@@ -13,8 +13,8 @@ public:
    // void removePlayer(Player player);
    // void addBalance();
    // void removeBalance();
-   std::string getName();
-   int getStats();
+   std::string getName() const;
+   int getStats() const;
 
 private:
    std::string name;

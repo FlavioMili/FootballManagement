@@ -4,18 +4,27 @@ Game::Game() {
    leagues.emplace_back();
 }
 
+Game::~Game() = default;
+
+
 void Game::run() {
-   for (auto& l : leagues) {
-      std::vector<Team> teams = l.getTeams();
-      for(size_t i = 0; i < teams.size(); ++i) {
-         for (size_t j = 0; j < teams.size(); ++j) {
-            if (i == j) continue;
-            if (teams[i].getStats() > teams[j].getStats())
-               std::cout << teams[i].getName() << "Wins\n";
-            else 
-               std::cout << teams[j].getName() << "Wins\n";
-         }
+   std::cout << "Starting Game::run()\n";
+
+   for (size_t lIndex = 0; lIndex < leagues.size(); ++lIndex) {
+      std::cout << "Processing League #" << lIndex + 1 << "\n";
+
+      std::vector<Team> teams = leagues[lIndex].getTeams();
+      std::cout << "Number of teams in this league: " << teams.size() << "\n";
+
+      for (size_t i = 0; i < teams.size(); ++i) {
+         std::cout << "Team " << i << ": " << teams[i].getName() << " (Stats: " << teams[i].getStats() << ")\n";
       }
 
+      // magic number just to test a  match
+      Match::simulateMatch(teams[0], teams[1]);
+
+      std::cout << "Finished processing League #" << lIndex + 1 << "\n\n";
    }
+
+   std::cout << "Finished Game::run()\n";
 }

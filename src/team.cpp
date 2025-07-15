@@ -13,11 +13,11 @@ void Team::generateTeam() {
       players.emplace_back();
 }
 
-std::string Team::getName() {
+std::string Team::getName() const {
    return name;
 }
 
-int Team::getStats() {
+int Team::getStats() const {
    int res {};
    for (auto& p : players) 
       res += p.getStats();
