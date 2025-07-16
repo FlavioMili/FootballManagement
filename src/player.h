@@ -1,6 +1,8 @@
 #pragma once
 
+#include "global.h"
 #include <cstdint>
+#include <map>
 #include <string>
 #include <random>
 #include <algorithm>
@@ -17,11 +19,11 @@ public:
    void setNumber(int num);
    int getNumber() const;
 
-   int getStats() const;
+   int getStats(Stats stat) const;
 
 private:
    std::string name;
    int number;
-   int stats;
-   int randomizeStats();
+   std::map<Stats, int> stats;
+   std::map<Stats, int> randomizeStats();
 };

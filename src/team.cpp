@@ -20,6 +20,6 @@ std::string Team::getName() const {
 int Team::getStats() const {
    int res {};
    for (auto& p : players) 
-      res += p.getStats();
+      res += p.getStats(Stats::SHOOTING); // just for testing yet
    return res;
 }

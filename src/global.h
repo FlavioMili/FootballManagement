@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 enum class Role {
    GOALKEEPER,
    DEFENDER,
@@ -15,4 +17,10 @@ enum class Stats {
    PHYSIQUE,
    STAMINA,
    DRIBBLING,
+};
+
+constexpr std::array<Stats, 7> all_stats = {
+   Stats::RUNNING, Stats::SHOOTING, Stats::PASSING,
+   Stats::DEFENDING, Stats::PHYSIQUE, Stats::STAMINA,
+   Stats::DRIBBLING
 };
