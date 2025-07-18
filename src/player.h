@@ -20,6 +20,8 @@ public:
    int getNumber() const;
 
    int getStats(Stats stat) const;
+   nlohmann::json toJson() const;
+   static Player fromJson(const nlohmann::json& j);
 
 private:
    std::string name;
