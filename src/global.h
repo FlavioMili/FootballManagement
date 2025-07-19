@@ -75,3 +75,21 @@ constexpr std::string_view roleToString(Role r) {
    }
    throw "Invalid Role enum";
 }
+
+// Serialization for storing in JSONs
+inline void to_json(nlohmann::json& j, const Role& r) {
+    j = std::string(roleToString(r));
+}
+
+inline void from_json(const nlohmann::json& j, Role& r) {
+    r = stringToRole(j.get<std::string>());
+}
+
+inline void to_json(nlohmann::json& j, const Stats& s) {
+    j = std::string(statToString(s));
+}
+
+inline void from_json(const nlohmann::json& j, Stats& s) {
+    s = stringToStat(j.get<std::string>());
+}
+

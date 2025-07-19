@@ -1,11 +1,8 @@
 #pragma once
 
 #include "global.h"
-#include <cstdint>
-#include <map>
 #include <string>
-#include <random>
-#include <algorithm>
+#include <map>
 
 class Player {
 public:
@@ -20,8 +17,8 @@ public:
    int getNumber() const;
 
    int getStats(Stats stat) const;
-   nlohmann::json toJson() const;
-   static Player fromJson(const nlohmann::json& j);
+   friend void to_json(nlohmann::json& j, const Player& p);
+   friend void from_json(const nlohmann::json& j, Player& p);
 
 private:
    std::string name;

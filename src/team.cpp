@@ -23,3 +23,21 @@ int Team::getStats() const {
       res += p.getStats(Stats::SHOOTING); // just for testing yet
    return res;
 }
+
+std::vector<Player> Team::getPlayers() const {
+   return players;
+}
+
+void to_json(nlohmann::json& j, const Team& t) {
+   j = {
+      {"name", t.name},
+      {"balance", t.balance},
+      {"players", t.players}
+   };
+}
+
+void from_json(const nlohmann::json& j, Team& t) {
+   j.at("name").get_to(t.name);
+   j.at("balance").get_to(t.balance);
+   j.at("players").get_to(t.players);
+}

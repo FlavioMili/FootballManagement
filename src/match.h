@@ -4,5 +4,5 @@
 
 class Match {
 public:
-   static void simulateMatch(const Team& teamB, const Team& teamA);
+   static void simulateMatch(const Team& teamA, const Team& teamB);
 };

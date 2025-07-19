@@ -1,9 +1,7 @@
 #pragma once
 
-#include <vector>
-#include <iostream>
 #include "league.h"
-#include "match.h"
+#include <vector>
 
 class Game {
 public:
@@ -11,7 +9,12 @@ public:
    ~Game();
    void run();
 
+   std::vector<League> getLeagues() const;
+
+   void save(const std::string& filename) const;
+   void load(const std::string& filename);
+
+
 private:
    std::vector<League> leagues;
-
 };

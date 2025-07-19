@@ -1,4 +1,8 @@
 #include "game.h"
+#include "match.h"
+#include <iostream>
+#include <fstream>
+
 
 Game::Game() {
    leagues.emplace_back();
@@ -27,4 +31,21 @@ void Game::run() {
    }
 
    std::cout << "Finished Game::run()\n";
+}
+
+void Game::save(const std::string& filename) const {
+   nlohmann::json j = leagues;
+   std::ofstream file(filename);
+   file << j.dump(4);
+}
+
+void Game::load(const std::string& filename) {
+   std::ifstream file(filename);
+   nlohmann::json j;
+   file >> j;
+   leagues = j.get<std::vector<League>>();
+}
+
+std::vector<League> Game::getLeagues() const {
+   return leagues;
 }

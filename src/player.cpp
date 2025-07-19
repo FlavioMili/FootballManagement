@@ -1,4 +1,6 @@
 #include "player.h"
+#include <random>
+#include <algorithm>
 
 Player::Player(std::string name, int number) {
    this->stats = randomizeStats();
@@ -39,4 +41,18 @@ int Player::getNumber() const {
 
 int Player::getStats(Stats stat) const {
    return stats.at(stat);
+}
+
+void to_json(nlohmann::json& j, const Player& p) {
+   j = {
+      {"name", p.getName()},
+      {"number", p.getNumber()},
+      {"stats", p.stats}
+   };
+}
+
+void from_json(const nlohmann::json& j, Player& p) {
+   p.setName(j.at("name").get<std::string>());
+   p.setNumber(j.at("number").get<int>());
+   p.stats = j.at("stats").get<std::map<Stats, int>>();
 }

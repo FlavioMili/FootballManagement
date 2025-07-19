@@ -1,2 +1,4 @@
 build/*
 football_management
+compile_commands.json
+.cache
