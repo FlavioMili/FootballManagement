@@ -1,37 +1,31 @@
-#include "game.h"
+#include "database.h"
+#include "datagenerator.h"
 #include <iostream>
+#include <filesystem>
+
+const std::string DB_FILE = "football_manager.db";
 
 int main() {
-    Game game;
+    // Check if the database file exists to determine if it's a first run.
+    // This is a simple check. The db.isInitialized() is a more robust check
+    // against the database content itself.
+    bool db_exists = std::filesystem::exists(DB_FILE);
 
-    // Run game logic once (creates leagues and teams)
-    game.run();
+    Database db(DB_FILE);
 
-    // Save game state to file "game_state.json" in project root
-    std::cout << "Game saved to game_state.json\n";
-
-    // Create a new game object and load saved state
-    Game loadedGame;
-    loadedGame.load("game_state.json");
-    std::cout << "Game loaded from game_state.json\n";
-
-    // Print all player names from loaded game
-    const auto& leagues = loadedGame.getLeagues(); // You need to add getLeagues() const to Game
-
-    for (size_t li = 0; li < leagues.size(); ++li) {
-        std::cout << "League " << li + 1 << ":\n";
-        const auto& teams = leagues[li].getTeams();
-        for (size_t ti = 0; ti < teams.size(); ++ti) {
-            std::cout << " Team " << ti + 1 << " (" << teams[ti].getName() << "):\n";
-
-            // Assuming Team class has a getPlayers() method returning vector<Player>
-            const auto& players = teams[ti].getPlayers();
-            for (const auto& p : players) {
-                std::cout << "  - " << p.getName() << "\n";
-            }
-        }
+    if (!db_exists || !db.isInitialized()) {
+        std::cout << "First run detected or database is not initialized." << std::endl;
+        // 1. Create the tables
+        db.initialize();
+        // 2. Populate with initial data
+        DataGenerator::generate(db);
+    } else {
+        std::cout << "Welcome back! Loading game from " << DB_FILE << std::endl;
+        // Here, you would add the logic to load game state from the database
+        // and start the actual game loop.
     }
 
-   game.save("game_state.json");
+    std::cout << "\nSetup complete. You can now inspect the '" << DB_FILE << "' file." << std::endl;
+
     return 0;
 }

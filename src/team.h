@@ -9,22 +9,14 @@ public:
    Team(std::string name = "testTeam");
    ~Team();
    void generateTeam();
-   // void addPlayer(Player player);
-   // void removePlayer(Player player);
-   // void addBalance();
-   // void removeBalance();
    std::string getName() const;
-   int getStats() const;
+   int getBalance() const;
+   void setBalance(int balance);
    std::vector<Player> getPlayers() const;
-
-   friend void to_json(nlohmann::json& j, const Team& t);
-   friend void from_json(const nlohmann::json& j, Team& t);
+   void setPlayers(const std::vector<Player>& players);
 
 private:
    std::string name;
    std::vector<Player> players;
    int balance;
 };
-
-void to_json(nlohmann::json& j, const Team& t);
-void from_json(const nlohmann::json& j, Team& t);

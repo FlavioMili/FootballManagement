@@ -1,58 +1,42 @@
 #include "player.h"
-#include <random>
-#include <algorithm>
 
-Player::Player(std::string name, int number) {
-   this->stats = randomizeStats();
-   this->name = name;
-   this->number = number;
-}
+Player::Player(std::string name, int age)
+    : name(name), age(age) {}
 
-Player::~Player() = default;
+Player::~Player() {}
 
-std::map<Stats, int> Player::randomizeStats() {
-   std::map<Stats, int> generated_stats;
-   static std::default_random_engine generator(std::random_device{}());
-   std::normal_distribution<double> distribution(70, 8); // mean 70, stddev 8
-
-   for (const auto& stat_type : all_stats) {
-      int value = static_cast<int>(distribution(generator));
-      generated_stats[stat_type] = std::clamp(value, 1, 99);
-   }
-
-   return generated_stats;
-}
-
-void Player::setName(std::string name) {
-   this->name = name;
+void Player::setName(std::string new_name) {
+    this->name = new_name;
 }
 
 std::string Player::getName() const {
-   return name;
+    return name;
 }
 
-void Player::setNumber(int number) {
-   this->number = number;
+void Player::setAge(int new_age) {
+    this->age = new_age;
 }
 
-int Player::getNumber() const {
-   return number;
+int Player::getAge() const {
+    return age;
 }
 
-int Player::getStats(Stats stat) const {
-   return stats.at(stat);
+void Player::setStats(const std::map<std::string, int>& new_stats) {
+    this->stats = new_stats;
 }
 
-void to_json(nlohmann::json& j, const Player& p) {
-   j = {
-      {"name", p.getName()},
-      {"number", p.getNumber()},
-      {"stats", p.stats}
-   };
+const std::map<std::string, int>& Player::getStats() const {
+    return stats;
 }
 
-void from_json(const nlohmann::json& j, Player& p) {
-   p.setName(j.at("name").get<std::string>());
-   p.setNumber(j.at("number").get<int>());
-   p.stats = j.at("stats").get<std::map<Stats, int>>();
+int Player::getStat(const std::string& stat_name) const {
+    auto it = stats.find(stat_name);
+    if (it != stats.end()) {
+        return it->second;
+    }
+    return 0; // Return a default value if stat not found
+}
+
+void Player::setStat(const std::string& stat_name, int value) {
+    stats[stat_name] = value;
 }

@@ -1,20 +1,17 @@
 #pragma once
 
+#include "database.h"
 #include "league.h"
 #include <vector>
+#include <string>
 
 class Game {
 public:
-   Game();
-   ~Game();
-   void run();
-
-   std::vector<League> getLeagues() const;
-
-   void save(const std::string& filename) const;
-   void load(const std::string& filename);
-
+    Game();
+    void run();
 
 private:
-   std::vector<League> leagues;
+    // The Game class will eventually manage the game state,
+    // interacting with the database.
+    // For now, it's simple to allow the project to compile.
 };

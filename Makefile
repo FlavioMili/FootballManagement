@@ -16,7 +16,7 @@ all: $(TARGET)
 
 # Link
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ -lsqlite3
 
 # Compile .cpp -> .o into build/
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp

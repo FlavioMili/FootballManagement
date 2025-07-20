@@ -2,3 +2,4 @@ build/*
 football_management
 compile_commands.json
 .cache
+game_state.json

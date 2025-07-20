@@ -1,14 +1,9 @@
 #include "match.h"
 #include <iostream>
 
-void Match::simulateMatch(const Team& teamA, const Team& teamB) {
-    std::cout << "Match: " << teamA.getName() << " vs " << teamB.getName() << "\n";
-    std::cout << "Stats: " << teamA.getStats() << " vs " << teamB.getStats() << "\n";
+Match::Match(const Team& a, const Team& b) : teamA(a), teamB(b) {}
 
-    if (teamA.getStats() > teamB.getStats()) {
-        std::cout << "Result: " << teamA.getName() << " wins!\n";
-    } else {
-        std::cout << "Result: " << teamB.getName() << " wins!\n";
-    }
+void Match::simulate() {
+    std::cout << "Simulating match between " << teamA.getName() << " and " << teamB.getName() << std::endl;
+    // Future logic for match simulation will go here.
 }
-

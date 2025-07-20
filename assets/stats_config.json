@@ -1,0 +1,41 @@
+{
+  "possible_stats": [
+    "Pace",
+    "Shooting",
+    "Passing",
+    "Dribbling",
+    "Defending",
+    "Physicality",
+    "Stamina",
+    "Vision",
+    "Goalkeeping"
+  ],
+  "role_focus": {
+    "Striker": {
+      "stats": ["Shooting", "Pace", "Dribbling", "Physicality"],
+      "weights": [0.4, 0.2, 0.2, 0.2]
+    },
+    "Midfielder": {
+      "stats": ["Passing", "Vision", "Stamina", "Dribbling"],
+      "weights": [0.3, 0.3, 0.2, 0.2]
+    },
+    "Defender": {
+      "stats": ["Defending", "Physicality", "Pace", "Vision"],
+      "weights": [0.4, 0.3, 0.15, 0.15]
+    },
+    "Goalkeeper": {
+      "stats": ["Goalkeeping", "Vision", "Physicality"],
+      "weights": [0.7, 0.2, 0.1]
+    }
+  },
+  "rating_weights": {
+    "focus_stats_contribution": 0.8,
+    "other_stats_contribution": 0.2
+  },
+  "age_distribution": {
+    "min": 16,
+    "max": 34,
+    "peak_start": 24,
+    "peak_end": 29
+  }
+}
