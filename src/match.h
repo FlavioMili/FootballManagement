@@ -2,12 +2,18 @@
 
 #include "team.h"
 
+enum class MatchResult {
+    HOME_WIN,
+    AWAY_WIN,
+    TIE
+};
+
 class Match {
 public:
-    Match(const Team& teamA, const Team& teamB);
-    void simulate();
+    Match(Team& teamA, Team& teamB);
+    MatchResult simulate();
 
 private:
-    Team teamA;
-    Team teamB;
+    Team& teamA;
+    Team& teamB;
 };

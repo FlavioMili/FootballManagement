@@ -1,35 +1,37 @@
 #include "team.h"
-#include "player.h"
+#include <numeric>
 
-Team::Team(std::string name) {
-   this->name = name;
-   this->balance = 1000000;
-   generateTeam();
-}
+Team::Team(std::string name) : name(name), balance(0) {}
 
-Team::~Team() = default;
-
-void Team::generateTeam() {
-   for (int i = 0; i < 11; ++i)
-      players.emplace_back();
-}
+Team::~Team() {}
 
 std::string Team::getName() const {
-   return name;
+    return name;
 }
 
-int Team::getBalance() const {
-   return balance;
+long long Team::getBalance() const {
+    return balance;
 }
 
-void Team::setBalance(int balance) {
-   this->balance = balance;
+void Team::setBalance(long long new_balance) {
+    this->balance = new_balance;
 }
 
-std::vector<Player> Team::getPlayers() const {
-   return players;
+const std::vector<Player>& Team::getPlayers() const {
+    return players;
 }
 
-void Team::setPlayers(const std::vector<Player>& players) {
-   this->players = players;
+void Team::setPlayers(const std::vector<Player>& new_players) {
+    this->players = new_players;
+}
+
+double Team::getAverageStat(const std::string& stat_name) const {
+    if (players.empty()) {
+        return 0.0;
+    }
+    double total = 0.0;
+    for (const auto& player : players) {
+        total += player.getStat(stat_name);
+    }
+    return total / players.size();
 }

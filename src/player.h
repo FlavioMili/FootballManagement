@@ -20,9 +20,7 @@ public:
    int getStat(const std::string& stat_name) const;
    void setStat(const std::string& stat_name, int value);
 
-   // Overall rating can be calculated on the fly
-   // based on a specific configuration (e.g. from stats_config.json)
-   // double calculateOverallRating(const std::vector<std::string>& focus_stats) const;
+   long long calculateMarketValue() const;
 
 private:
    std::string name;

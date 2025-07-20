@@ -71,6 +71,7 @@ void DataGenerator::generate(Database& db) {
     std::cout << "Name files loaded successfully." << std::endl;
 
     db.beginTransaction();
+    db.setMetadata("season", "1");
 
     auto create_player_with_role = [&](long long team_id) {
         std::string player_name = first_names[get_random(0, first_names.size() - 1)] + " " + last_names[get_random(0, last_names.size() - 1)];
@@ -96,7 +97,7 @@ void DataGenerator::generate(Database& db) {
 
     // 1. Create Free Agents Team
     std::cout << "Creating Free Agents team..." << std::endl;
-    long long free_agents_team_id = db.saveTeam("Free Agents", nullptr);
+    long long free_agents_team_id = db.saveTeam("Free Agents", 0, nullptr);
     for (int i = 0; i < 50; ++i) {
         create_player_with_role(free_agents_team_id);
     }
@@ -120,7 +121,8 @@ void DataGenerator::generate(Database& db) {
                 break;
             }
             std::string current_team_name = team_names[team_name_idx++];
-            long long team_id = db.saveTeam(current_team_name, &league_id);
+            long long team_balance = get_random(5000000, 20000000); // 5M to 20M
+            long long team_id = db.saveTeam(current_team_name, team_balance, &league_id);
             std::cout << "  - Creating Team: " << current_team_name << " (ID: " << team_id << ")" << std::endl;
 
             int num_players = get_random(22, 28);
