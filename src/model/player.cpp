@@ -1,4 +1,6 @@
 #include "player.h"
+#include <numeric>
+#include <iostream>
 
 Player::Player(int id, std::string name, int age, std::string role)
 : id(id), name(std::move(name)), age(age), role(std::move(role)), overall(0) {}
@@ -48,4 +50,5 @@ void Player::calculateOverall(const std::map<std::string, double>& weights) {
    } else {
       overall = 0;
    }
+   std::cout << "DEBUG: Player::calculateOverall() - Player: " << name << ", Role: " << role << ", Total Value: " << total_value << ", Total Weight: " << total_weight << ", Calculated Overall: " << overall << std::endl;
 }

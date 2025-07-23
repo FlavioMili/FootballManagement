@@ -51,6 +51,11 @@ void DataGenerator::generatePlayers(int team_id, const std::string& role, int co
          int max_val = stat_props["max"];
          stats[stat_name] = min_val + rand() % (max_val - min_val + 1);
       }
+      std::cout << "DEBUG: DataGenerator::generatePlayers() - Generated stats for " << name << ": ";
+      for (const auto& pair : stats) {
+         std::cout << pair.first << ": " << pair.second << ", ";
+      }
+      std::cout << std::endl;
       player.setStats(stats);
 
       std::map<std::string, double> weights;
@@ -59,6 +64,11 @@ void DataGenerator::generatePlayers(int team_id, const std::string& role, int co
       for (size_t j = 0; j < role_stats.size(); ++j) {
          weights[role_stats[j]] = role_weights[j];
       }
+      std::cout << "DEBUG: DataGenerator::generatePlayers() - Role: " << role << ", Weights: ";
+      for (const auto& pair : weights) {
+         std::cout << pair.first << ": " << pair.second << ", ";
+      }
+      std::cout << std::endl;
       player.calculateOverall(weights);
       db.addPlayer(team_id, player);
    }

@@ -18,7 +18,7 @@ void Calendar::generate(const std::vector<Team>& teams) {
    }
 
    int num_teams = team_ids.size();
-   int num_rounds = num_teams - 1;
+   int num_rounds = (num_teams - 1) * 2; // Double for home and away
 
    for (int round = 0; round < num_rounds; ++round) {
       Week week(round);
@@ -27,8 +27,15 @@ void Calendar::generate(const std::vector<Team>& teams) {
          int away_id = team_ids[num_teams - 1 - i];
 
          if (home_id != -1 && away_id != -1) {
-            if (round % 2 == 1) {
-               std::swap(home_id, away_id);
+            // Determine home/away based on round number for double round-robin
+            if (round < (num_teams - 1)) { // First half of the season (original schedule)
+               if (round % 2 == 1) {
+                  std::swap(home_id, away_id);
+               }
+            } else { // Second half of the season (reversed fixtures)
+               if (round % 2 == 0) { // Reverse home/away for second half
+                  std::swap(home_id, away_id);
+               }
             }
             week.addMatch({home_id, away_id});
          }
