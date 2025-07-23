@@ -10,6 +10,17 @@
     "Vision",
     "Goalkeeping"
   ],
+  "stats": {
+    "Pace": {"min": 0, "max": 100},
+    "Shooting": {"min": 0, "max": 100},
+    "Passing": {"min": 0, "max": 100},
+    "Dribbling": {"min": 0, "max": 100},
+    "Defending": {"min": 0, "max": 100},
+    "Physicality": {"min": 0, "max": 100},
+    "Stamina": {"min": 0, "max": 100},
+    "Vision": {"min": 0, "max": 100},
+    "Goalkeeping": {"min": 0, "max": 100}
+  },
   "role_focus": {
     "Striker": {
       "stats": ["Shooting", "Pace", "Dribbling", "Physicality"],
