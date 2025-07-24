@@ -1,5 +1,4 @@
 #include "game_controller.h"
-#include <iostream>
 
 GameController::GameController(Game& game) : game(game) {}
 

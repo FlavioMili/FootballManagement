@@ -1,8 +1,6 @@
 #pragma once
 
 #include "game_controller.h"
-#include <string>
-#include <vector>
 
 class CliView {
 public:

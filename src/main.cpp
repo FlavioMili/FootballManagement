@@ -1,6 +1,6 @@
-#include "controller/game_controller.h"
-#include "view/cli/cli_view.h"
-#include "model/database.h"
+#include "game_controller.h"
+#include "cli_view.h"
+#include "database.h"
 #include <iostream>
 
 int main() {
