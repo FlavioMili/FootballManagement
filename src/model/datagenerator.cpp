@@ -94,6 +94,7 @@ void DataGenerator::generateAll() {
       std::shuffle(current_league_team_names.begin(), current_league_team_names.end(), std::default_random_engine(seed));
 
       for (size_t i = 0; i < TEAMS_PER_LEAGUE && i < current_league_team_names.size(); ++i) {
+         // TODO this should become random balance
          db.addTeam(league.getId(), current_league_team_names[i], 1000000);
       }
 

@@ -29,9 +29,10 @@ public:
    void saveCalendar(const Calendar& calendar, int season, int league_id);
    Calendar loadCalendar(int season, int league_id);
 
-   void updateGameState(int season, int week, int managed_team_id);
-   int loadManagedTeamId();
    void saveManagedTeamId(int team_id);
+   int loadManagedTeamId();
+
+   void updateGameState(int season, int week, int managed_team_id);
    void loadGameState(int& season, int& week, int& managed_team_id);
 
 private:

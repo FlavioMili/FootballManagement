@@ -9,7 +9,7 @@ struct Database::Impl {
 
 Database::Database(const std::string& db_path) : pImpl(std::make_unique<Impl>()) {
    if (sqlite3_open(db_path.c_str(), &pImpl->db)) {
-      std::cerr << "Can't open database: " << sqlite3_errmsg(pImpl->db) << std::endl;
+      std::cerr << "Can't open database: " << sqlite3_errmsg(pImpl->db) << "\n";
    }
 }
 
@@ -28,11 +28,17 @@ void Database::initialize() {
       "CREATE TABLE IF NOT EXISTS calendar (season INTEGER, week INTEGER, home_team_id INTEGER, away_team_id INTEGER, league_id INTEGER);";
    char* err_msg = 0;
    if (sqlite3_exec(pImpl->db, sql, 0, 0, &err_msg) != SQLITE_OK) {
-      std::cerr << "SQL error: " << err_msg << std::endl;
+      std::cerr << "SQL error: " << err_msg << "\n";
       sqlite3_free(err_msg);
    }
 }
 
+/**
+* This can be later improved by removing the initialized 
+* value and just considering the state of weeks passed.
+* There could be a problem when quitting immediately 
+* after starting the game
+*/
 bool Database::isFirstRun() {
    sqlite3_stmt* stmt;
    const char* sql = "SELECT value FROM game_state WHERE key = 'initialized';";
