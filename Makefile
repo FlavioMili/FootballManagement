@@ -1,6 +1,7 @@
 # Compiler and flags
 CXX := g++
 CXXFLAGS := -Wall -Wextra -std=c++20 -I./include -I./src -I./src/model -I./src/controller -I./src/view/cli
+MAKEFLAGS += -j$(shell nproc)
 
 # Directories
 SRC_DIR := src

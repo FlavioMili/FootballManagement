@@ -1,11 +1,13 @@
 #include "match.h"
 #include "player.h"
-#include <iostream>
-#include <numeric>
 
 Match::Match(Team& home, Team& away)
 : home_team(home), away_team(away), home_score(0), away_score(0) {}
 
+/**
+* TODO : improve the simulation, it is one of the 
+* fundamentals of the game.
+*/
 void Match::simulate() {
    double home_strength = 0;
    for (const auto& player : home_team.getPlayers()) {

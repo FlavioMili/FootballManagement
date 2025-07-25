@@ -2,10 +2,7 @@
 
 #include "database.h"
 #include "league.h"
-#include "manager.h"
 #include "calendar.h"
-#include <string>
-#include <memory>
 #include <vector>
 
 class Game {

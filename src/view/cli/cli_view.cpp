@@ -44,14 +44,16 @@ void CliView::processInput() {
          exit(0);
       default:
          std::cout << "Invalid choice. Please try again.\n";
-         break;
    }
 }
 
 void CliView::viewRoster() {
    Team team = controller.getManagedTeam();
    std::vector<Player> players = controller.getPlayersForTeam(team.getId());
-   std::cout << "\n--- Roster for " << team.getName() << " ---" << std::endl;
+
+   std::cout << " PLAYERS SIZE IN ROSTER: " << players.size() << "\n";
+
+   std::cout << "\n--- Roster for " << team.getName() << " ---\n";
    for (const auto& p : players) {
       std::cout << p.getName() << " (Age: " << p.getAge() 
          << ", Role: " << p.getRole() << ") - Overall: "
@@ -61,7 +63,7 @@ void CliView::viewRoster() {
 
 void CliView::viewLeaderboard(int league_id) {
    std::vector<Team> teams = controller.getTeamsInLeague(league_id);
-   std::cout << "\n--- Leaderboard ---" << std::endl;
+   std::cout << "\n--- Leaderboard ---\n";
    std::sort(teams.begin(), teams.end(), [](const Team& a, const Team& b) {
       return a.getPoints() > b.getPoints();
    });

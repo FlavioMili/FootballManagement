@@ -4,15 +4,14 @@
 
 void Calendar::generate(const std::vector<Team>& teams) {
    weeks.clear();
-   if (teams.size() < 2) {
-      return;
-   }
+   if (teams.size() < 2) return;
 
    std::vector<int> team_ids;
-   for (const auto& team : teams) {
-      team_ids.push_back(team.getId());
+   for (const auto& t : teams) {
+      team_ids.push_back(t.getId());
    }
 
+   // TODO instantiate a rest day in that case
    if (team_ids.size() % 2 != 0) {
       team_ids.push_back(-1); // Dummy team for scheduling
    }

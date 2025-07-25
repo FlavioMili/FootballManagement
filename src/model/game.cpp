@@ -1,15 +1,12 @@
+#include <iostream>
 #include "game.h"
 #include "datagenerator.h"
-#include <iostream>
 
 Game::Game(Database& db) : db(db), current_season(0), current_week(0), managed_team_id(-1) {
-   // Always attempt to load data first
    loadData();
 
-   bool first_run_detected = db.isFirstRun();
-
-   if (first_run_detected) {
-      // If it's a first run, generate all data
+   // If it's a first run, generate all data
+   if (db.isFirstRun()) {
       DataGenerator generator(db);
       generator.generateAll();
       // After generation, reload data to get newly created leagues/teams/players
@@ -19,6 +16,7 @@ Game::Game(Database& db) : db(db), current_season(0), current_week(0), managed_t
       if (!leagues.empty() && !teams.empty()) {
          current_season = 1;
          current_week = 0;
+         // TODO make it a choice
          managed_team_id = teams[rand() % teams.size()].getId(); // Assign a random team as managed
          db.updateGameState(current_season, current_week, managed_team_id); // Save this initial state
 
@@ -31,7 +29,7 @@ Game::Game(Database& db) : db(db), current_season(0), current_week(0), managed_t
             league_calendars[league.getId()] = league_calendar;
          }
       } else {
-         std::cerr << "Error: No leagues or teams generated on first run. Cannot set initial game state." << std::endl;
+         std::cerr << "Error: No leagues or teams generated on first run. Cannot set initial game state.\n";
       }
    }
 
@@ -43,15 +41,17 @@ Game::Game(Database& db) : db(db), current_season(0), current_week(0), managed_t
 
    // Display managed team only once, after it's definitively set
    if (managed_team_id != -1) {
-      std::cout << "You have been appointed as the manager of: " << getManagedTeam().getName() << std::endl;
+      std::cout << "You have been appointed as the manager of: " 
+         << getManagedTeam().getName() << "\n";
    }
 }
 
 void Game::loadData() {
    db.loadGameState(current_season, current_week, managed_team_id);
+   // TODO maybe also clear players?
    leagues.clear();
    teams.clear();
-   league_calendars.clear(); // Clear existing calendars
+   league_calendars.clear();
 
    leagues = db.getLeagues();
    for (const auto& league : leagues) {
@@ -83,11 +83,11 @@ void Game::simulateWeek() {
    Calendar& current_calendar = league_calendars.at(managed_league_id);
 
    if (current_week >= (int)current_calendar.getWeeks().size()) {
-      std::cout << "No more weeks to simulate in the current season." << std::endl;
+      std::cout << "No more weeks to simulate in the current season.\n";
       return;
    }
 
-   std::cout << "--- Simulating Week " << current_week + 1 << " ---" << std::endl;
+   std::cout << "--- Simulating Week " << current_week + 1 << " ---\n";
 
    const auto& week_matches = current_calendar.getWeeks()[current_week].getMatches();
    for (const auto& match_info : week_matches) {
@@ -99,7 +99,7 @@ void Game::simulateWeek() {
 
       if (home_team.getId() == managed_team_id || away_team.getId() == managed_team_id) {
          std::cout << "Your Team's Match Result: " << home_team.getName() << " " << match.getHomeScore()
-                   << " - " << match.getAwayScore() << " " << away_team.getName() << std::endl;
+            << " - " << match.getAwayScore() << " " << away_team.getName() << "\n";
       }
    }
 
@@ -125,8 +125,8 @@ void Game::updateStandings(const Match& match) {
 }
 
 void Game::endSeason() {
-   std::cout << "--- Season " << current_season << " has concluded. ---" << std::endl;
-   // Display final leaderboard or other season-end information
+   std::cout << "--- Season " << current_season << " has concluded. ---\n";
+   // TODO Display final leaderboard or other season-end information
 }
 
 void Game::startNewSeason() {
@@ -150,8 +150,8 @@ void Game::startNewSeason() {
       league_calendars[league.getId()] = league_calendar;
    }
 
-   std::cout << "--- Generating schedule for " << leagues[0].getName() << " ---" << std::endl;
-   std::cout << "Generated a schedule with " << league_calendars.at(leagues[0].getId()).getWeeks().size() << " weeks." << std::endl;
+   std::cout << "--- Generating schedule for " << leagues[0].getName() << " ---\n";
+   std::cout << "Generated a schedule with " << league_calendars.at(leagues[0].getId()).getWeeks().size() << " weeks.\n";
 }
 
 int Game::getCurrentSeason() const {

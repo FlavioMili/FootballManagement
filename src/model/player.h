@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <vector>
 #include <map>
 
 class Player {
@@ -20,9 +19,9 @@ public:
 
 private:
    int id;
+   std::map<std::string, int> stats;
    std::string name;
-   int age;
    std::string role;
    int overall;
-   std::map<std::string, int> stats;
+   int age;
 };
