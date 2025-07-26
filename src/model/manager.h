@@ -8,10 +8,10 @@
 * game save, so that there is more variety
 */
 class Manager {
-public:
-   Manager(const Team& team);
-   const Team& getTeam() const;
+ public:
+  Manager(const Team& team);
+  const Team& getTeam() const;
 
-private:
-   const Team& team;
+ private:
+  const Team& team;
 };

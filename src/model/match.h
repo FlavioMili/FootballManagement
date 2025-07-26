@@ -3,24 +3,24 @@
 #include "team.h"
 
 struct Matchup {
-   int home_team_id;
-   int away_team_id;
+  int home_team_id;
+  int away_team_id;
 };
 
 class Match {
-public:
-   Match(Team& home, Team& away);
+ public:
+  Match(const Team& home, const Team& away);
 
-   void simulate();
+  void simulate();
 
-   Team& getHomeTeam() const;
-   Team& getAwayTeam() const;
-   int getHomeScore() const;
-   int getAwayScore() const;
+  const Team& getHomeTeam() const;
+  const Team& getAwayTeam() const;
+  int getHomeScore() const;
+  int getAwayScore() const;
 
-private:
-   Team& home_team;
-   Team& away_team;
-   int home_score;
-   int away_score;
+ private:
+  const Team& home_team;
+  const Team& away_team;
+  int home_score;
+  int away_score;
 };
