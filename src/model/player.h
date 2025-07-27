@@ -11,7 +11,8 @@ class Player {
   std::string getName() const;
   int getAge() const;
   std::string getRole() const;
-  int getOverall() const;
+  double getOverall() const;
+  void setOverall(double overall);
   const std::map<std::string, int>& getStats() const;
 
   void setStats(const std::map<std::string, int>& stats);
@@ -22,6 +23,6 @@ class Player {
   std::map<std::string, int> stats;
   std::string name;
   std::string role;
-  int overall;
+  double overall;
   int age;
 };

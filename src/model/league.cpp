@@ -24,11 +24,8 @@ void League::setTeams(const std::vector<Team>& new_teams) {
 }
 
 int League::getPoints(int team_id) const {
-    try {
-        return leaderboard.at(team_id);
-    } catch (const std::exception& e) {
-        return -1; 
-    }
+    auto it = leaderboard.find(team_id);
+    return it != leaderboard.end() ? it->second : 0;
 }
 
 void League::addPoints(int team_id, int points) {

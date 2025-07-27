@@ -14,6 +14,8 @@ struct Database::Impl {
 Database::Database(const std::string& db_path) : pImpl(std::make_unique<Impl>()) {
   if (sqlite3_open(db_path.c_str(), &pImpl->db)) {
     std::cerr << "Can't open database: " << sqlite3_errmsg(pImpl->db) << "\n";
+  } else {
+    sqlite3_exec(pImpl->db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
   }
 }
 
@@ -147,7 +149,7 @@ void Database::updateTeam(const Team& team) {
 
 void Database::addPlayer(int team_id, const Player& player) {
   sqlite3_stmt* stmt;
-  const char* sql = "INSERT INTO Players (team_id, name, age, role, stats) VALUES (?, ?, ?, ?, ?);";
+  const char* sql = "INSERT INTO Players (team_id, name, age, role, stats, overall_rating) VALUES (?, ?, ?, ?, ?, ?);";
   if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
     nlohmann::json stats_json = player.getStats();
     std::string stats_str = stats_json.dump();
@@ -156,6 +158,7 @@ void Database::addPlayer(int team_id, const Player& player) {
     sqlite3_bind_int(stmt, 3, player.getAge());
     sqlite3_bind_text(stmt, 4, player.getRole().c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 5, stats_str.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_double(stmt, 6, player.getOverall());
     sqlite3_step(stmt);
   }
   sqlite3_finalize(stmt);
@@ -163,9 +166,9 @@ void Database::addPlayer(int team_id, const Player& player) {
 
 std::vector<Player> Database::getPlayers(int team_id) const {
   sqlite3_stmt* stmt;
-  const char* sql = "SELECT id, name, age, role, stats FROM Players WHERE team_id = ?;";
+  const char* sql = "SELECT id, name, age, role, stats, overall_rating FROM Players WHERE team_id = ?;";
   std::vector<Player> players;
-  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
     sqlite3_bind_int(stmt, 1, team_id);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
       int id = sqlite3_column_int(stmt, 0);
@@ -176,9 +179,12 @@ std::vector<Player> Database::getPlayers(int team_id) const {
       std::string role = role_text ? reinterpret_cast<const char*>(role_text) : "";
       const unsigned char* stats_text = sqlite3_column_text(stmt, 4);
       std::string stats_str = stats_text ? reinterpret_cast<const char*>(stats_text) : "";
+      double overall = sqlite3_column_double(stmt, 5);
+
       Player player(id, name, age, role);
       nlohmann::json stats_json = nlohmann::json::parse(stats_str);
       player.setStats(stats_json.get<std::map<std::string, int>>());
+      player.setOverall(overall);
       players.push_back(player);
     }
   }

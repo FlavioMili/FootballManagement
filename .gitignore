@@ -3,4 +3,4 @@ football_management
 compile_commands.json
 .cache
 game_state.json
-football_management.db
+football_management.db*

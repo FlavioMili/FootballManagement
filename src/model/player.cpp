@@ -22,8 +22,12 @@ std::string Player::getRole() const {
   return role;
 }
 
-int Player::getOverall() const {
+double Player::getOverall() const {
   return overall;
+}
+
+void Player::setOverall(double overall) {
+  this->overall = overall;
 }
 
 const std::map<std::string, int>& Player::getStats() const {
@@ -35,13 +39,11 @@ void Player::setStats(const std::map<std::string, int>& new_stats) {
 }
 
 void Player::calculateOverall(const std::map<std::string, double>& weights) {
-  double total_value = 0;
-
+  overall = 0;
   for (const auto& stat : stats) {
     auto it = weights.find(stat.first);
     if (it != weights.end()) {
-      total_value += stat.second * it->second;
+      overall += stat.second * it->second;
     }
   }
-  overall = total_value/100;
 }

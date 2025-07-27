@@ -58,7 +58,9 @@ void DataGenerator::generatePlayers(int team_id, const std::string& role, int co
     for (size_t j = 0; j < role_stats.size(); ++j) {
       weights[role_stats[j]] = role_weights[j];
     }
+
     player.calculateOverall(weights);
+
     db.addPlayer(team_id, player);
   }
 }
