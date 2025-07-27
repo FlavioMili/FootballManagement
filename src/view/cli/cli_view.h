@@ -9,7 +9,7 @@ class CliView {
 
  private:
   void displayMenu();
-  void processInput();
+  bool processInput();
   void viewRoster();
   void viewLeaderboard(int league_id);
 

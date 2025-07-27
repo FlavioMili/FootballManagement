@@ -18,49 +18,55 @@ Database::Database(const std::string& db_path) : pImpl(std::make_unique<Impl>())
 }
 
 Database::~Database() {
-  sqlite3_close(pImpl->db);
+  close();
 }
 
-void Database::initialize() const {
-  const char* sql =
-    "CREATE TABLE IF NOT EXISTS game_state (key TEXT PRIMARY KEY, value INTEGER);"
-    "INSERT OR IGNORE INTO game_state (key, value) VALUES ('initialized', 0);"  /* Initialize with 0, will be set to 1 after first run */
-    "INSERT OR IGNORE INTO game_state (key, value) VALUES ('managed_team_id', -1);"  // Initialize with -1 or a suitable default
-    "CREATE TABLE IF NOT EXISTS leagues (id INTEGER PRIMARY KEY, name TEXT);"
-    "CREATE TABLE IF NOT EXISTS teams (id INTEGER PRIMARY KEY, league_id INTEGER, name TEXT, balance INTEGER, points INTEGER);"
-    "CREATE TABLE IF NOT EXISTS players (id INTEGER PRIMARY KEY, team_id INTEGER, name TEXT, age INTEGER, role TEXT, stats TEXT);"
-    "CREATE TABLE IF NOT EXISTS calendar (season INTEGER, week INTEGER, home_team_id INTEGER, away_team_id INTEGER, league_id INTEGER);";
-  char* err_msg = 0;
-  if (sqlite3_exec(pImpl->db, sql, 0, 0, &err_msg) != SQLITE_OK) {
-    std::cerr << "SQL error: " << err_msg << "\n";
-    sqlite3_free(err_msg);
+void Database::close() {
+  if (pImpl->db) {
+    int rc = sqlite3_close(pImpl->db);
+    if (rc != SQLITE_OK) {
+      // Log error, but don't throw from destructor context
+      std::cerr << "Error closing database: " << sqlite3_errmsg(pImpl->db) << std::endl;
+    }
+    pImpl->db = nullptr;
   }
 }
 
-/**
-* This can be later improved by removing the initialized 
-* value and just considering the state of weeks passed.
-* There could be a problem when quitting immediately 
-* after starting the game
-*/
+void Database::initialize() {
+  char* err_msg = nullptr;
+  const char* sql =
+    "CREATE TABLE IF NOT EXISTS Leagues (id INTEGER PRIMARY KEY, name TEXT NOT NULL);"
+    "CREATE TABLE IF NOT EXISTS Teams (id INTEGER PRIMARY KEY, league_id INTEGER, name TEXT NOT NULL, balance INTEGER, FOREIGN KEY(league_id) REFERENCES Leagues(id));"
+    "CREATE TABLE IF NOT EXISTS Players (id INTEGER PRIMARY KEY, team_id INTEGER, name TEXT NOT NULL, age INTEGER, role TEXT, overall_rating REAL, stats TEXT, FOREIGN KEY(team_id) REFERENCES Teams(id));"
+    "CREATE TABLE IF NOT EXISTS Calendar (season INTEGER, week INTEGER, home_team_id INTEGER, away_team_id INTEGER, league_id INTEGER, PRIMARY KEY(season, league_id, week, home_team_id, away_team_id));"
+    "CREATE TABLE IF NOT EXISTS GameState (key TEXT PRIMARY KEY, value INTEGER);"
+    "CREATE TABLE IF NOT EXISTS LeaguePoints (league_id INTEGER, team_id INTEGER, points INTEGER, PRIMARY KEY(league_id, team_id));";
+
+  if (sqlite3_exec(pImpl->db, sql, 0, 0, &err_msg) != SQLITE_OK) {
+    std::string error_str = "SQL error: " + std::string(err_msg);
+    sqlite3_free(err_msg);
+    throw std::runtime_error(error_str);
+  }
+}
+
 bool Database::isFirstRun() const {
   sqlite3_stmt* stmt;
-  const char* sql = "SELECT value FROM game_state WHERE key = 'initialized';";
-  bool first_run = true;
-  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-      first_run = (sqlite3_column_int(stmt, 0) == 0);
-    }
+  const char* sql = "SELECT value FROM GameState WHERE key = 'season';";
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) != SQLITE_OK) {
+    // This can happen if the table doesn't exist yet, which is a "first run"
+    return true;
+  }
+  int rc = sqlite3_step(stmt);
+  if (rc == SQLITE_ROW) {
+    int season = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+    return season == 0;
   }
   sqlite3_finalize(stmt);
-  if (first_run) {
-    const char* insert_sql = "INSERT OR REPLACE INTO game_state (key, value) VALUES ('initialized', 1);";
-    sqlite3_exec(pImpl->db, insert_sql, 0, 0, 0);
-  }
-  return first_run;
+  return true;
 }
 
-void Database::addLeague(const std::string& name) const {
+void Database::addLeague(const std::string& name) {
   sqlite3_stmt* stmt;
   const char* sql = "INSERT INTO leagues (name) VALUES (?);";
   if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
@@ -76,64 +82,80 @@ std::vector<League> Database::getLeagues() const {
   std::vector<League> leagues;
   if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-      leagues.emplace_back(sqlite3_column_int(stmt, 0), (const char*)sqlite3_column_text(stmt, 1));
+      int id = sqlite3_column_int(stmt, 0);
+      const unsigned char* name_text = sqlite3_column_text(stmt, 1);
+      std::string name = name_text ? reinterpret_cast<const char*>(name_text) : "";
+      leagues.emplace_back(id, name);
     }
   }
   sqlite3_finalize(stmt);
   return leagues;
 }
 
-void Database::addTeam(int league_id, const std::string& name, uint64_t balance) const {
+void Database::addTeam(int league_id, const std::string& name, uint64_t balance) {
   sqlite3_stmt* stmt;
-  const char* sql = "INSERT INTO teams (league_id, name, balance, points) VALUES (?, ?, ?, 0);";
-  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
-    sqlite3_bind_int(stmt, 1, league_id);
-    sqlite3_bind_text(stmt, 2, name.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int64(stmt, 3, balance);
-    sqlite3_step(stmt);
+  const char* sql = "INSERT INTO Teams (league_id, name, balance) VALUES (?, ?, ?);";
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+  sqlite3_bind_int(stmt, 1, league_id);
+  sqlite3_bind_text(stmt, 2, name.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_int64(stmt, 3, balance);
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to execute statement: " + std::string(sqlite3_errmsg(pImpl->db)));
   }
   sqlite3_finalize(stmt);
 }
 
-std::vector<Team> Database::getTeams(int league_id) const {
-  sqlite3_stmt* stmt;
-  const char* sql = "SELECT id, league_id, name, balance, points FROM teams WHERE league_id = ?;";
+std::vector<Team> Database::getTeams(const int league_id) const {
   std::vector<Team> teams;
-  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
-    sqlite3_bind_int(stmt, 1, league_id);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-      Team team(sqlite3_column_int(stmt, 0), sqlite3_column_int(stmt, 1), (const char*)sqlite3_column_text(stmt, 2), sqlite3_column_int64(stmt, 3));
-      team.addPoints(sqlite3_column_int(stmt, 4));
-      teams.push_back(team);
-    }
+  sqlite3_stmt* stmt;
+  const char* sql = "SELECT id, name, balance FROM Teams WHERE league_id = ?;";
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(pImpl->db)));
   }
+  sqlite3_bind_int(stmt, 1, league_id);
+
+  while (sqlite3_step(stmt) == SQLITE_ROW) {
+    int id = sqlite3_column_int(stmt, 0);
+    const unsigned char* name_text = sqlite3_column_text(stmt, 1);
+    std::string name = name_text ? reinterpret_cast<const char*>(name_text) : "";
+    uint64_t balance = sqlite3_column_int64(stmt, 2);
+    teams.emplace_back(id, league_id, name, balance);
+  }
+
   sqlite3_finalize(stmt);
   return teams;
 }
 
-void Database::updateTeam(const Team& team) const {
+void Database::updateTeam(const Team& team) {
   sqlite3_stmt* stmt;
-  const char* sql = "UPDATE teams SET balance = ?, points = ? WHERE id = ?;";
-  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
-    sqlite3_bind_int64(stmt, 1, team.getBalance());
-    sqlite3_bind_int(stmt, 2, team.getPoints());
-    sqlite3_bind_int(stmt, 3, team.getId());
-    sqlite3_step(stmt);
+  const char* sql = "UPDATE Teams SET name = ?, balance = ? WHERE id = ?;";
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+  sqlite3_bind_text(stmt, 1, team.getName().c_str(), -1, SQLITE_STATIC);
+  sqlite3_bind_int64(stmt, 2, team.getBalance());
+  sqlite3_bind_int(stmt, 3, team.getId());
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to execute statement: " + std::string(sqlite3_errmsg(pImpl->db)));
   }
   sqlite3_finalize(stmt);
 }
 
-void Database::addPlayer(int team_id, const Player& player) const {
+void Database::addPlayer(int team_id, const Player& player) {
   sqlite3_stmt* stmt;
-  const char* sql = "INSERT INTO players (team_id, name, age, role, stats) VALUES (?, ?, ?, ?, ?);";
+  const char* sql = "INSERT INTO Players (team_id, name, age, role, stats) VALUES (?, ?, ?, ?, ?);";
   if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
     nlohmann::json stats_json = player.getStats();
     std::string stats_str = stats_json.dump();
     sqlite3_bind_int(stmt, 1, team_id);
-    sqlite3_bind_text(stmt, 2, player.getName().c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, player.getName().c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 3, player.getAge());
-    sqlite3_bind_text(stmt, 4, player.getRole().c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 5, stats_str.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, player.getRole().c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 5, stats_str.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_step(stmt);
   }
   sqlite3_finalize(stmt);
@@ -141,13 +163,21 @@ void Database::addPlayer(int team_id, const Player& player) const {
 
 std::vector<Player> Database::getPlayers(int team_id) const {
   sqlite3_stmt* stmt;
-  const char* sql = "SELECT id, name, age, role, stats FROM players WHERE team_id = ?;";
+  const char* sql = "SELECT id, name, age, role, stats FROM Players WHERE team_id = ?;";
   std::vector<Player> players;
   if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
     sqlite3_bind_int(stmt, 1, team_id);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-      Player player(sqlite3_column_int(stmt, 0), (const char*)sqlite3_column_text(stmt, 1), sqlite3_column_int(stmt, 2), (const char*)sqlite3_column_text(stmt, 3));
-      nlohmann::json stats_json = nlohmann::json::parse((const char*)sqlite3_column_text(stmt, 4));
+      int id = sqlite3_column_int(stmt, 0);
+      const unsigned char* name_text = sqlite3_column_text(stmt, 1);
+      std::string name = name_text ? reinterpret_cast<const char*>(name_text) : "";
+      int age = sqlite3_column_int(stmt, 2);
+      const unsigned char* role_text = sqlite3_column_text(stmt, 3);
+      std::string role = role_text ? reinterpret_cast<const char*>(role_text) : "";
+      const unsigned char* stats_text = sqlite3_column_text(stmt, 4);
+      std::string stats_str = stats_text ? reinterpret_cast<const char*>(stats_text) : "";
+      Player player(id, name, age, role);
+      nlohmann::json stats_json = nlohmann::json::parse(stats_str);
       player.setStats(stats_json.get<std::map<std::string, int>>());
       players.push_back(player);
     }
@@ -156,9 +186,9 @@ std::vector<Player> Database::getPlayers(int team_id) const {
   return players;
 }
 
-void Database::saveCalendar(const Calendar& calendar, int season, int league_id) const {
+void Database::saveCalendar(const Calendar& calendar, int season, int league_id) {
   sqlite3_stmt* stmt;
-  const char* sql = "INSERT INTO calendar (season, week, home_team_id, away_team_id, league_id) VALUES (?, ?, ?, ?, ?);";
+  const char* sql = "INSERT INTO Calendar (season, week, home_team_id, away_team_id, league_id) VALUES (?, ?, ?, ?, ?);";
   if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
     int week_num = 0;
     for (const auto& week : calendar.getWeeks()) {
@@ -179,7 +209,7 @@ void Database::saveCalendar(const Calendar& calendar, int season, int league_id)
 
 Calendar Database::loadCalendar(int season, int league_id) const {
   sqlite3_stmt* stmt;
-  const char* sql = "SELECT week, home_team_id, away_team_id FROM calendar WHERE season = ? AND league_id = ? ORDER BY week;";
+  const char* sql = "SELECT week, home_team_id, away_team_id FROM Calendar WHERE season = ? AND league_id = ? ORDER BY week;";
   Calendar calendar;
   std::vector<Week> weeks;
   if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
@@ -208,24 +238,24 @@ Calendar Database::loadCalendar(int season, int league_id) const {
   return calendar;
 }
 
-void Database::updateGameState(int season, int week, int managed_team_id) const {
+void Database::updateGameState(int season, int week, int managed_team_id) {
   sqlite3_stmt* stmt;
 
-  const char* sql_season = "INSERT OR REPLACE INTO game_state (key, value) VALUES ('season', ?);";
+  const char* sql_season = "INSERT OR REPLACE INTO GameState (key, value) VALUES ('season', ?);";
   if (sqlite3_prepare_v2(pImpl->db, sql_season, -1, &stmt, 0) == SQLITE_OK) {
     sqlite3_bind_int(stmt, 1, season);
     sqlite3_step(stmt);
   }
   sqlite3_finalize(stmt);
 
-  const char* sql_week = "INSERT OR REPLACE INTO game_state (key, value) VALUES ('week', ?);";
+  const char* sql_week = "INSERT OR REPLACE INTO GameState (key, value) VALUES ('week', ?);";
   if (sqlite3_prepare_v2(pImpl->db, sql_week, -1, &stmt, 0) == SQLITE_OK) {
     sqlite3_bind_int(stmt, 1, week);
     sqlite3_step(stmt);
   }
   sqlite3_finalize(stmt);
 
-  const char* sql_managed_team = "INSERT OR REPLACE INTO game_state (key, value) VALUES ('managed_team_id', ?);";
+  const char* sql_managed_team = "INSERT OR REPLACE INTO GameState (key, value) VALUES ('managed_team_id', ?);";
   if (sqlite3_prepare_v2(pImpl->db, sql_managed_team, -1, &stmt, 0) == SQLITE_OK) {
     sqlite3_bind_int(stmt, 1, managed_team_id);
     sqlite3_step(stmt);
@@ -235,7 +265,7 @@ void Database::updateGameState(int season, int week, int managed_team_id) const 
 
 void Database::loadGameState(int& season, int& week, int& managed_team_id) const {
   sqlite3_stmt* stmt;
-  const char* sql = "SELECT key, value FROM game_state;";
+  const char* sql = "SELECT key, value FROM GameState;";
   if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
     while (sqlite3_step(stmt) == SQLITE_ROW) {
       std::string key = (const char*)sqlite3_column_text(stmt, 0);
@@ -251,9 +281,9 @@ void Database::loadGameState(int& season, int& week, int& managed_team_id) const
   sqlite3_finalize(stmt);
 }
 
-int Database::loadManagedTeamId() {
+int Database::loadManagedTeamId() const {
   sqlite3_stmt* stmt;
-  const char* sql = "SELECT value FROM game_state WHERE key = 'managed_team_id';";
+  const char* sql = "SELECT value FROM GameState WHERE key = 'managed_team_id';";
   int managed_team_id = -1;
   if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
     if (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -264,12 +294,47 @@ int Database::loadManagedTeamId() {
   return managed_team_id;
 }
 
-void Database::saveManagedTeamId(int team_id) const {
+void Database::saveManagedTeamId(int team_id) {
   sqlite3_stmt* stmt;
-  const char* sql = "INSERT OR REPLACE INTO game_state (key, value) VALUES ('managed_team_id', ?);";
+  const char* sql = "INSERT OR REPLACE INTO GameState (key, value) VALUES ('managed_team_id', ?);";
   if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
     sqlite3_bind_int(stmt, 1, team_id);
     sqlite3_step(stmt);
+  }
+  sqlite3_finalize(stmt);
+}
+
+void Database::saveLeaguePoints(const League& league) {
+  const char* sql = "INSERT OR REPLACE INTO LeaguePoints (league_id, team_id, points) VALUES (?, ?, ?);";
+  sqlite3_stmt* stmt;
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+
+  for (const auto& pair : league.getLeaderboard()) {
+    sqlite3_bind_int(stmt, 1, league.getId());
+    sqlite3_bind_int(stmt, 2, pair.first);
+    sqlite3_bind_int(stmt, 3, pair.second);
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+      sqlite3_finalize(stmt);
+      throw std::runtime_error("Failed to execute statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+    }
+    sqlite3_reset(stmt);
+  }
+  sqlite3_finalize(stmt);
+}
+
+void Database::loadLeaguePoints(League& league) const {
+  const char* sql = "SELECT team_id, points FROM LeaguePoints WHERE league_id = ?;";
+  sqlite3_stmt* stmt;
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+  sqlite3_bind_int(stmt, 1, league.getId());
+  while (sqlite3_step(stmt) == SQLITE_ROW) {
+    int team_id = sqlite3_column_int(stmt, 0);
+    int points = sqlite3_column_int(stmt, 1);
+    league.setPoints(team_id, points);
   }
   sqlite3_finalize(stmt);
 }

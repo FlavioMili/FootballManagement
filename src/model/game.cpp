@@ -2,52 +2,47 @@
 #include <iostream>
 #include "datagenerator.h"
 
-Game::Game(const Database& db) 
-: db(db), current_season(0), 
+Game::Game(Database& db)
+: db(db), current_season(1),
   current_week(0), managed_team_id(-1) {
-  loadData();
-
-  // If it's a first run, generate all data
   if (db.isFirstRun()) {
+    std::cout << "First run detected. Generating new game data...\n";
     DataGenerator generator(db);
     generator.generateAll();
-    // After generation, reload data to get newly created leagues/teams/players
-    loadData();
 
-    // Set initial game state for a new game
-    if (!leagues.empty() && !teams.empty()) {
-      current_season = 1;
-      current_week = 0;
-      // TODO make it a choice
-      // Assign a random team as managed
-      managed_team_id = teams[rand() % teams.size()].getId();  
-      // save the current state
-      db.updateGameState(current_season, current_week, managed_team_id);
+    // We need to get the generated teams to pick one to manage.
+    // We'll just get teams from the first league for simplicity.
+    std::vector<League> all_leagues = db.getLeagues();
+    if (all_leagues.empty()) {
+      throw std::runtime_error("FATAL: No leagues were generated on first run.");
+    }
+    std::vector<Team> teams_in_first_league = db.getTeams(all_leagues[0].getId());
+    if (teams_in_first_league.empty()) {
+      throw std::runtime_error("FATAL: No teams were generated on first run.");
+    }
+    managed_team_id = teams_in_first_league[rand() % teams_in_first_league.size()].getId();
 
-      // Generate and save calendars for each league for the first season
-      for (const auto& league : leagues) {
-        Calendar league_calendar;
-        std::vector<Team> teams_in_league = db.getTeams(league.getId());
-        league_calendar.generate(teams_in_league);
-        db.saveCalendar(league_calendar, current_season, league.getId());
-        league_calendars[league.getId()] = league_calendar;
-      }
-    } else {
-      std::cerr << "Error: No leagues or teams generated on first run. Cannot set initial game state.\n";
+    // Save the very first state of the game
+    db.updateGameState(current_season, current_week, managed_team_id);
+
+    // Generate and save calendars for the first season
+    for (const auto& league : all_leagues) {
+      Calendar league_calendar;
+      std::vector<Team> teams_in_league = db.getTeams(league.getId());
+      league_calendar.generate(teams_in_league);
+      db.saveCalendar(league_calendar, current_season, league.getId());
     }
   }
 
-  // Ensure managed_team_id is set if it's still -1 (e.g., old save or error in loading)
-  if (managed_team_id == -1 && !teams.empty()) {
-    // fallback
-    managed_team_id = teams[rand() % teams.size()].getId();
-    db.saveManagedTeamId(managed_team_id);
-  }
+  // Load all game data. On a first run, this will load the data that was
+  // just generated. On subsequent runs, it will load the saved game state.
+  loadData();
 
-  // Display managed team only once, after it's definitively set
   if (managed_team_id != -1) {
-    std::cout << "You have been appointed as the manager of: " 
-      << getManagedTeam().getName() << "\n";
+    std::cout << "You have been appointed as the manager of: "
+              << getManagedTeam().getName() << "\n";
+  } else {
+      throw std::runtime_error("FATAL: Could not load or assign a managed team.");
   }
 }
 
@@ -59,8 +54,10 @@ void Game::loadData() {
   league_calendars.clear();
 
   leagues = db.getLeagues();
-  for (const auto& league : leagues) {
+  for (auto& league : leagues) {
     std::vector<Team> league_teams = db.getTeams(league.getId());
+    league.setTeams(league_teams);
+    db.loadLeaguePoints(league);
     teams.insert(teams.end(), league_teams.begin(), league_teams.end());
     // Load calendar for each league
     league_calendars[league.getId()] = db.loadCalendar(current_season, league.getId());
@@ -113,16 +110,17 @@ void Game::simulateWeek() {
 }
 
 void Game::updateStandings(const Match& match) {
-  Team& home_team = match.getHomeTeam();
-  Team& away_team = match.getAwayTeam();
+  Team& home_team = getTeamById(match.getHomeTeam().getId());
+  Team& away_team = getTeamById(match.getAwayTeam().getId());
+  League& league = getLeagueById(home_team.getLeagueId());
 
   if (match.getHomeScore() > match.getAwayScore()) {
-    home_team.addPoints(3);
+    league.addPoints(home_team.getId(), 3);
   } else if (match.getHomeScore() < match.getAwayScore()) {
-    away_team.addPoints(3);
+    league.addPoints(away_team.getId(), 3);
   } else {
-    home_team.addPoints(1);
-    away_team.addPoints(1);
+    league.addPoints(home_team.getId(), 1);
+    league.addPoints(away_team.getId(), 1);
   }
 
   db.updateTeam(home_team);
@@ -139,9 +137,8 @@ void Game::startNewSeason() {
   current_week = 0;
   db.updateGameState(current_season, current_week, managed_team_id);
 
-  for (auto& team : teams) {
-    team.resetPoints();
-    db.updateTeam(team);
+  for (auto& league : leagues) {
+    league.resetPoints();
   }
 
   loadData();  // Reload data for the new season
@@ -181,6 +178,13 @@ Team& Game::getTeamById(int team_id) {
   throw std::runtime_error("Team not found with ID: " + std::to_string(team_id));
 }
 
+League& Game::getLeagueById(int league_id) {
+    auto it = std::find_if(leagues.begin(), leagues.end(),
+                           [league_id](const League& l) { return l.getId() == league_id; });
+    if (it != leagues.end()) return *it;
+    throw std::runtime_error("League not found with ID: " + std::to_string(league_id));
+}
+
 std::vector<Player> Game::getPlayersForTeam(int team_id) {
   return db.getPlayers(team_id);
 }
@@ -193,4 +197,11 @@ std::vector<Team> Game::getTeamsInLeague(int league_id) {
     }
   }
   return teams_in_league;
+}
+
+void Game::saveGame() {
+  db.updateGameState(current_season, current_week, managed_team_id);
+  for(const auto& league : leagues) {
+    db.saveLeaguePoints(league);
+  }
 }

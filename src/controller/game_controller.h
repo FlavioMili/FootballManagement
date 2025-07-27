@@ -15,6 +15,8 @@ class GameController {
 
   std::vector<Player> getPlayersForTeam(int team_id);
   std::vector<Team> getTeamsInLeague(int league_id);
+  League& getLeagueById(int league_id);
+  void saveGame();
 
  private:
   Game& game;

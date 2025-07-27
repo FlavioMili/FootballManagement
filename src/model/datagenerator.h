@@ -7,7 +7,7 @@
 
 class DataGenerator {
  public:
-  explicit DataGenerator(const Database& db);
+  explicit DataGenerator(Database& db);
   void generateAll();
 
  private:
@@ -15,7 +15,7 @@ class DataGenerator {
   void generateTeams(int league_id, const std::vector<std::string>& names);
   void generateLeagues(const std::vector<std::string>& names);
 
-  const Database& db;
+  Database& db;
   nlohmann::json stats_config;
   std::vector<std::string> first_names;
   std::vector<std::string> last_names;

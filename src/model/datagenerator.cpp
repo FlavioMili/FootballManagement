@@ -1,18 +1,18 @@
 #include "datagenerator.h"
 #include <fstream>
 #include <iostream>
-#include <algorithm>  // For std::random_shuffle
-#include <random>     // For std::default_random_engine
-#include <chrono>     // For std::chrono::system_clock
+#include <algorithm>
+#include <random>
+#include <chrono>
 #include <map>
 #include <string>
 #include <vector>
 #include "player.h"
 #include "team.h"
 #include "league.h"
-#include "global.h"   // Include global.h for TEAMS_PER_LEAGUE
+#include "global.h"
 
-DataGenerator::DataGenerator(const Database& db) : db(db) {
+DataGenerator::DataGenerator(Database& db) : db(db) {
   std::ifstream f("assets/stats_config.json");
   if (!f.is_open()) {
     std::cerr << "Error: Could not open assets/stats_config.json\n";

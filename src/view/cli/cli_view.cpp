@@ -2,13 +2,15 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <limits>
 
 CliView::CliView(GameController& controller) : controller(controller) {}
 
 void CliView::run() {
-  while (true) {
+  bool running = true;
+  while (running) {
     displayMenu();
-    processInput();
+    running = processInput();
   }
 }
 
@@ -26,9 +28,17 @@ void CliView::displayMenu() {
 * other types of menus, for instance strategy or others.
 * the idea might be using ncurses later on????
 */
-void CliView::processInput() {
-  int choice;
+bool CliView::processInput() {
+  int choice = -1;
+  std::cout << "Enter your choice: ";
   std::cin >> choice;
+
+  if (std::cin.fail() || choice < 1 || choice > 4) {
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cout << "Invalid input. Please enter a number between 1 and 4.\n";
+    return true;
+  }
 
   switch (choice) {
     case 1:
@@ -41,10 +51,9 @@ void CliView::processInput() {
       controller.advanceWeek();
       break;
     case 4:
-      exit(0);
-    default:
-      std::cout << "Invalid choice. Please try again.\n";
+      return false;
   }
+  return true;
 }
 
 void CliView::viewRoster() {
@@ -62,14 +71,16 @@ void CliView::viewRoster() {
 }
 
 void CliView::viewLeaderboard(int league_id) {
+  League& league = controller.getLeagueById(league_id);
   std::vector<Team> teams = controller.getTeamsInLeague(league_id);
+
   std::cout << "\n--- Leaderboard ---\n";
-  std::sort(teams.begin(), teams.end(), [](const Team& a, const Team& b) {
-    return a.getPoints() > b.getPoints();
+  std::sort(teams.begin(), teams.end(), [&](const Team& a, const Team& b) {
+    return league.getPoints(a.getId()) > league.getPoints(b.getId());
   });
 
   for (const auto& t : teams) {
     std::cout << t.getName() << ": " 
-      << t.getPoints() << " points\n";
+      << league.getPoints(t.getId()) << " points\n";
   }
 }

@@ -6,12 +6,14 @@
 int main() {
   srand(time(0));
   try {
-    const Database db("football_management.db");
+    Database db("football_management.db");
     db.initialize();
     Game game(db);
     GameController controller(game);
     CliView view(controller);
     view.run();
+    controller.saveGame();
+    db.close();
   } catch (const std::exception& e) {
     std::cerr << "Error: " << e.what() << "\n";
     return 1;
