@@ -25,6 +25,7 @@ class Game {
   std::vector<Player> getPlayersForTeam(int team_id);
   std::vector<Team> getTeamsInLeague(int league_id);
   void saveGame();
+  std::map<std::string, double> getStatWeights();
 
  private:
   Database& db;

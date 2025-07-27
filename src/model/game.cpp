@@ -1,6 +1,8 @@
 #include "game.h"
 #include <iostream>
 #include "datagenerator.h"
+#include "../../include/json.hpp"
+#include <fstream>
 
 Game::Game(Database& db)
 : db(db), current_season(1),
@@ -127,8 +129,29 @@ void Game::updateStandings(const Match& match) {
   db.updateTeam(away_team);
 }
 
+std::map<std::string, double> Game::getStatWeights() {
+  std::map<std::string, double> statWeights;
+  std::ifstream file("assets/stats_config.json");
+  if (!file.is_open()) {
+    throw std::runtime_error("Could not open assets/stats_config.json");
+  }
+  nlohmann::json config;
+  file >> config;
+  file.close();
+
+  if (config.contains("overall_weights") && config["overall_weights"].is_object()) {
+    for (auto const& [key, val] : config["overall_weights"].items()) {
+      if (val.is_number()) {
+        statWeights[key] = val.get<double>();
+      }
+    }
+  }
+  return statWeights;
+}
+
 void Game::endSeason() {
   std::cout << "--- Season " << current_season << " has concluded. ---\n";
+  db.ageAllPlayers(getStatWeights());
   // TODO Display final leaderboard or other season-end information
 }
 

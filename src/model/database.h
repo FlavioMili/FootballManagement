@@ -40,6 +40,10 @@ public:
   void saveLeaguePoints(const League& league);
   void loadLeaguePoints(League& league) const;
 
+  void ageAllPlayers(const std::map<std::string, double>& statWeights);
+  void updatePlayer(const Player& player);
+  void deletePlayer(int player_id);
+
 private:
   struct Impl;
   std::unique_ptr<Impl> pImpl;

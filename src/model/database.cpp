@@ -344,3 +344,79 @@ void Database::loadLeaguePoints(League& league) const {
   }
   sqlite3_finalize(stmt);
 }
+
+void Database::updatePlayer(const Player& player) {
+  sqlite3_stmt* stmt;
+  const char* sql = "UPDATE Players SET name = ?, age = ?, role = ?, stats = ?, overall_rating = ? WHERE id = ?;";
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+  nlohmann::json stats_json = player.getStats();
+  std::string stats_str = stats_json.dump();
+  sqlite3_bind_text(stmt, 1, player.getName().c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_int(stmt, 2, player.getAge());
+  sqlite3_bind_text(stmt, 3, player.getRole().c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, 4, stats_str.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_double(stmt, 5, player.getOverall());
+  sqlite3_bind_int(stmt, 6, player.getId());
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to execute statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+  sqlite3_finalize(stmt);
+}
+
+void Database::deletePlayer(int player_id) {
+  sqlite3_stmt* stmt;
+  const char* sql = "DELETE FROM Players WHERE id = ?;";
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+  sqlite3_bind_int(stmt, 1, player_id);
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to execute statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+  sqlite3_finalize(stmt);
+}
+
+void Database::ageAllPlayers(const std::map<std::string, double>& statWeights) {
+  std::vector<Player> all_players;
+  // Retrieve all players from the database
+  sqlite3_stmt* stmt;
+  const char* sql = "SELECT id, team_id, name, age, role, stats, overall_rating FROM Players;";
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+      int id = sqlite3_column_int(stmt, 0);
+      const unsigned char* name_text = sqlite3_column_text(stmt, 2);
+      std::string name = name_text ? reinterpret_cast<const char*>(name_text) : "";
+      int age = sqlite3_column_int(stmt, 3);
+      const unsigned char* role_text = sqlite3_column_text(stmt, 4);
+      std::string role = role_text ? reinterpret_cast<const char*>(role_text) : "";
+      const unsigned char* stats_text = sqlite3_column_text(stmt, 5);
+      std::string stats_str = stats_text ? reinterpret_cast<const char*>(stats_text) : "";
+      double overall = sqlite3_column_double(stmt, 6);
+
+      Player player(id, name, age, role);
+      nlohmann::json stats_json = nlohmann::json::parse(stats_str);
+      player.setStats(stats_json.get<std::map<std::string, int>>());
+      player.setOverall(overall);
+      all_players.push_back(player);
+    }
+  }
+  sqlite3_finalize(stmt);
+
+  std::vector<int> retired_player_ids;
+  for (auto& player : all_players) {
+    player.agePlayer(statWeights);
+    if (player.checkRetirement()) {
+      retired_player_ids.push_back(player.getId());
+    } else {
+      updatePlayer(player);
+    }
+  }
+
+  for (int player_id : retired_player_ids) {
+    deletePlayer(player_id);
+  }
+}
