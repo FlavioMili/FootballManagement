@@ -118,6 +118,7 @@ void Game::advanceWeek() {
 
   if (current_week >= static_cast<int>(calendar.getWeeks().size()) && calendar.getWeeks().size() > 0) {
     handleSeasonTransition();
+    return;
   }
   simulateWeek();
 }
@@ -195,6 +196,9 @@ void Game::startNewSeason() {
   current_season++;
   current_week = 0;
   db.updateGameState(current_season, current_week, managed_team_id);
+
+  // Reset points in the database before resetting in memory
+  db.resetAllLeaguePoints();
 
   for (auto& league : leagues) {
     league.resetPoints();

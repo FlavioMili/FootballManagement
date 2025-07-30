@@ -44,6 +44,7 @@ public:
 
   void saveLeaguePoints(const League& league);
   void loadLeaguePoints(League& league) const;
+  void resetAllLeaguePoints();
 
   void ageAllPlayers();
   void updatePlayer(const Player& player);

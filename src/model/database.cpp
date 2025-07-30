@@ -392,6 +392,19 @@ void Database::loadLeaguePoints(League& league) const {
   sqlite3_finalize(stmt);
 }
 
+void Database::resetAllLeaguePoints() {
+  const char* sql = "UPDATE LeaguePoints SET points = 0;";
+  sqlite3_stmt* stmt;
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to execute statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+  sqlite3_finalize(stmt);
+}
+
 void Database::updatePlayer(const Player& player) {
   sqlite3_stmt* stmt;
   const char* sql = "UPDATE Players SET name = ?, age = ?, role = ?, stats = ? WHERE id = ?;";
