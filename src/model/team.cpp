@@ -28,6 +28,10 @@ const std::vector<Player>& Team::getPlayers() const {
   return players;
 }
 
+std::vector<Player>& Team::getPlayers() {
+  return players;
+}
+
 void Team::setBalance(uint64_t new_balance) {
   balance = new_balance;
 }

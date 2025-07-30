@@ -1,6 +1,7 @@
 #pragma once
 
 #include "team.h"
+#include "stats_config.h"
 
 struct Matchup {
   int home_team_id;
@@ -9,7 +10,7 @@ struct Matchup {
 
 class Match {
  public:
-  Match(const Team& home, const Team& away);
+  Match(const Team& home, const Team& away, const StatsConfig& stats_config);
 
   void simulate();
 
@@ -21,6 +22,7 @@ class Match {
  private:
   const Team& home_team;
   const Team& away_team;
+  const StatsConfig& stats_config;
   int home_score;
   int away_score;
 };

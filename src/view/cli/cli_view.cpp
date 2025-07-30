@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <vector>
 #include <limits>
+#include <iomanip>
 
 CliView::CliView(GameController& controller) : controller(controller) {}
 
@@ -66,7 +67,8 @@ void CliView::viewRoster() {
   for (const auto& p : players) {
     std::cout << p.getName() << " (Age: " << p.getAge() 
       << ", Role: " << p.getRole() << ") - Overall: "
-      << p.getOverall() << "\n";
+      << std::fixed << std::setprecision(2)
+      << p.getOverall(controller.getStatsConfig()) << "\n";
   }
 }
 

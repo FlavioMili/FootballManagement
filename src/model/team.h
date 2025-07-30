@@ -14,6 +14,7 @@ class Team {
   std::string getName() const;
   uint64_t getBalance() const;
   const std::vector<Player>& getPlayers() const;
+  std::vector<Player>& getPlayers();
 
   void setBalance(uint64_t balance);
   void addBalance(uint64_t to_add);

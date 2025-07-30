@@ -2,6 +2,8 @@
 
 #include <string>
 #include <map>
+#include <vector>
+#include "stats_config.h"
 
 class Player {
  public:
@@ -12,20 +14,19 @@ class Player {
   int getAge() const;
   void setAge(int age);
   std::string getRole() const;
-  double getOverall() const;
-  void setOverall(double overall);
-  const std::map<std::string, int>& getStats() const;
+  double getOverall(const StatsConfig& stats_config) const;
+  const std::map<std::string, float>& getStats() const;
 
-  void setStats(const std::map<std::string, int>& stats);
-  void calculateOverall(const std::map<std::string, double>& weights);
-  void agePlayer(const std::map<std::string, double>& statWeights);
+  void setStats(const std::map<std::string, float>& stats);
+  void agePlayer();
   bool checkRetirement() const;
+  void train(const std::vector<std::string>& focus_stats);
 
  private:
   int id;
-  std::map<std::string, int> stats;
+  std::map<std::string, float> stats;
   std::string name;
   std::string role;
-  double overall;
   int age;
 };
+

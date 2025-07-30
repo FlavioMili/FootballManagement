@@ -12,19 +12,16 @@
 #include "league.h"
 #include "global.h"
 
-DataGenerator::DataGenerator(Database& db) : db(db) {
-  std::ifstream f("assets/stats_config.json");
-  if (!f.is_open()) {
-    std::cerr << "Error: Could not open assets/stats_config.json\n";
-    return;
-  }
-  stats_config = nlohmann::json::parse(f);
-
-  std::ifstream f_first("assets/first_names.json");
-  first_names = nlohmann::json::parse(f_first)["names"].get<std::vector<std::string>>();
-
-  std::ifstream f_last("assets/last_names.json");
-  last_names = nlohmann::json::parse(f_last)["names"].get<std::vector<std::string>>();
+DataGenerator::DataGenerator(Database& db,
+     const nlohmann::json& stats_config,
+     const std::vector<std::string>& league_names,
+     const std::vector<std::string>& team_names)
+: db(db),
+  stats_config(stats_config),
+  league_names(league_names),
+  team_names(team_names) {
+  first_names = db.getFirstNames();
+  last_names = db.getLastNames();
 }
 
 void DataGenerator::generateLeagues(const std::vector<std::string>& names) {
@@ -46,41 +43,30 @@ void DataGenerator::generatePlayers(int team_id, const std::string& role, int co
     age = 16 + rand() % 15;
     Player player(0, name, age, role);
 
-    std::map<std::string, int> stats;
+    std::map<std::string, float> stats;
     for (const auto& stat_name : stats_config["possible_stats"]) {
-      stats[stat_name] = MIN_STAT_VAL + rand() % (MAX_STAT_VAL - MIN_STAT_VAL + 1);
+      stats[stat_name] = static_cast<float>(MIN_STAT_VAL + (rand() % (MAX_STAT_VAL - MIN_STAT_VAL))) + 
+                         static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+      if (stats[stat_name] > MAX_STAT_VAL) stats[stat_name] = MAX_STAT_VAL;
     }
     player.setStats(stats);
-
-    std::map<std::string, double> weights;
-    const auto& role_stats = stats_config["role_focus"][role]["stats"];
-    const auto& role_weights = stats_config["role_focus"][role]["weights"];
-    for (size_t j = 0; j < role_stats.size(); ++j) {
-      weights[role_stats[j]] = role_weights[j];
-    }
-
-    player.calculateOverall(weights);
 
     db.addPlayer(team_id, player);
   }
 }
 
 void DataGenerator::generateAll() {
-  std::ifstream f_leagues("assets/league_names.json");
-  std::vector<std::string> all_league_names = nlohmann::json::parse(f_leagues)["names"].get<std::vector<std::string>>();
   std::vector<std::string> selected_league_names;
-  for (size_t i = 0; i < 2 && i < all_league_names.size(); ++i) {
-    selected_league_names.push_back(all_league_names[i]);
+  for (size_t i = 0; i < 2 && i < league_names.size(); ++i) {
+    selected_league_names.push_back(league_names[i]);
   }
 
   generateLeagues(selected_league_names);
   std::vector<League> leagues = db.getLeagues();
-  std::ifstream f_teams("assets/team_names.json");
-  std::vector<std::string> all_team_names = nlohmann::json::parse(f_teams)["names"].get<std::vector<std::string>>();
 
   for (const auto& league : leagues) {
     // Shuffle team names and take only TEAMS_PER_LEAGUE
-    std::vector<std::string> current_league_team_names = all_team_names;
+    std::vector<std::string> current_league_team_names = team_names;
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::shuffle(current_league_team_names.begin(),
                  current_league_team_names.end(), 

@@ -2,8 +2,8 @@
 #include <cstdlib>
 #include "player.h"
 
-Match::Match(const Team& home, const Team& away)
-: home_team(home), away_team(away), home_score(0), away_score(0) {}
+Match::Match(const Team& home, const Team& away, const StatsConfig& stats_config)
+: home_team(home), away_team(away), stats_config(stats_config), home_score(0), away_score(0) {}
 
 /**
 * TODO : improve the simulation, it is one of the 
@@ -12,12 +12,12 @@ Match::Match(const Team& home, const Team& away)
 void Match::simulate() {
   double home_strength = 0;
   for (const auto& player : home_team.getPlayers()) {
-    home_strength += player.getOverall();
+    home_strength += player.getOverall(stats_config);
   }
 
   double away_strength = 0;
   for (const auto& player : away_team.getPlayers()) {
-    away_strength += player.getOverall();
+    away_strength += player.getOverall(stats_config);
   }
 
   double total_strength = home_strength + away_strength;

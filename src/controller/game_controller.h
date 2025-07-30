@@ -4,6 +4,7 @@
 #include <vector> 
 #include "game.h"
 #include "manager.h"
+#include "stats_config.h"
 
 class GameController {
  public:
@@ -11,6 +12,7 @@ class GameController {
 
   Team getManagedTeam() const;
   std::vector<Team> getTeams() const;
+  const StatsConfig& getStatsConfig() const;
   void advanceWeek();
 
   std::vector<Player> getPlayersForTeam(int team_id);

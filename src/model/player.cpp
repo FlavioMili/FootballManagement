@@ -6,7 +6,7 @@
 #include <random>
 
 Player::Player(int id, std::string name, int age, std::string role)
-: id(id), name(std::move(name)), role(std::move(role)), overall(0), age(age) {}
+: id(id), name(std::move(name)), role(std::move(role)), age(age) {}
 
 int Player::getId() const {
   return id;
@@ -28,52 +28,43 @@ std::string Player::getRole() const {
   return role;
 }
 
-double Player::getOverall() const {
-  return overall;
+double Player::getOverall(const StatsConfig& stats_config) const {
+    double overall = 0.0;
+    const auto& role_config = stats_config.role_focus.at(role);
+    const auto& weights = role_config.weights;
+    const auto& stat_names = role_config.stats;
+
+    for (size_t i = 0; i < stat_names.size(); ++i) {
+        const std::string& stat_name = stat_names[i];
+        if (stats.count(stat_name)) {
+            overall += stats.at(stat_name) * weights[i];
+        }
+    }
+    return overall;
 }
 
-void Player::setOverall(double overall) {
-  this->overall = overall;
-}
-
-const std::map<std::string, int>& Player::getStats() const {
+const std::map<std::string, float>& Player::getStats() const {
   return stats;
 }
 
-void Player::setStats(const std::map<std::string, int>& new_stats) {
+void Player::setStats(const std::map<std::string, float>& new_stats) {
   stats = new_stats;
 }
 
-void Player::calculateOverall(const std::map<std::string, double>& weights) {
-  overall = 0;
-  for (const auto& stat : stats) {
-    auto it = weights.find(stat.first);
-    if (it != weights.end()) {
-      overall += stat.second * it->second;
-    }
-  }
-}
-
-void Player::agePlayer(const std::map<std::string, double>& statWeights) {
+void Player::agePlayer() {
   age++;
 
   for (auto& stat : stats) {
-    float ageFactor = 1.0f;
-    if (age >= PLAYER_AGE_FACTOR_DECLINE_AGE) {
-      ageFactor -= (age - PLAYER_AGE_FACTOR_DECLINE_AGE + 1) * PLAYER_AGE_FACTOR_DECAY_RATE;
-    }
+    if (age < PLAYER_AGE_FACTOR_DECLINE_AGE) continue;
 
-    float statChange = PLAYER_STAT_INCREASE_BASE * ageFactor;
-    stat.second = static_cast<int>(stat.second + statChange);
+    float age_factor = 1.0f - (age - PLAYER_AGE_FACTOR_DECLINE_AGE + 1) * PLAYER_AGE_FACTOR_DECAY_RATE;
 
-    // Ensure stats stay within MIN_STAT_VAL and MAX_STAT_VAL
-    if (stat.second < MIN_STAT_VAL) {
+    float decay = PLAYER_STAT_INCREASE_BASE * (1.0f - std::max(0.0f, age_factor));
+    stat.second -= decay;
+
+    if (stat.second < MIN_STAT_VAL)
       stat.second = MIN_STAT_VAL;
-    } else if (stat.second > MAX_STAT_VAL) {
-      stat.second = MAX_STAT_VAL;
-    }
   }
-  calculateOverall(statWeights);
 }
 
 bool Player::checkRetirement() const {
@@ -86,7 +77,29 @@ bool Player::checkRetirement() const {
   std::uniform_real_distribution<> dis(0.0, 1.0);
 
   float retirementChance = PLAYER_RETIREMENT_BASE_CHANCE +
-                           (age - PLAYER_RETIREMENT_AGE_THRESHOLD) * PLAYER_RETIREMENT_CHANCE_INCREASE_PER_YEAR;
+       (age - PLAYER_RETIREMENT_AGE_THRESHOLD) * PLAYER_RETIREMENT_CHANCE_INCREASE_PER_YEAR;
 
   return dis(gen) < retirementChance;
+}
+
+void Player::train(const std::vector<std::string>& focus_stats) {
+  if (focus_stats.empty()) return;
+
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  std::uniform_int_distribution<> stat_dis(0, focus_stats.size() - 1);
+  std::uniform_real_distribution<float> rand_dist(0.0f, 1.0f);
+
+  std::string random_stat = focus_stats[stat_dis(gen)];
+  auto it = stats.find(random_stat);
+  if (it == stats.end()) return;
+
+  float age_factor = ((PLAYER_AGE_FACTOR_DECLINE_AGE - age) * PLAYER_AGE_FACTOR_DECAY_RATE);
+  float random_factor = rand_dist(gen);
+
+  float increment = PLAYER_STAT_INCREASE_BASE * (random_factor * age_factor);
+  it->second += increment;
+
+  if (it->second > MAX_STAT_VAL)
+    it->second = MAX_STAT_VAL;
 }

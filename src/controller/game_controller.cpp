@@ -11,6 +11,10 @@ std::vector<Team> GameController::getTeams() const {
   return game.getTeams();
 }
 
+const StatsConfig& GameController::getStatsConfig() const {
+  return game.getStatsConfig();
+}
+
 void GameController::advanceWeek() {
   game.advanceWeek();
 }

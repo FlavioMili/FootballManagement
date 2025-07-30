@@ -21,6 +21,11 @@ public:
   void addLeague(const std::string& name);
   std::vector<League> getLeagues() const;
 
+  void addFirstName(const std::string& name);
+  void addLastName(const std::string& name);
+  std::vector<std::string> getFirstNames() const;
+  std::vector<std::string> getLastNames() const;
+
   void addTeam(int league_id, const std::string& name, uint64_t balance);
   std::vector<Team> getTeams(const int league_id) const;
   void updateTeam(const Team& team);
@@ -40,7 +45,7 @@ public:
   void saveLeaguePoints(const League& league);
   void loadLeaguePoints(League& league) const;
 
-  void ageAllPlayers(const std::map<std::string, double>& statWeights);
+  void ageAllPlayers();
   void updatePlayer(const Player& player);
   void deletePlayer(int player_id);
 
