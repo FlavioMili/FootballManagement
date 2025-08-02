@@ -8,7 +8,7 @@
 
 class GameController {
  public:
-  GameController(Game& game);
+  explicit GameController(Game& game);
 
   Team getManagedTeam() const;
   std::vector<Team> getTeams() const;
