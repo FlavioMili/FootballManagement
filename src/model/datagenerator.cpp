@@ -1,6 +1,4 @@
 #include "datagenerator.h"
-#include <fstream>
-#include <iostream>
 #include <algorithm>
 #include <random>
 #include <chrono>
@@ -58,7 +56,7 @@ void DataGenerator::generatePlayers(int team_id, const std::string& role, int co
 void DataGenerator::generateAll() {
   std::vector<std::string> selected_league_names;
   for (size_t i = 0; i < 2 && i < league_names.size(); ++i) {
-    selected_league_names.push_back(league_names[i]);
+    selected_league_names.emplace_back(league_names[i]);
   }
 
   generateLeagues(selected_league_names);
