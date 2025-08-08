@@ -54,6 +54,11 @@ void DataGenerator::generatePlayers(int team_id, const std::string& role, int co
 }
 
 void DataGenerator::generateAll() {
+  auto existing_teams = db.getTeams(0);
+  if (existing_teams.empty()) {
+    db.addTeam(/*league_id=*/0, FREE_AGENTS_TEAM_NAME, -1);
+  }
+
   std::vector<std::string> selected_league_names;
   for (size_t i = 0; i < 2 && i < league_names.size(); ++i) {
     selected_league_names.emplace_back(league_names[i]);
@@ -63,7 +68,6 @@ void DataGenerator::generateAll() {
   std::vector<League> leagues = db.getLeagues();
 
   for (const auto& league : leagues) {
-    // Shuffle team names and take only TEAMS_PER_LEAGUE
     std::vector<std::string> current_league_team_names = team_names;
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::shuffle(current_league_team_names.begin(),
@@ -71,7 +75,6 @@ void DataGenerator::generateAll() {
                  std::default_random_engine(seed));
 
     for (size_t i = 0; i < TEAMS_PER_LEAGUE && i < current_league_team_names.size(); ++i) {
-      // TODO this should become random balance
       db.addTeam(league.getId(), current_league_team_names[i], 1000000);
     }
 

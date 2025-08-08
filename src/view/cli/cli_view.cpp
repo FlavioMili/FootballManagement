@@ -8,10 +8,42 @@
 CliView::CliView(GameController& controller) : controller(controller) {}
 
 void CliView::run() {
+  if (!controller.hasSelectedTeam()) {
+    chooseManagedTeam();
+  }
+
   bool running = true;
   while (running) {
     displayMenu();
     running = processInput();
+  }
+}
+
+void CliView::chooseManagedTeam() {
+  std::vector<Team> available = controller.getAvailableTeams();
+
+  if (available.empty()) {
+    throw std::runtime_error("No teams available to manage.");
+  }
+
+  std::cout << "\n--- Choose Your Team ---\n";
+  for (size_t i = 0; i < available.size(); ++i) {
+    std::cout << (i + 1) << ". " << available[i].getName() << "\n";
+  }
+
+  int choice = -1;
+  while (true) {
+    std::cout << "Enter team number: ";
+    std::cin >> choice;
+
+    if (!std::cin.fail() && choice >= 1 && choice <= static_cast<int>(available.size())) {
+      controller.selectManagedTeam(available[choice - 1].getId());
+      break;
+    } else {
+      std::cin.clear();
+      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      std::cout << "Invalid input. Try again.\n";
+    }
   }
 }
 

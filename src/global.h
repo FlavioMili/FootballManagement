@@ -1,9 +1,14 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 // This file can be used for global constants, enums, and functions
 // that are used across the entire project.
+// If possible, use constexpr
+
+constexpr uint8_t FREE_AGENTS_TEAM_ID = 0;
+constexpr std::string FREE_AGENTS_TEAM_NAME = "Free agents";
 
 constexpr uint8_t TEAMS_PER_LEAGUE = 16;
 constexpr uint8_t MIN_STAT_VAL = 1;

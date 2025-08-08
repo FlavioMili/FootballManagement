@@ -1,14 +1,45 @@
 #include "game_controller.h"
-#include <vector>
 
 GameController::GameController(Game& game) : game(game) {}
+
+int GameController::getCurrentSeason() const {
+  return game.getCurrentSeason();
+}
+
+int GameController::getCurrentWeek() const {
+  return game.getCurrentWeek();
+}
+
+bool GameController::hasSelectedTeam() const {
+  return game.hasSelectedTeam();
+}
 
 Team GameController::getManagedTeam() const {
   return game.getManagedTeam();
 }
 
+void GameController::selectManagedTeam(int team_id) {
+  game.selectManagedTeam(team_id);
+}
+
 std::vector<Team> GameController::getTeams() const {
   return game.getTeams();
+}
+
+std::vector<Team> GameController::getAvailableTeams() const {
+  return game.getAvailableTeams();
+}
+
+std::vector<Player> GameController::getPlayersForTeam(int team_id) const {
+  return game.getPlayersForTeam(team_id);
+}
+
+std::vector<Team> GameController::getTeamsInLeague(int league_id) const {
+  return game.getTeamsInLeague(league_id);
+}
+
+League& GameController::getLeagueById(int league_id) {
+  return game.getLeagueById(league_id);
 }
 
 const StatsConfig& GameController::getStatsConfig() const {
@@ -19,18 +50,14 @@ void GameController::advanceWeek() {
   game.advanceWeek();
 }
 
-std::vector<Player> GameController::getPlayersForTeam(int team_id) {
-  return game.getPlayersForTeam(team_id);
-}
-
-std::vector<Team> GameController::getTeamsInLeague(int league_id) {
-  return game.getTeamsInLeague(league_id);
-}
-
-League& GameController::getLeagueById(int league_id) {
-  return game.getLeagueById(league_id);
+void GameController::startNewSeason() {
+  game.startNewSeason();
 }
 
 void GameController::saveGame() {
   game.saveGame();
+}
+
+void GameController::loadGame() {
+  game.loadData();
 }

@@ -50,6 +50,11 @@ public:
   void updatePlayer(const Player& player);
   void deletePlayer(int player_id);
 
+  std::vector<Player> getFreeAgents() const;
+  std::vector<Player> getAllPlayers() const;
+  std::vector<int> getAllTeamIds() const;
+  void transferPlayer(int player_id, int new_team_id);
+
 private:
   struct Impl;
   std::unique_ptr<Impl> pImpl;

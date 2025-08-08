@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include "global.h"
 #include "json.hpp"
 
 struct Database::Impl {
@@ -440,8 +441,25 @@ void Database::deletePlayer(int player_id) {
 }
 
 void Database::ageAllPlayers() {
+  std::vector<Player> all_players = getAllPlayers();
+
+  for (auto& player : all_players) {
+    player.agePlayer();
+    if (player.checkRetirement()) {
+      deletePlayer(player.getId());
+      std::cout << player.getName() << " just retired at the age of " << player.getAge() << "!\n";
+    } else {
+      updatePlayer(player);
+    }
+  }
+}
+
+std::vector<Player> Database::getFreeAgents() const {
+    return getPlayers(FREE_AGENTS_TEAM_ID);
+}
+
+std::vector<Player> Database::getAllPlayers() const {
   std::vector<Player> all_players;
-  // Retrieve all players from the database
   sqlite3_stmt* stmt;
   const char* sql = "SELECT id, team_id, name, age, role, stats FROM Players;";
   if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
@@ -462,15 +480,37 @@ void Database::ageAllPlayers() {
     }
   }
   sqlite3_finalize(stmt);
+  
+  return all_players;
+}
 
-  std::vector<int> retired_player_ids;
-  for (auto& player : all_players) {
-    player.agePlayer();
-    if (player.checkRetirement()) {
-      deletePlayer(player.getId());
-      std::cout << player.getName() << " just retired at the age of " << player.getAge() << "!\n";
-    } else {
-      updatePlayer(player);
+std::vector<int> Database::getAllTeamIds() const {
+  std::vector<int> team_ids;
+  sqlite3_stmt* stmt;
+  const char* sql = "SELECT id FROM Teams;";
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) == SQLITE_OK) {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+      team_ids.push_back(sqlite3_column_int(stmt, 0));
     }
   }
+  sqlite3_finalize(stmt);
+  return team_ids;
+}
+
+// TODO
+// This function should maybe manage the economical side of the transfer 
+// or we could manage it in a different method just for reusability  
+void Database::transferPlayer(int player_id, int new_team_id) {
+  sqlite3_stmt* stmt;
+  const char* sql = "UPDATE Players SET team_id = ? WHERE id = ?;";
+  if (sqlite3_prepare_v2(pImpl->db, sql, -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+  sqlite3_bind_int(stmt, 1, new_team_id);
+  sqlite3_bind_int(stmt, 2, player_id);
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to execute statement: " + std::string(sqlite3_errmsg(pImpl->db)));
+  }
+  sqlite3_finalize(stmt);
 }

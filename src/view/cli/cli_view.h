@@ -12,6 +12,7 @@ class CliView {
   bool processInput();
   void viewRoster();
   void viewLeaderboard(int league_id);
+  void chooseManagedTeam();
 
   GameController& controller;
 };

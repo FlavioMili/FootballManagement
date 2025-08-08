@@ -1,7 +1,11 @@
 #include "game.h"
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
+#include <algorithm>
+
 #include "datagenerator.h"
+#include "global.h"
 #include "json.hpp"
 
 void from_json(const nlohmann::json& j, RoleFocus& rf) {
@@ -15,70 +19,65 @@ void from_json(const nlohmann::json& j, StatsConfig& sc) {
 }
 
 Game::Game(Database& db)
-  : db(db), current_season(1),
-  current_week(0), managed_team_id(-1) {
-
-  std::ifstream f_stats("assets/stats_config.json");
-  if (!f_stats.is_open()) {
-    throw std::runtime_error("FATAL: Could not open assets/stats_config.json");
-  }
-  nlohmann::json stats_config_json = nlohmann::json::parse(f_stats);
-  stats_config = stats_config_json.get<StatsConfig>();
-
-  std::ifstream f_leagues("assets/league_names.json");
-  if (!f_leagues.is_open()) {
-    throw std::runtime_error("FATAL: Could not open assets/league_names.json");
-  }
-  league_names = nlohmann::json::parse(f_leagues)["names"].get<std::vector<std::string>>();
-
-  std::ifstream f_teams("assets/team_names.json");
-  if (!f_teams.is_open()) {
-    throw std::runtime_error("FATAL: Could not open assets/team_names.json");
-  }
-  team_names = nlohmann::json::parse(f_teams)["names"].get<std::vector<std::string>>();
+: db(db), current_season(1), 
+  current_week(0), managed_team_id(FREE_AGENTS_TEAM_ID) 
+{
+  loadConfigs();
 
   if (db.isFirstRun()) {
-    std::cout << "First run detected. Populating database with initial data...\n";
-
-    std::ifstream f_first("assets/first_names.json");
-    if (!f_first.is_open()) {
-      throw std::runtime_error("FATAL: Could not open assets/first_names.json");
-    }
-    auto first_names_json = nlohmann::json::parse(f_first)["names"].get<std::vector<std::string>>();
-    for(const auto& name : first_names_json) {
-      db.addFirstName(name);
-    }
-
-    std::ifstream f_last("assets/last_names.json");
-    if (!f_last.is_open()) {
-      throw std::runtime_error("FATAL: Could not open assets/last_names.json");
-    }
-    auto last_names_json = nlohmann::json::parse(f_last)["names"].get<std::vector<std::string>>();
-    for(const auto& name : last_names_json) {
-      db.addLastName(name);
-    }
-
-    std::cout << "Generating new game data...\n";
-    DataGenerator generator(db, stats_config_json, league_names, team_names);
-    generator.generateAll();
-
-    std::vector<League> all_leagues = db.getLeagues();
-    if (all_leagues.empty()) {
-      throw std::runtime_error("FATAL: No leagues were generated on first run.");
-    }
-
-    std::vector<Team> teams_in_first_league = db.getTeams(all_leagues[0].getId());
-    if (teams_in_first_league.empty()) {
-      throw std::runtime_error("FATAL: No teams were generated on first run.");
-    }
-
-    managed_team_id = teams_in_first_league[rand() % teams_in_first_league.size()].getId();
-    db.updateGameState(current_season, current_week, managed_team_id);
-    generateAllCalendars(all_leagues);
+    initializeDatabase();
   }
 
   loadData();
 
+  // This is now enforced in the view side, must be improved and made safer
+  // ensureManagedTeamAssigned();
+}
+
+void Game::loadConfigs() {
+  {
+    std::ifstream f("assets/stats_config.json");
+    if (!f.is_open()) {
+      throw std::runtime_error("FATAL: Could not open assets/stats_config.json");
+    }
+    nlohmann::json stats_config_json = nlohmann::json::parse(f);
+    stats_config = stats_config_json.get<StatsConfig>();
+    raw_stats_config_json = std::move(stats_config_json);
+  }
+
+  // TODO change paths to variables in the config file
+  league_names = loadJsonFileKey<std::vector<std::string>>("assets/league_names.json", "names");
+  team_names   = loadJsonFileKey<std::vector<std::string>>("assets/team_names.json", "names");
+}
+
+void Game::initializeDatabase() {
+  std::cout << "First run detected. Populating database with initial data...\n";
+
+  auto first_names = loadJsonFileKey<std::vector<std::string>>("assets/first_names.json", "names");
+  for (const auto& name : first_names) db.addFirstName(name);
+
+  auto last_names  = loadJsonFileKey<std::vector<std::string>>("assets/last_names.json", "names");
+  for (const auto& name : last_names) db.addLastName(name);
+
+  // Generate game data
+  std::cout << "Generating new game data...\n";
+  DataGenerator generator(db, raw_stats_config_json, league_names, team_names);
+  generator.generateAll();
+
+  // Verify generated data and get leagues from DB
+  auto all_leagues = db.getLeagues();
+  if (all_leagues.empty()) throw std::runtime_error("FATAL: No leagues generated.");
+  auto teams_in_first_league = db.getTeams(all_leagues[0].getId());
+  if (teams_in_first_league.empty()) throw std::runtime_error("FATAL: No teams generated.");
+
+  // Assign free agents as initial managed team just to give a choice
+  managed_team_id = FREE_AGENTS_TEAM_ID;
+  db.updateGameState(current_season, current_week, managed_team_id);
+
+  generateAllCalendars(all_leagues);
+}
+
+void Game::ensureManagedTeamAssigned() {
   if (managed_team_id != -1) {
     std::cout << "You have been appointed as the manager of: "
       << getManagedTeam().getName() << "\n";
@@ -103,20 +102,16 @@ void Game::loadData() {
   }
 }
 
-const StatsConfig& Game::getStatsConfig() const {
-  return stats_config;
-}
+const StatsConfig& Game::getStatsConfig() const { return stats_config; }
 
-Team& Game::getManagedTeam() {
-  return getTeamById(managed_team_id);
-}
-
+Team& Game::getManagedTeam() { return getTeamById(managed_team_id); }
+const Team& Game::getManagedTeam() const { return getTeamById(managed_team_id); }
 
 void Game::advanceWeek() {
   int managed_league_id = getManagedTeam().getLeagueId();
   const auto& calendar = league_calendars.at(managed_league_id);
 
-  if (current_week >= static_cast<int>(calendar.getWeeks().size()) && calendar.getWeeks().size() > 0) {
+  if (current_week >= static_cast<int>(calendar.getWeeks().size()) && !calendar.getWeeks().empty()) {
     handleSeasonTransition();
     return;
   }
@@ -133,14 +128,12 @@ void Game::simulateWeek() {
   }
 
   std::cout << "--- Simulating Week " << current_week + 1 << " ---\n";
-
   const auto& week_matches = current_calendar.getWeeks()[current_week].getMatches();
 
   for (const auto& match_info : week_matches) {
     Team& home_team = getTeamById(match_info.home_team_id);
     Team& away_team = getTeamById(match_info.away_team_id);
 
-    // Ensure players are loaded for both teams
     getPlayersForTeam(home_team.getId());
     getPlayersForTeam(away_team.getId());
 
@@ -181,54 +174,46 @@ void Game::updateStandings(const Match& match) {
 void Game::endSeason() {
   std::cout << "--- Season " << current_season << " has concluded. ---\n";
   db.ageAllPlayers();
-  // TODO Display final leaderboard or other season-end information
 }
 
 void Game::handleSeasonTransition() {
   endSeason();
   startNewSeason();
-  // After starting a new season, we need to reload the data to get the new calendar
-  loadData(); 
+  loadData();
 }
-
 
 void Game::startNewSeason() {
   current_season++;
   current_week = 0;
   db.updateGameState(current_season, current_week, managed_team_id);
-
-  // Reset points in the database before resetting in memory
   db.resetAllLeaguePoints();
 
   for (auto& league : leagues) {
     league.resetPoints();
   }
-
-  // Generate and save calendars for each league for the new season
   generateAllCalendars(leagues);
 
-  std::cout << "--- Generating schedule for " << leagues[0].getName() << " ---\n";
-  std::cout << "Generated a schedule with " <<
-    league_calendars.at(leagues[0].getId()).getWeeks().size() << " weeks.\n";
+  if (!leagues.empty()) {
+    std::cout << "--- Generating schedule for " << leagues[0].getName() << " ---\n";
+    std::cout << "Generated a schedule with "
+      << league_calendars.at(leagues[0].getId()).getWeeks().size() << " weeks.\n";
+  }
 }
 
-int Game::getCurrentSeason() const {
-  return current_season;
-}
-
-int Game::getCurrentWeek() const {
-  return current_week;
-}
-
-const std::vector<Team>& Game::getTeams() const {
-  return teams;
-}
+int Game::getCurrentSeason() const { return current_season; }
+int Game::getCurrentWeek() const { return current_week; }
+const std::vector<Team>& Game::getTeams() const { return teams; }
 
 Team& Game::getTeamById(int team_id) {
   for (auto& team : teams) {
-    if (team.getId() == team_id) {
-      return team;
-    }
+    if (team.getId() == team_id) return team;
+  }
+  throw std::runtime_error("Team not found with ID: " + std::to_string(team_id));
+}
+
+const Team& Game::getTeamById(int team_id) const {
+  for (const auto& team : teams) {
+    if (team.getId() == team_id) return team;
   }
   throw std::runtime_error("Team not found with ID: " + std::to_string(team_id));
 }
@@ -240,8 +225,14 @@ League& Game::getLeagueById(int league_id) {
   throw std::runtime_error("League not found with ID: " + std::to_string(league_id));
 }
 
-std::vector<Player> Game::getPlayersForTeam(int team_id) {
-  // This function now needs to populate the players for the team from the in-memory state
+const League& Game::getLeagueById(int league_id) const {
+  auto it = std::find_if(leagues.cbegin(), leagues.cend(),
+                         [league_id](const League& l) { return l.getId() == league_id; });
+  if (it != leagues.cend()) return *it;
+  throw std::runtime_error("League not found with ID: " + std::to_string(league_id));
+}
+
+std::vector<Player>& Game::getPlayersForTeam(int team_id) {
   Team& team = getTeamById(team_id);
   if (team.getPlayers().empty()) {
     team.setPlayers(db.getPlayers(team_id));
@@ -252,26 +243,26 @@ std::vector<Player> Game::getPlayersForTeam(int team_id) {
 std::vector<Team> Game::getTeamsInLeague(int league_id) {
   std::vector<Team> teams_in_league;
   for (const auto& team : teams) {
-    if (team.getLeagueId() == league_id) {
-      teams_in_league.push_back(team);
-    }
+    if (team.getLeagueId() == league_id) teams_in_league.push_back(team);
   }
   return teams_in_league;
 }
 
 void Game::saveGame() {
   db.updateGameState(current_season, current_week, managed_team_id);
-  for(const auto& league : leagues) {
+  for (const auto& league : leagues) {
     db.saveLeaguePoints(league);
   }
 }
 
-void Game::generateAllCalendars(const std::vector<League> leagues) {
-  for (const auto& league : leagues) {
+void Game::generateAllCalendars(const std::vector<League>& leagues_param) {
+  for (const auto& league : leagues_param) {
     Calendar league_calendar;
     std::vector<Team> teams_in_league = db.getTeams(league.getId());
     league_calendar.generate(teams_in_league);
     db.saveCalendar(league_calendar, current_season, league.getId());
+
+    league_calendars[league.getId()] = league_calendar;
   }
 }
 
@@ -281,4 +272,29 @@ void Game::trainPlayers(std::vector<Player>& players) {
     p.train(focus_stats);
     db.updatePlayer(p);
   }
+}
+
+void Game::selectManagedTeam(int team_id) {
+  auto it = std::find_if(teams.begin(), teams.end(),
+    [team_id](const Team& t) { return t.getId() == team_id; });
+
+  if (it == teams.end()) throw std::runtime_error("Invalid team ID");
+
+  managed_team_id = team_id;
+  db.saveManagedTeamId(team_id);
+  std::cout << "You are now managing: " << getTeamById(team_id).getName() << std::endl;
+}
+
+bool Game::hasSelectedTeam() const {
+  return managed_team_id != FREE_AGENTS_TEAM_ID;
+}
+
+std::vector<Team> Game::getAvailableTeams() const {
+  std::vector<Team> available_teams;
+  for (const auto& team : teams) {
+    if (team.getId() != FREE_AGENTS_TEAM_ID) {
+      available_teams.push_back(team);
+    }
+  }
+  return available_teams;
 }

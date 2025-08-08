@@ -10,15 +10,25 @@ class GameController {
  public:
   explicit GameController(Game& game);
 
-  Team getManagedTeam() const;
-  std::vector<Team> getTeams() const;
-  const StatsConfig& getStatsConfig() const;
-  void advanceWeek();
+  int getCurrentSeason() const;
+  int getCurrentWeek() const;
+  bool hasSelectedTeam() const;
 
-  std::vector<Player> getPlayersForTeam(int team_id);
-  std::vector<Team> getTeamsInLeague(int league_id);
+  Team getManagedTeam() const;
+  void selectManagedTeam(int team_id);
+
+  std::vector<Team> getTeams() const;
+  std::vector<Team> getAvailableTeams() const;
+  std::vector<Player> getPlayersForTeam(int team_id) const;
+  std::vector<Team> getTeamsInLeague(int league_id) const;
   League& getLeagueById(int league_id);
+  const StatsConfig& getStatsConfig() const;
+
+  void advanceWeek();
+  void startNewSeason();
+
   void saveGame();
+  void loadGame();
 
  private:
   Game& game;
