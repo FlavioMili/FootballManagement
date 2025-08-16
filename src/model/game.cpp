@@ -36,9 +36,9 @@ Game::Game(Database& db)
 
 void Game::loadConfigs() {
   {
-    std::ifstream f("assets/stats_config.json");
+    std::ifstream f(STATS_CONFIG_PATH);
     if (!f.is_open()) {
-      throw std::runtime_error("FATAL: Could not open assets/stats_config.json");
+      throw std::runtime_error("FATAL: Could not open stats config file");
     }
     nlohmann::json stats_config_json = nlohmann::json::parse(f);
     stats_config = stats_config_json.get<StatsConfig>();
@@ -46,17 +46,17 @@ void Game::loadConfigs() {
   }
 
   // TODO change paths to variables in the config file
-  league_names = loadJsonFileKey<std::vector<std::string>>("assets/league_names.json", "names");
-  team_names   = loadJsonFileKey<std::vector<std::string>>("assets/team_names.json", "names");
+  league_names = loadJsonFileKey<std::vector<std::string>>(LEAGUE_NAMES_PATH, "names");
+  team_names   = loadJsonFileKey<std::vector<std::string>>(TEAM_NAMES_PATH, "names");
 }
 
 void Game::initializeDatabase() {
   std::cout << "First run detected. Populating database with initial data...\n";
 
-  auto first_names = loadJsonFileKey<std::vector<std::string>>("assets/first_names.json", "names");
+  auto first_names = loadJsonFileKey<std::vector<std::string>>(FIRST_NAMES_PATH, "names");
   for (const auto& name : first_names) db.addFirstName(name);
 
-  auto last_names  = loadJsonFileKey<std::vector<std::string>>("assets/last_names.json", "names");
+  auto last_names  = loadJsonFileKey<std::vector<std::string>>(LAST_NAMES_PATH, "names");
   for (const auto& name : last_names) db.addLastName(name);
 
   // Generate game data

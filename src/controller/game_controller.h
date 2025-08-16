@@ -6,6 +6,11 @@
 #include "manager.h"
 #include "stats_config.h"
 
+/**
+  * This class is used to separate the view and
+  * the model in a traditional MVC pattern.
+  * This might change in the future
+*/
 class GameController {
  public:
   explicit GameController(Game& game);

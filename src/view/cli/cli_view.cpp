@@ -9,7 +9,7 @@ CliView::CliView(GameController& controller) : controller(controller) {}
 
 void CliView::run() {
   if (!controller.hasSelectedTeam()) {
-    chooseManagedTeam();
+    chooseManagedTeamMenu();
   }
 
   bool running = true;
@@ -19,7 +19,7 @@ void CliView::run() {
   }
 }
 
-void CliView::chooseManagedTeam() {
+void CliView::chooseManagedTeamMenu() {
   std::vector<Team> available = controller.getAvailableTeams();
 
   if (available.empty()) {
