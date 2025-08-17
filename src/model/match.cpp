@@ -5,10 +5,6 @@
 Match::Match(const Team& home, const Team& away, const StatsConfig& stats_config)
 : home_team(home), away_team(away), stats_config(stats_config), home_score(0), away_score(0) {}
 
-/**
-* TODO : improve the simulation, it is one of the 
-* fundamentals of the game.
-*/
 void Match::simulate() {
   double home_strength = 0;
   for (const auto& player : home_team.getPlayers()) {

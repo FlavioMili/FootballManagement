@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "global.h"
 #include "player.h"
 #include "team.h"
 #include "league.h"
@@ -11,7 +12,9 @@
 
 class Database {
 public:
-  explicit Database(const std::string& db_path);
+  explicit Database(const std::string& db_path, 
+      const std::string& schema_path = SCHEMA_PATH,
+      const std::string& queries_path = QUERIES_PATH);
   ~Database();
 
   void initialize();
@@ -58,4 +61,12 @@ public:
 private:
   struct Impl;
   std::unique_ptr<Impl> pImpl;
+
+  std::string schema_path_;
+  std::string queries_path_;
+
+  // Helper methods
+  void loadSQLFiles();
+  void executeStatement(const std::string& query_id, 
+        const std::vector<std::string>& params = {});
 };

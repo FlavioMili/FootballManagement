@@ -30,8 +30,10 @@ Game::Game(Database& db)
 
   loadData();
 
-  // This is now enforced in the view side, must be improved and made safer
-  // ensureManagedTeamAssigned();
+  /* TODO
+   * This is now enforced in the view side, must be improved and made safer
+   * ensureManagedTeamAssigned();
+  */
 }
 
 void Game::loadConfigs() {
@@ -45,7 +47,6 @@ void Game::loadConfigs() {
     raw_stats_config_json = std::move(stats_config_json);
   }
 
-  // TODO change paths to variables in the config file
   league_names = loadJsonFileKey<std::vector<std::string>>(LEAGUE_NAMES_PATH, "names");
   team_names   = loadJsonFileKey<std::vector<std::string>>(TEAM_NAMES_PATH, "names");
 }

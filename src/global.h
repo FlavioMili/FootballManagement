@@ -14,6 +14,9 @@ constexpr const char* TEAM_NAMES_PATH = "assets/config/team_names.json";
 constexpr const char* FIRST_NAMES_PATH ="assets/config/first_names.json";
 constexpr const char* LAST_NAMES_PATH ="assets/config/last_names.json";
 
+constexpr const char* SCHEMA_PATH ="assets/db/schema.sql";
+constexpr const char* QUERIES_PATH ="assets/db/queries.sql";
+
 constexpr uint8_t FREE_AGENTS_TEAM_ID = 0;
 constexpr const char* FREE_AGENTS_TEAM_NAME = "Free agents";
 

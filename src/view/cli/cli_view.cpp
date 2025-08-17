@@ -53,7 +53,6 @@ void CliView::displayMenu() {
   std::cout << "2. View Leaderboard\n";
   std::cout << "3. Advance to next week\n";
   std::cout << "4. Exit\n";
-  std::cout << "Enter your choice: ";
 }
 
 /**

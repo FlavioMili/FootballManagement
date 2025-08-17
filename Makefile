@@ -14,7 +14,7 @@ SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
 BUILD_TYPE ?= release
 
 # Common include paths & flags
-INCLUDES := -I./include -I./src -I./src/model -I./src/controller -I./src/view/cli
+INCLUDES := -I./include -I./src -I./src/model -I./src/controller -I./src/view/cli -I./src/database
 BASE_FLAGS := -Wall -Wextra -std=c++20 $(INCLUDES)
 
 # Flags per build type

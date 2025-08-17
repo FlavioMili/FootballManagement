@@ -5,6 +5,13 @@
 #include "database.h"
 #include "json.hpp"
 
+/*
+  * This class is used to generate data
+  * during the first run and at the end of seasons
+  * or also if needed during the game.
+* TODO add generation of single league, team or player 
+* this would make it possible to add in-game editors.
+  */
 class DataGenerator {
  public:
   explicit DataGenerator(Database& db,
