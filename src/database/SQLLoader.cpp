@@ -86,7 +86,8 @@ void SQLLoader::parseQueries(const std::string& content) {
     queries_[current_query_id] = trim(current_query);
   }
 
-  std::cout << "Loaded " << queries_.size() << " queries from file." << std::endl;
+  // Debug line 
+  // std::cout << "Loaded " << queries_.size() << " queries from file." << std::endl;
 }
 
 std::string SQLLoader::trim(const std::string& str) {

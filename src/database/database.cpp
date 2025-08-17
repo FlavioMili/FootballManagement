@@ -49,7 +49,8 @@ void Database::close() {
 void Database::loadSQLFiles() {
   try {
     pImpl->sql_loader->loadQueriesFromFile(queries_path_);
-    std::cout << "SQL queries loaded successfully from: " << queries_path_ << std::endl;
+    // Debug line
+    // std::cout << "SQL queries loaded successfully from: " << queries_path_ << std::endl;
   } catch (const std::exception& e) {
     std::cerr << "Failed to load SQL queries: " << e.what() << std::endl;
     throw;
@@ -67,7 +68,8 @@ void Database::initialize() {
       throw std::runtime_error(error_str);
     }
 
-    std::cout << "Database schema initialized successfully." << std::endl;
+    // Debug line
+    // std::cout << "Database schema initialized successfully." << std::endl;
   } catch (const std::exception& e) {
     std::cerr << "Failed to initialize database: " << e.what() << std::endl;
     throw;
@@ -404,27 +406,26 @@ Calendar Database::loadCalendar(int season, int league_id) const {
   sqlite3_bind_int(stmt, 2, league_id);
 
   int current_week = -1;
-  Week* week = nullptr;
+  std::optional<Week> week;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
     int week_num = sqlite3_column_int(stmt, 0);
     if (week_num != current_week) {
-      if (week) {
-        weeks.push_back(*week);
+      if (week.has_value()) {
+        weeks.push_back(std::move(*week));
       }
-      week = new Week(week_num);
+      week.emplace(week_num);
       current_week = week_num;
     }
     week->addMatch({sqlite3_column_int(stmt, 1), sqlite3_column_int(stmt, 2)});
   }
 
-  if (week) {
-    weeks.push_back(*week);
-    delete week;
+  if (week.has_value()) {
+    weeks.push_back(std::move(*week));
   }
 
   sqlite3_finalize(stmt);
-  calendar.setWeeks(weeks);
+  calendar.setWeeks(std::move(weeks));
   return calendar;
 }
 

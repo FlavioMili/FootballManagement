@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS Players (
 );
 
 -- Calendar table for match scheduling
+-- TODO change the game to support days
 CREATE TABLE IF NOT EXISTS Calendar (
     season INTEGER NOT NULL,
     week INTEGER NOT NULL,
@@ -39,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Calendar (
 );
 
 -- Game state management
+-- TODO change game state to support days
 CREATE TABLE IF NOT EXISTS GameState (
     key TEXT PRIMARY KEY,
     value INTEGER NOT NULL
@@ -55,6 +57,7 @@ CREATE TABLE IF NOT EXISTS LeaguePoints (
 );
 
 -- Player name generation tables
+-- TODO associate names to nationalities
 CREATE TABLE IF NOT EXISTS FirstNames (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
@@ -64,6 +67,12 @@ CREATE TABLE IF NOT EXISTS LastNames (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
 );
+
+-- This is  the free agent team 
+-- Check inside the src/global.h for
+-- the ID and Name, whether you want to change it later
+INSERT OR IGNORE INTO teams (id, league_id, name, balance)
+VALUES (0, 0, 'Free agents', -1);
 
 -- Enable WAL mode for better concurrency
 PRAGMA journal_mode=WAL;

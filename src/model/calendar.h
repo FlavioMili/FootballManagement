@@ -6,7 +6,7 @@
 
 class Week {
  public:
-  Week(int week_number) : week_number(week_number) {}
+  Week(int week_number = 0);
   void addMatch(const Matchup& matchup) {
     matches.push_back(matchup);
   }

@@ -3,6 +3,8 @@
 #include <vector>
 #include <utility>
 
+Week::Week(int week_number) : week_number(week_number) {}
+
 void Calendar::generate(const std::vector<Team>& teams) {
   weeks.clear();
   if (teams.size() < 2) return;
