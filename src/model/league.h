@@ -5,6 +5,14 @@
 #include <map>
 #include "team.h"
 
+/**
+  * League class, seems like it has pretty much 
+  * all we need to make it work, maybe it could 
+  * be improved with stats or something like that.
+  *
+  * TODO add stats after the match engine improves and
+  * makes players actually perform stuff
+*/
 class League {
  public:
   League(int id, std::string name);

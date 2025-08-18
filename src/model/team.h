@@ -1,30 +1,31 @@
 #pragma once
 
-#include <cstdint>
 #include <vector>
 #include <string>
 #include "player.h"
 
+// TODO change balance-related things with a Finances class
+// TODO add stadium
 class Team {
  public:
-  Team(int id, int league_id, std::string name, uint64_t balance = 0);
+  Team(int id, int league_id, std::string name, int balance = 0);
 
   int getId() const;
   int getLeagueId() const;
   std::string getName() const;
-  uint64_t getBalance() const;
+  int getBalance() const;
   const std::vector<Player>& getPlayers() const;
   std::vector<Player>& getPlayers();
 
-  void setBalance(uint64_t balance);
-  void addBalance(uint64_t to_add);
-  void subtractBalance(uint64_t to_subtract);
+  void setBalance(int balance);
+  void addBalance(int to_add);
+  void subtractBalance(int to_subtract);
   void setPlayers(const std::vector<Player>& players);
 
  private:
   int id;
   int league_id;
   std::string name;
-  uint64_t balance;
+  int balance;
   std::vector<Player> players;
 };

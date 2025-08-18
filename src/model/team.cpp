@@ -1,10 +1,9 @@
 #include "team.h"
-#include <cstdint>
 #include <utility>
 #include <vector>
 #include <string>
-#include "league.h"
-Team::Team(int id, int league_id, std::string name, uint64_t balance)
+
+Team::Team(int id, int league_id, std::string name, int balance)
   : id(id), league_id(league_id), name(std::move(name)),
   balance(balance) {}
 
@@ -20,7 +19,7 @@ std::string Team::getName() const {
   return name;
 }
 
-uint64_t Team::getBalance() const {
+int Team::getBalance() const {
   return balance;
 }
 
@@ -32,15 +31,15 @@ std::vector<Player>& Team::getPlayers() {
   return players;
 }
 
-void Team::setBalance(uint64_t new_balance) {
+void Team::setBalance(int new_balance) {
   balance = new_balance;
 }
 
-void Team::addBalance(uint64_t to_add) {
+void Team::addBalance(int to_add) {
   balance += to_add;
 }
 
-void Team::subtractBalance(uint64_t to_subtract) {
+void Team::subtractBalance(int to_subtract) {
   balance -= to_subtract;
 }
 

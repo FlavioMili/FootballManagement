@@ -5,6 +5,14 @@
 #include <vector>
 #include "stats_config.h"
 
+/**
+  * TODO add status (enum PlayerStatus) a vector and/or a bitset
+  * just so that we can check if a player is on transfer list,
+  * or injured, or had a red card, and so on.
+  * This way we can manage more things easily later on I guess.
+  * Also these for modding reasons might come from a modifiable json?
+*/
+
 class Player {
  public:
   Player(int id, std::string name, int age, std::string role);

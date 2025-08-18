@@ -4,6 +4,14 @@
 #include "team.h"
 #include "match.h"
 
+/**
+  * This class should be further improved to have
+  * a 365 days year, and take track of it adding 
+  * Transfer windows, holidays and make the Calendar
+  * close to reality as per league + tournaments during
+  * the year.
+*/
+
 class Week {
  public:
   Week(int week_number = 0);

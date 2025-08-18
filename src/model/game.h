@@ -14,6 +14,13 @@
 #include "match.h"
 #include "team.h"
 
+/** This is the main class where things happen
+  * It could possibly be simplified by making an 
+  * Event class, and then manage different type of
+  * events, considering that we should randomize the 
+  * AI behaviours generating random events.
+*/
+
 class Game {
 public:
   explicit Game(Database& db);
