@@ -6,6 +6,7 @@
 
 // TODO change balance-related things with a Finances class
 // TODO add stadium
+// TODO add lineup and in controller lineupManager class
 class Team {
  public:
   Team(int id, int league_id, std::string name, int balance = 0);
