@@ -1,8 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
-#include <string_view>
+#include <utility>
 
 // This file can be used for global constants, enums, and functions
 // that are used across the entire project.
@@ -33,3 +32,18 @@ constexpr float PLAYER_AGE_FACTOR_DECLINE_AGE = 31.5;
 constexpr int PLAYER_RETIREMENT_AGE_THRESHOLD = 32;
 constexpr float PLAYER_RETIREMENT_BASE_CHANCE = 0.01f;
 constexpr float PLAYER_RETIREMENT_CHANCE_INCREASE_PER_YEAR = 0.05f;
+
+
+/* This is the size of the grid where to insert players 
+  * it could be used to generate heatmaps where the actions 
+  * take place during a match simulation. So that the 
+  * local average stats of all players (attacker vs defenders)
+  * do make more of a difference during the game. 
+*/
+static constexpr int LINEUP_GRID_ROWS = 5;
+static constexpr int LINEUP_GRID_COLS = 5;
+static constexpr int LINEUP_GRID_SIZE = LINEUP_GRID_ROWS * LINEUP_GRID_COLS;
+
+// Functions to access the array of lineup's grid
+constexpr int toIndex(int row, int col) { return row * LINEUP_GRID_COLS + col; }
+constexpr std::pair<int,int> toRowCol(int i) { return { i / LINEUP_GRID_COLS, i % LINEUP_GRID_COLS }; }

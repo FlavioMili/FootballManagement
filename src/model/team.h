@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include "lineup.h"
 #include "player.h"
 
 // TODO change balance-related things with a Finances class
@@ -23,10 +24,18 @@ class Team {
   void subtractBalance(int to_subtract);
   void setPlayers(const std::vector<Player>& players);
 
+  // Lineup access
+  Lineup& getLineup();
+  const Lineup& getLineup() const;
+
+  // Generate best starting XI automatically
+  void generateStartingXI(const StatsConfig& stats_config);
+
  private:
   int id;
   int league_id;
   std::string name;
   int balance;
   std::vector<Player> players;
+  Lineup lineup;
 };
