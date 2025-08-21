@@ -1,6 +1,6 @@
 #include <iostream>
 #include "game_controller.h"
-#include "cli_view.h"
+#include "view/gui/gui_view.h"
 #include "database.h"
 
 int main() {
@@ -10,7 +10,9 @@ int main() {
     db.initialize();
     Game game(db);
     GameController controller(game);
-    CliView view(controller);
+
+    // CliView view(controller);
+    GUIView view(controller);
     view.run();
     controller.saveGame();
     db.close();
