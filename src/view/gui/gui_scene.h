@@ -1,7 +1,7 @@
 #pragma once
+#include "view/gui/gui_view.h"
 #include <SDL3/SDL.h>
 #include <memory>
-#include "gui_view.h"
 
 // TODO add scene types
 enum class SceneID { MAIN_MENU, SETTINGS, GAME_MENU, };
@@ -31,9 +31,11 @@ class GUIScene {
   // Helper methods for derived classes
   SDL_Renderer* getRenderer() const;
   SDL_Window* getWindow() const;
+  GUIView* getGuiView() const { return guiView; }
   void changeScene(std::unique_ptr<GUIScene> newScene);
   void quit();
 
- private:
   GUIView* guiView;
+
+ private:
 };

@@ -1,5 +1,5 @@
-#include "gui_scene.h"
-#include "gui_view.h"
+#include "view/gui/gui_scene.h"
+#include "view/gui/gui_view.h"
 
 GUIScene::GUIScene(GUIView* guiView) : guiView(guiView) {
 }

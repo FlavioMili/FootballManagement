@@ -1,5 +1,5 @@
 #pragma once
-#include "game_controller.h"
+#include "controller/game_controller.h"
 #include <SDL3/SDL.h>
 #include <memory>
 

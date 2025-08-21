@@ -1,7 +1,8 @@
 #include <iostream>
-#include "game_controller.h"
+#include "controller/game_controller.h"
 #include "view/gui/gui_view.h"
-#include "database.h"
+#include "view/gui/scenes/main_menu_scene.h"
+#include "database/database.h"
 
 int main() {
   srand(time(0));
@@ -13,6 +14,8 @@ int main() {
 
     // CliView view(controller);
     GUIView view(controller);
+    auto mainMenuScene = std::make_unique<MainMenuScene>(&view);
+    view.changeScene(std::move(mainMenuScene));
     view.run();
     controller.saveGame();
     db.close();

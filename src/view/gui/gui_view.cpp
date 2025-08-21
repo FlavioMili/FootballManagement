@@ -1,5 +1,6 @@
-#include "gui_view.h"
-#include "gui_scene.h"
+#include "view/gui/gui_view.h"
+#include "view/gui/gui_scene.h"
+#include "controller/game_controller.h"
 #include <iostream>
 
 GUIView::GUIView(GameController& controller) 
