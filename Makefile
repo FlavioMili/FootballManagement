@@ -15,7 +15,7 @@ BUILD_TYPE ?= release
 
 # Common include paths & flags
 INCLUDES := -I./include -I./src -I./src/model -I./src/controller -I./src/view/cli -I./src/database
-BASE_FLAGS := -Wall -Wextra -std=c++20 $(INCLUDES) $(shell sdl3-config --cflags)
+BASE_FLAGS := -Wall -Wextra -pedantic -std=c++20 $(INCLUDES) $(shell pkg-config --cflags sdl3)
 
 # Flags per build type
 ifeq ($(BUILD_TYPE),debug)
@@ -45,7 +45,7 @@ all: $(TARGET)
 
 # Link
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lsqlite3 $(shell pkg-config --libs sdl3 sdl3_ttf) -lSDL3 -lSDL3_ttf
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lsqlite3 $(shell pkg-config --libs sdl3) -lSDL3 -lSDL3_ttf
 
 # Compile
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
