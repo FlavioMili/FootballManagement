@@ -21,16 +21,18 @@ enum ButtonIndex {
 MainMenuScene::~MainMenuScene() = default;
 
 MainMenuScene::MainMenuScene(GUIView* guiView)
-    : GUIScene(guiView),
-      font(nullptr),
-  vButtons(30, 300, 200, 200, 60) // <-- initialize the member here
+  : GUIScene(guiView),
+  font(nullptr),
+  vButtons(30, 300, 200, 200, 60)
 {
   vButtons.addButton("New game", [this]() { handleButtonClick(NEW_GAME_BUTTON); });
   vButtons.addButton("Load game", [this]() { handleButtonClick(LOAD_GAME_BUTTON); });
   vButtons.addButton("Settings", [this]() { handleButtonClick(SETTINGS_BUTTON); });
   vButtons.addButton("Quit game", [this]() { handleButtonClick(QUIT_BUTTON); });
 
-  buttons = vButtons.getButtons();
+  buttons.insert(buttons.end(),
+     vButtons.getButtons().begin(),
+     vButtons.getButtons().end());
 }
 
 void MainMenuScene::onEnter() {
@@ -78,7 +80,7 @@ void MainMenuScene::handleEvent(const SDL_Event& event) {
 }
 
 void MainMenuScene::update(float deltaTime) {
-  // Update any animations or hover effects here
+  // Update animations and hover effects
   // For now, this can be empty
   (void)deltaTime; // Suppress unused parameter warning
 }

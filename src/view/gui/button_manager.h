@@ -4,6 +4,8 @@
 #include <vector>
 #include <functional>
 
+class OrderedButtons;
+
 struct ButtonStyle {
   SDL_Color backgroundColor = {70, 70, 150, 255};
   SDL_Color borderColor = {100, 100, 200, 255};
@@ -15,7 +17,9 @@ struct ButtonStyle {
 };
 
 struct Button {
-  SDL_FRect rect;
+  SDL_FRect rect {};
+  SDL_Texture* textTexture = nullptr;
+  SDL_FRect textRect{};
   const char* label;
   std::function<void()> onClick;
   bool isHovered = false;
@@ -33,8 +37,9 @@ class ButtonManager {
   int addButton(const SDL_FRect& rect, const char* label,
                 std::function<void()> callback);
   int addButton(float x, float y, float w, float h,
-              const char* label, std::function<void()> callback);
+                const char* label, std::function<void()> callback);
 
+  void addOrderedButtons(const OrderedButtons& ordered);
 
   void removeButton(int buttonId);
   void clearButtons();
@@ -56,9 +61,10 @@ class ButtonManager {
   void setFont(TTF_Font* font) { this->font = font; }
   void setDefaultStyle(const ButtonStyle& style) { defaultStyle = style; }
 
-private:
+ private:
   void renderButton(const Button& button);
   bool isPointInButton(float x, float y, const Button& button) const;
+  void createButtonTexture(Button& btn);
 
   SDL_Renderer* renderer;
   TTF_Font* font;
@@ -68,11 +74,11 @@ private:
 };
 
 class OrderedButtons {
-public:
+ public:
   OrderedButtons(int padding = 30, int startingX = 100, int startingY = 100, 
                  float width = 30, float height = 100, 
                  ButtonStyle style = ButtonStyle())
-  : padding(padding), startingX(startingX), 
+    : padding(padding), startingX(startingX), 
     startingY(startingY), width(width), height(height), style(style) {}
 
   // Base virtual function
@@ -83,7 +89,7 @@ public:
 
   const std::vector<Button>& getButtons() const { return buttons; }
 
-protected:
+ protected:
   int padding;
   int startingX, startingY;
   float width, height;
@@ -93,7 +99,7 @@ protected:
 
 // Vertical buttons stack
 class VerticalButtons : public OrderedButtons {
-public:
+ public:
   VerticalButtons(int padding = 30, int startingX = 100,
                   int startingY = 100, float width = 60, float height = 30, 
                   ButtonStyle style = ButtonStyle())
@@ -115,10 +121,10 @@ public:
 
 // Horizontal buttons stack
 class HorizontalButtons : public OrderedButtons {
-public:
+ public:
   HorizontalButtons(int padding = 30, int startingX = 100,
-                  int startingY = 100, float width = 60, float height = 30, 
-                  ButtonStyle style = ButtonStyle())
+                    int startingY = 100, float width = 60, float height = 30, 
+                    ButtonStyle style = ButtonStyle())
   : OrderedButtons(padding, startingX, startingY, width, height, style) {}
 
   void addButton(const char* text, std::function<void()> callback) override {

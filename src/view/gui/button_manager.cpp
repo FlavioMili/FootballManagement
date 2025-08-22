@@ -6,7 +6,12 @@ ButtonManager::ButtonManager(SDL_Renderer* renderer, TTF_Font* font)
 }
 
 ButtonManager::~ButtonManager() {
-  // Buttons are automatically cleaned up
+    for (auto& btn : buttons) {
+        if (btn.textTexture) {
+            SDL_DestroyTexture(btn.textTexture);
+            btn.textTexture = nullptr;
+        }
+    }
 }
 
 int ButtonManager::addButton(const SDL_FRect& rect, const char* label, std::function<void()> callback) {
@@ -16,6 +21,8 @@ int ButtonManager::addButton(const SDL_FRect& rect, const char* label, std::func
   button.onClick = callback;
   button.style = defaultStyle;
   button.id = nextButtonId++;
+
+  createButtonTexture(button);
 
   buttons.push_back(button);
   return button.id;
@@ -90,45 +97,27 @@ void ButtonManager::render() {
   }
 }
 
-void ButtonManager::renderButton(const Button& button) {
-  const ButtonStyle& style = button.style;
+void ButtonManager::renderButton(const Button& btn) {
+  if (!btn.isVisible) return;
 
-  // Choose colors based on hover state
-  SDL_Color bgColor = button.isHovered ? style.hoverBackgroundColor : style.backgroundColor;
-  SDL_Color borderColor = button.isHovered ? style.hoverBorderColor : style.borderColor;
+  SDL_SetRenderDrawColor(renderer,
+                         btn.style.backgroundColor.r,
+                         btn.style.backgroundColor.g,
+                         btn.style.backgroundColor.b,
+                         btn.style.backgroundColor.a);
+  SDL_RenderFillRect(renderer, &btn.rect);
 
-  // Draw background
-  SDL_SetRenderDrawColor(renderer, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
-  SDL_RenderFillRect(renderer, &button.rect);
-
-  // Draw border
-  if (style.hasBorder) {
-    SDL_SetRenderDrawColor(renderer, borderColor.r, borderColor.g, borderColor.b, borderColor.a);
-    SDL_RenderRect(renderer, &button.rect);
+  if (btn.style.hasBorder) {
+    SDL_SetRenderDrawColor(renderer,
+                           btn.style.borderColor.r,
+                           btn.style.borderColor.g,
+                           btn.style.borderColor.b,
+                           btn.style.borderColor.a);
+    SDL_RenderRect(renderer, &btn.rect);
   }
 
-  // Draw text
-  if (font && button.label && *button.label) {
-    SDL_Surface* textSurface = TTF_RenderText_Solid(font, button.label, strlen(button.label), style.textColor);
-
-    if (textSurface) {
-      SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-
-      if (textTexture) {
-        // Center text in button
-        SDL_FRect textRect = {
-          button.rect.x + (button.rect.w - textSurface->w) / 2.0f,
-          button.rect.y + (button.rect.h - textSurface->h) / 2.0f,
-          (float)textSurface->w,
-          (float)textSurface->h
-        };
-
-        SDL_RenderTexture(renderer, textTexture, nullptr, &textRect);
-        SDL_DestroyTexture(textTexture);
-      }
-      SDL_DestroySurface(textSurface);
-    }
-  }
+  if (btn.textTexture)
+    SDL_RenderTexture(renderer, btn.textTexture, nullptr, &btn.textRect);
 }
 
 bool ButtonManager::isPointInButton(float x, float y, const Button& button) const {
@@ -136,5 +125,26 @@ bool ButtonManager::isPointInButton(float x, float y, const Button& button) cons
   y >= button.rect.y && y <= button.rect.y + button.rect.h);
 }
 
+void ButtonManager::createButtonTexture(Button& btn) {
+  if (!font || !renderer) return;
+  if (btn.textTexture) SDL_DestroyTexture(btn.textTexture);
 
+  SDL_Color color = btn.style.textColor;
+  SDL_Surface* surf = TTF_RenderText_Blended(font, btn.label, strlen(btn.label), color);
+  if (!surf) return;
 
+  btn.textTexture = SDL_CreateTextureFromSurface(renderer, surf);
+  btn.textRect = {
+    btn.rect.x + (btn.rect.w - surf->w) / 2.0f,
+    btn.rect.y + (btn.rect.h - surf->h) / 2.0f,
+    static_cast<float>(surf->w),
+    static_cast<float>(surf->h)
+  };
+  SDL_DestroySurface(surf);
+}
+
+void ButtonManager::addOrderedButtons(const OrderedButtons& ordered) {
+  for (auto& btn : ordered.getButtons()) {
+    addButton(btn.rect, btn.label, btn.onClick);
+  }
+}
