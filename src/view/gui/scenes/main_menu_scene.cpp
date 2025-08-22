@@ -1,31 +1,36 @@
+#include "view/gui/button_manager.h"
 #include "view/gui/scenes/main_menu_scene.h"
 #include "view/gui/gui_scene.h"
 #include "view/gui/gui_view.h"
 #include "view/gui/scenes/settings_scene.h"
 #include "view/gui/scenes/main_game_scene.h"
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_video.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <iostream>
 
 SceneID MainMenuScene::getID() const { return SceneID::MAIN_MENU; }
 
 enum ButtonIndex {
-  PLAY_BUTTON = 0,
-  SETTINGS_BUTTON = 1,
-  QUIT_BUTTON = 2
+  NEW_GAME_BUTTON = 0,
+  LOAD_GAME_BUTTON = 1,
+  SETTINGS_BUTTON = 2,
+  QUIT_BUTTON = 3,
 };
 
-MainMenuScene::MainMenuScene(GUIView* guiView) : GUIScene(guiView), font(nullptr) {
-  // Initialize buttons (non-static, part of the class)
-  buttons = {
-    {{300, 200, 200, 60}, "Play"},
-    {{300, 300, 200, 60}, "Settings"},
-    {{300, 400, 200, 60}, "Quit"}
-  };
-}
+MainMenuScene::~MainMenuScene() = default;
 
-MainMenuScene::~MainMenuScene() {
-  // Destructor cleanup (onExit should handle most cleanup)
+MainMenuScene::MainMenuScene(GUIView* guiView)
+    : GUIScene(guiView),
+      font(nullptr),
+  vButtons(30, 300, 200, 200, 60) // <-- initialize the member here
+{
+  vButtons.addButton("New game", [this]() { handleButtonClick(NEW_GAME_BUTTON); });
+  vButtons.addButton("Load game", [this]() { handleButtonClick(LOAD_GAME_BUTTON); });
+  vButtons.addButton("Settings", [this]() { handleButtonClick(SETTINGS_BUTTON); });
+  vButtons.addButton("Quit game", [this]() { handleButtonClick(QUIT_BUTTON); });
+
+  buttons = vButtons.getButtons();
 }
 
 void MainMenuScene::onEnter() {
@@ -40,11 +45,12 @@ void MainMenuScene::onEnter() {
   font = TTF_OpenFont("assets/fonts/font.ttf", 28);
   if (!font) {
     std::cerr << "Failed to load font: " << SDL_GetError() << std::endl;
-    // Try a fallback or continue without font
+    // TODO add a fallback? 
   }
 }
 
 void MainMenuScene::handleEvent(const SDL_Event& event) {
+  (void) event;
   if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
     float mouseX = event.button.x;
     float mouseY = event.button.y;
@@ -64,8 +70,8 @@ void MainMenuScene::handleEvent(const SDL_Event& event) {
       case SDLK_ESCAPE:
         quit();
         break;
-      case SDLK_RETURN:
-        handleButtonClick(PLAY_BUTTON);
+      case SDLK_RETURN: // This is an option for a shortcut
+        handleButtonClick(LOAD_GAME_BUTTON);
         break;
     }
   }
@@ -106,9 +112,12 @@ bool MainMenuScene::isPointInButton(float x, float y, const Button& button) {
 
 void MainMenuScene::handleButtonClick(int buttonIndex) {
   switch (buttonIndex) {
-    case PLAY_BUTTON: {
+    case NEW_GAME_BUTTON: {
       auto gameScene = std::make_unique<MainGameScene>(guiView);
       changeScene(std::move(gameScene));
+      break;
+    }
+    case LOAD_GAME_BUTTON: {
       break;
     }
     case SETTINGS_BUTTON: {

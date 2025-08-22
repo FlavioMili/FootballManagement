@@ -4,11 +4,8 @@
 #include <vector>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include "view/gui/button_manager.h"
 
-struct Button {
-  SDL_FRect rect;
-  const char* label;
-};
 
 class MainMenuScene : public GUIScene {
  public:
@@ -30,7 +27,10 @@ class MainMenuScene : public GUIScene {
   void renderButton(const Button& btn);
   void renderTitle();
 
-  // Resources
+
   TTF_Font* font;
+  VerticalButtons vButtons;
+
+  // Resources
   std::vector<Button> buttons;
 };
