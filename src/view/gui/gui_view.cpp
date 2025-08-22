@@ -2,6 +2,7 @@
 #include "view/gui/gui_scene.h"
 #include "controller/game_controller.h"
 #include <iostream>
+#include <stack>
 
 GUIView::GUIView(GameController& controller) 
   : controller(controller), window(nullptr),
@@ -9,6 +10,11 @@ GUIView::GUIView(GameController& controller)
   currentScene(nullptr) { }
 
 GUIView::~GUIView() {
+  // Clean up any overlaid scenes
+  while (!sceneStack.empty()) {
+    sceneStack.pop();
+  }
+  
   if (renderer) {
     SDL_DestroyRenderer(renderer);
   }
@@ -24,24 +30,23 @@ bool GUIView::initialize() {
     std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
     return false;
   }
-
+  
   // Create window
   window = SDL_CreateWindow("Game GUI", 800, 600, SDL_WINDOW_RESIZABLE);
   if (!window) {
     std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
     return false;
   }
-
+  
   // Create renderer
   renderer = SDL_CreateRenderer(window, nullptr);
   if (!renderer) {
     std::cerr << "Failed to create renderer: " << SDL_GetError() << std::endl;
     return false;
   }
-
+  
   // Enable blending for transparency
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-
   return true;
 }
 
@@ -49,21 +54,22 @@ void GUIView::run() {
   if (!initialize()) {
     return;
   }
-
+  
   running = true;
   Uint64 lastTime = SDL_GetTicks();
-
+  
   while (running) {
     Uint64 currentTime = SDL_GetTicks();
     float deltaTime = (currentTime - lastTime) / 1000.0f;
     lastTime = currentTime;
-
+    
     handleEvents();
     update(deltaTime);
     render();
-
+    
     // Cap framerate to ~60 FPS
     // TODO check framerate of computer and update this
+    // or edit in settings
     SDL_Delay(16);
   }
 }
@@ -74,46 +80,105 @@ void GUIView::handleEvents() {
     if (event.type == SDL_EVENT_QUIT) {
       running = false;
     }
-
-    // Pass event to current scene
-    if (currentScene) {
-      currentScene->handleEvent(event);
+    
+    // Pass event to the topmost scene 
+    // (overlay if exists, otherwise current scene)
+    GUIScene* activeScene = getActiveScene();
+    if (activeScene) {
+      activeScene->handleEvent(event);
     }
   }
 }
 
+// TODO check if the update should be only on the
+// topmost stack or it is ok like this. 
+// BENCHMARK_NEEDED
+// I think this might work for most of the game but
+// we need to have the game engine work with no overlays 
+// to ensure performance.
+//
+// This is a possible implementation 
+// void GUIView::update(float deltaTime) {
+//   // Update only the active scene (topmost overlay or current scene)
+//   GUIScene* activeScene = getActiveScene();
+//   if (activeScene) {
+//     activeScene->update(deltaTime);
+//   }
+// }
+
 void GUIView::update(float deltaTime) {
+  // Update all scenes in the stack 
+  // (background scenes might have animations)
   if (currentScene) {
     currentScene->update(deltaTime);
   }
+  
+  // Update overlays using a tempStack
+  std::stack<std::unique_ptr<GUIScene>> tempStack;
+
+  while (!sceneStack.empty()) {
+    auto scene = std::move(sceneStack.top());
+    sceneStack.pop();
+    scene->update(deltaTime);
+    tempStack.push(std::move(scene));
+  }
+  
+  // Restore the stack
+  while (!tempStack.empty()) {
+    sceneStack.push(std::move(tempStack.top()));
+    tempStack.pop();
+  }
 }
 
+// Notice we render only the topmost here
 void GUIView::render() {
   // Clear screen with dark background
   SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
   SDL_RenderClear(renderer);
-
-  // Render current scene
-  if (currentScene) {
-    currentScene->render();
+  
+  // Render only the active scene (topmost overlay or current scene)
+  GUIScene* activeScene = getActiveScene();
+  if (activeScene) {
+    activeScene->render();
   }
-
+  
   // Present the rendered frame
   SDL_RenderPresent(renderer);
 }
 
 void GUIView::changeScene(std::unique_ptr<GUIScene> newScene) {
+  // Clear any overlays when changing main scene
+  while (!sceneStack.empty()) {
+    sceneStack.top()->onExit();
+    sceneStack.pop();
+  }
+  
   // Exit current scene
   if (currentScene) {
     currentScene->onExit();
   }
-
+  
   // Switch to new scene
   currentScene = std::move(newScene);
-
+  
   // Enter new scene
   if (currentScene) {
     currentScene->onEnter();
+  }
+}
+
+void GUIView::overlayScene(std::unique_ptr<GUIScene> overlay) {
+  if (overlay) {
+    overlay->onEnter();
+    sceneStack.push(std::move(overlay));
+  }
+}
+
+void GUIView::popScene() {
+  if (!sceneStack.empty()) {
+    // Exit the top overlay scene
+    sceneStack.top()->onExit();
+    sceneStack.pop();
   }
 }
 
@@ -127,4 +192,13 @@ SDL_Renderer* GUIView::getRenderer() const {
 
 SDL_Window* GUIView::getWindow() const {
   return window;
+}
+
+GUIScene* GUIView::getActiveScene() const {
+  // Return the topmost scene 
+  // (overlay if exists, otherwise current scene)
+  if (!sceneStack.empty()) {
+    return sceneStack.top().get();
+  }
+  return currentScene.get();
 }
