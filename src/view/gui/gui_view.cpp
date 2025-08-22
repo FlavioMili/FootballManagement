@@ -90,58 +90,27 @@ void GUIView::handleEvents() {
   }
 }
 
-// TODO check if the update should be only on the
-// topmost stack or it is ok like this. 
-// BENCHMARK_NEEDED
-// I think this might work for most of the game but
-// we need to have the game engine work with no overlays 
-// to ensure performance.
-//
-// This is a possible implementation 
-// void GUIView::update(float deltaTime) {
-//   // Update only the active scene (topmost overlay or current scene)
-//   GUIScene* activeScene = getActiveScene();
-//   if (activeScene) {
-//     activeScene->update(deltaTime);
-//   }
-// }
-
 void GUIView::update(float deltaTime) {
-  // Update all scenes in the stack 
-  // (background scenes might have animations)
-  if (currentScene) {
-    currentScene->update(deltaTime);
-  }
-  
-  // Update overlays using a tempStack
-  std::stack<std::unique_ptr<GUIScene>> tempStack;
-
-  while (!sceneStack.empty()) {
-    auto scene = std::move(sceneStack.top());
-    sceneStack.pop();
-    scene->update(deltaTime);
-    tempStack.push(std::move(scene));
-  }
-  
-  // Restore the stack
-  while (!tempStack.empty()) {
-    sceneStack.push(std::move(tempStack.top()));
-    tempStack.pop();
+  // Update only the active scene 
+  // (topmost overlay or current scene)
+  GUIScene* activeScene = getActiveScene();
+  if (activeScene) {
+    activeScene->update(deltaTime);
   }
 }
 
-// Notice we render only the topmost here
 void GUIView::render() {
   // Clear screen with dark background
   SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
   SDL_RenderClear(renderer);
-  
-  // Render only the active scene (topmost overlay or current scene)
+
+  // Render only the active scene 
+  // (topmost overlay or current scene)
   GUIScene* activeScene = getActiveScene();
   if (activeScene) {
     activeScene->render();
   }
-  
+
   // Present the rendered frame
   SDL_RenderPresent(renderer);
 }
