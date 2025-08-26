@@ -22,6 +22,8 @@ void Match::simulate() {
   for (int i = 0; i < LINEUP_GRID_SIZE; ++i) {
     if (Player* p = home_lineup.getPlayerAt(i)) {
       std::string role = p->getRole();
+
+      // TODO this one will not be hard coded anymore, it is just a placeholder
       if (role == "Striker") home_attack += p->getOverall(stats_config);
       else if (role == "Midfielder") home_midfield += p->getOverall(stats_config);
       else if (role == "Defender") home_defense += p->getOverall(stats_config);
