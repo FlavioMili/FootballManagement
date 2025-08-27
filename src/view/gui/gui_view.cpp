@@ -14,7 +14,7 @@ GUIView::~GUIView() {
   while (!sceneStack.empty()) {
     sceneStack.pop();
   }
-  
+
   if (renderer) {
     SDL_DestroyRenderer(renderer);
   }
@@ -30,21 +30,21 @@ bool GUIView::initialize() {
     std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
     return false;
   }
-  
+
   // Create window
-  window = SDL_CreateWindow("Game GUI", 800, 600, SDL_WINDOW_RESIZABLE);
+  window = SDL_CreateWindow("Game GUI", 1200, 800, SDL_WINDOW_RESIZABLE);
   if (!window) {
     std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
     return false;
   }
-  
+
   // Create renderer
   renderer = SDL_CreateRenderer(window, nullptr);
   if (!renderer) {
     std::cerr << "Failed to create renderer: " << SDL_GetError() << std::endl;
     return false;
   }
-  
+
   // Enable blending for transparency
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
   return true;
@@ -54,19 +54,19 @@ void GUIView::run() {
   if (!initialize()) {
     return;
   }
-  
+
   running = true;
   Uint64 lastTime = SDL_GetTicks();
-  
+
   while (running) {
     Uint64 currentTime = SDL_GetTicks();
     float deltaTime = (currentTime - lastTime) / 1000.0f;
     lastTime = currentTime;
-    
+
     handleEvents();
     update(deltaTime);
     render();
-    
+
     // Cap framerate to ~60 FPS
     // TODO check framerate of computer and update this
     // or edit in settings
@@ -80,7 +80,7 @@ void GUIView::handleEvents() {
     if (event.type == SDL_EVENT_QUIT) {
       running = false;
     }
-    
+
     // Pass event to the topmost scene 
     // (overlay if exists, otherwise current scene)
     GUIScene* activeScene = getActiveScene();
@@ -121,15 +121,15 @@ void GUIView::changeScene(std::unique_ptr<GUIScene> newScene) {
     sceneStack.top()->onExit();
     sceneStack.pop();
   }
-  
+
   // Exit current scene
   if (currentScene) {
     currentScene->onExit();
   }
-  
+
   // Switch to new scene
   currentScene = std::move(newScene);
-  
+
   // Enter new scene
   if (currentScene) {
     currentScene->onEnter();

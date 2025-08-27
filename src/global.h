@@ -1,11 +1,28 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
+#include <string>
 #include <utility>
 
 // This file can be used for global constants, enums, and functions
 // that are used across the entire project.
 // If possible, use constexpr
+
+/* This is an enum used in the settings manager to set the 
+ * text language, to be supported in the future
+ */
+enum Language {
+  EN,
+  // IT,
+  // ES,
+};
+
+const std::map<Language, std::string> languageToString {
+  {EN, "English"},
+  // {IT, "Italian"},
+  // {ES, "Spanish"},
+};
 
 constexpr const char* STATS_CONFIG_PATH = "assets/config/stats_config.json";
 constexpr const char* LEAGUE_NAMES_PATH = "assets/config/league_names.json"; 

@@ -2,8 +2,8 @@
 #include "view/gui/scenes/main_menu_scene.h"
 #include "view/gui/gui_scene.h"
 #include "view/gui/gui_view.h"
-#include "view/gui/scenes/settings_scene.h"
 #include "view/gui/scenes/main_game_scene.h"
+#include "view/gui/scenes/settings_scene.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -18,61 +18,67 @@ enum ButtonIndex {
   QUIT_BUTTON = 3,
 };
 
-MainMenuScene::~MainMenuScene() = default;
-
-MainMenuScene::MainMenuScene(GUIView* guiView)
-  : GUIScene(guiView),
-  font(nullptr),
-  vButtons(30, 300, 200, 200, 60)
-{
-  vButtons.addButton("New game", [this]() { handleButtonClick(NEW_GAME_BUTTON); });
-  vButtons.addButton("Load game", [this]() { handleButtonClick(LOAD_GAME_BUTTON); });
-  vButtons.addButton("Settings", [this]() { handleButtonClick(SETTINGS_BUTTON); });
-  vButtons.addButton("Quit game", [this]() { handleButtonClick(QUIT_BUTTON); });
-
-  buttons.insert(buttons.end(),
-     vButtons.getButtons().begin(),
-     vButtons.getButtons().end());
-}
+MainMenuScene::MainMenuScene(GUIView* guiView) : GUIScene(guiView), font(nullptr) {}
 
 void MainMenuScene::onEnter() {
-  // Initialize TTF if not already done
-  if (!TTF_WasInit()) {
-    if (!TTF_Init()) {
-      std::cerr << "Failed to initialize TTF: " << SDL_GetError() << std::endl;
-      return;
-    }
+  if (!TTF_WasInit() && !TTF_Init()) {
+    std::cerr << "Failed to initialize TTF: " << SDL_GetError() << std::endl;
+    return;
   }
 
   font = TTF_OpenFont("assets/fonts/font.ttf", 28);
   if (!font) {
     std::cerr << "Failed to load font: " << SDL_GetError() << std::endl;
-    // TODO add a fallback? 
   }
+
+  buttonManager = std::make_unique<ButtonManager>(getRenderer(), font);
+
+  // Button layout parameters
+  float btnWidth = 200.0f;
+  float btnHeight = 60.0f;
+  float startX = 300.0f;
+  float startY = 200.0f;
+  float padding = 30.0f;
+  float currentY = startY;
+
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "New game", [this]() {
+    handleButtonClick(NEW_GAME_BUTTON);
+  });
+  currentY += btnHeight + padding;
+
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Load game", [this]() {
+    handleButtonClick(LOAD_GAME_BUTTON);
+  });
+  currentY += btnHeight + padding;
+
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Settings", [this]() {
+    handleButtonClick(SETTINGS_BUTTON);
+  });
+  currentY += btnHeight + padding;
+
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Quit game", [this]() {
+    handleButtonClick(QUIT_BUTTON);
+  });
 }
 
 void MainMenuScene::handleEvent(const SDL_Event& event) {
-  (void) event;
-  if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
-    float mouseX = event.button.x;
-    float mouseY = event.button.y;
-
-    // Check which button was clicked
-    for (size_t i = 0; i < buttons.size(); ++i) {
-      if (isPointInButton(mouseX, mouseY, buttons[i])) {
-        handleButtonClick(i);
-        break;
+  if (buttonManager) {
+    if (event.type == SDL_EVENT_MOUSE_MOTION) {
+      buttonManager->handleMouseMove(event.motion.x, event.motion.y);
+    }
+    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+      if (buttonManager->handleMouseClick(event.button.x, event.button.y)) {
+        return;
       }
     }
   }
 
-  // Handle keyboard shortcuts
   if (event.type == SDL_EVENT_KEY_DOWN) {
     switch (event.key.key) {
       case SDLK_ESCAPE:
         quit();
         break;
-      case SDLK_RETURN: // This is an option for a shortcut
+      case SDLK_RETURN:
         handleButtonClick(LOAD_GAME_BUTTON);
         break;
     }
@@ -80,23 +86,16 @@ void MainMenuScene::handleEvent(const SDL_Event& event) {
 }
 
 void MainMenuScene::update(float deltaTime) {
-  // Update animations and hover effects
-  // For now, this can be empty
-  (void)deltaTime; // Suppress unused parameter warning
+  (void)deltaTime;
 }
 
 void MainMenuScene::render() {
-  // Clear screen with dark background
   SDL_SetRenderDrawColor(getRenderer(), 30, 30, 35, 255);
   SDL_RenderClear(getRenderer());
 
-  // Draw title
   renderTitle();
 
-  // Draw buttons
-  for (const auto& btn : buttons) {
-    renderButton(btn);
-  }
+  if (buttonManager) { buttonManager->render(); }
 }
 
 void MainMenuScene::onExit() {
@@ -104,12 +103,6 @@ void MainMenuScene::onExit() {
     TTF_CloseFont(font);
     font = nullptr;
   }
-}
-
-// Helper methods
-bool MainMenuScene::isPointInButton(float x, float y, const Button& button) {
-  return (x >= button.rect.x && x <= button.rect.x + button.rect.w &&
-  y >= button.rect.y && y <= button.rect.y + button.rect.h);
 }
 
 void MainMenuScene::handleButtonClick(int buttonIndex) {
@@ -133,53 +126,20 @@ void MainMenuScene::handleButtonClick(int buttonIndex) {
   }
 }
 
-void MainMenuScene::renderButton(const Button& btn) {
-  // Button background with subtle gradient effect
-  SDL_SetRenderDrawColor(getRenderer(), 70, 70, 150, 255);
-  SDL_RenderFillRect(getRenderer(), &btn.rect);
-
-  // Button border
-  SDL_SetRenderDrawColor(getRenderer(), 100, 100, 200, 255);
-  SDL_RenderRect(getRenderer(), &btn.rect);
-
-  // Render button text
-  if (font) {
-    SDL_Color textColor = {255, 255, 255, 255};
-    SDL_Surface* textSurface = TTF_RenderText_Solid(font, btn.label, strlen(btn.label), textColor);
-
-    if (textSurface) {
-      SDL_Texture* textTexture = SDL_CreateTextureFromSurface(getRenderer(), textSurface);
-
-      if (textTexture) {
-        // Center text in button
-        SDL_FRect textRect = {
-          btn.rect.x + (btn.rect.w - textSurface->w) / 2.0f,
-          btn.rect.y + (btn.rect.h - textSurface->h) / 2.0f,
-          (float)textSurface->w,
-          (float)textSurface->h
-        };
-
-        SDL_RenderTexture(getRenderer(), textTexture, nullptr, &textRect);
-        SDL_DestroyTexture(textTexture);
-      }
-      SDL_DestroySurface(textSurface);
-    }
-  }
-}
-
 void MainMenuScene::renderTitle() {
   if (!font) return;
 
   const char* title = "Football Management";
-  SDL_Color titleColor = {255, 255, 100, 255}; // Yellow title
+  SDL_Color titleColor = {255, 255, 100, 255};
 
-  SDL_Surface* titleSurface = TTF_RenderText_Solid(font, title, strlen(title), titleColor);
+  // TODO move in onEnter
+  SDL_Surface* titleSurface = TTF_RenderText_Solid(font, title, 0, titleColor);
   if (titleSurface) {
     SDL_Texture* titleTexture = SDL_CreateTextureFromSurface(getRenderer(), titleSurface);
     if (titleTexture) {
       SDL_FRect titleRect = {
-        400 - titleSurface->w / 2.0f,  // Center horizontally (assuming 800px window)
-        100,  // Top of screen
+        400 - titleSurface->w / 2.0f,
+        100,
         (float)titleSurface->w,
         (float)titleSurface->h
       };

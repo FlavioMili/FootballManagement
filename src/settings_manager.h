@@ -1,0 +1,30 @@
+#pragma once
+#include "global.h"
+#include <string>
+#include <SDL3/SDL.h>
+
+struct Settings {
+  Language language = Language::EN;
+  int resolution_width = 1280;
+  int resolution_height = 720;
+  bool fullscreen = false;
+  int fps_limit = 60;
+};
+
+class SettingsManager {
+ public:
+  static SettingsManager& instance();
+
+  void load();
+  void save() const;
+  void apply(SDL_Window* window);
+
+  Settings& get() { return settings_; }
+  const Settings& get() const { return settings_; }
+
+ private:
+  SettingsManager();
+
+  Settings settings_;
+  std::string configFile_;
+};

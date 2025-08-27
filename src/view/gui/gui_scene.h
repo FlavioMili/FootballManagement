@@ -9,7 +9,7 @@ enum class SceneID { MAIN_MENU, SETTINGS, GAME_MENU, };
 class GUIScene {
  public:
   GUIScene(GUIView* guiView);
-  virtual ~GUIScene();
+  virtual ~GUIScene() = default;
 
   // Core scene interface - must be implemented by derived classes
   virtual void handleEvent(const SDL_Event& event) = 0;
@@ -24,6 +24,7 @@ class GUIScene {
   * This function might be used to check what we are rendering.
   * we would simply do something like this: 
   * MainMenuScene::getID() { return SceneID::MAIN_MENU; }
+  * TODO : remove or not?
   */
   virtual SceneID getID() const = 0;
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <string>
 #include <vector>
 #include <functional>
 
@@ -20,7 +21,7 @@ struct Button {
   SDL_FRect rect {};
   SDL_Texture* textTexture = nullptr;
   SDL_FRect textRect{};
-  const char* label;
+  std::string label;
   std::function<void()> onClick;
   bool isHovered = false;
   bool isVisible = true;
@@ -33,11 +34,12 @@ class ButtonManager {
   ButtonManager(SDL_Renderer* renderer, TTF_Font* font);
   ~ButtonManager();
 
+  int getButtonCount() { return buttons.size(); }
   // Button creation and management
-  int addButton(const SDL_FRect& rect, const char* label,
+  int addButton(const SDL_FRect& rect, const std::string label,
                 std::function<void()> callback);
   int addButton(float x, float y, float w, float h,
-                const char* label, std::function<void()> callback);
+                const std::string label, std::function<void()> callback);
 
   void addOrderedButtons(const OrderedButtons& ordered);
 
@@ -48,7 +50,7 @@ class ButtonManager {
   void setButtonStyle(int buttonId, const ButtonStyle& style);
   void setButtonVisible(int buttonId, bool visible);
   void setButtonEnabled(int buttonId, bool enabled);
-  void setButtonText(int buttonId, const char* text);
+  void setButtonText(int buttonId, const std::string text);
 
   // Event handling
   void handleMouseMove(float x, float y);
@@ -73,70 +75,71 @@ class ButtonManager {
   int nextButtonId = 0;
 };
 
-class OrderedButtons {
- public:
-  OrderedButtons(int padding = 30, int startingX = 100, int startingY = 100, 
-                 float width = 30, float height = 100, 
-                 ButtonStyle style = ButtonStyle())
-    : padding(padding), startingX(startingX), 
-    startingY(startingY), width(width), height(height), style(style) {}
-
-  // Base virtual function
-  virtual void addButton(const char* text, std::function<void()> callback) {
-    // Base class does nothing
-    (void) text; (void) callback;
-  }
-
-  const std::vector<Button>& getButtons() const { return buttons; }
-
- protected:
-  int padding;
-  int startingX, startingY;
-  float width, height;
-  ButtonStyle style;
-  std::vector<Button> buttons;
-};
-
-// Vertical buttons stack
-class VerticalButtons : public OrderedButtons {
- public:
-  VerticalButtons(int padding = 30, int startingX = 100,
-                  int startingY = 100, float width = 60, float height = 30, 
-                  ButtonStyle style = ButtonStyle())
-  : OrderedButtons(padding, startingX, startingY, width, height, style) {}
-
-  void addButton(const char* text, std::function<void()> callback) override {
-    float y = startingY;
-    if (!buttons.empty())
-      y = buttons.back().rect.y + buttons.back().rect.h + padding;
-
-    Button btn;
-    btn.label = text;
-    btn.rect = { static_cast<float>(startingX), y, width, height };
-    btn.onClick = callback;
-    btn.style = style;
-    buttons.push_back(btn);
-  }
-};
-
-// Horizontal buttons stack
-class HorizontalButtons : public OrderedButtons {
- public:
-  HorizontalButtons(int padding = 30, int startingX = 100,
-                    int startingY = 100, float width = 60, float height = 30, 
-                    ButtonStyle style = ButtonStyle())
-  : OrderedButtons(padding, startingX, startingY, width, height, style) {}
-
-  void addButton(const char* text, std::function<void()> callback) override {
-    float x = startingX;
-    if (!buttons.empty())
-      x = buttons.back().rect.x + buttons.back().rect.w + padding;
-
-    Button btn;
-    btn.label = text;
-    btn.rect = { x, static_cast<float>(startingY), width, height };
-    btn.onClick = callback;
-    btn.style = style;
-    buttons.push_back(btn);
-  }
-};
+// TODO remove?
+// class OrderedButtons {
+//  public:
+//   OrderedButtons(int padding = 30, int startingX = 100, int startingY = 100, 
+//                  float width = 30, float height = 100, 
+//                  ButtonStyle style = ButtonStyle())
+//     : padding(padding), startingX(startingX), 
+//     startingY(startingY), width(width), height(height), style(style) {}
+//
+//   // Base virtual function
+//   virtual void addButton(const std::string text, std::function<void()> callback) {
+//     // Base class does nothing
+//     (void) text; (void) callback;
+//   }
+//
+//   const std::vector<Button>& getButtons() const { return buttons; }
+//
+//  protected:
+//   int padding;
+//   int startingX, startingY;
+//   float width, height;
+//   ButtonStyle style;
+//   std::vector<Button> buttons;
+// };
+//
+// // Vertical buttons stack
+// class VerticalButtons : public OrderedButtons {
+//  public:
+//   VerticalButtons(int padding = 30, int startingX = 100,
+//                   int startingY = 100, float width = 60, float height = 30, 
+//                   ButtonStyle style = ButtonStyle())
+//   : OrderedButtons(padding, startingX, startingY, width, height, style) {}
+//
+//   void addButton(const std::string text, std::function<void()> callback) override {
+//     float y = startingY;
+//     if (!buttons.empty())
+//       y = buttons.back().rect.y + buttons.back().rect.h + padding;
+//
+//     Button btn;
+//     btn.label = text;
+//     btn.rect = { static_cast<float>(startingX), y, width, height };
+//     btn.onClick = callback;
+//     btn.style = style;
+//     buttons.push_back(btn);
+//   }
+// };
+//
+// // Horizontal buttons stack
+// class HorizontalButtons : public OrderedButtons {
+//  public:
+//   HorizontalButtons(int padding = 30, int startingX = 100,
+//                     int startingY = 100, float width = 60, float height = 30, 
+//                     ButtonStyle style = ButtonStyle())
+//   : OrderedButtons(padding, startingX, startingY, width, height, style) {}
+//
+//   void addButton(const std::string text, std::function<void()> callback) override {
+//     float x = startingX;
+//     if (!buttons.empty())
+//       x = buttons.back().rect.x + buttons.back().rect.w + padding;
+//
+//     Button btn;
+//     btn.label = text;
+//     btn.rect = { x, static_cast<float>(startingY), width, height };
+//     btn.onClick = callback;
+//     btn.style = style;
+//     buttons.push_back(btn);
+//   }
+// };

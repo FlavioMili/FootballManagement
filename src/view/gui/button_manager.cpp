@@ -6,15 +6,15 @@ ButtonManager::ButtonManager(SDL_Renderer* renderer, TTF_Font* font)
 }
 
 ButtonManager::~ButtonManager() {
-    for (auto& btn : buttons) {
-        if (btn.textTexture) {
-            SDL_DestroyTexture(btn.textTexture);
-            btn.textTexture = nullptr;
-        }
+  for (auto& btn : buttons) {
+    if (btn.textTexture) {
+      SDL_DestroyTexture(btn.textTexture);
+      btn.textTexture = nullptr;
     }
+  }
 }
 
-int ButtonManager::addButton(const SDL_FRect& rect, const char* label, std::function<void()> callback) {
+int ButtonManager::addButton(const SDL_FRect& rect, const std::string label, std::function<void()> callback) {
   Button button;
   button.rect = rect;
   button.label = label;
@@ -28,7 +28,7 @@ int ButtonManager::addButton(const SDL_FRect& rect, const char* label, std::func
   return button.id;
 }
 
-int ButtonManager::addButton(float x, float y, float w, float h, const char* label, std::function<void()> callback) {
+int ButtonManager::addButton(float x, float y, float w, float h, const std::string label, std::function<void()> callback) {
   return addButton({x, y, w, h}, label, callback);
 }
 
@@ -60,7 +60,7 @@ void ButtonManager::setButtonVisible(int buttonId, bool visible) {
   }
 }
 
-void ButtonManager::setButtonText(int buttonId, const char* text) {
+void ButtonManager::setButtonText(int buttonId, const std::string text) {
   auto it = std::find_if(buttons.begin(), buttons.end(),
                          [buttonId](Button& btn) { return btn.id == buttonId; });
   if (it != buttons.end()) {
@@ -130,7 +130,7 @@ void ButtonManager::createButtonTexture(Button& btn) {
   if (btn.textTexture) SDL_DestroyTexture(btn.textTexture);
 
   SDL_Color color = btn.style.textColor;
-  SDL_Surface* surf = TTF_RenderText_Blended(font, btn.label, strlen(btn.label), color);
+  SDL_Surface* surf = TTF_RenderText_Blended(font, btn.label.c_str(), 0, color);
   if (!surf) return;
 
   btn.textTexture = SDL_CreateTextureFromSurface(renderer, surf);
@@ -143,8 +143,9 @@ void ButtonManager::createButtonTexture(Button& btn) {
   SDL_DestroySurface(surf);
 }
 
-void ButtonManager::addOrderedButtons(const OrderedButtons& ordered) {
-  for (auto& btn : ordered.getButtons()) {
-    addButton(btn.rect, btn.label, btn.onClick);
-  }
-}
+// TODO remove?
+// void ButtonManager::addOrderedButtons(const OrderedButtons& ordered) {
+//   for (auto& btn : ordered.getButtons()) {
+//     addButton(btn.rect, btn.label, btn.onClick);
+//   }
+// }

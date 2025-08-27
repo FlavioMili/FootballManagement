@@ -4,9 +4,6 @@
 GUIScene::GUIScene(GUIView* guiView) : guiView(guiView) {
 }
 
-GUIScene::~GUIScene() {
-}
-
 void GUIScene::onEnter() {
   // Default implementation - can be overridden by derived classes
 }
