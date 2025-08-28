@@ -18,7 +18,8 @@ enum ButtonIndex {
   QUIT_BUTTON = 3,
 };
 
-MainMenuScene::MainMenuScene(GUIView* guiView) : GUIScene(guiView), font(nullptr) {}
+MainMenuScene::MainMenuScene(GUIView* guiView) 
+    : GUIScene(guiView), font(nullptr), titleTexture(nullptr), titleRect({}) {}
 
 void MainMenuScene::onEnter() {
   if (!TTF_WasInit() && !TTF_Init()) {
@@ -29,6 +30,20 @@ void MainMenuScene::onEnter() {
   font = TTF_OpenFont("assets/fonts/font.ttf", 28);
   if (!font) {
     std::cerr << "Failed to load font: " << SDL_GetError() << std::endl;
+  }
+
+  const char* title = "Football Management";
+  SDL_Color titleColor = {255, 255, 100, 255};
+  SDL_Surface* titleSurface = TTF_RenderText_Solid(font, title, 0, titleColor);
+  if (titleSurface) {
+    titleTexture = SDL_CreateTextureFromSurface(getRenderer(), titleSurface);
+    titleRect = {
+      400.0f - titleSurface->w / 2.0f,
+      100.0f,
+      static_cast<float>(titleSurface->w),
+      static_cast<float>(titleSurface->h)
+    };
+    SDL_DestroySurface(titleSurface);
   }
 
   buttonManager = std::make_unique<ButtonManager>(getRenderer(), font);
@@ -59,6 +74,8 @@ void MainMenuScene::onEnter() {
   buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Quit game", [this]() {
     handleButtonClick(QUIT_BUTTON);
   });
+
+  if (buttonManager) buttonManager->recreateTextures();
 }
 
 void MainMenuScene::handleEvent(const SDL_Event& event) {
@@ -99,6 +116,10 @@ void MainMenuScene::render() {
 }
 
 void MainMenuScene::onExit() {
+  if (titleTexture) {
+    SDL_DestroyTexture(titleTexture);
+    titleTexture = nullptr;
+  }
   if (font) {
     TTF_CloseFont(font);
     font = nullptr;
@@ -127,26 +148,7 @@ void MainMenuScene::handleButtonClick(int buttonIndex) {
 }
 
 void MainMenuScene::renderTitle() {
-  if (!font) return;
-
-  const char* title = "Football Management";
-  SDL_Color titleColor = {255, 255, 100, 255};
-
-  // TODO move in onEnter
-  SDL_Surface* titleSurface = TTF_RenderText_Solid(font, title, 0, titleColor);
-  if (titleSurface) {
-    SDL_Texture* titleTexture = SDL_CreateTextureFromSurface(getRenderer(), titleSurface);
-    if (titleTexture) {
-      SDL_FRect titleRect = {
-        400 - titleSurface->w / 2.0f,
-        100,
-        (float)titleSurface->w,
-        (float)titleSurface->h
-      };
-
-      SDL_RenderTexture(getRenderer(), titleTexture, nullptr, &titleRect);
-      SDL_DestroyTexture(titleTexture);
-    }
-    SDL_DestroySurface(titleSurface);
+  if (titleTexture) {
+    SDL_RenderTexture(getRenderer(), titleTexture, nullptr, &titleRect);
   }
 }

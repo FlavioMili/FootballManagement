@@ -116,14 +116,14 @@ void SettingsScene::update(float deltaTime) {
 }
 
 void SettingsScene::render() {
-  SDL_SetRenderDrawColor(getRenderer(), 20, 40, 60, 255);
+  // SDL_SetRenderDrawColor(getRenderer(), 20, 40, 60, 255);
   SDL_RenderClear(getRenderer());
 
   // Draw box
   SDL_FRect settingsBox = {200, 150, 400, 350};
-  SDL_SetRenderDrawColor(getRenderer(), 60, 80, 100, 255);
+  // SDL_SetRenderDrawColor(getRenderer(), 60, 80, 100, 255);
   SDL_RenderFillRect(getRenderer(), &settingsBox);
-  SDL_SetRenderDrawColor(getRenderer(), 100, 120, 140, 255);
+  // SDL_SetRenderDrawColor(getRenderer(), 100, 120, 140, 255);
   SDL_RenderRect(getRenderer(), &settingsBox);
 
   renderText("SETTINGS", 400, 170, {255, 255, 100, 255});

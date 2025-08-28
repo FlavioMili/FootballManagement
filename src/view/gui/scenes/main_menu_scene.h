@@ -25,5 +25,8 @@ class MainMenuScene : public GUIScene {
   void renderTitle();
 
   std::unique_ptr<ButtonManager> buttonManager;
+
   TTF_Font* font;
+  SDL_Texture* titleTexture;
+  SDL_FRect titleRect;
 };

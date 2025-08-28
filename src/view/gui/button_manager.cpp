@@ -116,8 +116,7 @@ void ButtonManager::renderButton(const Button& btn) {
     SDL_RenderRect(renderer, &btn.rect);
   }
 
-  if (btn.textTexture)
-    SDL_RenderTexture(renderer, btn.textTexture, nullptr, &btn.textRect);
+  if (btn.textTexture) SDL_RenderTexture(renderer, btn.textTexture, nullptr, &btn.textRect);
 }
 
 bool ButtonManager::isPointInButton(float x, float y, const Button& button) const {
@@ -143,9 +142,14 @@ void ButtonManager::createButtonTexture(Button& btn) {
   SDL_DestroySurface(surf);
 }
 
+void ButtonManager::recreateTextures() {
+  for (auto& b: buttons) createButtonTexture(b);
+}
+
 // TODO remove?
 // void ButtonManager::addOrderedButtons(const OrderedButtons& ordered) {
 //   for (auto& btn : ordered.getButtons()) {
 //     addButton(btn.rect, btn.label, btn.onClick);
 //   }
 // }
+//

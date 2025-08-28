@@ -63,6 +63,9 @@ class ButtonManager {
   void setFont(TTF_Font* font) { this->font = font; }
   void setDefaultStyle(const ButtonStyle& style) { defaultStyle = style; }
 
+  const std::vector<Button> getButtons() { return buttons; }
+  void recreateTextures();
+
  private:
   void renderButton(const Button& button);
   bool isPointInButton(float x, float y, const Button& button) const;
