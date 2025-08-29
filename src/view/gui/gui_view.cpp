@@ -2,6 +2,7 @@
 #include "settings_manager.h"
 #include "view/gui/gui_scene.h"
 #include "controller/game_controller.h"
+#include "view/gui/scenes/main_menu_scene.h"
 #include <iostream>
 #include <stack>
 
@@ -48,8 +49,12 @@ bool GUIView::initialize() {
 
   SettingsManager::instance()->load();
   SettingsManager::instance()->apply(window);
-  // Enable blending for transparency
+
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+  auto mainMenuScene = std::make_unique<MainMenuScene>(this);
+  changeScene(std::move(mainMenuScene));
+
   return true;
 }
 
@@ -166,9 +171,9 @@ SDL_Window* GUIView::getWindow() const {
   return window;
 }
 
+// Return the topmost scene 
+// (overlay if exists, otherwise current scene)
 GUIScene* GUIView::getActiveScene() const {
-  // Return the topmost scene 
-  // (overlay if exists, otherwise current scene)
   if (!sceneStack.empty()) {
     return sceneStack.top().get();
   }

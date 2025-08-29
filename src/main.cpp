@@ -15,8 +15,6 @@ int main() {
 
     // CliView view(controller);
     GUIView view(controller);
-    auto mainMenuScene = std::make_unique<MainMenuScene>(&view);
-    view.changeScene(std::move(mainMenuScene));
     view.run();
     controller.saveGame();
     db.close();

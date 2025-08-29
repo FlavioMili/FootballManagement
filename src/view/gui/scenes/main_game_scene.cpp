@@ -55,8 +55,8 @@ void MainGameScene::update(float deltaTime) {
 
 void MainGameScene::render() {
   // Clear screen with game background color
-  SDL_SetRenderDrawColor(getRenderer(), 10, 50, 10, 255);  // Dark green
   SDL_RenderClear(getRenderer());
+  SDL_SetRenderDrawColor(getRenderer(), 10, 50, 10, 255);  // Dark green
 
   // Draw main game area
   SDL_FRect gameArea = {50, 50, 700, 450};

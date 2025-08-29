@@ -11,7 +11,7 @@ public:
   GUIView(GameController& controller);
   ~GUIView();
 
-  // Starts the scene run
+  /* Starts the scene run */
   void run();
 
   /*
