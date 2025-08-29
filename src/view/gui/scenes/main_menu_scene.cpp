@@ -75,7 +75,7 @@ void MainMenuScene::onEnter() {
     handleButtonClick(QUIT_BUTTON);
   });
 
-  if (buttonManager) buttonManager->recreateTextures();
+  // if (buttonManager) buttonManager->recreateTextures();
 }
 
 void MainMenuScene::handleEvent(const SDL_Event& event) {

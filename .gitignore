@@ -6,3 +6,4 @@ game_state.json
 football_management.db*
 reports*
 heaptrack*
+assets/config/settings.json

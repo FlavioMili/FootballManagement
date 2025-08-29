@@ -1,4 +1,5 @@
 #include "view/gui/gui_view.h"
+#include "settings_manager.h"
 #include "view/gui/gui_scene.h"
 #include "controller/game_controller.h"
 #include <iostream>
@@ -45,6 +46,8 @@ bool GUIView::initialize() {
     return false;
   }
 
+  SettingsManager::instance()->load();
+  SettingsManager::instance()->apply(window);
   // Enable blending for transparency
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
   return true;
@@ -101,7 +104,7 @@ void GUIView::update(float deltaTime) {
 
 void GUIView::render() {
   // Clear screen with dark background
-  SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
+  // SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
   SDL_RenderClear(renderer);
 
   // Render only the active scene 

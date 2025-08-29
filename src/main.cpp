@@ -1,5 +1,6 @@
 #include <iostream>
 #include "controller/game_controller.h"
+#include "settings_manager.h"
 #include "view/gui/gui_view.h"
 #include "view/gui/scenes/main_menu_scene.h"
 #include "database/database.h"

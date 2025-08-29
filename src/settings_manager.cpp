@@ -9,8 +9,8 @@ SettingsManager::SettingsManager() {
   configFile_ = "assets/config/settings.json";
 }
 
-SettingsManager& SettingsManager::instance() {
-  static SettingsManager instance;
+SettingsManager* SettingsManager::instance() {
+  static SettingsManager* instance = new SettingsManager();
   return instance;
 }
 
@@ -42,7 +42,7 @@ void SettingsManager::save() const {
   j["fps_limit"]  = settings_.fps_limit;
 
   std::ofstream out(configFile_);
-  out << j.dump(4);
+  out << j.dump(2);
 }
 
 void SettingsManager::apply(SDL_Window* window) {

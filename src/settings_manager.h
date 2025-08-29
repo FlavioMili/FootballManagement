@@ -13,7 +13,7 @@ struct Settings {
 
 class SettingsManager {
  public:
-  static SettingsManager& instance();
+  static SettingsManager* instance();
 
   void load();
   void save() const;
@@ -21,6 +21,10 @@ class SettingsManager {
 
   Settings& get() { return settings_; }
   const Settings& get() const { return settings_; }
+
+  // TODO This is pretty horrible 
+  // check /src/view/gui/scenes/settings_scene.cpp
+  Settings& getSettings() { return settings_; }
 
  private:
   SettingsManager();

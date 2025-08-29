@@ -14,7 +14,8 @@ ButtonManager::~ButtonManager() {
   }
 }
 
-int ButtonManager::addButton(const SDL_FRect& rect, const std::string label, std::function<void()> callback) {
+int ButtonManager::addButton(const SDL_FRect& rect, const std::string label,
+                             std::function<void()> callback) {
   Button button;
   button.rect = rect;
   button.label = label;
@@ -28,8 +29,30 @@ int ButtonManager::addButton(const SDL_FRect& rect, const std::string label, std
   return button.id;
 }
 
-int ButtonManager::addButton(float x, float y, float w, float h, const std::string label, std::function<void()> callback) {
+int ButtonManager::addButton(const SDL_FRect& rect, const std::string label,
+                             ButtonStyle style, std::function<void()> callback) {
+  Button button;
+  button.rect = rect;
+  button.label = label;
+  button.onClick = callback;
+  button.style = defaultStyle;
+  button.id = nextButtonId++;
+  button.style = style;
+
+  createButtonTexture(button);
+
+  buttons.push_back(button);
+  return button.id;
+}
+
+int ButtonManager::addButton(float x, float y, float w, float h, const std::string label,
+                             std::function<void()> callback) {
   return addButton({x, y, w, h}, label, callback);
+}
+
+int ButtonManager::addButton(float x, float y, float w, float h, const std::string label,
+                             ButtonStyle style, std::function<void()> callback) {
+  return addButton({x, y, w, h}, label, style, callback);
 }
 
 void ButtonManager::removeButton(int buttonId) {
@@ -145,11 +168,3 @@ void ButtonManager::createButtonTexture(Button& btn) {
 void ButtonManager::recreateTextures() {
   for (auto& b: buttons) createButtonTexture(b);
 }
-
-// TODO remove?
-// void ButtonManager::addOrderedButtons(const OrderedButtons& ordered) {
-//   for (auto& btn : ordered.getButtons()) {
-//     addButton(btn.rect, btn.label, btn.onClick);
-//   }
-// }
-//
