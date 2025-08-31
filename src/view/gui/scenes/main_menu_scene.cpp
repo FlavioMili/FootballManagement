@@ -27,55 +27,16 @@ void MainMenuScene::onEnter() {
     return;
   }
 
-  font = TTF_OpenFont("assets/fonts/font.ttf", 28);
+  font = TTF_OpenFont("assets/fonts/font.ttf", 32);
   if (!font) {
     std::cerr << "Failed to load font: " << SDL_GetError() << std::endl;
-  }
-
-  const char* title = "Football Management";
-  SDL_Color titleColor = {255, 255, 100, 255};
-  SDL_Surface* titleSurface = TTF_RenderText_Solid(font, title, 0, titleColor);
-  if (titleSurface) {
-    titleTexture = SDL_CreateTextureFromSurface(getRenderer(), titleSurface);
-    titleRect = {
-      400.0f - titleSurface->w / 2.0f,
-      100.0f,
-      static_cast<float>(titleSurface->w),
-      static_cast<float>(titleSurface->h)
-    };
-    SDL_DestroySurface(titleSurface);
+    return;
   }
 
   buttonManager = std::make_unique<ButtonManager>(getRenderer(), font);
-
-  // Button layout parameters
-  float btnWidth = 200.0f;
-  float btnHeight = 60.0f;
-  float startX = 300.0f;
-  float startY = 200.0f;
-  float padding = 30.0f;
-  float currentY = startY;
-
-  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "New game", [this]() {
-    handleButtonClick(NEW_GAME_BUTTON);
-  });
-  currentY += btnHeight + padding;
-
-  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Load game", [this]() {
-    handleButtonClick(LOAD_GAME_BUTTON);
-  });
-  currentY += btnHeight + padding;
-
-  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Settings", [this]() {
-    handleButtonClick(SETTINGS_BUTTON);
-  });
-  currentY += btnHeight + padding;
-
-  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Quit game", [this]() {
-    handleButtonClick(QUIT_BUTTON);
-  });
-
-  // if (buttonManager) buttonManager->recreateTextures();
+  
+  createStaticContent();
+  updateLayout();
 }
 
 void MainMenuScene::handleEvent(const SDL_Event& event) {
@@ -87,6 +48,9 @@ void MainMenuScene::handleEvent(const SDL_Event& event) {
       if (buttonManager->handleMouseClick(event.button.x, event.button.y)) {
         return;
       }
+    }
+    if (event.type == SDL_EVENT_WINDOW_RESIZED) {
+      updateLayout();
     }
   }
 
@@ -100,6 +64,70 @@ void MainMenuScene::handleEvent(const SDL_Event& event) {
         break;
     }
   }
+}
+
+void MainMenuScene::createStaticContent() {
+  if (!buttonManager || !font) return;
+
+  const char* title = "Football Management";
+  SDL_Color titleColor = {255, 255, 100, 255};
+  SDL_Surface* titleSurface = TTF_RenderText_Solid(font, title, 0, titleColor);
+  
+  if (titleSurface) {
+    titleTexture = SDL_CreateTextureFromSurface(getRenderer(), titleSurface);
+    if (!titleTexture) {
+      std::cerr << "Failed to create title texture: " << SDL_GetError() << std::endl;
+    }
+    SDL_DestroySurface(titleSurface);
+  }
+
+  buttonManager->addButton({0, 0, 200, 60}, "New game", [this]() {
+    handleButtonClick(NEW_GAME_BUTTON);
+  });
+
+  buttonManager->addButton({0, 0, 200, 60}, "Load game", [this]() {
+    handleButtonClick(LOAD_GAME_BUTTON);
+  });
+
+  buttonManager->addButton({0, 0, 200, 60}, "Settings", [this]() {
+    handleButtonClick(SETTINGS_BUTTON);
+  });
+
+  buttonManager->addButton({0, 0, 200, 60}, "Quit game", [this]() {
+    handleButtonClick(QUIT_BUTTON);
+  });
+}
+
+void MainMenuScene::updateLayout() {
+  if (!buttonManager) return;
+
+  int w, h;
+  SDL_GetWindowSizeInPixels(guiView->getWindow(), &w, &h);
+
+  // Update title position
+  if (titleTexture) {
+    float titleW, titleH;
+    if (SDL_GetTextureSize(titleTexture, &titleW, &titleH)) {
+      titleRect = {
+        static_cast<float>(w)/2 - titleW / 2.0f,
+        100.0f,
+        static_cast<float>(titleW),
+        static_cast<float>(titleH)
+      };
+    }
+  }
+
+  // Update button positions
+  float btnWidth = 200.0f;
+  float btnHeight = 60.0f;
+  float startX = static_cast<float>(w)/2 - btnWidth/2;
+  float startY = 200.0f;
+  float padding = 30.0f;
+
+  buttonManager->updateButtonPosition(0, {startX, startY, btnWidth, btnHeight});
+  buttonManager->updateButtonPosition(1, {startX, startY + (btnHeight + padding), btnWidth, btnHeight});
+  buttonManager->updateButtonPosition(2, {startX, startY + 2 * (btnHeight + padding), btnWidth, btnHeight});
+  buttonManager->updateButtonPosition(3, {startX, startY + 3 * (btnHeight + padding), btnWidth, btnHeight});
 }
 
 void MainMenuScene::update(float deltaTime) {
@@ -151,4 +179,59 @@ void MainMenuScene::renderTitle() {
   if (titleTexture) {
     SDL_RenderTexture(getRenderer(), titleTexture, nullptr, &titleRect);
   }
+}
+
+void MainMenuScene::make_scene() {
+  if (!buttonManager) return;
+  buttonManager->clearButtons();
+
+  if (titleTexture) {
+    SDL_DestroyTexture(titleTexture);
+    titleTexture = nullptr;
+  }
+
+  int w, h;
+  SDL_GetWindowSizeInPixels(guiView->getWindow(), &w, &h);
+
+  const char* title = "Football Management";
+  SDL_Color titleColor = {255, 255, 100, 255};
+  SDL_Surface* titleSurface = TTF_RenderText_Solid(font, title, 0, titleColor);
+  if (titleSurface) {
+    titleTexture = SDL_CreateTextureFromSurface(getRenderer(), titleSurface);
+    titleRect = {
+      static_cast<float>(w)/2 - titleSurface->w / 2.0f,
+      100.0f,
+      static_cast<float>(titleSurface->w),
+      static_cast<float>(titleSurface->h)
+    };
+    SDL_DestroySurface(titleSurface);
+  }
+
+  // Button layout parameters
+  float btnWidth = 200.0f;
+  float btnHeight = 60.0f;
+  float startX = static_cast<float>(w)/2 - btnWidth/2;
+  float startY = 200.0f;
+  float padding = 30.0f;
+  float currentY = startY;
+
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "New game", [this]() {
+    handleButtonClick(NEW_GAME_BUTTON);
+  });
+  currentY += btnHeight + padding;
+
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Load game", [this]() {
+    handleButtonClick(LOAD_GAME_BUTTON);
+  });
+  currentY += btnHeight + padding;
+
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Settings", [this]() {
+    handleButtonClick(SETTINGS_BUTTON);
+  });
+  currentY += btnHeight + padding;
+
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Quit game", [this]() {
+    handleButtonClick(QUIT_BUTTON);
+  });
+
 }

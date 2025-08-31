@@ -23,6 +23,9 @@ class MainMenuScene : public GUIScene {
   // Helper methods
   void handleButtonClick(int buttonIndex);
   void renderTitle();
+  void createStaticContent();
+  void updateLayout();
+  void make_scene();
 
   std::unique_ptr<ButtonManager> buttonManager;
 

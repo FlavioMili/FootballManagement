@@ -5,8 +5,6 @@
 #include <vector>
 #include <functional>
 
-class OrderedButtons;
-
 struct ButtonStyle {
   SDL_Color backgroundColor = {70, 70, 150, 255};
   SDL_Color borderColor = {100, 100, 200, 255};
@@ -46,8 +44,6 @@ class ButtonManager {
   int addButton(float x, float y, float w, float h, const std::string label,
                 ButtonStyle style, std::function<void()> callback);
 
-  void addOrderedButtons(const OrderedButtons& ordered);
-
   void removeButton(int buttonId);
   void clearButtons();
 
@@ -70,6 +66,7 @@ class ButtonManager {
 
   const std::vector<Button> getButtons() { return buttons; }
   void recreateTextures();
+  void updateButtonPosition(int buttonIndex, SDL_FRect newRect);
 
  private:
   void renderButton(const Button& button);

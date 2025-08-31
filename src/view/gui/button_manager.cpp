@@ -64,6 +64,11 @@ void ButtonManager::removeButton(int buttonId) {
 }
 
 void ButtonManager::clearButtons() {
+  for (auto& button : buttons) {
+    if (button.textTexture) {
+      SDL_DestroyTexture(button.textTexture);
+    }
+  }
   buttons.clear();
 }
 
@@ -139,7 +144,19 @@ void ButtonManager::renderButton(const Button& btn) {
     SDL_RenderRect(renderer, &btn.rect);
   }
 
-  if (btn.textTexture) SDL_RenderTexture(renderer, btn.textTexture, nullptr, &btn.textRect);
+  if (btn.textTexture) {
+    float textW, textH;
+    SDL_GetTextureSize(btn.textTexture, &textW, &textH);
+    
+    SDL_FRect dynamicTextRect = {
+      btn.rect.x + (btn.rect.w - textW) / 2.0f,
+      btn.rect.y + (btn.rect.h - textH) / 2.0f,
+      static_cast<float>(textW),
+      static_cast<float>(textH)
+    };
+    
+    SDL_RenderTexture(renderer, btn.textTexture, nullptr, &dynamicTextRect);
+  }
 }
 
 bool ButtonManager::isPointInButton(float x, float y, const Button& button) const {
@@ -167,4 +184,26 @@ void ButtonManager::createButtonTexture(Button& btn) {
 
 void ButtonManager::recreateTextures() {
   for (auto& b: buttons) createButtonTexture(b);
+}
+
+void ButtonManager::updateButtonPosition(int buttonIndex, SDL_FRect newRect) {
+  if (buttonIndex < 0 || buttonIndex >= static_cast<int>(buttons.size())) {
+    return;
+  }
+
+  Button& btn = buttons[buttonIndex];
+  btn.rect = newRect;
+
+  // I think this can be removed because now it is managed in the render
+  // if (btn.textTexture) {
+  //   float textW, textH;
+  //   if (SDL_GetTextureSize(btn.textTexture, &textW, &textH) == 0) {
+  //     btn.textRect = {
+  //       btn.rect.x + (btn.rect.w - textW) / 2.0f,
+  //       btn.rect.y + (btn.rect.h - textH) / 2.0f,
+  //       static_cast<float>(textW),
+  //       static_cast<float>(textH)
+  //     };
+  //   }
+  // }
 }
