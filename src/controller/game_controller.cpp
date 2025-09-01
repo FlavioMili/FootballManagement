@@ -1,3 +1,11 @@
+// -----------------------------------------------------------------------------
+//  Football Management Project
+//  Copyright (c) 2025 Flavio Milinanni. All Rights Reserved.
+//
+//  This file is part of the Football Management Project.
+//  See the LICENSE file in the project root.
+// -----------------------------------------------------------------------------
+
 #include "game_controller.h"
 
 GameController::GameController(Game& game) : game(game) {}

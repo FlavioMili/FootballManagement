@@ -1,3 +1,11 @@
+// -----------------------------------------------------------------------------
+//  Football Management Project
+//  Copyright (c) 2025 Flavio Milinanni. All Rights Reserved.
+//
+//  This file is part of the Football Management Project.
+//  See the LICENSE file in the project root.
+// -----------------------------------------------------------------------------
+
 #include "view/gui/button_manager.h"
 #include "view/gui/scenes/main_menu_scene.h"
 #include "view/gui/gui_scene.h"
