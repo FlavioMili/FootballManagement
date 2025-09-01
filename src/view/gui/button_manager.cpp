@@ -102,6 +102,7 @@ void ButtonManager::setButtonText(int buttonId, const std::string& text) {
                          [buttonId](Button& btn) { return btn.id == buttonId; });
   if (it != buttons.end()) {
     it->label = text;
+    createButtonTexture(*it);
   }
 }
 
@@ -137,11 +138,14 @@ void ButtonManager::render() {
 void ButtonManager::renderButton(const Button& btn) {
   if (!btn.isVisible) return;
 
+  SDL_Color bgColor = btn.isHovered 
+    ? btn.style.hoverBackgroundColor 
+    : btn.style.backgroundColor;
   SDL_SetRenderDrawColor(renderer,
-                         btn.style.backgroundColor.r,
-                         btn.style.backgroundColor.g,
-                         btn.style.backgroundColor.b,
-                         btn.style.backgroundColor.a);
+                         bgColor.r,
+                         bgColor.g,
+                         bgColor.b,
+                         bgColor.a);
   SDL_RenderFillRect(renderer, &btn.rect);
 
   if (btn.style.hasBorder) {
@@ -202,17 +206,4 @@ void ButtonManager::updateButtonPosition(int buttonIndex, SDL_FRect newRect) {
 
   Button& btn = buttons[buttonIndex];
   btn.rect = newRect;
-
-  // I think this can be removed because now it is managed in the render
-  // if (btn.textTexture) {
-  //   float textW, textH;
-  //   if (SDL_GetTextureSize(btn.textTexture, &textW, &textH) == 0) {
-  //     btn.textRect = {
-  //       btn.rect.x + (btn.rect.w - textW) / 2.0f,
-  //       btn.rect.y + (btn.rect.h - textH) / 2.0f,
-  //       static_cast<float>(textW),
-  //       static_cast<float>(textH)
-  //     };
-  //   }
-  // }
 }

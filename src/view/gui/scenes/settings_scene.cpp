@@ -10,108 +10,83 @@
 #include "main_menu_scene.h"
 #include "settings_manager.h"
 #include "view/gui/gui_view.h"
-#include <SDL3_ttf/SDL_ttf.h>
+#include "dropdown.h"
 #include <iostream>
 
 SceneID SettingsScene::getID() const { return SceneID::SETTINGS; }
 
-SettingsScene::SettingsScene(GUIView* guiView) :
-  GUIScene(guiView), font(nullptr), fullscreenButtonId(-1)
-{}
+SettingsScene::SettingsScene(GUIView* guiView)
+: GUIScene(guiView), font(nullptr) {}
 
-SettingsScene::~SettingsScene() { 
-  if (font) {
-    TTF_CloseFont(font);
-    font = nullptr;
-  }
+SettingsScene::~SettingsScene() {
+  // unique_ptrs and onExit
+  // will handle cleanup
 }
 
 void SettingsScene::onEnter() {
-  if (!TTF_WasInit() && !TTF_Init()) {
-    std::cerr << "TTF init failed\n";
+  if (!TTF_WasInit() && TTF_Init() != 0) {
+    std::cerr << "TTF_Init() failed: " << SDL_GetError() << "\n";
+    return;
   }
 
-  font = TTF_OpenFont("assets/fonts/font.ttf", 28);
+  font = TTF_OpenFont("assets/fonts/font.ttf", 24);
   if (!font) {
-    std::cerr << "Font load failed\n";
+    std::cerr << "Failed to load font: " << SDL_GetError() << "\n";
+    return;
   }
-
-  // Show current state
-  initializeCurrentSelections();
 
   buttonManager = std::make_unique<ButtonManager>(getRenderer(), font);
 
-  // Define button layout parameters
-  float btnY = 180.0f;
-  float btnPaddingX = 30.0f;
-  float btnPaddingY = 60.0f;
+  for(const auto& [lang, str] : languageToString) { languageOptions.push_back(str); }
+  for(const auto& res : resolutions) { resolutionOptions.push_back(std::to_string(res.first) + "x" + std::to_string(res.second)); }
+  for(const auto& fps : fpsOptions) { fpsOptionsStrings.push_back(std::to_string(fps)); }
 
-  // Language buttons
-  float langX = 250.0f;
-  float langWidth = 120.0f;
-  float langHeight = 40.0f;
-  int langIndex = 0;
-  for (const auto& [lang, str] : languageToString) {
-    ButtonStyle style = (langIndex == selectedLanguage) ? getSelectedButtonStyle() 
-                      : getDefaultButtonStyle();
+  initializeCurrentSelections();
+  createLabelTextures();
 
-    int buttonId = buttonManager->addButton({langX, btnY, langWidth, langHeight},
-                                            str, style, [this, langIndex]() {
-                                            updateLanguageSelection(langIndex); });
+  float dropdownX = 350.0f;
+  float dropdownY = 200.0f;
+  float dropdownW = 300.0f;
+  float dropdownH = 40.0f;
+  float paddingY = 60.0f;
 
-    languageButtonIds.push_back(buttonId);
-    langX += langWidth + btnPaddingX;
-    langIndex++;
-  }
+  languageDropdown = std::make_shared<Dropdown>(getRenderer(), font, 
+                SDL_FRect{dropdownX, dropdownY, dropdownW, dropdownH}, languageOptions);
+  languageDropdown->setSelectedIndex(selectedLanguage);
+  languageDropdown->setOnSelectionChanged([this](int index, const std::string& value)
+                                          { (void)value; selectedLanguage = index; });
 
-  // FPS buttons
-  btnY += btnPaddingY;
-  float fpsX = 250.0f;
-  float fpsWidth = 100.0f;
-  float fpsHeight = 40.0f;
-  for (size_t i = 0; i < fpsOptions.size(); i++) {
-    const std::string fpsText = std::to_string(fpsOptions[i]);
-    ButtonStyle style = (i == (size_t)selectedFPS) ? getSelectedButtonStyle() : getDefaultButtonStyle();
+  dropdownY += paddingY;
+  resolutionDropdown = std::make_shared<Dropdown>(getRenderer(), font, 
+                SDL_FRect{dropdownX, dropdownY, dropdownW, dropdownH}, resolutionOptions);
+  resolutionDropdown->setSelectedIndex(selectedResolution);
+  resolutionDropdown->setOnSelectionChanged([this](int index, const std::string& value)
+                                            { (void)value; selectedResolution = index; });
 
-    int buttonId = buttonManager->addButton({fpsX, btnY, fpsWidth, fpsHeight}, fpsText, style, [this, i]() {
-      updateFPSSelection(i);
-    });
+  dropdownY += paddingY;
+  fpsDropdown = std::make_shared<Dropdown>(getRenderer(), font, 
+                SDL_FRect{dropdownX, dropdownY, dropdownW, dropdownH}, fpsOptionsStrings);
+  fpsDropdown->setSelectedIndex(selectedFPS);
+  fpsDropdown->setOnSelectionChanged([this](int index, const std::string& value)
+                                     { (void)value; selectedFPS = index; });
 
-    fpsButtonIds.push_back(buttonId);
-    fpsX += fpsWidth + btnPaddingX;
-  }
-
-  // Resolution buttons
-  btnY += btnPaddingY;
-  float resX = 250.0f;
-  float resWidth = 160.0f;
-  float resHeight = 40.0f;
-  for (size_t i = 0; i < resolutions.size(); i++) {
-    const std::string resText = std::to_string(resolutions[i].first) + "x" + std::to_string(resolutions[i].second);
-    ButtonStyle style = (i == (size_t)selectedResolution) ? getSelectedButtonStyle() : getDefaultButtonStyle();
-
-    int buttonId = buttonManager->addButton({resX, btnY, resWidth, resHeight}, 
-                                            resText, style, [this, i]() {
-      updateResolutionSelection(i);
-    });
-
-    resolutionButtonIds.push_back(buttonId);
-    resX += resWidth + btnPaddingX;
-  }
-
-  // Fullscreen toggle
-  btnY += btnPaddingY;
+  dropdownY += paddingY + 10.0f;
   std::string fullscreenText = fullscreen ? "Fullscreen: ON" : "Fullscreen: OFF";
-  ButtonStyle fullscreenStyle = fullscreen ? getSelectedButtonStyle() : getDefaultButtonStyle();
+  fullscreenButtonId = buttonManager->addButton(dropdownX, dropdownY, dropdownW, dropdownH, fullscreenText, [this](){
+    fullscreen = !fullscreen;
+    buttonManager->setButtonText(fullscreenButtonId, fullscreen ? "Fullscreen: ON" : "Fullscreen: OFF");
+    buttonManager->setButtonStyle(fullscreenButtonId, fullscreen ? getSelectedButtonStyle() : getDefaultButtonStyle());
+  });
+  buttonManager->setButtonStyle(fullscreenButtonId, fullscreen ? getSelectedButtonStyle() : getDefaultButtonStyle());
 
-  fullscreenButtonId = buttonManager->addButton({250, btnY, 200, 40},
-                                      fullscreenText, fullscreenStyle, [this]() {
-    updateFullscreenToggle();
+  dropdownY += paddingY;
+  float cancelX = 250.0f;
+  float buttonW = 200.0f;
+  buttonManager->addButton(cancelX, dropdownY, buttonW, dropdownH, "Cancel", [this](){
+    changeScene(std::make_unique<MainMenuScene>(guiView));
   });
 
-  // Back/Apply button
-  btnY += btnPaddingY;
-  buttonManager->addButton({250, btnY, 200, 40}, "Apply & Back", [this]() {
+  applyButtonId = buttonManager->addButton(cancelX + buttonW + 20, dropdownY, buttonW, dropdownH, "Apply & Back", [this](){
     applyAndSaveSettings();
   });
 }
@@ -120,102 +95,146 @@ void SettingsScene::initializeCurrentSelections() {
   SettingsManager* settingsManager = SettingsManager::instance();
   const auto& settings = settingsManager->getSettings();
 
-  // Find current language index
   auto itLang = std::find_if(languageToString.begin(), languageToString.end(),
-      [&](const auto& kv) { return static_cast<int>(kv.first) == settings.language; });
+                             [&](const auto& kv) { return static_cast<int>(kv.first) == settings.language; });
+  selectedLanguage = (itLang != languageToString.end()) ? std::distance(languageToString.begin(), itLang) : 0;
 
-  selectedLanguage = (itLang != languageToString.end())
-                       ? std::distance(languageToString.begin(), itLang)
-                       : 0;
-
-  // Find current FPS index
   auto itFps = std::find(fpsOptions.begin(), fpsOptions.end(), settings.fps_limit);
   selectedFPS = (itFps != fpsOptions.end()) ? std::distance(fpsOptions.begin(), itFps) : 0;
 
-  // Find current resolution index
   auto itRes = std::find_if(resolutions.begin(), resolutions.end(),
-                          [&](const auto& r) {
-                          return r.first == settings.resolution_width &&
-                          r.second == settings.resolution_height;
-                          });
+                            [&](const auto& r) { return r.first == settings.resolution_width && r.second == settings.resolution_height; });
   selectedResolution = (itRes != resolutions.end()) ? std::distance(resolutions.begin(), itRes) : 0;
 
   fullscreen = settings.fullscreen;
-}
-
-void SettingsScene::updateLanguageSelection(int newSelection) {
-  if (newSelection == selectedLanguage) return;
-
-  // Update visual selection
-  for (size_t i = 0; i < languageButtonIds.size(); i++) {
-    ButtonStyle style = (i == (size_t)newSelection) ? getSelectedButtonStyle() : getDefaultButtonStyle();
-    buttonManager->setButtonStyle(languageButtonIds[i], style);
-  }
-  selectedLanguage = newSelection;
-}
-
-void SettingsScene::updateFPSSelection(int newSelection) {
-  if (newSelection == selectedFPS) return;
-
-  for (size_t i = 0; i < fpsButtonIds.size(); i++) {
-    ButtonStyle style = (i == (size_t)newSelection) ? getSelectedButtonStyle() : getDefaultButtonStyle();
-    buttonManager->setButtonStyle(fpsButtonIds[i], style);
-  }
-  selectedFPS = newSelection;
-}
-
-void SettingsScene::updateResolutionSelection(int newSelection) {
-  if (newSelection == selectedResolution) return;
-
-  for (size_t i = 0; i < resolutionButtonIds.size(); i++) {
-    ButtonStyle style = (i == (size_t)newSelection) ? getSelectedButtonStyle() : getDefaultButtonStyle();
-    buttonManager->setButtonStyle(resolutionButtonIds[i], style);
-  }
-  selectedResolution = newSelection;
-}
-
-void SettingsScene::updateFullscreenToggle() {
-  fullscreen = !fullscreen;
-  std::string newText = fullscreen ? "Fullscreen: ON" : "Fullscreen: OFF";
-  ButtonStyle newStyle = fullscreen ? getSelectedButtonStyle() : getDefaultButtonStyle();
-
-  if (fullscreenButtonId != -1) {
-    buttonManager->setButtonText(fullscreenButtonId, newText);
-    buttonManager->setButtonStyle(fullscreenButtonId, newStyle);
-  }
 }
 
 void SettingsScene::applyAndSaveSettings() {
   SettingsManager* settingsManager = SettingsManager::instance();
   auto& settings = settingsManager->getSettings();
 
-  // Update language
   auto langIt = languageToString.begin();
   std::advance(langIt, selectedLanguage);
   settings.language = langIt->first;
 
-  // Update FPS
-  if (selectedFPS < (int)fpsOptions.size()) {
-    settings.fps_limit = fpsOptions[selectedFPS];
-  }
-
-  // Update resolution
-  if (selectedResolution < (int)resolutions.size()) {
+  if (selectedFPS >= 0 && selectedFPS < (int)fpsOptions.size()) { settings.fps_limit = fpsOptions[selectedFPS]; }
+  if (selectedResolution >= 0 && selectedResolution < (int)resolutions.size()) {
     settings.resolution_width = resolutions[selectedResolution].first;
     settings.resolution_height = resolutions[selectedResolution].second;
   }
-
   settings.fullscreen = fullscreen;
 
-  // Apply settings to window immediately
   settingsManager->apply(guiView->getWindow());
-
-  // Save to JSON file
   settingsManager->save();
 
-  // Return to main menu
-  auto mainMenu = std::make_unique<MainMenuScene>(guiView);
-  changeScene(std::move(mainMenu));
+  changeScene(std::make_unique<MainMenuScene>(guiView));
+}
+
+void SettingsScene::handleEvent(const SDL_Event& event) {
+  if (buttonManager) {
+    if (event.type == SDL_EVENT_MOUSE_MOTION) {
+      buttonManager->handleMouseMove(event.motion.x, event.motion.y);
+    } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+      if (buttonManager->handleMouseClick(event.button.x, event.button.y)) return;
+    }
+  }
+
+  if (languageDropdown && languageDropdown->handleEvent(event)) {
+    activeDropdown = languageDropdown;
+    resolutionDropdown->close();
+    fpsDropdown->close();
+  } else if (resolutionDropdown && resolutionDropdown->handleEvent(event)) {
+    activeDropdown = resolutionDropdown;
+    languageDropdown->close();
+    fpsDropdown->close();
+  } else if (fpsDropdown && fpsDropdown->handleEvent(event)) {
+    activeDropdown = fpsDropdown;
+    languageDropdown->close();
+    resolutionDropdown->close();
+  } else {
+    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+      activeDropdown = nullptr;
+    }
+  }
+
+  if (event.type == SDL_EVENT_KEY_DOWN && (event.key.key == SDLK_ESCAPE || event.key.key == SDLK_BACKSPACE)) {
+    changeScene(std::make_unique<MainMenuScene>(guiView));
+  }
+}
+
+void SettingsScene::update(float deltaTime) {
+  (void)deltaTime;
+}
+
+void SettingsScene::render() {
+  SDL_SetRenderDrawColor(getRenderer(), 30, 30, 30, 255);
+  SDL_RenderClear(getRenderer());
+
+  if (titleTexture) { SDL_RenderTexture(getRenderer(), titleTexture, nullptr, &titleRect); }
+  if (buttonManager) { buttonManager->render(); }
+
+  if (langLabelTexture) { SDL_RenderTexture(getRenderer(), langLabelTexture, nullptr, &langLabelRect); }
+  if (resLabelTexture) { SDL_RenderTexture(getRenderer(), resLabelTexture, nullptr, &resLabelRect); }
+  if (fpsLabelTexture) { SDL_RenderTexture(getRenderer(), fpsLabelTexture, nullptr, &fpsLabelRect); }
+
+  // Render non-active dropdowns first
+  if (languageDropdown != activeDropdown) languageDropdown->render();
+  if (resolutionDropdown != activeDropdown) resolutionDropdown->render();
+  if (fpsDropdown != activeDropdown) fpsDropdown->render();
+
+  // Render active dropdown last so it's on top
+  if (activeDropdown) activeDropdown->render();
+}
+
+void SettingsScene::onExit() {
+  freeLabelTextures();
+  if (font) {
+    TTF_CloseFont(font);
+    font = nullptr;
+  }
+}
+
+void SettingsScene::createLabelTextures() {
+  SDL_Color color = {255, 255, 255, 255};
+  float w, h;
+  float yPos = 200.0f;
+
+  // Title
+  SDL_Surface* surf = TTF_RenderText_Blended(font, "Settings", 0, color);
+  titleTexture = SDL_CreateTextureFromSurface(getRenderer(), surf);
+  SDL_GetTextureSize(titleTexture, &w, &h);
+  int win_w, win_h;
+  SDL_GetWindowSizeInPixels(guiView->getWindow(), &win_w, &win_h);
+  titleRect = { (static_cast<float>(win_w) / 2 - w / 2), 100.0f, w, h };
+  SDL_DestroySurface(surf);
+
+  // Labels
+  surf = TTF_RenderText_Blended(font, "Language", 0, color);
+  langLabelTexture = SDL_CreateTextureFromSurface(getRenderer(), surf);
+  SDL_GetTextureSize(langLabelTexture, &w, &h);
+  langLabelRect = { 200.0f, yPos + 10, w, h };
+  SDL_DestroySurface(surf);
+
+  yPos += 60.0f;
+  surf = TTF_RenderText_Blended(font, "Resolution", 0, color);
+  resLabelTexture = SDL_CreateTextureFromSurface(getRenderer(), surf);
+  SDL_GetTextureSize(resLabelTexture, &w, &h);
+  resLabelRect = { 200.0f, yPos + 10, w, h };
+  SDL_DestroySurface(surf);
+
+  yPos += 60.0f;
+  surf = TTF_RenderText_Blended(font, "Refresh Rate", 0, color);
+  fpsLabelTexture = SDL_CreateTextureFromSurface(getRenderer(), surf);
+  SDL_GetTextureSize(fpsLabelTexture, &w, &h);
+  fpsLabelRect = { 200.0f, yPos + 10, w, h };
+  SDL_DestroySurface(surf);
+}
+
+void SettingsScene::freeLabelTextures() {
+  if (titleTexture) { SDL_DestroyTexture(titleTexture); titleTexture = nullptr; }
+  if (langLabelTexture) { SDL_DestroyTexture(langLabelTexture); langLabelTexture = nullptr; }
+  if (resLabelTexture) { SDL_DestroyTexture(resLabelTexture); resLabelTexture = nullptr; }
+  if (fpsLabelTexture) { SDL_DestroyTexture(fpsLabelTexture); fpsLabelTexture = nullptr; }
 }
 
 ButtonStyle SettingsScene::getDefaultButtonStyle() {
@@ -229,69 +248,9 @@ ButtonStyle SettingsScene::getDefaultButtonStyle() {
 
 ButtonStyle SettingsScene::getSelectedButtonStyle() {
   ButtonStyle style;
-  style.backgroundColor = {80, 120, 80, 255}; // Green tint for selected
+  style.backgroundColor = {80, 120, 80, 255};
   style.textColor = {255, 255, 255, 255};
   style.borderColor = {120, 180, 120, 255};
   style.hasBorder = true;
   return style;
-}
-
-void SettingsScene::handleEvent(const SDL_Event& event) {
-  if (event.type == SDL_EVENT_MOUSE_MOTION) {
-    buttonManager->handleMouseMove(event.motion.x, event.motion.y);
-  }
-  if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-    if (buttonManager->handleMouseClick(event.button.x, event.button.y))
-      return;
-  }
-  if (event.type == SDL_EVENT_KEY_DOWN && (event.key.key == SDLK_ESCAPE || event.key.key == SDLK_BACKSPACE)) {
-    auto mainMenu = std::make_unique<MainMenuScene>(guiView);
-    changeScene(std::move(mainMenu));
-  }
-}
-
-void SettingsScene::update(float deltaTime) {
-  (void)deltaTime; // Suppress unused parameter warning
-}
-
-void SettingsScene::render() {
-  SDL_RenderClear(getRenderer());
-
-  // Draw settings box
-  SDL_FRect settingsBox = {200, 150, 400, 350};
-  SDL_SetRenderDrawColor(getRenderer(), 60, 80, 100, 255);
-  SDL_RenderFillRect(getRenderer(), &settingsBox);
-  SDL_SetRenderDrawColor(getRenderer(), 100, 120, 140, 255);
-  SDL_RenderRect(getRenderer(), &settingsBox);
-
-  renderText("SETTINGS", 400, 170, {255, 255, 100, 255});
-
-  if (buttonManager) buttonManager->render();
-}
-
-void SettingsScene::onExit() {
-  if (font) {
-    TTF_CloseFont(font);
-    font = nullptr;
-  }
-}
-
-void SettingsScene::renderText(const char* text, float x, float y, SDL_Color color) {
-  if (!font) return;
-
-  SDL_Surface* textSurface = TTF_RenderText_Solid(font, text, strlen(text), color);
-  if (textSurface) {
-    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(getRenderer(), textSurface);
-    if (textTexture) {
-      SDL_FRect textRect = {
-        x - textSurface->w / 2.0f,
-        y - textSurface->h / 2.0f,
-        (float)textSurface->w,
-        (float)textSurface->h
-      };
-
-      SDL_RenderTexture(getRenderer(), textTexture, nullptr, &textRect);
-    }
-    SDL_DestroySurface(textSurface);
-  }
 }

@@ -9,10 +9,11 @@
 #pragma once
 #include "view/gui/gui_view.h"
 #include <SDL3/SDL.h>
+#include <cstdint>
 #include <memory>
 
 // TODO add scene types
-enum class SceneID { MAIN_MENU, SETTINGS, GAME_MENU, };
+enum class SceneID : uint8_t { MAIN_MENU, SETTINGS, GAME_MENU, };
 
 class GUIScene {
  public:

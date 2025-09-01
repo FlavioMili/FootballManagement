@@ -15,11 +15,12 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <cstdint>
 #include <iostream>
 
 SceneID MainMenuScene::getID() const { return SceneID::MAIN_MENU; }
 
-enum ButtonIndex {
+enum ButtonIndex : uint8_t {
   NEW_GAME_BUTTON = 0,
   LOAD_GAME_BUTTON = 1,
   SETTINGS_BUTTON = 2,

@@ -10,10 +10,13 @@
 #include "view/gui/button_manager.h"
 #include "view/gui/gui_scene.h"
 #include "view/gui/gui_view.h"
+#include "view/gui/dropdown.h"
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <array>
 #include <utility>
+#include <memory>
+#include <vector>
 
 class SettingsScene : public GUIScene {
  public:
@@ -30,11 +33,18 @@ class SettingsScene : public GUIScene {
   TTF_Font* font;
   std::unique_ptr<ButtonManager> buttonManager;
 
+  // New dropdowns
+  std::shared_ptr<Dropdown> languageDropdown;
+  std::shared_ptr<Dropdown> resolutionDropdown;
+  std::shared_ptr<Dropdown> fpsDropdown;
+  std::shared_ptr<Dropdown> activeDropdown = nullptr;
+
   // Options
+  std::vector<std::string> languageOptions;
+  std::vector<std::string> resolutionOptions;
+  std::vector<std::string> fpsOptionsStrings;
   std::array<int, 4> fpsOptions = {60, 90, 120, 144};
-  std::array<std::pair<int, int>, 4> resolutions = {{
-    {1280, 720}, {1920, 1080},
-    {2560, 1440}, {3840, 2160}, }};
+  std::array<std::pair<int, int>, 4> resolutions = {{ {1280, 720}, {1920, 1080}, {2560, 1440}, {3840, 2160} }};
 
   // Current selections
   int selectedLanguage = 0;
@@ -42,23 +52,22 @@ class SettingsScene : public GUIScene {
   int selectedResolution = 0;
   bool fullscreen = false;
 
-  // Button IDs for visual updates
-  std::vector<int> languageButtonIds;
-  std::vector<int> fpsButtonIds;
-  std::vector<int> resolutionButtonIds;
   int fullscreenButtonId = -1;
-
+  int applyButtonId = -1;
 
   // Helper methods
   void initializeCurrentSelections();
-  void updateLanguageSelection(int newSelection);
-  void updateFPSSelection(int newSelection);
-  void updateResolutionSelection(int newSelection);
-  void updateFullscreenToggle();
   void applyAndSaveSettings();
+  void createLabelTextures();
+  void freeLabelTextures();
 
   ButtonStyle getDefaultButtonStyle();
   ButtonStyle getSelectedButtonStyle();
 
-  void renderText(const char* text, float x, float y, SDL_Color color = {255, 255, 255, 255});
+  // Cached Textures
+  SDL_Texture* titleTexture = nullptr;
+  SDL_Texture* langLabelTexture = nullptr;
+  SDL_Texture* resLabelTexture = nullptr;
+  SDL_Texture* fpsLabelTexture = nullptr;
+  SDL_FRect titleRect{}, langLabelRect{}, resLabelRect{}, fpsLabelRect{};
 };

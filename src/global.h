@@ -20,7 +20,7 @@
 /* This is an enum used in the settings manager to set the 
  * text language, to be supported in the future
  */
-enum Language {
+enum Language : uint8_t {
   EN,
   // IT,
   // ES,
