@@ -38,6 +38,7 @@ class Dropdown {
   void render();
   void update(float deltaTime);
   void close();
+  bool isDropdownOpen() const;
 
   int getSelectedIndex() const;
   std::string getSelectedOption() const;
