@@ -31,13 +31,13 @@ MainMenuScene::MainMenuScene(GUIView* guiView)
 
 void MainMenuScene::onEnter() {
   if (!TTF_WasInit() && !TTF_Init()) {
-    std::cerr << "Failed to initialize TTF: " << SDL_GetError() << std::endl;
+    std::cerr << "Failed to initialize TTF: " << SDL_GetError() << '\n';
     return;
   }
 
   font = TTF_OpenFont("assets/fonts/font.ttf", 32);
   if (!font) {
-    std::cerr << "Failed to load font: " << SDL_GetError() << std::endl;
+    std::cerr << "Failed to load font: " << SDL_GetError() << '\n';
     return;
   }
 
@@ -84,7 +84,7 @@ void MainMenuScene::createStaticContent() {
   if (titleSurface) {
     titleTexture = SDL_CreateTextureFromSurface(getRenderer(), titleSurface);
     if (!titleTexture) {
-      std::cerr << "Failed to create title texture: " << SDL_GetError() << std::endl;
+      std::cerr << "Failed to create title texture: " << SDL_GetError() << '\n';
     }
     SDL_DestroySurface(titleSurface);
   }

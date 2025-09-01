@@ -12,7 +12,7 @@
 
 class CliView {
  public:
-  CliView(GameController& controller);
+  explicit CliView(GameController& controller);
   void run();
 
  private:

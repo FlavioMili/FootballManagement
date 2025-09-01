@@ -16,7 +16,7 @@ class GUIScene;
 
 class GUIView {
 public:
-  GUIView(GameController& controller);
+  explicit GUIView(GameController& controller);
   ~GUIView();
 
   /* Starts the scene run */

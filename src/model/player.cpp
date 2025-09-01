@@ -44,7 +44,7 @@ double Player::getOverall(const StatsConfig& stats_config) const {
 
     for (size_t i = 0; i < stat_names.size(); ++i) {
         const std::string& stat_name = stat_names[i];
-        if (stats.count(stat_name)) {
+        if (stats.contains(stat_name)) {
             overall += stats.at(stat_name) * weights[i];
         }
     }
@@ -98,7 +98,7 @@ void Player::train(const std::vector<std::string>& focus_stats) {
   std::uniform_int_distribution<> stat_dis(0, focus_stats.size() - 1);
   std::uniform_real_distribution<float> rand_dist(0.0f, 1.0f);
 
-  std::string random_stat = focus_stats[stat_dis(gen)];
+  const std::string& random_stat = focus_stats[stat_dis(gen)];
   auto it = stats.find(random_stat);
   if (it == stats.end()) return;
 

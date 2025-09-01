@@ -17,7 +17,7 @@
 
 class SettingsScene : public GUIScene {
  public:
-  SettingsScene(GUIView* guiView);
+  explicit SettingsScene(GUIView* guiView);
   ~SettingsScene();
   void handleEvent(const SDL_Event& event) override;
   void update(float deltaTime) override;

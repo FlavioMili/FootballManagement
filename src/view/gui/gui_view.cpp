@@ -37,21 +37,21 @@ GUIView::~GUIView() {
 bool GUIView::initialize() {
   // Initialize SDL
   if (!SDL_Init(SDL_INIT_VIDEO)) {
-    std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
+    std::cerr << "Failed to initialize SDL: " << SDL_GetError() << '\n';
     return false;
   }
 
   // Create window
   window = SDL_CreateWindow("Game GUI", 1200, 800, SDL_WINDOW_RESIZABLE);
   if (!window) {
-    std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
+    std::cerr << "Failed to create window: " << SDL_GetError() << '\n';
     return false;
   }
 
   // Create renderer
   renderer = SDL_CreateRenderer(window, nullptr);
   if (!renderer) {
-    std::cerr << "Failed to create renderer: " << SDL_GetError() << std::endl;
+    std::cerr << "Failed to create renderer: " << SDL_GetError() << '\n';
     return false;
   }
 

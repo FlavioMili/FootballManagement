@@ -42,14 +42,14 @@ class ButtonManager {
 
   int getButtonCount() { return buttons.size(); }
   // Button creation and management
-  int addButton(const SDL_FRect& rect, const std::string label,
+  int addButton(const SDL_FRect& rect, const std::string& label,
                 std::function<void()> callback);
-  int addButton(const SDL_FRect& rect, const std::string label,
+  int addButton(const SDL_FRect& rect, const std::string& label,
                 ButtonStyle style, std::function<void()> callback);
 
   int addButton(float x, float y, float w, float h,
-                const std::string label, std::function<void()> callback);
-  int addButton(float x, float y, float w, float h, const std::string label,
+                const std::string& label, std::function<void()> callback);
+  int addButton(float x, float y, float w, float h, const std::string& label,
                 ButtonStyle style, std::function<void()> callback);
 
   void removeButton(int buttonId);
@@ -59,7 +59,7 @@ class ButtonManager {
   void setButtonStyle(int buttonId, const ButtonStyle& style);
   void setButtonVisible(int buttonId, bool visible);
   void setButtonEnabled(int buttonId, bool enabled);
-  void setButtonText(int buttonId, const std::string text);
+  void setButtonText(int buttonId, const std::string& text);
 
   // Event handling
   void handleMouseMove(float x, float y);

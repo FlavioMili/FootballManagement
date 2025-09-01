@@ -291,7 +291,7 @@ void Game::selectManagedTeam(int team_id) {
 
   managed_team_id = team_id;
   db.saveManagedTeamId(team_id);
-  std::cout << "You are now managing: " << getTeamById(team_id).getName() << std::endl;
+  std::cout << "You are now managing: " << getTeamById(team_id).getName() << '\n';
 }
 
 bool Game::hasSelectedTeam() const {

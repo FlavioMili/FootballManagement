@@ -8,6 +8,7 @@
 
 #include "button_manager.h"
 #include <algorithm>
+#include <utility>
 
 ButtonManager::ButtonManager(SDL_Renderer* renderer, TTF_Font* font) 
 : renderer(renderer), font(font) {
@@ -22,12 +23,12 @@ ButtonManager::~ButtonManager() {
   }
 }
 
-int ButtonManager::addButton(const SDL_FRect& rect, const std::string label,
+int ButtonManager::addButton(const SDL_FRect& rect, const std::string& label,
                              std::function<void()> callback) {
   Button button;
   button.rect = rect;
   button.label = label;
-  button.onClick = callback;
+  button.onClick = std::move(callback);
   button.style = defaultStyle;
   button.id = nextButtonId++;
 
@@ -37,12 +38,12 @@ int ButtonManager::addButton(const SDL_FRect& rect, const std::string label,
   return button.id;
 }
 
-int ButtonManager::addButton(const SDL_FRect& rect, const std::string label,
+int ButtonManager::addButton(const SDL_FRect& rect, const std::string& label,
                              ButtonStyle style, std::function<void()> callback) {
   Button button;
   button.rect = rect;
   button.label = label;
-  button.onClick = callback;
+  button.onClick = std::move(callback);
   button.style = defaultStyle;
   button.id = nextButtonId++;
   button.style = style;
@@ -53,14 +54,14 @@ int ButtonManager::addButton(const SDL_FRect& rect, const std::string label,
   return button.id;
 }
 
-int ButtonManager::addButton(float x, float y, float w, float h, const std::string label,
+int ButtonManager::addButton(float x, float y, float w, float h, const std::string& label,
                              std::function<void()> callback) {
-  return addButton({x, y, w, h}, label, callback);
+  return addButton({x, y, w, h}, label, std::move(callback));
 }
 
-int ButtonManager::addButton(float x, float y, float w, float h, const std::string label,
+int ButtonManager::addButton(float x, float y, float w, float h, const std::string& label,
                              ButtonStyle style, std::function<void()> callback) {
-  return addButton({x, y, w, h}, label, style, callback);
+  return addButton({x, y, w, h}, label, style, std::move(callback));
 }
 
 void ButtonManager::removeButton(int buttonId) {
@@ -96,7 +97,7 @@ void ButtonManager::setButtonVisible(int buttonId, bool visible) {
   }
 }
 
-void ButtonManager::setButtonText(int buttonId, const std::string text) {
+void ButtonManager::setButtonText(int buttonId, const std::string& text) {
   auto it = std::find_if(buttons.begin(), buttons.end(),
                          [buttonId](Button& btn) { return btn.id == buttonId; });
   if (it != buttons.end()) {

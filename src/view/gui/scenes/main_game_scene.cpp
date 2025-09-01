@@ -31,7 +31,7 @@ MainGameScene::~MainGameScene() {
 void MainGameScene::onEnter() {
   if (!TTF_WasInit()) {
     if (!TTF_Init()) {
-      std::cerr << "Failed to initialize TTF: " << SDL_GetError() << std::endl;
+      std::cerr << "Failed to initialize TTF: " << SDL_GetError() << '\n';
       return;
     }
   }
@@ -40,11 +40,11 @@ void MainGameScene::onEnter() {
   smallFont = TTF_OpenFont("assets/fonts/font.ttf", 18);
 
   if (!font) {
-    std::cerr << "Failed to load font: " << SDL_GetError() << std::endl;
+    std::cerr << "Failed to load font: " << SDL_GetError() << '\n';
     return;
   }
   if (!smallFont) {
-    std::cerr << "Failed to load small font: " << SDL_GetError() << std::endl;
+    std::cerr << "Failed to load small font: " << SDL_GetError() << '\n';
     return;
   }
   createStaticTextures();
@@ -98,45 +98,45 @@ void MainGameScene::onExit() {
 void MainGameScene::createStaticTextures() {
   SDL_Renderer* renderer = getRenderer();
   if (!renderer) {
-    std::cerr << "Renderer not available for texture creation" << std::endl;
+    std::cerr << "Renderer not available for texture creation" << '\n';
     return;
   }
 
   // Create title texture
   titleTexture = createTextTexture("MAIN GAME SCENE", font, {255, 255, 100, 255});
-  if (!titleTexture) std::cerr << "Failed to create title texture" << std::endl;
+  if (!titleTexture) std::cerr << "Failed to create title texture" << '\n';
 
   // Create game info texture
   gameInfoTexture = createTextTexture("Football Management Game", font, {255, 255, 255, 255});
-  if (!gameInfoTexture) std::cerr << "Failed to create game info texture" << std::endl;
+  if (!gameInfoTexture) std::cerr << "Failed to create game info texture" << '\n';
 
   // Create instructions texture
   instructionsTexture = createTextTexture("Press ESC to return to menu | Q to quit", font, {200, 200, 200, 255});
-  if (!instructionsTexture) std::cerr << "Failed to create instructions texture" << std::endl;
+  if (!instructionsTexture) std::cerr << "Failed to create instructions texture" << '\n';
 
   // Create UI textures
   statusTexture = createTextTexture("Game Status: Running", smallFont, {200, 200, 200, 255});
-  if (!statusTexture) std::cerr << "Failed to create status texture" << std::endl;
+  if (!statusTexture) std::cerr << "Failed to create status texture" << '\n';
 
   controlsTexture = createTextTexture("Controls", smallFont, {200, 200, 200, 255});
-  if (!controlsTexture) std::cerr << "Failed to create controls texture" << std::endl;
+  if (!controlsTexture) std::cerr << "Failed to create controls texture" << '\n';
 }
 
 SDL_Texture* MainGameScene::createTextTexture(const char* text, TTF_Font* textFont, SDL_Color color) {
   if (!textFont || !text || !getRenderer()) {
-    std::cerr << "Invalid parameters for createTextTexture" << std::endl;
+    std::cerr << "Invalid parameters for createTextTexture" << '\n';
     return nullptr;
   }
 
   SDL_Surface* surface = TTF_RenderText_Solid(textFont, text, 0, color);
   if (!surface) {
-    std::cerr << "Failed to create text surface: " << SDL_GetError() << std::endl;
+    std::cerr << "Failed to create text surface: " << SDL_GetError() << '\n';
     return nullptr;
   }
 
   SDL_Texture* texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
   if (!texture) {
-    std::cerr << "Failed to create texture from surface: " << SDL_GetError() << std::endl;
+    std::cerr << "Failed to create texture from surface: " << SDL_GetError() << '\n';
   }
 
   SDL_DestroySurface(surface);

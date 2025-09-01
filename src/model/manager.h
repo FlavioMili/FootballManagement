@@ -25,7 +25,7 @@
 */
 class Manager {
  public:
-  Manager(const Team& team);
+  explicit Manager(const Team& team);
   const Team& getTeam() const;
 
  private:

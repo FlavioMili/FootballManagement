@@ -14,7 +14,7 @@
 
 class MainGameScene : public GUIScene {
  public:
-  MainGameScene(GUIView* guiView);
+  explicit MainGameScene(GUIView* guiView);
   ~MainGameScene();
   void handleEvent(const SDL_Event& event) override;
   void update(float deltaTime) override;

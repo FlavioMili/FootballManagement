@@ -18,6 +18,7 @@ void Calendar::generate(const std::vector<Team>& teams) {
   if (teams.size() < 2) return;
 
   std::vector<int> team_ids;
+  team_ids.reserve(teams.size());
   for (const auto& t : teams) {
     team_ids.push_back(t.getId());
   }

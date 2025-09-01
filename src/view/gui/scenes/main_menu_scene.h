@@ -16,7 +16,7 @@
 
 class MainMenuScene : public GUIScene {
  public:
-  MainMenuScene(GUIView* guiView);
+  explicit MainMenuScene(GUIView* guiView);
   ~MainMenuScene() = default;
 
   void handleEvent(const SDL_Event& event) override;

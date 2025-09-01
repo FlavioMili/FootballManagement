@@ -48,7 +48,7 @@ void Database::close() {
   if (pImpl->db) {
     int rc = sqlite3_close(pImpl->db);
     if (rc != SQLITE_OK) {
-      std::cerr << "Error closing database: " << sqlite3_errmsg(pImpl->db) << std::endl;
+      std::cerr << "Error closing database: " << sqlite3_errmsg(pImpl->db) << '\n';
     }
     pImpl->db = nullptr;
   }
@@ -60,7 +60,7 @@ void Database::loadSQLFiles() {
     // Debug line
     // std::cout << "SQL queries loaded successfully from: " << queries_path_ << std::endl;
   } catch (const std::exception& e) {
-    std::cerr << "Failed to load SQL queries: " << e.what() << std::endl;
+    std::cerr << "Failed to load SQL queries: " << e.what() << '\n';
     throw;
   }
 }
@@ -79,7 +79,7 @@ void Database::initialize() {
     // Debug line
     // std::cout << "Database schema initialized successfully." << std::endl;
   } catch (const std::exception& e) {
-    std::cerr << "Failed to initialize database: " << e.what() << std::endl;
+    std::cerr << "Failed to initialize database: " << e.what() << '\n';
     throw;
   }
 }
@@ -433,7 +433,7 @@ Calendar Database::loadCalendar(int season, int league_id) const {
   }
 
   sqlite3_finalize(stmt);
-  calendar.setWeeks(std::move(weeks));
+  calendar.setWeeks(weeks);
   return calendar;
 }
 

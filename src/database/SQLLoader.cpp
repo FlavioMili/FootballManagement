@@ -35,7 +35,7 @@ const std::string& SQLLoader::getQuery(const std::string& query_id) const {
 }
 
 bool SQLLoader::hasQuery(const std::string& query_id) const {
-  return queries_.find(query_id) != queries_.end();
+  return queries_.contains(query_id);
 }
 
 std::string SQLLoader::readFile(const std::string& filepath) {
