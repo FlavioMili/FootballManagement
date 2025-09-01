@@ -284,14 +284,13 @@ void SettingsScene::renderText(const char* text, float x, float y, SDL_Color col
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(getRenderer(), textSurface);
     if (textTexture) {
       SDL_FRect textRect = {
-        x - textSurface->w / 2.0f,  // Center horizontally
-        y - textSurface->h / 2.0f,  // Center vertically
+        x - textSurface->w / 2.0f,
+        y - textSurface->h / 2.0f,
         (float)textSurface->w,
         (float)textSurface->h
       };
 
       SDL_RenderTexture(getRenderer(), textTexture, nullptr, &textRect);
-      SDL_DestroyTexture(textTexture);
     }
     SDL_DestroySurface(textSurface);
   }

@@ -31,7 +31,7 @@
 
 class Game {
 public:
-  explicit Game(Database& db);
+  explicit Game(std::shared_ptr<Database> db);
 
   void simulateWeek();
   void startNewSeason();
@@ -71,7 +71,7 @@ public:
   void saveGame();
 
 private:
-  Database& db;
+  std::shared_ptr<Database> db;
   StatsConfig stats_config;
   nlohmann::json raw_stats_config_json;
   std::vector<std::string> league_names;

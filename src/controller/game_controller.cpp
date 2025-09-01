@@ -8,64 +8,65 @@
 
 #include "game_controller.h"
 
-GameController::GameController(Game& game) : game(game) {}
+GameController::GameController(std::unique_ptr<Game> game)
+: game(std::move(game)) {}
 
 int GameController::getCurrentSeason() const {
-  return game.getCurrentSeason();
+  return game->getCurrentSeason();
 }
 
 int GameController::getCurrentWeek() const {
-  return game.getCurrentWeek();
+  return game->getCurrentWeek();
 }
 
 bool GameController::hasSelectedTeam() const {
-  return game.hasSelectedTeam();
+  return game->hasSelectedTeam();
 }
 
 Team GameController::getManagedTeam() const {
-  return game.getManagedTeam();
+  return game->getManagedTeam();
 }
 
 void GameController::selectManagedTeam(int team_id) {
-  game.selectManagedTeam(team_id);
+  game->selectManagedTeam(team_id);
 }
 
 std::vector<Team> GameController::getTeams() const {
-  return game.getTeams();
+  return game->getTeams();
 }
 
 std::vector<Team> GameController::getAvailableTeams() const {
-  return game.getAvailableTeams();
+  return game->getAvailableTeams();
 }
 
 std::vector<Player> GameController::getPlayersForTeam(int team_id) const {
-  return game.getPlayersForTeam(team_id);
+  return game->getPlayersForTeam(team_id);
 }
 
 std::vector<Team> GameController::getTeamsInLeague(int league_id) const {
-  return game.getTeamsInLeague(league_id);
+  return game->getTeamsInLeague(league_id);
 }
 
 League& GameController::getLeagueById(int league_id) {
-  return game.getLeagueById(league_id);
+  return game->getLeagueById(league_id);
 }
 
 const StatsConfig& GameController::getStatsConfig() const {
-  return game.getStatsConfig();
+  return game->getStatsConfig();
 }
 
 void GameController::advanceWeek() {
-  game.advanceWeek();
+  game->advanceWeek();
 }
 
 void GameController::startNewSeason() {
-  game.startNewSeason();
+  game->startNewSeason();
 }
 
 void GameController::saveGame() {
-  game.saveGame();
+  game->saveGame();
 }
 
 void GameController::loadGame() {
-  game.loadData();
+  game->loadData();
 }

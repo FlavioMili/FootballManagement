@@ -36,12 +36,12 @@ class Week {
 };
 
 class Calendar {
-public:
+ public:
   Calendar() = default;
   void generate(const std::vector<Team>& teams);
   const std::vector<Week>& getWeeks() const;
   void setWeeks(const std::vector<Week>& weeks);
 
-private:
+ private:
   std::vector<Week> weeks;
 };

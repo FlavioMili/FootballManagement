@@ -7,25 +7,23 @@
 // -----------------------------------------------------------------------------
 
 #include <iostream>
+#include <memory>
 #include "controller/game_controller.h"
-#include "settings_manager.h"
 #include "view/gui/gui_view.h"
-#include "view/gui/scenes/main_menu_scene.h"
 #include "database/database.h"
 
 int main() {
   srand(time(0));
   try {
-    Database db("football_management.db");
-    db.initialize();
-    Game game(db);
-    GameController controller(game);
+    auto db = std::make_shared<Database>("football_management.db");
+    db->initialize();
+    auto game = std::make_unique<Game>(db);
+    GameController controller(std::move(game));
 
-    // CliView view(controller);
     GUIView view(controller);
     view.run();
     controller.saveGame();
-    db.close();
+    db->close();
   } catch (const std::exception& e) {
     std::cerr << "Error: " << e.what() << "\n";
     return 1;
