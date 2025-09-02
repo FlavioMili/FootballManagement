@@ -7,248 +7,139 @@
 // -----------------------------------------------------------------------------
 
 #include "main_game_scene.h"
+#include "global.h"
 #include "main_menu_scene.h"
-#include <SDL3_ttf/SDL_ttf.h>
-#include <iostream>
+#include "main_menu_scene.h"
+#include "view/gui/scenes/roster_scene.h"
+#include "view/gui/scenes/strategy_scene.h"
+#include <SDL3_ttf/SDL_ttf.h> 
+#include <iostream> 
 
 SceneID MainGameScene::getID() const { return SceneID::GAME_MENU; }
 
 MainGameScene::MainGameScene(GUIView* guiView) 
-  : GUIScene(guiView), 
-  font(nullptr), 
-  smallFont(nullptr),
-  titleTexture(nullptr),
-  gameInfoTexture(nullptr),
-  instructionsTexture(nullptr),
-  statusTexture(nullptr),
-  controlsTexture(nullptr) {
-}
+: GUIScene(guiView), font(nullptr) {}
 
 MainGameScene::~MainGameScene() {
   cleanup();
 }
 
-void MainGameScene::onEnter() {
-  if (!TTF_WasInit()) {
-    if (!TTF_Init()) {
-      std::cerr << "Failed to initialize TTF: " << SDL_GetError() << '\n';
-      return;
-    }
-  }
+void MainGameScene::onEnter() { 
+  if (!TTF_WasInit() && TTF_Init() != 0) { 
+    std::cerr << "TTF_Init() failed: " << SDL_GetError() << "\n"; 
+    return; 
+  } 
 
-  font = TTF_OpenFont("assets/fonts/font.ttf", 28);
-  smallFont = TTF_OpenFont("assets/fonts/font.ttf", 18);
+  font = TTF_OpenFont(FONT_PATH, 24);
+  if (!font) { 
+    std::cerr << "Failed to load font: " << SDL_GetError() << "\n"; 
+    return; 
+  } 
 
-  if (!font) {
-    std::cerr << "Failed to load font: " << SDL_GetError() << '\n';
-    return;
-  }
-  if (!smallFont) {
-    std::cerr << "Failed to load small font: " << SDL_GetError() << '\n';
-    return;
-  }
-  createStaticTextures();
-}
+  buttonManager = std::make_unique<ButtonManager>(getRenderer(), font); 
+  initializeUI(); 
+} 
 
 void MainGameScene::handleEvent(const SDL_Event& event) {
+  if (event.type == SDL_EVENT_WINDOW_RESIZED) {
+    updateLayout();
+  }
+
+  if (event.type == SDL_EVENT_MOUSE_MOTION) {
+    buttonManager->handleMouseMove(event.motion.x, event.motion.y);
+  } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+    buttonManager->handleMouseClick(event.button.x, event.button.y);
+  }
+
   if (event.type == SDL_EVENT_KEY_DOWN) {
     switch (event.key.key) {
-      case SDLK_ESCAPE: {
-        // Return to main menu
-        auto mainMenu = std::make_unique<MainMenuScene>(guiView);
-        changeScene(std::move(mainMenu));
+      case SDLK_ESCAPE:
+        changeScene(std::make_unique<MainMenuScene>(guiView));
         break;
-      }
       case SDLK_Q:
         quit();
         break;
     }
   }
+} 
+
+void MainGameScene::update(float deltaTime) { 
+  (void)deltaTime; 
+} 
+
+void MainGameScene::render() { 
+  SDL_SetRenderDrawColor(getRenderer(), 10, 50, 10, 255); // Dark green background 
+  SDL_RenderClear(getRenderer()); 
+
+  renderSidebar(); 
+  buttonManager->render(); 
+} 
+
+void MainGameScene::onExit() { 
+  cleanup(); 
+} 
+
+void MainGameScene::initializeUI() {
+  setupButtons();
+  updateLayout(); // Set initial layout
+} 
+
+void MainGameScene::renderSidebar() {
+  SDL_SetRenderDrawColor(getRenderer(), 40, 40, 40, 255); // Dark grey for sidebar
+  SDL_RenderFillRect(getRenderer(), &sidebarRect);
 }
 
-void MainGameScene::update(float deltaTime) {
-  (void)deltaTime; // Avoid unused parameter warning
+void MainGameScene::setupButtons() {
+  ButtonStyle sidebarButtonStyle;
+  sidebarButtonStyle.backgroundColor = {50, 50, 50, 255};
+  sidebarButtonStyle.hoverBackgroundColor = {70, 70, 70, 255};
+  sidebarButtonStyle.textColor = {255, 255, 255, 255};
+  sidebarButtonStyle.borderColor = {100, 100, 100, 255};
+  sidebarButtonStyle.borderWidth = 1;
+  sidebarButtonStyle.hasBorder = true;
+
+  sidebarButtonIds.push_back(buttonManager->addButton(VIEW_ROSTER_BUTTON, 0, 0, 0, "View Roster", sidebarButtonStyle, [this]() { guiView->overlayScene(std::make_unique<RosterScene>(guiView)); }));
+  sidebarButtonIds.push_back(buttonManager->addButton(SET_STRATEGY_BUTTON, 0, 0, 0, "Set Strategy", sidebarButtonStyle, [this]() { guiView->overlayScene(std::make_unique<StrategyScene>(guiView)); }));
+  sidebarButtonIds.push_back(buttonManager->addButton(FINANCES_BUTTON, 0, 0, 0, "Finances", sidebarButtonStyle, [](){ /* Placeholder */ }));
+  sidebarButtonIds.push_back(buttonManager->addButton(TRANSFER_MARKET_BUTTON, 0, 0, 0, "Transfer Market", sidebarButtonStyle, [](){ /* Placeholder */ }));
+
+  ButtonStyle nextButtonStyle;
+  nextButtonStyle.backgroundColor = {80, 120, 80, 255};
+  nextButtonStyle.hoverBackgroundColor = {100, 140, 100, 255};
+  nextButtonStyle.textColor = {255, 255, 255, 255};
+  nextButtonStyle.borderColor = {120, 180, 120, 255};
+  nextButtonStyle.borderWidth = 1;
+  nextButtonStyle.hasBorder = true;
+
+  nextButtonId = buttonManager->addButton(NEXT_WEEK_BUTTON, 0, 0, 0, "Next", nextButtonStyle, [this](){
+    guiView->getController().advanceWeek();
+  });
 }
 
-void MainGameScene::render() {
-  SDL_SetRenderDrawColor(getRenderer(), 10, 50, 10, 255);  // Dark green
-  SDL_RenderClear(getRenderer());
-
-  SDL_FRect gameArea = {50, 50, 700, 450};
-  SDL_SetRenderDrawColor(getRenderer(), 30, 100, 30, 255);  // Lighter green (like a field)
-  SDL_RenderFillRect(getRenderer(), &gameArea);
-
-  // Draw border around game area
-  SDL_SetRenderDrawColor(getRenderer(), 255, 255, 255, 255);
-  SDL_RenderRect(getRenderer(), &gameArea);
-
-  // Render pre-created textures
-  renderCachedTexture(titleTexture, 400, 100);
-  renderCachedTexture(gameInfoTexture, 400, 275);
-  renderCachedTexture(instructionsTexture, 400, 550);
-
-  // Draw UI elements
-  renderGameUI();
-}
-
-void MainGameScene::onExit() {
-  cleanup();
-}
-
-void MainGameScene::createStaticTextures() {
-  SDL_Renderer* renderer = getRenderer();
-  if (!renderer) {
-    std::cerr << "Renderer not available for texture creation" << '\n';
-    return;
+void MainGameScene::updateLayout() {
+  int windowWidth = 0;
+  int windowHeight = 0;
+  if (guiView && guiView->getWindow()) {
+    SDL_GetWindowSize(guiView->getWindow(), &windowWidth, &windowHeight);
   }
 
-  // Create title texture
-  titleTexture = createTextTexture("MAIN GAME SCENE", font, {255, 255, 100, 255});
-  if (!titleTexture) std::cerr << "Failed to create title texture" << '\n';
+  sidebarRect = { 0, 0, windowWidth * 0.2f, (float)windowHeight };
 
-  // Create game info texture
-  gameInfoTexture = createTextTexture("Football Management Game", font, {255, 255, 255, 255});
-  if (!gameInfoTexture) std::cerr << "Failed to create game info texture" << '\n';
-
-  // Create instructions texture
-  instructionsTexture = createTextTexture("Press ESC to return to menu | Q to quit", font, {200, 200, 200, 255});
-  if (!instructionsTexture) std::cerr << "Failed to create instructions texture" << '\n';
-
-  // Create UI textures
-  statusTexture = createTextTexture("Game Status: Running", smallFont, {200, 200, 200, 255});
-  if (!statusTexture) std::cerr << "Failed to create status texture" << '\n';
-
-  controlsTexture = createTextTexture("Controls", smallFont, {200, 200, 200, 255});
-  if (!controlsTexture) std::cerr << "Failed to create controls texture" << '\n';
-}
-
-SDL_Texture* MainGameScene::createTextTexture(const char* text, TTF_Font* textFont, SDL_Color color) {
-  if (!textFont || !text || !getRenderer()) {
-    std::cerr << "Invalid parameters for createTextTexture" << '\n';
-    return nullptr;
+  float buttonY = 10.0f;
+  float buttonHeight = 50.0f;
+  for (size_t i = 0; i < sidebarButtonIds.size(); ++i) {
+    buttonManager->updateButtonPosition(sidebarButtonIds[i], { sidebarRect.x + 10, buttonY, sidebarRect.w - 20, buttonHeight });
+    buttonY += buttonHeight + 5; // Add some padding
   }
 
-  SDL_Surface* surface = TTF_RenderText_Solid(textFont, text, 0, color);
-  if (!surface) {
-    std::cerr << "Failed to create text surface: " << SDL_GetError() << '\n';
-    return nullptr;
+  if (nextButtonId != -1) {
+    buttonManager->updateButtonPosition(nextButtonId, { windowWidth - 110.0f, 10.0f, 100.0f, 40.0f });
   }
+} 
 
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-  if (!texture) {
-    std::cerr << "Failed to create texture from surface: " << SDL_GetError() << '\n';
-  }
-
-  SDL_DestroySurface(surface);
-  return texture;
-}
-
-void MainGameScene::renderCachedTexture(SDL_Texture* texture, float centerX, float centerY) {
-  if (!texture) return;
-
-  float w, h;
-  if (SDL_GetTextureSize(texture, &w, &h) == 0) {
-    SDL_FRect textRect = {
-      centerX - w / 2.0f,  // Center horizontally
-      centerY - h / 2.0f,  // Center vertically
-      (float)w,
-      (float)h
-    };
-    SDL_RenderTexture(getRenderer(), texture, nullptr, &textRect);
-  }
-}
-
-void MainGameScene::renderText(const char* text, float x, float y, SDL_Color color) {
-  if (!font || !text) return;
-
-  SDL_Surface* textSurface = TTF_RenderText_Solid(font, text, strlen(text), color);
-  if (!textSurface) return;
-
-  SDL_Texture* textTexture = SDL_CreateTextureFromSurface(getRenderer(), textSurface);
-
-  if (textTexture) {
-    SDL_FRect textRect = {
-      x - textSurface->w / 2.0f,  // Center horizontally
-      y - textSurface->h / 2.0f,  // Center vertically
-      (float)textSurface->w,
-      (float)textSurface->h
-    };
-
-    SDL_RenderTexture(getRenderer(), textTexture, nullptr, &textRect);
-    SDL_DestroyTexture(textTexture);
-  }
-
-  SDL_DestroySurface(textSurface); // Always clean up surface
-}
-
-void MainGameScene::renderGameUI() {
-  SDL_Renderer* renderer = getRenderer();
-
-  // Top status bar
-  SDL_FRect statusBar = {0, 0, 800, 40};
-  SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255);
-  SDL_RenderFillRect(renderer, &statusBar);
-
-  // Side panel
-  SDL_FRect sidePanel = {650, 40, 150, 460};
-  SDL_SetRenderDrawColor(renderer, 60, 60, 60, 255);
-  SDL_RenderFillRect(renderer, &sidePanel);
-  SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
-  SDL_RenderRect(renderer, &sidePanel);
-
-  // Render cached UI textures
-  if (statusTexture) {
-    float w, h;
-    if (SDL_GetTextureSize(statusTexture, &w, &h) == 0) {
-      SDL_FRect statusRect = {10, 10, (float)w, (float)h};
-      SDL_RenderTexture(renderer, statusTexture, nullptr, &statusRect);
-    }
-  }
-
-  if (controlsTexture) {
-    float w, h;
-    if (SDL_GetTextureSize(controlsTexture, &w, &h) == 0) {
-      SDL_FRect controlsRect = {
-        725 - w / 2.0f,  // Center in side panel
-        70,
-        (float)w,
-        (float)h
-      };
-      SDL_RenderTexture(renderer, controlsTexture, nullptr, &controlsRect);
-    }
-  }
-}
-
-void MainGameScene::cleanup() {
-  // Clean up textures
-  if (titleTexture) {
-    SDL_DestroyTexture(titleTexture);
-    titleTexture = nullptr;
-  }
-  if (gameInfoTexture) {
-    SDL_DestroyTexture(gameInfoTexture);
-    gameInfoTexture = nullptr;
-  }
-  if (instructionsTexture) {
-    SDL_DestroyTexture(instructionsTexture);
-    instructionsTexture = nullptr;
-  }
-  if (statusTexture) {
-    SDL_DestroyTexture(statusTexture);
-    statusTexture = nullptr;
-  }
-  if (controlsTexture) {
-    SDL_DestroyTexture(controlsTexture);
-    controlsTexture = nullptr;
-  }
-
-  // Clean up fonts
-  if (font) {
-    TTF_CloseFont(font);
-    font = nullptr;
-  }
-  if (smallFont) {
-    TTF_CloseFont(smallFont);
-    smallFont = nullptr;
+void MainGameScene::cleanup() { 
+  if (font) { 
+    TTF_CloseFont(font); 
+    font = nullptr; 
   }
 }

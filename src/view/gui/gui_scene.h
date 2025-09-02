@@ -13,7 +13,8 @@
 #include <memory>
 
 // TODO add scene types
-enum class SceneID : uint8_t { MAIN_MENU, SETTINGS, GAME_MENU, };
+enum class SceneID : uint8_t { MAIN_MENU, SETTINGS, GAME_MENU,
+  TEAM_SELECTION, ROSTER, STRATEGY, };
 
 class GUIScene {
  public:

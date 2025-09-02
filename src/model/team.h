@@ -12,6 +12,7 @@
 #include <string>
 #include "lineup.h"
 #include "player.h"
+#include "strategy.h"
 
 // TODO change balance-related things with a Finances class
 // TODO add stadium
@@ -36,6 +37,11 @@ class Team {
   Lineup& getLineup();
   const Lineup& getLineup() const;
 
+  // Strategy access
+  Strategy& getStrategy();
+  const Strategy& getStrategy() const;
+  void setStrategy(const Strategy& strategy);
+
   // Generate best starting XI automatically
   void generateStartingXI(const StatsConfig& stats_config);
 
@@ -46,4 +52,5 @@ class Team {
   int balance;
   std::vector<Player> players;
   Lineup lineup;
+  Strategy team_strategy;
 };

@@ -51,6 +51,7 @@ public:
   // Resource access for scenes
   SDL_Renderer* getRenderer() const;
   SDL_Window* getWindow() const;
+  GameController& getController() const;
 
  private:
   bool initialize();

@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------- 
 //  Football Management Project
 //  Copyright (c) 2025 Flavio Milinanni. All Rights Reserved.
 //
@@ -242,5 +242,4 @@ void MainMenuScene::make_scene() {
   buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Quit game", [this]() {
     handleButtonClick(QUIT_BUTTON);
   });
-
 }

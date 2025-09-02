@@ -9,8 +9,11 @@
 #pragma once
 #include "view/gui/gui_scene.h"
 #include "view/gui/gui_view.h"
+#include "view/gui/button_manager.h"
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <memory>
+#include <vector>
 
 class MainGameScene : public GUIScene {
  public:
@@ -24,21 +27,26 @@ class MainGameScene : public GUIScene {
   SceneID getID() const override;
 
  private:
-  void renderText(const char* text, float x, float y, SDL_Color color = {255, 255, 255, 255});
-  void renderGameUI();
-  void createStaticTextures();
+  void initializeUI();
+  void renderSidebar();
+  void updateLayout();
   void cleanup();
-  SDL_Texture* createTextTexture(const char* text, TTF_Font* textFont, SDL_Color color);
-  void renderCachedTexture(SDL_Texture* texture, float centerX, float centerY);
+  void setupButtons();
 
-  // Fonts
-  TTF_Font* font;
-  TTF_Font* smallFont;
+  TTF_Font* font = nullptr;
+  std::unique_ptr<ButtonManager> buttonManager;
 
-  // Cached textures for static text
-  SDL_Texture* titleTexture;
-  SDL_Texture* gameInfoTexture;
-  SDL_Texture* instructionsTexture;
-  SDL_Texture* statusTexture;
-  SDL_Texture* controlsTexture;
+  // UI element dimensions
+  SDL_FRect sidebarRect;
+
+  // Button IDs
+  enum ButtonIndex : int {
+    VIEW_ROSTER_BUTTON = 0,
+    SET_STRATEGY_BUTTON = 1,
+    FINANCES_BUTTON = 2,
+    TRANSFER_MARKET_BUTTON = 3,
+    NEXT_WEEK_BUTTON = 4
+  };
+  std::vector<int> sidebarButtonIds;
+  int nextButtonId = -1;
 };

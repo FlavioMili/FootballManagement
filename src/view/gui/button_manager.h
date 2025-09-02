@@ -70,6 +70,7 @@ class ButtonManager {
 
   // Utility
   void setFont(TTF_Font* font) { this->font = font; }
+  TTF_Font* getFont() { return this->font; }
   void setDefaultStyle(const ButtonStyle& style) { defaultStyle = style; }
 
   const std::vector<Button> getButtons() { return buttons; }

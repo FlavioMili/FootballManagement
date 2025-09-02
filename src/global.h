@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <string_view>
 #include <utility>
 
 // This file can be used for global constants, enums, and functions
@@ -72,3 +73,7 @@ static constexpr int LINEUP_GRID_SIZE = LINEUP_GRID_ROWS * LINEUP_GRID_COLS;
 // Functions to access the array of lineup's grid
 constexpr int toIndex(int row, int col) { return row * LINEUP_GRID_COLS + col; }
 constexpr std::pair<int,int> toRowCol(int i) { return { i / LINEUP_GRID_COLS, i % LINEUP_GRID_COLS }; }
+
+
+// Fonts
+constexpr const char* FONT_PATH = "assets/fonts/font.ttf" ; 

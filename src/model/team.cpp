@@ -12,7 +12,7 @@
 #include <string>
 
 Team::Team(int id, int league_id, std::string name, int balance)
-  : id(id), league_id(league_id), name(std::move(name)), balance(balance) {}
+  : id(id), league_id(league_id), name(std::move(name)), balance(balance), team_strategy() {}
 
 int Team::getId() const { return id; }
 int Team::getLeagueId() const { return league_id; }
@@ -32,6 +32,10 @@ void Team::setPlayers(const std::vector<Player>& new_players) {
 
 Lineup& Team::getLineup() { return lineup; }
 const Lineup& Team::getLineup() const { return lineup; }
+
+Strategy& Team::getStrategy() { return team_strategy; }
+const Strategy& Team::getStrategy() const { return team_strategy; }
+void Team::setStrategy(const Strategy& strategy) { team_strategy = strategy; }
 
 // Generate best starting XI automatically
 void Team::generateStartingXI(const StatsConfig& stats_config) {

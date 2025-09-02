@@ -11,6 +11,7 @@
 #include "view/gui/gui_scene.h"
 #include "controller/game_controller.h"
 #include "view/gui/scenes/main_menu_scene.h"
+#include "view/gui/scenes/team_selection_scene.h"
 #include <iostream>
 #include <stack>
 
@@ -60,8 +61,12 @@ bool GUIView::initialize() {
 
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-  auto mainMenuScene = std::make_unique<MainMenuScene>(this);
-  changeScene(std::move(mainMenuScene));
+  // Check if a team has been selected. If not, show the team selection scene.
+  if (!controller.hasSelectedTeam()) {
+    changeScene(std::make_unique<TeamSelectionScene>(this));
+  } else {
+    changeScene(std::make_unique<MainMenuScene>(this));
+  }
 
   return true;
 }
@@ -179,7 +184,11 @@ SDL_Window* GUIView::getWindow() const {
   return window;
 }
 
-// Return the topmost scene 
+GameController& GUIView::getController() const {
+  return controller;
+}
+
+// Return the topmost scene
 // (overlay if exists, otherwise current scene)
 GUIScene* GUIView::getActiveScene() const {
   if (!sceneStack.empty()) {
