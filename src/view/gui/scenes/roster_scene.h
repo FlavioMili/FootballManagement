@@ -16,27 +16,27 @@
 class GUIView;
 
 class RosterScene : public GUIScene {
-public:
-    explicit RosterScene(GUIView* parent);
-    ~RosterScene() override;
+ public:
+  explicit RosterScene(GUIView* parent);
+  ~RosterScene() override;
 
-    void onEnter() override;
-    void onExit() override;
-    void handleEvent(const SDL_Event& event) override;
-    void update(float deltaTime) override;
-    void render() override;
-    SceneID getID() const override;
+  void onEnter() override;
+  void onExit() override;
+  void handleEvent(const SDL_Event& event) override;
+  void update(float deltaTime) override;
+  void render() override;
+  SceneID getID() const override;
 
-void onResize(int width, int height) override;
+  void onResize(int width, int height) override;
 
-private:
-    GUIView* parent_view;
-    ButtonManager button_manager;
-    std::vector<Player> roster_players;
-    int backButtonId = -1;
+ private:
+  GUIView* parent_view;
+  ButtonManager button_manager;
+  std::vector<Player> roster_players;
+  int backButtonId = -1;
 
-    void setupUI();
+  void setupUI();
 
-    void loadRoster();
-    void setupPlayerDisplay();
+  void loadRoster();
+  void setupPlayerDisplay();
 };

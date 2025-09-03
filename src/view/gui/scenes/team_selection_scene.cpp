@@ -15,8 +15,8 @@
 
 TeamSelectionScene::TeamSelectionScene(GUIView* parent)
   : GUIScene(parent), parent_view(parent),
-    font(nullptr), title_font(nullptr), selected_team_index(-1),
-    button_manager(getRenderer(), TTF_OpenFont(FONT_PATH, 18))
+  font(nullptr), title_font(nullptr), selected_team_index(-1),
+  button_manager(getRenderer(), TTF_OpenFont(FONT_PATH, 18))
 {}
 
 TeamSelectionScene::~TeamSelectionScene() {
@@ -45,30 +45,30 @@ void TeamSelectionScene::onEnter() {
   if (!font) {
     std::cerr << "Failed to load button font: " << SDL_GetError() << '\n';
     // Try fallback font path if FONT_PATH is defined
-    #ifdef FONT_PATH
+#ifdef FONT_PATH
     font = TTF_OpenFont(FONT_PATH, 24);
     if (!font) {
       std::cerr << "Failed to load fallback font: " << SDL_GetError() << '\n';
       return;
     }
-    #else
+#else
     return;
-    #endif
+#endif
   }
 
   title_font = TTF_OpenFont("assets/fonts/font.ttf", 36);
   if (!title_font) {
     std::cerr << "Failed to load title font: " << SDL_GetError() << '\n';
-    #ifdef FONT_PATH
+#ifdef FONT_PATH
     title_font = TTF_OpenFont(FONT_PATH, 36);
     if (!title_font) {
       std::cerr << "Failed to load fallback title font: " << SDL_GetError() << '\n';
       // Use the same font as buttons if title font fails
       title_font = font;
     }
-    #else
+#else
     title_font = font;
-    #endif
+#endif
   }
 
   // Set font for button manager
@@ -105,7 +105,7 @@ void TeamSelectionScene::render() {
   // Render title using the pre-loaded title font
   if (title_font) {
     SDL_Color textColor = {255, 255, 255, 255}; // White
-    
+
     SDL_Surface* textSurface = TTF_RenderText_Solid(title_font, "Select Your Team", 0, textColor);
     if (textSurface) {
       SDL_Texture* textTexture = SDL_CreateTextureFromSurface(getRenderer(), textSurface);

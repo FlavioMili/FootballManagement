@@ -17,10 +17,11 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <cstdint>
 #include <iostream>
+#include <sys/types.h>
 
 SceneID MainMenuScene::getID() const { return SceneID::MAIN_MENU; }
 
-enum ButtonIndex : uint8_t {
+enum MainMenuButtonIndex : uint8_t {
   NEW_GAME_BUTTON = 0,
   LOAD_GAME_BUTTON = 1,
   SETTINGS_BUTTON = 2,
@@ -163,7 +164,7 @@ void MainMenuScene::onExit() {
   }
 }
 
-void MainMenuScene::handleButtonClick(int buttonIndex) {
+void MainMenuScene::handleButtonClick(uint8_t buttonIndex) {
   switch (buttonIndex) {
     case NEW_GAME_BUTTON: {
       auto gameScene = std::make_unique<MainGameScene>(guiView);

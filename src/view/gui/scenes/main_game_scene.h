@@ -12,8 +12,17 @@
 #include "view/gui/button_manager.h"
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <cstdint>
 #include <memory>
 #include <vector>
+
+enum GameSceneButtonIndex : uint8_t {
+  VIEW_ROSTER_BUTTON = 0,
+  SET_STRATEGY_BUTTON = 1,
+  FINANCES_BUTTON = 2,
+  TRANSFER_MARKET_BUTTON = 3,
+  NEXT_WEEK_BUTTON = 4
+};
 
 class MainGameScene : public GUIScene {
  public:
@@ -40,14 +49,6 @@ class MainGameScene : public GUIScene {
   // UI element dimensions
   SDL_FRect sidebarRect;
 
-  // Button IDs
-  enum ButtonIndex : int {
-    VIEW_ROSTER_BUTTON = 0,
-    SET_STRATEGY_BUTTON = 1,
-    FINANCES_BUTTON = 2,
-    TRANSFER_MARKET_BUTTON = 3,
-    NEXT_WEEK_BUTTON = 4
-  };
   std::vector<int> sidebarButtonIds;
   int nextButtonId = -1;
 };

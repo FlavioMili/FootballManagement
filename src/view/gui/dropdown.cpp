@@ -210,9 +210,9 @@ void Dropdown::renderArrow(const SDL_FRect& buttonRect) const {
 
   std::vector<SDL_Vertex> vertices(3);
   SDL_FColor color = { style.arrowColor.r / 255.0f,
-                       style.arrowColor.g / 255.0f,
-                       style.arrowColor.b / 255.0f,
-                       style.arrowColor.a / 255.0f };
+    style.arrowColor.g / 255.0f,
+    style.arrowColor.b / 255.0f,
+    style.arrowColor.a / 255.0f };
 
   if (isOpen) { // Up arrow
     vertices[0].position = {arrowX, arrowY + arrowSize};

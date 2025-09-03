@@ -160,14 +160,14 @@ void ButtonManager::renderButton(const Button& btn) {
   if (btn.textTexture) {
     float textW, textH;
     SDL_GetTextureSize(btn.textTexture, &textW, &textH);
-    
+
     SDL_FRect dynamicTextRect = {
       btn.rect.x + (btn.rect.w - textW) / 2.0f,
       btn.rect.y + (btn.rect.h - textH) / 2.0f,
       static_cast<float>(textW),
       static_cast<float>(textH)
     };
-    
+
     SDL_RenderTexture(renderer, btn.textTexture, nullptr, &dynamicTextRect);
   }
 }

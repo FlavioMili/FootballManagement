@@ -11,6 +11,7 @@
 #include "view/gui/gui_view.h"
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <cstdint>
 #include "view/gui/button_manager.h"
 
 
@@ -29,7 +30,7 @@ class MainMenuScene : public GUIScene {
 
  private:
   // Helper methods
-  void handleButtonClick(int buttonIndex);
+  void handleButtonClick(uint8_t buttonIndex);
   void renderTitle();
   void createStaticContent();
   void updateLayout();

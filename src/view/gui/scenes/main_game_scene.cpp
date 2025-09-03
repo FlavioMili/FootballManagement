@@ -40,9 +40,9 @@ void MainGameScene::onEnter() {
 }
 
 void MainGameScene::onResize(int width, int height) {
-    (void)width;
-    (void)height;
-    updateLayout();
+  (void)width;
+  (void)height;
+  updateLayout();
 }
 
 void MainGameScene::handleEvent(const SDL_Event& event) {

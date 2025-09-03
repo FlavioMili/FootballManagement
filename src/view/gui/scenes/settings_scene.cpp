@@ -57,21 +57,21 @@ void SettingsScene::onEnter() {
   float paddingY = 60.0f;
 
   languageDropdown = std::make_shared<Dropdown>(getRenderer(), font, 
-                SDL_FRect{dropdownX, dropdownY, dropdownW, dropdownH}, languageOptions);
+                                                SDL_FRect{dropdownX, dropdownY, dropdownW, dropdownH}, languageOptions);
   languageDropdown->setOnSelectionChanged([this](int index, const std::string& value)
                                           { (void)value; selectedLanguage = index; });
   languageDropdown->setSelectedIndex(selectedLanguage);
 
   dropdownY += paddingY;
   resolutionDropdown = std::make_shared<Dropdown>(getRenderer(), font, 
-                SDL_FRect{dropdownX, dropdownY, dropdownW, dropdownH}, resolutionOptions);
+                                                  SDL_FRect{dropdownX, dropdownY, dropdownW, dropdownH}, resolutionOptions);
   resolutionDropdown->setOnSelectionChanged([this](int index, const std::string& value)
                                             { (void)value; selectedResolution = index; });
   resolutionDropdown->setSelectedIndex(selectedResolution);
 
   dropdownY += paddingY;
   fpsDropdown = std::make_shared<Dropdown>(getRenderer(), font, 
-                SDL_FRect{dropdownX, dropdownY, dropdownW, dropdownH}, fpsOptionsStrings);
+                                           SDL_FRect{dropdownX, dropdownY, dropdownW, dropdownH}, fpsOptionsStrings);
   fpsDropdown->setOnSelectionChanged([this](int index, const std::string& value)
                                      { (void)value; selectedFPS = index; });
   fpsDropdown->setSelectedIndex(selectedFPS);
@@ -109,9 +109,9 @@ void SettingsScene::initializeCurrentSelections() {
   selectedFPS = (itFps != fpsOptions.end()) ? std::distance(fpsOptions.begin(), itFps) : 0;
 
   auto itRes = std::find_if(resolutions.begin(), resolutions.end(),
-                [&](const auto& r) {
-                return r.first == settings.resolution_width && r.second == settings.resolution_height; 
-                });
+                            [&](const auto& r) {
+                            return r.first == settings.resolution_width && r.second == settings.resolution_height; 
+                            });
   selectedResolution = (itRes != resolutions.end()) ? std::distance(resolutions.begin(), itRes) : 0;
 
   fullscreen = settings.fullscreen;
@@ -139,61 +139,61 @@ void SettingsScene::applyAndSaveSettings() {
 }
 
 void SettingsScene::handleEvent(const SDL_Event& event) {
-    // Motion events are passed to both buttons and open dropdowns
-    if (event.type == SDL_EVENT_MOUSE_MOTION) {
-        if (buttonManager) {
-            buttonManager->handleMouseMove(event.motion.x, event.motion.y);
-        }
-        if (activeDropdown && activeDropdown->isDropdownOpen()) {
-            activeDropdown->handleEvent(event);
-        }
-        return;
+  // Motion events are passed to both buttons and open dropdowns
+  if (event.type == SDL_EVENT_MOUSE_MOTION) {
+    if (buttonManager) {
+      buttonManager->handleMouseMove(event.motion.x, event.motion.y);
+    }
+    if (activeDropdown && activeDropdown->isDropdownOpen()) {
+      activeDropdown->handleEvent(event);
+    }
+    return;
+  }
+
+  // Click events require careful handling
+  if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+    // If a dropdown is open, it gets exclusive priority
+    if (activeDropdown && activeDropdown->isDropdownOpen()) {
+      activeDropdown->handleEvent(event);
+      // After handling, the dropdown might have closed.
+      // If it's now closed, we check if it was because the user clicked outside.
+      // The dropdown's handleEvent should return true if it handled the click (selection or closing).
+      // This prevents the click from passing through to buttons underneath.
+      if (!activeDropdown->isDropdownOpen()) {
+        activeDropdown = nullptr;
+      }
+      return; // The click is consumed by the dropdown logic
     }
 
-    // Click events require careful handling
-    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        // If a dropdown is open, it gets exclusive priority
-        if (activeDropdown && activeDropdown->isDropdownOpen()) {
-            activeDropdown->handleEvent(event);
-            // After handling, the dropdown might have closed.
-            // If it's now closed, we check if it was because the user clicked outside.
-            // The dropdown's handleEvent should return true if it handled the click (selection or closing).
-            // This prevents the click from passing through to buttons underneath.
-            if (!activeDropdown->isDropdownOpen()) {
-                activeDropdown = nullptr;
-            }
-            return; // The click is consumed by the dropdown logic
-        }
-
-        // If no dropdown is open, check if a click opens one
-        if (languageDropdown->handleEvent(event)) {
-            activeDropdown = languageDropdown;
-            resolutionDropdown->close();
-            fpsDropdown->close();
-            return;
-        }
-        if (resolutionDropdown->handleEvent(event)) {
-            activeDropdown = resolutionDropdown;
-            languageDropdown->close();
-            fpsDropdown->close();
-            return;
-        }
-        if (fpsDropdown->handleEvent(event)) {
-            activeDropdown = fpsDropdown;
-            languageDropdown->close();
-            resolutionDropdown->close();
-            return;
-        }
-
-        // If no dropdown was opened or interacted with, check buttons
-        if (buttonManager) {
-            buttonManager->handleMouseClick(event.button.x, event.button.y);
-        }
+    // If no dropdown is open, check if a click opens one
+    if (languageDropdown->handleEvent(event)) {
+      activeDropdown = languageDropdown;
+      resolutionDropdown->close();
+      fpsDropdown->close();
+      return;
+    }
+    if (resolutionDropdown->handleEvent(event)) {
+      activeDropdown = resolutionDropdown;
+      languageDropdown->close();
+      fpsDropdown->close();
+      return;
+    }
+    if (fpsDropdown->handleEvent(event)) {
+      activeDropdown = fpsDropdown;
+      languageDropdown->close();
+      resolutionDropdown->close();
+      return;
     }
 
-    if (event.type == SDL_EVENT_KEY_DOWN && (event.key.key == SDLK_ESCAPE || event.key.key == SDLK_BACKSPACE)) {
-        changeScene(std::make_unique<MainMenuScene>(guiView));
+    // If no dropdown was opened or interacted with, check buttons
+    if (buttonManager) {
+      buttonManager->handleMouseClick(event.button.x, event.button.y);
     }
+  }
+
+  if (event.type == SDL_EVENT_KEY_DOWN && (event.key.key == SDLK_ESCAPE || event.key.key == SDLK_BACKSPACE)) {
+    changeScene(std::make_unique<MainMenuScene>(guiView));
+  }
 }
 
 void SettingsScene::update(float deltaTime) {
