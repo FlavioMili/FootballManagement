@@ -39,6 +39,8 @@ class MainGameScene : public GUIScene {
  private:
   void initializeUI();
   void renderSidebar();
+  void renderLeaderboard();
+  void renderTopPlayers();
   void updateLayout();
   void cleanup();
   void setupButtons();

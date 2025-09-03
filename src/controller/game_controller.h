@@ -33,9 +33,12 @@ class GameController {
 
   std::vector<Team> getTeams() const;
   std::vector<Team> getAvailableTeams() const;
-  std::vector<Player> getPlayersForTeam(int team_id) const;
+  std::vector<Player>& getPlayersForTeam(int team_id);
+  const std::vector<Player>& getPlayersForTeam(int team_id) const;
   std::vector<Team> getTeamsInLeague(int league_id) const;
   League& getLeagueById(int league_id);
+  Team& getTeamById(int team_id);
+  const Team& getTeamById(int team_id) const;
   const StatsConfig& getStatsConfig() const;
 
   void advanceWeek();

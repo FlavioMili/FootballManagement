@@ -43,7 +43,11 @@ std::vector<Team> GameController::getAvailableTeams() const {
   return game->getAvailableTeams();
 }
 
-std::vector<Player> GameController::getPlayersForTeam(int team_id) const {
+std::vector<Player>& GameController::getPlayersForTeam(int team_id) {
+  return game->getPlayersForTeam(team_id);
+}
+
+const std::vector<Player>& GameController::getPlayersForTeam(int team_id) const {
   return game->getPlayersForTeam(team_id);
 }
 
@@ -53,6 +57,14 @@ std::vector<Team> GameController::getTeamsInLeague(int league_id) const {
 
 League& GameController::getLeagueById(int league_id) {
   return game->getLeagueById(league_id);
+}
+
+Team& GameController::getTeamById(int team_id) {
+  return game->getTeamById(team_id);
+}
+
+const Team& GameController::getTeamById(int team_id) const {
+  return game->getTeamById(team_id);
 }
 
 const StatsConfig& GameController::getStatsConfig() const {

@@ -18,11 +18,11 @@ int main() {
     auto db = std::make_shared<Database>("football_management.db");
     db->initialize();
     auto game = std::make_unique<Game>(db);
-    GameController controller(std::move(game));
+    auto controller = std::make_unique<GameController>(std::move(game));
 
-    GUIView view(controller);
+    GUIView view(*controller);
     view.run();
-    controller.saveGame();
+    controller->saveGame();
     db->close();
   } catch (const std::exception& e) {
     std::cerr << "Error: " << e.what() << "\n";
