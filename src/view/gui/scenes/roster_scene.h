@@ -27,10 +27,15 @@ public:
     void render() override;
     SceneID getID() const override;
 
+void onResize(int width, int height) override;
+
 private:
     GUIView* parent_view;
     ButtonManager button_manager;
     std::vector<Player> roster_players;
+    int backButtonId = -1;
+
+    void setupUI();
 
     void loadRoster();
     void setupPlayerDisplay();

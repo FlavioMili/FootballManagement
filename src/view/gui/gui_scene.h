@@ -29,6 +29,7 @@ class GUIScene {
   // Optional lifecycle hooks
   virtual void onEnter();
   virtual void onExit();
+  virtual void onResize(int width, int height);
 
   /*
   * This function might be used to check what we are rendering.

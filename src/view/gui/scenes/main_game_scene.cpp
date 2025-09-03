@@ -9,7 +9,6 @@
 #include "main_game_scene.h"
 #include "global.h"
 #include "main_menu_scene.h"
-#include "main_menu_scene.h"
 #include "view/gui/scenes/roster_scene.h"
 #include "view/gui/scenes/strategy_scene.h"
 #include <SDL3_ttf/SDL_ttf.h> 
@@ -38,11 +37,19 @@ void MainGameScene::onEnter() {
 
   buttonManager = std::make_unique<ButtonManager>(getRenderer(), font); 
   initializeUI(); 
-} 
+}
+
+void MainGameScene::onResize(int width, int height) {
+    (void)width;
+    (void)height;
+    updateLayout();
+}
 
 void MainGameScene::handleEvent(const SDL_Event& event) {
   if (event.type == SDL_EVENT_WINDOW_RESIZED) {
-    updateLayout();
+    int w, h;
+    SDL_GetWindowSizeInPixels(getWindow(), &w, &h);
+    onResize(w, h);
   }
 
   if (event.type == SDL_EVENT_MOUSE_MOTION) {
@@ -65,7 +72,7 @@ void MainGameScene::handleEvent(const SDL_Event& event) {
 
 void MainGameScene::update(float deltaTime) { 
   (void)deltaTime; 
-} 
+}
 
 void MainGameScene::render() { 
   SDL_SetRenderDrawColor(getRenderer(), 10, 50, 10, 255); // Dark green background 
@@ -73,16 +80,16 @@ void MainGameScene::render() {
 
   renderSidebar(); 
   buttonManager->render(); 
-} 
+}
 
 void MainGameScene::onExit() { 
   cleanup(); 
-} 
+}
 
 void MainGameScene::initializeUI() {
   setupButtons();
   updateLayout(); // Set initial layout
-} 
+}
 
 void MainGameScene::renderSidebar() {
   SDL_SetRenderDrawColor(getRenderer(), 40, 40, 40, 255); // Dark grey for sidebar
@@ -98,10 +105,10 @@ void MainGameScene::setupButtons() {
   sidebarButtonStyle.borderWidth = 1;
   sidebarButtonStyle.hasBorder = true;
 
-  sidebarButtonIds.push_back(buttonManager->addButton(VIEW_ROSTER_BUTTON, 0, 0, 0, "View Roster", sidebarButtonStyle, [this]() { guiView->overlayScene(std::make_unique<RosterScene>(guiView)); }));
-  sidebarButtonIds.push_back(buttonManager->addButton(SET_STRATEGY_BUTTON, 0, 0, 0, "Set Strategy", sidebarButtonStyle, [this]() { guiView->overlayScene(std::make_unique<StrategyScene>(guiView)); }));
-  sidebarButtonIds.push_back(buttonManager->addButton(FINANCES_BUTTON, 0, 0, 0, "Finances", sidebarButtonStyle, [](){ /* Placeholder */ }));
-  sidebarButtonIds.push_back(buttonManager->addButton(TRANSFER_MARKET_BUTTON, 0, 0, 0, "Transfer Market", sidebarButtonStyle, [](){ /* Placeholder */ }));
+  sidebarButtonIds.push_back(buttonManager->addButton(0, 0, 0, 0, "View Roster", sidebarButtonStyle, [this]() { guiView->overlayScene(std::make_unique<RosterScene>(guiView)); }));
+  sidebarButtonIds.push_back(buttonManager->addButton(0, 0, 0, 0, "Set Strategy", sidebarButtonStyle, [this]() { guiView->overlayScene(std::make_unique<StrategyScene>(guiView)); }));
+  sidebarButtonIds.push_back(buttonManager->addButton(0, 0, 0, 0, "Finances", sidebarButtonStyle, [](){ /* Placeholder */ }));
+  sidebarButtonIds.push_back(buttonManager->addButton(0, 0, 0, 0, "Transfer Market", sidebarButtonStyle, [](){ /* Placeholder */ }));
 
   ButtonStyle nextButtonStyle;
   nextButtonStyle.backgroundColor = {80, 120, 80, 255};
@@ -111,7 +118,7 @@ void MainGameScene::setupButtons() {
   nextButtonStyle.borderWidth = 1;
   nextButtonStyle.hasBorder = true;
 
-  nextButtonId = buttonManager->addButton(NEXT_WEEK_BUTTON, 0, 0, 0, "Next", nextButtonStyle, [this](){
+  nextButtonId = buttonManager->addButton(0, 0, 0, 0, "Next", nextButtonStyle, [this](){
     guiView->getController().advanceWeek();
   });
 }
@@ -128,14 +135,16 @@ void MainGameScene::updateLayout() {
   float buttonY = 10.0f;
   float buttonHeight = 50.0f;
   for (size_t i = 0; i < sidebarButtonIds.size(); ++i) {
-    buttonManager->updateButtonPosition(sidebarButtonIds[i], { sidebarRect.x + 10, buttonY, sidebarRect.w - 20, buttonHeight });
+    buttonManager->updateButtonPositionById(sidebarButtonIds[i], { sidebarRect.x + 10, buttonY, sidebarRect.w - 20, buttonHeight });
     buttonY += buttonHeight + 5; // Add some padding
   }
 
   if (nextButtonId != -1) {
-    buttonManager->updateButtonPosition(nextButtonId, { windowWidth - 110.0f, 10.0f, 100.0f, 40.0f });
+    float buttonWidth = 100.0f;
+    float buttonHeight = 40.0f;
+    buttonManager->updateButtonPositionById(nextButtonId, { windowWidth - buttonWidth - 10.0f, 10.0f, buttonWidth, buttonHeight });
   }
-} 
+}
 
 void MainGameScene::cleanup() { 
   if (font) { 

@@ -29,21 +29,37 @@ StrategyScene::~StrategyScene() {
 void StrategyScene::onEnter() {
     std::cout << "Entering StrategyScene\n";
     loadStrategy();
-    setupStrategyControls();
-
-    button_manager.addButton(10, 750, 100, 40, "Back", [this]() {
-        parent_view->popScene();
-    });
-
-    button_manager.addButton(120, 750, 100, 40, "Apply", [this]() {
-        saveStrategy();
-        parent_view->popScene();
-    });
+    setupUI();
 }
 
 void StrategyScene::onExit() {
     std::cout << "Exiting StrategyScene\n";
     button_manager.clearButtons();
+}
+
+void StrategyScene::onResize(int width, int height) {
+    (void)width;
+    (void)height;
+    setupUI();
+}
+
+void StrategyScene::setupUI() {
+    button_manager.clearButtons();
+
+    int width, height;
+    SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
+
+    // Back and Apply buttons
+    backButtonId = button_manager.addButton(10, height - 50, 100, 40, "Back", [this]() {
+        parent_view->popScene();
+    });
+
+    applyButtonId = button_manager.addButton(120, height - 50, 100, 40, "Apply", [this]() {
+        saveStrategy();
+        parent_view->popScene();
+    });
+
+    setupStrategyControls();
 }
 
 void StrategyScene::handleEvent(const SDL_Event& event) {
@@ -62,6 +78,9 @@ void StrategyScene::update(float deltaTime) {
 void StrategyScene::render() {
     SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50, 255); // Dark grey background
     SDL_RenderClear(getRenderer());
+
+    int width, height;
+    SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
 
     // Render title
     SDL_Color textColor = {255, 255, 255, 255}; // White
@@ -85,7 +104,7 @@ void StrategyScene::render() {
         return;
     }
 
-    SDL_FRect textRect = { (1200.0f - textSurface->w) / 2.0f, 50.0f, (float)textSurface->w, (float)textSurface->h };
+    SDL_FRect textRect = { (width - textSurface->w) / 2.0f, 50.0f, (float)textSurface->w, (float)textSurface->h };
     SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
 
     SDL_DestroyTexture(textTexture);
@@ -103,9 +122,12 @@ void StrategyScene::render() {
 }
 
 void StrategyScene::setupStrategyControls() {
+    int width, height;
+    SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
+
     float buttonWidth = 50.0f;
     float buttonHeight = 40.0f;
-    float xOffset = 800.0f;
+    float xOffset = width * 0.7f;
     float yOffset = 150.0f;
     float padding = 10.0f;
 

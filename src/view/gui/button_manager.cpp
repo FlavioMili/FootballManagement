@@ -207,3 +207,11 @@ void ButtonManager::updateButtonPosition(int buttonIndex, SDL_FRect newRect) {
   Button& btn = buttons[buttonIndex];
   btn.rect = newRect;
 }
+
+void ButtonManager::updateButtonPositionById(int buttonId, SDL_FRect newRect) {
+  auto it = std::find_if(buttons.begin(), buttons.end(),
+                         [buttonId](Button& btn) { return btn.id == buttonId; });
+  if (it != buttons.end()) {
+    it->rect = newRect;
+  }
+}

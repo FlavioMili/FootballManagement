@@ -27,10 +27,16 @@ public:
     void render() override;
     SceneID getID() const override;
 
+void onResize(int width, int height) override;
+
 private:
     GUIView* parent_view;
     ButtonManager button_manager;
     StrategySliders current_sliders;
+    int backButtonId = -1;
+    int applyButtonId = -1;
+
+    void setupUI();
 
     // For simplicity, we'll use buttons to increment/decrement values for now
     // A proper slider implementation would be more complex.

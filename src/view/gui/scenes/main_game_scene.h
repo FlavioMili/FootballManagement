@@ -24,6 +24,7 @@ class MainGameScene : public GUIScene {
   void render() override;
   void onEnter() override;
   void onExit() override;
+  void onResize(int width, int height) override;
   SceneID getID() const override;
 
  private:

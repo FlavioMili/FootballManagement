@@ -76,6 +76,7 @@ class ButtonManager {
   const std::vector<Button> getButtons() { return buttons; }
   void recreateTextures();
   void updateButtonPosition(int buttonIndex, SDL_FRect newRect);
+  void updateButtonPositionById(int buttonId, SDL_FRect newRect);
 
  private:
   void renderButton(const Button& button);

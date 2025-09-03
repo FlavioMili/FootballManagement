@@ -23,16 +23,31 @@ RosterScene::~RosterScene() {
 void RosterScene::onEnter() {
     std::cout << "Entering RosterScene\n";
     loadRoster();
-    setupPlayerDisplay();
-
-    button_manager.addButton(10, 10, 100, 40, "Back", [this]() {
-        parent_view->popScene();
-    });
+    setupUI();
 }
 
 void RosterScene::onExit() {
     std::cout << "Exiting RosterScene\n";
     button_manager.clearButtons();
+}
+
+void RosterScene::onResize(int width, int height) {
+    (void)width;
+    (void)height;
+    setupUI();
+}
+
+void RosterScene::setupUI() {
+    button_manager.clearButtons();
+
+    int width, height;
+    SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
+
+    backButtonId = button_manager.addButton(10, height - 50, 100, 40, "Back", [this]() {
+        parent_view->popScene();
+    });
+
+    setupPlayerDisplay();
 }
 
 void RosterScene::handleEvent(const SDL_Event& event) {
@@ -50,6 +65,9 @@ void RosterScene::update(float deltaTime) {
 void RosterScene::render() {
     SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50, 255); // Dark grey background
     SDL_RenderClear(getRenderer());
+
+    int width, height;
+    SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
 
     // Render title
     SDL_Color textColor = {255, 255, 255, 255}; // White
@@ -73,7 +91,7 @@ void RosterScene::render() {
         return;
     }
 
-    SDL_FRect textRect = { (1200.0f - textSurface->w) / 2.0f, 50.0f, (float)textSurface->w, (float)textSurface->h };
+    SDL_FRect textRect = { (width - textSurface->w) / 2.0f, 50.0f, (float)textSurface->w, (float)textSurface->h };
     SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
 
     SDL_DestroyTexture(textTexture);

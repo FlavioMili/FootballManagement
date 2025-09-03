@@ -102,6 +102,15 @@ void GUIView::handleEvents() {
       running = false;
     }
 
+    if (event.type == SDL_EVENT_WINDOW_RESIZED) {
+        int width, height;
+        SDL_GetWindowSizeInPixels(window, &width, &height);
+        GUIScene* activeScene = getActiveScene();
+        if (activeScene) {
+            activeScene->onResize(width, height);
+        }
+    }
+
     // Pass event to the topmost scene 
     // (overlay if exists, otherwise current scene)
     GUIScene* activeScene = getActiveScene();
