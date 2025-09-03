@@ -30,11 +30,19 @@ void StrategyScene::onEnter() {
     std::cout << "Entering StrategyScene\n";
     loadStrategy();
     setupStrategyControls();
+
+    button_manager.addButton(10, 750, 100, 40, "Back", [this]() {
+        parent_view->popScene();
+    });
+
+    button_manager.addButton(120, 750, 100, 40, "Apply", [this]() {
+        saveStrategy();
+        parent_view->popScene();
+    });
 }
 
 void StrategyScene::onExit() {
     std::cout << "Exiting StrategyScene\n";
-    saveStrategy();
     button_manager.clearButtons();
 }
 
@@ -142,6 +150,7 @@ void StrategyScene::updateStrategyValue(const std::string& slider_name, float de
 
 void StrategyScene::saveStrategy() {
     parent_view->getController().getManagedTeam().getStrategy().setAllSliders(current_sliders);
+    parent_view->getController().saveGame();
 }
 
 void StrategyScene::loadStrategy() {

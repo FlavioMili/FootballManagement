@@ -23,7 +23,11 @@ bool GameController::hasSelectedTeam() const {
   return game->hasSelectedTeam();
 }
 
-Team GameController::getManagedTeam() const {
+Team& GameController::getManagedTeam() {
+  return game->getManagedTeam();
+}
+
+const Team& GameController::getManagedTeam() const {
   return game->getManagedTeam();
 }
 

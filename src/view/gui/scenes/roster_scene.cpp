@@ -24,6 +24,10 @@ void RosterScene::onEnter() {
     std::cout << "Entering RosterScene\n";
     loadRoster();
     setupPlayerDisplay();
+
+    button_manager.addButton(10, 10, 100, 40, "Back", [this]() {
+        parent_view->popScene();
+    });
 }
 
 void RosterScene::onExit() {

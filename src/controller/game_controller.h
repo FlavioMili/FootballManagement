@@ -27,7 +27,8 @@ class GameController {
   int getCurrentWeek() const;
   bool hasSelectedTeam() const;
 
-  Team getManagedTeam() const;
+  Team& getManagedTeam();
+  const Team& getManagedTeam() const;
   void selectManagedTeam(int team_id);
 
   std::vector<Team> getTeams() const;
