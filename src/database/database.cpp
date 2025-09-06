@@ -286,7 +286,7 @@ std::vector<Team> Database::getTeams(const int league_id) const {
     int id = sqlite3_column_int(stmt, 0);
     const unsigned char* name_text = sqlite3_column_text(stmt, 1);
     std::string name = name_text ? reinterpret_cast<const char*>(name_text) : "";
-    uint64_t balance = sqlite3_column_int64(stmt, 2);
+    std::int64_t balance = sqlite3_column_int64(stmt, 2);
     teams.emplace_back(id, league_id, name, balance);
   }
 
@@ -303,7 +303,7 @@ void Database::updateTeam(const Team& team) {
   }
 
   sqlite3_bind_text(stmt, 1, team.getName().c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int64(stmt, 2, team.getBalance());
+  sqlite3_bind_int64(stmt, 2, team.getFinances().getBalance());
   sqlite3_bind_int(stmt, 3, team.getId());
 
   if (sqlite3_step(stmt) != SQLITE_DONE) {
