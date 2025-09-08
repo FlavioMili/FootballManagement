@@ -45,7 +45,8 @@ all: $(TARGET)
 
 # Link
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lsqlite3 $(shell pkg-config --libs sdl3) -lSDL3_ttf
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) -lsqlite3 $(shell pkg-config --libs sdl3) -lSDL3_ttf -lspdlog -lfmt
+
 
 # Compile
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp

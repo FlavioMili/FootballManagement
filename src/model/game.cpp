@@ -16,6 +16,7 @@
 #include "datagenerator.h"
 #include "global.h"
 #include "json.hpp"
+#include "logger.h"
 
 void from_json(const nlohmann::json& j, RoleFocus& rf) {
   j.at("stats").get_to(rf.stats);

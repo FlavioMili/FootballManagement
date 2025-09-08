@@ -11,8 +11,10 @@
 #include "controller/game_controller.h"
 #include "view/gui/gui_view.h"
 #include "database/database.h"
+#include "logger.h"
 
 int main() {
+  Logger::init();
   srand(time(0));
   try {
     auto db = std::make_shared<Database>("football_management.db");

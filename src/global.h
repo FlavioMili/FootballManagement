@@ -33,6 +33,8 @@ const std::map<Language, std::string> languageToString {
   // {ES, "Spanish"},
 };
 
+// PATHS 
+constexpr const char* LOGGER_PATH = "logs/log.txt";
 constexpr const char* STATS_CONFIG_PATH = "assets/config/stats_config.json";
 constexpr const char* LEAGUE_NAMES_PATH = "assets/config/league_names.json"; 
 constexpr const char* TEAM_NAMES_PATH = "assets/config/team_names.json"; 
