@@ -26,5 +26,10 @@ void Logger::init() {
 
 void Logger::info(const std::string& msg)  { logger->info(msg); }
 void Logger::error(const std::string& msg) { logger->error(msg); }
-void Logger::debug(const std::string& msg) { logger->debug(msg); }
 void Logger::warn(const std::string& msg)  { logger->warn(msg); }
+
+#ifdef DEBUG
+  void Logger::debug(const std::string& msg) { logger->debug(msg); }
+#else 
+  void Logger::debug(const std::string& msg) { (void)msg; }
+#endif

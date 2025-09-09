@@ -20,7 +20,7 @@ BASE_FLAGS := -Wall -Wextra -pedantic -std=c++20 $(INCLUDES) $(shell pkg-config 
 # Flags per build type
 ifeq ($(BUILD_TYPE),debug)
     CXXFLAGS := $(BASE_FLAGS)
-    CXXFLAGS += -Og -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
+    CXXFLAGS += -Og -g3 -fsanitize=address,undefined -fno-omit-frame-pointer -DDEBUG
     LDFLAGS  := -fsanitize=address,undefined
     OBJ_DIR  := $(BUILD_DIR)/debug
 else ifeq ($(BUILD_TYPE),release)
