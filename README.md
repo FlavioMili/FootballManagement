@@ -1,25 +1,25 @@
 # Project Football Management
 
 
-# Installation & Usage
+## Installation & Usage
 
-## Prerequisites
+### Prerequisites
 
 Make sure your system has a **C++20 compiler** and the required libraries installed.
 
-### Ubuntu / Debian
+#### Ubuntu / Debian
 ```bash
 sudo apt update
 sudo apt install g++ make libsdl3-dev libsdl3-ttf-dev libsqlite3-dev libspdlog-dev libfmt-dev
 ```
 
-### Arch
+#### Arch
 ```bash
 sudo pacman -Syu
 sudo pacman -S gcc make sdl3 sdl3_ttf sqlite spdlog fmt
 ```
 
-### MacOS 
+#### MacOS 
 ```bash
 brew update
 brew install gcc make sdl3 sdl3_ttf sqlite spdlog fmt
