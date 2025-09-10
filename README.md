@@ -27,14 +27,25 @@ brew install gcc make sdl3 sdl3_ttf sqlite spdlog fmt
 
 ### Installing and Compiling
 ```bash 
-cd FootballManagement
 git clone https://github.com/FlavioMili/FootballManagement
-make release
+cd FootballManagement
+mkdir build && cd build
+
+# Debug build (includes DEBUG macro and sanitizers)
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+
+# Release build (optimized, no debug info)
+cmake -DCMAKE_BUILD_TYPE=Release ..
+
+# Release with debug info (optimized + debug symbols)
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+
+make -j $nproc
 ```
 
 ### Have fun (and report issues :D)
 ```bash
-./football_management
+./FootballManagement
 ```
 
 ---
