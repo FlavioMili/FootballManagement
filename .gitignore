@@ -1,5 +1,5 @@
 build/*
-football_management
+FootballManagement*
 compile_commands.json
 .cache
 game_state.json

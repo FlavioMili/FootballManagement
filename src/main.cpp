@@ -21,7 +21,7 @@ int main() {
   Logger::init();
   srand(time(0));
   try {
-    auto db = std::make_shared<Database>("football_management.db");
+    auto db = std::make_shared<Database>("FootballManagement.db");
     db->initialize();
     auto game = std::make_unique<Game>(db);
     auto controller = std::make_unique<GameController>(std::move(game));
