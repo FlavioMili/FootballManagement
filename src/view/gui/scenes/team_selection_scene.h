@@ -23,7 +23,6 @@ class TeamSelectionScene : public GUIScene {
   TTF_Font* font;
   TTF_Font* title_font;
   std::vector<Team> available_teams;
-  int selected_team_index;
   ButtonManager button_manager;
 
   void loadAvailableTeams();

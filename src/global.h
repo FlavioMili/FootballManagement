@@ -11,7 +11,6 @@
 #include <cstdint>
 #include <map>
 #include <string>
-#include <string_view>
 #include <utility>
 
 // This file can be used for global constants, enums, and functions

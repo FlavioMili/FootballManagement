@@ -15,7 +15,7 @@
 
 TeamSelectionScene::TeamSelectionScene(GUIView* parent)
   : GUIScene(parent), parent_view(parent),
-  font(nullptr), title_font(nullptr), selected_team_index(-1),
+  font(nullptr), title_font(nullptr),
   button_manager(getRenderer(), TTF_OpenFont(FONT_PATH, 18))
 {}
 

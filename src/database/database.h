@@ -19,7 +19,7 @@
 #include "calendar.h"
 
 class Database {
-public:
+ public:
   explicit Database(const std::string& db_path, 
       const std::string& schema_path = SCHEMA_PATH,
       const std::string& queries_path = QUERIES_PATH);
@@ -66,7 +66,7 @@ public:
   std::vector<int> getAllTeamIds() const;
   void transferPlayer(int player_id, int new_team_id);
 
-private:
+ private:
   struct Impl;
   std::unique_ptr<Impl> pImpl;
 
