@@ -102,7 +102,7 @@ void SettingsScene::initializeCurrentSelections() {
   const auto& settings = settingsManager->getSettings();
 
   auto itLang = std::find_if(languageToString.begin(), languageToString.end(),
-                             [&](const auto& kv) { return static_cast<int>(kv.first) == settings.language; });
+                             [&](const auto& kv) { return kv.first == settings.language; });
   selectedLanguage = (itLang != languageToString.end()) ? std::distance(languageToString.begin(), itLang) : 0;
 
   auto itFps = std::find(fpsOptions.begin(), fpsOptions.end(), settings.fps_limit);

@@ -76,7 +76,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}"
+  RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}"
 )
 
 # -----------------------------
@@ -84,7 +84,12 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 # -----------------------------
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
-  target_compile_options(${PROJECT_NAME} PRIVATE -Og -g3 -fsanitize=address,undefined -fno-omit-frame-pointer)
+  target_compile_options(${PROJECT_NAME} PRIVATE
+    -Wall -Wextra -Wpedantic
+    -Wconversion -Wsign-conversion -Wshadow -Wold-style-cast -Wcast-align -Wformat=2
+    -Og -g3 -fsanitize=address,undefined
+    -fno-omit-frame-pointer -fstack-protector-strong -fno-optimize-sibling-calls
+  )
   target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
   target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)

@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include "SQLLoader.h"
+#include "logger.h"
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
@@ -95,7 +96,7 @@ void SQLLoader::parseQueries(const std::string& content) {
   }
 
   // Debug line 
-  // std::cout << "Loaded " << queries_.size() << " queries from file." << std::endl;
+  Logger::debug("Loaded " + std::to_string(queries_.size()) + " queries from file.\n");
 }
 
 std::string SQLLoader::trim(const std::string& str) {

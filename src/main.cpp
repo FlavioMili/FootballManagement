@@ -16,7 +16,6 @@
 
 #include "database/database.h"
 
-
 int main() {
   Logger::init();
   srand(time(0));
@@ -30,7 +29,7 @@ int main() {
     view.run();
     controller->saveGame();
     db->close();
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << "\n";
     return 1;
   }
