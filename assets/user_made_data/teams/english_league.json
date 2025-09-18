@@ -1,0 +1,22 @@
+[
+  {"id":301,"name":"London North","league_id":3},
+  {"id":302,"name":"Manchester City","league_id":3},
+  {"id":303,"name":"Liverpool Bay","league_id":3},
+  {"id":304,"name":"Birmingham","league_id":3},
+  {"id":305,"name":"Leeds","league_id":3},
+  {"id":306,"name":"Newcastle","league_id":3},
+  {"id":307,"name":"Sheffield","league_id":3},
+  {"id":308,"name":"Southampton","league_id":3},
+  {"id":309,"name":"Norwich","league_id":3},
+  {"id":310,"name":"Brighton","league_id":3},
+  {"id":311,"name":"Coventry","league_id":3},
+  {"id":312,"name":"Bristol","league_id":3},
+  {"id":313,"name":"Leicester","league_id":3},
+  {"id":314,"name":"Hull Town","league_id":3},
+  {"id":315,"name":"Stoke City","league_id":3},
+  {"id":316,"name":"London South","league_id":3},
+  {"id":317,"name":"Sunderland","league_id":3},
+  {"id":318,"name":"Derby","league_id":3},
+  {"id":319,"name":"Portsmouth","league_id":3},
+  {"id":320,"name":"Reading","league_id":3}
+]

@@ -1,0 +1,22 @@
+[
+  {"id":101,"name":"Turin","league_id":1},
+  {"id":102,"name":"Milan","league_id":1},
+  {"id":103,"name":"Lecce","league_id":1},
+  {"id":104,"name":"Como","league_id":1},
+  {"id":105,"name":"Roma","league_id":1},
+  {"id":106,"name":"Neapols","league_id":1},
+  {"id":107,"name":"Genova","league_id":1},
+  {"id":108,"name":"Firenze","league_id":1},
+  {"id":109,"name":"Bologna","league_id":1},
+  {"id":110,"name":"Verona","league_id":1},
+  {"id":111,"name":"Palermo","league_id":1},
+  {"id":112,"name":"Bari","league_id":1},
+  {"id":113,"name":"Cagliari","league_id":1},
+  {"id":114,"name":"Parma","league_id":1},
+  {"id":115,"name":"Reggio","league_id":1},
+  {"id":116,"name":"Caserta","league_id":1},
+  {"id":117,"name":"Trieste","league_id":1},
+  {"id":118,"name":"Cosenza","league_id":1},
+  {"id":119,"name":"Vicenza","league_id":1},
+  {"id":120,"name":"Padova","league_id":1}
+]

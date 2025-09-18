@@ -1,0 +1,22 @@
+[
+  {"id":201,"name":"Madrid","league_id":2},
+  {"id":202,"name":"Barcelona","league_id":2},
+  {"id":203,"name":"Bilbao","league_id":2},
+  {"id":204,"name":"Sevilla","league_id":2},
+  {"id":205,"name":"Valencia","league_id":2},
+  {"id":206,"name":"Granada","league_id":2},
+  {"id":207,"name":"Zaragoza","league_id":2},
+  {"id":208,"name":"Malaga","league_id":2},
+  {"id":209,"name":"Getafe","league_id":2},
+  {"id":210,"name":"Valladolid","league_id":2},
+  {"id":211,"name":"Tenerife","league_id":2},
+  {"id":212,"name":"Palma","league_id":2},
+  {"id":213,"name":"Tarragona","league_id":2},
+  {"id":214,"name":"Santander","league_id":2},
+  {"id":215,"name":"Burgos","league_id":2},
+  {"id":216,"name":"Oviedo","league_id":2},
+  {"id":217,"name":"Almeria","league_id":2},
+  {"id":218,"name":"Gijon","league_id":2},
+  {"id":219,"name":"Salamanca","league_id":2},
+  {"id":220,"name":"Toledo","league_id":2}
+]

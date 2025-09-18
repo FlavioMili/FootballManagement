@@ -35,10 +35,10 @@ const std::map<Language, std::string> languageToString {
 // PATHS 
 constexpr const char* LOGGER_PATH = "logs/log.txt";
 constexpr const char* STATS_CONFIG_PATH = "assets/config/stats_config.json";
-constexpr const char* LEAGUE_NAMES_PATH = "assets/config/league_names.json"; 
-constexpr const char* TEAM_NAMES_PATH = "assets/config/team_names.json"; 
-constexpr const char* FIRST_NAMES_PATH ="assets/config/first_names.json";
-constexpr const char* LAST_NAMES_PATH ="assets/config/last_names.json";
+constexpr const char* LEAGUE_NAMES_PATH = "assets/names_files/league_names.json"; 
+constexpr const char* TEAM_NAMES_PATH = "assets/names_files/team_names.json"; 
+constexpr const char* FIRST_NAMES_PATH ="assets/names_files/first_names.json";
+constexpr const char* LAST_NAMES_PATH ="assets/names_files/last_names.json";
 
 constexpr const char* SCHEMA_PATH ="assets/db/schema.sql";
 constexpr const char* QUERIES_PATH ="assets/db/queries.sql";

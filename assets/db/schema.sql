@@ -1,4 +1,5 @@
 -- Updated schema to match C++ implementation
+
 -- Leagues table
 CREATE TABLE IF NOT EXISTS Leagues (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
