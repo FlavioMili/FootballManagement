@@ -28,8 +28,7 @@ file(GLOB_RECURSE CORE_SRC
 set(MODEL_DIR "${PROJECT_SOURCE_DIR}/src/model")
 set(CONTROLLER_DIR "${PROJECT_SOURCE_DIR}/src/controller")
 set(DATABASE_DIR "${PROJECT_SOURCE_DIR}/src/database")
-set(VIEW_CLI_DIR "${PROJECT_SOURCE_DIR}/src/view/cli")
-set(VIEW_GUI_DIR "${PROJECT_SOURCE_DIR}/src/view/gui")
+set(VIEW_GUI_DIR "${PROJECT_SOURCE_DIR}/src/gui")
 set(VIEW_GUI_SCENES_DIR "${VIEW_GUI_DIR}/scenes")
 
 # -----------------------------
@@ -46,7 +45,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   ${MODEL_DIR}
   ${CONTROLLER_DIR}
   ${DATABASE_DIR}
-  ${VIEW_CLI_DIR}
   ${VIEW_GUI_DIR}
   ${VIEW_GUI_SCENES_DIR}
 )

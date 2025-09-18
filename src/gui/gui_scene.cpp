@@ -6,8 +6,8 @@
 //  See the LICENSE file in the project root.
 // -----------------------------------------------------------------------------
 
-#include "view/gui/gui_scene.h"
-#include "view/gui/gui_view.h"
+#include "gui/gui_scene.h"
+#include "gui/gui_view.h"
 
 GUIScene::GUIScene(GUIView* guiView) : guiView(guiView) {
 }

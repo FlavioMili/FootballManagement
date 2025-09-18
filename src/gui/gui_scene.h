@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include "view/gui/gui_view.h"
+#include "gui/gui_view.h"
 #include <SDL3/SDL.h>
 #include <cstdint>
 #include <memory>

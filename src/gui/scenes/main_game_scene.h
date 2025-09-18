@@ -7,9 +7,9 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include "view/gui/gui_scene.h"
-#include "view/gui/gui_view.h"
-#include "view/gui/button_manager.h"
+#include "gui/gui_scene.h"
+#include "gui/gui_view.h"
+#include "gui/button_manager.h"
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <cstdint>

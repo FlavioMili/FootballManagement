@@ -6,12 +6,12 @@
 //  See the LICENSE file in the project root.
 // -----------------------------------------------------------------------------
 
-#include "view/gui/gui_view.h"
+#include "gui/gui_view.h"
 #include "settings_manager.h"
-#include "view/gui/gui_scene.h"
+#include "gui/gui_scene.h"
 #include "controller/game_controller.h"
-#include "view/gui/scenes/main_menu_scene.h"
-#include "view/gui/scenes/team_selection_scene.h"
+#include "gui/scenes/main_menu_scene.h"
+#include "gui/scenes/team_selection_scene.h"
 #include <iostream>
 #include <stack>
 

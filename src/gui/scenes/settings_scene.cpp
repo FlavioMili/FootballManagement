@@ -9,7 +9,7 @@
 #include "settings_scene.h"
 #include "main_menu_scene.h"
 #include "settings_manager.h"
-#include "view/gui/gui_view.h"
+#include "gui/gui_view.h"
 #include "dropdown.h"
 #include <iostream>
 

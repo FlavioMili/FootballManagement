@@ -8,7 +8,7 @@
 
 #include "strategy_scene.h"
 #include "gui_scene.h"
-#include "view/gui/gui_view.h"
+#include "gui/gui_view.h"
 #include "global.h"
 #include <iostream>
 #include <SDL3_ttf/SDL_ttf.h>

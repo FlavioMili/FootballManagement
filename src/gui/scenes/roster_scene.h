@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "view/gui/gui_scene.h"
-#include "view/gui/button_manager.h"
+#include "gui/gui_scene.h"
+#include "gui/button_manager.h"
 #include "model/player.h"
 #include <vector>
 

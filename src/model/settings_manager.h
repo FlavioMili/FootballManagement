@@ -31,7 +31,7 @@ class SettingsManager {
   const Settings& get() const { return settings_; }
 
   // TODO This is pretty horrible 
-  // check /src/view/gui/scenes/settings_scene.cpp
+  // check /src/gui/scenes/settings_scene.cpp
   Settings& getSettings() { return settings_; }
 
  private:

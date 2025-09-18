@@ -11,7 +11,7 @@
 
 #include "gui_scene.h"
 #include "model/team.h"
-#include "view/gui/button_manager.h"
+#include "gui/button_manager.h"
 #include <vector>
 #include <SDL3_ttf/SDL_ttf.h>
 

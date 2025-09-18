@@ -9,8 +9,8 @@
 #include "main_game_scene.h"
 #include "global.h"
 #include "main_menu_scene.h"
-#include "view/gui/scenes/roster_scene.h"
-#include "view/gui/scenes/strategy_scene.h"
+#include "gui/scenes/roster_scene.h"
+#include "gui/scenes/strategy_scene.h"
 #include <SDL3_ttf/SDL_ttf.h> 
 #include <iostream>
 #include <algorithm>

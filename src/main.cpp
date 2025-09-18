@@ -12,7 +12,7 @@
 #include "logger.h"
 
 #include "controller/game_controller.h"
-#include "view/gui/gui_view.h"
+#include "gui/gui_view.h"
 
 #include "database/database.h"
 

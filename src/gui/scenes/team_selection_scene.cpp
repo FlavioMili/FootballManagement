@@ -8,8 +8,8 @@
 
 #include "team_selection_scene.h"
 #include "global.h"
-#include "view/gui/gui_view.h"
-#include "view/gui/scenes/main_menu_scene.h"
+#include "gui/gui_view.h"
+#include "gui/scenes/main_menu_scene.h"
 #include <iostream>
 #include <SDL3_ttf/SDL_ttf.h>
 
