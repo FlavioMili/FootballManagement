@@ -22,10 +22,10 @@
   */
 class DataGenerator {
  public:
-  explicit DataGenerator(std::shared_ptr<Database> db,
+  explicit DataGenerator(std::shared_ptr<Database> db_ptr,
                  const nlohmann::json& stats_config,
-                 const std::vector<std::string>& league_names,
-                 const std::vector<std::string>& team_names);
+                 const std::vector<std::string>& league_names_v,
+                 const std::vector<std::string>& team_names_v);
   void generateAll();
 
  private:

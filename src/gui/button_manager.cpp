@@ -8,10 +8,11 @@
 
 #include "button_manager.h"
 #include <algorithm>
+#include <cstddef>
 #include <utility>
 
-ButtonManager::ButtonManager(SDL_Renderer* renderer, TTF_Font* font) 
-: renderer(renderer), font(font) {
+ButtonManager::ButtonManager(SDL_Renderer* renderer_ptr, TTF_Font* font_ptr) 
+: renderer(renderer_ptr), font(font_ptr) {
 }
 
 ButtonManager::~ButtonManager() {
@@ -187,8 +188,8 @@ void ButtonManager::createButtonTexture(Button& btn) {
 
   btn.textTexture = SDL_CreateTextureFromSurface(renderer, surf);
   btn.textRect = {
-    btn.rect.x + (btn.rect.w - surf->w) / 2.0f,
-    btn.rect.y + (btn.rect.h - surf->h) / 2.0f,
+    btn.rect.x + (btn.rect.w - static_cast<float>(surf->w)) / 2.0f,
+    btn.rect.y + (btn.rect.h - static_cast<float>(surf->h)) / 2.0f,
     static_cast<float>(surf->w),
     static_cast<float>(surf->h)
   };
@@ -199,8 +200,8 @@ void ButtonManager::recreateTextures() {
   for (auto& b: buttons) createButtonTexture(b);
 }
 
-void ButtonManager::updateButtonPosition(int buttonIndex, SDL_FRect newRect) {
-  if (buttonIndex < 0 || buttonIndex >= static_cast<int>(buttons.size())) {
+void ButtonManager::updateButtonPosition(size_t buttonIndex, SDL_FRect newRect) {
+  if (buttonIndex < 0 || buttonIndex >= buttons.size()) {
     return;
   }
 

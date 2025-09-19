@@ -43,7 +43,7 @@ void RosterScene::setupUI() {
   int width, height;
   SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
 
-  backButtonId = button_manager.addButton(10, height - 50, 100, 40, "Back", [this]() {
+  backButtonId = button_manager.addButton(10, static_cast<float>(height) - 50, 100, 40, "Back", [this]() {
     parent_view->popScene();
   });
 
@@ -91,7 +91,8 @@ void RosterScene::render() {
     return;
   }
 
-  SDL_FRect textRect = { (width - textSurface->w) / 2.0f, 50.0f, (float)textSurface->w, (float)textSurface->h };
+  SDL_FRect textRect = { static_cast<float>(width - textSurface->w) / 2.0f, 50.0f, 
+    static_cast<float>(textSurface->w), static_cast<float>(textSurface->h) };
   SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
 
   SDL_DestroyTexture(textTexture);
@@ -124,7 +125,8 @@ void RosterScene::render() {
       continue;
     }
 
-    SDL_FRect playerRect = { 50.0f, startY + (float)i * lineHeight, (float)playerSurface->w, (float)playerSurface->h };
+    SDL_FRect playerRect = { 50.0f, static_cast<float>(startY) + static_cast<float>(i) * lineHeight, 
+                                    static_cast<float>(playerSurface->w), static_cast<float>(playerSurface->h) };
     SDL_RenderTexture(getRenderer(), playerTexture, NULL, &playerRect);
 
     SDL_DestroyTexture(playerTexture);

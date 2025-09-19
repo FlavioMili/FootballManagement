@@ -16,7 +16,7 @@
 #include <cstdint>
 class Finances {
  public:
-  Finances(std::int64_t balance);
+  Finances(std::int64_t startingBalance);
   ~Finances() = default;
 
   /*

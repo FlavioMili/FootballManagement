@@ -111,10 +111,10 @@ void TeamSelectionScene::render() {
       SDL_Texture* textTexture = SDL_CreateTextureFromSurface(getRenderer(), textSurface);
       if (textTexture) {
         SDL_FRect textRect = { 
-          (1200.0f - textSurface->w) / 2.0f, 
+          (1200.0f - static_cast<float>(textSurface->w)) / 2.0f, 
           50.0f, 
-          (float)textSurface->w, 
-          (float)textSurface->h 
+          static_cast<float>(textSurface->w), 
+          static_cast<float>(textSurface->h)
         };
         SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
         SDL_DestroyTexture(textTexture);
@@ -146,7 +146,7 @@ void TeamSelectionScene::setupTeamButtons() {
     std::string leagueName = parent_view->getController().getLeagueById(team.getLeagueId()).getName();
     std::string buttonText = team.getName() + " (" + leagueName + ")";
     float buttonX = (1200.0f - buttonWidth) / 2.0f; // Fixed: was 120.0f, should be screen width
-    float buttonY = startY + (i * (buttonHeight + padding));
+    float buttonY = startY + (static_cast<float>(i) * (buttonHeight + padding));
 
     button_manager.addButton(
       buttonX, buttonY, buttonWidth, buttonHeight,

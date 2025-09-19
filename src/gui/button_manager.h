@@ -9,6 +9,7 @@
 #pragma once
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <functional>
@@ -37,10 +38,10 @@ struct Button {
 
 class ButtonManager {
  public:
-  ButtonManager(SDL_Renderer* renderer, TTF_Font* font);
+  ButtonManager(SDL_Renderer* renderer_ptr, TTF_Font* font_ptr);
   ~ButtonManager();
 
-  int getButtonCount() { return buttons.size(); }
+  int getButtonCount() { return static_cast<int>(buttons.size()); }
   // Button creation and management
   int addButton(const SDL_FRect& rect, const std::string& label,
                 std::function<void()> callback);
@@ -69,13 +70,13 @@ class ButtonManager {
   void render();
 
   // Utility
-  void setFont(TTF_Font* font) { this->font = font; }
+  void setFont(TTF_Font* newFont) { font = newFont; }
   TTF_Font* getFont() { return this->font; }
   void setDefaultStyle(const ButtonStyle& style) { defaultStyle = style; }
 
   const std::vector<Button> getButtons() { return buttons; }
   void recreateTextures();
-  void updateButtonPosition(int buttonIndex, SDL_FRect newRect);
+  void updateButtonPosition(size_t buttonIndex, SDL_FRect newRect);
   void updateButtonPositionById(int buttonId, SDL_FRect newRect);
 
  private:

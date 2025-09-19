@@ -13,10 +13,10 @@
 #include <vector>
 #include <string>
 
-Team::Team(int id, int league_id, std::string name, std::int64_t balance) : 
-  id(id), 
-  league_id(league_id),
-  name(std::move(name)), 
+Team::Team(int team_id, int team_league_id, std::string team_name, std::int64_t balance) : 
+  id(team_id), 
+  league_id(team_league_id),
+  name(std::move(team_name)), 
   team_strategy(),
   finances(balance)
 {}

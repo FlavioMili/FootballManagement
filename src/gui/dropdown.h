@@ -24,8 +24,8 @@ struct DropdownStyle {
 
 class Dropdown {
  public:
-  Dropdown(SDL_Renderer* renderer, TTF_Font* font,
-           const SDL_FRect& rect, const std::vector<std::string>& options);
+  Dropdown(SDL_Renderer* dropdown_renderer, TTF_Font* dropdown_font,
+           const SDL_FRect& rect, const std::vector<std::string>& dropdown_options);
   ~Dropdown();
 
   // Disable copy and move to prevent accidental memory issues

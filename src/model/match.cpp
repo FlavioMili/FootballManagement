@@ -11,8 +11,8 @@
 #include "player.h"
 #include "lineup.h"
 
-Match::Match(const Team& home, const Team& away, const StatsConfig& stats_config)
-: home_team(home), away_team(away), stats_config(stats_config), home_score(0), away_score(0) {}
+Match::Match(const Team& home, const Team& away, const StatsConfig& _stats_config)
+: home_team(home), away_team(away), stats_config(_stats_config), home_score(0), away_score(0) {}
 
 // TODO this needs to become a smarter simulation, considering a heat map
 // randomising where the game is taking place and moving to step by step

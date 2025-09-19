@@ -16,7 +16,8 @@ class GUIScene;
 
 class GUIView {
 public:
-  explicit GUIView(GameController& controller);
+  // TODO change to a unique_ptr
+  explicit GUIView(GameController& controller_ref);
   ~GUIView();
 
   /* Starts the scene run */

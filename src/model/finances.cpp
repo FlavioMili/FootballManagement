@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <cstdint>
 
-Finances::Finances(std::int64_t balance) :
-  balance(balance),
+Finances::Finances(std::int64_t startingBalance) :
+  balance(startingBalance),
   transfer_to_wages_ratio(0.5)
 {};
 

@@ -251,7 +251,7 @@ std::vector<std::string> Database::getLastNames() const {
   return names;
 }
 
-void Database::addTeam(int league_id, const std::string& name, uint64_t balance) {
+void Database::addTeam(int league_id, const std::string& name, int64_t balance) {
   sqlite3_stmt* stmt;
   const std::string& sql = pImpl->sql_loader->getQuery("INSERT_TEAM");
 
@@ -261,7 +261,7 @@ void Database::addTeam(int league_id, const std::string& name, uint64_t balance)
 
   sqlite3_bind_int(stmt, 1, league_id);
   sqlite3_bind_text(stmt, 2, name.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int64(stmt, 3, balance);
+  sqlite3_bind_int64(stmt, 3, static_cast<long long>(balance));
 
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     sqlite3_finalize(stmt);
@@ -487,7 +487,7 @@ void Database::loadGameState(int& season, int& week, int& managed_team_id) const
   }
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    std::string key = (const char*)sqlite3_column_text(stmt, 0);
+    std::string key = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
     if (key == "season") {
       season = sqlite3_column_int(stmt, 1);
     } else if (key == "week") {

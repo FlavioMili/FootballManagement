@@ -10,13 +10,13 @@
 #include "main_menu_scene.h"
 #include "settings_manager.h"
 #include "gui/gui_view.h"
-#include "dropdown.h"
+#include "gui/dropdown.h"
 #include <iostream>
 
 SceneID SettingsScene::getID() const { return SceneID::SETTINGS; }
 
-SettingsScene::SettingsScene(GUIView* guiView)
-: GUIScene(guiView), font(nullptr) {}
+SettingsScene::SettingsScene(GUIView* guiView_ptr)
+: GUIScene(guiView_ptr), font(nullptr) {}
 
 SettingsScene::~SettingsScene() {
   // unique_ptrs and onExit
@@ -103,16 +103,16 @@ void SettingsScene::initializeCurrentSelections() {
 
   auto itLang = std::find_if(languageToString.begin(), languageToString.end(),
                              [&](const auto& kv) { return kv.first == settings.language; });
-  selectedLanguage = (itLang != languageToString.end()) ? std::distance(languageToString.begin(), itLang) : 0;
+  selectedLanguage = (itLang != languageToString.end()) ? static_cast<int>(std::distance(languageToString.begin(), itLang)) : 0;
 
   auto itFps = std::find(fpsOptions.begin(), fpsOptions.end(), settings.fps_limit);
-  selectedFPS = (itFps != fpsOptions.end()) ? std::distance(fpsOptions.begin(), itFps) : 0;
+  selectedFPS = (itFps != fpsOptions.end()) ? static_cast<int>(std::distance(fpsOptions.begin(), itFps)) : 0;
 
   auto itRes = std::find_if(resolutions.begin(), resolutions.end(),
                             [&](const auto& r) {
                             return r.first == settings.resolution_width && r.second == settings.resolution_height; 
                             });
-  selectedResolution = (itRes != resolutions.end()) ? std::distance(resolutions.begin(), itRes) : 0;
+  selectedResolution = (itRes != resolutions.end()) ? static_cast<int>(std::distance(resolutions.begin(), itRes)) : 0;
 
   fullscreen = settings.fullscreen;
 }
@@ -125,10 +125,13 @@ void SettingsScene::applyAndSaveSettings() {
   std::advance(langIt, selectedLanguage);
   settings.language = langIt->first;
 
-  if (selectedFPS >= 0 && selectedFPS < (int)fpsOptions.size()) { settings.fps_limit = fpsOptions[selectedFPS]; }
-  if (selectedResolution >= 0 && selectedResolution < (int)resolutions.size()) {
-    settings.resolution_width = resolutions[selectedResolution].first;
-    settings.resolution_height = resolutions[selectedResolution].second;
+  if (selectedFPS >= 0 && selectedFPS < static_cast<int>(fpsOptions.size())) {
+    settings.fps_limit = fpsOptions[static_cast<std::size_t>(selectedFPS)];
+  }
+
+  if (selectedResolution >= 0 && selectedResolution < static_cast<int>(resolutions.size())) {
+    settings.resolution_width  = resolutions[static_cast<std::size_t>(selectedResolution)].first;
+    settings.resolution_height = resolutions[static_cast<std::size_t>(selectedResolution)].second;
   }
   settings.fullscreen = fullscreen;
 

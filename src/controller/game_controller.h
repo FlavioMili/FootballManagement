@@ -21,7 +21,7 @@
 */
 class GameController {
  public:
-  explicit GameController(std::unique_ptr<Game> game);
+  explicit GameController(std::unique_ptr<Game> game_ptr);
 
   int getCurrentSeason() const;
   int getCurrentWeek() const;

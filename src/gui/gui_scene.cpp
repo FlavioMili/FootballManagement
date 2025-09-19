@@ -9,7 +9,7 @@
 #include "gui/gui_scene.h"
 #include "gui/gui_view.h"
 
-GUIScene::GUIScene(GUIView* guiView) : guiView(guiView) {
+GUIScene::GUIScene(GUIView* guiView_ptr) : guiView(guiView_ptr) {
 }
 
 void GUIScene::onEnter() {

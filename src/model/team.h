@@ -20,7 +20,7 @@
 // TODO add lineup and in controller lineupManager class
 class Team {
  public:
-  Team(int id, int league_id, std::string name, int64_t balance);
+  Team(int team_id, int team_league_id, std::string team_name, int64_t balance);
 
   int getId() const;
   int getLeagueId() const;

@@ -37,7 +37,7 @@ class Database {
   std::vector<std::string> getFirstNames() const;
   std::vector<std::string> getLastNames() const;
 
-  void addTeam(int league_id, const std::string& name, uint64_t balance);
+  void addTeam(int league_id, const std::string& name, int64_t balance);
   std::vector<Team> getTeams(const int league_id) const;
   void updateTeam(const Team& team);
 

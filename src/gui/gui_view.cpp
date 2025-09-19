@@ -15,8 +15,8 @@
 #include <iostream>
 #include <stack>
 
-GUIView::GUIView(GameController& controller) 
-  : controller(controller), window(nullptr),
+GUIView::GUIView(GameController& controller_ref) 
+  : controller(controller_ref), window(nullptr),
   renderer(nullptr), running(false),
   currentScene(nullptr) { }
 
@@ -81,7 +81,7 @@ void GUIView::run() {
 
   while (running) {
     Uint64 currentTime = SDL_GetTicks();
-    float deltaTime = (currentTime - lastTime) / 1000.0f;
+    float deltaTime = static_cast<float>(currentTime - lastTime) / 1000.0f;
     lastTime = currentTime;
 
     handleEvents();

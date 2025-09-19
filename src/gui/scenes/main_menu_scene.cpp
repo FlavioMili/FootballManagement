@@ -28,8 +28,8 @@ enum MainMenuButtonIndex : uint8_t {
   QUIT_BUTTON = 3,
 };
 
-MainMenuScene::MainMenuScene(GUIView* guiView) 
-    : GUIScene(guiView), font(nullptr), titleTexture(nullptr), titleRect({}) {}
+MainMenuScene::MainMenuScene(GUIView* guiView_ptr) 
+    : GUIScene(guiView_ptr), font(nullptr), titleTexture(nullptr), titleRect({}) {}
 
 void MainMenuScene::onEnter() {
   if (!TTF_WasInit() && !TTF_Init()) {
@@ -209,7 +209,7 @@ void MainMenuScene::make_scene() {
   if (titleSurface) {
     titleTexture = SDL_CreateTextureFromSurface(getRenderer(), titleSurface);
     titleRect = {
-      static_cast<float>(w)/2 - titleSurface->w / 2.0f,
+      static_cast<float>(w)/2 - static_cast<float>(titleSurface->w) / 2.0f,
       100.0f,
       static_cast<float>(titleSurface->w),
       static_cast<float>(titleSurface->h)

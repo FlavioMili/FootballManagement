@@ -9,7 +9,7 @@
 // team_selection_scene.h
 #pragma once
 
-#include "gui_scene.h"
+#include "gui/gui_scene.h"
 #include "model/team.h"
 #include "gui/button_manager.h"
 #include <vector>

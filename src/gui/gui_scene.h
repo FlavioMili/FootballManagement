@@ -18,7 +18,7 @@ enum class SceneID : uint8_t { MAIN_MENU, SETTINGS, GAME_MENU,
 
 class GUIScene {
  public:
-  explicit GUIScene(GUIView* guiView);
+  explicit GUIScene(GUIView* guiView_ptr);
   virtual ~GUIScene() = default;
 
   // Core scene interface - must be implemented by derived classes

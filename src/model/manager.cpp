@@ -8,8 +8,8 @@
 
 #include "manager.h"
 
-Manager::Manager(const Team& team) : team(team) {}
+Manager::Manager(const Team& team) : _team(team) {}
 
 const Team& Manager::getTeam() const {
-  return team;
+  return _team;
 }

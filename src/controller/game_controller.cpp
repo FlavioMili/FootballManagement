@@ -8,8 +8,8 @@
 
 #include "game_controller.h"
 
-GameController::GameController(std::unique_ptr<Game> game)
-: game(std::move(game)) {}
+GameController::GameController(std::unique_ptr<Game> game_ptr)
+: game(std::move(game_ptr)) {}
 
 int GameController::getCurrentSeason() const {
   return game->getCurrentSeason();

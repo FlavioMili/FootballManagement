@@ -31,7 +31,7 @@ struct Matchup {
 class Match {
  public:
   Match(const Team& home, const Team& away,
-        const StatsConfig& stats_config);
+        const StatsConfig& _stats_config);
 
   void simulate();
 

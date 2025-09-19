@@ -29,5 +29,5 @@ class Manager {
   const Team& getTeam() const;
 
  private:
-  const Team& team;
+  const Team& _team;
 };

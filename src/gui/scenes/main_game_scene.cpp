@@ -1,4 +1,4 @@
-// ----------------------------------------------------------------------------- 
+// -----------------------------------------------------------------------------
 //  Football Management Project
 //  Copyright (c) 2025 Flavio Milinanni. All Rights Reserved.
 //
@@ -8,38 +8,36 @@
 
 #include "main_game_scene.h"
 #include "global.h"
-#include "main_menu_scene.h"
 #include "gui/scenes/roster_scene.h"
 #include "gui/scenes/strategy_scene.h"
-#include <SDL3_ttf/SDL_ttf.h> 
-#include <iostream>
+#include "main_menu_scene.h"
+#include <SDL3_ttf/SDL_ttf.h>
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
 SceneID MainGameScene::getID() const { return SceneID::GAME_MENU; }
 
-MainGameScene::MainGameScene(GUIView* guiView) 
-: GUIScene(guiView), font(nullptr) {}
+MainGameScene::MainGameScene(GUIView *guiView_ptr)
+    : GUIScene(guiView_ptr), font(nullptr) {}
 
-MainGameScene::~MainGameScene() {
-  cleanup();
-}
+MainGameScene::~MainGameScene() { cleanup(); }
 
-void MainGameScene::onEnter() { 
-  if (!TTF_WasInit() && TTF_Init() != 0) { 
-    std::cerr << "TTF_Init() failed: " << SDL_GetError() << "\n"; 
-    return; 
-  } 
+void MainGameScene::onEnter() {
+  if (!TTF_WasInit() && TTF_Init() != 0) {
+    std::cerr << "TTF_Init() failed: " << SDL_GetError() << "\n";
+    return;
+  }
 
   font = TTF_OpenFont(FONT_PATH, 24);
-  if (!font) { 
-    std::cerr << "Failed to load font: " << SDL_GetError() << "\n"; 
-    return; 
-  } 
+  if (!font) {
+    std::cerr << "Failed to load font: " << SDL_GetError() << "\n";
+    return;
+  }
 
-  buttonManager = std::make_unique<ButtonManager>(getRenderer(), font); 
-  initializeUI(); 
-} 
+  buttonManager = std::make_unique<ButtonManager>(getRenderer(), font);
+  initializeUI();
+}
 
 void MainGameScene::onResize(int width, int height) {
   (void)width;
@@ -47,7 +45,7 @@ void MainGameScene::onResize(int width, int height) {
   updateLayout();
 }
 
-void MainGameScene::handleEvent(const SDL_Event& event) {
+void MainGameScene::handleEvent(const SDL_Event &event) {
   if (event.type == SDL_EVENT_WINDOW_RESIZED) {
     int w, h;
     SDL_GetWindowSizeInPixels(getWindow(), &w, &h);
@@ -62,42 +60,39 @@ void MainGameScene::handleEvent(const SDL_Event& event) {
 
   if (event.type == SDL_EVENT_KEY_DOWN) {
     switch (event.key.key) {
-      case SDLK_ESCAPE:
-        changeScene(std::make_unique<MainMenuScene>(guiView));
-        break;
-      case SDLK_Q:
-        quit();
-        break;
+    case SDLK_ESCAPE:
+      changeScene(std::make_unique<MainMenuScene>(guiView));
+      break;
+    case SDLK_Q:
+      quit();
+      break;
     }
   }
-} 
+}
 
-void MainGameScene::update(float deltaTime) { 
-  (void)deltaTime; 
-} 
+void MainGameScene::update(float deltaTime) { (void)deltaTime; }
 
-void MainGameScene::render() { 
-  // Dark green background 
+void MainGameScene::render() {
+  // Dark green background
   SDL_SetRenderDrawColor(getRenderer(), 10, 50, 10, 255);
-  SDL_RenderClear(getRenderer()); 
+  SDL_RenderClear(getRenderer());
 
-  renderSidebar(); 
+  renderSidebar();
   renderLeaderboard();
   renderTopPlayers();
-  buttonManager->render(); 
-} 
+  buttonManager->render();
+}
 
-void MainGameScene::onExit() { 
-  cleanup(); 
-} 
+void MainGameScene::onExit() { cleanup(); }
 
 void MainGameScene::initializeUI() {
   setupButtons();
   updateLayout(); // Set initial layout
-} 
+}
 
 void MainGameScene::renderSidebar() {
-  SDL_SetRenderDrawColor(getRenderer(), 40, 40, 40, 255); // Dark grey for sidebar
+  SDL_SetRenderDrawColor(getRenderer(), 40, 40, 40,
+                         255); // Dark grey for sidebar
   SDL_RenderFillRect(getRenderer(), &sidebarRect);
 }
 
@@ -109,10 +104,12 @@ void MainGameScene::renderLeaderboard() {
   float leaderboardY = 20;
 
   SDL_Color textColor = {255, 255, 255, 255};
-  TTF_Font* titleFont = TTF_OpenFont(FONT_PATH, 28);
-  SDL_Surface* surface = TTF_RenderText_Solid(titleFont, "League Standings", 0, textColor);
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-  SDL_FRect rect = {leaderboardX, leaderboardY, (float)surface->w, (float)surface->h};
+  TTF_Font *titleFont = TTF_OpenFont(FONT_PATH, 28);
+  SDL_Surface *surface =
+      TTF_RenderText_Solid(titleFont, "League Standings", 0, textColor);
+  SDL_Texture *texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
+  SDL_FRect rect = {leaderboardX, leaderboardY, static_cast<float>(surface->w),
+                    static_cast<float>(surface->h)};
   SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
   SDL_DestroySurface(surface);
   SDL_DestroyTexture(texture);
@@ -120,21 +117,24 @@ void MainGameScene::renderLeaderboard() {
 
   leaderboardY += rect.h + 10;
 
-  League& league = guiView->getController().getLeagueById(guiView->getController().getManagedTeam().getLeagueId());
-  const auto& leaderboard = league.getLeaderboard();
-  std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(), leaderboard.end());
-  std::sort(sorted_teams.begin(), sorted_teams.end(), [](const auto& a, const auto& b) {
-    return a.second > b.second;
-  });
+  League &league = guiView->getController().getLeagueById(
+      guiView->getController().getManagedTeam().getLeagueId());
+  const auto &leaderboard = league.getLeaderboard();
+  std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(),
+                                                leaderboard.end());
+  std::sort(sorted_teams.begin(), sorted_teams.end(),
+            [](const auto &a, const auto &b) { return a.second > b.second; });
 
-  TTF_Font* itemFont = TTF_OpenFont(FONT_PATH, 20);
+  TTF_Font *itemFont = TTF_OpenFont(FONT_PATH, 20);
   int rank = 1;
-  for (const auto& pair : sorted_teams) {
-    Team& team = guiView->getController().getTeamById(pair.first);
-    std::string text = std::to_string(rank) + ". " + team.getName() + " - " + std::to_string(pair.second) + " pts";
+  for (const auto &pair : sorted_teams) {
+    Team &team = guiView->getController().getTeamById(pair.first);
+    std::string text = std::to_string(rank) + ". " + team.getName() + " - " +
+                       std::to_string(pair.second) + " pts";
     surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
     texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-    rect = {leaderboardX, leaderboardY, (float)surface->w, (float)surface->h};
+    rect = {leaderboardX, leaderboardY, static_cast<float>(surface->w),
+            static_cast<float>(surface->h)};
     SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
     SDL_DestroySurface(surface);
     SDL_DestroyTexture(texture);
@@ -152,10 +152,12 @@ void MainGameScene::renderTopPlayers() {
   float topPlayersY = 20;
 
   SDL_Color textColor = {255, 255, 255, 255};
-  TTF_Font* titleFont = TTF_OpenFont(FONT_PATH, 28);
-  SDL_Surface* surface = TTF_RenderText_Solid(titleFont, "Top Players", 0, textColor);
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-  SDL_FRect rect = {topPlayersX, topPlayersY, (float)surface->w, (float)surface->h};
+  TTF_Font *titleFont = TTF_OpenFont(FONT_PATH, 28);
+  SDL_Surface *surface =
+      TTF_RenderText_Solid(titleFont, "Top Players", 0, textColor);
+  SDL_Texture *texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
+  SDL_FRect rect = {topPlayersX, topPlayersY, static_cast<float>(surface->w),
+                    static_cast<float>(surface->h)};
   SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
   SDL_DestroySurface(surface);
   SDL_DestroyTexture(texture);
@@ -163,19 +165,24 @@ void MainGameScene::renderTopPlayers() {
 
   topPlayersY += rect.h + 10;
 
-  auto players = guiView->getController().getPlayersForTeam(guiView->getController().getManagedTeam().getId());
-  const auto& stats_config = guiView->getController().getStatsConfig();
-  std::sort(players.begin(), players.end(), [&stats_config](const Player& a, const Player& b) {
-    return a.getOverall(stats_config) > b.getOverall(stats_config);
-  });
+  auto players = guiView->getController().getPlayersForTeam(
+      guiView->getController().getManagedTeam().getId());
+  const auto &stats_config = guiView->getController().getStatsConfig();
+  std::sort(players.begin(), players.end(),
+            [&stats_config](const Player &a, const Player &b) {
+              return a.getOverall(stats_config) > b.getOverall(stats_config);
+            });
 
-  TTF_Font* itemFont = TTF_OpenFont(FONT_PATH, 20);
+  TTF_Font *itemFont = TTF_OpenFont(FONT_PATH, 20);
   for (size_t i = 0; i < 3 && i < players.size(); ++i) {
-    const auto& player = players[i];
-    std::string text = player.getName() + " (" + player.getRole() + ") - OVR: " + std::to_string(player.getOverall(stats_config));
+    const auto &player = players[i];
+    std::string text =
+        player.getName() + " (" + player.getRole() +
+        ") - OVR: " + std::to_string(player.getOverall(stats_config));
     surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
     texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-    rect = {topPlayersX, topPlayersY, (float)surface->w, (float)surface->h};
+    rect = {topPlayersX, topPlayersY, static_cast<float>(surface->w),
+            static_cast<float>(surface->h)};
     SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
     SDL_DestroySurface(surface);
     SDL_DestroyTexture(texture);
@@ -193,14 +200,19 @@ void MainGameScene::setupButtons() {
   sidebarButtonStyle.borderWidth = 1;
   sidebarButtonStyle.hasBorder = true;
 
-  sidebarButtonIds.push_back(buttonManager->addButton(0, 0, 0, 0, "View Roster", sidebarButtonStyle, 
-                                                      [this]() { guiView->overlayScene(std::make_unique<RosterScene>(guiView)); }));
-  sidebarButtonIds.push_back(buttonManager->addButton(0, 0, 0, 0, "Set Strategy", sidebarButtonStyle, 
-                                                      [this]() { guiView->overlayScene(std::make_unique<StrategyScene>(guiView)); }));
-  sidebarButtonIds.push_back(buttonManager->addButton(0, 0, 0, 0, "Finances", sidebarButtonStyle, 
-                                                      [](){ /* Placeholder */ }));
-  sidebarButtonIds.push_back(buttonManager->addButton(0, 0, 0, 0, "Transfer Market", sidebarButtonStyle, 
-                                                      [](){ /* Placeholder */ }));
+  sidebarButtonIds.push_back(buttonManager->addButton(
+      0, 0, 0, 0, "View Roster", sidebarButtonStyle, [this]() {
+        guiView->overlayScene(std::make_unique<RosterScene>(guiView));
+      }));
+  sidebarButtonIds.push_back(buttonManager->addButton(
+      0, 0, 0, 0, "Set Strategy", sidebarButtonStyle, [this]() {
+        guiView->overlayScene(std::make_unique<StrategyScene>(guiView));
+      }));
+  sidebarButtonIds.push_back(buttonManager->addButton(
+      0, 0, 0, 0, "Finances", sidebarButtonStyle, []() { /* Placeholder */ }));
+  sidebarButtonIds.push_back(
+      buttonManager->addButton(0, 0, 0, 0, "Transfer Market",
+                               sidebarButtonStyle, []() { /* Placeholder */ }));
 
   ButtonStyle nextButtonStyle;
   nextButtonStyle.backgroundColor = {80, 120, 80, 255};
@@ -210,9 +222,10 @@ void MainGameScene::setupButtons() {
   nextButtonStyle.borderWidth = 1;
   nextButtonStyle.hasBorder = true;
 
-  nextButtonId = buttonManager->addButton(0, 0, 0, 0, "Next", nextButtonStyle, [this](){
-    guiView->getController().advanceWeek();
-  });
+  nextButtonId =
+      buttonManager->addButton(0, 0, 0, 0, "Next", nextButtonStyle, [this]() {
+        guiView->getController().advanceWeek();
+      });
 }
 
 void MainGameScene::updateLayout() {
@@ -222,27 +235,30 @@ void MainGameScene::updateLayout() {
     SDL_GetWindowSize(guiView->getWindow(), &windowWidth, &windowHeight);
   }
 
-  sidebarRect = { 0, 0, windowWidth * 0.2f, (float)windowHeight };
+  sidebarRect = {0, 0, static_cast<float>(windowWidth) * 0.2f,
+                 static_cast<float>(windowHeight)};
 
   float buttonY = 10.0f;
-  float buttonHeight = 50.0f;
+  float buttonH = 50.0f;
   for (size_t i = 0; i < sidebarButtonIds.size(); ++i) {
-    buttonManager->updateButtonPositionById(sidebarButtonIds[i],
-                                            { sidebarRect.x + 10, buttonY, sidebarRect.w - 20, buttonHeight });
-    buttonY += buttonHeight + 5; // Add some padding
+    buttonManager->updateButtonPositionById(
+        sidebarButtonIds[i],
+        {sidebarRect.x + 10, buttonY, sidebarRect.w - 20, buttonH});
+    buttonY += buttonH + 5; // Add some padding
   }
 
   if (nextButtonId != -1) {
-    float buttonWidth = 100.0f;
-    float buttonHeight = 40.0f;
-    buttonManager->updateButtonPositionById(nextButtonId,
-                                            { windowWidth - buttonWidth - 10.0f, 10.0f, buttonWidth, buttonHeight });
+    float buttonW = 100.0f;
+    float buttonH2 = 40.0f;
+    buttonManager->updateButtonPositionById(
+        nextButtonId, {static_cast<float>(windowWidth) - buttonW - 10.0f, 10.0f,
+                       buttonW, buttonH2});
   }
-} 
+}
 
-void MainGameScene::cleanup() { 
-  if (font) { 
-    TTF_CloseFont(font); 
-    font = nullptr; 
+void MainGameScene::cleanup() {
+  if (font) {
+    TTF_CloseFont(font);
+    font = nullptr;
   }
 }

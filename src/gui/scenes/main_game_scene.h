@@ -26,7 +26,7 @@ enum GameSceneButtonIndex : uint8_t {
 
 class MainGameScene : public GUIScene {
  public:
-  explicit MainGameScene(GUIView* guiView);
+  explicit MainGameScene(GUIView* guiView_ptr);
   ~MainGameScene();
   void handleEvent(const SDL_Event& event) override;
   void update(float deltaTime) override;

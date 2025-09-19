@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include "strategy_scene.h"
-#include "gui_scene.h"
+#include "gui/gui_scene.h"
 #include "gui/gui_view.h"
 #include "global.h"
 #include <iostream>
@@ -50,11 +50,11 @@ void StrategyScene::setupUI() {
   SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
 
   // Back and Apply buttons
-  backButtonId = button_manager.addButton(10, height - 50, 100, 40, "Back", [this]() {
+  backButtonId = button_manager.addButton(10, static_cast<float>(height - 50), 100, 40, "Back", [this]() {
     parent_view->popScene();
   });
 
-  applyButtonId = button_manager.addButton(120, height - 50, 100, 40, "Apply", [this]() {
+  applyButtonId = button_manager.addButton(120, static_cast<float>(height - 50), 100, 40, "Apply", [this]() {
     saveStrategy();
     parent_view->popScene();
   });
@@ -104,7 +104,8 @@ void StrategyScene::render() {
     return;
   }
 
-  SDL_FRect textRect = { (width - textSurface->w) / 2.0f, 50.0f, (float)textSurface->w, (float)textSurface->h };
+  SDL_FRect textRect = { (static_cast<float>(width - textSurface->w)) / 2.0f,
+                      50.0f, static_cast<float>(textSurface->w), static_cast<float>(textSurface->h) };
   SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
 
   SDL_DestroyTexture(textTexture);
@@ -127,7 +128,7 @@ void StrategyScene::setupStrategyControls() {
 
   float buttonWidth = 50.0f;
   float buttonHeight = 40.0f;
-  float xOffset = width * 0.7f;
+  float xOffset = static_cast<float>(width) * 0.7f;
   float yOffset = 150.0f;
   float padding = 10.0f;
 
@@ -204,7 +205,8 @@ void StrategyScene::renderSliderValue(const std::string& label, float value, int
     return;
   }
 
-  SDL_FRect textRect = { 50.0f, (float)y_pos, (float)textSurface->w, (float)textSurface->h };
+  SDL_FRect textRect = { 50.0f, static_cast<float>(y_pos), 
+                static_cast<float>(textSurface->w), static_cast<float>(textSurface->h) };
   SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
 
   SDL_DestroyTexture(textTexture);
