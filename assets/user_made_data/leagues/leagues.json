@@ -1,8 +1,8 @@
 [
   { "id": 1, "name": "Italian League", },
-  { "id": 2, "name": "Spanish League", },
-  { "id": 3, "name": "English League", },
-  { "id": 4, "name": "German League", },
-  { "id": 5, "name": "French League", }
+  { "id": 2, "name": "Italian Lower League", "parent_league": 1 },
+  { "id": 3, "name": "Spanish League", },
+  { "id": 4, "name": "English League", },
+  { "id": 5, "name": "German League", },
+  { "id": 6, "name": "French League", }
 ]
-

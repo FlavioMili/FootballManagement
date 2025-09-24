@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS LastNames (
 );
 
 -- This is  the free agent team 
--- Check inside the src/global.h for
+-- Check inside the src/global folders for
 -- the ID and Name, whether you want to change it later
 INSERT OR IGNORE INTO teams (id, league_id, name, balance)
 VALUES (0, 0, 'Free agents', -1);
