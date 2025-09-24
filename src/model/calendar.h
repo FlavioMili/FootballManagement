@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <vector>
 #include "team.h"
 #include "match.h"
@@ -31,7 +32,7 @@ class Week {
   }
 
  private:
-  int week_number;
+  uint8_t week_number;
   std::vector<Matchup> matches;
 };
 

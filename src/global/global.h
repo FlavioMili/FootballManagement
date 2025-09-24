@@ -15,7 +15,7 @@
 // that are used across the entire project.
 // If possible, use constexpr
 
-constexpr uint8_t FREE_AGENTS_TEAM_ID = -1;
+constexpr uint8_t FREE_AGENTS_TEAM_ID = 0;
 constexpr const char *FREE_AGENTS_TEAM_NAME = "Free agents";
 
 constexpr uint8_t TEAMS_PER_LEAGUE = 16;

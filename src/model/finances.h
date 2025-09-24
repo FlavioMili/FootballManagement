@@ -36,5 +36,4 @@ class Finances {
   // Example: if this is 0.8 then we have 80% of the 
   //          budget as transfer budget.
   double transfer_to_wages_ratio; 
-
 };

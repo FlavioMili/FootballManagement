@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include "global.h"
+#include "global/languages.h"
 #include <string>
 #include <SDL3/SDL.h>
 

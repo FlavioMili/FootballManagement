@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 #include <map>
 #include <string>
@@ -17,7 +19,7 @@
 #include "database.h"
 #include "league.h"
 #include "calendar.h"
-#include "stats_config.h"
+#include "global/stats_config.h"
 #include "player.h"
 #include "match.h"
 #include "team.h"
@@ -71,6 +73,7 @@ public:
   void saveGame();
 
 private:
+  // TODO make it a private element, managed only by the game itself
   std::shared_ptr<Database> db;
   StatsConfig stats_config;
   nlohmann::json raw_stats_config_json;
@@ -78,11 +81,12 @@ private:
   std::vector<std::string> team_names;
   std::vector<League> leagues;
   std::vector<Team> teams;
-  std::map<int, Calendar> league_calendars;  // league_id to Calendar
+  std::map<size_t, Calendar> league_calendars;  // league_id to Calendar
 
-  int current_season;
-  int current_week;
-  int managed_team_id;
+  uint8_t current_season;
+  uint8_t current_week;
+  // TODO game state
+  uint16_t managed_team_id;
 
   void loadConfigs();
   void initializeDatabase();

@@ -12,7 +12,7 @@
 #include <vector> 
 #include "game.h"
 #include "manager.h"
-#include "stats_config.h"
+#include "global/stats_config.h"
 
 /**
   * This class is used to separate the view and

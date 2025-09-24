@@ -8,6 +8,7 @@
 
 #include "match.h"
 #include <cstdlib>
+#include <string_view>
 #include "player.h"
 #include "lineup.h"
 
@@ -29,7 +30,7 @@ void Match::simulate() {
 
   for (int i = 0; i < LINEUP_GRID_SIZE; ++i) {
     if (Player* p = home_lineup.getPlayerAt(i)) {
-      std::string role = p->getRole();
+      std::string_view role = p->getRole();
 
       // TODO this one will not be hard coded anymore, it is just a placeholder
       if (role == "Striker") home_attack += p->getOverall(stats_config);
@@ -45,7 +46,7 @@ void Match::simulate() {
 
   for (int i = 0; i < LINEUP_GRID_SIZE; ++i) {
     if (Player* p = away_lineup.getPlayerAt(i)) {
-      std::string role = p->getRole();
+      std::string_view role = p->getRole();
       if (role == "Striker") away_attack += p->getOverall(stats_config);
       else if (role == "Midfielder") away_midfield += p->getOverall(stats_config);
       else if (role == "Defender") away_defense += p->getOverall(stats_config);

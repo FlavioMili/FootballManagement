@@ -7,39 +7,38 @@
 // -----------------------------------------------------------------------------
 
 #include "SQLLoader.h"
-#include "logger.h"
+#include "global/logger.h"
+#include "global/paths.h"
+#include "global/queries.h"
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <iostream>
 
-SQLLoader& SQLLoader::getInstance() {
-  static SQLLoader instance;
-  return instance;
-}
+// static storage for queries
+std::unordered_map<Query, std::string> SQLLoader::queries_{};
 
-void SQLLoader::loadQueriesFromFile(const std::string& filepath) {
-  std::string content = readFile(filepath);
+// -------------------- PUBLIC --------------------
+
+void SQLLoader::loadQueriesFromFile() {
+  std::string content = readFile(QUERIES_PATH);
   parseQueries(content);
 }
 
-std::string SQLLoader::loadSchemaFromFile(const std::string& filepath) {
-  return readFile(filepath);
-}
+std::string SQLLoader::loadSchemaFromFile() { return readFile(SCHEMA_PATH); }
 
-const std::string& SQLLoader::getQuery(const std::string& query_id) const {
+const std::string &SQLLoader::getQuery(const Query query_id) {
   auto it = queries_.find(query_id);
   if (it == queries_.end()) {
-    throw std::runtime_error("Query not found: " + query_id);
+    throw std::runtime_error("Query not found for ID: " +
+                             std::to_string(static_cast<int>(query_id)));
   }
   return it->second;
 }
 
-bool SQLLoader::hasQuery(const std::string& query_id) const {
-  return queries_.contains(query_id);
-}
+// -------------------- PRIVATE --------------------
 
-std::string SQLLoader::readFile(const std::string& filepath) {
+std::string SQLLoader::readFile(const std::string &filepath) {
   std::ifstream file(filepath);
   if (!file.is_open()) {
     throw std::runtime_error("Cannot open file: " + filepath);
@@ -50,58 +49,69 @@ std::string SQLLoader::readFile(const std::string& filepath) {
   return buffer.str();
 }
 
-void SQLLoader::parseQueries(const std::string& content) {
-  // Split content into lines
+void SQLLoader::parseQueries(const std::string &content) {
   std::istringstream stream(content);
   std::string line;
-  std::string current_query_id;
-  std::string current_query;
+  std::string current_query_str;
+  Query current_query_enum{};
   bool in_query = false;
+  bool has_query_id = false;
 
   while (std::getline(stream, line)) {
     line = trim(line);
 
-    // Skip empty lines and comments (unless it's a query ID comment)
-    if (line.empty() || (line.substr(0, 2) == "--" && line.find("@QUERY_ID:") == std::string::npos)) {
+    // skip empty lines or comments (except query ID)
+    if (line.empty() || (line.substr(0, 2) == "--" &&
+                         line.find("@QUERY_ID:") == std::string::npos)) {
       continue;
     }
 
-    // Check if this line contains a query ID
+    // check for query ID
     if (line.find("-- @QUERY_ID:") != std::string::npos) {
-      // Save previous query if exists
-      if (!current_query_id.empty() && !current_query.empty()) {
-        queries_[current_query_id] = trim(current_query);
+      // save previous query
+      if (has_query_id && !current_query_str.empty()) {
+        queries_[current_query_enum] = trim(current_query_str);
       }
 
-      // Extract new query ID
+      // extract query string
       size_t start = line.find("@QUERY_ID:") + 10;
-      current_query_id = trim(line.substr(start));
-      current_query.clear();
+      std::string id = trim(line.substr(start));
+
+      // map string → enum via your constexpr map
+      auto it = string_to_query_map.find(id);
+      if (it == string_to_query_map.end()) {
+        throw std::runtime_error("Unknown query ID: " + id);
+      }
+      current_query_enum = it->second;
+      current_query_enum = it->second;
+
+      current_query_str.clear();
       in_query = true;
+      has_query_id = true;
       continue;
     }
 
-    // If we're in a query, accumulate the SQL
+    // accumulate query
     if (in_query && !line.empty()) {
-      if (!current_query.empty()) {
-        current_query += " ";
-      }
-      current_query += line;
+      if (!current_query_str.empty())
+        current_query_str += " ";
+      current_query_str += line;
     }
   }
 
-  // Save the last query
-  if (!current_query_id.empty() && !current_query.empty()) {
-    queries_[current_query_id] = trim(current_query);
+  // save last query
+  if (has_query_id && !current_query_str.empty()) {
+    queries_[current_query_enum] = trim(current_query_str);
   }
 
-  // Debug line 
-  Logger::debug("Loaded " + std::to_string(queries_.size()) + " queries from file.\n");
+  Logger::debug("Loaded " + std::to_string(queries_.size()) +
+                " queries from file.\n");
 }
 
-std::string SQLLoader::trim(const std::string& str) {
+std::string SQLLoader::trim(const std::string &str) {
   size_t start = str.find_first_not_of(" \t\n\r");
-  if (start == std::string::npos) return "";
+  if (start == std::string::npos)
+    return "";
 
   size_t end = str.find_last_not_of(" \t\n\r");
   return str.substr(start, end - start + 1);

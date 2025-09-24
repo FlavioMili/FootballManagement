@@ -8,10 +8,10 @@
 
 #pragma once
 
-#include <string>
+#include <cstdint>
+#include <string_view>
 #include <vector>
 #include <map>
-#include "team.h"
 
 /**
   * League class, seems like it has pretty much 
@@ -23,22 +23,27 @@
 */
 class League {
  public:
-  League(int id, std::string name);
+  League(uint8_t league_id, std::string_view league_name,
+         const std::vector<size_t>& initial_team_ids = {});
 
-  int getId() const;
-  std::string getName() const;
-  const std::vector<Team>& getTeams() const;
-  void setTeams(const std::vector<Team>& teams);
-  
-  int getPoints(int team_id) const;
-  void addPoints(int team_id, int points);
-  void setPoints(int team_id, int points);
+  // Accessors
+  uint8_t getId() const;
+  std::string_view getName() const;
+
+  const std::vector<size_t>& getTeamIDs() const;
+  void addTeamID(uint16_t team_id);
+  void removeTeamID(uint16_t team_id);
+
+  uint8_t getPoints(uint16_t team_id) const;
+  void addPoints(uint16_t team_id, uint8_t points);
+  void setPoints(uint16_t team_id, uint8_t points);
   void resetPoints();
-  const std::map<int, int>& getLeaderboard() const;
+
+  const std::map<uint8_t, uint8_t>& getLeaderboard() const;
 
  private:
-  int id;
-  std::string name;
-  std::vector<Team> teams;
-  std::map<int, int> leaderboard;  // map[team_id] = points;
+  uint8_t id;
+  std::string_view name;
+  std::vector<uint16_t> team_ids;
+  std::map<uint16_t, uint8_t> leaderboard; // team_id -> points
 };

@@ -9,11 +9,12 @@
 #pragma once
 
 #include "team.h"
-#include "stats_config.h"
+#include "global/stats_config.h"
+#include <cstdint>
 
 struct Matchup {
-  int home_team_id;
-  int away_team_id;
+  uint32_t home_team_id;
+  uint32_t away_team_id;
 };
 
 /**

@@ -92,7 +92,7 @@ std::string Lineup::toString() const {
   return oss.str();
 }
 
-void Lineup::generateStartingXI(const std::vector<Player>& allPlayers, const StatsConfig& stats_config) {
+void Lineup::generateStartingXI(const std::vector<uint32_t>& allPlayers, const StatsConfig& stats_config) {
   // Clear previous lineup
   gridClear();
   reserves.clear();

@@ -7,14 +7,15 @@
 // -----------------------------------------------------------------------------
 
 #include "main_game_scene.h"
-#include "global.h"
+#include "global/paths.h"
 #include "gui/scenes/roster_scene.h"
 #include "gui/scenes/strategy_scene.h"
 #include "main_menu_scene.h"
 #include <SDL3_ttf/SDL_ttf.h>
 #include <algorithm>
 #include <iostream>
-#include <vector>
+#include <string>
+#include <vector> 
 
 SceneID MainGameScene::getID() const { return SceneID::GAME_MENU; }
 
@@ -129,7 +130,7 @@ void MainGameScene::renderLeaderboard() {
   int rank = 1;
   for (const auto &pair : sorted_teams) {
     Team &team = guiView->getController().getTeamById(pair.first);
-    std::string text = std::to_string(rank) + ". " + team.getName() + " - " +
+    std::string text = std::to_string(rank) + ". " + std::string(team.getName()) + " - " +
                        std::to_string(pair.second) + " pts";
     surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
     texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
@@ -177,7 +178,7 @@ void MainGameScene::renderTopPlayers() {
   for (size_t i = 0; i < 3 && i < players.size(); ++i) {
     const auto &player = players[i];
     std::string text =
-        player.getName() + " (" + player.getRole() +
+        player.getName() + " (" + std::string(player.getRole()) +
         ") - OVR: " + std::to_string(player.getOverall(stats_config));
     surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
     texture = SDL_CreateTextureFromSurface(getRenderer(), surface);

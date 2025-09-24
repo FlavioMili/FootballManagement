@@ -14,9 +14,10 @@
 #include <stdexcept>
 
 #include "database/datagenerator.h"
-#include "global.h"
+#include "global/global.h"
+#include "global/paths.h"
 #include "json.hpp"
-#include "logger.h"
+#include "global/logger.h"
 
 void from_json(const nlohmann::json &j, RoleFocus &rf) {
   j.at("stats").get_to(rf.stats);
@@ -96,7 +97,7 @@ void Game::initializeDatabase() {
 }
 
 void Game::ensureManagedTeamAssigned() {
-  if (managed_team_id != -1) {
+  if (managed_team_id != FREE_AGENTS_TEAM_ID) {
     Logger::info("You have been appointed as the manager of: " +
                  getManagedTeam().getName() + "\n");
   } else {

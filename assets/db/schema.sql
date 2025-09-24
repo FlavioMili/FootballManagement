@@ -1,9 +1,9 @@
--- Updated schema to match C++ implementation
-
 -- Leagues table
 CREATE TABLE IF NOT EXISTS Leagues (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE
+    name TEXT NOT NULL UNIQUE,
+    parent_league_id INTEGER NULL,
+    FOREIGN KEY(parent_league_id) REFERENCES Leagues(id)
 );
 
 -- Teams table
@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS Teams (
     league_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     balance INTEGER NOT NULL DEFAULT 0,
+    strategy TEXT DEFAULT '{}',   -- JSON
+    lineup TEXT DEFAULT '{}',     -- JSON
     FOREIGN KEY(league_id) REFERENCES Leagues(id)
 );
 
@@ -19,32 +21,43 @@ CREATE TABLE IF NOT EXISTS Teams (
 CREATE TABLE IF NOT EXISTS Players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     team_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
     age INTEGER NOT NULL DEFAULT 18,
     role TEXT NOT NULL,
-    stats TEXT NOT NULL, -- JSON string containing player stats
+    nationality TEXT NOT NULL,
+    wage INTEGER NOT NULL DEFAULT 0,
+    contract_years INTEGER NOT NULL DEFAULT 1,
+    height INTEGER NOT NULL DEFAULT 175,
+    foot TEXT NOT NULL DEFAULT 'Right', -- 'Left' or 'Right'
+    stats TEXT NOT NULL,                -- JSON string
+    status INTEGER DEFAULT 0,           -- bitmask: injured, transfer, etc.
     FOREIGN KEY(team_id) REFERENCES Teams(id)
 );
 
 -- Calendar table for match scheduling
--- TODO change the game to support days
 CREATE TABLE IF NOT EXISTS Calendar (
+    matchup_id INTEGER PRIMARY KEY AUTOINCREMENT,
     season INTEGER NOT NULL,
     week INTEGER NOT NULL,
     home_team_id INTEGER NOT NULL,
     away_team_id INTEGER NOT NULL,
     league_id INTEGER NOT NULL,
-    PRIMARY KEY(season, league_id, week, home_team_id, away_team_id),
+    match_date DATE,
+    played BOOLEAN DEFAULT 0,
+    home_goals INTEGER DEFAULT -1,
+    away_goals INTEGER DEFAULT -1,
     FOREIGN KEY(home_team_id) REFERENCES Teams(id),
     FOREIGN KEY(away_team_id) REFERENCES Teams(id),
     FOREIGN KEY(league_id) REFERENCES Leagues(id)
 );
 
 -- Game state management
--- TODO change game state to support days
 CREATE TABLE IF NOT EXISTS GameState (
-    key TEXT PRIMARY KEY,
-    value INTEGER NOT NULL
+    managed_team INTEGER PRIMARY KEY,
+    current_date DATE NOT NULL,
+    season INTEGER NOT NULL,
+    week INTEGER NOT NULL
 );
 
 -- League points/standings
@@ -52,13 +65,13 @@ CREATE TABLE IF NOT EXISTS LeaguePoints (
     league_id INTEGER NOT NULL,
     team_id INTEGER NOT NULL,
     points INTEGER NOT NULL DEFAULT 0,
+    goal_difference INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY(league_id, team_id),
     FOREIGN KEY(league_id) REFERENCES Leagues(id),
     FOREIGN KEY(team_id) REFERENCES Teams(id)
 );
 
 -- Player name generation tables
--- TODO associate names to nationalities
 CREATE TABLE IF NOT EXISTS FirstNames (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
@@ -69,11 +82,9 @@ CREATE TABLE IF NOT EXISTS LastNames (
     name TEXT NOT NULL UNIQUE
 );
 
--- This is  the free agent team 
--- Check inside the src/global folders for
--- the ID and Name, whether you want to change it later
-INSERT OR IGNORE INTO teams (id, league_id, name, balance)
+-- Free agent team
+INSERT OR IGNORE INTO Teams (id, league_id, name, balance)
 VALUES (0, 0, 'Free agents', -1);
 
--- Enable WAL mode for better concurrency
+-- Enable WAL mode
 PRAGMA journal_mode=WAL;

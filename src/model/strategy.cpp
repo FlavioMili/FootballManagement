@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include "strategy.h"
-#include "global.h"
+#include "global/global.h"
 #include <algorithm>
 #include <cmath>
 

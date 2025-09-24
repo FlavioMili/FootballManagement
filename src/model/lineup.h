@@ -10,7 +10,7 @@
 #include <array>
 #include <vector>
 #include <string>
-#include "global.h"
+#include "global/global.h"
 #include "player.h"
 #include "strategy.h"
 
@@ -52,7 +52,7 @@ public:
   // Debug / visualisation
   std::string toString() const;
 
-  void generateStartingXI(const std::vector<Player>& allPlayers, const StatsConfig& stats_config);
+  void generateStartingXI(const std::vector<uint32_t>& allPlayers, const StatsConfig& stats_config);
 
   void gridClear() {goalkeeper = nullptr; grid.fill(nullptr); }
 

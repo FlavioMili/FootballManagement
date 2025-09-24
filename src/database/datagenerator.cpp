@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include "datagenerator.h"
-#include "global.h"
+#include "global/paths.h"
 #include "league.h"
 #include "player.h"
 #include "team.h"

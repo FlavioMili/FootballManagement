@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include "team_selection_scene.h"
-#include "global.h"
+#include "global/paths.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/main_menu_scene.h"
 #include <iostream>

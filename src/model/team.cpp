@@ -9,44 +9,39 @@
 #include "team.h"
 #include "finances.h"
 #include <cstdint>
-#include <utility>
+#include <string_view>
 #include <vector>
-#include <string>
 
-Team::Team(int team_id, int team_league_id, std::string team_name, std::int64_t balance) : 
-  id(team_id), 
-  league_id(team_league_id),
-  name(std::move(team_name)), 
-  team_strategy(),
-  finances(balance)
-{}
+// Constructor
+Team::Team(uint16_t team_id, uint8_t team_league_id, std::string_view team_name,
+           int64_t initial_balance,
+           const std::vector<uint32_t> &initial_player_ids,
+           const Strategy &strategy, const Lineup &lineup_data)
+    : id(team_id), league_id(team_league_id), name(team_name),
+      player_ids(initial_player_ids), team_strategy(strategy),
+      lineup(lineup_data), finances(initial_balance) {}
 
-int Team::getId() const { return id; }
-int Team::getLeagueId() const { return league_id; }
-std::string Team::getName() const { return name; }
-const std::vector<Player>& Team::getPlayers() const { return players; }
-std::vector<Player>& Team::getPlayers() { return players; }
+// Accessors
+uint16_t Team::getId() const { return id; }
+uint8_t Team::getLeagueId() const { return league_id; }
+const std::string Team::getName() const { return std::string(name); }
 
-void Team::setPlayers(const std::vector<Player>& new_players) {
-  players = new_players;
-  lineup.gridClear();
-}
+const std::vector<uint32_t> &Team::getPlayerIDs() const { return player_ids; }
 
-Lineup& Team::getLineup() { return lineup; }
-const Lineup& Team::getLineup() const { return lineup; }
+// Lineup access
+Lineup &Team::getLineup() { return lineup; }
+const Lineup &Team::getLineup() const { return lineup; }
 
-Strategy& Team::getStrategy() { return team_strategy; }
-const Strategy& Team::getStrategy() const { return team_strategy; }
-void Team::setStrategy(const Strategy& strategy) { team_strategy = strategy; }
+// Strategy access
+Strategy &Team::getStrategy() { return team_strategy; }
+const Strategy &Team::getStrategy() const { return team_strategy; }
+void Team::setStrategy(const Strategy &strategy) { team_strategy = strategy; }
 
 // Generate best starting XI automatically
-void Team::generateStartingXI(const StatsConfig& stats_config) {
-  lineup.generateStartingXI(players, stats_config);
+void Team::generateStartingXI(const StatsConfig &stats_config) {
+  lineup.generateStartingXI(player_ids, stats_config);
 }
 
-Finances& Team::getFinances() noexcept {
-  return finances;
-}
-const Finances& Team::getFinances() const noexcept {
-  return finances;
-}
+// Finances access
+Finances &Team::getFinances() noexcept { return finances; }
+const Finances &Team::getFinances() const noexcept { return finances; }

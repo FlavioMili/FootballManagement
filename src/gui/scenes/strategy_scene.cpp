@@ -9,7 +9,7 @@
 #include "strategy_scene.h"
 #include "gui/gui_scene.h"
 #include "gui/gui_view.h"
-#include "global.h"
+#include "global/paths.h"
 #include <iostream>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <algorithm>

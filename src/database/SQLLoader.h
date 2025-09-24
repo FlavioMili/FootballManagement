@@ -10,29 +10,26 @@
 
 #include <string>
 #include <unordered_map>
+#include "global/queries.h"
 
 class SQLLoader {
  public:
-  static SQLLoader& getInstance();
-
   // Load SQL file and parse queries
-  void loadQueriesFromFile(const std::string& filepath);
+  static void loadQueriesFromFile();
 
   // Load schema from file
-  std::string loadSchemaFromFile(const std::string& filepath);
+  static std::string loadSchemaFromFile();
 
   // Get query by ID
-  const std::string& getQuery(const std::string& query_id) const;
-
-  // Check if query exists
-  bool hasQuery(const std::string& query_id) const;
+  static const std::string& getQuery(const Query query);
 
  private:
   SQLLoader() = default;
-  std::unordered_map<std::string, std::string> queries_;
 
-  // Helper methods
-  std::string readFile(const std::string& filepath);
-  void parseQueries(const std::string& content);
-  std::string trim(const std::string& str);
+  static std::unordered_map<Query, std::string> queries_;
+
+  // Helpers
+  static std::string readFile(const std::string& filepath);
+  static void parseQueries(const std::string& content);
+  static std::string trim(const std::string& str);
 };
