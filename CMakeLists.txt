@@ -84,7 +84,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
   target_compile_options(${PROJECT_NAME} PRIVATE
     -Wall -Wextra -Wpedantic
-    # -Wconversion -Wsign-conversion -Wshadow -Wold-style-cast -Wcast-align -Wformat=2
+    -Wconversion -Wsign-conversion -Wshadow -Wold-style-cast -Wcast-align -Wformat=2
     -Og -g3 -fsanitize=address,undefined
     -fno-omit-frame-pointer -fstack-protector-strong -fno-optimize-sibling-calls
   )

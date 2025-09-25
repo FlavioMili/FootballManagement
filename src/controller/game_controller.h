@@ -8,38 +8,39 @@
 
 #pragma once
 
-#include <memory>
-#include <vector> 
-#include "game.h"
-#include "manager.h"
 #include "global/stats_config.h"
+#include "model/game.h"
+#include "model/league.h"
+#include "model/manager.h"
+#include "model/player.h"
+#include "model/team.h"
+#include <functional>
+#include <memory>
+#include <optional>
+#include <vector>
 
-/**
-  * This class is used to separate the view and
-  * the model in a traditional MVC pattern.
-  * This might change in the future
-*/
 class GameController {
- public:
+public:
   explicit GameController(std::unique_ptr<Game> game_ptr);
 
   int getCurrentSeason() const;
   int getCurrentWeek() const;
   bool hasSelectedTeam() const;
 
-  Team& getManagedTeam();
-  const Team& getManagedTeam() const;
-  void selectManagedTeam(uint32_t team_id);
+  std::optional<std::reference_wrapper<Team>> getManagedTeam();
+  std::optional<std::reference_wrapper<const Team>> getManagedTeam() const;
+  void selectManagedTeam(uint16_t team_id);
 
-  std::vector<Team> getTeams() const;
-  std::vector<Team> getAvailableTeams() const;
-  std::vector<Player> getPlayersForTeam(uint32_t team_id);
-  const std::vector<Player> getPlayersForTeam(uint32_t team_id) const;
-  std::vector<Team> getTeamsInLeague(uint8_t league_id) const;
-  League& getLeagueById(uint8_t league_id);
-  Team& getTeamById(uint16_t team_id);
-  const Team& getTeamById(uint16_t team_id) const;
-  const StatsConfig& getStatsConfig() const;
+  const std::vector<std::reference_wrapper<const Team>> &getTeams() const;
+  std::vector<std::reference_wrapper<const Player>>
+  getPlayersForTeam(uint16_t team_id) const;
+  std::vector<std::reference_wrapper<const Team>>
+  getTeamsInLeague(uint8_t league_id) const;
+  std::optional<std::reference_wrapper<const League>>
+  getLeagueById(uint8_t league_id) const;
+  std::optional<std::reference_wrapper<const Team>>
+  getTeamById(uint16_t team_id) const;
+  const StatsConfig &getStatsConfig() const;
 
   void advanceWeek();
   void startNewSeason();
@@ -47,7 +48,7 @@ class GameController {
   void saveGame();
   void loadGame();
 
- private:
+private:
   std::unique_ptr<Game> game;
   std::unique_ptr<Manager> manager;
 };

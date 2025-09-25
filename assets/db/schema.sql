@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS Players (
 -- Calendar table for match scheduling
 CREATE TABLE IF NOT EXISTS Calendar (
   matchup_id INTEGER PRIMARY KEY AUTOINCREMENT,
-  season INTEGER NOT NULL,
+  season INTEGER NOT NULL DEFAULT 0,
   week INTEGER NOT NULL,
   home_team_id INTEGER NOT NULL,
   away_team_id INTEGER NOT NULL,
@@ -72,20 +72,9 @@ CREATE TABLE IF NOT EXISTS LeaguePoints (
   FOREIGN KEY(team_id) REFERENCES Teams(id)
 );
 
--- Player name generation tables
-CREATE TABLE IF NOT EXISTS FirstNames (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS LastNames (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE
-);
-
 -- Free agent team
 INSERT OR IGNORE INTO Teams (id, league_id, name, balance)
-VALUES (0, 0, 'Free agents', -1);
+VALUES (-1, -1, 'Free agents', -1);
 
 -- Enable WAL mode
 PRAGMA journal_mode=WAL;

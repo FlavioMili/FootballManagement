@@ -23,7 +23,7 @@
 
 class Week {
  public:
-  explicit Week(int week_number = 0);
+  explicit Week(int new_week_number = 0);
   void addMatch(const Matchup& matchup) {
     matches.push_back(matchup);
   }
@@ -41,7 +41,7 @@ class Calendar {
   Calendar() = default;
   void generate(const std::vector<Team>& teams);
   const std::vector<Week>& getWeeks() const;
-  void setWeeks(const std::vector<Week>& weeks);
+  void setWeeks(const std::vector<Week>& new_weeks);
 
  private:
   std::vector<Week> weeks;

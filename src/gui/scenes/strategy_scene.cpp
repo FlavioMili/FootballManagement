@@ -172,12 +172,18 @@ void StrategyScene::updateStrategyValue(const std::string& slider_name, float de
 }
 
 void StrategyScene::saveStrategy() {
-  parent_view->getController().getManagedTeam().getStrategy().setAllSliders(current_sliders);
-  parent_view->getController().saveGame();
+  auto managedTeamOpt = parent_view->getController().getManagedTeam();
+  if (managedTeamOpt.has_value()) {
+    managedTeamOpt->get().getStrategy().setAllSliders(current_sliders);
+    parent_view->getController().saveGame();
+  }
 }
 
 void StrategyScene::loadStrategy() {
-  current_sliders = parent_view->getController().getManagedTeam().getStrategy().getSliders();
+  auto managedTeamOpt = parent_view->getController().getManagedTeam();
+  if (managedTeamOpt.has_value()) {
+    current_sliders = managedTeamOpt->get().getStrategy().getSliders();
+  }
 }
 
 void StrategyScene::renderSliderValue(const std::string& label, float value, int y_pos) {

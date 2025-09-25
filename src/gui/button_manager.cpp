@@ -201,7 +201,7 @@ void ButtonManager::recreateTextures() {
 }
 
 void ButtonManager::updateButtonPosition(size_t buttonIndex, SDL_FRect newRect) {
-  if (buttonIndex < 0 || buttonIndex >= buttons.size()) {
+  if (buttonIndex >= buttons.size()) {
     return;
   }
 

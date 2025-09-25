@@ -32,7 +32,7 @@ class RosterScene : public GUIScene {
  private:
   GUIView* parent_view;
   ButtonManager button_manager;
-  std::vector<Player> roster_players;
+  std::vector<std::reference_wrapper<const Player>> roster_players;
   int backButtonId = -1;
 
   void setupUI();

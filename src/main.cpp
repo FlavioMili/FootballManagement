@@ -14,14 +14,10 @@
 #include "controller/game_controller.h"
 #include "gui/gui_view.h"
 
-#include "database/database.h"
-
 int main() {
   Logger::init();
-  srand(time(0));
+  srand(static_cast<uint>(time(0)));
   try {
-    auto db = std::make_shared<Database>();
-    db->initialize();
     auto game = std::make_unique<Game>();
     auto controller = std::make_unique<GameController>(std::move(game));
 

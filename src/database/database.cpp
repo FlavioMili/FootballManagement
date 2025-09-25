@@ -44,44 +44,29 @@ void Database::loadSQLFiles() {
 }
 
 void Database::initialize() {
+  Logger::debug("Database::initialize called.");
   try {
     std::string schema_sql = SQLLoader::loadSchemaFromFile();
     char *err_msg = nullptr;
 
     if (sqlite3_exec(db.get(), schema_sql.c_str(), 0, 0, &err_msg) !=
         SQLITE_OK) {
-      std::string error_str = "SQL error: " + std::string(err_msg);
+      std::string error_str =
+          "SQL error during schema initialization: " + std::string(err_msg);
       sqlite3_free(err_msg);
-      throw std::runtime_error(error_str);
+      Logger::error(error_str);
+      // Do not throw here, let the program continue to see if other errors
+      // occur throw std::runtime_error(error_str);
+    } else {
+      Logger::debug("Database schema initialized successfully.\n");
     }
 
-    Logger::debug("Database schema initialized successfully.\n");
+    // updateGameState(season, week, managed_team_id);
   } catch (const std::exception &e) {
     Logger::error("Failed to initialize database: " + std::string(e.what()) +
                   "\n");
     throw;
   }
-}
-
-bool Database::isFirstRun() const {
-  sqlite3_stmt *stmt;
-  const std::string &sql = SQLLoader::getQuery(Query::SELECT_GAME_STATE);
-
-  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
-    return true; // Table doesn't exist yet, so it's a first run
-  }
-
-  sqlite3_bind_text(stmt, 1, "season", -1, SQLITE_TRANSIENT);
-  int rc = sqlite3_step(stmt);
-
-  if (rc == SQLITE_ROW) {
-    int season = sqlite3_column_int(stmt, 0);
-    sqlite3_finalize(stmt);
-    return season == 0;
-  }
-
-  sqlite3_finalize(stmt);
-  return true;
 }
 
 std::vector<League> Database::loadAllLeagues() {
@@ -383,84 +368,6 @@ void Database::transferPlayer(uint32_t player_id, uint16_t new_team_id) {
   sqlite3_finalize(stmt);
 }
 
-void Database::addFirstName(const std::string &name) {
-  sqlite3_stmt *stmt;
-  const std::string &sql = SQLLoader::getQuery(Query::INSERT_FIRST_NAME);
-
-  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db.get())));
-  }
-
-  sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_TRANSIENT);
-
-  if (sqlite3_step(stmt) != SQLITE_DONE) {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db.get())));
-  }
-
-  sqlite3_finalize(stmt);
-}
-
-void Database::addLastName(const std::string &name) {
-  sqlite3_stmt *stmt;
-  const std::string &sql = SQLLoader::getQuery(Query::INSERT_LAST_NAME);
-
-  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db.get())));
-  }
-
-  sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_TRANSIENT);
-
-  if (sqlite3_step(stmt) != SQLITE_DONE) {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db.get())));
-  }
-
-  sqlite3_finalize(stmt);
-}
-
-std::vector<std::string> Database::getFirstNames() const {
-  sqlite3_stmt *stmt;
-  const std::string &sql = SQLLoader::getQuery(Query::SELECT_FIRST_NAMES);
-  std::vector<std::string> names;
-
-  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db.get())));
-  }
-
-  while (sqlite3_step(stmt) == SQLITE_ROW) {
-    const unsigned char *name_text = sqlite3_column_text(stmt, 0);
-    names.emplace_back(reinterpret_cast<const char *>(name_text));
-  }
-
-  sqlite3_finalize(stmt);
-  return names;
-}
-
-std::vector<std::string> Database::getLastNames() const {
-  sqlite3_stmt *stmt;
-  const std::string &sql = SQLLoader::getQuery(Query::SELECT_LAST_NAMES);
-  std::vector<std::string> names;
-
-  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db.get())));
-  }
-
-  while (sqlite3_step(stmt) == SQLITE_ROW) {
-    const unsigned char *name_text = sqlite3_column_text(stmt, 0);
-    names.emplace_back(reinterpret_cast<const char *>(name_text));
-  }
-
-  sqlite3_finalize(stmt);
-  return names;
-}
-
 void Database::saveCalendar(const Calendar &calendar, int season,
                             uint8_t league_id) {
   sqlite3_stmt *stmt;
@@ -520,8 +427,8 @@ Calendar Database::loadCalendar(int season, uint8_t league_id) const {
       week.emplace(week_num);
       current_week = week_num;
     }
-    week->addMatch({static_cast<uint32_t>(sqlite3_column_int(stmt, 1)),
-                    static_cast<uint32_t>(sqlite3_column_int(stmt, 2))});
+    week->addMatch({static_cast<uint16_t>(sqlite3_column_int(stmt, 1)),
+                    static_cast<uint16_t>(sqlite3_column_int(stmt, 2))});
   }
 
   if (week.has_value()) {
@@ -533,76 +440,54 @@ Calendar Database::loadCalendar(int season, uint8_t league_id) const {
   return calendar;
 }
 
-void Database::updateGameState(int season, int week, int managed_team_id) {
+void Database::updateGameState(uint8_t season, uint8_t week,
+                               uint16_t managed_team_id,
+                               const std::string &game_date) {
   sqlite3_stmt *stmt;
   const std::string &sql = SQLLoader::getQuery(Query::UPSERT_GAME_STATE);
 
-  // Update season
   if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
     throw std::runtime_error("Failed to prepare statement: " +
                              std::string(sqlite3_errmsg(db.get())));
   }
-  sqlite3_bind_text(stmt, 1, "season", -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 2, season);
-  if (sqlite3_step(stmt) != SQLITE_DONE) {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db.get())));
-  }
-  sqlite3_finalize(stmt);
 
-  // Update week
-  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db.get())));
-  }
-  sqlite3_bind_text(stmt, 1, "week", -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 2, week);
-  if (sqlite3_step(stmt) != SQLITE_DONE) {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db.get())));
-  }
-  sqlite3_finalize(stmt);
+  sqlite3_bind_int(stmt, 1, managed_team_id);
+  sqlite3_bind_text(stmt, 2, game_date.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_int(stmt, 3, season);
+  sqlite3_bind_int(stmt, 4, week);
 
-  // Update managed team ID
-  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db.get())));
-  }
-  sqlite3_bind_text(stmt, 1, "managed_team_id", -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 2, managed_team_id);
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     sqlite3_finalize(stmt);
     throw std::runtime_error("Failed to execute statement: " +
                              std::string(sqlite3_errmsg(db.get())));
   }
+
   sqlite3_finalize(stmt);
 }
 
-void Database::loadGameState(int &season, int &week,
-                             int &managed_team_id) const {
+bool Database::loadGameState(uint8_t &season, uint8_t &week,
+                             uint16_t &managed_team_id,
+                             std::string &game_date) const {
   sqlite3_stmt *stmt;
   const std::string &sql = SQLLoader::getQuery(Query::SELECT_GAME_STATE);
+  bool has_data = false;
 
   if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db.get())));
+    return false;
   }
 
-  while (sqlite3_step(stmt) == SQLITE_ROW) {
-    std::string key =
-        reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
-    if (key == "season") {
-      season = sqlite3_column_int(stmt, 1);
-    } else if (key == "week") {
-      week = sqlite3_column_int(stmt, 1);
-    } else if (key == "managed_team_id") {
-      managed_team_id = sqlite3_column_int(stmt, 1);
-    }
+  if (sqlite3_step(stmt) == SQLITE_ROW) {
+    has_data = true;
+    managed_team_id = sqlite3_column_int(stmt, 0);
+    const unsigned char *game_date_text = sqlite3_column_text(stmt, 1);
+    game_date =
+        game_date_text ? reinterpret_cast<const char *>(game_date_text) : "";
+    season = sqlite3_column_int(stmt, 2);
+    week = sqlite3_column_int(stmt, 3);
   }
 
   sqlite3_finalize(stmt);
+  return has_data;
 }
 
 int Database::loadManagedTeamId() const {
@@ -684,8 +569,8 @@ void Database::loadLeaguePoints(League &league) const {
   sqlite3_bind_int(stmt, 1, league.getId());
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    int team_id = sqlite3_column_int(stmt, 0);
-    int points = sqlite3_column_int(stmt, 1);
+    uint16_t team_id = static_cast<uint16_t>(sqlite3_column_int(stmt, 0));
+    uint8_t points = static_cast<uint8_t>(sqlite3_column_int(stmt, 1));
     league.setPoints(team_id, points);
   }
 

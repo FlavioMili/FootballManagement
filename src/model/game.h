@@ -8,28 +8,18 @@
 
 #pragma once
 
+#include "json.hpp"
 #include <cstddef>
 #include <cstdint>
-#include <vector>
+#include <fstream>
 #include <map>
 #include <string>
-#include <fstream>
-#include "json.hpp"
+#include <vector>
 
-#include "database.h"
-#include "league.h"
-#include "calendar.h"
+#include "database/database.h"
 #include "global/stats_config.h"
-#include "player.h"
-#include "match.h"
-#include "team.h"
-
-/** This is the main class where things happen
-  * It could possibly be simplified by making an 
-  * Event class, and then manage different type of
-  * events, considering that we should randomize the 
-  * AI behaviours generating random events.
-*/
+#include "model/calendar.h"
+#include "model/match.h"
 
 class Game {
 public:
@@ -44,59 +34,31 @@ public:
 
   int getCurrentSeason() const;
   int getCurrentWeek() const;
-  const StatsConfig& getStatsConfig() const;
 
-  const std::vector<Team> getTeams() const;
+  void updateStandings(const Match &match);
 
-  // both overloads
-  Team& getTeamById(int team_id);
-  const Team& getTeamById(int team_id) const;
-
-  League& getLeagueById(int league_id);
-  const League& getLeagueById(int league_id) const;
-
-  Team& getManagedTeam();
-  const Team& getManagedTeam() const;
-
-  void updateStandings(const Match& match);
-
-  std::vector<Player> getPlayersForTeam(int team_id);
-  const std::vector<Player> getPlayersForTeam(int team_id) const;
-
-  std::vector<Team> getTeamsInLeague(int league_id);
-  const std::vector<Team> getTeamsInLeague(int league_id) const;
-
-  void selectManagedTeam(int team_id);
-  std::vector<Team> getAvailableTeams() const;
   bool hasSelectedTeam() const;
 
   void saveGame();
 
 private:
-  // TODO make it a private element, managed only by the game itself
   std::shared_ptr<Database> db;
   StatsConfig stats_config;
   nlohmann::json raw_stats_config_json;
-  std::vector<std::string> league_names;
-  std::vector<std::string> team_names;
-  std::vector<League> leagues;
-  std::vector<Team> teams;
-  std::map<size_t, Calendar> league_calendars;  // league_id to Calendar
+  std::map<size_t, Calendar> league_calendars;
 
   uint8_t current_season;
   uint8_t current_week;
-  // TODO game state
-  uint16_t managed_team_id;
+  std::string current_date;
 
   void loadConfigs();
   void initializeDatabase();
   void ensureManagedTeamAssigned();
 
   void generateAllCalendars();
-  void trainPlayers(const std::vector<uint32_t>& player_ids);
+  void trainPlayers(const std::vector<uint32_t> &player_ids);
 
-  template<typename T>
-  T loadJsonFile(const std::string& path) {
+  template <typename T> T loadJsonFile(const std::string &path) {
     std::ifstream f(path);
     if (!f.is_open()) {
       throw std::runtime_error("FATAL: Could not open " + path);
@@ -104,8 +66,8 @@ private:
     return nlohmann::json::parse(f).get<T>();
   }
 
-  template<typename T>
-  T loadJsonFileKey(const std::string& path, const std::string& key) {
+  template <typename T>
+  T loadJsonFileKey(const std::string &path, const std::string &key) {
     std::ifstream f(path);
     if (!f.is_open()) {
       throw std::runtime_error("FATAL: Could not open " + path);

@@ -124,7 +124,7 @@ UPDATE Players SET team_id = ? WHERE id = ?;
 -- ==========================================
 
 -- @QUERY_ID: INSERT_CALENDAR_MATCH
-INSERT INTO Calendar (season, week, date, home_team_id, away_team_id,
+INSERT OR IGNORE INTO Calendar (season, week, date, home_team_id, away_team_id,
   home_score, away_score, league_id)
 VALUES (?, ?, ?, ?, ?, NULL, NULL, ?);
 
@@ -145,11 +145,11 @@ ORDER BY week, date;
 -- ==========================================
 
 -- @QUERY_ID: UPSERT_GAME_STATE
-INSERT OR REPLACE INTO GameState (id, managed_team, game_date)
-VALUES (1, ?, ?);
+INSERT OR REPLACE INTO GameState (id, managed_team, game_date, season, week)
+VALUES (1, ?, ?, ?, ?);
 
 -- @QUERY_ID: SELECT_GAME_STATE
-SELECT managed_team, game_date FROM GameState WHERE id = 1;
+SELECT managed_team, game_date, season, week FROM GameState WHERE id = 1;
 
 -- ==========================================
 -- LEAGUE POINTS
@@ -164,20 +164,3 @@ SELECT team_id, points FROM LeaguePoints WHERE league_id = ?;
 
 -- @QUERY_ID: RESET_ALL_LEAGUE_POINTS
 UPDATE LeaguePoints SET points = 0;
-
--- ==========================================
--- NAMES (Optional for generation)
--- TODO remove
--- ==========================================
-
--- @QUERY_ID: INSERT_FIRST_NAME
-INSERT INTO FirstNames (name) VALUES (?);
-
--- @QUERY_ID: INSERT_LAST_NAME
-INSERT INTO LastNames (name) VALUES (?);
-
--- @QUERY_ID: SELECT_FIRST_NAMES
-SELECT name FROM FirstNames;
-
--- @QUERY_ID: SELECT_LAST_NAMES
-SELECT name FROM LastNames;

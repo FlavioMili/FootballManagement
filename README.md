@@ -1,9 +1,5 @@
 # Project Football Management
 
-## WARNING 
-If you want to try the game go to the commit #44381c9d257a9adba24d2fb8988f13b7b8e69a94
-At the moment it does not compile as many things are changing in the architecture.
-
 
 ## Installation & Usage
 

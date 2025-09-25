@@ -131,7 +131,7 @@ void TeamSelectionScene::render() {
 }
 
 void TeamSelectionScene::loadAvailableTeams() {
-  available_teams = parent_view->getController().getAvailableTeams();
+  available_teams = parent_view->getController().getTeams();
 }
 
 void TeamSelectionScene::setupTeamButtons() {
@@ -141,9 +141,13 @@ void TeamSelectionScene::setupTeamButtons() {
   float buttonWidth = 400.0f;
 
   for (size_t i = 0; i < available_teams.size(); ++i) {
-    const Team& team = available_teams[i];
+    const Team& team = available_teams[i].get();
     // Get league name from GameController
-    std::string leagueName = parent_view->getController().getLeagueById(team.getLeagueId()).getName();
+    std::string leagueName = "Unknown League";
+    auto leagueOpt = parent_view->getController().getLeagueById(team.getLeagueId());
+    if (leagueOpt.has_value()) {
+      leagueName = leagueOpt->get().getName();
+    }
     std::string buttonText = team.getName() + " (" + leagueName + ")";
     float buttonX = (1200.0f - buttonWidth) / 2.0f; // Fixed: was 120.0f, should be screen width
     float buttonY = startY + (static_cast<float>(i) * (buttonHeight + padding));

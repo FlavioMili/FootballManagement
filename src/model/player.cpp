@@ -14,15 +14,15 @@
 #include <utility>
 #include <random>
 
-Player::Player(uint32_t id, uint32_t team_id, std::string_view first_name,
-               std::string_view last_name, std::string_view role,
-               Language nationality, uint32_t wage, uint32_t status,
-               uint8_t age, uint8_t contract_years, uint8_t height, Foot foot,
-               const std::map<std::string, float> &stats)
-    : id(id), team_id(team_id), wage(wage), status(status),
-      first_name(first_name), last_name(last_name), role(role),
-      nationality(nationality), age(age), contract_years(contract_years),
-      height(height), foot(foot), stats(stats) {}
+Player::Player(uint32_t new_id, uint32_t new_team_id, std::string_view new_first_name,
+               std::string_view new_last_name, std::string_view new_role,
+               Language new_nationality, uint32_t new_wage, uint32_t new_status,
+               uint8_t new_age, uint8_t new_contract_years, uint8_t new_height, Foot new_foot,
+               const std::map<std::string, float> &new_stats)
+    : id(new_id), team_id(new_team_id), wage(new_wage), status(new_status),
+      first_name(new_first_name), last_name(new_last_name), role(new_role),
+      nationality(new_nationality), age(new_age), contract_years(new_contract_years),
+      height(new_height), foot(new_foot), stats(new_stats) {}
 
 uint32_t Player::getId() const { return id; }
 

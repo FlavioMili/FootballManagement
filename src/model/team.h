@@ -11,7 +11,6 @@
 #include "finances.h"
 #include "lineup.h"
 #include "strategy.h"
-#include <cstddef>
 #include <cstdint>
 #include <string_view>
 #include <vector>

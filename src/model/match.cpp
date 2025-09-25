@@ -46,6 +46,7 @@ void Match::simulate() {
 
   for (int i = 0; i < LINEUP_GRID_SIZE; ++i) {
     if (Player* p = away_lineup.getPlayerAt(i)) {
+      // TODO modify roles
       std::string_view role = p->getRole();
       if (role == "Striker") away_attack += p->getOverall(stats_config);
       else if (role == "Midfielder") away_midfield += p->getOverall(stats_config);
@@ -72,5 +73,5 @@ void Match::simulate() {
 
 const Team& Match::getHomeTeam() const { return home_team; }
 const Team& Match::getAwayTeam() const { return away_team; }
-int Match::getHomeScore() const { return home_score; }
-int Match::getAwayScore() const { return away_score; }
+uint8_t Match::getHomeScore() const { return home_score; }
+uint8_t Match::getAwayScore() const { return away_score; }

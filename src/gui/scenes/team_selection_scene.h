@@ -22,7 +22,7 @@ class TeamSelectionScene : public GUIScene {
   GUIView* parent_view;
   TTF_Font* font;
   TTF_Font* title_font;
-  std::vector<Team> available_teams;
+  std::vector<std::reference_wrapper<const Team>> available_teams;
   ButtonManager button_manager;
 
   void loadAvailableTeams();

@@ -9,7 +9,6 @@
 #pragma once
 
 #include "calendar.h"
-#include "global/paths.h"
 #include "league.h"
 #include "player.h"
 #include "team.h"
@@ -20,12 +19,11 @@
 #include <vector>
 
 class Database {
- public:
+public:
   explicit Database();
   ~Database() = default;
 
   void initialize();
-  bool isFirstRun() const;
 
   // Data Loading
   std::vector<League> loadAllLeagues();
@@ -40,21 +38,18 @@ class Database {
   void insertTeamWithId(const Team &team);
   void insertPlayerWithId(const Player &player);
 
-  // Data-generation related
-  void addFirstName(const std::string &name);
-  void addLastName(const std::string &name);
-  std::vector<std::string> getFirstNames() const;
-  std::vector<std::string> getLastNames() const;
-
   // Calendar
   void saveCalendar(const Calendar &calendar, int season, uint8_t league_id);
   Calendar loadCalendar(int season, uint8_t league_id) const;
 
+#include <string>
+
   // Game State
   void saveManagedTeamId(int team_id);
   int loadManagedTeamId() const;
-  void updateGameState(int season, int week, int managed_team_id);
-  void loadGameState(int &season, int &week, int &managed_team_id) const;
+  void updateGameState(uint8_t season, uint8_t week, uint16_t managed_team_id, const std::string& game_date);
+  bool loadGameState(uint8_t &season, uint8_t &week,
+                     uint16_t &managed_team_id, std::string& game_date) const;
 
   // League Points
   void saveLeaguePoints(const League &league);
@@ -67,7 +62,7 @@ class Database {
   void deletePlayer(uint32_t player_id);
   void transferPlayer(uint32_t player_id, uint16_t new_team_id);
 
- private:
+private:
   std::unique_ptr<sqlite3, decltype(&sqlite3_close)> db;
 
   void loadSQLFiles();

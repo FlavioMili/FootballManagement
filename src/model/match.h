@@ -13,8 +13,8 @@
 #include <cstdint>
 
 struct Matchup {
-  uint32_t home_team_id;
-  uint32_t away_team_id;
+  uint16_t home_team_id;
+  uint16_t away_team_id;
 };
 
 /**
@@ -38,13 +38,13 @@ class Match {
 
   const Team& getHomeTeam() const;
   const Team& getAwayTeam() const;
-  int getHomeScore() const;
-  int getAwayScore() const;
+  uint8_t getHomeScore() const;
+  uint8_t getAwayScore() const;
 
  private:
   const Team& home_team;
   const Team& away_team;
   const StatsConfig& stats_config;
-  int home_score;
-  int away_score;
+  uint8_t home_score;
+  uint8_t away_score;
 };

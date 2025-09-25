@@ -36,10 +36,6 @@ enum class Query {
   UPSERT_LEAGUE_POINTS,
   SELECT_LEAGUE_POINTS,
   RESET_ALL_LEAGUE_POINTS,
-  INSERT_FIRST_NAME,
-  INSERT_LAST_NAME,
-  SELECT_FIRST_NAMES,
-  SELECT_LAST_NAMES,
 
   COUNT // As last element, it is the count of the enum elements
 };
@@ -84,10 +80,4 @@ const std::unordered_map<std::string, Query> string_to_query_map = {
     {"UPSERT_LEAGUE_POINTS", Query::UPSERT_LEAGUE_POINTS},
     {"SELECT_LEAGUE_POINTS", Query::SELECT_LEAGUE_POINTS},
     {"RESET_ALL_LEAGUE_POINTS", Query::RESET_ALL_LEAGUE_POINTS},
-
-    // Names
-    {"INSERT_FIRST_NAME", Query::INSERT_FIRST_NAME},
-    {"INSERT_LAST_NAME", Query::INSERT_LAST_NAME},
-    {"SELECT_FIRST_NAMES", Query::SELECT_FIRST_NAMES},
-    {"SELECT_LAST_NAMES", Query::SELECT_LAST_NAMES},
 };

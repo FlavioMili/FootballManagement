@@ -43,7 +43,10 @@ static constexpr uint8_t LINEUP_GRID_COLS = 5;
 static constexpr uint8_t LINEUP_GRID_SIZE = LINEUP_GRID_ROWS * LINEUP_GRID_COLS;
 
 // Functions to access the array of lineup's grid
-constexpr uint8_t toIndex(uint8_t row, uint8_t col) { return row * LINEUP_GRID_COLS + col; }
+constexpr uint8_t toIndex(uint8_t row, uint8_t col) {
+    return static_cast<uint8_t>(row * LINEUP_GRID_COLS + col);
+}
+
 constexpr std::pair<int, int> toRowCol(int i) {
   return {i / LINEUP_GRID_COLS, i % LINEUP_GRID_COLS};
 }

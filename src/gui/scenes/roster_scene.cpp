@@ -109,7 +109,7 @@ void RosterScene::render() {
   int startY = 150;
   float lineHeight = 30.0f;
   for (size_t i = 0; i < roster_players.size(); ++i) {
-    const Player& player = roster_players[i];
+    const Player& player = roster_players[i].get();
     std::string playerText = player.getName() + " (" + player.getRole() + ") - OVR: " +
       std::to_string(player.getOverall(parent_view->getController().getStatsConfig()));
 
@@ -138,7 +138,11 @@ void RosterScene::render() {
 }
 
 void RosterScene::loadRoster() {
-  roster_players = parent_view->getController().getPlayersForTeam(parent_view->getController().getManagedTeam().getId());
+  auto managedTeamOpt = parent_view->getController().getManagedTeam();
+  if (managedTeamOpt.has_value()) {
+    roster_players = parent_view->getController().getPlayersForTeam(
+        managedTeamOpt->get().getId());
+  }
 }
 
 void RosterScene::setupPlayerDisplay() {

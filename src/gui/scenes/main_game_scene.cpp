@@ -118,31 +118,39 @@ void MainGameScene::renderLeaderboard() {
 
   leaderboardY += rect.h + 10;
 
-  League &league = guiView->getController().getLeagueById(
-      guiView->getController().getManagedTeam().getLeagueId());
-  const auto &leaderboard = league.getLeaderboard();
-  std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(),
-                                                leaderboard.end());
-  std::sort(sorted_teams.begin(), sorted_teams.end(),
-            [](const auto &a, const auto &b) { return a.second > b.second; });
+  auto managedTeamOpt = guiView->getController().getManagedTeam();
+  if (managedTeamOpt.has_value()) {
+    auto leagueOpt = guiView->getController().getLeagueById(managedTeamOpt->get().getLeagueId());
+    if (leagueOpt.has_value()) {
+      const League &league = leagueOpt->get();
+      const auto &leaderboard = league.getLeaderboard();
+      std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(),
+                                                    leaderboard.end());
+      std::sort(sorted_teams.begin(), sorted_teams.end(),
+                [](const auto &a, const auto &b) { return a.second > b.second; });
 
-  TTF_Font *itemFont = TTF_OpenFont(FONT_PATH, 20);
-  int rank = 1;
-  for (const auto &pair : sorted_teams) {
-    Team &team = guiView->getController().getTeamById(pair.first);
-    std::string text = std::to_string(rank) + ". " + std::string(team.getName()) + " - " +
-                       std::to_string(pair.second) + " pts";
-    surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
-    texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-    rect = {leaderboardX, leaderboardY, static_cast<float>(surface->w),
-            static_cast<float>(surface->h)};
-    SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
-    SDL_DestroySurface(surface);
-    SDL_DestroyTexture(texture);
-    leaderboardY += rect.h + 5;
-    rank++;
+      TTF_Font *itemFont = TTF_OpenFont(FONT_PATH, 20);
+      int rank = 1;
+      for (const auto &pair : sorted_teams) {
+        auto teamOpt = guiView->getController().getTeamById(pair.first);
+        if (teamOpt.has_value()) {
+          const Team &team = teamOpt->get();
+          std::string text = std::to_string(rank) + ". " + std::string(team.getName()) + " - " +
+                             std::to_string(pair.second) + " pts";
+          surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
+          texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
+          rect = {leaderboardX, leaderboardY, static_cast<float>(surface->w),
+                  static_cast<float>(surface->h)};
+          SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
+          SDL_DestroySurface(surface);
+          SDL_DestroyTexture(texture);
+          leaderboardY += rect.h + 5;
+          rank++;
+        }
+      }
+      TTF_CloseFont(itemFont);
+    }
   }
-  TTF_CloseFont(itemFont);
 }
 
 void MainGameScene::renderTopPlayers() {
@@ -166,30 +174,35 @@ void MainGameScene::renderTopPlayers() {
 
   topPlayersY += rect.h + 10;
 
-  auto players = guiView->getController().getPlayersForTeam(
-      guiView->getController().getManagedTeam().getId());
-  const auto &stats_config = guiView->getController().getStatsConfig();
-  std::sort(players.begin(), players.end(),
-            [&stats_config](const Player &a, const Player &b) {
-              return a.getOverall(stats_config) > b.getOverall(stats_config);
-            });
+  auto managedTeamOpt = guiView->getController().getManagedTeam();
+  if (managedTeamOpt.has_value()) {
+    auto players = guiView->getController().getPlayersForTeam(
+        managedTeamOpt->get().getId());
+    const auto &stats_config = guiView->getController().getStatsConfig();
+    std::sort(players.begin(), players.end(),
+              [&stats_config](const std::reference_wrapper<const Player> &a,
+                              const std::reference_wrapper<const Player> &b) {
+                return a.get().getOverall(stats_config) >
+                       b.get().getOverall(stats_config);
+              });
 
-  TTF_Font *itemFont = TTF_OpenFont(FONT_PATH, 20);
-  for (size_t i = 0; i < 3 && i < players.size(); ++i) {
-    const auto &player = players[i];
-    std::string text =
-        player.getName() + " (" + std::string(player.getRole()) +
-        ") - OVR: " + std::to_string(player.getOverall(stats_config));
-    surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
-    texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-    rect = {topPlayersX, topPlayersY, static_cast<float>(surface->w),
-            static_cast<float>(surface->h)};
-    SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
-    SDL_DestroySurface(surface);
-    SDL_DestroyTexture(texture);
-    topPlayersY += rect.h + 5;
+    TTF_Font *itemFont = TTF_OpenFont(FONT_PATH, 20);
+    for (size_t i = 0; i < 3 && i < players.size(); ++i) {
+      const auto &player = players[i].get();
+      std::string text =
+          player.getName() + " (" + std::string(player.getRole()) +
+          ") - OVR: " + std::to_string(player.getOverall(stats_config));
+      surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
+      texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
+      rect = {topPlayersX, topPlayersY, static_cast<float>(surface->w),
+              static_cast<float>(surface->h)};
+      SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
+      SDL_DestroySurface(surface);
+      SDL_DestroyTexture(texture);
+      topPlayersY += rect.h + 5;
+    }
+    TTF_CloseFont(itemFont);
   }
-  TTF_CloseFont(itemFont);
 }
 
 void MainGameScene::setupButtons() {

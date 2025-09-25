@@ -20,11 +20,11 @@ enum class Foot : bool { Left = false, Right = true };
 
 class Player {
  public:
-  Player(uint32_t id, uint32_t team_id, std::string_view first_name,
-         std::string_view last_name, std::string_view role,
-         Language nationality, uint32_t wage, uint32_t status, uint8_t age,
-         uint8_t contract_years, uint8_t height, Foot foot,
-         const std::map<std::string, float> &stats);
+  Player(uint32_t new_id, uint32_t new_team_id, std::string_view new_first_name,
+         std::string_view new_last_name, std::string_view new_role,
+         Language new_nationality, uint32_t new_wage, uint32_t new_status, uint8_t new_age,
+         uint8_t new_contract_years, uint8_t new_height, Foot new_foot,
+         const std::map<std::string, float> &new_stats);
 
   uint32_t getId() const;
   uint32_t getTeamId() const;
@@ -32,7 +32,7 @@ class Player {
   std::string getFirstName() const;
   std::string getLastName() const;
   int getAge() const;
-  void setAge(int age);
+  void setAge(int new_age);
   std::string getRole() const;
   Language getNationality() const;
   uint32_t getWage() const;
