@@ -6,7 +6,11 @@
 -- ==========================================
 
 -- @QUERY_ID: INSERT_LEAGUE
-INSERT INTO Leagues (name, parent_league_id) VALUES (?, ?);
+INSERT OR IGNORE INTO Leagues (name, parent_league_id) VALUES (?, ?);
+
+-- @QUERY_ID: INSERT_LEAGUE_WITH_ID
+INSERT OR IGNORE INTO Leagues (id, name, parent_league_id) VALUES (?, ?, ?);
+
 
 -- @QUERY_ID: SELECT_LEAGUES
 SELECT id, name, parent_league_id FROM Leagues;
@@ -16,8 +20,12 @@ SELECT id, name, parent_league_id FROM Leagues;
 -- ==========================================
 
 -- @QUERY_ID: INSERT_TEAM
-INSERT INTO Teams (league_id, name, balance, strategy, lineup)
+INSERT OR IGNORE INTO Teams (league_id, name, balance, strategy, lineup)
 VALUES (?, ?, ?, ?, ?);
+
+-- @QUERY_ID: INSERT_TEAM_WITH_ID
+INSERT OR IGNORE INTO Teams (id, league_id, name, balance, strategy, lineup)
+VALUES (?, ?, ?, ?, ?, ?);
 
 -- @QUERY_ID: SELECT_TEAMS_BY_LEAGUE
 SELECT id, name, balance, strategy, lineup
@@ -36,15 +44,67 @@ SELECT id FROM Teams;
 -- ==========================================
 
 -- @QUERY_ID: INSERT_PLAYER
-INSERT INTO Players (team_id, name, age, role, stats)
-VALUES (?, ?, ?, ?, ?);
+INSERT INTO Players (
+  team_id,
+  first_name,
+  last_name,
+  age,
+  role,
+  nationality,
+  wage,
+  contract_years,
+  height,
+  foot,
+  stats,
+  status
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- @QUERY_ID: INSERT_PLAYER_WITH_ID
+INSERT INTO Players (
+  team_id,
+  first_name,
+  last_name,
+  age,
+  role,
+  nationality,
+  wage,
+  contract_years,
+  height,
+  foot,
+  stats,
+  status
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- @QUERY_ID: SELECT_PLAYERS_BY_TEAM
-SELECT id, name, age, role, stats
-FROM Players WHERE team_id = ?;
+SELECT id,
+  first_name,
+  last_name,
+  age,
+  role,
+  nationality,
+  wage,
+  contract_years,
+  height,
+  foot,
+  stats,
+  status
+FROM Players
+WHERE team_id = ?;
 
 -- @QUERY_ID: SELECT_ALL_PLAYERS
-SELECT id, team_id, name, age, role, stats
+SELECT id,
+  team_id,
+  first_name,
+  last_name,
+  age,
+  role,
+  nationality,
+  wage,
+  contract_years,
+  height,
+  foot,
+  stats,
+  status
 FROM Players;
 
 -- @QUERY_ID: UPDATE_PLAYER
@@ -64,7 +124,7 @@ UPDATE Players SET team_id = ? WHERE id = ?;
 
 -- @QUERY_ID: INSERT_CALENDAR_MATCH
 INSERT INTO Calendar (season, week, date, home_team_id, away_team_id,
-                      home_score, away_score, league_id)
+  home_score, away_score, league_id)
 VALUES (?, ?, ?, ?, ?, NULL, NULL, ?);
 
 -- @QUERY_ID: UPDATE_CALENDAR_RESULT
@@ -74,7 +134,7 @@ WHERE id = ?;
 
 -- @QUERY_ID: SELECT_CALENDAR
 SELECT id, season, week, date, home_team_id, away_team_id,
-       home_score, away_score
+  home_score, away_score
 FROM Calendar
 WHERE season = ? AND league_id = ?
 ORDER BY week, date;

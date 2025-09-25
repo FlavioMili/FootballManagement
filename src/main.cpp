@@ -10,7 +10,6 @@
 #include <memory>
 
 #include "global/logger.h"
-#include "global/paths.h"
 
 #include "controller/game_controller.h"
 #include "gui/gui_view.h"
@@ -21,15 +20,14 @@ int main() {
   Logger::init();
   srand(time(0));
   try {
-    auto db = std::make_shared<Database>(DATABASE_PATH);
+    auto db = std::make_shared<Database>();
     db->initialize();
-    auto game = std::make_unique<Game>(db);
+    auto game = std::make_unique<Game>();
     auto controller = std::make_unique<GameController>(std::move(game));
 
     GUIView view(*controller);
     view.run();
     controller->saveGame();
-    db->close();
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << "\n";
     return 1;

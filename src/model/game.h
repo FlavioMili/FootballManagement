@@ -33,7 +33,7 @@
 
 class Game {
 public:
-  explicit Game(std::shared_ptr<Database> db);
+  Game();
 
   void simulateWeek();
   void startNewSeason();
@@ -46,7 +46,7 @@ public:
   int getCurrentWeek() const;
   const StatsConfig& getStatsConfig() const;
 
-  const std::vector<Team>& getTeams() const;
+  const std::vector<Team> getTeams() const;
 
   // both overloads
   Team& getTeamById(int team_id);
@@ -60,8 +60,8 @@ public:
 
   void updateStandings(const Match& match);
 
-  std::vector<Player>& getPlayersForTeam(int team_id);
-  const std::vector<Player>& getPlayersForTeam(int team_id) const;
+  std::vector<Player> getPlayersForTeam(int team_id);
+  const std::vector<Player> getPlayersForTeam(int team_id) const;
 
   std::vector<Team> getTeamsInLeague(int league_id);
   const std::vector<Team> getTeamsInLeague(int league_id) const;
@@ -92,8 +92,8 @@ private:
   void initializeDatabase();
   void ensureManagedTeamAssigned();
 
-  void generateAllCalendars(const std::vector<League>& leagues);
-  void trainPlayers(std::vector<Player>& players);
+  void generateAllCalendars();
+  void trainPlayers(const std::vector<uint32_t>& player_ids);
 
   template<typename T>
   T loadJsonFile(const std::string& path) {

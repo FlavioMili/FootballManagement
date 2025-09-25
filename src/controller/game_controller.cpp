@@ -31,7 +31,7 @@ const Team& GameController::getManagedTeam() const {
   return game->getManagedTeam();
 }
 
-void GameController::selectManagedTeam(int team_id) {
+void GameController::selectManagedTeam(uint32_t team_id) {
   game->selectManagedTeam(team_id);
 }
 
@@ -43,27 +43,27 @@ std::vector<Team> GameController::getAvailableTeams() const {
   return game->getAvailableTeams();
 }
 
-std::vector<Player>& GameController::getPlayersForTeam(int team_id) {
+std::vector<Player> GameController::getPlayersForTeam(uint32_t team_id) {
   return game->getPlayersForTeam(team_id);
 }
 
-const std::vector<Player>& GameController::getPlayersForTeam(int team_id) const {
+const std::vector<Player> GameController::getPlayersForTeam(uint32_t team_id) const {
   return game->getPlayersForTeam(team_id);
 }
 
-std::vector<Team> GameController::getTeamsInLeague(int league_id) const {
+std::vector<Team> GameController::getTeamsInLeague(uint8_t league_id) const {
   return game->getTeamsInLeague(league_id);
 }
 
-League& GameController::getLeagueById(int league_id) {
+League& GameController::getLeagueById(uint8_t league_id) {
   return game->getLeagueById(league_id);
 }
 
-Team& GameController::getTeamById(int team_id) {
+Team& GameController::getTeamById(uint16_t team_id) {
   return game->getTeamById(team_id);
 }
 
-const Team& GameController::getTeamById(int team_id) const {
+const Team& GameController::getTeamById(uint16_t team_id) const {
   return game->getTeamById(team_id);
 }
 

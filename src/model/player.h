@@ -16,36 +16,30 @@
 #include <string_view>
 #include <vector>
 
-// TODO mode this class in some header file
-enum class Foot : bool { Left  = false, Right = true };
-
-/**
- * TODO add status (enum PlayerStatus) a vector and/or a bitset
- * just so that we can check if a player is on transfer list,
- * or injured, or had a red card, and so on.
- * This way we can manage more things easily later on I guess.
- * Also these for modding reasons might come from a modifiable json?
- */
+enum class Foot : bool { Left = false, Right = true };
 
 class Player {
  public:
-  Player(uint32_t id,
-         std::string_view first_name,
-         std::string_view last_name,
-         std::string_view role,
-         Language nationality,
-         uint32_t wage,
-         uint8_t contract_years,
-         uint8_t age,
-         uint8_t height,
-         Foot foot,
+  Player(uint32_t id, uint32_t team_id, std::string_view first_name,
+         std::string_view last_name, std::string_view role,
+         Language nationality, uint32_t wage, uint32_t status, uint8_t age,
+         uint8_t contract_years, uint8_t height, Foot foot,
          const std::map<std::string, float> &stats);
 
   uint32_t getId() const;
+  uint32_t getTeamId() const;
   std::string getName() const;
+  std::string getFirstName() const;
+  std::string getLastName() const;
   int getAge() const;
   void setAge(int age);
   std::string getRole() const;
+  Language getNationality() const;
+  uint32_t getWage() const;
+  uint8_t getContractYears() const;
+  uint8_t getHeight() const;
+  Foot getFoot() const;
+  uint32_t getStatus() const;
   double getOverall(const StatsConfig &stats_config) const;
   const std::map<std::string, float> &getStats() const;
   void setStats(const std::map<std::string, float> &new_stats);
@@ -54,15 +48,24 @@ class Player {
   void train(const std::vector<std::string> &focus_stats);
 
  private:
+  // 32-bit fields first
   uint32_t id;
-  std::string_view first_name;
-  std::string_view last_name;
-  std::string_view role; // TODO URGENT: change to enum
-  Language nationality;
+  uint32_t team_id;
   uint32_t wage;
-  uint8_t contract_years;
+  uint32_t status;
+
+  // strings (non-POD, heap allocated, alignment not a problem)
+  std::string first_name;
+  std::string last_name;
+  std::string role;
+
+  // Enums and small ints grouped together
+  Language nationality;
   uint8_t age;
+  uint8_t contract_years;
   uint8_t height;
   Foot foot;
+
+  // stats container
   std::map<std::string, float> stats;
 };

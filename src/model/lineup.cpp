@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include "lineup.h"
+#include "database/gamedata.h"
 #include <sstream>
 #include <algorithm>
 
@@ -92,7 +93,7 @@ std::string Lineup::toString() const {
   return oss.str();
 }
 
-void Lineup::generateStartingXI(const std::vector<uint32_t>& allPlayers, const StatsConfig& stats_config) {
+void Lineup::generateStartingXI(const std::vector<uint32_t>& allPlayerIDs, const StatsConfig& stats_config) {
   // Clear previous lineup
   gridClear();
   reserves.clear();
@@ -101,7 +102,8 @@ void Lineup::generateStartingXI(const std::vector<uint32_t>& allPlayers, const S
   const Player* bestGK = nullptr;
 
   // Separate GK from outfield
-  for (const auto& p : allPlayers) {
+  for (const auto& playerID : allPlayerIDs) {
+    const Player& p = GameData::instance().getPlayers().at(playerID);
     if (p.getRole() == "Goalkeeper") {
       if (!bestGK || p.getOverall(stats_config) > bestGK->getOverall(stats_config))
         bestGK = &p;

@@ -37,8 +37,8 @@ void SettingsScene::onEnter() {
 
   buttonManager = std::make_unique<ButtonManager>(getRenderer(), font);
 
-  for(const auto& [lang, str] : languageToString) {
-    languageOptions.push_back(str); 
+for (const auto &[lang, str] : languageToString) {
+    languageOptions.push_back(str);
   }
   for(const auto& res : resolutions) { 
     resolutionOptions.push_back(std::to_string(res.first) + "x" + std::to_string(res.second)); 

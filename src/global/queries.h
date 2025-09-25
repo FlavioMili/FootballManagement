@@ -8,19 +8,21 @@
 
 #pragma once
 
-#include <array>
 #include <stdexcept>
 #include <string_view>
 #include <unordered_map>
 
 enum class Query {
   INSERT_LEAGUE,
+  INSERT_LEAGUE_WITH_ID,
   SELECT_LEAGUES,
   INSERT_TEAM,
+  INSERT_TEAM_WITH_ID,
   SELECT_TEAMS_BY_LEAGUE,
   UPDATE_TEAM,
   SELECT_ALL_TEAM_IDS,
   INSERT_PLAYER,
+  INSERT_PLAYER_WITH_ID,
   SELECT_PLAYERS_BY_TEAM,
   SELECT_ALL_PLAYERS,
   UPDATE_PLAYER,
@@ -28,9 +30,9 @@ enum class Query {
   TRANSFER_PLAYER,
   INSERT_CALENDAR_MATCH,
   SELECT_CALENDAR,
+  UPDATE_CALENDAR_RESULT,
   UPSERT_GAME_STATE,
   SELECT_GAME_STATE,
-  SELECT_GAME_STATE_BY_KEY,
   UPSERT_LEAGUE_POINTS,
   SELECT_LEAGUE_POINTS,
   RESET_ALL_LEAGUE_POINTS,
@@ -50,16 +52,19 @@ struct QueryMapEntry {
 const std::unordered_map<std::string, Query> string_to_query_map = {
     // Leagues
     {"INSERT_LEAGUE", Query::INSERT_LEAGUE},
+    {"INSERT_LEAGUE_WITH_ID", Query::INSERT_LEAGUE_WITH_ID},
     {"SELECT_LEAGUES", Query::SELECT_LEAGUES},
 
     // Teams
     {"INSERT_TEAM", Query::INSERT_TEAM},
+    {"INSERT_TEAM_WITH_ID", Query::INSERT_TEAM_WITH_ID},
     {"SELECT_TEAMS_BY_LEAGUE", Query::SELECT_TEAMS_BY_LEAGUE},
     {"UPDATE_TEAM", Query::UPDATE_TEAM},
     {"SELECT_ALL_TEAM_IDS", Query::SELECT_ALL_TEAM_IDS},
 
     // Players
     {"INSERT_PLAYER", Query::INSERT_PLAYER},
+    {"INSERT_PLAYER_WITH_ID", Query::INSERT_PLAYER_WITH_ID},
     {"SELECT_PLAYERS_BY_TEAM", Query::SELECT_PLAYERS_BY_TEAM},
     {"SELECT_ALL_PLAYERS", Query::SELECT_ALL_PLAYERS},
     {"UPDATE_PLAYER", Query::UPDATE_PLAYER},
@@ -69,11 +74,11 @@ const std::unordered_map<std::string, Query> string_to_query_map = {
     // Calendar
     {"INSERT_CALENDAR_MATCH", Query::INSERT_CALENDAR_MATCH},
     {"SELECT_CALENDAR", Query::SELECT_CALENDAR},
+    {"UPDATE_CALENDAR_RESULT", Query::UPDATE_CALENDAR_RESULT},
 
     // Game State
     {"UPSERT_GAME_STATE", Query::UPSERT_GAME_STATE},
     {"SELECT_GAME_STATE", Query::SELECT_GAME_STATE},
-    {"SELECT_GAME_STATE_BY_KEY", Query::SELECT_GAME_STATE_BY_KEY},
 
     // League Points
     {"UPSERT_LEAGUE_POINTS", Query::UPSERT_LEAGUE_POINTS},

@@ -7,8 +7,9 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-  
+
 #include <cstdint>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 
@@ -23,7 +24,7 @@ enum class Language : uint8_t {
   IE, NO, SK, CZ, HU, UA, US, 
 };
 
-const std::unordered_map<Language, std::string_view> languageToString{
+const std::unordered_map<Language, std::string> languageToString{
     {Language::EN, "English"},    {Language::IT, "Italian"},
     {Language::ES, "Spanish"},    {Language::FR, "French"},
     {Language::DE, "German"},     {Language::MX, "Mexican"},
@@ -41,7 +42,7 @@ const std::unordered_map<Language, std::string_view> languageToString{
     {Language::HU, "Hungarian"},  {Language::UA, "Ukrainian"},
     {Language::US, "American"}};
 
-const std::unordered_map<std::string_view, Language> stringToLanguage{
+const std::unordered_map<std::string, Language> stringToLanguage{
     {"English", Language::EN},    {"Italian", Language::IT},
     {"Spanish", Language::ES},    {"French", Language::FR},
     {"German", Language::DE},     {"Mexican", Language::MX},

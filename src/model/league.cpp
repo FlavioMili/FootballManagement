@@ -8,32 +8,33 @@
 
 #include "league.h"
 #include <algorithm>
-#include <string_view>
+#include <string>
 #include <utility>
 #include <vector>
 
-League::League(size_t league_id, std::string_view league_name,
-               const std::vector<size_t> &initial_team_ids)
-    : id(league_id), name(league_name), team_ids(initial_team_ids) {
-  for (auto tid : team_ids) {
+League::League(uint8_t league_id, const std::string &league_name,
+               const std::vector<uint16_t> &initial_team_ids)
+    : id(league_id), name(league_name) {
+  for (auto tid : initial_team_ids) {
+    team_ids.push_back(tid);
     leaderboard[tid] = 0;
   }
 }
 
-size_t League::getId() const { return id; }
+uint8_t League::getId() const { return id; }
 
-std::string_view League::getName() const { return name; }
+std::string League::getName() const { return name; }
 
-const std::vector<size_t> &League::getTeamIDs() const { return team_ids; }
+const std::vector<uint16_t> &League::getTeamIDs() const { return team_ids; }
 
-void League::addTeamID(size_t team_id) {
+void League::addTeamID(uint16_t team_id) {
   if (std::find(team_ids.begin(), team_ids.end(), team_id) == team_ids.end()) {
     team_ids.push_back(team_id);
     leaderboard[team_id] = 0;
   }
 }
 
-void League::removeTeamID(size_t team_id) {
+void League::removeTeamID(uint16_t team_id) {
   auto it = std::remove(team_ids.begin(), team_ids.end(), team_id);
   if (it != team_ids.end()) {
     team_ids.erase(it, team_ids.end());
@@ -42,16 +43,16 @@ void League::removeTeamID(size_t team_id) {
 }
 
 // Points management
-uint8_t League::getPoints(size_t team_id) const {
+uint8_t League::getPoints(uint16_t team_id) const {
   auto it = leaderboard.find(team_id);
   return it != leaderboard.end() ? it->second : 0;
 }
 
-void League::addPoints(size_t team_id, uint8_t points) {
+void League::addPoints(uint16_t team_id, uint8_t points) {
   leaderboard[team_id] += points;
 }
 
-void League::setPoints(size_t team_id, uint8_t points) {
+void League::setPoints(uint16_t team_id, uint8_t points) {
   leaderboard[team_id] = points;
 }
 
@@ -61,6 +62,6 @@ void League::resetPoints() {
   }
 }
 
-const std::map<size_t, uint8_t> &League::getLeaderboard() const {
+const std::map<uint16_t, uint8_t> &League::getLeaderboard() const {
   return leaderboard;
 }

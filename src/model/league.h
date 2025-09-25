@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <string_view>
 #include <vector>
 #include <map>
@@ -22,15 +23,15 @@
   * makes players actually perform stuff
 */
 class League {
- public:
-  League(uint8_t league_id, std::string_view league_name,
-         const std::vector<size_t>& initial_team_ids = {});
+public:
+  League(uint8_t league_id, const std::string &league_name,
+         const std::vector<uint16_t> &initial_team_ids = {});
 
   // Accessors
   uint8_t getId() const;
-  std::string_view getName() const;
+  std::string getName() const;
 
-  const std::vector<size_t>& getTeamIDs() const;
+  const std::vector<uint16_t> &getTeamIDs() const;
   void addTeamID(uint16_t team_id);
   void removeTeamID(uint16_t team_id);
 
@@ -39,11 +40,11 @@ class League {
   void setPoints(uint16_t team_id, uint8_t points);
   void resetPoints();
 
-  const std::map<uint8_t, uint8_t>& getLeaderboard() const;
+  const std::map<uint16_t, uint8_t> &getLeaderboard() const;
 
- private:
+private:
   uint8_t id;
-  std::string_view name;
+  std::string name;
   std::vector<uint16_t> team_ids;
   std::map<uint16_t, uint8_t> leaderboard; // team_id -> points
 };

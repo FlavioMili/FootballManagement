@@ -29,16 +29,16 @@ class GameController {
 
   Team& getManagedTeam();
   const Team& getManagedTeam() const;
-  void selectManagedTeam(int team_id);
+  void selectManagedTeam(uint32_t team_id);
 
   std::vector<Team> getTeams() const;
   std::vector<Team> getAvailableTeams() const;
-  std::vector<Player>& getPlayersForTeam(int team_id);
-  const std::vector<Player>& getPlayersForTeam(int team_id) const;
-  std::vector<Team> getTeamsInLeague(int league_id) const;
-  League& getLeagueById(int league_id);
-  Team& getTeamById(int team_id);
-  const Team& getTeamById(int team_id) const;
+  std::vector<Player> getPlayersForTeam(uint32_t team_id);
+  const std::vector<Player> getPlayersForTeam(uint32_t team_id) const;
+  std::vector<Team> getTeamsInLeague(uint8_t league_id) const;
+  League& getLeagueById(uint8_t league_id);
+  Team& getTeamById(uint16_t team_id);
+  const Team& getTeamById(uint16_t team_id) const;
   const StatsConfig& getStatsConfig() const;
 
   void advanceWeek();

@@ -22,54 +22,50 @@
 class Database {
 public:
   explicit Database();
-  ~Database() = default;  
+  ~Database() = default;
 
   void initialize();
-  void close();
   bool isFirstRun() const;
 
-  void addLeague(const std::string &name);
-  std::vector<League> getLeagues() const;
+  // Data Loading
+  std::vector<League> loadAllLeagues();
+  std::vector<Team> loadAllTeams();
+  std::vector<Player> loadAllPlayers();
 
+  // Data Insertion
+  void insertLeague(const League &league);
+  void insertTeam(const Team &team);
+  void insertPlayer(const Player &player);
+
+  // Data-generation related
   void addFirstName(const std::string &name);
   void addLastName(const std::string &name);
   std::vector<std::string> getFirstNames() const;
   std::vector<std::string> getLastNames() const;
 
-  void addTeam(uint8_t league_id, const std::string &name, int64_t balance);
-  std::vector<Team> getTeams(const uint8_t league_id) const;
-  void updateTeam(const Team &team);
-
-  void addPlayer(int team_id, const Player &player);
-  std::vector<uint32_t> getPlayers(uint16_t team_id) const;
-
+  // Calendar
   void saveCalendar(const Calendar &calendar, int season, uint8_t league_id);
   Calendar loadCalendar(int season, uint8_t league_id) const;
 
+  // Game State
   void saveManagedTeamId(int team_id);
   int loadManagedTeamId() const;
-
   void updateGameState(int season, int week, int managed_team_id);
   void loadGameState(int &season, int &week, int &managed_team_id) const;
 
+  // League Points
   void saveLeaguePoints(const League &league);
   void loadLeaguePoints(League &league) const;
   void resetAllLeaguePoints();
 
+  // Player specific actions
   void ageAllPlayers();
   void updatePlayer(const Player &player);
   void deletePlayer(uint32_t player_id);
-
-  std::vector<uint32_t> getFreeAgents() const;
-  std::vector<uint32_t> getAllPlayers() const;
-  std::vector<int> getAllTeamIds() const;
   void transferPlayer(uint32_t player_id, uint16_t new_team_id);
 
 private:
   std::unique_ptr<sqlite3, decltype(&sqlite3_close)> db;
 
-  // Helper methods
   void loadSQLFiles();
-  void executeStatement(const std::string &query_id,
-                        const std::vector<std::string> &params = {});
 };
