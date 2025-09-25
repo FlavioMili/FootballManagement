@@ -20,7 +20,7 @@
 #include <vector>
 
 class Database {
-public:
+ public:
   explicit Database();
   ~Database() = default;
 
@@ -36,6 +36,9 @@ public:
   void insertLeague(const League &league);
   void insertTeam(const Team &team);
   void insertPlayer(const Player &player);
+  void insertLeagueWithId(const League &league);
+  void insertTeamWithId(const Team &team);
+  void insertPlayerWithId(const Player &player);
 
   // Data-generation related
   void addFirstName(const std::string &name);
@@ -64,7 +67,7 @@ public:
   void deletePlayer(uint32_t player_id);
   void transferPlayer(uint32_t player_id, uint16_t new_team_id);
 
-private:
+ private:
   std::unique_ptr<sqlite3, decltype(&sqlite3_close)> db;
 
   void loadSQLFiles();

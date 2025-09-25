@@ -112,19 +112,19 @@ bool GameData::loadFromDB() {
   if (db.isFirstRun()) {
     auto leagues = DataGenerator::generateLeagues("assets/user_made_data/leagues/leagues.json");
     for (const auto &league : leagues) {
-      db.insertLeague(league);
+      db.insertLeagueWithId(league);
       _leagues.emplace(league.getId(), league);
     }
 
     auto teams = DataGenerator::generateTeams("assets/user_made_data/teams/italian_league.json");
     for (const auto &team : teams) {
-      db.insertTeam(team);
+      db.insertTeamWithId(team);
       _teams.emplace(team.getId(), team);
     }
 
     auto players = DataGenerator::generatePlayers("assets/user_made_data/players/lecce_players.json");
     for (const auto &player : players) {
-      db.insertPlayer(player);
+      db.insertPlayerWithId(player);
       _players.emplace(player.getId(), player);
     }
   } else {

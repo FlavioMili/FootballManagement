@@ -60,7 +60,8 @@ INSERT INTO Players (
   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- @QUERY_ID: INSERT_PLAYER_WITH_ID
-INSERT INTO Players (
+INSERT OR IGNORE INTO Players (
+  id,
   team_id,
   first_name,
   last_name,

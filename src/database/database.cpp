@@ -49,7 +49,7 @@ void Database::initialize() {
     char *err_msg = nullptr;
 
     if (sqlite3_exec(db.get(), schema_sql.c_str(), 0, 0, &err_msg) !=
-      SQLITE_OK) {
+        SQLITE_OK) {
       std::string error_str = "SQL error: " + std::string(err_msg);
       sqlite3_free(err_msg);
       throw std::runtime_error(error_str);
@@ -98,7 +98,7 @@ std::vector<League> Database::loadAllLeagues() {
     int id = sqlite3_column_int(stmt, 0);
     const unsigned char *name_text = sqlite3_column_text(stmt, 1);
     std::string name =
-      name_text ? reinterpret_cast<const char *>(name_text) : "";
+        name_text ? reinterpret_cast<const char *>(name_text) : "";
     leagues.emplace_back(id, name);
   }
 
@@ -121,7 +121,7 @@ std::vector<Team> Database::loadAllTeams() {
     int league_id = sqlite3_column_int(stmt, 1);
     const unsigned char *name_text = sqlite3_column_text(stmt, 2);
     std::string name =
-      name_text ? reinterpret_cast<const char *>(name_text) : "";
+        name_text ? reinterpret_cast<const char *>(name_text) : "";
     std::int64_t balance = sqlite3_column_int64(stmt, 3);
     teams.emplace_back(id, league_id, name, balance);
   }
@@ -136,7 +136,7 @@ std::vector<Player> Database::loadAllPlayers() {
   std::vector<Player> players;
 
   if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, nullptr) !=
-    SQLITE_OK) {
+      SQLITE_OK) {
     throw std::runtime_error("Failed to prepare statement: " +
                              std::string(sqlite3_errmsg(db.get())));
   }
@@ -145,31 +145,31 @@ std::vector<Player> Database::loadAllPlayers() {
     uint32_t id = sqlite3_column_int(stmt, 0);
     uint32_t team_id = sqlite3_column_int(stmt, 1);
     const char *first_name =
-      reinterpret_cast<const char *>(sqlite3_column_text(stmt, 2));
+        reinterpret_cast<const char *>(sqlite3_column_text(stmt, 2));
     const char *last_name =
-      reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
+        reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
     int age = sqlite3_column_int(stmt, 4);
     const char *role =
-      reinterpret_cast<const char *>(sqlite3_column_text(stmt, 5));
+        reinterpret_cast<const char *>(sqlite3_column_text(stmt, 5));
     const char *nationality_str =
-      reinterpret_cast<const char *>(sqlite3_column_text(stmt, 6));
+        reinterpret_cast<const char *>(sqlite3_column_text(stmt, 6));
     uint32_t wage = sqlite3_column_int(stmt, 7);
     int contract_years = sqlite3_column_int(stmt, 8);
     int height = sqlite3_column_int(stmt, 9);
     const char *foot_str =
-      reinterpret_cast<const char *>(sqlite3_column_text(stmt, 10));
+        reinterpret_cast<const char *>(sqlite3_column_text(stmt, 10));
     const char *stats_str =
-      reinterpret_cast<const char *>(sqlite3_column_text(stmt, 11));
+        reinterpret_cast<const char *>(sqlite3_column_text(stmt, 11));
     int status = sqlite3_column_int(stmt, 12);
 
     auto it = stringToLanguage.find(nationality_str);
     Language nationality =
-      (it != stringToLanguage.end()) ? it->second : Language::EN;
+        (it != stringToLanguage.end()) ? it->second : Language::EN;
     Foot foot = (std::string(foot_str) == "Left") ? Foot::Left : Foot::Right;
 
     nlohmann::json stats_json = nlohmann::json::parse(stats_str);
     std::map<std::string, float> stats =
-      stats_json.get<std::map<std::string, float>>();
+        stats_json.get<std::map<std::string, float>>();
 
     players.emplace_back(id, team_id, first_name, last_name, role, nationality,
                          wage, status, age, contract_years, height, foot,
@@ -200,6 +200,32 @@ void Database::insertLeague(const League &league) {
   sqlite3_finalize(stmt);
 }
 
+void Database::insertLeagueWithId(const League &league) {
+  sqlite3_stmt *stmt;
+  const std::string &sql = SQLLoader::getQuery(Query::INSERT_LEAGUE_WITH_ID);
+
+  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " +
+                             std::string(sqlite3_errmsg(db.get())));
+  }
+
+  sqlite3_bind_int(stmt, 1, league.getId()); // Explicit ID
+  sqlite3_bind_text(stmt, 2, league.getName().c_str(), -1, SQLITE_TRANSIENT);
+
+  if (league.getParentLeagueID()) {
+    uint8_t parentID = *league.getParentLeagueID();
+    sqlite3_bind_int(stmt, 3, parentID); // NULL if no parent
+  }
+
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to execute statement: " +
+                             std::string(sqlite3_errmsg(db.get())));
+  }
+
+  sqlite3_finalize(stmt);
+}
+
 void Database::insertTeam(const Team &team) {
   sqlite3_stmt *stmt;
   const std::string &sql = SQLLoader::getQuery(Query::INSERT_TEAM);
@@ -212,6 +238,29 @@ void Database::insertTeam(const Team &team) {
   sqlite3_bind_int(stmt, 1, team.getLeagueId());
   sqlite3_bind_text(stmt, 2, team.getName().c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_int64(stmt, 3, team.getFinances().getBalance());
+
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to execute statement: " +
+                             std::string(sqlite3_errmsg(db.get())));
+  }
+
+  sqlite3_finalize(stmt);
+}
+
+void Database::insertTeamWithId(const Team &team) {
+  sqlite3_stmt *stmt;
+  const std::string &sql = SQLLoader::getQuery(Query::INSERT_TEAM_WITH_ID);
+
+  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " +
+                             std::string(sqlite3_errmsg(db.get())));
+  }
+
+  sqlite3_bind_int(stmt, 1, team.getId()); // Explicit ID
+  sqlite3_bind_int(stmt, 2, team.getLeagueId());
+  sqlite3_bind_text(stmt, 3, team.getName().c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_int64(stmt, 4, team.getFinances().getBalance());
 
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     sqlite3_finalize(stmt);
@@ -246,7 +295,7 @@ void Database::insertPlayer(const Player &player) {
 
   auto it = languageToString.find(player.getNationality());
   std::string nationality_str =
-    (it != languageToString.end()) ? std::string(it->second) : "English";
+      (it != languageToString.end()) ? std::string(it->second) : "English";
   sqlite3_bind_text(stmt, 6, nationality_str.c_str(), -1, SQLITE_TRANSIENT);
 
   sqlite3_bind_int(stmt, 7, player.getWage());
@@ -258,6 +307,51 @@ void Database::insertPlayer(const Player &player) {
 
   sqlite3_bind_text(stmt, 11, stats_str.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_int(stmt, 12, player.getStatus());
+
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to execute statement: " +
+                             std::string(sqlite3_errmsg(db.get())));
+  }
+
+  sqlite3_finalize(stmt);
+}
+
+void Database::insertPlayerWithId(const Player &player) {
+  sqlite3_stmt *stmt;
+  const std::string &sql = SQLLoader::getQuery(Query::INSERT_PLAYER_WITH_ID);
+
+  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
+    throw std::runtime_error("Failed to prepare statement: " +
+                             std::string(sqlite3_errmsg(db.get())));
+  }
+
+  nlohmann::json stats_json = player.getStats();
+  std::string stats_str = stats_json.dump();
+
+  sqlite3_bind_int(stmt, 1, player.getId()); // Explicit ID
+  sqlite3_bind_int(stmt, 2, player.getTeamId());
+  sqlite3_bind_text(stmt, 3, player.getFirstName().c_str(), -1,
+                    SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, 4, player.getLastName().c_str(), -1,
+                    SQLITE_TRANSIENT);
+  sqlite3_bind_int(stmt, 5, player.getAge());
+  sqlite3_bind_text(stmt, 6, player.getRole().c_str(), -1, SQLITE_TRANSIENT);
+
+  auto it = languageToString.find(player.getNationality());
+  std::string nationality_str =
+      (it != languageToString.end()) ? std::string(it->second) : "English";
+  sqlite3_bind_text(stmt, 7, nationality_str.c_str(), -1, SQLITE_TRANSIENT);
+
+  sqlite3_bind_int(stmt, 8, player.getWage());
+  sqlite3_bind_int(stmt, 9, player.getContractYears());
+  sqlite3_bind_int(stmt, 10, player.getHeight());
+
+  std::string foot_str = (player.getFoot() == Foot::Left) ? "Left" : "Right";
+  sqlite3_bind_text(stmt, 11, foot_str.c_str(), -1, SQLITE_TRANSIENT);
+
+  sqlite3_bind_text(stmt, 12, stats_str.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_int(stmt, 13, player.getStatus());
 
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     sqlite3_finalize(stmt);
@@ -427,7 +521,7 @@ Calendar Database::loadCalendar(int season, uint8_t league_id) const {
       current_week = week_num;
     }
     week->addMatch({static_cast<uint32_t>(sqlite3_column_int(stmt, 1)),
-      static_cast<uint32_t>(sqlite3_column_int(stmt, 2))});
+                    static_cast<uint32_t>(sqlite3_column_int(stmt, 2))});
   }
 
   if (week.has_value()) {
@@ -498,7 +592,7 @@ void Database::loadGameState(int &season, int &week,
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
     std::string key =
-      reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
+        reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
     if (key == "season") {
       season = sqlite3_column_int(stmt, 1);
     } else if (key == "week") {
@@ -640,7 +734,7 @@ void Database::updatePlayer(const Player &player) {
 
   auto it = languageToString.find(player.getNationality());
   std::string nationality_str =
-    (it != languageToString.end()) ? std::string(it->second) : "English";
+      (it != languageToString.end()) ? std::string(it->second) : "English";
   sqlite3_bind_text(stmt, 5, nationality_str.c_str(), -1, SQLITE_TRANSIENT);
 
   sqlite3_bind_int(stmt, 6, player.getWage());
@@ -693,7 +787,7 @@ void Database::ageAllPlayers() {
     if (player.checkRetirement()) {
       deletePlayer(player.getId());
       std::cout << player.getName() << " just retired at the age of "
-        << player.getAge() << "!\n";
+                << player.getAge() << "!\n";
     } else {
       updatePlayer(player);
     }
