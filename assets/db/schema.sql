@@ -57,8 +57,8 @@ CREATE TABLE IF NOT EXISTS GameState (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   managed_team INTEGER,
   game_date DATE NOT NULL,
-  season INTEGER NOT NULL,
-  week INTEGER NOT NULL
+  season INTEGER NOT NULL DEFAULT 0,
+  week INTEGER NOT NULL DEFAULT 0
 );
 
 -- League points/standings

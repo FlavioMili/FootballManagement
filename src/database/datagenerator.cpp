@@ -23,13 +23,19 @@ std::vector<std::string> DataGenerator::last_names;
 void DataGenerator::loadNames() {
   if (first_names.empty()) {
     std::ifstream f(FIRST_NAMES_PATH);
+    if (!f.is_open()) {
+      throw std::runtime_error("Could not open first names file");
+    }
     json data = json::parse(f);
-    first_names = data.get<std::vector<std::string>>();
+    first_names = data.at("names").get<std::vector<std::string>>();
   }
   if (last_names.empty()) {
     std::ifstream f(LAST_NAMES_PATH);
+    if (!f.is_open()) {
+      throw std::runtime_error("Could not open last names file");
+    }
     json data = json::parse(f);
-    last_names = data.get<std::vector<std::string>>();
+    last_names = data.at("names").get<std::vector<std::string>>();
   }
 }
 
@@ -76,10 +82,19 @@ Player DataGenerator::generateRandomPlayer(uint16_t team_id) {
 std::vector<League> DataGenerator::generateLeagues() {
   std::ifstream f(LEAGUE_NAMES_PATH);
   json data = json::parse(f);
+
   std::vector<League> leagues;
-  for (const auto &item : data["leagues"]) {
-    leagues.emplace_back(item.at("id").get<uint8_t>(),
-                         item.at("name").get<std::string>());
+
+  for (const auto &item : data) {
+    uint8_t id = item.at("id").get<uint8_t>();
+    std::string name = item.at("name").get<std::string>();
+
+    std::optional<uint8_t> parent = std::nullopt;
+    if (item.contains("parent_league")) {
+      parent = item.at("parent_league").get<uint8_t>();
+    }
+
+    leagues.emplace_back(id, name, std::vector<uint16_t>{}, parent);
   }
   return leagues;
 }
@@ -114,7 +129,8 @@ std::vector<Player> DataGenerator::generatePlayers() {
         uint16_t team_id = item.at("team_id").get<uint16_t>();
         teams_with_players[team_id] = true;
 
-        auto it = stringToLanguage.find(item.at("nationality").get<std::string>());
+        auto it =
+            stringToLanguage.find(item.at("nationality").get<std::string>());
         Language nationality =
             (it != stringToLanguage.end()) ? it->second : Language::EN;
         Foot foot = (item.at("preferred_foot").get<std::string>() == "Left")

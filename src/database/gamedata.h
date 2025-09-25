@@ -74,4 +74,5 @@ private:
   std::vector<std::reference_wrapper<const Player>> _playersVec;
   uint16_t managed_team_id;
   StatsConfig stats_config;
+  std::shared_ptr<Database> db;
 };

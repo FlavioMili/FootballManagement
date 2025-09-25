@@ -13,12 +13,13 @@ constexpr const char *LOGGER_PATH = "logs/log.txt";
 
 
 constexpr const char *STATS_CONFIG_PATH = "assets/config/stats_config.json";
-constexpr const char *LEAGUE_NAMES_PATH = "assets/names_files/league_names.json";
+constexpr const char *LEAGUE_NAMES_PATH = "assets/user_made_data/leagues/leagues.json";
 constexpr const char *TEAM_NAMES_PATH = "assets/names_files/team_names.json";
 constexpr const char *FIRST_NAMES_PATH = "assets/names_files/first_names.json";
 constexpr const char *LAST_NAMES_PATH = "assets/names_files/last_names.json";
 
 // User Made data
+constexpr const char *LEAGUES_DIR = "assets/user_made_data/legues/";
 constexpr const char *TEAMS_DIR = "assets/user_made_data/teams/";
 constexpr const char *PLAYERS_DIR = "assets/user_made_data/players/";
 

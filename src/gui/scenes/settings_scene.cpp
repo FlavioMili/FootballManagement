@@ -11,6 +11,7 @@
 #include "settings_manager.h"
 #include "gui/gui_view.h"
 #include "gui/dropdown.h"
+#include <algorithm>
 #include <iostream>
 
 SceneID SettingsScene::getID() const { return SceneID::SETTINGS; }

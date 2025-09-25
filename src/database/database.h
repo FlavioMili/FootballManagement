@@ -46,7 +46,7 @@ public:
 
   // Game State
   void saveManagedTeamId(int team_id);
-  int loadManagedTeamId() const;
+  uint16_t loadManagedTeamId() const;
   void updateGameState(uint8_t season, uint8_t week, uint16_t managed_team_id, const std::string& game_date);
   bool loadGameState(uint8_t &season, uint8_t &week,
                      uint16_t &managed_team_id, std::string& game_date) const;

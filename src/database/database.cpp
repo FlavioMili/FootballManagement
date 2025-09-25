@@ -490,7 +490,7 @@ bool Database::loadGameState(uint8_t &season, uint8_t &week,
   return has_data;
 }
 
-int Database::loadManagedTeamId() const {
+uint16_t Database::loadManagedTeamId() const {
   sqlite3_stmt *stmt;
   const std::string &sql = SQLLoader::getQuery(Query::SELECT_GAME_STATE);
   int managed_team_id = -1;

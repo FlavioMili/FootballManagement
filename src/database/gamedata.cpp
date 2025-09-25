@@ -28,6 +28,7 @@ GameData::GameData() {
 // ---------------- DB ----------------
 bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr,
                           bool is_first_run) {
+  db = database_ptr;
   Logger::debug("GameData::loadFromDB called.");
   Logger::debug("is_first_run: " + std::to_string(is_first_run));
   if (is_first_run) {
@@ -38,14 +39,17 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr,
     for (const auto &league : leagues) {
       database_ptr->insertLeagueWithId(league);
     }
+    Logger::debug("Leagues generated.");
     auto teams = DataGenerator::generateTeams();
     for (const auto &team : teams) {
       database_ptr->insertTeamWithId(team);
     }
+    Logger::debug("Teams generated.");
     auto players = DataGenerator::generatePlayers();
     for (const auto &player : players) {
       database_ptr->insertPlayer(player);
     }
+    Logger::debug("Players generated.");
   }
 
   auto leagues = database_ptr->loadAllLeagues();
@@ -85,15 +89,14 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr,
 }
 
 bool GameData::saveToDB() const {
-  Database db;
   for (const auto &pair : _leagues) {
-    db.insertLeague(pair.second);
+    db->insertLeague(pair.second);
   }
   for (const auto &pair : _teams) {
-    db.insertTeam(pair.second);
+    db->insertTeam(pair.second);
   }
   for (const auto &pair : _players) {
-    db.updatePlayer(pair.second);
+    db->updatePlayer(pair.second);
   }
   return true;
 }
@@ -205,8 +208,7 @@ uint16_t GameData::getManagedTeamId() const { return managed_team_id; }
 
 void GameData::setManagedTeamId(uint16_t id) {
   managed_team_id = id;
-  Database db;
-  db.saveManagedTeamId(id);
+  db->saveManagedTeamId(id);
 }
 
 void from_json(const nlohmann::json &j, RoleFocus &rf) {

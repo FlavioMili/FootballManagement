@@ -21,7 +21,6 @@ Game::Game() : current_season(1), current_week(0), current_date("2025-07-01") {
   bool is_first_run = (stat(DATABASE_PATH, &buffer) != 0);
 
   db = std::make_shared<Database>();
-
   GameData::instance().loadFromDB(db, is_first_run);
   loadData();
 }

@@ -8,10 +8,8 @@
 
 #pragma once
 
-#include "json.hpp"
 #include <cstddef>
 #include <cstdint>
-#include <fstream>
 #include <map>
 #include <string>
 #include <vector>
@@ -44,7 +42,6 @@ public:
 private:
   std::shared_ptr<Database> db;
   StatsConfig stats_config;
-  nlohmann::json raw_stats_config_json;
   std::map<size_t, Calendar> league_calendars;
 
   uint8_t current_season;
@@ -57,21 +54,4 @@ private:
 
   void generateAllCalendars();
   void trainPlayers(const std::vector<uint32_t> &player_ids);
-
-  template <typename T> T loadJsonFile(const std::string &path) {
-    std::ifstream f(path);
-    if (!f.is_open()) {
-      throw std::runtime_error("FATAL: Could not open " + path);
-    }
-    return nlohmann::json::parse(f).get<T>();
-  }
-
-  template <typename T>
-  T loadJsonFileKey(const std::string &path, const std::string &key) {
-    std::ifstream f(path);
-    if (!f.is_open()) {
-      throw std::runtime_error("FATAL: Could not open " + path);
-    }
-    return nlohmann::json::parse(f).at(key).get<T>();
-  }
 };
