@@ -8,22 +8,20 @@
 
 #include "team_selection_scene.h"
 #include "gamedata.h"
+#include "global/global.h"
 #include "global/logger.h"
 #include "global/paths.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/main_menu_scene.h"
-#include <iostream>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <algorithm>
+#include <iostream>
 
-TeamSelectionScene::TeamSelectionScene(GUIView* parent)
-  : GUIScene(parent), parent_view(parent),
-  font(nullptr), title_font(nullptr),
-  button_manager(getRenderer(), TTF_OpenFont(FONT_PATH, 18))
-{}
+TeamSelectionScene::TeamSelectionScene(GUIView *parent)
+    : GUIScene(parent), parent_view(parent), font(nullptr), title_font(nullptr),
+      button_manager(getRenderer(), TTF_OpenFont(FONT_PATH, 18)) {}
 
-TeamSelectionScene::~TeamSelectionScene() {
-  cleanup();
-}
+TeamSelectionScene::~TeamSelectionScene() { cleanup(); }
 
 void TeamSelectionScene::cleanup() {
   if (font) {
@@ -68,7 +66,7 @@ void TeamSelectionScene::onExit() {
   cleanup();
 }
 
-void TeamSelectionScene::handleEvent(const SDL_Event& event) {
+void TeamSelectionScene::handleEvent(const SDL_Event &event) {
   if (event.type == SDL_EVENT_MOUSE_MOTION) {
     button_manager.handleMouseMove(event.motion.x, event.motion.y);
   } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
@@ -76,32 +74,32 @@ void TeamSelectionScene::handleEvent(const SDL_Event& event) {
   }
 }
 
-void TeamSelectionScene::update(float deltaTime) {
-  (void)deltaTime;
-}
+void TeamSelectionScene::update(float deltaTime) { (void)deltaTime; }
 
 void TeamSelectionScene::render() {
-  SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50, 255); // Dark grey background
+  SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50,
+                         255); // Dark grey background
   SDL_RenderClear(getRenderer());
 
   // Render title using the pre-loaded title font
   if (title_font) {
     SDL_Color textColor = {255, 255, 255, 255}; // White
 
-    SDL_Surface* textSurface = TTF_RenderText_Solid(title_font, "Select Your Team", 0, textColor);
+    SDL_Surface *textSurface =
+        TTF_RenderText_Solid(title_font, "Select Your Team", 0, textColor);
     if (textSurface) {
-      SDL_Texture* textTexture = SDL_CreateTextureFromSurface(getRenderer(), textSurface);
+      SDL_Texture *textTexture =
+          SDL_CreateTextureFromSurface(getRenderer(), textSurface);
       if (textTexture) {
-        SDL_FRect textRect = { 
-          (1200.0f - static_cast<float>(textSurface->w)) / 2.0f, 
-          50.0f, 
-          static_cast<float>(textSurface->w), 
-          static_cast<float>(textSurface->h)
-        };
+        SDL_FRect textRect = {(1200.0f - static_cast<float>(textSurface->w)) /
+                                  2.0f,
+                              50.0f, static_cast<float>(textSurface->w),
+                              static_cast<float>(textSurface->h)};
         SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
         SDL_DestroyTexture(textTexture);
       } else {
-        std::cerr << "Failed to create texture from text: " << SDL_GetError() << "\n";
+        std::cerr << "Failed to create texture from text: " << SDL_GetError()
+                  << "\n";
       }
       SDL_DestroySurface(textSurface);
     } else {
@@ -112,8 +110,17 @@ void TeamSelectionScene::render() {
   button_manager.render();
 }
 
+/**
+* Note that this function skips the free agents team
+*/
 void TeamSelectionScene::loadAvailableTeams() {
   available_teams = parent_view->getController().getTeams();
+  available_teams.erase(
+      std::remove_if(available_teams.begin(), available_teams.end(),
+                     [](const std::reference_wrapper<const Team> &team_ref) {
+                       return team_ref.get().getName() == FREE_AGENTS_TEAM_NAME;
+                     }),
+      available_teams.end());
 }
 
 void TeamSelectionScene::setupTeamButtons() {
@@ -122,34 +129,32 @@ void TeamSelectionScene::setupTeamButtons() {
   float padding = 10.0f;
   float buttonWidth = 400.0f;
 
-  for (size_t i = 1; i < available_teams.size(); ++i) {
-    const Team& team = available_teams[i].get();
+  for (size_t i = 0; i < available_teams.size(); ++i) {
+    const Team &team = available_teams[i].get();
+
     // Get league name from GameController
     std::string leagueName = "Unknown League";
-    auto leagueOpt = parent_view->getController().getLeagueById(team.getLeagueId());
+    auto leagueOpt =
+        parent_view->getController().getLeagueById(team.getLeagueId());
     if (leagueOpt.has_value()) {
       leagueName = leagueOpt->get().getName();
     }
     std::string buttonText = team.getName() + " (" + leagueName + ")";
-    float buttonX = (1200.0f - buttonWidth) / 2.0f; // Fixed: was 120.0f, should be screen width
+    float buttonX = (1200.0f - buttonWidth) /
+                    2.0f; // Fixed: was 120.0f, should be screen width
     float buttonY = startY + (static_cast<float>(i) * (buttonHeight + padding));
 
     button_manager.addButton(
-      buttonX, buttonY, buttonWidth, buttonHeight,
-      buttonText,
-      [this, team_id = team.getId()]() {
-        this->onTeamSelected(team_id);
-      }
-    );
+        buttonX, buttonY, buttonWidth, buttonHeight, buttonText,
+        [this, team_id = team.getId()]() { this->onTeamSelected(team_id); });
   }
 }
 
 void TeamSelectionScene::onTeamSelected(uint16_t team_id) {
-  Logger::debug("Team selected: " + GameData::instance().getTeam(team_id)->get().getName() + "\n");
+  Logger::debug("Team selected: " +
+                GameData::instance().getTeam(team_id)->get().getName() + "\n");
   parent_view->getController().selectManagedTeam(team_id);
   parent_view->popScene();
 }
 
-SceneID TeamSelectionScene::getID() const {
-  return SceneID::TEAM_SELECTION;
-}
+SceneID TeamSelectionScene::getID() const { return SceneID::TEAM_SELECTION; }

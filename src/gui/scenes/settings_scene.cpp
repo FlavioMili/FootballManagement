@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include "settings_scene.h"
+#include "global/paths.h"
 #include "main_menu_scene.h"
 #include "settings_manager.h"
 #include "gui/gui_view.h"
@@ -30,7 +31,7 @@ void SettingsScene::onEnter() {
     return;
   }
 
-  font = TTF_OpenFont("assets/fonts/font.ttf", 24);
+  font = TTF_OpenFont(FONT_PATH, 24);
   if (!font) {
     std::cerr << "Failed to load font: " << SDL_GetError() << "\n";
     return;

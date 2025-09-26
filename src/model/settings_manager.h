@@ -8,7 +8,6 @@
 
 #pragma once
 #include "global/languages.h"
-#include <string>
 #include <SDL3/SDL.h>
 
 struct Settings {
@@ -36,7 +35,5 @@ class SettingsManager {
 
  private:
   SettingsManager();
-
   Settings settings_;
-  std::string configFile_;
 };

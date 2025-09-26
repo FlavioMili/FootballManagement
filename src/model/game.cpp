@@ -23,13 +23,16 @@ Game::Game() : current_season(1), current_week(0), current_date("2025-07-01") {
 
 void Game::loadData() {
   uint8_t season, week;
-  uint16_t managed_team_id;
   std::string game_date;
   db->loadGameState(season, week, managed_team_id, game_date);
   current_season = season;
   current_week = week;
   current_date = game_date;
   GameData::instance().setManagedTeamId(managed_team_id);
+  managed_league_id = GameData::instance()
+                          .getTeams()
+                          .at(GameData::instance().getManagedTeamId())
+                          .getLeagueId();
 }
 
 void Game::advanceWeek() {
@@ -52,10 +55,6 @@ void Game::advanceWeek() {
            static_cast<unsigned int>(day));
   current_date = date_buf;
 
-  uint16_t managed_league_id = GameData::instance()
-                                   .getTeams()
-                                   .at(GameData::instance().getManagedTeamId())
-                                   .getLeagueId();
   const auto &calendar = league_calendars.at(managed_league_id);
 
   if (current_week >= static_cast<int>(calendar.getWeeks().size()) &&
@@ -67,10 +66,6 @@ void Game::advanceWeek() {
 }
 
 void Game::simulateWeek() {
-  uint16_t managed_league_id = GameData::instance()
-                                   .getTeams()
-                                   .at(GameData::instance().getManagedTeamId())
-                                   .getLeagueId();
   Calendar &current_calendar = league_calendars.at(managed_league_id);
 
   if (current_week >= static_cast<int>(current_calendar.getWeeks().size())) {
@@ -104,8 +99,6 @@ void Game::simulateWeek() {
   }
 
   current_week++;
-  db->updateGameState(current_season, current_week,
-                      GameData::instance().getManagedTeamId(), current_date);
 }
 
 void Game::updateStandings(const Match &match) {

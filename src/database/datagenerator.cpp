@@ -88,7 +88,7 @@ Player DataGenerator::generateRandomPlayer(uint16_t team_id) {
 }
 
 std::vector<League> DataGenerator::generateLeagues() {
-  std::ifstream f(LEAGUE_NAMES_PATH);
+  std::ifstream f(LEAGUES_PATH);
   json data = json::parse(f);
 
   std::vector<League> leagues;

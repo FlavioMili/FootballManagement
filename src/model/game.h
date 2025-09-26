@@ -42,6 +42,8 @@ private:
   StatsConfig stats_config;
   std::map<size_t, Calendar> league_calendars;
 
+  uint16_t managed_team_id = 0;
+  uint16_t managed_league_id = 0;
   uint8_t current_season;
   uint8_t current_week;
   std::string current_date;

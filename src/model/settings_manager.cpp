@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include "settings_manager.h"
+#include "global/paths.h"
 #include "json.hpp"
 #include <fstream>
 #include <iostream>
@@ -14,7 +15,6 @@
 using json = nlohmann::json;
 
 SettingsManager::SettingsManager() {
-  configFile_ = "assets/config/settings.json";
 }
 
 SettingsManager* SettingsManager::instance() {
@@ -23,7 +23,7 @@ SettingsManager* SettingsManager::instance() {
 }
 
 void SettingsManager::load() {
-  std::ifstream in(configFile_);
+  std::ifstream in(SETTINGS_PATH);
   if (!in) {
     std::cerr << "Settings file not found, using defaults.\n";
     return;
@@ -49,7 +49,7 @@ void SettingsManager::save() const {
   j["fullscreen"] = settings_.fullscreen;
   j["fps_limit"]  = settings_.fps_limit;
 
-  std::ofstream out(configFile_);
+  std::ofstream out(SETTINGS_PATH);
   out << j.dump(2);
 }
 

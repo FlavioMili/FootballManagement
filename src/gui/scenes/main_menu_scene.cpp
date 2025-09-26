@@ -6,6 +6,7 @@
 //  See the LICENSE file in the project root.
 // -----------------------------------------------------------------------------
 
+#include "global/paths.h"
 #include "gui/button_manager.h"
 #include "gui/scenes/main_menu_scene.h"
 #include "gui/gui_scene.h"
@@ -29,7 +30,7 @@ void MainMenuScene::onEnter() {
     return;
   }
 
-  font = TTF_OpenFont("assets/fonts/font.ttf", 32);
+  font = TTF_OpenFont(FONT_PATH, 32);
   if (!font) {
     std::cerr << "Failed to load font: " << SDL_GetError() << '\n';
     return;
