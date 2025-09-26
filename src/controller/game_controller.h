@@ -11,7 +11,6 @@
 #include "global/stats_config.h"
 #include "model/game.h"
 #include "model/league.h"
-#include "model/manager.h"
 #include "model/player.h"
 #include "model/team.h"
 #include <functional>
@@ -50,5 +49,4 @@ public:
 
 private:
   std::unique_ptr<Game> game;
-  std::unique_ptr<Manager> manager;
 };

@@ -15,18 +15,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <cstdint>
 #include <iostream>
 #include <sys/types.h>
 
 SceneID MainMenuScene::getID() const { return SceneID::MAIN_MENU; }
-
-enum MainMenuButtonIndex : uint8_t {
-  NEW_GAME_BUTTON = 0,
-  LOAD_GAME_BUTTON = 1,
-  SETTINGS_BUTTON = 2,
-  QUIT_BUTTON = 3,
-};
 
 MainMenuScene::MainMenuScene(GUIView* guiView_ptr) 
     : GUIScene(guiView_ptr), font(nullptr), titleTexture(nullptr), titleRect({}) {}
@@ -164,7 +156,7 @@ void MainMenuScene::onExit() {
   }
 }
 
-void MainMenuScene::handleButtonClick(uint8_t buttonIndex) {
+void MainMenuScene::handleButtonClick(MainMenuButtonIndex buttonIndex) {
   switch (buttonIndex) {
     case NEW_GAME_BUTTON: {
       auto gameScene = std::make_unique<MainGameScene>(guiView);

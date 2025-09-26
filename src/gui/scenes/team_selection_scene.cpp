@@ -7,6 +7,8 @@
 // -----------------------------------------------------------------------------
 
 #include "team_selection_scene.h"
+#include "gamedata.h"
+#include "global/logger.h"
 #include "global/paths.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/main_menu_scene.h"
@@ -41,46 +43,27 @@ void TeamSelectionScene::onEnter() {
   }
 
   // Load fonts with error checking
-  font = TTF_OpenFont("assets/fonts/font.ttf", 24);
+  font = TTF_OpenFont(FONT_PATH, 24);
   if (!font) {
     std::cerr << "Failed to load button font: " << SDL_GetError() << '\n';
-    // Try fallback font path if FONT_PATH is defined
-#ifdef FONT_PATH
-    font = TTF_OpenFont(FONT_PATH, 24);
-    if (!font) {
-      std::cerr << "Failed to load fallback font: " << SDL_GetError() << '\n';
-      return;
-    }
-#else
-    return;
-#endif
   }
 
-  title_font = TTF_OpenFont("assets/fonts/font.ttf", 36);
+  title_font = TTF_OpenFont(FONT_PATH, 36);
   if (!title_font) {
     std::cerr << "Failed to load title font: " << SDL_GetError() << '\n';
-#ifdef FONT_PATH
-    title_font = TTF_OpenFont(FONT_PATH, 36);
-    if (!title_font) {
-      std::cerr << "Failed to load fallback title font: " << SDL_GetError() << '\n';
-      // Use the same font as buttons if title font fails
-      title_font = font;
-    }
-#else
     title_font = font;
-#endif
   }
 
   // Set font for button manager
   button_manager.setFont(font);
 
-  std::cout << "Entering TeamSelectionScene\n";
+  Logger::debug("Entering TeamSelectionScene\n");
   loadAvailableTeams();
   setupTeamButtons();
 }
 
 void TeamSelectionScene::onExit() {
-  std::cout << "Exiting TeamSelectionScene\n";
+  Logger::debug("Exiting TeamSelectionScene\n");
   button_manager.clearButtons();
   cleanup();
 }
@@ -94,7 +77,6 @@ void TeamSelectionScene::handleEvent(const SDL_Event& event) {
 }
 
 void TeamSelectionScene::update(float deltaTime) {
-  // No continuous updates needed for this scene yet
   (void)deltaTime;
 }
 
@@ -140,7 +122,7 @@ void TeamSelectionScene::setupTeamButtons() {
   float padding = 10.0f;
   float buttonWidth = 400.0f;
 
-  for (size_t i = 0; i < available_teams.size(); ++i) {
+  for (size_t i = 1; i < available_teams.size(); ++i) {
     const Team& team = available_teams[i].get();
     // Get league name from GameController
     std::string leagueName = "Unknown League";
@@ -162,10 +144,10 @@ void TeamSelectionScene::setupTeamButtons() {
   }
 }
 
-void TeamSelectionScene::onTeamSelected(int team_id) {
-  std::cout << "Team selected: " << team_id << "\n";
+void TeamSelectionScene::onTeamSelected(uint16_t team_id) {
+  Logger::debug("Team selected: " + GameData::instance().getTeam(team_id)->get().getName() + "\n");
   parent_view->getController().selectManagedTeam(team_id);
-  parent_view->changeScene(std::make_unique<MainMenuScene>(parent_view));
+  parent_view->popScene();
 }
 
 SceneID TeamSelectionScene::getID() const {

@@ -12,24 +12,14 @@
 #include "gui/gui_scene.h"
 #include "model/team.h"
 #include "gui/button_manager.h"
+#include <cstdint>
+#include <sys/types.h>
 #include <vector>
 #include <SDL3_ttf/SDL_ttf.h>
 
 class GUIView;
 
 class TeamSelectionScene : public GUIScene {
- private:
-  GUIView* parent_view;
-  TTF_Font* font;
-  TTF_Font* title_font;
-  std::vector<std::reference_wrapper<const Team>> available_teams;
-  ButtonManager button_manager;
-
-  void loadAvailableTeams();
-  void setupTeamButtons();
-  void onTeamSelected(int team_id);
-  void cleanup();
-
  public:
   explicit TeamSelectionScene(GUIView* parent);
   ~TeamSelectionScene() override;
@@ -40,4 +30,16 @@ class TeamSelectionScene : public GUIScene {
   void update(float deltaTime) override;
   void render() override;
   SceneID getID() const override;
+
+ private:
+  GUIView* parent_view;
+  TTF_Font* font;
+  TTF_Font* title_font;
+  std::vector<std::reference_wrapper<const Team>> available_teams;
+  ButtonManager button_manager;
+
+  void loadAvailableTeams();
+  void setupTeamButtons();
+  void onTeamSelected(uint16_t team_id);
+  void cleanup();
 };

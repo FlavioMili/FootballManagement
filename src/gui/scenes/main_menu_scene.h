@@ -14,6 +14,13 @@
 #include <cstdint>
 #include "gui/button_manager.h"
 
+enum MainMenuButtonIndex : uint8_t {
+  NEW_GAME_BUTTON = 0,
+  LOAD_GAME_BUTTON = 1,
+  SETTINGS_BUTTON = 2,
+  QUIT_BUTTON = 3,
+};
+
 
 class MainMenuScene : public GUIScene {
  public:
@@ -30,7 +37,7 @@ class MainMenuScene : public GUIScene {
 
  private:
   // Helper methods
-  void handleButtonClick(uint8_t buttonIndex);
+  void handleButtonClick(MainMenuButtonIndex buttonIndex);
   void renderTitle();
   void createStaticContent();
   void updateLayout();

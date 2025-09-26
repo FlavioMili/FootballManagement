@@ -29,7 +29,7 @@ public:
   GameData &operator=(const GameData &) = delete;
 
   // ---------------- DB ----------------
-  bool loadFromDB(std::shared_ptr<Database> database_ptr, bool is_first_run);
+  bool loadFromDB(std::shared_ptr<Database> database_ptr);
   bool saveToDB() const;
 
   // ---------------- StatsConfig ----------------
@@ -63,6 +63,8 @@ public:
   uint16_t getManagedTeamId() const;
   void setManagedTeamId(uint16_t id);
 
+  bool isFirstRun();
+
 private:
   GameData();
 
@@ -75,4 +77,5 @@ private:
   uint16_t managed_team_id;
   StatsConfig stats_config;
   std::shared_ptr<Database> db;
+  bool is_first_run = false;
 };

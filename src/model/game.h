@@ -35,8 +35,6 @@ public:
 
   void updateStandings(const Match &match);
 
-  bool hasSelectedTeam() const;
-
   void saveGame();
 
 private:

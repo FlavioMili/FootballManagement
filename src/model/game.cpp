@@ -8,7 +8,6 @@
 
 #include "model/game.h"
 #include "database/gamedata.h"
-#include "global/global.h"
 #include "global/paths.h"
 #include <iostream>
 #include <memory>
@@ -17,11 +16,8 @@
 Game::Game() : current_season(1), current_week(0), current_date("2025-07-01") {
   GameData::instance().loadStatsConfig();
 
-  struct stat buffer;
-  bool is_first_run = (stat(DATABASE_PATH, &buffer) != 0);
-
   db = std::make_shared<Database>();
-  GameData::instance().loadFromDB(db, is_first_run);
+  GameData::instance().loadFromDB(db);
   loadData();
 }
 
@@ -191,8 +187,4 @@ void Game::trainPlayers(const std::vector<uint32_t> &player_ids) {
     player.train(focus_stats);
     db->updatePlayer(player);
   }
-}
-
-bool Game::hasSelectedTeam() const {
-  return GameData::instance().getManagedTeamId() != FREE_AGENTS_TEAM_ID;
 }

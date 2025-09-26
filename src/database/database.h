@@ -42,14 +42,14 @@ public:
   void saveCalendar(const Calendar &calendar, int season, uint8_t league_id);
   Calendar loadCalendar(int season, uint8_t league_id) const;
 
-#include <string>
-
   // Game State
+  bool isFirstRun();
   void saveManagedTeamId(int team_id);
   uint16_t loadManagedTeamId() const;
-  void updateGameState(uint8_t season, uint8_t week, uint16_t managed_team_id, const std::string& game_date);
-  bool loadGameState(uint8_t &season, uint8_t &week,
-                     uint16_t &managed_team_id, std::string& game_date) const;
+  void updateGameState(uint8_t season, uint8_t week, uint16_t managed_team_id,
+                       const std::string &game_date);
+  bool loadGameState(uint8_t &season, uint8_t &week, uint16_t &managed_team_id,
+                     std::string &game_date) const;
 
   // League Points
   void saveLeaguePoints(const League &league);

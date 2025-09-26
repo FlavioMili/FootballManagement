@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include "roster_scene.h"
+#include "global/logger.h"
 #include "gui/gui_view.h"
 #include "global/paths.h"
 #include <iostream>
@@ -21,13 +22,13 @@ RosterScene::~RosterScene() {
 }
 
 void RosterScene::onEnter() {
-  std::cout << "Entering RosterScene\n";
+  Logger::debug("Entering RosterScene\n");
   loadRoster();
   setupUI();
 }
 
 void RosterScene::onExit() {
-  std::cout << "Exiting RosterScene\n";
+  Logger::debug("Exiting RosterScene\n");
   button_manager.clearButtons();
 }
 

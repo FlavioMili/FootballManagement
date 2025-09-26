@@ -26,11 +26,14 @@ GameData::GameData() {
 }
 
 // ---------------- DB ----------------
-bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr,
-                          bool is_first_run) {
+bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr) {
+
   db = database_ptr;
+  is_first_run = db->isFirstRun();
+
   Logger::debug("GameData::loadFromDB called.");
   Logger::debug("is_first_run: " + std::to_string(is_first_run));
+
   if (is_first_run) {
     Logger::debug("First run detected. Initializing database.");
     database_ptr->initialize();
@@ -230,6 +233,6 @@ void GameData::loadStatsConfig() {
   stats_config = stats_config_json.get<StatsConfig>();
 }
 
-const StatsConfig& GameData::getStatsConfig() const {
-  return stats_config;
-}
+const StatsConfig &GameData::getStatsConfig() const { return stats_config; }
+
+bool GameData::isFirstRun() { return is_first_run; }

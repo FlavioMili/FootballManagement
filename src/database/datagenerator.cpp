@@ -1,3 +1,11 @@
+// -----------------------------------------------------------------------------
+//  Football Management Project
+//  Copyright (c) 2025 Flavio Milinanni. All Rights Reserved.
+//
+//  This file is part of the Football Management Project.
+//  See the LICENSE file in the project root.
+// -----------------------------------------------------------------------------
+
 #include "database/datagenerator.h"
 
 #include "gamedata.h"
@@ -153,8 +161,8 @@ std::vector<Player> DataGenerator::generatePlayers() {
 
   auto teams = GameData::instance().getTeamsVector();
   for (const auto &teamRef : teams) {
-    const Team &team = teamRef.get(); // unwrap reference
-    if (teams_with_players.find(team.getId()) == teams_with_players.end()) {
+    const Team &team = teamRef.get();
+    if (teams_with_players.contains(team.getId())) {
       for (int i = 0; i < 22; ++i) {
         players.push_back(generateRandomPlayer(team.getId()));
       }

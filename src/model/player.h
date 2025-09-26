@@ -32,7 +32,7 @@ class Player {
   std::string getFirstName() const;
   std::string getLastName() const;
   int getAge() const;
-  void setAge(int new_age);
+  void setAge(uint8_t new_age);
   std::string getRole() const;
   Language getNationality() const;
   uint32_t getWage() const;

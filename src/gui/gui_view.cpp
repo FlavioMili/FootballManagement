@@ -61,12 +61,7 @@ bool GUIView::initialize() {
 
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-  // Check if a team has been selected. If not, show the team selection scene.
-  if (!controller.hasSelectedTeam()) {
-    changeScene(std::make_unique<TeamSelectionScene>(this));
-  } else {
-    changeScene(std::make_unique<MainMenuScene>(this));
-  }
+  changeScene(std::make_unique<MainMenuScene>(this));
 
   return true;
 }

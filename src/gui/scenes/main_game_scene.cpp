@@ -11,6 +11,7 @@
 #include "gui/scenes/roster_scene.h"
 #include "gui/scenes/strategy_scene.h"
 #include "main_menu_scene.h"
+#include "team_selection_scene.h"
 #include <SDL3_ttf/SDL_ttf.h>
 #include <algorithm>
 #include <iostream>
@@ -20,11 +21,16 @@
 SceneID MainGameScene::getID() const { return SceneID::GAME_MENU; }
 
 MainGameScene::MainGameScene(GUIView *guiView_ptr)
-    : GUIScene(guiView_ptr), font(nullptr) {}
+    : GUIScene(guiView_ptr), parent_view(guiView_ptr), font(nullptr) {}
 
 MainGameScene::~MainGameScene() { cleanup(); }
 
 void MainGameScene::onEnter() {
+
+  if (!parent_view->getController().hasSelectedTeam()) {
+    guiView->overlayScene(std::make_unique<TeamSelectionScene>(guiView));
+  }
+
   if (!TTF_WasInit() && TTF_Init() != 0) {
     std::cerr << "TTF_Init() failed: " << SDL_GetError() << "\n";
     return;

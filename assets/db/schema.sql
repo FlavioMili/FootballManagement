@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS Calendar (
 -- Game state management
 CREATE TABLE IF NOT EXISTS GameState (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  managed_team INTEGER,
+  managed_team INTEGER DEFAULT 0,
   game_date DATE NOT NULL,
   season INTEGER NOT NULL DEFAULT 0,
   week INTEGER NOT NULL DEFAULT 0
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS LeaguePoints (
 
 -- Free agent team
 INSERT OR IGNORE INTO Teams (id, league_id, name, balance)
-VALUES (-1, -1, 'Free agents', -1);
+VALUES (0, -1, 'Free agents', -1);
 
 -- Enable WAL mode
 PRAGMA journal_mode=WAL;

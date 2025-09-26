@@ -38,7 +38,8 @@ void Database::loadSQLFiles() {
   try {
     SQLLoader::loadQueriesFromFile();
   } catch (const std::exception &e) {
-    std::cerr << "Failed to load SQL queries: " << e.what() << '\n';
+    Logger::error("Failed to load SQL queries: " + std::string(e.what()) +
+                  '\n');
     throw;
   }
 }
@@ -55,18 +56,33 @@ void Database::initialize() {
           "SQL error during schema initialization: " + std::string(err_msg);
       sqlite3_free(err_msg);
       Logger::error(error_str);
-      // Do not throw here, let the program continue to see if other errors
-      // occur throw std::runtime_error(error_str);
     } else {
       Logger::debug("Database schema initialized successfully.\n");
     }
-
-    // updateGameState(season, week, managed_team_id);
   } catch (const std::exception &e) {
     Logger::error("Failed to initialize database: " + std::string(e.what()) +
                   "\n");
     throw;
   }
+}
+
+bool Database::isFirstRun() {
+  sqlite3_stmt *stmt;
+  // TODO move to queries or improve when managing multiple saves
+  const char *sql = "SELECT COUNT(*) FROM GameState WHERE id = 1;";
+
+  if (sqlite3_prepare_v2(db.get(), sql, -1, &stmt, nullptr) != SQLITE_OK) {
+    return true;
+  }
+
+  bool first_run = true;
+  if (sqlite3_step(stmt) == SQLITE_ROW) {
+    int count = sqlite3_column_int(stmt, 0);
+    first_run = (count == 0);
+  }
+
+  sqlite3_finalize(stmt);
+  return first_run;
 }
 
 std::vector<League> Database::loadAllLeagues() {
@@ -456,6 +472,11 @@ void Database::updateGameState(uint8_t season, uint8_t week,
   sqlite3_bind_int(stmt, 3, season);
   sqlite3_bind_int(stmt, 4, week);
 
+  Logger::debug(
+      "Updating GameState with values: " + std::string("managed_team_id=") +
+      std::to_string(managed_team_id) + ", game_date=" + game_date +
+      ", season=" + std::to_string(season) + ", week=" + std::to_string(week));
+
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     sqlite3_finalize(stmt);
     throw std::runtime_error("Failed to execute statement: " +
@@ -484,6 +505,12 @@ bool Database::loadGameState(uint8_t &season, uint8_t &week,
         game_date_text ? reinterpret_cast<const char *>(game_date_text) : "";
     season = sqlite3_column_int(stmt, 2);
     week = sqlite3_column_int(stmt, 3);
+
+    Logger::debug(
+        "Loading GameState with values: " + std::string("managed_team_id=") +
+        std::to_string(managed_team_id) + ", game_date=" + game_date +
+        ", season=" + std::to_string(season) +
+        ", week=" + std::to_string(week));
   }
 
   sqlite3_finalize(stmt);

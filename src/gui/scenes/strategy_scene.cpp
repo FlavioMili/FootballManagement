@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include "strategy_scene.h"
+#include "global/logger.h"
 #include "gui/gui_scene.h"
 #include "gui/gui_view.h"
 #include "global/paths.h"
@@ -27,13 +28,13 @@ StrategyScene::~StrategyScene() {
 }
 
 void StrategyScene::onEnter() {
-  std::cout << "Entering StrategyScene\n";
+  Logger::debug("Entering StrategyScene\n");
   loadStrategy();
   setupUI();
 }
 
 void StrategyScene::onExit() {
-  std::cout << "Exiting StrategyScene\n";
+  Logger::debug("Exiting StrategyScene\n");
   button_manager.clearButtons();
 }
 

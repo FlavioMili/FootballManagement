@@ -37,6 +37,8 @@ class MainGameScene : public GUIScene {
   SceneID getID() const override;
 
  private:
+  GUIView* parent_view;
+
   void initializeUI();
   void renderSidebar();
   void renderLeaderboard();

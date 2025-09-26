@@ -8,6 +8,7 @@
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
+#include "global/global.h"
 
 GameController::GameController(std::unique_ptr<Game> game_ptr)
     : game(std::move(game_ptr)) {}
@@ -18,7 +19,11 @@ int GameController::getCurrentSeason() const {
 
 int GameController::getCurrentWeek() const { return game->getCurrentWeek(); }
 
-bool GameController::hasSelectedTeam() const { return game->hasSelectedTeam(); }
+bool GameController::hasSelectedTeam() const {
+    auto managed_id = GameData::instance().getManagedTeamId();
+    return managed_id != FREE_AGENTS_TEAM_ID &&
+           GameData::instance().getTeam(managed_id).has_value();
+}
 
 std::optional<std::reference_wrapper<Team>> GameController::getManagedTeam() {
   return GameData::instance().getTeam(GameData::instance().getManagedTeamId());

@@ -36,7 +36,7 @@ std::string Player::getLastName() const { return last_name; }
 
 int Player::getAge() const { return age; }
 
-void Player::setAge(int new_age) { age = new_age; }
+void Player::setAge(uint8_t new_age) { age = new_age; }
 
 std::string Player::getRole() const { return role; }
 
@@ -68,7 +68,7 @@ double Player::getOverall(const StatsConfig &stats_config) const {
     const std::string &stat_name = stat_names[i];
     auto it = stats.find(stat_name);
     if (it != stats.end()) {
-      overall += it->second * weights[i];
+      overall += static_cast<double>(it->second) * weights[i];
     }
   }
   return overall;
