@@ -10,6 +10,7 @@
 
 #include "gamedata.h"
 #include "global/languages.h"
+#include "global/logger.h"
 #include "global/paths.h"
 #include "global/stats_config.h"
 #include "json.hpp"
@@ -20,6 +21,7 @@
 #include <filesystem>
 #include <fstream>
 #include <random>
+#include <string>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -48,6 +50,7 @@ void DataGenerator::loadNames() {
 }
 
 Player DataGenerator::generateRandomPlayer(uint16_t team_id) {
+  static uint32_t next_player_id = 50000;
   auto stats_config = GameData::instance().getStatsConfig();
   static std::mt19937 gen(std::random_device{}());
   std::uniform_int_distribution<size_t> name_dist(0, first_names.size() - 1);
@@ -81,7 +84,8 @@ Player DataGenerator::generateRandomPlayer(uint16_t team_id) {
     stats[stat_name] = stat_dist(gen);
   }
 
-  return Player(0, team_id, first_name, last_name, role, Language::EN,
+  Logger::debug("Generated Player with ID: " + std::to_string(next_player_id));
+  return Player(next_player_id++, team_id, first_name, last_name, role, Language::EN,
                 static_cast<uint32_t>(wage), 0, static_cast<uint8_t>(age),
                 static_cast<uint8_t>(contract_years),
                 static_cast<uint8_t>(height), foot, stats);
@@ -127,15 +131,16 @@ std::vector<Team> DataGenerator::generateTeams() {
 std::vector<Player> DataGenerator::generatePlayers() {
   loadNames();
   std::vector<Player> players;
-  std::map<uint16_t, bool> teams_with_players;
+  std::map<uint16_t, int> player_counts;
 
+  // Load pre-defined players from JSON and count them
   for (const auto &entry : fs::directory_iterator(PLAYERS_DIR)) {
     if (entry.is_regular_file() && entry.path().extension() == ".json") {
       std::ifstream f(entry.path());
       json data = json::parse(f);
       for (const auto &item : data) {
         uint16_t team_id = item.at("team_id").get<uint16_t>();
-        teams_with_players[team_id] = true;
+        player_counts[team_id]++;
 
         auto it =
             stringToLanguage.find(item.at("nationality").get<std::string>());
@@ -159,15 +164,25 @@ std::vector<Player> DataGenerator::generatePlayers() {
     }
   }
 
+  // Ensure every team has at least 30 players
   auto teams = GameData::instance().getTeamsVector();
+  Logger::debug("Ensuring player rosters for " + std::to_string(teams.size()) +
+                " teams.");
   for (const auto &teamRef : teams) {
     const Team &team = teamRef.get();
-    if (teams_with_players.contains(team.getId())) {
-      for (int i = 0; i < 22; ++i) {
+    int current_player_count = player_counts[team.getId()];
+    Logger::debug("Team " + team.getName() + " (ID: " +
+                  std::to_string(team.getId()) + ") has " +
+                  std::to_string(current_player_count) + " players.");
+
+    int players_to_generate = 30 - current_player_count;
+    if (players_to_generate > 0) {
+      Logger::debug("Generating " + std::to_string(players_to_generate) +
+                    " new players for " + team.getName());
+      for (int i = 0; i < players_to_generate; ++i) {
         players.push_back(generateRandomPlayer(team.getId()));
       }
     }
   }
-
   return players;
 }

@@ -33,7 +33,6 @@ public:
   bool saveToDB() const;
 
   // ---------------- StatsConfig ----------------
-  void loadStatsConfig();
   const StatsConfig &getStatsConfig() const;
 
   // ---------------- League ----------------
@@ -78,4 +77,6 @@ private:
   StatsConfig stats_config;
   std::shared_ptr<Database> db;
   bool is_first_run = false;
+
+  void loadStatsConfig();
 };

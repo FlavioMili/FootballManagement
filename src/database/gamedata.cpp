@@ -28,6 +28,8 @@ GameData::GameData() {
 // ---------------- DB ----------------
 bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr) {
 
+  loadStatsConfig();
+
   db = database_ptr;
   is_first_run = db->isFirstRun();
 
@@ -38,41 +40,56 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr) {
     Logger::debug("First run detected. Initializing database.");
     database_ptr->initialize();
     Logger::debug("Database initialized. Generating data.");
+
     auto leagues = DataGenerator::generateLeagues();
     for (const auto &league : leagues) {
       database_ptr->insertLeagueWithId(league);
+      _leagues.emplace(league.getId(), league);
     }
-    Logger::debug("Leagues generated.");
+    Logger::debug("Leagues generated and loaded into GameData.");
+
     auto teams = DataGenerator::generateTeams();
     for (const auto &team : teams) {
       database_ptr->insertTeamWithId(team);
+      _teams.emplace(team.getId(), team);
     }
-    Logger::debug("Teams generated.");
+    Logger::debug("Teams generated and loaded into GameData.");
+
+    // Build team vector immediately so DataGenerator can use it
+    _teamsVec.reserve(_teams.size());
+    for (auto &p : _teams)
+      _teamsVec.push_back(p.second);
+
     auto players = DataGenerator::generatePlayers();
     for (const auto &player : players) {
       database_ptr->insertPlayer(player);
+      _players.emplace(player.getId(), player);
     }
-    Logger::debug("Players generated.");
-  }
+    Logger::debug("Players generated and loaded into GameData.");
 
-  auto leagues = database_ptr->loadAllLeagues();
-  for (const auto &league : leagues) {
-    _leagues.emplace(league.getId(), league);
-  }
+  } else {
 
-  auto teams = database_ptr->loadAllTeams();
-  for (const auto &team : teams) {
-    _teams.emplace(team.getId(), team);
-  }
+    // Not the first run, load everything from the database
+    auto leagues = database_ptr->loadAllLeagues();
+    for (const auto &league : leagues) {
+      _leagues.emplace(league.getId(), league);
+    }
 
-  auto players = database_ptr->loadAllPlayers();
-  for (const auto &player : players) {
-    _players.emplace(player.getId(), player);
+    auto teams = database_ptr->loadAllTeams();
+    for (const auto &team : teams) {
+      _teams.emplace(team.getId(), team);
+    }
+
+    auto players = database_ptr->loadAllPlayers();
+    for (const auto &player : players) {
+      _players.emplace(player.getId(), player);
+    }
+    Logger::debug("Loaded all data from database.");
   }
 
   managed_team_id = database_ptr->loadManagedTeamId();
 
-  // Build vectors once
+  // Build vectors from the maps
   _leaguesVec.clear();
   _leaguesVec.reserve(_leagues.size());
   for (auto &p : _leagues)

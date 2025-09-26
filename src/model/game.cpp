@@ -8,13 +8,11 @@
 
 #include "model/game.h"
 #include "database/gamedata.h"
-#include "global/paths.h"
 #include <iostream>
 #include <memory>
 #include <sys/stat.h>
 
 Game::Game() : current_season(1), current_week(0), current_date("2025-07-01") {
-  GameData::instance().loadStatsConfig();
 
   db = std::make_shared<Database>();
   GameData::instance().loadFromDB(db);
@@ -28,13 +26,26 @@ void Game::loadData() {
   current_season = season;
   current_week = week;
   current_date = game_date;
+
+  // If the loaded team ID is not valid, default to the free agent team.
+  if (GameData::instance().getTeams().find(managed_team_id) ==
+      GameData::instance().getTeams().end()) {
+    managed_team_id = FREE_AGENTS_TEAM_ID;
+  }
   GameData::instance().setManagedTeamId(managed_team_id);
-  managed_league_id = GameData::instance()
-                          .getTeams()
-                          .at(GameData::instance().getManagedTeamId())
-                          .getLeagueId();
+
+  // Only determine the managed league if a team is actually selected.
+  if (managed_team_id != FREE_AGENTS_TEAM_ID) {
+    managed_league_id = GameData::instance()
+                            .getTeams()
+                            .at(GameData::instance().getManagedTeamId())
+                            .getLeagueId();
+  } else {
+    managed_league_id = 0;
+  }
 }
 
+// TODO urgent fixing
 void Game::advanceWeek() {
   // Simple date advancement: add 7 days.
   int day = std::stoi(current_date.substr(8, 2));

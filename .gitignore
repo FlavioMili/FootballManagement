@@ -4,7 +4,7 @@ compile_commands.json
 .cache
 game_state.json
 football_management.db*
-*reports*
+*report*
 heaptrack*
 assets/config/settings.json
 add_copyright_header.sh
