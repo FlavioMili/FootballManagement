@@ -8,6 +8,7 @@
 
 #include "model/game.h"
 #include "database/gamedata.h"
+#include "global/logger.h"
 #include <iostream>
 #include <memory>
 #include <sys/stat.h>
@@ -165,6 +166,7 @@ void Game::saveGame() {
   for (const auto &pair : GameData::instance().getLeagues()) {
     db->saveLeaguePoints(pair.second);
   }
+  Logger::debug("Game saved");
 }
 
 void Game::generateAllCalendars() {

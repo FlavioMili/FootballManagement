@@ -4,5 +4,11 @@
   { "id": 2, "name": "Spanish League" },
   { "id": 3, "name": "English League" },
   { "id": 4, "name": "German League" },
-  { "id": 5, "name": "French League" }
+  { "id": 5, "name": "French League" },
+  { "id": 7, "name": "American League" },
+  { "id": 8, "name": "Russian League" },
+  { "id": 9, "name": "Mexican League" },
+  { "id": 10, "name": "Argentinian League" },
+  { "id": 11, "name": "Brazilian League" },
+  { "id": 12, "name": "Portuguese League" }
 ]

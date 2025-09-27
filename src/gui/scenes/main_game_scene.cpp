@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
-#include <vector> 
+#include <vector>
 
 SceneID MainGameScene::getID() const { return SceneID::GAME_MENU; }
 
@@ -126,14 +126,16 @@ void MainGameScene::renderLeaderboard() {
 
   auto managedTeamOpt = guiView->getController().getManagedTeam();
   if (managedTeamOpt.has_value()) {
-    auto leagueOpt = guiView->getController().getLeagueById(managedTeamOpt->get().getLeagueId());
+    auto leagueOpt = guiView->getController().getLeagueById(
+        managedTeamOpt->get().getLeagueId());
     if (leagueOpt.has_value()) {
       const League &league = leagueOpt->get();
       const auto &leaderboard = league.getLeaderboard();
       std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(),
                                                     leaderboard.end());
-      std::sort(sorted_teams.begin(), sorted_teams.end(),
-                [](const auto &a, const auto &b) { return a.second > b.second; });
+      std::sort(
+          sorted_teams.begin(), sorted_teams.end(),
+          [](const auto &a, const auto &b) { return a.second > b.second; });
 
       TTF_Font *itemFont = TTF_OpenFont(FONT_PATH, 20);
       int rank = 1;
@@ -141,7 +143,8 @@ void MainGameScene::renderLeaderboard() {
         auto teamOpt = guiView->getController().getTeamById(pair.first);
         if (teamOpt.has_value()) {
           const Team &team = teamOpt->get();
-          std::string text = std::to_string(rank) + ". " + std::string(team.getName()) + " - " +
+          std::string text = std::to_string(rank) + ". " +
+                             std::string(team.getName()) + " - " +
                              std::to_string(pair.second) + " pts";
           surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
           texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
@@ -233,6 +236,9 @@ void MainGameScene::setupButtons() {
   sidebarButtonIds.push_back(
       buttonManager->addButton(0, 0, 0, 0, "Transfer Market",
                                sidebarButtonStyle, []() { /* Placeholder */ }));
+  sidebarButtonIds.push_back(buttonManager->addButton(
+      0, 0, 0, 0, "Save Game", sidebarButtonStyle,
+      [this]() { this->parent_view->getController().saveGame(); }));
 
   ButtonStyle nextButtonStyle;
   nextButtonStyle.backgroundColor = {80, 120, 80, 255};
