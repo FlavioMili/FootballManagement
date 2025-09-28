@@ -87,6 +87,7 @@ void MainGameScene::render() {
   renderSidebar();
   renderLeaderboard();
   renderTopPlayers();
+  renderDate();
   buttonManager->render();
 }
 
@@ -214,6 +215,35 @@ void MainGameScene::renderTopPlayers() {
   }
 }
 
+void MainGameScene::renderDate() {
+  int windowWidth, windowHeight;
+  SDL_GetWindowSizeInPixels(getWindow(), &windowWidth, &windowHeight);
+
+  SDL_Color textColor = {255, 255, 255, 255};
+  TTF_Font *dateFont = TTF_OpenFont(FONT_PATH, 24);
+  if (!dateFont)
+    return;
+
+  std::string dateText = guiView->getController().getCurrentDate().toString();
+  SDL_Surface *surface =
+      TTF_RenderText_Solid(dateFont, dateText.c_str(), 0, textColor);
+  SDL_Texture *texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
+
+  float texW = 0, texH = 0;
+  SDL_GetTextureSize(texture, &texW, &texH);
+
+  // Position it to the left of the next day button
+  float buttonW = 100.0f;
+  SDL_FRect dstRect = {static_cast<float>(windowWidth) - buttonW - 10.0f -
+                           texW - 10.0f,
+                       15.0f, (float)texW, (float)texH};
+  SDL_RenderTexture(getRenderer(), texture, nullptr, &dstRect);
+
+  SDL_DestroySurface(surface);
+  SDL_DestroyTexture(texture);
+  TTF_CloseFont(dateFont);
+}
+
 void MainGameScene::setupButtons() {
   ButtonStyle sidebarButtonStyle;
   sidebarButtonStyle.backgroundColor = {50, 50, 50, 255};
@@ -248,10 +278,9 @@ void MainGameScene::setupButtons() {
   nextButtonStyle.borderWidth = 1;
   nextButtonStyle.hasBorder = true;
 
-  nextButtonId =
-      buttonManager->addButton(0, 0, 0, 0, "Next", nextButtonStyle, [this]() {
-        guiView->getController().advanceWeek();
-      });
+  nextButtonId = buttonManager->addButton(
+      0, 0, 0, 0, "Next Day", nextButtonStyle,
+      [this]() { guiView->getController().advanceDay(); });
 }
 
 void MainGameScene::updateLayout() {

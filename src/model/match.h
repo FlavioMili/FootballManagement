@@ -12,11 +12,6 @@
 #include "global/stats_config.h"
 #include <cstdint>
 
-struct Matchup {
-  uint16_t home_team_id;
-  uint16_t away_team_id;
-};
-
 /**
   * The match class manages the simulation of matches
   * This is one of the most important classses for the

@@ -38,17 +38,15 @@ public:
   void insertTeamWithId(const Team &team);
   void insertPlayerWithId(const Player &player);
 
-  // Calendar
-  void saveCalendar(const Calendar &calendar, int season, uint8_t league_id);
-  Calendar loadCalendar(int season, uint8_t league_id) const;
+  // Fixtures
+  void saveFixtures(const Calendar &calendar, uint8_t league_id);
+  void loadFixtures(Calendar &calendar, uint8_t league_id) const;
 
   // Game State
   bool isFirstRun();
-  void saveManagedTeamId(int team_id);
-  uint16_t loadManagedTeamId() const;
-  void updateGameState(uint8_t season, uint8_t week, uint16_t managed_team_id,
+  void updateGameState(uint8_t current_season, uint16_t managed_team_id,
                        const std::string &game_date);
-  bool loadGameState(uint8_t &season, uint8_t &week, uint16_t &managed_team_id,
+  bool loadGameState(uint8_t &current_season, uint16_t &managed_team_id,
                      std::string &game_date) const;
 
   // League Points

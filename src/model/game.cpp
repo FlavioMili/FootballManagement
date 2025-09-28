@@ -13,104 +13,76 @@
 #include <memory>
 #include <sys/stat.h>
 
-Game::Game() : current_season(1), current_week(0), current_date("2025-07-01") {
-
+Game::Game() : current_season(1) {
   db = std::make_shared<Database>();
   GameData::instance().loadFromDB(db);
   loadData();
 }
 
 void Game::loadData() {
-  uint8_t season, week;
-  std::string game_date;
-  db->loadGameState(season, week, managed_team_id, game_date);
-  current_season = season;
-  current_week = week;
-  current_date = game_date;
+  uint16_t managed_team_id = 0;
+  std::string game_date_str;
+  if (db->loadGameState(current_season, managed_team_id, game_date_str)) {
+    GameDate::instance().setCurrent(GameDateValue::fromString(game_date_str));
+    for (auto &pair : GameData::instance().getLeagues()) {
+      Calendar cal;
+      db->loadFixtures(cal, pair.first);
+      league_calendars[pair.first] = std::move(cal);
+    }
+  } else {
+    generateAllCalendars();
+  }
 
-  // If the loaded team ID is not valid, default to the free agent team.
   if (GameData::instance().getTeams().find(managed_team_id) ==
       GameData::instance().getTeams().end()) {
     managed_team_id = FREE_AGENTS_TEAM_ID;
   }
   GameData::instance().setManagedTeamId(managed_team_id);
-
-  // Only determine the managed league if a team is actually selected.
-  if (managed_team_id != FREE_AGENTS_TEAM_ID) {
-    managed_league_id = GameData::instance()
-                            .getTeams()
-                            .at(GameData::instance().getManagedTeamId())
-                            .getLeagueId();
-  } else {
-    managed_league_id = 0;
-  }
 }
 
-// TODO urgent fixing
-void Game::advanceWeek() {
-  // Simple date advancement: add 7 days.
-  int day = std::stoi(current_date.substr(8, 2));
-  int month = std::stoi(current_date.substr(5, 2));
-  int year = std::stoi(current_date.substr(0, 4));
-  day += 7;
-  if (day > 30) { // Assuming 30 days per month for simplicity
-    day -= 30;
-    month++;
-    if (month > 12) {
-      month = 1;
-      year++;
-    }
-  }
-  char date_buf[11];
-  snprintf(date_buf, sizeof(date_buf), "%04u-%02u-%02u",
-           static_cast<unsigned int>(year), static_cast<unsigned int>(month),
-           static_cast<unsigned int>(day));
-  current_date = date_buf;
+void Game::advanceDay() {
+  uint16_t managed_team_id = GameData::instance().getManagedTeamId();
+  if (managed_team_id == FREE_AGENTS_TEAM_ID)
+    return;
 
-  const auto &calendar = league_calendars.at(managed_league_id);
+  uint8_t managed_league_id =
+      GameData::instance().getTeam(managed_team_id)->get().getLeagueId();
 
-  if (current_week >= static_cast<int>(calendar.getWeeks().size()) &&
-      !calendar.getWeeks().empty()) {
+  GameDate::instance().nextDay();
+  auto curr = GameDate::instance().getCurrent();
+  Logger::debug("Date changed to: " + curr.toString());
+
+  if (curr.month == 7 && curr.day == 1) { // Season start
     handleSeasonTransition();
     return;
   }
-  simulateWeek();
+
+  if (league_calendars.count(managed_league_id)) {
+    const auto &matches = league_calendars.at(managed_league_id)
+                              .getMatches(GameDate::instance().getCurrent());
+    if (matches.size() > 0)
+      simulateMatches(matches);
+  }
 }
 
-void Game::simulateWeek() {
-  Calendar &current_calendar = league_calendars.at(managed_league_id);
+void Game::simulateMatches(const std::vector<Matchup> &matches) {
+  uint16_t managed_team_id = GameData::instance().getManagedTeamId();
+  for (const auto &matchup : matches) {
+    Team &home = GameData::instance().getTeams().at(matchup.home_team_id);
+    Team &away = GameData::instance().getTeams().at(matchup.away_team_id);
 
-  if (current_week >= static_cast<int>(current_calendar.getWeeks().size())) {
-    std::cout << "No more weeks to simulate in the current season.\n";
-    return;
-  }
-
-  std::cout << "--- Simulating Week " << current_week + 1 << " ---\n";
-  const auto &week_matches =
-      current_calendar.getWeeks()[current_week].getMatches();
-  current_calendar.getWeeks()[current_week].getMatches();
-
-  for (const auto &match_info : week_matches) {
-    Team &home_team =
-        GameData::instance().getTeams().at(match_info.home_team_id);
-    Team &away_team =
-        GameData::instance().getTeams().at(match_info.away_team_id);
-
-    Match match(home_team, away_team, stats_config);
+    Match match(home, away, stats_config);
     match.simulate();
     updateStandings(match);
 
-    if (home_team.getId() == GameData::instance().getManagedTeamId() ||
-        away_team.getId() == GameData::instance().getManagedTeamId()) {
-      std::cout << "Your Team's Match Result: " << home_team.getName() << " "
-                << match.getHomeScore() << " - " << match.getAwayScore() << " "
-                << away_team.getName() << "\n";
-    }
-    trainPlayers(home_team.getPlayerIDs());
-    trainPlayers(away_team.getPlayerIDs());
-  }
+    trainPlayers(home.getPlayerIDs());
+    trainPlayers(away.getPlayerIDs());
 
-  current_week++;
+    if (home.getId() == managed_team_id || away.getId() == managed_team_id) {
+      std::cout << home.getName() << " " << match.getHomeScore() << " - "
+                << match.getAwayScore() << " " << away.getName() << "\n";
+    }
+  }
 }
 
 void Game::updateStandings(const Match &match) {
@@ -132,37 +104,39 @@ void Game::updateStandings(const Match &match) {
 }
 
 void Game::endSeason() {
-  std::cout << "--- Season " << current_season << " has concluded. ---\n";
+  std::cout << "--- Season " << current_season << " has concluded. ---" << "\n";
   db->ageAllPlayers();
 }
 
 void Game::handleSeasonTransition() {
   endSeason();
   startNewSeason();
+  current_season++;
 }
 
 void Game::startNewSeason() {
-  current_season++;
-  current_week = 0;
-  current_date =
-      std::to_string(std::stoi(current_date.substr(0, 4)) + 1) + "-07-01";
-  db->updateGameState(current_season, current_week,
-                      GameData::instance().getManagedTeamId(), current_date);
-  db->resetAllLeaguePoints();
+  GameDate::instance().setCurrent(GameDateValue(current_season + 2025, 7, 1));
 
+  db->resetAllLeaguePoints();
   for (auto &pair : GameData::instance().getLeagues()) {
     pair.second.resetPoints();
   }
+
   generateAllCalendars();
+
+  db->updateGameState(current_season, GameData::instance().getManagedTeamId(),
+                      GameDate::instance().getCurrent().toString());
 }
 
 int Game::getCurrentSeason() const { return current_season; }
 
-int Game::getCurrentWeek() const { return current_week; }
+GameDateValue Game::getCurrentDate() const {
+  return GameDate::instance().getCurrent();
+}
 
 void Game::saveGame() {
-  db->updateGameState(current_season, current_week,
-                      GameData::instance().getManagedTeamId(), current_date);
+  db->updateGameState(current_season, GameData::instance().getManagedTeamId(),
+                      GameDate::instance().getCurrent().toString());
   for (const auto &pair : GameData::instance().getLeagues()) {
     db->saveLeaguePoints(pair.second);
   }
@@ -170,18 +144,13 @@ void Game::saveGame() {
 }
 
 void Game::generateAllCalendars() {
+  GameDateValue seasonStart = GameDate::instance().getCurrent();
   for (const auto &pair : GameData::instance().getLeagues()) {
+    const League &league = pair.second;
     Calendar league_calendar;
-    std::vector<Team> teams_in_league;
-    for (const auto &team_pair : GameData::instance().getTeams()) {
-      if (team_pair.second.getLeagueId() == pair.first) {
-        teams_in_league.push_back(team_pair.second);
-      }
-    }
-    league_calendar.generate(teams_in_league);
-    db->saveCalendar(league_calendar, current_season, pair.first);
-
-    league_calendars[pair.first] = league_calendar;
+    league_calendar.generate(league, seasonStart);
+    db->saveFixtures(league_calendar, pair.first);
+    league_calendars[pair.first] = std::move(league_calendar);
   }
 }
 

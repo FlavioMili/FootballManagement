@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <utility>
 
@@ -51,3 +52,4 @@ constexpr std::pair<int, int> toRowCol(int i) {
   return {i / LINEUP_GRID_COLS, i % LINEUP_GRID_COLS};
 }
 
+constexpr std::array<uint8_t, 12> DAYS_PER_MONTH = { 31,28,31,30,31,30,31,31,30,31,30,31 };

@@ -8,50 +8,57 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <map>
-#include <string>
+#include <memory>
 #include <vector>
 
 #include "database/database.h"
 #include "global/stats_config.h"
+#include "match.h"
 #include "model/calendar.h"
-#include "model/match.h"
+#include "model/gamedate.h"
 
 class Game {
-public:
+ public:
   Game();
 
-  void simulateWeek();
+  // Simulation
   void startNewSeason();
   void loadData();
-  void advanceWeek();
+  void advanceDay(); // Advance simulation by 1 day
   void endSeason();
   void handleSeasonTransition();
 
+  // Accessors
   int getCurrentSeason() const;
-  int getCurrentWeek() const;
+  GameDateValue getCurrentDate() const;
 
+  // Update league standings after a match
   void updateStandings(const Match &match);
 
+  // Save / load game state
   void saveGame();
 
-private:
+ private:
   std::shared_ptr<Database> db;
   StatsConfig stats_config;
+
+  // League calendars mapped by league ID
   std::map<size_t, Calendar> league_calendars;
 
-  uint16_t managed_team_id = 0;
-  uint16_t managed_league_id = 0;
+  // Current season
   uint8_t current_season;
-  uint8_t current_week;
-  std::string current_date;
 
+  // Initialization helpers
   void loadConfigs();
   void initializeDatabase();
   void ensureManagedTeamAssigned();
-
   void generateAllCalendars();
+
+  // Player training
   void trainPlayers(const std::vector<uint32_t> &player_ids);
+
+  // Matchday simulation helper
+  void simulateMatches(const std::vector<Matchup> &matches);
 };

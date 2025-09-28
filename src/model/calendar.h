@@ -1,48 +1,31 @@
-// -----------------------------------------------------------------------------
-//  Football Management Project
-//  Copyright (c) 2025 Flavio Milinanni. All Rights Reserved.
-//
-//  This file is part of the Football Management Project.
-//  See the LICENSE file in the project root.
-// -----------------------------------------------------------------------------
-
 #pragma once
-
-#include <cstdint>
+#include "gamedate.h"
+#include "league.h"
+#include <map>
 #include <vector>
-#include "team.h"
-#include "match.h"
 
-/**
-  * This class should be further improved to have
-  * a 365 days year, and take track of it adding 
-  * Transfer windows, holidays and make the Calendar
-  * close to reality as per league + tournaments during
-  * the year.
-*/
-
-class Week {
- public:
-  explicit Week(int new_week_number = 0);
-  void addMatch(const Matchup& matchup) {
-    matches.push_back(matchup);
-  }
-  const std::vector<Matchup>& getMatches() const {
-    return matches;
-  }
-
- private:
-  uint8_t week_number;
-  std::vector<Matchup> matches;
+struct Matchup {
+  uint16_t home_team_id;
+  uint16_t away_team_id;
 };
 
 class Calendar {
  public:
   Calendar() = default;
-  void generate(const std::vector<Team>& teams);
-  const std::vector<Week>& getWeeks() const;
-  void setWeeks(const std::vector<Week>& new_weeks);
+
+  void generate(const League league, const GameDateValue &startDate);
+
+  // Get matches on a specific date
+  const std::vector<Matchup> &getMatches(const GameDateValue &date) const;
+
+  // modify matches
+  void addMatch(const GameDateValue &date, const Matchup &matchup);
+
+  const std::map<GameDateValue, std::vector<Matchup>> &getFixtures() const { return fixtures; };
 
  private:
-  std::vector<Week> weeks;
+  std::map<GameDateValue, std::vector<Matchup>> fixtures;
+
+  GameDateValue scheduleRound(const std::vector<int> &team_ids,
+                              GameDateValue date, bool reverse = false);
 };

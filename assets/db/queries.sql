@@ -110,7 +110,7 @@ FROM Players;
 
 -- @QUERY_ID: UPDATE_PLAYER
 UPDATE Players
-SET name = ?, age = ?, role = ?, stats = ?
+SET first_name = ?, last_name = ?, age = ?, role = ?, stats = ?
 WHERE id = ?;
 
 -- @QUERY_ID: DELETE_PLAYER
@@ -120,36 +120,31 @@ DELETE FROM Players WHERE id = ?;
 UPDATE Players SET team_id = ? WHERE id = ?;
 
 -- ==========================================
--- CALENDAR
+-- FIXTURES
 -- ==========================================
 
--- @QUERY_ID: INSERT_CALENDAR_MATCH
-INSERT OR IGNORE INTO Calendar (season, week, date, home_team_id, away_team_id,
-  home_score, away_score, league_id)
-VALUES (?, ?, ?, ?, ?, NULL, NULL, ?);
+-- @QUERY_ID: DELETE_FIXTURES_BY_LEAGUE
+DELETE FROM Fixtures WHERE league_id = ?;
 
--- @QUERY_ID: UPDATE_CALENDAR_RESULT
-UPDATE Calendar
-SET home_score = ?, away_score = ?
-WHERE id = ?;
+-- @QUERY_ID: INSERT_FIXTURE
+INSERT INTO Fixtures (game_date, home_team_id, away_team_id, league_id) VALUES (?, ?, ?, ?);
 
--- @QUERY_ID: SELECT_CALENDAR
-SELECT id, season, week, date, home_team_id, away_team_id,
-  home_score, away_score
-FROM Calendar
-WHERE season = ? AND league_id = ?
-ORDER BY week, date;
+-- @QUERY_ID: SELECT_FIXTURES_BY_LEAGUE
+SELECT game_date, home_team_id, away_team_id, home_goals, away_goals, played FROM Fixtures WHERE league_id = ?;
+
+-- @QUERY_ID: UPDATE_FIXTURE_RESULT
+UPDATE Fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE game_date = ? AND home_team_id = ? AND away_team_id = ?;
 
 -- ==========================================
 -- GAME STATE
 -- ==========================================
 
 -- @QUERY_ID: UPSERT_GAME_STATE
-INSERT OR REPLACE INTO GameState (id, managed_team, game_date, season, week)
-VALUES (1, ?, ?, ?, ?);
+INSERT OR REPLACE INTO GameState (id, managed_team_id, game_date, current_season)
+VALUES (1, ?, ?, ?);
 
 -- @QUERY_ID: SELECT_GAME_STATE
-SELECT managed_team, game_date, season, week FROM GameState WHERE id = 1;
+SELECT managed_team_id, game_date, current_season FROM GameState WHERE id = 1;
 
 -- ==========================================
 -- LEAGUE POINTS

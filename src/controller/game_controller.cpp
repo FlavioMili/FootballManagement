@@ -9,6 +9,7 @@
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
 #include "global/global.h"
+#include "global/logger.h"
 
 GameController::GameController(std::unique_ptr<Game> game_ptr)
     : game(std::move(game_ptr)) {}
@@ -17,12 +18,14 @@ int GameController::getCurrentSeason() const {
   return game->getCurrentSeason();
 }
 
-int GameController::getCurrentWeek() const { return game->getCurrentWeek(); }
+GameDateValue GameController::getCurrentDate() const {
+  return game->getCurrentDate();
+}
 
 bool GameController::hasSelectedTeam() const {
-    auto managed_id = GameData::instance().getManagedTeamId();
-    return managed_id != FREE_AGENTS_TEAM_ID &&
-           GameData::instance().getTeam(managed_id).has_value();
+  auto managed_id = GameData::instance().getManagedTeamId();
+  return managed_id != FREE_AGENTS_TEAM_ID &&
+         GameData::instance().getTeam(managed_id).has_value();
 }
 
 std::optional<std::reference_wrapper<Team>> GameController::getManagedTeam() {
@@ -73,7 +76,9 @@ const StatsConfig &GameController::getStatsConfig() const {
   return GameData::instance().getStatsConfig();
 }
 
-void GameController::advanceWeek() { game->advanceWeek(); }
+void GameController::advanceDay() {
+  game->advanceDay();
+}
 
 void GameController::startNewSeason() { game->startNewSeason(); }
 

@@ -35,31 +35,30 @@ CREATE TABLE IF NOT EXISTS Players (
   FOREIGN KEY(team_id) REFERENCES Teams(id)
 );
 
--- Calendar table for match scheduling
-CREATE TABLE IF NOT EXISTS Calendar (
-  matchup_id INTEGER PRIMARY KEY AUTOINCREMENT,
-  season INTEGER NOT NULL DEFAULT 0,
-  week INTEGER NOT NULL,
-  home_team_id INTEGER NOT NULL,
-  away_team_id INTEGER NOT NULL,
-  league_id INTEGER NOT NULL,
-  match_date DATE,
-  played BOOLEAN DEFAULT 0,
-  home_goals INTEGER DEFAULT -1,
-  away_goals INTEGER DEFAULT -1,
-  FOREIGN KEY(home_team_id) REFERENCES Teams(id),
-  FOREIGN KEY(away_team_id) REFERENCES Teams(id),
-  FOREIGN KEY(league_id) REFERENCES Leagues(id)
+-- Fixtures table for match scheduling
+CREATE TABLE IF NOT EXISTS Fixtures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_date TEXT NOT NULL,
+    home_team_id INTEGER NOT NULL,
+    away_team_id INTEGER NOT NULL,
+    league_id INTEGER NOT NULL,
+    home_goals INTEGER,
+    away_goals INTEGER,
+    played INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY(home_team_id) REFERENCES Teams(id),
+    FOREIGN KEY(away_team_id) REFERENCES Teams(id),
+    FOREIGN KEY(league_id) REFERENCES Leagues(id),
+    UNIQUE(game_date, home_team_id, away_team_id)
 );
 
 -- Game state management
 CREATE TABLE IF NOT EXISTS GameState (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  managed_team INTEGER DEFAULT 0,
-  game_date DATE NOT NULL,
-  season INTEGER NOT NULL DEFAULT 0,
-  week INTEGER NOT NULL DEFAULT 0
+  id INTEGER PRIMARY KEY,
+  managed_team_id INTEGER,
+  game_date TEXT,
+  current_season INTEGER
 );
+
 
 -- League points/standings
 CREATE TABLE IF NOT EXISTS LeaguePoints (

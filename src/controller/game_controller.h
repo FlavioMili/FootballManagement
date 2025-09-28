@@ -23,7 +23,7 @@ public:
   explicit GameController(std::unique_ptr<Game> game_ptr);
 
   int getCurrentSeason() const;
-  int getCurrentWeek() const;
+  GameDateValue getCurrentDate() const;
   bool hasSelectedTeam() const;
 
   std::optional<std::reference_wrapper<Team>> getManagedTeam();
@@ -41,7 +41,7 @@ public:
   getTeamById(uint16_t team_id) const;
   const StatsConfig &getStatsConfig() const;
 
-  void advanceWeek();
+  void advanceDay();
   void startNewSeason();
 
   void saveGame();
