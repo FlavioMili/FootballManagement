@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS Fixtures (
     home_team_id INTEGER NOT NULL,
     away_team_id INTEGER NOT NULL,
     league_id INTEGER NOT NULL,
+    match_type INTEGER NOT NULL DEFAULT 0, -- 0: LEAGUE, 1: FRIENDLY, 2: CUP 
     home_goals INTEGER,
     away_goals INTEGER,
     played INTEGER NOT NULL DEFAULT 0,

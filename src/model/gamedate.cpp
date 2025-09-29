@@ -1,23 +1,31 @@
+// -----------------------------------------------------------------------------
+//  Football Management Project
+//  Copyright (c) 2025 Flavio Milinanni. All Rights Reserved.
+//
+//  This file is part of the Football Management Project.
+//  See the LICENSE file in the project root.
+// -----------------------------------------------------------------------------
+
 #include "gamedate.h"
 #include "global/global.h"
 #include <iomanip>
 #include <stdexcept>
 
 /*
-  * I know that this code is full of magic numbers but
-  * it is understandable enough so I will not change it 
-*/
+ * I know that this code is full of magic numbers but
+ * it is understandable enough so I will not change it
+ */
 
 /**
-* Cultural moment, I needed to lookup the formula and
-* this is what I found:
-  *
-  * The Gregorian calendar year is approximately 365.2425 days.
-  * If we only used the "divisible by 4" rule, we'd have too many
-  * leap years and the calendar would drift about 3 days every 400 years.
-  *
-  * Seems like you never stop learning when writing code :P
-*/
+ * Cultural moment, I needed to lookup the formula and
+ * this is what I found:
+ *
+ * The Gregorian calendar year is approximately 365.2425 days.
+ * If we only used the "divisible by 4" rule, we'd have too many
+ * leap years and the calendar would drift about 3 days every 400 years.
+ *
+ * Seems like you never stop learning when writing code :P
+ */
 bool GameDateValue::isLeapYear(uint16_t y) {
   return (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0);
 }
@@ -78,8 +86,10 @@ GameDateValue GameDateValue::operator-(size_t days) const {
 }
 
 bool GameDateValue::operator<(const GameDateValue &other) const {
-  if (year != other.year) return year < other.year;
-  if (month != other.month) return month < other.month;
+  if (year != other.year)
+    return year < other.year;
+  if (month != other.month)
+    return month < other.month;
   return day < other.day;
 }
 
@@ -102,4 +112,30 @@ GameDateValue GameDateValue::fromString(const std::string &str) {
   uint8_t m = std::stoi(str.substr(5, 2));
   uint8_t d = std::stoi(str.substr(8, 2));
   return GameDateValue(y, m, d);
+}
+
+SeasonPhase GameDateValue::checkPhase() const {
+  if (month == 6) {
+    return SeasonPhase::OFF_SEASON;
+  }
+  if (month == 7 || month == 8) {
+    return SeasonPhase::PRE_SEASON;
+  }
+  if (month == 5) {
+    return SeasonPhase::POST_SEASON;  // End of season
+  }
+  // Sept through April is regular season
+  return SeasonPhase::REGULAR_SEASON;
+}
+
+bool GameDateValue::isTransferWindowOpen() const {
+  // Summer window: June-August
+  if (month >= 6 && month <= 8) {
+    return true;
+  }
+  // Winter window: January
+  if (month == 1) {
+    return true;
+  }
+  return false;
 }

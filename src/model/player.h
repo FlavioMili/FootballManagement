@@ -49,23 +49,23 @@ class Player {
 
  private:
   // 32-bit fields first
-  uint32_t id;
-  uint32_t team_id;
-  uint32_t wage;
-  uint32_t status;
+  uint32_t _id;
+  uint32_t _team_id;
+  uint32_t _wage;
+  uint32_t _status;
 
   // strings (non-POD, heap allocated, alignment not a problem)
-  std::string first_name;
-  std::string last_name;
-  std::string role;
+  std::string _first_name;
+  std::string _last_name;
+  std::string _role;
 
   // Enums and small ints grouped together
-  Language nationality;
-  uint8_t age;
-  uint8_t contract_years;
-  uint8_t height;
-  Foot foot;
+  Language _nationality;
+  uint8_t _age;
+  uint8_t _contract_years;
+  uint8_t _height;
+  Foot _foot;
 
   // stats container
-  std::map<std::string, float> stats;
+  std::map<std::string, float> _stats;
 };

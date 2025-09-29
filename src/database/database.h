@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "calendar.h"
 #include "league.h"
+#include "match.h"
 #include "player.h"
 #include "team.h"
 #include <cstdint>
@@ -39,8 +39,10 @@ public:
   void insertPlayerWithId(const Player &player);
 
   // Fixtures
-  void saveFixtures(const Calendar &calendar, uint8_t league_id);
-  void loadFixtures(Calendar &calendar, uint8_t league_id) const;
+  void insertFixture(const Match &match, uint8_t league_id);
+  void saveMatches(const std::vector<Match> &matches);
+  std::vector<Match> loadAllMatches();
+
 
   // Game State
   bool isFirstRun();
@@ -64,4 +66,5 @@ private:
   std::unique_ptr<sqlite3, decltype(&sqlite3_close)> db;
 
   void loadSQLFiles();
+  void loadTeamsForLeague(League &league) const;
 };

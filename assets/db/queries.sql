@@ -110,7 +110,19 @@ FROM Players;
 
 -- @QUERY_ID: UPDATE_PLAYER
 UPDATE Players
-SET first_name = ?, last_name = ?, age = ?, role = ?, stats = ?
+SET 
+  team_id = ?, 
+  first_name = ?, 
+  last_name = ?, 
+  age = ?, 
+  role = ?, 
+  nationality = ?, 
+  wage = ?, 
+  contract_years = ?, 
+  height = ?, 
+  foot = ?, 
+  stats = ?, 
+  status = ?
 WHERE id = ?;
 
 -- @QUERY_ID: DELETE_PLAYER

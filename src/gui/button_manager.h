@@ -20,6 +20,8 @@ struct ButtonStyle {
   SDL_Color textColor = {255, 255, 255, 255};
   SDL_Color hoverBackgroundColor = {90, 90, 170, 255};
   SDL_Color hoverBorderColor = {120, 120, 220, 255};
+  SDL_Color selectedBackgroundColor = {120, 120, 220, 255};
+  SDL_Color selectedBorderColor = {150, 150, 250, 255};
   bool hasBorder = true;
   int borderWidth = 1;
 };
@@ -32,6 +34,7 @@ struct Button {
   std::function<void()> onClick;
   bool isHovered = false;
   bool isVisible = true;
+  bool isSelected = false;
   ButtonStyle style;
   int id = -1;
 };
@@ -61,6 +64,7 @@ class ButtonManager {
   void setButtonVisible(int buttonId, bool visible);
   void setButtonEnabled(int buttonId, bool enabled);
   void setButtonText(int buttonId, const std::string& text);
+  void setButtonSelected(int buttonId, bool selected);
 
   // Event handling
   void handleMouseMove(float x, float y);

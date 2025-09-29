@@ -19,7 +19,7 @@
 #include <vector>
 
 class GameController {
-public:
+ public:
   explicit GameController(std::unique_ptr<Game> game_ptr);
 
   int getCurrentSeason() const;
@@ -30,6 +30,7 @@ public:
   std::optional<std::reference_wrapper<const Team>> getManagedTeam() const;
   void selectManagedTeam(uint16_t team_id);
 
+  const std::vector<std::reference_wrapper<const League>> &getLeagues() const;
   const std::vector<std::reference_wrapper<const Team>> &getTeams() const;
   std::vector<std::reference_wrapper<const Player>>
   getPlayersForTeam(uint16_t team_id) const;
@@ -42,11 +43,9 @@ public:
   const StatsConfig &getStatsConfig() const;
 
   void advanceDay();
-  void startNewSeason();
 
   void saveGame();
-  void loadGame();
 
-private:
+ private:
   std::unique_ptr<Game> game;
 };

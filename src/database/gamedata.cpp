@@ -29,7 +29,7 @@ GameData::GameData() {
 bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr) {
   loadStatsConfig();
   db = database_ptr;
-  is_first_run = db->isFirstRun();
+  bool is_first_run = db->isFirstRun();
 
   Logger::debug("GameData::loadFromDB called. is_first_run: " +
                 std::to_string(is_first_run));
@@ -67,7 +67,6 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr) {
       database_ptr->insertPlayer(player);
       _players.emplace(player.getId(), player);
     }
-
   } else {
     auto leagues_from_db = database_ptr->loadAllLeagues();
     all_teams = database_ptr->loadAllTeams();
@@ -85,6 +84,7 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr) {
       _leagues.emplace(league_from_db.getId(),
                        League(league_from_db.getId(), league_from_db.getName(),
                               league_teams_map[league_from_db.getId()]));
+      db->loadLeaguePoints(_leagues.at(league_from_db.getId()));
     }
 
     auto players = database_ptr->loadAllPlayers();
@@ -113,18 +113,7 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr) {
   return true;
 }
 
-bool GameData::saveToDB() const {
-  for (const auto &pair : _leagues) {
-    db->insertLeague(pair.second);
-  }
-  for (const auto &pair : _teams) {
-    db->insertTeam(pair.second);
-  }
-  for (const auto &pair : _players) {
-    db->updatePlayer(pair.second);
-  }
-  return true;
-}
+
 
 // ---------------- League ----------------
 void GameData::addLeague(uint8_t id, const League &league) {
@@ -176,6 +165,7 @@ const std::unordered_map<uint16_t, Team> &GameData::getTeams() const {
 }
 
 std::unordered_map<uint16_t, Team> &GameData::getTeams() { return _teams; }
+
 const std::vector<std::reference_wrapper<const Team>> &
 GameData::getTeamsVector() const {
   return _teamsVec;
@@ -207,6 +197,12 @@ GameData::getPlayersVector() const {
   return _playersVec;
 }
 
+void GameData::ageAllPlayers() {
+  for (auto &pair : _players) {
+    pair.second.agePlayer();
+  }
+}
+
 std::vector<std::reference_wrapper<const Player>>
 GameData::getPlayersForTeam(uint16_t team_id) const {
   std::vector<std::reference_wrapper<const Player>> players;
@@ -229,9 +225,7 @@ bool GameData::removePlayer(uint32_t id) {
   return erased;
 }
 
-uint16_t GameData::getManagedTeamId() const { return managed_team_id; }
 
-void GameData::setManagedTeamId(uint16_t id) { managed_team_id = id; }
 
 void from_json(const nlohmann::json &j, RoleFocus &rf) {
   j.at("stats").get_to(rf.stats);
@@ -253,5 +247,3 @@ void GameData::loadStatsConfig() {
 }
 
 const StatsConfig &GameData::getStatsConfig() const { return stats_config; }
-
-bool GameData::isFirstRun() { return is_first_run; }

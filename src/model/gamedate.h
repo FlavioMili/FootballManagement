@@ -1,9 +1,15 @@
+// -----------------------------------------------------------------------------
+//  Football Management Project
+//  Copyright (c) 2025 Flavio Milinanni. All Rights Reserved.
+//
+//  This file is part of the Football Management Project.
+//  See the LICENSE file in the project root.
+// -----------------------------------------------------------------------------
+
 #pragma once
 #include <cstdint>
 #include <string>
-#pragma once
-#include <cstdint>
-#include <string>
+#include "global/types.h"
 
 struct GameDateValue {
   uint16_t year;
@@ -37,6 +43,12 @@ struct GameDateValue {
   // ----------------------
   std::string toString() const;
   static GameDateValue fromString(const std::string &str);
+
+  // ----------------------
+  // Game logic
+  // ----------------------
+  SeasonPhase checkPhase() const;
+  bool isTransferWindowOpen() const;
 
  private:
   static bool isLeapYear(uint16_t y);

@@ -1,64 +1,47 @@
-// -----------------------------------------------------------------------------
-//  Football Management Project
-//  Copyright (c) 2025 Flavio Milinanni. All Rights Reserved.
-//
-//  This file is part of the Football Management Project.
-//  See the LICENSE file in the project root.
-// -----------------------------------------------------------------------------
-
 #pragma once
 
 #include <cstdint>
-#include <map>
-#include <memory>
 #include <vector>
+#include <memory>
 
-#include "database/database.h"
-#include "global/stats_config.h"
-#include "match.h"
-#include "model/calendar.h"
 #include "model/gamedate.h"
+#include "model/calendar.h"
+#include "model/match.h"
+#include "database/database.h"
 
 class Game {
- public:
+public:
   Game();
 
   // Simulation
-  void startNewSeason();
-  void loadData();
-  void advanceDay(); // Advance simulation by 1 day
-  void endSeason();
-  void handleSeasonTransition();
+  void advanceDay();
 
   // Accessors
+  const GameDateValue &getCurrentDate() const;
+  const Calendar &getCalendar() const;
   int getCurrentSeason() const;
-  GameDateValue getCurrentDate() const;
-
-  // Update league standings after a match
-  void updateStandings(const Match &match);
+  uint16_t getManagedTeamId() const;
+  void setManagedTeamId(uint16_t id);
 
   // Save / load game state
   void saveGame();
 
- private:
-  std::shared_ptr<Database> db;
-  StatsConfig stats_config;
-
-  // League calendars mapped by league ID
-  std::map<size_t, Calendar> league_calendars;
-
-  // Current season
-  uint8_t current_season;
-
-  // Initialization helpers
-  void loadConfigs();
-  void initializeDatabase();
-  void ensureManagedTeamAssigned();
-  void generateAllCalendars();
+private:
+  void loadGame();
+  void endSeason();
+  void handleSeasonTransition();
+  void startNewSeason();
 
   // Player training
   void trainPlayers(const std::vector<uint32_t> &player_ids);
 
   // Matchday simulation helper
-  void simulateMatches(const std::vector<Matchup> &matches);
+  void simulateMatches(std::vector<Match> &matches);
+  void updateStandings(const Match &match);
+
+  std::shared_ptr<Database> db;
+  Calendar calendar;
+  GameDateValue currentDate;
+  uint8_t current_season = 1;
+  uint16_t managed_team_id;
 };

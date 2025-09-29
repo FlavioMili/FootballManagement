@@ -12,7 +12,6 @@
 #include "global/logger.h"
 #include "global/paths.h"
 #include "gui/gui_view.h"
-#include "gui/scenes/main_menu_scene.h"
 #include <SDL3_ttf/SDL_ttf.h>
 #include <algorithm>
 #include <iostream>
@@ -40,7 +39,6 @@ void TeamSelectionScene::onEnter() {
     return;
   }
 
-  // Load fonts with error checking
   font = TTF_OpenFont(FONT_PATH, 24);
   if (!font) {
     std::cerr << "Failed to load button font: " << SDL_GetError() << '\n';
@@ -52,12 +50,11 @@ void TeamSelectionScene::onEnter() {
     title_font = font;
   }
 
-  // Set font for button manager
   button_manager.setFont(font);
 
   Logger::debug("Entering TeamSelectionScene\n");
-  loadAvailableTeams();
-  setupTeamButtons();
+  loadAvailableLeagues();
+  setupLeagueAndTeamButtons();
 }
 
 void TeamSelectionScene::onExit() {
@@ -67,10 +64,62 @@ void TeamSelectionScene::onExit() {
 }
 
 void TeamSelectionScene::handleEvent(const SDL_Event &event) {
-  if (event.type == SDL_EVENT_MOUSE_MOTION) {
-    button_manager.handleMouseMove(event.motion.x, event.motion.y);
-  } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-    button_manager.handleMouseClick(event.button.x, event.button.y);
+  bool event_handled = false;
+  SDL_FPoint mouse_point;
+
+  switch (event.type) {
+  case SDL_EVENT_MOUSE_MOTION:
+    if (is_dragging_leagues_) {
+      league_scroll_offset_ -= event.motion.xrel;
+      setupLeagueAndTeamButtons();
+      event_handled = true;
+    } else if (is_dragging_teams_) {
+      team_scroll_offset_ -= event.motion.yrel;
+      setupLeagueAndTeamButtons();
+      event_handled = true;
+    }
+    break;
+
+  case SDL_EVENT_MOUSE_BUTTON_DOWN:
+    mouse_point = {(float)event.button.x, (float)event.button.y};
+    if (SDL_PointInRectFloat(&mouse_point, &league_list_rect_)) {
+      is_dragging_leagues_ = true;
+    } else if (SDL_PointInRectFloat(&mouse_point, &team_list_rect_)) {
+      is_dragging_teams_ = true;
+    }
+    break;
+
+  case SDL_EVENT_MOUSE_BUTTON_UP:
+    if (is_dragging_leagues_) {
+      is_dragging_leagues_ = false;
+      event_handled = true;
+    }
+    if (is_dragging_teams_) {
+      is_dragging_teams_ = false;
+      event_handled = true;
+    }
+    break;
+
+  case SDL_EVENT_MOUSE_WHEEL:
+    mouse_point = {(float)event.wheel.x, (float)event.wheel.y};
+    if (SDL_PointInRectFloat(&mouse_point, &league_list_rect_)) {
+      league_scroll_offset_ += event.wheel.x * 20;
+      setupLeagueAndTeamButtons();
+      event_handled = true;
+    } else if (SDL_PointInRectFloat(&mouse_point, &team_list_rect_)) {
+      team_scroll_offset_ += event.wheel.y * 20;
+      setupLeagueAndTeamButtons();
+      event_handled = true;
+    }
+    break;
+  }
+
+  if (!event_handled) {
+    if (event.type == SDL_EVENT_MOUSE_MOTION) {
+      button_manager.handleMouseMove(event.motion.x, event.motion.y);
+    } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+      button_manager.handleMouseClick(event.button.x, event.button.y);
+    }
   }
 }
 
@@ -81,7 +130,6 @@ void TeamSelectionScene::render() {
                          255); // Dark grey background
   SDL_RenderClear(getRenderer());
 
-  // Render title using the pre-loaded title font
   if (title_font) {
     SDL_Color textColor = {255, 255, 255, 255}; // White
 
@@ -108,45 +156,197 @@ void TeamSelectionScene::render() {
   }
 
   button_manager.render();
+  renderLeagueScrollbar();
+  renderTeamScrollbar();
 }
 
-/**
-* Note that this function skips the free agents team
-*/
-void TeamSelectionScene::loadAvailableTeams() {
-  available_teams = parent_view->getController().getTeams();
-  available_teams.erase(
-      std::remove_if(available_teams.begin(), available_teams.end(),
-                     [](const std::reference_wrapper<const Team> &team_ref) {
-                       return team_ref.get().getName() == FREE_AGENTS_TEAM_NAME;
-                     }),
-      available_teams.end());
+void TeamSelectionScene::renderLeagueScrollbar() {
+  float viewWidth = 800.0f;
+  float leagueButtonWidth = 200.0f;
+  float leaguePadding = 10.0f;
+  float totalLeagueWidth =
+      available_leagues.size() * (leagueButtonWidth + leaguePadding) -
+      leaguePadding;
+
+  if (totalLeagueWidth > viewWidth) {
+    float scrollbar_area_y = league_list_rect_.y + league_list_rect_.h + 5;
+    float scrollbar_area_height = 5;
+    SDL_FRect scrollbar_bg = {0, scrollbar_area_y, viewWidth,
+                              scrollbar_area_height};
+
+    SDL_SetRenderDrawColor(getRenderer(), 100, 100, 100,
+                           255); // Scrollbar background
+    SDL_RenderFillRect(getRenderer(), &scrollbar_bg);
+
+    float max_scroll_offset = totalLeagueWidth - viewWidth + 2 * leaguePadding;
+    float handle_width = (viewWidth / totalLeagueWidth) * viewWidth;
+    float handle_x = (league_scroll_offset_ / max_scroll_offset) *
+                     (viewWidth - handle_width);
+
+    SDL_FRect scrollbar_handle = {handle_x, scrollbar_area_y, handle_width,
+                                  scrollbar_area_height};
+    SDL_SetRenderDrawColor(getRenderer(), 150, 150, 150,
+                           255); // Scrollbar handle
+    SDL_RenderFillRect(getRenderer(), &scrollbar_handle);
+  }
 }
 
-void TeamSelectionScene::setupTeamButtons() {
-  float startY = 150.0f;
-  float buttonHeight = 50.0f;
-  float padding = 10.0f;
-  float buttonWidth = 400.0f;
+void TeamSelectionScene::renderTeamScrollbar() {
+  if (!selected_league_id)
+    return;
 
-  for (size_t i = 0; i < available_teams.size(); ++i) {
-    const Team &team = available_teams[i].get();
+  float viewHeight = 600.0f;
+  float teamButtonHeight = 50.0f;
+  float teamPadding = 15.0f;
+  int teams_per_row = 4;
+  int num_rows = (available_teams.size() + teams_per_row - 1) / teams_per_row;
+  float totalTeamHeight =
+      num_rows * (teamButtonHeight + teamPadding) - teamPadding;
+  float teamListVisibleHeight =
+      viewHeight - (league_list_rect_.y + league_list_rect_.h + 50);
 
-    // Get league name from GameController
-    std::string leagueName = "Unknown League";
-    auto leagueOpt =
-        parent_view->getController().getLeagueById(team.getLeagueId());
-    if (leagueOpt.has_value()) {
-      leagueName = leagueOpt->get().getName();
+  if (totalTeamHeight > teamListVisibleHeight) {
+    float scrollbar_area_x = 1200.0f - 12; // 12px from the right edge
+    float scrollbar_area_y = team_list_rect_.y;
+    float scrollbar_area_width = 8;
+
+    SDL_FRect scrollbar_bg = {scrollbar_area_x, scrollbar_area_y,
+                              scrollbar_area_width, teamListVisibleHeight};
+    SDL_SetRenderDrawColor(getRenderer(), 100, 100, 100,
+                           255); // Scrollbar background
+    SDL_RenderFillRect(getRenderer(), &scrollbar_bg);
+
+    float max_scroll_offset = totalTeamHeight - teamListVisibleHeight;
+    float handle_height =
+        (teamListVisibleHeight / totalTeamHeight) * teamListVisibleHeight;
+    float handle_y =
+        scrollbar_area_y + (team_scroll_offset_ / max_scroll_offset) *
+                               (teamListVisibleHeight - handle_height);
+
+    SDL_FRect scrollbar_handle = {scrollbar_area_x, handle_y,
+                                  scrollbar_area_width, handle_height};
+    SDL_SetRenderDrawColor(getRenderer(), 150, 150, 150,
+                           255); // Scrollbar handle
+    SDL_RenderFillRect(getRenderer(), &scrollbar_handle);
+  }
+}
+
+void TeamSelectionScene::loadAvailableLeagues() {
+  available_leagues = parent_view->getController().getLeagues();
+}
+
+void TeamSelectionScene::setupLeagueAndTeamButtons() {
+  button_manager.clearButtons();
+  league_button_ids.clear();
+
+  float leagueButtonStartY = 150.0f;
+  float leagueButtonHeight = 40.0f;
+  float leagueButtonWidth = 200.0f;
+  float leaguePadding = 10.0f;
+  float totalLeagueWidth =
+      available_leagues.size() * (leagueButtonWidth + leaguePadding) -
+      leaguePadding;
+  float viewWidth = 1200.0f;
+  float leagueStartX = (viewWidth - totalLeagueWidth) / 2.0f;
+
+  league_list_rect_ = {0, leagueButtonStartY, viewWidth, leagueButtonHeight};
+
+  float max_scroll_offset =
+      totalLeagueWidth > viewWidth
+          ? totalLeagueWidth - viewWidth + 2 * leaguePadding
+          : 0;
+  league_scroll_offset_ =
+      std::max(0.0f, std::min(league_scroll_offset_, max_scroll_offset));
+
+  float currentX =
+      leagueStartX > 0 ? leagueStartX : leaguePadding - league_scroll_offset_;
+
+  for (size_t i = 0; i < available_leagues.size(); ++i) {
+    const League &league = available_leagues[i].get();
+    int buttonId = button_manager.addButton(
+        currentX, leagueButtonStartY, leagueButtonWidth, leagueButtonHeight,
+        league.getName(), [this, league_id = league.getId()]() {
+          this->onLeagueSelected(league_id);
+        });
+    league_button_ids.push_back(buttonId);
+    currentX += leagueButtonWidth + leaguePadding;
+  }
+
+  if (selected_league_id) {
+    auto it = std::find_if(available_leagues.begin(), available_leagues.end(),
+                           [this](const auto &league_ref) {
+                             return league_ref.get().getId() ==
+                                    selected_league_id.value();
+                           });
+    if (it != available_leagues.end()) {
+      size_t index = std::distance(available_leagues.begin(), it);
+      if (index < league_button_ids.size()) {
+        button_manager.setButtonSelected(league_button_ids[index], true);
+      }
     }
-    std::string buttonText = team.getName() + " (" + leagueName + ")";
-    float buttonX = (1200.0f - buttonWidth) /
-                    2.0f; // Fixed: was 120.0f, should be screen width
-    float buttonY = startY + (static_cast<float>(i) * (buttonHeight + padding));
 
-    button_manager.addButton(
-        buttonX, buttonY, buttonWidth, buttonHeight, buttonText,
-        [this, team_id = team.getId()]() { this->onTeamSelected(team_id); });
+    loadAvailableTeams();
+    int teams_per_row = 4;
+    float teamButtonWidth = 250.0f;
+    float teamButtonHeight = 50.0f;
+    float teamPadding = 15.0f;
+    float teamStartX =
+        (viewWidth -
+         (teams_per_row * (teamButtonWidth + teamPadding) - teamPadding)) /
+        2.0f;
+    float teamStartY = leagueButtonStartY + leagueButtonHeight + 50.0f;
+    float teamListHeight = 800.0f - teamStartY;
+    team_list_rect_ = {teamStartX, teamStartY,
+                       teams_per_row * (teamButtonWidth + teamPadding),
+                       teamListHeight};
+
+    int num_rows = (available_teams.size() + teams_per_row - 1) / teams_per_row;
+    float totalTeamHeight =
+        num_rows * (teamButtonHeight + teamPadding) - teamPadding;
+    float max_team_scroll_offset =
+        totalTeamHeight > teamListHeight ? totalTeamHeight - teamListHeight : 0;
+    team_scroll_offset_ =
+        std::max(0.0f, std::min(team_scroll_offset_, max_team_scroll_offset));
+
+    for (size_t i = 0; i < available_teams.size(); ++i) {
+      const Team &team = available_teams[i].get();
+      int row = i / teams_per_row;
+      int col = i % teams_per_row;
+      float buttonX = teamStartX + col * (teamButtonWidth + teamPadding);
+      float buttonY = teamStartY + row * (teamButtonHeight + teamPadding) -
+                      team_scroll_offset_;
+
+      if (buttonY > teamStartY - teamButtonHeight &&
+          buttonY < teamStartY + teamListHeight) {
+        button_manager.addButton(buttonX, buttonY, teamButtonWidth,
+                                 teamButtonHeight, team.getName(),
+                                 [this, team_id = team.getId()]() {
+                                   this->onTeamSelected(team_id);
+                                 });
+      }
+    }
+  }
+}
+
+void TeamSelectionScene::onLeagueSelected(uint8_t league_id) {
+  selected_league_id = league_id;
+  team_scroll_offset_ = 0.0f;
+  setupLeagueAndTeamButtons();
+}
+
+void TeamSelectionScene::loadAvailableTeams() {
+  if (!selected_league_id)
+    return;
+
+  auto all_teams = parent_view->getController().getTeams();
+  available_teams.clear();
+
+  for (const auto &team_ref : all_teams) {
+    const Team &team = team_ref.get();
+    if (team.getLeagueId() == selected_league_id.value() &&
+        team.getName() != FREE_AGENTS_TEAM_NAME) {
+      available_teams.push_back(team_ref);
+    }
   }
 }
 
