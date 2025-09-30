@@ -549,6 +549,7 @@ void Database::saveLeaguePoints(const League &league) {
                                std::string(sqlite3_errmsg(db.get())));
     }
 
+   sqlite3_clear_bindings(stmt);
     sqlite3_reset(stmt);
   }
 

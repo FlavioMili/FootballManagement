@@ -126,44 +126,53 @@ void TeamSelectionScene::handleEvent(const SDL_Event &event) {
 void TeamSelectionScene::update(float deltaTime) { (void)deltaTime; }
 
 void TeamSelectionScene::render() {
-  SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50,
-                         255); // Dark grey background
+  int width, height;
+  SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
+
+  SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50, 255);
   SDL_RenderClear(getRenderer());
 
   if (title_font) {
-    SDL_Color textColor = {255, 255, 255, 255}; // White
-
+    SDL_Color textColor = {255, 255, 255, 255};
     SDL_Surface *textSurface =
         TTF_RenderText_Solid(title_font, "Select Your Team", 0, textColor);
     if (textSurface) {
       SDL_Texture *textTexture =
           SDL_CreateTextureFromSurface(getRenderer(), textSurface);
       if (textTexture) {
-        SDL_FRect textRect = {(1200.0f - static_cast<float>(textSurface->w)) /
+        SDL_FRect textRect = {(width - static_cast<float>(textSurface->w)) /
                                   2.0f,
                               50.0f, static_cast<float>(textSurface->w),
                               static_cast<float>(textSurface->h)};
         SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
         SDL_DestroyTexture(textTexture);
-      } else {
-        std::cerr << "Failed to create texture from text: " << SDL_GetError()
-                  << "\n";
       }
       SDL_DestroySurface(textSurface);
-    } else {
-      std::cerr << "Failed to render text: " << SDL_GetError() << "\n";
     }
   }
 
+  // Set clipping rect for league buttons
+  SDL_Rect clipRect = {static_cast<int>(league_list_rect_.x),
+                       static_cast<int>(league_list_rect_.y),
+                       static_cast<int>(league_list_rect_.w),
+                       static_cast<int>(league_list_rect_.h)};
+  SDL_SetRenderClipRect(getRenderer(), &clipRect);
+
   button_manager.render();
+
+  // Reset clipping
+  SDL_SetRenderClipRect(getRenderer(), NULL);
+
   renderLeagueScrollbar();
   renderTeamScrollbar();
 }
 
 void TeamSelectionScene::renderLeagueScrollbar() {
-  float viewWidth = 800.0f;
-  float leagueButtonWidth = 200.0f;
-  float leaguePadding = 10.0f;
+  int width, height;
+  SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
+  float viewWidth = static_cast<float>(width);
+  float leagueButtonWidth = 250.0f;
+  float leaguePadding = 20.0f;
   float totalLeagueWidth =
       available_leagues.size() * (leagueButtonWidth + leaguePadding) -
       leaguePadding;
@@ -171,17 +180,18 @@ void TeamSelectionScene::renderLeagueScrollbar() {
   if (totalLeagueWidth > viewWidth) {
     float scrollbar_area_y = league_list_rect_.y + league_list_rect_.h + 5;
     float scrollbar_area_height = 5;
-    SDL_FRect scrollbar_bg = {0, scrollbar_area_y, viewWidth,
-                              scrollbar_area_height};
+    SDL_FRect scrollbar_bg = {league_list_rect_.x, scrollbar_area_y,
+                              league_list_rect_.w, scrollbar_area_height};
 
     SDL_SetRenderDrawColor(getRenderer(), 100, 100, 100,
                            255); // Scrollbar background
     SDL_RenderFillRect(getRenderer(), &scrollbar_bg);
 
     float max_scroll_offset = totalLeagueWidth - viewWidth + 2 * leaguePadding;
-    float handle_width = (viewWidth / totalLeagueWidth) * viewWidth;
-    float handle_x = (league_scroll_offset_ / max_scroll_offset) *
-                     (viewWidth - handle_width);
+    float handle_width = (viewWidth / totalLeagueWidth) * league_list_rect_.w;
+    float handle_x =
+        league_list_rect_.x + (league_scroll_offset_ / max_scroll_offset) *
+                                  (league_list_rect_.w - handle_width);
 
     SDL_FRect scrollbar_handle = {handle_x, scrollbar_area_y, handle_width,
                                   scrollbar_area_height};
@@ -206,26 +216,26 @@ void TeamSelectionScene::renderTeamScrollbar() {
       viewHeight - (league_list_rect_.y + league_list_rect_.h + 50);
 
   if (totalTeamHeight > teamListVisibleHeight) {
-    float scrollbar_area_x = 1200.0f - 12; // 12px from the right edge
-    float scrollbar_area_y = team_list_rect_.y;
+    int width, height;
+    SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
+    float scrollbar_area_x = static_cast<float>(width);
     float scrollbar_area_width = 8;
 
-    SDL_FRect scrollbar_bg = {scrollbar_area_x, scrollbar_area_y,
-                              scrollbar_area_width, teamListVisibleHeight};
+    SDL_FRect scrollbar_bg = {scrollbar_area_x, team_list_rect_.y, scrollbar_area_width,
+                              team_list_rect_.h};
+    float max_scroll_offset = totalTeamHeight - team_list_rect_.h;
+    float handle_height =
+        (team_list_rect_.h / totalTeamHeight) * team_list_rect_.h;
+    float handle_y =
+        team_list_rect_.y + (team_scroll_offset_ / max_scroll_offset) *
+                                (team_list_rect_.h - handle_height);
     SDL_SetRenderDrawColor(getRenderer(), 100, 100, 100,
                            255); // Scrollbar background
     SDL_RenderFillRect(getRenderer(), &scrollbar_bg);
 
-    float max_scroll_offset = totalTeamHeight - teamListVisibleHeight;
-    float handle_height =
-        (teamListVisibleHeight / totalTeamHeight) * teamListVisibleHeight;
-    float handle_y =
-        scrollbar_area_y + (team_scroll_offset_ / max_scroll_offset) *
-                               (teamListVisibleHeight - handle_height);
-
     SDL_FRect scrollbar_handle = {scrollbar_area_x, handle_y,
                                   scrollbar_area_width, handle_height};
-    SDL_SetRenderDrawColor(getRenderer(), 150, 150, 150,
+    SDL_SetRenderDrawColor(getRenderer(), 250, 150, 190,
                            255); // Scrollbar handle
     SDL_RenderFillRect(getRenderer(), &scrollbar_handle);
   }
@@ -239,36 +249,54 @@ void TeamSelectionScene::setupLeagueAndTeamButtons() {
   button_manager.clearButtons();
   league_button_ids.clear();
 
+  int width, height;
+  SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
+  float viewWidth = static_cast<float>(width);
+
   float leagueButtonStartY = 150.0f;
-  float leagueButtonHeight = 40.0f;
-  float leagueButtonWidth = 200.0f;
-  float leaguePadding = 10.0f;
+  float leagueButtonHeight = 80.0f;
+  float leagueButtonWidth = 250.0f;
+  float leaguePadding = 20.0f;
+
+  // Calculate total width needed for all league buttons
   float totalLeagueWidth =
-      available_leagues.size() * (leagueButtonWidth + leaguePadding) -
-      leaguePadding;
-  float viewWidth = 1200.0f;
-  float leagueStartX = (viewWidth - totalLeagueWidth) / 2.0f;
+      available_leagues.size() * (leagueButtonWidth + leaguePadding);
 
-  league_list_rect_ = {0, leagueButtonStartY, viewWidth, leagueButtonHeight};
+  // The visible area should be the full window width or total content width,
+  // whichever is smaller
+  float visibleLeagueWidth =
+      std::min(totalLeagueWidth, viewWidth); 
+  float leagueAreaStartX = (viewWidth - visibleLeagueWidth) / 2.5f;
 
-  float max_scroll_offset =
-      totalLeagueWidth > viewWidth
-          ? totalLeagueWidth - viewWidth + 2 * leaguePadding
-          : 0;
+  league_list_rect_ = {leagueAreaStartX, leagueButtonStartY, visibleLeagueWidth,
+                       leagueButtonHeight};
+
+  float max_scroll_offset = totalLeagueWidth > visibleLeagueWidth
+                                ? totalLeagueWidth - visibleLeagueWidth
+                                : 0;
   league_scroll_offset_ =
       std::max(0.0f, std::min(league_scroll_offset_, max_scroll_offset));
 
-  float currentX =
-      leagueStartX > 0 ? leagueStartX : leaguePadding - league_scroll_offset_;
+  // Start rendering buttons from the left edge of the visible area
+  float currentX = leagueAreaStartX - league_scroll_offset_;
 
   for (size_t i = 0; i < available_leagues.size(); ++i) {
     const League &league = available_leagues[i].get();
-    int buttonId = button_manager.addButton(
-        currentX, leagueButtonStartY, leagueButtonWidth, leagueButtonHeight,
-        league.getName(), [this, league_id = league.getId()]() {
-          this->onLeagueSelected(league_id);
-        });
-    league_button_ids.push_back(buttonId);
+
+    // Only add buttons that are visible in the scrollable area
+    if (currentX + leagueButtonWidth >= leagueAreaStartX &&
+        currentX <= leagueAreaStartX + visibleLeagueWidth) {
+      int buttonId = button_manager.addButton(
+          currentX, leagueButtonStartY, leagueButtonWidth, leagueButtonHeight,
+          league.getName(), [this, league_id = league.getId()]() {
+            this->onLeagueSelected(league_id);
+          });
+      league_button_ids.push_back(buttonId);
+    } else {
+      // Still need to track button IDs even if not visible
+      league_button_ids.push_back(-1);
+    }
+
     currentX += leagueButtonWidth + leaguePadding;
   }
 
@@ -280,7 +308,7 @@ void TeamSelectionScene::setupLeagueAndTeamButtons() {
                            });
     if (it != available_leagues.end()) {
       size_t index = std::distance(available_leagues.begin(), it);
-      if (index < league_button_ids.size()) {
+      if (index < league_button_ids.size() && league_button_ids[index] != -1) {
         button_manager.setButtonSelected(league_button_ids[index], true);
       }
     }
@@ -295,7 +323,7 @@ void TeamSelectionScene::setupLeagueAndTeamButtons() {
          (teams_per_row * (teamButtonWidth + teamPadding) - teamPadding)) /
         2.0f;
     float teamStartY = leagueButtonStartY + leagueButtonHeight + 50.0f;
-    float teamListHeight = 800.0f - teamStartY;
+    float teamListHeight = height - teamStartY - 50.0f;
     team_list_rect_ = {teamStartX, teamStartY,
                        teams_per_row * (teamButtonWidth + teamPadding),
                        teamListHeight};
