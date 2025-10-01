@@ -18,13 +18,13 @@ Game::Game() : currentDate(START_DATE) {
   db = std::make_shared<Database>();
   GameData::instance().loadFromDB(db);
   loadGame();
-  calendar.generate(currentDate);
 }
 
 void Game::loadGame() {
   std::string game_date_str;
   if (db->loadGameState(current_season, managed_team_id, game_date_str)) {
     currentDate = GameDateValue::fromString(game_date_str);
+    db->loadCalendar(calendar);
     Logger::debug("Game loaded. Date: " + game_date_str +
                   ", Season: " + std::to_string(current_season));
   } else {
@@ -32,6 +32,7 @@ void Game::loadGame() {
     current_season = 1;
     managed_team_id = FREE_AGENTS_TEAM_ID; // Or some other default
     currentDate = START_DATE;
+    calendar.generate(currentDate);
     Logger::debug("First run, initializing game state.");
   }
   // Ensure managed team is valid
@@ -43,6 +44,7 @@ void Game::loadGame() {
 
 void Game::saveGame() {
   db->updateGameState(current_season, managed_team_id, currentDate.toString());
+  db->saveCalendar(calendar);
 
   for (const auto &pair : GameData::instance().getLeagues()) {
     db->saveLeaguePoints(pair.second);
@@ -60,9 +62,10 @@ void Game::advanceDay() {
     return;
   }
 
-  auto &matches_today = calendar.getMatchesForDate(currentDate);
+  const auto &matches_today = calendar.getMatchesForDate(currentDate);
   if (!matches_today.empty()) {
-    simulateMatches(matches_today);
+    auto matches_to_simulate = matches_today;
+    simulateMatches(matches_to_simulate);
   }
 }
 

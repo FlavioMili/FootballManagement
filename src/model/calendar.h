@@ -21,7 +21,6 @@ public:
   void addMatch(const Match &match);
   const std::map<GameDateValue, std::vector<Match>> &getFullCalendar() const;
   const std::vector<Match> &getMatchesForDate(const GameDateValue &date) const;
-  std::vector<Match> &getMatchesForDate(const GameDateValue &date);
 
 private:
   void generateSeasonFixtures(const GameDateValue &startDate);

@@ -8,6 +8,7 @@
 
 #include "database.h"
 #include "SQLLoader.h"
+#include "calendar.h"
 #include "gamedata.h"
 #include "global/logger.h"
 #include "global/paths.h"
@@ -407,18 +408,8 @@ void Database::transferPlayer(uint32_t player_id, uint16_t new_team_id) {
   sqlite3_finalize(stmt);
 }
 
-void Database::insertFixture(const Match &match, uint8_t league_id) {
-  std::string sql =
-      "INSERT INTO Fixtures (game_date, home_team_id, away_team_id, league_id, "
-      "match_type, home_goals, away_goals, played) "
-      "VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
-      "ON CONFLICT(game_date, home_team_id, away_team_id) DO UPDATE SET "
-      "league_id = excluded.league_id, "
-      "match_type = excluded.match_type, "
-      "home_goals = excluded.home_goals, "
-      "away_goals = excluded.away_goals, "
-      "played = excluded.played;";
-
+void Database::insertFixture(const Match &match) {
+  const std::string &sql = SQLLoader::getQuery(Query::INSERT_FIXTURE);
   sqlite3_stmt *stmt;
   if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, nullptr) ==
       SQLITE_OK) {
@@ -426,32 +417,17 @@ void Database::insertFixture(const Match &match, uint8_t league_id) {
                       SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 2, match.getHomeTeamId());
     sqlite3_bind_int(stmt, 3, match.getAwayTeamId());
-    sqlite3_bind_int(stmt, 4, league_id);
-    sqlite3_bind_int(stmt, 5, static_cast<int>(match.getMatchType()));
 
-    if (match.isPlayed()) {
-      sqlite3_bind_int(stmt, 6, match.getHomeScore());
-      sqlite3_bind_int(stmt, 7, match.getAwayScore());
-      sqlite3_bind_int(stmt, 8, 1); // played = 1
-    } else {
-      sqlite3_bind_null(stmt, 6);
-      sqlite3_bind_null(stmt, 7);
-      sqlite3_bind_int(stmt, 8, 0); // played = 0
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+      sqlite3_finalize(stmt);
+      throw std::runtime_error("Failed to execute statement: " +
+                               std::string(sqlite3_errmsg(db.get())));
     }
 
-    sqlite3_step(stmt);
     sqlite3_finalize(stmt);
   } else {
-    Logger::error("Failed to prepare upsertFixture statement: " +
+    Logger::error("Failed to prepare insertFixture statement: " +
                   std::string(sqlite3_errmsg(db.get())));
-  }
-}
-
-void Database::saveMatches(const std::vector<Match> &matches) {
-  for (const auto &match : matches) {
-    // Assuming league_id can be determined or is not needed for all match types
-    // For now, passing 0 as a placeholder league_id
-    insertFixture(match, 0);
   }
 }
 
@@ -481,6 +457,50 @@ std::vector<Match> Database::loadAllMatches() {
 
   sqlite3_finalize(stmt);
   return matches;
+}
+
+void Database::saveCalendar(const Calendar &calendar) {
+#ifdef DEBUG
+  if (calendar.getFullCalendar().empty()) {
+    Logger::debug("Calendar is empty, nothing to save.");
+    return;
+  }
+  Logger::debug("Saving calendar...");
+  auto it = calendar.getFullCalendar().begin();
+  if (it != calendar.getFullCalendar().end() && !it->second.empty()) {
+    const auto &first_match = it->second[0];
+    Logger::debug("First match to save: " + first_match.getDate().toString() + " " +
+                  std::to_string(first_match.getHomeTeamId()) + " vs " +
+                  std::to_string(first_match.getAwayTeamId()));
+  }
+#endif // DEBUG
+
+  for (const auto &pair : calendar.getFullCalendar()) {
+    for (const auto &match : pair.second) {
+      insertFixture(match);
+    }
+  }
+}
+
+void Database::loadCalendar(Calendar &calendar) {
+  auto matches = loadAllMatches();
+
+#ifdef DEBUG
+  
+  if (matches.empty()) {
+    Logger::debug("No matches found in database to load into calendar.");
+    return;
+  }
+  Logger::debug("Loading calendar...");
+  const auto &first_match = matches[0];
+  Logger::debug("First match loaded: " + first_match.getDate().toString() + " " +
+                std::to_string(first_match.getHomeTeamId()) + " vs " +
+                std::to_string(first_match.getAwayTeamId()));
+#endif // DEBUG
+
+  for (const auto &match : matches) {
+    calendar.addMatch(match);
+  }
 }
 
 void Database::updateGameState(uint8_t current_season, uint16_t managed_team_id,
@@ -549,7 +569,7 @@ void Database::saveLeaguePoints(const League &league) {
                                std::string(sqlite3_errmsg(db.get())));
     }
 
-   sqlite3_clear_bindings(stmt);
+    sqlite3_clear_bindings(stmt);
     sqlite3_reset(stmt);
   }
 

@@ -135,14 +135,8 @@ UPDATE Players SET team_id = ? WHERE id = ?;
 -- FIXTURES
 -- ==========================================
 
--- @QUERY_ID: DELETE_FIXTURES_BY_LEAGUE
-DELETE FROM Fixtures WHERE league_id = ?;
-
 -- @QUERY_ID: INSERT_FIXTURE
-INSERT INTO Fixtures (game_date, home_team_id, away_team_id, league_id) VALUES (?, ?, ?, ?);
-
--- @QUERY_ID: SELECT_FIXTURES_BY_LEAGUE
-SELECT game_date, home_team_id, away_team_id, home_goals, away_goals, played FROM Fixtures WHERE league_id = ?;
+INSERT OR IGNORE INTO Fixtures (game_date, home_team_id, away_team_id) VALUES (?, ?, ?);
 
 -- @QUERY_ID: UPDATE_FIXTURE_RESULT
 UPDATE Fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE game_date = ? AND home_team_id = ? AND away_team_id = ?;

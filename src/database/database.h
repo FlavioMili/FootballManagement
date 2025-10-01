@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "calendar.h"
 #include "league.h"
 #include "match.h"
 #include "player.h"
@@ -39,10 +40,12 @@ public:
   void insertPlayerWithId(const Player &player);
 
   // Fixtures
-  void insertFixture(const Match &match, uint8_t league_id);
-  void saveMatches(const std::vector<Match> &matches);
+  void insertFixture(const Match &match);
   std::vector<Match> loadAllMatches();
 
+  // Calendar
+  void saveCalendar(const Calendar &calendar);
+  void loadCalendar(Calendar &calendar);
 
   // Game State
   bool isFirstRun();

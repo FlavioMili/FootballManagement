@@ -38,10 +38,6 @@ Calendar::getMatchesForDate(const GameDateValue &date) const {
   }
   return no_matches;
 }
-
-std::vector<Match> &Calendar::getMatchesForDate(const GameDateValue &date) {
-  return schedule[date];
-}
 void Calendar::generateSeasonFixtures(const GameDateValue &startDate) {
   auto leagues = GameData::instance().getLeaguesVector();
   for (auto &l : leagues) {

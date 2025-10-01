@@ -28,17 +28,14 @@ enum class Query {
   UPDATE_PLAYER,
   DELETE_PLAYER,
   TRANSFER_PLAYER,
-  DELETE_FIXTURES_BY_LEAGUE,
   INSERT_FIXTURE,
-  SELECT_FIXTURES_BY_LEAGUE,
   UPDATE_FIXTURE_RESULT,
   UPSERT_GAME_STATE,
   SELECT_GAME_STATE,
   UPSERT_LEAGUE_POINTS,
   SELECT_LEAGUE_POINTS,
   RESET_ALL_LEAGUE_POINTS,
-
-  COUNT // As last element, it is the count of the enum elements
+  COUNT
 };
 
 struct QueryMapEntry {
@@ -69,9 +66,7 @@ const std::unordered_map<std::string, Query> string_to_query_map = {
     {"TRANSFER_PLAYER", Query::TRANSFER_PLAYER},
 
     // Calendar
-    {"DELETE_FIXTURES_BY_LEAGUE", Query::DELETE_FIXTURES_BY_LEAGUE},
     {"INSERT_FIXTURE", Query::INSERT_FIXTURE},
-    {"SELECT_FIXTURES_BY_LEAGUE", Query::SELECT_FIXTURES_BY_LEAGUE},
     {"UPDATE_FIXTURE_RESULT", Query::UPDATE_FIXTURE_RESULT},
 
     // Game State

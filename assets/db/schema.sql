@@ -41,14 +41,12 @@ CREATE TABLE IF NOT EXISTS Fixtures (
     game_date TEXT NOT NULL,
     home_team_id INTEGER NOT NULL,
     away_team_id INTEGER NOT NULL,
-    league_id INTEGER NOT NULL,
     match_type INTEGER NOT NULL DEFAULT 0, -- 0: LEAGUE, 1: FRIENDLY, 2: CUP 
     home_goals INTEGER,
     away_goals INTEGER,
     played INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY(home_team_id) REFERENCES Teams(id),
     FOREIGN KEY(away_team_id) REFERENCES Teams(id),
-    FOREIGN KEY(league_id) REFERENCES Leagues(id),
     UNIQUE(game_date, home_team_id, away_team_id)
 );
 

@@ -152,13 +152,22 @@ void TeamSelectionScene::render() {
   }
 
   // Set clipping rect for league buttons
-  SDL_Rect clipRect = {static_cast<int>(league_list_rect_.x),
-                       static_cast<int>(league_list_rect_.y),
-                       static_cast<int>(league_list_rect_.w),
-                       static_cast<int>(league_list_rect_.h)};
-  SDL_SetRenderClipRect(getRenderer(), &clipRect);
-
+  SDL_Rect league_clip_rect = {static_cast<int>(league_list_rect_.x),
+                               static_cast<int>(league_list_rect_.y),
+                               static_cast<int>(league_list_rect_.w),
+                               static_cast<int>(league_list_rect_.h)};
+  SDL_SetRenderClipRect(getRenderer(), &league_clip_rect);
   button_manager.render();
+
+  // Set clipping rect for team buttons
+  if (selected_league_id) {
+    SDL_Rect team_clip_rect = {static_cast<int>(team_list_rect_.x),
+                               static_cast<int>(team_list_rect_.y),
+                               static_cast<int>(team_list_rect_.w),
+                               static_cast<int>(team_list_rect_.h)};
+    SDL_SetRenderClipRect(getRenderer(), &team_clip_rect);
+    button_manager.render();
+  }
 
   // Reset clipping
   SDL_SetRenderClipRect(getRenderer(), NULL);
@@ -216,9 +225,7 @@ void TeamSelectionScene::renderTeamScrollbar() {
       viewHeight - (league_list_rect_.y + league_list_rect_.h + 50);
 
   if (totalTeamHeight > teamListVisibleHeight) {
-    int width, height;
-    SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
-    float scrollbar_area_x = static_cast<float>(width);
+    float scrollbar_area_x = team_list_rect_.x + team_list_rect_.w + 5;
     float scrollbar_area_width = 8;
 
     SDL_FRect scrollbar_bg = {scrollbar_area_x, team_list_rect_.y, scrollbar_area_width,
@@ -262,17 +269,15 @@ void TeamSelectionScene::setupLeagueAndTeamButtons() {
   float totalLeagueWidth =
       available_leagues.size() * (leagueButtonWidth + leaguePadding);
 
-  // The visible area should be the full window width or total content width,
-  // whichever is smaller
-  float visibleLeagueWidth =
-      std::min(totalLeagueWidth, viewWidth); 
-  float leagueAreaStartX = (viewWidth - visibleLeagueWidth) / 2.5f;
+  // The visible area for leagues with padding
+  float leagueVisibleWidth = viewWidth - 40.0f; // 20px padding on each side
+  float leagueAreaStartX = 20.0f;
 
-  league_list_rect_ = {leagueAreaStartX, leagueButtonStartY, visibleLeagueWidth,
+  league_list_rect_ = {leagueAreaStartX, leagueButtonStartY, leagueVisibleWidth,
                        leagueButtonHeight};
 
-  float max_scroll_offset = totalLeagueWidth > visibleLeagueWidth
-                                ? totalLeagueWidth - visibleLeagueWidth
+  float max_scroll_offset = totalLeagueWidth > leagueVisibleWidth
+                                ? totalLeagueWidth - leagueVisibleWidth
                                 : 0;
   league_scroll_offset_ =
       std::max(0.0f, std::min(league_scroll_offset_, max_scroll_offset));
@@ -283,19 +288,11 @@ void TeamSelectionScene::setupLeagueAndTeamButtons() {
   for (size_t i = 0; i < available_leagues.size(); ++i) {
     const League &league = available_leagues[i].get();
 
-    // Only add buttons that are visible in the scrollable area
-    if (currentX + leagueButtonWidth >= leagueAreaStartX &&
-        currentX <= leagueAreaStartX + visibleLeagueWidth) {
-      int buttonId = button_manager.addButton(
-          currentX, leagueButtonStartY, leagueButtonWidth, leagueButtonHeight,
-          league.getName(), [this, league_id = league.getId()]() {
-            this->onLeagueSelected(league_id);
-          });
-      league_button_ids.push_back(buttonId);
-    } else {
-      // Still need to track button IDs even if not visible
-      league_button_ids.push_back(-1);
-    }
+    int buttonId = button_manager.addButton(
+        currentX, leagueButtonStartY, leagueButtonWidth, leagueButtonHeight,
+        league.getName(),
+        [this, league_id = league.getId()]() { this->onLeagueSelected(league_id); });
+    league_button_ids.push_back(buttonId);
 
     currentX += leagueButtonWidth + leaguePadding;
   }
@@ -308,25 +305,22 @@ void TeamSelectionScene::setupLeagueAndTeamButtons() {
                            });
     if (it != available_leagues.end()) {
       size_t index = std::distance(available_leagues.begin(), it);
-      if (index < league_button_ids.size() && league_button_ids[index] != -1) {
+      if (index < league_button_ids.size()) {
         button_manager.setButtonSelected(league_button_ids[index], true);
       }
     }
 
     loadAvailableTeams();
     int teams_per_row = 4;
-    float teamButtonWidth = 250.0f;
+    // float teamButtonWidth = 250.0f;
     float teamButtonHeight = 50.0f;
     float teamPadding = 15.0f;
-    float teamStartX =
-        (viewWidth -
-         (teams_per_row * (teamButtonWidth + teamPadding) - teamPadding)) /
-        2.0f;
+    float teamAreaWidth = viewWidth - 40.0f; // 20px padding on each side
+    float teamStartX = 20.0f;
+
     float teamStartY = leagueButtonStartY + leagueButtonHeight + 50.0f;
     float teamListHeight = height - teamStartY - 50.0f;
-    team_list_rect_ = {teamStartX, teamStartY,
-                       teams_per_row * (teamButtonWidth + teamPadding),
-                       teamListHeight};
+    team_list_rect_ = {teamStartX, teamStartY, teamAreaWidth, teamListHeight};
 
     int num_rows = (available_teams.size() + teams_per_row - 1) / teams_per_row;
     float totalTeamHeight =
@@ -336,22 +330,21 @@ void TeamSelectionScene::setupLeagueAndTeamButtons() {
     team_scroll_offset_ =
         std::max(0.0f, std::min(team_scroll_offset_, max_team_scroll_offset));
 
+    float dynamicTeamButtonWidth = (teamAreaWidth - (teams_per_row - 1) * teamPadding) / teams_per_row;
+
     for (size_t i = 0; i < available_teams.size(); ++i) {
       const Team &team = available_teams[i].get();
       int row = i / teams_per_row;
       int col = i % teams_per_row;
-      float buttonX = teamStartX + col * (teamButtonWidth + teamPadding);
+      float buttonX = teamStartX + col * (dynamicTeamButtonWidth + teamPadding);
       float buttonY = teamStartY + row * (teamButtonHeight + teamPadding) -
                       team_scroll_offset_;
 
-      if (buttonY > teamStartY - teamButtonHeight &&
-          buttonY < teamStartY + teamListHeight) {
-        button_manager.addButton(buttonX, buttonY, teamButtonWidth,
-                                 teamButtonHeight, team.getName(),
-                                 [this, team_id = team.getId()]() {
-                                   this->onTeamSelected(team_id);
-                                 });
-      }
+      button_manager.addButton(buttonX, buttonY, dynamicTeamButtonWidth,
+                               teamButtonHeight, team.getName(),
+                               [this, team_id = team.getId()]() {
+                                 this->onTeamSelected(team_id);
+                               });
     }
   }
 }
