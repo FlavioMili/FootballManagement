@@ -69,8 +69,7 @@ find_package(SQLite3 REQUIRED)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE
-  ${SDL3_LIBRARIES} # Keep this
-  # PkgConfig::SDL3 # REMOVE THIS LINE
+  ${SDL3_LIBRARIES} 
   SQLite::SQLite3
   spdlog::spdlog
   fmt::fmt
