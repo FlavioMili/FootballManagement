@@ -10,6 +10,7 @@
 #include "global/global.h"
 #include <iomanip>
 #include <stdexcept>
+#include <sstream>
 
 /*
  * I know that this code is full of magic numbers but
