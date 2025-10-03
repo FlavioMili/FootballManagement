@@ -60,13 +60,16 @@ target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -pedantic)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL3 REQUIRED sdl3)
 
+# Add PkgConfig's discovered library paths to the linker search paths (for macOS)
+target_link_directories(${PROJECT_NAME} PRIVATE ${SDL3_LIBRARY_DIRS})
+
 find_package(spdlog REQUIRED)
 find_package(fmt REQUIRED)
 find_package(SQLite3 REQUIRED)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE
-  ${SDL3_LIBRARIES}
+  ${SDL3_LIBRARIES} 
   SQLite::SQLite3
   spdlog::spdlog
   fmt::fmt
