@@ -10,3 +10,4 @@ assets/config/settings.json
 add_copyright_header.sh
 logs
 docs
+.DS_Store
