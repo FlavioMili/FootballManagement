@@ -19,7 +19,7 @@ Team::Team(uint16_t team_id, uint8_t team_league_id, std::string_view team_name,
            const Strategy &strategy, const Lineup &lineup_data)
     : id(team_id), league_id(team_league_id), name(team_name),
       player_ids(initial_player_ids), team_strategy(strategy),
-      lineup(lineup_data), finances(initial_balance) {}
+      lineup(lineup_data), finances(initial_balance, *this) {}
 
 // Accessors
 uint16_t Team::getId() const { return id; }

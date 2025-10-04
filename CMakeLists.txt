@@ -1,3 +1,4 @@
+set(CMAKE_CXX_COMPILER "g++") 
 cmake_minimum_required(VERSION 3.12)
 project(FootballManagement LANGUAGES CXX)
 
