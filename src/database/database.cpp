@@ -13,7 +13,7 @@
 #include "global/logger.h"
 #include "global/paths.h"
 #include "global/queries.h"
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 #include <cstdint>
 #include <iostream>
 #include <sqlite3.h>

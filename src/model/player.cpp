@@ -79,29 +79,27 @@ double Player::getOverall(const StatsConfig &stats_config) const {
 void Player::agePlayer() {
   ++_age;
 
+  if (_age < PLAYER_AGE_FACTOR_DECLINE_AGE) return;
+
+  float age_factor = 1.0f - (_age - PLAYER_AGE_FACTOR_DECLINE_AGE + 1) *
+                                PLAYER_AGE_FACTOR_DECAY_RATE;
+
+  // Ensure age_factor doesn't make decay negative (growth) unexpectedly here
+  // though formula suggests it decreases.
+  float decay = PLAYER_STAT_INCREASE_BASE * (1.0f - std::max(0.0f, age_factor));
+
   for (auto &stat : _stats) {
-    if (_age < PLAYER_AGE_FACTOR_DECLINE_AGE)
-      continue;
-
-    float age_factor = 1.0f - (_age - PLAYER_AGE_FACTOR_DECLINE_AGE + 1) *
-                                  PLAYER_AGE_FACTOR_DECAY_RATE;
-
-    float decay =
-        PLAYER_STAT_INCREASE_BASE * (1.0f - std::max(0.0f, age_factor));
     stat.second -= decay;
 
-    if (stat.second < MIN_STAT_VAL)
-      stat.second = MIN_STAT_VAL;
+    if (stat.second < MIN_STAT_VAL) stat.second = MIN_STAT_VAL;
   }
 }
 
 bool Player::checkRetirement() const {
-  if (_age < PLAYER_RETIREMENT_AGE_THRESHOLD) {
-    return false;
-  }
+  if (_age < PLAYER_RETIREMENT_AGE_THRESHOLD) return false;
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
   std::uniform_real_distribution<> dis(0.0, 1.0);
 
   float retirementChance = PLAYER_RETIREMENT_BASE_CHANCE +
@@ -123,9 +121,9 @@ void Player::train(const std::vector<std::string> &focus_stats) {
 
   const std::string &random_stat =
       focus_stats[static_cast<size_t>(stat_dis(gen))];
+
   auto it = _stats.find(random_stat);
-  if (it == _stats.end())
-    return;
+  if (it == _stats.end()) return;
 
   float age_factor =
       ((PLAYER_AGE_FACTOR_DECLINE_AGE - _age) * PLAYER_AGE_FACTOR_DECAY_RATE);
@@ -134,6 +132,5 @@ void Player::train(const std::vector<std::string> &focus_stats) {
   float increment = PLAYER_STAT_INCREASE_BASE * (random_factor * age_factor);
   it->second += increment;
 
-  if (it->second > MAX_STAT_VAL)
-    it->second = MAX_STAT_VAL;
+  if (it->second > MAX_STAT_VAL) it->second = MAX_STAT_VAL;
 }

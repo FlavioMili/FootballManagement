@@ -13,7 +13,7 @@
 #include "global/logger.h"
 #include "global/paths.h"
 #include "global/stats_config.h"
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 #include "model/league.h"
 #include "model/player.h"
 #include "model/team.h"

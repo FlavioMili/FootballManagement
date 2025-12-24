@@ -10,7 +10,7 @@
 #include "database/gamedata.h"
 #include "lineup.h"
 #include "player.h"
-#include <cstdlib>
+#include <random>
 #include <string>
 
 Match::Match(uint16_t home_id, uint16_t away_id, GameDateValue date,
@@ -79,12 +79,15 @@ void Match::simulate(const GameData &game_data) {
   double home_chance =
       total_strength > 0 ? home_strength / total_strength : 0.5;
 
-  int goals = rand() % 6;
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  std::uniform_int_distribution<> goal_dist(0, 5);
+  std::uniform_real_distribution<> chance_dist(0.0, 1.0);
+
+  int goals = goal_dist(gen);
   for (int i = 0; i < goals; ++i) {
-    if (static_cast<double>(rand()) / RAND_MAX < home_chance)
-      home_score++;
-    else
-      away_score++;
+    if (chance_dist(gen) < home_chance) home_score++;
+    else away_score++;
   }
 }
 

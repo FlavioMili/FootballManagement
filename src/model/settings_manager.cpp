@@ -8,7 +8,7 @@
 
 #include "settings_manager.h"
 #include "global/paths.h"
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>
 

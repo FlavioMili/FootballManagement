@@ -12,7 +12,7 @@
 #include "database/datagenerator.h"
 #include "global/logger.h"
 #include "global/paths.h"
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 #include <algorithm>
 #include <fstream>
 
