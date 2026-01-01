@@ -11,6 +11,7 @@
 #include "finances.h"
 #include "lineup.h"
 #include "strategy.h"
+#include "global/types.h"
 #include <cstdint>
 #include <string_view>
 #include <vector>
@@ -20,25 +21,22 @@
 // TODO add lineup and in controller lineupManager class
 class Team {
  public:
-  Team(uint16_t team_id, uint8_t team_league_id, std::string_view team_name,
+  Team(TeamID team_id, uint8_t team_league_id, std::string_view team_name,
        int64_t initial_balance,
-       const std::vector<uint32_t> &initial_player_ids = {},
+       const std::vector<PlayerID> &initial_player_ids = {},
        const Strategy &strategy = Strategy{},
        const Lineup &lineup_data = Lineup{});
 
   // Accessors
-  uint16_t getId() const;
-  uint8_t getLeagueId() const;
+  TeamID getId() const;
+  LeagueID getLeagueId() const;
   const std::string getName() const;
 
-  const std::vector<uint32_t> &getPlayerIDs() const;
+  const std::vector<PlayerID> &getPlayerIDs() const;
 
-  // TODO make these managed by the datapath of either retirement or
-  // database itself?
-  // otherwise we need to check how to make it so that the 
-  // main map id to player actually has those ids
-  // void addPlayerID(const size_t id);
-  // void removePlayerID(const size_t id);
+  // Manage roster
+  void addPlayerID(PlayerID id);
+  bool removePlayerID(PlayerID id);
 
   // Lineup access
   Lineup &getLineup();
@@ -57,15 +55,15 @@ class Team {
   const Finances &getFinances() const noexcept;
 
  private:
-  uint16_t id;
-  uint8_t league_id;
+  TeamID id;
+  LeagueID league_id;
   std::string name;
 
   /*
    * the main idea is to have a players map *map[player_id]-- > player;
    * and here we just iterate on the ids to get *all players.
    */
-  std::vector<uint32_t> player_ids;
+  std::vector<PlayerID> player_ids;
 
   Strategy team_strategy;
   Lineup lineup;

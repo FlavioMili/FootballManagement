@@ -27,7 +27,7 @@ constexpr uint8_t MAX_STAT_VAL = 100;
 // Player Development
 constexpr float PLAYER_STAT_INCREASE_BASE = 0.03f;
 constexpr float PLAYER_AGE_FACTOR_DECAY_RATE = 0.05f;
-constexpr float PLAYER_AGE_FACTOR_DECLINE_AGE = 31.5;
+constexpr float PLAYER_AGE_FACTOR_DECLINE_AGE = 31.5f;
 
 // Player Retirement
 constexpr uint8_t PLAYER_RETIREMENT_AGE_THRESHOLD = 32;

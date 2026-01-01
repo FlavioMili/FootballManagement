@@ -196,7 +196,7 @@ void StrategyScene::renderSliderValue(const std::string& label, float value, int
   }
 
   char buffer[50];
-  snprintf(buffer, sizeof(buffer), "%s: %.1f", label.c_str(), value);
+  snprintf(buffer, sizeof(buffer), "%s: %.1f", label.c_str(), static_cast<double>(value));
 
   SDL_Surface* textSurface = TTF_RenderText_Solid(font, buffer, 0, textColor);
   if (!textSurface) {

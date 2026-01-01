@@ -10,6 +10,7 @@
 
 #include "global/languages.h"
 #include "global/stats_config.h"
+#include "global/types.h"
 #include <cstdint>
 #include <map>
 #include <string>
@@ -17,17 +18,19 @@
 #include <vector>
 
 enum class Foot : bool { Left = false, Right = true };
+enum class TransferStatus { Listed, NotListed };
 
 class Player {
  public:
-  Player(uint32_t new_id, uint32_t new_team_id, std::string_view new_first_name,
+  Player(PlayerID new_id, TeamID new_team_id, std::string_view new_first_name,
          std::string_view new_last_name, std::string_view new_role,
          Language new_nationality, uint32_t new_wage, uint32_t new_status, uint8_t new_age,
          uint8_t new_contract_years, uint8_t new_height, Foot new_foot,
          const std::map<std::string, float> &new_stats);
 
-  uint32_t getId() const;
-  uint32_t getTeamId() const;
+  PlayerID getId() const;
+  TeamID getTeamId() const;
+  void setTeamId(TeamID id);
   std::string getName() const;
   std::string getFirstName() const;
   std::string getLastName() const;
@@ -47,12 +50,19 @@ class Player {
   bool checkRetirement() const;
   void train(const std::vector<std::string> &focus_stats);
 
+  // Market Value & Transfer Logic
+  uint32_t getMarketValue() const;
+  void updateMarketValue(const StatsConfig &stats_config);
+  void setTransferStatus(TransferStatus status);
+  TransferStatus getTransferStatus() const;
+
  private:
   // 32-bit fields first
-  uint32_t _id;
-  uint32_t _team_id;
+  PlayerID _id;
+  TeamID _team_id;
   uint32_t _wage;
   uint32_t _status;
+  uint32_t _cached_market_value = 0;
 
   // strings (non-POD, heap allocated, alignment not a problem)
   std::string _first_name;
@@ -61,6 +71,7 @@ class Player {
 
   // Enums and small ints grouped together
   Language _nationality;
+  TransferStatus _transfer_status = TransferStatus::NotListed;
   uint8_t _age;
   uint8_t _contract_years;
   uint8_t _height;

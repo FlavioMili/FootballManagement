@@ -50,7 +50,7 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr) {
     for (auto &p : _teams)
       _teamsVec.push_back(p.second);
 
-    std::map<uint8_t, std::vector<uint16_t>> league_teams_map;
+    std::map<uint8_t, std::vector<TeamID>> league_teams_map;
     for (const auto &team : all_teams) {
       league_teams_map[team.getLeagueId()].push_back(team.getId());
     }
@@ -75,7 +75,7 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr) {
       _teams.emplace(team.getId(), team);
     }
 
-    std::map<uint8_t, std::vector<uint16_t>> league_teams_map;
+    std::map<uint8_t, std::vector<TeamID>> league_teams_map;
     for (const auto &team : all_teams) {
       league_teams_map[team.getLeagueId()].push_back(team.getId());
     }
@@ -116,24 +116,24 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr) {
 
 
 // ---------------- League ----------------
-void GameData::addLeague(uint8_t id, const League &league) {
+void GameData::addLeague(LeagueID id, const League &league) {
   _leagues.emplace(id, league);
   if (!_leaguesVec.empty())
     _leaguesVec.push_back(_leagues.at(id));
 }
 
 std::optional<std::reference_wrapper<const League>>
-GameData::getLeague(uint8_t id) const {
+GameData::getLeague(LeagueID id) const {
   if (auto it = _leagues.find(id); it != _leagues.end())
     return it->second;
   return std::nullopt;
 }
 
-const std::unordered_map<uint8_t, League> &GameData::getLeagues() const {
+const std::unordered_map<LeagueID, League> &GameData::getLeagues() const {
   return _leagues;
 }
 
-std::unordered_map<uint8_t, League> &GameData::getLeagues() { return _leagues; }
+std::unordered_map<LeagueID, League> &GameData::getLeagues() { return _leagues; }
 
 const std::vector<std::reference_wrapper<const League>> &
 GameData::getLeaguesVector() const {
@@ -141,30 +141,30 @@ GameData::getLeaguesVector() const {
 }
 
 // ---------------- Team ----------------
-void GameData::addTeam(uint16_t id, const Team &team) {
+void GameData::addTeam(TeamID id, const Team &team) {
   _teams.emplace(id, team);
   if (!_teamsVec.empty())
     _teamsVec.push_back(_teams.at(id));
 }
 
-std::optional<std::reference_wrapper<Team>> GameData::getTeam(uint16_t id) {
+std::optional<std::reference_wrapper<Team>> GameData::getTeam(TeamID id) {
   if (auto it = _teams.find(id); it != _teams.end())
     return it->second;
   return std::nullopt;
 }
 
 std::optional<std::reference_wrapper<const Team>>
-GameData::getTeam(uint16_t id) const {
+GameData::getTeam(TeamID id) const {
   if (auto it = _teams.find(id); it != _teams.end())
     return it->second;
   return std::nullopt;
 }
 
-const std::unordered_map<uint16_t, Team> &GameData::getTeams() const {
+const std::unordered_map<TeamID, Team> &GameData::getTeams() const {
   return _teams;
 }
 
-std::unordered_map<uint16_t, Team> &GameData::getTeams() { return _teams; }
+std::unordered_map<TeamID, Team> &GameData::getTeams() { return _teams; }
 
 const std::vector<std::reference_wrapper<const Team>> &
 GameData::getTeamsVector() const {
@@ -172,24 +172,24 @@ GameData::getTeamsVector() const {
 }
 
 // ---------------- Player ----------------
-void GameData::addPlayer(uint32_t id, const Player &player) {
+void GameData::addPlayer(PlayerID id, const Player &player) {
   _players.emplace(id, player);
   if (!_playersVec.empty())
     _playersVec.push_back(_players.at(id));
 }
 
 std::optional<std::reference_wrapper<const Player>>
-GameData::getPlayer(uint32_t id) const {
+GameData::getPlayer(PlayerID id) const {
   if (auto it = _players.find(id); it != _players.end())
     return it->second;
   return std::nullopt;
 }
 
-const std::unordered_map<uint32_t, Player> &GameData::getPlayers() const {
+const std::unordered_map<PlayerID, Player> &GameData::getPlayers() const {
   return _players;
 }
 
-std::unordered_map<uint32_t, Player> &GameData::getPlayers() {
+std::unordered_map<PlayerID, Player> &GameData::getPlayers() {
   return _players;
 }
 const std::vector<std::reference_wrapper<const Player>> &
@@ -204,7 +204,7 @@ void GameData::ageAllPlayers() {
 }
 
 std::vector<std::reference_wrapper<const Player>>
-GameData::getPlayersForTeam(uint16_t team_id) const {
+GameData::getPlayersForTeam(TeamID team_id) const {
   std::vector<std::reference_wrapper<const Player>> players;
   for (const auto &player : _playersVec) {
     if (player.get().getTeamId() == team_id) {
@@ -214,7 +214,7 @@ GameData::getPlayersForTeam(uint16_t team_id) const {
   return players;
 }
 
-bool GameData::removePlayer(uint32_t id) {
+bool GameData::removePlayer(PlayerID id) {
   bool erased = _players.erase(id) > 0;
   if (erased && !_playersVec.empty()) {
     _playersVec.erase(

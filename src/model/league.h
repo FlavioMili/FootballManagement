@@ -12,6 +12,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include "global/types.h"
 #include <map>
 
 /**
@@ -24,29 +25,29 @@
 */
 class League {
 public:
-  League(uint8_t league_id, const std::string &league_name,
-         const std::vector<uint16_t> &initial_team_ids = {}, std::optional<uint8_t> parent = std::nullopt);
+  League(LeagueID league_id, const std::string &league_name,
+         const std::vector<TeamID> &initial_team_ids = {}, std::optional<LeagueID> parent = std::nullopt);
 
   // Accessors
   uint8_t getId() const;
   std::string getName() const;
 
-  const std::vector<uint16_t> &getTeamIDs() const;
-  void addTeamID(uint16_t team_id);
-  void removeTeamID(uint16_t team_id);
+  const std::vector<TeamID> &getTeamIDs() const;
+  void addTeamID(TeamID team_id);
+  void removeTeamID(TeamID team_id);
 
-  uint8_t getPoints(uint16_t team_id) const;
-  void addPoints(uint16_t team_id, uint8_t points);
-  void setPoints(uint16_t team_id, uint8_t points);
+  uint8_t getPoints(TeamID team_id) const;
+  void addPoints(TeamID team_id, uint8_t points);
+  void setPoints(TeamID team_id, uint8_t points);
   void resetPoints();
 
-  const std::map<uint16_t, uint8_t> &getLeaderboard() const;
-  const std::optional<uint8_t> getParentLeagueID() const;
+  const std::map<TeamID, uint8_t> &getLeaderboard() const;
+  const std::optional<LeagueID> getParentLeagueID() const;
 
 private:
-  const uint8_t id;
+  const LeagueID id;
   std::string name;
-  const std::optional<uint8_t> parent_league_id;
-  std::vector<uint16_t> team_ids;
-  std::map<uint16_t, uint8_t> leaderboard; // team_id -> points
+  const std::optional<LeagueID> parent_league_id;
+  std::vector<TeamID> team_ids;
+  std::map<TeamID, uint8_t> leaderboard; // team_id -> points
 };

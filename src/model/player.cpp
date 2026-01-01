@@ -13,8 +13,9 @@
 #include <random>
 #include <string>
 #include <utility>
+#include <cmath>
 
-Player::Player(uint32_t new_id, uint32_t new_team_id,
+Player::Player(PlayerID new_id, TeamID new_team_id,
                std::string_view new_first_name, std::string_view new_last_name,
                std::string_view new_role, Language new_nationality,
                uint32_t new_wage, uint32_t new_status, uint8_t new_age,
@@ -28,7 +29,9 @@ Player::Player(uint32_t new_id, uint32_t new_team_id,
 
 uint32_t Player::getId() const { return _id; }
 
-uint32_t Player::getTeamId() const { return _team_id; }
+TeamID Player::getTeamId() const { return _team_id; }
+
+void Player::setTeamId(TeamID id) { _team_id = id; }
 
 std::string Player::getName() const { return _first_name + " " + _last_name; }
 
@@ -81,7 +84,7 @@ void Player::agePlayer() {
 
   if (_age < PLAYER_AGE_FACTOR_DECLINE_AGE) return;
 
-  float age_factor = 1.0f - (_age - PLAYER_AGE_FACTOR_DECLINE_AGE + 1) *
+  float age_factor = 1.0f - (static_cast<float>(_age) - PLAYER_AGE_FACTOR_DECLINE_AGE + 1.0f) *
                                 PLAYER_AGE_FACTOR_DECAY_RATE;
 
   // Ensure age_factor doesn't make decay negative (growth) unexpectedly here
@@ -100,10 +103,10 @@ bool Player::checkRetirement() const {
 
   static std::random_device rd;
   static std::mt19937 gen(rd());
-  std::uniform_real_distribution<> dis(0.0, 1.0);
+  std::uniform_real_distribution<float> dis(0.0f, 1.0f);
 
   float retirementChance = PLAYER_RETIREMENT_BASE_CHANCE +
-                           (_age - PLAYER_RETIREMENT_AGE_THRESHOLD) *
+                           (static_cast<float>(_age) - PLAYER_RETIREMENT_AGE_THRESHOLD) *
                                PLAYER_RETIREMENT_CHANCE_INCREASE_PER_YEAR;
 
   return dis(gen) < retirementChance;
@@ -126,11 +129,59 @@ void Player::train(const std::vector<std::string> &focus_stats) {
   if (it == _stats.end()) return;
 
   float age_factor =
-      ((PLAYER_AGE_FACTOR_DECLINE_AGE - _age) * PLAYER_AGE_FACTOR_DECAY_RATE);
+      ((PLAYER_AGE_FACTOR_DECLINE_AGE - static_cast<float>(_age)) * PLAYER_AGE_FACTOR_DECAY_RATE);
   float random_factor = rand_dist(gen);
 
   float increment = PLAYER_STAT_INCREASE_BASE * (random_factor * age_factor);
   it->second += increment;
 
   if (it->second > MAX_STAT_VAL) it->second = MAX_STAT_VAL;
+}
+
+// ---------------- Market Logic ----------------
+
+uint32_t Player::getMarketValue() const {
+  return _cached_market_value;
+}
+
+void Player::updateMarketValue(const StatsConfig &stats_config) {
+  // Simple algorithm for market value
+  // Value = (Overall^2 * 1000) * AgeFactor
+  // AgeFactor: Younger players (18-25) have higher potential value. 
+  // This is a placeholder algorithm.
+  
+  double overall = getOverall(stats_config);
+  
+  // Base value calculation
+  // E.g. Overall 50 -> 2500 * 1000 = 2.5M
+  // E.g. Overall 80 -> 6400 * 1000 = 6.4M (Need steeper curve)
+  // Let's try Overall^3
+  
+  // Normalized overall (0-100) -> (0-1)
+  // But our overall is sum of weighted stats. Weights sum to 1? 
+  // Let's assume overall is roughly 0-100.
+  
+  double base_value = std::pow(overall, 3) * 10.0; 
+  // 50^3 * 10 = 125,000 * 10 = 1,250,000
+  // 80^3 * 10 = 512,000 * 10 = 5,120,000
+  // 90^3 * 10 = 729,000 * 10 = 7,290,000
+  
+  // Age multiplier
+  // Peak value at ~24-27
+  double age_multiplier = 1.0;
+  if (_age < 20) age_multiplier = 1.5;
+  else if (_age < 24) age_multiplier = 1.3;
+  else if (_age < 29) age_multiplier = 1.1;
+  else if (_age < 32) age_multiplier = 0.9;
+  else age_multiplier = 0.6; // Older players lose value
+  
+  _cached_market_value = static_cast<uint32_t>(base_value * age_multiplier);
+}
+
+void Player::setTransferStatus(TransferStatus status) {
+  _transfer_status = status;
+}
+
+TransferStatus Player::getTransferStatus() const {
+  return _transfer_status;
 }

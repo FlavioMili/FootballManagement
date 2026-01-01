@@ -62,8 +62,8 @@ public:
   // Player specific actions
   void ageAllPlayers();
   void updatePlayer(const Player &player);
-  void deletePlayer(uint32_t player_id);
-  void transferPlayer(uint32_t player_id, uint16_t new_team_id);
+  void deletePlayer(PlayerID player_id);
+  void transferPlayer(PlayerID player_id, uint16_t new_team_id);
 
 private:
   std::unique_ptr<sqlite3, decltype(&sqlite3_close)> db;

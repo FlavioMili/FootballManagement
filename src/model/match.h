@@ -16,12 +16,12 @@ class GameData;
 
 class Match {
  public:
-  Match(uint16_t home_id, uint16_t away_id, GameDateValue date, MatchType type);
+  Match(TeamID home_id, TeamID away_id, GameDateValue date, MatchType type);
 
   void simulate(const GameData &game_data);
 
-  uint16_t getHomeTeamId() const;
-  uint16_t getAwayTeamId() const;
+  TeamID getHomeTeamId() const;
+  TeamID getAwayTeamId() const;
   uint8_t getHomeScore() const;
   uint8_t getAwayScore() const;
   MatchType getMatchType() const;
@@ -29,8 +29,8 @@ class Match {
   bool isPlayed() const;
 
  private:
-  uint16_t home_team_id;
-  uint16_t away_team_id;
+  TeamID home_team_id;
+  TeamID away_team_id;
   GameDateValue match_date;
   MatchType match_type;
   uint8_t home_score;

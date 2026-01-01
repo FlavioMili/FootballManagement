@@ -26,5 +26,5 @@ class DataGenerator {
   static std::vector<std::string> last_names;
 
   static void loadNames();
-  static Player generateRandomPlayer(uint16_t team_id);
+  static Player generateRandomPlayer(TeamID team_id);
 };

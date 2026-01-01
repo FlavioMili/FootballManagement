@@ -49,7 +49,7 @@ void DataGenerator::loadNames() {
   }
 }
 
-Player DataGenerator::generateRandomPlayer(uint16_t team_id) {
+Player DataGenerator::generateRandomPlayer(TeamID team_id) {
   static uint32_t next_player_id = 50000;
   auto stats_config = GameData::instance().getStatsConfig();
   static std::mt19937 gen(std::random_device{}());
@@ -139,7 +139,7 @@ std::vector<Player> DataGenerator::generatePlayers() {
       std::ifstream f(entry.path());
       json data = json::parse(f);
       for (const auto &item : data) {
-        uint16_t team_id = item.at("team_id").get<uint16_t>();
+        TeamID team_id = item.at("team_id").get<uint16_t>();
         player_counts[team_id]++;
 
         auto it =

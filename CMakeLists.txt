@@ -73,6 +73,15 @@ find_package(SQLite3 REQUIRED)
 file(GLOB_RECURSE ALL_SRC src/*.cpp)
 list(FILTER ALL_SRC EXCLUDE REGEX "src/main.cpp$")
 
+
+# -----------------------------
+# Path Configuration
+# -----------------------------
+configure_file(
+  "${PROJECT_SOURCE_DIR}/src/global/paths.h.in"
+  "${PROJECT_BINARY_DIR}/src/global/paths.h"
+)
+
 add_library(core_lib ${ALL_SRC})
 
 # -----------------------------
@@ -85,6 +94,7 @@ set(VIEW_GUI_DIR "${PROJECT_SOURCE_DIR}/src/gui")
 set(VIEW_GUI_SCENES_DIR "${VIEW_GUI_DIR}/scenes")
 
 target_include_directories(core_lib PUBLIC
+  ${PROJECT_BINARY_DIR}/src
   ${PROJECT_SOURCE_DIR}/src
   ${MODEL_DIR}
   ${CONTROLLER_DIR}
@@ -141,12 +151,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   )
 
   target_compile_definitions(core_lib PRIVATE DEBUG)
-  target_compile_options(core_lib PRIVATE 
+  target_compile_options(core_lib PUBLIC 
     -Og -g3 
     -fsanitize=address,undefined
     ${DEBUG_WARNINGS}
   )
-  target_link_options(core_lib PRIVATE -fsanitize=address,undefined)
+  target_link_options(core_lib PUBLIC -fsanitize=address,undefined)
   
   target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
   target_compile_options(${PROJECT_NAME} PRIVATE 
@@ -176,4 +186,14 @@ endif()
 if(BUILD_TESTING)
   enable_testing()
   add_subdirectory(test)
+endif()
+
+# Copy compile_commands.json to source dir
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+  add_custom_target(copy_compile_commands ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${CMAKE_BINARY_DIR}/compile_commands.json
+      ${CMAKE_SOURCE_DIR}/compile_commands.json
+    COMMENT "Copying compile_commands.json to root"
+  )
 endif()

@@ -26,33 +26,33 @@ Player* Lineup::getGoalkeeper() const {
 
 // -------------- Grid (outfield players) ---------------
 void Lineup::placePlayer(int row, int col, Player* player) {
-  int index = toIndex(row, col);
+  int index = toIndex(static_cast<uint8_t>(row), static_cast<uint8_t>(col));
   placePlayer(index, player);
 }
 
 void Lineup::removePlayer(int row, int col) {
-  int index = toIndex(row, col);
+  int index = toIndex(static_cast<uint8_t>(row), static_cast<uint8_t>(col));
   removePlayer(index);
 }
 
 Player* Lineup::getPlayerAt(int row, int col) const {
-  int index = toIndex(row, col);
+  int index = toIndex(static_cast<uint8_t>(row), static_cast<uint8_t>(col));
   return getPlayerAt(index);
 }
 
 void Lineup::placePlayer(int index, Player* player) {
   if (index < 0 || index >= LINEUP_GRID_SIZE) return;
-  grid[index] = player;
+  grid[static_cast<size_t>(index)] = player;
 }
 
 void Lineup::removePlayer(int index) {
   if (index < 0 || index >= LINEUP_GRID_SIZE) return;
-  grid[index] = nullptr;
+  grid[static_cast<size_t>(index)] = nullptr;
 }
 
 Player* Lineup::getPlayerAt(int index) const {
   if (index < 0 || index >= LINEUP_GRID_SIZE) return nullptr;
-  return grid[index];
+  return grid[static_cast<size_t>(index)];
 }
 
 // -------------- Reserves ---------------
@@ -93,7 +93,7 @@ std::string Lineup::toString() const {
   return oss.str();
 }
 
-void Lineup::generateStartingXI(const std::vector<uint32_t>& allPlayerIDs, const StatsConfig& stats_config) {
+void Lineup::generateStartingXI(const std::vector<PlayerID>& allPlayerIDs, const StatsConfig& stats_config) {
   // Clear previous lineup
   gridClear();
   reserves.clear();
@@ -129,12 +129,12 @@ void Lineup::generateStartingXI(const std::vector<uint32_t>& allPlayerIDs, const
 
   for (int r = rows - 1; r >= 0 && placed < 10; --r) {
     for (int c = 0; c < cols && placed < 10; ++c) {
-      grid[toIndex(r, c)] = const_cast<Player*>(outfieldPlayers[placed]);
+      grid[static_cast<size_t>(toIndex(static_cast<uint8_t>(r), static_cast<uint8_t>(c)))] = const_cast<Player*>(outfieldPlayers[static_cast<size_t>(placed)]);
       ++placed;
     }
   }
 
   // Remaining players go to reserves
-  for (size_t i = placed; i < outfieldPlayers.size(); ++i)
+  for (size_t i = static_cast<size_t>(placed); i < outfieldPlayers.size(); ++i)
     reserves.push_back(const_cast<Player*>(outfieldPlayers[i]));
 }

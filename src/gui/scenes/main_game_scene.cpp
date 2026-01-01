@@ -141,11 +141,11 @@ void MainGameScene::renderLeaderboard() {
       TTF_Font *itemFont = TTF_OpenFont(FONT_PATH, 20);
       int rank = 1;
       for (const auto &pair : sorted_teams) {
-        auto teamOpt = guiView->getController().getTeamById(pair.first);
+        auto teamOpt = guiView->getController().getTeamById(static_cast<uint16_t>(pair.first));
         if (teamOpt.has_value()) {
           const Team &team = teamOpt->get();
           std::string text = std::to_string(rank) + ". " +
-                             std::string(team.getName()) + " - " +
+                             team.getName() + " - " +
                              std::to_string(pair.second) + " pts";
           surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
           texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
@@ -200,7 +200,7 @@ void MainGameScene::renderTopPlayers() {
     for (size_t i = 0; i < 3 && i < players.size(); ++i) {
       const auto &player = players[i].get();
       std::string text =
-          player.getName() + " (" + std::string(player.getRole()) +
+          player.getName() + " (" + player.getRole() +
           ") - OVR: " + std::to_string(player.getOverall(stats_config));
       surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
       texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
@@ -236,7 +236,7 @@ void MainGameScene::renderDate() {
   float buttonW = 100.0f;
   SDL_FRect dstRect = {static_cast<float>(windowWidth) - buttonW - 10.0f -
                            texW - 10.0f,
-                       15.0f, (float)texW, (float)texH};
+                       15.0f, static_cast<float>(texW), static_cast<float>(texH)};
   SDL_RenderTexture(getRenderer(), texture, nullptr, &dstRect);
 
   SDL_DestroySurface(surface);

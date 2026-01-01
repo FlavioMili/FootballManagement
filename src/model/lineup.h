@@ -8,6 +8,7 @@
 
 #pragma once
 #include <array>
+#include "global/types.h"
 #include <vector>
 #include <string>
 #include "global/global.h"
@@ -52,7 +53,7 @@ public:
   // Debug / visualisation
   std::string toString() const;
 
-  void generateStartingXI(const std::vector<uint32_t>& allPlayers, const StatsConfig& stats_config);
+  void generateStartingXI(const std::vector<PlayerID>& allPlayers, const StatsConfig& stats_config);
 
   void gridClear() {goalkeeper = nullptr; grid.fill(nullptr); }
 

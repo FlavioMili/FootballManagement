@@ -87,8 +87,8 @@ void Game::simulateMatches(std::vector<Match> &matches) {
 
       if (home_team.getId() == managed_team_id ||
           away_team.getId() == managed_team_id) {
-        std::cout << home_team.getName() << " " << (int)match.getHomeScore()
-                  << " - " << (int)match.getAwayScore() << " "
+        std::cout << home_team.getName() << " " << static_cast<int>(match.getHomeScore())
+                  << " - " << static_cast<int>(match.getAwayScore()) << " "
                   << away_team.getName() << "\n";
       }
     }
@@ -124,7 +124,7 @@ void Game::updateStandings(const Match &match) {
 }
 
 void Game::endSeason() {
-  std::cout << "--- Season " << (int)current_season << " has concluded. ---"
+  std::cout << "--- Season " << static_cast<int>(current_season) << " has concluded. ---"
             << "\n";
   GameData::instance().ageAllPlayers();
   current_season++;

@@ -81,7 +81,7 @@ void TeamSelectionScene::handleEvent(const SDL_Event &event) {
     break;
 
   case SDL_EVENT_MOUSE_BUTTON_DOWN:
-    mouse_point = {(float)event.button.x, (float)event.button.y};
+    mouse_point = {static_cast<float>(event.button.x), static_cast<float>(event.button.y)};
     if (SDL_PointInRectFloat(&mouse_point, &league_list_rect_)) {
       is_dragging_leagues_ = true;
     } else if (SDL_PointInRectFloat(&mouse_point, &team_list_rect_)) {
@@ -101,7 +101,7 @@ void TeamSelectionScene::handleEvent(const SDL_Event &event) {
     break;
 
   case SDL_EVENT_MOUSE_WHEEL:
-    mouse_point = {(float)event.wheel.x, (float)event.wheel.y};
+    mouse_point = {static_cast<float>(event.wheel.x), static_cast<float>(event.wheel.y)};
     if (SDL_PointInRectFloat(&mouse_point, &league_list_rect_)) {
       league_scroll_offset_ += event.wheel.x * 20;
       setupLeagueAndTeamButtons();
@@ -140,7 +140,7 @@ void TeamSelectionScene::render() {
       SDL_Texture *textTexture =
           SDL_CreateTextureFromSurface(getRenderer(), textSurface);
       if (textTexture) {
-        SDL_FRect textRect = {(width - static_cast<float>(textSurface->w)) /
+        SDL_FRect textRect = {(static_cast<float>(width) - static_cast<float>(textSurface->w)) /
                                   2.0f,
                               50.0f, static_cast<float>(textSurface->w),
                               static_cast<float>(textSurface->h)};
@@ -183,7 +183,7 @@ void TeamSelectionScene::renderLeagueScrollbar() {
   float leagueButtonWidth = 250.0f;
   float leaguePadding = 20.0f;
   float totalLeagueWidth =
-      available_leagues.size() * (leagueButtonWidth + leaguePadding) -
+      static_cast<float>(available_leagues.size()) * (leagueButtonWidth + leaguePadding) -
       leaguePadding;
 
   if (totalLeagueWidth > viewWidth) {
@@ -218,9 +218,9 @@ void TeamSelectionScene::renderTeamScrollbar() {
   float teamButtonHeight = 50.0f;
   float teamPadding = 15.0f;
   int teams_per_row = 4;
-  int num_rows = (available_teams.size() + teams_per_row - 1) / teams_per_row;
+  size_t num_rows = (available_teams.size() + static_cast<size_t>(teams_per_row) - 1) / static_cast<size_t>(teams_per_row);
   float totalTeamHeight =
-      num_rows * (teamButtonHeight + teamPadding) - teamPadding;
+      static_cast<float>(num_rows) * (teamButtonHeight + teamPadding) - teamPadding;
   float teamListVisibleHeight =
       viewHeight - (league_list_rect_.y + league_list_rect_.h + 50);
 
@@ -267,7 +267,7 @@ void TeamSelectionScene::setupLeagueAndTeamButtons() {
 
   // Calculate total width needed for all league buttons
   float totalLeagueWidth =
-      available_leagues.size() * (leagueButtonWidth + leaguePadding);
+      static_cast<float>(available_leagues.size()) * (leagueButtonWidth + leaguePadding);
 
   // The visible area for leagues with padding
   float leagueVisibleWidth = viewWidth - 40.0f; // 20px padding on each side
@@ -304,7 +304,7 @@ void TeamSelectionScene::setupLeagueAndTeamButtons() {
                                     selected_league_id.value();
                            });
     if (it != available_leagues.end()) {
-      size_t index = std::distance(available_leagues.begin(), it);
+      size_t index = static_cast<size_t>(std::distance(available_leagues.begin(), it));
       if (index < league_button_ids.size()) {
         button_manager.setButtonSelected(league_button_ids[index], true);
       }
@@ -319,25 +319,25 @@ void TeamSelectionScene::setupLeagueAndTeamButtons() {
     float teamStartX = 20.0f;
 
     float teamStartY = leagueButtonStartY + leagueButtonHeight + 50.0f;
-    float teamListHeight = height - teamStartY - 50.0f;
+    float teamListHeight = static_cast<float>(height) - teamStartY - 50.0f;
     team_list_rect_ = {teamStartX, teamStartY, teamAreaWidth, teamListHeight};
 
-    int num_rows = (available_teams.size() + teams_per_row - 1) / teams_per_row;
+    size_t num_rows = (available_teams.size() + static_cast<size_t>(teams_per_row) - 1) / static_cast<size_t>(teams_per_row);
     float totalTeamHeight =
-        num_rows * (teamButtonHeight + teamPadding) - teamPadding;
+        static_cast<float>(num_rows) * (teamButtonHeight + teamPadding) - teamPadding;
     float max_team_scroll_offset =
         totalTeamHeight > teamListHeight ? totalTeamHeight - teamListHeight : 0;
     team_scroll_offset_ =
         std::max(0.0f, std::min(team_scroll_offset_, max_team_scroll_offset));
 
-    float dynamicTeamButtonWidth = (teamAreaWidth - (teams_per_row - 1) * teamPadding) / teams_per_row;
+    float dynamicTeamButtonWidth = (teamAreaWidth - static_cast<float>(teams_per_row - 1) * teamPadding) / static_cast<float>(teams_per_row);
 
     for (size_t i = 0; i < available_teams.size(); ++i) {
       const Team &team = available_teams[i].get();
-      int row = i / teams_per_row;
-      int col = i % teams_per_row;
-      float buttonX = teamStartX + col * (dynamicTeamButtonWidth + teamPadding);
-      float buttonY = teamStartY + row * (teamButtonHeight + teamPadding) -
+      int row = static_cast<int>(i) / teams_per_row;
+      int col = static_cast<int>(i) % teams_per_row;
+      float buttonX = teamStartX + static_cast<float>(col) * (dynamicTeamButtonWidth + teamPadding);
+      float buttonY = teamStartY + static_cast<float>(row) * (teamButtonHeight + teamPadding) -
                       team_scroll_offset_;
 
       button_manager.addButton(buttonX, buttonY, dynamicTeamButtonWidth,

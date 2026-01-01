@@ -10,6 +10,11 @@
 
 #include <cstdint>
 
+// ID Types
+using LeagueID = uint8_t;
+using TeamID = uint16_t;
+using PlayerID = uint32_t;
+
 enum class SeasonPhase : uint8_t {
     PRE_SEASON,
     REGULAR_SEASON,
@@ -24,7 +29,7 @@ enum class MatchType : uint8_t {
 };
 
 struct Matchup {
-  uint16_t home_team_id;
-  uint16_t away_team_id;
+  TeamID home_team_id;
+  TeamID away_team_id;
   MatchType type;
 };

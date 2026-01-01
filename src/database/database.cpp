@@ -125,7 +125,7 @@ void Database::loadTeamsForLeague(League &league) const {
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
     int team_id = sqlite3_column_int(stmt, 0);
-    league.addTeamID(team_id);
+    league.addTeamID(static_cast<uint16_t>(team_id));
   }
 
   sqlite3_finalize(stmt);
@@ -167,8 +167,8 @@ std::vector<Player> Database::loadAllPlayers() {
   }
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    uint32_t id = sqlite3_column_int(stmt, 0);
-    uint32_t team_id = sqlite3_column_int(stmt, 1);
+    uint32_t id = static_cast<uint32_t>(sqlite3_column_int(stmt, 0));
+    uint32_t team_id = static_cast<uint32_t>(sqlite3_column_int(stmt, 1));
     const char *first_name =
         reinterpret_cast<const char *>(sqlite3_column_text(stmt, 2));
     const char *last_name =
@@ -178,7 +178,7 @@ std::vector<Player> Database::loadAllPlayers() {
         reinterpret_cast<const char *>(sqlite3_column_text(stmt, 5));
     const char *nationality_str =
         reinterpret_cast<const char *>(sqlite3_column_text(stmt, 6));
-    uint32_t wage = sqlite3_column_int(stmt, 7);
+    uint32_t wage = static_cast<uint32_t>(sqlite3_column_int(stmt, 7));
     int contract_years = sqlite3_column_int(stmt, 8);
     int height = sqlite3_column_int(stmt, 9);
     const char *foot_str =
@@ -312,7 +312,7 @@ void Database::insertPlayer(const Player &player) {
   std::string first_name = player.getFirstName();
   std::string last_name = player.getLastName();
 
-  sqlite3_bind_int(stmt, 1, player.getTeamId());
+  sqlite3_bind_int(stmt, 1, static_cast<int>(player.getTeamId()));
   sqlite3_bind_text(stmt, 2, first_name.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 3, last_name.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_int(stmt, 4, player.getAge());
@@ -323,7 +323,7 @@ void Database::insertPlayer(const Player &player) {
       (it != languageToString.end()) ? std::string(it->second) : "English";
   sqlite3_bind_text(stmt, 6, nationality_str.c_str(), -1, SQLITE_TRANSIENT);
 
-  sqlite3_bind_int(stmt, 7, player.getWage());
+  sqlite3_bind_int(stmt, 7, static_cast<int>(player.getWage()));
   sqlite3_bind_int(stmt, 8, player.getContractYears());
   sqlite3_bind_int(stmt, 9, player.getHeight());
 
@@ -331,7 +331,7 @@ void Database::insertPlayer(const Player &player) {
   sqlite3_bind_text(stmt, 10, foot_str.c_str(), -1, SQLITE_TRANSIENT);
 
   sqlite3_bind_text(stmt, 11, stats_str.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 12, player.getStatus());
+  sqlite3_bind_int(stmt, 12, static_cast<int>(player.getStatus()));
 
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     sqlite3_finalize(stmt);
@@ -354,8 +354,8 @@ void Database::insertPlayerWithId(const Player &player) {
   nlohmann::json stats_json = player.getStats();
   std::string stats_str = stats_json.dump();
 
-  sqlite3_bind_int(stmt, 1, player.getId()); // Explicit ID
-  sqlite3_bind_int(stmt, 2, player.getTeamId());
+  sqlite3_bind_int(stmt, 1, static_cast<int>(player.getId())); // Explicit ID
+  sqlite3_bind_int(stmt, 2, static_cast<int>(player.getTeamId()));
   sqlite3_bind_text(stmt, 3, player.getFirstName().c_str(), -1,
                     SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 4, player.getLastName().c_str(), -1,
@@ -368,7 +368,7 @@ void Database::insertPlayerWithId(const Player &player) {
       (it != languageToString.end()) ? std::string(it->second) : "English";
   sqlite3_bind_text(stmt, 7, nationality_str.c_str(), -1, SQLITE_TRANSIENT);
 
-  sqlite3_bind_int(stmt, 8, player.getWage());
+  sqlite3_bind_int(stmt, 8, static_cast<int>(player.getWage()));
   sqlite3_bind_int(stmt, 9, player.getContractYears());
   sqlite3_bind_int(stmt, 10, player.getHeight());
 
@@ -376,7 +376,7 @@ void Database::insertPlayerWithId(const Player &player) {
   sqlite3_bind_text(stmt, 11, foot_str.c_str(), -1, SQLITE_TRANSIENT);
 
   sqlite3_bind_text(stmt, 12, stats_str.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 13, player.getStatus());
+  sqlite3_bind_int(stmt, 13, static_cast<int>(player.getStatus()));
 
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     sqlite3_finalize(stmt);
@@ -387,7 +387,7 @@ void Database::insertPlayerWithId(const Player &player) {
   sqlite3_finalize(stmt);
 }
 
-void Database::transferPlayer(uint32_t player_id, uint16_t new_team_id) {
+void Database::transferPlayer(PlayerID player_id, uint16_t new_team_id) {
   sqlite3_stmt *stmt;
   const std::string &sql = SQLLoader::getQuery(Query::TRANSFER_PLAYER);
 
@@ -397,7 +397,7 @@ void Database::transferPlayer(uint32_t player_id, uint16_t new_team_id) {
   }
 
   sqlite3_bind_int(stmt, 1, new_team_id);
-  sqlite3_bind_int(stmt, 2, player_id);
+  sqlite3_bind_int(stmt, 2, static_cast<int>(player_id));
 
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     sqlite3_finalize(stmt);
@@ -445,8 +445,8 @@ std::vector<Match> Database::loadAllMatches() {
   }
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    uint16_t home_id = sqlite3_column_int(stmt, 0);
-    uint16_t away_id = sqlite3_column_int(stmt, 1);
+    uint16_t home_id = static_cast<uint16_t>(sqlite3_column_int(stmt, 0));
+    uint16_t away_id = static_cast<uint16_t>(sqlite3_column_int(stmt, 1));
     std::string date_str =
         reinterpret_cast<const char *>(sqlite3_column_text(stmt, 2));
     auto match_type = static_cast<MatchType>(sqlite3_column_int(stmt, 3));
@@ -538,11 +538,11 @@ bool Database::loadGameState(uint8_t &current_season, uint16_t &managed_team_id,
 
   if (sqlite3_step(stmt) == SQLITE_ROW) {
     has_data = true;
-    managed_team_id = sqlite3_column_int(stmt, 0);
+    managed_team_id = static_cast<uint16_t>(sqlite3_column_int(stmt, 0));
     const unsigned char *game_date_text = sqlite3_column_text(stmt, 1);
     game_date =
         game_date_text ? reinterpret_cast<const char *>(game_date_text) : "";
-    current_season = sqlite3_column_int(stmt, 2);
+    current_season = static_cast<uint8_t>(sqlite3_column_int(stmt, 2));
   }
 
   sqlite3_finalize(stmt);
@@ -588,7 +588,7 @@ void Database::loadLeaguePoints(League &league) const {
   sqlite3_bind_int(stmt, 1, league.getId());
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    uint16_t team_id = static_cast<uint16_t>(sqlite3_column_int(stmt, 0));
+    TeamID team_id = static_cast<uint16_t>(sqlite3_column_int(stmt, 0));
     uint8_t points = static_cast<uint8_t>(sqlite3_column_int(stmt, 1));
     league.setPoints(team_id, points);
   }
@@ -627,7 +627,7 @@ void Database::updatePlayer(const Player &player) {
   nlohmann::json stats_json = player.getStats();
   std::string stats_str = stats_json.dump();
 
-  sqlite3_bind_int(stmt, 1, player.getTeamId());
+  sqlite3_bind_int(stmt, 1, static_cast<int>(player.getTeamId()));
   sqlite3_bind_text(stmt, 2, player.getFirstName().c_str(), -1,
                     SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 3, player.getLastName().c_str(), -1,
@@ -640,7 +640,7 @@ void Database::updatePlayer(const Player &player) {
       (it != languageToString.end()) ? std::string(it->second) : "English";
   sqlite3_bind_text(stmt, 6, nationality_str.c_str(), -1, SQLITE_TRANSIENT);
 
-  sqlite3_bind_int(stmt, 7, player.getWage());
+  sqlite3_bind_int(stmt, 7, static_cast<int>(player.getWage()));
   sqlite3_bind_int(stmt, 8, player.getContractYears());
   sqlite3_bind_int(stmt, 9, player.getHeight());
 
@@ -648,8 +648,8 @@ void Database::updatePlayer(const Player &player) {
   sqlite3_bind_text(stmt, 10, foot_str.c_str(), -1, SQLITE_TRANSIENT);
 
   sqlite3_bind_text(stmt, 11, stats_str.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 12, player.getStatus());
-  sqlite3_bind_int(stmt, 13, player.getId());
+  sqlite3_bind_int(stmt, 12, static_cast<int>(player.getStatus()));
+  sqlite3_bind_int(stmt, 13, static_cast<int>(player.getId()));
 
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     sqlite3_finalize(stmt);
@@ -660,7 +660,7 @@ void Database::updatePlayer(const Player &player) {
   sqlite3_finalize(stmt);
 }
 
-void Database::deletePlayer(uint32_t player_id) {
+void Database::deletePlayer(PlayerID player_id) {
   sqlite3_stmt *stmt;
   const std::string &sql = SQLLoader::getQuery(Query::DELETE_PLAYER);
   if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, 0) != SQLITE_OK) {
@@ -668,7 +668,7 @@ void Database::deletePlayer(uint32_t player_id) {
                              std::string(sqlite3_errmsg(db.get())));
   }
 
-  sqlite3_bind_int(stmt, 1, player_id);
+  sqlite3_bind_int(stmt, 1, static_cast<int>(player_id));
 
   if (sqlite3_step(stmt) != SQLITE_DONE) {
     sqlite3_finalize(stmt);

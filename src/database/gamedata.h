@@ -9,6 +9,7 @@
 #pragma once
 
 #include "gamedate.h"
+#include "global/types.h"
 #include "global/stats_config.h"
 #include "model/league.h"
 
@@ -38,52 +39,52 @@ public:
   const StatsConfig &getStatsConfig() const;
 
   // ---------------- League ----------------
-  void addLeague(uint8_t id, const League &league);
+  void addLeague(LeagueID id, const League &league);
 
   std::optional<std::reference_wrapper<const League>>
-  getLeague(uint8_t id) const;
+  getLeague(LeagueID id) const;
 
-  const std::unordered_map<uint8_t, League> &getLeagues() const;
+  const std::unordered_map<LeagueID, League> &getLeagues() const;
 
-  std::unordered_map<uint8_t, League> &getLeagues();
+  std::unordered_map<LeagueID, League> &getLeagues();
 
   const std::vector<std::reference_wrapper<const League>> &
   getLeaguesVector() const;
 
   // ---------------- Team ----------------
-  void addTeam(uint16_t id, const Team &team);
+  void addTeam(TeamID id, const Team &team);
 
-  std::optional<std::reference_wrapper<Team>> getTeam(uint16_t id);
+  std::optional<std::reference_wrapper<Team>> getTeam(TeamID id);
 
-  std::optional<std::reference_wrapper<const Team>> getTeam(uint16_t id) const;
+  std::optional<std::reference_wrapper<const Team>> getTeam(TeamID id) const;
 
-  const std::unordered_map<uint16_t, Team> &getTeams() const;
+  const std::unordered_map<TeamID, Team> &getTeams() const;
 
-  std::unordered_map<uint16_t, Team> &getTeams();
+  std::unordered_map<TeamID, Team> &getTeams();
   
   const std::vector<std::reference_wrapper<const Team>> &getTeamsVector() const;
 
   void ageAllPlayers();
 
-  void addPlayer(uint32_t id, const Player &player);
+  void addPlayer(PlayerID id, const Player &player);
   std::optional<std::reference_wrapper<const Player>>
-  getPlayer(uint32_t id) const;
-  const std::unordered_map<uint32_t, Player> &getPlayers() const;
-  std::unordered_map<uint32_t, Player> &getPlayers();
+  getPlayer(PlayerID id) const;
+  const std::unordered_map<PlayerID, Player> &getPlayers() const;
+  std::unordered_map<PlayerID, Player> &getPlayers();
   const std::vector<std::reference_wrapper<const Player>> &
   getPlayersVector() const;
   std::vector<std::reference_wrapper<const Player>>
-  getPlayersForTeam(uint16_t team_id) const;
-  bool removePlayer(uint32_t id);
+  getPlayersForTeam(TeamID team_id) const;
+  bool removePlayer(PlayerID id);
 
 private:
   GameData();
 
-  std::unordered_map<uint8_t, League> _leagues;
+  std::unordered_map<LeagueID, League> _leagues;
   std::vector<std::reference_wrapper<const League>> _leaguesVec;
-  std::unordered_map<uint16_t, Team> _teams;
+  std::unordered_map<TeamID, Team> _teams;
   std::vector<std::reference_wrapper<const Team>> _teamsVec;
-  std::unordered_map<uint32_t, Player> _players;
+  std::unordered_map<PlayerID, Player> _players;
   std::vector<std::reference_wrapper<const Player>> _playersVec;
   StatsConfig stats_config;
   std::shared_ptr<Database> db;

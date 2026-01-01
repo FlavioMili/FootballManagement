@@ -60,8 +60,8 @@ void Calendar::generateSeasonFixtures(const GameDateValue &startDate) {
 
     for (size_t round = 0; round < num_rounds; ++round) {
       for (size_t i = 0; i < num_teams / 2; ++i) {
-        uint16_t home_id = team_ids[i];
-        uint16_t away_id = team_ids[num_teams - 1 - i];
+        TeamID home_id = team_ids[i];
+        TeamID away_id = team_ids[num_teams - 1 - i];
 
         if (home_id == 0 || away_id == 0) {
           continue;
@@ -119,8 +119,8 @@ void Calendar::generateFriendlies(const GameDateValue &startDate,
     currentDate.nextWeek(); // Schedule friendlies weekly for a few weeks.
     if (currentDate < START_SEASON_DATE) {
       for (size_t i = 0; i < num_teams / 2; ++i) {
-        uint16_t home_id = team_ids[i];
-        uint16_t away_id = team_ids[num_teams - 1 - i];
+        TeamID home_id = team_ids[i];
+        TeamID away_id = team_ids[num_teams - 1 - i];
 
         if (home_id == FREE_AGENTS_TEAM_ID || away_id == FREE_AGENTS_TEAM_ID) {
           continue;

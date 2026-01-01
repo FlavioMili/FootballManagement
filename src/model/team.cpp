@@ -8,14 +8,15 @@
 
 #include "team.h"
 #include "finances.h"
+#include <algorithm>
 #include <cstdint>
 #include <string_view>
 #include <vector>
 
 // Constructor
-Team::Team(uint16_t team_id, uint8_t team_league_id, std::string_view team_name,
+Team::Team(TeamID team_id, uint8_t team_league_id, std::string_view team_name,
            int64_t initial_balance,
-           const std::vector<uint32_t> &initial_player_ids,
+           const std::vector<PlayerID> &initial_player_ids,
            const Strategy &strategy, const Lineup &lineup_data)
     : id(team_id), league_id(team_league_id), name(team_name),
       player_ids(initial_player_ids), team_strategy(strategy),
@@ -24,9 +25,22 @@ Team::Team(uint16_t team_id, uint8_t team_league_id, std::string_view team_name,
 // Accessors
 uint16_t Team::getId() const { return id; }
 uint8_t Team::getLeagueId() const { return league_id; }
-const std::string Team::getName() const { return std::string(name); }
+const std::string Team::getName() const { return name; }
 
-const std::vector<uint32_t> &Team::getPlayerIDs() const { return player_ids; }
+const std::vector<PlayerID> &Team::getPlayerIDs() const { return player_ids; }
+
+void Team::addPlayerID(PlayerID player_id) {
+  player_ids.push_back(player_id);
+}
+
+bool Team::removePlayerID(PlayerID player_id) {
+  auto it = std::remove(player_ids.begin(), player_ids.end(), player_id);
+  if (it != player_ids.end()) {
+    player_ids.erase(it, player_ids.end());
+    return true;
+  }
+  return false;
+}
 
 // Lineup access
 Lineup &Team::getLineup() { return lineup; }

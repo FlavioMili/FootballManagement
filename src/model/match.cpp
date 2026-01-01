@@ -13,7 +13,7 @@
 #include <random>
 #include <string>
 
-Match::Match(uint16_t home_id, uint16_t away_id, GameDateValue date,
+Match::Match(TeamID home_id, TeamID away_id, GameDateValue date,
              MatchType type)
     : home_team_id(home_id), away_team_id(away_id), match_date(date),
       match_type(type), home_score(0), away_score(0) {}

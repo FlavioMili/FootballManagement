@@ -109,9 +109,9 @@ std::string GameDateValue::toString() const {
 GameDateValue GameDateValue::fromString(const std::string &str) {
   if (str.size() != 10)
     throw std::runtime_error("Invalid date string");
-  uint16_t y = std::stoi(str.substr(0, 4));
-  uint8_t m = std::stoi(str.substr(5, 2));
-  uint8_t d = std::stoi(str.substr(8, 2));
+  uint16_t y = static_cast<uint16_t>(std::stoi(str.substr(0, 4)));
+  uint8_t m = static_cast<uint8_t>(std::stoi(str.substr(5, 2)));
+  uint8_t d = static_cast<uint8_t>(std::stoi(str.substr(8, 2)));
   return GameDateValue(y, m, d);
 }
 
