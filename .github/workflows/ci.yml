@@ -11,7 +11,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install dependencies
+    - name: Setup SDL3
+      uses: libsdl-org/setup-sdl@main
+      with:
+        version: 3-latest
+        install-linux-dependencies: true
+
+    - name: Install Tools & TTF Dependencies
       run: |
         sudo apt update
         sudo apt install -y \
@@ -19,9 +25,9 @@ jobs:
           clang-tidy \
           clang-format \
           cppcheck \
-          libsdl3-dev \
-          libsdl3-ttf-dev \
-          libsqlite3-dev
+          libsqlite3-dev \
+          libfreetype-dev \
+          libharfbuzz-dev
 
     - name: Configure
       run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
