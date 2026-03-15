@@ -81,7 +81,7 @@ set(CORE_SOURCES
     model/team.cpp
 )
 
-add_library(core_lib ${CORE_SOURCES})
+add_library(core_lib STATIC ${CORE_SOURCES})
 
 # -----------------------------
 # Include Directories
