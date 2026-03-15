@@ -81,7 +81,9 @@ if(NOT SQLite3_FOUND)
     GIT_TAG        v3.45.1.0
   )
   FetchContent_MakeAvailable(sqlite3)
-  add_library(SQLite::SQLite3 ALIAS sqlite3)
+  if(NOT TARGET SQLite::SQLite3)
+    add_library(SQLite::SQLite3 ALIAS sqlite3)
+  endif()
 endif()
 
 # --- SDL3 ---
@@ -93,7 +95,7 @@ if(NOT SDL3_FOUND)
   FetchContent_Declare(
     SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG        release-3.2.0
+    GIT_TAG        main # Using main for SDL3 to get latest fixes as tags are moving fast
   )
   FetchContent_MakeAvailable(SDL3)
 endif()
@@ -102,12 +104,12 @@ endif()
 find_package(SDL3_ttf QUIET)
 if(NOT SDL3_ttf_FOUND)
   message(STATUS "SDL3_ttf not found, fetching from GitHub...")
-  # SDL3_ttf depends on SDL3
   set(SDL3TTF_SAMPLES OFF CACHE BOOL "" FORCE)
+  # SDL3_ttf uses its own internal logic to find freetype/harfbuzz
   FetchContent_Declare(
     SDL3_ttf
     GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
-    GIT_TAG        release-3.1.0
+    GIT_TAG        main # Using main to ensure compatibility with SDL3 main
   )
   FetchContent_MakeAvailable(SDL3_ttf)
 endif()
