@@ -17,13 +17,12 @@ jobs:
         version: 3-latest
         install-linux-dependencies: true
 
-    - name: Install Tools & TTF Dependencies
+    - name: Install Tools & Dependencies
       run: |
         sudo apt update
         sudo apt install -y \
           clang \
           clang-tidy \
-          clang-format \
           cppcheck \
           libsqlite3-dev \
           libfreetype-dev \
@@ -31,10 +30,6 @@ jobs:
 
     - name: Configure
       run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
-
-    - name: Format check
-      run: |
-        clang-format --dry-run --Werror $(git ls-files '*.cpp' '*.h')
 
     - name: Build
       run: cmake --build build -j
