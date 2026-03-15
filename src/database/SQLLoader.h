@@ -10,9 +10,11 @@
 
 #include <string>
 #include <unordered_map>
+
 #include "global/queries.h"
 
-class SQLLoader {
+class SQLLoader
+{
  public:
   // Load SQL file and parse queries
   static void loadQueriesFromFile();

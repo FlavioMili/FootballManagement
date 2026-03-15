@@ -9,22 +9,25 @@
 #include <iostream>
 #include <memory>
 
-#include "global/logger.h"
-
 #include "controller/game_controller.h"
+#include "global/logger.h"
 #include "gui/gui_view.h"
 
-int main() {
+int main()
+{
   Logger::init();
   srand(static_cast<uint>(time(0)));
-  try {
+  try
+  {
     auto game = std::make_unique<Game>();
     auto controller = std::make_unique<GameController>(std::move(game));
 
     GUIView view(*controller);
     view.run();
     controller->saveGame();
-  } catch (const std::exception &e) {
+  }
+  catch (const std::exception& e)
+  {
     std::cerr << "Error: " << e.what() << "\n";
     return 1;
   }

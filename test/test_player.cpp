@@ -1,11 +1,13 @@
-#include "global/stats_config.h"
-#include "model/player.h"
 #include <gtest/gtest.h>
 
-TEST(PlayerTest, ConstructorAndGetters) {
+#include "global/stats_config.h"
+#include "model/player.h"
+
+TEST(PlayerTest, ConstructorAndGetters)
+{
   std::map<std::string, float> stats = {{"Speed", 80.0f}, {"Passing", 70.0f}};
-  Player p(1, 10, "John", "Doe", "Midfielder", Language::EN, 1000, 1, 25, 3,
-           180, Foot::Right, stats);
+  Player p(1, 10, "John", "Doe", "Midfielder", Language::EN, 1000, 1, 25, 3, 180, Foot::Right,
+           stats);
 
   EXPECT_EQ(p.getId(), 1);
   EXPECT_EQ(p.getTeamId(), 10);
@@ -15,11 +17,11 @@ TEST(PlayerTest, ConstructorAndGetters) {
   EXPECT_EQ(p.getStats().at("Speed"), 80.0f);
 }
 
-TEST(PlayerTest, AgePlayerGrowth) {
+TEST(PlayerTest, AgePlayerGrowth)
+{
   std::map<std::string, float> stats = {{"Speed", 80.0f}};
   // Young player
-  Player p(1, 10, "Young", "Gun", "Striker", Language::EN, 1000, 1, 20, 3, 180,
-           Foot::Right, stats);
+  Player p(1, 10, "Young", "Gun", "Striker", Language::EN, 1000, 1, 20, 3, 180, Foot::Right, stats);
 
   // If age < PLAYER_AGE_FACTOR_DECLINE_AGE (31.5), stats don't decay.
   p.agePlayer();
@@ -27,11 +29,11 @@ TEST(PlayerTest, AgePlayerGrowth) {
   EXPECT_EQ(p.getStats().at("Speed"), 80.0f);
 }
 
-TEST(PlayerTest, AgePlayerDecline) {
+TEST(PlayerTest, AgePlayerDecline)
+{
   std::map<std::string, float> stats = {{"Speed", 80.0f}};
   // Old player
-  Player p(1, 10, "Old", "Guard", "Striker", Language::EN, 1000, 1, 35, 3, 180,
-           Foot::Right, stats);
+  Player p(1, 10, "Old", "Guard", "Striker", Language::EN, 1000, 1, 35, 3, 180, Foot::Right, stats);
 
   p.agePlayer();
   EXPECT_EQ(p.getAge(), 36);
@@ -39,10 +41,11 @@ TEST(PlayerTest, AgePlayerDecline) {
   EXPECT_LT(p.getStats().at("Speed"), 80.0f);
 }
 
-TEST(PlayerTest, GetOverall) {
+TEST(PlayerTest, GetOverall)
+{
   std::map<std::string, float> stats = {{"Speed", 80.0f}, {"Shooting", 90.0f}};
-  Player p(1, 10, "Striker", "Man", "Striker", Language::EN, 1000, 1, 25, 3,
-           180, Foot::Right, stats);
+  Player p(1, 10, "Striker", "Man", "Striker", Language::EN, 1000, 1, 25, 3, 180, Foot::Right,
+           stats);
 
   StatsConfig config;
   RoleFocus roleFocus;
@@ -54,10 +57,11 @@ TEST(PlayerTest, GetOverall) {
   EXPECT_DOUBLE_EQ(overall, 85.0);
 }
 
-TEST(PlayerTest, Train) {
+TEST(PlayerTest, Train)
+{
   std::map<std::string, float> stats = {{"Speed", 50.0f}};
-  Player p(1, 10, "Trainee", "Boy", "Striker", Language::EN, 1000, 1, 20, 3,
-           180, Foot::Right, stats);
+  Player p(1, 10, "Trainee", "Boy", "Striker", Language::EN, 1000, 1, 20, 3, 180, Foot::Right,
+           stats);
 
   // Train speed
   // Training is random, but it should increase or stay same (if random factor
@@ -66,7 +70,8 @@ TEST(PlayerTest, Train) {
   // exactly. We can loop a few times to ensure increase.
 
   float initial_speed = p.getStats().at("Speed");
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 10; ++i)
+  {
     p.train({"Speed"});
   }
 

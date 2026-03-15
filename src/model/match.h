@@ -8,24 +8,26 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include "gamedate.h"
 #include "global/types.h"
-#include <cstdint>
 
 class GameData;
 
-class Match {
+class Match
+{
  public:
   Match(TeamID home_id, TeamID away_id, GameDateValue date, MatchType type);
 
-  void simulate(const GameData &game_data);
+  void simulate(const GameData& game_data);
 
   TeamID getHomeTeamId() const;
   TeamID getAwayTeamId() const;
   uint8_t getHomeScore() const;
   uint8_t getAwayScore() const;
   MatchType getMatchType() const;
-  const GameDateValue &getDate() const;
+  const GameDateValue& getDate() const;
   bool isPlayed() const;
 
  private:

@@ -7,16 +7,19 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include "gui/button_manager.h"
-#include "gui/gui_scene.h"
-#include "gui/gui_view.h"
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+
 #include <cstdint>
 #include <memory>
 #include <vector>
 
-enum GameSceneButtonIndex : uint8_t {
+#include "gui/button_manager.h"
+#include "gui/gui_scene.h"
+#include "gui/gui_view.h"
+
+enum GameSceneButtonIndex : uint8_t
+{
   VIEW_ROSTER_BUTTON = 0,
   SET_STRATEGY_BUTTON = 1,
   FINANCES_BUTTON = 2,
@@ -24,11 +27,12 @@ enum GameSceneButtonIndex : uint8_t {
   NEXT_DAY_BUTTON = 4
 };
 
-class MainGameScene : public GUIScene {
+class MainGameScene : public GUIScene
+{
  public:
-  explicit MainGameScene(GUIView *guiView_ptr);
+  explicit MainGameScene(GUIView* guiView_ptr);
   ~MainGameScene();
-  void handleEvent(const SDL_Event &event) override;
+  void handleEvent(const SDL_Event& event) override;
   void update(float deltaTime) override;
   void render() override;
   void onEnter() override;
@@ -37,7 +41,7 @@ class MainGameScene : public GUIScene {
   SceneID getID() const override;
 
  private:
-  GUIView *parent_view;
+  GUIView* parent_view;
 
   void initializeUI();
   void renderSidebar();
@@ -48,7 +52,7 @@ class MainGameScene : public GUIScene {
   void cleanup();
   void setupButtons();
 
-  TTF_Font *font = nullptr;
+  TTF_Font* font = nullptr;
   std::unique_ptr<ButtonManager> buttonManager;
 
   // UI element dimensions

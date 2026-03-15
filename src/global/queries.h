@@ -12,7 +12,8 @@
 #include <string_view>
 #include <unordered_map>
 
-enum class Query {
+enum class Query
+{
   INSERT_LEAGUE,
   INSERT_LEAGUE_WITH_ID,
   SELECT_LEAGUES,
@@ -38,7 +39,8 @@ enum class Query {
   COUNT
 };
 
-struct QueryMapEntry {
+struct QueryMapEntry
+{
   std::string_view id;
   Query query;
 };

@@ -7,10 +7,12 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include "global/languages.h"
 #include <SDL3/SDL.h>
 
-struct Settings {
+#include "global/languages.h"
+
+struct Settings
+{
   Language language = Language::EN;
   int resolution_width = 1280;
   int resolution_height = 720;
@@ -18,7 +20,8 @@ struct Settings {
   int fps_limit = 60;
 };
 
-class SettingsManager {
+class SettingsManager
+{
  public:
   static SettingsManager* instance();
 
@@ -29,7 +32,7 @@ class SettingsManager {
   Settings& get() { return settings_; }
   const Settings& get() const { return settings_; }
 
-  // TODO This is pretty horrible 
+  // TODO This is pretty horrible
   // check /src/gui/scenes/settings_scene.cpp
   Settings& getSettings() { return settings_; }
 

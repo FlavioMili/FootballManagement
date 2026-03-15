@@ -9,33 +9,36 @@
 // team_selection_scene.h
 #pragma once
 
+#include <SDL3_ttf/SDL_ttf.h>
+#include <sys/types.h>
+
+#include <cstdint>
+#include <vector>
+
 #include "gui/button_manager.h"
 #include "gui/gui_scene.h"
 #include "model/league.h"
 #include "model/team.h"
-#include <SDL3_ttf/SDL_ttf.h>
-#include <cstdint>
-#include <sys/types.h>
-#include <vector>
 
 class GUIView;
 
-class TeamSelectionScene : public GUIScene {
+class TeamSelectionScene : public GUIScene
+{
  public:
-  explicit TeamSelectionScene(GUIView *parent);
+  explicit TeamSelectionScene(GUIView* parent);
   ~TeamSelectionScene() override;
 
   void onEnter() override;
   void onExit() override;
-  void handleEvent(const SDL_Event &event) override;
+  void handleEvent(const SDL_Event& event) override;
   void update(float deltaTime) override;
   void render() override;
   SceneID getID() const override;
 
  private:
-  GUIView *parent_view;
-  TTF_Font *font;
-  TTF_Font *title_font;
+  GUIView* parent_view;
+  TTF_Font* font;
+  TTF_Font* title_font;
   std::vector<std::reference_wrapper<const League>> available_leagues;
   std::vector<std::reference_wrapper<const Team>> available_teams;
   ButtonManager button_manager;

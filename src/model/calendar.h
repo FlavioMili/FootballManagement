@@ -8,24 +8,25 @@
 
 #pragma once
 
-#include "gamedate.h"
-#include "match.h"
 #include <map>
 #include <vector>
 
-class Calendar {
-public:
+#include "gamedate.h"
+#include "match.h"
+
+class Calendar
+{
+ public:
   Calendar() = default;
 
-  void generate(const GameDateValue &startDate);
-  void addMatch(const Match &match);
-  const std::map<GameDateValue, std::vector<Match>> &getFullCalendar() const;
-  const std::vector<Match> &getMatchesForDate(const GameDateValue &date) const;
+  void generate(const GameDateValue& startDate);
+  void addMatch(const Match& match);
+  const std::map<GameDateValue, std::vector<Match>>& getFullCalendar() const;
+  const std::vector<Match>& getMatchesForDate(const GameDateValue& date) const;
 
-private:
-  void generateSeasonFixtures(const GameDateValue &startDate);
-  void generateFriendlies(const GameDateValue &startDate,
-                          size_t numFriendlies = 4);
+ private:
+  void generateSeasonFixtures(const GameDateValue& startDate);
+  void generateFriendlies(const GameDateValue& startDate, size_t numFriendlies = 4);
 
   std::map<GameDateValue, std::vector<Match>> schedule;
 };

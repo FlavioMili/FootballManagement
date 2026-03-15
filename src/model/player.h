@@ -8,25 +8,34 @@
 
 #pragma once
 
-#include "global/languages.h"
-#include "global/stats_config.h"
-#include "global/types.h"
 #include <cstdint>
 #include <map>
 #include <string>
 #include <string_view>
 #include <vector>
 
-enum class Foot : bool { Left = false, Right = true };
-enum class TransferStatus { Listed, NotListed };
+#include "global/languages.h"
+#include "global/stats_config.h"
+#include "global/types.h"
 
-class Player {
+enum class Foot : bool
+{
+  Left = false,
+  Right = true
+};
+enum class TransferStatus
+{
+  Listed,
+  NotListed
+};
+
+class Player
+{
  public:
   Player(PlayerID new_id, TeamID new_team_id, std::string_view new_first_name,
-         std::string_view new_last_name, std::string_view new_role,
-         Language new_nationality, uint32_t new_wage, uint32_t new_status, uint8_t new_age,
-         uint8_t new_contract_years, uint8_t new_height, Foot new_foot,
-         const std::map<std::string, float> &new_stats);
+         std::string_view new_last_name, std::string_view new_role, Language new_nationality,
+         uint32_t new_wage, uint32_t new_status, uint8_t new_age, uint8_t new_contract_years,
+         uint8_t new_height, Foot new_foot, const std::map<std::string, float>& new_stats);
 
   PlayerID getId() const;
   TeamID getTeamId() const;
@@ -43,16 +52,16 @@ class Player {
   uint8_t getHeight() const;
   Foot getFoot() const;
   uint32_t getStatus() const;
-  double getOverall(const StatsConfig &stats_config) const;
-  const std::map<std::string, float> &getStats() const;
-  void setStats(const std::map<std::string, float> &new_stats);
+  double getOverall(const StatsConfig& stats_config) const;
+  const std::map<std::string, float>& getStats() const;
+  void setStats(const std::map<std::string, float>& new_stats);
   void agePlayer();
   bool checkRetirement() const;
-  void train(const std::vector<std::string> &focus_stats);
+  void train(const std::vector<std::string>& focus_stats);
 
   // Market Value & Transfer Logic
   uint32_t getMarketValue() const;
-  void updateMarketValue(const StatsConfig &stats_config);
+  void updateMarketValue(const StatsConfig& stats_config);
   void setTransferStatus(TransferStatus status);
   TransferStatus getTransferStatus() const;
 

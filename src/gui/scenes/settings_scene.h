@@ -7,18 +7,21 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include "gui/button_manager.h"
-#include "gui/gui_scene.h"
-#include "gui/gui_view.h"
-#include "gui/dropdown.h"
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+
 #include <array>
-#include <utility>
 #include <memory>
+#include <utility>
 #include <vector>
 
-class SettingsScene : public GUIScene {
+#include "gui/button_manager.h"
+#include "gui/dropdown.h"
+#include "gui/gui_scene.h"
+#include "gui/gui_view.h"
+
+class SettingsScene : public GUIScene
+{
  public:
   explicit SettingsScene(GUIView* guiView_ptr);
   ~SettingsScene();
@@ -44,7 +47,8 @@ class SettingsScene : public GUIScene {
   std::vector<std::string> resolutionOptions;
   std::vector<std::string> fpsOptionsStrings;
   std::array<int, 4> fpsOptions = {60, 90, 120, 144};
-  std::array<std::pair<int, int>, 4> resolutions = {{ {1280, 720}, {1920, 1080}, {2560, 1440}, {3840, 2160} }};
+  std::array<std::pair<int, int>, 4> resolutions = {
+      {{1280, 720}, {1920, 1080}, {2560, 1440}, {3840, 2160}}};
 
   // Current selections
   int selectedLanguage = 0;

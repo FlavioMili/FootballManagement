@@ -8,17 +8,18 @@
 
 #pragma once
 
-#include "gamedate.h"
 #include <array>
 #include <cstdint>
 #include <utility>
+
+#include "gamedate.h"
 
 // This file can be used for global constants, enums, and functions
 // that are used across the entire project.
 // If possible, use constexpr
 
 constexpr uint8_t FREE_AGENTS_TEAM_ID = 0;
-constexpr const char *FREE_AGENTS_TEAM_NAME = "Free agents";
+constexpr const char* FREE_AGENTS_TEAM_NAME = "Free agents";
 
 constexpr uint8_t TEAMS_PER_LEAGUE = 16;
 constexpr uint8_t MIN_STAT_VAL = 1;
@@ -45,15 +46,16 @@ static constexpr uint8_t LINEUP_GRID_COLS = 5;
 static constexpr uint8_t LINEUP_GRID_SIZE = LINEUP_GRID_ROWS * LINEUP_GRID_COLS;
 
 // Functions to access the array of lineup's grid
-constexpr uint8_t toIndex(uint8_t row, uint8_t col) {
+constexpr uint8_t toIndex(uint8_t row, uint8_t col)
+{
   return static_cast<uint8_t>(row * LINEUP_GRID_COLS + col);
 }
 
-constexpr std::pair<int, int> toRowCol(int i) {
+constexpr std::pair<int, int> toRowCol(int i)
+{
   return {i / LINEUP_GRID_COLS, i % LINEUP_GRID_COLS};
 }
 
-constexpr std::array<uint8_t, 12> DAYS_PER_MONTH = {31, 28, 31, 30, 31, 30,
-                                                    31, 31, 30, 31, 30, 31};
+constexpr std::array<uint8_t, 12> DAYS_PER_MONTH = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 const GameDateValue START_DATE(2025, 7, 2);
 const GameDateValue START_SEASON_DATE(2025, 9, 1);

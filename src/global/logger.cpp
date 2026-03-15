@@ -7,24 +7,31 @@
 // -----------------------------------------------------------------------------
 
 #include "logger.h"
-#include <memory>
-#include <spdlog/spdlog.h>
+
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
+
+#include <memory>
+
 #include "global/paths.h"
 
-namespace {
+namespace
+{
 std::shared_ptr<spdlog::logger> logger;
 }
 
-void Logger::init() {
-  if (!logger) {
-    std::shared_ptr<spdlog::sinks::sink> file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(LOGGER_PATH, true);
-    std::shared_ptr<spdlog::sinks::sink> console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+void Logger::init()
+{
+  if (!logger)
+  {
+    std::shared_ptr<spdlog::sinks::sink> file_sink =
+        std::make_shared<spdlog::sinks::basic_file_sink_mt>(LOGGER_PATH, true);
+    std::shared_ptr<spdlog::sinks::sink> console_sink =
+        std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 
-    logger = std::make_shared<spdlog::logger>(
-      "main_logger", spdlog::sinks_init_list{console_sink, file_sink}
-    );
+    logger = std::make_shared<spdlog::logger>("main_logger",
+                                              spdlog::sinks_init_list{console_sink, file_sink});
 
     logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%^%l%$] %v");
     logger->set_level(spdlog::level::debug);
@@ -32,12 +39,12 @@ void Logger::init() {
   }
 }
 
-void Logger::info(const std::string& msg)  { logger->info(msg); }
+void Logger::info(const std::string& msg) { logger->info(msg); }
 void Logger::error(const std::string& msg) { logger->error(msg); }
-void Logger::warn(const std::string& msg)  { logger->warn(msg); }
+void Logger::warn(const std::string& msg) { logger->warn(msg); }
 
 #ifdef DEBUG
-  void Logger::debug(const std::string& msg) { logger->debug(msg); }
-#else 
-  void Logger::debug(const std::string& msg) { (void)msg; }
+void Logger::debug(const std::string& msg) { logger->debug(msg); }
+#else
+void Logger::debug(const std::string& msg) { (void)msg; }
 #endif

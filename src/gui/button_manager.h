@@ -9,12 +9,14 @@
 #pragma once
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+
 #include <cstddef>
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
 
-struct ButtonStyle {
+struct ButtonStyle
+{
   SDL_Color backgroundColor = {70, 70, 150, 255};
   SDL_Color borderColor = {100, 100, 200, 255};
   SDL_Color textColor = {255, 255, 255, 255};
@@ -26,8 +28,9 @@ struct ButtonStyle {
   int borderWidth = 1;
 };
 
-struct Button {
-  SDL_FRect rect {};
+struct Button
+{
+  SDL_FRect rect{};
   SDL_Texture* textTexture = nullptr;
   SDL_FRect textRect{};
   std::string label;
@@ -39,22 +42,22 @@ struct Button {
   int id = -1;
 };
 
-class ButtonManager {
+class ButtonManager
+{
  public:
   ButtonManager(SDL_Renderer* renderer_ptr, TTF_Font* font_ptr);
   ~ButtonManager();
 
   int getButtonCount() { return static_cast<int>(buttons.size()); }
   // Button creation and management
-  int addButton(const SDL_FRect& rect, const std::string& label,
+  int addButton(const SDL_FRect& rect, const std::string& label, std::function<void()> callback);
+  int addButton(const SDL_FRect& rect, const std::string& label, ButtonStyle style,
                 std::function<void()> callback);
-  int addButton(const SDL_FRect& rect, const std::string& label,
-                ButtonStyle style, std::function<void()> callback);
 
-  int addButton(float x, float y, float w, float h,
-                const std::string& label, std::function<void()> callback);
   int addButton(float x, float y, float w, float h, const std::string& label,
-                ButtonStyle style, std::function<void()> callback);
+                std::function<void()> callback);
+  int addButton(float x, float y, float w, float h, const std::string& label, ButtonStyle style,
+                std::function<void()> callback);
 
   void removeButton(int buttonId);
   void clearButtons();

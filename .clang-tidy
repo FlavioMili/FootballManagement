@@ -1,0 +1,14 @@
+Checks: >
+  bugprone-*,
+  performance-*,
+  modernize-*,
+  readability-*,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-owning-memory,
+  -readability-magic-numbers
+
+WarningsAsErrors: "*"
+
+HeaderFilterRegex: "src/.*"
+
+FormatStyle: file

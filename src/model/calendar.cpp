@@ -7,67 +7,76 @@
 // -----------------------------------------------------------------------------
 
 #include "model/calendar.h"
+
+#include <algorithm>
+#include <vector>
+
 #include "database/gamedata.h"
 #include "global/global.h"
 #include "global/logger.h"
 #include "model/league.h"
-#include <algorithm>
-#include <vector>
 
-void Calendar::generate(const GameDateValue &startDate) {
+void Calendar::generate(const GameDateValue& startDate)
+{
   schedule.clear();
-  generateSeasonFixtures(startDate+50);
+  generateSeasonFixtures(startDate + 50);
   generateFriendlies(startDate);
 }
 
-void Calendar::addMatch(const Match &match) {
-  schedule[match.getDate()].push_back(match);
-}
+void Calendar::addMatch(const Match& match) { schedule[match.getDate()].push_back(match); }
 
-const std::map<GameDateValue, std::vector<Match>> &
-Calendar::getFullCalendar() const {
+const std::map<GameDateValue, std::vector<Match>>& Calendar::getFullCalendar() const
+{
   return schedule;
 }
 
-const std::vector<Match> &
-Calendar::getMatchesForDate(const GameDateValue &date) const {
+const std::vector<Match>& Calendar::getMatchesForDate(const GameDateValue& date) const
+{
   static const std::vector<Match> no_matches;
   auto it = schedule.find(date);
-  if (it != schedule.end()) {
+  if (it != schedule.end())
+  {
     return it->second;
   }
   return no_matches;
 }
-void Calendar::generateSeasonFixtures(const GameDateValue &startDate) {
+void Calendar::generateSeasonFixtures(const GameDateValue& startDate)
+{
   auto leagues = GameData::instance().getLeaguesVector();
-  for (auto &l : leagues) {
+  for (auto& l : leagues)
+  {
     League league = l.get();
     std::vector<uint16_t> team_ids = league.getTeamIDs();
 
-    if (team_ids.size() < 2) {
-      Logger::warn("Not enough teams to generate fixtures in: " +
-                   league.getName());
+    if (team_ids.size() < 2)
+    {
+      Logger::warn("Not enough teams to generate fixtures in: " + league.getName());
       continue;
     }
 
-    if (team_ids.size() % 2 != 0) {
-      team_ids.push_back(0); // Add a dummy team for round robin
+    if (team_ids.size() % 2 != 0)
+    {
+      team_ids.push_back(0);  // Add a dummy team for round robin
     }
 
     size_t num_teams = team_ids.size();
-    size_t num_rounds = (num_teams - 1) * 2; // Full season (home and away)
+    size_t num_rounds = (num_teams - 1) * 2;  // Full season (home and away)
     GameDateValue currentDate = startDate;
 
-    for (size_t round = 0; round < num_rounds; ++round) {
-      for (size_t i = 0; i < num_teams / 2; ++i) {
+    for (size_t round = 0; round < num_rounds; ++round)
+    {
+      for (size_t i = 0; i < num_teams / 2; ++i)
+      {
         TeamID home_id = team_ids[i];
         TeamID away_id = team_ids[num_teams - 1 - i];
 
-        if (home_id == 0 || away_id == 0) {
+        if (home_id == 0 || away_id == 0)
+        {
           continue;
         }
 
-        if (round >= (num_rounds / 2)) {
+        if (round >= (num_rounds / 2))
+        {
           std::swap(home_id, away_id);
         }
 
@@ -75,11 +84,14 @@ void Calendar::generateSeasonFixtures(const GameDateValue &startDate) {
       }
 
       // Winter break after the first half of the season
-      if (round == (num_rounds / 2) - 1) {
-        currentDate.nextWeek(); // Advance to the date of the next round
-        currentDate.nextWeek(); // Skip a week
-        currentDate.nextWeek(); // Skip another week
-      } else {
+      if (round == (num_rounds / 2) - 1)
+      {
+        currentDate.nextWeek();  // Advance to the date of the next round
+        currentDate.nextWeek();  // Skip a week
+        currentDate.nextWeek();  // Skip another week
+      }
+      else
+      {
         currentDate.nextWeek();
       }
 
@@ -90,39 +102,45 @@ void Calendar::generateSeasonFixtures(const GameDateValue &startDate) {
   }
 }
 
-void Calendar::generateFriendlies(const GameDateValue &startDate,
-                                  size_t numFriendlies) {
+void Calendar::generateFriendlies(const GameDateValue& startDate, size_t numFriendlies)
+{
   auto teams = GameData::instance().getTeamsVector();
   std::vector<uint16_t> team_ids;
   team_ids.reserve(teams.size());
 
-  for (const auto &team_ref : teams) {
+  for (const auto& team_ref : teams)
+  {
     team_ids.push_back(team_ref.get().getId());
   }
 
   size_t num_teams = team_ids.size();
-  if (num_teams < 2) {
+  if (num_teams < 2)
+  {
     return;
   }
 
   bool isOdd = (num_teams % 2 != 0);
-  if (isOdd) {
-    team_ids.push_back(
-        FREE_AGENTS_TEAM_ID); // Assuming FREE_AGENTS_TEAM_ID is available
+  if (isOdd)
+  {
+    team_ids.push_back(FREE_AGENTS_TEAM_ID);  // Assuming FREE_AGENTS_TEAM_ID is available
     num_teams++;
   }
 
   GameDateValue currentDate = startDate;
-  currentDate.nextDay(); // Start friendlies the day after season start
+  currentDate.nextDay();  // Start friendlies the day after season start
 
-  for (size_t round = 0; round < numFriendlies; ++round) {
-    currentDate.nextWeek(); // Schedule friendlies weekly for a few weeks.
-    if (currentDate < START_SEASON_DATE) {
-      for (size_t i = 0; i < num_teams / 2; ++i) {
+  for (size_t round = 0; round < numFriendlies; ++round)
+  {
+    currentDate.nextWeek();  // Schedule friendlies weekly for a few weeks.
+    if (currentDate < START_SEASON_DATE)
+    {
+      for (size_t i = 0; i < num_teams / 2; ++i)
+      {
         TeamID home_id = team_ids[i];
         TeamID away_id = team_ids[num_teams - 1 - i];
 
-        if (home_id == FREE_AGENTS_TEAM_ID || away_id == FREE_AGENTS_TEAM_ID) {
+        if (home_id == FREE_AGENTS_TEAM_ID || away_id == FREE_AGENTS_TEAM_ID)
+        {
           continue;
         }
 

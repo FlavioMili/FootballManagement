@@ -9,24 +9,25 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 #include <memory>
+#include <vector>
 
-#include "model/gamedate.h"
-#include "model/calendar.h"
-#include "model/match.h"
 #include "database/database.h"
+#include "model/calendar.h"
+#include "model/gamedate.h"
+#include "model/match.h"
 
-class Game {
-public:
+class Game
+{
+ public:
   Game();
 
   // Simulation
   void advanceDay();
 
   // Accessors
-  const GameDateValue &getCurrentDate() const;
-  const Calendar &getCalendar() const;
+  const GameDateValue& getCurrentDate() const;
+  const Calendar& getCalendar() const;
   int getCurrentSeason() const;
   uint16_t getManagedTeamId() const;
   void setManagedTeamId(uint16_t id);
@@ -34,18 +35,18 @@ public:
   // Save / load game state
   void saveGame();
 
-private:
+ private:
   void loadGame();
   void endSeason();
   void handleSeasonTransition();
   void startNewSeason();
 
   // Player training
-  void trainPlayers(const std::vector<uint32_t> &player_ids);
+  void trainPlayers(const std::vector<uint32_t>& player_ids);
 
   // Matchday simulation helper
-  void simulateMatches(std::vector<Match> &matches);
-  void updateStandings(const Match &match);
+  void simulateMatches(std::vector<Match>& matches);
+  void updateStandings(const Match& match);
 
   std::shared_ptr<Database> db;
   Calendar calendar;

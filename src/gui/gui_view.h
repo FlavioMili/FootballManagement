@@ -7,15 +7,18 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include "controller/game_controller.h"
 #include <SDL3/SDL.h>
+
 #include <memory>
 #include <stack>
 
+#include "controller/game_controller.h"
+
 class GUIScene;
 
-class GUIView {
-public:
+class GUIView
+{
+ public:
   // TODO change to a unique_ptr
   explicit GUIView(GameController& controller_ref);
   ~GUIView();
@@ -24,23 +27,23 @@ public:
   void run();
 
   /*
-  * Function to change the scene, this should be used
-  * when we also want to remove the previous scene from
-  * the Scenes Stack.
-  */
+   * Function to change the scene, this should be used
+   * when we also want to remove the previous scene from
+   * the Scenes Stack.
+   */
   void changeScene(std::unique_ptr<GUIScene> newScene);
 
   /*
-  * This functions adds a scene as an overlay, this 
-  * makes it possible to show faster the scene that 
-  * was previously dispalyed.
-  * Example: When we are on the main game dashboard
-  * if we want to display the Lineup, we could just 
-  * overlay on the main game dashboard since we will
-  * for sure go back. Then if we click on a player to
-  * see his profile, we can make a new overlay, and these
-  * scenes will be just popped at the end of their usage.
-  */
+   * This functions adds a scene as an overlay, this
+   * makes it possible to show faster the scene that
+   * was previously dispalyed.
+   * Example: When we are on the main game dashboard
+   * if we want to display the Lineup, we could just
+   * overlay on the main game dashboard since we will
+   * for sure go back. Then if we click on a player to
+   * see his profile, we can make a new overlay, and these
+   * scenes will be just popped at the end of their usage.
+   */
   void overlayScene(std::unique_ptr<GUIScene> overlay);
 
   // This is the functio to pop Overlaid scenes

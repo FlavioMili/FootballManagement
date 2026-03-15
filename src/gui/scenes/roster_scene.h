@@ -8,14 +8,16 @@
 
 #pragma once
 
-#include "gui/gui_scene.h"
-#include "gui/button_manager.h"
-#include "model/player.h"
 #include <vector>
+
+#include "gui/button_manager.h"
+#include "gui/gui_scene.h"
+#include "model/player.h"
 
 class GUIView;
 
-class RosterScene : public GUIScene {
+class RosterScene : public GUIScene
+{
  public:
   explicit RosterScene(GUIView* parent);
   ~RosterScene() override;

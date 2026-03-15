@@ -8,19 +8,22 @@
 
 #pragma once
 
+#include <sqlite3.h>
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "calendar.h"
 #include "league.h"
 #include "match.h"
 #include "player.h"
 #include "team.h"
-#include <cstdint>
-#include <memory>
-#include <sqlite3.h>
-#include <string>
-#include <vector>
 
-class Database {
-public:
+class Database
+{
+ public:
   explicit Database();
   ~Database() = default;
 
@@ -32,42 +35,42 @@ public:
   std::vector<Player> loadAllPlayers();
 
   // Data Insertion
-  void insertLeague(const League &league);
-  void insertTeam(const Team &team);
-  void insertPlayer(const Player &player);
-  void insertLeagueWithId(const League &league);
-  void insertTeamWithId(const Team &team);
-  void insertPlayerWithId(const Player &player);
+  void insertLeague(const League& league);
+  void insertTeam(const Team& team);
+  void insertPlayer(const Player& player);
+  void insertLeagueWithId(const League& league);
+  void insertTeamWithId(const Team& team);
+  void insertPlayerWithId(const Player& player);
 
   // Fixtures
-  void insertFixture(const Match &match);
+  void insertFixture(const Match& match);
   std::vector<Match> loadAllMatches();
 
   // Calendar
-  void saveCalendar(const Calendar &calendar);
-  void loadCalendar(Calendar &calendar);
+  void saveCalendar(const Calendar& calendar);
+  void loadCalendar(Calendar& calendar);
 
   // Game State
   bool isFirstRun();
   void updateGameState(uint8_t current_season, uint16_t managed_team_id,
-                       const std::string &game_date);
-  bool loadGameState(uint8_t &current_season, uint16_t &managed_team_id,
-                     std::string &game_date) const;
+                       const std::string& game_date);
+  bool loadGameState(uint8_t& current_season, uint16_t& managed_team_id,
+                     std::string& game_date) const;
 
   // League Points
-  void saveLeaguePoints(const League &league);
-  void loadLeaguePoints(League &league) const;
+  void saveLeaguePoints(const League& league);
+  void loadLeaguePoints(League& league) const;
   void resetAllLeaguePoints();
 
   // Player specific actions
   void ageAllPlayers();
-  void updatePlayer(const Player &player);
+  void updatePlayer(const Player& player);
   void deletePlayer(PlayerID player_id);
   void transferPlayer(PlayerID player_id, uint16_t new_team_id);
 
-private:
+ private:
   std::unique_ptr<sqlite3, decltype(&sqlite3_close)> db;
 
   void loadSQLFiles();
-  void loadTeamsForLeague(League &league) const;
+  void loadTeamsForLeague(League& league) const;
 };

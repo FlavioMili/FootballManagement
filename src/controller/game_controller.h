@@ -8,17 +8,19 @@
 
 #pragma once
 
-#include "global/stats_config.h"
-#include "model/game.h"
-#include "model/league.h"
-#include "model/player.h"
-#include "model/team.h"
 #include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
 
-class GameController {
+#include "global/stats_config.h"
+#include "model/game.h"
+#include "model/league.h"
+#include "model/player.h"
+#include "model/team.h"
+
+class GameController
+{
  public:
   explicit GameController(std::unique_ptr<Game> game_ptr);
 
@@ -30,17 +32,13 @@ class GameController {
   std::optional<std::reference_wrapper<const Team>> getManagedTeam() const;
   void selectManagedTeam(uint16_t team_id);
 
-  const std::vector<std::reference_wrapper<const League>> &getLeagues() const;
-  const std::vector<std::reference_wrapper<const Team>> &getTeams() const;
-  std::vector<std::reference_wrapper<const Player>>
-  getPlayersForTeam(uint16_t team_id) const;
-  std::vector<std::reference_wrapper<const Team>>
-  getTeamsInLeague(uint8_t league_id) const;
-  std::optional<std::reference_wrapper<const League>>
-  getLeagueById(uint8_t league_id) const;
-  std::optional<std::reference_wrapper<const Team>>
-  getTeamById(uint16_t team_id) const;
-  const StatsConfig &getStatsConfig() const;
+  const std::vector<std::reference_wrapper<const League>>& getLeagues() const;
+  const std::vector<std::reference_wrapper<const Team>>& getTeams() const;
+  std::vector<std::reference_wrapper<const Player>> getPlayersForTeam(uint16_t team_id) const;
+  std::vector<std::reference_wrapper<const Team>> getTeamsInLeague(uint8_t league_id) const;
+  std::optional<std::reference_wrapper<const League>> getLeagueById(uint8_t league_id) const;
+  std::optional<std::reference_wrapper<const Team>> getTeamById(uint16_t team_id) const;
+  const StatsConfig& getStatsConfig() const;
 
   void advanceDay();
 

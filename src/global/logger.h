@@ -10,7 +10,8 @@
 
 #include <string>
 
-class Logger {
+class Logger
+{
  public:
   static void init();
 

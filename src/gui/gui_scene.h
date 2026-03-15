@@ -7,16 +7,26 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include "gui/gui_view.h"
 #include <SDL3/SDL.h>
+
 #include <cstdint>
 #include <memory>
 
-// TODO add scene types
-enum class SceneID : uint8_t { MAIN_MENU, SETTINGS, GAME_MENU,
-  TEAM_SELECTION, ROSTER, STRATEGY, };
+#include "gui/gui_view.h"
 
-class GUIScene {
+// TODO add scene types
+enum class SceneID : uint8_t
+{
+  MAIN_MENU,
+  SETTINGS,
+  GAME_MENU,
+  TEAM_SELECTION,
+  ROSTER,
+  STRATEGY,
+};
+
+class GUIScene
+{
  public:
   explicit GUIScene(GUIView* guiView_ptr);
   virtual ~GUIScene() = default;
@@ -32,11 +42,11 @@ class GUIScene {
   virtual void onResize(int width, int height);
 
   /*
-  * This function might be used to check what we are rendering.
-  * we would simply do something like this: 
-  * MainMenuScene::getID() { return SceneID::MAIN_MENU; }
-  * TODO : remove or not?
-  */
+   * This function might be used to check what we are rendering.
+   * we would simply do something like this:
+   * MainMenuScene::getID() { return SceneID::MAIN_MENU; }
+   * TODO : remove or not?
+   */
   virtual SceneID getID() const = 0;
 
  protected:

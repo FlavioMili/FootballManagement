@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.14)
-project(FootballManagement LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.16)
+project(FootballManagement LANGUAGES CXX C)
 
 # -----------------------------
 # C++ Standard
@@ -17,7 +17,30 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # -----------------------------
-# Dependencies (FetchContent)
+# Debug Warning Flags
+# -----------------------------
+set(DEBUG_WARNINGS
+  -Wshadow
+  -Wnon-virtual-dtor
+  -Wold-style-cast
+  -Wcast-align
+  -Wunused
+  -Woverloaded-virtual
+  -Wconversion
+  -Wsign-conversion
+  -Wmisleading-indentation
+  -Wduplicated-cond
+  -Wduplicated-branches
+  -Wlogical-op
+  -Wnull-dereference
+  -Wuseless-cast
+  -Wdouble-promotion
+  -Wformat=2
+  -Wimplicit-fallthrough
+)
+
+# -----------------------------
+# Dependencies (FetchContent & find_package)
 # -----------------------------
 include(FetchContent)
 
@@ -48,6 +71,47 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
+# --- SQLite3 ---
+find_package(SQLite3 QUIET)
+if(NOT SQLite3_FOUND)
+  message(STATUS "SQLite3 not found, fetching from GitHub...")
+  FetchContent_Declare(
+    sqlite3
+    GIT_REPOSITORY https://github.com/sjinks/sqlite3-cmake.git
+    GIT_TAG        v3.45.1.0
+  )
+  FetchContent_MakeAvailable(sqlite3)
+  add_library(SQLite::SQLite3 ALIAS sqlite3)
+endif()
+
+# --- SDL3 ---
+find_package(SDL3 QUIET)
+if(NOT SDL3_FOUND)
+  message(STATUS "SDL3 not found, fetching from GitHub...")
+  set(SDL_TESTS OFF CACHE BOOL "" FORCE)
+  set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
+  FetchContent_Declare(
+    SDL3
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+    GIT_TAG        release-3.2.0
+  )
+  FetchContent_MakeAvailable(SDL3)
+endif()
+
+# --- SDL3_ttf ---
+find_package(SDL3_ttf QUIET)
+if(NOT SDL3_ttf_FOUND)
+  message(STATUS "SDL3_ttf not found, fetching from GitHub...")
+  # SDL3_ttf depends on SDL3
+  set(SDL3TTF_SAMPLES OFF CACHE BOOL "" FORCE)
+  FetchContent_Declare(
+    SDL3_ttf
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
+    GIT_TAG        release-3.1.0
+  )
+  FetchContent_MakeAvailable(SDL3_ttf)
+endif()
+
 # GoogleTest (for tests)
 option(BUILD_TESTING "Build tests" ON)
 if(BUILD_TESTING)
@@ -60,133 +124,19 @@ if(BUILD_TESTING)
   FetchContent_MakeAvailable(googletest)
 endif()
 
-# SDL3 (System)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SDL3 REQUIRED sdl3)
-
-# SQLite3 (System)
-find_package(SQLite3 REQUIRED)
-
 # -----------------------------
-# Sources & Library
+# Subdirectories
 # -----------------------------
-file(GLOB_RECURSE ALL_SRC src/*.cpp)
-list(FILTER ALL_SRC EXCLUDE REGEX "src/main.cpp$")
+add_subdirectory(src)
 
-
-# -----------------------------
-# Path Configuration
-# -----------------------------
-configure_file(
-  "${PROJECT_SOURCE_DIR}/src/global/paths.h.in"
-  "${PROJECT_BINARY_DIR}/src/global/paths.h"
-)
-
-add_library(core_lib ${ALL_SRC})
-
-# -----------------------------
-# Include Directories
-# -----------------------------
-set(MODEL_DIR "${PROJECT_SOURCE_DIR}/src/model")
-set(CONTROLLER_DIR "${PROJECT_SOURCE_DIR}/src/controller")
-set(DATABASE_DIR "${PROJECT_SOURCE_DIR}/src/database")
-set(VIEW_GUI_DIR "${PROJECT_SOURCE_DIR}/src/gui")
-set(VIEW_GUI_SCENES_DIR "${VIEW_GUI_DIR}/scenes")
-
-target_include_directories(core_lib PUBLIC
-  ${PROJECT_BINARY_DIR}/src
-  ${PROJECT_SOURCE_DIR}/src
-  ${MODEL_DIR}
-  ${CONTROLLER_DIR}
-  ${DATABASE_DIR}
-  ${VIEW_GUI_DIR}
-  ${VIEW_GUI_SCENES_DIR}
-  ${SDL3_INCLUDE_DIRS}
-)
-
-target_link_directories(core_lib PUBLIC ${SDL3_LIBRARY_DIRS})
-
-target_link_libraries(core_lib PUBLIC
-  fmt::fmt
-  spdlog::spdlog
-  nlohmann_json::nlohmann_json
-  SQLite::SQLite3
-  ${SDL3_LIBRARIES}
-  SDL3_ttf
-)
-
-# Basic warnings for all builds
-target_compile_options(core_lib PRIVATE -Wall -Wextra -pedantic)
-
-# -----------------------------
-# Executable
-# -----------------------------
-add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE core_lib)
-
-# -----------------------------
-# Build type flags
-# -----------------------------
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  
-  # Extensive warning flags for Debug build
-  set(DEBUG_WARNINGS
-    -Wshadow
-    -Wnon-virtual-dtor
-    -Wold-style-cast
-    -Wcast-align
-    -Wunused
-    -Woverloaded-virtual
-    -Wconversion
-    -Wsign-conversion
-    -Wmisleading-indentation
-    -Wduplicated-cond
-    -Wduplicated-branches
-    -Wlogical-op
-    -Wnull-dereference
-    -Wuseless-cast
-    -Wdouble-promotion
-    -Wformat=2
-    -Wimplicit-fallthrough
-  )
-
-  target_compile_definitions(core_lib PRIVATE DEBUG)
-  target_compile_options(core_lib PUBLIC 
-    -Og -g3 
-    -fsanitize=address,undefined
-    ${DEBUG_WARNINGS}
-  )
-  target_link_options(core_lib PUBLIC -fsanitize=address,undefined)
-  
-  target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
-  target_compile_options(${PROJECT_NAME} PRIVATE 
-    -Og -g3 
-    -fsanitize=address,undefined
-    ${DEBUG_WARNINGS}
-  )
-  target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined)
-
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-  target_compile_definitions(core_lib PRIVATE NDEBUG)
-  target_compile_options(core_lib PRIVATE -O2 -march=native -flto=auto)
-  target_link_options(core_lib PRIVATE -flto=auto)
-
-  target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
-  target_compile_options(${PROJECT_NAME} PRIVATE -O2 -march=native -flto=auto)
-  target_link_options(${PROJECT_NAME} PRIVATE -flto=auto)
-
-elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-  target_compile_options(core_lib PRIVATE -O2 -g -march=native)
-  target_compile_options(${PROJECT_NAME} PRIVATE -O2 -g -march=native)
-endif()
-
-# -----------------------------
-# Tests
-# -----------------------------
 if(BUILD_TESTING)
   enable_testing()
   add_subdirectory(test)
 endif()
+
+# -----------------------------
+# Tools & Formatting
+# -----------------------------
 
 # Copy compile_commands.json to source dir
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
@@ -195,5 +145,40 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS)
       ${CMAKE_BINARY_DIR}/compile_commands.json
       ${CMAKE_SOURCE_DIR}/compile_commands.json
     COMMENT "Copying compile_commands.json to root"
+  )
+endif()
+
+find_program(CLANG_FORMAT clang-format)
+if(CLANG_FORMAT)
+  file(GLOB_RECURSE FORMAT_FILES
+    src/*.cpp
+    src/*.h
+    src/*.hpp
+    test/*.cpp
+  )
+  add_custom_target(format
+    COMMAND ${CLANG_FORMAT} -i ${FORMAT_FILES}
+    COMMENT "Running clang-format"
+  )
+endif()
+
+find_program(CLANG_TIDY clang-tidy)
+if(CLANG_TIDY)
+  set(CMAKE_CXX_CLANG_TIDY
+      ${CLANG_TIDY};
+      -p=${CMAKE_BINARY_DIR}
+  )
+endif()
+
+find_program(CPPCHECK cppcheck)
+if(CPPCHECK)
+  add_custom_target(cppcheck
+    COMMAND ${CPPCHECK}
+    --enable=warning,performance,portability
+    --std=c++20
+    --language=c++
+    --inline-suppr
+    --quiet
+    src
   )
 endif()

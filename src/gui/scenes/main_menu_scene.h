@@ -7,22 +7,25 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include "gui/gui_scene.h"
-#include "gui/gui_view.h"
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <cstdint>
-#include "gui/button_manager.h"
 
-enum MainMenuButtonIndex : uint8_t {
+#include <cstdint>
+
+#include "gui/button_manager.h"
+#include "gui/gui_scene.h"
+#include "gui/gui_view.h"
+
+enum MainMenuButtonIndex : uint8_t
+{
   NEW_GAME_BUTTON = 0,
   LOAD_GAME_BUTTON = 1,
   SETTINGS_BUTTON = 2,
   QUIT_BUTTON = 3,
 };
 
-
-class MainMenuScene : public GUIScene {
+class MainMenuScene : public GUIScene
+{
  public:
   explicit MainMenuScene(GUIView* guiView_ptr);
   ~MainMenuScene() = default;

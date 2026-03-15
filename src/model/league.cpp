@@ -7,15 +7,18 @@
 // -----------------------------------------------------------------------------
 
 #include "league.h"
+
 #include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
 
-League::League(LeagueID league_id, const std::string &league_name,
-               const std::vector<TeamID> &initial_team_ids, std::optional<LeagueID> parent)
-    : id(league_id), name(league_name), parent_league_id(parent) {
-  for (auto tid : initial_team_ids) {
+League::League(LeagueID league_id, const std::string& league_name,
+               const std::vector<TeamID>& initial_team_ids, std::optional<LeagueID> parent)
+    : id(league_id), name(league_name), parent_league_id(parent)
+{
+  for (auto tid : initial_team_ids)
+  {
     team_ids.push_back(tid);
     leaderboard[tid] = 0;
   }
@@ -25,47 +28,46 @@ uint8_t League::getId() const { return id; }
 
 std::string League::getName() const { return name; }
 
-const std::vector<TeamID> &League::getTeamIDs() const { return team_ids; }
+const std::vector<TeamID>& League::getTeamIDs() const { return team_ids; }
 
-void League::addTeamID(TeamID team_id) {
-  if (std::find(team_ids.begin(), team_ids.end(), team_id) == team_ids.end()) {
+void League::addTeamID(TeamID team_id)
+{
+  if (std::find(team_ids.begin(), team_ids.end(), team_id) == team_ids.end())
+  {
     team_ids.push_back(team_id);
     leaderboard[team_id] = 0;
   }
 }
 
-void League::removeTeamID(TeamID team_id) {
+void League::removeTeamID(TeamID team_id)
+{
   auto it = std::remove(team_ids.begin(), team_ids.end(), team_id);
-  if (it != team_ids.end()) {
+  if (it != team_ids.end())
+  {
     team_ids.erase(it, team_ids.end());
     leaderboard.erase(team_id);
   }
 }
 
 // Points management
-uint8_t League::getPoints(TeamID team_id) const {
+uint8_t League::getPoints(TeamID team_id) const
+{
   auto it = leaderboard.find(team_id);
   return it != leaderboard.end() ? it->second : 0;
 }
 
-void League::addPoints(TeamID team_id, uint8_t points) {
-  leaderboard[team_id] += points;
-}
+void League::addPoints(TeamID team_id, uint8_t points) { leaderboard[team_id] += points; }
 
-void League::setPoints(TeamID team_id, uint8_t points) {
-  leaderboard[team_id] = points;
-}
+void League::setPoints(TeamID team_id, uint8_t points) { leaderboard[team_id] = points; }
 
-void League::resetPoints() {
-  for (auto &[_, pts] : leaderboard) {
+void League::resetPoints()
+{
+  for (auto& [_, pts] : leaderboard)
+  {
     pts = 0;
   }
 }
 
-const std::map<TeamID, uint8_t> &League::getLeaderboard() const {
-  return leaderboard;
-}
+const std::map<TeamID, uint8_t>& League::getLeaderboard() const { return leaderboard; }
 
-const std::optional<LeagueID> League::getParentLeagueID() const {
-    return parent_league_id;
-}
+const std::optional<LeagueID> League::getParentLeagueID() const { return parent_league_id; }

@@ -8,14 +8,16 @@
 
 #pragma once
 
-#include "league.h"
-#include "player.h"
-#include "team.h"
 #include <cstdint>
 #include <string>
 #include <vector>
 
-class DataGenerator {
+#include "league.h"
+#include "player.h"
+#include "team.h"
+
+class DataGenerator
+{
  public:
   static std::vector<League> generateLeagues();
   static std::vector<Team> generateTeams();

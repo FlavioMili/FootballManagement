@@ -1,0 +1,37 @@
+name: C++ CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y \
+          clang \
+          clang-tidy \
+          clang-format \
+          cppcheck \
+          libsdl3-dev \
+          libsdl3-ttf-dev \
+          libsqlite3-dev
+
+    - name: Configure
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+
+    - name: Format check
+      run: |
+        clang-format --dry-run --Werror $(git ls-files '*.cpp' '*.h')
+
+    - name: Build
+      run: cmake --build build -j
+
+    - name: Run tests
+      run: ctest --test-dir build --output-on-failure

@@ -7,29 +7,34 @@
 // -----------------------------------------------------------------------------
 
 #include "SQLLoader.h"
-#include "global/logger.h"
-#include "global/paths.h"
-#include "global/queries.h"
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+
+#include "global/logger.h"
+#include "global/paths.h"
+#include "global/queries.h"
 
 // static storage for queries
 std::unordered_map<Query, std::string> SQLLoader::queries_{};
 
 // -------------------- PUBLIC --------------------
 
-void SQLLoader::loadQueriesFromFile() {
+void SQLLoader::loadQueriesFromFile()
+{
   std::string content = readFile(QUERIES_PATH);
   parseQueries(content);
 }
 
 std::string SQLLoader::loadSchemaFromFile() { return readFile(SCHEMA_PATH); }
 
-const std::string &SQLLoader::getQuery(const Query query_id) {
+const std::string& SQLLoader::getQuery(const Query query_id)
+{
   auto it = queries_.find(query_id);
-  if (it == queries_.end()) {
+  if (it == queries_.end())
+  {
     throw std::runtime_error("Query not found for ID: " +
                              std::to_string(static_cast<int>(query_id)));
   }
@@ -38,9 +43,11 @@ const std::string &SQLLoader::getQuery(const Query query_id) {
 
 // -------------------- PRIVATE --------------------
 
-std::string SQLLoader::readFile(const std::string &filepath) {
+std::string SQLLoader::readFile(const std::string& filepath)
+{
   std::ifstream file(filepath);
-  if (!file.is_open()) {
+  if (!file.is_open())
+  {
     throw std::runtime_error("Cannot open file: " + filepath);
   }
 
@@ -49,7 +56,8 @@ std::string SQLLoader::readFile(const std::string &filepath) {
   return buffer.str();
 }
 
-void SQLLoader::parseQueries(const std::string &content) {
+void SQLLoader::parseQueries(const std::string& content)
+{
   std::istringstream stream(content);
   std::string line;
   std::string current_query_str;
@@ -57,19 +65,22 @@ void SQLLoader::parseQueries(const std::string &content) {
   bool in_query = false;
   bool has_query_id = false;
 
-  while (std::getline(stream, line)) {
+  while (std::getline(stream, line))
+  {
     line = trim(line);
 
     // skip empty lines or comments (except query ID)
-    if (line.empty() || (line.substr(0, 2) == "--" &&
-                         line.find("@QUERY_ID:") == std::string::npos)) {
+    if (line.empty() || (line.substr(0, 2) == "--" && line.find("@QUERY_ID:") == std::string::npos))
+    {
       continue;
     }
 
     // check for query ID
-    if (line.find("-- @QUERY_ID:") != std::string::npos) {
+    if (line.find("-- @QUERY_ID:") != std::string::npos)
+    {
       // save previous query
-      if (has_query_id && !current_query_str.empty()) {
+      if (has_query_id && !current_query_str.empty())
+      {
         queries_[current_query_enum] = trim(current_query_str);
       }
 
@@ -79,7 +90,8 @@ void SQLLoader::parseQueries(const std::string &content) {
 
       // map string → enum via your constexpr map
       auto it = string_to_query_map.find(id);
-      if (it == string_to_query_map.end()) {
+      if (it == string_to_query_map.end())
+      {
         throw std::runtime_error("Unknown query ID: " + id);
       }
       current_query_enum = it->second;
@@ -92,26 +104,26 @@ void SQLLoader::parseQueries(const std::string &content) {
     }
 
     // accumulate query
-    if (in_query && !line.empty()) {
-      if (!current_query_str.empty())
-        current_query_str += " ";
+    if (in_query && !line.empty())
+    {
+      if (!current_query_str.empty()) current_query_str += " ";
       current_query_str += line;
     }
   }
 
   // save last query
-  if (has_query_id && !current_query_str.empty()) {
+  if (has_query_id && !current_query_str.empty())
+  {
     queries_[current_query_enum] = trim(current_query_str);
   }
 
-  Logger::debug("Loaded " + std::to_string(queries_.size()) +
-                " queries from file.\n");
+  Logger::debug("Loaded " + std::to_string(queries_.size()) + " queries from file.\n");
 }
 
-std::string SQLLoader::trim(const std::string &str) {
+std::string SQLLoader::trim(const std::string& str)
+{
   size_t start = str.find_first_not_of(" \t\n\r");
-  if (start == std::string::npos)
-    return "";
+  if (start == std::string::npos) return "";
 
   size_t end = str.find_last_not_of(" \t\n\r");
   return str.substr(start, end - start + 1);

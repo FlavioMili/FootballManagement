@@ -9,9 +9,11 @@
 #pragma once
 #include <cstdint>
 #include <string>
+
 #include "global/types.h"
 
-struct GameDateValue {
+struct GameDateValue
+{
   uint16_t year;
   uint8_t month;
   uint8_t day;
@@ -19,8 +21,7 @@ struct GameDateValue {
   // Let's start the game from July first, so that we have
   // the transfer window and some friendlies before starting
   // the championship.
-  GameDateValue(uint16_t y = 2025, uint8_t m = 7, uint8_t d = 1)
-      : year(y), month(m), day(d) {}
+  GameDateValue(uint16_t y = 2025, uint8_t m = 7, uint8_t d = 1) : year(y), month(m), day(d) {}
 
   // ----------------------
   // Date arithmetic
@@ -35,14 +36,14 @@ struct GameDateValue {
   // ----------------------
   // Comparisons
   // ----------------------
-  bool operator<(const GameDateValue &other) const;
-  bool operator==(const GameDateValue &other) const;
+  bool operator<(const GameDateValue& other) const;
+  bool operator==(const GameDateValue& other) const;
 
   // ----------------------
   // String/DB conversion
   // ----------------------
   std::string toString() const;
-  static GameDateValue fromString(const std::string &str);
+  static GameDateValue fromString(const std::string& str);
 
   // ----------------------
   // Game logic
@@ -56,9 +57,11 @@ struct GameDateValue {
 };
 
 // SINGLETON
-class GameDate {
+class GameDate
+{
  public:
-  static GameDate &instance() {
+  static GameDate& instance()
+  {
     static GameDate _instance;
     return _instance;
   }
@@ -72,8 +75,8 @@ class GameDate {
 
  private:
   GameDate() : current(2025, 7, 1) {}
-  GameDate(const GameDate &) = delete;
-  GameDate &operator=(const GameDate &) = delete;
+  GameDate(const GameDate&) = delete;
+  GameDate& operator=(const GameDate&) = delete;
 
   GameDateValue current;
 };

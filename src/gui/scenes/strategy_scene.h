@@ -8,14 +8,16 @@
 
 #pragma once
 
-#include "gui/gui_scene.h"
-#include "gui/button_manager.h"
-#include "model/strategy.h"
 #include <string>
+
+#include "gui/button_manager.h"
+#include "gui/gui_scene.h"
+#include "model/strategy.h"
 
 class GUIView;
 
-class StrategyScene : public GUIScene {
+class StrategyScene : public GUIScene
+{
  public:
   explicit StrategyScene(GUIView* parent);
   ~StrategyScene() override;

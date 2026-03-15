@@ -10,11 +10,13 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
 
-struct DropdownStyle {
+struct DropdownStyle
+{
   SDL_Color backgroundColor = {60, 60, 60, 255};
   SDL_Color borderColor = {100, 100, 100, 255};
   SDL_Color textColor = {255, 255, 255, 255};
@@ -22,10 +24,11 @@ struct DropdownStyle {
   SDL_Color arrowColor = {200, 200, 200, 255};
 };
 
-class Dropdown {
+class Dropdown
+{
  public:
-  Dropdown(SDL_Renderer* dropdown_renderer, TTF_Font* dropdown_font,
-           const SDL_FRect& rect, const std::vector<std::string>& dropdown_options);
+  Dropdown(SDL_Renderer* dropdown_renderer, TTF_Font* dropdown_font, const SDL_FRect& rect,
+           const std::vector<std::string>& dropdown_options);
   ~Dropdown();
 
   // Disable copy and move to prevent accidental memory issues
