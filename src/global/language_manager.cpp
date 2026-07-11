@@ -42,12 +42,12 @@ bool LanguageManager::loadLanguage(Language lang)
     return true;
 }
 
-std::string LanguageManager::get(const std::string& key) const
+const char* LanguageManager::get(const char* key) const
 {
     if (auto it = translations.find(key);
         it != translations.end()) 
     {
-        return it->second;
+        return it->second.c_str();
     }
-    return key; // Fallback to returning the key if translation is missing
+    return key; // Fallback to returning the literal key pointer if translation is missing
 }

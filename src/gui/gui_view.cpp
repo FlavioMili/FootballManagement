@@ -98,6 +98,9 @@ bool GUIView::initialize()
   io.IniFilename = "assets/imgui.ini";
   ImGui::StyleColorsDark();
 
+  // Load high quality TTF font to replace the pixelated default
+  io.Fonts->AddFontFromFileTTF("assets/fonts/font.ttf", 20.0f);
+
   ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
   ImGui_ImplSDLRenderer3_Init(renderer);
 

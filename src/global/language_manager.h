@@ -25,7 +25,7 @@ class LanguageManager
   bool loadLanguage(Language lang);
 
   // Retrieves the localized string. Returns the key itself if not found.
-  std::string get(const std::string& key) const;
+  const char* get(const char* key) const;
 
  private:
   LanguageManager() = default;
@@ -33,6 +33,6 @@ class LanguageManager
 };
 
 // Global helper macro for concise UI code
-#define LOC(key) LanguageManager::instance().get(key).c_str()
+#define LOC(key) LanguageManager::instance().get(key)
 
 #endif // LANGUAGE_MANAGER_H
