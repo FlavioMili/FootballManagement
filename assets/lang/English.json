@@ -10,5 +10,9 @@
   "SETTINGS_REFRESH_RATE": "Refresh Rate",
   "SETTINGS_FULLSCREEN": "Fullscreen",
   "SETTINGS_CANCEL": "Cancel",
-  "SETTINGS_APPLY": "Apply & Back"
+  "SETTINGS_APPLY": "Apply & Back",
+  "TEAM_SELECTION_TITLE": "Select Your Team",
+  "TEAM_SELECTION_LEAGUES": "Leagues:",
+  "TEAM_SELECTION_TEAMS": "Teams:",
+  "TEAM_SELECTION_SELECT_LEAGUE_FIRST": "Select a league first."
 }

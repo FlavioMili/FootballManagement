@@ -20,6 +20,9 @@ constexpr float BUTTON_HEIGHT = 40.0f;
 constexpr float MENU_BUTTON_WIDTH = 200.0f;
 constexpr float MENU_BUTTON_HEIGHT = 50.0f;
 
+// Window layout
+constexpr float CENTER_PIVOT = 0.5f;
+
 struct Resolution {
   int width;
   int height;
