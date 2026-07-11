@@ -63,7 +63,7 @@ bool GUIView::initialize()
   }
 
   // Initialize SDL_ttf
-  if (static_cast<int>(TTF_Init()) != 0)
+  if (!TTF_Init())
   {
     std::cerr << "Failed to initialize SDL_ttf: " << SDL_GetError() << '\n';
     return false;

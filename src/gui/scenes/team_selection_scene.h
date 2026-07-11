@@ -7,15 +7,15 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
+#include <cstdint>
+#include <optional>
+#include <vector>
+
 #include "gui/gui_scene.h"
 #include "model/league.h"
 #include "model/team.h"
-#include <vector>
-#include <optional>
-#include <cstdint>
 
-class TeamSelectionScene : public GUIScene
-{
+class TeamSelectionScene : public GUIScene {
  public:
   explicit TeamSelectionScene(GUIView* parent);
   ~TeamSelectionScene() override = default;
