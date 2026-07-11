@@ -23,14 +23,19 @@ void Calendar::generate(const GameDateValue& startDate)
   generateFriendlies(startDate);
 }
 
-void Calendar::addMatch(const Match& match) { schedule[match.getDate()].push_back(match); }
+void Calendar::addMatch(const Match& match)
+{
+  schedule[match.getDate()].push_back(match);
+}
 
-const std::map<GameDateValue, std::vector<Match>>& Calendar::getFullCalendar() const
+const std::map<GameDateValue, std::vector<Match>>& Calendar::getFullCalendar()
+    const
 {
   return schedule;
 }
 
-const std::vector<Match>& Calendar::getMatchesForDate(const GameDateValue& date) const
+const std::vector<Match>& Calendar::getMatchesForDate(
+    const GameDateValue& date) const
 {
   static const std::vector<Match> no_matches;
   auto it = schedule.find(date);
@@ -50,7 +55,8 @@ void Calendar::generateSeasonFixtures(const GameDateValue& startDate)
 
     if (team_ids.size() < 2)
     {
-      Logger::warn("Not enough teams to generate fixtures in: " + league.getName());
+      Logger::warn("Not enough teams to generate fixtures in: " +
+                   league.getName());
       continue;
     }
 
@@ -102,7 +108,8 @@ void Calendar::generateSeasonFixtures(const GameDateValue& startDate)
   }
 }
 
-void Calendar::generateFriendlies(const GameDateValue& startDate, size_t numFriendlies)
+void Calendar::generateFriendlies(const GameDateValue& startDate,
+                                  size_t numFriendlies)
 {
   auto teams = GameData::instance().getTeamsVector();
   std::vector<uint16_t> team_ids;
@@ -122,7 +129,8 @@ void Calendar::generateFriendlies(const GameDateValue& startDate, size_t numFrie
   bool isOdd = (num_teams % 2 != 0);
   if (isOdd)
   {
-    team_ids.push_back(FREE_AGENTS_TEAM_ID);  // Assuming FREE_AGENTS_TEAM_ID is available
+    team_ids.push_back(
+        FREE_AGENTS_TEAM_ID);  // Assuming FREE_AGENTS_TEAM_ID is available
     num_teams++;
   }
 

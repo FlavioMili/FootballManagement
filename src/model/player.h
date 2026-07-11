@@ -33,9 +33,10 @@ class Player
 {
  public:
   Player(PlayerID new_id, TeamID new_team_id, std::string_view new_first_name,
-         std::string_view new_last_name, std::string_view new_role, Language new_nationality,
-         uint32_t new_wage, uint32_t new_status, uint8_t new_age, uint8_t new_contract_years,
-         uint8_t new_height, Foot new_foot, const std::map<std::string, float>& new_stats);
+         std::string_view new_last_name, std::string_view new_role,
+         Language new_nationality, uint32_t new_wage, uint32_t new_status,
+         uint8_t new_age, uint8_t new_contract_years, uint8_t new_height,
+         Foot new_foot, const std::map<std::string, float>& new_stats);
 
   PlayerID getId() const;
   TeamID getTeamId() const;

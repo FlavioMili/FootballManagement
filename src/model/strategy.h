@@ -12,11 +12,13 @@
  *
  * DESCRIPTION OF ALL SLIDERS
  *
- * pressing      : Team-wide intensity of pressing opponents (0 = none, 1 = maximum)
- * riskTaking    : Aggressiveness in attack vs. defensive caution (0 = very safe, 1 = very risky)
- * offensiveBias : Likelihood to pass forward or safer options (0 = mostly safe, 1 = mostly forward)
- * widthUsage    : Horizontal spread of the team on the field (0 = narrow, 1 = full width)
- * compactness   : Closeness of players to the goalkeeper (0 = very close, 1 = very high)
+ * pressing      : Team-wide intensity of pressing opponents (0 = none, 1 =
+ * maximum) riskTaking    : Aggressiveness in attack vs. defensive caution (0 =
+ * very safe, 1 = very risky) offensiveBias : Likelihood to pass forward or
+ * safer options (0 = mostly safe, 1 = mostly forward) widthUsage    :
+ * Horizontal spread of the team on the field (0 = narrow, 1 = full width)
+ * compactness   : Closeness of players to the goalkeeper (0 = very close, 1 =
+ * very high)
  *
  * These sliders influence movement, positioning, passing decisions, and
  * pressing behavior for all players during simulation. They can be
@@ -32,7 +34,8 @@ struct StrategySliders
 };
 
 /**
- * RoleWeights defines the behavior of a single player during a match simulation.
+ * RoleWeights defines the behavior of a single player during a match
+ * simulation.
  * - attackWeight  : tendency to engage in offensive actions
  * - defenseWeight : tendency to engage in defensive actions
  * - movementRadius: distance (in grid cells) the player can
@@ -41,7 +44,8 @@ struct StrategySliders
  *     are going to take place
  *
  * During simulation, these weights are applied only within the movementRadius
- * so that we might calculate better what is going on in a certain area of the field.
+ * so that we might calculate better what is going on in a certain area of the
+ * field.
  */
 struct RoleWeights
 {
@@ -75,13 +79,15 @@ class Strategy
   void setCompactness(float value) { sliders.compactness = value; }
 
   // --- Setters for player role weights ---
-  void setOutfieldWeights(int playerIndex, float attack, float defense, int radius);
+  void setOutfieldWeights(int playerIndex, float attack, float defense,
+                          int radius);
 
   RoleWeights& getRole(int roleIndex);              // non-const
   const RoleWeights& getRole(int roleIndex) const;  // const
 
-  void setAllSliders(const StrategySliders& newSliders);  // set all sliders at once
-  StrategySliders getSliders() const;                     // retrieve current slider state
+  void setAllSliders(
+      const StrategySliders& newSliders);  // set all sliders at once
+  StrategySliders getSliders() const;      // retrieve current slider state
 
   // apply same weights to all outfield
   void setAllOutfieldWeights(float attack, float defense, int radius);

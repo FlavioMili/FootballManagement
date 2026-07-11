@@ -14,7 +14,8 @@
 #include <vector>
 
 League::League(LeagueID league_id, const std::string& league_name,
-               const std::vector<TeamID>& initial_team_ids, std::optional<LeagueID> parent)
+               const std::vector<TeamID>& initial_team_ids,
+               std::optional<LeagueID> parent)
     : id(league_id), name(league_name), parent_league_id(parent)
 {
   for (auto tid : initial_team_ids)
@@ -56,9 +57,15 @@ uint8_t League::getPoints(TeamID team_id) const
   return it != leaderboard.end() ? it->second : 0;
 }
 
-void League::addPoints(TeamID team_id, uint8_t points) { leaderboard[team_id] += points; }
+void League::addPoints(TeamID team_id, uint8_t points)
+{
+  leaderboard[team_id] += points;
+}
 
-void League::setPoints(TeamID team_id, uint8_t points) { leaderboard[team_id] = points; }
+void League::setPoints(TeamID team_id, uint8_t points)
+{
+  leaderboard[team_id] = points;
+}
 
 void League::resetPoints()
 {
@@ -68,6 +75,12 @@ void League::resetPoints()
   }
 }
 
-const std::map<TeamID, uint8_t>& League::getLeaderboard() const { return leaderboard; }
+const std::map<TeamID, uint8_t>& League::getLeaderboard() const
+{
+  return leaderboard;
+}
 
-const std::optional<LeagueID> League::getParentLeagueID() const { return parent_league_id; }
+const std::optional<LeagueID> League::getParentLeagueID() const
+{
+  return parent_league_id;
+}

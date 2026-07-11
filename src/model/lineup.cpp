@@ -78,7 +78,8 @@ const Strategy& Lineup::getStrategy() const { return strategy; }
 std::string Lineup::toString() const
 {
   std::ostringstream oss;
-  oss << "Goalkeeper: " << (goalkeeper ? goalkeeper->getName() : "None") << "\n";
+  oss << "Goalkeeper: " << (goalkeeper ? goalkeeper->getName() : "None")
+      << "\n";
   oss << "Grid:\n";
   for (int r = 0; r < LINEUP_GRID_ROWS; ++r)
   {
@@ -114,7 +115,9 @@ void Lineup::generateStartingXI(const std::vector<PlayerID>& allPlayerIDs,
     const Player& p = GameData::instance().getPlayers().at(playerID);
     if (p.getRole() == "Goalkeeper")
     {
-      if (!bestGK || p.getOverall(stats_config) > bestGK->getOverall(stats_config)) bestGK = &p;
+      if (!bestGK ||
+          p.getOverall(stats_config) > bestGK->getOverall(stats_config))
+        bestGK = &p;
     }
     else
     {
@@ -127,8 +130,10 @@ void Lineup::generateStartingXI(const std::vector<PlayerID>& allPlayerIDs,
   if (!goalkeeper) return;                   // no GK found, abort
 
   // Sort outfield players by overall descending
-  std::sort(outfieldPlayers.begin(), outfieldPlayers.end(), [&](const Player* a, const Player* b)
-            { return a->getOverall(stats_config) > b->getOverall(stats_config); });
+  std::sort(
+      outfieldPlayers.begin(), outfieldPlayers.end(),
+      [&](const Player* a, const Player* b)
+      { return a->getOverall(stats_config) > b->getOverall(stats_config); });
 
   // Place top 10 outfield players in grid (row 4 = defense, row 0 = attack)
   int rows = LINEUP_GRID_ROWS;
@@ -139,7 +144,8 @@ void Lineup::generateStartingXI(const std::vector<PlayerID>& allPlayerIDs,
   {
     for (int c = 0; c < cols && placed < 10; ++c)
     {
-      grid[static_cast<size_t>(toIndex(static_cast<uint8_t>(r), static_cast<uint8_t>(c)))] =
+      grid[static_cast<size_t>(
+          toIndex(static_cast<uint8_t>(r), static_cast<uint8_t>(c)))] =
           const_cast<Player*>(outfieldPlayers[static_cast<size_t>(placed)]);
       ++placed;
     }

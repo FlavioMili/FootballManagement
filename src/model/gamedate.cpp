@@ -72,7 +72,10 @@ GameDateValue GameDateValue::operator[](size_t i) const
   return tmp;
 }
 
-GameDateValue GameDateValue::operator+(size_t days) const { return (*this)[days]; }
+GameDateValue GameDateValue::operator+(size_t days) const
+{
+  return (*this)[days];
+}
 
 GameDateValue GameDateValue::operator-(size_t days) const
 {
@@ -111,8 +114,9 @@ bool GameDateValue::operator==(const GameDateValue& other) const
 std::string GameDateValue::toString() const
 {
   std::ostringstream oss;
-  oss << std::setw(4) << std::setfill('0') << year << "-" << std::setw(2) << std::setfill('0')
-      << unsigned(month) << "-" << std::setw(2) << std::setfill('0') << unsigned(day);
+  oss << std::setw(4) << std::setfill('0') << year << "-" << std::setw(2)
+      << std::setfill('0') << unsigned(month) << "-" << std::setw(2)
+      << std::setfill('0') << unsigned(day);
   return oss.str();
 }
 

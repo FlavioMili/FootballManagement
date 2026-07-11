@@ -42,13 +42,15 @@ class GameData
   // ---------------- League ----------------
   void addLeague(LeagueID id, const League& league);
 
-  std::optional<std::reference_wrapper<const League>> getLeague(LeagueID id) const;
+  std::optional<std::reference_wrapper<const League>> getLeague(
+      LeagueID id) const;
 
   const std::unordered_map<LeagueID, League>& getLeagues() const;
 
   std::unordered_map<LeagueID, League>& getLeagues();
 
-  const std::vector<std::reference_wrapper<const League>>& getLeaguesVector() const;
+  const std::vector<std::reference_wrapper<const League>>& getLeaguesVector()
+      const;
 
   // ---------------- Team ----------------
   void addTeam(TeamID id, const Team& team);
@@ -66,11 +68,14 @@ class GameData
   void ageAllPlayers();
 
   void addPlayer(PlayerID id, const Player& player);
-  std::optional<std::reference_wrapper<const Player>> getPlayer(PlayerID id) const;
+  std::optional<std::reference_wrapper<const Player>> getPlayer(
+      PlayerID id) const;
   const std::unordered_map<PlayerID, Player>& getPlayers() const;
   std::unordered_map<PlayerID, Player>& getPlayers();
-  const std::vector<std::reference_wrapper<const Player>>& getPlayersVector() const;
-  std::vector<std::reference_wrapper<const Player>> getPlayersForTeam(TeamID team_id) const;
+  const std::vector<std::reference_wrapper<const Player>>& getPlayersVector()
+      const;
+  std::vector<std::reference_wrapper<const Player>> getPlayersForTeam(
+      TeamID team_id) const;
   bool removePlayer(PlayerID id);
 
  private:

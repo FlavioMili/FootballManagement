@@ -63,7 +63,8 @@ class GUIView
   void update(float deltaTime);
   void render();
 
-  // Helper method to get the currently active scene (top overlay or current scene)
+  // Helper method to get the currently active scene (top overlay or current
+  // scene)
   GUIScene* getActiveScene() const;
 
   GameController& controller;

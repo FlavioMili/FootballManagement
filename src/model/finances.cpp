@@ -28,7 +28,10 @@ void Finances::subtractBalance(std::int64_t amount) { balance -= amount; }
 
 std::int64_t Finances::getBalance() const noexcept { return balance; }
 
-float Finances::getTransferToWagesRatio() const noexcept { return transfer_to_wages_ratio; }
+float Finances::getTransferToWagesRatio() const noexcept
+{
+  return transfer_to_wages_ratio;
+}
 
 int64_t Finances::getCurrentWageSpending() const
 {

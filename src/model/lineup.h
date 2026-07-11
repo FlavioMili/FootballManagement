@@ -58,7 +58,8 @@ class Lineup
   // Debug / visualisation
   std::string toString() const;
 
-  void generateStartingXI(const std::vector<PlayerID>& allPlayers, const StatsConfig& stats_config);
+  void generateStartingXI(const std::vector<PlayerID>& allPlayers,
+                          const StatsConfig& stats_config);
 
   void gridClear()
   {

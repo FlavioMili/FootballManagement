@@ -70,7 +70,8 @@ void SQLLoader::parseQueries(const std::string& content)
     line = trim(line);
 
     // skip empty lines or comments (except query ID)
-    if (line.empty() || (line.substr(0, 2) == "--" && line.find("@QUERY_ID:") == std::string::npos))
+    if (line.empty() || (line.substr(0, 2) == "--" &&
+                         line.find("@QUERY_ID:") == std::string::npos))
     {
       continue;
     }
@@ -117,7 +118,8 @@ void SQLLoader::parseQueries(const std::string& content)
     queries_[current_query_enum] = trim(current_query_str);
   }
 
-  Logger::debug("Loaded " + std::to_string(queries_.size()) + " queries from file.\n");
+  Logger::debug("Loaded " + std::to_string(queries_.size()) +
+                " queries from file.\n");
 }
 
 std::string SQLLoader::trim(const std::string& str)

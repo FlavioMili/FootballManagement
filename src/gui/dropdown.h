@@ -27,7 +27,8 @@ struct DropdownStyle
 class Dropdown
 {
  public:
-  Dropdown(SDL_Renderer* dropdown_renderer, TTF_Font* dropdown_font, const SDL_FRect& rect,
+  Dropdown(SDL_Renderer* dropdown_renderer, TTF_Font* dropdown_font,
+           const SDL_FRect& rect,
            const std::vector<std::string>& dropdown_options);
   ~Dropdown();
 
@@ -47,7 +48,8 @@ class Dropdown
   std::string getSelectedOption() const;
   void setSelectedIndex(int index);
 
-  void setOnSelectionChanged(std::function<void(int, const std::string&)> callback);
+  void setOnSelectionChanged(
+      std::function<void(int, const std::string&)> callback);
 
  private:
   void createTextures();

@@ -26,7 +26,8 @@ class Calendar
 
  private:
   void generateSeasonFixtures(const GameDateValue& startDate);
-  void generateFriendlies(const GameDateValue& startDate, size_t numFriendlies = 4);
+  void generateFriendlies(const GameDateValue& startDate,
+                          size_t numFriendlies = 4);
 
   std::map<GameDateValue, std::vector<Match>> schedule;
 };

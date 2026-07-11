@@ -50,14 +50,15 @@ class ButtonManager
 
   int getButtonCount() { return static_cast<int>(buttons.size()); }
   // Button creation and management
-  int addButton(const SDL_FRect& rect, const std::string& label, std::function<void()> callback);
-  int addButton(const SDL_FRect& rect, const std::string& label, ButtonStyle style,
+  int addButton(const SDL_FRect& rect, const std::string& label,
                 std::function<void()> callback);
+  int addButton(const SDL_FRect& rect, const std::string& label,
+                ButtonStyle style, std::function<void()> callback);
 
   int addButton(float x, float y, float w, float h, const std::string& label,
                 std::function<void()> callback);
-  int addButton(float x, float y, float w, float h, const std::string& label, ButtonStyle style,
-                std::function<void()> callback);
+  int addButton(float x, float y, float w, float h, const std::string& label,
+                ButtonStyle style, std::function<void()> callback);
 
   void removeButton(int buttonId);
   void clearButtons();

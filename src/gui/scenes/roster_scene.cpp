@@ -55,8 +55,9 @@ void RosterScene::setupUI()
   int width, height;
   SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
 
-  backButtonId = button_manager.addButton(10, static_cast<float>(height) - 50, 100, 40, "Back",
-                                          [this]() { parent_view->popScene(); });
+  backButtonId =
+      button_manager.addButton(10, static_cast<float>(height) - 50, 100, 40,
+                               "Back", [this]() { parent_view->popScene(); });
 
   setupPlayerDisplay();
 }
@@ -77,7 +78,8 @@ void RosterScene::update(float deltaTime) { (void)(deltaTime); }
 
 void RosterScene::render()
 {
-  SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50, 255);  // Dark grey background
+  SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50,
+                         255);  // Dark grey background
   SDL_RenderClear(getRenderer());
 
   int width, height;
@@ -92,24 +94,28 @@ void RosterScene::render()
     return;
   }
 
-  SDL_Surface* textSurface = TTF_RenderText_Solid(font, "Team Roster", 0, textColor);
+  SDL_Surface* textSurface =
+      TTF_RenderText_Solid(font, "Team Roster", 0, textColor);
   if (!textSurface)
   {
     std::cerr << "Failed to render text: " << SDL_GetError() << "\n";
     TTF_CloseFont(font);
     return;
   }
-  SDL_Texture* textTexture = SDL_CreateTextureFromSurface(getRenderer(), textSurface);
+  SDL_Texture* textTexture =
+      SDL_CreateTextureFromSurface(getRenderer(), textSurface);
   if (!textTexture)
   {
-    std::cerr << "Failed to create texture from text: " << SDL_GetError() << "\n";
+    std::cerr << "Failed to create texture from text: " << SDL_GetError()
+              << "\n";
     SDL_DestroySurface(textSurface);
     TTF_CloseFont(font);
     return;
   }
 
-  SDL_FRect textRect = {static_cast<float>(width - textSurface->w) / 2.0f, 50.0f,
-                        static_cast<float>(textSurface->w), static_cast<float>(textSurface->h)};
+  SDL_FRect textRect = {static_cast<float>(width - textSurface->w) / 2.0f,
+                        50.0f, static_cast<float>(textSurface->w),
+                        static_cast<float>(textSurface->h)};
   SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
 
   SDL_DestroyTexture(textTexture);
@@ -131,25 +137,30 @@ void RosterScene::render()
     const Player& player = roster_players[i].get();
     std::string playerText =
         player.getName() + " (" + player.getRole() + ") - OVR: " +
-        std::to_string(player.getOverall(parent_view->getController().getStatsConfig()));
+        std::to_string(
+            player.getOverall(parent_view->getController().getStatsConfig()));
 
-    SDL_Surface* playerSurface = TTF_RenderText_Solid(playerFont, playerText.c_str(), 0, textColor);
+    SDL_Surface* playerSurface =
+        TTF_RenderText_Solid(playerFont, playerText.c_str(), 0, textColor);
     if (!playerSurface)
     {
       std::cerr << "Failed to render player text: " << SDL_GetError() << "\n";
       continue;
     }
-    SDL_Texture* playerTexture = SDL_CreateTextureFromSurface(getRenderer(), playerSurface);
+    SDL_Texture* playerTexture =
+        SDL_CreateTextureFromSurface(getRenderer(), playerSurface);
     if (!playerTexture)
     {
-      std::cerr << "Failed to create player texture: " << SDL_GetError() << "\n";
+      std::cerr << "Failed to create player texture: " << SDL_GetError()
+                << "\n";
       SDL_DestroySurface(playerSurface);
       continue;
     }
 
-    SDL_FRect playerRect = {50.0f, static_cast<float>(startY) + static_cast<float>(i) * lineHeight,
-                            static_cast<float>(playerSurface->w),
-                            static_cast<float>(playerSurface->h)};
+    SDL_FRect playerRect = {
+        50.0f, static_cast<float>(startY) + static_cast<float>(i) * lineHeight,
+        static_cast<float>(playerSurface->w),
+        static_cast<float>(playerSurface->h)};
     SDL_RenderTexture(getRenderer(), playerTexture, NULL, &playerRect);
 
     SDL_DestroyTexture(playerTexture);
@@ -165,7 +176,8 @@ void RosterScene::loadRoster()
   auto managedTeamOpt = parent_view->getController().getManagedTeam();
   if (managedTeamOpt.has_value())
   {
-    roster_players = parent_view->getController().getPlayersForTeam(managedTeamOpt->get().getId());
+    roster_players = parent_view->getController().getPlayersForTeam(
+        managedTeamOpt->get().getId());
   }
 }
 

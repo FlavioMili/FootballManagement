@@ -23,8 +23,10 @@
 class Team
 {
  public:
-  Team(TeamID team_id, uint8_t team_league_id, std::string_view team_name, int64_t initial_balance,
-       const std::vector<PlayerID>& initial_player_ids = {}, const Strategy& strategy = Strategy{},
+  Team(TeamID team_id, uint8_t team_league_id, std::string_view team_name,
+       int64_t initial_balance,
+       const std::vector<PlayerID>& initial_player_ids = {},
+       const Strategy& strategy = Strategy{},
        const Lineup& lineup_data = Lineup{});
 
   // Accessors
