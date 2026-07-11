@@ -14,5 +14,10 @@
   "TEAM_SELECTION_TITLE": "Select Your Team",
   "TEAM_SELECTION_LEAGUES": "Leagues:",
   "TEAM_SELECTION_TEAMS": "Teams:",
-  "TEAM_SELECTION_SELECT_LEAGUE_FIRST": "Select a league first."
+  "TEAM_SELECTION_SELECT_LEAGUE_FIRST": "Select a league first.",
+  "ROSTER_TITLE": "Team Roster",
+  "ROSTER_BACK": "Back",
+  "ROSTER_COL_NAME": "Name",
+  "ROSTER_COL_ROLE": "Role",
+  "ROSTER_COL_OVERALL": "Overall"
 }

@@ -7,38 +7,22 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-
-#include <vector>
-
-#include "gui/button_manager.h"
 #include "gui/gui_scene.h"
 #include "model/player.h"
-
-class GUIView;
+#include <vector>
 
 class RosterScene : public GUIScene
 {
  public:
   explicit RosterScene(GUIView* parent);
-  ~RosterScene() override;
+  ~RosterScene() override = default;
 
   void onEnter() override;
-  void onExit() override;
-  void handleEvent(const SDL_Event& event) override;
   void update(float deltaTime) override;
   void render() override;
-  SceneID getID() const override;
-
-  void onResize(int width, int height) override;
+  [[nodiscard]] SceneID getID() const override;
 
  private:
-  GUIView* parent_view;
-  ButtonManager button_manager;
-  std::vector<std::reference_wrapper<const Player>> roster_players;
-  int backButtonId = -1;
-
-  void setupUI();
-
   void loadRoster();
-  void setupPlayerDisplay();
+  std::vector<std::reference_wrapper<const Player>> roster_players;
 };
