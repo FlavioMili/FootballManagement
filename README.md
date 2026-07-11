@@ -1,6 +1,5 @@
 # Project Football Management
 
-
 ## Installation & Usage
 
 ### Prerequisites
@@ -49,78 +48,74 @@ make -j $nproc
 ```
 
 ---
-This part of the README outlines the architectural principles and future development roadmap for the Football Manager project.  
-It is intended to be a living document, updated as the project evolves.
 
 ## Architectural Principles
 
-The primary goal is to build a **modular, scalable, and data-driven** game.  
-Adherence to these principles is crucial for long-term development success.
+The primary goal is to build a **modular, scalable, and data-driven** football management simulation.  
 
 ### 0. Use Modern C++
-- **Self-explainatory**
+- Embrace C++20 features for clear, self-explanatory, and memory-safe code (smart pointers, ranges, concepts).
 
 ### 1. Data-Driven Design
-- **Core Principle:** Game logic should be driven by configuration files (`.json`) and database state, not hard-coded in C++.
-  - *Example:* Player stats, roles, and rating calculations are defined in `assets/stats_config.json`.  
-    To edit a  stat, only the JSON file and the data generator should need changes, not the core `Player` class.
+- **Core Principle:** Game logic and balance should be driven by configuration files (`.json`) and database state, not hard-coded.
+  - *Example:* Player stats, roles, and rating calculations are defined in `assets/stats_config.json`.
 - **Benefit:** Allows for rapid iteration, balancing, and feature expansion without recompiling the core engine.
 
-### 2. Separation of Concerns (Most likely needs to find a better long term solution)
-- **Data Layer (`Database` class):** The *only* module that interacts directly with the SQLite database.
-- **Logic Layer (`Game`, `Player`, `Team`, `League`, `Match`):** Represents the game's rules and state, operates on data objects, and is decoupled from storage.
-- **Controller Layer (`GameController` class):** Receives user input and manipulates the logic layer accordingly.
-- **Presentation Layer (`CliView` class):** Displays information to the user. It is completely decoupled from the game logic.
+### 2. Separation of Concerns & UI Evolution
+- **Data Layer (`Database`):** The *only* module that interacts directly with SQLite.
+- **Logic Layer (`Game`, `Match`, `Player`):** Operates entirely independent of how it is displayed.
+- **Presentation Layer:** Currently using raw SDL3. **Immediate Goal:** Transition to a robust immediate-mode GUI framework (like Dear ImGui) or a web-based/HTML layout engine (like RmlUi) to scale menu complexity without writing manual coordinate-based UI code.
 
-### 3. State Management
-- The **database is the single source of truth** for persistent game state (e.g., season, week, team balance).
-- C++ objects represent the *in-memory state* required for simulation, loaded on demand. Possibly lazy loading
+### 3. Match Simulation & State Management
+- **State:** The database is the single source of truth for persistent game state. C++ objects represent the *in-memory state* for active simulation.
+- **Match Engine:** Instead of instantly calculating results, the engine operates on a stateful **Minute-by-Minute (Playing Time)** simulation, allowing mid-match events, tactical changes, and substitutions.
 
 ---
 
-## Development Roadmap
+## Development Roadmap & Long-Term Plan
 
-### Phase 1: Core Simulation Engine ✅
-- [x] Modular, data-driven player stat system (`stats_config.json`) (soon will be redone for improvement)
-- [x] SQLite database for all game data
-- [x] First-run data generation for leagues, teams (16 per league), and specialized players
-- [x] Randomized managed team assignment on first run
-- [x] Basic season simulation with league-specific, double round-robin calendar
-- [x] Leaderboard and point system (league-specific)
-- [x] Basic CLI for interaction
-- [x] Save/Load functionality
+### Phase 1: Core Engine & Foundation (Completed ✅)
+- [x] SQLite database for game data persistence.
+- [x] First-run data generation for leagues, teams, and players.
+- [x] Basic season simulation with league-specific calendars.
+- [x] Abstract instantaneous match simulation.
+- [x] Basic CLI and raw SDL3 UI for interaction.
+- [x] Save/Load functionality.
 
-### Phase 2: Gameplay Mechanics 🚧
-- **Player Progression:**
-  - [x] Player aging at season end
-  - [x] Player development based on age, performance
-  - [x] Player retirement
-  - [ ] Regen logic: create new players when others retire to maintain pool size
+### Phase 2: Immediate Fixes & UI Overhaul (Current Focus 🚧)
+- **UI & Menus Upgrade:**
+  - [ ] Replace custom SDL widgets with a robust UI framework (e.g., Dear ImGui) for "Better Menus".
+  - [ ] Create detailed dashboards for Team Roster, League Standings, and Player Profiles.
+- **Stateful Match Engine ("Actual Playing Time"):**
+  - [ ] Refactor `Match::simulate` into an event-driven loop (90 minutes + stoppage time).
+  - [ ] Generate mid-game events (Shots, Saves, Fouls, Cards, Injuries).
+  - [ ] Implement a live "Match Day View" allowing the player to watch events unfold and make live substitutions.
+- **Architecture:**
+  - [ ] Reduce dependency on the global `GameData` singleton to improve testability.
+
+### Phase 3: Advanced Gameplay Mechanics
+- **Player Progression & Dynamics:**
+  - [x] Player aging and static development.
+  - [ ] Dynamic morale and form based on playtime, match results, and training.
+  - [ ] Regen logic: create new youth players when older players retire.
 - **Transfers & Contracts:**
-  - [ ] Transfer market system
-  - [ ] Player contracts and salaries
-  - [ ] Add player selection before starting the game
+  - [ ] Implement player contracts, wage expectations, and release clauses.
+  - [ ] AI-driven transfer market and inter-club bidding logic.
 - **Team Finances:**
-  - [ ] Track team balance (income from tickets, expenses for salaries)
-  - [ ] Bankruptcy consequences (Managing debt)
+  - [ ] Track team balance (ticket sales, TV rights, salary expenses).
+  - [ ] Board expectations and job security.
 
-### Phase 3: Advanced Simulation
-- **Calendar Overhaul:**
-  - [ ] Replace "matchday" structure with 365-day time model for more flexible market simulation
-- **Tactics & Strategy:**
-  - [ ] Strategy/tactics system configurable per team (done but needs testing)
-  - [ ] Link team tactics to match AI behavior
-- **Player Morale, Form and training:**
-  - [ ] Dynamic player morale based on playtime, performance, results
-  - [ ] Add training sessions for players
- 
-### Phase 4: User Interface
-- **Command-Line Interface (CLI):** (Possibly skippable but currently used for debugging)
-  - [ ] Improve interaction model
-  - [ ] Add detailed views for teams, players, stats
-- **Graphical User Interface (GUI):*
-  - [x] Make a easy GUI to start off using SDL3.
-  - [ ] Improve the GUI layout to be more beautiful and easy to use.
-  - [ ] Expand database to support advanced GUI elements (e.g. avatars, club crests)
+### Phase 4: Strategy & Deep Simulation
+- **Tactical Depth:**
+  - [ ] Allow precise player positioning, team mentality (Attacking/Defensive), and passing style.
+  - [ ] Link tactical setup to the minute-by-minute Match Engine probabilities.
+- **Calendar & World:**
+  - [ ] Move from an abstract "Matchday" system to a true 365-day calendar.
+  - [ ] Add domestic cups and continental competitions.
 
----
+### Phase 5: Polish & Visuals
+- **Immersive Match View:**
+  - [ ] Develop a 2D pitch view (similar to classic Football Manager) representing player movements.
+- **Rich Media:**
+  - [ ] Generated avatars for players.
+  - [ ] Club crests, detailed UI themes, and sound design.
