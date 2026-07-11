@@ -7,48 +7,17 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include <SDL3/SDL.h>
-#include <SDL3_ttf/SDL_ttf.h>
 
-#include <cstdint>
-
-#include "gui/button_manager.h"
 #include "gui/gui_scene.h"
 #include "gui/gui_view.h"
-
-enum MainMenuButtonIndex : uint8_t
-{
-  NEW_GAME_BUTTON = 0,
-  LOAD_GAME_BUTTON = 1,
-  SETTINGS_BUTTON = 2,
-  QUIT_BUTTON = 3,
-};
 
 class MainMenuScene : public GUIScene
 {
  public:
   explicit MainMenuScene(GUIView* guiView_ptr);
-  ~MainMenuScene() = default;
+  ~MainMenuScene() override = default;
 
-  void handleEvent(const SDL_Event& event) override;
   void update(float deltaTime) override;
   void render() override;
-  void onEnter() override;
-  void onExit() override;
-
-  SceneID getID() const override;
-
- private:
-  // Helper methods
-  void handleButtonClick(MainMenuButtonIndex buttonIndex);
-  void renderTitle();
-  void createStaticContent();
-  void updateLayout();
-  void make_scene();
-
-  std::unique_ptr<ButtonManager> buttonManager;
-
-  TTF_Font* font;
-  SDL_Texture* titleTexture;
-  SDL_FRect titleRect;
+  [[nodiscard]] SceneID getID() const override;
 };
