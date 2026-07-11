@@ -7,292 +7,69 @@
 // -----------------------------------------------------------------------------
 
 #include "strategy_scene.h"
-
-#include <SDL3_ttf/SDL_ttf.h>
-
-#include <algorithm>
-#include <iostream>
-
-#include "global/logger.h"
-#include "global/paths.h"
-#include "gui/gui_scene.h"
+#include <imgui.h>
+#include "global/language_manager.h"
+#include "gui/gui_constants.h"
 #include "gui/gui_view.h"
 
-SceneID StrategyScene::getID() const { return SceneID::STRATEGY; }
-
-StrategyScene::StrategyScene(GUIView* parent)
-    : GUIScene(parent),
-      parent_view(parent),
-      button_manager(parent->getRenderer(), TTF_OpenFont(FONT_PATH, 24))
+namespace
 {
-}
+constexpr float WINDOW_WIDTH = 500.0f;
+constexpr float WINDOW_HEIGHT = 400.0f;
+}  // namespace
 
-StrategyScene::~StrategyScene()
-{
-  // The font is managed by ButtonManager, no need to close here.
-}
+StrategyScene::StrategyScene(GUIView* parent) : GUIScene(parent) {}
 
 void StrategyScene::onEnter()
 {
-  Logger::debug("Entering StrategyScene\n");
   loadStrategy();
-  setupUI();
 }
 
-void StrategyScene::onExit()
-{
-  Logger::debug("Exiting StrategyScene\n");
-  button_manager.clearButtons();
-}
-
-void StrategyScene::onResize(int width, int height)
-{
-  (void)width;
-  (void)height;
-  setupUI();
-}
-
-void StrategyScene::setupUI()
-{
-  button_manager.clearButtons();
-
-  int width, height;
-  SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
-
-  // Back and Apply buttons
-  backButtonId =
-      button_manager.addButton(10, static_cast<float>(height - 50), 100, 40,
-                               "Back", [this]() { parent_view->popScene(); });
-
-  applyButtonId = button_manager.addButton(120, static_cast<float>(height - 50),
-                                           100, 40, "Apply",
-                                           [this]()
-                                           {
-                                             saveStrategy();
-                                             parent_view->popScene();
-                                           });
-
-  setupStrategyControls();
-}
-
-void StrategyScene::handleEvent(const SDL_Event& event)
-{
-  if (event.type == SDL_EVENT_MOUSE_MOTION)
-  {
-    button_manager.handleMouseMove(event.motion.x, event.motion.y);
-  }
-  else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
-  {
-    button_manager.handleMouseClick(event.button.x, event.button.y);
-  }
-}
-
-void StrategyScene::update(float deltaTime)
-{
-  (void)deltaTime;
-  // No continuous updates needed for this scene yet
-}
+void StrategyScene::update(float deltaTime) { (void)deltaTime; }
 
 void StrategyScene::render()
 {
-  SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50,
-                         255);  // Dark grey background
-  SDL_RenderClear(getRenderer());
+  ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(GUIConstants::CENTER_PIVOT, GUIConstants::CENTER_PIVOT));
+  ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH, WINDOW_HEIGHT), ImGuiCond_FirstUseEver);
+  ImGui::Begin(LOC("STRATEGY_TITLE"), nullptr, ImGuiWindowFlags_NoCollapse);
 
-  int width, height;
-  SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
+  ImGui::SliderFloat(LOC("STRATEGY_PRESSING"), &current_sliders.pressing, 0.0f, 1.0f);
+  ImGui::SliderFloat(LOC("STRATEGY_RISK_TAKING"), &current_sliders.riskTaking, 0.0f, 1.0f);
+  ImGui::SliderFloat(LOC("STRATEGY_OFFENSIVE_BIAS"), &current_sliders.offensiveBias, 0.0f, 1.0f);
+  ImGui::SliderFloat(LOC("STRATEGY_WIDTH_USAGE"), &current_sliders.widthUsage, 0.0f, 1.0f);
+  ImGui::SliderFloat(LOC("STRATEGY_COMPACTNESS"), &current_sliders.compactness, 0.0f, 1.0f);
 
-  // Render title
-  SDL_Color textColor = {255, 255, 255, 255};  // White
-  TTF_Font* font = TTF_OpenFont(FONT_PATH, 36);
-  if (!font)
-  {
-    std::cerr << "Failed to load font: " << SDL_GetError() << "\n";
-    return;
+  ImGui::Spacing();
+  ImGui::Separator();
+  ImGui::Spacing();
+
+  if (ImGui::Button(LOC("STRATEGY_BACK"), ImVec2(GUIConstants::BUTTON_WIDTH, GUIConstants::BUTTON_HEIGHT))) {
+    guiView->popScene();
+  }
+  ImGui::SameLine();
+  if (ImGui::Button(LOC("STRATEGY_APPLY"), ImVec2(GUIConstants::BUTTON_WIDTH, GUIConstants::BUTTON_HEIGHT))) {
+    saveStrategy();
+    guiView->popScene();
   }
 
-  SDL_Surface* textSurface =
-      TTF_RenderText_Solid(font, "Team Strategy", 0, textColor);
-  if (!textSurface)
-  {
-    std::cerr << "Failed to render text: " << SDL_GetError() << "\n";
-    TTF_CloseFont(font);
-    return;
-  }
-  SDL_Texture* textTexture =
-      SDL_CreateTextureFromSurface(getRenderer(), textSurface);
-  if (!textTexture)
-  {
-    std::cerr << "Failed to create texture from text: " << SDL_GetError()
-              << "\n";
-    SDL_DestroySurface(textSurface);
-    TTF_CloseFont(font);
-    return;
-  }
-
-  SDL_FRect textRect = {(static_cast<float>(width - textSurface->w)) / 2.0f,
-                        50.0f, static_cast<float>(textSurface->w),
-                        static_cast<float>(textSurface->h)};
-  SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
-
-  SDL_DestroyTexture(textTexture);
-  SDL_DestroySurface(textSurface);
-  TTF_CloseFont(font);
-
-  // Render slider values
-  renderSliderValue("Pressing", current_sliders.pressing, 150);
-  renderSliderValue("Risk Taking", current_sliders.riskTaking, 250);
-  renderSliderValue("Offensive Bias", current_sliders.offensiveBias, 350);
-  renderSliderValue("Width Usage", current_sliders.widthUsage, 450);
-  renderSliderValue("Compactness", current_sliders.compactness, 550);
-
-  button_manager.render();
-}
-
-void StrategyScene::setupStrategyControls()
-{
-  int width, height;
-  SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
-
-  float buttonWidth = 50.0f;
-  float buttonHeight = 40.0f;
-  float xOffset = static_cast<float>(width) * 0.7f;
-  float yOffset = 150.0f;
-  float padding = 10.0f;
-
-  // Pressing
-  button_manager.addButton(xOffset, yOffset, buttonWidth, buttonHeight, "-",
-                           [this]()
-                           { updateStrategyValue("pressing", -0.1f); });
-  button_manager.addButton(xOffset + buttonWidth + padding, yOffset,
-                           buttonWidth, buttonHeight, "+",
-                           [this]() { updateStrategyValue("pressing", 0.1f); });
-
-  // Risk Taking
-  yOffset += 100.0f;
-  button_manager.addButton(xOffset, yOffset, buttonWidth, buttonHeight, "-",
-                           [this]()
-                           { updateStrategyValue("riskTaking", -0.1f); });
-  button_manager.addButton(xOffset + buttonWidth + padding, yOffset,
-                           buttonWidth, buttonHeight, "+", [this]()
-                           { updateStrategyValue("riskTaking", 0.1f); });
-
-  // Offensive Bias
-  yOffset += 100.0f;
-  button_manager.addButton(xOffset, yOffset, buttonWidth, buttonHeight, "-",
-                           [this]()
-                           { updateStrategyValue("offensiveBias", -0.1f); });
-  button_manager.addButton(xOffset + buttonWidth + padding, yOffset,
-                           buttonWidth, buttonHeight, "+", [this]()
-                           { updateStrategyValue("offensiveBias", 0.1f); });
-
-  // Width Usage
-  yOffset += 100.0f;
-  button_manager.addButton(xOffset, yOffset, buttonWidth, buttonHeight, "-",
-                           [this]()
-                           { updateStrategyValue("widthUsage", -0.1f); });
-  button_manager.addButton(xOffset + buttonWidth + padding, yOffset,
-                           buttonWidth, buttonHeight, "+", [this]()
-                           { updateStrategyValue("widthUsage", 0.1f); });
-
-  // Compactness
-  yOffset += 100.0f;
-  button_manager.addButton(xOffset, yOffset, buttonWidth, buttonHeight, "-",
-                           [this]()
-                           { updateStrategyValue("compactness", -0.1f); });
-  button_manager.addButton(xOffset + buttonWidth + padding, yOffset,
-                           buttonWidth, buttonHeight, "+", [this]()
-                           { updateStrategyValue("compactness", 0.1f); });
-}
-
-void StrategyScene::updateStrategyValue(const std::string& slider_name,
-                                        float delta)
-{
-  if (slider_name == "pressing")
-  {
-    current_sliders.pressing =
-        std::max(0.0f, std::min(1.0f, current_sliders.pressing + delta));
-  }
-  else if (slider_name == "riskTaking")
-  {
-    current_sliders.riskTaking =
-        std::max(0.0f, std::min(1.0f, current_sliders.riskTaking + delta));
-  }
-  else if (slider_name == "offensiveBias")
-  {
-    current_sliders.offensiveBias =
-        std::max(0.0f, std::min(1.0f, current_sliders.offensiveBias + delta));
-  }
-  else if (slider_name == "widthUsage")
-  {
-    current_sliders.widthUsage =
-        std::max(0.0f, std::min(1.0f, current_sliders.widthUsage + delta));
-  }
-  else if (slider_name == "compactness")
-  {
-    current_sliders.compactness =
-        std::max(0.0f, std::min(1.0f, current_sliders.compactness + delta));
-  }
+  ImGui::End();
 }
 
 void StrategyScene::saveStrategy()
 {
-  auto managedTeamOpt = parent_view->getController().getManagedTeam();
-  if (managedTeamOpt.has_value())
-  {
+  auto managedTeamOpt = guiView->getController().getManagedTeam();
+  if (managedTeamOpt.has_value()) {
     managedTeamOpt->get().getStrategy().setAllSliders(current_sliders);
-    parent_view->getController().saveGame();
+    guiView->getController().saveGame();
   }
 }
 
 void StrategyScene::loadStrategy()
 {
-  auto managedTeamOpt = parent_view->getController().getManagedTeam();
-  if (managedTeamOpt.has_value())
-  {
+  auto managedTeamOpt = guiView->getController().getManagedTeam();
+  if (managedTeamOpt.has_value()) {
     current_sliders = managedTeamOpt->get().getStrategy().getSliders();
   }
 }
 
-void StrategyScene::renderSliderValue(const std::string& label, float value,
-                                      int y_pos)
-{
-  SDL_Color textColor = {255, 255, 255, 255};  // White
-  TTF_Font* font = TTF_OpenFont(FONT_PATH, 24);
-  if (!font)
-  {
-    std::cerr << "Failed to load font: " << SDL_GetError() << "\n";
-    return;
-  }
-
-  char buffer[50];
-  snprintf(buffer, sizeof(buffer), "%s: %.1f", label.c_str(),
-           static_cast<double>(value));
-
-  SDL_Surface* textSurface = TTF_RenderText_Solid(font, buffer, 0, textColor);
-  if (!textSurface)
-  {
-    std::cerr << "Failed to render text: " << SDL_GetError() << "\n";
-    TTF_CloseFont(font);
-    return;
-  }
-  SDL_Texture* textTexture =
-      SDL_CreateTextureFromSurface(getRenderer(), textSurface);
-  if (!textTexture)
-  {
-    std::cerr << "Failed to create texture from text: " << SDL_GetError()
-              << "\n";
-    SDL_DestroySurface(textSurface);
-    TTF_CloseFont(font);
-    return;
-  }
-
-  SDL_FRect textRect = {50.0f, static_cast<float>(y_pos),
-                        static_cast<float>(textSurface->w),
-                        static_cast<float>(textSurface->h)};
-  SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
-
-  SDL_DestroyTexture(textTexture);
-  SDL_DestroySurface(textSurface);
-  TTF_CloseFont(font);
-}
+SceneID StrategyScene::getID() const { return SceneID::STRATEGY; }
