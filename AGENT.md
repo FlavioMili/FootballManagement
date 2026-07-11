@@ -38,3 +38,4 @@ As an AI Agent, you must comply with [AI_GUIDELINES.md](AI_GUIDELINES.md):
 1. **Declare your usage:** Make sure any Pull Request clearly states that it was agent-generated and describes the steps you took.
 2. **Request Review:** You MUST request human review on architectural decisions and complex logic  BEFORE pushing. Do not bypass the human user.
 3. **Document Your Work:** Utilize plan artifacts and walkthroughs to summarize your goals and accomplishments.
+4. **Never Push:** ONLY USERS can push to remote branches! The agent must NEVER run `git push`. The agent should only create commits and then let the user review and push them manually.
