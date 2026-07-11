@@ -4,7 +4,7 @@
 ![C++](https://img.shields.io/badge/C++-20-blue.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
-Welcome to **Football Management**, a fast-paced, data-driven football management simulator built from the ground up in C++20 using SDL3, Dear ImGui, and SQLite3. 
+Welcome to **Football Management**, a fast-paced, data-driven football management simulator built from the ground up in C++20 using SDL3, Dear ImGui, and SQLite3.
 
 Whether you're looking to manage your favorite club to glory, simulate years of football history, or contribute to an open-source C++ game engine, you're in the right place!
 
@@ -25,7 +25,7 @@ We welcome contributions from humans and AI alike! Before you start, please chec
 
 ### Prerequisites
 
-Make sure your system has a **C++20 compiler** and the required libraries installed.
+Make sure your system has a **C++23 compiler** and the required libraries installed.
 
 #### Ubuntu / Debian
 ```bash
@@ -39,7 +39,7 @@ sudo pacman -Syu
 sudo pacman -S gcc make sdl3 sdl3_ttf sqlite spdlog fmt
 ```
 
-#### MacOS 
+#### MacOS
 ```bash
 brew update
 brew install gcc make sdl3 sdl3_ttf sqlite spdlog fmt
@@ -72,17 +72,17 @@ make -j $(nproc)
 
 ## Architectural Principles
 
-The primary goal is to build a **modular, scalable, and data-driven** game.  
+The primary goal is to build a **modular, scalable, and data-driven** game.
 Adherence to these principles is crucial for long-term development success.
 
 ### 0. Use Modern C++
-- We rely on C++20 features. Keep it modern, safe, and self-explanatory.
+- We rely on C++23 features. Keep it modern, safe, and self-explanatory.
 
 ### 1. Data-Driven Design
 - **Core Principle:** Game logic should be driven by configuration files (`.json`) and database state, not hard-coded in C++.
-  - *Example:* Player stats, roles, and rating calculations are defined in `assets/stats_config.json`.  
+  - *Example:* Player stats, roles, and rating calculations are defined in `assets/stats_config.json`.
     To edit a stat, only the JSON file and the data generator should need changes, not the core `Player` class.
-- **Benefit:** Allows for rapid iteration, balancing, and feature expansion without recompiling the core engine.
+- **Benefit:** Allows for rapid iteration, balancing, and feature expansion without recompiling the core engine. (Also cheating and modding :D )
 
 ### 2. Separation of Concerns
 - **Data Layer (`Database` class):** The *only* module that interacts directly with the SQLite database.
@@ -104,7 +104,7 @@ Adherence to these principles is crucial for long-term development success.
 - [x] First-run data generation for leagues and teams
 - [x] Basic season simulation with league-specific calendar
 - [x] Leaderboard and point system
-- [x] Basic CLI for interaction
+- [x] Basic CLI for interaction - out of development but might be retaken into consideration
 - [x] Save/Load functionality
 
 ### Phase 2: Gameplay Mechanics 🚧
@@ -133,6 +133,6 @@ Adherence to these principles is crucial for long-term development success.
 ### Phase 4: User Interface 🚧
 - **Graphical User Interface (GUI):**
   - [x] Port to Dear ImGui
-  - [ ] Implement robust Language System (JSON)
+  - [x] Implement robust Language System (JSON)
   - [ ] Improve the GUI layout (Docking, Data Visualizations)
   - [ ] Expand database to support advanced GUI elements (avatars, crests)

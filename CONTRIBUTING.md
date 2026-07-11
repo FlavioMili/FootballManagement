@@ -23,7 +23,7 @@ First off, thank you for considering contributing to Football Management! It's p
 
 ## Branching Strategy
 
-- **Main branch:** `main` is our bleeding edge. It should always compile.
+- **Main branch:** `main` is our bleeding edge. It should always compile and pass all tests.
 - **Epic branches:** Features that take weeks go into Epic branches (e.g. `epic/modern-ui-design`).
 - **Issue branches:** Work on specific issues in their own branch, named after the issue number. For example, if you are working on Issue #42:
   ```bash
