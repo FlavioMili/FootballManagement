@@ -4,7 +4,7 @@
 ![C++](https://img.shields.io/badge/C++-20-blue.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
-Welcome to **Football Management**, a fast-paced, data-driven football management simulator built from the ground up in C++20 using SDL3, Dear ImGui, and SQLite3.
+Welcome to **Football Management**, a fast-paced, data-driven football management simulator built from the ground up in C++23 using SDL3, Dear ImGui, and SQLite3.
 
 Whether you're looking to manage your favorite club to glory, simulate years of football history, or contribute to an open-source C++ game engine, you're in the right place!
 
