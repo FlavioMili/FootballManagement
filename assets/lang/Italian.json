@@ -10,5 +10,9 @@
   "SETTINGS_REFRESH_RATE": "Frequenza",
   "SETTINGS_FULLSCREEN": "Schermo Intero",
   "SETTINGS_CANCEL": "Annulla",
-  "SETTINGS_APPLY": "Applica"
+  "SETTINGS_APPLY": "Applica",
+  "TEAM_SELECTION_TITLE": "Seleziona la tua Squadra",
+  "TEAM_SELECTION_LEAGUES": "Campionati:",
+  "TEAM_SELECTION_TEAMS": "Squadre:",
+  "TEAM_SELECTION_SELECT_LEAGUE_FIRST": "Seleziona prima un campionato."
 }
