@@ -44,8 +44,9 @@ bool LanguageManager::loadLanguage(Language lang)
 
 std::string LanguageManager::get(const std::string& key) const
 {
-    auto it = translations.find(key);
-    if (it != translations.end()) {
+    if (auto it = translations.find(key);
+        it != translations.end()) 
+    {
         return it->second;
     }
     return key; // Fallback to returning the key if translation is missing
