@@ -11,6 +11,7 @@
 #include <string>
 
 #include "controller/game_controller.h"
+#include "global/logger.h"
 #include "model/game.h"
 #include "model/team.h"
 #include "model/player.h"
@@ -18,7 +19,9 @@
 class GameFlowTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        // Suppress logs or initialize minimal stuff if needed
+        // Initialize Logger to prevent segfaults when Game or Database try to log
+        Logger::init();
+        
         game = std::make_unique<Game>();
         controller = std::make_unique<GameController>(std::move(game));
     }
