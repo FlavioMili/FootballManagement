@@ -13,6 +13,7 @@
 #include <nlohmann/json.hpp>
 
 #include "global/paths.h"
+#include "global/language_manager.h"
 
 using json = nlohmann::json;
 
@@ -47,6 +48,8 @@ void SettingsManager::load()
   }
   settings_.fullscreen = j.value("fullscreen", settings_.fullscreen);
   settings_.fps_limit = j.value("fps_limit", settings_.fps_limit);
+
+  LanguageManager::instance().loadLanguage(settings_.language);
 }
 
 void SettingsManager::save() const
@@ -72,4 +75,6 @@ void SettingsManager::apply(SDL_Window* window)
                       settings_.resolution_height);
   }
   // fps limit: handled by main loop
+
+  LanguageManager::instance().loadLanguage(settings_.language);
 }

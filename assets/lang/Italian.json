@@ -1,0 +1,14 @@
+{
+  "MENU_TITLE": "Gestione Calcio",
+  "MENU_NEW_GAME": "Nuova Partita",
+  "MENU_LOAD_GAME": "Carica Partita",
+  "MENU_SETTINGS": "Impostazioni",
+  "MENU_QUIT": "Esci",
+  "SETTINGS_TITLE": "Impostazioni",
+  "SETTINGS_LANGUAGE": "Lingua",
+  "SETTINGS_RESOLUTION": "Risoluzione",
+  "SETTINGS_REFRESH_RATE": "Frequenza",
+  "SETTINGS_FULLSCREEN": "Schermo Intero",
+  "SETTINGS_CANCEL": "Annulla",
+  "SETTINGS_APPLY": "Applica"
+}

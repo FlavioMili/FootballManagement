@@ -1,0 +1,14 @@
+{
+  "MENU_TITLE": "Football Management",
+  "MENU_NEW_GAME": "New Game",
+  "MENU_LOAD_GAME": "Load Game",
+  "MENU_SETTINGS": "Settings",
+  "MENU_QUIT": "Quit",
+  "SETTINGS_TITLE": "Settings",
+  "SETTINGS_LANGUAGE": "Language",
+  "SETTINGS_RESOLUTION": "Resolution",
+  "SETTINGS_REFRESH_RATE": "Refresh Rate",
+  "SETTINGS_FULLSCREEN": "Fullscreen",
+  "SETTINGS_CANCEL": "Cancel",
+  "SETTINGS_APPLY": "Apply & Back"
+}

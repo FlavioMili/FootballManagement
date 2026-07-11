@@ -37,6 +37,8 @@ set(CORE_SOURCES
     # Global
     global/global.h
     global/languages.h
+    global/language_manager.h
+    global/language_manager.cpp
     global/logger.h
     global/logger.cpp
     global/queries.h
