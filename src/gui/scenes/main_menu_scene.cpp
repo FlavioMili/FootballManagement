@@ -16,6 +16,7 @@
 #include <iostream>
 
 #include "global/paths.h"
+#include "global/language_manager.h"
 #include "gui/button_manager.h"
 #include "gui/gui_scene.h"
 #include "gui/gui_view.h"
@@ -89,7 +90,7 @@ void MainMenuScene::createStaticContent()
 {
   if (!buttonManager || !font) return;
 
-  const char* title = "Football Management";
+  const char* title = LOC("MENU_TITLE");
   SDL_Color titleColor = {255, 255, 100, 255};
   SDL_Surface* titleSurface = TTF_RenderText_Solid(font, title, 0, titleColor);
 
@@ -103,16 +104,16 @@ void MainMenuScene::createStaticContent()
     SDL_DestroySurface(titleSurface);
   }
 
-  buttonManager->addButton({0, 0, 200, 60}, "New game",
+  buttonManager->addButton({0, 0, 200, 60}, LOC("MENU_NEW_GAME"),
                            [this]() { handleButtonClick(NEW_GAME_BUTTON); });
 
-  buttonManager->addButton({0, 0, 200, 60}, "Load game",
+  buttonManager->addButton({0, 0, 200, 60}, LOC("MENU_LOAD_GAME"),
                            [this]() { handleButtonClick(LOAD_GAME_BUTTON); });
 
-  buttonManager->addButton({0, 0, 200, 60}, "Settings",
+  buttonManager->addButton({0, 0, 200, 60}, LOC("MENU_SETTINGS"),
                            [this]() { handleButtonClick(SETTINGS_BUTTON); });
 
-  buttonManager->addButton({0, 0, 200, 60}, "Quit game",
+  buttonManager->addButton({0, 0, 200, 60}, LOC("MENU_QUIT"),
                            [this]() { handleButtonClick(QUIT_BUTTON); });
 }
 
@@ -227,7 +228,7 @@ void MainMenuScene::make_scene()
   int w, h;
   SDL_GetWindowSizeInPixels(guiView->getWindow(), &w, &h);
 
-  const char* title = "Football Management";
+  const char* title = LOC("MENU_TITLE");
   SDL_Color titleColor = {255, 255, 100, 255};
   SDL_Surface* titleSurface = TTF_RenderText_Solid(font, title, 0, titleColor);
   if (titleSurface)
@@ -248,18 +249,18 @@ void MainMenuScene::make_scene()
   float padding = 30.0f;
   float currentY = startY;
 
-  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "New game",
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, LOC("MENU_NEW_GAME"),
                            [this]() { handleButtonClick(NEW_GAME_BUTTON); });
   currentY += btnHeight + padding;
 
-  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Load game",
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, LOC("MENU_LOAD_GAME"),
                            [this]() { handleButtonClick(LOAD_GAME_BUTTON); });
   currentY += btnHeight + padding;
 
-  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Settings",
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, LOC("MENU_SETTINGS"),
                            [this]() { handleButtonClick(SETTINGS_BUTTON); });
   currentY += btnHeight + padding;
 
-  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, "Quit game",
+  buttonManager->addButton({startX, currentY, btnWidth, btnHeight}, LOC("MENU_QUIT"),
                            [this]() { handleButtonClick(QUIT_BUTTON); });
 }
