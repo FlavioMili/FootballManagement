@@ -32,7 +32,7 @@ class GUIScene
   virtual ~GUIScene() = default;
 
   // Core scene interface - must be implemented by derived classes
-  virtual void handleEvent(const SDL_Event& event) = 0;
+  virtual void handleEvent(const SDL_Event& event);
   virtual void update(float deltaTime) = 0;
   virtual void render() = 0;
 

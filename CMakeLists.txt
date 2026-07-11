@@ -4,7 +4,7 @@ project(FootballManagement LANGUAGES CXX C)
 # -----------------------------
 # C++ Standard
 # -----------------------------
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -115,6 +115,15 @@ if(NOT SDL3_ttf_FOUND)
   )
   FetchContent_MakeAvailable(SDL3_ttf)
 endif()
+
+# --- ImGui ---
+FetchContent_Declare(
+  imgui
+  GIT_REPOSITORY https://github.com/ocornut/imgui.git
+  GIT_TAG        master
+)
+FetchContent_MakeAvailable(imgui)
+
 
 # GoogleTest (for tests)
 option(BUILD_TESTING "Build tests" ON)
