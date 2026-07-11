@@ -70,7 +70,7 @@ bool GUIView::initialize()
   }
 
   // Create window
-  window = SDL_CreateWindow("Game GUI", 1200, 800, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+  window = SDL_CreateWindow("Game GUI", 1200, 800, SDL_WINDOW_RESIZABLE);
   if (window == nullptr)
   {
     std::cerr << "Failed to create window: " << SDL_GetError() << '\n';
@@ -97,6 +97,9 @@ bool GUIView::initialize()
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io.IniFilename = "assets/imgui.ini";
   ImGui::StyleColorsDark();
+
+  // Load high quality TTF font to replace the pixelated default
+  io.Fonts->AddFontFromFileTTF("assets/fonts/font.ttf", 20.0f);
 
   ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
   ImGui_ImplSDLRenderer3_Init(renderer);
