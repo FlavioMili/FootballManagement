@@ -46,7 +46,8 @@ void Match::simulate(const GameData& game_data)
   const auto& stats_config = game_data.getStatsConfig();
 
   // Home lineup
-  if (Player* gk = home_lineup.getGoalkeeper()) home_defense += gk->getOverall(stats_config);
+  if (Player* gk = home_lineup.getGoalkeeper())
+    home_defense += gk->getOverall(stats_config);
 
   for (int i = 0; i < LINEUP_GRID_SIZE; ++i)
   {
@@ -65,7 +66,8 @@ void Match::simulate(const GameData& game_data)
   }
 
   // Away lineup
-  if (Player* gk = away_lineup.getGoalkeeper()) away_defense += gk->getOverall(stats_config);
+  if (Player* gk = away_lineup.getGoalkeeper())
+    away_defense += gk->getOverall(stats_config);
 
   for (int i = 0; i < LINEUP_GRID_SIZE; ++i)
   {
@@ -87,7 +89,8 @@ void Match::simulate(const GameData& game_data)
   double away_strength = away_attack * 1.5 + away_midfield + away_defense * 0.8;
 
   double total_strength = home_strength + away_strength;
-  double home_chance = total_strength > 0 ? home_strength / total_strength : 0.5;
+  double home_chance =
+      total_strength > 0 ? home_strength / total_strength : 0.5;
 
   static std::random_device rd;
   static std::mt19937 gen(rd());

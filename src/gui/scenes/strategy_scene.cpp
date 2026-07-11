@@ -60,10 +60,12 @@ void StrategyScene::setupUI()
   SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
 
   // Back and Apply buttons
-  backButtonId = button_manager.addButton(10, static_cast<float>(height - 50), 100, 40, "Back",
-                                          [this]() { parent_view->popScene(); });
+  backButtonId =
+      button_manager.addButton(10, static_cast<float>(height - 50), 100, 40,
+                               "Back", [this]() { parent_view->popScene(); });
 
-  applyButtonId = button_manager.addButton(120, static_cast<float>(height - 50), 100, 40, "Apply",
+  applyButtonId = button_manager.addButton(120, static_cast<float>(height - 50),
+                                           100, 40, "Apply",
                                            [this]()
                                            {
                                              saveStrategy();
@@ -93,7 +95,8 @@ void StrategyScene::update(float deltaTime)
 
 void StrategyScene::render()
 {
-  SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50, 255);  // Dark grey background
+  SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50,
+                         255);  // Dark grey background
   SDL_RenderClear(getRenderer());
 
   int width, height;
@@ -108,24 +111,28 @@ void StrategyScene::render()
     return;
   }
 
-  SDL_Surface* textSurface = TTF_RenderText_Solid(font, "Team Strategy", 0, textColor);
+  SDL_Surface* textSurface =
+      TTF_RenderText_Solid(font, "Team Strategy", 0, textColor);
   if (!textSurface)
   {
     std::cerr << "Failed to render text: " << SDL_GetError() << "\n";
     TTF_CloseFont(font);
     return;
   }
-  SDL_Texture* textTexture = SDL_CreateTextureFromSurface(getRenderer(), textSurface);
+  SDL_Texture* textTexture =
+      SDL_CreateTextureFromSurface(getRenderer(), textSurface);
   if (!textTexture)
   {
-    std::cerr << "Failed to create texture from text: " << SDL_GetError() << "\n";
+    std::cerr << "Failed to create texture from text: " << SDL_GetError()
+              << "\n";
     SDL_DestroySurface(textSurface);
     TTF_CloseFont(font);
     return;
   }
 
-  SDL_FRect textRect = {(static_cast<float>(width - textSurface->w)) / 2.0f, 50.0f,
-                        static_cast<float>(textSurface->w), static_cast<float>(textSurface->h)};
+  SDL_FRect textRect = {(static_cast<float>(width - textSurface->w)) / 2.0f,
+                        50.0f, static_cast<float>(textSurface->w),
+                        static_cast<float>(textSurface->h)};
   SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
 
   SDL_DestroyTexture(textTexture);
@@ -155,48 +162,61 @@ void StrategyScene::setupStrategyControls()
 
   // Pressing
   button_manager.addButton(xOffset, yOffset, buttonWidth, buttonHeight, "-",
-                           [this]() { updateStrategyValue("pressing", -0.1f); });
-  button_manager.addButton(xOffset + buttonWidth + padding, yOffset, buttonWidth, buttonHeight, "+",
+                           [this]()
+                           { updateStrategyValue("pressing", -0.1f); });
+  button_manager.addButton(xOffset + buttonWidth + padding, yOffset,
+                           buttonWidth, buttonHeight, "+",
                            [this]() { updateStrategyValue("pressing", 0.1f); });
 
   // Risk Taking
   yOffset += 100.0f;
   button_manager.addButton(xOffset, yOffset, buttonWidth, buttonHeight, "-",
-                           [this]() { updateStrategyValue("riskTaking", -0.1f); });
-  button_manager.addButton(xOffset + buttonWidth + padding, yOffset, buttonWidth, buttonHeight, "+",
-                           [this]() { updateStrategyValue("riskTaking", 0.1f); });
+                           [this]()
+                           { updateStrategyValue("riskTaking", -0.1f); });
+  button_manager.addButton(xOffset + buttonWidth + padding, yOffset,
+                           buttonWidth, buttonHeight, "+", [this]()
+                           { updateStrategyValue("riskTaking", 0.1f); });
 
   // Offensive Bias
   yOffset += 100.0f;
   button_manager.addButton(xOffset, yOffset, buttonWidth, buttonHeight, "-",
-                           [this]() { updateStrategyValue("offensiveBias", -0.1f); });
-  button_manager.addButton(xOffset + buttonWidth + padding, yOffset, buttonWidth, buttonHeight, "+",
-                           [this]() { updateStrategyValue("offensiveBias", 0.1f); });
+                           [this]()
+                           { updateStrategyValue("offensiveBias", -0.1f); });
+  button_manager.addButton(xOffset + buttonWidth + padding, yOffset,
+                           buttonWidth, buttonHeight, "+", [this]()
+                           { updateStrategyValue("offensiveBias", 0.1f); });
 
   // Width Usage
   yOffset += 100.0f;
   button_manager.addButton(xOffset, yOffset, buttonWidth, buttonHeight, "-",
-                           [this]() { updateStrategyValue("widthUsage", -0.1f); });
-  button_manager.addButton(xOffset + buttonWidth + padding, yOffset, buttonWidth, buttonHeight, "+",
-                           [this]() { updateStrategyValue("widthUsage", 0.1f); });
+                           [this]()
+                           { updateStrategyValue("widthUsage", -0.1f); });
+  button_manager.addButton(xOffset + buttonWidth + padding, yOffset,
+                           buttonWidth, buttonHeight, "+", [this]()
+                           { updateStrategyValue("widthUsage", 0.1f); });
 
   // Compactness
   yOffset += 100.0f;
   button_manager.addButton(xOffset, yOffset, buttonWidth, buttonHeight, "-",
-                           [this]() { updateStrategyValue("compactness", -0.1f); });
-  button_manager.addButton(xOffset + buttonWidth + padding, yOffset, buttonWidth, buttonHeight, "+",
-                           [this]() { updateStrategyValue("compactness", 0.1f); });
+                           [this]()
+                           { updateStrategyValue("compactness", -0.1f); });
+  button_manager.addButton(xOffset + buttonWidth + padding, yOffset,
+                           buttonWidth, buttonHeight, "+", [this]()
+                           { updateStrategyValue("compactness", 0.1f); });
 }
 
-void StrategyScene::updateStrategyValue(const std::string& slider_name, float delta)
+void StrategyScene::updateStrategyValue(const std::string& slider_name,
+                                        float delta)
 {
   if (slider_name == "pressing")
   {
-    current_sliders.pressing = std::max(0.0f, std::min(1.0f, current_sliders.pressing + delta));
+    current_sliders.pressing =
+        std::max(0.0f, std::min(1.0f, current_sliders.pressing + delta));
   }
   else if (slider_name == "riskTaking")
   {
-    current_sliders.riskTaking = std::max(0.0f, std::min(1.0f, current_sliders.riskTaking + delta));
+    current_sliders.riskTaking =
+        std::max(0.0f, std::min(1.0f, current_sliders.riskTaking + delta));
   }
   else if (slider_name == "offensiveBias")
   {
@@ -205,7 +225,8 @@ void StrategyScene::updateStrategyValue(const std::string& slider_name, float de
   }
   else if (slider_name == "widthUsage")
   {
-    current_sliders.widthUsage = std::max(0.0f, std::min(1.0f, current_sliders.widthUsage + delta));
+    current_sliders.widthUsage =
+        std::max(0.0f, std::min(1.0f, current_sliders.widthUsage + delta));
   }
   else if (slider_name == "compactness")
   {
@@ -233,7 +254,8 @@ void StrategyScene::loadStrategy()
   }
 }
 
-void StrategyScene::renderSliderValue(const std::string& label, float value, int y_pos)
+void StrategyScene::renderSliderValue(const std::string& label, float value,
+                                      int y_pos)
 {
   SDL_Color textColor = {255, 255, 255, 255};  // White
   TTF_Font* font = TTF_OpenFont(FONT_PATH, 24);
@@ -244,7 +266,8 @@ void StrategyScene::renderSliderValue(const std::string& label, float value, int
   }
 
   char buffer[50];
-  snprintf(buffer, sizeof(buffer), "%s: %.1f", label.c_str(), static_cast<double>(value));
+  snprintf(buffer, sizeof(buffer), "%s: %.1f", label.c_str(),
+           static_cast<double>(value));
 
   SDL_Surface* textSurface = TTF_RenderText_Solid(font, buffer, 0, textColor);
   if (!textSurface)
@@ -253,16 +276,19 @@ void StrategyScene::renderSliderValue(const std::string& label, float value, int
     TTF_CloseFont(font);
     return;
   }
-  SDL_Texture* textTexture = SDL_CreateTextureFromSurface(getRenderer(), textSurface);
+  SDL_Texture* textTexture =
+      SDL_CreateTextureFromSurface(getRenderer(), textSurface);
   if (!textTexture)
   {
-    std::cerr << "Failed to create texture from text: " << SDL_GetError() << "\n";
+    std::cerr << "Failed to create texture from text: " << SDL_GetError()
+              << "\n";
     SDL_DestroySurface(textSurface);
     TTF_CloseFont(font);
     return;
   }
 
-  SDL_FRect textRect = {50.0f, static_cast<float>(y_pos), static_cast<float>(textSurface->w),
+  SDL_FRect textRect = {50.0f, static_cast<float>(y_pos),
+                        static_cast<float>(textSurface->w),
                         static_cast<float>(textSurface->h)};
   SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
 

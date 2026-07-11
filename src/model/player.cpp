@@ -17,10 +17,12 @@
 
 #include "global/global.h"
 
-Player::Player(PlayerID new_id, TeamID new_team_id, std::string_view new_first_name,
-               std::string_view new_last_name, std::string_view new_role, Language new_nationality,
-               uint32_t new_wage, uint32_t new_status, uint8_t new_age, uint8_t new_contract_years,
-               uint8_t new_height, Foot new_foot, const std::map<std::string, float>& new_stats)
+Player::Player(PlayerID new_id, TeamID new_team_id,
+               std::string_view new_first_name, std::string_view new_last_name,
+               std::string_view new_role, Language new_nationality,
+               uint32_t new_wage, uint32_t new_status, uint8_t new_age,
+               uint8_t new_contract_years, uint8_t new_height, Foot new_foot,
+               const std::map<std::string, float>& new_stats)
     : _id(new_id),
       _team_id(new_team_id),
       _wage(new_wage),
@@ -69,7 +71,10 @@ uint32_t Player::getStatus() const { return _status; }
 
 const std::map<std::string, float>& Player::getStats() const { return _stats; }
 
-void Player::setStats(const std::map<std::string, float>& new_stats) { _stats = new_stats; }
+void Player::setStats(const std::map<std::string, float>& new_stats)
+{
+  _stats = new_stats;
+}
 
 double Player::getOverall(const StatsConfig& stats_config) const
 {
@@ -96,8 +101,9 @@ void Player::agePlayer()
 
   if (_age < PLAYER_AGE_FACTOR_DECLINE_AGE) return;
 
-  float age_factor = 1.0f - (static_cast<float>(_age) - PLAYER_AGE_FACTOR_DECLINE_AGE + 1.0f) *
-                                PLAYER_AGE_FACTOR_DECAY_RATE;
+  float age_factor =
+      1.0f - (static_cast<float>(_age) - PLAYER_AGE_FACTOR_DECLINE_AGE + 1.0f) *
+                 PLAYER_AGE_FACTOR_DECAY_RATE;
 
   // Ensure age_factor doesn't make decay negative (growth) unexpectedly here
   // though formula suggests it decreases.
@@ -120,8 +126,9 @@ bool Player::checkRetirement() const
   std::uniform_real_distribution<float> dis(0.0f, 1.0f);
 
   float retirementChance =
-      PLAYER_RETIREMENT_BASE_CHANCE + (static_cast<float>(_age) - PLAYER_RETIREMENT_AGE_THRESHOLD) *
-                                          PLAYER_RETIREMENT_CHANCE_INCREASE_PER_YEAR;
+      PLAYER_RETIREMENT_BASE_CHANCE +
+      (static_cast<float>(_age) - PLAYER_RETIREMENT_AGE_THRESHOLD) *
+          PLAYER_RETIREMENT_CHANCE_INCREASE_PER_YEAR;
 
   return dis(gen) < retirementChance;
 }
@@ -132,16 +139,19 @@ void Player::train(const std::vector<std::string>& focus_stats)
 
   static std::random_device rd;
   static std::mt19937 gen(rd());
-  std::uniform_int_distribution<> stat_dis(0, static_cast<int>(focus_stats.size() - 1));
+  std::uniform_int_distribution<> stat_dis(
+      0, static_cast<int>(focus_stats.size() - 1));
   std::uniform_real_distribution<float> rand_dist(0.0f, 1.0f);
 
-  const std::string& random_stat = focus_stats[static_cast<size_t>(stat_dis(gen))];
+  const std::string& random_stat =
+      focus_stats[static_cast<size_t>(stat_dis(gen))];
 
   auto it = _stats.find(random_stat);
   if (it == _stats.end()) return;
 
   float age_factor =
-      ((PLAYER_AGE_FACTOR_DECLINE_AGE - static_cast<float>(_age)) * PLAYER_AGE_FACTOR_DECAY_RATE);
+      ((PLAYER_AGE_FACTOR_DECLINE_AGE - static_cast<float>(_age)) *
+       PLAYER_AGE_FACTOR_DECAY_RATE);
   float random_factor = rand_dist(gen);
 
   float increment = PLAYER_STAT_INCREASE_BASE * (random_factor * age_factor);
@@ -194,6 +204,9 @@ void Player::updateMarketValue(const StatsConfig& stats_config)
   _cached_market_value = static_cast<uint32_t>(base_value * age_multiplier);
 }
 
-void Player::setTransferStatus(TransferStatus status) { _transfer_status = status; }
+void Player::setTransferStatus(TransferStatus status)
+{
+  _transfer_status = status;
+}
 
 TransferStatus Player::getTransferStatus() const { return _transfer_status; }

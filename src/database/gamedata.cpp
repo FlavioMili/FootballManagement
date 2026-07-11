@@ -35,7 +35,8 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
   db = database_ptr;
   bool is_first_run = db->isFirstRun();
 
-  Logger::debug("GameData::loadFromDB called. is_first_run: " + std::to_string(is_first_run));
+  Logger::debug("GameData::loadFromDB called. is_first_run: " +
+                std::to_string(is_first_run));
 
   std::vector<Team> all_teams;
   if (is_first_run)
@@ -63,8 +64,9 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
     for (const auto& league_data : leagues_data)
     {
       database_ptr->insertLeagueWithId(league_data);
-      _leagues.emplace(league_data.getId(), League(league_data.getId(), league_data.getName(),
-                                                   league_teams_map[league_data.getId()]));
+      _leagues.emplace(league_data.getId(),
+                       League(league_data.getId(), league_data.getName(),
+                              league_teams_map[league_data.getId()]));
     }
 
     auto players = DataGenerator::generatePlayers();
@@ -129,17 +131,25 @@ void GameData::addLeague(LeagueID id, const League& league)
   if (!_leaguesVec.empty()) _leaguesVec.push_back(_leagues.at(id));
 }
 
-std::optional<std::reference_wrapper<const League>> GameData::getLeague(LeagueID id) const
+std::optional<std::reference_wrapper<const League>> GameData::getLeague(
+    LeagueID id) const
 {
   if (auto it = _leagues.find(id); it != _leagues.end()) return it->second;
   return std::nullopt;
 }
 
-const std::unordered_map<LeagueID, League>& GameData::getLeagues() const { return _leagues; }
+const std::unordered_map<LeagueID, League>& GameData::getLeagues() const
+{
+  return _leagues;
+}
 
-std::unordered_map<LeagueID, League>& GameData::getLeagues() { return _leagues; }
+std::unordered_map<LeagueID, League>& GameData::getLeagues()
+{
+  return _leagues;
+}
 
-const std::vector<std::reference_wrapper<const League>>& GameData::getLeaguesVector() const
+const std::vector<std::reference_wrapper<const League>>&
+GameData::getLeaguesVector() const
 {
   return _leaguesVec;
 }
@@ -157,17 +167,22 @@ std::optional<std::reference_wrapper<Team>> GameData::getTeam(TeamID id)
   return std::nullopt;
 }
 
-std::optional<std::reference_wrapper<const Team>> GameData::getTeam(TeamID id) const
+std::optional<std::reference_wrapper<const Team>> GameData::getTeam(
+    TeamID id) const
 {
   if (auto it = _teams.find(id); it != _teams.end()) return it->second;
   return std::nullopt;
 }
 
-const std::unordered_map<TeamID, Team>& GameData::getTeams() const { return _teams; }
+const std::unordered_map<TeamID, Team>& GameData::getTeams() const
+{
+  return _teams;
+}
 
 std::unordered_map<TeamID, Team>& GameData::getTeams() { return _teams; }
 
-const std::vector<std::reference_wrapper<const Team>>& GameData::getTeamsVector() const
+const std::vector<std::reference_wrapper<const Team>>&
+GameData::getTeamsVector() const
 {
   return _teamsVec;
 }
@@ -179,16 +194,24 @@ void GameData::addPlayer(PlayerID id, const Player& player)
   if (!_playersVec.empty()) _playersVec.push_back(_players.at(id));
 }
 
-std::optional<std::reference_wrapper<const Player>> GameData::getPlayer(PlayerID id) const
+std::optional<std::reference_wrapper<const Player>> GameData::getPlayer(
+    PlayerID id) const
 {
   if (auto it = _players.find(id); it != _players.end()) return it->second;
   return std::nullopt;
 }
 
-const std::unordered_map<PlayerID, Player>& GameData::getPlayers() const { return _players; }
+const std::unordered_map<PlayerID, Player>& GameData::getPlayers() const
+{
+  return _players;
+}
 
-std::unordered_map<PlayerID, Player>& GameData::getPlayers() { return _players; }
-const std::vector<std::reference_wrapper<const Player>>& GameData::getPlayersVector() const
+std::unordered_map<PlayerID, Player>& GameData::getPlayers()
+{
+  return _players;
+}
+const std::vector<std::reference_wrapper<const Player>>&
+GameData::getPlayersVector() const
 {
   return _playersVec;
 }
@@ -201,7 +224,8 @@ void GameData::ageAllPlayers()
   }
 }
 
-std::vector<std::reference_wrapper<const Player>> GameData::getPlayersForTeam(TeamID team_id) const
+std::vector<std::reference_wrapper<const Player>> GameData::getPlayersForTeam(
+    TeamID team_id) const
 {
   std::vector<std::reference_wrapper<const Player>> players;
   for (const auto& player : _playersVec)
@@ -219,9 +243,10 @@ bool GameData::removePlayer(PlayerID id)
   bool erased = _players.erase(id) > 0;
   if (erased && !_playersVec.empty())
   {
-    _playersVec.erase(std::remove_if(_playersVec.begin(), _playersVec.end(),
-                                     [id](const Player& p) { return p.getId() == id; }),
-                      _playersVec.end());
+    _playersVec.erase(
+        std::remove_if(_playersVec.begin(), _playersVec.end(),
+                       [id](const Player& p) { return p.getId() == id; }),
+        _playersVec.end());
   }
   return erased;
 }

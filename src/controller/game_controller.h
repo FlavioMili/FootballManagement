@@ -34,10 +34,14 @@ class GameController
 
   const std::vector<std::reference_wrapper<const League>>& getLeagues() const;
   const std::vector<std::reference_wrapper<const Team>>& getTeams() const;
-  std::vector<std::reference_wrapper<const Player>> getPlayersForTeam(uint16_t team_id) const;
-  std::vector<std::reference_wrapper<const Team>> getTeamsInLeague(uint8_t league_id) const;
-  std::optional<std::reference_wrapper<const League>> getLeagueById(uint8_t league_id) const;
-  std::optional<std::reference_wrapper<const Team>> getTeamById(uint16_t team_id) const;
+  std::vector<std::reference_wrapper<const Player>> getPlayersForTeam(
+      uint16_t team_id) const;
+  std::vector<std::reference_wrapper<const Team>> getTeamsInLeague(
+      uint8_t league_id) const;
+  std::optional<std::reference_wrapper<const League>> getLeagueById(
+      uint8_t league_id) const;
+  std::optional<std::reference_wrapper<const Team>> getTeamById(
+      uint16_t team_id) const;
   const StatsConfig& getStatsConfig() const;
 
   void advanceDay();

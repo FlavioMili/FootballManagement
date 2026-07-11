@@ -101,10 +101,13 @@ void Game::simulateMatches(std::vector<Match>& matches)
       trainPlayers(home_team.getPlayerIDs());
       trainPlayers(away_team.getPlayerIDs());
 
-      if (home_team.getId() == managed_team_id || away_team.getId() == managed_team_id)
+      if (home_team.getId() == managed_team_id ||
+          away_team.getId() == managed_team_id)
       {
-        std::cout << home_team.getName() << " " << static_cast<int>(match.getHomeScore()) << " - "
-                  << static_cast<int>(match.getAwayScore()) << " " << away_team.getName() << "\n";
+        std::cout << home_team.getName() << " "
+                  << static_cast<int>(match.getHomeScore()) << " - "
+                  << static_cast<int>(match.getAwayScore()) << " "
+                  << away_team.getName() << "\n";
       }
     }
   }
@@ -126,7 +129,8 @@ void Game::updateStandings(const Match& match)
   if (!away_team_opt) return;
   Team& away_team = away_team_opt->get();
 
-  League& league = GameData::instance().getLeagues().at(home_team.getLeagueId());
+  League& league =
+      GameData::instance().getLeagues().at(home_team.getLeagueId());
 
   if (match.getHomeScore() > match.getAwayScore())
   {
@@ -145,7 +149,8 @@ void Game::updateStandings(const Match& match)
 
 void Game::endSeason()
 {
-  std::cout << "--- Season " << static_cast<int>(current_season) << " has concluded. ---"
+  std::cout << "--- Season " << static_cast<int>(current_season)
+            << " has concluded. ---"
             << "\n";
   GameData::instance().ageAllPlayers();
   current_season++;
@@ -182,7 +187,8 @@ void Game::trainPlayers(const std::vector<uint32_t>& player_ids)
   for (auto& player_id : player_ids)
   {
     Player& player = GameData::instance().getPlayers().at(player_id);
-    const auto& focus_stats = stats_config.role_focus.at(player.getRole()).stats;
+    const auto& focus_stats =
+        stats_config.role_focus.at(player.getRole()).stats;
     player.train(focus_stats);
   }
 }

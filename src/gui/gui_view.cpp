@@ -11,14 +11,14 @@
 #include <iostream>
 #include <stack>
 
+#include "backends/imgui_impl_sdl3.h"
+#include "backends/imgui_impl_sdlrenderer3.h"
 #include "controller/game_controller.h"
 #include "gui/gui_scene.h"
 #include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/team_selection_scene.h"
-#include "settings_manager.h"
 #include "imgui.h"
-#include "backends/imgui_impl_sdl3.h"
-#include "backends/imgui_impl_sdlrenderer3.h"
+#include "settings_manager.h"
 
 GUIView::GUIView(GameController& controller_ref)
     : controller(controller_ref),
@@ -83,7 +83,8 @@ bool GUIView::initialize()
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO(); (void)io;
+  ImGuiIO& io = ImGui::GetIO();
+  (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io.IniFilename = "assets/imgui.ini";
   ImGui::StyleColorsDark();

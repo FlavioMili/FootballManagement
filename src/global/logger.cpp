@@ -30,8 +30,8 @@ void Logger::init()
     std::shared_ptr<spdlog::sinks::sink> console_sink =
         std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 
-    logger = std::make_shared<spdlog::logger>("main_logger",
-                                              spdlog::sinks_init_list{console_sink, file_sink});
+    logger = std::make_shared<spdlog::logger>(
+        "main_logger", spdlog::sinks_init_list{console_sink, file_sink});
 
     logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%^%l%$] %v");
     logger->set_level(spdlog::level::debug);

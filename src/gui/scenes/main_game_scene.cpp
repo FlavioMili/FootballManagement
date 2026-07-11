@@ -133,7 +133,8 @@ void MainGameScene::renderLeaderboard()
 
   SDL_Color textColor = {255, 255, 255, 255};
   TTF_Font* titleFont = TTF_OpenFont(FONT_PATH, 28);
-  SDL_Surface* surface = TTF_RenderText_Solid(titleFont, "League Standings", 0, textColor);
+  SDL_Surface* surface =
+      TTF_RenderText_Solid(titleFont, "League Standings", 0, textColor);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
   SDL_FRect rect = {leaderboardX, leaderboardY, static_cast<float>(surface->w),
                     static_cast<float>(surface->h)};
@@ -147,25 +148,29 @@ void MainGameScene::renderLeaderboard()
   auto managedTeamOpt = guiView->getController().getManagedTeam();
   if (managedTeamOpt.has_value())
   {
-    auto leagueOpt = guiView->getController().getLeagueById(managedTeamOpt->get().getLeagueId());
+    auto leagueOpt = guiView->getController().getLeagueById(
+        managedTeamOpt->get().getLeagueId());
     if (leagueOpt.has_value())
     {
       const League& league = leagueOpt->get();
       const auto& leaderboard = league.getLeaderboard();
-      std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(), leaderboard.end());
+      std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(),
+                                                    leaderboard.end());
       std::sort(sorted_teams.begin(), sorted_teams.end(),
-                [](const auto& a, const auto& b) { return a.second > b.second; });
+                [](const auto& a, const auto& b)
+                { return a.second > b.second; });
 
       TTF_Font* itemFont = TTF_OpenFont(FONT_PATH, 20);
       int rank = 1;
       for (const auto& pair : sorted_teams)
       {
-        auto teamOpt = guiView->getController().getTeamById(static_cast<uint16_t>(pair.first));
+        auto teamOpt = guiView->getController().getTeamById(
+            static_cast<uint16_t>(pair.first));
         if (teamOpt.has_value())
         {
           const Team& team = teamOpt->get();
-          std::string text = std::to_string(rank) + ". " + team.getName() + " - " +
-                             std::to_string(pair.second) + " pts";
+          std::string text = std::to_string(rank) + ". " + team.getName() +
+                             " - " + std::to_string(pair.second) + " pts";
           surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
           texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
           rect = {leaderboardX, leaderboardY, static_cast<float>(surface->w),
@@ -192,7 +197,8 @@ void MainGameScene::renderTopPlayers()
 
   SDL_Color textColor = {255, 255, 255, 255};
   TTF_Font* titleFont = TTF_OpenFont(FONT_PATH, 28);
-  SDL_Surface* surface = TTF_RenderText_Solid(titleFont, "Top Players", 0, textColor);
+  SDL_Surface* surface =
+      TTF_RenderText_Solid(titleFont, "Top Players", 0, textColor);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
   SDL_FRect rect = {topPlayersX, topPlayersY, static_cast<float>(surface->w),
                     static_cast<float>(surface->h)};
@@ -206,19 +212,24 @@ void MainGameScene::renderTopPlayers()
   auto managedTeamOpt = guiView->getController().getManagedTeam();
   if (managedTeamOpt.has_value())
   {
-    auto players = guiView->getController().getPlayersForTeam(managedTeamOpt->get().getId());
+    auto players = guiView->getController().getPlayersForTeam(
+        managedTeamOpt->get().getId());
     const auto& stats_config = guiView->getController().getStatsConfig();
     std::sort(players.begin(), players.end(),
               [&stats_config](const std::reference_wrapper<const Player>& a,
                               const std::reference_wrapper<const Player>& b)
-              { return a.get().getOverall(stats_config) > b.get().getOverall(stats_config); });
+              {
+                return a.get().getOverall(stats_config) >
+                       b.get().getOverall(stats_config);
+              });
 
     TTF_Font* itemFont = TTF_OpenFont(FONT_PATH, 20);
     for (size_t i = 0; i < 3 && i < players.size(); ++i)
     {
       const auto& player = players[i].get();
-      std::string text = player.getName() + " (" + player.getRole() +
-                         ") - OVR: " + std::to_string(player.getOverall(stats_config));
+      std::string text =
+          player.getName() + " (" + player.getRole() +
+          ") - OVR: " + std::to_string(player.getOverall(stats_config));
       surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
       texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
       rect = {topPlayersX, topPlayersY, static_cast<float>(surface->w),
@@ -242,7 +253,8 @@ void MainGameScene::renderDate()
   if (!dateFont) return;
 
   std::string dateText = guiView->getController().getCurrentDate().toString();
-  SDL_Surface* surface = TTF_RenderText_Solid(dateFont, dateText.c_str(), 0, textColor);
+  SDL_Surface* surface =
+      TTF_RenderText_Solid(dateFont, dateText.c_str(), 0, textColor);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
 
   float texW = 0, texH = 0;
@@ -250,8 +262,9 @@ void MainGameScene::renderDate()
 
   // Position it to the left of the next day button
   float buttonW = 100.0f;
-  SDL_FRect dstRect = {static_cast<float>(windowWidth) - buttonW - 10.0f - texW - 10.0f, 15.0f,
-                       static_cast<float>(texW), static_cast<float>(texH)};
+  SDL_FRect dstRect = {
+      static_cast<float>(windowWidth) - buttonW - 10.0f - texW - 10.0f, 15.0f,
+      static_cast<float>(texW), static_cast<float>(texH)};
   SDL_RenderTexture(getRenderer(), texture, nullptr, &dstRect);
 
   SDL_DestroySurface(surface);
@@ -269,19 +282,20 @@ void MainGameScene::setupButtons()
   sidebarButtonStyle.borderWidth = 1;
   sidebarButtonStyle.hasBorder = true;
 
-  sidebarButtonIds.push_back(
-      buttonManager->addButton(0, 0, 0, 0, "View Roster", sidebarButtonStyle, [this]()
-                               { guiView->overlayScene(std::make_unique<RosterScene>(guiView)); }));
   sidebarButtonIds.push_back(buttonManager->addButton(
-      0, 0, 0, 0, "Set Strategy", sidebarButtonStyle,
-      [this]() { guiView->overlayScene(std::make_unique<StrategyScene>(guiView)); }));
-  sidebarButtonIds.push_back(buttonManager->addButton(0, 0, 0, 0, "Finances", sidebarButtonStyle,
-                                                      []() { /* Placeholder */ }));
+      0, 0, 0, 0, "View Roster", sidebarButtonStyle, [this]()
+      { guiView->overlayScene(std::make_unique<RosterScene>(guiView)); }));
   sidebarButtonIds.push_back(buttonManager->addButton(
-      0, 0, 0, 0, "Transfer Market", sidebarButtonStyle, []() { /* Placeholder */ }));
+      0, 0, 0, 0, "Set Strategy", sidebarButtonStyle, [this]()
+      { guiView->overlayScene(std::make_unique<StrategyScene>(guiView)); }));
+  sidebarButtonIds.push_back(buttonManager->addButton(
+      0, 0, 0, 0, "Finances", sidebarButtonStyle, []() { /* Placeholder */ }));
   sidebarButtonIds.push_back(
-      buttonManager->addButton(0, 0, 0, 0, "Save Game", sidebarButtonStyle,
-                               [this]() { this->parent_view->getController().saveGame(); }));
+      buttonManager->addButton(0, 0, 0, 0, "Transfer Market",
+                               sidebarButtonStyle, []() { /* Placeholder */ }));
+  sidebarButtonIds.push_back(buttonManager->addButton(
+      0, 0, 0, 0, "Save Game", sidebarButtonStyle,
+      [this]() { this->parent_view->getController().saveGame(); }));
 
   ButtonStyle nextButtonStyle;
   nextButtonStyle.backgroundColor = {80, 120, 80, 255};
@@ -291,8 +305,9 @@ void MainGameScene::setupButtons()
   nextButtonStyle.borderWidth = 1;
   nextButtonStyle.hasBorder = true;
 
-  nextButtonId = buttonManager->addButton(0, 0, 0, 0, "Next Day", nextButtonStyle,
-                                          [this]() { guiView->getController().advanceDay(); });
+  nextButtonId =
+      buttonManager->addButton(0, 0, 0, 0, "Next Day", nextButtonStyle, [this]()
+                               { guiView->getController().advanceDay(); });
 }
 
 void MainGameScene::updateLayout()
@@ -304,14 +319,16 @@ void MainGameScene::updateLayout()
     SDL_GetWindowSize(guiView->getWindow(), &windowWidth, &windowHeight);
   }
 
-  sidebarRect = {0, 0, static_cast<float>(windowWidth) * 0.2f, static_cast<float>(windowHeight)};
+  sidebarRect = {0, 0, static_cast<float>(windowWidth) * 0.2f,
+                 static_cast<float>(windowHeight)};
 
   float buttonY = 10.0f;
   float buttonH = 50.0f;
   for (size_t i = 0; i < sidebarButtonIds.size(); ++i)
   {
     buttonManager->updateButtonPositionById(
-        sidebarButtonIds[i], {sidebarRect.x + 10, buttonY, sidebarRect.w - 20, buttonH});
+        sidebarButtonIds[i],
+        {sidebarRect.x + 10, buttonY, sidebarRect.w - 20, buttonH});
     buttonY += buttonH + 5;  // Add some padding
   }
 
@@ -320,8 +337,8 @@ void MainGameScene::updateLayout()
     float buttonW = 100.0f;
     float buttonH2 = 40.0f;
     buttonManager->updateButtonPositionById(
-        nextButtonId,
-        {static_cast<float>(windowWidth) - buttonW - 10.0f, 10.0f, buttonW, buttonH2});
+        nextButtonId, {static_cast<float>(windowWidth) - buttonW - 10.0f, 10.0f,
+                       buttonW, buttonH2});
   }
 }
 

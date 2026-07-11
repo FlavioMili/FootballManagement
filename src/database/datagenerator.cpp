@@ -60,12 +60,14 @@ Player DataGenerator::generateRandomPlayer(TeamID team_id)
   auto stats_config = GameData::instance().getStatsConfig();
   static std::mt19937 gen(std::random_device{}());
   std::uniform_int_distribution<size_t> name_dist(0, first_names.size() - 1);
-  std::uniform_int_distribution<size_t> last_name_dist(0, last_names.size() - 1);
+  std::uniform_int_distribution<size_t> last_name_dist(0,
+                                                       last_names.size() - 1);
   std::uniform_int_distribution<int> age_dist(18, 35);
   std::uniform_int_distribution<int> contract_dist(1, 5);
   std::uniform_int_distribution<int> height_dist(165, 200);
   std::uniform_int_distribution<int> wage_dist(500, 10000);
-  std::uniform_int_distribution<size_t> role_dist(0, stats_config.role_focus.size() - 1);
+  std::uniform_int_distribution<size_t> role_dist(
+      0, stats_config.role_focus.size() - 1);
   std::uniform_int_distribution<int> foot_dist(0, 1);
 
   std::string first_name = first_names[name_dist(gen)];
@@ -90,9 +92,10 @@ Player DataGenerator::generateRandomPlayer(TeamID team_id)
   }
 
   Logger::debug("Generated Player with ID: " + std::to_string(next_player_id));
-  return Player(next_player_id++, team_id, first_name, last_name, role, Language::EN,
-                static_cast<uint32_t>(wage), 0, static_cast<uint8_t>(age),
-                static_cast<uint8_t>(contract_years), static_cast<uint8_t>(height), foot, stats);
+  return Player(next_player_id++, team_id, first_name, last_name, role,
+                Language::EN, static_cast<uint32_t>(wage), 0,
+                static_cast<uint8_t>(age), static_cast<uint8_t>(contract_years),
+                static_cast<uint8_t>(height), foot, stats);
 }
 
 std::vector<League> DataGenerator::generateLeagues()
@@ -129,7 +132,8 @@ std::vector<Team> DataGenerator::generateTeams()
       json data = json::parse(f);
       for (const auto& item : data)
       {
-        teams.emplace_back(item.at("id").get<uint16_t>(), item.at("league_id").get<uint8_t>(),
+        teams.emplace_back(item.at("id").get<uint16_t>(),
+                           item.at("league_id").get<uint8_t>(),
                            item.at("name").get<std::string>(), 0);
       }
     }
@@ -156,16 +160,22 @@ std::vector<Player> DataGenerator::generatePlayers()
         TeamID team_id = item.at("team_id").get<uint16_t>();
         player_counts[team_id]++;
 
-        auto it = stringToLanguage.find(item.at("nationality").get<std::string>());
-        Language nationality = (it != stringToLanguage.end()) ? it->second : Language::EN;
-        Foot foot =
-            (item.at("preferred_foot").get<std::string>() == "Left") ? Foot::Left : Foot::Right;
+        auto it =
+            stringToLanguage.find(item.at("nationality").get<std::string>());
+        Language nationality =
+            (it != stringToLanguage.end()) ? it->second : Language::EN;
+        Foot foot = (item.at("preferred_foot").get<std::string>() == "Left")
+                        ? Foot::Left
+                        : Foot::Right;
 
         players.emplace_back(
-            item.at("id").get<uint32_t>(), team_id, item.at("first_name").get<std::string>(),
-            item.at("last_name").get<std::string>(), item.at("role").get<std::string>(),
-            nationality, item.at("wage").get<uint32_t>(), item.value("status", 0),
-            item.at("age").get<uint8_t>(), item.at("contract_years").get<uint8_t>(),
+            item.at("id").get<uint32_t>(), team_id,
+            item.at("first_name").get<std::string>(),
+            item.at("last_name").get<std::string>(),
+            item.at("role").get<std::string>(), nationality,
+            item.at("wage").get<uint32_t>(), item.value("status", 0),
+            item.at("age").get<uint8_t>(),
+            item.at("contract_years").get<uint8_t>(),
             item.at("height").get<uint8_t>(), foot,
             item.at("stats").get<std::map<std::string, float>>());
       }
@@ -174,19 +184,21 @@ std::vector<Player> DataGenerator::generatePlayers()
 
   // Ensure every team has at least 30 players
   auto teams = GameData::instance().getTeamsVector();
-  Logger::debug("Ensuring player rosters for " + std::to_string(teams.size()) + " teams.");
+  Logger::debug("Ensuring player rosters for " + std::to_string(teams.size()) +
+                " teams.");
   for (const auto& teamRef : teams)
   {
     const Team& team = teamRef.get();
     int current_player_count = player_counts[team.getId()];
-    Logger::debug("Team " + team.getName() + " (ID: " + std::to_string(team.getId()) + ") has " +
+    Logger::debug("Team " + team.getName() +
+                  " (ID: " + std::to_string(team.getId()) + ") has " +
                   std::to_string(current_player_count) + " players.");
 
     int players_to_generate = 30 - current_player_count;
     if (players_to_generate > 0)
     {
-      Logger::debug("Generating " + std::to_string(players_to_generate) + " new players for " +
-                    team.getName());
+      Logger::debug("Generating " + std::to_string(players_to_generate) +
+                    " new players for " + team.getName());
       for (int i = 0; i < players_to_generate; ++i)
       {
         players.push_back(generateRandomPlayer(team.getId()));

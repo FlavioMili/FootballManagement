@@ -32,10 +32,15 @@ void GUIScene::onResize(int /*width*/, int /*height*/)
   // Default implementation
 }
 
+SDL_Renderer* GUIScene::getRenderer() const
+{
+  return guiView ? guiView->getRenderer() : nullptr;
+}
 
-SDL_Renderer* GUIScene::getRenderer() const { return guiView ? guiView->getRenderer() : nullptr; }
-
-SDL_Window* GUIScene::getWindow() const { return guiView ? guiView->getWindow() : nullptr; }
+SDL_Window* GUIScene::getWindow() const
+{
+  return guiView ? guiView->getWindow() : nullptr;
+}
 
 void GUIScene::changeScene(std::unique_ptr<GUIScene> newScene)
 {

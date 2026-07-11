@@ -129,8 +129,8 @@ void MainMenuScene::updateLayout()
     float titleW, titleH;
     if (SDL_GetTextureSize(titleTexture, &titleW, &titleH))
     {
-      titleRect = {static_cast<float>(w) / 2 - titleW / 2.0f, 100.0f, static_cast<float>(titleW),
-                   static_cast<float>(titleH)};
+      titleRect = {static_cast<float>(w) / 2 - titleW / 2.0f, 100.0f,
+                   static_cast<float>(titleW), static_cast<float>(titleH)};
     }
   }
 
@@ -233,8 +233,10 @@ void MainMenuScene::make_scene()
   if (titleSurface)
   {
     titleTexture = SDL_CreateTextureFromSurface(getRenderer(), titleSurface);
-    titleRect = {static_cast<float>(w) / 2 - static_cast<float>(titleSurface->w) / 2.0f, 100.0f,
-                 static_cast<float>(titleSurface->w), static_cast<float>(titleSurface->h)};
+    titleRect = {
+        static_cast<float>(w) / 2 - static_cast<float>(titleSurface->w) / 2.0f,
+        100.0f, static_cast<float>(titleSurface->w),
+        static_cast<float>(titleSurface->h)};
     SDL_DestroySurface(titleSurface);
   }
 

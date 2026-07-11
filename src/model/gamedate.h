@@ -21,7 +21,10 @@ struct GameDateValue
   // Let's start the game from July first, so that we have
   // the transfer window and some friendlies before starting
   // the championship.
-  GameDateValue(uint16_t y = 2025, uint8_t m = 7, uint8_t d = 1) : year(y), month(m), day(d) {}
+  GameDateValue(uint16_t y = 2025, uint8_t m = 7, uint8_t d = 1)
+      : year(y), month(m), day(d)
+  {
+  }
 
   // ----------------------
   // Date arithmetic

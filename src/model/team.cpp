@@ -17,7 +17,8 @@
 
 // Constructor
 Team::Team(TeamID team_id, uint8_t team_league_id, std::string_view team_name,
-           int64_t initial_balance, const std::vector<PlayerID>& initial_player_ids,
+           int64_t initial_balance,
+           const std::vector<PlayerID>& initial_player_ids,
            const Strategy& strategy, const Lineup& lineup_data)
     : id(team_id),
       league_id(team_league_id),

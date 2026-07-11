@@ -7,12 +7,13 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
+#include <array>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "gui/gui_scene.h"
 #include "gui/gui_view.h"
-#include <string>
-#include <vector>
-#include <utility>
-#include <array>
 
 class SettingsScene : public GUIScene
 {

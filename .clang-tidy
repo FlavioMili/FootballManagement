@@ -5,7 +5,9 @@ Checks: >
   readability-*,
   cppcoreguidelines-*,
   -cppcoreguidelines-owning-memory,
-  -readability-magic-numbers
+  -readability-magic-numbers,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length
 
 WarningsAsErrors: "*"
 

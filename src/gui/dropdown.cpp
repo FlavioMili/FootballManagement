@@ -10,15 +10,20 @@
 
 #include <cstddef>
 
-Dropdown::Dropdown(SDL_Renderer* dropdown_renderer, TTF_Font* dropdown_font, const SDL_FRect& rect,
+Dropdown::Dropdown(SDL_Renderer* dropdown_renderer, TTF_Font* dropdown_font,
+                   const SDL_FRect& rect,
                    const std::vector<std::string>& dropdown_options)
-    : renderer(dropdown_renderer), font(dropdown_font), mainRect(rect), options(dropdown_options)
+    : renderer(dropdown_renderer),
+      font(dropdown_font),
+      mainRect(rect),
+      options(dropdown_options)
 {
   optionRects.resize(options.size());
   for (size_t i = 0; i < options.size(); ++i)
   {
-    optionRects[i] = {mainRect.x, mainRect.y + mainRect.h * static_cast<float>(i + 1), mainRect.w,
-                      mainRect.h};
+    optionRects[i] = {mainRect.x,
+                      mainRect.y + mainRect.h * static_cast<float>(i + 1),
+                      mainRect.w, mainRect.h};
   }
 
   createTextures();
@@ -84,18 +89,21 @@ bool Dropdown::handleEvent(const SDL_Event& event)
 
 void Dropdown::render()
 {
-  SDL_SetRenderDrawColor(renderer, style.backgroundColor.r, style.backgroundColor.g,
-                         style.backgroundColor.b, style.backgroundColor.a);
+  SDL_SetRenderDrawColor(renderer, style.backgroundColor.r,
+                         style.backgroundColor.g, style.backgroundColor.b,
+                         style.backgroundColor.a);
   SDL_RenderFillRect(renderer, &mainRect);
-  SDL_SetRenderDrawColor(renderer, style.borderColor.r, style.borderColor.g, style.borderColor.b,
-                         style.borderColor.a);
+  SDL_SetRenderDrawColor(renderer, style.borderColor.r, style.borderColor.g,
+                         style.borderColor.b, style.borderColor.a);
   SDL_RenderRect(renderer, &mainRect);
 
   if (selectedOptionTexture)
   {
     float textW, textH;
     SDL_GetTextureSize(selectedOptionTexture, &textW, &textH);
-    SDL_FRect textRect = {mainRect.x + 10, mainRect.y + (mainRect.h - textH) / 2.0f, textW, textH};
+    SDL_FRect textRect = {mainRect.x + 10,
+                          mainRect.y + (mainRect.h - textH) / 2.0f, textW,
+                          textH};
     SDL_RenderTexture(renderer, selectedOptionTexture, nullptr, &textRect);
   }
 
@@ -107,13 +115,14 @@ void Dropdown::render()
     {
       if (i == static_cast<size_t>(hoveredIndex))
       {
-        SDL_SetRenderDrawColor(renderer, style.hoverColor.r, style.hoverColor.g, style.hoverColor.b,
-                               style.hoverColor.a);
+        SDL_SetRenderDrawColor(renderer, style.hoverColor.r, style.hoverColor.g,
+                               style.hoverColor.b, style.hoverColor.a);
       }
       else
       {
-        SDL_SetRenderDrawColor(renderer, style.backgroundColor.r, style.backgroundColor.g,
-                               style.backgroundColor.b, style.backgroundColor.a);
+        SDL_SetRenderDrawColor(renderer, style.backgroundColor.r,
+                               style.backgroundColor.g, style.backgroundColor.b,
+                               style.backgroundColor.a);
       }
       SDL_RenderFillRect(renderer, &optionRects[i]);
       SDL_SetRenderDrawColor(renderer, style.borderColor.r, style.borderColor.g,
@@ -124,8 +133,9 @@ void Dropdown::render()
       {
         float textW, textH;
         SDL_GetTextureSize(optionTextures[i], &textW, &textH);
-        SDL_FRect textRect = {optionRects[i].x + 10,
-                              optionRects[i].y + (optionRects[i].h - textH) / 2.0f, textW, textH};
+        SDL_FRect textRect = {
+            optionRects[i].x + 10,
+            optionRects[i].y + (optionRects[i].h - textH) / 2.0f, textW, textH};
         SDL_RenderTexture(renderer, optionTextures[i], nullptr, &textRect);
       }
     }
@@ -147,7 +157,8 @@ std::string Dropdown::getSelectedOption() const
 
 void Dropdown::setSelectedIndex(int index)
 {
-  if (index >= 0 && index < static_cast<int>(options.size()) && index != selectedIndex)
+  if (index >= 0 && index < static_cast<int>(options.size()) &&
+      index != selectedIndex)
   {
     selectedIndex = index;
     auto selectedOption = options[static_cast<size_t>(selectedIndex)];
@@ -162,7 +173,8 @@ void Dropdown::setSelectedIndex(int index)
       SDL_DestroyTexture(selectedOptionTexture);
       selectedOptionTexture = nullptr;
     }
-    SDL_Surface* surf = TTF_RenderText_Blended(font, selectedOption.c_str(), 0, style.textColor);
+    SDL_Surface* surf = TTF_RenderText_Blended(font, selectedOption.c_str(), 0,
+                                               style.textColor);
     if (surf)
     {
       selectedOptionTexture = SDL_CreateTextureFromSurface(renderer, surf);
@@ -171,7 +183,8 @@ void Dropdown::setSelectedIndex(int index)
   }
 }
 
-void Dropdown::setOnSelectionChanged(std::function<void(int, const std::string&)> callback)
+void Dropdown::setOnSelectionChanged(
+    std::function<void(int, const std::string&)> callback)
 {
   onSelectionChangedCallback = std::move(callback);
 }
@@ -183,7 +196,8 @@ void Dropdown::createTextures()
 
   for (size_t i = 0; i < options.size(); ++i)
   {
-    SDL_Surface* surf = TTF_RenderText_Blended(font, options[i].c_str(), 0, style.textColor);
+    SDL_Surface* surf =
+        TTF_RenderText_Blended(font, options[i].c_str(), 0, style.textColor);
     if (surf)
     {
       optionTextures[i] = SDL_CreateTextureFromSurface(renderer, surf);
@@ -194,7 +208,8 @@ void Dropdown::createTextures()
   if (selectedIndex >= 0 && selectedIndex < static_cast<int>(options.size()))
   {
     SDL_Surface* surf = TTF_RenderText_Blended(
-        font, options[static_cast<size_t>(selectedIndex)].c_str(), 0, style.textColor);
+        font, options[static_cast<size_t>(selectedIndex)].c_str(), 0,
+        style.textColor);
     if (surf)
     {
       selectedOptionTexture = SDL_CreateTextureFromSurface(renderer, surf);
@@ -259,6 +274,6 @@ void Dropdown::renderArrow(const SDL_FRect& buttonRect) const
     vertices[2].color = color;
     vertices[2].tex_coord = {0, 0};
   }
-  SDL_RenderGeometry(renderer, nullptr, vertices.data(), static_cast<int>(vertices.size()), nullptr,
-                     0);
+  SDL_RenderGeometry(renderer, nullptr, vertices.data(),
+                     static_cast<int>(vertices.size()), nullptr, 0);
 }

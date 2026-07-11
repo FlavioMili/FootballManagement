@@ -37,8 +37,9 @@ void SettingsManager::load()
   in >> j;
 
   settings_.language = j.value("language", settings_.language);
-  auto res = j.value("resolution",
-                     std::vector<int>{settings_.resolution_width, settings_.resolution_height});
+  auto res =
+      j.value("resolution", std::vector<int>{settings_.resolution_width,
+                                             settings_.resolution_height});
   if (res.size() == 2)
   {
     settings_.resolution_width = res[0];
@@ -67,7 +68,8 @@ void SettingsManager::apply(SDL_Window* window)
   SDL_SetWindowFullscreen(window, settings_.fullscreen ? true : false);
   if (!settings_.fullscreen)
   {
-    SDL_SetWindowSize(window, settings_.resolution_width, settings_.resolution_height);
+    SDL_SetWindowSize(window, settings_.resolution_width,
+                      settings_.resolution_height);
   }
   // fps limit: handled by main loop
 }
