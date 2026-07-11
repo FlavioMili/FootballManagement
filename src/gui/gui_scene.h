@@ -32,14 +32,14 @@ class GUIScene
   virtual ~GUIScene() = default;
 
   // Core scene interface - must be implemented by derived classes
-  virtual void handleEvent(const SDL_Event& event) = 0;
+  virtual void handleEvent(const SDL_Event& /*event*/) {}
   virtual void update(float deltaTime) = 0;
   virtual void render() = 0;
 
   // Optional lifecycle hooks
   virtual void onEnter();
   virtual void onExit();
-  virtual void onResize(int width, int height);
+  virtual void onResize(int /*width*/, int /*height*/) {}
 
   /*
    * This function might be used to check what we are rendering.

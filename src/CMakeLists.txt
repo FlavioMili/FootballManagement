@@ -9,6 +9,16 @@ configure_file(
 # -----------------------------
 # Sources & Library
 # -----------------------------
+set(IMGUI_SOURCES
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
+)
+
 set(CORE_SOURCES
     # Controller
     controller/game_controller.h
@@ -35,6 +45,7 @@ set(CORE_SOURCES
     global/types.h
 
     # GUI
+    ${IMGUI_SOURCES}
     gui/button_manager.h
     gui/button_manager.cpp
     gui/dropdown.h
@@ -94,6 +105,8 @@ target_include_directories(core_lib PUBLIC
   ${PROJECT_SOURCE_DIR}/src/database
   ${PROJECT_SOURCE_DIR}/src/gui
   ${PROJECT_SOURCE_DIR}/src/gui/scenes
+  ${imgui_SOURCE_DIR}
+  ${imgui_SOURCE_DIR}/backends
 )
 
 target_link_libraries(core_lib PUBLIC
@@ -121,7 +134,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(core_lib PRIVATE DEBUG)
     target_compile_options(core_lib PUBLIC -Og -g3 -fsanitize=address,undefined ${DEBUG_WARNINGS})
     target_link_options(core_lib PUBLIC -fsanitize=address,undefined)
-    
+
     target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
     target_compile_options(${PROJECT_NAME} PRIVATE -Og -g3 -fsanitize=address,undefined ${DEBUG_WARNINGS})
     target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined)
@@ -139,3 +152,6 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
     target_compile_options(core_lib PRIVATE -O2 -g -march=native)
     target_compile_options(${PROJECT_NAME} PRIVATE -O2 -g -march=native)
 endif()
+
+# Enforce strict unused variable checking for ALL builds
+target_compile_options(core_lib PUBLIC -Wall -Wextra -Wunused)

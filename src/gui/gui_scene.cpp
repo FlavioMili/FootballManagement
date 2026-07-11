@@ -22,12 +22,6 @@ void GUIScene::onExit()
   // Default implementation - can be overridden by derived classes
 }
 
-void GUIScene::onResize(int width, int height)
-{
-  // Default implementation - can be overridden by derived classes
-  (void)width;
-  (void)height;
-}
 
 SDL_Renderer* GUIScene::getRenderer() const { return guiView ? guiView->getRenderer() : nullptr; }
 

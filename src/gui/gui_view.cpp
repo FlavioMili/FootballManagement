@@ -16,6 +16,9 @@
 #include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/team_selection_scene.h"
 #include "settings_manager.h"
+#include "imgui.h"
+#include "backends/imgui_impl_sdl3.h"
+#include "backends/imgui_impl_sdlrenderer3.h"
 
 GUIView::GUIView(GameController& controller_ref)
     : controller(controller_ref),
@@ -36,6 +39,9 @@ GUIView::~GUIView()
 
   if (renderer)
   {
+    ImGui_ImplSDLRenderer3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
     SDL_DestroyRenderer(renderer);
   }
   if (window)
@@ -75,6 +81,16 @@ bool GUIView::initialize()
 
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO& io = ImGui::GetIO(); (void)io;
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  io.IniFilename = "assets/imgui.ini";
+  ImGui::StyleColorsDark();
+
+  ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
+  ImGui_ImplSDLRenderer3_Init(renderer);
+
   changeScene(std::make_unique<MainMenuScene>(this));
 
   return true;
@@ -112,6 +128,7 @@ void GUIView::handleEvents()
   SDL_Event event;
   while (SDL_PollEvent(&event))
   {
+    ImGui_ImplSDL3_ProcessEvent(&event);
     if (event.type == SDL_EVENT_QUIT)
     {
       running = false;
@@ -152,8 +169,12 @@ void GUIView::update(float deltaTime)
 void GUIView::render()
 {
   // Clear screen with dark background
-  // SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
+  SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
   SDL_RenderClear(renderer);
+
+  ImGui_ImplSDLRenderer3_NewFrame();
+  ImGui_ImplSDL3_NewFrame();
+  ImGui::NewFrame();
 
   // Render only the active scene
   // (topmost overlay or current scene)
@@ -162,6 +183,9 @@ void GUIView::render()
   {
     activeScene->render();
   }
+
+  ImGui::Render();
+  ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
 
   // Present the rendered frame
   SDL_RenderPresent(renderer);
