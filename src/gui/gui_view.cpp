@@ -13,6 +13,7 @@
 
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
+#include <SDL3_ttf/SDL_ttf.h>
 #include "controller/game_controller.h"
 #include "gui/gui_scene.h"
 #include "gui/scenes/main_menu_scene.h"
@@ -37,17 +38,18 @@ GUIView::~GUIView()
     sceneStack.pop();
   }
 
-  if (renderer)
+  if (renderer != nullptr)
   {
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
     SDL_DestroyRenderer(renderer);
   }
-  if (window)
+  if (window != nullptr)
   {
     SDL_DestroyWindow(window);
   }
+  TTF_Quit();
   SDL_Quit();
 }
 
@@ -60,9 +62,16 @@ bool GUIView::initialize()
     return false;
   }
 
+  // Initialize SDL_ttf
+  if (static_cast<int>(TTF_Init()) != 0)
+  {
+    std::cerr << "Failed to initialize SDL_ttf: " << SDL_GetError() << '\n';
+    return false;
+  }
+
   // Create window
   window = SDL_CreateWindow("Game GUI", 1200, 800, SDL_WINDOW_RESIZABLE);
-  if (!window)
+  if (window == nullptr)
   {
     std::cerr << "Failed to create window: " << SDL_GetError() << '\n';
     return false;
@@ -70,7 +79,7 @@ bool GUIView::initialize()
 
   // Create renderer
   renderer = SDL_CreateRenderer(window, nullptr);
-  if (!renderer)
+  if (renderer == nullptr)
   {
     std::cerr << "Failed to create renderer: " << SDL_GetError() << '\n';
     return false;
@@ -137,10 +146,11 @@ void GUIView::handleEvents()
 
     if (event.type == SDL_EVENT_WINDOW_RESIZED)
     {
-      int width, height;
+      int width = 0;
+      int height = 0;
       SDL_GetWindowSizeInPixels(window, &width, &height);
       GUIScene* activeScene = getActiveScene();
-      if (activeScene)
+      if (activeScene != nullptr)
       {
         activeScene->onResize(width, height);
       }
@@ -149,7 +159,7 @@ void GUIView::handleEvents()
     // Pass event to the topmost scene
     // (overlay if exists, otherwise current scene)
     GUIScene* activeScene = getActiveScene();
-    if (activeScene)
+    if (activeScene != nullptr)
     {
       activeScene->handleEvent(event);
     }
@@ -161,7 +171,7 @@ void GUIView::update(float deltaTime)
   // Update only the active scene
   // (topmost overlay or current scene)
   GUIScene* activeScene = getActiveScene();
-  if (activeScene)
+  if (activeScene != nullptr)
   {
     activeScene->update(deltaTime);
   }
@@ -180,7 +190,7 @@ void GUIView::render()
   // Render only the active scene
   // (topmost overlay or current scene)
   GUIScene* activeScene = getActiveScene();
-  if (activeScene)
+  if (activeScene != nullptr)
   {
     activeScene->render();
   }
