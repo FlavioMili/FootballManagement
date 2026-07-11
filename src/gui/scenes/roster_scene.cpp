@@ -7,183 +7,65 @@
 // -----------------------------------------------------------------------------
 
 #include "roster_scene.h"
-
-#include <SDL3_ttf/SDL_ttf.h>
-
-#include <iostream>
-
-#include "global/logger.h"
-#include "global/paths.h"
+#include <imgui.h>
+#include "global/language_manager.h"
+#include "gui/gui_constants.h"
 #include "gui/gui_view.h"
 
-RosterScene::RosterScene(GUIView* parent)
-    : GUIScene(parent),
-      parent_view(parent),
-      button_manager(parent->getRenderer(), TTF_OpenFont(FONT_PATH, 24))
+namespace
 {
-}
+constexpr float WINDOW_WIDTH = 600.0f;
+constexpr float WINDOW_HEIGHT = 600.0f;
+constexpr int TABLE_COLUMNS = 3;
+constexpr float OVERALL_COLUMN_WIDTH = 60.0f;
+}  // namespace
 
-RosterScene::~RosterScene()
-{
-  // The font is managed by ButtonManager, no need to close here.
-}
+RosterScene::RosterScene(GUIView* parent) : GUIScene(parent) {}
 
 void RosterScene::onEnter()
 {
-  Logger::debug("Entering RosterScene\n");
   loadRoster();
-  setupUI();
 }
 
-void RosterScene::onExit()
-{
-  Logger::debug("Exiting RosterScene\n");
-  button_manager.clearButtons();
-}
-
-void RosterScene::onResize(int width, int height)
-{
-  (void)width;
-  (void)height;
-  setupUI();
-}
-
-void RosterScene::setupUI()
-{
-  button_manager.clearButtons();
-
-  int width, height;
-  SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
-
-  backButtonId =
-      button_manager.addButton(10, static_cast<float>(height) - 50, 100, 40,
-                               "Back", [this]() { parent_view->popScene(); });
-
-  setupPlayerDisplay();
-}
-
-void RosterScene::handleEvent(const SDL_Event& event)
-{
-  if (event.type == SDL_EVENT_MOUSE_MOTION)
-  {
-    button_manager.handleMouseMove(event.motion.x, event.motion.y);
-  }
-  else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
-  {
-    button_manager.handleMouseClick(event.button.x, event.button.y);
-  }
-}
-
-void RosterScene::update(float deltaTime) { (void)(deltaTime); }
+void RosterScene::update(float deltaTime) { (void)deltaTime; }
 
 void RosterScene::render()
 {
-  SDL_SetRenderDrawColor(getRenderer(), 50, 50, 50,
-                         255);  // Dark grey background
-  SDL_RenderClear(getRenderer());
+  ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(GUIConstants::CENTER_PIVOT, GUIConstants::CENTER_PIVOT));
+  ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH, WINDOW_HEIGHT), ImGuiCond_FirstUseEver);
+  ImGui::Begin(LOC("ROSTER_TITLE"), nullptr, ImGuiWindowFlags_NoCollapse);
 
-  int width, height;
-  SDL_GetWindowSizeInPixels(getWindow(), &width, &height);
-
-  // Render title
-  SDL_Color textColor = {255, 255, 255, 255};  // White
-  TTF_Font* font = TTF_OpenFont(FONT_PATH, 36);
-  if (!font)
-  {
-    std::cerr << "Failed to load font: " << SDL_GetError() << "\n";
-    return;
+  if (ImGui::Button(LOC("ROSTER_BACK"), ImVec2(GUIConstants::BUTTON_WIDTH, GUIConstants::BUTTON_HEIGHT))) {
+    guiView->popScene();
   }
+  ImGui::Separator();
+  ImGui::Spacing();
 
-  SDL_Surface* textSurface =
-      TTF_RenderText_Solid(font, "Team Roster", 0, textColor);
-  if (!textSurface)
-  {
-    std::cerr << "Failed to render text: " << SDL_GetError() << "\n";
-    TTF_CloseFont(font);
-    return;
-  }
-  SDL_Texture* textTexture =
-      SDL_CreateTextureFromSurface(getRenderer(), textSurface);
-  if (!textTexture)
-  {
-    std::cerr << "Failed to create texture from text: " << SDL_GetError()
-              << "\n";
-    SDL_DestroySurface(textSurface);
-    TTF_CloseFont(font);
-    return;
-  }
+  if (ImGui::BeginTable("RosterTable", TABLE_COLUMNS, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable)) {
+    ImGui::TableSetupColumn(LOC("ROSTER_COL_NAME"));
+    ImGui::TableSetupColumn(LOC("ROSTER_COL_ROLE"));
+    ImGui::TableSetupColumn(LOC("ROSTER_COL_OVERALL"), ImGuiTableColumnFlags_WidthFixed, OVERALL_COLUMN_WIDTH);
+    ImGui::TableHeadersRow();
 
-  SDL_FRect textRect = {static_cast<float>(width - textSurface->w) / 2.0f,
-                        50.0f, static_cast<float>(textSurface->w),
-                        static_cast<float>(textSurface->h)};
-  SDL_RenderTexture(getRenderer(), textTexture, NULL, &textRect);
-
-  SDL_DestroyTexture(textTexture);
-  SDL_DestroySurface(textSurface);
-  TTF_CloseFont(font);
-
-  // Render player list
-  TTF_Font* playerFont = TTF_OpenFont(FONT_PATH, 24);
-  if (!playerFont)
-  {
-    std::cerr << "Failed to load player font: " << SDL_GetError() << "\n";
-    return;
-  }
-
-  int startY = 150;
-  float lineHeight = 30.0f;
-  for (size_t i = 0; i < roster_players.size(); ++i)
-  {
-    const Player& player = roster_players[i].get();
-    std::string playerText =
-        player.getName() + " (" + player.getRole() + ") - OVR: " +
-        std::to_string(
-            player.getOverall(parent_view->getController().getStatsConfig()));
-
-    SDL_Surface* playerSurface =
-        TTF_RenderText_Solid(playerFont, playerText.c_str(), 0, textColor);
-    if (!playerSurface)
-    {
-      std::cerr << "Failed to render player text: " << SDL_GetError() << "\n";
-      continue;
+    for (const auto& player_ref : roster_players) {
+      const Player& player = player_ref.get();
+      ImGui::TableNextRow();
+      ImGui::TableNextColumn(); ImGui::Text("%s", player.getName().c_str());
+      ImGui::TableNextColumn(); ImGui::Text("%s", player.getRole().c_str());
+      ImGui::TableNextColumn(); ImGui::Text("%.1f", player.getOverall(guiView->getController().getStatsConfig()));
     }
-    SDL_Texture* playerTexture =
-        SDL_CreateTextureFromSurface(getRenderer(), playerSurface);
-    if (!playerTexture)
-    {
-      std::cerr << "Failed to create player texture: " << SDL_GetError()
-                << "\n";
-      SDL_DestroySurface(playerSurface);
-      continue;
-    }
-
-    SDL_FRect playerRect = {
-        50.0f, static_cast<float>(startY) + static_cast<float>(i) * lineHeight,
-        static_cast<float>(playerSurface->w),
-        static_cast<float>(playerSurface->h)};
-    SDL_RenderTexture(getRenderer(), playerTexture, NULL, &playerRect);
-
-    SDL_DestroyTexture(playerTexture);
-    SDL_DestroySurface(playerSurface);
+    ImGui::EndTable();
   }
-  TTF_CloseFont(playerFont);
 
-  button_manager.render();
+  ImGui::End();
 }
 
 void RosterScene::loadRoster()
 {
-  auto managedTeamOpt = parent_view->getController().getManagedTeam();
-  if (managedTeamOpt.has_value())
-  {
-    roster_players = parent_view->getController().getPlayersForTeam(
-        managedTeamOpt->get().getId());
+  auto managedTeamOpt = guiView->getController().getManagedTeam();
+  if (managedTeamOpt.has_value()) {
+    roster_players = guiView->getController().getPlayersForTeam(managedTeamOpt->get().getId());
   }
-}
-
-void RosterScene::setupPlayerDisplay()
-{
-  // TODO do later
 }
 
 SceneID RosterScene::getID() const { return SceneID::ROSTER; }

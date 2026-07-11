@@ -14,5 +14,10 @@
   "TEAM_SELECTION_TITLE": "Seleziona la tua Squadra",
   "TEAM_SELECTION_LEAGUES": "Campionati:",
   "TEAM_SELECTION_TEAMS": "Squadre:",
-  "TEAM_SELECTION_SELECT_LEAGUE_FIRST": "Seleziona prima un campionato."
+  "TEAM_SELECTION_SELECT_LEAGUE_FIRST": "Seleziona prima un campionato.",
+  "ROSTER_TITLE": "Rosa Squadra",
+  "ROSTER_BACK": "Indietro",
+  "ROSTER_COL_NAME": "Nome",
+  "ROSTER_COL_ROLE": "Ruolo",
+  "ROSTER_COL_OVERALL": "Val. Gen."
 }
