@@ -115,7 +115,7 @@ target_link_libraries(core_lib PUBLIC
   fmt::fmt
   spdlog::spdlog
   nlohmann_json::nlohmann_json
-  SQLite::SQLite3
+  SQLite3::SQLite3
   SDL3::SDL3
   SDL3_ttf::SDL3_ttf
 )

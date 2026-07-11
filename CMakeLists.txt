@@ -83,8 +83,8 @@ if(NOT SQLite3_FOUND)
     GIT_TAG        v3.45.1.0
   )
   FetchContent_MakeAvailable(sqlite3)
-  if(NOT TARGET SQLite::SQLite3)
-    add_library(SQLite::SQLite3 ALIAS sqlite3)
+  if(NOT TARGET SQLite3::SQLite3)
+    add_library(SQLite3::SQLite3 ALIAS sqlite3)
   endif()
 endif()
 
