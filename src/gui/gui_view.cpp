@@ -70,7 +70,7 @@ bool GUIView::initialize()
   }
 
   // Create window
-  window = SDL_CreateWindow("Game GUI", 1200, 800, SDL_WINDOW_RESIZABLE);
+  window = SDL_CreateWindow("Game GUI", 1200, 800, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
   if (window == nullptr)
   {
     std::cerr << "Failed to create window: " << SDL_GetError() << '\n';
