@@ -1,3 +1,11 @@
+// -----------------------------------------------------------------------------
+//  Football Management Project
+//  Copyright (c) 2026 FlavioMili. All Rights Reserved.
+//
+//  This file is part of the Football Management Project.
+//  See the LICENSE file in the project root.
+// -----------------------------------------------------------------------------
+
 #include <gtest/gtest.h>
 
 #include "global/stats_config.h"
