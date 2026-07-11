@@ -11,3 +11,4 @@ add_copyright_header.sh
 logs
 docs
 .DS_Store
+assets/imgui.ini
