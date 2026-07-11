@@ -1,0 +1,6 @@
+*.db
+*.sh
+compile_commands.json
+logs
+build
+assets
