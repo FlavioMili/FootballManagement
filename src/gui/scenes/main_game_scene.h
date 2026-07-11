@@ -7,57 +7,22 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include <SDL3/SDL.h>
-#include <SDL3_ttf/SDL_ttf.h>
-
-#include <cstdint>
-#include <memory>
-#include <vector>
-
-#include "gui/button_manager.h"
 #include "gui/gui_scene.h"
 #include "gui/gui_view.h"
-
-enum GameSceneButtonIndex : uint8_t
-{
-  VIEW_ROSTER_BUTTON = 0,
-  SET_STRATEGY_BUTTON = 1,
-  FINANCES_BUTTON = 2,
-  TRANSFER_MARKET_BUTTON = 3,
-  NEXT_DAY_BUTTON = 4
-};
 
 class MainGameScene : public GUIScene
 {
  public:
   explicit MainGameScene(GUIView* guiView_ptr);
-  ~MainGameScene();
-  void handleEvent(const SDL_Event& event) override;
+  ~MainGameScene() override = default;
+
+  void onEnter() override;
   void update(float deltaTime) override;
   void render() override;
-  void onEnter() override;
-  void onExit() override;
-  void onResize(int width, int height) override;
-  SceneID getID() const override;
+  [[nodiscard]] SceneID getID() const override;
 
  private:
-  GUIView* parent_view;
-
-  void initializeUI();
   void renderSidebar();
-  void renderLeaderboard();
-  void renderTopPlayers();
-  void renderDate();
-  void updateLayout();
-  void cleanup();
-  void setupButtons();
-
-  TTF_Font* font = nullptr;
-  std::unique_ptr<ButtonManager> buttonManager;
-
-  // UI element dimensions
-  SDL_FRect sidebarRect;
-
-  std::vector<int> sidebarButtonIds;
-  int nextButtonId = -1;
+  void renderMainArea();
+  void renderTopBar();
 };

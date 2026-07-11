@@ -7,89 +7,40 @@
 // -----------------------------------------------------------------------------
 
 #include "main_game_scene.h"
-
-#include <SDL3_ttf/SDL_ttf.h>
-
+#include <imgui.h>
 #include <algorithm>
-#include <iostream>
-#include <string>
-#include <vector>
+#include "global/language_manager.h"
+#include "gui/gui_constants.h"
+#include "gui/gui_view.h"
 
-#include "global/paths.h"
+namespace
+{
+constexpr float SIDEBAR_WIDTH = 200.0f;
+constexpr float NEXT_DAY_BUTTON_WIDTH = 150.0f;
+constexpr float NEXT_DAY_BUTTON_HEIGHT = 30.0f;
+constexpr float NEXT_DAY_BUTTON_OFFSET = 160.0f;
+constexpr float SIDEBAR_BUTTON_HEIGHT = 40.0f;
+constexpr int STANDINGS_COLUMNS = 3;
+constexpr int TOP_PLAYERS_COLUMNS = 3;
+constexpr float POS_COL_WIDTH = 30.0f;
+constexpr float PTS_COL_WIDTH = 50.0f;
+constexpr float OVR_COL_WIDTH = 40.0f;
+constexpr size_t MAX_TOP_PLAYERS = 5;
+}  // namespace
+#include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/roster_scene.h"
 #include "gui/scenes/strategy_scene.h"
-#include "main_menu_scene.h"
-#include "team_selection_scene.h"
+#include "gui/scenes/team_selection_scene.h"
 
 SceneID MainGameScene::getID() const { return SceneID::GAME_MENU; }
 
-MainGameScene::MainGameScene(GUIView* guiView_ptr)
-    : GUIScene(guiView_ptr), parent_view(guiView_ptr), font(nullptr)
-{
-}
-
-MainGameScene::~MainGameScene() { cleanup(); }
+MainGameScene::MainGameScene(GUIView* guiView_ptr) : GUIScene(guiView_ptr) {}
 
 void MainGameScene::onEnter()
 {
-  if (!parent_view->getController().hasSelectedTeam())
+  if (!guiView->getController().hasSelectedTeam())
   {
     guiView->overlayScene(std::make_unique<TeamSelectionScene>(guiView));
-  }
-
-  if (!TTF_WasInit() && TTF_Init() != 0)
-  {
-    std::cerr << "TTF_Init() failed: " << SDL_GetError() << "\n";
-    return;
-  }
-
-  font = TTF_OpenFont(FONT_PATH, 24);
-  if (!font)
-  {
-    std::cerr << "Failed to load font: " << SDL_GetError() << "\n";
-    return;
-  }
-
-  buttonManager = std::make_unique<ButtonManager>(getRenderer(), font);
-  initializeUI();
-}
-
-void MainGameScene::onResize(int width, int height)
-{
-  (void)width;
-  (void)height;
-  updateLayout();
-}
-
-void MainGameScene::handleEvent(const SDL_Event& event)
-{
-  if (event.type == SDL_EVENT_WINDOW_RESIZED)
-  {
-    int w, h;
-    SDL_GetWindowSizeInPixels(getWindow(), &w, &h);
-    onResize(w, h);
-  }
-
-  if (event.type == SDL_EVENT_MOUSE_MOTION)
-  {
-    buttonManager->handleMouseMove(event.motion.x, event.motion.y);
-  }
-  else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
-  {
-    buttonManager->handleMouseClick(event.button.x, event.button.y);
-  }
-
-  if (event.type == SDL_EVENT_KEY_DOWN)
-  {
-    switch (event.key.key)
-    {
-      case SDLK_ESCAPE:
-        changeScene(std::make_unique<MainMenuScene>(guiView));
-        break;
-      case SDLK_Q:
-        quit();
-        break;
-    }
   }
 }
 
@@ -97,256 +48,155 @@ void MainGameScene::update(float deltaTime) { (void)deltaTime; }
 
 void MainGameScene::render()
 {
-  // Dark green background
-  SDL_SetRenderDrawColor(getRenderer(), 10, 50, 10, 255);
-  SDL_RenderClear(getRenderer());
+  ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->WorkPos);
+  ImGui::SetNextWindowSize(viewport->WorkSize);
+  ImGui::Begin(LOC("MAIN_GAME_TITLE"), nullptr,
+               ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+                   ImGuiWindowFlags_NoBringToFrontOnFocus);
+
+  renderTopBar();
+  ImGui::Separator();
+
+  // Split into sidebar and main area
+  ImGui::Columns(2, "MainLayout", false);
+  ImGui::SetColumnWidth(0, SIDEBAR_WIDTH);
 
   renderSidebar();
-  renderLeaderboard();
-  renderTopPlayers();
-  renderDate();
-  buttonManager->render();
+
+  ImGui::NextColumn();
+
+  renderMainArea();
+
+  ImGui::Columns(1);
+  ImGui::End();
 }
 
-void MainGameScene::onExit() { cleanup(); }
-
-void MainGameScene::initializeUI()
+void MainGameScene::renderTopBar()
 {
-  setupButtons();
-  updateLayout();  // Set initial layout
+  std::string dateStr = guiView->getController().getCurrentDate().toString();
+  ImGui::Text(LOC("MAIN_GAME_DATE"), dateStr.c_str());
+  ImGui::SameLine(ImGui::GetWindowWidth() - NEXT_DAY_BUTTON_OFFSET);
+  if (ImGui::Button(LOC("MAIN_GAME_NEXT_DAY"), ImVec2(NEXT_DAY_BUTTON_WIDTH, NEXT_DAY_BUTTON_HEIGHT)))
+  {
+    guiView->getController().advanceDay();
+  }
 }
 
 void MainGameScene::renderSidebar()
 {
-  SDL_SetRenderDrawColor(getRenderer(), 40, 40, 40,
-                         255);  // Dark grey for sidebar
-  SDL_RenderFillRect(getRenderer(), &sidebarRect);
+  ImGui::BeginChild("Sidebar", ImVec2(0, 0), true);
+  if (ImGui::Button(LOC("MAIN_GAME_VIEW_ROSTER"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
+  {
+    guiView->overlayScene(std::make_unique<RosterScene>(guiView));
+  }
+  ImGui::Spacing();
+  if (ImGui::Button(LOC("MAIN_GAME_SET_STRATEGY"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
+  {
+    guiView->overlayScene(std::make_unique<StrategyScene>(guiView));
+  }
+  ImGui::Spacing();
+  if (ImGui::Button(LOC("MAIN_GAME_FINANCES"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT))) {}
+  ImGui::Spacing();
+  if (ImGui::Button(LOC("MAIN_GAME_TRANSFER_MARKET"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT))) {}
+  ImGui::Spacing();
+  if (ImGui::Button(LOC("MAIN_GAME_SAVE_GAME"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
+  {
+    guiView->getController().saveGame();
+  }
+  ImGui::Spacing();
+  if (ImGui::Button(LOC("MAIN_GAME_MAIN_MENU"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
+  {
+    changeScene(std::make_unique<MainMenuScene>(guiView));
+  }
+  ImGui::EndChild();
 }
 
-void MainGameScene::renderLeaderboard()
+void MainGameScene::renderMainArea()
 {
-  int windowWidth, windowHeight;
-  SDL_GetWindowSizeInPixels(getWindow(), &windowWidth, &windowHeight);
+  ImGui::BeginChild("MainArea", ImVec2(0, 0), false);
 
-  float leaderboardX = sidebarRect.w + 20;
-  float leaderboardY = 20;
+  ImGui::Columns(2, "MainContent", false);
 
-  SDL_Color textColor = {255, 255, 255, 255};
-  TTF_Font* titleFont = TTF_OpenFont(FONT_PATH, 28);
-  SDL_Surface* surface =
-      TTF_RenderText_Solid(titleFont, "League Standings", 0, textColor);
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-  SDL_FRect rect = {leaderboardX, leaderboardY, static_cast<float>(surface->w),
-                    static_cast<float>(surface->h)};
-  SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
-  SDL_DestroySurface(surface);
-  SDL_DestroyTexture(texture);
-  TTF_CloseFont(titleFont);
-
-  leaderboardY += rect.h + 10;
-
+  // Left: Standings
+  ImGui::Text("%s", LOC("MAIN_GAME_LEAGUE_STANDINGS"));
+  ImGui::Separator();
   auto managedTeamOpt = guiView->getController().getManagedTeam();
   if (managedTeamOpt.has_value())
   {
-    auto leagueOpt = guiView->getController().getLeagueById(
-        managedTeamOpt->get().getLeagueId());
+    auto leagueOpt = guiView->getController().getLeagueById(managedTeamOpt->get().getLeagueId());
     if (leagueOpt.has_value())
     {
       const League& league = leagueOpt->get();
       const auto& leaderboard = league.getLeaderboard();
-      std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(),
-                                                    leaderboard.end());
+      std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(), leaderboard.end());
       std::sort(sorted_teams.begin(), sorted_teams.end(),
-                [](const auto& a, const auto& b)
-                { return a.second > b.second; });
+                [](const auto& a, const auto& b) { return a.second > b.second; });
 
-      TTF_Font* itemFont = TTF_OpenFont(FONT_PATH, 20);
-      int rank = 1;
-      for (const auto& pair : sorted_teams)
+      if (ImGui::BeginTable("Standings", STANDINGS_COLUMNS, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
       {
-        auto teamOpt = guiView->getController().getTeamById(
-            static_cast<uint16_t>(pair.first));
-        if (teamOpt.has_value())
+        ImGui::TableSetupColumn(LOC("MAIN_GAME_POS"), ImGuiTableColumnFlags_WidthFixed, POS_COL_WIDTH);
+        ImGui::TableSetupColumn(LOC("MAIN_GAME_TEAM"));
+        ImGui::TableSetupColumn(LOC("MAIN_GAME_PTS"), ImGuiTableColumnFlags_WidthFixed, PTS_COL_WIDTH);
+        ImGui::TableHeadersRow();
+
+        int rank = 1;
+        for (const auto& pair : sorted_teams)
         {
-          const Team& team = teamOpt->get();
-          std::string text = std::to_string(rank) + ". " + team.getName() +
-                             " - " + std::to_string(pair.second) + " pts";
-          surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
-          texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-          rect = {leaderboardX, leaderboardY, static_cast<float>(surface->w),
-                  static_cast<float>(surface->h)};
-          SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
-          SDL_DestroySurface(surface);
-          SDL_DestroyTexture(texture);
-          leaderboardY += rect.h + 5;
-          rank++;
+          auto teamOpt = guiView->getController().getTeamById(static_cast<uint16_t>(pair.first));
+          if (teamOpt.has_value())
+          {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("%d", rank);
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", teamOpt->get().getName().c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%d", pair.second);
+            rank++;
+          }
         }
+        ImGui::EndTable();
       }
-      TTF_CloseFont(itemFont);
     }
   }
-}
 
-void MainGameScene::renderTopPlayers()
-{
-  int windowWidth, windowHeight;
-  SDL_GetWindowSizeInPixels(getWindow(), &windowWidth, &windowHeight);
+  ImGui::NextColumn();
 
-  float topPlayersX = sidebarRect.w + 350;
-  float topPlayersY = 20;
-
-  SDL_Color textColor = {255, 255, 255, 255};
-  TTF_Font* titleFont = TTF_OpenFont(FONT_PATH, 28);
-  SDL_Surface* surface =
-      TTF_RenderText_Solid(titleFont, "Top Players", 0, textColor);
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-  SDL_FRect rect = {topPlayersX, topPlayersY, static_cast<float>(surface->w),
-                    static_cast<float>(surface->h)};
-  SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
-  SDL_DestroySurface(surface);
-  SDL_DestroyTexture(texture);
-  TTF_CloseFont(titleFont);
-
-  topPlayersY += rect.h + 10;
-
-  auto managedTeamOpt = guiView->getController().getManagedTeam();
+  // Right: Top Players
+  ImGui::Text("%s", LOC("MAIN_GAME_TOP_PLAYERS"));
+  ImGui::Separator();
   if (managedTeamOpt.has_value())
   {
-    auto players = guiView->getController().getPlayersForTeam(
-        managedTeamOpt->get().getId());
+    auto players = guiView->getController().getPlayersForTeam(managedTeamOpt->get().getId());
     const auto& stats_config = guiView->getController().getStatsConfig();
     std::sort(players.begin(), players.end(),
               [&stats_config](const std::reference_wrapper<const Player>& a,
                               const std::reference_wrapper<const Player>& b)
-              {
-                return a.get().getOverall(stats_config) >
-                       b.get().getOverall(stats_config);
-              });
+              { return a.get().getOverall(stats_config) > b.get().getOverall(stats_config); });
 
-    TTF_Font* itemFont = TTF_OpenFont(FONT_PATH, 20);
-    for (size_t i = 0; i < 3 && i < players.size(); ++i)
+    if (ImGui::BeginTable("TopPlayers", TOP_PLAYERS_COLUMNS, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
     {
-      const auto& player = players[i].get();
-      std::string text =
-          player.getName() + " (" + player.getRole() +
-          ") - OVR: " + std::to_string(player.getOverall(stats_config));
-      surface = TTF_RenderText_Solid(itemFont, text.c_str(), 0, textColor);
-      texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-      rect = {topPlayersX, topPlayersY, static_cast<float>(surface->w),
-              static_cast<float>(surface->h)};
-      SDL_RenderTexture(getRenderer(), texture, nullptr, &rect);
-      SDL_DestroySurface(surface);
-      SDL_DestroyTexture(texture);
-      topPlayersY += rect.h + 5;
+      ImGui::TableSetupColumn(LOC("MAIN_GAME_NAME"));
+      ImGui::TableSetupColumn(LOC("MAIN_GAME_ROLE"));
+      ImGui::TableSetupColumn(LOC("MAIN_GAME_OVR"), ImGuiTableColumnFlags_WidthFixed, OVR_COL_WIDTH);
+      ImGui::TableHeadersRow();
+
+      for (size_t i = 0; i < MAX_TOP_PLAYERS && i < players.size(); ++i)
+      {
+        ImGui::TableNextRow();
+        const auto& player = players[i].get();
+        ImGui::TableNextColumn();
+        ImGui::Text("%s", player.getName().c_str());
+        ImGui::TableNextColumn();
+        ImGui::Text("%s", player.getRole().c_str());
+        ImGui::TableNextColumn();
+        ImGui::Text("%.1f", player.getOverall(stats_config));
+      }
+      ImGui::EndTable();
     }
-    TTF_CloseFont(itemFont);
-  }
-}
-
-void MainGameScene::renderDate()
-{
-  int windowWidth, windowHeight;
-  SDL_GetWindowSizeInPixels(getWindow(), &windowWidth, &windowHeight);
-
-  SDL_Color textColor = {255, 255, 255, 255};
-  TTF_Font* dateFont = TTF_OpenFont(FONT_PATH, 24);
-  if (!dateFont) return;
-
-  std::string dateText = guiView->getController().getCurrentDate().toString();
-  SDL_Surface* surface =
-      TTF_RenderText_Solid(dateFont, dateText.c_str(), 0, textColor);
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-
-  float texW = 0, texH = 0;
-  SDL_GetTextureSize(texture, &texW, &texH);
-
-  // Position it to the left of the next day button
-  float buttonW = 100.0f;
-  SDL_FRect dstRect = {
-      static_cast<float>(windowWidth) - buttonW - 10.0f - texW - 10.0f, 15.0f,
-      static_cast<float>(texW), static_cast<float>(texH)};
-  SDL_RenderTexture(getRenderer(), texture, nullptr, &dstRect);
-
-  SDL_DestroySurface(surface);
-  SDL_DestroyTexture(texture);
-  TTF_CloseFont(dateFont);
-}
-
-void MainGameScene::setupButtons()
-{
-  ButtonStyle sidebarButtonStyle;
-  sidebarButtonStyle.backgroundColor = {50, 50, 50, 255};
-  sidebarButtonStyle.hoverBackgroundColor = {70, 70, 70, 255};
-  sidebarButtonStyle.textColor = {255, 255, 255, 255};
-  sidebarButtonStyle.borderColor = {100, 100, 100, 255};
-  sidebarButtonStyle.borderWidth = 1;
-  sidebarButtonStyle.hasBorder = true;
-
-  sidebarButtonIds.push_back(buttonManager->addButton(
-      0, 0, 0, 0, "View Roster", sidebarButtonStyle, [this]()
-      { guiView->overlayScene(std::make_unique<RosterScene>(guiView)); }));
-  sidebarButtonIds.push_back(buttonManager->addButton(
-      0, 0, 0, 0, "Set Strategy", sidebarButtonStyle, [this]()
-      { guiView->overlayScene(std::make_unique<StrategyScene>(guiView)); }));
-  sidebarButtonIds.push_back(buttonManager->addButton(
-      0, 0, 0, 0, "Finances", sidebarButtonStyle, []() { /* Placeholder */ }));
-  sidebarButtonIds.push_back(
-      buttonManager->addButton(0, 0, 0, 0, "Transfer Market",
-                               sidebarButtonStyle, []() { /* Placeholder */ }));
-  sidebarButtonIds.push_back(buttonManager->addButton(
-      0, 0, 0, 0, "Save Game", sidebarButtonStyle,
-      [this]() { this->parent_view->getController().saveGame(); }));
-
-  ButtonStyle nextButtonStyle;
-  nextButtonStyle.backgroundColor = {80, 120, 80, 255};
-  nextButtonStyle.hoverBackgroundColor = {100, 140, 100, 255};
-  nextButtonStyle.textColor = {255, 255, 255, 255};
-  nextButtonStyle.borderColor = {120, 180, 120, 255};
-  nextButtonStyle.borderWidth = 1;
-  nextButtonStyle.hasBorder = true;
-
-  nextButtonId =
-      buttonManager->addButton(0, 0, 0, 0, "Next Day", nextButtonStyle, [this]()
-                               { guiView->getController().advanceDay(); });
-}
-
-void MainGameScene::updateLayout()
-{
-  int windowWidth = 0;
-  int windowHeight = 0;
-  if (guiView && guiView->getWindow())
-  {
-    SDL_GetWindowSize(guiView->getWindow(), &windowWidth, &windowHeight);
   }
 
-  sidebarRect = {0, 0, static_cast<float>(windowWidth) * 0.2f,
-                 static_cast<float>(windowHeight)};
-
-  float buttonY = 10.0f;
-  float buttonH = 50.0f;
-  for (size_t i = 0; i < sidebarButtonIds.size(); ++i)
-  {
-    buttonManager->updateButtonPositionById(
-        sidebarButtonIds[i],
-        {sidebarRect.x + 10, buttonY, sidebarRect.w - 20, buttonH});
-    buttonY += buttonH + 5;  // Add some padding
-  }
-
-  if (nextButtonId != -1)
-  {
-    float buttonW = 100.0f;
-    float buttonH2 = 40.0f;
-    buttonManager->updateButtonPositionById(
-        nextButtonId, {static_cast<float>(windowWidth) - buttonW - 10.0f, 10.0f,
-                       buttonW, buttonH2});
-  }
-}
-
-void MainGameScene::cleanup()
-{
-  if (font)
-  {
-    TTF_CloseFont(font);
-    font = nullptr;
-  }
+  ImGui::Columns(1);
+  ImGui::EndChild();
 }
