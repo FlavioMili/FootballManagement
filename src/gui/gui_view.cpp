@@ -13,6 +13,7 @@
 
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
+#include <SDL3_ttf/SDL_ttf.h>
 #include "controller/game_controller.h"
 #include "gui/gui_scene.h"
 #include "gui/scenes/main_menu_scene.h"
@@ -48,6 +49,7 @@ GUIView::~GUIView()
   {
     SDL_DestroyWindow(window);
   }
+  TTF_Quit();
   SDL_Quit();
 }
 
@@ -57,6 +59,13 @@ bool GUIView::initialize()
   if (!SDL_Init(SDL_INIT_VIDEO))
   {
     std::cerr << "Failed to initialize SDL: " << SDL_GetError() << '\n';
+    return false;
+  }
+
+  // Initialize SDL_ttf
+  if (TTF_Init() != 0)
+  {
+    std::cerr << "Failed to initialize SDL_ttf: " << SDL_GetError() << '\n';
     return false;
   }
 
