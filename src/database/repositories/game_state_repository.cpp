@@ -46,27 +46,13 @@ void GameStateRepository::updateGameState(uint8_t current_season,
                                           uint16_t managed_team_id,
                                           const std::string& game_date) const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::UPSERT_GAME_STATE);
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::UPSERT_GAME_STATE));
 
   sqlite3_bind_int(stmt, 1, managed_team_id);
   sqlite3_bind_text(stmt, 2, game_date.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_int(stmt, 3, current_season);
 
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
 

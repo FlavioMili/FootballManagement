@@ -22,15 +22,7 @@ TeamRepository::TeamRepository(std::shared_ptr<DatabaseConnection> conn)
 std::vector<Team> TeamRepository::loadAllTeams() const
 {
   std::vector<Team> teams;
-  sqlite3_stmt* stmt;
-  const std::string& sql = "SELECT id, league_id, name, balance FROM Teams";
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement("SELECT id, league_id, name, balance FROM Teams");
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
@@ -49,15 +41,7 @@ std::vector<Team> TeamRepository::loadAllTeams() const
 
 void TeamRepository::insertTeam(const Team& team) const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::INSERT_TEAM);
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_TEAM));
 
   sqlite3_bind_int(stmt, 1, team.getLeagueId());
   sqlite3_bind_text(stmt, 2, team.getName().c_str(), -1, SQLITE_TRANSIENT);
@@ -65,27 +49,13 @@ void TeamRepository::insertTeam(const Team& team) const
   sqlite3_bind_text(stmt, 4, "{}", -1, SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 5, "{}", -1, SQLITE_TRANSIENT);
 
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
 
 void TeamRepository::insertTeamWithId(const Team& team) const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::INSERT_TEAM_WITH_ID);
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_TEAM_WITH_ID));
 
   sqlite3_bind_int(stmt, 1, team.getId());
   sqlite3_bind_int(stmt, 2, team.getLeagueId());
@@ -94,12 +64,6 @@ void TeamRepository::insertTeamWithId(const Team& team) const
   sqlite3_bind_text(stmt, 5, "{}", -1, SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 6, "{}", -1, SQLITE_TRANSIENT);
 
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }

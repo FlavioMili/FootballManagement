@@ -22,14 +22,7 @@ FixtureRepository::FixtureRepository(std::shared_ptr<DatabaseConnection> conn)
 
 void FixtureRepository::insertFixture(const Match& match) const
 {
-  const std::string& sql = SQLLoader::getQuery(Query::INSERT_FIXTURE);
-  sqlite3_stmt* stmt;
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, nullptr) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare insertFixture statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_FIXTURE));
 
   sqlite3_bind_text(stmt, 1, match.getDate().toString().c_str(), -1,
                     SQLITE_TRANSIENT);
@@ -37,30 +30,14 @@ void FixtureRepository::insertFixture(const Match& match) const
   sqlite3_bind_int(stmt, 3, match.getAwayTeamId());
   sqlite3_bind_int(stmt, 4, static_cast<int>(match.getMatchType()));
 
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
 
 std::vector<Match> FixtureRepository::loadAllMatches() const
 {
   std::vector<Match> matches;
-  std::string sql =
-      "SELECT home_team_id, away_team_id, game_date, match_type FROM Fixtures;";
-  sqlite3_stmt* stmt;
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, nullptr) !=
-      SQLITE_OK)
-  {
-    Logger::error("Failed to prepare statement: " +
-                  std::string(sqlite3_errmsg(db_conn->getRaw())));
-    return matches;
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement("SELECT home_team_id, away_team_id, game_date, match_type FROM Fixtures;");
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {

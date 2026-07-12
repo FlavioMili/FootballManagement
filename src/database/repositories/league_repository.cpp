@@ -21,16 +21,8 @@ LeagueRepository::LeagueRepository(std::shared_ptr<DatabaseConnection> conn)
 
 std::vector<League> LeagueRepository::loadAllLeagues() const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::SELECT_LEAGUES);
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::SELECT_LEAGUES));
   std::vector<League> leagues;
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
@@ -54,15 +46,7 @@ std::vector<League> LeagueRepository::loadAllLeagues() const
 
 void LeagueRepository::loadTeamsForLeague(League& league) const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = "SELECT id FROM Teams WHERE league_id = ?";
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement("SELECT id FROM Teams WHERE league_id = ?");
 
   sqlite3_bind_int(stmt, 1, league.getId());
 
@@ -77,39 +61,17 @@ void LeagueRepository::loadTeamsForLeague(League& league) const
 
 void LeagueRepository::insertLeague(const League& league) const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::INSERT_LEAGUE);
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_LEAGUE));
 
   sqlite3_bind_text(stmt, 1, league.getName().data(), -1, SQLITE_TRANSIENT);
 
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
 
 void LeagueRepository::insertLeagueWithId(const League& league) const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::INSERT_LEAGUE_WITH_ID);
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_LEAGUE_WITH_ID));
 
   sqlite3_bind_int(stmt, 1, league.getId());
   sqlite3_bind_text(stmt, 2, league.getName().c_str(), -1, SQLITE_TRANSIENT);
@@ -120,27 +82,13 @@ void LeagueRepository::insertLeagueWithId(const League& league) const
     sqlite3_bind_int(stmt, 3, parentID);
   }
 
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
 
 void LeagueRepository::saveLeaguePoints(const League& league) const
 {
-  const std::string& sql = SQLLoader::getQuery(Query::UPSERT_LEAGUE_POINTS);
-  sqlite3_stmt* stmt;
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::UPSERT_LEAGUE_POINTS));
 
   for (const auto& pair : league.getLeaderboard())
   {
@@ -148,12 +96,7 @@ void LeagueRepository::saveLeaguePoints(const League& league) const
     sqlite3_bind_int(stmt, 2, pair.first);
     sqlite3_bind_int(stmt, 3, pair.second);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-      sqlite3_finalize(stmt);
-      throw std::runtime_error("Failed to execute statement: " +
-                               std::string(sqlite3_errmsg(db_conn->getRaw())));
-    }
+    db_conn->executeStep(stmt);
 
     sqlite3_clear_bindings(stmt);
     sqlite3_reset(stmt);
@@ -164,15 +107,7 @@ void LeagueRepository::saveLeaguePoints(const League& league) const
 
 void LeagueRepository::loadLeaguePoints(League& league) const
 {
-  const std::string& sql = SQLLoader::getQuery(Query::SELECT_LEAGUE_POINTS);
-  sqlite3_stmt* stmt;
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::SELECT_LEAGUE_POINTS));
 
   sqlite3_bind_int(stmt, 1, league.getId());
 
@@ -188,22 +123,8 @@ void LeagueRepository::loadLeaguePoints(League& league) const
 
 void LeagueRepository::resetAllLeaguePoints() const
 {
-  const std::string& sql = SQLLoader::getQuery(Query::RESET_ALL_LEAGUE_POINTS);
-  sqlite3_stmt* stmt;
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::RESET_ALL_LEAGUE_POINTS));
 
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }

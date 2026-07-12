@@ -26,6 +26,9 @@ class DatabaseConnection
   void commitTransaction();
   void rollbackTransaction();
 
+  sqlite3_stmt* prepareStatement(const std::string& sql) const;
+  void executeStep(sqlite3_stmt* stmt) const;
+
  private:
   std::unique_ptr<sqlite3, decltype(&sqlite3_close)> db;
   void loadSQLFiles();

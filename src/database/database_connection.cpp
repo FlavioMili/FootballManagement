@@ -108,3 +108,23 @@ void DatabaseConnection::rollbackTransaction()
     throw std::runtime_error("Failed to rollback transaction: " + err);
   }
 }
+
+sqlite3_stmt* DatabaseConnection::prepareStatement(const std::string& sql) const
+{
+  sqlite3_stmt* stmt;
+  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+  {
+    throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db.get())));
+  }
+  return stmt;
+}
+
+void DatabaseConnection::executeStep(sqlite3_stmt* stmt) const
+{
+  if (sqlite3_step(stmt) != SQLITE_DONE)
+  {
+    std::string err = sqlite3_errmsg(db.get());
+    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to execute statement: " + err);
+  }
+}

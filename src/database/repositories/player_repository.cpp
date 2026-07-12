@@ -22,16 +22,8 @@ PlayerRepository::PlayerRepository(std::shared_ptr<DatabaseConnection> conn)
 
 std::vector<Player> PlayerRepository::loadAllPlayers() const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::SELECT_ALL_PLAYERS);
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::SELECT_ALL_PLAYERS));
   std::vector<Player> players;
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, nullptr) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
@@ -75,15 +67,7 @@ std::vector<Player> PlayerRepository::loadAllPlayers() const
 
 void PlayerRepository::insertPlayer(const Player& player) const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::INSERT_PLAYER);
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_PLAYER));
 
   nlohmann::json stats_json = player.getStats();
   std::string stats_str = stats_json.dump();
@@ -110,27 +94,13 @@ void PlayerRepository::insertPlayer(const Player& player) const
   sqlite3_bind_text(stmt, 11, stats_str.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_int(stmt, 12, static_cast<int>(player.getStatus()));
 
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
 
 void PlayerRepository::insertPlayerWithId(const Player& player) const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::INSERT_PLAYER_WITH_ID);
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_PLAYER_WITH_ID));
 
   nlohmann::json stats_json = player.getStats();
   std::string stats_str = stats_json.dump();
@@ -158,27 +128,13 @@ void PlayerRepository::insertPlayerWithId(const Player& player) const
   sqlite3_bind_text(stmt, 12, stats_str.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_int(stmt, 13, static_cast<int>(player.getStatus()));
 
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
 
 void PlayerRepository::updatePlayer(const Player& player) const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::UPDATE_PLAYER);
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::UPDATE_PLAYER));
 
   nlohmann::json stats_json = player.getStats();
   std::string stats_str = stats_json.dump();
@@ -206,61 +162,27 @@ void PlayerRepository::updatePlayer(const Player& player) const
   sqlite3_bind_int(stmt, 12, static_cast<int>(player.getStatus()));
   sqlite3_bind_int(stmt, 13, static_cast<int>(player.getId()));
 
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
 
 void PlayerRepository::deletePlayer(PlayerID player_id) const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::DELETE_PLAYER);
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::DELETE_PLAYER));
   sqlite3_bind_int(stmt, 1, static_cast<int>(player_id));
 
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
 
 void PlayerRepository::transferPlayer(PlayerID player_id,
                                       uint16_t new_team_id) const
 {
-  sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::TRANSFER_PLAYER);
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
-      SQLITE_OK)
-  {
-    throw std::runtime_error("Failed to prepare statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
+  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::TRANSFER_PLAYER));
 
   sqlite3_bind_int(stmt, 1, new_team_id);
   sqlite3_bind_int(stmt, 2, static_cast<int>(player_id));
 
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-  {
-    sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " +
-                             std::string(sqlite3_errmsg(db_conn->getRaw())));
-  }
-
+  db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
