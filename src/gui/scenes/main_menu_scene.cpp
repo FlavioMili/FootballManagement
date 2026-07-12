@@ -23,38 +23,47 @@ MainMenuScene::MainMenuScene(GUIView* guiView_ptr) : GUIScene(guiView_ptr) {}
 
 void MainMenuScene::update(float deltaTime) { (void)deltaTime; }
 
-void MainMenuScene::render() {
-  ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always,
-                          ImVec2(0.5f, 0.5f));
-  ImGui::Begin("Football Management", nullptr,
-               ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
+void MainMenuScene::render()
+{
+  ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
+                          ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+  ImGui::Begin(
+      "Football Management", nullptr,
+      ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
 
   ImGui::Text("%s", LOC("MENU_TITLE"));
   ImGui::Separator();
   ImGui::Spacing();
 
   if (ImGui::Button(LOC("MENU_NEW_GAME"),
-                    ImVec2(GUIConstants::MENU_BUTTON_WIDTH, GUIConstants::MENU_BUTTON_HEIGHT))) {
+                    ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
+                           GUIConstants::MENU_BUTTON_HEIGHT)))
+  {
     auto gameScene = std::make_unique<MainGameScene>(guiView);
     changeScene(std::move(gameScene));
   }
   ImGui::Spacing();
 
   if (ImGui::Button(LOC("MENU_LOAD_GAME"),
-                    ImVec2(GUIConstants::MENU_BUTTON_WIDTH, GUIConstants::MENU_BUTTON_HEIGHT))) {
+                    ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
+                           GUIConstants::MENU_BUTTON_HEIGHT)))
+  {
     // TODO load game logic
   }
   ImGui::Spacing();
 
   if (ImGui::Button(LOC("MENU_SETTINGS"),
-                    ImVec2(GUIConstants::MENU_BUTTON_WIDTH, GUIConstants::MENU_BUTTON_HEIGHT))) {
+                    ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
+                           GUIConstants::MENU_BUTTON_HEIGHT)))
+  {
     auto settingsScene = std::make_unique<SettingsScene>(guiView);
     changeScene(std::move(settingsScene));
   }
   ImGui::Spacing();
 
-  if (ImGui::Button(LOC("MENU_QUIT"),
-                    ImVec2(GUIConstants::MENU_BUTTON_WIDTH, GUIConstants::MENU_BUTTON_HEIGHT))) {
+  if (ImGui::Button(LOC("MENU_QUIT"), ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
+                                             GUIConstants::MENU_BUTTON_HEIGHT)))
+  {
     quit();
   }
 

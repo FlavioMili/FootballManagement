@@ -7,8 +7,11 @@
 // -----------------------------------------------------------------------------
 
 #include "main_game_scene.h"
+
 #include <imgui.h>
+
 #include <algorithm>
+
 #include "global/language_manager.h"
 #include "gui/gui_constants.h"
 #include "gui/gui_view.h"
@@ -77,7 +80,8 @@ void MainGameScene::renderTopBar()
   std::string dateStr = guiView->getController().getCurrentDate().toString();
   ImGui::Text(LOC("MAIN_GAME_DATE"), dateStr.c_str());
   ImGui::SameLine(ImGui::GetWindowWidth() - NEXT_DAY_BUTTON_OFFSET);
-  if (ImGui::Button(LOC("MAIN_GAME_NEXT_DAY"), ImVec2(NEXT_DAY_BUTTON_WIDTH, NEXT_DAY_BUTTON_HEIGHT)))
+  if (ImGui::Button(LOC("MAIN_GAME_NEXT_DAY"),
+                    ImVec2(NEXT_DAY_BUTTON_WIDTH, NEXT_DAY_BUTTON_HEIGHT)))
   {
     guiView->getController().advanceDay();
   }
@@ -86,26 +90,36 @@ void MainGameScene::renderTopBar()
 void MainGameScene::renderSidebar()
 {
   ImGui::BeginChild("Sidebar", ImVec2(0, 0), true);
-  if (ImGui::Button(LOC("MAIN_GAME_VIEW_ROSTER"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
+  if (ImGui::Button(LOC("MAIN_GAME_VIEW_ROSTER"),
+                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
   {
     guiView->overlayScene(std::make_unique<RosterScene>(guiView));
   }
   ImGui::Spacing();
-  if (ImGui::Button(LOC("MAIN_GAME_SET_STRATEGY"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
+  if (ImGui::Button(LOC("MAIN_GAME_SET_STRATEGY"),
+                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
   {
     guiView->overlayScene(std::make_unique<StrategyScene>(guiView));
   }
   ImGui::Spacing();
-  if (ImGui::Button(LOC("MAIN_GAME_FINANCES"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT))) {}
+  if (ImGui::Button(LOC("MAIN_GAME_FINANCES"),
+                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
+  {
+  }
   ImGui::Spacing();
-  if (ImGui::Button(LOC("MAIN_GAME_TRANSFER_MARKET"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT))) {}
+  if (ImGui::Button(LOC("MAIN_GAME_TRANSFER_MARKET"),
+                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
+  {
+  }
   ImGui::Spacing();
-  if (ImGui::Button(LOC("MAIN_GAME_SAVE_GAME"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
+  if (ImGui::Button(LOC("MAIN_GAME_SAVE_GAME"),
+                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
   {
     guiView->getController().saveGame();
   }
   ImGui::Spacing();
-  if (ImGui::Button(LOC("MAIN_GAME_MAIN_MENU"), ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
+  if (ImGui::Button(LOC("MAIN_GAME_MAIN_MENU"),
+                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
   {
     changeScene(std::make_unique<MainMenuScene>(guiView));
   }
@@ -124,26 +138,35 @@ void MainGameScene::renderMainArea()
   auto managedTeamOpt = guiView->getController().getManagedTeam();
   if (managedTeamOpt.has_value())
   {
-    auto leagueOpt = guiView->getController().getLeagueById(managedTeamOpt->get().getLeagueId());
+    auto leagueOpt = guiView->getController().getLeagueById(
+        managedTeamOpt->get().getLeagueId());
     if (leagueOpt.has_value())
     {
       const League& league = leagueOpt->get();
       const auto& leaderboard = league.getLeaderboard();
-      std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(), leaderboard.end());
+      std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(),
+                                                    leaderboard.end());
       std::sort(sorted_teams.begin(), sorted_teams.end(),
-                [](const auto& a, const auto& b) { return a.second > b.second; });
+                [](const auto& a, const auto& b)
+                { return a.second > b.second; });
 
-      if (ImGui::BeginTable("Standings", STANDINGS_COLUMNS, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
+      if (ImGui::BeginTable("Standings", STANDINGS_COLUMNS,
+                            ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
       {
-        ImGui::TableSetupColumn(LOC("MAIN_GAME_POS"), ImGuiTableColumnFlags_WidthFixed, POS_COL_WIDTH);
+        ImGui::TableSetupColumn(LOC("MAIN_GAME_POS"),
+                                ImGuiTableColumnFlags_WidthFixed,
+                                POS_COL_WIDTH);
         ImGui::TableSetupColumn(LOC("MAIN_GAME_TEAM"));
-        ImGui::TableSetupColumn(LOC("MAIN_GAME_PTS"), ImGuiTableColumnFlags_WidthFixed, PTS_COL_WIDTH);
+        ImGui::TableSetupColumn(LOC("MAIN_GAME_PTS"),
+                                ImGuiTableColumnFlags_WidthFixed,
+                                PTS_COL_WIDTH);
         ImGui::TableHeadersRow();
 
         int rank = 1;
         for (const auto& pair : sorted_teams)
         {
-          auto teamOpt = guiView->getController().getTeamById(static_cast<uint16_t>(pair.first));
+          auto teamOpt = guiView->getController().getTeamById(
+              static_cast<uint16_t>(pair.first));
           if (teamOpt.has_value())
           {
             ImGui::TableNextRow();
@@ -168,18 +191,24 @@ void MainGameScene::renderMainArea()
   ImGui::Separator();
   if (managedTeamOpt.has_value())
   {
-    auto players = guiView->getController().getPlayersForTeam(managedTeamOpt->get().getId());
+    auto players = guiView->getController().getPlayersForTeam(
+        managedTeamOpt->get().getId());
     const auto& stats_config = guiView->getController().getStatsConfig();
     std::sort(players.begin(), players.end(),
               [&stats_config](const std::reference_wrapper<const Player>& a,
                               const std::reference_wrapper<const Player>& b)
-              { return a.get().getOverall(stats_config) > b.get().getOverall(stats_config); });
+              {
+                return a.get().getOverall(stats_config) >
+                       b.get().getOverall(stats_config);
+              });
 
-    if (ImGui::BeginTable("TopPlayers", TOP_PLAYERS_COLUMNS, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
+    if (ImGui::BeginTable("TopPlayers", TOP_PLAYERS_COLUMNS,
+                          ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
     {
       ImGui::TableSetupColumn(LOC("MAIN_GAME_NAME"));
       ImGui::TableSetupColumn(LOC("MAIN_GAME_ROLE"));
-      ImGui::TableSetupColumn(LOC("MAIN_GAME_OVR"), ImGuiTableColumnFlags_WidthFixed, OVR_COL_WIDTH);
+      ImGui::TableSetupColumn(LOC("MAIN_GAME_OVR"),
+                              ImGuiTableColumnFlags_WidthFixed, OVR_COL_WIDTH);
       ImGui::TableHeadersRow();
 
       for (size_t i = 0; i < MAX_TOP_PLAYERS && i < players.size(); ++i)

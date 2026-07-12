@@ -23,14 +23,18 @@ GameData& GameData::instance()
   return instance;
 }
 
-GameData::GameData()
-{
-  // Constructor is kept empty, initialization is done in loadFromDB
-}
+GameData::GameData() = default;
 
 // ---------------- DB ----------------
 bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
 {
+  _leagues.clear();
+  _teams.clear();
+  _players.clear();
+  _leaguesVec.clear();
+  _teamsVec.clear();
+  _playersVec.clear();
+
   loadStatsConfig();
   db = database_ptr;
   bool is_first_run = db->isFirstRun();
@@ -50,7 +54,7 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
     for (const auto& team : all_teams)
     {
       database_ptr->insertTeamWithId(team);
-      _teams.emplace(team.getId(), team);
+      _teams.try_emplace(team.getId(), team);
     }
     _teamsVec.reserve(_teams.size());
     for (auto& p : _teams) _teamsVec.push_back(p.second);
@@ -64,16 +68,16 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
     for (const auto& league_data : leagues_data)
     {
       database_ptr->insertLeagueWithId(league_data);
-      _leagues.emplace(league_data.getId(),
-                       League(league_data.getId(), league_data.getName(),
-                              league_teams_map[league_data.getId()]));
+      _leagues.try_emplace(league_data.getId(),
+                           League(league_data.getId(), league_data.getName(),
+                                  league_teams_map[league_data.getId()]));
     }
 
     auto players = DataGenerator::generatePlayers();
     for (const auto& player : players)
     {
       database_ptr->insertPlayer(player);
-      _players.emplace(player.getId(), player);
+      _players.try_emplace(player.getId(), player);
     }
   }
   else
@@ -83,7 +87,7 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
 
     for (const auto& team : all_teams)
     {
-      _teams.emplace(team.getId(), team);
+      _teams.try_emplace(team.getId(), team);
     }
 
     std::map<uint8_t, std::vector<TeamID>> league_teams_map;
@@ -94,16 +98,17 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
 
     for (const auto& league_from_db : leagues_from_db)
     {
-      _leagues.emplace(league_from_db.getId(),
-                       League(league_from_db.getId(), league_from_db.getName(),
-                              league_teams_map[league_from_db.getId()]));
+      _leagues.try_emplace(
+          league_from_db.getId(),
+          League(league_from_db.getId(), league_from_db.getName(),
+                 league_teams_map[league_from_db.getId()]));
       db->loadLeaguePoints(_leagues.at(league_from_db.getId()));
     }
 
     auto players = database_ptr->loadAllPlayers();
     for (const auto& player : players)
     {
-      _players.emplace(player.getId(), player);
+      _players.try_emplace(player.getId(), player);
     }
     Logger::debug("Loaded all data from database.");
   }
@@ -124,10 +129,22 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
   return true;
 }
 
+bool GameData::saveToDB() const
+{
+  if (!db) return false;
+
+  for (const auto& player_ref : _playersVec)
+  {
+    db->updatePlayer(player_ref.get());
+  }
+
+  return true;
+}
+
 // ---------------- League ----------------
 void GameData::addLeague(LeagueID id, const League& league)
 {
-  _leagues.emplace(id, league);
+  _leagues.try_emplace(id, league);
   if (!_leaguesVec.empty()) _leaguesVec.push_back(_leagues.at(id));
 }
 
@@ -157,7 +174,7 @@ GameData::getLeaguesVector() const
 // ---------------- Team ----------------
 void GameData::addTeam(TeamID id, const Team& team)
 {
-  _teams.emplace(id, team);
+  _teams.try_emplace(id, team);
   if (!_teamsVec.empty()) _teamsVec.push_back(_teams.at(id));
 }
 
@@ -190,8 +207,11 @@ GameData::getTeamsVector() const
 // ---------------- Player ----------------
 void GameData::addPlayer(PlayerID id, const Player& player)
 {
-  _players.emplace(id, player);
-  if (!_playersVec.empty()) _playersVec.push_back(_players.at(id));
+  _players.try_emplace(id, player);
+  if (!_playersVec.empty())
+  {
+    _playersVec.push_back(_players.at(id));
+  }
 }
 
 std::optional<std::reference_wrapper<const Player>> GameData::getPlayer(

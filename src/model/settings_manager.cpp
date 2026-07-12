@@ -12,8 +12,8 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-#include "global/paths.h"
 #include "global/language_manager.h"
+#include "global/paths.h"
 
 using json = nlohmann::json;
 

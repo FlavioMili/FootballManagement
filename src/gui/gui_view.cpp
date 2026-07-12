@@ -7,15 +7,16 @@
 // -----------------------------------------------------------------------------
 
 #include "gui/gui_view.h"
-#include "global/paths.h"
+
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include <iostream>
 #include <stack>
 
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
-#include <SDL3_ttf/SDL_ttf.h>
 #include "controller/game_controller.h"
+#include "global/paths.h"
 #include "gui/gui_scene.h"
 #include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/team_selection_scene.h"
@@ -102,9 +103,10 @@ bool GUIView::initialize()
 
   // Load high quality TTF font to replace the pixelated default
   std::string fontPath = std::string(PROJECT_ROOT) + "assets/fonts/font.ttf";
-  if (io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 20.0f) == nullptr) {
-      std::cerr << "Failed to load font: " << fontPath << '\n';
-      return false;
+  if (io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 20.0f) == nullptr)
+  {
+    std::cerr << "Failed to load font: " << fontPath << '\n';
+    return false;
   }
 
   ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
@@ -225,10 +227,7 @@ void GUIView::overlayScene(std::unique_ptr<GUIScene> overlay)
   pendingScene = std::move(overlay);
 }
 
-void GUIView::popScene()
-{
-  pendingAction = PendingAction::POP;
-}
+void GUIView::popScene() { pendingAction = PendingAction::POP; }
 
 void GUIView::applyPendingSceneChanges()
 {

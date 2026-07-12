@@ -15,7 +15,8 @@
 #include "model/league.h"
 #include "model/team.h"
 
-class TeamSelectionScene : public GUIScene {
+class TeamSelectionScene : public GUIScene
+{
  public:
   explicit TeamSelectionScene(GUIView* parent);
   ~TeamSelectionScene() override = default;
