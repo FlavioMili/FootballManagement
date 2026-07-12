@@ -142,6 +142,19 @@ if(BUILD_TESTING)
   FetchContent_MakeAvailable(googletest)
 endif()
 
+# Google Benchmark
+option(BUILD_BENCHMARKS "Build benchmarks" ON)
+if(BUILD_BENCHMARKS)
+  FetchContent_Declare(
+    benchmark
+    GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG        v1.8.3
+    GIT_SHALLOW    TRUE
+  )
+  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable benchmark tests" FORCE)
+  set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable benchmark install" FORCE)
+  FetchContent_MakeAvailable(benchmark)
+endif()
 # -----------------------------
 # Subdirectories
 # -----------------------------
@@ -151,6 +164,11 @@ if(BUILD_TESTING)
   enable_testing()
   add_subdirectory(test)
 endif()
+
+if(BUILD_BENCHMARKS)
+  add_subdirectory(benchmarks)
+endif()
+
 
 # -----------------------------
 # Tools & Formatting
