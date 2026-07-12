@@ -78,4 +78,10 @@ class GUIView
 
   // Overlay scene stack
   std::stack<std::unique_ptr<GUIScene>> sceneStack;
+
+  // Deferred scene management
+  enum class PendingAction { NONE, CHANGE, OVERLAY, POP };
+  PendingAction pendingAction = PendingAction::NONE;
+  std::unique_ptr<GUIScene> pendingScene;
+  void applyPendingSceneChanges();
 };

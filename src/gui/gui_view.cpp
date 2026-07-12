@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include "gui/gui_view.h"
+#include "global/paths.h"
 
 #include <iostream>
 #include <stack>
@@ -95,11 +96,16 @@ bool GUIView::initialize()
   ImGuiIO& io = ImGui::GetIO();
   (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-  io.IniFilename = "assets/imgui.ini";
+  static std::string iniPath = std::string(PROJECT_ROOT) + "assets/imgui.ini";
+  io.IniFilename = iniPath.c_str();
   ImGui::StyleColorsDark();
 
   // Load high quality TTF font to replace the pixelated default
-  io.Fonts->AddFontFromFileTTF("assets/fonts/font.ttf", 20.0f);
+  std::string fontPath = std::string(PROJECT_ROOT) + "assets/fonts/font.ttf";
+  if (io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 20.0f) == nullptr) {
+      std::cerr << "Failed to load font: " << fontPath << '\n';
+      return false;
+  }
 
   ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
   ImGui_ImplSDLRenderer3_Init(renderer);
@@ -124,6 +130,8 @@ void GUIView::run()
     Uint64 currentTime = SDL_GetTicks();
     float deltaTime = static_cast<float>(currentTime - lastTime) / 1000.0f;
     lastTime = currentTime;
+
+    applyPendingSceneChanges();
 
     handleEvents();
     update(deltaTime);
@@ -207,46 +215,72 @@ void GUIView::render()
 
 void GUIView::changeScene(std::unique_ptr<GUIScene> newScene)
 {
-  // Clear any overlays when changing main scene
-  while (!sceneStack.empty())
-  {
-    sceneStack.top()->onExit();
-    sceneStack.pop();
-  }
-
-  // Exit current scene
-  if (currentScene)
-  {
-    currentScene->onExit();
-  }
-
-  // Switch to new scene
-  currentScene = std::move(newScene);
-
-  // Enter new scene
-  if (currentScene)
-  {
-    currentScene->onEnter();
-  }
+  pendingAction = PendingAction::CHANGE;
+  pendingScene = std::move(newScene);
 }
 
 void GUIView::overlayScene(std::unique_ptr<GUIScene> overlay)
 {
-  if (overlay)
-  {
-    overlay->onEnter();
-    sceneStack.push(std::move(overlay));
-  }
+  pendingAction = PendingAction::OVERLAY;
+  pendingScene = std::move(overlay);
 }
 
 void GUIView::popScene()
 {
-  if (!sceneStack.empty())
+  pendingAction = PendingAction::POP;
+}
+
+void GUIView::applyPendingSceneChanges()
+{
+  if (pendingAction == PendingAction::NONE)
   {
-    // Exit the top overlay scene
-    sceneStack.top()->onExit();
-    sceneStack.pop();
+    return;
   }
+
+  if (pendingAction == PendingAction::CHANGE)
+  {
+    // Clear any overlays when changing main scene
+    while (!sceneStack.empty())
+    {
+      sceneStack.top()->onExit();
+      sceneStack.pop();
+    }
+
+    // Exit current scene
+    if (currentScene)
+    {
+      currentScene->onExit();
+    }
+
+    // Switch to new scene
+    currentScene = std::move(pendingScene);
+
+    // Enter new scene
+    if (currentScene)
+    {
+      currentScene->onEnter();
+    }
+  }
+  else if (pendingAction == PendingAction::OVERLAY)
+  {
+    if (pendingScene)
+    {
+      pendingScene->onEnter();
+      sceneStack.push(std::move(pendingScene));
+    }
+  }
+  else if (pendingAction == PendingAction::POP)
+  {
+    if (!sceneStack.empty())
+    {
+      // Exit the top overlay scene
+      sceneStack.top()->onExit();
+      sceneStack.pop();
+    }
+  }
+
+  pendingAction = PendingAction::NONE;
+  pendingScene.reset();
 }
 
 void GUIView::quit() { running = false; }
