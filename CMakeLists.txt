@@ -86,6 +86,11 @@ if(NOT SQLite3_FOUND)
   if(NOT TARGET SQLite3::SQLite3)
     add_library(SQLite3::SQLite3 ALIAS sqlite3)
   endif()
+else()
+  # CMake < 3.30 defines SQLite::SQLite3 but not SQLite3::SQLite3
+  if(TARGET SQLite::SQLite3 AND NOT TARGET SQLite3::SQLite3)
+    add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+  endif()
 endif()
 
 # --- SDL3 ---
