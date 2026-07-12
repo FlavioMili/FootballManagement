@@ -66,35 +66,45 @@ std::vector<Player> PlayerRepository::loadAllPlayers() const
   return players;
 }
 
+void PlayerRepository::bindPlayerParams(sqlite3_stmt* stmt,
+                                        const Player& player,
+                                        int startIndex) const
+{
+  nlohmann::json stats_json = player.getStats();
+  std::string stats_str = stats_json.dump();
+
+  sqlite3_bind_int(stmt, startIndex++, static_cast<int>(player.getTeamId()));
+  sqlite3_bind_text(stmt, startIndex++, player.getFirstName().c_str(), -1,
+                    SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, startIndex++, player.getLastName().c_str(), -1,
+                    SQLITE_TRANSIENT);
+  sqlite3_bind_int(stmt, startIndex++, player.getAge());
+  sqlite3_bind_text(stmt, startIndex++, player.getRole().c_str(), -1,
+                    SQLITE_TRANSIENT);
+
+  auto it = languageToString.find(player.getNationality());
+  std::string nationality_str =
+      (it != languageToString.end()) ? std::string(it->second) : "English";
+  sqlite3_bind_text(stmt, startIndex++, nationality_str.c_str(), -1,
+                    SQLITE_TRANSIENT);
+
+  sqlite3_bind_int(stmt, startIndex++, static_cast<int>(player.getWage()));
+  sqlite3_bind_int(stmt, startIndex++, player.getContractYears());
+  sqlite3_bind_int(stmt, startIndex++, player.getHeight());
+
+  std::string foot_str = (player.getFoot() == Foot::Left) ? "Left" : "Right";
+  sqlite3_bind_text(stmt, startIndex++, foot_str.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, startIndex++, stats_str.c_str(), -1,
+                    SQLITE_TRANSIENT);
+  sqlite3_bind_int(stmt, startIndex++, static_cast<int>(player.getStatus()));
+}
+
 void PlayerRepository::insertPlayer(const Player& player) const
 {
   sqlite3_stmt* stmt =
       db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_PLAYER));
 
-  nlohmann::json stats_json = player.getStats();
-  std::string stats_str = stats_json.dump();
-
-  sqlite3_bind_int(stmt, 1, static_cast<int>(player.getTeamId()));
-  sqlite3_bind_text(stmt, 2, player.getFirstName().c_str(), -1,
-                    SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, 3, player.getLastName().c_str(), -1,
-                    SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 4, player.getAge());
-  sqlite3_bind_text(stmt, 5, player.getRole().c_str(), -1, SQLITE_TRANSIENT);
-
-  auto it = languageToString.find(player.getNationality());
-  std::string nationality_str =
-      (it != languageToString.end()) ? std::string(it->second) : "English";
-  sqlite3_bind_text(stmt, 6, nationality_str.c_str(), -1, SQLITE_TRANSIENT);
-
-  sqlite3_bind_int(stmt, 7, static_cast<int>(player.getWage()));
-  sqlite3_bind_int(stmt, 8, player.getContractYears());
-  sqlite3_bind_int(stmt, 9, player.getHeight());
-
-  std::string foot_str = (player.getFoot() == Foot::Left) ? "Left" : "Right";
-  sqlite3_bind_text(stmt, 10, foot_str.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, 11, stats_str.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 12, static_cast<int>(player.getStatus()));
+  bindPlayerParams(stmt, player, 1);
 
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
@@ -105,31 +115,8 @@ void PlayerRepository::insertPlayerWithId(const Player& player) const
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       SQLLoader::getQuery(Query::INSERT_PLAYER_WITH_ID));
 
-  nlohmann::json stats_json = player.getStats();
-  std::string stats_str = stats_json.dump();
-
   sqlite3_bind_int(stmt, 1, static_cast<int>(player.getId()));
-  sqlite3_bind_int(stmt, 2, static_cast<int>(player.getTeamId()));
-  sqlite3_bind_text(stmt, 3, player.getFirstName().c_str(), -1,
-                    SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, 4, player.getLastName().c_str(), -1,
-                    SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 5, player.getAge());
-  sqlite3_bind_text(stmt, 6, player.getRole().c_str(), -1, SQLITE_TRANSIENT);
-
-  auto it = languageToString.find(player.getNationality());
-  std::string nationality_str =
-      (it != languageToString.end()) ? std::string(it->second) : "English";
-  sqlite3_bind_text(stmt, 7, nationality_str.c_str(), -1, SQLITE_TRANSIENT);
-
-  sqlite3_bind_int(stmt, 8, static_cast<int>(player.getWage()));
-  sqlite3_bind_int(stmt, 9, player.getContractYears());
-  sqlite3_bind_int(stmt, 10, player.getHeight());
-
-  std::string foot_str = (player.getFoot() == Foot::Left) ? "Left" : "Right";
-  sqlite3_bind_text(stmt, 11, foot_str.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, 12, stats_str.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 13, static_cast<int>(player.getStatus()));
+  bindPlayerParams(stmt, player, 2);
 
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
@@ -140,30 +127,7 @@ void PlayerRepository::updatePlayer(const Player& player) const
   sqlite3_stmt* stmt =
       db_conn->prepareStatement(SQLLoader::getQuery(Query::UPDATE_PLAYER));
 
-  nlohmann::json stats_json = player.getStats();
-  std::string stats_str = stats_json.dump();
-
-  sqlite3_bind_int(stmt, 1, static_cast<int>(player.getTeamId()));
-  sqlite3_bind_text(stmt, 2, player.getFirstName().c_str(), -1,
-                    SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, 3, player.getLastName().c_str(), -1,
-                    SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 4, player.getAge());
-  sqlite3_bind_text(stmt, 5, player.getRole().c_str(), -1, SQLITE_TRANSIENT);
-
-  auto it = languageToString.find(player.getNationality());
-  std::string nationality_str =
-      (it != languageToString.end()) ? std::string(it->second) : "English";
-  sqlite3_bind_text(stmt, 6, nationality_str.c_str(), -1, SQLITE_TRANSIENT);
-
-  sqlite3_bind_int(stmt, 7, static_cast<int>(player.getWage()));
-  sqlite3_bind_int(stmt, 8, player.getContractYears());
-  sqlite3_bind_int(stmt, 9, player.getHeight());
-
-  std::string foot_str = (player.getFoot() == Foot::Left) ? "Left" : "Right";
-  sqlite3_bind_text(stmt, 10, foot_str.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, 11, stats_str.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 12, static_cast<int>(player.getStatus()));
+  bindPlayerParams(stmt, player, 1);
   sqlite3_bind_int(stmt, 13, static_cast<int>(player.getId()));
 
   db_conn->executeStep(stmt);
