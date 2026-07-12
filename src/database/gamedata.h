@@ -77,6 +77,7 @@ class GameData
   std::vector<std::reference_wrapper<const Player>> getPlayersForTeam(
       TeamID team_id) const;
   bool removePlayer(PlayerID id);
+  void transferPlayer(PlayerID id, TeamID new_team_id);
 
  private:
   GameData();
@@ -87,6 +88,7 @@ class GameData
   std::vector<std::reference_wrapper<const Team>> _teamsVec;
   std::unordered_map<PlayerID, Player> _players;
   std::vector<std::reference_wrapper<const Player>> _playersVec;
+  std::unordered_map<TeamID, std::vector<PlayerID>> _teamPlayers;
   StatsConfig stats_config;
   std::shared_ptr<Database> db;
 
