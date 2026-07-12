@@ -231,55 +231,57 @@ void GUIView::popScene() { pendingAction = PendingAction::POP; }
 
 void GUIView::applyPendingSceneChanges()
 {
-  if (pendingAction == PendingAction::NONE)
+  while (pendingAction != PendingAction::NONE)
   {
-    return;
+    PendingAction currentAction = pendingAction;
+    std::unique_ptr<GUIScene> sceneToApply = std::move(pendingScene);
+
+    // Reset state before processing, so that onEnter/onExit can trigger new
+    // scene changes
+    pendingAction = PendingAction::NONE;
+
+    if (currentAction == PendingAction::CHANGE)
+    {
+      // Clear any overlays when changing main scene
+      while (!sceneStack.empty())
+      {
+        sceneStack.top()->onExit();
+        sceneStack.pop();
+      }
+
+      // Exit current scene
+      if (currentScene)
+      {
+        currentScene->onExit();
+      }
+
+      // Switch to new scene
+      currentScene = std::move(sceneToApply);
+
+      // Enter new scene
+      if (currentScene)
+      {
+        currentScene->onEnter();
+      }
+    }
+    else if (currentAction == PendingAction::OVERLAY)
+    {
+      if (sceneToApply)
+      {
+        sceneToApply->onEnter();
+        sceneStack.push(std::move(sceneToApply));
+      }
+    }
+    else if (currentAction == PendingAction::POP)
+    {
+      if (!sceneStack.empty())
+      {
+        // Exit the top overlay scene
+        sceneStack.top()->onExit();
+        sceneStack.pop();
+      }
+    }
   }
-
-  if (pendingAction == PendingAction::CHANGE)
-  {
-    // Clear any overlays when changing main scene
-    while (!sceneStack.empty())
-    {
-      sceneStack.top()->onExit();
-      sceneStack.pop();
-    }
-
-    // Exit current scene
-    if (currentScene)
-    {
-      currentScene->onExit();
-    }
-
-    // Switch to new scene
-    currentScene = std::move(pendingScene);
-
-    // Enter new scene
-    if (currentScene)
-    {
-      currentScene->onEnter();
-    }
-  }
-  else if (pendingAction == PendingAction::OVERLAY)
-  {
-    if (pendingScene)
-    {
-      pendingScene->onEnter();
-      sceneStack.push(std::move(pendingScene));
-    }
-  }
-  else if (pendingAction == PendingAction::POP)
-  {
-    if (!sceneStack.empty())
-    {
-      // Exit the top overlay scene
-      sceneStack.top()->onExit();
-      sceneStack.pop();
-    }
-  }
-
-  pendingAction = PendingAction::NONE;
-  pendingScene.reset();
 }
 
 void GUIView::quit() { running = false; }

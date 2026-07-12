@@ -6,11 +6,13 @@
 //  See the LICENSE file in the project root.
 // -----------------------------------------------------------------------------
 
+#include <filesystem>
 #include <iostream>
 #include <memory>
 
 #include "controller/game_controller.h"
 #include "global/logger.h"
+#include "global/paths.h"
 #include "gui/gui_view.h"
 
 int main()
@@ -19,6 +21,7 @@ int main()
   srand(static_cast<uint>(time(0)));
   try
   {
+    std::filesystem::remove(DATABASE_PATH);
     auto game = std::make_unique<Game>();
     auto controller = std::make_unique<GameController>(std::move(game));
 
