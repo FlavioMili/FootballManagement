@@ -62,6 +62,8 @@ void TeamRepository::insertTeam(const Team& team) const
   sqlite3_bind_int(stmt, 1, team.getLeagueId());
   sqlite3_bind_text(stmt, 2, team.getName().c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_int64(stmt, 3, team.getFinances().getBalance());
+  sqlite3_bind_text(stmt, 4, "{}", -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, 5, "{}", -1, SQLITE_TRANSIENT);
 
   if (sqlite3_step(stmt) != SQLITE_DONE)
   {
@@ -89,6 +91,8 @@ void TeamRepository::insertTeamWithId(const Team& team) const
   sqlite3_bind_int(stmt, 2, team.getLeagueId());
   sqlite3_bind_text(stmt, 3, team.getName().c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_int64(stmt, 4, team.getFinances().getBalance());
+  sqlite3_bind_text(stmt, 5, "{}", -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, 6, "{}", -1, SQLITE_TRANSIENT);
 
   if (sqlite3_step(stmt) != SQLITE_DONE)
   {

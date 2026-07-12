@@ -61,19 +61,25 @@ void Game::loadGame()
 void Game::saveGame()
 {
   db_conn->beginTransaction();
-  GameStateRepository gameStateRepo(db_conn);
-  FixtureRepository fixtureRepo(db_conn);
-  LeagueRepository leagueRepo(db_conn);
+  try {
+    GameStateRepository gameStateRepo(db_conn);
+    FixtureRepository fixtureRepo(db_conn);
+    LeagueRepository leagueRepo(db_conn);
 
-  gameStateRepo.updateGameState(current_season, managed_team_id,
-                                currentDate.toString());
-  fixtureRepo.saveCalendar(calendar);
+    gameStateRepo.updateGameState(current_season, managed_team_id,
+                                  currentDate.toString());
+    fixtureRepo.saveCalendar(calendar);
 
-  for (const auto& pair : GameData::instance().getLeagues())
-  {
-    leagueRepo.saveLeaguePoints(pair.second);
+    for (const auto& pair : GameData::instance().getLeagues())
+    {
+      leagueRepo.saveLeaguePoints(pair.second);
+    }
+    db_conn->commitTransaction();
+  } catch (const std::exception& e) {
+    db_conn->rollbackTransaction();
+    Logger::error("Failed to save game: " + std::string(e.what()));
+    throw;
   }
-  db_conn->commitTransaction();
 
   Logger::debug("Game saved.");
 }

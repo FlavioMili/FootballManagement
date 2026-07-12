@@ -110,15 +110,12 @@ bool GameData::loadFromDB(std::shared_ptr<DatabaseConnection> database_ptr)
       league_teams_map[team.getLeagueId()].push_back(team.getId());
     }
 
-    for (const auto& league_from_db : leagues_from_db)
+    for (auto& league_from_db : leagues_from_db)
     {
-      _leagues.try_emplace(
-          league_from_db.getId(),
-          League(league_from_db.getId(), league_from_db.getName(),
-                 league_teams_map[league_from_db.getId()]));
-      // Note: loadAllLeagues in repo already populates points, but we will
-      // leave it as is if needed, actually loadAllLeagues() populates the
-      // internal points of the League struct.
+      for (TeamID tid : league_teams_map[league_from_db.getId()]) {
+        league_from_db.addTeamID(tid);
+      }
+      _leagues.try_emplace(league_from_db.getId(), league_from_db);
     }
 
     auto players = playerRepo.loadAllPlayers();

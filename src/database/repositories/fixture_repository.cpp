@@ -24,28 +24,27 @@ void FixtureRepository::insertFixture(const Match& match) const
 {
   const std::string& sql = SQLLoader::getQuery(Query::INSERT_FIXTURE);
   sqlite3_stmt* stmt;
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, nullptr) ==
+  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, nullptr) !=
       SQLITE_OK)
   {
-    sqlite3_bind_text(stmt, 1, match.getDate().toString().c_str(), -1,
-                      SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, match.getHomeTeamId());
-    sqlite3_bind_int(stmt, 3, match.getAwayTeamId());
-
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-      sqlite3_finalize(stmt);
-      throw std::runtime_error("Failed to execute statement: " +
-                               std::string(sqlite3_errmsg(db_conn->getRaw())));
-    }
-
-    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to prepare insertFixture statement: " +
+                             std::string(sqlite3_errmsg(db_conn->getRaw())));
   }
-  else
+
+  sqlite3_bind_text(stmt, 1, match.getDate().toString().c_str(), -1,
+                    SQLITE_TRANSIENT);
+  sqlite3_bind_int(stmt, 2, match.getHomeTeamId());
+  sqlite3_bind_int(stmt, 3, match.getAwayTeamId());
+  sqlite3_bind_int(stmt, 4, static_cast<int>(match.getMatchType()));
+
+  if (sqlite3_step(stmt) != SQLITE_DONE)
   {
-    Logger::error("Failed to prepare insertFixture statement: " +
-                  std::string(sqlite3_errmsg(db_conn->getRaw())));
+    sqlite3_finalize(stmt);
+    throw std::runtime_error("Failed to execute statement: " +
+                             std::string(sqlite3_errmsg(db_conn->getRaw())));
   }
+
+  sqlite3_finalize(stmt);
 }
 
 std::vector<Match> FixtureRepository::loadAllMatches() const
