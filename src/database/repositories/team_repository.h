@@ -14,6 +14,8 @@
 #include "database/database_connection.h"
 #include "model/team.h"
 
+struct sqlite3_stmt;
+
 class TeamRepository
 {
  public:
@@ -25,4 +27,7 @@ class TeamRepository
 
  private:
   std::shared_ptr<DatabaseConnection> db_conn;
+
+  void bindTeamParams(sqlite3_stmt* stmt, const Team& team,
+                      int startIndex) const;
 };

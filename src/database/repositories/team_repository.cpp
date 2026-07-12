@@ -40,16 +40,23 @@ std::vector<Team> TeamRepository::loadAllTeams() const
   return teams;
 }
 
+void TeamRepository::bindTeamParams(sqlite3_stmt* stmt, const Team& team,
+                                    int startIndex) const
+{
+  sqlite3_bind_int(stmt, startIndex++, team.getLeagueId());
+  sqlite3_bind_text(stmt, startIndex++, team.getName().c_str(), -1,
+                    SQLITE_TRANSIENT);
+  sqlite3_bind_int64(stmt, startIndex++, team.getFinances().getBalance());
+  sqlite3_bind_text(stmt, startIndex++, "{}", -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, startIndex++, "{}", -1, SQLITE_TRANSIENT);
+}
+
 void TeamRepository::insertTeam(const Team& team) const
 {
   sqlite3_stmt* stmt =
       db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_TEAM));
 
-  sqlite3_bind_int(stmt, 1, team.getLeagueId());
-  sqlite3_bind_text(stmt, 2, team.getName().c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int64(stmt, 3, team.getFinances().getBalance());
-  sqlite3_bind_text(stmt, 4, "{}", -1, SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, 5, "{}", -1, SQLITE_TRANSIENT);
+  bindTeamParams(stmt, team, 1);
 
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
@@ -61,11 +68,7 @@ void TeamRepository::insertTeamWithId(const Team& team) const
       SQLLoader::getQuery(Query::INSERT_TEAM_WITH_ID));
 
   sqlite3_bind_int(stmt, 1, team.getId());
-  sqlite3_bind_int(stmt, 2, team.getLeagueId());
-  sqlite3_bind_text(stmt, 3, team.getName().c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int64(stmt, 4, team.getFinances().getBalance());
-  sqlite3_bind_text(stmt, 5, "{}", -1, SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, 6, "{}", -1, SQLITE_TRANSIENT);
+  bindTeamParams(stmt, team, 2);
 
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
