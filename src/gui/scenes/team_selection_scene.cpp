@@ -38,7 +38,8 @@ void TeamSelectionScene::render()
   ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH, WINDOW_HEIGHT),
                            ImGuiCond_FirstUseEver);
   ImGui::Begin(LOC("TEAM_SELECTION_TITLE"), nullptr,
-               ImGuiWindowFlags_NoCollapse);
+               ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+                   ImGuiWindowFlags_NoSavedSettings);
 
   ImGui::Text("%s", LOC("TEAM_SELECTION_LEAGUES"));
   ImGui::Separator();

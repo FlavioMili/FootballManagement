@@ -56,7 +56,8 @@ void MainGameScene::render()
   ImGui::SetNextWindowSize(viewport->WorkSize);
   ImGui::Begin(LOC("MAIN_GAME_TITLE"), nullptr,
                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
-                   ImGuiWindowFlags_NoBringToFrontOnFocus);
+                   ImGuiWindowFlags_NoBringToFrontOnFocus |
+                   ImGuiWindowFlags_NoSavedSettings);
 
   renderTopBar();
   ImGui::Separator();

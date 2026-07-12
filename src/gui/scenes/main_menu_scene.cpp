@@ -27,9 +27,10 @@ void MainMenuScene::render()
 {
   ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
                           ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-  ImGui::Begin(
-      "Football Management", nullptr,
-      ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
+  ImGui::Begin("Football Management", nullptr,
+               ImGuiWindowFlags_NoDecoration |
+                   ImGuiWindowFlags_AlwaysAutoResize |
+                   ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove);
 
   ImGui::Text("%s", LOC("MENU_TITLE"));
   ImGui::Separator();
@@ -42,7 +43,6 @@ void MainMenuScene::render()
     auto gameScene = std::make_unique<MainGameScene>(guiView);
     changeScene(std::move(gameScene));
   }
-  ImGui::Spacing();
 
   if (ImGui::Button(LOC("MENU_LOAD_GAME"),
                     ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
@@ -50,7 +50,6 @@ void MainMenuScene::render()
   {
     // TODO load game logic
   }
-  ImGui::Spacing();
 
   if (ImGui::Button(LOC("MENU_SETTINGS"),
                     ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
@@ -59,7 +58,6 @@ void MainMenuScene::render()
     auto settingsScene = std::make_unique<SettingsScene>(guiView);
     changeScene(std::move(settingsScene));
   }
-  ImGui::Spacing();
 
   if (ImGui::Button(LOC("MENU_QUIT"), ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
                                              GUIConstants::MENU_BUTTON_HEIGHT)))

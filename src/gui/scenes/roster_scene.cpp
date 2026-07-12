@@ -35,7 +35,9 @@ void RosterScene::render()
       ImVec2(GUIConstants::CENTER_PIVOT, GUIConstants::CENTER_PIVOT));
   ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH, WINDOW_HEIGHT),
                            ImGuiCond_FirstUseEver);
-  ImGui::Begin(LOC("ROSTER_TITLE"), nullptr, ImGuiWindowFlags_NoCollapse);
+  ImGui::Begin(LOC("ROSTER_TITLE"), nullptr,
+               ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+                   ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove);
 
   if (ImGui::Button(LOC("ROSTER_BACK"), ImVec2(GUIConstants::BUTTON_WIDTH,
                                                GUIConstants::BUTTON_HEIGHT)))

@@ -60,6 +60,7 @@ class GUIView
  private:
   friend class GameFlowTest_GUIFlowLifecycle_Test;
   bool initialize();
+  void applyCatppuccinLatteTheme();
   void handleEvents();
   void update(float deltaTime);
   void render();
