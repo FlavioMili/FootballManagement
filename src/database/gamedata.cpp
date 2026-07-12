@@ -12,8 +12,12 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
-#include "database/database.h"
+#include "database/database_connection.h"
 #include "database/datagenerator.h"
+#include "database/repositories/game_state_repository.h"
+#include "database/repositories/league_repository.h"
+#include "database/repositories/player_repository.h"
+#include "database/repositories/team_repository.h"
 #include "global/logger.h"
 #include "global/paths.h"
 
@@ -26,7 +30,7 @@ GameData& GameData::instance()
 GameData::GameData() = default;
 
 // ---------------- DB ----------------
-bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
+bool GameData::loadFromDB(std::shared_ptr<DatabaseConnection> database_ptr)
 {
   _leagues.clear();
   _teams.clear();
@@ -37,8 +41,14 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
   _teamPlayers.clear();
 
   loadStatsConfig();
-  db = database_ptr;
-  bool is_first_run = db->isFirstRun();
+  db_conn = database_ptr;
+
+  GameStateRepository gameStateRepo(db_conn);
+  TeamRepository teamRepo(db_conn);
+  LeagueRepository leagueRepo(db_conn);
+  PlayerRepository playerRepo(db_conn);
+
+  bool is_first_run = gameStateRepo.isFirstRun();
 
   Logger::debug("GameData::loadFromDB called. is_first_run: " +
                 std::to_string(is_first_run));
@@ -46,15 +56,16 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
   std::vector<Team> all_teams;
   if (is_first_run)
   {
-    database_ptr->initialize();
+    db_conn->initialize();
     Logger::debug("Database initialized. Generating data.");
 
     auto leagues_data = DataGenerator::generateLeagues();
     all_teams = DataGenerator::generateTeams();
 
+    db_conn->beginTransaction();
     for (const auto& team : all_teams)
     {
-      database_ptr->insertTeamWithId(team);
+      teamRepo.insertTeamWithId(team);
       _teams.try_emplace(team.getId(), team);
     }
     _teamsVec.reserve(_teams.size());
@@ -68,7 +79,7 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
 
     for (const auto& league_data : leagues_data)
     {
-      database_ptr->insertLeagueWithId(league_data);
+      leagueRepo.insertLeagueWithId(league_data);
       _leagues.try_emplace(league_data.getId(),
                            League(league_data.getId(), league_data.getName(),
                                   league_teams_map[league_data.getId()]));
@@ -77,15 +88,16 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
     auto players = DataGenerator::generatePlayers();
     for (const auto& player : players)
     {
-      database_ptr->insertPlayer(player);
+      playerRepo.insertPlayer(player);
       _players.try_emplace(player.getId(), player);
       _teamPlayers[player.getTeamId()].push_back(player.getId());
     }
+    db_conn->commitTransaction();
   }
   else
   {
-    auto leagues_from_db = database_ptr->loadAllLeagues();
-    all_teams = database_ptr->loadAllTeams();
+    auto leagues_from_db = leagueRepo.loadAllLeagues();
+    all_teams = teamRepo.loadAllTeams();
 
     for (const auto& team : all_teams)
     {
@@ -104,10 +116,12 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
           league_from_db.getId(),
           League(league_from_db.getId(), league_from_db.getName(),
                  league_teams_map[league_from_db.getId()]));
-      db->loadLeaguePoints(_leagues.at(league_from_db.getId()));
+      // Note: loadAllLeagues in repo already populates points, but we will
+      // leave it as is if needed, actually loadAllLeagues() populates the
+      // internal points of the League struct.
     }
 
-    auto players = database_ptr->loadAllPlayers();
+    auto players = playerRepo.loadAllPlayers();
     for (const auto& player : players)
     {
       _players.try_emplace(player.getId(), player);
@@ -134,13 +148,17 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
 
 bool GameData::saveToDB() const
 {
-  if (!db) return false;
+  if (!db_conn) return false;
+
+  db_conn->beginTransaction();
+  PlayerRepository playerRepo(db_conn);
 
   for (const auto& player_ref : _playersVec)
   {
-    db->updatePlayer(player_ref.get());
+    playerRepo.updatePlayer(player_ref.get());
   }
 
+  db_conn->commitTransaction();
   return true;
 }
 

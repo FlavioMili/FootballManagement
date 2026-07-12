@@ -12,7 +12,7 @@
 #include <memory>
 #include <vector>
 
-#include "database/database.h"
+#include "database/database_connection.h"
 #include "model/calendar.h"
 #include "model/gamedate.h"
 #include "model/match.h"
@@ -48,7 +48,7 @@ class Game
   void simulateMatches(std::vector<Match>& matches);
   void updateStandings(const Match& match);
 
-  std::shared_ptr<Database> db;
+  std::shared_ptr<DatabaseConnection> db_conn;
   Calendar calendar;
   GameDateValue currentDate;
   uint8_t current_season = 1;

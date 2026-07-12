@@ -2,6 +2,7 @@ add_executable(unit_tests
   test_player.cpp
   test_game_flow.cpp
   test_gamedata.cpp
+  test_database.cpp
 )
 
 target_link_libraries(unit_tests PRIVATE
