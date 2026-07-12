@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "database/database_connection.h"
+#include "global/logger.h"
 #include "database/repositories/league_repository.h"
 #include "database/repositories/player_repository.h"
 #include "database/repositories/team_repository.h"
@@ -21,6 +22,7 @@ class DatabaseTest : public ::testing::Test
  protected:
   void SetUp() override
   {
+    Logger::init();
     // Use an in-memory database for isolated, fast tests
     db_conn = std::make_shared<DatabaseConnection>(":memory:");
     db_conn->initialize();
