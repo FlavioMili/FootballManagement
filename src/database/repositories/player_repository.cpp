@@ -27,27 +27,28 @@ std::vector<Player> PlayerRepository::loadAllPlayers() const
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
-    uint32_t id = static_cast<uint32_t>(sqlite3_column_int(stmt, 0));
-    uint32_t team_id = static_cast<uint32_t>(sqlite3_column_int(stmt, 1));
-    const char* first_name =
+    auto id = static_cast<uint32_t>(sqlite3_column_int(stmt, 0));
+    auto team_id = static_cast<uint32_t>(sqlite3_column_int(stmt, 1));
+    auto first_name =
         reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-    const char* last_name =
+    auto last_name =
         reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
     int age = sqlite3_column_int(stmt, 4);
-    const char* role =
+    auto role =
         reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
-    const char* nationality_str =
+    auto nationality_str =
         reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
-    uint32_t wage = static_cast<uint32_t>(sqlite3_column_int(stmt, 7));
+    auto wage = static_cast<uint32_t>(sqlite3_column_int(stmt, 7));
     int contract_years = sqlite3_column_int(stmt, 8);
     int height = sqlite3_column_int(stmt, 9);
-    const char* foot_str =
+    auto foot_str =
         reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10));
-    const char* stats_str =
+    auto stats_str =
         reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11));
     int status = sqlite3_column_int(stmt, 12);
 
-    auto it = stringToLanguage.find(nationality_str);
+    std::string nat_str(nationality_str);
+    auto it = stringToLanguage.find(nat_str);
     Language nationality =
         (it != stringToLanguage.end()) ? it->second : Language::EN;
     Foot foot = (std::string(foot_str) == "Left") ? Foot::Left : Foot::Right;

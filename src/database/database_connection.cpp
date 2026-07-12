@@ -14,6 +14,7 @@
 #include <stdexcept>
 
 #include "SQLLoader.h"
+#include "database_exception.h"
 #include "global/logger.h"
 
 DatabaseConnection::DatabaseConnection(const std::string& db_path)
@@ -24,8 +25,8 @@ DatabaseConnection::DatabaseConnection(const std::string& db_path)
   {
     std::string err = sqlite3_errmsg(raw_db);
     sqlite3_close(raw_db);
-    throw std::runtime_error("Failed to open database: " + db_path +
-                             " Error: " + err);
+    throw DatabaseException("Failed to open database: " + db_path +
+                            " Error: " + err);
   }
 
   db.reset(raw_db);
@@ -83,7 +84,7 @@ void DatabaseConnection::beginTransaction()
   {
     std::string err = err_msg ? err_msg : "Unknown error";
     if (err_msg) sqlite3_free(err_msg);
-    throw std::runtime_error("Failed to begin transaction: " + err);
+    throw DatabaseException("Failed to begin transaction: " + err);
   }
 }
 
@@ -94,7 +95,7 @@ void DatabaseConnection::commitTransaction()
   {
     std::string err = err_msg ? err_msg : "Unknown error";
     if (err_msg) sqlite3_free(err_msg);
-    throw std::runtime_error("Failed to commit transaction: " + err);
+    throw DatabaseException("Failed to commit transaction: " + err);
   }
 }
 
@@ -105,7 +106,7 @@ void DatabaseConnection::rollbackTransaction()
   {
     std::string err = err_msg ? err_msg : "Unknown error";
     if (err_msg) sqlite3_free(err_msg);
-    throw std::runtime_error("Failed to rollback transaction: " + err);
+    throw DatabaseException("Failed to rollback transaction: " + err);
   }
 }
 
@@ -114,7 +115,7 @@ sqlite3_stmt* DatabaseConnection::prepareStatement(const std::string& sql) const
   sqlite3_stmt* stmt;
   if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
   {
-    throw std::runtime_error("Failed to prepare statement: " + std::string(sqlite3_errmsg(db.get())));
+    throw DatabaseException("Failed to prepare statement: " + std::string(sqlite3_errmsg(db.get())));
   }
   return stmt;
 }
@@ -125,6 +126,6 @@ void DatabaseConnection::executeStep(sqlite3_stmt* stmt) const
   {
     std::string err = sqlite3_errmsg(db.get());
     sqlite3_finalize(stmt);
-    throw std::runtime_error("Failed to execute statement: " + err);
+    throw DatabaseException("Failed to execute statement: " + err);
   }
 }
