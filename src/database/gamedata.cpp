@@ -108,6 +108,12 @@ void GameData::generateAndSaveInitialData()
                                 league_teams_map[league_data.getId()]));
   }
 
+  // DataGenerator::generatePlayers depends on GameData::getTeamsVector() being
+  // populated!
+  _teamsVec.clear();
+  _teamsVec.reserve(_teams.size());
+  for (auto& p : _teams) _teamsVec.push_back(p.second);
+
   auto players = DataGenerator::generatePlayers();
   for (const auto& player : players)
   {
