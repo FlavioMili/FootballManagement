@@ -99,7 +99,7 @@ bool GUIView::initialize()
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   static std::string iniPath = std::string(PROJECT_ROOT) + "assets/imgui.ini";
   io.IniFilename = iniPath.c_str();
-  ImGui::StyleColorsDark();
+  applyCatppuccinLatteTheme();
 
   // Load high quality TTF font to replace the pixelated default
   std::string fontPath = std::string(PROJECT_ROOT) + "assets/fonts/font.ttf";
@@ -299,4 +299,72 @@ GUIScene* GUIView::getActiveScene() const
     return sceneStack.top().get();
   }
   return currentScene.get();
+}
+
+void GUIView::applyCatppuccinLatteTheme()
+{
+  ImGuiStyle& style = ImGui::GetStyle();
+  ImVec4* colors = style.Colors;
+
+  ImVec4 base = ImVec4(0.937f, 0.945f, 0.961f, 1.00f);
+  ImVec4 crust = ImVec4(0.863f, 0.878f, 0.910f, 1.00f);
+  ImVec4 mantle = ImVec4(0.902f, 0.914f, 0.937f, 1.00f);
+  ImVec4 text = ImVec4(0.298f, 0.310f, 0.412f, 1.00f);
+  ImVec4 sapphire = ImVec4(0.125f, 0.624f, 0.710f, 1.00f);
+  ImVec4 sapphireHover = ImVec4(0.125f, 0.7f, 0.8f, 1.00f);
+  ImVec4 sapphireActive = ImVec4(0.125f, 0.8f, 0.9f, 1.00f);
+
+  colors[ImGuiCol_Text] = text;
+  colors[ImGuiCol_TextDisabled] = ImVec4(0.424f, 0.435f, 0.522f, 1.00f);
+  colors[ImGuiCol_WindowBg] = base;
+  colors[ImGuiCol_ChildBg] = crust;
+  colors[ImGuiCol_PopupBg] = base;
+  colors[ImGuiCol_Border] = mantle;
+  colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+  colors[ImGuiCol_FrameBg] = mantle;
+  colors[ImGuiCol_FrameBgHovered] = crust;
+  colors[ImGuiCol_FrameBgActive] = crust;
+  colors[ImGuiCol_TitleBg] = mantle;
+  colors[ImGuiCol_TitleBgActive] = crust;
+  colors[ImGuiCol_TitleBgCollapsed] = base;
+  colors[ImGuiCol_MenuBarBg] = mantle;
+  colors[ImGuiCol_ScrollbarBg] = base;
+  colors[ImGuiCol_ScrollbarGrab] = crust;
+  colors[ImGuiCol_ScrollbarGrabHovered] = mantle;
+  colors[ImGuiCol_ScrollbarGrabActive] = text;
+  colors[ImGuiCol_CheckMark] = sapphire;
+  colors[ImGuiCol_SliderGrab] = sapphire;
+  colors[ImGuiCol_SliderGrabActive] = sapphireActive;
+  colors[ImGuiCol_Button] = sapphire;
+  colors[ImGuiCol_ButtonHovered] = sapphireHover;
+  colors[ImGuiCol_ButtonActive] = sapphireActive;
+  colors[ImGuiCol_Header] = mantle;
+  colors[ImGuiCol_HeaderHovered] = crust;
+  colors[ImGuiCol_HeaderActive] = crust;
+  colors[ImGuiCol_Separator] = mantle;
+  colors[ImGuiCol_SeparatorHovered] = crust;
+  colors[ImGuiCol_SeparatorActive] = crust;
+  colors[ImGuiCol_ResizeGrip] = sapphire;
+  colors[ImGuiCol_ResizeGripHovered] = sapphireHover;
+  colors[ImGuiCol_ResizeGripActive] = sapphireActive;
+  colors[ImGuiCol_TabHovered] = crust;
+  colors[ImGuiCol_Tab] = mantle;
+  colors[ImGuiCol_TabSelected] = crust;
+  colors[ImGuiCol_TabSelectedOverline] = sapphire;
+  colors[ImGuiCol_TabDimmed] = mantle;
+  colors[ImGuiCol_TabDimmedSelected] = mantle;
+  colors[ImGuiCol_TabDimmedSelectedOverline] =
+      ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+  colors[ImGuiCol_NavHighlight] = sapphireHover;
+  colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+  colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+  colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+
+  style.WindowRounding = 8.0f;
+  style.FrameRounding = 6.0f;
+  style.PopupRounding = 6.0f;
+  style.ScrollbarRounding = 6.0f;
+  style.GrabRounding = 4.0f;
+  style.ItemSpacing = ImVec2(10, 10);
+  style.FramePadding = ImVec2(10, 8);
 }

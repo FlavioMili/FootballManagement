@@ -33,7 +33,9 @@ void StrategyScene::render()
       ImVec2(GUIConstants::CENTER_PIVOT, GUIConstants::CENTER_PIVOT));
   ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH, WINDOW_HEIGHT),
                            ImGuiCond_FirstUseEver);
-  ImGui::Begin(LOC("STRATEGY_TITLE"), nullptr, ImGuiWindowFlags_NoCollapse);
+  ImGui::Begin(LOC("STRATEGY_TITLE"), nullptr,
+               ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+                   ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove);
 
   ImGui::SliderFloat(LOC("STRATEGY_PRESSING"), &current_sliders.pressing, 0.0f,
                      1.0f);

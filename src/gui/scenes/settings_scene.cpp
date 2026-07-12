@@ -85,9 +85,10 @@ void SettingsScene::render()
 {
   ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
                           ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-  ImGui::Begin(
-      "Settings", nullptr,
-      ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize);
+  ImGui::Begin("Settings", nullptr,
+               ImGuiWindowFlags_NoDecoration |
+                   ImGuiWindowFlags_AlwaysAutoResize |
+                   ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove);
 
   ImGui::Text("%s", LOC("SETTINGS_TITLE"));
   ImGui::Separator();
