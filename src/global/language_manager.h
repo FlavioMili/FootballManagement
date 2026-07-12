@@ -11,12 +11,14 @@
 
 #include <string>
 #include <unordered_map>
+
 #include "global/languages.h"
 
 class LanguageManager
 {
  public:
-  static LanguageManager& instance() {
+  static LanguageManager& instance()
+  {
     static LanguageManager instance;
     return instance;
   }
@@ -35,4 +37,4 @@ class LanguageManager
 // Global helper macro for concise UI code
 #define LOC(key) LanguageManager::instance().get(key)
 
-#endif // LANGUAGE_MANAGER_H
+#endif  // LANGUAGE_MANAGER_H

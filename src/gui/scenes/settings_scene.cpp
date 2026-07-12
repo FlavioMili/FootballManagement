@@ -11,10 +11,10 @@
 #include <imgui.h>
 
 #include <algorithm>
-
-#include "global/paths.h"
-#include "global/language_manager.h"
 #include <filesystem>
+
+#include "global/language_manager.h"
+#include "global/paths.h"
 #include "gui/gui_constants.h"
 #include "gui/scenes/main_menu_scene.h"
 #include "settings_manager.h"
@@ -29,7 +29,8 @@ void SettingsScene::onEnter()
   availableLanguageEnums.clear();
   for (const auto& [lang, str] : languageToString)
   {
-    std::string filePath = std::string(PROJECT_ROOT) + "assets/lang/" + str + ".json";
+    std::string filePath =
+        std::string(PROJECT_ROOT) + "assets/lang/" + str + ".json";
     if (std::filesystem::exists(filePath))
     {
       languageOptions.push_back(str);
@@ -92,7 +93,8 @@ void SettingsScene::render()
   ImGui::Separator();
   ImGui::Spacing();
 
-  if (ImGui::BeginCombo(LOC("SETTINGS_LANGUAGE"), languageOptions[selectedLanguage].c_str()))
+  if (ImGui::BeginCombo(LOC("SETTINGS_LANGUAGE"),
+                        languageOptions[selectedLanguage].c_str()))
   {
     for (size_t i = 0; i < languageOptions.size(); i++)
     {
@@ -117,7 +119,8 @@ void SettingsScene::render()
     ImGui::EndCombo();
   }
 
-  if (ImGui::BeginCombo(LOC("SETTINGS_REFRESH_RATE"), fpsOptionsStrings[selectedFPS].c_str()))
+  if (ImGui::BeginCombo(LOC("SETTINGS_REFRESH_RATE"),
+                        fpsOptionsStrings[selectedFPS].c_str()))
   {
     for (size_t i = 0; i < fpsOptionsStrings.size(); i++)
     {
@@ -135,14 +138,15 @@ void SettingsScene::render()
   ImGui::Separator();
   ImGui::Spacing();
 
-  if (ImGui::Button(LOC("SETTINGS_CANCEL"), ImVec2(GUIConstants::BUTTON_WIDTH,
-                                     GUIConstants::BUTTON_HEIGHT)))
+  if (ImGui::Button(
+          LOC("SETTINGS_CANCEL"),
+          ImVec2(GUIConstants::BUTTON_WIDTH, GUIConstants::BUTTON_HEIGHT)))
   {
     changeScene(std::make_unique<MainMenuScene>(guiView));
   }
   ImGui::SameLine();
   if (ImGui::Button(LOC("SETTINGS_APPLY"), ImVec2(GUIConstants::BUTTON_WIDTH,
-                                     GUIConstants::BUTTON_HEIGHT)))
+                                                  GUIConstants::BUTTON_HEIGHT)))
   {
     applyAndSaveSettings();
   }

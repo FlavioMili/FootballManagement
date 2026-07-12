@@ -7,7 +7,9 @@
 // -----------------------------------------------------------------------------
 
 #include "roster_scene.h"
+
 #include <imgui.h>
+
 #include "global/language_manager.h"
 #include "gui/gui_constants.h"
 #include "gui/gui_view.h"
@@ -22,37 +24,49 @@ constexpr float OVERALL_COLUMN_WIDTH = 60.0f;
 
 RosterScene::RosterScene(GUIView* parent) : GUIScene(parent) {}
 
-void RosterScene::onEnter()
-{
-  loadRoster();
-}
+void RosterScene::onEnter() { loadRoster(); }
 
 void RosterScene::update(float deltaTime) { (void)deltaTime; }
 
 void RosterScene::render()
 {
-  ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(GUIConstants::CENTER_PIVOT, GUIConstants::CENTER_PIVOT));
-  ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH, WINDOW_HEIGHT), ImGuiCond_FirstUseEver);
+  ImGui::SetNextWindowPos(
+      ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always,
+      ImVec2(GUIConstants::CENTER_PIVOT, GUIConstants::CENTER_PIVOT));
+  ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH, WINDOW_HEIGHT),
+                           ImGuiCond_FirstUseEver);
   ImGui::Begin(LOC("ROSTER_TITLE"), nullptr, ImGuiWindowFlags_NoCollapse);
 
-  if (ImGui::Button(LOC("ROSTER_BACK"), ImVec2(GUIConstants::BUTTON_WIDTH, GUIConstants::BUTTON_HEIGHT))) {
+  if (ImGui::Button(LOC("ROSTER_BACK"), ImVec2(GUIConstants::BUTTON_WIDTH,
+                                               GUIConstants::BUTTON_HEIGHT)))
+  {
     guiView->popScene();
   }
   ImGui::Separator();
   ImGui::Spacing();
 
-  if (ImGui::BeginTable("RosterTable", TABLE_COLUMNS, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable)) {
+  if (ImGui::BeginTable("RosterTable", TABLE_COLUMNS,
+                        ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
+                            ImGuiTableFlags_Resizable))
+  {
     ImGui::TableSetupColumn(LOC("ROSTER_COL_NAME"));
     ImGui::TableSetupColumn(LOC("ROSTER_COL_ROLE"));
-    ImGui::TableSetupColumn(LOC("ROSTER_COL_OVERALL"), ImGuiTableColumnFlags_WidthFixed, OVERALL_COLUMN_WIDTH);
+    ImGui::TableSetupColumn(LOC("ROSTER_COL_OVERALL"),
+                            ImGuiTableColumnFlags_WidthFixed,
+                            OVERALL_COLUMN_WIDTH);
     ImGui::TableHeadersRow();
 
-    for (const auto& player_ref : roster_players) {
+    for (const auto& player_ref : roster_players)
+    {
       const Player& player = player_ref.get();
       ImGui::TableNextRow();
-      ImGui::TableNextColumn(); ImGui::Text("%s", player.getName().c_str());
-      ImGui::TableNextColumn(); ImGui::Text("%s", player.getRole().c_str());
-      ImGui::TableNextColumn(); ImGui::Text("%.1f", player.getOverall(guiView->getController().getStatsConfig()));
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", player.getName().c_str());
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", player.getRole().c_str());
+      ImGui::TableNextColumn();
+      ImGui::Text("%.1f",
+                  player.getOverall(guiView->getController().getStatsConfig()));
     }
     ImGui::EndTable();
   }
@@ -63,8 +77,10 @@ void RosterScene::render()
 void RosterScene::loadRoster()
 {
   auto managedTeamOpt = guiView->getController().getManagedTeam();
-  if (managedTeamOpt.has_value()) {
-    roster_players = guiView->getController().getPlayersForTeam(managedTeamOpt->get().getId());
+  if (managedTeamOpt.has_value())
+  {
+    roster_players = guiView->getController().getPlayersForTeam(
+        managedTeamOpt->get().getId());
   }
 }
 

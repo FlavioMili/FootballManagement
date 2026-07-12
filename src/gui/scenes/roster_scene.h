@@ -7,9 +7,10 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
+#include <vector>
+
 #include "gui/gui_scene.h"
 #include "model/player.h"
-#include <vector>
 
 class RosterScene : public GUIScene
 {
