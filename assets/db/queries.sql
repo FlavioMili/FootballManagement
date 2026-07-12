@@ -136,7 +136,7 @@ UPDATE Players SET team_id = ? WHERE id = ?;
 -- ==========================================
 
 -- @QUERY_ID: INSERT_FIXTURE
-INSERT OR IGNORE INTO Fixtures (game_date, home_team_id, away_team_id) VALUES (?, ?, ?);
+INSERT OR IGNORE INTO Fixtures (game_date, home_team_id, away_team_id, match_type) VALUES (?, ?, ?, ?);
 
 -- @QUERY_ID: UPDATE_FIXTURE_RESULT
 UPDATE Fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE game_date = ? AND home_team_id = ? AND away_team_id = ?;

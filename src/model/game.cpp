@@ -10,26 +10,34 @@
 
 #include <iostream>
 
+#include "database/database_connection.h"
 #include "database/gamedata.h"
+#include "database/repositories/fixture_repository.h"
+#include "database/repositories/game_state_repository.h"
+#include "database/repositories/league_repository.h"
 #include "global/global.h"
 #include "global/logger.h"
+#include "global/paths.h"
 #include "model/league.h"
 #include "model/team.h"
 
 Game::Game() : currentDate(START_DATE)
 {
-  db = std::make_shared<Database>();
-  GameData::instance().loadFromDB(db);
+  db_conn = std::make_shared<DatabaseConnection>(DATABASE_PATH);
+  GameData::instance().loadFromDB(db_conn);
   loadGame();
 }
 
 void Game::loadGame()
 {
+  GameStateRepository gameStateRepo(db_conn);
+  FixtureRepository fixtureRepo(db_conn);
   std::string game_date_str;
-  if (db->loadGameState(current_season, managed_team_id, game_date_str))
+  if (gameStateRepo.loadGameState(current_season, managed_team_id,
+                                  game_date_str))
   {
     currentDate = GameDateValue::fromString(game_date_str);
-    db->loadCalendar(calendar);
+    fixtureRepo.loadCalendar(calendar);
     Logger::debug("Game loaded. Date: " + game_date_str +
                   ", Season: " + std::to_string(current_season));
   }
@@ -52,12 +60,28 @@ void Game::loadGame()
 
 void Game::saveGame()
 {
-  db->updateGameState(current_season, managed_team_id, currentDate.toString());
-  db->saveCalendar(calendar);
-
-  for (const auto& pair : GameData::instance().getLeagues())
+  db_conn->beginTransaction();
+  try
   {
-    db->saveLeaguePoints(pair.second);
+    GameStateRepository gameStateRepo(db_conn);
+    FixtureRepository fixtureRepo(db_conn);
+    LeagueRepository leagueRepo(db_conn);
+
+    gameStateRepo.updateGameState(current_season, managed_team_id,
+                                  currentDate.toString());
+    fixtureRepo.saveCalendar(calendar);
+
+    for (const auto& pair : GameData::instance().getLeagues())
+    {
+      leagueRepo.saveLeaguePoints(pair.second);
+    }
+    db_conn->commitTransaction();
+  }
+  catch (const std::exception& e)
+  {
+    db_conn->rollbackTransaction();
+    Logger::error("Failed to save game: " + std::string(e.what()));
+    throw;
   }
 
   Logger::debug("Game saved.");

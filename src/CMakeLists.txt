@@ -25,8 +25,18 @@ set(CORE_SOURCES
     controller/game_controller.cpp
 
     # Database
-    database/database.h
-    database/database.cpp
+    database/database_connection.h
+    database/database_connection.cpp
+    database/repositories/player_repository.h
+    database/repositories/player_repository.cpp
+    database/repositories/team_repository.h
+    database/repositories/team_repository.cpp
+    database/repositories/league_repository.h
+    database/repositories/league_repository.cpp
+    database/repositories/fixture_repository.h
+    database/repositories/fixture_repository.cpp
+    database/repositories/game_state_repository.h
+    database/repositories/game_state_repository.cpp
     database/datagenerator.h
     database/datagenerator.cpp
     database/SQLLoader.h

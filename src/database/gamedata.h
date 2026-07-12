@@ -22,7 +22,7 @@
 #include "model/player.h"
 #include "model/team.h"
 
-class Database;
+class DatabaseConnection;
 
 class GameData
 {
@@ -33,7 +33,7 @@ class GameData
   GameData& operator=(const GameData&) = delete;
 
   // ---------------- DB ----------------
-  bool loadFromDB(std::shared_ptr<Database> database_ptr);
+  bool loadFromDB(std::shared_ptr<DatabaseConnection> database_ptr);
   bool saveToDB() const;
 
   // ---------------- StatsConfig ----------------
@@ -90,7 +90,9 @@ class GameData
   std::vector<std::reference_wrapper<const Player>> _playersVec;
   std::unordered_map<TeamID, std::vector<PlayerID>> _teamPlayers;
   StatsConfig stats_config;
-  std::shared_ptr<Database> db;
+  std::shared_ptr<DatabaseConnection> db_conn;
 
   void loadStatsConfig();
+  void generateAndSaveInitialData();
+  void loadExistingData();
 };

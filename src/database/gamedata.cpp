@@ -12,8 +12,12 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
-#include "database/database.h"
+#include "database/database_connection.h"
 #include "database/datagenerator.h"
+#include "database/repositories/game_state_repository.h"
+#include "database/repositories/league_repository.h"
+#include "database/repositories/player_repository.h"
+#include "database/repositories/team_repository.h"
 #include "global/logger.h"
 #include "global/paths.h"
 
@@ -26,7 +30,7 @@ GameData& GameData::instance()
 GameData::GameData() = default;
 
 // ---------------- DB ----------------
-bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
+bool GameData::loadFromDB(std::shared_ptr<DatabaseConnection> database_ptr)
 {
   _leagues.clear();
   _teams.clear();
@@ -37,83 +41,22 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
   _teamPlayers.clear();
 
   loadStatsConfig();
-  db = database_ptr;
-  bool is_first_run = db->isFirstRun();
+  db_conn = database_ptr;
+
+  GameStateRepository gameStateRepo(db_conn);
+
+  bool is_first_run = gameStateRepo.isFirstRun();
 
   Logger::debug("GameData::loadFromDB called. is_first_run: " +
                 std::to_string(is_first_run));
 
-  std::vector<Team> all_teams;
   if (is_first_run)
   {
-    database_ptr->initialize();
-    Logger::debug("Database initialized. Generating data.");
-
-    auto leagues_data = DataGenerator::generateLeagues();
-    all_teams = DataGenerator::generateTeams();
-
-    for (const auto& team : all_teams)
-    {
-      database_ptr->insertTeamWithId(team);
-      _teams.try_emplace(team.getId(), team);
-    }
-    _teamsVec.reserve(_teams.size());
-    for (auto& p : _teams) _teamsVec.push_back(p.second);
-
-    std::map<uint8_t, std::vector<TeamID>> league_teams_map;
-    for (const auto& team : all_teams)
-    {
-      league_teams_map[team.getLeagueId()].push_back(team.getId());
-    }
-
-    for (const auto& league_data : leagues_data)
-    {
-      database_ptr->insertLeagueWithId(league_data);
-      _leagues.try_emplace(league_data.getId(),
-                           League(league_data.getId(), league_data.getName(),
-                                  league_teams_map[league_data.getId()]));
-    }
-
-    auto players = DataGenerator::generatePlayers();
-    for (const auto& player : players)
-    {
-      database_ptr->insertPlayer(player);
-      _players.try_emplace(player.getId(), player);
-      _teamPlayers[player.getTeamId()].push_back(player.getId());
-    }
+    generateAndSaveInitialData();
   }
   else
   {
-    auto leagues_from_db = database_ptr->loadAllLeagues();
-    all_teams = database_ptr->loadAllTeams();
-
-    for (const auto& team : all_teams)
-    {
-      _teams.try_emplace(team.getId(), team);
-    }
-
-    std::map<uint8_t, std::vector<TeamID>> league_teams_map;
-    for (const auto& team : all_teams)
-    {
-      league_teams_map[team.getLeagueId()].push_back(team.getId());
-    }
-
-    for (const auto& league_from_db : leagues_from_db)
-    {
-      _leagues.try_emplace(
-          league_from_db.getId(),
-          League(league_from_db.getId(), league_from_db.getName(),
-                 league_teams_map[league_from_db.getId()]));
-      db->loadLeaguePoints(_leagues.at(league_from_db.getId()));
-    }
-
-    auto players = database_ptr->loadAllPlayers();
-    for (const auto& player : players)
-    {
-      _players.try_emplace(player.getId(), player);
-      _teamPlayers[player.getTeamId()].push_back(player.getId());
-    }
-    Logger::debug("Loaded all data from database.");
+    loadExistingData();
   }
 
   // Build vectors from the maps
@@ -132,15 +75,106 @@ bool GameData::loadFromDB(std::shared_ptr<Database> database_ptr)
   return true;
 }
 
+void GameData::generateAndSaveInitialData()
+{
+  TeamRepository teamRepo(db_conn);
+  LeagueRepository leagueRepo(db_conn);
+  PlayerRepository playerRepo(db_conn);
+
+  db_conn->initialize();
+  Logger::debug("Database initialized. Generating data.");
+
+  auto leagues_data = DataGenerator::generateLeagues();
+  auto all_teams = DataGenerator::generateTeams();
+
+  db_conn->beginTransaction();
+  for (const auto& team : all_teams)
+  {
+    teamRepo.insertTeamWithId(team);
+    _teams.try_emplace(team.getId(), team);
+  }
+
+  std::map<uint8_t, std::vector<TeamID>> league_teams_map;
+  for (const auto& team : all_teams)
+  {
+    league_teams_map[team.getLeagueId()].push_back(team.getId());
+  }
+
+  for (const auto& league_data : leagues_data)
+  {
+    leagueRepo.insertLeagueWithId(league_data);
+    _leagues.try_emplace(league_data.getId(),
+                         League(league_data.getId(), league_data.getName(),
+                                league_teams_map[league_data.getId()]));
+  }
+
+  // DataGenerator::generatePlayers depends on GameData::getTeamsVector() being
+  // populated!
+  _teamsVec.clear();
+  _teamsVec.reserve(_teams.size());
+  for (auto& p : _teams) _teamsVec.push_back(p.second);
+
+  auto players = DataGenerator::generatePlayers();
+  for (const auto& player : players)
+  {
+    playerRepo.insertPlayer(player);
+    _players.try_emplace(player.getId(), player);
+    _teamPlayers[player.getTeamId()].push_back(player.getId());
+  }
+  db_conn->commitTransaction();
+}
+
+void GameData::loadExistingData()
+{
+  TeamRepository teamRepo(db_conn);
+  LeagueRepository leagueRepo(db_conn);
+  PlayerRepository playerRepo(db_conn);
+
+  auto leagues_from_db = leagueRepo.loadAllLeagues();
+  auto all_teams = teamRepo.loadAllTeams();
+
+  for (const auto& team : all_teams)
+  {
+    _teams.try_emplace(team.getId(), team);
+  }
+
+  std::map<uint8_t, std::vector<TeamID>> league_teams_map;
+  for (const auto& team : all_teams)
+  {
+    league_teams_map[team.getLeagueId()].push_back(team.getId());
+  }
+
+  for (auto& league_from_db : leagues_from_db)
+  {
+    for (TeamID tid : league_teams_map[league_from_db.getId()])
+    {
+      league_from_db.addTeamID(tid);
+    }
+    _leagues.try_emplace(league_from_db.getId(), league_from_db);
+  }
+
+  auto players = playerRepo.loadAllPlayers();
+  for (const auto& player : players)
+  {
+    _players.try_emplace(player.getId(), player);
+    _teamPlayers[player.getTeamId()].push_back(player.getId());
+  }
+  Logger::debug("Loaded all data from database.");
+}
+
 bool GameData::saveToDB() const
 {
-  if (!db) return false;
+  if (!db_conn) return false;
+
+  db_conn->beginTransaction();
+  PlayerRepository playerRepo(db_conn);
 
   for (const auto& player_ref : _playersVec)
   {
-    db->updatePlayer(player_ref.get());
+    playerRepo.updatePlayer(player_ref.get());
   }
 
+  db_conn->commitTransaction();
   return true;
 }
 

@@ -11,7 +11,8 @@
 #include <filesystem>
 #include <memory>
 
-#include "database/database.h"
+#include "database/database_connection.h"
+#include "database/repositories/player_repository.h"
 #include "database/gamedata.h"
 #include "global/paths.h"
 
@@ -22,22 +23,22 @@ class DatabaseFixture : public benchmark::Fixture {
     (void)state;
     // Remove the database file to ensure a clean slate for each benchmark run
     std::filesystem::remove(DATABASE_PATH);
-    db = std::make_shared<Database>();
-    db->initialize();
+    db_conn = std::make_shared<DatabaseConnection>(DATABASE_PATH);
+    db_conn->initialize();
   }
 
   void TearDown(const ::benchmark::State& state) override {
     (void)state;
-    db.reset();
+    db_conn.reset();
   }
 
-  std::shared_ptr<Database> db;
+  std::shared_ptr<DatabaseConnection> db_conn;
 };
 
 BENCHMARK_DEFINE_F(DatabaseFixture, BM_LoadFromDB)(benchmark::State& state) {
   state.PauseTiming();
   // Pre-load initial data
-  GameData::instance().loadFromDB(db);
+  GameData::instance().loadFromDB(db_conn);
 
   int target_players = state.range(0);
   int current_players = GameData::instance().getPlayers().size();
@@ -46,20 +47,20 @@ BENCHMARK_DEFINE_F(DatabaseFixture, BM_LoadFromDB)(benchmark::State& state) {
   for (int i = current_players; i < target_players; ++i) {
     Player p(i, 1, "Test", "Player " + std::to_string(i), "ST", Language::EN, 1000, 0, 20, 2, 180,
              Foot::Right, {});
-    db->insertPlayer(p);
+    PlayerRepository(db_conn).insertPlayer(p);
   }
   state.ResumeTiming();
 
   for (auto _ : state) {
     (void)_;
-    GameData::instance().loadFromDB(db);
+    GameData::instance().loadFromDB(db_conn);
   }
 }
 
 BENCHMARK_DEFINE_F(DatabaseFixture, BM_SaveToDB)(benchmark::State& state) {
   state.PauseTiming();
   // Pre-load data
-  GameData::instance().loadFromDB(db);
+  GameData::instance().loadFromDB(db_conn);
 
   int target_players = state.range(0);
   int current_players = GameData::instance().getPlayers().size();
@@ -67,7 +68,7 @@ BENCHMARK_DEFINE_F(DatabaseFixture, BM_SaveToDB)(benchmark::State& state) {
   for (int i = current_players; i < target_players; ++i) {
     Player p(i, 1, "Test", "Player " + std::to_string(i), "ST", Language::EN, 1000, 0, 20, 2, 180,
              Foot::Right, {});
-    db->insertPlayer(p);
+    PlayerRepository(db_conn).insertPlayer(p);
     GameData::instance().addPlayer(p.getId(), p);
   }
   state.ResumeTiming();
@@ -90,7 +91,7 @@ BENCHMARK_REGISTER_F(DatabaseFixture, BM_SaveToDB)
 
 BENCHMARK_DEFINE_F(DatabaseFixture, BM_GetPlayersForTeam)(benchmark::State& state) {
   state.PauseTiming();
-  GameData::instance().loadFromDB(db);
+  GameData::instance().loadFromDB(db_conn);
 
   int target_players = state.range(0);
   int current_players = GameData::instance().getPlayers().size();
@@ -99,7 +100,7 @@ BENCHMARK_DEFINE_F(DatabaseFixture, BM_GetPlayersForTeam)(benchmark::State& stat
   for (int i = current_players; i < target_players; ++i) {
     Player p(i, (i % 2 == 0) ? team_id_to_query : 2, "Test", "Player " + std::to_string(i), "ST",
              Language::EN, 1000, 0, 20, 2, 180, Foot::Right, {});
-    db->insertPlayer(p);
+    PlayerRepository(db_conn).insertPlayer(p);
     GameData::instance().addPlayer(p.getId(), p);
   }
   state.ResumeTiming();
