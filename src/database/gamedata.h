@@ -93,4 +93,6 @@ class GameData
   std::shared_ptr<DatabaseConnection> db_conn;
 
   void loadStatsConfig();
+  void generateAndSaveInitialData();
+  void loadExistingData();
 };

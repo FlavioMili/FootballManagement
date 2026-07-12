@@ -30,12 +30,15 @@ class DatabaseTest : public ::testing::Test
 
   void TearDown() override { db_conn.reset(); }
 
+  std::shared_ptr<DatabaseConnection> getDbConn() const { return db_conn; }
+
+ private:
   std::shared_ptr<DatabaseConnection> db_conn;
 };
 
 TEST_F(DatabaseTest, InsertAndLoadPlayer)
 {
-  PlayerRepository playerRepo(db_conn);
+  PlayerRepository playerRepo(getDbConn());
 
   Player p(1, 10, "Test", "Player", "ST", Language::EN, 1000, 0, 20, 2, 180,
            Foot::Right, {});
@@ -50,7 +53,7 @@ TEST_F(DatabaseTest, InsertAndLoadPlayer)
 
 TEST_F(DatabaseTest, UpdatePlayer)
 {
-  PlayerRepository playerRepo(db_conn);
+  PlayerRepository playerRepo(getDbConn());
 
   Player p(1, 10, "Test", "Player", "ST", Language::EN, 1000, 0, 20, 2, 180,
            Foot::Right, {});
@@ -66,7 +69,7 @@ TEST_F(DatabaseTest, UpdatePlayer)
 
 TEST_F(DatabaseTest, DeletePlayer)
 {
-  PlayerRepository playerRepo(db_conn);
+  PlayerRepository playerRepo(getDbConn());
 
   Player p(1, 10, "Test", "Player", "ST", Language::EN, 1000, 0, 20, 2, 180,
            Foot::Right, {});
@@ -80,7 +83,7 @@ TEST_F(DatabaseTest, DeletePlayer)
 
 TEST_F(DatabaseTest, InsertAndLoadTeam)
 {
-  TeamRepository teamRepo(db_conn);
+  TeamRepository teamRepo(getDbConn());
 
   Team t(1, 1, "Test Team", 1000000);
   teamRepo.insertTeamWithId(t);
@@ -101,24 +104,24 @@ TEST_F(DatabaseTest, InsertAndLoadTeam)
 
 TEST_F(DatabaseTest, Transactions)
 {
-  PlayerRepository playerRepo(db_conn);
+  PlayerRepository playerRepo(getDbConn());
 
-  db_conn->beginTransaction();
+  getDbConn()->beginTransaction();
   Player p1(1, 10, "A", "B", "ST", Language::EN, 1000, 0, 20, 2, 180,
             Foot::Right, {});
   Player p2(2, 10, "C", "D", "ST", Language::EN, 1000, 0, 20, 2, 180,
             Foot::Right, {});
   playerRepo.insertPlayerWithId(p1);
   playerRepo.insertPlayerWithId(p2);
-  db_conn->rollbackTransaction();
+  getDbConn()->rollbackTransaction();
 
   auto players = playerRepo.loadAllPlayers();
   EXPECT_TRUE(players.empty());
 
-  db_conn->beginTransaction();
+  getDbConn()->beginTransaction();
   playerRepo.insertPlayerWithId(p1);
   playerRepo.insertPlayerWithId(p2);
-  db_conn->commitTransaction();
+  getDbConn()->commitTransaction();
 
   players = playerRepo.loadAllPlayers();
   EXPECT_EQ(players.size(), 2);

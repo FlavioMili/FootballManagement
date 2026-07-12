@@ -57,7 +57,8 @@ void DatabaseConnection::initialize()
     std::string schema_sql = SQLLoader::loadSchemaFromFile();
     char* err_msg = nullptr;
 
-    if (sqlite3_exec(db.get(), schema_sql.c_str(), 0, 0, &err_msg) != SQLITE_OK)
+    if (sqlite3_exec(db.get(), schema_sql.c_str(), nullptr, nullptr,
+                     &err_msg) != SQLITE_OK)
     {
       std::string error_str =
           "SQL error during schema initialization: " + std::string(err_msg);
@@ -80,7 +81,8 @@ void DatabaseConnection::initialize()
 void DatabaseConnection::beginTransaction()
 {
   char* err_msg = nullptr;
-  if (sqlite3_exec(db.get(), "BEGIN TRANSACTION;", 0, 0, &err_msg) != SQLITE_OK)
+  if (sqlite3_exec(db.get(), "BEGIN TRANSACTION;", nullptr, nullptr,
+                   &err_msg) != SQLITE_OK)
   {
     std::string err = err_msg ? err_msg : "Unknown error";
     if (err_msg) sqlite3_free(err_msg);
@@ -91,7 +93,8 @@ void DatabaseConnection::beginTransaction()
 void DatabaseConnection::commitTransaction()
 {
   char* err_msg = nullptr;
-  if (sqlite3_exec(db.get(), "COMMIT;", 0, 0, &err_msg) != SQLITE_OK)
+  if (sqlite3_exec(db.get(), "COMMIT;", nullptr, nullptr, &err_msg) !=
+      SQLITE_OK)
   {
     std::string err = err_msg ? err_msg : "Unknown error";
     if (err_msg) sqlite3_free(err_msg);
@@ -102,7 +105,8 @@ void DatabaseConnection::commitTransaction()
 void DatabaseConnection::rollbackTransaction()
 {
   char* err_msg = nullptr;
-  if (sqlite3_exec(db.get(), "ROLLBACK;", 0, 0, &err_msg) != SQLITE_OK)
+  if (sqlite3_exec(db.get(), "ROLLBACK;", nullptr, nullptr, &err_msg) !=
+      SQLITE_OK)
   {
     std::string err = err_msg ? err_msg : "Unknown error";
     if (err_msg) sqlite3_free(err_msg);
