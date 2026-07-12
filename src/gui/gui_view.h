@@ -58,6 +58,7 @@ class GUIView
   GameController& getController() const;
 
  private:
+  friend class GameFlowTest_GUIFlowLifecycle_Test;
   bool initialize();
   void handleEvents();
   void update(float deltaTime);
