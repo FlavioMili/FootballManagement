@@ -8,6 +8,7 @@
 
 #include "player.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <map>
@@ -99,22 +100,44 @@ void Player::agePlayer()
 {
   ++_age;
 
-  if (_age < PLAYER_AGE_FACTOR_DECLINE_AGE) return;
+  const float age_progression_delta = getAgeProgressionDelta();
+  applyProgressionFactors({[age_progression_delta](const Player&,
+                                                   const std::string&) {
+    return age_progression_delta;
+  }});
+}
 
-  float age_factor =
-      1.0f - (static_cast<float>(_age) - PLAYER_AGE_FACTOR_DECLINE_AGE + 1.0f) *
-                 PLAYER_AGE_FACTOR_DECAY_RATE;
+void Player::applyProgressionFactors(
+    const std::vector<StatProgressionFactor>& progression_factors)
+{
+  if (progression_factors.empty()) return;
 
-  // Ensure age_factor doesn't make decay negative (growth) unexpectedly here
-  // though formula suggests it decreases.
-  float decay = PLAYER_STAT_INCREASE_BASE * (1.0f - std::max(0.0f, age_factor));
-
-  for (auto& stat : _stats)
+  for (auto& [stat_name, value] : _stats)
   {
-    stat.second -= decay;
+    float total_delta = 0.0f;
+    for (const auto& factor : progression_factors)
+    {
+      total_delta += factor(*this, stat_name);
+    }
 
-    if (stat.second < MIN_STAT_VAL) stat.second = MIN_STAT_VAL;
+    value = std::clamp(value + total_delta, static_cast<float>(MIN_STAT_VAL),
+                       static_cast<float>(MAX_STAT_VAL));
   }
+}
+
+float Player::getAgeProgressionDelta() const
+{
+  const float years_from_decline =
+      PLAYER_AGE_FACTOR_DECLINE_AGE - static_cast<float>(_age);
+  const float age_factor =
+      std::max(0.0f, std::abs(years_from_decline) * PLAYER_AGE_FACTOR_DECAY_RATE);
+
+  if (years_from_decline >= 0.0f)
+  {
+    return PLAYER_STAT_INCREASE_BASE * age_factor;
+  }
+
+  return -PLAYER_STAT_INCREASE_BASE * (1.0f + age_factor);
 }
 
 bool Player::checkRetirement() const
