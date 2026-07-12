@@ -21,7 +21,8 @@ LeagueRepository::LeagueRepository(std::shared_ptr<DatabaseConnection> conn)
 
 std::vector<League> LeagueRepository::loadAllLeagues() const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::SELECT_LEAGUES));
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::SELECT_LEAGUES));
   std::vector<League> leagues;
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -46,7 +47,8 @@ std::vector<League> LeagueRepository::loadAllLeagues() const
 
 void LeagueRepository::loadTeamsForLeague(League& league) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement("SELECT id FROM Teams WHERE league_id = ?");
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement("SELECT id FROM Teams WHERE league_id = ?");
 
   sqlite3_bind_int(stmt, 1, league.getId());
 
@@ -61,7 +63,8 @@ void LeagueRepository::loadTeamsForLeague(League& league) const
 
 void LeagueRepository::insertLeague(const League& league) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_LEAGUE));
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_LEAGUE));
 
   sqlite3_bind_text(stmt, 1, league.getName().data(), -1, SQLITE_TRANSIENT);
 
@@ -71,7 +74,8 @@ void LeagueRepository::insertLeague(const League& league) const
 
 void LeagueRepository::insertLeagueWithId(const League& league) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_LEAGUE_WITH_ID));
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::INSERT_LEAGUE_WITH_ID));
 
   sqlite3_bind_int(stmt, 1, league.getId());
   sqlite3_bind_text(stmt, 2, league.getName().c_str(), -1, SQLITE_TRANSIENT);
@@ -88,7 +92,8 @@ void LeagueRepository::insertLeagueWithId(const League& league) const
 
 void LeagueRepository::saveLeaguePoints(const League& league) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::UPSERT_LEAGUE_POINTS));
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::UPSERT_LEAGUE_POINTS));
 
   for (const auto& pair : league.getLeaderboard())
   {
@@ -107,7 +112,8 @@ void LeagueRepository::saveLeaguePoints(const League& league) const
 
 void LeagueRepository::loadLeaguePoints(League& league) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::SELECT_LEAGUE_POINTS));
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::SELECT_LEAGUE_POINTS));
 
   sqlite3_bind_int(stmt, 1, league.getId());
 
@@ -123,7 +129,8 @@ void LeagueRepository::loadLeaguePoints(League& league) const
 
 void LeagueRepository::resetAllLeaguePoints() const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::RESET_ALL_LEAGUE_POINTS));
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::RESET_ALL_LEAGUE_POINTS));
 
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);

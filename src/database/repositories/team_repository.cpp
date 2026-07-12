@@ -22,7 +22,8 @@ TeamRepository::TeamRepository(std::shared_ptr<DatabaseConnection> conn)
 std::vector<Team> TeamRepository::loadAllTeams() const
 {
   std::vector<Team> teams;
-  sqlite3_stmt* stmt = db_conn->prepareStatement("SELECT id, league_id, name, balance FROM Teams");
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      "SELECT id, league_id, name, balance FROM Teams");
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
@@ -41,7 +42,8 @@ std::vector<Team> TeamRepository::loadAllTeams() const
 
 void TeamRepository::insertTeam(const Team& team) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_TEAM));
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_TEAM));
 
   sqlite3_bind_int(stmt, 1, team.getLeagueId());
   sqlite3_bind_text(stmt, 2, team.getName().c_str(), -1, SQLITE_TRANSIENT);
@@ -55,7 +57,8 @@ void TeamRepository::insertTeam(const Team& team) const
 
 void TeamRepository::insertTeamWithId(const Team& team) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_TEAM_WITH_ID));
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::INSERT_TEAM_WITH_ID));
 
   sqlite3_bind_int(stmt, 1, team.getId());
   sqlite3_bind_int(stmt, 2, team.getLeagueId());

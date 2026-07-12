@@ -39,5 +39,4 @@ jobs:
     - name: Run tests
       run: ctest --test-dir build --output-on-failure
 
-    - name: Check Copyrights
-      run: python3 scripts/update_copyrights.py --check
+

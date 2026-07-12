@@ -113,9 +113,11 @@ void DatabaseConnection::rollbackTransaction()
 sqlite3_stmt* DatabaseConnection::prepareStatement(const std::string& sql) const
 {
   sqlite3_stmt* stmt;
-  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+  if (sqlite3_prepare_v2(db.get(), sql.c_str(), -1, &stmt, nullptr) !=
+      SQLITE_OK)
   {
-    throw DatabaseException("Failed to prepare statement: " + std::string(sqlite3_errmsg(db.get())));
+    throw DatabaseException("Failed to prepare statement: " +
+                            std::string(sqlite3_errmsg(db.get())));
   }
   return stmt;
 }

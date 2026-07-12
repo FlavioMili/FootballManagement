@@ -112,7 +112,8 @@ bool GameData::loadFromDB(std::shared_ptr<DatabaseConnection> database_ptr)
 
     for (auto& league_from_db : leagues_from_db)
     {
-      for (TeamID tid : league_teams_map[league_from_db.getId()]) {
+      for (TeamID tid : league_teams_map[league_from_db.getId()])
+      {
         league_from_db.addTeamID(tid);
       }
       _leagues.try_emplace(league_from_db.getId(), league_from_db);

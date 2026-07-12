@@ -22,7 +22,8 @@ FixtureRepository::FixtureRepository(std::shared_ptr<DatabaseConnection> conn)
 
 void FixtureRepository::insertFixture(const Match& match) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_FIXTURE));
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_FIXTURE));
 
   sqlite3_bind_text(stmt, 1, match.getDate().toString().c_str(), -1,
                     SQLITE_TRANSIENT);
@@ -37,7 +38,9 @@ void FixtureRepository::insertFixture(const Match& match) const
 std::vector<Match> FixtureRepository::loadAllMatches() const
 {
   std::vector<Match> matches;
-  sqlite3_stmt* stmt = db_conn->prepareStatement("SELECT home_team_id, away_team_id, game_date, match_type FROM Fixtures;");
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      "SELECT home_team_id, away_team_id, game_date, match_type FROM "
+      "Fixtures;");
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {

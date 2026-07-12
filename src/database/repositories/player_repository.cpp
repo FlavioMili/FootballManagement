@@ -22,7 +22,8 @@ PlayerRepository::PlayerRepository(std::shared_ptr<DatabaseConnection> conn)
 
 std::vector<Player> PlayerRepository::loadAllPlayers() const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::SELECT_ALL_PLAYERS));
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::SELECT_ALL_PLAYERS));
   std::vector<Player> players;
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -34,8 +35,7 @@ std::vector<Player> PlayerRepository::loadAllPlayers() const
     auto last_name =
         reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
     int age = sqlite3_column_int(stmt, 4);
-    auto role =
-        reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+    auto role = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
     auto nationality_str =
         reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
     auto wage = static_cast<uint32_t>(sqlite3_column_int(stmt, 7));
@@ -68,7 +68,8 @@ std::vector<Player> PlayerRepository::loadAllPlayers() const
 
 void PlayerRepository::insertPlayer(const Player& player) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_PLAYER));
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_PLAYER));
 
   nlohmann::json stats_json = player.getStats();
   std::string stats_str = stats_json.dump();
@@ -101,7 +102,8 @@ void PlayerRepository::insertPlayer(const Player& player) const
 
 void PlayerRepository::insertPlayerWithId(const Player& player) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_PLAYER_WITH_ID));
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::INSERT_PLAYER_WITH_ID));
 
   nlohmann::json stats_json = player.getStats();
   std::string stats_str = stats_json.dump();
@@ -135,7 +137,8 @@ void PlayerRepository::insertPlayerWithId(const Player& player) const
 
 void PlayerRepository::updatePlayer(const Player& player) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::UPDATE_PLAYER));
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::UPDATE_PLAYER));
 
   nlohmann::json stats_json = player.getStats();
   std::string stats_str = stats_json.dump();
@@ -169,7 +172,8 @@ void PlayerRepository::updatePlayer(const Player& player) const
 
 void PlayerRepository::deletePlayer(PlayerID player_id) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::DELETE_PLAYER));
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::DELETE_PLAYER));
   sqlite3_bind_int(stmt, 1, static_cast<int>(player_id));
 
   db_conn->executeStep(stmt);
@@ -179,7 +183,8 @@ void PlayerRepository::deletePlayer(PlayerID player_id) const
 void PlayerRepository::transferPlayer(PlayerID player_id,
                                       uint16_t new_team_id) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::TRANSFER_PLAYER));
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::TRANSFER_PLAYER));
 
   sqlite3_bind_int(stmt, 1, new_team_id);
   sqlite3_bind_int(stmt, 2, static_cast<int>(player_id));

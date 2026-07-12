@@ -12,10 +12,10 @@
 #include <memory>
 
 #include "database/database_connection.h"
-#include "global/logger.h"
 #include "database/repositories/league_repository.h"
 #include "database/repositories/player_repository.h"
 #include "database/repositories/team_repository.h"
+#include "global/logger.h"
 
 class DatabaseTest : public ::testing::Test
 {

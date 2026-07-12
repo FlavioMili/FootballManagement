@@ -61,7 +61,8 @@ void Game::loadGame()
 void Game::saveGame()
 {
   db_conn->beginTransaction();
-  try {
+  try
+  {
     GameStateRepository gameStateRepo(db_conn);
     FixtureRepository fixtureRepo(db_conn);
     LeagueRepository leagueRepo(db_conn);
@@ -75,7 +76,9 @@ void Game::saveGame()
       leagueRepo.saveLeaguePoints(pair.second);
     }
     db_conn->commitTransaction();
-  } catch (const std::exception& e) {
+  }
+  catch (const std::exception& e)
+  {
     db_conn->rollbackTransaction();
     Logger::error("Failed to save game: " + std::string(e.what()));
     throw;

@@ -46,7 +46,8 @@ void GameStateRepository::updateGameState(uint8_t current_season,
                                           uint16_t managed_team_id,
                                           const std::string& game_date) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(SQLLoader::getQuery(Query::UPSERT_GAME_STATE));
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::UPSERT_GAME_STATE));
 
   sqlite3_bind_int(stmt, 1, managed_team_id);
   sqlite3_bind_text(stmt, 2, game_date.c_str(), -1, SQLITE_TRANSIENT);
