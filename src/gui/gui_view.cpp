@@ -308,13 +308,13 @@ void GUIView::applyCatppuccinLatteTheme()
   ImGuiStyle& style = ImGui::GetStyle();
   ImVec4* colors = style.Colors;
 
-  ImVec4 base = ImVec4(0.937f, 0.945f, 0.961f, 1.00f);
-  ImVec4 crust = ImVec4(0.863f, 0.878f, 0.910f, 1.00f);
-  ImVec4 mantle = ImVec4(0.902f, 0.914f, 0.937f, 1.00f);
-  ImVec4 text = ImVec4(0.298f, 0.310f, 0.412f, 1.00f);
-  ImVec4 sapphire = ImVec4(0.125f, 0.624f, 0.710f, 1.00f);
-  ImVec4 sapphireHover = ImVec4(0.125f, 0.7f, 0.8f, 1.00f);
-  ImVec4 sapphireActive = ImVec4(0.125f, 0.8f, 0.9f, 1.00f);
+  auto base = ImVec4(0.937f, 0.945f, 0.961f, 1.00f);
+  auto crust = ImVec4(0.863f, 0.878f, 0.910f, 1.00f);
+  auto mantle = ImVec4(0.902f, 0.914f, 0.937f, 1.00f);
+  auto text = ImVec4(0.298f, 0.310f, 0.412f, 1.00f);
+  auto sapphire = ImVec4(0.125f, 0.624f, 0.710f, 1.00f);
+  auto sapphireHover = ImVec4(0.125f, 0.7f, 0.8f, 1.00f);
+  auto sapphireActive = ImVec4(0.125f, 0.8f, 0.9f, 1.00f);
 
   colors[ImGuiCol_Text] = text;
   colors[ImGuiCol_TextDisabled] = ImVec4(0.424f, 0.435f, 0.522f, 1.00f);

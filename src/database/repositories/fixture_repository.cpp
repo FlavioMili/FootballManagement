@@ -11,6 +11,7 @@
 #include <sqlite3.h>
 
 #include <stdexcept>
+#include <utility>
 
 #include "database/SQLLoader.h"
 #include "global/logger.h"
@@ -29,7 +30,7 @@ void FixtureRepository::insertFixture(const Match& match) const
                     SQLITE_TRANSIENT);
   sqlite3_bind_int(stmt, 2, match.getHomeTeamId());
   sqlite3_bind_int(stmt, 3, match.getAwayTeamId());
-  sqlite3_bind_int(stmt, 4, static_cast<int>(match.getMatchType()));
+  sqlite3_bind_int(stmt, 4, std::to_underlying(match.getMatchType()));
 
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
@@ -75,7 +76,7 @@ void FixtureRepository::saveCalendar(const Calendar& calendar) const
                         SQLITE_TRANSIENT);
       sqlite3_bind_int(stmt, 2, match.getHomeTeamId());
       sqlite3_bind_int(stmt, 3, match.getAwayTeamId());
-      sqlite3_bind_int(stmt, 4, static_cast<int>(match.getMatchType()));
+      sqlite3_bind_int(stmt, 4, std::to_underlying(match.getMatchType()));
 
       db_conn->executeStep(stmt);
       sqlite3_clear_bindings(stmt);

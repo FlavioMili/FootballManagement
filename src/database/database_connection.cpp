@@ -18,7 +18,6 @@
 #include "global/logger.h"
 
 DatabaseConnection::DatabaseConnection(const std::string& db_path)
-    : db(nullptr, &sqlite3_close)
 {
   sqlite3* raw_db = nullptr;
   if (sqlite3_open(db_path.c_str(), &raw_db) != SQLITE_OK)
@@ -35,7 +34,7 @@ DatabaseConnection::DatabaseConnection(const std::string& db_path)
   loadSQLFiles();
 }
 
-void DatabaseConnection::loadSQLFiles()
+void DatabaseConnection::loadSQLFiles() const
 {
   try
   {
@@ -49,7 +48,7 @@ void DatabaseConnection::loadSQLFiles()
   }
 }
 
-void DatabaseConnection::initialize()
+void DatabaseConnection::initialize() const
 {
   Logger::debug("DatabaseConnection::initialize called.");
   try
@@ -78,7 +77,7 @@ void DatabaseConnection::initialize()
   }
 }
 
-void DatabaseConnection::beginTransaction()
+void DatabaseConnection::beginTransaction() const
 {
   char* err_msg = nullptr;
   if (sqlite3_exec(db.get(), "BEGIN TRANSACTION;", nullptr, nullptr,
@@ -90,7 +89,7 @@ void DatabaseConnection::beginTransaction()
   }
 }
 
-void DatabaseConnection::commitTransaction()
+void DatabaseConnection::commitTransaction() const
 {
   char* err_msg = nullptr;
   if (sqlite3_exec(db.get(), "COMMIT;", nullptr, nullptr, &err_msg) !=
@@ -102,7 +101,7 @@ void DatabaseConnection::commitTransaction()
   }
 }
 
-void DatabaseConnection::rollbackTransaction()
+void DatabaseConnection::rollbackTransaction() const
 {
   char* err_msg = nullptr;
   if (sqlite3_exec(db.get(), "ROLLBACK;", nullptr, nullptr, &err_msg) !=

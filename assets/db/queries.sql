@@ -142,7 +142,7 @@ INSERT OR IGNORE INTO Fixtures (game_date, home_team_id, away_team_id, match_typ
 UPDATE Fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE game_date = ? AND home_team_id = ? AND away_team_id = ?;
 
 -- @QUERY_ID: DELETE_ALL_FIXTURES
-DELETE FROM Fixtures;
+DELETE FROM Fixtures WHERE 1=1;
 
 -- ==========================================
 -- GAME STATE

@@ -19,17 +19,18 @@ class DatabaseConnection
   explicit DatabaseConnection(const std::string& db_path);
   ~DatabaseConnection() = default;
 
-  void initialize();
+  void initialize() const;
   sqlite3* getRaw() const { return db.get(); }
 
-  void beginTransaction();
-  void commitTransaction();
-  void rollbackTransaction();
+  void beginTransaction() const;
+  void commitTransaction() const;
+  void rollbackTransaction() const;
 
   sqlite3_stmt* prepareStatement(const std::string& sql) const;
   void executeStep(sqlite3_stmt* stmt) const;
 
  private:
-  std::unique_ptr<sqlite3, decltype(&sqlite3_close)> db;
-  void loadSQLFiles();
+  std::unique_ptr<sqlite3, decltype(&sqlite3_close)> db{nullptr,
+                                                        &sqlite3_close};
+  void loadSQLFiles() const;
 };

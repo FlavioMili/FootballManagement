@@ -14,8 +14,5 @@
 class DatabaseException : public std::runtime_error
 {
  public:
-  explicit DatabaseException(const std::string& message)
-      : std::runtime_error(message)
-  {
-  }
+  using std::runtime_error::runtime_error;
 };
