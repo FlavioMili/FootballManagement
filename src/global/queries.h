@@ -31,6 +31,7 @@ enum class Query
   TRANSFER_PLAYER,
   INSERT_FIXTURE,
   UPDATE_FIXTURE_RESULT,
+  DELETE_ALL_FIXTURES,
   UPSERT_GAME_STATE,
   SELECT_GAME_STATE,
   UPSERT_LEAGUE_POINTS,
@@ -70,6 +71,7 @@ const std::unordered_map<std::string, Query> string_to_query_map = {
     // Calendar
     {"INSERT_FIXTURE", Query::INSERT_FIXTURE},
     {"UPDATE_FIXTURE_RESULT", Query::UPDATE_FIXTURE_RESULT},
+    {"DELETE_ALL_FIXTURES", Query::DELETE_ALL_FIXTURES},
 
     // Game State
     {"UPSERT_GAME_STATE", Query::UPSERT_GAME_STATE},
