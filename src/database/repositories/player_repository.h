@@ -24,7 +24,13 @@ class PlayerRepository
   std::vector<Player> loadAllPlayers() const;
   void insertPlayer(const Player& player) const;
   void insertPlayerWithId(const Player& player) const;
+  void insertPlayers(
+      const std::vector<std::reference_wrapper<const Player>>& players) const;
+
   void updatePlayer(const Player& player) const;
+  void updatePlayers(
+      const std::vector<std::reference_wrapper<const Player>>& players) const;
+
   void deletePlayer(PlayerID player_id) const;
   void transferPlayer(PlayerID player_id, uint16_t new_team_id) const;
 

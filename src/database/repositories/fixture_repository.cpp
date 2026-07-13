@@ -60,18 +60,29 @@ std::vector<Match> FixtureRepository::loadAllMatches() const
 
 void FixtureRepository::saveCalendar(const Calendar& calendar) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(
+  sqlite3_stmt* stmt_delete = db_conn->prepareStatement(
       SQLLoader::getQuery(Query::DELETE_ALL_FIXTURES));
-  db_conn->executeStep(stmt);
-  sqlite3_finalize(stmt);
+  db_conn->executeStep(stmt_delete);
+  sqlite3_finalize(stmt_delete);
 
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_FIXTURE));
   for (const auto& pair : calendar.getFullCalendar())
   {
     for (const auto& match : pair.second)
     {
-      insertFixture(match);
+      sqlite3_bind_text(stmt, 1, match.getDate().toString().c_str(), -1,
+                        SQLITE_TRANSIENT);
+      sqlite3_bind_int(stmt, 2, match.getHomeTeamId());
+      sqlite3_bind_int(stmt, 3, match.getAwayTeamId());
+      sqlite3_bind_int(stmt, 4, static_cast<int>(match.getMatchType()));
+
+      db_conn->executeStep(stmt);
+      sqlite3_clear_bindings(stmt);
+      sqlite3_reset(stmt);
     }
   }
+  sqlite3_finalize(stmt);
 }
 
 void FixtureRepository::loadCalendar(Calendar& calendar) const

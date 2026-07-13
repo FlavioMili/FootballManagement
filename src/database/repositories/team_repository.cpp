@@ -73,3 +73,23 @@ void TeamRepository::insertTeamWithId(const Team& team) const
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
+
+void TeamRepository::insertTeamsWithId(
+    const std::vector<std::reference_wrapper<const Team>>& teams) const
+{
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::INSERT_TEAM_WITH_ID));
+
+  for (const auto& team_ref : teams)
+  {
+    const Team& team = team_ref.get();
+    sqlite3_bind_int(stmt, 1, team.getId());
+    bindTeamParams(stmt, team, 2);
+
+    db_conn->executeStep(stmt);
+    sqlite3_clear_bindings(stmt);
+    sqlite3_reset(stmt);
+  }
+
+  sqlite3_finalize(stmt);
+}
