@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <string>
 #include <string_view>
@@ -32,6 +33,9 @@ enum class TransferStatus
 class Player
 {
  public:
+  using StatProgressionFactor =
+      std::function<float(const Player&, const std::string&)>;
+
   Player(PlayerID new_id, TeamID new_team_id, std::string_view new_first_name,
          std::string_view new_last_name, std::string_view new_role,
          Language new_nationality, uint32_t new_wage, uint32_t new_status,
@@ -57,6 +61,8 @@ class Player
   const std::map<std::string, float>& getStats() const;
   void setStats(const std::map<std::string, float>& new_stats);
   void agePlayer();
+  void applyProgressionFactors(
+      const std::vector<StatProgressionFactor>& progression_factors);
   bool checkRetirement() const;
   void train(const std::vector<std::string>& focus_stats);
 
@@ -89,4 +95,6 @@ class Player
 
   // stats container
   std::map<std::string, float> _stats;
+
+  float getAgeProgressionDelta() const;
 };

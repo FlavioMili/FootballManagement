@@ -32,10 +32,10 @@ TEST(PlayerTest, AgePlayerGrowth)
   Player p(1, 10, "Young", "Gun", "Striker", Language::EN, 1000, 1, 20, 3, 180,
            Foot::Right, stats);
 
-  // If age < PLAYER_AGE_FACTOR_DECLINE_AGE (31.5), stats don't decay.
+  const float initial_speed = p.getStats().at("Speed");
   p.agePlayer();
   EXPECT_EQ(p.getAge(), 21);
-  EXPECT_EQ(p.getStats().at("Speed"), 80.0f);
+  EXPECT_GT(p.getStats().at("Speed"), initial_speed);
 }
 
 TEST(PlayerTest, AgePlayerDecline)
@@ -86,4 +86,20 @@ TEST(PlayerTest, Train)
   }
 
   EXPECT_GT(p.getStats().at("Speed"), initial_speed);
+}
+
+TEST(PlayerTest, ApplyProgressionFactorsAllowsMultipleSources)
+{
+  std::map<std::string, float> stats = {{"Speed", 50.0f}, {"Passing", 40.0f}};
+  Player p(1, 10, "Flexible", "Player", "Midfielder", Language::EN, 1000, 1, 25,
+           3, 180, Foot::Right, stats);
+
+  p.applyProgressionFactors(
+      {[](const Player&, const std::string& stat_name) {
+         return stat_name == "Speed" ? 1.5f : 0.0f;
+       },
+       [](const Player&, const std::string&) { return -0.5f; }});
+
+  EXPECT_FLOAT_EQ(p.getStats().at("Speed"), 51.0f);
+  EXPECT_FLOAT_EQ(p.getStats().at("Passing"), 39.5f);
 }
