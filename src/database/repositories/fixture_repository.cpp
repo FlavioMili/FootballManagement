@@ -60,6 +60,11 @@ std::vector<Match> FixtureRepository::loadAllMatches() const
 
 void FixtureRepository::saveCalendar(const Calendar& calendar) const
 {
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::DELETE_ALL_FIXTURES));
+  db_conn->executeStep(stmt);
+  sqlite3_finalize(stmt);
+
   for (const auto& pair : calendar.getFullCalendar())
   {
     for (const auto& match : pair.second)

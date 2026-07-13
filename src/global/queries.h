@@ -36,6 +36,7 @@ enum class Query
   UPSERT_LEAGUE_POINTS,
   SELECT_LEAGUE_POINTS,
   RESET_ALL_LEAGUE_POINTS,
+  DELETE_ALL_FIXTURES,
   COUNT
 };
 
@@ -79,4 +80,6 @@ const std::unordered_map<std::string, Query> string_to_query_map = {
     {"UPSERT_LEAGUE_POINTS", Query::UPSERT_LEAGUE_POINTS},
     {"SELECT_LEAGUE_POINTS", Query::SELECT_LEAGUE_POINTS},
     {"RESET_ALL_LEAGUE_POINTS", Query::RESET_ALL_LEAGUE_POINTS},
+
+    {"DELETE_ALL_FIXTURES", Query::DELETE_ALL_FIXTURES},
 };
