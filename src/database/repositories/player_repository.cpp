@@ -110,6 +110,22 @@ void PlayerRepository::insertPlayer(const Player& player) const
   sqlite3_finalize(stmt);
 }
 
+void PlayerRepository::insertPlayers(
+    const std::vector<std::reference_wrapper<const Player>>& players) const
+{
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_PLAYER));
+  for (const auto& player_ref : players)
+  {
+    const Player& player = player_ref.get();
+    bindPlayerParams(stmt, player, 1);
+    db_conn->executeStep(stmt);
+    sqlite3_clear_bindings(stmt);
+    sqlite3_reset(stmt);
+  }
+  sqlite3_finalize(stmt);
+}
+
 void PlayerRepository::insertPlayerWithId(const Player& player) const
 {
   sqlite3_stmt* stmt = db_conn->prepareStatement(
@@ -131,6 +147,23 @@ void PlayerRepository::updatePlayer(const Player& player) const
   sqlite3_bind_int(stmt, 13, static_cast<int>(player.getId()));
 
   db_conn->executeStep(stmt);
+  sqlite3_finalize(stmt);
+}
+
+void PlayerRepository::updatePlayers(
+    const std::vector<std::reference_wrapper<const Player>>& players) const
+{
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::UPDATE_PLAYER));
+  for (const auto& player_ref : players)
+  {
+    const Player& player = player_ref.get();
+    bindPlayerParams(stmt, player, 1);
+    sqlite3_bind_int(stmt, 13, static_cast<int>(player.getId()));
+    db_conn->executeStep(stmt);
+    sqlite3_clear_bindings(stmt);
+    sqlite3_reset(stmt);
+  }
   sqlite3_finalize(stmt);
 }
 

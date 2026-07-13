@@ -90,9 +90,15 @@ void GameData::generateAndSaveInitialData()
   db_conn->beginTransaction();
   for (const auto& team : all_teams)
   {
-    teamRepo.insertTeamWithId(team);
     _teams.try_emplace(team.getId(), team);
   }
+
+  // Populate _teamsVec so we can use insertTeamsWithId
+  _teamsVec.clear();
+  _teamsVec.reserve(_teams.size());
+  for (auto& p : _teams) _teamsVec.push_back(p.second);
+
+  teamRepo.insertTeamsWithId(_teamsVec);
 
   std::map<uint8_t, std::vector<TeamID>> league_teams_map;
   for (const auto& team : all_teams)
@@ -117,10 +123,16 @@ void GameData::generateAndSaveInitialData()
   auto players = DataGenerator::generatePlayers();
   for (const auto& player : players)
   {
-    playerRepo.insertPlayer(player);
     _players.try_emplace(player.getId(), player);
     _teamPlayers[player.getTeamId()].push_back(player.getId());
   }
+
+  _playersVec.clear();
+  _playersVec.reserve(_players.size());
+  for (auto& p : _players) _playersVec.push_back(p.second);
+
+  playerRepo.insertPlayers(_playersVec);
+
   db_conn->commitTransaction();
 }
 
@@ -169,10 +181,7 @@ bool GameData::saveToDB() const
   db_conn->beginTransaction();
   PlayerRepository playerRepo(db_conn);
 
-  for (const auto& player_ref : _playersVec)
-  {
-    playerRepo.updatePlayer(player_ref.get());
-  }
+  playerRepo.updatePlayers(_playersVec);
 
   db_conn->commitTransaction();
   return true;
@@ -317,10 +326,16 @@ bool GameData::removePlayer(PlayerID id)
   bool erased = _players.erase(id) > 0;
   if (erased && !_playersVec.empty())
   {
-    _playersVec.erase(
-        std::remove_if(_playersVec.begin(), _playersVec.end(),
-                       [id](const Player& p) { return p.getId() == id; }),
-        _playersVec.end());
+    auto it = std::find_if(_playersVec.begin(), _playersVec.end(),
+                           [id](const Player& p) { return p.getId() == id; });
+    if (it != _playersVec.end())
+    {
+      if (it != _playersVec.end() - 1)
+      {
+        std::swap(*it, _playersVec.back());
+      }
+      _playersVec.pop_back();
+    }
   }
   return erased;
 }

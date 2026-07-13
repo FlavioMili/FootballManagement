@@ -24,6 +24,8 @@ class TeamRepository
   std::vector<Team> loadAllTeams() const;
   void insertTeam(const Team& team) const;
   void insertTeamWithId(const Team& team) const;
+  void insertTeamsWithId(
+      const std::vector<std::reference_wrapper<const Team>>& teams) const;
 
  private:
   std::shared_ptr<DatabaseConnection> db_conn;
