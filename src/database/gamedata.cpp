@@ -96,7 +96,7 @@ void GameData::generateAndSaveInitialData()
   // Populate _teamsVec so we can use insertTeamsWithId
   _teamsVec.clear();
   _teamsVec.reserve(_teams.size());
-  for (auto& p : _teams) _teamsVec.push_back(p.second);
+  for (auto& [id, team] : _teams) _teamsVec.push_back(team);
 
   teamRepo.insertTeamsWithId(_teamsVec);
 
@@ -118,7 +118,7 @@ void GameData::generateAndSaveInitialData()
   // populated!
   _teamsVec.clear();
   _teamsVec.reserve(_teams.size());
-  for (auto& p : _teams) _teamsVec.push_back(p.second);
+  for (auto& [id, team] : _teams) _teamsVec.push_back(team);
 
   auto players = DataGenerator::generatePlayers();
   for (const auto& player : players)
@@ -129,7 +129,7 @@ void GameData::generateAndSaveInitialData()
 
   _playersVec.clear();
   _playersVec.reserve(_players.size());
-  for (auto& p : _players) _playersVec.push_back(p.second);
+  for (auto& [id, player] : _players) _playersVec.push_back(player);
 
   playerRepo.insertPlayers(_playersVec);
 
@@ -326,8 +326,8 @@ bool GameData::removePlayer(PlayerID id)
   bool erased = _players.erase(id) > 0;
   if (erased && !_playersVec.empty())
   {
-    auto it = std::find_if(_playersVec.begin(), _playersVec.end(),
-                           [id](const Player& p) { return p.getId() == id; });
+    auto it = std::ranges::find_if(
+        _playersVec, [id](const Player& p) { return p.getId() == id; });
     if (it != _playersVec.end())
     {
       if (it != _playersVec.end() - 1)
