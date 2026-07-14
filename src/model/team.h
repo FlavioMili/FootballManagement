@@ -96,7 +96,8 @@ class Team
    * @brief Generates the best starting XI automatically based on stats.
    * @param stats_config The configuration used to evaluate players.
    */
-  void generateStartingXI(const StatsConfig& stats_config);
+  void generateStartingXI(const class GameData& gamedata,
+                          const StatsConfig& stats_config);
 
   // Finances access
 

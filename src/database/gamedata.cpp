@@ -21,12 +21,6 @@
 #include "global/logger.h"
 #include "global/paths.h"
 
-GameData& GameData::instance()
-{
-  static GameData instance;
-  return instance;
-}
-
 GameData::GameData() = default;
 
 // ---------------- DB ----------------
@@ -120,7 +114,7 @@ void GameData::generateAndSaveInitialData()
   _teamsVec.reserve(_teams.size());
   for (auto& [id, team] : _teams) _teamsVec.push_back(team);
 
-  auto players = DataGenerator::generatePlayers();
+  auto players = DataGenerator::generatePlayers(*this);
   for (const auto& player : players)
   {
     _players.try_emplace(player.getId(), player);

@@ -32,7 +32,7 @@ class Game
    * @brief Constructs a new Game instance, initializing database connection and
    * game state.
    */
-  Game();
+  explicit Game(std::shared_ptr<class GameData> gd);
 
   /**
    * @brief Advances the game time by one day, simulating any matches or events
@@ -90,6 +90,7 @@ class Game
   void updateStandings(const Match& match);
 
   std::shared_ptr<DatabaseConnection> db_conn;
+  std::shared_ptr<class GameData> gamedata;
   Calendar calendar;
   GameDateValue currentDate;
   uint8_t current_season = 1;

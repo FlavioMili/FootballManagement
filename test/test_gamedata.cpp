@@ -18,6 +18,8 @@ class GameDataTest : public ::testing::Test
   {
     // Use unique IDs for tests to not clash with global state
   }
+
+  GameData gamedata;
 };
 
 #include <algorithm>
@@ -31,17 +33,17 @@ TEST_F(GameDataTest, TestAddRemovePlayer)
            Foot::Right, {});
 
   // Add player
-  GameData::instance().addPlayer(pid, p);
+  gamedata.addPlayer(pid, p);
 
-  auto players = GameData::instance().getPlayersForTeam(tid);
+  auto players = gamedata.getPlayersForTeam(tid);
   bool found = std::ranges::any_of(players, [pid](const auto& player_ref)
                                    { return player_ref.get().getId() == pid; });
   EXPECT_TRUE(found) << "Player was not found after addPlayer";
 
   // Remove player
-  EXPECT_TRUE(GameData::instance().removePlayer(pid));
+  EXPECT_TRUE(gamedata.removePlayer(pid));
 
-  players = GameData::instance().getPlayersForTeam(tid);
+  players = gamedata.getPlayersForTeam(tid);
   found = std::ranges::any_of(players, [pid](const auto& player_ref)
                               { return player_ref.get().getId() == pid; });
   EXPECT_FALSE(found) << "Player was still found after removePlayer";
@@ -55,24 +57,24 @@ TEST_F(GameDataTest, TestTransferPlayer)
 
   Player p(pid, source_tid, "Test", "Transfer", "CM", Language::EN, 1000, 0, 20,
            2, 180, Foot::Right, {});
-  GameData::instance().addPlayer(pid, p);
+  gamedata.addPlayer(pid, p);
 
-  GameData::instance().transferPlayer(pid, target_tid);
+  gamedata.transferPlayer(pid, target_tid);
 
-  auto source_players = GameData::instance().getPlayersForTeam(source_tid);
+  auto source_players = gamedata.getPlayersForTeam(source_tid);
   bool found_in_source =
       std::ranges::any_of(source_players, [pid](const auto& player_ref)
                           { return player_ref.get().getId() == pid; });
   EXPECT_FALSE(found_in_source)
       << "Player was still in source team after transfer";
 
-  auto target_players = GameData::instance().getPlayersForTeam(target_tid);
+  auto target_players = gamedata.getPlayersForTeam(target_tid);
   bool found_in_target =
       std::ranges::any_of(target_players, [pid](const auto& player_ref)
                           { return player_ref.get().getId() == pid; });
   EXPECT_TRUE(found_in_target)
       << "Player was not in target team after transfer";
 
-  EXPECT_EQ(GameData::instance().getPlayer(pid)->get().getTeamId(), target_tid);
-  GameData::instance().removePlayer(pid);
+  EXPECT_EQ(gamedata.getPlayer(pid)->get().getTeamId(), target_tid);
+  gamedata.removePlayer(pid);
 }

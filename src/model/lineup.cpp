@@ -99,7 +99,8 @@ std::string Lineup::toString() const
   return oss.str();
 }
 
-void Lineup::generateStartingXI(const std::vector<PlayerID>& allPlayerIDs,
+void Lineup::generateStartingXI(const class GameData& gamedata,
+                                const std::vector<PlayerID>& allPlayerIDs,
                                 const StatsConfig& stats_config)
 {
   // Clear previous lineup
@@ -112,7 +113,7 @@ void Lineup::generateStartingXI(const std::vector<PlayerID>& allPlayerIDs,
   // Separate GK from outfield
   for (const auto& playerID : allPlayerIDs)
   {
-    const Player& p = GameData::instance().getPlayers().at(playerID);
+    const Player& p = gamedata.getPlayers().at(playerID);
     if (p.getRole() == "Goalkeeper")
     {
       if (!bestGK ||

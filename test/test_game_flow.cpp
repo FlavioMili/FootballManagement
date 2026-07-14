@@ -13,6 +13,7 @@
 #include <string>
 
 #include "controller/game_controller.h"
+#include "database/gamedata.h"
 #include "global/logger.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/main_game_scene.h"
@@ -33,10 +34,12 @@ class GameFlowTest : public ::testing::Test
     // Initialize Logger to prevent segfaults when Game or Database try to log
     Logger::init();
 
-    game = std::make_unique<Game>();
-    controller = std::make_unique<GameController>(std::move(game));
+    gamedata = std::make_shared<GameData>();
+    game = std::make_unique<Game>(gamedata);
+    controller = std::make_unique<GameController>(std::move(game), gamedata);
   }
 
+  std::shared_ptr<GameData> gamedata;
   std::unique_ptr<Game> game;
   std::unique_ptr<GameController> controller;
 };

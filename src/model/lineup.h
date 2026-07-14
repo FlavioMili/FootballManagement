@@ -144,10 +144,12 @@ class Lineup
 
   /**
    * @brief Generates a starting XI automatically.
-   * @param allPlayers A vector of all available player IDs.
+   * @param gamedata The game data containing player information.
+   * @param allPlayerIDs A vector of all available player IDs.
    * @param stats_config The stats configuration for evaluating players.
    */
-  void generateStartingXI(const std::vector<PlayerID>& allPlayers,
+  void generateStartingXI(const class GameData& gamedata,
+                          const std::vector<PlayerID>& allPlayerIDs,
                           const StatsConfig& stats_config);
 
   /**

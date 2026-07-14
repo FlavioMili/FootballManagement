@@ -21,10 +21,11 @@
 #include "model/league.h"
 #include "model/team.h"
 
-Game::Game() : currentDate(START_DATE)
+Game::Game(std::shared_ptr<GameData> gd)
+    : gamedata(std::move(gd)), currentDate(START_DATE)
 {
   db_conn = std::make_shared<DatabaseConnection>(DATABASE_PATH);
-  GameData::instance().loadFromDB(db_conn);
+  (*gamedata).loadFromDB(db_conn);
   loadGame();
 }
 
@@ -47,12 +48,12 @@ void Game::loadGame()
     current_season = 1;
     managed_team_id = FREE_AGENTS_TEAM_ID;  // Or some other default
     currentDate = START_DATE;
-    calendar.generate(currentDate);
+    calendar.generate((*gamedata), currentDate);
     Logger::debug("First run, initializing game state.");
   }
   // Ensure managed team is valid
-  if (GameData::instance().getTeams().find(managed_team_id) ==
-      GameData::instance().getTeams().end())
+  if ((*gamedata).getTeams().find(managed_team_id) ==
+      (*gamedata).getTeams().end())
   {
     managed_team_id = FREE_AGENTS_TEAM_ID;
   }
@@ -71,7 +72,7 @@ void Game::saveGame()
                                   currentDate.toString());
     fixtureRepo.saveCalendar(calendar);
 
-    for (const auto& [id, league] : GameData::instance().getLeagues())
+    for (const auto& [id, league] : (*gamedata).getLeagues())
     {
       leagueRepo.saveLeaguePoints(league);
     }
@@ -110,10 +111,10 @@ void Game::simulateMatches(std::vector<Match>& matches)
 {
   for (auto& match : matches)
   {
-    match.simulate(GameData::instance());
+    match.simulate((*gamedata));
 
-    auto home_team_opt = GameData::instance().getTeam(match.getHomeTeamId());
-    auto away_team_opt = GameData::instance().getTeam(match.getAwayTeamId());
+    auto home_team_opt = (*gamedata).getTeam(match.getHomeTeamId());
+    auto away_team_opt = (*gamedata).getTeam(match.getAwayTeamId());
 
     if (home_team_opt && away_team_opt)
     {
@@ -145,16 +146,15 @@ void Game::updateStandings(const Match& match)
   }
   Logger::debug("Updating standings for league match.");
 
-  auto home_team_opt = GameData::instance().getTeam(match.getHomeTeamId());
+  auto home_team_opt = (*gamedata).getTeam(match.getHomeTeamId());
   if (!home_team_opt) return;
   Team& home_team = home_team_opt->get();
 
-  auto away_team_opt = GameData::instance().getTeam(match.getAwayTeamId());
+  auto away_team_opt = (*gamedata).getTeam(match.getAwayTeamId());
   if (!away_team_opt) return;
   Team& away_team = away_team_opt->get();
 
-  League& league =
-      GameData::instance().getLeagues().at(home_team.getLeagueId());
+  League& league = (*gamedata).getLeagues().at(home_team.getLeagueId());
 
   if (match.getHomeScore() > match.getAwayScore())
   {
@@ -176,7 +176,7 @@ void Game::endSeason()
   std::cout << "--- Season " << static_cast<int>(current_season)
             << " has concluded. ---"
             << "\n";
-  GameData::instance().ageAllPlayers();
+  (*gamedata).ageAllPlayers();
   current_season++;
 }
 
@@ -188,11 +188,11 @@ void Game::handleSeasonTransition()
 
 void Game::startNewSeason()
 {
-  for (auto& [id, league] : GameData::instance().getLeagues())
+  for (auto& [id, league] : (*gamedata).getLeagues())
   {
     league.resetPoints();
   }
-  calendar.generate(currentDate);
+  calendar.generate((*gamedata), currentDate);
 }
 
 const GameDateValue& Game::getCurrentDate() const { return currentDate; }
@@ -207,10 +207,10 @@ void Game::setManagedTeamId(uint16_t id) { managed_team_id = id; }
 
 void Game::trainPlayers(const std::vector<uint32_t>& player_ids)
 {
-  auto stats_config = GameData::instance().getStatsConfig();
+  auto stats_config = (*gamedata).getStatsConfig();
   for (auto& player_id : player_ids)
   {
-    Player& player = GameData::instance().getPlayers().at(player_id);
+    Player& player = (*gamedata).getPlayers().at(player_id);
     const auto& focus_stats =
         stats_config.role_focus.at(player.getRole()).stats;
     player.train(focus_stats);

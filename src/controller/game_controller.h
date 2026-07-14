@@ -34,7 +34,8 @@ class GameController
    * @brief Constructs a new GameController.
    * @param game_ptr Unique pointer to the Game model instance.
    */
-  explicit GameController(std::unique_ptr<Game> game_ptr);
+  explicit GameController(std::unique_ptr<Game> game_ptr,
+                          std::shared_ptr<class GameData> gd);
 
   /**
    * @brief Gets the current season year.
@@ -134,4 +135,5 @@ class GameController
 
  private:
   std::unique_ptr<Game> game;
+  std::shared_ptr<class GameData> gamedata;
 };

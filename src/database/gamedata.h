@@ -37,9 +37,9 @@ class GameData
 {
  public:
   /**
-   * @brief Access the singleton instance of GameData.
+   * @brief Constructs a new GameData instance.
    */
-  static GameData& instance();
+  GameData();
 
   GameData(const GameData&) = delete;
   GameData& operator=(const GameData&) = delete;
@@ -102,8 +102,6 @@ class GameData
   void transferPlayer(PlayerID id, TeamID new_team_id);
 
  private:
-  GameData();
-
   std::unordered_map<LeagueID, League> _leagues;
   std::vector<std::reference_wrapper<const League>> _leaguesVec;
   std::unordered_map<TeamID, Team> _teams;
