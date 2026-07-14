@@ -1,0 +1,16 @@
+PROJECT_NAME           = "Football Management"
+PROJECT_BRIEF          = "A terminal-based football management simulation"
+OUTPUT_DIRECTORY       = docs
+GENERATE_LATEX         = NO
+GENERATE_MAN           = NO
+GENERATE_RTF           = NO
+INPUT                  = src/ include/ README.md docs/ARCHITECTURE.md
+RECURSIVE              = YES
+USE_MDFILE_AS_MAINPAGE = README.md
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+HAVE_DOT               = NO
+# If we don't have dot, Doxygen can still generate some basic diagrams,
+# but our main ARCHITECTURE.md will have Mermaid diagrams for GitHub and Doxygen.
+# To support mermaid natively in modern doxygen, you just include it in markdown.

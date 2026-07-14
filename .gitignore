@@ -9,6 +9,6 @@ heaptrack*
 assets/config/settings.json
 add_copyright_header.sh
 logs
-docs
+docs/html/
 .DS_Store
 assets/imgui.ini
