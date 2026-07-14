@@ -9,6 +9,7 @@
 #include <SDL3/SDL.h>
 #include <gtest/gtest.h>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 
@@ -34,13 +35,19 @@ class GameFlowTest : public ::testing::Test
     // Initialize Logger to prevent segfaults when Game or Database try to log
     Logger::init();
 
-    gamedata = std::make_shared<GameData>();
-    game = std::make_unique<Game>(gamedata);
-    controller = std::make_unique<GameController>(std::move(game), gamedata);
+    std::string test_db_path = "test_game_flow.db";
+    std::filesystem::remove(test_db_path);
+    controller = std::make_unique<GameController>();
+    // We cannot easily inject a path into newGame unless we modify it, so for
+    // testing we can just call newGame(99) which maps to slot 99
+    controller->newGame(99);
   }
 
-  std::shared_ptr<GameData> gamedata;
-  std::unique_ptr<Game> game;
+  void TearDown() override
+  {
+    // cleanup
+  }
+
   std::unique_ptr<GameController> controller;
 };
 

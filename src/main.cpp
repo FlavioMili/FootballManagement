@@ -22,15 +22,14 @@ int main()
   srand(static_cast<uint>(time(0)));
   try
   {
-    std::filesystem::remove(DATABASE_PATH);
-    auto gamedata = std::make_shared<GameData>();
-    auto game = std::make_unique<Game>(gamedata);
-    auto controller =
-        std::make_unique<GameController>(std::move(game), gamedata);
+    auto controller = std::make_unique<GameController>();
 
     GUIView view(*controller);
     view.run();
-    controller->saveGame();
+    if (controller->isGameLoaded())
+    {
+      controller->saveGame();
+    }
   }
   catch (const std::exception& e)
   {

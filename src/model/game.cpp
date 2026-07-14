@@ -21,8 +21,8 @@
 #include "model/league.h"
 #include "model/team.h"
 
-Game::Game(std::shared_ptr<GameData> gd)
-    : db_conn(std::make_shared<DatabaseConnection>(DATABASE_PATH)),
+Game::Game(std::shared_ptr<GameData> gd, const std::string& db_path)
+    : db_conn(std::make_shared<DatabaseConnection>(db_path)),
       gamedata(std::move(gd)),
       currentDate(START_DATE)
 {

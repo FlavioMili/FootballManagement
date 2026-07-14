@@ -32,10 +32,24 @@ class GameController
  public:
   /**
    * @brief Constructs a new GameController.
-   * @param game_ptr Unique pointer to the Game model instance.
    */
-  explicit GameController(std::unique_ptr<Game> game_ptr,
-                          std::shared_ptr<class GameData> gd);
+  GameController();
+
+  /**
+   * @brief Starts a new game on the given save slot.
+   */
+  void newGame(int slot);
+
+  /**
+   * @brief Loads an existing game from the given save slot.
+   * @return True if loaded successfully, false otherwise.
+   */
+  bool loadGame(int slot);
+
+  /**
+   * @brief Checks if a game is currently loaded.
+   */
+  bool isGameLoaded() const;
 
   /**
    * @brief Gets the current season year.
@@ -136,4 +150,6 @@ class GameController
  private:
   std::unique_ptr<Game> game;
   std::shared_ptr<class GameData> gamedata;
+
+  std::string getSavePath(int slot) const;
 };

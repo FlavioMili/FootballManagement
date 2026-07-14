@@ -8,13 +8,56 @@
 
 #include "controller/game_controller.h"
 
+#include <SDL3/SDL.h>
+
+#include <filesystem>
+
 #include "database/gamedata.h"
 #include "global/global.h"
 
-GameController::GameController(std::unique_ptr<Game> game_ptr,
-                               std::shared_ptr<class GameData> gd)
-    : game(std::move(game_ptr)), gamedata(std::move(gd))
+GameController::GameController() : game(nullptr), gamedata(nullptr) {}
+
+std::string GameController::getSavePath(int slot) const
 {
+  char* prefPath = SDL_GetPrefPath("FlavioMili", "FootballManagement");
+  if (!prefPath)
+  {
+    return "save_" + std::to_string(slot) + ".db";
+  }
+  std::filesystem::path p(prefPath);
+  SDL_free(prefPath);
+
+  std::filesystem::create_directories(p);
+  p /= ("save_" + std::to_string(slot) + ".db");
+  return p.string();
+}
+
+void GameController::newGame(int slot)
+{
+  std::string path = getSavePath(slot);
+  if (std::filesystem::exists(path))
+  {
+    std::filesystem::remove(path);
+  }
+  gamedata = std::make_shared<GameData>();
+  game = std::make_unique<Game>(gamedata, path);
+}
+
+bool GameController::loadGame(int slot)
+{
+  std::string path = getSavePath(slot);
+  if (!std::filesystem::exists(path))
+  {
+    return false;
+  }
+  gamedata = std::make_shared<GameData>();
+  game = std::make_unique<Game>(gamedata, path);
+  return true;
+}
+
+bool GameController::isGameLoaded() const
+{
+  return game != nullptr && gamedata != nullptr;
 }
 
 int GameController::getCurrentSeason() const
