@@ -90,7 +90,7 @@ class GameController
    * @param team_id The ID of the team.
    * @return A vector of constant reference wrappers to the players.
    */
-  std::vector<std::reference_wrapper<const Player>> getPlayersForTeam(
+  const std::vector<std::reference_wrapper<const Player>>& getPlayersForTeam(
       uint16_t team_id) const;
 
   /**

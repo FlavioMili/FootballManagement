@@ -117,8 +117,8 @@ void GameData::generateAndSaveInitialData()
   auto players = DataGenerator::generatePlayers(*this);
   for (const auto& player : players)
   {
-    _players.try_emplace(player.getId(), player);
-    _teamPlayers[player.getTeamId()].push_back(player.getId());
+    auto it = _players.try_emplace(player.getId(), player).first;
+    _teamPlayers[player.getTeamId()].push_back(it->second);
   }
 
   _playersVec.clear();
@@ -162,8 +162,8 @@ void GameData::loadExistingData()
   auto players = playerRepo.loadAllPlayers();
   for (const auto& player : players)
   {
-    _players.try_emplace(player.getId(), player);
-    _teamPlayers[player.getTeamId()].push_back(player.getId());
+    auto it = _players.try_emplace(player.getId(), player).first;
+    _teamPlayers[player.getTeamId()].push_back(it->second);
   }
   Logger::debug("Loaded all data from database.");
 }
@@ -247,12 +247,12 @@ GameData::getTeamsVector() const
 // ---------------- Player ----------------
 void GameData::addPlayer(PlayerID id, const Player& player)
 {
-  _players.try_emplace(id, player);
+  auto it = _players.try_emplace(id, player).first;
   if (!_playersVec.empty())
   {
-    _playersVec.push_back(_players.at(id));
+    _playersVec.push_back(it->second);
   }
-  _teamPlayers[player.getTeamId()].push_back(id);
+  _teamPlayers[player.getTeamId()].push_back(it->second);
 }
 
 std::optional<std::reference_wrapper<const Player>> GameData::getPlayer(
@@ -285,24 +285,16 @@ void GameData::ageAllPlayers()
   }
 }
 
-std::vector<std::reference_wrapper<const Player>> GameData::getPlayersForTeam(
-    TeamID team_id) const
+const std::vector<std::reference_wrapper<const Player>>&
+GameData::getPlayersForTeam(TeamID team_id) const
 {
-  std::vector<std::reference_wrapper<const Player>> players;
+  static const std::vector<std::reference_wrapper<const Player>> empty_vec;
   auto it = _teamPlayers.find(team_id);
   if (it != _teamPlayers.end())
   {
-    players.reserve(it->second.size());
-    for (PlayerID pid : it->second)
-    {
-      auto player_it = _players.find(pid);
-      if (player_it != _players.end())
-      {
-        players.push_back(player_it->second);
-      }
-    }
+    return it->second;
   }
-  return players;
+  return empty_vec;
 }
 
 bool GameData::removePlayer(PlayerID id)
@@ -312,7 +304,8 @@ bool GameData::removePlayer(PlayerID id)
   {
     TeamID team_id = player_it->second.getTeamId();
     auto& team_players = _teamPlayers[team_id];
-    std::erase(team_players, id);
+    std::erase_if(team_players,
+                  [id](const auto& ref) { return ref.get().getId() == id; });
   }
 
   bool erased = _players.erase(id) > 0;
@@ -343,9 +336,10 @@ void GameData::transferPlayer(PlayerID id, TeamID new_team_id)
   it->second.setTeamId(new_team_id);
 
   auto& old_team_vec = _teamPlayers[old_team_id];
-  std::erase(old_team_vec, id);
+  std::erase_if(old_team_vec,
+                [id](const auto& ref) { return ref.get().getId() == id; });
 
-  _teamPlayers[new_team_id].push_back(id);
+  _teamPlayers[new_team_id].push_back(it->second);
 }
 
 void from_json(const nlohmann::json& j, RoleFocus& rf)

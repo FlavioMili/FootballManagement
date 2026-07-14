@@ -62,7 +62,7 @@ GameController::getTeams() const
   return (*gamedata).getTeamsVector();
 }
 
-std::vector<std::reference_wrapper<const Player>>
+const std::vector<std::reference_wrapper<const Player>>&
 GameController::getPlayersForTeam(uint16_t team_id) const
 {
   return (*gamedata).getPlayersForTeam(team_id);
