@@ -95,11 +95,11 @@ void LeagueRepository::saveLeaguePoints(const League& league) const
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       SQLLoader::getQuery(Query::UPSERT_LEAGUE_POINTS));
 
-  for (const auto& pair : league.getLeaderboard())
+  for (const auto& [teamId, points] : league.getLeaderboard())
   {
     sqlite3_bind_int(stmt, 1, league.getId());
-    sqlite3_bind_int(stmt, 2, pair.first);
-    sqlite3_bind_int(stmt, 3, pair.second);
+    sqlite3_bind_int(stmt, 2, teamId);
+    sqlite3_bind_int(stmt, 3, points);
 
     db_conn->executeStep(stmt);
 

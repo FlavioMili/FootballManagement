@@ -24,16 +24,38 @@
 
 class DatabaseConnection;
 
+/**
+ * @class GameData
+ * @brief Singleton class that acts as an in-memory cache for the database
+ * state.
+ *
+ * GameData is responsible for loading the initial game state from SQLite,
+ * holding all core entities (Leagues, Teams, Players), and facilitating
+ * high-performance read/write access during gameplay without hitting the disk.
+ */
 class GameData
 {
  public:
+  /**
+   * @brief Access the singleton instance of GameData.
+   */
   static GameData& instance();
 
   GameData(const GameData&) = delete;
   GameData& operator=(const GameData&) = delete;
 
   // ---------------- DB ----------------
+  /**
+   * @brief Loads the initial game state from the database.
+   * @param database_ptr Shared pointer to the active DatabaseConnection.
+   * @return True if successful, false otherwise.
+   */
   bool loadFromDB(std::shared_ptr<DatabaseConnection> database_ptr);
+
+  /**
+   * @brief Saves the current in-memory state back to the database.
+   * @return True if successful, false otherwise.
+   */
   bool saveToDB() const;
 
   // ---------------- StatsConfig ----------------

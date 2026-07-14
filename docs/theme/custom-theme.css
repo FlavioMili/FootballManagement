@@ -1,0 +1,74 @@
+/* =========================================================================
+   Catppuccin Integration for Doxygen Awesome
+   Light Mode: Latte
+   Dark Mode: Frappé
+   ========================================================================= */
+
+/* Use html:not(.dark-mode) to match doxygen-awesome-css specificity for light mode */
+html:not(.dark-mode) {
+    /* Catppuccin Latte (Light Theme) */
+    
+    /* Base and Surfaces */
+    --page-background-color: #eff1f5; /* Base */
+    --header-background-color: #e6e9ef; /* Mantle */
+    --header-background: var(--header-background-color);
+    
+    /* Foreground / Text */
+    --page-foreground-color: #4c4f69; /* Text */
+    --page-secondary-foreground-color: #5c5f77; /* Subtext0 */
+    --on-primary-color: #eff1f5; /* Base (for text on primary buttons) */
+
+    /* Primary Accent (Sapphire/Blue) */
+    --primary-color: #209fb5; /* Sapphire */
+    --primary-dark-color: #179299; /* Teal */
+    --primary-light-color: #1e66f5; /* Blue */
+    --primary-lighter-color: #7287fd; /* Lavender */
+
+    /* Links and Accents */
+    --link-color: var(--primary-light-color);
+
+    /* Separators and borders */
+    --separator-color: #ccd0da; /* Surface0 */
+    --odd-color: rgba(204, 208, 218, 0.3); /* Surface0 with opacity */
+
+    /* Code Blocks */
+    --fragment-background: #e6e9ef; /* Mantle */
+    --fragment-foreground: #4c4f69; /* Text */
+
+    /* Typography */
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+}
+
+/* Use html:not(.light-mode) inside media query to match dark mode specificity */
+@media (prefers-color-scheme: dark) {
+    html:not(.light-mode) {
+        /* Catppuccin Frappé (Dark Theme) */
+        
+        /* Base and Surfaces */
+        --page-background-color: #303446; /* Base */
+        --header-background-color: #292c3c; /* Mantle */
+        --header-background: var(--header-background-color);
+        
+        /* Foreground / Text */
+        --page-foreground-color: #c6d0f5; /* Text */
+        --page-secondary-foreground-color: #b5bfe2; /* Subtext1 */
+        --on-primary-color: #303446; /* Base (for text on primary buttons) */
+
+        /* Primary Accent (Sapphire/Blue) */
+        --primary-color: #85c1dc; /* Sapphire */
+        --primary-dark-color: #81c8be; /* Teal */
+        --primary-light-color: #8caaee; /* Blue */
+        --primary-lighter-color: #babbf1; /* Lavender */
+
+        /* Links and Accents */
+        --link-color: var(--primary-light-color);
+
+        /* Separators and borders */
+        --separator-color: #414559; /* Surface0 */
+        --odd-color: rgba(65, 69, 89, 0.3); /* Surface0 with opacity */
+
+        /* Code Blocks */
+        --fragment-background: #292c3c; /* Mantle */
+        --fragment-foreground: #c6d0f5; /* Text */
+    }
+}

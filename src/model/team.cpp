@@ -41,10 +41,8 @@ void Team::addPlayerID(PlayerID player_id) { player_ids.push_back(player_id); }
 
 bool Team::removePlayerID(PlayerID player_id)
 {
-  auto it = std::remove(player_ids.begin(), player_ids.end(), player_id);
-  if (it != player_ids.end())
+  if (std::erase(player_ids, player_id) > 0)
   {
-    player_ids.erase(it, player_ids.end());
     return true;
   }
   return false;

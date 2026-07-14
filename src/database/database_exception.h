@@ -11,6 +11,10 @@
 #include <stdexcept>
 #include <string>
 
+/**
+ * @class DatabaseException
+ * @brief Exception thrown for database-related errors.
+ */
 class DatabaseException : public std::runtime_error
 {
  public:

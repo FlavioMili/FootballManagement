@@ -17,22 +17,63 @@
 #include "model/gamedate.h"
 #include "model/match.h"
 
+/**
+ * @class Game
+ * @brief Represents the core game state and logic.
+ *
+ * The Game class orchestrates the simulation mechanics, handling the
+ * progression of time, saving and loading the game state, and triggering match
+ * simulations.
+ */
 class Game
 {
  public:
+  /**
+   * @brief Constructs a new Game instance, initializing database connection and
+   * game state.
+   */
   Game();
 
-  // Simulation
+  /**
+   * @brief Advances the game time by one day, simulating any matches or events
+   * scheduled for the current date.
+   */
   void advanceDay();
 
-  // Accessors
+  /**
+   * @brief Retrieves the current in-game date.
+   * @return A constant reference to the current GameDateValue.
+   */
   const GameDateValue& getCurrentDate() const;
+
+  /**
+   * @brief Retrieves the calendar containing all fixtures.
+   * @return A constant reference to the game Calendar.
+   */
   const Calendar& getCalendar() const;
+
+  /**
+   * @brief Retrieves the current season number.
+   * @return The current season as an integer.
+   */
   int getCurrentSeason() const;
+
+  /**
+   * @brief Retrieves the ID of the team currently managed by the user.
+   * @return The managed team's ID.
+   */
   uint16_t getManagedTeamId() const;
+
+  /**
+   * @brief Sets the team managed by the user.
+   * @param id The ID of the team to manage.
+   */
   void setManagedTeamId(uint16_t id);
 
-  // Save / load game state
+  /**
+   * @brief Saves the current game state, including calendar and game variables,
+   * to the database.
+   */
   void saveGame();
 
  private:

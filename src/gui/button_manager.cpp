@@ -78,10 +78,8 @@ int ButtonManager::addButton(float x, float y, float w, float h,
 
 void ButtonManager::removeButton(int buttonId)
 {
-  buttons.erase(std::remove_if(buttons.begin(), buttons.end(),
-                               [buttonId](const Button& btn)
-                               { return btn.id == buttonId; }),
-                buttons.end());
+  std::erase_if(buttons,
+                [buttonId](const Button& btn) { return btn.id == buttonId; });
 }
 
 void ButtonManager::clearButtons()
@@ -98,8 +96,8 @@ void ButtonManager::clearButtons()
 
 void ButtonManager::setButtonStyle(int buttonId, const ButtonStyle& style)
 {
-  auto it = std::find_if(buttons.begin(), buttons.end(), [buttonId](Button& btn)
-                         { return btn.id == buttonId; });
+  auto it = std::ranges::find_if(
+      buttons, [buttonId](Button& btn) { return btn.id == buttonId; });
   if (it != buttons.end())
   {
     it->style = style;
@@ -108,8 +106,8 @@ void ButtonManager::setButtonStyle(int buttonId, const ButtonStyle& style)
 
 void ButtonManager::setButtonVisible(int buttonId, bool visible)
 {
-  auto it = std::find_if(buttons.begin(), buttons.end(), [buttonId](Button& btn)
-                         { return btn.id == buttonId; });
+  auto it = std::ranges::find_if(
+      buttons, [buttonId](Button& btn) { return btn.id == buttonId; });
   if (it != buttons.end())
   {
     it->isVisible = visible;
@@ -118,8 +116,8 @@ void ButtonManager::setButtonVisible(int buttonId, bool visible)
 
 void ButtonManager::setButtonText(int buttonId, const std::string& text)
 {
-  auto it = std::find_if(buttons.begin(), buttons.end(), [buttonId](Button& btn)
-                         { return btn.id == buttonId; });
+  auto it = std::ranges::find_if(
+      buttons, [buttonId](Button& btn) { return btn.id == buttonId; });
   if (it != buttons.end())
   {
     it->label = text;
@@ -167,8 +165,8 @@ void ButtonManager::render()
 
 void ButtonManager::setButtonSelected(int buttonId, bool selected)
 {
-  auto it = std::find_if(buttons.begin(), buttons.end(), [buttonId](Button& btn)
-                         { return btn.id == buttonId; });
+  auto it = std::ranges::find_if(
+      buttons, [buttonId](Button& btn) { return btn.id == buttonId; });
   if (it != buttons.end())
   {
     it->isSelected = selected;
@@ -264,8 +262,8 @@ void ButtonManager::updateButtonPosition(size_t buttonIndex, SDL_FRect newRect)
 
 void ButtonManager::updateButtonPositionById(int buttonId, SDL_FRect newRect)
 {
-  auto it = std::find_if(buttons.begin(), buttons.end(), [buttonId](Button& btn)
-                         { return btn.id == buttonId; });
+  auto it = std::ranges::find_if(
+      buttons, [buttonId](Button& btn) { return btn.id == buttonId; });
   if (it != buttons.end())
   {
     it->rect = newRect;

@@ -218,3 +218,17 @@ if(CPPCHECK)
     src
   )
 endif()
+
+# -----------------------------
+# Documentation (Doxygen)
+# -----------------------------
+find_package(Doxygen)
+if (DOXYGEN_FOUND)
+  # Create a custom target that runs doxygen using our highly configured Doxyfile
+  add_custom_target(docs
+    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Generating API documentation with Doxygen and Catppuccin theme"
+    VERBATIM
+  )
+endif()

@@ -147,9 +147,8 @@ void MainGameScene::renderMainArea()
       const auto& leaderboard = league.getLeaderboard();
       std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(),
                                                     leaderboard.end());
-      std::sort(sorted_teams.begin(), sorted_teams.end(),
-                [](const auto& a, const auto& b)
-                { return a.second > b.second; });
+      std::ranges::sort(sorted_teams, [](const auto& a, const auto& b)
+                        { return a.second > b.second; });
 
       if (ImGui::BeginTable("Standings", STANDINGS_COLUMNS,
                             ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
@@ -164,10 +163,10 @@ void MainGameScene::renderMainArea()
         ImGui::TableHeadersRow();
 
         int rank = 1;
-        for (const auto& pair : sorted_teams)
+        for (const auto& [teamId, points] : sorted_teams)
         {
           auto teamOpt = guiView->getController().getTeamById(
-              static_cast<uint16_t>(pair.first));
+              static_cast<uint16_t>(teamId));
           if (teamOpt.has_value())
           {
             ImGui::TableNextRow();
@@ -176,7 +175,7 @@ void MainGameScene::renderMainArea()
             ImGui::TableNextColumn();
             ImGui::Text("%s", teamOpt->get().getName().c_str());
             ImGui::TableNextColumn();
-            ImGui::Text("%d", pair.second);
+            ImGui::Text("%d", points);
             rank++;
           }
         }
@@ -195,13 +194,14 @@ void MainGameScene::renderMainArea()
     auto players = guiView->getController().getPlayersForTeam(
         managedTeamOpt->get().getId());
     const auto& stats_config = guiView->getController().getStatsConfig();
-    std::sort(players.begin(), players.end(),
-              [&stats_config](const std::reference_wrapper<const Player>& a,
-                              const std::reference_wrapper<const Player>& b)
-              {
-                return a.get().getOverall(stats_config) >
-                       b.get().getOverall(stats_config);
-              });
+    std::ranges::sort(
+        players,
+        [&stats_config](const std::reference_wrapper<const Player>& a,
+                        const std::reference_wrapper<const Player>& b)
+        {
+          return a.get().getOverall(stats_config) >
+                 b.get().getOverall(stats_config);
+        });
 
     if (ImGui::BeginTable("TopPlayers", TOP_PLAYERS_COLUMNS,
                           ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))

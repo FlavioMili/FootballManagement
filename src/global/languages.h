@@ -13,9 +13,12 @@
 #include <string_view>
 #include <unordered_map>
 
-/* This is an enum used in the settings manager to set the
- * text language, to be supported in the future
- * It will ve used also as nationality of Players
+/**
+ * @enum Language
+ * @brief Enum representing supported languages in the game.
+ *
+ * Used in the settings manager to set the text language and also
+ * acts as the nationality of Players.
  */
 enum class Language : uint8_t
 {
@@ -52,6 +55,9 @@ enum class Language : uint8_t
   US,
 };
 
+/**
+ * @brief Maps a Language enum value to its corresponding string representation.
+ */
 const std::unordered_map<Language, std::string> languageToString{
     {Language::EN, "English"},    {Language::IT, "Italian"},
     {Language::ES, "Spanish"},    {Language::FR, "French"},
@@ -70,6 +76,10 @@ const std::unordered_map<Language, std::string> languageToString{
     {Language::HU, "Hungarian"},  {Language::UA, "Ukrainian"},
     {Language::US, "American"}};
 
+/**
+ * @brief Maps a string representation of a language back to its Language enum
+ * value.
+ */
 const std::unordered_map<std::string, Language> stringToLanguage{
     {"English", Language::EN},    {"Italian", Language::IT},
     {"Spanish", Language::ES},    {"French", Language::FR},

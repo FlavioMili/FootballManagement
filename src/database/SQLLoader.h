@@ -13,16 +13,29 @@
 
 #include "global/queries.h"
 
+/**
+ * @class SQLLoader
+ * @brief Utility class for loading SQL files and parsing queries.
+ */
 class SQLLoader
 {
  public:
-  // Load SQL file and parse queries
+  /**
+   * @brief Load SQL file and parse queries.
+   */
   static void loadQueriesFromFile();
 
-  // Load schema from file
+  /**
+   * @brief Load database schema from file.
+   * @return A string containing the database schema.
+   */
   static std::string loadSchemaFromFile();
 
-  // Get query by ID
+  /**
+   * @brief Get a query by its ID.
+   * @param query The identifier of the query to retrieve.
+   * @return A constant reference to the query string.
+   */
   static const std::string& getQuery(const Query query);
 
  private:

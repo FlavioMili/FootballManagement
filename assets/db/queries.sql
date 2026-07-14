@@ -167,4 +167,4 @@ VALUES (?, ?, ?);
 SELECT team_id, points FROM LeaguePoints WHERE league_id = ?;
 
 -- @QUERY_ID: RESET_ALL_LEAGUE_POINTS
-UPDATE LeaguePoints SET points = 0;
+UPDATE LeaguePoints SET points = 0 WHERE 1=1;

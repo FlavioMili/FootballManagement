@@ -17,6 +17,9 @@
 #include "strategy.h"
 
 /**
+ * @class Lineup
+ * @brief Manages the starting XI and reserves of a team.
+ *
  * This class will manage the starting 11 of the team,
  * the reserves, possibly changing depending on the type
  * of competition of the next match, the strategy and
@@ -25,42 +28,131 @@
 class Lineup
 {
  public:
+  /**
+   * @brief Constructs a Lineup object.
+   */
   Lineup();
 
   // Goalkeeper
+  /**
+   * @brief Sets the goalkeeper.
+   * @param gk Pointer to the Player object.
+   */
   void setGoalkeeper(Player* gk);
+
+  /**
+   * @brief Gets the goalkeeper.
+   * @return Pointer to the goalkeeper Player object.
+   */
   Player* getGoalkeeper() const;
 
   // Grid (outfield players)
+  /**
+   * @brief Places a player in the outfield grid by row and column.
+   * @param row Row index.
+   * @param col Column index.
+   * @param player Pointer to the Player object.
+   */
   void placePlayer(int row, int col, Player* player);
+
+  /**
+   * @brief Removes a player from the outfield grid by row and column.
+   * @param row Row index.
+   * @param col Column index.
+   */
   void removePlayer(int row, int col);
+
+  /**
+   * @brief Gets a player from the outfield grid by row and column.
+   * @param row Row index.
+   * @param col Column index.
+   * @return Pointer to the Player object.
+   */
   Player* getPlayerAt(int row, int col) const;
 
+  /**
+   * @brief Places a player in the outfield grid by linear index.
+   * @param index Linear index.
+   * @param player Pointer to the Player object.
+   */
   void placePlayer(int index, Player* player);
+
+  /**
+   * @brief Removes a player from the outfield grid by linear index.
+   * @param index Linear index.
+   */
   void removePlayer(int index);
+
+  /**
+   * @brief Gets a player from the outfield grid by linear index.
+   * @param index Linear index.
+   * @return Pointer to the Player object.
+   */
   Player* getPlayerAt(int index) const;
 
   // Helpers for index conversions
+  /**
+   * @brief Converts row and column to a linear index.
+   * @param row Row index.
+   * @param col Column index.
+   * @return The linear index.
+   */
   static int toIndex(int row, int col) { return row * LINEUP_GRID_COLS + col; }
+
+  /**
+   * @brief Converts a linear index to row and column.
+   * @param index Linear index.
+   * @return A pair containing the row and column.
+   */
   static std::pair<int, int> toRowCol(int index)
   {
     return {index / LINEUP_GRID_COLS, index % LINEUP_GRID_COLS};
   }
 
   // Reserves
+  /**
+   * @brief Sets the reserve players.
+   * @param subs A vector of pointers to the reserve Player objects.
+   */
   void setReserves(const std::vector<Player*>& subs);
+
+  /**
+   * @brief Gets the reserve players.
+   * @return A vector of pointers to the reserve Player objects.
+   */
   const std::vector<Player*>& getReserves() const;
 
   // Strategy
+  /**
+   * @brief Sets the strategy for this lineup.
+   * @param strat The strategy to set.
+   */
   void setStrategy(const Strategy& strat);
+
+  /**
+   * @brief Gets the strategy for this lineup.
+   * @return The strategy.
+   */
   const Strategy& getStrategy() const;
 
   // Debug / visualisation
+  /**
+   * @brief Converts the lineup to a string representation for debugging.
+   * @return The string representation of the lineup.
+   */
   std::string toString() const;
 
+  /**
+   * @brief Generates a starting XI automatically.
+   * @param allPlayers A vector of all available player IDs.
+   * @param stats_config The stats configuration for evaluating players.
+   */
   void generateStartingXI(const std::vector<PlayerID>& allPlayers,
                           const StatsConfig& stats_config);
 
+  /**
+   * @brief Clears the grid and goalkeeper.
+   */
   void gridClear()
   {
     goalkeeper = nullptr;
