@@ -22,19 +22,38 @@
 
 #include "global/languages.h"
 
+/**
+ * @class LanguageManager
+ * @brief Singleton class that manages localization and translations.
+ *
+ * This class handles loading language files and providing translated strings
+ * based on a key.
+ */
 class LanguageManager
 {
  public:
+  /**
+   * @brief Gets the singleton instance of the LanguageManager.
+   * @return A reference to the LanguageManager instance.
+   */
   static LanguageManager& instance()
   {
     static LanguageManager instance;
     return instance;
   }
 
-  // Loads the JSON file for the specific language into memory
+  /**
+   * @brief Loads the JSON file for the specific language into memory.
+   * @param lang The Language enum value to load.
+   * @return True if the language was successfully loaded, false otherwise.
+   */
   bool loadLanguage(Language lang);
 
-  // Retrieves the localized string. Returns the key itself if not found.
+  /**
+   * @brief Retrieves the localized string. Returns the key itself if not found.
+   * @param key The key to look up the translation for.
+   * @return The localized string, or the key if no translation exists.
+   */
   const char* get(const char* key) const;
 
  private:
@@ -42,7 +61,11 @@ class LanguageManager
   std::unordered_map<std::string, std::string> translations;
 };
 
-// Global helper macro for concise UI code
+/**
+ * @def LOC
+ * @brief Global helper macro for concise UI code localization.
+ * @param key The key to translate.
+ */
 #define LOC(key) LanguageManager::instance().get(key)
 
 #endif  // LANGUAGE_MANAGER_H

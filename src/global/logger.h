@@ -10,13 +10,39 @@
 
 #include <string>
 
+/**
+ * @class Logger
+ * @brief Provides simple logging utilities.
+ */
 class Logger
 {
  public:
+  /**
+   * @brief Initializes the logging system.
+   */
   static void init();
 
+  /**
+   * @brief Logs an informational message.
+   * @param msg The message to log.
+   */
   static void info(const std::string& msg);
+
+  /**
+   * @brief Logs an error message.
+   * @param msg The message to log.
+   */
   static void error(const std::string& msg);
+
+  /**
+   * @brief Logs a debug message.
+   * @param msg The message to log.
+   */
   static void debug(const std::string& msg);
+
+  /**
+   * @brief Logs a warning message.
+   * @param msg The message to log.
+   */
   static void warn(const std::string& msg);
 };

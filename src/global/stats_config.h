@@ -12,23 +12,36 @@
 #include <string>
 #include <vector>
 
-/*
- * In this file there are structs to simplify the
- * json parsing and loading of stats.
+/**
+ * @file stats_config.h
+ * @brief Contains structures to simplify JSON parsing and loading of player
+ * statistics.
  *
- * In the future this file might include other structs
- * useful for the project. In that case I would move
- * this file to src/
+ * In the future, this file might include other structs useful for the project.
+ * If so, it might be moved to src/.
  */
 
+/**
+ * @struct RoleFocus
+ * @brief Represents the statistics and their weights for a specific player
+ * role.
+ */
 struct RoleFocus
 {
-  std::vector<std::string> stats;
-  std::vector<double> weights;
+  std::vector<std::string>
+      stats; /*!< List of statistic names relevant to the role. */
+  std::vector<double> weights; /*!< Corresponding weights for each statistic. */
 };
 
+/**
+ * @struct StatsConfig
+ * @brief Configuration mapping roles to their focus areas and listing all
+ * possible stats.
+ */
 struct StatsConfig
 {
-  std::map<std::string, RoleFocus> role_focus;
-  std::vector<std::string> possible_stats;
+  std::map<std::string, RoleFocus>
+      role_focus; /*!< Mapping of role names to their RoleFocus. */
+  std::vector<std::string>
+      possible_stats; /*!< List of all possible statistics. */
 };

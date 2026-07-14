@@ -1,0 +1,32 @@
+/* Catppuccin integration for Doxygen Awesome */
+html {
+    /* Latte Base (Light Mode) */
+    --page-background-color: #eff1f5;
+    --header-background: #e6e9ef;
+    
+    /* Primary Color (Catppuccin Blue/Sapphire) */
+    --primary-color: #1e66f5;
+    --primary-dark-color: #179299;
+    --primary-light-color: #7287fd;
+    --primary-lighter-color: #8caaee;
+
+    /* Text */
+    --page-foreground-color: #4c4f69;
+}
+
+@media (prefers-color-scheme: dark) {
+    html {
+        /* Mocha Base (Dark Mode) */
+        --page-background-color: #1e1e2e;
+        --header-background: #181825;
+        
+        /* Primary Color */
+        --primary-color: #89b4fa;
+        --primary-dark-color: #b4befe;
+        --primary-light-color: #89dceb;
+        --primary-lighter-color: #74c7ec;
+
+        /* Text */
+        --page-foreground-color: #cdd6f4;
+    }
+}

@@ -12,30 +12,37 @@
 #include <string_view>
 #include <unordered_map>
 
+/**
+ * @enum Role
+ * @brief Represents the positional role of a player on the field.
+ */
 enum class Role : uint8_t
 {
-  GKP,
-  CB,
-  LB,
-  RB,
-  LWB,
-  RWB,
-  CDM,
-  CM,
-  CAM,
-  LM,
-  RM,
-  LWM,
-  RWM,
-  ST,
-  CF,
-  LW,
-  RW,
-  LF,
-  RF
+  GKP, /*!< Goalkeeper */
+  CB,  /*!< Center Back */
+  LB,  /*!< Left Back */
+  RB,  /*!< Right Back */
+  LWB, /*!< Left Wing Back */
+  RWB, /*!< Right Wing Back */
+  CDM, /*!< Central Defensive Midfielder */
+  CM,  /*!< Central Midfielder */
+  CAM, /*!< Central Attacking Midfielder */
+  LM,  /*!< Left Midfielder */
+  RM,  /*!< Right Midfielder */
+  LWM, /*!< Left Wing Midfielder */
+  RWM, /*!< Right Wing Midfielder */
+  ST,  /*!< Striker */
+  CF,  /*!< Center Forward */
+  LW,  /*!< Left Winger */
+  RW,  /*!< Right Winger */
+  LF,  /*!< Left Forward */
+  RF   /*!< Right Forward */
 };
 
-// These are used to parse the input easily
+/**
+ * @brief Maps a string representation of a role to its Role enum value.
+ * Used for parsing input.
+ */
 inline const std::unordered_map<std::string_view, Role> strToRole{
     {"GKP", Role::GKP}, {"CB", Role::CB},   {"LB", Role::LB},
     {"RB", Role::RB},   {"LWB", Role::LWB}, {"RWB", Role::RWB},
@@ -45,6 +52,9 @@ inline const std::unordered_map<std::string_view, Role> strToRole{
     {"LW", Role::LW},   {"RW", Role::RW},   {"LF", Role::LF},
     {"RF", Role::RF}};
 
+/**
+ * @brief Maps a Role enum value to its string representation.
+ */
 inline const std::unordered_map<Role, std::string_view> roleToStr{
     {Role::GKP, "GKP"}, {Role::CB, "CB"},   {Role::LB, "LB"},
     {Role::RB, "RB"},   {Role::LWB, "LWB"}, {Role::RWB, "RWB"},

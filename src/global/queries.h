@@ -12,6 +12,10 @@
 #include <string_view>
 #include <unordered_map>
 
+/**
+ * @enum Query
+ * @brief Identifiers for predefined database queries.
+ */
 enum class Query
 {
   INSERT_LEAGUE,
@@ -37,15 +41,22 @@ enum class Query
   UPSERT_LEAGUE_POINTS,
   SELECT_LEAGUE_POINTS,
   RESET_ALL_LEAGUE_POINTS,
-  COUNT
+  COUNT /*!< Total number of queries, useful for array sizing */
 };
 
+/**
+ * @struct QueryMapEntry
+ * @brief Represents an entry linking a string identifier to a Query enum.
+ */
 struct QueryMapEntry
 {
-  std::string_view id;
-  Query query;
+  std::string_view id; /*!< String identifier for the query */
+  Query query;         /*!< Corresponding Query enum value */
 };
 
+/**
+ * @brief A map resolving string identifiers to Query enum values.
+ */
 const std::unordered_map<std::string, Query> string_to_query_map = {
     // Leagues
     {"INSERT_LEAGUE", Query::INSERT_LEAGUE},
