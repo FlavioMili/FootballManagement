@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/Flavio/Programming/FootballManagement/build_before/_deps/spdlog-subbuild/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

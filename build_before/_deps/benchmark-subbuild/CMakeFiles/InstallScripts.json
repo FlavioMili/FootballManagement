@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/Flavio/Programming/FootballManagement/build_before/_deps/benchmark-subbuild/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

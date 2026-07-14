@@ -1,3 +1,0 @@
-/home/Flavio/Programming/FootballManagement/build_before/_deps/imgui-subbuild/CMakeFiles/imgui-populate.dir
-/home/Flavio/Programming/FootballManagement/build_before/_deps/imgui-subbuild/CMakeFiles/edit_cache.dir
-/home/Flavio/Programming/FootballManagement/build_before/_deps/imgui-subbuild/CMakeFiles/rebuild_cache.dir
