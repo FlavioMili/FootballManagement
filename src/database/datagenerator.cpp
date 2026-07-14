@@ -54,7 +54,7 @@ void DataGenerator::loadNames()
   }
 }
 
-Player DataGenerator::generateRandomPlayer(class GameData& gamedata,
+Player DataGenerator::generateRandomPlayer(const GameData& gamedata,
                                            TeamID team_id)
 {
   static uint32_t next_player_id = 50000;
@@ -143,7 +143,7 @@ std::vector<Team> DataGenerator::generateTeams()
   return teams;
 }
 
-std::vector<Player> DataGenerator::generatePlayers(class GameData& gamedata)
+std::vector<Player> DataGenerator::generatePlayers(const GameData& gamedata)
 {
   loadNames();
   std::vector<Player> players;
