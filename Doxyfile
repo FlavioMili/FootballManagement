@@ -1,5 +1,5 @@
 PROJECT_NAME           = "Football Management"
-PROJECT_BRIEF          = "A GUI-based football management simulation"
+PROJECT_BRIEF          = "An open source football management simulator"
 OUTPUT_DIRECTORY       = docs
 GENERATE_LATEX         = NO
 GENERATE_MAN           = NO

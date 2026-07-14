@@ -4,7 +4,8 @@
    Dark Mode: Frappé
    ========================================================================= */
 
-html {
+/* Use html:not(.dark-mode) to match doxygen-awesome-css specificity for light mode */
+html:not(.dark-mode) {
     /* Catppuccin Latte (Light Theme) */
     
     /* Base and Surfaces */
@@ -38,8 +39,9 @@ html {
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, sans-serif;
 }
 
+/* Use html:not(.light-mode) inside media query to match dark mode specificity */
 @media (prefers-color-scheme: dark) {
-    html {
+    html:not(.light-mode) {
         /* Catppuccin Frappé (Dark Theme) */
         
         /* Base and Surfaces */
