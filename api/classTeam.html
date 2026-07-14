@@ -144,9 +144,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae2067e73d309f2bfe183dbcb9374c843" id="r_ae2067e73d309f2bfe183dbcb9374c843"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeam.html#ae2067e73d309f2bfe183dbcb9374c843">setStrategy</a> (const <a class="el" href="classStrategy.html">Strategy</a> &amp;strategy)</td></tr>
 <tr class="memdesc:ae2067e73d309f2bfe183dbcb9374c843"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the team's strategy.  <br /></td></tr>
 <tr class="separator:ae2067e73d309f2bfe183dbcb9374c843"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae54378880a9ab0d5d260368dd72a3bb" id="r_aae54378880a9ab0d5d260368dd72a3bb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeam.html#aae54378880a9ab0d5d260368dd72a3bb">generateStartingXI</a> (const <a class="el" href="structStatsConfig.html">StatsConfig</a> &amp;stats_config)</td></tr>
-<tr class="memdesc:aae54378880a9ab0d5d260368dd72a3bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generates the best starting XI automatically based on stats.  <br /></td></tr>
-<tr class="separator:aae54378880a9ab0d5d260368dd72a3bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae9ee205f5d01e7734e23a2815baf4b61" id="r_ae9ee205f5d01e7734e23a2815baf4b61"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeam.html#ae9ee205f5d01e7734e23a2815baf4b61">generateStartingXI</a> (const class <a class="el" href="classGameData.html">GameData</a> &amp;gamedata, const <a class="el" href="structStatsConfig.html">StatsConfig</a> &amp;stats_config)</td></tr>
+<tr class="memdesc:ae9ee205f5d01e7734e23a2815baf4b61"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generates the best starting XI automatically based on stats.  <br /></td></tr>
+<tr class="separator:ae9ee205f5d01e7734e23a2815baf4b61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2fce34a4f9a85482dba19294903aac37" id="r_a2fce34a4f9a85482dba19294903aac37"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFinances.html">Finances</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeam.html#a2fce34a4f9a85482dba19294903aac37">getFinances</a> () noexcept</td></tr>
 <tr class="memdesc:a2fce34a4f9a85482dba19294903aac37"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the team's finances (non-const).  <br /></td></tr>
 <tr class="separator:a2fce34a4f9a85482dba19294903aac37"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -273,8 +273,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="aae54378880a9ab0d5d260368dd72a3bb" name="aae54378880a9ab0d5d260368dd72a3bb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aae54378880a9ab0d5d260368dd72a3bb">&#9670;&#160;</a></span>generateStartingXI()</h2>
+<a id="ae9ee205f5d01e7734e23a2815baf4b61" name="ae9ee205f5d01e7734e23a2815baf4b61"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae9ee205f5d01e7734e23a2815baf4b61">&#9670;&#160;</a></span>generateStartingXI()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -282,9 +282,19 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="memname">void Team::generateStartingXI </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="structStatsConfig.html">StatsConfig</a> &amp;&#160;</td>
-          <td class="paramname"><em>stats_config</em></td><td>)</td>
+          <td class="paramtype">const class <a class="el" href="classGameData.html">GameData</a> &amp;&#160;</td>
+          <td class="paramname"><em>gamedata</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const <a class="el" href="structStatsConfig.html">StatsConfig</a> &amp;&#160;</td>
+          <td class="paramname"><em>stats_config</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">

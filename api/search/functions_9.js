@@ -14,7 +14,7 @@ var searchData=
   ['loadcalendar_11',['loadCalendar',['../classFixtureRepository.html#a347b6a1097ddc2c78d14610e6743c304',1,'FixtureRepository']]],
   ['loadexistingdata_12',['loadExistingData',['../classGameData.html#ac4e958180d6268673123f37b35d11a3a',1,'GameData']]],
   ['loadfromdb_13',['loadFromDB',['../classGameData.html#a211d56ca50267b9374fc3a224f5dc972',1,'GameData']]],
-  ['loadgame_14',['loadGame',['../classGame.html#aa574d129f713c4b0ed4114c5d5224be3',1,'Game']]],
+  ['loadgame_14',['loadgame',['../classGameController.html#a4ddd3105f8d7d1abd3e336aca9511da5',1,'GameController::loadGame()'],['../classGame.html#aa574d129f713c4b0ed4114c5d5224be3',1,'Game::loadGame()']]],
   ['loadgamestate_15',['loadGameState',['../classGameStateRepository.html#acedaf840cd60d6957924582d74285e4d',1,'GameStateRepository']]],
   ['loadlanguage_16',['loadLanguage',['../classLanguageManager.html#a0085a0ae7759efe1e04e76f0673851c0',1,'LanguageManager']]],
   ['loadleaguepoints_17',['loadLeaguePoints',['../classLeagueRepository.html#a31e2062a376dd395b25158c3cc5b75d4',1,'LeagueRepository']]],

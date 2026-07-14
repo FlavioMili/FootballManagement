@@ -96,6 +96,7 @@ $(document).ready(function(){initNavTree('classMainGameScene.html',''); initResi
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
+<a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classMainGameScene-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">MainGameScene Class Reference</div></div>
 </div><!--header-->
@@ -160,6 +161,19 @@ Private Member Functions</h2></td></tr>
 <tr class="separator:aeaf88f6e9781eb6ce13b331f7631b3ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a169c047d9f148ae83e10a5be892ba713" id="r_a169c047d9f148ae83e10a5be892ba713"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a169c047d9f148ae83e10a5be892ba713">renderTopBar</a> ()</td></tr>
 <tr class="separator:a169c047d9f148ae83e10a5be892ba713"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a7bd1db9f842878c2c3122a71347062" id="r_a8a7bd1db9f842878c2c3122a71347062"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a8a7bd1db9f842878c2c3122a71347062">refreshData</a> ()</td></tr>
+<tr class="separator:a8a7bd1db9f842878c2c3122a71347062"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private Attributes</h2></td></tr>
+<tr class="memitem:ad21ad4d9b247a93c1b494c6046dbb9c3" id="r_ad21ad4d9b247a93c1b494c6046dbb9c3"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; int, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ad21ad4d9b247a93c1b494c6046dbb9c3">cached_standings</a></td></tr>
+<tr class="separator:ad21ad4d9b247a93c1b494c6046dbb9c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a793f068be978bdcfedc3c6b15a29de0b" id="r_a793f068be978bdcfedc3c6b15a29de0b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a793f068be978bdcfedc3c6b15a29de0b">cached_top_players</a></td></tr>
+<tr class="separator:a793f068be978bdcfedc3c6b15a29de0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21894e8216dc117865d35d1bb94d5051" id="r_a21894e8216dc117865d35d1bb94d5051"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a21894e8216dc117865d35d1bb94d5051">cached_season</a> = -1</td></tr>
+<tr class="separator:a21894e8216dc117865d35d1bb94d5051"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afda9685db8b1181693410bb4eb99ca06" id="r_afda9685db8b1181693410bb4eb99ca06"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#afda9685db8b1181693410bb4eb99ca06">cached_date</a></td></tr>
+<tr class="separator:afda9685db8b1181693410bb4eb99ca06"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -307,6 +321,31 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a8a7bd1db9f842878c2c3122a71347062" name="a8a7bd1db9f842878c2c3122a71347062"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8a7bd1db9f842878c2c3122a71347062">&#9670;&#160;</a></span>refreshData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::refreshData </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="aa867613f41457c7d8f0a1bc68456a535" name="aa867613f41457c7d8f0a1bc68456a535"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa867613f41457c7d8f0a1bc68456a535">&#9670;&#160;</a></span>render()</h2>
 
@@ -444,6 +483,95 @@ Additional Inherited Members</h2></td></tr>
 </dl>
 
 <p>Implements <a class="el" href="classGUIScene.html#acc1736a1a3f3f5c48bee6af45d1a0177">GUIScene</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="afda9685db8b1181693410bb4eb99ca06" name="afda9685db8b1181693410bb4eb99ca06"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afda9685db8b1181693410bb4eb99ca06">&#9670;&#160;</a></span>cached_date</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structGameDateValue.html">GameDateValue</a> MainGameScene::cached_date</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a21894e8216dc117865d35d1bb94d5051" name="a21894e8216dc117865d35d1bb94d5051"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a21894e8216dc117865d35d1bb94d5051">&#9670;&#160;</a></span>cached_season</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MainGameScene::cached_season = -1</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad21ad4d9b247a93c1b494c6046dbb9c3" name="ad21ad4d9b247a93c1b494c6046dbb9c3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad21ad4d9b247a93c1b494c6046dbb9c3">&#9670;&#160;</a></span>cached_standings</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;std::pair&lt;int, int&gt; &gt; MainGameScene::cached_standings</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a793f068be978bdcfedc3c6b15a29de0b" name="a793f068be978bdcfedc3c6b15a29de0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a793f068be978bdcfedc3c6b15a29de0b">&#9670;&#160;</a></span>cached_top_players</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;std::reference_wrapper&lt;const <a class="el" href="classPlayer.html">Player</a>&gt; &gt; MainGameScene::cached_top_players</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>

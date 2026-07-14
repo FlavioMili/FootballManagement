@@ -1,27 +1,9 @@
 var searchData=
 [
-  ['fi_0',['FI',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf0aa03aaca953a9a63b4459663d00134',1,'languages.h']]],
-  ['finances_1',['finances',['../classFinances.html#abc8e83033194f90323cb7dc476f95e68',1,'Finances::Finances()'],['../classTeam.html#afe825e2db13282c3d10ce7c89ef3307c',1,'Team::finances'],['../classFinances.html',1,'Finances']]],
-  ['finances_2ecpp_2',['finances.cpp',['../finances_8cpp.html',1,'']]],
-  ['finances_2eh_3',['finances.h',['../finances_8h.html',1,'']]],
-  ['first_5fnames_4',['first_names',['../classDataGenerator.html#a6db3feb42f31c9b27a4ee00d321eec21',1,'DataGenerator']]],
-  ['fixture_5frepository_2ecpp_5',['fixture_repository.cpp',['../fixture__repository_8cpp.html',1,'']]],
-  ['fixture_5frepository_2eh_6',['fixture_repository.h',['../fixture__repository_8h.html',1,'']]],
-  ['fixturerepository_7',['fixturerepository',['../classFixtureRepository.html',1,'FixtureRepository'],['../classFixtureRepository.html#a7187a8a40816d40498e299e418ccb094',1,'FixtureRepository::FixtureRepository()']]],
-  ['flow_8',['High-Level Data Flow',['../md_docs_2ARCHITECTURE.html#autotoc_md24',1,'']]],
-  ['font_9',['font',['../classButtonManager.html#ae46989f3905700e2932d906423964c22',1,'ButtonManager::font'],['../classDropdown.html#a7a37a933a03df61de524d1cd217546f8',1,'Dropdown::font']]],
-  ['foot_10',['Foot',['../player_8h.html#a29a274bfa86b6e9dbfae8cddbae6e606',1,'player.h']]],
-  ['football_20management_11',['Project Football Management',['../index.html',1,'']]],
-  ['fps_5flimit_12',['fps_limit',['../structSettings.html#a23e5a6c3a469756b947472762fdb82f9',1,'Settings']]],
-  ['fps_5foptions_13',['FPS_OPTIONS',['../namespaceGUIConstants.html#ab499dc2630a73a8953043e62413ba801',1,'GUIConstants']]],
-  ['fpsoptionsstrings_14',['fpsOptionsStrings',['../classSettingsScene.html#abf35e9700bbe1c75e8237497c9a4a622',1,'SettingsScene']]],
-  ['fr_15',['FR',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca11aedd0e432747c2bcd97b82808d24a0',1,'languages.h']]],
-  ['free_5fagents_5fteam_5fid_16',['FREE_AGENTS_TEAM_ID',['../global_8h.html#ad739458e122087a2668268985c8c993c',1,'global.h']]],
-  ['free_5fagents_5fteam_5fname_17',['FREE_AGENTS_TEAM_NAME',['../global_8h.html#ab55c8d4cd4b54165e255b81c69f2a1a8',1,'global.h']]],
-  ['freetextures_18',['freeTextures',['../classDropdown.html#a5247a1d8c5601d4dd1e0dc1102ef1bb9',1,'Dropdown']]],
-  ['friendly_19',['FRIENDLY',['../types_8h.html#a06be3d3918a8700cf086896e9f03e885af6a34a956d1ce0a552bf4731b9f9d9c0',1,'types.h']]],
-  ['from_5fjson_20',['from_json',['../gamedata_8cpp.html#acbed2310753297913d417c35015d4141',1,'from_json(const nlohmann::json &amp;j, RoleFocus &amp;rf):&#160;gamedata.cpp'],['../gamedata_8cpp.html#adb107b6c290100cf04992c5de8a565fd',1,'from_json(const nlohmann::json &amp;j, StatsConfig &amp;sc):&#160;gamedata.cpp']]],
-  ['fromstring_21',['fromString',['../structGameDateValue.html#aa9b78f9013994efafbae10f0c2037c98',1,'GameDateValue']]],
-  ['fullscreen_22',['fullscreen',['../structSettings.html#a3d28191427be4bd21df6bf77e689790b',1,'Settings::fullscreen'],['../classSettingsScene.html#a8a9a06658ff29e16f365d41d1316e820',1,'SettingsScene::fullscreen']]],
-  ['fun_20and_20report_20issues_20_3ad_23',['Have fun (and report issues :D)',['../index.html#autotoc_md10',1,'']]]
+  ['en_0',['EN',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caaa85f1840e282d8a8304dbc2c0d7c9b2',1,'languages.h']]],
+  ['endseason_1',['endSeason',['../classGame.html#abe55c7e8223c3be5e495c215d4841170',1,'Game']]],
+  ['engine_20✅_2',['Phase 1: Core Simulation Engine ✅',['../index.html#autotoc_md19',1,'']]],
+  ['error_3',['error',['../classLogger.html#a52d98131462d3254f76fae8f43b2fa90',1,'Logger']]],
+  ['es_4',['ES',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca04c19fa1e772ab66f0aad2efe61f25cd',1,'languages.h']]],
+  ['executestep_5',['executeStep',['../classDatabaseConnection.html#a82d4f570fef33dae395858befb72ef83',1,'DatabaseConnection']]]
 ];

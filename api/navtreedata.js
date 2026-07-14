@@ -33,7 +33,8 @@ var NAVTREE =
         [ "2. The Game Data Cache (<tt>GameData</tt>)", "md_docs_2ARCHITECTURE.html#autotoc_md27", null ],
         [ "3. Repositories", "md_docs_2ARCHITECTURE.html#autotoc_md28", null ],
         [ "4. Database Connection (<tt>DatabaseConnection</tt>)", "md_docs_2ARCHITECTURE.html#autotoc_md29", null ],
-        [ "5. GUI Views (<tt>GUIView</tt> and Scenes)", "md_docs_2ARCHITECTURE.html#autotoc_md30", null ]
+        [ "5. GUI Views (<tt>GUIView</tt> and Scenes)", "md_docs_2ARCHITECTURE.html#autotoc_md30", null ],
+        [ "6. Save System", "md_docs_2ARCHITECTURE.html#autotoc_md31", null ]
       ] ]
     ] ],
     [ "Namespaces", "namespaces.html", [
@@ -72,9 +73,9 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "SQLLoader_8cpp.html",
-"classGameDate.html",
-"classTeam.html#a7463b8b89ec3db04c15e094578af63b5",
-"main_8cpp.html"
+"classGameData.html#ae837b9b44074c7cc587d02b9168c111c",
+"classTeam.html",
+"league_8h.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

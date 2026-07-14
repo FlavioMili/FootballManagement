@@ -95,7 +95,6 @@ $(document).ready(function(){initNavTree('classGameData.html',''); initResizable
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classGameData-members.html">List of all members</a>  </div>
@@ -110,6 +109,9 @@ $(document).ready(function(){initNavTree('classGameData.html',''); initResizable
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a67ab18c5a35df618e99983275c7552ab" id="r_a67ab18c5a35df618e99983275c7552ab"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a67ab18c5a35df618e99983275c7552ab">GameData</a> ()</td></tr>
+<tr class="memdesc:a67ab18c5a35df618e99983275c7552ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classGameData.html" title="Singleton class that acts as an in-memory cache for the database state.">GameData</a> instance.  <br /></td></tr>
+<tr class="separator:a67ab18c5a35df618e99983275c7552ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ccb44cfede8ab807de133e2999b1825" id="r_a4ccb44cfede8ab807de133e2999b1825"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a4ccb44cfede8ab807de133e2999b1825">GameData</a> (const <a class="el" href="classGameData.html">GameData</a> &amp;)=delete</td></tr>
 <tr class="separator:a4ccb44cfede8ab807de133e2999b1825"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a976075ba17848d8ad927bef2cc584d94" id="r_a976075ba17848d8ad927bef2cc584d94"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classGameData.html">GameData</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a976075ba17848d8ad927bef2cc584d94">operator=</a> (const <a class="el" href="classGameData.html">GameData</a> &amp;)=delete</td></tr>
@@ -156,23 +158,15 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a5b8c1073e23b5e9bab7a1f32cfb2d471"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf4cc1d8f371cd6f5229d9e977a9b0b6" id="r_abf4cc1d8f371cd6f5229d9e977a9b0b6"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#abf4cc1d8f371cd6f5229d9e977a9b0b6">getPlayersVector</a> () const</td></tr>
 <tr class="separator:abf4cc1d8f371cd6f5229d9e977a9b0b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a4184401a150a6831ad8da1f22db176" id="r_a3a4184401a150a6831ad8da1f22db176"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a3a4184401a150a6831ad8da1f22db176">getPlayersForTeam</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id) const</td></tr>
-<tr class="separator:a3a4184401a150a6831ad8da1f22db176"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe124849455cfa68a0481368d7c96f43" id="r_afe124849455cfa68a0481368d7c96f43"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#afe124849455cfa68a0481368d7c96f43">getPlayersForTeam</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id) const</td></tr>
+<tr class="separator:afe124849455cfa68a0481368d7c96f43"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9663604d814b640133dce9bcbd7f9798" id="r_a9663604d814b640133dce9bcbd7f9798"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a9663604d814b640133dce9bcbd7f9798">removePlayer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> id)</td></tr>
 <tr class="separator:a9663604d814b640133dce9bcbd7f9798"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa33566325177829cd9c041154fda4971" id="r_aa33566325177829cd9c041154fda4971"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#aa33566325177829cd9c041154fda4971">transferPlayer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> new_team_id)</td></tr>
 <tr class="separator:aa33566325177829cd9c041154fda4971"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:ad4958a03053b5cc160ffd5e1b2528448" id="r_ad4958a03053b5cc160ffd5e1b2528448"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classGameData.html">GameData</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#ad4958a03053b5cc160ffd5e1b2528448">instance</a> ()</td></tr>
-<tr class="memdesc:ad4958a03053b5cc160ffd5e1b2528448"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access the singleton instance of <a class="el" href="classGameData.html" title="Singleton class that acts as an in-memory cache for the database state.">GameData</a>.  <br /></td></tr>
-<tr class="separator:ad4958a03053b5cc160ffd5e1b2528448"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
-<tr class="memitem:a67ab18c5a35df618e99983275c7552ab" id="r_a67ab18c5a35df618e99983275c7552ab"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a67ab18c5a35df618e99983275c7552ab">GameData</a> ()</td></tr>
-<tr class="separator:a67ab18c5a35df618e99983275c7552ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02aba4cd6aaef8cd1e8ebe80a06948af" id="r_a02aba4cd6aaef8cd1e8ebe80a06948af"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a02aba4cd6aaef8cd1e8ebe80a06948af">loadStatsConfig</a> ()</td></tr>
 <tr class="separator:a02aba4cd6aaef8cd1e8ebe80a06948af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a123e2a349374cc053a74502c8ca8941c" id="r_a123e2a349374cc053a74502c8ca8941c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a123e2a349374cc053a74502c8ca8941c">generateAndSaveInitialData</a> ()</td></tr>
@@ -194,8 +188,8 @@ Private Attributes</h2></td></tr>
 <tr class="separator:ab10561db5f753201ec3bbe818ea40bf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af35deeda852492036a6be47b94cec5c4" id="r_af35deeda852492036a6be47b94cec5c4"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#af35deeda852492036a6be47b94cec5c4">_playersVec</a></td></tr>
 <tr class="separator:af35deeda852492036a6be47b94cec5c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7659e286973fe4da8956d945f20e5442" id="r_a7659e286973fe4da8956d945f20e5442"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>, std::vector&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a7659e286973fe4da8956d945f20e5442">_teamPlayers</a></td></tr>
-<tr class="separator:a7659e286973fe4da8956d945f20e5442"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d5ff1b5755f26ecb457adffc136e149" id="r_a4d5ff1b5755f26ecb457adffc136e149"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>, std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a4d5ff1b5755f26ecb457adffc136e149">_teamPlayers</a></td></tr>
+<tr class="separator:a4d5ff1b5755f26ecb457adffc136e149"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a16a70375e019a0a1e5b3665c8f88201d" id="r_a16a70375e019a0a1e5b3665c8f88201d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structStatsConfig.html">StatsConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a16a70375e019a0a1e5b3665c8f88201d">stats_config</a></td></tr>
 <tr class="separator:a16a70375e019a0a1e5b3665c8f88201d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a420050a66a4182e8bb6c45f04af751" id="r_a3a420050a66a4182e8bb6c45f04af751"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="el" href="classDatabaseConnection.html">DatabaseConnection</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a3a420050a66a4182e8bb6c45f04af751">db_conn</a></td></tr>
@@ -205,8 +199,35 @@ Private Attributes</h2></td></tr>
 <div class="textblock"><p>Singleton class that acts as an in-memory cache for the database state. </p>
 <p><a class="el" href="classGameData.html" title="Singleton class that acts as an in-memory cache for the database state.">GameData</a> is responsible for loading the initial game state from SQLite, holding all core entities (Leagues, Teams, Players), and facilitating high-performance read/write access during gameplay without hitting the disk. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a67ab18c5a35df618e99983275c7552ab" name="a67ab18c5a35df618e99983275c7552ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a67ab18c5a35df618e99983275c7552ab">&#9670;&#160;</a></span>GameData() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">GameData::GameData </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructs a new <a class="el" href="classGameData.html" title="Singleton class that acts as an in-memory cache for the database state.">GameData</a> instance. </p>
+
+</div>
+</div>
 <a id="a4ccb44cfede8ab807de133e2999b1825" name="a4ccb44cfede8ab807de133e2999b1825"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4ccb44cfede8ab807de133e2999b1825">&#9670;&#160;</a></span>GameData() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4ccb44cfede8ab807de133e2999b1825">&#9670;&#160;</a></span>GameData() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -225,31 +246,6 @@ Private Attributes</h2></td></tr>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">delete</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a67ab18c5a35df618e99983275c7552ab" name="a67ab18c5a35df618e99983275c7552ab"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a67ab18c5a35df618e99983275c7552ab">&#9670;&#160;</a></span>GameData() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">GameData::GameData </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span><span class="mlabel">default</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -504,14 +500,14 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a3a4184401a150a6831ad8da1f22db176" name="a3a4184401a150a6831ad8da1f22db176"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3a4184401a150a6831ad8da1f22db176">&#9670;&#160;</a></span>getPlayersForTeam()</h2>
+<a id="afe124849455cfa68a0481368d7c96f43" name="afe124849455cfa68a0481368d7c96f43"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe124849455cfa68a0481368d7c96f43">&#9670;&#160;</a></span>getPlayersForTeam()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; GameData::getPlayersForTeam </td>
+          <td class="memname">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; &amp; GameData::getPlayersForTeam </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
           <td class="paramname"><em>team_id</em></td><td>)</td>
@@ -640,33 +636,6 @@ Private Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-
-</div>
-</div>
-<a id="ad4958a03053b5cc160ffd5e1b2528448" name="ad4958a03053b5cc160ffd5e1b2528448"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad4958a03053b5cc160ffd5e1b2528448">&#9670;&#160;</a></span>instance()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classGameData.html">GameData</a> &amp; GameData::instance </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Access the singleton instance of <a class="el" href="classGameData.html" title="Singleton class that acts as an in-memory cache for the database state.">GameData</a>. </p>
 
 </div>
 </div>
@@ -928,8 +897,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a7659e286973fe4da8956d945f20e5442" name="a7659e286973fe4da8956d945f20e5442"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7659e286973fe4da8956d945f20e5442">&#9670;&#160;</a></span>_teamPlayers</h2>
+<a id="a4d5ff1b5755f26ecb457adffc136e149" name="a4d5ff1b5755f26ecb457adffc136e149"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4d5ff1b5755f26ecb457adffc136e149">&#9670;&#160;</a></span>_teamPlayers</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -938,7 +907,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::unordered_map&lt;<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>, std::vector&lt;<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&gt; &gt; GameData::_teamPlayers</td>
+          <td class="memname">std::unordered_map&lt;<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>, std::vector&lt;std::reference_wrapper&lt;const <a class="el" href="classPlayer.html">Player</a>&gt; &gt; &gt; GameData::_teamPlayers</td>
         </tr>
       </table>
   </td>

@@ -2,7 +2,7 @@ var classTeam =
 [
     [ "Team", "classTeam.html#ad1ede6646cfcfbd6efdd069893918e86", null ],
     [ "addPlayerID", "classTeam.html#a1264ed81efce4e6db89cf289d4fd604c", null ],
-    [ "generateStartingXI", "classTeam.html#aae54378880a9ab0d5d260368dd72a3bb", null ],
+    [ "generateStartingXI", "classTeam.html#ae9ee205f5d01e7734e23a2815baf4b61", null ],
     [ "getFinances", "classTeam.html#a2f0a03795fb969af345005e6316d1040", null ],
     [ "getFinances", "classTeam.html#a2fce34a4f9a85482dba19294903aac37", null ],
     [ "getId", "classTeam.html#ae42795518c929d8b5afaf94a90d9b5d4", null ],

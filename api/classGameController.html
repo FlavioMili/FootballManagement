@@ -95,6 +95,7 @@ $(document).ready(function(){initNavTree('classGameController.html',''); initRes
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classGameController-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">GameController Class Reference</div></div>
@@ -108,9 +109,18 @@ $(document).ready(function(){initNavTree('classGameController.html',''); initRes
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad6cee065bf3ee6244ae53a78794c5b47" id="r_ad6cee065bf3ee6244ae53a78794c5b47"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#ad6cee065bf3ee6244ae53a78794c5b47">GameController</a> (std::unique_ptr&lt; <a class="el" href="classGame.html">Game</a> &gt; game_ptr)</td></tr>
-<tr class="memdesc:ad6cee065bf3ee6244ae53a78794c5b47"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classGameController.html" title="Manages the core game logic, interacting with teams, leagues, and players.">GameController</a>.  <br /></td></tr>
-<tr class="separator:ad6cee065bf3ee6244ae53a78794c5b47"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d72ff3f639acb68578e20fee3649b42" id="r_a7d72ff3f639acb68578e20fee3649b42"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a7d72ff3f639acb68578e20fee3649b42">GameController</a> ()</td></tr>
+<tr class="memdesc:a7d72ff3f639acb68578e20fee3649b42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classGameController.html" title="Manages the core game logic, interacting with teams, leagues, and players.">GameController</a>.  <br /></td></tr>
+<tr class="separator:a7d72ff3f639acb68578e20fee3649b42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac99993c83899ad858a415bbebf0fe8bf" id="r_ac99993c83899ad858a415bbebf0fe8bf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#ac99993c83899ad858a415bbebf0fe8bf">newGame</a> (int slot)</td></tr>
+<tr class="memdesc:ac99993c83899ad858a415bbebf0fe8bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starts a new game on the given save slot.  <br /></td></tr>
+<tr class="separator:ac99993c83899ad858a415bbebf0fe8bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4ddd3105f8d7d1abd3e336aca9511da5" id="r_a4ddd3105f8d7d1abd3e336aca9511da5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a4ddd3105f8d7d1abd3e336aca9511da5">loadGame</a> (int slot)</td></tr>
+<tr class="memdesc:a4ddd3105f8d7d1abd3e336aca9511da5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads an existing game from the given save slot.  <br /></td></tr>
+<tr class="separator:a4ddd3105f8d7d1abd3e336aca9511da5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5bd3d0ee7f48a540c50c251243bdcc66" id="r_a5bd3d0ee7f48a540c50c251243bdcc66"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a5bd3d0ee7f48a540c50c251243bdcc66">isGameLoaded</a> () const</td></tr>
+<tr class="memdesc:a5bd3d0ee7f48a540c50c251243bdcc66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if a game is currently loaded.  <br /></td></tr>
+<tr class="separator:a5bd3d0ee7f48a540c50c251243bdcc66"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a72b5e366d294cd92afac84448db71b85" id="r_a72b5e366d294cd92afac84448db71b85"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a72b5e366d294cd92afac84448db71b85">getCurrentSeason</a> () const</td></tr>
 <tr class="memdesc:a72b5e366d294cd92afac84448db71b85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the current season year.  <br /></td></tr>
 <tr class="separator:a72b5e366d294cd92afac84448db71b85"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -135,9 +145,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a110328e8ff1ee84e78808cf7b3fbf43c" id="r_a110328e8ff1ee84e78808cf7b3fbf43c"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classTeam.html">Team</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a110328e8ff1ee84e78808cf7b3fbf43c">getTeams</a> () const</td></tr>
 <tr class="memdesc:a110328e8ff1ee84e78808cf7b3fbf43c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets all teams available in the game.  <br /></td></tr>
 <tr class="separator:a110328e8ff1ee84e78808cf7b3fbf43c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f555c649b1cbc466e98aaca1ebe4602" id="r_a6f555c649b1cbc466e98aaca1ebe4602"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a6f555c649b1cbc466e98aaca1ebe4602">getPlayersForTeam</a> (uint16_t team_id) const</td></tr>
-<tr class="memdesc:a6f555c649b1cbc466e98aaca1ebe4602"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the players belonging to a specific team.  <br /></td></tr>
-<tr class="separator:a6f555c649b1cbc466e98aaca1ebe4602"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ff49b7ff61961a51f7a46d07358b40f" id="r_a9ff49b7ff61961a51f7a46d07358b40f"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a9ff49b7ff61961a51f7a46d07358b40f">getPlayersForTeam</a> (uint16_t team_id) const</td></tr>
+<tr class="memdesc:a9ff49b7ff61961a51f7a46d07358b40f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the players belonging to a specific team.  <br /></td></tr>
+<tr class="separator:a9ff49b7ff61961a51f7a46d07358b40f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac3abee8b1f78c14578881f585b0d28d1" id="r_ac3abee8b1f78c14578881f585b0d28d1"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classTeam.html">Team</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#ac3abee8b1f78c14578881f585b0d28d1">getTeamsInLeague</a> (uint8_t league_id) const</td></tr>
 <tr class="memdesc:ac3abee8b1f78c14578881f585b0d28d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the teams belonging to a specific league.  <br /></td></tr>
 <tr class="separator:ac3abee8b1f78c14578881f585b0d28d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -157,46 +167,38 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ad17fdc5ff712b8903cdb32bae7255726"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the current state of the game.  <br /></td></tr>
 <tr class="separator:ad17fdc5ff712b8903cdb32bae7255726"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private Member Functions</h2></td></tr>
+<tr class="memitem:aee9a52b289607970790733dcc30cf6e5" id="r_aee9a52b289607970790733dcc30cf6e5"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#aee9a52b289607970790733dcc30cf6e5">getSavePath</a> (int slot) const</td></tr>
+<tr class="separator:aee9a52b289607970790733dcc30cf6e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
 <tr class="memitem:a5bc22fd160fa4b1a0d75dc92d3f83966" id="r_a5bc22fd160fa4b1a0d75dc92d3f83966"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classGame.html">Game</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a5bc22fd160fa4b1a0d75dc92d3f83966">game</a></td></tr>
 <tr class="separator:a5bc22fd160fa4b1a0d75dc92d3f83966"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a266b4394730984e1a6ee72e23f6cd1b3" id="r_a266b4394730984e1a6ee72e23f6cd1b3"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; class <a class="el" href="classGameData.html">GameData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a266b4394730984e1a6ee72e23f6cd1b3">gamedata</a></td></tr>
+<tr class="separator:a266b4394730984e1a6ee72e23f6cd1b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Manages the core game logic, interacting with teams, leagues, and players. </p>
 <p>This controller holds the central game state and provides methods to retrieve and manipulate game data such as leagues, teams, and the managed team. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="ad6cee065bf3ee6244ae53a78794c5b47" name="ad6cee065bf3ee6244ae53a78794c5b47"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad6cee065bf3ee6244ae53a78794c5b47">&#9670;&#160;</a></span>GameController()</h2>
+<a id="a7d72ff3f639acb68578e20fee3649b42" name="a7d72ff3f639acb68578e20fee3649b42"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d72ff3f639acb68578e20fee3649b42">&#9670;&#160;</a></span>GameController()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">GameController::GameController </td>
           <td>(</td>
-          <td class="paramtype">std::unique_ptr&lt; <a class="el" href="classGame.html">Game</a> &gt;&#160;</td>
-          <td class="paramname"><em>game_ptr</em></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Constructs a new <a class="el" href="classGameController.html" title="Manages the core game logic, interacting with teams, leagues, and players.">GameController</a>. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">game_ptr</td><td>Unique pointer to the <a class="el" href="classGame.html" title="Represents the core game state and logic.">Game</a> model instance. </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -347,14 +349,14 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a6f555c649b1cbc466e98aaca1ebe4602" name="a6f555c649b1cbc466e98aaca1ebe4602"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6f555c649b1cbc466e98aaca1ebe4602">&#9670;&#160;</a></span>getPlayersForTeam()</h2>
+<a id="a9ff49b7ff61961a51f7a46d07358b40f" name="a9ff49b7ff61961a51f7a46d07358b40f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9ff49b7ff61961a51f7a46d07358b40f">&#9670;&#160;</a></span>getPlayersForTeam()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; GameController::getPlayersForTeam </td>
+          <td class="memname">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; &amp; GameController::getPlayersForTeam </td>
           <td>(</td>
           <td class="paramtype">uint16_t&#160;</td>
           <td class="paramname"><em>team_id</em></td><td>)</td>
@@ -371,6 +373,32 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>A vector of constant reference wrappers to the players. </dd></dl>
+
+</div>
+</div>
+<a id="aee9a52b289607970790733dcc30cf6e5" name="aee9a52b289607970790733dcc30cf6e5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee9a52b289607970790733dcc30cf6e5">&#9670;&#160;</a></span>getSavePath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string GameController::getSavePath </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>slot</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -488,6 +516,66 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a5bd3d0ee7f48a540c50c251243bdcc66" name="a5bd3d0ee7f48a540c50c251243bdcc66"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5bd3d0ee7f48a540c50c251243bdcc66">&#9670;&#160;</a></span>isGameLoaded()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GameController::isGameLoaded </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Checks if a game is currently loaded. </p>
+
+</div>
+</div>
+<a id="a4ddd3105f8d7d1abd3e336aca9511da5" name="a4ddd3105f8d7d1abd3e336aca9511da5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4ddd3105f8d7d1abd3e336aca9511da5">&#9670;&#160;</a></span>loadGame()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GameController::loadGame </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>slot</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Loads an existing game from the given save slot. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if loaded successfully, false otherwise. </dd></dl>
+
+</div>
+</div>
+<a id="ac99993c83899ad858a415bbebf0fe8bf" name="ac99993c83899ad858a415bbebf0fe8bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac99993c83899ad858a415bbebf0fe8bf">&#9670;&#160;</a></span>newGame()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GameController::newGame </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>slot</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Starts a new game on the given save slot. </p>
+
+</div>
+</div>
 <a id="ad17fdc5ff712b8903cdb32bae7255726" name="ad17fdc5ff712b8903cdb32bae7255726"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad17fdc5ff712b8903cdb32bae7255726">&#9670;&#160;</a></span>saveGame()</h2>
 
@@ -545,6 +633,28 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::unique_ptr&lt;<a class="el" href="classGame.html">Game</a>&gt; GameController::game</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a266b4394730984e1a6ee72e23f6cd1b3" name="a266b4394730984e1a6ee72e23f6cd1b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a266b4394730984e1a6ee72e23f6cd1b3">&#9670;&#160;</a></span>gamedata</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::shared_ptr&lt;class <a class="el" href="classGameData.html">GameData</a>&gt; GameController::gamedata</td>
         </tr>
       </table>
   </td>

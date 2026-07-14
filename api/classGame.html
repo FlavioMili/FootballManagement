@@ -109,9 +109,9 @@ $(document).ready(function(){initNavTree('classGame.html',''); initResizable(); 
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad59df6562a58a614fda24622d3715b65" id="r_ad59df6562a58a614fda24622d3715b65"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#ad59df6562a58a614fda24622d3715b65">Game</a> ()</td></tr>
-<tr class="memdesc:ad59df6562a58a614fda24622d3715b65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classGame.html" title="Represents the core game state and logic.">Game</a> instance, initializing database connection and game state.  <br /></td></tr>
-<tr class="separator:ad59df6562a58a614fda24622d3715b65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad6954c2d2fd3adfdd8a7b331a47c6907" id="r_ad6954c2d2fd3adfdd8a7b331a47c6907"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#ad6954c2d2fd3adfdd8a7b331a47c6907">Game</a> (std::shared_ptr&lt; class <a class="el" href="classGameData.html">GameData</a> &gt; gd, const std::string &amp;db_path)</td></tr>
+<tr class="memdesc:ad6954c2d2fd3adfdd8a7b331a47c6907"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classGame.html" title="Represents the core game state and logic.">Game</a> object.  <br /></td></tr>
+<tr class="separator:ad6954c2d2fd3adfdd8a7b331a47c6907"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a07e7c96e055f2ac28ce7a05d2573ce" id="r_a3a07e7c96e055f2ac28ce7a05d2573ce"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a3a07e7c96e055f2ac28ce7a05d2573ce">advanceDay</a> ()</td></tr>
 <tr class="memdesc:a3a07e7c96e055f2ac28ce7a05d2573ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advances the game time by one day, simulating any matches or events scheduled for the current date.  <br /></td></tr>
 <tr class="separator:a3a07e7c96e055f2ac28ce7a05d2573ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -155,6 +155,8 @@ Private Member Functions</h2></td></tr>
 Private Attributes</h2></td></tr>
 <tr class="memitem:aae66a3f565896abfe7a086b1ec0f5360" id="r_aae66a3f565896abfe7a086b1ec0f5360"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="el" href="classDatabaseConnection.html">DatabaseConnection</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#aae66a3f565896abfe7a086b1ec0f5360">db_conn</a></td></tr>
 <tr class="separator:aae66a3f565896abfe7a086b1ec0f5360"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c365b0fe4711a702d2205c3affecce3" id="r_a5c365b0fe4711a702d2205c3affecce3"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; class <a class="el" href="classGameData.html">GameData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a5c365b0fe4711a702d2205c3affecce3">gamedata</a></td></tr>
+<tr class="separator:a5c365b0fe4711a702d2205c3affecce3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0fe387393f94569a97aa49524680e8d6" id="r_a0fe387393f94569a97aa49524680e8d6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classCalendar.html">Calendar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a0fe387393f94569a97aa49524680e8d6">calendar</a></td></tr>
 <tr class="separator:a0fe387393f94569a97aa49524680e8d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0026df59a6f7aad9a951c38a954423f" id="r_af0026df59a6f7aad9a951c38a954423f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#af0026df59a6f7aad9a951c38a954423f">currentDate</a></td></tr>
@@ -168,22 +170,48 @@ Private Attributes</h2></td></tr>
 <div class="textblock"><p>Represents the core game state and logic. </p>
 <p>The <a class="el" href="classGame.html" title="Represents the core game state and logic.">Game</a> class orchestrates the simulation mechanics, handling the progression of time, saving and loading the game state, and triggering match simulations. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="ad59df6562a58a614fda24622d3715b65" name="ad59df6562a58a614fda24622d3715b65"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad59df6562a58a614fda24622d3715b65">&#9670;&#160;</a></span>Game()</h2>
+<a id="ad6954c2d2fd3adfdd8a7b331a47c6907" name="ad6954c2d2fd3adfdd8a7b331a47c6907"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad6954c2d2fd3adfdd8a7b331a47c6907">&#9670;&#160;</a></span>Game()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">Game::Game </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">std::shared_ptr&lt; class <a class="el" href="classGameData.html">GameData</a> &gt;&#160;</td>
+          <td class="paramname"><em>gd</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>db_path</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
-<p>Constructs a new <a class="el" href="classGame.html" title="Represents the core game state and logic.">Game</a> instance, initializing database connection and game state. </p>
+<p>Constructs a new <a class="el" href="classGame.html" title="Represents the core game state and logic.">Game</a> object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">gd</td><td>Shared pointer to the <a class="el" href="classGameData.html" title="Singleton class that acts as an in-memory cache for the database state.">GameData</a> instance. </td></tr>
+    <tr><td class="paramname">db_path</td><td>Path to the SQLite database file for this game. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -588,6 +616,28 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::shared_ptr&lt;<a class="el" href="classDatabaseConnection.html">DatabaseConnection</a>&gt; Game::db_conn</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5c365b0fe4711a702d2205c3affecce3" name="a5c365b0fe4711a702d2205c3affecce3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c365b0fe4711a702d2205c3affecce3">&#9670;&#160;</a></span>gamedata</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::shared_ptr&lt;class <a class="el" href="classGameData.html">GameData</a>&gt; Game::gamedata</td>
         </tr>
       </table>
   </td>

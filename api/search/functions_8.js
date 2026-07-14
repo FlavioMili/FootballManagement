@@ -12,11 +12,12 @@ var searchData=
   ['insertteam_9',['insertTeam',['../classTeamRepository.html#a4ceaba334ebcf60101f10d8dc3db8462',1,'TeamRepository']]],
   ['insertteamswithid_10',['insertTeamsWithId',['../classTeamRepository.html#adf336331ddb1ffd5159dd1721ddb6156',1,'TeamRepository']]],
   ['insertteamwithid_11',['insertTeamWithId',['../classTeamRepository.html#a7eb806263f02c681c28182058f00b1db',1,'TeamRepository']]],
-  ['instance_12',['instance',['../classGameData.html#ad4958a03053b5cc160ffd5e1b2528448',1,'GameData::instance()'],['../classLanguageManager.html#acce7f57b957ccf759cdbf65628a6b983',1,'LanguageManager::instance()'],['../classGameDate.html#a682a097a82ead75da41663d01583e7d8',1,'GameDate::instance()'],['../classSettingsManager.html#a70509f6304c076e2cceea0445951c324',1,'SettingsManager::instance()']]],
+  ['instance_12',['instance',['../classLanguageManager.html#acce7f57b957ccf759cdbf65628a6b983',1,'LanguageManager::instance()'],['../classGameDate.html#a682a097a82ead75da41663d01583e7d8',1,'GameDate::instance()'],['../classSettingsManager.html#a70509f6304c076e2cceea0445951c324',1,'SettingsManager::instance()']]],
   ['isdropdownopen_13',['isDropdownOpen',['../classDropdown.html#a4321af5095cb3e450dc2fc6240ddee50',1,'Dropdown']]],
   ['isfirstrun_14',['isFirstRun',['../classGameStateRepository.html#afba4da22c12fb191b930662e86513c9c',1,'GameStateRepository']]],
-  ['isleapyear_15',['isLeapYear',['../structGameDateValue.html#a88e85074d96d94d14129c38889300c57',1,'GameDateValue']]],
-  ['isplayed_16',['isPlayed',['../classMatch.html#a2d950a4f7fbf7319f10365d457ef1f5b',1,'Match']]],
-  ['ispointinbutton_17',['isPointInButton',['../classButtonManager.html#a0d7501a308fd9a72435708a77e4f0691',1,'ButtonManager']]],
-  ['istransferwindowopen_18',['isTransferWindowOpen',['../structGameDateValue.html#a000e6c6cb2a6e6e1c226dbc510933cb4',1,'GameDateValue']]]
+  ['isgameloaded_15',['isGameLoaded',['../classGameController.html#a5bd3d0ee7f48a540c50c251243bdcc66',1,'GameController']]],
+  ['isleapyear_16',['isLeapYear',['../structGameDateValue.html#a88e85074d96d94d14129c38889300c57',1,'GameDateValue']]],
+  ['isplayed_17',['isPlayed',['../classMatch.html#a2d950a4f7fbf7319f10365d457ef1f5b',1,'Match']]],
+  ['ispointinbutton_18',['isPointInButton',['../classButtonManager.html#a0d7501a308fd9a72435708a77e4f0691',1,'ButtonManager']]],
+  ['istransferwindowopen_19',['isTransferWindowOpen',['../structGameDateValue.html#a000e6c6cb2a6e6e1c226dbc510933cb4',1,'GameDateValue']]]
 ];

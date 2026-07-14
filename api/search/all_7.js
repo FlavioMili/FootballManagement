@@ -1,26 +1,4 @@
 var searchData=
 [
-  ['_5fage_0',['_age',['../classPlayer.html#a96afedde0e2f0672eda0f5df82abbf23',1,'Player']]],
-  ['_5fcached_5fmarket_5fvalue_1',['_cached_market_value',['../classPlayer.html#a9c5efee2136c594d4d9ea46bc39eef2a',1,'Player']]],
-  ['_5fcontract_5fyears_2',['_contract_years',['../classPlayer.html#ac6645056500a8798bf3502ccf234d837',1,'Player']]],
-  ['_5ffirst_5fname_3',['_first_name',['../classPlayer.html#a71057df9bb971e2d00f6f09b6adcea8e',1,'Player']]],
-  ['_5ffoot_4',['_foot',['../classPlayer.html#a8f57f0b7dadaebd55cd7a99807a6da4f',1,'Player']]],
-  ['_5fheight_5',['_height',['../classPlayer.html#a5a3725cbecb4dd6b67aa94cd2a557481',1,'Player']]],
-  ['_5fid_6',['_id',['../classPlayer.html#a9f989f787fe3beba429cea5b8a1326ef',1,'Player']]],
-  ['_5flast_5fname_7',['_last_name',['../classPlayer.html#a0576f8dee6a1fca292ded0d4deafe181',1,'Player']]],
-  ['_5fleagues_8',['_leagues',['../classGameData.html#a2502e72fd9a21bad1a5f4e6e2da827eb',1,'GameData']]],
-  ['_5fleaguesvec_9',['_leaguesVec',['../classGameData.html#ae837b9b44074c7cc587d02b9168c111c',1,'GameData']]],
-  ['_5fnationality_10',['_nationality',['../classPlayer.html#a787193d73dd9f80bf589c6d0de80d212',1,'Player']]],
-  ['_5fplayed_11',['_played',['../classMatch.html#affd399eb06a3ef7308645fbb59b3306d',1,'Match']]],
-  ['_5fplayers_12',['_players',['../classGameData.html#ab10561db5f753201ec3bbe818ea40bf1',1,'GameData']]],
-  ['_5fplayersvec_13',['_playersVec',['../classGameData.html#af35deeda852492036a6be47b94cec5c4',1,'GameData']]],
-  ['_5frole_14',['_role',['../classPlayer.html#aa88f96bbb58fa090c4d887468184d07d',1,'Player']]],
-  ['_5fstats_15',['_stats',['../classPlayer.html#ac330e12ffd6ae63e89dc8ca5e7167e05',1,'Player']]],
-  ['_5fstatus_16',['_status',['../classPlayer.html#a12122f838d032c80bbfa77a8965e1248',1,'Player']]],
-  ['_5fteam_5fid_17',['_team_id',['../classPlayer.html#a8685d7c544df408712e7360d5e723701',1,'Player']]],
-  ['_5fteamplayers_18',['_teamPlayers',['../classGameData.html#a7659e286973fe4da8956d945f20e5442',1,'GameData']]],
-  ['_5fteams_19',['_teams',['../classGameData.html#af1f0d7287b772c33e7fae69e11f9834b',1,'GameData']]],
-  ['_5fteamsvec_20',['_teamsVec',['../classGameData.html#ab9c185b2767565b6315caf5299b2b167',1,'GameData']]],
-  ['_5ftransfer_5fstatus_21',['_transfer_status',['../classPlayer.html#a1d21f3f93d72c942bd35324ebbdf9b4e',1,'Player']]],
-  ['_5fwage_22',['_wage',['../classPlayer.html#aaa7f507f293fb96b9bac21fd49d82854',1,'Player']]]
+  ['_3ad_0',['Have fun (and report issues :D)',['../index.html#autotoc_md10',1,'']]]
 ];

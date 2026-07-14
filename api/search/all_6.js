@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['_3ad_0',['Have fun (and report issues :D)',['../index.html#autotoc_md10',1,'']]]
+  ['6_20save_20system_0',['6. Save System',['../md_docs_2ARCHITECTURE.html#autotoc_md31',1,'']]]
 ];

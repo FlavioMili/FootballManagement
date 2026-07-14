@@ -4,7 +4,7 @@ var classFinances =
     [ "~Finances", "classFinances.html#aece96cfad039769570f00eb0c33d04e9", null ],
     [ "addBalance", "classFinances.html#abab825e85627bc6d6fa030fb0f1077ee", null ],
     [ "getBalance", "classFinances.html#a820c6b37cf7f6531b48e81ae7b434081", null ],
-    [ "getCurrentWageSpending", "classFinances.html#acdb35fc93fb3286aa4cacabb133ab54d", null ],
+    [ "getCurrentWageSpending", "classFinances.html#acd921ab5b1908be2415552910d7e3f07", null ],
     [ "getTransferToWagesRatio", "classFinances.html#a6ab100ef7f80127bee1f9d00a6c6c1b9", null ],
     [ "setTransferToWagesRatio", "classFinances.html#a00fe954af3535996d6066df634975959", null ],
     [ "subtractBalance", "classFinances.html#ae2fb52ac0fe964304f6bd59e564f28db", null ],

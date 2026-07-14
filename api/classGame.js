@@ -1,6 +1,6 @@
 var classGame =
 [
-    [ "Game", "classGame.html#ad59df6562a58a614fda24622d3715b65", null ],
+    [ "Game", "classGame.html#ad6954c2d2fd3adfdd8a7b331a47c6907", null ],
     [ "advanceDay", "classGame.html#a3a07e7c96e055f2ac28ce7a05d2573ce", null ],
     [ "endSeason", "classGame.html#abe55c7e8223c3be5e495c215d4841170", null ],
     [ "getCalendar", "classGame.html#a791383dbf44783cd2c05e601706e898e", null ],
@@ -19,5 +19,6 @@ var classGame =
     [ "current_season", "classGame.html#a9ca1939e337596720afc9bb6f81b2383", null ],
     [ "currentDate", "classGame.html#af0026df59a6f7aad9a951c38a954423f", null ],
     [ "db_conn", "classGame.html#aae66a3f565896abfe7a086b1ec0f5360", null ],
+    [ "gamedata", "classGame.html#a5c365b0fe4711a702d2205c3affecce3", null ],
     [ "managed_team_id", "classGame.html#a9544cd311f81852f10c48bda21c75a9d", null ]
 ];

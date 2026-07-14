@@ -18,7 +18,7 @@ var searchData=
   ['_5fstats_15',['_stats',['../classPlayer.html#ac330e12ffd6ae63e89dc8ca5e7167e05',1,'Player']]],
   ['_5fstatus_16',['_status',['../classPlayer.html#a12122f838d032c80bbfa77a8965e1248',1,'Player']]],
   ['_5fteam_5fid_17',['_team_id',['../classPlayer.html#a8685d7c544df408712e7360d5e723701',1,'Player']]],
-  ['_5fteamplayers_18',['_teamPlayers',['../classGameData.html#a7659e286973fe4da8956d945f20e5442',1,'GameData']]],
+  ['_5fteamplayers_18',['_teamPlayers',['../classGameData.html#a4d5ff1b5755f26ecb457adffc136e149',1,'GameData']]],
   ['_5fteams_19',['_teams',['../classGameData.html#af1f0d7287b772c33e7fae69e11f9834b',1,'GameData']]],
   ['_5fteamsvec_20',['_teamsVec',['../classGameData.html#ab9c185b2767565b6315caf5299b2b167',1,'GameData']]],
   ['_5ftransfer_5fstatus_21',['_transfer_status',['../classPlayer.html#a1d21f3f93d72c942bd35324ebbdf9b4e',1,'Player']]],

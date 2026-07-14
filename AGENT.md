@@ -40,3 +40,4 @@ As an AI Agent, you must comply with [AI_GUIDELINES.md](AI_GUIDELINES.md):
 2. **Request Review:** You MUST request human review on architectural decisions and complex logic  BEFORE pushing. Do not bypass the human user.
 3. **Document Your Work:** Utilize plan artifacts and walkthroughs to summarize your goals and accomplishments.
 4. **Never Commit or Push:** ONLY USERS can create commits and push to remote branches! The agent must NEVER run `git commit` or `git push`. The agent should only `git add` relevant files and let the user review and commit them manually.
+5. **Save temporary files ONLY in /tmp, not in the repo, so to avoid pushing wrong files**
