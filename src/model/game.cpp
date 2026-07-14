@@ -22,9 +22,10 @@
 #include "model/team.h"
 
 Game::Game(std::shared_ptr<GameData> gd)
-    : gamedata(std::move(gd)), currentDate(START_DATE)
+    : db_conn(std::make_shared<DatabaseConnection>(DATABASE_PATH)),
+      gamedata(std::move(gd)),
+      currentDate(START_DATE)
 {
-  db_conn = std::make_shared<DatabaseConnection>(DATABASE_PATH);
   (*gamedata).loadFromDB(db_conn);
   loadGame();
 }
@@ -33,9 +34,8 @@ void Game::loadGame()
 {
   GameStateRepository gameStateRepo(db_conn);
   FixtureRepository fixtureRepo(db_conn);
-  std::string game_date_str;
-  if (gameStateRepo.loadGameState(current_season, managed_team_id,
-                                  game_date_str))
+  if (std::string game_date_str; gameStateRepo.loadGameState(
+          current_season, managed_team_id, game_date_str))
   {
     currentDate = GameDateValue::fromString(game_date_str);
     fixtureRepo.loadCalendar(calendar);

@@ -1,0 +1,18 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/Flavio/Programming/FootballManagement/build_before/cmake_install.cmake",
+		"/home/Flavio/Programming/FootballManagement/build_before/_deps/fmt-build/cmake_install.cmake",
+		"/home/Flavio/Programming/FootballManagement/build_before/_deps/spdlog-build/cmake_install.cmake",
+		"/home/Flavio/Programming/FootballManagement/build_before/_deps/json-build/cmake_install.cmake",
+		"/home/Flavio/Programming/FootballManagement/build_before/_deps/googletest-build/cmake_install.cmake",
+		"/home/Flavio/Programming/FootballManagement/build_before/_deps/googletest-build/googlemock/cmake_install.cmake",
+		"/home/Flavio/Programming/FootballManagement/build_before/_deps/googletest-build/googletest/cmake_install.cmake",
+		"/home/Flavio/Programming/FootballManagement/build_before/_deps/benchmark-build/cmake_install.cmake",
+		"/home/Flavio/Programming/FootballManagement/build_before/_deps/benchmark-build/src/cmake_install.cmake",
+		"/home/Flavio/Programming/FootballManagement/build_before/src/cmake_install.cmake",
+		"/home/Flavio/Programming/FootballManagement/build_before/test/cmake_install.cmake",
+		"/home/Flavio/Programming/FootballManagement/build_before/benchmarks/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

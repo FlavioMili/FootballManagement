@@ -17,15 +17,15 @@
 Lineup::Lineup() { gridClear(); }
 
 // -------------------- Goalkeeper --------------------
-void Lineup::setGoalkeeper(Player* gk)
+void Lineup::setGoalkeeper(const Player* gk)
 {
   goalkeeper = gk;  // nullptr allowed
 }
 
-Player* Lineup::getGoalkeeper() const { return goalkeeper; }
+const Player* Lineup::getGoalkeeper() const { return goalkeeper; }
 
 // -------------- Grid (outfield players) ---------------
-void Lineup::placePlayer(int row, int col, Player* player)
+void Lineup::placePlayer(int row, int col, const Player* player)
 {
   int index = toIndex(static_cast<uint8_t>(row), static_cast<uint8_t>(col));
   placePlayer(index, player);
@@ -37,13 +37,13 @@ void Lineup::removePlayer(int row, int col)
   removePlayer(index);
 }
 
-Player* Lineup::getPlayerAt(int row, int col) const
+const Player* Lineup::getPlayerAt(int row, int col) const
 {
   int index = toIndex(static_cast<uint8_t>(row), static_cast<uint8_t>(col));
   return getPlayerAt(index);
 }
 
-void Lineup::placePlayer(int index, Player* player)
+void Lineup::placePlayer(int index, const Player* player)
 {
   if (index < 0 || index >= LINEUP_GRID_SIZE) return;
   grid[static_cast<size_t>(index)] = player;
@@ -55,19 +55,22 @@ void Lineup::removePlayer(int index)
   grid[static_cast<size_t>(index)] = nullptr;
 }
 
-Player* Lineup::getPlayerAt(int index) const
+const Player* Lineup::getPlayerAt(int index) const
 {
   if (index < 0 || index >= LINEUP_GRID_SIZE) return nullptr;
   return grid[static_cast<size_t>(index)];
 }
 
 // -------------- Reserves ---------------
-void Lineup::setReserves(const std::vector<Player*>& subs)
+void Lineup::setReserves(const std::vector<const Player*>& subs)
 {
   reserves = subs;  // copies the pointers; nullptrs allowed
 }
 
-const std::vector<Player*>& Lineup::getReserves() const { return reserves; }
+const std::vector<const Player*>& Lineup::getReserves() const
+{
+  return reserves;
+}
 
 // --------------- Strategy ------------------
 void Lineup::setStrategy(const Strategy& strat) { strategy = strat; }
@@ -85,7 +88,7 @@ std::string Lineup::toString() const
   {
     for (int c = 0; c < LINEUP_GRID_COLS; ++c)
     {
-      Player* p = getPlayerAt(r, c);
+      const Player* p = getPlayerAt(r, c);
       oss << "[" << (p ? p->getName() : "Empty") << "]";
     }
     oss << "\n";
@@ -127,8 +130,8 @@ void Lineup::generateStartingXI(const class GameData& gamedata,
   }
 
   // Set goalkeeper
-  goalkeeper = const_cast<Player*>(bestGK);  // safe because we store pointers
-  if (!goalkeeper) return;                   // no GK found, abort
+  goalkeeper = bestGK;      // safe because we store pointers
+  if (!goalkeeper) return;  // no GK found, abort
 
   // Sort outfield players by overall descending
   std::ranges::sort(
@@ -146,12 +149,12 @@ void Lineup::generateStartingXI(const class GameData& gamedata,
     {
       grid[static_cast<size_t>(
           toIndex(static_cast<uint8_t>(r), static_cast<uint8_t>(c)))] =
-          const_cast<Player*>(outfieldPlayers[static_cast<size_t>(placed)]);
+          outfieldPlayers[static_cast<size_t>(placed)];
       ++placed;
     }
   }
 
   // Remaining players go to reserves
   for (size_t i = static_cast<size_t>(placed); i < outfieldPlayers.size(); ++i)
-    reserves.push_back(const_cast<Player*>(outfieldPlayers[i]));
+    reserves.push_back(outfieldPlayers[i]);
 }

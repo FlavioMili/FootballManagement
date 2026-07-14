@@ -1,0 +1,3 @@
+/home/Flavio/Programming/FootballManagement/build_before/_deps/spdlog-subbuild/CMakeFiles/spdlog-populate.dir
+/home/Flavio/Programming/FootballManagement/build_before/_deps/spdlog-subbuild/CMakeFiles/edit_cache.dir
+/home/Flavio/Programming/FootballManagement/build_before/_deps/spdlog-subbuild/CMakeFiles/rebuild_cache.dir

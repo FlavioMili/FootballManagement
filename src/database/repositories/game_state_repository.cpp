@@ -23,9 +23,8 @@ GameStateRepository::GameStateRepository(
 bool GameStateRepository::isFirstRun() const
 {
   sqlite3_stmt* stmt;
-  const char* sql = "SELECT COUNT(*) FROM GameState WHERE id = 1;";
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql, -1, &stmt, nullptr) !=
+  if (const char* sql = "SELECT COUNT(*) FROM GameState WHERE id = 1;";
+      sqlite3_prepare_v2(db_conn->getRaw(), sql, -1, &stmt, nullptr) !=
       SQLITE_OK)
   {
     return true;  // Assume first run if table doesn't exist
@@ -62,10 +61,9 @@ bool GameStateRepository::loadGameState(uint8_t& current_season,
                                         std::string& game_date) const
 {
   sqlite3_stmt* stmt;
-  const std::string& sql = SQLLoader::getQuery(Query::SELECT_GAME_STATE);
   bool has_data = false;
-
-  if (sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, 0) !=
+  if (const std::string& sql = SQLLoader::getQuery(Query::SELECT_GAME_STATE);
+      sqlite3_prepare_v2(db_conn->getRaw(), sql.c_str(), -1, &stmt, nullptr) !=
       SQLITE_OK)
   {
     return false;

@@ -1,0 +1,5 @@
+if(EXISTS "/home/Flavio/Programming/FootballManagement/build_before/test/unit_tests_e3b0c442_tests.cmake")
+  include("/home/Flavio/Programming/FootballManagement/build_before/test/unit_tests_e3b0c442_tests.cmake")
+else()
+  add_test(unit_tests_NOT_BUILT unit_tests_NOT_BUILT)
+endif()

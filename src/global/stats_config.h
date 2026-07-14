@@ -40,7 +40,7 @@ struct RoleFocus
  */
 struct StatsConfig
 {
-  std::map<std::string, RoleFocus>
+  std::map<std::string, RoleFocus, std::less<>>
       role_focus; /*!< Mapping of role names to their RoleFocus. */
   std::vector<std::string>
       possible_stats; /*!< List of all possible statistics. */

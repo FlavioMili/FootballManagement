@@ -8,6 +8,8 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 #include "database/gamedata.h"
 #include "model/player.h"
 
@@ -21,8 +23,6 @@ class GameDataTest : public ::testing::Test
 
   GameData gamedata;
 };
-
-#include <algorithm>
 
 TEST_F(GameDataTest, TestAddRemovePlayer)
 {

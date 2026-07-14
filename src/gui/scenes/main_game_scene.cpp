@@ -157,17 +157,19 @@ void MainGameScene::renderMainArea()
     {
       auto teamOpt =
           guiView->getController().getTeamById(static_cast<uint16_t>(teamId));
-      if (teamOpt.has_value())
+      if (!teamOpt.has_value())
       {
-        ImGui::TableNextRow();
-        ImGui::TableNextColumn();
-        ImGui::Text("%d", rank);
-        ImGui::TableNextColumn();
-        ImGui::Text("%s", teamOpt->get().getName().c_str());
-        ImGui::TableNextColumn();
-        ImGui::Text("%d", points);
-        rank++;
+        continue;
       }
+
+      ImGui::TableNextRow();
+      ImGui::TableNextColumn();
+      ImGui::Text("%d", rank);
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", teamOpt->get().getName().c_str());
+      ImGui::TableNextColumn();
+      ImGui::Text("%d", points);
+      rank++;
     }
     ImGui::EndTable();
   }
