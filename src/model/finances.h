@@ -67,7 +67,7 @@ class Finances
    * @brief Gets the current total wage spending of the team.
    * @return The current wage spending.
    */
-  int64_t getCurrentWageSpending() const;
+  int64_t getCurrentWageSpending(const class GameData& gamedata) const;
 
  private:
   std::int64_t balance;

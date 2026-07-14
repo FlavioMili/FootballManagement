@@ -58,9 +58,10 @@ const Strategy& Team::getStrategy() const { return team_strategy; }
 void Team::setStrategy(const Strategy& strategy) { team_strategy = strategy; }
 
 // Generate best starting XI automatically
-void Team::generateStartingXI(const StatsConfig& stats_config)
+void Team::generateStartingXI(const class GameData& gamedata,
+                              const StatsConfig& stats_config)
 {
-  lineup.generateStartingXI(player_ids, stats_config);
+  lineup.generateStartingXI(gamedata, player_ids, stats_config);
 }
 
 // Finances access

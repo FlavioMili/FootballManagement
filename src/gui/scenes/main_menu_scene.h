@@ -44,4 +44,7 @@ class MainMenuScene : public GUIScene
    * @return The SceneID (MAIN_MENU).
    */
   [[nodiscard]] SceneID getID() const override;
+
+ private:
+  bool is_new_game = false;
 };

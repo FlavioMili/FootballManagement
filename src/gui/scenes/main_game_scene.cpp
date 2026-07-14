@@ -45,6 +45,10 @@ void MainGameScene::onEnter()
   {
     guiView->overlayScene(std::make_unique<TeamSelectionScene>(guiView));
   }
+  else
+  {
+    refreshData();
+  }
 }
 
 void MainGameScene::update(float deltaTime) { (void)deltaTime; }
@@ -85,6 +89,7 @@ void MainGameScene::renderTopBar()
                     ImVec2(NEXT_DAY_BUTTON_WIDTH, NEXT_DAY_BUTTON_HEIGHT)))
   {
     guiView->getController().advanceDay();
+    refreshData();
   }
 }
 
@@ -136,52 +141,37 @@ void MainGameScene::renderMainArea()
   // Left: Standings
   ImGui::Text("%s", LOC("MAIN_GAME_LEAGUE_STANDINGS"));
   ImGui::Separator();
-  auto managedTeamOpt = guiView->getController().getManagedTeam();
-  if (managedTeamOpt.has_value())
+
+  if (ImGui::BeginTable("Standings", STANDINGS_COLUMNS,
+                        ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
   {
-    auto leagueOpt = guiView->getController().getLeagueById(
-        managedTeamOpt->get().getLeagueId());
-    if (leagueOpt.has_value())
+    ImGui::TableSetupColumn(LOC("MAIN_GAME_POS"),
+                            ImGuiTableColumnFlags_WidthFixed, POS_COL_WIDTH);
+    ImGui::TableSetupColumn(LOC("MAIN_GAME_TEAM"));
+    ImGui::TableSetupColumn(LOC("MAIN_GAME_PTS"),
+                            ImGuiTableColumnFlags_WidthFixed, PTS_COL_WIDTH);
+    ImGui::TableHeadersRow();
+
+    int rank = 1;
+    for (const auto& [teamId, points] : cached_standings)
     {
-      const League& league = leagueOpt->get();
-      const auto& leaderboard = league.getLeaderboard();
-      std::vector<std::pair<int, int>> sorted_teams(leaderboard.begin(),
-                                                    leaderboard.end());
-      std::ranges::sort(sorted_teams, [](const auto& a, const auto& b)
-                        { return a.second > b.second; });
-
-      if (ImGui::BeginTable("Standings", STANDINGS_COLUMNS,
-                            ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
+      auto teamOpt =
+          guiView->getController().getTeamById(static_cast<uint16_t>(teamId));
+      if (!teamOpt.has_value())
       {
-        ImGui::TableSetupColumn(LOC("MAIN_GAME_POS"),
-                                ImGuiTableColumnFlags_WidthFixed,
-                                POS_COL_WIDTH);
-        ImGui::TableSetupColumn(LOC("MAIN_GAME_TEAM"));
-        ImGui::TableSetupColumn(LOC("MAIN_GAME_PTS"),
-                                ImGuiTableColumnFlags_WidthFixed,
-                                PTS_COL_WIDTH);
-        ImGui::TableHeadersRow();
-
-        int rank = 1;
-        for (const auto& [teamId, points] : sorted_teams)
-        {
-          auto teamOpt = guiView->getController().getTeamById(
-              static_cast<uint16_t>(teamId));
-          if (teamOpt.has_value())
-          {
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::Text("%d", rank);
-            ImGui::TableNextColumn();
-            ImGui::Text("%s", teamOpt->get().getName().c_str());
-            ImGui::TableNextColumn();
-            ImGui::Text("%d", points);
-            rank++;
-          }
-        }
-        ImGui::EndTable();
+        continue;
       }
+
+      ImGui::TableNextRow();
+      ImGui::TableNextColumn();
+      ImGui::Text("%d", rank);
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", teamOpt->get().getName().c_str());
+      ImGui::TableNextColumn();
+      ImGui::Text("%d", points);
+      rank++;
     }
+    ImGui::EndTable();
   }
 
   ImGui::NextColumn();
@@ -189,44 +179,66 @@ void MainGameScene::renderMainArea()
   // Right: Top Players
   ImGui::Text("%s", LOC("MAIN_GAME_TOP_PLAYERS"));
   ImGui::Separator();
-  if (managedTeamOpt.has_value())
+
+  if (ImGui::BeginTable("TopPlayers", TOP_PLAYERS_COLUMNS,
+                        ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
   {
-    auto players = guiView->getController().getPlayersForTeam(
-        managedTeamOpt->get().getId());
+    ImGui::TableSetupColumn(LOC("MAIN_GAME_NAME"));
+    ImGui::TableSetupColumn(LOC("MAIN_GAME_ROLE"));
+    ImGui::TableSetupColumn(LOC("MAIN_GAME_OVR"),
+                            ImGuiTableColumnFlags_WidthFixed, OVR_COL_WIDTH);
+    ImGui::TableHeadersRow();
+
     const auto& stats_config = guiView->getController().getStatsConfig();
-    std::ranges::sort(
-        players,
-        [&stats_config](const std::reference_wrapper<const Player>& a,
-                        const std::reference_wrapper<const Player>& b)
-        {
-          return a.get().getOverall(stats_config) >
-                 b.get().getOverall(stats_config);
-        });
-
-    if (ImGui::BeginTable("TopPlayers", TOP_PLAYERS_COLUMNS,
-                          ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
+    for (size_t i = 0; i < MAX_TOP_PLAYERS && i < cached_top_players.size();
+         ++i)
     {
-      ImGui::TableSetupColumn(LOC("MAIN_GAME_NAME"));
-      ImGui::TableSetupColumn(LOC("MAIN_GAME_ROLE"));
-      ImGui::TableSetupColumn(LOC("MAIN_GAME_OVR"),
-                              ImGuiTableColumnFlags_WidthFixed, OVR_COL_WIDTH);
-      ImGui::TableHeadersRow();
-
-      for (size_t i = 0; i < MAX_TOP_PLAYERS && i < players.size(); ++i)
-      {
-        ImGui::TableNextRow();
-        const auto& player = players[i].get();
-        ImGui::TableNextColumn();
-        ImGui::Text("%s", player.getName().c_str());
-        ImGui::TableNextColumn();
-        ImGui::Text("%s", player.getRole().c_str());
-        ImGui::TableNextColumn();
-        ImGui::Text("%.1f", player.getOverall(stats_config));
-      }
-      ImGui::EndTable();
+      ImGui::TableNextRow();
+      const auto& player = cached_top_players[i].get();
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", player.getName().c_str());
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", player.getRole().c_str());
+      ImGui::TableNextColumn();
+      ImGui::Text("%.1f", player.getOverall(stats_config));
     }
+    ImGui::EndTable();
   }
 
   ImGui::Columns(1);
   ImGui::EndChild();
+}
+
+void MainGameScene::refreshData()
+{
+  cached_date = guiView->getController().getCurrentDate();
+  cached_season = guiView->getController().getCurrentSeason();
+
+  auto managedTeamOpt = guiView->getController().getManagedTeam();
+  if (!managedTeamOpt.has_value()) return;
+
+  // Refresh standings
+  auto leagueOpt = guiView->getController().getLeagueById(
+      managedTeamOpt->get().getLeagueId());
+  if (leagueOpt.has_value())
+  {
+    const League& league = leagueOpt->get();
+    const auto& leaderboard = league.getLeaderboard();
+    cached_standings.assign(leaderboard.begin(), leaderboard.end());
+    std::ranges::sort(cached_standings, [](const auto& a, const auto& b)
+                      { return a.second > b.second; });
+  }
+
+  // Refresh top players
+  cached_top_players =
+      guiView->getController().getPlayersForTeam(managedTeamOpt->get().getId());
+  const auto& stats_config = guiView->getController().getStatsConfig();
+  std::ranges::sort(
+      cached_top_players,
+      [&stats_config](const std::reference_wrapper<const Player>& a,
+                      const std::reference_wrapper<const Player>& b)
+      {
+        return a.get().getOverall(stats_config) >
+               b.get().getOverall(stats_config);
+      });
 }

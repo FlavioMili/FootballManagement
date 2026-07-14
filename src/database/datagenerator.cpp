@@ -54,10 +54,11 @@ void DataGenerator::loadNames()
   }
 }
 
-Player DataGenerator::generateRandomPlayer(TeamID team_id)
+Player DataGenerator::generateRandomPlayer(const GameData& gamedata,
+                                           TeamID team_id)
 {
   static uint32_t next_player_id = 50000;
-  auto stats_config = GameData::instance().getStatsConfig();
+  auto stats_config = gamedata.getStatsConfig();
   static std::mt19937 gen(std::random_device{}());
   std::uniform_int_distribution<size_t> name_dist(0, first_names.size() - 1);
   std::uniform_int_distribution<size_t> last_name_dist(0,
@@ -142,7 +143,7 @@ std::vector<Team> DataGenerator::generateTeams()
   return teams;
 }
 
-std::vector<Player> DataGenerator::generatePlayers()
+std::vector<Player> DataGenerator::generatePlayers(const GameData& gamedata)
 {
   loadNames();
   std::vector<Player> players;
@@ -183,7 +184,7 @@ std::vector<Player> DataGenerator::generatePlayers()
   }
 
   // Ensure every team has at least 30 players
-  auto teams = GameData::instance().getTeamsVector();
+  auto teams = gamedata.getTeamsVector();
   Logger::debug("Ensuring player rosters for " + std::to_string(teams.size()) +
                 " teams.");
   for (const auto& teamRef : teams)
@@ -201,7 +202,7 @@ std::vector<Player> DataGenerator::generatePlayers()
                     " new players for " + team.getName());
       for (int i = 0; i < players_to_generate; ++i)
       {
-        players.push_back(generateRandomPlayer(team.getId()));
+        players.push_back(generateRandomPlayer(gamedata, team.getId()));
       }
     }
   }

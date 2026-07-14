@@ -16,10 +16,11 @@
 #include "database/gamedata.h"
 #include "global/paths.h"
 
+
 // Set up the database environment for benchmarks
 class DatabaseFixture : public benchmark::Fixture {
  public:
-  void SetUp(const ::benchmark::State& state) override {
+  void SetUp(::benchmark::State& state) override {
     (void)state;
     // Remove the database file to ensure a clean slate for each benchmark run
     std::filesystem::remove(DATABASE_PATH);
@@ -27,21 +28,22 @@ class DatabaseFixture : public benchmark::Fixture {
     db_conn->initialize();
   }
 
-  void TearDown(const ::benchmark::State& state) override {
+  void TearDown(::benchmark::State& state) override {
     (void)state;
     db_conn.reset();
   }
 
   std::shared_ptr<DatabaseConnection> db_conn;
+  GameData gamedata;
 };
 
 BENCHMARK_DEFINE_F(DatabaseFixture, BM_LoadFromDB)(benchmark::State& state) {
   state.PauseTiming();
   // Pre-load initial data
-  GameData::instance().loadFromDB(db_conn);
+  gamedata.loadFromDB(db_conn);
 
   int target_players = state.range(0);
-  int current_players = GameData::instance().getPlayers().size();
+  int current_players = gamedata.getPlayers().size();
 
   // Inject extra players directly into the DB
   for (int i = current_players; i < target_players; ++i) {
@@ -53,29 +55,29 @@ BENCHMARK_DEFINE_F(DatabaseFixture, BM_LoadFromDB)(benchmark::State& state) {
 
   for (auto _ : state) {
     (void)_;
-    GameData::instance().loadFromDB(db_conn);
+    gamedata.loadFromDB(db_conn);
   }
 }
 
 BENCHMARK_DEFINE_F(DatabaseFixture, BM_SaveToDB)(benchmark::State& state) {
   state.PauseTiming();
   // Pre-load data
-  GameData::instance().loadFromDB(db_conn);
+  gamedata.loadFromDB(db_conn);
 
   int target_players = state.range(0);
-  int current_players = GameData::instance().getPlayers().size();
+  int current_players = gamedata.getPlayers().size();
 
   for (int i = current_players; i < target_players; ++i) {
     Player p(i, 1, "Test", "Player " + std::to_string(i), "ST", Language::EN, 1000, 0, 20, 2, 180,
              Foot::Right, {});
     PlayerRepository(db_conn).insertPlayer(p);
-    GameData::instance().addPlayer(p.getId(), p);
+    gamedata.addPlayer(p.getId(), p);
   }
   state.ResumeTiming();
 
   for (auto _ : state) {
     (void)_;
-    GameData::instance().saveToDB();
+    gamedata.saveToDB();
   }
 }
 
@@ -90,24 +92,27 @@ BENCHMARK_REGISTER_F(DatabaseFixture, BM_SaveToDB)
     ->Unit(benchmark::kMillisecond);
 
 BENCHMARK_DEFINE_F(DatabaseFixture, BM_GetPlayersForTeam)(benchmark::State& state) {
-  state.PauseTiming();
-  GameData::instance().loadFromDB(db_conn);
+  // Pre-load data
+  gamedata.loadFromDB(db_conn);
 
   int target_players = state.range(0);
-  int current_players = GameData::instance().getPlayers().size();
+  int current_players = gamedata.getPlayers().size();
 
   TeamID team_id_to_query = 1;
+  // Use a transaction for fast inserts
+  db_conn->beginTransaction();
   for (int i = current_players; i < target_players; ++i) {
     Player p(i, (i % 2 == 0) ? team_id_to_query : 2, "Test", "Player " + std::to_string(i), "ST",
              Language::EN, 1000, 0, 20, 2, 180, Foot::Right, {});
     PlayerRepository(db_conn).insertPlayer(p);
-    GameData::instance().addPlayer(p.getId(), p);
+    gamedata.addPlayer(p.getId(), p);
   }
-  state.ResumeTiming();
+  db_conn->commitTransaction();
 
+  // Reset the timers so the setup time isn't counted
+  state.ResumeTiming();
   for (auto _ : state) {
-    (void)_;
-    auto players = GameData::instance().getPlayersForTeam(team_id_to_query);
+    auto players = gamedata.getPlayersForTeam(team_id_to_query);
     benchmark::DoNotOptimize(players);
   }
 }

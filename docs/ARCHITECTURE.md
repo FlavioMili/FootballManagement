@@ -16,7 +16,7 @@ graph TD
 ## Core Components
 
 ### 1. The Game Model (`Game`)
-The `Game` class holds the overarching state machine for the simulation. It dictates the current phase of the game (e.g., Main Menu, Team Selection, Playing) and orchestrates the transition between UI scenes.
+The `Game` class holds the overarching state machine for the simulation. It dictates the current phase of the game (e.g., Main Menu, Team Selection, Playing) and orchestrates the transition between UI scenes. It is instantiated per save-file loaded.
 
 ### 2. The Game Data Cache (`GameData`)
 `GameData` serves as the centralized, in-memory repository of all game entities (Teams, Players, Leagues, Fixtures). Because reading from the database is expensive, `GameData` loads everything on game start and flushes changes to the database periodically or upon user request.
@@ -29,3 +29,7 @@ This class wraps raw `sqlite3` pointers and handles the RAII lifecycle of the da
 
 ### 5. GUI Views (`GUIView` and Scenes)
 The presentation layer is built on Dear ImGui. The `GUIView` class manages the main render loop, pushing and popping `IScene` objects onto a scene stack to handle navigation (e.g., moving from the Main Menu to the Roster Scene).
+
+### 6. Save System
+The game uses a cross-platform save system powered by `SDL_GetPrefPath`. Save files are isolated from the main game binary and stored in the OS-native application data folder (e.g. `~/.local/share/FlavioMili/FootballManagement/` on Linux). 
+The `GameController` dynamically initializes the `Game` and `DatabaseConnection` with the correct `save_X.db` file when a slot is loaded or a new game is started. On creating a new game, the database is generated from scratch using the template base schema.

@@ -40,12 +40,13 @@ class DataGenerator
    * @brief Generate a collection of players.
    * @return A vector of generated Player objects.
    */
-  static std::vector<Player> generatePlayers();
+  static std::vector<Player> generatePlayers(const class GameData& gamedata);
 
  private:
   static std::vector<std::string> first_names;
   static std::vector<std::string> last_names;
 
   static void loadNames();
-  static Player generateRandomPlayer(TeamID team_id);
+  static Player generateRandomPlayer(const class GameData& gamedata,
+                                     TeamID team_id);
 };

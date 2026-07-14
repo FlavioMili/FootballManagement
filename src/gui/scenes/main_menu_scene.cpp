@@ -11,6 +11,7 @@
 #include <imgui.h>
 
 #include "global/language_manager.h"
+#include "global/logger.h"
 #include "gui/gui_constants.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/main_game_scene.h"
@@ -40,15 +41,59 @@ void MainMenuScene::render()
                     ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
                            GUIConstants::MENU_BUTTON_HEIGHT)))
   {
-    auto gameScene = std::make_unique<MainGameScene>(guiView);
-    changeScene(std::move(gameScene));
+    ImGui::OpenPopup("Select Save Slot");
+    is_new_game = true;
   }
 
   if (ImGui::Button(LOC("MENU_LOAD_GAME"),
                     ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
                            GUIConstants::MENU_BUTTON_HEIGHT)))
   {
-    // TODO load game logic
+    ImGui::OpenPopup("Select Save Slot");
+    is_new_game = false;
+  }
+
+  if (ImGui::BeginPopupModal("Select Save Slot", nullptr,
+                             ImGuiWindowFlags_AlwaysAutoResize))
+  {
+    ImGui::Text("%s", is_new_game
+                          ? "Select a slot for your New Game (will overwrite):"
+                          : "Select a slot to Load:");
+    ImGui::Separator();
+
+    for (int i = 1; i <= 3; ++i)
+    {
+      if (ImGui::Button(("Slot " + std::to_string(i)).c_str(), ImVec2(200, 40)))
+      {
+        if (is_new_game)
+        {
+          guiView->getController().newGame(i);
+          auto gameScene = std::make_unique<MainGameScene>(guiView);
+          changeScene(std::move(gameScene));
+        }
+        else
+        {
+          if (guiView->getController().loadGame(i))
+          {
+            auto gameScene = std::make_unique<MainGameScene>(guiView);
+            changeScene(std::move(gameScene));
+          }
+          else
+          {
+            // Failed to load
+            Logger::error("Failed to load game from slot " + std::to_string(i));
+          }
+        }
+        ImGui::CloseCurrentPopup();
+      }
+    }
+
+    ImGui::Separator();
+    if (ImGui::Button("Cancel", ImVec2(200, 30)))
+    {
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndPopup();
   }
 
   if (ImGui::Button(LOC("MENU_SETTINGS"),

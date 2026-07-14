@@ -53,4 +53,11 @@ class MainGameScene : public GUIScene
   void renderSidebar();
   void renderMainArea();
   void renderTopBar();
+
+  void refreshData();
+
+  std::vector<std::pair<int, int>> cached_standings;
+  std::vector<std::reference_wrapper<const Player>> cached_top_players;
+  int cached_season = -1;
+  GameDateValue cached_date;
 };

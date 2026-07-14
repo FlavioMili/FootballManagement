@@ -38,13 +38,13 @@ class Lineup
    * @brief Sets the goalkeeper.
    * @param gk Pointer to the Player object.
    */
-  void setGoalkeeper(Player* gk);
+  void setGoalkeeper(const Player* gk);
 
   /**
    * @brief Gets the goalkeeper.
    * @return Pointer to the goalkeeper Player object.
    */
-  Player* getGoalkeeper() const;
+  const Player* getGoalkeeper() const;
 
   // Grid (outfield players)
   /**
@@ -53,7 +53,7 @@ class Lineup
    * @param col Column index.
    * @param player Pointer to the Player object.
    */
-  void placePlayer(int row, int col, Player* player);
+  void placePlayer(int row, int col, const Player* player);
 
   /**
    * @brief Removes a player from the outfield grid by row and column.
@@ -68,14 +68,14 @@ class Lineup
    * @param col Column index.
    * @return Pointer to the Player object.
    */
-  Player* getPlayerAt(int row, int col) const;
+  const Player* getPlayerAt(int row, int col) const;
 
   /**
    * @brief Places a player in the outfield grid by linear index.
    * @param index Linear index.
    * @param player Pointer to the Player object.
    */
-  void placePlayer(int index, Player* player);
+  void placePlayer(int index, const Player* player);
 
   /**
    * @brief Removes a player from the outfield grid by linear index.
@@ -88,7 +88,7 @@ class Lineup
    * @param index Linear index.
    * @return Pointer to the Player object.
    */
-  Player* getPlayerAt(int index) const;
+  const Player* getPlayerAt(int index) const;
 
   // Helpers for index conversions
   /**
@@ -114,13 +114,13 @@ class Lineup
    * @brief Sets the reserve players.
    * @param subs A vector of pointers to the reserve Player objects.
    */
-  void setReserves(const std::vector<Player*>& subs);
+  void setReserves(const std::vector<const Player*>& subs);
 
   /**
    * @brief Gets the reserve players.
    * @return A vector of pointers to the reserve Player objects.
    */
-  const std::vector<Player*>& getReserves() const;
+  const std::vector<const Player*>& getReserves() const;
 
   // Strategy
   /**
@@ -144,10 +144,12 @@ class Lineup
 
   /**
    * @brief Generates a starting XI automatically.
-   * @param allPlayers A vector of all available player IDs.
+   * @param gamedata The game data containing player information.
+   * @param allPlayerIDs A vector of all available player IDs.
    * @param stats_config The stats configuration for evaluating players.
    */
-  void generateStartingXI(const std::vector<PlayerID>& allPlayers,
+  void generateStartingXI(const class GameData& gamedata,
+                          const std::vector<PlayerID>& allPlayerIDs,
                           const StatsConfig& stats_config);
 
   /**
@@ -160,9 +162,10 @@ class Lineup
   }
 
  private:
-  Player* goalkeeper;
-  std::array<Player*, LINEUP_GRID_SIZE> grid;  // 25 slots, many may be empty
-  std::vector<Player*> reserves;
+  const Player* goalkeeper;
+  std::array<const Player*, LINEUP_GRID_SIZE>
+      grid;  // 25 slots, many may be empty
+  std::vector<const Player*> reserves;
   Strategy strategy;
 
   // Helper

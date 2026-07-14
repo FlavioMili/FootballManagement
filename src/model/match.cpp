@@ -46,12 +46,12 @@ void Match::simulate(const GameData& game_data)
   const auto& stats_config = game_data.getStatsConfig();
 
   // Home lineup
-  if (Player* gk = home_lineup.getGoalkeeper())
+  if (const Player* gk = home_lineup.getGoalkeeper())
     home_defense += gk->getOverall(stats_config);
 
   for (int i = 0; i < LINEUP_GRID_SIZE; ++i)
   {
-    if (Player* p = home_lineup.getPlayerAt(i))
+    if (const Player* p = home_lineup.getPlayerAt(i))
     {
       std::string role = p->getRole();
       if (role == "Striker")
@@ -66,12 +66,12 @@ void Match::simulate(const GameData& game_data)
   }
 
   // Away lineup
-  if (Player* gk = away_lineup.getGoalkeeper())
+  if (const Player* gk = away_lineup.getGoalkeeper())
     away_defense += gk->getOverall(stats_config);
 
   for (int i = 0; i < LINEUP_GRID_SIZE; ++i)
   {
-    if (Player* p = away_lineup.getPlayerAt(i))
+    if (const Player* p = away_lineup.getPlayerAt(i))
     {
       std::string role = p->getRole();
       if (role == "Striker")

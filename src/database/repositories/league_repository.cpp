@@ -80,7 +80,7 @@ void LeagueRepository::insertLeagueWithId(const League& league) const
   sqlite3_bind_int(stmt, 1, league.getId());
   sqlite3_bind_text(stmt, 2, league.getName().c_str(), -1, SQLITE_TRANSIENT);
 
-  if (league.getParentLeagueID())
+  if (league.getParentLeagueID().has_value())
   {
     uint8_t parentID = *league.getParentLeagueID();
     sqlite3_bind_int(stmt, 3, parentID);
@@ -119,8 +119,8 @@ void LeagueRepository::loadLeaguePoints(League& league) const
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
-    TeamID team_id = static_cast<uint16_t>(sqlite3_column_int(stmt, 0));
-    uint8_t points = static_cast<uint8_t>(sqlite3_column_int(stmt, 1));
+    auto team_id = static_cast<uint16_t>(sqlite3_column_int(stmt, 0));
+    auto points = static_cast<uint8_t>(sqlite3_column_int(stmt, 1));
     league.setPoints(team_id, points);
   }
 

@@ -11,6 +11,7 @@
 #include <memory>
 
 #include "controller/game_controller.h"
+#include "database/gamedata.h"
 #include "global/logger.h"
 #include "global/paths.h"
 #include "gui/gui_view.h"
@@ -21,13 +22,14 @@ int main()
   srand(static_cast<uint>(time(0)));
   try
   {
-    std::filesystem::remove(DATABASE_PATH);
-    auto game = std::make_unique<Game>();
-    auto controller = std::make_unique<GameController>(std::move(game));
+    auto controller = std::make_unique<GameController>();
 
     GUIView view(*controller);
     view.run();
-    controller->saveGame();
+    if (controller->isGameLoaded())
+    {
+      controller->saveGame();
+    }
   }
   catch (const std::exception& e)
   {

@@ -33,14 +33,14 @@ float Finances::getTransferToWagesRatio() const noexcept
   return transfer_to_wages_ratio;
 }
 
-int64_t Finances::getCurrentWageSpending() const
+int64_t Finances::getCurrentWageSpending(const class GameData& gamedata) const
 {
   int64_t wages{};
   auto playerIDs = team.getPlayerIDs();
 
   for (auto& pID : playerIDs)
   {
-    wages += GameData::instance().getPlayer(pID)->get().getWage();
+    wages += gamedata.getPlayer(pID)->get().getWage();
   }
   return wages;
 }

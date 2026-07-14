@@ -32,7 +32,7 @@ struct GameDateValue
    * the transfer window and some friendlies before starting
    * the championship.
    */
-  GameDateValue(uint16_t y = 2025, uint8_t m = 7, uint8_t d = 1)
+  explicit GameDateValue(uint16_t y = 2025, uint8_t m = 7, uint8_t d = 1)
       : year(y), month(m), day(d)
   {
   }
