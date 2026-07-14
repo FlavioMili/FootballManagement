@@ -33,7 +33,7 @@ const std::vector<TeamID>& League::getTeamIDs() const { return team_ids; }
 
 void League::addTeamID(TeamID team_id)
 {
-  if (std::find(team_ids.begin(), team_ids.end(), team_id) == team_ids.end())
+  if (std::ranges::find(team_ids, team_id) == team_ids.end())
   {
     team_ids.push_back(team_id);
     leaderboard[team_id] = 0;
@@ -42,10 +42,8 @@ void League::addTeamID(TeamID team_id)
 
 void League::removeTeamID(TeamID team_id)
 {
-  auto it = std::remove(team_ids.begin(), team_ids.end(), team_id);
-  if (it != team_ids.end())
+  if (std::erase(team_ids, team_id) > 0)
   {
-    team_ids.erase(it, team_ids.end());
     leaderboard.erase(team_id);
   }
 }

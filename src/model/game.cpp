@@ -71,9 +71,9 @@ void Game::saveGame()
                                   currentDate.toString());
     fixtureRepo.saveCalendar(calendar);
 
-    for (const auto& pair : GameData::instance().getLeagues())
+    for (const auto& [id, league] : GameData::instance().getLeagues())
     {
-      leagueRepo.saveLeaguePoints(pair.second);
+      leagueRepo.saveLeaguePoints(league);
     }
     db_conn->commitTransaction();
   }
@@ -188,9 +188,9 @@ void Game::handleSeasonTransition()
 
 void Game::startNewSeason()
 {
-  for (auto& pair : GameData::instance().getLeagues())
+  for (auto& [id, league] : GameData::instance().getLeagues())
   {
-    pair.second.resetPoints();
+    league.resetPoints();
   }
   calendar.generate(currentDate);
 }

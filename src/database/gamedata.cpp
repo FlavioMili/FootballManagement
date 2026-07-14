@@ -62,15 +62,15 @@ bool GameData::loadFromDB(std::shared_ptr<DatabaseConnection> database_ptr)
   // Build vectors from the maps
   _leaguesVec.clear();
   _leaguesVec.reserve(_leagues.size());
-  for (auto& p : _leagues) _leaguesVec.push_back(p.second);
+  for (auto& [id, league] : _leagues) _leaguesVec.push_back(league);
 
   _teamsVec.clear();
   _teamsVec.reserve(_teams.size());
-  for (auto& p : _teams) _teamsVec.push_back(p.second);
+  for (auto& [id, team] : _teams) _teamsVec.push_back(team);
 
   _playersVec.clear();
   _playersVec.reserve(_players.size());
-  for (auto& p : _players) _playersVec.push_back(p.second);
+  for (auto& [id, player] : _players) _playersVec.push_back(player);
 
   return true;
 }
@@ -285,9 +285,9 @@ GameData::getPlayersVector() const
 
 void GameData::ageAllPlayers()
 {
-  for (auto& pair : _players)
+  for (auto& [id, player] : _players)
   {
-    pair.second.agePlayer();
+    player.agePlayer();
   }
 }
 
@@ -318,9 +318,7 @@ bool GameData::removePlayer(PlayerID id)
   {
     TeamID team_id = player_it->second.getTeamId();
     auto& team_players = _teamPlayers[team_id];
-    team_players.erase(
-        std::remove(team_players.begin(), team_players.end(), id),
-        team_players.end());
+    std::erase(team_players, id);
   }
 
   bool erased = _players.erase(id) > 0;
@@ -351,8 +349,7 @@ void GameData::transferPlayer(PlayerID id, TeamID new_team_id)
   it->second.setTeamId(new_team_id);
 
   auto& old_team_vec = _teamPlayers[old_team_id];
-  old_team_vec.erase(std::remove(old_team_vec.begin(), old_team_vec.end(), id),
-                     old_team_vec.end());
+  std::erase(old_team_vec, id);
 
   _teamPlayers[new_team_id].push_back(id);
 }

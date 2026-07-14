@@ -109,11 +109,11 @@ void Player::agePlayer()
   // though formula suggests it decreases.
   float decay = PLAYER_STAT_INCREASE_BASE * (1.0f - std::max(0.0f, age_factor));
 
-  for (auto& stat : _stats)
+  for (auto& [statName, value] : _stats)
   {
-    stat.second -= decay;
+    value -= decay;
 
-    if (stat.second < MIN_STAT_VAL) stat.second = MIN_STAT_VAL;
+    if (value < MIN_STAT_VAL) value = MIN_STAT_VAL;
   }
 }
 

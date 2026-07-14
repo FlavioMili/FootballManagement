@@ -130,9 +130,8 @@ void Lineup::generateStartingXI(const std::vector<PlayerID>& allPlayerIDs,
   if (!goalkeeper) return;                   // no GK found, abort
 
   // Sort outfield players by overall descending
-  std::sort(
-      outfieldPlayers.begin(), outfieldPlayers.end(),
-      [&](const Player* a, const Player* b)
+  std::ranges::sort(
+      outfieldPlayers, [&](const Player* a, const Player* b)
       { return a->getOverall(stats_config) > b->getOverall(stats_config); });
 
   // Place top 10 outfield players in grid (row 4 = defense, row 0 = attack)

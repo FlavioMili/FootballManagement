@@ -68,9 +68,9 @@ void FixtureRepository::saveCalendar(const Calendar& calendar) const
 
   sqlite3_stmt* stmt =
       db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_FIXTURE));
-  for (const auto& pair : calendar.getFullCalendar())
+  for (const auto& [matchDay, matches] : calendar.getFullCalendar())
   {
-    for (const auto& match : pair.second)
+    for (const auto& match : matches)
     {
       sqlite3_bind_text(stmt, 1, match.getDate().toString().c_str(), -1,
                         SQLITE_TRANSIENT);
