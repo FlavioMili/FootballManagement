@@ -1,0 +1,25 @@
+var classTeam =
+[
+    [ "Team", "classTeam.html#ad1ede6646cfcfbd6efdd069893918e86", null ],
+    [ "addPlayerID", "classTeam.html#a1264ed81efce4e6db89cf289d4fd604c", null ],
+    [ "generateStartingXI", "classTeam.html#aae54378880a9ab0d5d260368dd72a3bb", null ],
+    [ "getFinances", "classTeam.html#a2f0a03795fb969af345005e6316d1040", null ],
+    [ "getFinances", "classTeam.html#a2fce34a4f9a85482dba19294903aac37", null ],
+    [ "getId", "classTeam.html#ae42795518c929d8b5afaf94a90d9b5d4", null ],
+    [ "getLeagueId", "classTeam.html#af91fb8a1aaed180245ccd07fe7932a8d", null ],
+    [ "getLineup", "classTeam.html#ac8dd234be85d4335cfb5003ebfe3b8cc", null ],
+    [ "getLineup", "classTeam.html#aeec06a081ef83b9684acdecd95bb0b4e", null ],
+    [ "getName", "classTeam.html#a480da19d8b480153a9a8545ac9c39ccd", null ],
+    [ "getPlayerIDs", "classTeam.html#a9c8b9367f47a776cd8b895906dd2ac16", null ],
+    [ "getStrategy", "classTeam.html#a2a102394423417d53b76c289961faecf", null ],
+    [ "getStrategy", "classTeam.html#a087483d7a318f8f2b3a90dc034db3b54", null ],
+    [ "removePlayerID", "classTeam.html#aaf363d95ada042958e1d984c0860f44f", null ],
+    [ "setStrategy", "classTeam.html#ae2067e73d309f2bfe183dbcb9374c843", null ],
+    [ "finances", "classTeam.html#afe825e2db13282c3d10ce7c89ef3307c", null ],
+    [ "id", "classTeam.html#a5791d1f6408652605c5939e544690e1b", null ],
+    [ "league_id", "classTeam.html#a9bdecbf757a79bcd566d324f5fec61e9", null ],
+    [ "lineup", "classTeam.html#a23d04ef150824d8cbc1189fb3fde3456", null ],
+    [ "name", "classTeam.html#a7463b8b89ec3db04c15e094578af63b5", null ],
+    [ "player_ids", "classTeam.html#a71ef480b72c86a1e978fbc741cff434b", null ],
+    [ "team_strategy", "classTeam.html#a191c98e0c5e0b64d09b6afbf99416fee", null ]
+];

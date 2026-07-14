@@ -25,6 +25,7 @@ You MUST adhere to our linting and formatting rules:
 2. **Linting:** We strictly enforce `.clang-tidy`. Ensure your changes do not introduce warnings.
 3. **Scoped Variables:** Keep variables scoped tightly, inside `if` statements if they are not used elsewhere.
 4. **Headers:** We use `#pragma once` as our include guard.
+5. **Performance Testing:** Any code modifying core performance (like Database IO) MUST run benchmarks locally. These are disabled in CI. Configure with `-DBUILD_BENCHMARKS=ON` and run `./build/benchmarks/db_benchmarks`. Report the results to the user.
 
 ## 5. GitHub Traceability Protocol
 Before starting a major implementation, the agent should:
@@ -38,3 +39,4 @@ As an AI Agent, you must comply with [AI_GUIDELINES.md](AI_GUIDELINES.md):
 1. **Declare your usage:** Make sure any Pull Request clearly states that it was agent-generated and describes the steps you took.
 2. **Request Review:** You MUST request human review on architectural decisions and complex logic  BEFORE pushing. Do not bypass the human user.
 3. **Document Your Work:** Utilize plan artifacts and walkthroughs to summarize your goals and accomplishments.
+4. **Never Commit or Push:** ONLY USERS can create commits and push to remote branches! The agent must NEVER run `git commit` or `git push`. The agent should only `git add` relevant files and let the user review and commit them manually.

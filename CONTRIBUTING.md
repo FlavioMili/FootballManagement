@@ -21,6 +21,21 @@ First off, thank you for considering contributing to Football Management! It's p
    ctest --test-dir build -V
    ```
 
+## Performance Benchmarks
+
+If your Pull Request introduces changes that might affect the game's performance (such as database IO, tight game loops, etc.), you **MUST** run the benchmarks locally. Note that these benchmarks are *not* run in CI to save resources and avoid flakiness.
+
+To run the benchmarks:
+```bash
+# Configure the build with benchmarks enabled
+cmake -S . -B build -DBUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release
+# Build the benchmarks
+cmake --build build --target db_benchmarks
+# Execute the benchmarks
+./build/benchmarks/db_benchmarks
+```
+Please include the benchmark output in your Pull Request description.
+
 ## Branching Strategy
 
 - **Main branch:** `main` is our bleeding edge. It should always compile and pass all tests.

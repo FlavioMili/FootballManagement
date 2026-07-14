@@ -1,0 +1,35 @@
+var classGUIView =
+[
+    [ "PendingAction", "classGUIView.html#a5599174075b54d4caad80c213daedad0", [
+      [ "NONE", "classGUIView.html#a5599174075b54d4caad80c213daedad0ab50339a10e1de285ac99d4c3990b8693", null ],
+      [ "CHANGE", "classGUIView.html#a5599174075b54d4caad80c213daedad0a421cfd143e450c3f5814a0495409e073", null ],
+      [ "OVERLAY", "classGUIView.html#a5599174075b54d4caad80c213daedad0a0395ef37aaf2724781e56e74c9cca583", null ],
+      [ "POP", "classGUIView.html#a5599174075b54d4caad80c213daedad0aefdb39a4c7286afcecf0e8a7435fce6a", null ]
+    ] ],
+    [ "GUIView", "classGUIView.html#a7ca40b58018713c5c91ab1e53e9a70e1", null ],
+    [ "~GUIView", "classGUIView.html#a0fec40298e47e7b86af03ccb31ea7803", null ],
+    [ "applyCatppuccinLatteTheme", "classGUIView.html#a5aae1d5de2be5b50378d51fcfb2ec38b", null ],
+    [ "applyPendingSceneChanges", "classGUIView.html#a7e525473cca5a2272288c71e65d703bb", null ],
+    [ "changeScene", "classGUIView.html#ad52c6aba9aaa9df5aba80493a0314875", null ],
+    [ "getActiveScene", "classGUIView.html#a3e3aa698f5e4cc219cca1a7e1f43f127", null ],
+    [ "getController", "classGUIView.html#ac5bea47bc5df7db30835588a13255e2d", null ],
+    [ "getRenderer", "classGUIView.html#a880b1fa86042a2994e21e8cdacb846d9", null ],
+    [ "getWindow", "classGUIView.html#aca2c06d5349f20054a22b8c232ed7b7e", null ],
+    [ "handleEvents", "classGUIView.html#af9726402be6b2677c160c7213be0868a", null ],
+    [ "initialize", "classGUIView.html#a09b6c8cab5626c113d27dbbfa882b6ad", null ],
+    [ "overlayScene", "classGUIView.html#a0b59705de676f49769060d1fc8962abc", null ],
+    [ "popScene", "classGUIView.html#a9a2b8f8ce4199c06cddce663094622a9", null ],
+    [ "quit", "classGUIView.html#a1cd3cf476bcf47adf7ec8e8fdb18e8d7", null ],
+    [ "render", "classGUIView.html#aab2105ec50a97925112d97cdd5456a15", null ],
+    [ "run", "classGUIView.html#a0fef49a04f8ef5111d45273bc21ceb44", null ],
+    [ "update", "classGUIView.html#a8a2fde03bd86fcbc98049eddd976b2e5", null ],
+    [ "GameFlowTest_GUIFlowLifecycle_Test", "classGUIView.html#af70851c82f5c5d3e1b6b40e55b6d8532", null ],
+    [ "controller", "classGUIView.html#ad92f0d45a39f78d897c97f22c68a0e12", null ],
+    [ "currentScene", "classGUIView.html#a088b9d0eb634232916dae175698c7b10", null ],
+    [ "pendingAction", "classGUIView.html#a295b0d82742d1e6d5a332459c7cc9ee0", null ],
+    [ "pendingScene", "classGUIView.html#aad7c197e9593027bfa285e436e222690", null ],
+    [ "renderer", "classGUIView.html#a0c4d2af0aad819e66b1f32a94d782595", null ],
+    [ "running", "classGUIView.html#adb591d44135de010b50b2c2068803f50", null ],
+    [ "sceneStack", "classGUIView.html#ab98bc5a6f48ee51be2f5d60f1e8e7693", null ],
+    [ "window", "classGUIView.html#a5ca054ab5ecd4413d6adaa2a8c01a851", null ]
+];

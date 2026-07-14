@@ -1,0 +1,38 @@
+var languages_8h =
+[
+    [ "Language", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0c", [
+      [ "EN", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caaa85f1840e282d8a8304dbc2c0d7c9b2", null ],
+      [ "IT", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0cacd32106bcb6de321930cf34574ea388c", null ],
+      [ "ES", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca04c19fa1e772ab66f0aad2efe61f25cd", null ],
+      [ "FR", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca11aedd0e432747c2bcd97b82808d24a0", null ],
+      [ "DE", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca3a52f3c22ed6fcde5bf696a6c02c9e73", null ],
+      [ "MX", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca0b98720dcb2cc6fd60358a45dfbc5b87", null ],
+      [ "CN", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca1c2903397d8833382673bab22aa8b937", null ],
+      [ "RO", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf5b15f58cabad73d1bf2de7bcb89db6c", null ],
+      [ "PT", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca35357b9c8fe4d3273d0237ecc8ff2e75", null ],
+      [ "NL", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca796834e7a2839412d79dbc5f1327594d", null ],
+      [ "SE", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf003c44deab679aa2edfaff864c77402", null ],
+      [ "PL", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca9b7d173b068dc4d5517bfae92d676437", null ],
+      [ "GR", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf214a7d42e0de5875d55189e01e2e187", null ],
+      [ "TR", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caebe021079e5a3c4f42ca6119eab92633", null ],
+      [ "RU", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf9308c5d059650ee40cab30bad1e96d0", null ],
+      [ "AR", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca5b61a1b298a0d06efa6933a97e68d763", null ],
+      [ "JP", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca24d22e03afb23edb45c6c8cfa16a280e", null ],
+      [ "BR", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca19d3326f3137cbadd21ce901a9bed4a7", null ],
+      [ "KR", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca38dd815e66dbd0d47a2b876ca442e987", null ],
+      [ "BE", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0cad3dcf429c679f9af82eb9a3b31c4df44", null ],
+      [ "CH", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca1ee0bf89c5d1032317d13a2e022793c8", null ],
+      [ "HR", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0cafd4c638da5f85d025963f99fe90b1b1a", null ],
+      [ "DK", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0cadd65ef9a5579d4e518c6d4abbd0cb1c6", null ],
+      [ "FI", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf0aa03aaca953a9a63b4459663d00134", null ],
+      [ "IE", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0cad2cb7bbc0d23f34c4255d924076e902f", null ],
+      [ "NO", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0cac2f3f489a00553e7a01d369c103c7251", null ],
+      [ "SK", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca13dd621f27110108a10a88e99fe9ceaf", null ],
+      [ "CZ", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca928568b84963ceb76aaaa2cae9afdbfa", null ],
+      [ "HU", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca35b5282113b88c2fe23dcbec9f0258c1", null ],
+      [ "UA", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca3943d8795e03e8e3307b5b71eac1b669", null ],
+      [ "US", "languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca7516fd43adaa5e0b8a65a672c39845d2", null ]
+    ] ],
+    [ "languageToString", "languages_8h.html#a2f07d9425b4166af10feff3f67f349ae", null ],
+    [ "stringToLanguage", "languages_8h.html#abab92034cdd048c7d531b8359c39b5e9", null ]
+];
