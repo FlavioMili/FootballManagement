@@ -16,6 +16,7 @@
 #include "database/gamedata.h"
 #include "global/paths.h"
 
+
 // Set up the database environment for benchmarks
 class DatabaseFixture : public benchmark::Fixture {
  public:
@@ -46,7 +47,7 @@ BENCHMARK_DEFINE_F(DatabaseFixture, BM_LoadFromDB)(benchmark::State& state) {
 
   // Inject extra players directly into the DB
   for (int i = current_players; i < target_players; ++i) {
-    Player p(i, 1, "Test", std::format("Player {}", i), "ST", Language::EN, 1000, 0, 20, 2, 180,
+    Player p(i, 1, "Test", "Player " + std::to_string(i), "ST", Language::EN, 1000, 0, 20, 2, 180,
              Foot::Right, {});
     PlayerRepository(db_conn).insertPlayer(p);
   }
@@ -67,7 +68,7 @@ BENCHMARK_DEFINE_F(DatabaseFixture, BM_SaveToDB)(benchmark::State& state) {
   int current_players = gamedata.getPlayers().size();
 
   for (int i = current_players; i < target_players; ++i) {
-    Player p(i, 1, "Test", std::format("Player {}", i), "ST", Language::EN, 1000, 0, 20, 2, 180,
+    Player p(i, 1, "Test", "Player " + std::to_string(i), "ST", Language::EN, 1000, 0, 20, 2, 180,
              Foot::Right, {});
     PlayerRepository(db_conn).insertPlayer(p);
     gamedata.addPlayer(p.getId(), p);
@@ -101,7 +102,7 @@ BENCHMARK_DEFINE_F(DatabaseFixture, BM_GetPlayersForTeam)(benchmark::State& stat
   // Use a transaction for fast inserts
   db_conn->beginTransaction();
   for (int i = current_players; i < target_players; ++i) {
-    Player p(i, (i % 2 == 0) ? team_id_to_query : 2, "Test", std::format("Player {}", i), "ST",
+    Player p(i, (i % 2 == 0) ? team_id_to_query : 2, "Test", "Player " + std::to_string(i), "ST",
              Language::EN, 1000, 0, 20, 2, 180, Foot::Right, {});
     PlayerRepository(db_conn).insertPlayer(p);
     gamedata.addPlayer(p.getId(), p);
