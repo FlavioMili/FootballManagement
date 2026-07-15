@@ -41,6 +41,7 @@ var hierarchy =
     [ "std::runtime_error", null, [
       [ "DatabaseException", "classDatabaseException.html", null ]
     ] ],
+    [ "GameController::SaveSlotMetadata", "structGameController_1_1SaveSlotMetadata.html", null ],
     [ "Settings", "structSettings.html", null ],
     [ "SettingsManager", "classSettingsManager.html", null ],
     [ "SQLLoader", "classSQLLoader.html", null ],

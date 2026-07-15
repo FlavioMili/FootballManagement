@@ -1,13 +1,22 @@
 var searchData=
 [
-  ['team_0',['team',['../classFinances.html#acb6779ddc08bbbca6155972bce46f238',1,'Finances']]],
-  ['team_5fids_1',['team_ids',['../classLeague.html#a8043c69c88833555f46a35ccee1d6799',1,'League']]],
-  ['team_5fstrategy_2',['team_strategy',['../classTeam.html#a191c98e0c5e0b64d09b6afbf99416fee',1,'Team']]],
-  ['teams_5fper_5fleague_3',['TEAMS_PER_LEAGUE',['../global_8h.html#aa2cbe1ed62a26b623cfbd98820f38cc1',1,'global.h']]],
-  ['textcolor_4',['textcolor',['../structButtonStyle.html#a29c0ab15d12b7ed79cdc01599c189c0c',1,'ButtonStyle::textColor'],['../structDropdownStyle.html#ac2faa0db32e85648eaf8028357b701d4',1,'DropdownStyle::textColor']]],
-  ['textrect_5',['textRect',['../structButton.html#aab1976b8de49338081e3919f2f7f1c82',1,'Button']]],
-  ['texttexture_6',['textTexture',['../structButton.html#a7c393b63851f6641fa4b5eb33d86bc54',1,'Button']]],
-  ['transfer_5fto_5fwages_5fratio_7',['transfer_to_wages_ratio',['../classFinances.html#ac8f92a39da4eb2b954c88b023c51720e',1,'Finances']]],
-  ['translations_8',['translations',['../classLanguageManager.html#a963c8837d9bcad6e461632dc9824fadd',1,'LanguageManager']]],
-  ['type_9',['type',['../structMatchup.html#a32295a906c1a841ae30f46dca858d984',1,'Matchup']]]
+  ['scenestack_0',['sceneStack',['../classGUIView.html#ab98bc5a6f48ee51be2f5d60f1e8e7693',1,'GUIView']]],
+  ['schedule_1',['schedule',['../classCalendar.html#a34084ca9a5476ff38da69cd1d0ca1099',1,'Calendar']]],
+  ['selected_5fleague_5fid_2',['selected_league_id',['../classTeamSelectionScene.html#ab9d9ca1d66bd7a8f787130d7a5ed1c98',1,'TeamSelectionScene']]],
+  ['selectedbackgroundcolor_3',['selectedBackgroundColor',['../structButtonStyle.html#a7c37f70bc165c7723f70709bcf48954a',1,'ButtonStyle']]],
+  ['selectedbordercolor_4',['selectedBorderColor',['../structButtonStyle.html#a7987880180193628e1e10620fc0072ca',1,'ButtonStyle']]],
+  ['selectedfps_5',['selectedFPS',['../classSettingsScene.html#a4e4b17253aac7146edf37ec09e364f70',1,'SettingsScene']]],
+  ['selectedindex_6',['selectedIndex',['../classDropdown.html#a6c8d1bd2b0575015f671c3046c07ba96',1,'Dropdown']]],
+  ['selectedlanguage_7',['selectedLanguage',['../classSettingsScene.html#a67da21bb9e886502cd511d4048d15784',1,'SettingsScene']]],
+  ['selectedoptiontexture_8',['selectedOptionTexture',['../classDropdown.html#ac733dac5dbbaf1c913d13829f0a4bbb2',1,'Dropdown']]],
+  ['selectedresolution_9',['selectedResolution',['../classSettingsScene.html#a3991698d693e7ccfc487f593423d1d7c',1,'SettingsScene']]],
+  ['settings_5f_10',['settings_',['../classSettingsManager.html#a3979b9e628ef606283af3025e3d993f1',1,'SettingsManager']]],
+  ['sliders_11',['sliders',['../classStrategy.html#ad3b1cb86285ac93d86850d3a9736107a',1,'Strategy']]],
+  ['stats_12',['stats',['../structRoleFocus.html#afb73ef140147be7369102fa03205d9f0',1,'RoleFocus']]],
+  ['stats_5fconfig_13',['stats_config',['../classGameData.html#a16a70375e019a0a1e5b3665c8f88201d',1,'GameData']]],
+  ['strategy_14',['strategy',['../classLineup.html#a7e4505807074d9a50842b8122df730ab',1,'Lineup']]],
+  ['string_5fto_5fquery_5fmap_15',['string_to_query_map',['../queries_8h.html#ac14409a867c1c3c46cf759af18ce4ade',1,'queries.h']]],
+  ['stringtolanguage_16',['stringToLanguage',['../languages_8h.html#abab92034cdd048c7d531b8359c39b5e9',1,'languages.h']]],
+  ['strtorole_17',['strToRole',['../roles_8h.html#acb6515445dbcc3f74b136be9dac5453b',1,'roles.h']]],
+  ['style_18',['style',['../structButton.html#a48e8b887ae158e6298338117d2841b04',1,'Button::style'],['../classDropdown.html#a24d486832f5b0d77ef62837f70f272e3',1,'Dropdown::style']]]
 ];

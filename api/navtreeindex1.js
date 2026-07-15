@@ -1,5 +1,6 @@
 var NAVTREEINDEX1 =
 {
+"classGameData.html#ac4e958180d6268673123f37b35d11a3a":[3,0,14,22],
 "classGameData.html#ae837b9b44074c7cc587d02b9168c111c":[3,0,14,30],
 "classGameData.html#aeccc80a25dc5d811bedac66c9fef519a":[3,0,14,7],
 "classGameData.html#af1f0d7287b772c33e7fae69e11f9834b":[3,0,14,34],
@@ -101,11 +102,16 @@ var NAVTREEINDEX1 =
 "classMainGameScene.html#aeaf88f6e9781eb6ce13b331f7631b3ed":[3,0,25,6],
 "classMainGameScene.html#afda9685db8b1181693410bb4eb99ca06":[3,0,25,10],
 "classMainMenuScene.html":[3,0,26],
+"classMainMenuScene.html#a1a2c7488fb70643fe55552f87bdce1ba":[3,0,26,4],
 "classMainMenuScene.html#a257e73d46dd5797f85d3c65e3aec8b62":[3,0,26,1],
-"classMainMenuScene.html#a35aeb52ce00f58d80034b08cdaf3c724":[3,0,26,5],
-"classMainMenuScene.html#a49f0125db20661e59b84c21ac6b0c3d6":[3,0,26,4],
+"classMainMenuScene.html#a31e54e2a52f0380e1eeb80913dd40bed":[3,0,26,10],
+"classMainMenuScene.html#a35aeb52ce00f58d80034b08cdaf3c724":[3,0,26,9],
+"classMainMenuScene.html#a3705375d7970c287728a99aab4580a7f":[3,0,26,7],
+"classMainMenuScene.html#a49f0125db20661e59b84c21ac6b0c3d6":[3,0,26,6],
 "classMainMenuScene.html#a8085f7f0a63f00fccf15c7e1cb7bf2cd":[3,0,26,0],
-"classMainMenuScene.html#a878e85454a37b0d10912e22f22d30415":[3,0,26,3],
+"classMainMenuScene.html#a82f65d6ccb644e67c2f31f23523de589":[3,0,26,3],
+"classMainMenuScene.html#a878e85454a37b0d10912e22f22d30415":[3,0,26,5],
+"classMainMenuScene.html#ab3910b44918a74b4241a99f3c8d6fdcf":[3,0,26,8],
 "classMainMenuScene.html#ac65f4aa576ae71cb9fac4a1154edca49":[3,0,26,2],
 "classMatch.html":[3,0,27],
 "classMatch.html#a2d950a4f7fbf7319f10365d457ef1f5b":[3,0,27,7],
@@ -243,11 +249,5 @@ var NAVTREEINDEX1 =
 "classStrategyScene.html":[3,0,41],
 "classStrategyScene.html#a3d3b1b8b187a9f2ca2424f52bb993781":[3,0,41,1],
 "classStrategyScene.html#a63e01ab83176557810a3eea3ec62e4f1":[3,0,41,6],
-"classStrategyScene.html#a7d89d449655e80420007e99da12c6be0":[3,0,41,2],
-"classStrategyScene.html#a84803643de39a22401f43afc9fe559b2":[3,0,41,3],
-"classStrategyScene.html#a86a81efb9e8e7ebcb61ff689b505683c":[3,0,41,5],
-"classStrategyScene.html#abb97a33ec1a01649aad3f98b0edfc906":[3,0,41,4],
-"classStrategyScene.html#abc26a5fe29ca57ca50bbdaf58bb811d2":[3,0,41,7],
-"classStrategyScene.html#abcebd3231e4462e9821ecc331075d5e1":[3,0,41,8],
-"classStrategyScene.html#acf32061583a40f86dbe73db76a1d170b":[3,0,41,0]
+"classStrategyScene.html#a7d89d449655e80420007e99da12c6be0":[3,0,41,2]
 };

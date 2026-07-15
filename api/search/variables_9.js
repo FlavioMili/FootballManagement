@@ -1,14 +1,10 @@
 var searchData=
 [
-  ['label_0',['label',['../structButton.html#ae0495ded918806414811aef215ade634',1,'Button']]],
-  ['language_1',['language',['../structSettings.html#ad87f4c5f2f2385700f45fdc9dcec5b61',1,'Settings']]],
-  ['languageoptions_2',['languageOptions',['../classSettingsScene.html#aa81b72a3bdf4b16491fa54343e11c028',1,'SettingsScene']]],
-  ['languagetostring_3',['languageToString',['../languages_8h.html#a2f07d9425b4166af10feff3f67f349ae',1,'languages.h']]],
-  ['last_5fnames_4',['last_names',['../classDataGenerator.html#a717560a67cc0db67c47d8fadfb8b64a8',1,'DataGenerator']]],
-  ['leaderboard_5',['leaderboard',['../classLeague.html#a2d3cfc5ef5eff1951cbf35221343a386',1,'League']]],
-  ['league_5fid_6',['league_id',['../classTeam.html#a9bdecbf757a79bcd566d324f5fec61e9',1,'Team']]],
-  ['lineup_7',['lineup',['../classTeam.html#a23d04ef150824d8cbc1189fb3fde3456',1,'Team']]],
-  ['lineup_5fgrid_5fcols_8',['LINEUP_GRID_COLS',['../global_8h.html#a22ad9e4a9c0282a6f6a197e55d57db7e',1,'global.h']]],
-  ['lineup_5fgrid_5frows_9',['LINEUP_GRID_ROWS',['../global_8h.html#a5490d8954e233c9eca52690f69a7e172',1,'global.h']]],
-  ['lineup_5fgrid_5fsize_10',['LINEUP_GRID_SIZE',['../global_8h.html#a9b9674d857525b2867a17b849de0d0b4',1,'global.h']]]
+  ['id_0',['id',['../structQueryMapEntry.html#acbd7105a903e1c7918ab240fc8d6f57d',1,'QueryMapEntry::id'],['../structButton.html#ac5a33b0d2f5306780146a85c24cf5219',1,'Button::id'],['../classLeague.html#ae7585c16afccdca798c5e5ea9b007f9a',1,'League::id'],['../classTeam.html#a5791d1f6408652605c5939e544690e1b',1,'Team::id']]],
+  ['is_5floading_5frendered_1',['is_loading_rendered',['../classMainMenuScene.html#ab3910b44918a74b4241a99f3c8d6fdcf',1,'MainMenuScene']]],
+  ['is_5fnew_5fgame_2',['is_new_game',['../classMainMenuScene.html#a35aeb52ce00f58d80034b08cdaf3c724',1,'MainMenuScene']]],
+  ['ishovered_3',['isHovered',['../structButton.html#a38e200731f4c2d5a043cee9332c761c8',1,'Button']]],
+  ['isopen_4',['isOpen',['../classDropdown.html#afc1189bbc8e4c45139d72e266281680b',1,'Dropdown']]],
+  ['isselected_5',['isSelected',['../structButton.html#ae92bdb88a560b5400831a10abce2df1a',1,'Button']]],
+  ['isvisible_6',['isVisible',['../structButton.html#a7e814150eeb57e6088aaed9eaec2c457',1,'Button']]]
 ];

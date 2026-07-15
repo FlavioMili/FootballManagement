@@ -1,5 +1,6 @@
 var classGameController =
 [
+    [ "SaveSlotMetadata", "structGameController_1_1SaveSlotMetadata.html", "structGameController_1_1SaveSlotMetadata" ],
     [ "GameController", "classGameController.html#a7d72ff3f639acb68578e20fee3649b42", null ],
     [ "advanceDay", "classGameController.html#a3ead30a10cc3aa32e3a5cba32b5e4e46", null ],
     [ "getCurrentDate", "classGameController.html#ad90f1b6a4ecf4b22d0ef23ea939029b7", null ],
@@ -10,6 +11,7 @@ var classGameController =
     [ "getManagedTeam", "classGameController.html#af80b0d72158dd7150e250423896de8e1", null ],
     [ "getPlayersForTeam", "classGameController.html#a9ff49b7ff61961a51f7a46d07358b40f", null ],
     [ "getSavePath", "classGameController.html#aee9a52b289607970790733dcc30cf6e5", null ],
+    [ "getSaveSlotMetadata", "classGameController.html#a05cd4606dbbcbac6ea4d3ea4292368a8", null ],
     [ "getStatsConfig", "classGameController.html#ac23a217d70a7738deed98e245aaee70c", null ],
     [ "getTeamById", "classGameController.html#af61601eded7549ac30ce238a4f6f7143", null ],
     [ "getTeams", "classGameController.html#a110328e8ff1ee84e78808cf7b3fbf43c", null ],

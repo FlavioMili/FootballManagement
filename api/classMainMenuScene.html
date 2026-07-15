@@ -95,6 +95,7 @@ $(document).ready(function(){initNavTree('classMainMenuScene.html',''); initResi
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classMainMenuScene-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">MainMenuScene Class Reference</div></div>
@@ -123,6 +124,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a257e73d46dd5797f85d3c65e3aec8b62" id="r_a257e73d46dd5797f85d3c65e3aec8b62"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a257e73d46dd5797f85d3c65e3aec8b62">~MainMenuScene</a> () override=default</td></tr>
 <tr class="memdesc:a257e73d46dd5797f85d3c65e3aec8b62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys the <a class="el" href="classMainMenuScene.html" title="Scene for the main menu.">MainMenuScene</a>.  <br /></td></tr>
 <tr class="separator:a257e73d46dd5797f85d3c65e3aec8b62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a2c7488fb70643fe55552f87bdce1ba" id="r_a1a2c7488fb70643fe55552f87bdce1ba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a1a2c7488fb70643fe55552f87bdce1ba">onEnter</a> () override</td></tr>
+<tr class="memdesc:a1a2c7488fb70643fe55552f87bdce1ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Populated when the scene is entered. Caches the save slot metadata.  <br /></td></tr>
+<tr class="separator:a1a2c7488fb70643fe55552f87bdce1ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49f0125db20661e59b84c21ac6b0c3d6" id="r_a49f0125db20661e59b84c21ac6b0c3d6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a49f0125db20661e59b84c21ac6b0c3d6">update</a> (float deltaTime) override</td></tr>
 <tr class="memdesc:a49f0125db20661e59b84c21ac6b0c3d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates scene logic.  <br /></td></tr>
 <tr class="separator:a49f0125db20661e59b84c21ac6b0c3d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -142,9 +146,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a234a16aa00d64053c910e99c07a1122a inherit pub_methods_classGUIScene" id="r_a234a16aa00d64053c910e99c07a1122a"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a234a16aa00d64053c910e99c07a1122a">handleEvent</a> (const SDL_Event &amp;event)</td></tr>
 <tr class="memdesc:a234a16aa00d64053c910e99c07a1122a inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handles SDL events for the scene.  <br /></td></tr>
 <tr class="separator:a234a16aa00d64053c910e99c07a1122a inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aec503d8701f715aa785b03aa8005f4dc inherit pub_methods_classGUIScene" id="r_aec503d8701f715aa785b03aa8005f4dc"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#aec503d8701f715aa785b03aa8005f4dc">onEnter</a> ()</td></tr>
-<tr class="memdesc:aec503d8701f715aa785b03aa8005f4dc inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the scene is entered/becomes active.  <br /></td></tr>
-<tr class="separator:aec503d8701f715aa785b03aa8005f4dc inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene" id="r_afcc66fd1ac7245d74c3a139590d14cba"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#afcc66fd1ac7245d74c3a139590d14cba">onExit</a> ()</td></tr>
 <tr class="memdesc:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the scene is exited/becomes inactive.  <br /></td></tr>
 <tr class="separator:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -152,10 +153,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the window is resized.  <br /></td></tr>
 <tr class="separator:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private Member Functions</h2></td></tr>
+<tr class="memitem:a82f65d6ccb644e67c2f31f23523de589" id="r_a82f65d6ccb644e67c2f31f23523de589"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a82f65d6ccb644e67c2f31f23523de589">loadCachedMetadata</a> ()</td></tr>
+<tr class="separator:a82f65d6ccb644e67c2f31f23523de589"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
 <tr class="memitem:a35aeb52ce00f58d80034b08cdaf3c724" id="r_a35aeb52ce00f58d80034b08cdaf3c724"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a35aeb52ce00f58d80034b08cdaf3c724">is_new_game</a> = false</td></tr>
 <tr class="separator:a35aeb52ce00f58d80034b08cdaf3c724"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31e54e2a52f0380e1eeb80913dd40bed" id="r_a31e54e2a52f0380e1eeb80913dd40bed"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a31e54e2a52f0380e1eeb80913dd40bed">loading_slot</a> = 0</td></tr>
+<tr class="separator:a31e54e2a52f0380e1eeb80913dd40bed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3910b44918a74b4241a99f3c8d6fdcf" id="r_ab3910b44918a74b4241a99f3c8d6fdcf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#ab3910b44918a74b4241a99f3c8d6fdcf">is_loading_rendered</a> = false</td></tr>
+<tr class="separator:ab3910b44918a74b4241a99f3c8d6fdcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3705375d7970c287728a99aab4580a7f" id="r_a3705375d7970c287728a99aab4580a7f"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structGameController_1_1SaveSlotMetadata.html">GameController::SaveSlotMetadata</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a3705375d7970c287728a99aab4580a7f">cached_metadata</a></td></tr>
+<tr class="separator:a3705375d7970c287728a99aab4580a7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -274,6 +286,60 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a82f65d6ccb644e67c2f31f23523de589" name="a82f65d6ccb644e67c2f31f23523de589"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a82f65d6ccb644e67c2f31f23523de589">&#9670;&#160;</a></span>loadCachedMetadata()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::loadCachedMetadata </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1a2c7488fb70643fe55552f87bdce1ba" name="a1a2c7488fb70643fe55552f87bdce1ba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a2c7488fb70643fe55552f87bdce1ba">&#9670;&#160;</a></span>onEnter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::onEnter </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Populated when the scene is entered. Caches the save slot metadata. </p>
+
+<p>Reimplemented from <a class="el" href="classGUIScene.html#aec503d8701f715aa785b03aa8005f4dc">GUIScene</a>.</p>
+
+</div>
+</div>
 <a id="a878e85454a37b0d10912e22f22d30415" name="a878e85454a37b0d10912e22f22d30415"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a878e85454a37b0d10912e22f22d30415">&#9670;&#160;</a></span>render()</h2>
 
@@ -340,6 +406,50 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a id="a3705375d7970c287728a99aab4580a7f" name="a3705375d7970c287728a99aab4580a7f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3705375d7970c287728a99aab4580a7f">&#9670;&#160;</a></span>cached_metadata</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="structGameController_1_1SaveSlotMetadata.html">GameController::SaveSlotMetadata</a>&gt; MainMenuScene::cached_metadata</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab3910b44918a74b4241a99f3c8d6fdcf" name="ab3910b44918a74b4241a99f3c8d6fdcf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3910b44918a74b4241a99f3c8d6fdcf">&#9670;&#160;</a></span>is_loading_rendered</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainMenuScene::is_loading_rendered = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a35aeb52ce00f58d80034b08cdaf3c724" name="a35aeb52ce00f58d80034b08cdaf3c724"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a35aeb52ce00f58d80034b08cdaf3c724">&#9670;&#160;</a></span>is_new_game</h2>
 
@@ -351,6 +461,28 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">bool MainMenuScene::is_new_game = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a31e54e2a52f0380e1eeb80913dd40bed" name="a31e54e2a52f0380e1eeb80913dd40bed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a31e54e2a52f0380e1eeb80913dd40bed">&#9670;&#160;</a></span>loading_slot</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MainMenuScene::loading_slot = 0</td>
         </tr>
       </table>
   </td>

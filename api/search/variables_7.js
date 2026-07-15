@@ -1,11 +1,9 @@
 var searchData=
 [
-  ['hasborder_0',['hasBorder',['../structButtonStyle.html#aa42e6de85cfa8b093bc39c8d0a563c84',1,'ButtonStyle']]],
-  ['height_1',['height',['../structGUIConstants_1_1Resolution.html#abb8f094e918d16883175c1f16fa18cee',1,'GUIConstants::Resolution']]],
-  ['home_5fscore_2',['home_score',['../classMatch.html#a6d3f770a4fd7aa7229d4b864db217b2d',1,'Match']]],
-  ['home_5fteam_5fid_3',['home_team_id',['../structMatchup.html#a65c92434ac034a2cddb140db8c829686',1,'Matchup::home_team_id'],['../classMatch.html#a6d3da5ef12a42b8b50106dd63b459d75',1,'Match::home_team_id']]],
-  ['hoverbackgroundcolor_4',['hoverBackgroundColor',['../structButtonStyle.html#a3e2283990aff27772330405176bd7551',1,'ButtonStyle']]],
-  ['hoverbordercolor_5',['hoverBorderColor',['../structButtonStyle.html#a15931fe9f75e72536d50d7b50ac798e6',1,'ButtonStyle']]],
-  ['hovercolor_6',['hoverColor',['../structDropdownStyle.html#aa1b4c0b791cf9f0e966418e711e90102',1,'DropdownStyle']]],
-  ['hoveredindex_7',['hoveredIndex',['../classDropdown.html#ada1eb2c45f5e4b1eadc569dee6ee4c92',1,'Dropdown']]]
+  ['game_0',['game',['../classGameController.html#a5bc22fd160fa4b1a0d75dc92d3f83966',1,'GameController']]],
+  ['game_5fdate_1',['game_date',['../structGameController_1_1SaveSlotMetadata.html#a40fe76302791197eb1e3def4429055a4',1,'GameController::SaveSlotMetadata']]],
+  ['gamedata_2',['gamedata',['../classGameController.html#a266b4394730984e1a6ee72e23f6cd1b3',1,'GameController::gamedata'],['../classGame.html#a5c365b0fe4711a702d2205c3affecce3',1,'Game::gamedata']]],
+  ['goalkeeper_3',['goalkeeper',['../classLineup.html#a267bf874c32ac610e6a72f4ecf378424',1,'Lineup::goalkeeper'],['../classStrategy.html#a2773d90551bb30e59c0f681ce4faf30b',1,'Strategy::goalkeeper']]],
+  ['grid_4',['grid',['../classLineup.html#a3ff79b2c96560f3388c3b8de1a83b3f8',1,'Lineup']]],
+  ['guiview_5',['guiView',['../classGUIScene.html#af5bdff54b79d3b097e7bdf4df2d5e4c9',1,'GUIScene']]]
 ];

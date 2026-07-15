@@ -1,7 +1,7 @@
 var searchData=
 [
   ['fi_0',['FI',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf0aa03aaca953a9a63b4459663d00134',1,'languages.h']]],
-  ['finances_1',['finances',['../classTeam.html#afe825e2db13282c3d10ce7c89ef3307c',1,'Team::finances'],['../classFinances.html#abc8e83033194f90323cb7dc476f95e68',1,'Finances::Finances()'],['../classFinances.html',1,'Finances']]],
+  ['finances_1',['finances',['../classFinances.html#abc8e83033194f90323cb7dc476f95e68',1,'Finances::Finances()'],['../classTeam.html#afe825e2db13282c3d10ce7c89ef3307c',1,'Team::finances'],['../classFinances.html',1,'Finances']]],
   ['finances_2ecpp_2',['finances.cpp',['../finances_8cpp.html',1,'']]],
   ['finances_2eh_3',['finances.h',['../finances_8h.html',1,'']]],
   ['first_5fnames_4',['first_names',['../classDataGenerator.html#a6db3feb42f31c9b27a4ee00d321eec21',1,'DataGenerator']]],

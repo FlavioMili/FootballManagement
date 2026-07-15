@@ -73,9 +73,9 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "SQLLoader_8cpp.html",
-"classGameData.html#ae837b9b44074c7cc587d02b9168c111c",
-"classTeam.html",
-"league_8h.html"
+"classGameData.html#ac4e958180d6268673123f37b35d11a3a",
+"classStrategyScene.html#a84803643de39a22401f43afc9fe559b2",
+"languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf214a7d42e0de5875d55189e01e2e187"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
