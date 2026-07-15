@@ -10,6 +10,6 @@ var searchData=
   ['select_5fteams_5fby_5fleague_7',['SELECT_TEAMS_BY_LEAGUE',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a05f64ae10cdbca53d98636e2be057947',1,'queries.h']]],
   ['settings_8',['SETTINGS',['../gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942faed6f7aca7887a927b9ed3d62aa347a86',1,'gui_scene.h']]],
   ['sk_9',['SK',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca13dd621f27110108a10a88e99fe9ceaf',1,'languages.h']]],
-  ['st_10',['ST',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42caec8e57d71f07e31203035548b79d03c8',1,'roles.h']]],
+  ['st_10',['st',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42caec8e57d71f07e31203035548b79d03c8',1,'ST:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900aec8e57d71f07e31203035548b79d03c8',1,'ST:&#160;types.h']]],
   ['strategy_11',['STRATEGY',['../gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942faa35ebfc4db62c49ea3ee50dc144c1ea9',1,'gui_scene.h']]]
 ];

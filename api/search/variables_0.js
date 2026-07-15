@@ -14,7 +14,7 @@ var searchData=
   ['_5fplayed_11',['_played',['../classMatch.html#affd399eb06a3ef7308645fbb59b3306d',1,'Match']]],
   ['_5fplayers_12',['_players',['../classGameData.html#ab10561db5f753201ec3bbe818ea40bf1',1,'GameData']]],
   ['_5fplayersvec_13',['_playersVec',['../classGameData.html#af35deeda852492036a6be47b94cec5c4',1,'GameData']]],
-  ['_5frole_14',['_role',['../classPlayer.html#aa88f96bbb58fa090c4d887468184d07d',1,'Player']]],
+  ['_5frole_14',['_role',['../classPlayer.html#a4a46e03d9e9a78e1e0b37553a5212723',1,'Player']]],
   ['_5fstats_15',['_stats',['../classPlayer.html#ac330e12ffd6ae63e89dc8ca5e7167e05',1,'Player']]],
   ['_5fstatus_16',['_status',['../classPlayer.html#a12122f838d032c80bbfa77a8965e1248',1,'Player']]],
   ['_5fteam_5fid_17',['_team_id',['../classPlayer.html#a8685d7c544df408712e7360d5e723701',1,'Player']]],

@@ -1,7 +1,7 @@
 var searchData=
 [
   ['fi_0',['FI',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf0aa03aaca953a9a63b4459663d00134',1,'languages.h']]],
-  ['finances_1',['finances',['../classFinances.html#abc8e83033194f90323cb7dc476f95e68',1,'Finances::Finances()'],['../classTeam.html#afe825e2db13282c3d10ce7c89ef3307c',1,'Team::finances'],['../classFinances.html',1,'Finances']]],
+  ['finances_1',['finances',['../classTeam.html#afe825e2db13282c3d10ce7c89ef3307c',1,'Team::finances'],['../classFinances.html#abc8e83033194f90323cb7dc476f95e68',1,'Finances::Finances()'],['../classFinances.html',1,'Finances']]],
   ['finances_2ecpp_2',['finances.cpp',['../finances_8cpp.html',1,'']]],
   ['finances_2eh_3',['finances.h',['../finances_8h.html',1,'']]],
   ['first_5fnames_4',['first_names',['../classDataGenerator.html#a6db3feb42f31c9b27a4ee00d321eec21',1,'DataGenerator']]],
@@ -19,9 +19,10 @@ var searchData=
   ['free_5fagents_5fteam_5fid_16',['FREE_AGENTS_TEAM_ID',['../global_8h.html#ad739458e122087a2668268985c8c993c',1,'global.h']]],
   ['free_5fagents_5fteam_5fname_17',['FREE_AGENTS_TEAM_NAME',['../global_8h.html#ab55c8d4cd4b54165e255b81c69f2a1a8',1,'global.h']]],
   ['freetextures_18',['freeTextures',['../classDropdown.html#a5247a1d8c5601d4dd1e0dc1102ef1bb9',1,'Dropdown']]],
-  ['friendly_19',['FRIENDLY',['../types_8h.html#a06be3d3918a8700cf086896e9f03e885af6a34a956d1ce0a552bf4731b9f9d9c0',1,'types.h']]],
-  ['from_5fjson_20',['from_json',['../gamedata_8cpp.html#acbed2310753297913d417c35015d4141',1,'from_json(const nlohmann::json &amp;j, RoleFocus &amp;rf):&#160;gamedata.cpp'],['../gamedata_8cpp.html#adb107b6c290100cf04992c5de8a565fd',1,'from_json(const nlohmann::json &amp;j, StatsConfig &amp;sc):&#160;gamedata.cpp']]],
-  ['fromstring_21',['fromString',['../structGameDateValue.html#aa9b78f9013994efafbae10f0c2037c98',1,'GameDateValue']]],
-  ['fullscreen_22',['fullscreen',['../structSettings.html#a3d28191427be4bd21df6bf77e689790b',1,'Settings::fullscreen'],['../classSettingsScene.html#a8a9a06658ff29e16f365d41d1316e820',1,'SettingsScene::fullscreen']]],
-  ['fun_20and_20report_20issues_20_3ad_23',['Have fun (and report issues :D)',['../index.html#autotoc_md10',1,'']]]
+  ['friction_19',['friction',['../structMatchBall.html#ae4233d071d30540772754f477b8b66b4',1,'MatchBall']]],
+  ['friendly_20',['FRIENDLY',['../types_8h.html#a06be3d3918a8700cf086896e9f03e885af6a34a956d1ce0a552bf4731b9f9d9c0',1,'types.h']]],
+  ['from_5fjson_21',['from_json',['../gamedata_8cpp.html#acbed2310753297913d417c35015d4141',1,'from_json(const nlohmann::json &amp;j, RoleFocus &amp;rf):&#160;gamedata.cpp'],['../gamedata_8cpp.html#adb107b6c290100cf04992c5de8a565fd',1,'from_json(const nlohmann::json &amp;j, StatsConfig &amp;sc):&#160;gamedata.cpp']]],
+  ['fromstring_22',['fromstring',['../classRoleUtils.html#a48cfb853cab50086a17c1819f2ccccd3',1,'RoleUtils::fromString()'],['../structGameDateValue.html#aa9b78f9013994efafbae10f0c2037c98',1,'GameDateValue::fromString()']]],
+  ['fullscreen_23',['fullscreen',['../classSettingsScene.html#a8a9a06658ff29e16f365d41d1316e820',1,'SettingsScene::fullscreen'],['../structSettings.html#a3d28191427be4bd21df6bf77e689790b',1,'Settings::fullscreen']]],
+  ['fun_20and_20report_20issues_20_3ad_24',['Have fun (and report issues :D)',['../index.html#autotoc_md10',1,'']]]
 ];

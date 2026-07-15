@@ -7,5 +7,6 @@ var classCalendar =
     [ "generateSeasonFixtures", "classCalendar.html#a076890e4d1930827fbee6a53d15710f3", null ],
     [ "getFullCalendar", "classCalendar.html#a8a6f87dc5524668350d2fe4fb3b8d553", null ],
     [ "getMatchesForDate", "classCalendar.html#a40276008c6e09e0c35c3a0d5d66d8c5c", null ],
+    [ "getMatchesForDateMutable", "classCalendar.html#a974cb41d288b1dadffd3dedf9b8409c2", null ],
     [ "schedule", "classCalendar.html#a34084ca9a5476ff38da69cd1d0ca1099", null ]
 ];

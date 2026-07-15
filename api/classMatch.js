@@ -8,6 +8,7 @@ var classMatch =
     [ "getHomeTeamId", "classMatch.html#ac8a41dfcb9e48143285cddaadfa78450", null ],
     [ "getMatchType", "classMatch.html#aafa0219aa2c3d62e92e6a588b43aaef9", null ],
     [ "isPlayed", "classMatch.html#a2d950a4f7fbf7319f10365d457ef1f5b", null ],
+    [ "setPlayedResult", "classMatch.html#a7facb883f963418971786baf8a53cf27", null ],
     [ "simulate", "classMatch.html#ad7877015ac961f579eaf30e26d00dc0d", null ],
     [ "_played", "classMatch.html#affd399eb06a3ef7308645fbb59b3306d", null ],
     [ "away_score", "classMatch.html#ac1d2600f0025cf8ce8cb74d931b5cff4", null ],

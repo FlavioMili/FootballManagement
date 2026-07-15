@@ -10,8 +10,9 @@ var searchData=
   ['compactness_7',['compactness',['../structStrategySliders.html#a9b672c1f0c8c9312b4063d1c9e450c04',1,'StrategySliders']]],
   ['controller_8',['controller',['../classGUIView.html#ad92f0d45a39f78d897c97f22c68a0e12',1,'GUIView']]],
   ['current_9',['current',['../classGameDate.html#aabcbba3254c2b049a33d8a809f5ba5ae',1,'GameDate']]],
-  ['current_5fseason_10',['current_season',['../classGame.html#a9ca1939e337596720afc9bb6f81b2383',1,'Game']]],
-  ['current_5fsliders_11',['current_sliders',['../classStrategyScene.html#abcebd3231e4462e9821ecc331075d5e1',1,'StrategyScene']]],
-  ['currentdate_12',['currentDate',['../classGame.html#af0026df59a6f7aad9a951c38a954423f',1,'Game']]],
-  ['currentscene_13',['currentScene',['../classGUIView.html#a088b9d0eb634232916dae175698c7b10',1,'GUIView']]]
+  ['current_5flineup_10',['current_lineup',['../classLineupScene.html#aa27dfc400edf49a5f6fa8e3936eade57',1,'LineupScene']]],
+  ['current_5fseason_11',['current_season',['../classGame.html#a9ca1939e337596720afc9bb6f81b2383',1,'Game']]],
+  ['current_5fsliders_12',['current_sliders',['../classStrategyScene.html#abcebd3231e4462e9821ecc331075d5e1',1,'StrategyScene']]],
+  ['currentdate_13',['currentDate',['../classGame.html#af0026df59a6f7aad9a951c38a954423f',1,'Game']]],
+  ['currentscene_14',['currentScene',['../classGUIView.html#a088b9d0eb634232916dae175698c7b10',1,'GUIView']]]
 ];

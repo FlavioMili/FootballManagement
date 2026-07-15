@@ -112,12 +112,14 @@ Inheritance diagram for GUIScene:</div>
  <div class="center">
   <img src="classGUIScene.png" usemap="#GUIScene_map" alt=""/>
   <map id="GUIScene_map" name="GUIScene_map">
-<area href="classMainGameScene.html" title="Scene for the main game dashboard." alt="MainGameScene" shape="rect" coords="0,56,130,80"/>
-<area href="classMainMenuScene.html" title="Scene for the main menu." alt="MainMenuScene" shape="rect" coords="140,56,270,80"/>
-<area href="classRosterScene.html" title="Scene for displaying the team roster." alt="RosterScene" shape="rect" coords="280,56,410,80"/>
-<area href="classSettingsScene.html" title="Scene for managing application settings." alt="SettingsScene" shape="rect" coords="420,56,550,80"/>
-<area href="classStrategyScene.html" title="Scene for managing team strategy." alt="StrategyScene" shape="rect" coords="560,56,690,80"/>
-<area href="classTeamSelectionScene.html" title="Scene for selecting a team." alt="TeamSelectionScene" shape="rect" coords="700,56,830,80"/>
+<area href="classLineupScene.html" title="GUI scene for managing the team&#39;s lineup." alt="LineupScene" shape="rect" coords="140,56,270,80"/>
+<area href="classMainGameScene.html" title="Scene for the main game dashboard." alt="MainGameScene" shape="rect" coords="140,112,270,136"/>
+<area href="classMainMenuScene.html" title="Scene for the main menu." alt="MainMenuScene" shape="rect" coords="140,168,270,192"/>
+<area href="classMatchScene.html" alt="MatchScene" shape="rect" coords="140,224,270,248"/>
+<area href="classRosterScene.html" title="Scene for displaying the team roster." alt="RosterScene" shape="rect" coords="140,280,270,304"/>
+<area href="classSettingsScene.html" title="Scene for managing application settings." alt="SettingsScene" shape="rect" coords="140,336,270,360"/>
+<area href="classStrategyScene.html" title="Scene for managing team strategy." alt="StrategyScene" shape="rect" coords="140,392,270,416"/>
+<area href="classTeamSelectionScene.html" title="Scene for selecting a team." alt="TeamSelectionScene" shape="rect" coords="140,448,270,472"/>
   </map>
 </div></div>
 <table class="memberdecls">
@@ -328,7 +330,7 @@ Protected Attributes</h2></td></tr>
 <dl class="section return"><dt>Returns</dt><dd>The SceneID of this scene.</dd></dl>
 <p>This function might be used to check what we are rendering. we would simply do something like this: <a class="el" href="classMainMenuScene.html#ac65f4aa576ae71cb9fac4a1154edca49" title="Gets the ID of this scene.">MainMenuScene::getID()</a> { return <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942faa16d505f03a4b6f35486f65f6a61317e">SceneID::MAIN_MENU</a>; } TODO : remove or not? </p>
 
-<p>Implemented in <a class="el" href="classMainGameScene.html#a8d9498d24dc90d11bd48a5b74dc10853">MainGameScene</a>, <a class="el" href="classMainMenuScene.html#ac65f4aa576ae71cb9fac4a1154edca49">MainMenuScene</a>, <a class="el" href="classRosterScene.html#a728763477b35d74fff5052cb86f60d8a">RosterScene</a>, <a class="el" href="classSettingsScene.html#a14a3de8c2a367dea3006aa107df4d8d6">SettingsScene</a>, <a class="el" href="classStrategyScene.html#a7d89d449655e80420007e99da12c6be0">StrategyScene</a>, and <a class="el" href="classTeamSelectionScene.html#a1f17cf244cce89632ff06827465129a0">TeamSelectionScene</a>.</p>
+<p>Implemented in <a class="el" href="classLineupScene.html#a03e1dcc4648cf1dcff2e7aae07d8d93f">LineupScene</a>, <a class="el" href="classMainGameScene.html#a8d9498d24dc90d11bd48a5b74dc10853">MainGameScene</a>, <a class="el" href="classMainMenuScene.html#ac65f4aa576ae71cb9fac4a1154edca49">MainMenuScene</a>, <a class="el" href="classMatchScene.html#ae8f0f72e9f61a0441d245167b888d967">MatchScene</a>, <a class="el" href="classRosterScene.html#a728763477b35d74fff5052cb86f60d8a">RosterScene</a>, <a class="el" href="classSettingsScene.html#a14a3de8c2a367dea3006aa107df4d8d6">SettingsScene</a>, <a class="el" href="classStrategyScene.html#a7d89d449655e80420007e99da12c6be0">StrategyScene</a>, and <a class="el" href="classTeamSelectionScene.html#a1f17cf244cce89632ff06827465129a0">TeamSelectionScene</a>.</p>
 
 </div>
 </div>
@@ -447,7 +449,7 @@ Protected Attributes</h2></td></tr>
 
 <p>Called when the scene is entered/becomes active. </p>
 
-<p>Reimplemented in <a class="el" href="classMainGameScene.html#a14ad2dc972424aeac5429fdf4b8b0c24">MainGameScene</a>, <a class="el" href="classMainMenuScene.html#a1a2c7488fb70643fe55552f87bdce1ba">MainMenuScene</a>, <a class="el" href="classRosterScene.html#ae00602310d5396d7292fd79b446d0886">RosterScene</a>, <a class="el" href="classSettingsScene.html#aac20d40002b25ab67af88c8aa3660ea1">SettingsScene</a>, <a class="el" href="classStrategyScene.html#abb97a33ec1a01649aad3f98b0edfc906">StrategyScene</a>, and <a class="el" href="classTeamSelectionScene.html#ac62779c3197ab89640bf7ae790ee3ce4">TeamSelectionScene</a>.</p>
+<p>Reimplemented in <a class="el" href="classLineupScene.html#a86be5e333a2125d7f4bfc1dbf68ae9e3">LineupScene</a>, <a class="el" href="classMainGameScene.html#a14ad2dc972424aeac5429fdf4b8b0c24">MainGameScene</a>, <a class="el" href="classMainMenuScene.html#a1a2c7488fb70643fe55552f87bdce1ba">MainMenuScene</a>, <a class="el" href="classMatchScene.html#af91b4e9d9e7bd53679073d1dbf472e01">MatchScene</a>, <a class="el" href="classRosterScene.html#ae00602310d5396d7292fd79b446d0886">RosterScene</a>, <a class="el" href="classSettingsScene.html#aac20d40002b25ab67af88c8aa3660ea1">SettingsScene</a>, <a class="el" href="classStrategyScene.html#abb97a33ec1a01649aad3f98b0edfc906">StrategyScene</a>, and <a class="el" href="classTeamSelectionScene.html#ac62779c3197ab89640bf7ae790ee3ce4">TeamSelectionScene</a>.</p>
 
 </div>
 </div>
@@ -575,7 +577,7 @@ Protected Attributes</h2></td></tr>
 
 <p>Renders the scene. </p>
 
-<p>Implemented in <a class="el" href="classMainGameScene.html#aa867613f41457c7d8f0a1bc68456a535">MainGameScene</a>, <a class="el" href="classMainMenuScene.html#a878e85454a37b0d10912e22f22d30415">MainMenuScene</a>, <a class="el" href="classRosterScene.html#ac746063726dd9a6abda097675b152058">RosterScene</a>, <a class="el" href="classSettingsScene.html#a460ba02a6bb2b68f653389cbae194fdf">SettingsScene</a>, <a class="el" href="classStrategyScene.html#a86a81efb9e8e7ebcb61ff689b505683c">StrategyScene</a>, and <a class="el" href="classTeamSelectionScene.html#a19c8e171c8342d4d34ccddba356599c4">TeamSelectionScene</a>.</p>
+<p>Implemented in <a class="el" href="classLineupScene.html#a953d763c5b011ddfd6a050fa76dd3cc8">LineupScene</a>, <a class="el" href="classMainGameScene.html#aa867613f41457c7d8f0a1bc68456a535">MainGameScene</a>, <a class="el" href="classMainMenuScene.html#a878e85454a37b0d10912e22f22d30415">MainMenuScene</a>, <a class="el" href="classMatchScene.html#a50d79994d90b5b7fa7d24ee61bdc3ade">MatchScene</a>, <a class="el" href="classRosterScene.html#ac746063726dd9a6abda097675b152058">RosterScene</a>, <a class="el" href="classSettingsScene.html#a460ba02a6bb2b68f653389cbae194fdf">SettingsScene</a>, <a class="el" href="classStrategyScene.html#a86a81efb9e8e7ebcb61ff689b505683c">StrategyScene</a>, and <a class="el" href="classTeamSelectionScene.html#a19c8e171c8342d4d34ccddba356599c4">TeamSelectionScene</a>.</p>
 
 </div>
 </div>
@@ -611,7 +613,7 @@ Protected Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p>Implemented in <a class="el" href="classMainGameScene.html#a6b06c97485383fbd6a5e833fd55aa039">MainGameScene</a>, <a class="el" href="classMainMenuScene.html#a49f0125db20661e59b84c21ac6b0c3d6">MainMenuScene</a>, <a class="el" href="classRosterScene.html#a6f292151c3a7c6d1d06897f5a05dc1f7">RosterScene</a>, <a class="el" href="classSettingsScene.html#a1d33d296ea26d4f17127a91d5ba485ab">SettingsScene</a>, <a class="el" href="classStrategyScene.html#abc26a5fe29ca57ca50bbdaf58bb811d2">StrategyScene</a>, and <a class="el" href="classTeamSelectionScene.html#ae27b545cc138384acecd9636055d4fde">TeamSelectionScene</a>.</p>
+<p>Implemented in <a class="el" href="classLineupScene.html#a3a3999dba0b62e91ba7daf02dd9b22bd">LineupScene</a>, <a class="el" href="classMainGameScene.html#a6b06c97485383fbd6a5e833fd55aa039">MainGameScene</a>, <a class="el" href="classMainMenuScene.html#a49f0125db20661e59b84c21ac6b0c3d6">MainMenuScene</a>, <a class="el" href="classMatchScene.html#a9838b9f36c987dc77cea8ea7965623e0">MatchScene</a>, <a class="el" href="classRosterScene.html#a6f292151c3a7c6d1d06897f5a05dc1f7">RosterScene</a>, <a class="el" href="classSettingsScene.html#a1d33d296ea26d4f17127a91d5ba485ab">SettingsScene</a>, <a class="el" href="classStrategyScene.html#abc26a5fe29ca57ca50bbdaf58bb811d2">StrategyScene</a>, and <a class="el" href="classTeamSelectionScene.html#ae27b545cc138384acecd9636055d4fde">TeamSelectionScene</a>.</p>
 
 </div>
 </div>

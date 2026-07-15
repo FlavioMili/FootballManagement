@@ -1,6 +1,6 @@
 var classPlayer =
 [
-    [ "Player", "classPlayer.html#a7b563453c97941ce33016d44f76e4e50", null ],
+    [ "Player", "classPlayer.html#ac38f62925478488d5e1d7b9a299d25a9", null ],
     [ "agePlayer", "classPlayer.html#a6e12b3575e64a3fb25b7bd6c8f1a0624", null ],
     [ "checkRetirement", "classPlayer.html#a878ae112a4f5d0d1787788ea1442f3e0", null ],
     [ "getAge", "classPlayer.html#a6ad697015ffc539b7a7a6a63b9bba079", null ],
@@ -14,7 +14,7 @@ var classPlayer =
     [ "getName", "classPlayer.html#a73e4ff2d70e62ca7e3be1d9b4ad9de85", null ],
     [ "getNationality", "classPlayer.html#a43283f9ec1ed2c7adffad72c9df4b184", null ],
     [ "getOverall", "classPlayer.html#ab4061bd3dddccbc2187e540f3d659b24", null ],
-    [ "getRole", "classPlayer.html#ad1a7942a2e841b6cd036107a604442ed", null ],
+    [ "getRole", "classPlayer.html#a51b3860176598be09491d5968130884a", null ],
     [ "getStats", "classPlayer.html#af54ff2887f101e29f29266f1d57a103a", null ],
     [ "getStatus", "classPlayer.html#aad43816a26c97a9c0f5dfa07fea7f57f", null ],
     [ "getTeamId", "classPlayer.html#a172d423394eead7ab2460490db4f11e3", null ],
@@ -35,7 +35,7 @@ var classPlayer =
     [ "_id", "classPlayer.html#a9f989f787fe3beba429cea5b8a1326ef", null ],
     [ "_last_name", "classPlayer.html#a0576f8dee6a1fca292ded0d4deafe181", null ],
     [ "_nationality", "classPlayer.html#a787193d73dd9f80bf589c6d0de80d212", null ],
-    [ "_role", "classPlayer.html#aa88f96bbb58fa090c4d887468184d07d", null ],
+    [ "_role", "classPlayer.html#a4a46e03d9e9a78e1e0b37553a5212723", null ],
     [ "_stats", "classPlayer.html#ac330e12ffd6ae63e89dc8ca5e7167e05", null ],
     [ "_status", "classPlayer.html#a12122f838d032c80bbfa77a8965e1248", null ],
     [ "_team_id", "classPlayer.html#a8685d7c544df408712e7360d5e723701", null ],

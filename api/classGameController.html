@@ -169,12 +169,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3ead30a10cc3aa32e3a5cba32b5e4e46" id="r_a3ead30a10cc3aa32e3a5cba32b5e4e46"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a3ead30a10cc3aa32e3a5cba32b5e4e46">advanceDay</a> ()</td></tr>
 <tr class="memdesc:a3ead30a10cc3aa32e3a5cba32b5e4e46"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advances the game date by one day.  <br /></td></tr>
 <tr class="separator:a3ead30a10cc3aa32e3a5cba32b5e4e46"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afcbf97d3dd20effc95b76cf0679c7cf9" id="r_afcbf97d3dd20effc95b76cf0679c7cf9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#afcbf97d3dd20effc95b76cf0679c7cf9">setMatchResult</a> (<a class="el" href="structGameDateValue.html">GameDateValue</a> date, uint16_t home_id, uint16_t away_id, uint8_t home_score, uint8_t away_score)</td></tr>
+<tr class="separator:afcbf97d3dd20effc95b76cf0679c7cf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad17fdc5ff712b8903cdb32bae7255726" id="r_ad17fdc5ff712b8903cdb32bae7255726"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#ad17fdc5ff712b8903cdb32bae7255726">saveGame</a> ()</td></tr>
 <tr class="memdesc:ad17fdc5ff712b8903cdb32bae7255726"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the current state of the game.  <br /></td></tr>
 <tr class="separator:ad17fdc5ff712b8903cdb32bae7255726"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a05cd4606dbbcbac6ea4d3ea4292368a8" id="r_a05cd4606dbbcbac6ea4d3ea4292368a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameController_1_1SaveSlotMetadata.html">SaveSlotMetadata</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a05cd4606dbbcbac6ea4d3ea4292368a8">getSaveSlotMetadata</a> (int slot) const</td></tr>
 <tr class="memdesc:a05cd4606dbbcbac6ea4d3ea4292368a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets metadata for a save slot.  <br /></td></tr>
 <tr class="separator:a05cd4606dbbcbac6ea4d3ea4292368a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3217b7afd7177bdad6d66d97479c0e9" id="r_ac3217b7afd7177bdad6d66d97479c0e9"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classGame.html">Game</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#ac3217b7afd7177bdad6d66d97479c0e9">getGame</a> () const</td></tr>
+<tr class="separator:ac3217b7afd7177bdad6d66d97479c0e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
@@ -268,6 +272,31 @@ Private Attributes</h2></td></tr>
 
 <p>Gets the current season year. </p>
 <dl class="section return"><dt>Returns</dt><dd>The current season as an integer. </dd></dl>
+
+</div>
+</div>
+<a id="ac3217b7afd7177bdad6d66d97479c0e9" name="ac3217b7afd7177bdad6d66d97479c0e9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3217b7afd7177bdad6d66d97479c0e9">&#9670;&#160;</a></span>getGame()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classGame.html">Game</a> * GameController::getGame </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -647,6 +676,52 @@ Private Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="afcbf97d3dd20effc95b76cf0679c7cf9" name="afcbf97d3dd20effc95b76cf0679c7cf9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afcbf97d3dd20effc95b76cf0679c7cf9">&#9670;&#160;</a></span>setMatchResult()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GameController::setMatchResult </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td>
+          <td class="paramname"><em>date</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>home_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>away_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>home_score</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>away_score</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>

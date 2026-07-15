@@ -26,12 +26,14 @@ var searchData=
   ['delete_5fall_5ffixtures_23',['DELETE_ALL_FIXTURES',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a5bac1a5d7d59311d2d0fa3a4eaeceea6',1,'queries.h']]],
   ['delete_5fplayer_24',['DELETE_PLAYER',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a702503c8368b5fe546f7375a4ff08fa7',1,'queries.h']]],
   ['deleteplayer_25',['deletePlayer',['../classPlayerRepository.html#a062bd7268d91204bf609fe6dad6278d4',1,'PlayerRepository']]],
-  ['design_26',['1. Data-Driven Design',['../index.html#autotoc_md14',1,'']]],
-  ['development_20roadmap_27',['Development Roadmap',['../index.html#autotoc_md18',1,'']]],
-  ['dk_28',['DK',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0cadd65ef9a5579d4e518c6d4abbd0cb1c6',1,'languages.h']]],
-  ['driven_20design_29',['1. Data-Driven Design',['../index.html#autotoc_md14',1,'']]],
-  ['dropdown_30',['dropdown',['../classDropdown.html',1,'Dropdown'],['../classDropdown.html#a49f6a54dcd3ae650fe85eeef47985cd4',1,'Dropdown::Dropdown(SDL_Renderer *dropdown_renderer, TTF_Font *dropdown_font, const SDL_FRect &amp;rect, const std::vector&lt; std::string &gt; &amp;dropdown_options)'],['../classDropdown.html#a44b1d8222bdd86411730255357b701fb',1,'Dropdown::Dropdown(Dropdown &amp;&amp;)=delete'],['../classDropdown.html#ad351ff7dece6554a9a169bf79332a625',1,'Dropdown::Dropdown(const Dropdown &amp;)=delete']]],
-  ['dropdown_2ecpp_31',['dropdown.cpp',['../dropdown_8cpp.html',1,'']]],
-  ['dropdown_2eh_32',['dropdown.h',['../dropdown_8h.html',1,'']]],
-  ['dropdownstyle_33',['DropdownStyle',['../structDropdownStyle.html',1,'']]]
+  ['description_26',['description',['../structMatchEvent.html#a543f95df4927b37e8b8a84a0f49da455',1,'MatchEvent']]],
+  ['design_27',['1. Data-Driven Design',['../index.html#autotoc_md14',1,'']]],
+  ['development_20roadmap_28',['Development Roadmap',['../index.html#autotoc_md18',1,'']]],
+  ['dk_29',['DK',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0cadd65ef9a5579d4e518c6d4abbd0cb1c6',1,'languages.h']]],
+  ['dragging_5fplayer_5fid_30',['dragging_player_id',['../classLineupScene.html#afd9696702d6d1155a764a5b77747160a',1,'LineupScene']]],
+  ['driven_20design_31',['1. Data-Driven Design',['../index.html#autotoc_md14',1,'']]],
+  ['dropdown_32',['dropdown',['../classDropdown.html#a44b1d8222bdd86411730255357b701fb',1,'Dropdown::Dropdown(Dropdown &amp;&amp;)=delete'],['../classDropdown.html#ad351ff7dece6554a9a169bf79332a625',1,'Dropdown::Dropdown(const Dropdown &amp;)=delete'],['../classDropdown.html#a49f6a54dcd3ae650fe85eeef47985cd4',1,'Dropdown::Dropdown(SDL_Renderer *dropdown_renderer, TTF_Font *dropdown_font, const SDL_FRect &amp;rect, const std::vector&lt; std::string &gt; &amp;dropdown_options)'],['../classDropdown.html',1,'Dropdown']]],
+  ['dropdown_2ecpp_33',['dropdown.cpp',['../dropdown_8cpp.html',1,'']]],
+  ['dropdown_2eh_34',['dropdown.h',['../dropdown_8h.html',1,'']]],
+  ['dropdownstyle_35',['DropdownStyle',['../structDropdownStyle.html',1,'']]]
 ];

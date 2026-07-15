@@ -17,8 +17,10 @@ var hierarchy =
     [ "GameDateValue", "structGameDateValue.html", null ],
     [ "GameStateRepository", "classGameStateRepository.html", null ],
     [ "GUIScene", "classGUIScene.html", [
+      [ "LineupScene", "classLineupScene.html", null ],
       [ "MainGameScene", "classMainGameScene.html", null ],
       [ "MainMenuScene", "classMainMenuScene.html", null ],
+      [ "MatchScene", "classMatchScene.html", null ],
       [ "RosterScene", "classRosterScene.html", null ],
       [ "SettingsScene", "classSettingsScene.html", null ],
       [ "StrategyScene", "classStrategyScene.html", null ],
@@ -31,12 +33,18 @@ var hierarchy =
     [ "Lineup", "classLineup.html", null ],
     [ "Logger", "classLogger.html", null ],
     [ "Match", "classMatch.html", null ],
+    [ "MatchBall", "structMatchBall.html", null ],
+    [ "MatchEngine", "classMatchEngine.html", null ],
+    [ "MatchEvent", "structMatchEvent.html", null ],
+    [ "MatchPlayer", "structMatchPlayer.html", null ],
     [ "Matchup", "structMatchup.html", null ],
     [ "Player", "classPlayer.html", null ],
     [ "PlayerRepository", "classPlayerRepository.html", null ],
+    [ "Lineup::PositionedPlayer", "structLineup_1_1PositionedPlayer.html", null ],
     [ "QueryMapEntry", "structQueryMapEntry.html", null ],
     [ "GUIConstants::Resolution", "structGUIConstants_1_1Resolution.html", null ],
     [ "RoleFocus", "structRoleFocus.html", null ],
+    [ "RoleUtils", "classRoleUtils.html", null ],
     [ "RoleWeights", "structRoleWeights.html", null ],
     [ "std::runtime_error", null, [
       [ "DatabaseException", "classDatabaseException.html", null ]
@@ -49,5 +57,6 @@ var hierarchy =
     [ "Strategy", "classStrategy.html", null ],
     [ "StrategySliders", "structStrategySliders.html", null ],
     [ "Team", "classTeam.html", null ],
-    [ "TeamRepository", "classTeamRepository.html", null ]
+    [ "TeamRepository", "classTeamRepository.html", null ],
+    [ "Vector2F", "structVector2F.html", null ]
 ];

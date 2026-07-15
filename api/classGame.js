@@ -3,6 +3,7 @@ var classGame =
     [ "Game", "classGame.html#ad6954c2d2fd3adfdd8a7b331a47c6907", null ],
     [ "advanceDay", "classGame.html#a3a07e7c96e055f2ac28ce7a05d2573ce", null ],
     [ "endSeason", "classGame.html#abe55c7e8223c3be5e495c215d4841170", null ],
+    [ "getCalendar", "classGame.html#a3acb8212ac80bdd2a115d7b612173ad8", null ],
     [ "getCalendar", "classGame.html#a791383dbf44783cd2c05e601706e898e", null ],
     [ "getCurrentDate", "classGame.html#a70674da80f5f875018c666dfcb92fe51", null ],
     [ "getCurrentSeason", "classGame.html#ae14036a58d2adb136a35da5f0cc769bb", null ],

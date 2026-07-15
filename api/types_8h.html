@@ -109,6 +109,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchup.html">Matchup</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a single match between two teams.  <a href="structMatchup.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structVector2F.html">Vector2F</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A simple 2D float vector for pitch coordinates.  <a href="structVector2F.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -137,6 +140,27 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:a06be3d3918a8700cf086896e9f03e885"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents the type or category of a match.  <a href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">More...</a><br /></td></tr>
 <tr class="separator:a06be3d3918a8700cf086896e9f03e885"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1e198be4ce1cfce8be42795524c8900" id="r_ae1e198be4ce1cfce8be42795524c8900"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a> : uint8_t { <br />
+&#160;&#160;<a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900a7555b4f0c30ff860f6d579c79e3fa8e1">GK</a>
+, <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900a834cb54b61bbed9d4296c995e4c5d8b2">CB</a>
+, <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900ac951270e425b15fc20c64da4341c1d89">LB</a>
+, <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900ac8ee22e1fc2165dfd3d2b04aef93b2f2">RB</a>
+, <br />
+&#160;&#160;<a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900add15a7c4d52bc4cfd3fbe832cd458a24">CDM</a>
+, <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900a707354872d4e8210a2a573b99721b1fb">CM</a>
+, <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900a94bf53c56990d9ef19cd5c64d493ad39">CAM</a>
+, <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900adfd5b430bc4db2c2836d0227ad9ac0c4">LM</a>
+, <br />
+&#160;&#160;<a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900a2622e9b348f05f74e3e4bb9b7d213dc8">RM</a>
+, <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900ac556331de98ff0977430dade00c6c714">LW</a>
+, <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900a5c6dc3d436504b7a65191cafe28212ee">RW</a>
+, <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900aec8e57d71f07e31203035548b79d03c8">ST</a>
+, <br />
+&#160;&#160;<a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900a696b031073e74bf2cb98e5ef201d4aa3">UNKNOWN</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:ae1e198be4ce1cfce8be42795524c8900"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a specific tactical role on the pitch.  <a href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">More...</a><br /></td></tr>
+<tr class="separator:ae1e198be4ce1cfce8be42795524c8900"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Typedef Documentation</h2>
 <a id="a23de5420c0b18be78144797767703d6f" name="a23de5420c0b18be78144797767703d6f"></a>
@@ -216,6 +240,57 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a06be3d3918a8700cf086896e9f03e885a5b11962dcbe85de55770d22d3e5fb85a" name="a06be3d3918a8700cf086896e9f03e885a5b11962dcbe85de55770d22d3e5fb85a"></a>CUP&#160;</td><td class="fielddoc"><p>A cup tournament match </p>
 </td></tr>
+</table>
+
+</div>
+</div>
+<a id="ae1e198be4ce1cfce8be42795524c8900" name="ae1e198be4ce1cfce8be42795524c8900"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1e198be4ce1cfce8be42795524c8900">&#9670;&#160;</a></span>PlayerRole</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a> : uint8_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Represents a specific tactical role on the pitch. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900a7555b4f0c30ff860f6d579c79e3fa8e1" name="ae1e198be4ce1cfce8be42795524c8900a7555b4f0c30ff860f6d579c79e3fa8e1"></a>GK&#160;</td><td class="fielddoc"><p>Goalkeeper </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900a834cb54b61bbed9d4296c995e4c5d8b2" name="ae1e198be4ce1cfce8be42795524c8900a834cb54b61bbed9d4296c995e4c5d8b2"></a>CB&#160;</td><td class="fielddoc"><p>Center Back </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900ac951270e425b15fc20c64da4341c1d89" name="ae1e198be4ce1cfce8be42795524c8900ac951270e425b15fc20c64da4341c1d89"></a>LB&#160;</td><td class="fielddoc"><p>Left Back </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900ac8ee22e1fc2165dfd3d2b04aef93b2f2" name="ae1e198be4ce1cfce8be42795524c8900ac8ee22e1fc2165dfd3d2b04aef93b2f2"></a>RB&#160;</td><td class="fielddoc"><p>Right Back </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900add15a7c4d52bc4cfd3fbe832cd458a24" name="ae1e198be4ce1cfce8be42795524c8900add15a7c4d52bc4cfd3fbe832cd458a24"></a>CDM&#160;</td><td class="fielddoc"><p>Central Defensive Midfielder </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900a707354872d4e8210a2a573b99721b1fb" name="ae1e198be4ce1cfce8be42795524c8900a707354872d4e8210a2a573b99721b1fb"></a>CM&#160;</td><td class="fielddoc"><p>Central Midfielder </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900a94bf53c56990d9ef19cd5c64d493ad39" name="ae1e198be4ce1cfce8be42795524c8900a94bf53c56990d9ef19cd5c64d493ad39"></a>CAM&#160;</td><td class="fielddoc"><p>Central Attacking Midfielder </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900adfd5b430bc4db2c2836d0227ad9ac0c4" name="ae1e198be4ce1cfce8be42795524c8900adfd5b430bc4db2c2836d0227ad9ac0c4"></a>LM&#160;</td><td class="fielddoc"><p>Left Midfielder </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900a2622e9b348f05f74e3e4bb9b7d213dc8" name="ae1e198be4ce1cfce8be42795524c8900a2622e9b348f05f74e3e4bb9b7d213dc8"></a>RM&#160;</td><td class="fielddoc"><p>Right Midfielder </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900ac556331de98ff0977430dade00c6c714" name="ae1e198be4ce1cfce8be42795524c8900ac556331de98ff0977430dade00c6c714"></a>LW&#160;</td><td class="fielddoc"><p>Left Winger </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900a5c6dc3d436504b7a65191cafe28212ee" name="ae1e198be4ce1cfce8be42795524c8900a5c6dc3d436504b7a65191cafe28212ee"></a>RW&#160;</td><td class="fielddoc"><p>Right Winger </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900aec8e57d71f07e31203035548b79d03c8" name="ae1e198be4ce1cfce8be42795524c8900aec8e57d71f07e31203035548b79d03c8"></a>ST&#160;</td><td class="fielddoc"><p>Striker </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae1e198be4ce1cfce8be42795524c8900a696b031073e74bf2cb98e5ef201d4aa3" name="ae1e198be4ce1cfce8be42795524c8900a696b031073e74bf2cb98e5ef201d4aa3"></a>UNKNOWN&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>

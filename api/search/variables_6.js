@@ -8,5 +8,6 @@ var searchData=
   ['fpsoptionsstrings_5',['fpsOptionsStrings',['../classSettingsScene.html#abf35e9700bbe1c75e8237497c9a4a622',1,'SettingsScene']]],
   ['free_5fagents_5fteam_5fid_6',['FREE_AGENTS_TEAM_ID',['../global_8h.html#ad739458e122087a2668268985c8c993c',1,'global.h']]],
   ['free_5fagents_5fteam_5fname_7',['FREE_AGENTS_TEAM_NAME',['../global_8h.html#ab55c8d4cd4b54165e255b81c69f2a1a8',1,'global.h']]],
-  ['fullscreen_8',['fullscreen',['../classSettingsScene.html#a8a9a06658ff29e16f365d41d1316e820',1,'SettingsScene::fullscreen'],['../structSettings.html#a3d28191427be4bd21df6bf77e689790b',1,'Settings::fullscreen']]]
+  ['friction_8',['friction',['../structMatchBall.html#ae4233d071d30540772754f477b8b66b4',1,'MatchBall']]],
+  ['fullscreen_9',['fullscreen',['../classSettingsScene.html#a8a9a06658ff29e16f365d41d1316e820',1,'SettingsScene::fullscreen'],['../structSettings.html#a3d28191427be4bd21df6bf77e689790b',1,'Settings::fullscreen']]]
 ];

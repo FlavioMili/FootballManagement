@@ -94,8 +94,8 @@ $(document).ready(function(){initNavTree('classLineup.html',''); initResizable()
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classLineup-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">Lineup Class Reference</div></div>
@@ -107,6 +107,11 @@ $(document).ready(function(){initNavTree('classLineup.html',''); initResizable()
 
 <p><code>#include &lt;<a class="el" href="lineup_8h_source.html">lineup.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structLineup_1_1PositionedPlayer.html">PositionedPlayer</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a27b5d73d4303d27f1e38e355545d0848" id="r_a27b5d73d4303d27f1e38e355545d0848"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a27b5d73d4303d27f1e38e355545d0848">Lineup</a> ()</td></tr>
@@ -118,24 +123,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a668416c5790ec2fd6e9ce2a352e1ad08" id="r_a668416c5790ec2fd6e9ce2a352e1ad08"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classPlayer.html">Player</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a668416c5790ec2fd6e9ce2a352e1ad08">getGoalkeeper</a> () const</td></tr>
 <tr class="memdesc:a668416c5790ec2fd6e9ce2a352e1ad08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the goalkeeper.  <br /></td></tr>
 <tr class="separator:a668416c5790ec2fd6e9ce2a352e1ad08"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8ce1c85fc16dc361bff37f09d2a2f3c0" id="r_a8ce1c85fc16dc361bff37f09d2a2f3c0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a8ce1c85fc16dc361bff37f09d2a2f3c0">placePlayer</a> (int row, int col, const <a class="el" href="classPlayer.html">Player</a> *player)</td></tr>
-<tr class="memdesc:a8ce1c85fc16dc361bff37f09d2a2f3c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Places a player in the outfield grid by row and column.  <br /></td></tr>
-<tr class="separator:a8ce1c85fc16dc361bff37f09d2a2f3c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0490ddda059384ad6eb7bc1028dd96f3" id="r_a0490ddda059384ad6eb7bc1028dd96f3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a0490ddda059384ad6eb7bc1028dd96f3">removePlayer</a> (int row, int col)</td></tr>
-<tr class="memdesc:a0490ddda059384ad6eb7bc1028dd96f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a player from the outfield grid by row and column.  <br /></td></tr>
-<tr class="separator:a0490ddda059384ad6eb7bc1028dd96f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af718d1954be5d96c13dcfa37d09fcd8d" id="r_af718d1954be5d96c13dcfa37d09fcd8d"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classPlayer.html">Player</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#af718d1954be5d96c13dcfa37d09fcd8d">getPlayerAt</a> (int row, int col) const</td></tr>
-<tr class="memdesc:af718d1954be5d96c13dcfa37d09fcd8d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a player from the outfield grid by row and column.  <br /></td></tr>
-<tr class="separator:af718d1954be5d96c13dcfa37d09fcd8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acc496490233f0831b58e82962c6cbe8a" id="r_acc496490233f0831b58e82962c6cbe8a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#acc496490233f0831b58e82962c6cbe8a">placePlayer</a> (int index, const <a class="el" href="classPlayer.html">Player</a> *player)</td></tr>
-<tr class="memdesc:acc496490233f0831b58e82962c6cbe8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Places a player in the outfield grid by linear index.  <br /></td></tr>
-<tr class="separator:acc496490233f0831b58e82962c6cbe8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4a88247ad633bb25c6fbf329feef2a43" id="r_a4a88247ad633bb25c6fbf329feef2a43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a4a88247ad633bb25c6fbf329feef2a43">removePlayer</a> (int index)</td></tr>
-<tr class="memdesc:a4a88247ad633bb25c6fbf329feef2a43"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a player from the outfield grid by linear index.  <br /></td></tr>
-<tr class="separator:a4a88247ad633bb25c6fbf329feef2a43"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d7a61a4d12c22a2554d78cc5e7d3a03" id="r_a3d7a61a4d12c22a2554d78cc5e7d3a03"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classPlayer.html">Player</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a3d7a61a4d12c22a2554d78cc5e7d3a03">getPlayerAt</a> (int index) const</td></tr>
-<tr class="memdesc:a3d7a61a4d12c22a2554d78cc5e7d3a03"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a player from the outfield grid by linear index.  <br /></td></tr>
-<tr class="separator:a3d7a61a4d12c22a2554d78cc5e7d3a03"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abccbff9c5fb0bc96a53c13dcc799504d" id="r_abccbff9c5fb0bc96a53c13dcc799504d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#abccbff9c5fb0bc96a53c13dcc799504d">addOutfieldPlayer</a> (const <a class="el" href="classPlayer.html">Player</a> *player, <a class="el" href="structVector2F.html">Vector2F</a> position)</td></tr>
+<tr class="memdesc:abccbff9c5fb0bc96a53c13dcc799504d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds an outfield player to the pitch at the specified coordinate.  <br /></td></tr>
+<tr class="separator:abccbff9c5fb0bc96a53c13dcc799504d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad9f91c375e04edf2e3f7f4f9d312ea04" id="r_ad9f91c375e04edf2e3f7f4f9d312ea04"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#ad9f91c375e04edf2e3f7f4f9d312ea04">moveOutfieldPlayer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> playerID, <a class="el" href="structVector2F.html">Vector2F</a> newPosition)</td></tr>
+<tr class="memdesc:ad9f91c375e04edf2e3f7f4f9d312ea04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates the position of an existing outfield player.  <br /></td></tr>
+<tr class="separator:ad9f91c375e04edf2e3f7f4f9d312ea04"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7e5a5b3671168c114db3f91b2c48404" id="r_ac7e5a5b3671168c114db3f91b2c48404"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#ac7e5a5b3671168c114db3f91b2c48404">removeOutfieldPlayer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> playerID)</td></tr>
+<tr class="memdesc:ac7e5a5b3671168c114db3f91b2c48404"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes an outfield player from the pitch.  <br /></td></tr>
+<tr class="separator:ac7e5a5b3671168c114db3f91b2c48404"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47102645a88aa387ae39e0566d9ba23c" id="r_a47102645a88aa387ae39e0566d9ba23c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a47102645a88aa387ae39e0566d9ba23c">swapPlayers</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> benchPlayerID, <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> pitchPlayerID)</td></tr>
+<tr class="memdesc:a47102645a88aa387ae39e0566d9ba23c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Swaps a bench player with an outfield player.  <br /></td></tr>
+<tr class="separator:a47102645a88aa387ae39e0566d9ba23c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a5a7e5b1f02c560e3fb8c5feb01e4e2" id="r_a6a5a7e5b1f02c560e3fb8c5feb01e4e2"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="structLineup_1_1PositionedPlayer.html">PositionedPlayer</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a6a5a7e5b1f02c560e3fb8c5feb01e4e2">getOutfieldPlayers</a> () const</td></tr>
+<tr class="memdesc:a6a5a7e5b1f02c560e3fb8c5feb01e4e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets all positioned outfield players.  <br /></td></tr>
+<tr class="separator:a6a5a7e5b1f02c560e3fb8c5feb01e4e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa5578e5763d6e67d99f63c36a46648c0" id="r_aa5578e5763d6e67d99f63c36a46648c0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#aa5578e5763d6e67d99f63c36a46648c0">setReserves</a> (const std::vector&lt; const <a class="el" href="classPlayer.html">Player</a> * &gt; &amp;subs)</td></tr>
 <tr class="memdesc:aa5578e5763d6e67d99f63c36a46648c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the reserve players.  <br /></td></tr>
 <tr class="separator:aa5578e5763d6e67d99f63c36a46648c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -154,25 +156,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9dc480831afc05abf3eaa74b653c41ec" id="r_a9dc480831afc05abf3eaa74b653c41ec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a9dc480831afc05abf3eaa74b653c41ec">generateStartingXI</a> (const class <a class="el" href="classGameData.html">GameData</a> &amp;gamedata, const std::vector&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt; &amp;allPlayerIDs, const <a class="el" href="structStatsConfig.html">StatsConfig</a> &amp;stats_config)</td></tr>
 <tr class="memdesc:a9dc480831afc05abf3eaa74b653c41ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generates a starting XI automatically.  <br /></td></tr>
 <tr class="separator:a9dc480831afc05abf3eaa74b653c41ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afee483cfdfd354c54dac00cfe8604071" id="r_afee483cfdfd354c54dac00cfe8604071"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#afee483cfdfd354c54dac00cfe8604071">gridClear</a> ()</td></tr>
-<tr class="memdesc:afee483cfdfd354c54dac00cfe8604071"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the grid and goalkeeper.  <br /></td></tr>
-<tr class="separator:afee483cfdfd354c54dac00cfe8604071"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a9f3ab2d67f69dd117ab2e929e5164716" id="r_a9f3ab2d67f69dd117ab2e929e5164716"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a9f3ab2d67f69dd117ab2e929e5164716">toIndex</a> (int row, int col)</td></tr>
-<tr class="memdesc:a9f3ab2d67f69dd117ab2e929e5164716"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts row and column to a linear index.  <br /></td></tr>
-<tr class="separator:a9f3ab2d67f69dd117ab2e929e5164716"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd6c58031a36b913e9331fc79b520df1" id="r_acd6c58031a36b913e9331fc79b520df1"><td class="memItemLeft" align="right" valign="top">static std::pair&lt; int, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#acd6c58031a36b913e9331fc79b520df1">toRowCol</a> (int index)</td></tr>
-<tr class="memdesc:acd6c58031a36b913e9331fc79b520df1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a linear index to row and column.  <br /></td></tr>
-<tr class="separator:acd6c58031a36b913e9331fc79b520df1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0466287d330a4d6c10f6204935e12b81" id="r_a0466287d330a4d6c10f6204935e12b81"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a0466287d330a4d6c10f6204935e12b81">clear</a> ()</td></tr>
+<tr class="memdesc:a0466287d330a4d6c10f6204935e12b81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the outfield players and goalkeeper.  <br /></td></tr>
+<tr class="separator:a0466287d330a4d6c10f6204935e12b81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
 <tr class="memitem:a267bf874c32ac610e6a72f4ecf378424" id="r_a267bf874c32ac610e6a72f4ecf378424"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classPlayer.html">Player</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a267bf874c32ac610e6a72f4ecf378424">goalkeeper</a></td></tr>
 <tr class="separator:a267bf874c32ac610e6a72f4ecf378424"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3ff79b2c96560f3388c3b8de1a83b3f8" id="r_a3ff79b2c96560f3388c3b8de1a83b3f8"><td class="memItemLeft" align="right" valign="top">std::array&lt; const <a class="el" href="classPlayer.html">Player</a> *, <a class="el" href="global_8h.html#a9b9674d857525b2867a17b849de0d0b4">LINEUP_GRID_SIZE</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a3ff79b2c96560f3388c3b8de1a83b3f8">grid</a></td></tr>
-<tr class="separator:a3ff79b2c96560f3388c3b8de1a83b3f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e3d83839ed540d1320ada263d08d028" id="r_a2e3d83839ed540d1320ada263d08d028"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structLineup_1_1PositionedPlayer.html">PositionedPlayer</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a2e3d83839ed540d1320ada263d08d028">outfield_players</a></td></tr>
+<tr class="separator:a2e3d83839ed540d1320ada263d08d028"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa7fe4674d735a43d6720b20ef8fcb92" id="r_afa7fe4674d735a43d6720b20ef8fcb92"><td class="memItemLeft" align="right" valign="top">std::vector&lt; const <a class="el" href="classPlayer.html">Player</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#afa7fe4674d735a43d6720b20ef8fcb92">reserves</a></td></tr>
 <tr class="separator:afa7fe4674d735a43d6720b20ef8fcb92"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e4505807074d9a50842b8122df730ab" id="r_a7e4505807074d9a50842b8122df730ab"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classStrategy.html">Strategy</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a7e4505807074d9a50842b8122df730ab">strategy</a></td></tr>
@@ -202,6 +195,70 @@ Private Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="abccbff9c5fb0bc96a53c13dcc799504d" name="abccbff9c5fb0bc96a53c13dcc799504d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abccbff9c5fb0bc96a53c13dcc799504d">&#9670;&#160;</a></span>addOutfieldPlayer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Lineup::addOutfieldPlayer </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classPlayer.html">Player</a> *&#160;</td>
+          <td class="paramname"><em>player</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structVector2F.html">Vector2F</a>&#160;</td>
+          <td class="paramname"><em>position</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Adds an outfield player to the pitch at the specified coordinate. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">player</td><td>Pointer to the <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object. </td></tr>
+    <tr><td class="paramname">position</td><td>The position on the pitch (x, y in [0.0, 1.0]). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a0466287d330a4d6c10f6204935e12b81" name="a0466287d330a4d6c10f6204935e12b81"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0466287d330a4d6c10f6204935e12b81">&#9670;&#160;</a></span>clear()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Lineup::clear </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Clears the outfield players and goalkeeper. </p>
+
+</div>
+</div>
 <a id="a9dc480831afc05abf3eaa74b653c41ec" name="a9dc480831afc05abf3eaa74b653c41ec"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9dc480831afc05abf3eaa74b653c41ec">&#9670;&#160;</a></span>generateStartingXI()</h2>
 
@@ -266,68 +323,23 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a3d7a61a4d12c22a2554d78cc5e7d3a03" name="a3d7a61a4d12c22a2554d78cc5e7d3a03"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3d7a61a4d12c22a2554d78cc5e7d3a03">&#9670;&#160;</a></span>getPlayerAt() <span class="overload">[1/2]</span></h2>
+<a id="a6a5a7e5b1f02c560e3fb8c5feb01e4e2" name="a6a5a7e5b1f02c560e3fb8c5feb01e4e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a5a7e5b1f02c560e3fb8c5feb01e4e2">&#9670;&#160;</a></span>getOutfieldPlayers()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">const <a class="el" href="classPlayer.html">Player</a> * Lineup::getPlayerAt </td>
+          <td class="memname">const std::vector&lt; <a class="el" href="structLineup_1_1PositionedPlayer.html">Lineup::PositionedPlayer</a> &gt; &amp; Lineup::getOutfieldPlayers </td>
           <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>index</em></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Gets a player from the outfield grid by linear index. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">index</td><td>Linear index. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Pointer to the <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object. </dd></dl>
-
-</div>
-</div>
-<a id="af718d1954be5d96c13dcfa37d09fcd8d" name="af718d1954be5d96c13dcfa37d09fcd8d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af718d1954be5d96c13dcfa37d09fcd8d">&#9670;&#160;</a></span>getPlayerAt() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">const <a class="el" href="classPlayer.html">Player</a> * Lineup::getPlayerAt </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>row</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>col</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Gets a player from the outfield grid by row and column. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">row</td><td>Row index. </td></tr>
-    <tr><td class="paramname">col</td><td>Column index. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Pointer to the <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object. </dd></dl>
+<p>Gets all positioned outfield players. </p>
+<dl class="section return"><dt>Returns</dt><dd>A vector of positioned players. </dd></dl>
 
 </div>
 </div>
@@ -371,50 +383,23 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="afee483cfdfd354c54dac00cfe8604071" name="afee483cfdfd354c54dac00cfe8604071"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afee483cfdfd354c54dac00cfe8604071">&#9670;&#160;</a></span>gridClear()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void Lineup::gridClear </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Clears the grid and goalkeeper. </p>
-
-</div>
-</div>
-<a id="acc496490233f0831b58e82962c6cbe8a" name="acc496490233f0831b58e82962c6cbe8a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acc496490233f0831b58e82962c6cbe8a">&#9670;&#160;</a></span>placePlayer() <span class="overload">[1/2]</span></h2>
+<a id="ad9f91c375e04edf2e3f7f4f9d312ea04" name="ad9f91c375e04edf2e3f7f4f9d312ea04"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad9f91c375e04edf2e3f7f4f9d312ea04">&#9670;&#160;</a></span>moveOutfieldPlayer()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void Lineup::placePlayer </td>
+          <td class="memname">bool Lineup::moveOutfieldPlayer </td>
           <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>index</em>, </td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>playerID</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="classPlayer.html">Player</a> *&#160;</td>
-          <td class="paramname"><em>player</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="structVector2F.html">Vector2F</a>&#160;</td>
+          <td class="paramname"><em>newPosition</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -424,118 +409,38 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Places a player in the outfield grid by linear index. </p>
+<p>Updates the position of an existing outfield player. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">index</td><td>Linear index. </td></tr>
-    <tr><td class="paramname">player</td><td>Pointer to the <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object. </td></tr>
+    <tr><td class="paramname">playerID</td><td>The ID of the player to move. </td></tr>
+    <tr><td class="paramname">newPosition</td><td>The new position on the pitch. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the player was found and moved, false otherwise. </dd></dl>
 
 </div>
 </div>
-<a id="a8ce1c85fc16dc361bff37f09d2a2f3c0" name="a8ce1c85fc16dc361bff37f09d2a2f3c0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8ce1c85fc16dc361bff37f09d2a2f3c0">&#9670;&#160;</a></span>placePlayer() <span class="overload">[2/2]</span></h2>
+<a id="ac7e5a5b3671168c114db3f91b2c48404" name="ac7e5a5b3671168c114db3f91b2c48404"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7e5a5b3671168c114db3f91b2c48404">&#9670;&#160;</a></span>removeOutfieldPlayer()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void Lineup::placePlayer </td>
+          <td class="memname">void Lineup::removeOutfieldPlayer </td>
           <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>row</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>col</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="classPlayer.html">Player</a> *&#160;</td>
-          <td class="paramname"><em>player</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Places a player in the outfield grid by row and column. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">row</td><td>Row index. </td></tr>
-    <tr><td class="paramname">col</td><td>Column index. </td></tr>
-    <tr><td class="paramname">player</td><td>Pointer to the <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a4a88247ad633bb25c6fbf329feef2a43" name="a4a88247ad633bb25c6fbf329feef2a43"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4a88247ad633bb25c6fbf329feef2a43">&#9670;&#160;</a></span>removePlayer() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void Lineup::removePlayer </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>index</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>playerID</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Removes a player from the outfield grid by linear index. </p>
+<p>Removes an outfield player from the pitch. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">index</td><td>Linear index. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a0490ddda059384ad6eb7bc1028dd96f3" name="a0490ddda059384ad6eb7bc1028dd96f3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0490ddda059384ad6eb7bc1028dd96f3">&#9670;&#160;</a></span>removePlayer() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void Lineup::removePlayer </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>row</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>col</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Removes a player from the outfield grid by row and column. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">row</td><td>Row index. </td></tr>
-    <tr><td class="paramname">col</td><td>Column index. </td></tr>
+    <tr><td class="paramname">playerID</td><td>The ID of the player to remove. </td></tr>
   </table>
   </dd>
 </dl>
@@ -620,26 +525,23 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a9f3ab2d67f69dd117ab2e929e5164716" name="a9f3ab2d67f69dd117ab2e929e5164716"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9f3ab2d67f69dd117ab2e929e5164716">&#9670;&#160;</a></span>toIndex()</h2>
+<a id="a47102645a88aa387ae39e0566d9ba23c" name="a47102645a88aa387ae39e0566d9ba23c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a47102645a88aa387ae39e0566d9ba23c">&#9670;&#160;</a></span>swapPlayers()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static int Lineup::toIndex </td>
+          <td class="memname">bool Lineup::swapPlayers </td>
           <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>row</em>, </td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>benchPlayerID</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>col</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>pitchPlayerID</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -647,57 +549,17 @@ Private Attributes</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Converts row and column to a linear index. </p>
+<p>Swaps a bench player with an outfield player. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">row</td><td>Row index. </td></tr>
-    <tr><td class="paramname">col</td><td>Column index. </td></tr>
+    <tr><td class="paramname">benchPlayerID</td><td>The ID of the substitute. </td></tr>
+    <tr><td class="paramname">pitchPlayerID</td><td>The ID of the current starting player. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The linear index. </dd></dl>
-
-</div>
-</div>
-<a id="acd6c58031a36b913e9331fc79b520df1" name="acd6c58031a36b913e9331fc79b520df1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acd6c58031a36b913e9331fc79b520df1">&#9670;&#160;</a></span>toRowCol()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">static std::pair&lt; int, int &gt; Lineup::toRowCol </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>index</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Converts a linear index to row and column. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">index</td><td>Linear index. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A pair containing the row and column. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>true if successful, false otherwise. </dd></dl>
 
 </div>
 </div>
@@ -744,8 +606,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a3ff79b2c96560f3388c3b8de1a83b3f8" name="a3ff79b2c96560f3388c3b8de1a83b3f8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3ff79b2c96560f3388c3b8de1a83b3f8">&#9670;&#160;</a></span>grid</h2>
+<a id="a2e3d83839ed540d1320ada263d08d028" name="a2e3d83839ed540d1320ada263d08d028"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e3d83839ed540d1320ada263d08d028">&#9670;&#160;</a></span>outfield_players</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -754,7 +616,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::array&lt;const <a class="el" href="classPlayer.html">Player</a>*, <a class="el" href="global_8h.html#a9b9674d857525b2867a17b849de0d0b4">LINEUP_GRID_SIZE</a>&gt; Lineup::grid</td>
+          <td class="memname">std::vector&lt;<a class="el" href="structLineup_1_1PositionedPlayer.html">PositionedPlayer</a>&gt; Lineup::outfield_players</td>
         </tr>
       </table>
   </td>
