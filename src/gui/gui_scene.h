@@ -23,6 +23,7 @@ enum class SceneID : uint8_t
   MAIN_MENU,      /**< Main menu scene */
   SETTINGS,       /**< Settings scene */
   GAME_MENU,      /**< In-game menu scene */
+  LINEUP,         /**< Lineup management scene */
   TEAM_SELECTION, /**< Team selection scene */
   ROSTER,         /**< Team roster scene */
   STRATEGY,       /**< Strategy management scene */

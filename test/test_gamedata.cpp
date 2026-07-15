@@ -29,8 +29,8 @@ TEST_F(GameDataTest, TestAddRemovePlayer)
   PlayerID pid = 99999;
   TeamID tid = 999;
 
-  Player p(pid, tid, "Test", "Player", "ST", Language::EN, 1000, 0, 20, 2, 180,
-           Foot::Right, {});
+  Player p(pid, tid, "Test", "Player", PlayerRole::ST, Language::EN, 1000, 0,
+           20, 2, 180, Foot::Right, {});
 
   // Add player
   gamedata.addPlayer(pid, p);
@@ -55,8 +55,8 @@ TEST_F(GameDataTest, TestTransferPlayer)
   TeamID source_tid = 111;
   TeamID target_tid = 222;
 
-  Player p(pid, source_tid, "Test", "Transfer", "CM", Language::EN, 1000, 0, 20,
-           2, 180, Foot::Right, {});
+  Player p(pid, source_tid, "Test", "Transfer", PlayerRole::CM, Language::EN,
+           1000, 0, 20, 2, 180, Foot::Right, {});
   gamedata.addPlayer(pid, p);
 
   gamedata.transferPlayer(pid, target_tid);

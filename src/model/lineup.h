@@ -46,68 +46,47 @@ class Lineup
    */
   const Player* getGoalkeeper() const;
 
-  // Grid (outfield players)
-  /**
-   * @brief Places a player in the outfield grid by row and column.
-   * @param row Row index.
-   * @param col Column index.
-   * @param player Pointer to the Player object.
-   */
-  void placePlayer(int row, int col, const Player* player);
-
-  /**
-   * @brief Removes a player from the outfield grid by row and column.
-   * @param row Row index.
-   * @param col Column index.
-   */
-  void removePlayer(int row, int col);
-
-  /**
-   * @brief Gets a player from the outfield grid by row and column.
-   * @param row Row index.
-   * @param col Column index.
-   * @return Pointer to the Player object.
-   */
-  const Player* getPlayerAt(int row, int col) const;
-
-  /**
-   * @brief Places a player in the outfield grid by linear index.
-   * @param index Linear index.
-   * @param player Pointer to the Player object.
-   */
-  void placePlayer(int index, const Player* player);
-
-  /**
-   * @brief Removes a player from the outfield grid by linear index.
-   * @param index Linear index.
-   */
-  void removePlayer(int index);
-
-  /**
-   * @brief Gets a player from the outfield grid by linear index.
-   * @param index Linear index.
-   * @return Pointer to the Player object.
-   */
-  const Player* getPlayerAt(int index) const;
-
-  // Helpers for index conversions
-  /**
-   * @brief Converts row and column to a linear index.
-   * @param row Row index.
-   * @param col Column index.
-   * @return The linear index.
-   */
-  static int toIndex(int row, int col) { return row * LINEUP_GRID_COLS + col; }
-
-  /**
-   * @brief Converts a linear index to row and column.
-   * @param index Linear index.
-   * @return A pair containing the row and column.
-   */
-  static std::pair<int, int> toRowCol(int index)
+  // Outfield Players
+  struct PositionedPlayer
   {
-    return {index / LINEUP_GRID_COLS, index % LINEUP_GRID_COLS};
-  }
+    const Player* player;
+    Vector2F position;
+  };
+
+  /**
+   * @brief Adds an outfield player to the pitch at the specified coordinate.
+   * @param player Pointer to the Player object.
+   * @param position The position on the pitch (x, y in [0.0, 1.0]).
+   */
+  void addOutfieldPlayer(const Player* player, Vector2F position);
+
+  /**
+   * @brief Updates the position of an existing outfield player.
+   * @param playerID The ID of the player to move.
+   * @param newPosition The new position on the pitch.
+   * @return true if the player was found and moved, false otherwise.
+   */
+  bool moveOutfieldPlayer(PlayerID playerID, Vector2F newPosition);
+
+  /**
+   * @brief Removes an outfield player from the pitch.
+   * @param playerID The ID of the player to remove.
+   */
+  void removeOutfieldPlayer(PlayerID playerID);
+
+  /**
+   * @brief Swaps a bench player with an outfield player.
+   * @param benchPlayerID The ID of the substitute.
+   * @param pitchPlayerID The ID of the current starting player.
+   * @return true if successful, false otherwise.
+   */
+  bool swapPlayers(PlayerID benchPlayerID, PlayerID pitchPlayerID);
+
+  /**
+   * @brief Gets all positioned outfield players.
+   * @return A vector of positioned players.
+   */
+  const std::vector<PositionedPlayer>& getOutfieldPlayers() const;
 
   // Reserves
   /**
@@ -153,22 +132,19 @@ class Lineup
                           const StatsConfig& stats_config);
 
   /**
-   * @brief Clears the grid and goalkeeper.
+   * @brief Clears the outfield players and goalkeeper.
    */
-  void gridClear()
+  void clear()
   {
     goalkeeper = nullptr;
-    grid.fill(nullptr);
+    outfield_players.clear();
   }
 
  private:
   const Player* goalkeeper;
-  std::array<const Player*, LINEUP_GRID_SIZE>
-      grid;  // 25 slots, many may be empty
+  std::vector<PositionedPlayer> outfield_players;
   std::vector<const Player*> reserves;
   Strategy strategy;
-
-  // Helper
 };
 
 /***************************************************************

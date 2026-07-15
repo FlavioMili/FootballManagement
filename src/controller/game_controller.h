@@ -160,6 +160,8 @@ class GameController
    */
   SaveSlotMetadata getSaveSlotMetadata(int slot) const;
 
+  const Game* getGame() const { return game.get(); }
+
  private:
   std::unique_ptr<Game> game;
   std::shared_ptr<class GameData> gamedata;

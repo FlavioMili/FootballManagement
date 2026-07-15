@@ -14,6 +14,7 @@
 #include <stdexcept>
 
 #include "database/SQLLoader.h"
+#include "model/role_utils.h"
 
 PlayerRepository::PlayerRepository(std::shared_ptr<DatabaseConnection> conn)
     : db_conn(conn)
@@ -57,9 +58,11 @@ std::vector<Player> PlayerRepository::loadAllPlayers() const
     std::map<std::string, float> stats =
         stats_json.get<std::map<std::string, float>>();
 
-    players.emplace_back(id, team_id, first_name, last_name, role, nationality,
-                         wage, status, age, contract_years, height, foot,
-                         stats);
+    PlayerRole playerRole = RoleUtils::fromString(role);
+
+    players.emplace_back(id, team_id, first_name, last_name, playerRole,
+                         nationality, wage, status, age, contract_years, height,
+                         foot, stats);
   }
 
   sqlite3_finalize(stmt);
@@ -79,8 +82,8 @@ void PlayerRepository::bindPlayerParams(sqlite3_stmt* stmt,
   sqlite3_bind_text(stmt, startIndex++, player.getLastName().c_str(), -1,
                     SQLITE_TRANSIENT);
   sqlite3_bind_int(stmt, startIndex++, player.getAge());
-  sqlite3_bind_text(stmt, startIndex++, player.getRole().c_str(), -1,
-                    SQLITE_TRANSIENT);
+  std::string role_str = RoleUtils::toString(player.getRole());
+  sqlite3_bind_text(stmt, startIndex++, role_str.c_str(), -1, SQLITE_TRANSIENT);
 
   auto it = languageToString.find(player.getNationality());
   std::string nationality_str =

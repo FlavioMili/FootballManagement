@@ -53,3 +53,34 @@ struct Matchup
   TeamID away_team_id; /*!< ID of the away team */
   MatchType type;      /*!< Type of the match */
 };
+
+/**
+ * @enum PlayerRole
+ * @brief Represents a specific tactical role on the pitch.
+ */
+enum class PlayerRole : uint8_t
+{
+  GK,  /*!< Goalkeeper */
+  CB,  /*!< Center Back */
+  LB,  /*!< Left Back */
+  RB,  /*!< Right Back */
+  CDM, /*!< Central Defensive Midfielder */
+  CM,  /*!< Central Midfielder */
+  CAM, /*!< Central Attacking Midfielder */
+  LM,  /*!< Left Midfielder */
+  RM,  /*!< Right Midfielder */
+  LW,  /*!< Left Winger */
+  RW,  /*!< Right Winger */
+  ST,  /*!< Striker */
+  UNKNOWN
+};
+
+/**
+ * @struct Vector2F
+ * @brief A simple 2D float vector for pitch coordinates.
+ */
+struct Vector2F
+{
+  float x;
+  float y;
+};

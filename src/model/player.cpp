@@ -16,12 +16,13 @@
 #include <utility>
 
 #include "global/global.h"
+#include "role_utils.h"
 
 Player::Player(PlayerID new_id, TeamID new_team_id,
                std::string_view new_first_name, std::string_view new_last_name,
-               std::string_view new_role, Language new_nationality,
-               uint32_t new_wage, uint32_t new_status, uint8_t new_age,
-               uint8_t new_contract_years, uint8_t new_height, Foot new_foot,
+               PlayerRole new_role, Language new_nationality, uint32_t new_wage,
+               uint32_t new_status, uint8_t new_age, uint8_t new_contract_years,
+               uint8_t new_height, Foot new_foot,
                const std::map<std::string, float>& new_stats)
     : _id(new_id),
       _team_id(new_team_id),
@@ -55,7 +56,7 @@ int Player::getAge() const { return _age; }
 
 void Player::setAge(uint8_t new_age) { _age = new_age; }
 
-std::string Player::getRole() const { return _role; }
+PlayerRole Player::getRole() const { return _role; }
 
 Language Player::getNationality() const { return _nationality; }
 
@@ -79,7 +80,8 @@ void Player::setStats(const std::map<std::string, float>& new_stats)
 double Player::getOverall(const StatsConfig& stats_config) const
 {
   double overall = 0.0;
-  const auto& role_config = stats_config.role_focus.at(std::string(_role));
+  const auto& role_config =
+      stats_config.role_focus.at(RoleUtils::getBroadCategory(_role));
   const auto& weights = role_config.weights;
   const auto& stat_names = role_config.stats;
 

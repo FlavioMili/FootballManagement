@@ -22,6 +22,7 @@
 #include "global/stats_config.h"
 #include "model/league.h"
 #include "model/player.h"
+#include "model/role_utils.h"
 #include "model/team.h"
 
 namespace fs = std::filesystem;
@@ -93,9 +94,10 @@ Player DataGenerator::generateRandomPlayer(const GameData& gamedata,
   }
 
   Logger::debug("Generated Player with ID: " + std::to_string(next_player_id));
-  return Player(next_player_id++, team_id, first_name, last_name, role,
-                Language::EN, static_cast<uint32_t>(wage), 0,
-                static_cast<uint8_t>(age), static_cast<uint8_t>(contract_years),
+  return Player(next_player_id++, team_id, first_name, last_name,
+                RoleUtils::fromString(role), Language::EN,
+                static_cast<uint32_t>(wage), 0, static_cast<uint8_t>(age),
+                static_cast<uint8_t>(contract_years),
                 static_cast<uint8_t>(height), foot, stats);
 }
 
@@ -173,9 +175,9 @@ std::vector<Player> DataGenerator::generatePlayers(const GameData& gamedata)
             item.at("id").get<uint32_t>(), team_id,
             item.at("first_name").get<std::string>(),
             item.at("last_name").get<std::string>(),
-            item.at("role").get<std::string>(), nationality,
-            item.at("wage").get<uint32_t>(), item.value("status", 0),
-            item.at("age").get<uint8_t>(),
+            RoleUtils::fromString(item.at("role").get<std::string>()),
+            nationality, item.at("wage").get<uint32_t>(),
+            item.value("status", 0), item.at("age").get<uint8_t>(),
             item.at("contract_years").get<uint8_t>(),
             item.at("height").get<uint8_t>(), foot,
             item.at("stats").get<std::map<std::string, float>>());

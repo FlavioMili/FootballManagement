@@ -66,6 +66,10 @@ set(CORE_SOURCES
     gui/gui_scene.cpp
     gui/gui_view.h
     gui/gui_view.cpp
+    gui/scenes/lineup_scene.h
+    gui/scenes/lineup_scene.cpp
+    gui/scenes/match_scene.h
+    gui/scenes/match_scene.cpp
     gui/scenes/main_game_scene.h
     gui/scenes/main_game_scene.cpp
     gui/scenes/main_menu_scene.h
@@ -94,8 +98,12 @@ set(CORE_SOURCES
     model/lineup.cpp
     model/match.h
     model/match.cpp
+    model/match_engine.h
+    model/match_engine.cpp
     model/player.h
     model/player.cpp
+    model/role_utils.h
+    model/role_utils.cpp
     model/settings_manager.h
     model/settings_manager.cpp
     model/strategy.h

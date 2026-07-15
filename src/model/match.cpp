@@ -13,6 +13,7 @@
 
 #include "database/gamedata.h"
 #include "lineup.h"
+#include "model/role_utils.h"
 #include "player.h"
 
 Match::Match(TeamID home_id, TeamID away_id, GameDateValue date, MatchType type)
@@ -24,6 +25,8 @@ Match::Match(TeamID home_id, TeamID away_id, GameDateValue date, MatchType type)
       away_score(0)
 {
 }
+
+#include "match_engine.h"
 
 void Match::simulate(const GameData& game_data)
 {
@@ -37,74 +40,23 @@ void Match::simulate(const GameData& game_data)
   const Team& home_team = home_team_opt->get();
   const Team& away_team = away_team_opt->get();
 
-  const Lineup& home_lineup = home_team.getLineup();
-  const Lineup& away_lineup = away_team.getLineup();
+  MatchEngine engine(home_team.getLineup(), away_team.getLineup(),
+                     home_team.getStrategy(), away_team.getStrategy(),
+                     game_data.getStatsConfig());
 
-  double home_attack = 0, home_midfield = 0, home_defense = 0;
-  double away_attack = 0, away_midfield = 0, away_defense = 0;
-
-  const auto& stats_config = game_data.getStatsConfig();
-
-  // Home lineup
-  if (const Player* gk = home_lineup.getGoalkeeper())
-    home_defense += gk->getOverall(stats_config);
-
-  for (int i = 0; i < LINEUP_GRID_SIZE; ++i)
+  // Physics tick rate for background sim: ~60 ticks per real second (so 1 tick
+  // = 1 sim minute) Wait, if TIME_SCALE=60, then dt=1.0f means 1 sim minute.
+  // Let's use a smaller dt for stability: 0.1s.
+  // 90 minutes * 60 seconds = 5400 simulation seconds.
+  // 5400 / (0.1 * 60) = 900 ticks.
+  const float dt = 0.1f;
+  while (engine.getMatchTimeMinutes() < 90.0f)
   {
-    if (const Player* p = home_lineup.getPlayerAt(i))
-    {
-      std::string role = p->getRole();
-      if (role == "Striker")
-        home_attack += p->getOverall(stats_config);
-      else if (role == "Midfielder")
-        home_midfield += p->getOverall(stats_config);
-      else if (role == "Defender")
-        home_defense += p->getOverall(stats_config);
-      else if (role == "Goalkeeper")
-        home_defense += p->getOverall(stats_config);
-    }
+    engine.update(dt);
   }
 
-  // Away lineup
-  if (const Player* gk = away_lineup.getGoalkeeper())
-    away_defense += gk->getOverall(stats_config);
-
-  for (int i = 0; i < LINEUP_GRID_SIZE; ++i)
-  {
-    if (const Player* p = away_lineup.getPlayerAt(i))
-    {
-      std::string role = p->getRole();
-      if (role == "Striker")
-        away_attack += p->getOverall(stats_config);
-      else if (role == "Midfielder")
-        away_midfield += p->getOverall(stats_config);
-      else if (role == "Defender")
-        away_defense += p->getOverall(stats_config);
-      else if (role == "Goalkeeper")
-        away_defense += p->getOverall(stats_config);
-    }
-  }
-
-  double home_strength = home_attack * 1.5 + home_midfield + home_defense * 0.8;
-  double away_strength = away_attack * 1.5 + away_midfield + away_defense * 0.8;
-
-  double total_strength = home_strength + away_strength;
-  double home_chance =
-      total_strength > 0 ? home_strength / total_strength : 0.5;
-
-  static std::random_device rd;
-  static std::mt19937 gen(rd());
-  std::uniform_int_distribution<> goal_dist(0, 5);
-  std::uniform_real_distribution<> chance_dist(0.0, 1.0);
-
-  int goals = goal_dist(gen);
-  for (int i = 0; i < goals; ++i)
-  {
-    if (chance_dist(gen) < home_chance)
-      home_score++;
-    else
-      away_score++;
-  }
+  home_score = engine.getHomeScore();
+  away_score = engine.getAwayScore();
 }
 
 uint16_t Match::getHomeTeamId() const { return home_team_id; }

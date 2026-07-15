@@ -19,6 +19,7 @@
 #include "global/logger.h"
 #include "global/paths.h"
 #include "model/league.h"
+#include "model/role_utils.h"
 #include "model/team.h"
 
 Game::Game(std::shared_ptr<GameData> gd, const std::string& db_path)
@@ -212,7 +213,9 @@ void Game::trainPlayers(const std::vector<uint32_t>& player_ids)
   {
     Player& player = (*gamedata).getPlayers().at(player_id);
     const auto& focus_stats =
-        stats_config.role_focus.at(player.getRole()).stats;
+        stats_config.role_focus
+            .at(RoleUtils::getBroadCategory(player.getRole()))
+            .stats;
     player.train(focus_stats);
   }
 }
