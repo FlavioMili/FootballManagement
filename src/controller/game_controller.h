@@ -150,6 +150,9 @@ class GameController
    */
   void advanceDay();
 
+  void setMatchResult(GameDateValue date, uint16_t home_id, uint16_t away_id,
+                      uint8_t home_score, uint8_t away_score);
+
   /**
    * @brief Saves the current state of the game.
    */

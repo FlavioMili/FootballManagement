@@ -149,6 +149,24 @@ const StatsConfig& GameController::getStatsConfig() const
 
 void GameController::advanceDay() { game->advanceDay(); }
 
+void GameController::setMatchResult(GameDateValue date, uint16_t home_id,
+                                    uint16_t away_id, uint8_t home_score,
+                                    uint8_t away_score)
+{
+  if (game)
+  {
+    auto& matches = game->getCalendar().getMatchesForDateMutable(date);
+    for (auto& m : matches)
+    {
+      if (m.getHomeTeamId() == home_id && m.getAwayTeamId() == away_id)
+      {
+        m.setPlayedResult(home_score, away_score);
+        break;
+      }
+    }
+  }
+}
+
 void GameController::saveGame() { game->saveGame(); }
 
 GameController::SaveSlotMetadata GameController::getSaveSlotMetadata(

@@ -26,8 +26,6 @@ Match::Match(TeamID home_id, TeamID away_id, GameDateValue date, MatchType type)
 {
 }
 
-#include "match_engine.h"
-
 void Match::simulate(const GameData& game_data)
 {
   _played = true;
@@ -40,23 +38,48 @@ void Match::simulate(const GameData& game_data)
   const Team& home_team = home_team_opt->get();
   const Team& away_team = away_team_opt->get();
 
-  MatchEngine engine(home_team.getLineup(), away_team.getLineup(),
-                     home_team.getStrategy(), away_team.getStrategy(),
-                     game_data.getStatsConfig());
-
-  // Physics tick rate for background sim: ~60 ticks per real second (so 1 tick
-  // = 1 sim minute) Wait, if TIME_SCALE=60, then dt=1.0f means 1 sim minute.
-  // Let's use a smaller dt for stability: 0.1s.
-  // 90 minutes * 60 seconds = 5400 simulation seconds.
-  // 5400 / (0.1 * 60) = 900 ticks.
-  const float dt = 0.1f;
-  while (engine.getMatchTimeMinutes() < 90.0f)
+  auto getAvgOvr = [&](const Lineup& l)
   {
-    engine.update(dt);
-  }
+    float sum = 0.0f;
+    int count = 0;
+    if (auto gk = l.getGoalkeeper())
+    {
+      sum += gk->getOverall(game_data.getStatsConfig());
+      count++;
+    }
+    for (auto& p : l.getOutfieldPlayers())
+    {
+      if (p.player)
+      {
+        sum += p.player->getOverall(game_data.getStatsConfig());
+        count++;
+      }
+    }
+    return count > 0 ? sum / count : 50.0f;
+  };
 
-  home_score = engine.getHomeScore();
-  away_score = engine.getAwayScore();
+  float homeOvr = getAvgOvr(home_team.getLineup());
+  float awayOvr = getAvgOvr(away_team.getLineup());
+
+  std::mt19937 rng(std::random_device{}());
+
+  float homeExpected =
+      std::max(0.1f, (homeOvr / 100.0f) * 2.5f + (homeOvr - awayOvr) / 20.0f);
+  float awayExpected =
+      std::max(0.1f, (awayOvr / 100.0f) * 2.0f + (awayOvr - homeOvr) / 20.0f);
+
+  std::poisson_distribution<int> homeGoals(homeExpected);
+  std::poisson_distribution<int> awayGoals(awayExpected);
+
+  home_score = homeGoals(rng);
+  away_score = awayGoals(rng);
+}
+
+void Match::setPlayedResult(uint8_t h, uint8_t a)
+{
+  home_score = h;
+  away_score = a;
+  _played = true;
 }
 
 uint16_t Match::getHomeTeamId() const { return home_team_id; }

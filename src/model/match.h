@@ -79,6 +79,8 @@ class Match
    */
   bool isPlayed() const;
 
+  void setPlayedResult(uint8_t h, uint8_t a);
+
  private:
   TeamID home_team_id;
   TeamID away_team_id;

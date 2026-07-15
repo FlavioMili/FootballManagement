@@ -48,11 +48,10 @@ bool Lineup::moveOutfieldPlayer(PlayerID playerID, Vector2F newPosition)
 
 void Lineup::removeOutfieldPlayer(PlayerID playerID)
 {
-  auto it =
-      std::remove_if(outfield_players.begin(), outfield_players.end(),
-                     [playerID](const PositionedPlayer& pp)
-                     { return pp.player && pp.player->getId() == playerID; });
-  outfield_players.erase(it, outfield_players.end());
+  auto [first, last] = std::ranges::remove_if(
+      outfield_players, [playerID](const PositionedPlayer& pp)
+      { return pp.player && pp.player->getId() == playerID; });
+  outfield_players.erase(first, last);
 }
 
 const std::vector<Lineup::PositionedPlayer>& Lineup::getOutfieldPlayers() const
@@ -63,9 +62,9 @@ const std::vector<Lineup::PositionedPlayer>& Lineup::getOutfieldPlayers() const
 bool Lineup::swapPlayers(PlayerID benchPlayerID, PlayerID pitchPlayerID)
 {
   // Find bench player
-  auto benchIt = std::find_if(reserves.begin(), reserves.end(),
-                              [benchPlayerID](const Player* p)
-                              { return p && p->getId() == benchPlayerID; });
+  auto benchIt =
+      std::ranges::find_if(reserves, [benchPlayerID](const Player* p)
+                           { return p && p->getId() == benchPlayerID; });
   if (benchIt == reserves.end()) return false;
 
   // Check if it's the goalkeeper
@@ -78,12 +77,10 @@ bool Lineup::swapPlayers(PlayerID benchPlayerID, PlayerID pitchPlayerID)
   }
 
   // Find pitch player
-  auto pitchIt = std::find_if(
-      outfield_players.begin(), outfield_players.end(),
-      [pitchPlayerID](const PositionedPlayer& pp)
-      { return pp.player && pp.player->getId() == pitchPlayerID; });
-
-  if (pitchIt != outfield_players.end())
+  if (auto pitchIt = std::ranges::find_if(
+          outfield_players, [pitchPlayerID](const PositionedPlayer& pp)
+          { return pp.player && pp.player->getId() == pitchPlayerID; });
+      pitchIt != outfield_players.end())
   {
     const Player* temp = *benchIt;
     *benchIt = pitchIt->player;

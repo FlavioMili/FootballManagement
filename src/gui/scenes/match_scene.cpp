@@ -232,6 +232,9 @@ void MatchScene::render()
   {
     if (ImGui::Button("Finish Match", ImVec2(150, 40)))
     {
+      guiView->getController().setMatchResult(
+          guiView->getController().getCurrentDate(), home_team_id, away_team_id,
+          engine->getHomeScore(), engine->getAwayScore());
       guiView->popScene();  // Pop MatchScene
       // Also advance day now that match is watched
       guiView->getController().advanceDay();
@@ -247,14 +250,14 @@ void MatchScene::renderSubstitutionsModal()
   if (ImGui::BeginPopupModal("Substitutions", &show_substitutions,
                              ImGuiWindowFlags_AlwaysAutoResize))
   {
-    auto opt = guiView->getController().getTeamById(home_team_id);
-    if (!opt)
+    auto managed_opt = guiView->getController().getManagedTeam();
+    if (!managed_opt)
     {
       ImGui::EndPopup();
       return;
     }
-    Team& home_team = const_cast<Team&>(opt->get());
-    Lineup& lineup = home_team.getLineup();
+    Team& managed_team = managed_opt->get();
+    Lineup& lineup = managed_team.getLineup();
 
     ImGui::Text(
         "Select one player from the pitch and one from the bench to swap.");

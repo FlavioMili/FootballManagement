@@ -499,6 +499,17 @@ void MatchEngine::resetPositions(bool homeConceded)
   for (auto& mp : players)
   {
     mp.position = mp.basePosition;
+
+    // Ensure players start in their own half
+    if (mp.isHomeTeam && mp.position.x > 0.49f)
+    {
+      mp.position.x = 0.49f;
+    }
+    if (!mp.isHomeTeam && mp.position.x < 0.51f)
+    {
+      mp.position.x = 0.51f;
+    }
+
     mp.velocity = {0.0f, 0.0f};
   }
 

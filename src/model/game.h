@@ -52,6 +52,7 @@ class Game
    * @return A constant reference to the game Calendar.
    */
   const Calendar& getCalendar() const;
+  Calendar& getCalendar();
 
   /**
    * @brief Retrieves the current season number.

@@ -200,6 +200,8 @@ const GameDateValue& Game::getCurrentDate() const { return currentDate; }
 
 const Calendar& Game::getCalendar() const { return calendar; }
 
+Calendar& Game::getCalendar() { return calendar; }
+
 int Game::getCurrentSeason() const { return current_season; }
 
 uint16_t Game::getManagedTeamId() const { return managed_team_id; }
