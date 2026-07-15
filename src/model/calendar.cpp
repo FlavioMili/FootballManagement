@@ -46,6 +46,16 @@ const std::vector<Match>& Calendar::getMatchesForDate(
   }
   return no_matches;
 }
+
+std::vector<Match>& Calendar::getMatchesForDateMutable(
+    const GameDateValue& date)
+{
+  static std::vector<Match>
+      no_matches;  // Need to be careful here, better return schedule[date] or
+                   // an existing one. Wait, if it doesn't exist, we can just
+                   // return schedule[date] which creates it.
+  return schedule[date];
+}
 void Calendar::generateSeasonFixtures(class GameData& gamedata,
                                       const GameDateValue& startDate)
 {

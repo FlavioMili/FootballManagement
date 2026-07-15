@@ -150,6 +150,9 @@ class GameController
    */
   void advanceDay();
 
+  void setMatchResult(GameDateValue date, uint16_t home_id, uint16_t away_id,
+                      uint8_t home_score, uint8_t away_score);
+
   /**
    * @brief Saves the current state of the game.
    */
@@ -159,6 +162,8 @@ class GameController
    * @brief Gets metadata for a save slot.
    */
   SaveSlotMetadata getSaveSlotMetadata(int slot) const;
+
+  const Game* getGame() const { return game.get(); }
 
  private:
   std::unique_ptr<Game> game;

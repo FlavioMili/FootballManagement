@@ -62,7 +62,7 @@ class Player
    * @param new_stats A map of the player's attributes/stats.
    */
   Player(PlayerID new_id, TeamID new_team_id, std::string_view new_first_name,
-         std::string_view new_last_name, std::string_view new_role,
+         std::string_view new_last_name, PlayerRole new_role,
          Language new_nationality, uint32_t new_wage, uint32_t new_status,
          uint8_t new_age, uint8_t new_contract_years, uint8_t new_height,
          Foot new_foot, const std::map<std::string, float>& new_stats);
@@ -92,7 +92,7 @@ class Player
   void setAge(uint8_t new_age);
 
   /** @brief Gets the player's role. */
-  std::string getRole() const;
+  PlayerRole getRole() const;
 
   /** @brief Gets the player's nationality. */
   Language getNationality() const;
@@ -169,9 +169,9 @@ class Player
   // strings (non-POD, heap allocated, alignment not a problem)
   std::string _first_name;
   std::string _last_name;
-  std::string _role;
 
   // Enums and small ints grouped together
+  PlayerRole _role;
   Language _nationality;
   TransferStatus _transfer_status = TransferStatus::NotListed;
   uint8_t _age;

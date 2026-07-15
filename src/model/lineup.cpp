@@ -9,12 +9,14 @@
 #include "lineup.h"
 
 #include <algorithm>
+#include <cmath>
 #include <sstream>
 
 #include "database/gamedata.h"
+#include "model/role_utils.h"
 
 // ---------------- Constructor -----------------
-Lineup::Lineup() { gridClear(); }
+Lineup::Lineup() { clear(); }
 
 // -------------------- Goalkeeper --------------------
 void Lineup::setGoalkeeper(const Player* gk)
@@ -24,41 +26,69 @@ void Lineup::setGoalkeeper(const Player* gk)
 
 const Player* Lineup::getGoalkeeper() const { return goalkeeper; }
 
-// -------------- Grid (outfield players) ---------------
-void Lineup::placePlayer(int row, int col, const Player* player)
+// -------------- Outfield Players ---------------
+void Lineup::addOutfieldPlayer(const Player* player, Vector2F position)
 {
-  int index = toIndex(static_cast<uint8_t>(row), static_cast<uint8_t>(col));
-  placePlayer(index, player);
+  if (!player) return;
+  outfield_players.push_back({player, position});
 }
 
-void Lineup::removePlayer(int row, int col)
+bool Lineup::moveOutfieldPlayer(PlayerID playerID, Vector2F newPosition)
 {
-  int index = toIndex(static_cast<uint8_t>(row), static_cast<uint8_t>(col));
-  removePlayer(index);
+  for (auto& posPlayer : outfield_players)
+  {
+    if (posPlayer.player && posPlayer.player->getId() == playerID)
+    {
+      posPlayer.position = newPosition;
+      return true;
+    }
+  }
+  return false;
 }
 
-const Player* Lineup::getPlayerAt(int row, int col) const
+void Lineup::removeOutfieldPlayer(PlayerID playerID)
 {
-  int index = toIndex(static_cast<uint8_t>(row), static_cast<uint8_t>(col));
-  return getPlayerAt(index);
+  auto [first, last] = std::ranges::remove_if(
+      outfield_players, [playerID](const PositionedPlayer& pp)
+      { return pp.player && pp.player->getId() == playerID; });
+  outfield_players.erase(first, last);
 }
 
-void Lineup::placePlayer(int index, const Player* player)
+const std::vector<Lineup::PositionedPlayer>& Lineup::getOutfieldPlayers() const
 {
-  if (index < 0 || index >= LINEUP_GRID_SIZE) return;
-  grid[static_cast<size_t>(index)] = player;
+  return outfield_players;
 }
 
-void Lineup::removePlayer(int index)
+bool Lineup::swapPlayers(PlayerID benchPlayerID, PlayerID pitchPlayerID)
 {
-  if (index < 0 || index >= LINEUP_GRID_SIZE) return;
-  grid[static_cast<size_t>(index)] = nullptr;
-}
+  // Find bench player
+  auto benchIt =
+      std::ranges::find_if(reserves, [benchPlayerID](const Player* p)
+                           { return p && p->getId() == benchPlayerID; });
+  if (benchIt == reserves.end()) return false;
 
-const Player* Lineup::getPlayerAt(int index) const
-{
-  if (index < 0 || index >= LINEUP_GRID_SIZE) return nullptr;
-  return grid[static_cast<size_t>(index)];
+  // Check if it's the goalkeeper
+  if (goalkeeper && goalkeeper->getId() == pitchPlayerID)
+  {
+    const Player* temp = *benchIt;
+    *benchIt = goalkeeper;
+    goalkeeper = temp;
+    return true;
+  }
+
+  // Find pitch player
+  if (auto pitchIt = std::ranges::find_if(
+          outfield_players, [pitchPlayerID](const PositionedPlayer& pp)
+          { return pp.player && pp.player->getId() == pitchPlayerID; });
+      pitchIt != outfield_players.end())
+  {
+    const Player* temp = *benchIt;
+    *benchIt = pitchIt->player;
+    pitchIt->player = temp;
+    return true;
+  }
+
+  return false;
 }
 
 // -------------- Reserves ---------------
@@ -83,15 +113,14 @@ std::string Lineup::toString() const
   std::ostringstream oss;
   oss << "Goalkeeper: " << (goalkeeper ? goalkeeper->getName() : "None")
       << "\n";
-  oss << "Grid:\n";
-  for (int r = 0; r < LINEUP_GRID_ROWS; ++r)
+  oss << "Outfield Players:\n";
+  for (const auto& posPlayer : outfield_players)
   {
-    for (int c = 0; c < LINEUP_GRID_COLS; ++c)
+    if (posPlayer.player)
     {
-      const Player* p = getPlayerAt(r, c);
-      oss << "[" << (p ? p->getName() : "Empty") << "]";
+      oss << "- " << posPlayer.player->getName() << " at ("
+          << posPlayer.position.x << ", " << posPlayer.position.y << ")\n";
     }
-    oss << "\n";
   }
   oss << "Reserves: ";
   for (auto* sub : reserves)
@@ -107,17 +136,17 @@ void Lineup::generateStartingXI(const class GameData& gamedata,
                                 const StatsConfig& stats_config)
 {
   // Clear previous lineup
-  gridClear();
+  clear();
   reserves.clear();
 
-  std::vector<const Player*> outfieldPlayers;
+  std::vector<const Player*> potentialOutfieldPlayers;
   const Player* bestGK = nullptr;
 
   // Separate GK from outfield
   for (const auto& playerID : allPlayerIDs)
   {
     const Player& p = gamedata.getPlayers().at(playerID);
-    if (p.getRole() == "Goalkeeper")
+    if (p.getRole() == PlayerRole::GK)
     {
       if (!bestGK ||
           p.getOverall(stats_config) > bestGK->getOverall(stats_config))
@@ -125,36 +154,77 @@ void Lineup::generateStartingXI(const class GameData& gamedata,
     }
     else
     {
-      outfieldPlayers.push_back(&p);
+      potentialOutfieldPlayers.push_back(&p);
     }
   }
 
-  // Set goalkeeper
-  goalkeeper = bestGK;      // safe because we store pointers
-  if (!goalkeeper) return;  // no GK found, abort
-
-  // Sort outfield players by overall descending
+  // Sort outfield players by overall descending to pick the best 10
   std::ranges::sort(
-      outfieldPlayers, [&](const Player* a, const Player* b)
+      potentialOutfieldPlayers, [&](const Player* a, const Player* b)
       { return a->getOverall(stats_config) > b->getOverall(stats_config); });
 
-  // Place top 10 outfield players in grid (row 4 = defense, row 0 = attack)
-  int rows = LINEUP_GRID_ROWS;
-  int cols = LINEUP_GRID_COLS;
-  int placed = 0;
-
-  for (int r = rows - 1; r >= 0 && placed < 10; --r)
+  // If no GK found, try to use the worst outfield player as GK
+  if (!bestGK && !potentialOutfieldPlayers.empty())
   {
-    for (int c = 0; c < cols && placed < 10; ++c)
+    bestGK = potentialOutfieldPlayers.back();
+    potentialOutfieldPlayers.pop_back();
+  }
+
+  goalkeeper = bestGK;
+  if (!goalkeeper) return;  // Still no players at all
+
+  // Take top 10 (or less if not enough players)
+  std::vector<const Player*> startingOutfield;
+  for (size_t i = 0; i < potentialOutfieldPlayers.size(); ++i)
+  {
+    if (i < 10)
     {
-      grid[static_cast<size_t>(
-          toIndex(static_cast<uint8_t>(r), static_cast<uint8_t>(c)))] =
-          outfieldPlayers[static_cast<size_t>(placed)];
-      ++placed;
+      startingOutfield.push_back(potentialOutfieldPlayers[i]);
+    }
+    else
+    {
+      reserves.push_back(potentialOutfieldPlayers[i]);
     }
   }
 
-  // Remaining players go to reserves
-  for (size_t i = static_cast<size_t>(placed); i < outfieldPlayers.size(); ++i)
-    reserves.push_back(outfieldPlayers[i]);
+  // Sort the starting 10 by their role's natural X coordinate descending
+  // (Strikers first), then by Y ascending
+  std::ranges::sort(startingOutfield,
+                    [](const Player* a, const Player* b)
+                    {
+                      auto posA = RoleUtils::getBaseCoordinate(a->getRole());
+                      auto posB = RoleUtils::getBaseCoordinate(b->getRole());
+                      if (posA.x != posB.x) return posA.x > posB.x;
+                      return posA.y < posB.y;
+                    });
+
+  // Fixed 4-4-2 formation coordinates (Horizontal Pitch: x is length, y is
+  // width)
+  static const std::vector<Vector2F> formation442 = {
+      // 2 Strikers (Front: x = 0.8)
+      {0.8f, 0.35f},
+      {0.8f, 0.65f},
+      // 4 Midfielders (Middle: x = 0.5)
+      {0.5f, 0.15f},
+      {0.5f, 0.35f},
+      {0.5f, 0.65f},
+      {0.5f, 0.85f},
+      // 4 Defenders (Back: x = 0.2)
+      {0.2f, 0.15f},
+      {0.2f, 0.35f},
+      {0.2f, 0.65f},
+      {0.2f, 0.85f}};
+
+  // Assign positions
+  for (size_t i = 0; i < startingOutfield.size(); ++i)
+  {
+    if (i < formation442.size())
+    {
+      addOutfieldPlayer(startingOutfield[i], formation442[i]);
+    }
+    else
+    {
+      reserves.push_back(startingOutfield[i]);
+    }
+  }
 }

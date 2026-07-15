@@ -19,6 +19,7 @@
 #include "global/logger.h"
 #include "global/paths.h"
 #include "model/league.h"
+#include "model/role_utils.h"
 #include "model/team.h"
 
 Game::Game(std::shared_ptr<GameData> gd, const std::string& db_path)
@@ -199,6 +200,8 @@ const GameDateValue& Game::getCurrentDate() const { return currentDate; }
 
 const Calendar& Game::getCalendar() const { return calendar; }
 
+Calendar& Game::getCalendar() { return calendar; }
+
 int Game::getCurrentSeason() const { return current_season; }
 
 uint16_t Game::getManagedTeamId() const { return managed_team_id; }
@@ -212,7 +215,9 @@ void Game::trainPlayers(const std::vector<uint32_t>& player_ids)
   {
     Player& player = (*gamedata).getPlayers().at(player_id);
     const auto& focus_stats =
-        stats_config.role_focus.at(player.getRole()).stats;
+        stats_config.role_focus
+            .at(RoleUtils::getBroadCategory(player.getRole()))
+            .stats;
     player.train(focus_stats);
   }
 }

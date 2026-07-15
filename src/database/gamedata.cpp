@@ -119,6 +119,13 @@ void GameData::generateAndSaveInitialData()
   {
     auto it = _players.try_emplace(player.getId(), player).first;
     _teamPlayers[player.getTeamId()].push_back(it->second);
+
+    // Add to Team's player list
+    auto team_it = _teams.find(player.getTeamId());
+    if (team_it != _teams.end())
+    {
+      team_it->second.addPlayerID(player.getId());
+    }
   }
 
   _playersVec.clear();
@@ -126,6 +133,11 @@ void GameData::generateAndSaveInitialData()
   for (auto& [id, player] : _players) _playersVec.push_back(player);
 
   playerRepo.insertPlayers(_playersVec);
+
+  for (auto& [id, team] : _teams)
+  {
+    team.generateStartingXI(*this, stats_config);
+  }
 
   db_conn->commitTransaction();
 }
@@ -164,7 +176,28 @@ void GameData::loadExistingData()
   {
     auto it = _players.try_emplace(player.getId(), player).first;
     _teamPlayers[player.getTeamId()].push_back(it->second);
+
+    // Add to Team's player list
+    auto team_it = _teams.find(player.getTeamId());
+    if (team_it != _teams.end())
+    {
+      team_it->second.addPlayerID(player.getId());
+    }
   }
+
+  _teamsVec.clear();
+  _teamsVec.reserve(_teams.size());
+  for (auto& [id, team] : _teams) _teamsVec.push_back(team);
+
+  _playersVec.clear();
+  _playersVec.reserve(_players.size());
+  for (auto& [id, player] : _players) _playersVec.push_back(player);
+
+  for (auto& [id, team] : _teams)
+  {
+    team.generateStartingXI(*this, stats_config);
+  }
+
   Logger::debug("Loaded all data from database.");
 }
 

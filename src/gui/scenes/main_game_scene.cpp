@@ -15,6 +15,7 @@
 #include "global/language_manager.h"
 #include "gui/gui_constants.h"
 #include "gui/gui_view.h"
+#include "model/role_utils.h"
 
 namespace
 {
@@ -30,10 +31,13 @@ constexpr float PTS_COL_WIDTH = 50.0f;
 constexpr float OVR_COL_WIDTH = 40.0f;
 constexpr size_t MAX_TOP_PLAYERS = 5;
 }  // namespace
+#include "gui/scenes/lineup_scene.h"
 #include "gui/scenes/main_menu_scene.h"
+#include "gui/scenes/match_scene.h"
 #include "gui/scenes/roster_scene.h"
 #include "gui/scenes/strategy_scene.h"
 #include "gui/scenes/team_selection_scene.h"
+#include "model/game.h"
 
 SceneID MainGameScene::getID() const { return SceneID::GAME_MENU; }
 
@@ -85,11 +89,45 @@ void MainGameScene::renderTopBar()
   std::string dateStr = guiView->getController().getCurrentDate().toString();
   ImGui::Text(LOC("MAIN_GAME_DATE"), dateStr.c_str());
   ImGui::SameLine(ImGui::GetWindowWidth() - NEXT_DAY_BUTTON_OFFSET);
-  if (ImGui::Button(LOC("MAIN_GAME_NEXT_DAY"),
-                    ImVec2(NEXT_DAY_BUTTON_WIDTH, NEXT_DAY_BUTTON_HEIGHT)))
+
+  // Check if managed team has a match today
+  bool has_match_today = false;
+  uint16_t opp_id = 0;
+  if (auto managed = guiView->getController().getManagedTeam())
   {
-    guiView->getController().advanceDay();
-    refreshData();
+    uint16_t tid = managed->get().getId();
+    const auto& matches =
+        guiView->getController().getGame()->getCalendar().getMatchesForDate(
+            guiView->getController().getCurrentDate());
+    for (const auto& m : matches)
+    {
+      if (m.getHomeTeamId() == tid || m.getAwayTeamId() == tid)
+      {
+        has_match_today = true;
+        opp_id =
+            (m.getHomeTeamId() == tid) ? m.getAwayTeamId() : m.getHomeTeamId();
+        break;
+      }
+    }
+  }
+
+  if (has_match_today)
+  {
+    if (ImGui::Button("Play Match",
+                      ImVec2(NEXT_DAY_BUTTON_WIDTH, NEXT_DAY_BUTTON_HEIGHT)))
+    {
+      uint16_t tid = guiView->getController().getManagedTeam()->get().getId();
+      guiView->overlayScene(std::make_unique<MatchScene>(guiView, tid, opp_id));
+    }
+  }
+  else
+  {
+    if (ImGui::Button(LOC("MAIN_GAME_NEXT_DAY"),
+                      ImVec2(NEXT_DAY_BUTTON_WIDTH, NEXT_DAY_BUTTON_HEIGHT)))
+    {
+      guiView->getController().advanceDay();
+      refreshData();
+    }
   }
 }
 
@@ -100,6 +138,11 @@ void MainGameScene::renderSidebar()
                     ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
   {
     guiView->overlayScene(std::make_unique<RosterScene>(guiView));
+  }
+  ImGui::Spacing();
+  if (ImGui::Button("Lineup", ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
+  {
+    guiView->overlayScene(std::make_unique<LineupScene>(guiView));
   }
   ImGui::Spacing();
   if (ImGui::Button(LOC("MAIN_GAME_SET_STRATEGY"),
@@ -198,7 +241,7 @@ void MainGameScene::renderMainArea()
       ImGui::TableNextColumn();
       ImGui::Text("%s", player.getName().c_str());
       ImGui::TableNextColumn();
-      ImGui::Text("%s", player.getRole().c_str());
+      ImGui::Text("%s", RoleUtils::toString(player.getRole()).c_str());
       ImGui::TableNextColumn();
       ImGui::Text("%.1f", player.getOverall(stats_config));
     }

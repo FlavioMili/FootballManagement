@@ -40,8 +40,8 @@ TEST_F(DatabaseTest, InsertAndLoadPlayer)
 {
   PlayerRepository playerRepo(getDbConn());
 
-  Player p(1, 10, "Test", "Player", "ST", Language::EN, 1000, 0, 20, 2, 180,
-           Foot::Right, {});
+  Player p(1, 10, "Test", "Player", PlayerRole::ST, Language::EN, 1000, 0, 20,
+           2, 180, Foot::Right, {});
   playerRepo.insertPlayer(p);
 
   auto players = playerRepo.loadAllPlayers();
@@ -55,8 +55,8 @@ TEST_F(DatabaseTest, UpdatePlayer)
 {
   PlayerRepository playerRepo(getDbConn());
 
-  Player p(1, 10, "Test", "Player", "ST", Language::EN, 1000, 0, 20, 2, 180,
-           Foot::Right, {});
+  Player p(1, 10, "Test", "Player", PlayerRole::ST, Language::EN, 1000, 0, 20,
+           2, 180, Foot::Right, {});
   playerRepo.insertPlayerWithId(p);
 
   p.setAge(21);
@@ -71,8 +71,8 @@ TEST_F(DatabaseTest, DeletePlayer)
 {
   PlayerRepository playerRepo(getDbConn());
 
-  Player p(1, 10, "Test", "Player", "ST", Language::EN, 1000, 0, 20, 2, 180,
-           Foot::Right, {});
+  Player p(1, 10, "Test", "Player", PlayerRole::ST, Language::EN, 1000, 0, 20,
+           2, 180, Foot::Right, {});
   playerRepo.insertPlayerWithId(p);
 
   playerRepo.deletePlayer(1);
@@ -107,9 +107,9 @@ TEST_F(DatabaseTest, Transactions)
   PlayerRepository playerRepo(getDbConn());
 
   getDbConn()->beginTransaction();
-  Player p1(1, 10, "A", "B", "ST", Language::EN, 1000, 0, 20, 2, 180,
+  Player p1(1, 10, "A", "B", PlayerRole::ST, Language::EN, 1000, 0, 20, 2, 180,
             Foot::Right, {});
-  Player p2(2, 10, "C", "D", "ST", Language::EN, 1000, 0, 20, 2, 180,
+  Player p2(2, 10, "C", "D", PlayerRole::ST, Language::EN, 1000, 0, 20, 2, 180,
             Foot::Right, {});
   playerRepo.insertPlayerWithId(p1);
   playerRepo.insertPlayerWithId(p2);

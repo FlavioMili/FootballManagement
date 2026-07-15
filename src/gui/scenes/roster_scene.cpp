@@ -13,6 +13,7 @@
 #include "global/language_manager.h"
 #include "gui/gui_constants.h"
 #include "gui/gui_view.h"
+#include "model/role_utils.h"
 
 namespace
 {
@@ -65,7 +66,7 @@ void RosterScene::render()
       ImGui::TableNextColumn();
       ImGui::Text("%s", player.getName().c_str());
       ImGui::TableNextColumn();
-      ImGui::Text("%s", player.getRole().c_str());
+      ImGui::Text("%s", RoleUtils::toString(player.getRole()).c_str());
       ImGui::TableNextColumn();
       ImGui::Text("%.1f",
                   player.getOverall(guiView->getController().getStatsConfig()));

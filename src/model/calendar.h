@@ -53,6 +53,7 @@ class Calendar
    * @return A vector of matches scheduled for the given date.
    */
   const std::vector<Match>& getMatchesForDate(const GameDateValue& date) const;
+  std::vector<Match>& getMatchesForDateMutable(const GameDateValue& date);
 
  private:
   /**
