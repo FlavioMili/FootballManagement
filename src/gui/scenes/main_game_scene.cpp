@@ -15,6 +15,13 @@
 #include "global/language_manager.h"
 #include "gui/gui_constants.h"
 #include "gui/gui_view.h"
+#include "gui/scenes/lineup_scene.h"
+#include "gui/scenes/main_menu_scene.h"
+#include "gui/scenes/match_scene.h"
+#include "gui/scenes/roster_scene.h"
+#include "gui/scenes/strategy_scene.h"
+#include "gui/scenes/team_selection_scene.h"
+#include "model/game.h"
 #include "model/role_utils.h"
 
 namespace
@@ -31,13 +38,6 @@ constexpr float PTS_COL_WIDTH = 50.0f;
 constexpr float OVR_COL_WIDTH = 40.0f;
 constexpr size_t MAX_TOP_PLAYERS = 5;
 }  // namespace
-#include "gui/scenes/lineup_scene.h"
-#include "gui/scenes/main_menu_scene.h"
-#include "gui/scenes/match_scene.h"
-#include "gui/scenes/roster_scene.h"
-#include "gui/scenes/strategy_scene.h"
-#include "gui/scenes/team_selection_scene.h"
-#include "model/game.h"
 
 SceneID MainGameScene::getID() const { return SceneID::GAME_MENU; }
 

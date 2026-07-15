@@ -11,6 +11,8 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <format>
+#include <numbers>
 
 #include "global/language_manager.h"
 #include "gui/gui_constants.h"
@@ -25,8 +27,7 @@ constexpr float PITCH_WIDTH = 800.0f;
 constexpr float PITCH_HEIGHT = 500.0f;
 constexpr float PLAYER_RADIUS = 15.0f;
 
-static void renderPlayerTooltip(const Player* p,
-                                const StatsConfig& stats_config)
+void renderPlayerTooltip(const Player* p, const StatsConfig& stats_config)
 {
   if (ImGui::IsItemHovered())
   {
@@ -121,7 +122,7 @@ void LineupScene::renderPitch()
 
   // Draw Pitch background
   ImVec2 pitch_min = p;
-  ImVec2 pitch_max = ImVec2(p.x + PITCH_WIDTH, p.y + PITCH_HEIGHT);
+  auto pitch_max = ImVec2(p.x + PITCH_WIDTH, p.y + PITCH_HEIGHT);
   draw_list->AddRectFilled(pitch_min, pitch_max,
                            IM_COL32(34, 139, 34, 255));  // Green pitch
 
@@ -171,7 +172,7 @@ void LineupScene::renderPitch()
 
   // Corner arcs
   float corner_r = PITCH_HEIGHT * 0.03f;
-  const float PI = 3.14159265f;
+  const float PI = std::numbers::pi_v<float>;
   // Top-left
   draw_list->PathArcTo(ImVec2(pitch_min.x, pitch_min.y), corner_r, 0.0f,
                        PI * 0.5f, 10);
@@ -192,13 +193,13 @@ void LineupScene::renderPitch()
   // Render Goalkeeper (Left side goal)
   if (const Player* gk = current_lineup->getGoalkeeper())
   {
-    ImVec2 pos = ImVec2(pitch_min.x + PLAYER_RADIUS + 10.0f,
-                        pitch_min.y + PITCH_HEIGHT * 0.5f);
+    auto pos = ImVec2(pitch_min.x + PLAYER_RADIUS + 10.0f,
+                      pitch_min.y + PITCH_HEIGHT * 0.5f);
 
     // Invisible button for Drag & Drop
     ImGui::SetCursorScreenPos(
         ImVec2(pos.x - PLAYER_RADIUS, pos.y - PLAYER_RADIUS));
-    std::string btn_id = "##player_" + std::to_string(gk->getId());
+    std::string btn_id = std::format("##player_{}", gk->getId());
     ImGui::InvisibleButton(btn_id.c_str(),
                            ImVec2(PLAYER_RADIUS * 2, PLAYER_RADIUS * 2));
 
@@ -248,20 +249,18 @@ void LineupScene::renderPitch()
   }
 
   // Render Outfield Players
-  ImGuiIO& io = ImGui::GetIO();
+  const ImGuiIO& io = ImGui::GetIO();
   for (const auto& posPlayer : current_lineup->getOutfieldPlayers())
   {
     if (!posPlayer.player) continue;
 
-    ImVec2 player_pos =
-        ImVec2(pitch_min.x + posPlayer.position.x * PITCH_WIDTH,
-               pitch_min.y + posPlayer.position.y * PITCH_HEIGHT);
+    auto player_pos = ImVec2(pitch_min.x + posPlayer.position.x * PITCH_WIDTH,
+                             pitch_min.y + posPlayer.position.y * PITCH_HEIGHT);
 
     // Invisible button for dragging & swapping
     ImGui::SetCursorScreenPos(
         ImVec2(player_pos.x - PLAYER_RADIUS, player_pos.y - PLAYER_RADIUS));
-    std::string btn_id =
-        "##player_" + std::to_string(posPlayer.player->getId());
+    std::string btn_id = std::format("##player_{}", posPlayer.player->getId());
     ImGui::InvisibleButton(btn_id.c_str(),
                            ImVec2(PLAYER_RADIUS * 2, PLAYER_RADIUS * 2));
 
@@ -345,9 +344,10 @@ void LineupScene::renderBench()
     if (p)
     {
       std::string label =
-          "[" + RoleUtils::toString(p->getRole()) + "] " + p->getName();
-      bool is_selected = (selected_player_id == p->getId());
-      if (ImGui::Selectable(label.c_str(), is_selected))
+          std::format("[{}] {}##{}", RoleUtils::toString(p->getRole()),
+                      p->getName(), p->getId());
+      if (bool is_selected = (selected_player_id == p->getId());
+          ImGui::Selectable(label.c_str(), is_selected))
       {
         if (selected_player_id == 0)
         {

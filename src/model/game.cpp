@@ -51,6 +51,7 @@ void Game::loadGame()
     currentDate = START_DATE;
     calendar.generate((*gamedata), currentDate);
     Logger::debug("First run, initializing game state.");
+    saveGame();
   }
   // Ensure managed team is valid
   if ((*gamedata).getTeams().find(managed_team_id) ==

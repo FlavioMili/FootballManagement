@@ -15,11 +15,9 @@
 #include "model/player.h"
 #include "model/team.h"
 
-// Keep players alive for the test
-static std::vector<std::unique_ptr<Player>> dummyPlayers;
-
 // Helper function to create a dummy team with a specific overall rating
-Team createDummyTeam(TeamID id, const std::string& name, int rating)
+Team createDummyTeam(TeamID id, const std::string& name, int rating,
+                     std::vector<std::unique_ptr<Player>>& dummy_players)
 {
   Team team(id, 1, name, 1000, {}, Strategy(), Lineup());
   // Add 11 players
@@ -34,15 +32,16 @@ Team createDummyTeam(TeamID id, const std::string& name, int rating)
                                       180, 75, rating, Foot::Right, stats);
     team.getLineup().addOutfieldPlayer(p.get(),
                                        {0.5f, static_cast<float>(i) / 11.0f});
-    dummyPlayers.push_back(std::move(p));
+    dummy_players.push_back(std::move(p));
   }
   return team;
 }
 
 TEST(MatchEngineTest, BasicSimulationRunsWithoutCrashing)
 {
-  Team home = createDummyTeam(1, "Home", 50);
-  Team away = createDummyTeam(2, "Away", 50);
+  std::vector<std::unique_ptr<Player>> dummyPlayers;
+  Team home = createDummyTeam(1, "Home", 50, dummyPlayers);
+  Team away = createDummyTeam(2, "Away", 50, dummyPlayers);
 
   StatsConfig config;
   config.possible_stats = {"Pace", "Shooting", "Passing", "Defending"};
@@ -62,7 +61,8 @@ TEST(MatchEngineTest, BasicSimulationRunsWithoutCrashing)
 
   // Simulate 90 minutes
   float dt = 0.05f;
-  for (float t = 0; t < 90.0f; t += dt)
+  int steps = static_cast<int>(90.0f / dt);
+  for (int i = 0; i < steps; ++i)
   {
     engine.update(dt);
   }
@@ -73,9 +73,10 @@ TEST(MatchEngineTest, BasicSimulationRunsWithoutCrashing)
 
 TEST(MatchEngineTest, StatAdvantage)
 {
+  std::vector<std::unique_ptr<Player>> dummyPlayers;
   // 99 overall team vs 10 overall team
-  Team godTeam = createDummyTeam(1, "Gods", 99);
-  Team weakTeam = createDummyTeam(2, "Scrubs", 10);
+  Team godTeam = createDummyTeam(1, "Gods", 99, dummyPlayers);
+  Team weakTeam = createDummyTeam(2, "Scrubs", 10, dummyPlayers);
 
   StatsConfig config;
   config.possible_stats = {"Pace", "Shooting", "Passing", "Defending"};
@@ -95,7 +96,8 @@ TEST(MatchEngineTest, StatAdvantage)
 
   // Simulate 90 minutes
   float dt = 0.05f;
-  for (float t = 0; t < 90.0f; t += dt)
+  int steps = static_cast<int>(90.0f / dt);
+  for (int i = 0; i < steps; ++i)
   {
     engine.update(dt);
   }

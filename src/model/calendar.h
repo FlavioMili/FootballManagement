@@ -33,7 +33,7 @@ class Calendar
    * @brief Generates the full calendar starting from a given date.
    * @param startDate The date to start generating the calendar from.
    */
-  void generate(class GameData& gamedata, const GameDateValue& startDate);
+  void generate(const class GameData& gamedata, const GameDateValue& startDate);
 
   /**
    * @brief Adds a single match to the calendar.
@@ -60,7 +60,7 @@ class Calendar
    * @brief Generates the season fixtures.
    * @param startDate The date to start the season from.
    */
-  void generateSeasonFixtures(class GameData& gamedata,
+  void generateSeasonFixtures(const class GameData& gamedata,
                               const GameDateValue& startDate);
 
   /**
@@ -68,7 +68,7 @@ class Calendar
    * @param startDate The date to start scheduling friendlies from.
    * @param numFriendlies The number of friendlies to schedule. Default is 4.
    */
-  void generateFriendlies(class GameData& gamedata,
+  void generateFriendlies(const class GameData& gamedata,
                           const GameDateValue& startDate,
                           size_t numFriendlies = 4);
 

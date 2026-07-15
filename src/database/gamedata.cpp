@@ -76,6 +76,15 @@ void GameData::generateAndSaveInitialData()
   PlayerRepository playerRepo(db_conn);
 
   db_conn->initialize();
+  sqlite3_exec(
+      db_conn->getRaw(),
+      "DELETE FROM Players; DELETE FROM Teams; DELETE FROM Leagues; DELETE "
+      "FROM GameState; DELETE FROM LeaguePoints; DELETE FROM Fixtures;",
+      nullptr, nullptr, nullptr);
+  sqlite3_exec(db_conn->getRaw(),
+               "INSERT OR IGNORE INTO Teams (id, league_id, name, balance) "
+               "VALUES (0, -1, 'Free agents', -1);",
+               nullptr, nullptr, nullptr);
   Logger::debug("Database initialized. Generating data.");
 
   auto leagues_data = DataGenerator::generateLeagues();
@@ -144,6 +153,13 @@ void GameData::generateAndSaveInitialData()
 
 void GameData::loadExistingData()
 {
+  // Clean up any duplicate players that might have been inserted in previous
+  // runs due to initialization bugs
+  sqlite3_exec(db_conn->getRaw(),
+               "DELETE FROM Players WHERE id NOT IN (SELECT MIN(id) FROM "
+               "Players GROUP BY team_id, first_name, last_name);",
+               nullptr, nullptr, nullptr);
+
   TeamRepository teamRepo(db_conn);
   LeagueRepository leagueRepo(db_conn);
   PlayerRepository playerRepo(db_conn);

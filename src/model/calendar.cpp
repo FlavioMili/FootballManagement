@@ -16,7 +16,7 @@
 #include "global/logger.h"
 #include "model/league.h"
 
-void Calendar::generate(class GameData& gamedata,
+void Calendar::generate(const class GameData& gamedata,
                         const GameDateValue& startDate)
 {
   schedule.clear();
@@ -56,7 +56,7 @@ std::vector<Match>& Calendar::getMatchesForDateMutable(
                    // return schedule[date] which creates it.
   return schedule[date];
 }
-void Calendar::generateSeasonFixtures(class GameData& gamedata,
+void Calendar::generateSeasonFixtures(const class GameData& gamedata,
                                       const GameDateValue& startDate)
 {
   auto leagues = gamedata.getLeaguesVector();
@@ -120,7 +120,7 @@ void Calendar::generateSeasonFixtures(class GameData& gamedata,
   }
 }
 
-void Calendar::generateFriendlies(class GameData& gamedata,
+void Calendar::generateFriendlies(const class GameData& gamedata,
                                   const GameDateValue& startDate,
                                   size_t numFriendlies)
 {

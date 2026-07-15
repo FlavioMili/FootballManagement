@@ -10,6 +10,9 @@
 
 #include <imgui.h>
 
+#include <format>
+#include <numbers>
+
 #include "gui/gui_view.h"
 #include "model/role_utils.h"
 #include "model/team.h"
@@ -117,14 +120,13 @@ void MatchScene::render()
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
   // Keep pitch centered horizontally if window is large enough
-  float window_width = ImGui::GetWindowWidth();
-  if (window_width > pitch_width)
+  if (float window_width = ImGui::GetWindowWidth(); window_width > pitch_width)
   {
     p.x += (window_width - pitch_width) * 0.5f;
   }
 
   ImVec2 p_min = p;
-  ImVec2 p_max = ImVec2(p.x + pitch_width, p.y + pitch_height);
+  auto p_max = ImVec2(p.x + pitch_width, p.y + pitch_height);
 
   ImU32 line_color = IM_COL32(255, 255, 255, 200);
 
@@ -174,7 +176,7 @@ void MatchScene::render()
 
   // Corner arcs
   float corner_r = pitch_height * 0.03f;
-  const float PI = 3.14159265f;
+  const float PI = std::numbers::pi_v<float>;
   // Top-left
   draw_list->PathArcTo(ImVec2(p_min.x, p_min.y), corner_r, 0.0f, PI * 0.5f, 10);
   draw_list->PathStroke(line_color, 0, 2.0f);
@@ -192,8 +194,8 @@ void MatchScene::render()
   // Players
   for (const auto& mp : engine->getPlayers())
   {
-    ImVec2 pos = ImVec2(p_min.x + mp.position.x * pitch_width,
-                        p_min.y + mp.position.y * pitch_height);
+    auto pos = ImVec2(p_min.x + mp.position.x * pitch_width,
+                      p_min.y + mp.position.y * pitch_height);
     ImU32 color =
         mp.isHomeTeam ? IM_COL32(50, 50, 200, 255) : IM_COL32(200, 50, 50, 255);
     draw_list->AddCircleFilled(pos, 8.0f, color);
@@ -209,7 +211,7 @@ void MatchScene::render()
 
   // Ball
   Vector2F bpos = engine->getBall().position;
-  ImVec2 ball_pos =
+  auto ball_pos =
       ImVec2(p_min.x + bpos.x * pitch_width, p_min.y + bpos.y * pitch_height);
   draw_list->AddCircleFilled(ball_pos, 4.0f, IM_COL32(255, 255, 255, 255));
 
@@ -228,17 +230,14 @@ void MatchScene::render()
     ImGui::SetScrollHereY(1.0f);
   ImGui::EndChild();
 
-  if (match_finished)
+  if (match_finished && ImGui::Button("Finish Match", ImVec2(150, 40)))
   {
-    if (ImGui::Button("Finish Match", ImVec2(150, 40)))
-    {
-      guiView->getController().setMatchResult(
-          guiView->getController().getCurrentDate(), home_team_id, away_team_id,
-          engine->getHomeScore(), engine->getAwayScore());
-      guiView->popScene();  // Pop MatchScene
-      // Also advance day now that match is watched
-      guiView->getController().advanceDay();
-    }
+    guiView->getController().setMatchResult(
+        guiView->getController().getCurrentDate(), home_team_id, away_team_id,
+        engine->getHomeScore(), engine->getAwayScore());
+    guiView->popScene();  // Pop MatchScene
+    // Also advance day now that match is watched
+    guiView->getController().advanceDay();
   }
 
   ImGui::End();
@@ -272,9 +271,10 @@ void MatchScene::renderSubstitutionsModal()
     {
       bool selected =
           (selected_pitch_player == lineup.getGoalkeeper()->getId());
-      if (ImGui::Selectable(
-              std::string("GK - " + lineup.getGoalkeeper()->getName()).c_str(),
-              selected))
+      std::string label =
+          std::format("GK - {}##{}", lineup.getGoalkeeper()->getName(),
+                      lineup.getGoalkeeper()->getId());
+      if (ImGui::Selectable(label.c_str(), selected))
       {
         selected_pitch_player = selected ? 0 : lineup.getGoalkeeper()->getId();
       }
@@ -283,11 +283,10 @@ void MatchScene::renderSubstitutionsModal()
     {
       if (!posPlayer.player) continue;
       bool selected = (selected_pitch_player == posPlayer.player->getId());
-      if (ImGui::Selectable(
-              std::string(RoleUtils::toString(posPlayer.player->getRole()) +
-                          " - " + posPlayer.player->getName())
-                  .c_str(),
-              selected))
+      std::string label = std::format(
+          "{} - {}##{}", RoleUtils::toString(posPlayer.player->getRole()),
+          posPlayer.player->getName(), posPlayer.player->getId());
+      if (ImGui::Selectable(label.c_str(), selected))
       {
         selected_pitch_player = selected ? 0 : posPlayer.player->getId();
       }
@@ -301,10 +300,10 @@ void MatchScene::renderSubstitutionsModal()
     {
       if (!res) continue;
       bool selected = (selected_bench_player == res->getId());
-      if (ImGui::Selectable(std::string(RoleUtils::toString(res->getRole()) +
-                                        " - " + res->getName())
-                                .c_str(),
-                            selected))
+      std::string label =
+          std::format("{} - {}##{}", RoleUtils::toString(res->getRole()),
+                      res->getName(), res->getId());
+      if (ImGui::Selectable(label.c_str(), selected))
       {
         selected_bench_player = selected ? 0 : res->getId();
       }
@@ -313,23 +312,21 @@ void MatchScene::renderSubstitutionsModal()
     ImGui::Columns(1);
     ImGui::Separator();
 
-    if (ImGui::Button("Swap Selected", ImVec2(120, 30)))
+    if (ImGui::Button("Swap Selected", ImVec2(120, 30)) &&
+        selected_pitch_player != 0 && selected_bench_player != 0)
     {
-      if (selected_pitch_player != 0 && selected_bench_player != 0)
+      const Player* bench_ptr = nullptr;
+      for (auto p : lineup.getReserves())
       {
-        const Player* bench_ptr = nullptr;
-        for (auto p : lineup.getReserves())
-        {
-          if (p && p->getId() == selected_bench_player) bench_ptr = p;
-        }
+        if (p && p->getId() == selected_bench_player) bench_ptr = p;
+      }
 
-        if (bench_ptr &&
-            lineup.swapPlayers(selected_bench_player, selected_pitch_player))
-        {
-          engine->substitutePlayer(selected_pitch_player, bench_ptr);
-          selected_pitch_player = 0;
-          selected_bench_player = 0;
-        }
+      if (bench_ptr &&
+          lineup.swapPlayers(selected_bench_player, selected_pitch_player))
+      {
+        engine->substitutePlayer(selected_pitch_player, bench_ptr);
+        selected_pitch_player = 0;
+        selected_bench_player = 0;
       }
     }
     ImGui::SameLine();

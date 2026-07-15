@@ -12,29 +12,30 @@ std::string RoleUtils::toString(PlayerRole role)
 {
   switch (role)
   {
-    case PlayerRole::GK:
+    using enum PlayerRole;
+    case GK:
       return "GK";
-    case PlayerRole::CB:
+    case CB:
       return "CB";
-    case PlayerRole::LB:
+    case LB:
       return "LB";
-    case PlayerRole::RB:
+    case RB:
       return "RB";
-    case PlayerRole::CDM:
+    case CDM:
       return "CDM";
-    case PlayerRole::CM:
+    case CM:
       return "CM";
-    case PlayerRole::CAM:
+    case CAM:
       return "CAM";
-    case PlayerRole::LM:
+    case LM:
       return "LM";
-    case PlayerRole::RM:
+    case RM:
       return "RM";
-    case PlayerRole::LW:
+    case LW:
       return "LW";
-    case PlayerRole::RW:
+    case RW:
       return "RW";
-    case PlayerRole::ST:
+    case ST:
       return "ST";
     default:
       return "UNKNOWN";
@@ -43,26 +44,27 @@ std::string RoleUtils::toString(PlayerRole role)
 
 PlayerRole RoleUtils::fromString(std::string_view role_str)
 {
-  if (role_str == "GK") return PlayerRole::GK;
-  if (role_str == "CB") return PlayerRole::CB;
-  if (role_str == "LB") return PlayerRole::LB;
-  if (role_str == "RB") return PlayerRole::RB;
-  if (role_str == "CDM") return PlayerRole::CDM;
-  if (role_str == "CM") return PlayerRole::CM;
-  if (role_str == "CAM") return PlayerRole::CAM;
-  if (role_str == "LM") return PlayerRole::LM;
-  if (role_str == "RM") return PlayerRole::RM;
-  if (role_str == "LW") return PlayerRole::LW;
-  if (role_str == "RW") return PlayerRole::RW;
-  if (role_str == "ST") return PlayerRole::ST;
+  using enum PlayerRole;
+  if (role_str == "GK") return GK;
+  if (role_str == "CB") return CB;
+  if (role_str == "LB") return LB;
+  if (role_str == "RB") return RB;
+  if (role_str == "CDM") return CDM;
+  if (role_str == "CM") return CM;
+  if (role_str == "CAM") return CAM;
+  if (role_str == "LM") return LM;
+  if (role_str == "RM") return RM;
+  if (role_str == "LW") return LW;
+  if (role_str == "RW") return RW;
+  if (role_str == "ST") return ST;
 
   // Handle legacy strings for backwards compatibility if needed
-  if (role_str == "Goalkeeper") return PlayerRole::GK;
-  if (role_str == "Defender") return PlayerRole::CB;
-  if (role_str == "Midfielder") return PlayerRole::CM;
-  if (role_str == "Striker") return PlayerRole::ST;
+  if (role_str == "Goalkeeper") return GK;
+  if (role_str == "Defender") return CB;
+  if (role_str == "Midfielder") return CM;
+  if (role_str == "Striker") return ST;
 
-  return PlayerRole::UNKNOWN;
+  return UNKNOWN;
 }
 
 Vector2F RoleUtils::getBaseCoordinate(PlayerRole role)
@@ -71,29 +73,30 @@ Vector2F RoleUtils::getBaseCoordinate(PlayerRole role)
   // Y goes from Top (0.0) to Bottom (1.0).
   switch (role)
   {
-    case PlayerRole::GK:
+    using enum PlayerRole;
+    case GK:
       return {0.05f, 0.50f};
-    case PlayerRole::CB:
+    case CB:
       return {0.15f, 0.50f};
-    case PlayerRole::LB:
+    case LB:
       return {0.15f, 0.15f};
-    case PlayerRole::RB:
+    case RB:
       return {0.15f, 0.85f};
-    case PlayerRole::CDM:
+    case CDM:
       return {0.30f, 0.50f};
-    case PlayerRole::CM:
+    case CM:
       return {0.45f, 0.50f};
-    case PlayerRole::CAM:
+    case CAM:
       return {0.60f, 0.50f};
-    case PlayerRole::LM:
+    case LM:
       return {0.45f, 0.15f};
-    case PlayerRole::RM:
+    case RM:
       return {0.45f, 0.85f};
-    case PlayerRole::LW:
+    case LW:
       return {0.75f, 0.15f};
-    case PlayerRole::RW:
+    case RW:
       return {0.75f, 0.85f};
-    case PlayerRole::ST:
+    case ST:
       return {0.85f, 0.50f};
     default:
       return {0.50f, 0.50f};
@@ -104,21 +107,22 @@ std::string RoleUtils::getBroadCategory(PlayerRole role)
 {
   switch (role)
   {
-    case PlayerRole::GK:
+    using enum PlayerRole;
+    case GK:
       return "Goalkeeper";
-    case PlayerRole::CB:
-    case PlayerRole::LB:
-    case PlayerRole::RB:
+    case CB:
+    case LB:
+    case RB:
       return "Defender";
-    case PlayerRole::CDM:
-    case PlayerRole::CM:
-    case PlayerRole::CAM:
-    case PlayerRole::LM:
-    case PlayerRole::RM:
+    case CDM:
+    case CM:
+    case CAM:
+    case LM:
+    case RM:
       return "Midfielder";
-    case PlayerRole::LW:
-    case PlayerRole::RW:
-    case PlayerRole::ST:
+    case LW:
+    case RW:
+    case ST:
       return "Striker";
     default:
       return "Unknown";

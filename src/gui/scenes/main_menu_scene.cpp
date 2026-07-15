@@ -10,6 +10,8 @@
 
 #include <imgui.h>
 
+#include <format>
+
 #include "global/language_manager.h"
 #include "global/logger.h"
 #include "gui/gui_constants.h"
@@ -54,8 +56,8 @@ void MainMenuScene::update(float deltaTime)
       }
       else
       {
-        Logger::error("Failed to load game from slot " +
-                      std::to_string(loading_slot));
+        Logger::error(
+            std::format("Failed to load game from slot {}", loading_slot));
         loading_slot = 0;  // reset
       }
     }
@@ -119,7 +121,7 @@ void MainMenuScene::render()
       const auto& metadata = (cached_metadata.size() >= static_cast<size_t>(i))
                                  ? cached_metadata[static_cast<size_t>(i - 1)]
                                  : GameController::SaveSlotMetadata{};
-      std::string btn_label = "Slot " + std::to_string(i) + ": ";
+      std::string btn_label = std::format("Slot {}: ", i);
       if (!metadata.exists)
       {
         btn_label += LOC("MENU_SAVE_SLOT_EMPTY");
@@ -158,13 +160,11 @@ void MainMenuScene::render()
         ImGui::EndDisabled();
       }
 
-      if (metadata.exists && !metadata.real_date.empty())
+      if (metadata.exists && !metadata.real_date.empty() &&
+          ImGui::IsItemHovered())
       {
-        if (ImGui::IsItemHovered())
-        {
-          ImGui::SetTooltip(LOC("MENU_SAVE_SLOT_LAST_SAVED"),
-                            metadata.real_date.c_str());
-        }
+        ImGui::SetTooltip(LOC("MENU_SAVE_SLOT_LAST_SAVED"),
+                          metadata.real_date.c_str());
       }
     }
 

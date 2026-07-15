@@ -26,8 +26,7 @@ float distance(Vector2F a, Vector2F b)
 
 Vector2F normalize(Vector2F v)
 {
-  float len = std::sqrt(v.x * v.x + v.y * v.y);
-  if (len > 0.0001f)
+  if (float len = std::sqrt(v.x * v.x + v.y * v.y); len > 0.0001f)
   {
     return {v.x / len, v.y / len};
   }
@@ -187,9 +186,9 @@ void MatchEngine::calculateForces(float dt)
       bool teamHasBall = false;
       if (ball.possessedBy)
       {
-        auto it = std::find_if(players.begin(), players.end(),
-                               [this](const MatchPlayer& p)
-                               { return p.player == ball.possessedBy; });
+        auto it =
+            std::ranges::find_if(players, [this](const MatchPlayer& p)
+                                 { return p.player == ball.possessedBy; });
         if (it != players.end() && it->isHomeTeam == mp.isHomeTeam)
         {
           teamHasBall = true;
@@ -280,9 +279,9 @@ void MatchEngine::calculateForces(float dt)
     mp.velocity.y += force.y * mp.acceleration * dt;
 
     // Clamp velocity to max speed
-    float speed = std::sqrt(mp.velocity.x * mp.velocity.x +
-                            mp.velocity.y * mp.velocity.y);
-    if (speed > mp.maxSpeed)
+    if (float speed = std::sqrt(mp.velocity.x * mp.velocity.x +
+                                mp.velocity.y * mp.velocity.y);
+        speed > mp.maxSpeed)
     {
       mp.velocity.x = (mp.velocity.x / speed) * mp.maxSpeed;
       mp.velocity.y = (mp.velocity.y / speed) * mp.maxSpeed;
@@ -303,9 +302,8 @@ void MatchEngine::resolvePossessionAndPassing(float dt)
   if (ball.possessedBy)
   {
     // Make the ball stick to the possessing player
-    auto it = std::find_if(players.begin(), players.end(),
-                           [this](const MatchPlayer& mp)
-                           { return mp.player == ball.possessedBy; });
+    auto it = std::ranges::find_if(players, [this](const MatchPlayer& mp)
+                                   { return mp.player == ball.possessedBy; });
     if (it != players.end())
     {
       ball.position = it->position;
@@ -349,24 +347,22 @@ void MatchEngine::resolvePossessionAndPassing(float dt)
         else
         {
           // Pass to someone further forward
-          MatchPlayer* target = nullptr;
+          const MatchPlayer* target = nullptr;
           float bestScore = -1.0f;
-          for (auto& other : players)
+          for (const auto& other : players)
           {
-            if (other.isHomeTeam == isHome && other.player != it->player)
+            if (other.isHomeTeam == isHome && other.player != it->player &&
+                ((isHome && other.position.x > it->position.x) ||
+                 (!isHome && other.position.x < it->position.x)))
             {
-              if ((isHome && other.position.x > it->position.x) ||
-                  (!isHome && other.position.x < it->position.x))
+              float d = distance(it->position, other.position);
+              if (d > 0.1f && d < 0.6f)
               {
-                float d = distance(it->position, other.position);
-                if (d > 0.1f && d < 0.6f)
+                float score = 1.0f / d;  // Prefer closer targets
+                if (score > bestScore)
                 {
-                  float score = 1.0f / d;  // Prefer closer targets
-                  if (score > bestScore)
-                  {
-                    bestScore = score;
-                    target = &other;
-                  }
+                  bestScore = score;
+                  target = &other;
                 }
               }
             }
@@ -402,7 +398,7 @@ void MatchEngine::resolvePossessionAndPassing(float dt)
   else
   {
     // Find closest player to grab the ball
-    MatchPlayer* closest = nullptr;
+    const MatchPlayer* closest = nullptr;
     float minDist = 0.03f;  // Grab radius
 
     for (auto& mp : players)
@@ -435,12 +431,12 @@ void MatchEngine::resolvePossessionAndPassing(float dt)
   // try to tackle
   if (ball.possessedBy)
   {
-    auto carrierIt = std::find_if(players.begin(), players.end(),
-                                  [this](const MatchPlayer& mp)
-                                  { return mp.player == ball.possessedBy; });
+    auto carrierIt =
+        std::ranges::find_if(players, [this](const MatchPlayer& mp)
+                             { return mp.player == ball.possessedBy; });
     if (carrierIt != players.end())
     {
-      for (auto& defender : players)
+      for (const auto& defender : players)
       {
         if (defender.isHomeTeam == carrierIt->isHomeTeam) continue;
         if (defender.tackleCooldown > 0.0f) continue;
@@ -539,7 +535,7 @@ void MatchEngine::resetPositions(bool homeConceded)
 
 void MatchEngine::logEvent(const std::string& msg)
 {
-  events.push_back({matchTimeMinutes, msg});
+  events.emplace_back(matchTimeMinutes, msg);
   // Keep only last 10 events
   if (events.size() > 10)
   {
