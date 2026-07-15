@@ -22,10 +22,63 @@ SceneID MainMenuScene::getID() const { return SceneID::MAIN_MENU; }
 
 MainMenuScene::MainMenuScene(GUIView* guiView_ptr) : GUIScene(guiView_ptr) {}
 
-void MainMenuScene::update(float deltaTime) { (void)deltaTime; }
+void MainMenuScene::onEnter() { loadCachedMetadata(); }
+
+void MainMenuScene::loadCachedMetadata()
+{
+  cached_metadata.clear();
+  for (int i = 1; i <= 3; ++i)
+  {
+    cached_metadata.push_back(guiView->getController().getSaveSlotMetadata(i));
+  }
+}
+
+void MainMenuScene::update(float deltaTime)
+{
+  (void)deltaTime;
+
+  if (loading_slot > 0 && is_loading_rendered)
+  {
+    if (is_new_game)
+    {
+      guiView->getController().newGame(loading_slot);
+      auto gameScene = std::make_unique<MainGameScene>(guiView);
+      changeScene(std::move(gameScene));
+    }
+    else
+    {
+      if (guiView->getController().loadGame(loading_slot))
+      {
+        auto gameScene = std::make_unique<MainGameScene>(guiView);
+        changeScene(std::move(gameScene));
+      }
+      else
+      {
+        Logger::error("Failed to load game from slot " +
+                      std::to_string(loading_slot));
+        loading_slot = 0;  // reset
+      }
+    }
+  }
+}
 
 void MainMenuScene::render()
 {
+  if (loading_slot > 0)
+  {
+    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
+                            ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::Begin(
+        "Loading", nullptr,
+        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
+            ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove);
+    ImGui::Text("%s...", LOC(is_new_game ? "MENU_LOADING_INITIALIZING"
+                                         : "MENU_LOADING_LOAD"));
+    ImGui::End();
+    is_loading_rendered = true;
+    return;
+  }
+
   ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
                           ImGuiCond_Always, ImVec2(0.5f, 0.5f));
   ImGui::Begin("Football Management", nullptr,
@@ -63,33 +116,60 @@ void MainMenuScene::render()
 
     for (int i = 1; i <= 3; ++i)
     {
-      if (ImGui::Button(("Slot " + std::to_string(i)).c_str(), ImVec2(200, 40)))
+      const auto& metadata = (cached_metadata.size() >= static_cast<size_t>(i))
+                                 ? cached_metadata[static_cast<size_t>(i - 1)]
+                                 : GameController::SaveSlotMetadata{};
+      std::string btn_label = "Slot " + std::to_string(i) + ": ";
+      if (!metadata.exists)
       {
-        if (is_new_game)
+        btn_label += LOC("MENU_SAVE_SLOT_EMPTY");
+      }
+      else
+      {
+        if (metadata.team_name.empty())
         {
-          guiView->getController().newGame(i);
-          auto gameScene = std::make_unique<MainGameScene>(guiView);
-          changeScene(std::move(gameScene));
+          btn_label += LOC("MENU_SAVE_SLOT_NOT_STARTED");
         }
         else
         {
-          if (guiView->getController().loadGame(i))
+          btn_label += metadata.team_name;
+          if (!metadata.game_date.empty())
           {
-            auto gameScene = std::make_unique<MainGameScene>(guiView);
-            changeScene(std::move(gameScene));
-          }
-          else
-          {
-            // Failed to load
-            Logger::error("Failed to load game from slot " + std::to_string(i));
+            btn_label += " (" + metadata.game_date + ")";
           }
         }
+      }
+
+      bool disable_button = !is_new_game && !metadata.exists;
+      if (disable_button)
+      {
+        ImGui::BeginDisabled();
+      }
+
+      if (ImGui::Button(btn_label.c_str(), ImVec2(400, 40)))
+      {
+        loading_slot = i;
+        is_loading_rendered = false;
         ImGui::CloseCurrentPopup();
+      }
+
+      if (disable_button)
+      {
+        ImGui::EndDisabled();
+      }
+
+      if (metadata.exists && !metadata.real_date.empty())
+      {
+        if (ImGui::IsItemHovered())
+        {
+          ImGui::SetTooltip(LOC("MENU_SAVE_SLOT_LAST_SAVED"),
+                            metadata.real_date.c_str());
+        }
       }
     }
 
     ImGui::Separator();
-    if (ImGui::Button("Cancel", ImVec2(200, 30)))
+    if (ImGui::Button(LOC("SETTINGS_CANCEL"), ImVec2(400, 30)))
     {
       ImGui::CloseCurrentPopup();
     }

@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "gui/gui_scene.h"
 #include "gui/gui_view.h"
 
@@ -29,6 +31,11 @@ class MainMenuScene : public GUIScene
   ~MainMenuScene() override = default;
 
   /**
+   * @brief Populated when the scene is entered. Caches the save slot metadata.
+   */
+  void onEnter() override;
+
+  /**
    * @brief Updates scene logic.
    * @param deltaTime Time elapsed since last update.
    */
@@ -47,4 +54,9 @@ class MainMenuScene : public GUIScene
 
  private:
   bool is_new_game = false;
+  int loading_slot = 0;
+  bool is_loading_rendered = false;
+  std::vector<GameController::SaveSlotMetadata> cached_metadata;
+
+  void loadCachedMetadata();
 };

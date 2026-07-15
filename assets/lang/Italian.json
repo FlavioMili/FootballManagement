@@ -44,5 +44,10 @@
   "ROSTER_BACK": "Indietro",
   "ROSTER_COL_NAME": "Nome",
   "ROSTER_COL_ROLE": "Ruolo",
-  "ROSTER_COL_OVERALL": "Val. Gen."
+  "ROSTER_COL_OVERALL": "Val. Gen.",
+  "MENU_SAVE_SLOT_EMPTY": "Vuoto",
+  "MENU_SAVE_SLOT_NOT_STARTED": "Nuova Partita (Non Iniziata)",
+  "MENU_SAVE_SLOT_LAST_SAVED": "Ultimo salvataggio: %s",
+  "MENU_LOADING_INITIALIZING": "Inizializzazione nuova partita",
+  "MENU_LOADING_LOAD": "Caricamento partita salvata"
 }

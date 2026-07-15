@@ -30,6 +30,14 @@
 class GameController
 {
  public:
+  struct SaveSlotMetadata
+  {
+    bool exists = false;
+    std::string team_name = "";
+    std::string game_date = "";
+    std::string real_date = "";
+  };
+
   /**
    * @brief Constructs a new GameController.
    */
@@ -146,6 +154,11 @@ class GameController
    * @brief Saves the current state of the game.
    */
   void saveGame();
+
+  /**
+   * @brief Gets metadata for a save slot.
+   */
+  SaveSlotMetadata getSaveSlotMetadata(int slot) const;
 
  private:
   std::unique_ptr<Game> game;

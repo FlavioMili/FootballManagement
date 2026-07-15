@@ -136,3 +136,39 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   view.popScene();
   EXPECT_NO_THROW(step_frame());
 }
+
+TEST_F(GameFlowTest, SaveSlotMetadata)
+{
+  // Clean up any potential leftover from a previous run on slot 99
+  controller.reset();
+
+  // Re-create controller to ensure clean state
+  controller = std::make_unique<GameController>();
+
+  // Check metadata for empty/non-existent slot (e.g. slot 100)
+  auto metadata_nonexistent = controller->getSaveSlotMetadata(100);
+  EXPECT_FALSE(metadata_nonexistent.exists);
+
+  // Re-create slot 99
+  controller->newGame(99);
+
+  // Check metadata for slot 99 (newly created game, no team selected yet)
+  auto metadata_new = controller->getSaveSlotMetadata(99);
+  EXPECT_TRUE(metadata_new.exists);
+  EXPECT_TRUE(metadata_new.team_name.empty());
+
+  // Select team, save, check metadata
+  auto teams = controller->getTeams();
+  ASSERT_FALSE(teams.empty());
+  TeamID testTeamId = teams.front().get().getId();
+  std::string testTeamName = teams.front().get().getName();
+
+  controller->selectManagedTeam(testTeamId);
+  controller->saveGame();
+
+  auto metadata_saved = controller->getSaveSlotMetadata(99);
+  EXPECT_TRUE(metadata_saved.exists);
+  EXPECT_EQ(metadata_saved.team_name, testTeamName);
+  EXPECT_FALSE(metadata_saved.game_date.empty());
+  EXPECT_FALSE(metadata_saved.real_date.empty());
+}

@@ -9,8 +9,13 @@
 #include "controller/game_controller.h"
 
 #include <SDL3/SDL.h>
+#include <sqlite3.h>
 
+#include <chrono>
+#include <ctime>
 #include <filesystem>
+#include <iomanip>
+#include <sstream>
 
 #include "database/gamedata.h"
 #include "global/global.h"
@@ -145,3 +150,73 @@ const StatsConfig& GameController::getStatsConfig() const
 void GameController::advanceDay() { game->advanceDay(); }
 
 void GameController::saveGame() { game->saveGame(); }
+
+GameController::SaveSlotMetadata GameController::getSaveSlotMetadata(
+    int slot) const
+{
+  SaveSlotMetadata metadata;
+  std::string path = getSavePath(slot);
+  if (!std::filesystem::exists(path))
+  {
+    metadata.exists = false;
+    return metadata;
+  }
+  metadata.exists = true;
+
+  try
+  {
+    auto ftime = std::filesystem::last_write_time(path);
+    auto sct =
+        std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+            ftime - std::filesystem::file_time_type::clock::now() +
+            std::chrono::system_clock::now());
+    std::time_t tt = std::chrono::system_clock::to_time_t(sct);
+    std::tm* tm = std::localtime(&tt);
+    char buf[100];
+    if (std::strftime(buf, sizeof(buf), "%d/%m/%Y %H:%M", tm))
+    {
+      metadata.real_date = buf;
+    }
+  }
+  catch (...)
+  {
+    metadata.real_date = "";
+  }
+
+  sqlite3* db = nullptr;
+  if (sqlite3_open_v2(path.c_str(), &db, SQLITE_OPEN_READONLY, nullptr) ==
+      SQLITE_OK)
+  {
+    sqlite3_stmt* stmt = nullptr;
+    const char* sql_state =
+        "SELECT managed_team_id, game_date FROM GameState WHERE id = 1;";
+    if (sqlite3_prepare_v2(db, sql_state, -1, &stmt, nullptr) == SQLITE_OK)
+    {
+      if (sqlite3_step(stmt) == SQLITE_ROW)
+      {
+        int team_id = sqlite3_column_int(stmt, 0);
+        const unsigned char* date_text = sqlite3_column_text(stmt, 1);
+        metadata.game_date =
+            date_text ? reinterpret_cast<const char*>(date_text) : "";
+
+        sqlite3_stmt* team_stmt = nullptr;
+        const char* sql_team = "SELECT name FROM Teams WHERE id = ?;";
+        if (sqlite3_prepare_v2(db, sql_team, -1, &team_stmt, nullptr) ==
+            SQLITE_OK)
+        {
+          sqlite3_bind_int(team_stmt, 1, team_id);
+          if (sqlite3_step(team_stmt) == SQLITE_ROW)
+          {
+            const unsigned char* name_text = sqlite3_column_text(team_stmt, 0);
+            metadata.team_name =
+                name_text ? reinterpret_cast<const char*>(name_text) : "";
+          }
+          sqlite3_finalize(team_stmt);
+        }
+      }
+      sqlite3_finalize(stmt);
+    }
+    sqlite3_close(db);
+  }
+  return metadata;
+}
