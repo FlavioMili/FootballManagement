@@ -42,4 +42,5 @@ class LineupScene : public GUIScene
   bool is_dragging = false;
 
   Lineup* current_lineup = nullptr;
+  PlayerID selected_player_id = 0;
 };

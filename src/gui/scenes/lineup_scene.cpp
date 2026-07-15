@@ -202,6 +202,29 @@ void LineupScene::renderPitch()
     ImGui::InvisibleButton(btn_id.c_str(),
                            ImVec2(PLAYER_RADIUS * 2, PLAYER_RADIUS * 2));
 
+    if (ImGui::IsItemClicked())
+    {
+      if (selected_player_id == 0)
+      {
+        selected_player_id = gk->getId();
+      }
+      else if (selected_player_id == gk->getId())
+      {
+        selected_player_id = 0;
+      }
+      else
+      {
+        current_lineup->swapPlayers(selected_player_id, gk->getId());
+        selected_player_id = 0;
+      }
+    }
+
+    if (selected_player_id == gk->getId())
+    {
+      draw_list->AddCircle(pos, PLAYER_RADIUS + 3.0f,
+                           IM_COL32(255, 255, 0, 255), 0, 2.0f);
+    }
+
     draw_list->AddCircleFilled(pos, PLAYER_RADIUS, IM_COL32(200, 200, 50, 255));
 
     std::string name_label =
@@ -241,6 +264,30 @@ void LineupScene::renderPitch()
         "##player_" + std::to_string(posPlayer.player->getId());
     ImGui::InvisibleButton(btn_id.c_str(),
                            ImVec2(PLAYER_RADIUS * 2, PLAYER_RADIUS * 2));
+
+    if (ImGui::IsItemClicked())
+    {
+      if (selected_player_id == 0)
+      {
+        selected_player_id = posPlayer.player->getId();
+      }
+      else if (selected_player_id == posPlayer.player->getId())
+      {
+        selected_player_id = 0;
+      }
+      else
+      {
+        current_lineup->swapPlayers(selected_player_id,
+                                    posPlayer.player->getId());
+        selected_player_id = 0;
+      }
+    }
+
+    if (selected_player_id == posPlayer.player->getId())
+    {
+      draw_list->AddCircle(player_pos, PLAYER_RADIUS + 3.0f,
+                           IM_COL32(255, 255, 0, 255), 0, 2.0f);
+    }
 
     if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
     {
@@ -299,7 +346,23 @@ void LineupScene::renderBench()
     {
       std::string label =
           "[" + RoleUtils::toString(p->getRole()) + "] " + p->getName();
-      ImGui::Selectable(label.c_str());
+      bool is_selected = (selected_player_id == p->getId());
+      if (ImGui::Selectable(label.c_str(), is_selected))
+      {
+        if (selected_player_id == 0)
+        {
+          selected_player_id = p->getId();
+        }
+        else if (selected_player_id == p->getId())
+        {
+          selected_player_id = 0;
+        }
+        else
+        {
+          current_lineup->swapPlayers(selected_player_id, p->getId());
+          selected_player_id = 0;
+        }
+      }
       renderPlayerTooltip(p, guiView->getController().getStatsConfig());
 
       if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
