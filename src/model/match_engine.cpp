@@ -233,6 +233,32 @@ void MatchEngine::calculateForces(float dt)
         }
       }
 
+      // Goalkeeper logic
+      if (mp.player->getRole() == PlayerRole::GK)
+      {
+        float goalX = mp.isHomeTeam ? 0.05f : 0.95f;
+        base.x = goalX;
+        base.y = 0.5f;
+
+        // Follow ball y slightly
+        float dy = ball.position.y - 0.5f;
+        base.y += std::clamp(dy * 0.3f, -0.15f, 0.15f);
+
+        // If ball is loose or opponent has it, and it's close, rush out
+        float distToBall = distance(mp.position, ball.position);
+        if (!teamHasBall && distToBall < 0.15f)
+        {
+          base.x = ball.position.x;
+          base.y = ball.position.y;
+          mp.maxSpeed = 0.8f;  // Burst speed
+        }
+        else
+        {
+          float ovr = mp.player->getOverall(statsConfig) / 100.0f;
+          mp.maxSpeed = 0.05f + ovr * 0.15f;
+        }
+      }
+
       Vector2F toBase = {base.x - mp.position.x, base.y - mp.position.y};
       force.x += toBase.x * 0.5f;
       force.y += toBase.y * 0.5f;
@@ -313,15 +339,17 @@ void MatchEngine::resolvePossessionAndPassing(float dt)
       static std::mt19937 rng(42);
       std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
-      if (dist(rng) < 0.05f)  // 5% chance per frame
+      // Decision making based on time, not frames. Roughly 1 action every 2 sim
+      // seconds.
+      if (dist(rng) < 0.5f * dt)
       {
         bool isHome = it->isHomeTeam;
         float distToGoal = distance(
             it->position, isHome ? Vector2F{1.0f, 0.5f} : Vector2F{0.0f, 0.5f});
 
-        if (distToGoal < 0.4f)
+        if (distToGoal < 0.15f || (distToGoal < 0.25f && dist(rng) < 0.2f))
         {
-          // Shoot!
+          // Shoot! (Must be close to goal, or occasionally a long shot)
           ball.lastPossessor = ball.possessedBy;
           ball.passCooldown = 0.5f;
           ball.possessedBy = nullptr;
@@ -332,37 +360,42 @@ void MatchEngine::resolvePossessionAndPassing(float dt)
           Vector2F norm = normalize(toGoal);
 
           float ovr = it->player->getOverall(statsConfig) / 100.0f;
-          // Add inaccuracy (bad players have huge error, good players have tiny
-          // error)
-          float errorMargin = 0.5f - ovr * 0.45f;
+          // Add inaccuracy
+          float errorMargin = 0.3f - ovr * 0.25f;
           norm.y += (dist(rng) - 0.5f) * errorMargin;
           norm.x += (dist(rng) - 0.5f) * (errorMargin * 0.5f);
           norm = normalize(norm);
 
           // Scale shot power
-          float shotSpeed = 0.7f + ovr * 0.7f;
+          float shotSpeed = 1.0f + ovr * 0.5f;
           ball.velocity = {norm.x * shotSpeed, norm.y * shotSpeed};
           logEvent(it->player->getName() + " shoots!");
         }
         else
         {
-          // Pass to someone further forward
+          // Pass to someone further forward or safe sideways pass
           const MatchPlayer* target = nullptr;
           float bestScore = -1.0f;
           for (const auto& other : players)
           {
-            if (other.isHomeTeam == isHome && other.player != it->player &&
-                ((isHome && other.position.x > it->position.x) ||
-                 (!isHome && other.position.x < it->position.x)))
+            if (other.isHomeTeam == isHome && other.player != it->player)
             {
-              float d = distance(it->position, other.position);
-              if (d > 0.1f && d < 0.6f)
+              float dx = isHome ? (other.position.x - it->position.x)
+                                : (it->position.x - other.position.x);
+
+              // Prefer players who are ahead or slightly sideways
+              if (dx > -0.1f)
               {
-                float score = 1.0f / d;  // Prefer closer targets
-                if (score > bestScore)
+                float d = distance(it->position, other.position);
+                if (d > 0.1f && d < 0.5f)
                 {
-                  bestScore = score;
-                  target = &other;
+                  // Score based on distance and how far forward they are
+                  float score = (dx * 2.0f) + (1.0f / d);
+                  if (score > bestScore)
+                  {
+                    bestScore = score;
+                    target = &other;
+                  }
                 }
               }
             }
@@ -373,21 +406,21 @@ void MatchEngine::resolvePossessionAndPassing(float dt)
             ball.passCooldown = 0.5f;
             ball.possessedBy = nullptr;
 
-            Vector2F toTarget = {target->position.x - it->position.x,
-                                 target->position.y - it->position.y};
+            // Lead the pass slightly
+            Vector2F toTarget = {
+                target->position.x + target->velocity.x * 0.5f - it->position.x,
+                target->position.y + target->velocity.y * 0.5f -
+                    it->position.y};
             Vector2F norm = normalize(toTarget);
 
             float ovr = it->player->getOverall(statsConfig) / 100.0f;
-            // Add passing inaccuracy
-            float errorMargin = 0.4f - ovr * 0.35f;
+            float errorMargin = 0.2f - ovr * 0.15f;
             norm.y += (dist(rng) - 0.5f) * errorMargin;
             norm.x += (dist(rng) - 0.5f) * (errorMargin * 0.5f);
             norm = normalize(norm);
 
-            // Scale pass speed
-            float passSpeed = 1.0f + ovr * 0.8f;
-            ball.velocity = {norm.x * passSpeed,
-                             norm.y * passSpeed};  // Pass fast
+            float passSpeed = 0.8f + ovr * 0.4f;
+            ball.velocity = {norm.x * passSpeed, norm.y * passSpeed};
             logEvent(it->player->getName() + " passes to " +
                      target->player->getName());
           }
