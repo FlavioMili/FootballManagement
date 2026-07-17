@@ -66,4 +66,7 @@ class SettingsScene : public GUIScene
   int selectedFPS = 0;
   int selectedResolution = 0;
   bool fullscreen = false;
+
+  bool showWipeDataOverlay = false;
+  float wipeDataTimer = 0.0f;
 };
