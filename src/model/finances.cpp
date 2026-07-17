@@ -14,8 +14,8 @@
 #include "gamedata.h"
 #include "team.h"
 
-Finances::Finances(std::int64_t startingBalance, Team& team_ref)
-    : balance(startingBalance), team(team_ref), transfer_to_wages_ratio(0.5) {};
+Finances::Finances(std::int64_t startingBalance, Team& /*team_ref*/)
+    : balance(startingBalance), transfer_to_wages_ratio(0.5) {};
 
 void Finances::setTransferToWagesRatio(float ratio)
 {
@@ -33,7 +33,8 @@ float Finances::getTransferToWagesRatio() const noexcept
   return transfer_to_wages_ratio;
 }
 
-int64_t Finances::getCurrentWageSpending(const class GameData& gamedata) const
+int64_t Finances::getCurrentWageSpending(const class GameData& gamedata,
+                                         const Team& team) const
 {
   int64_t wages{};
   auto playerIDs = team.getPlayerIDs();

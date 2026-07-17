@@ -378,7 +378,8 @@ bool GameController::canAffordPlayer(TeamID buyer_id, PlayerID pid,
     return false;
   }
 
-  int64_t current_wages = finances.getCurrentWageSpending(*gamedata);
+  int64_t current_wages =
+      finances.getCurrentWageSpending(*gamedata, buyer_opt->get());
   int64_t new_wage_total =
       current_wages + static_cast<int64_t>(player.getWage());
 

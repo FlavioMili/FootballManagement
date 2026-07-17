@@ -129,6 +129,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imgui)
 
+# --- ImGui Test Engine ---
+FetchContent_Declare(
+  imgui_test_engine
+  GIT_REPOSITORY https://github.com/ocornut/imgui_test_engine.git
+  GIT_TAG        main
+)
+FetchContent_MakeAvailable(imgui_test_engine)
+
 
 # GoogleTest (for tests)
 option(BUILD_TESTING "Build tests" ON)
