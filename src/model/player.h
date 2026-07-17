@@ -152,6 +152,9 @@ class Player
    */
   void updateMarketValue(const StatsConfig& stats_config);
 
+  /** @brief Bitmask bit for transfer-listed status. */
+  static constexpr uint32_t TRANSFER_LISTED_BIT = 0x01U;
+
   /** @brief Sets the player's transfer status. */
   void setTransferStatus(TransferStatus status);
 

@@ -38,6 +38,9 @@ Player::Player(PlayerID new_id, TeamID new_team_id,
       _foot(new_foot),
       _stats(new_stats)
 {
+  _transfer_status = (_status & TRANSFER_LISTED_BIT)
+                         ? TransferStatus::Listed
+                         : TransferStatus::NotListed;
 }
 
 uint32_t Player::getId() const { return _id; }
@@ -209,6 +212,14 @@ void Player::updateMarketValue(const StatsConfig& stats_config)
 void Player::setTransferStatus(TransferStatus status)
 {
   _transfer_status = status;
+  if (status == TransferStatus::Listed)
+  {
+    _status |= TRANSFER_LISTED_BIT;
+  }
+  else
+  {
+    _status &= ~TRANSFER_LISTED_BIT;
+  }
 }
 
 TransferStatus Player::getTransferStatus() const { return _transfer_status; }

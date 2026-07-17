@@ -168,3 +168,17 @@ SELECT team_id, points FROM LeaguePoints WHERE league_id = ?;
 
 -- @QUERY_ID: RESET_ALL_LEAGUE_POINTS
 UPDATE LeaguePoints SET points = 0 WHERE 1=1;
+
+-- ==========================================
+-- TRANSFER LIST
+-- ==========================================
+
+-- @QUERY_ID: UPSERT_TRANSFER_LISTING
+INSERT OR REPLACE INTO TransferList (player_id, asking_price, listing_date)
+VALUES (?, ?, ?);
+
+-- @QUERY_ID: DELETE_TRANSFER_LISTING
+DELETE FROM TransferList WHERE player_id = ?;
+
+-- @QUERY_ID: LOAD_ALL_TRANSFER_LISTINGS
+SELECT player_id, asking_price, listing_date FROM TransferList;

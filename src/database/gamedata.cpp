@@ -12,6 +12,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
+#include "database/SQLLoader.h"
 #include "database/database_connection.h"
 #include "database/datagenerator.h"
 #include "database/repositories/game_state_repository.h"
@@ -20,6 +21,8 @@
 #include "database/repositories/team_repository.h"
 #include "global/logger.h"
 #include "global/paths.h"
+#include "global/queries.h"
+#include "model/transfer_listing.h"
 
 GameData::GameData() = default;
 
@@ -389,6 +392,60 @@ void GameData::transferPlayer(PlayerID id, TeamID new_team_id)
                 [id](const auto& ref) { return ref.get().getId() == id; });
 
   _teamPlayers[new_team_id].push_back(it->second);
+}
+
+// ---------------- Transfer Market ----------------
+void GameData::saveTransferListing(const TransferListing& listing) const
+{
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::UPSERT_TRANSFER_LISTING));
+
+  sqlite3_bind_int(stmt, 1, static_cast<int>(listing.player_id));
+  sqlite3_bind_int(stmt, 2, static_cast<int>(listing.asking_price));
+  std::string date_str = listing.listing_date.toString();
+  sqlite3_bind_text(stmt, 3, date_str.c_str(), -1, SQLITE_TRANSIENT);
+
+  db_conn->executeStep(stmt);
+  sqlite3_finalize(stmt);
+}
+
+void GameData::deleteTransferListing(PlayerID player_id) const
+{
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::DELETE_TRANSFER_LISTING));
+
+  sqlite3_bind_int(stmt, 1, static_cast<int>(player_id));
+
+  db_conn->executeStep(stmt);
+  sqlite3_finalize(stmt);
+}
+
+std::unordered_map<PlayerID, TransferListing>
+GameData::loadAllTransferListings() const
+{
+  std::unordered_map<PlayerID, TransferListing> listings;
+
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::LOAD_ALL_TRANSFER_LISTINGS));
+
+  while (sqlite3_step(stmt) == SQLITE_ROW)
+  {
+    PlayerID pid = static_cast<PlayerID>(sqlite3_column_int(stmt, 0));
+    uint32_t price = static_cast<uint32_t>(sqlite3_column_int(stmt, 1));
+    const char* date_str =
+        reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+
+    TransferListing listing;
+    listing.player_id = pid;
+    listing.asking_price = price;
+    listing.listing_date =
+        GameDateValue::fromString(date_str ? date_str : "2025-07-01");
+
+    listings[pid] = listing;
+  }
+
+  sqlite3_finalize(stmt);
+  return listings;
 }
 
 void from_json(const nlohmann::json& j, RoleFocus& rf)
