@@ -15,5 +15,7 @@ var dir_b5cd8e7fdc4b3f1169d06247ffeae034 =
     [ "strategy_scene.cpp", "strategy__scene_8cpp.html", null ],
     [ "strategy_scene.h", "strategy__scene_8h.html", "strategy__scene_8h" ],
     [ "team_selection_scene.cpp", "team__selection__scene_8cpp.html", null ],
-    [ "team_selection_scene.h", "team__selection__scene_8h.html", "team__selection__scene_8h" ]
+    [ "team_selection_scene.h", "team__selection__scene_8h.html", "team__selection__scene_8h" ],
+    [ "transfer_market_scene.cpp", "transfer__market__scene_8cpp.html", null ],
+    [ "transfer_market_scene.h", "transfer__market__scene_8h.html", "transfer__market__scene_8h" ]
 ];

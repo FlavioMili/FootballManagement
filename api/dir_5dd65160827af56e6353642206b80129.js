@@ -25,5 +25,7 @@ var dir_5dd65160827af56e6353642206b80129 =
     [ "strategy.cpp", "strategy_8cpp.html", null ],
     [ "strategy.h", "strategy_8h.html", "strategy_8h" ],
     [ "team.cpp", "team_8cpp.html", null ],
-    [ "team.h", "team_8h.html", "team_8h" ]
+    [ "team.h", "team_8h.html", "team_8h" ],
+    [ "transfer_listing.cpp", "transfer__listing_8cpp.html", null ],
+    [ "transfer_listing.h", "transfer__listing_8h.html", "transfer__listing_8h" ]
 ];

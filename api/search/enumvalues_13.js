@@ -7,5 +7,6 @@ var searchData=
   ['update_5fteam_4',['UPDATE_TEAM',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a82e3070dec466adbf388354ba1c9b9e5',1,'queries.h']]],
   ['upsert_5fgame_5fstate_5',['UPSERT_GAME_STATE',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a54ea4f570e352f92d5f7ada2c6ee6fad',1,'queries.h']]],
   ['upsert_5fleague_5fpoints_6',['UPSERT_LEAGUE_POINTS',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a66a98e3eb5714a4007f70a221696aca0',1,'queries.h']]],
-  ['us_7',['US',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca7516fd43adaa5e0b8a65a672c39845d2',1,'languages.h']]]
+  ['upsert_5ftransfer_5flisting_7',['UPSERT_TRANSFER_LISTING',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a3c3576134fc0c66aca83f4f2de266e35',1,'queries.h']]],
+  ['us_8',['US',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca7516fd43adaa5e0b8a65a672c39845d2',1,'languages.h']]]
 ];

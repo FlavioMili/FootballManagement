@@ -12,6 +12,13 @@ var searchData=
   ['menu_5fbutton_5fheight_9',['MENU_BUTTON_HEIGHT',['../namespaceGUIConstants.html#abc2e76f38a7e582d6421122a60991b69',1,'GUIConstants']]],
   ['menu_5fbutton_5fwidth_10',['MENU_BUTTON_WIDTH',['../namespaceGUIConstants.html#a42d711d1401f48961605322502d596b5',1,'GUIConstants']]],
   ['min_5fstat_5fval_11',['MIN_STAT_VAL',['../global_8h.html#ae5ca3a6fc23f7d89ab8926acb991f017',1,'global.h']]],
-  ['month_12',['month',['../structGameDateValue.html#ae6429e04e2ca5595bdc88351226386e6',1,'GameDateValue']]],
-  ['movementradius_13',['movementRadius',['../structRoleWeights.html#accadccbd8108d564aba5d468b84697c0',1,'RoleWeights']]]
+  ['missing_5fcb_12',['missing_cb',['../structGameController_1_1SquadNeeds.html#a9891a33362816e16754bc9a2bb9eb8f9',1,'GameController::SquadNeeds']]],
+  ['missing_5fgk_13',['missing_gk',['../structGameController_1_1SquadNeeds.html#a8eb92a891bc999df5aa0754f7930478e',1,'GameController::SquadNeeds']]],
+  ['missing_5flb_14',['missing_lb',['../structGameController_1_1SquadNeeds.html#a62b40ea06c7bd57de257cb7a9c1eed5a',1,'GameController::SquadNeeds']]],
+  ['missing_5fmid_15',['missing_mid',['../structGameController_1_1SquadNeeds.html#abcbe1c8be85c1f09f152a13da0f0c8d5',1,'GameController::SquadNeeds']]],
+  ['missing_5frb_16',['missing_rb',['../structGameController_1_1SquadNeeds.html#ac0a2a5c82b6103e992086aa5620c4cde',1,'GameController::SquadNeeds']]],
+  ['missing_5fst_17',['missing_st',['../structGameController_1_1SquadNeeds.html#afd12265d93d2fdb4b267ba0449597a9e',1,'GameController::SquadNeeds']]],
+  ['missing_5fwing_18',['missing_wing',['../structGameController_1_1SquadNeeds.html#a540e0984f9bdb6be2f2ed136b043dbc9',1,'GameController::SquadNeeds']]],
+  ['month_19',['month',['../structGameDateValue.html#ae6429e04e2ca5595bdc88351226386e6',1,'GameDateValue']]],
+  ['movementradius_20',['movementRadius',['../structRoleWeights.html#accadccbd8108d564aba5d468b84697c0',1,'RoleWeights']]]
 ];

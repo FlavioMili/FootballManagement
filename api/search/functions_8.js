@@ -19,6 +19,7 @@ var searchData=
   ['isgameloaded_16',['isGameLoaded',['../classGameController.html#a5bd3d0ee7f48a540c50c251243bdcc66',1,'GameController']]],
   ['isleapyear_17',['isLeapYear',['../structGameDateValue.html#a88e85074d96d94d14129c38889300c57',1,'GameDateValue']]],
   ['isplayed_18',['isPlayed',['../classMatch.html#a2d950a4f7fbf7319f10365d457ef1f5b',1,'Match']]],
-  ['ispointinbutton_19',['isPointInButton',['../classButtonManager.html#a0d7501a308fd9a72435708a77e4f0691',1,'ButtonManager']]],
-  ['istransferwindowopen_20',['isTransferWindowOpen',['../structGameDateValue.html#a000e6c6cb2a6e6e1c226dbc510933cb4',1,'GameDateValue']]]
+  ['isplayerlisted_19',['isPlayerListed',['../classGameController.html#ad9c437e34cac2b51e30a266ce8fd6246',1,'GameController']]],
+  ['ispointinbutton_20',['isPointInButton',['../classButtonManager.html#a0d7501a308fd9a72435708a77e4f0691',1,'ButtonManager']]],
+  ['istransferwindowopen_21',['istransferwindowopen',['../classGameController.html#a534b33d84dea837b6b80d1894fcfc989',1,'GameController::isTransferWindowOpen()'],['../structGameDateValue.html#a000e6c6cb2a6e6e1c226dbc510933cb4',1,'GameDateValue::isTransferWindowOpen()']]]
 ];

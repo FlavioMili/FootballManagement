@@ -4,6 +4,8 @@ var hierarchy =
     [ "ButtonManager", "classButtonManager.html", null ],
     [ "ButtonStyle", "structButtonStyle.html", null ],
     [ "Calendar", "classCalendar.html", null ],
+    [ "TransferMarketScene::ConfirmState", "structTransferMarketScene_1_1ConfirmState.html", null ],
+    [ "TransferMarketScene::CounterState", "structTransferMarketScene_1_1CounterState.html", null ],
     [ "DatabaseConnection", "classDatabaseConnection.html", null ],
     [ "DataGenerator", "classDataGenerator.html", null ],
     [ "Dropdown", "classDropdown.html", null ],
@@ -24,7 +26,8 @@ var hierarchy =
       [ "RosterScene", "classRosterScene.html", null ],
       [ "SettingsScene", "classSettingsScene.html", null ],
       [ "StrategyScene", "classStrategyScene.html", null ],
-      [ "TeamSelectionScene", "classTeamSelectionScene.html", null ]
+      [ "TeamSelectionScene", "classTeamSelectionScene.html", null ],
+      [ "TransferMarketScene", "classTransferMarketScene.html", null ]
     ] ],
     [ "GUIView", "classGUIView.html", null ],
     [ "LanguageManager", "classLanguageManager.html", null ],
@@ -53,10 +56,12 @@ var hierarchy =
     [ "Settings", "structSettings.html", null ],
     [ "SettingsManager", "classSettingsManager.html", null ],
     [ "SQLLoader", "classSQLLoader.html", null ],
+    [ "GameController::SquadNeeds", "structGameController_1_1SquadNeeds.html", null ],
     [ "StatsConfig", "structStatsConfig.html", null ],
     [ "Strategy", "classStrategy.html", null ],
     [ "StrategySliders", "structStrategySliders.html", null ],
     [ "Team", "classTeam.html", null ],
     [ "TeamRepository", "classTeamRepository.html", null ],
+    [ "TransferListing", "structTransferListing.html", null ],
     [ "Vector2F", "structVector2F.html", null ]
 ];

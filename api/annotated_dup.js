@@ -55,5 +55,7 @@ var annotated_dup =
     [ "Team", "classTeam.html", "classTeam" ],
     [ "TeamRepository", "classTeamRepository.html", "classTeamRepository" ],
     [ "TeamSelectionScene", "classTeamSelectionScene.html", "classTeamSelectionScene" ],
+    [ "TransferListing", "structTransferListing.html", "structTransferListing" ],
+    [ "TransferMarketScene", "classTransferMarketScene.html", "classTransferMarketScene" ],
     [ "Vector2F", "structVector2F.html", "structVector2F" ]
 ];

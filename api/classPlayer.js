@@ -40,5 +40,6 @@ var classPlayer =
     [ "_status", "classPlayer.html#a12122f838d032c80bbfa77a8965e1248", null ],
     [ "_team_id", "classPlayer.html#a8685d7c544df408712e7360d5e723701", null ],
     [ "_transfer_status", "classPlayer.html#a1d21f3f93d72c942bd35324ebbdf9b4e", null ],
-    [ "_wage", "classPlayer.html#aaa7f507f293fb96b9bac21fd49d82854", null ]
+    [ "_wage", "classPlayer.html#aaa7f507f293fb96b9bac21fd49d82854", null ],
+    [ "TRANSFER_LISTED_BIT", "classPlayer.html#a6a03feb2828425b51680d0ca5cf52816", null ]
 ];

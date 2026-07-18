@@ -25,6 +25,9 @@ var queries_8h =
       [ "UPSERT_LEAGUE_POINTS", "queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a66a98e3eb5714a4007f70a221696aca0", null ],
       [ "SELECT_LEAGUE_POINTS", "queries_8h.html#a9eb5191b99123f36e7ee07068f87be85af192571c419a7d9b802faa3bbd7880be", null ],
       [ "RESET_ALL_LEAGUE_POINTS", "queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a427d3fd26f7834023b17223907b83911", null ],
+      [ "UPSERT_TRANSFER_LISTING", "queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a3c3576134fc0c66aca83f4f2de266e35", null ],
+      [ "DELETE_TRANSFER_LISTING", "queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a0f2ffce47920d233605e035a2ae396be", null ],
+      [ "LOAD_ALL_TRANSFER_LISTINGS", "queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a41d77fc401c82ec9068b235e0e832298", null ],
       [ "COUNT", "queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a4905ac9d6a22bdfc1ae096094ce6248d", null ]
     ] ],
     [ "string_to_query_map", "queries_8h.html#ac14409a867c1c3c46cf759af18ce4ade", null ]

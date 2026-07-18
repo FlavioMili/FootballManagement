@@ -14,5 +14,7 @@ var classSettingsScene =
     [ "resolutionOptions", "classSettingsScene.html#a8c5d3618e180eca556a5b76393ed0c39", null ],
     [ "selectedFPS", "classSettingsScene.html#a4e4b17253aac7146edf37ec09e364f70", null ],
     [ "selectedLanguage", "classSettingsScene.html#a67da21bb9e886502cd511d4048d15784", null ],
-    [ "selectedResolution", "classSettingsScene.html#a3991698d693e7ccfc487f593423d1d7c", null ]
+    [ "selectedResolution", "classSettingsScene.html#a3991698d693e7ccfc487f593423d1d7c", null ],
+    [ "showWipeDataOverlay", "classSettingsScene.html#a54193c24e3c79b45e72b33a6c37c176a", null ],
+    [ "wipeDataTimer", "classSettingsScene.html#ad66ad8800e74f11925b0be6b6bead540", null ]
 ];

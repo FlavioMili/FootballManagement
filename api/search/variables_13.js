@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['velocity_0',['velocity',['../structMatchPlayer.html#ac3e428863122a510aac7bb51a31908ce',1,'MatchPlayer::velocity'],['../structMatchBall.html#a0a0953c6d32de7d26fbe47a3e8dd7a29',1,'MatchBall::velocity']]]
+  ['upgrade_5ftarget_0',['upgrade_target',['../structGameController_1_1SquadNeeds.html#a816dc813914bd6c7c69e6f01e2593988',1,'GameController::SquadNeeds']]]
 ];

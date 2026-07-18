@@ -129,16 +129,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6ab100ef7f80127bee1f9d00a6c6c1b9" id="r_a6ab100ef7f80127bee1f9d00a6c6c1b9"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a6ab100ef7f80127bee1f9d00a6c6c1b9">getTransferToWagesRatio</a> () const noexcept</td></tr>
 <tr class="memdesc:a6ab100ef7f80127bee1f9d00a6c6c1b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the current transfer to wages ratio.  <br /></td></tr>
 <tr class="separator:a6ab100ef7f80127bee1f9d00a6c6c1b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd921ab5b1908be2415552910d7e3f07" id="r_acd921ab5b1908be2415552910d7e3f07"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#acd921ab5b1908be2415552910d7e3f07">getCurrentWageSpending</a> (const class <a class="el" href="classGameData.html">GameData</a> &amp;gamedata) const</td></tr>
-<tr class="memdesc:acd921ab5b1908be2415552910d7e3f07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the current total wage spending of the team.  <br /></td></tr>
-<tr class="separator:acd921ab5b1908be2415552910d7e3f07"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6bac4d9513806eb4c60897be2b46c4ab" id="r_a6bac4d9513806eb4c60897be2b46c4ab"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a6bac4d9513806eb4c60897be2b46c4ab">getCurrentWageSpending</a> (const class <a class="el" href="classGameData.html">GameData</a> &amp;gamedata, const <a class="el" href="classTeam.html">Team</a> &amp;team) const</td></tr>
+<tr class="memdesc:a6bac4d9513806eb4c60897be2b46c4ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the current total wage spending of the team.  <br /></td></tr>
+<tr class="separator:a6bac4d9513806eb4c60897be2b46c4ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
 <tr class="memitem:a2614c7877a732fcc20aa1776b04b93ff" id="r_a2614c7877a732fcc20aa1776b04b93ff"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a2614c7877a732fcc20aa1776b04b93ff">balance</a></td></tr>
 <tr class="separator:a2614c7877a732fcc20aa1776b04b93ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb6779ddc08bbbca6155972bce46f238" id="r_acb6779ddc08bbbca6155972bce46f238"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTeam.html">Team</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#acb6779ddc08bbbca6155972bce46f238">team</a></td></tr>
-<tr class="separator:acb6779ddc08bbbca6155972bce46f238"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac8f92a39da4eb2b954c88b023c51720e" id="r_ac8f92a39da4eb2b954c88b023c51720e"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#ac8f92a39da4eb2b954c88b023c51720e">transfer_to_wages_ratio</a></td></tr>
 <tr class="separator:ac8f92a39da4eb2b954c88b023c51720e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -265,8 +263,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="acd921ab5b1908be2415552910d7e3f07" name="acd921ab5b1908be2415552910d7e3f07"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acd921ab5b1908be2415552910d7e3f07">&#9670;&#160;</a></span>getCurrentWageSpending()</h2>
+<a id="a6bac4d9513806eb4c60897be2b46c4ab" name="a6bac4d9513806eb4c60897be2b46c4ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6bac4d9513806eb4c60897be2b46c4ab">&#9670;&#160;</a></span>getCurrentWageSpending()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -275,8 +273,18 @@ Private Attributes</h2></td></tr>
           <td class="memname">int64_t Finances::getCurrentWageSpending </td>
           <td>(</td>
           <td class="paramtype">const class <a class="el" href="classGameData.html">GameData</a> &amp;&#160;</td>
-          <td class="paramname"><em>gamedata</em></td><td>)</td>
-          <td> const</td>
+          <td class="paramname"><em>gamedata</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classTeam.html">Team</a> &amp;&#160;</td>
+          <td class="paramname"><em>team</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -378,28 +386,6 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::int64_t Finances::balance</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="acb6779ddc08bbbca6155972bce46f238" name="acb6779ddc08bbbca6155972bce46f238"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acb6779ddc08bbbca6155972bce46f238">&#9670;&#160;</a></span>team</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classTeam.html">Team</a>&amp; Finances::team</td>
         </tr>
       </table>
   </td>
