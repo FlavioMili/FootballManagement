@@ -82,6 +82,8 @@ set(CORE_SOURCES
     gui/scenes/strategy_scene.cpp
     gui/scenes/team_selection_scene.h
     gui/scenes/team_selection_scene.cpp
+    gui/scenes/transfer_market_scene.h
+    gui/scenes/transfer_market_scene.cpp
 
     # Model
     model/calendar.h
@@ -110,6 +112,8 @@ set(CORE_SOURCES
     model/strategy.cpp
     model/team.h
     model/team.cpp
+    model/transfer_listing.h
+    model/transfer_listing.cpp
 )
 
 add_library(core_lib STATIC ${CORE_SOURCES})

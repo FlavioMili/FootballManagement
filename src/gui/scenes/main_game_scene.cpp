@@ -21,6 +21,7 @@
 #include "gui/scenes/roster_scene.h"
 #include "gui/scenes/strategy_scene.h"
 #include "gui/scenes/team_selection_scene.h"
+#include "gui/scenes/transfer_market_scene.h"
 #include "model/game.h"
 #include "model/role_utils.h"
 
@@ -159,6 +160,7 @@ void MainGameScene::renderSidebar()
   if (ImGui::Button(LOC("MAIN_GAME_TRANSFER_MARKET"),
                     ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
   {
+    guiView->overlayScene(std::make_unique<TransferMarketScene>(guiView));
   }
   ImGui::Spacing();
   if (ImGui::Button(LOC("MAIN_GAME_SAVE_GAME"),

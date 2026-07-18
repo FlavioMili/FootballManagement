@@ -22,10 +22,9 @@
 #include "model/role_utils.h"
 #include "model/team.h"
 
-Game::Game(std::shared_ptr<GameData> gd, const std::string& db_path)
-    : db_conn(std::make_shared<DatabaseConnection>(db_path)),
-      gamedata(std::move(gd)),
-      currentDate(START_DATE)
+Game::Game(std::shared_ptr<GameData> gd,
+           std::shared_ptr<DatabaseConnection> conn)
+    : db_conn(std::move(conn)), gamedata(std::move(gd)), currentDate(START_DATE)
 {
   (*gamedata).loadFromDB(db_conn);
   loadGame();

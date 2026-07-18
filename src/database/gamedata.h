@@ -22,6 +22,8 @@
 #include "model/player.h"
 #include "model/team.h"
 
+struct TransferListing;
+
 class DatabaseConnection;
 
 /**
@@ -100,6 +102,22 @@ class GameData
       TeamID team_id) const;
   bool removePlayer(PlayerID id);
   void transferPlayer(PlayerID id, TeamID new_team_id);
+
+  // ---------------- Transfer Market ----------------
+  /**
+   * @brief Saves a transfer listing to the database (UPSERT).
+   */
+  void saveTransferListing(const TransferListing& listing) const;
+
+  /**
+   * @brief Deletes a transfer listing from the database.
+   */
+  void deleteTransferListing(PlayerID player_id) const;
+
+  /**
+   * @brief Loads all transfer listings from the database into a map.
+   */
+  std::unordered_map<PlayerID, TransferListing> loadAllTransferListings() const;
 
  private:
   std::unordered_map<LeagueID, League> _leagues;

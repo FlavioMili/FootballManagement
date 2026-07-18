@@ -11,6 +11,8 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <random>
+#include <unordered_map>
 #include <vector>
 
 #include "global/stats_config.h"
@@ -18,6 +20,7 @@
 #include "model/league.h"
 #include "model/player.h"
 #include "model/team.h"
+#include "model/transfer_listing.h"
 
 /**
  * @class GameController
@@ -163,11 +166,90 @@ class GameController
    */
   SaveSlotMetadata getSaveSlotMetadata(int slot) const;
 
+  // ========== Transfer Market: Listing ==========
+  void listPlayerForTransfer(PlayerID player_id, uint32_t asking_price);
+  void removePlayerFromTransfer(PlayerID player_id);
+  bool isPlayerListed(PlayerID player_id) const;
+
+  // ========== Transfer Market: Queries ==========
+  const std::unordered_map<PlayerID, TransferListing>& getAllListings() const;
+  std::vector<const TransferListing*> getListingsExcludingTeam(
+      TeamID team_id) const;
+  std::vector<const TransferListing*> getListingsByRole(PlayerRole role) const;
+
+  // ========== Transfer Market: Buying ==========
+  bool canAffordPlayer(TeamID buyer_id, PlayerID player_id,
+                       uint32_t target_price) const;
+  bool buyPlayer(PlayerID player_id, TeamID buyer_id, uint32_t price);
+  bool signFreeAgent(PlayerID player_id, TeamID buyer_id);
+  uint32_t getPlayerMarketValue(PlayerID player_id) const;
+
+  // ========== Transfer Market: Bids & Negotiation ==========
+  bool submitBid(PlayerID player_id, TeamID bidder_id, uint32_t bid_amount);
+  bool acceptBid(PlayerID player_id);
+  bool rejectBid(PlayerID player_id);
+  bool counterOffer(PlayerID player_id, uint32_t new_price);
+  bool isTransferWindowOpen() const;
+  std::vector<std::pair<PlayerID, TransferListing>> getIncomingBids() const;
+
+  // ========== AI Helpers ==========
+  struct SquadNeeds
+  {
+    int missing_gk = 0;
+    int missing_cb = 0;
+    int missing_lb = 0;
+    int missing_rb = 0;
+    int missing_mid = 0;
+    int missing_wing = 0;
+    int missing_st = 0;
+
+    int surplus_gk = 0;
+    int surplus_cb = 0;
+    int surplus_lb = 0;
+    int surplus_rb = 0;
+    int surplus_mid = 0;
+    int surplus_wing = 0;
+    int surplus_st = 0;
+
+    std::optional<PlayerRole>
+        upgrade_target;  // Role that needs quality upgrade
+  };
+
+  SquadNeeds evaluateSquadNeeds(TeamID team_id) const;
+  float calculateAttentionScore(PlayerID player_id) const;
+  float getLeagueAttentionMultiplier(LeagueID league_id) const;
+  uint32_t calculateMaxPrice(PlayerID player_id, TeamID buyer_id,
+                             const SquadNeeds& needs) const;
+  void evaluateAndActForTeam(TeamID team_id);
+  std::vector<PlayerID> findTargetsForRole(PlayerRole role, TeamID buyer_id,
+                                           const SquadNeeds& needs) const;
+  PlayerRole getRoleCategory(PlayerRole role) const;
+  uint32_t transferBudgetForTeam(TeamID team_id) const;
+
+  static float randomFloat(float min, float max)
+  {
+    std::random_device rd;
+    std::uniform_real_distribution<float> dis(min, max);
+    return dis(rd);
+  }
+
   const Game* getGame() const { return game.get(); }
 
+  /** @brief Gets the database connection (for repos that need it). */
+  std::shared_ptr<DatabaseConnection> getDbConn() const { return db_conn; }
+
+  /** @brief Gets the game data cache. */
+  std::shared_ptr<GameData> getGameData() const { return gamedata; }
+
  private:
+  std::shared_ptr<class DatabaseConnection> db_conn;
   std::unique_ptr<Game> game;
   std::shared_ptr<class GameData> gamedata;
+
+  std::unordered_map<PlayerID, TransferListing> transfer_listings;
+  void executeTransfer(PlayerID pid, TeamID buyer_id, TeamID seller_id,
+                       uint32_t price);
+  void processAITransferActivity();
 
   std::string getSavePath(int slot) const;
 };

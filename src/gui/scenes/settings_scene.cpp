@@ -79,7 +79,13 @@ void SettingsScene::onEnter()
   fullscreen = settings.fullscreen;
 }
 
-void SettingsScene::update(float deltaTime) { (void)deltaTime; }
+void SettingsScene::update(float deltaTime)
+{
+  if (showWipeDataOverlay && wipeDataTimer > 0.0f)
+  {
+    wipeDataTimer -= deltaTime;
+  }
+}
 
 void SettingsScene::render()
 {
@@ -134,6 +140,59 @@ void SettingsScene::render()
   }
 
   ImGui::Checkbox(LOC("SETTINGS_FULLSCREEN"), &fullscreen);
+
+  ImGui::Spacing();
+
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 1.0f));
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.9f, 0.2f, 0.2f, 1.0f));
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
+  if (ImGui::Button("REMOVE ALL DATA", ImVec2(GUIConstants::BUTTON_WIDTH,
+                                              GUIConstants::BUTTON_HEIGHT)))
+  {
+    showWipeDataOverlay = true;
+    wipeDataTimer = 3.0f;
+    ImGui::OpenPopup("WipeDataPopup");
+  }
+  ImGui::PopStyleColor(3);
+
+  if (ImGui::BeginPopupModal("WipeDataPopup", NULL,
+                             ImGuiWindowFlags_AlwaysAutoResize))
+  {
+    ImGui::Text(
+        "WARNING: This will permanently delete the database.\nAre you "
+        "absolutely sure?");
+    ImGui::Separator();
+
+    if (wipeDataTimer > 0.0f)
+    {
+      ImGui::BeginDisabled();
+      char buf[32];
+      snprintf(buf, sizeof(buf), "Confirm (%.1fs)", wipeDataTimer);
+      ImGui::Button(buf, ImVec2(120, 0));
+      ImGui::EndDisabled();
+    }
+    else
+    {
+      if (ImGui::Button("Confirm", ImVec2(120, 0)))
+      {
+        if (std::filesystem::exists(DATABASE_PATH))
+        {
+          std::filesystem::remove(DATABASE_PATH);
+        }
+        showWipeDataOverlay = false;
+        ImGui::CloseCurrentPopup();
+      }
+    }
+
+    ImGui::SetItemDefaultFocus();
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+    {
+      showWipeDataOverlay = false;
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndPopup();
+  }
 
   ImGui::Spacing();
   ImGui::Separator();

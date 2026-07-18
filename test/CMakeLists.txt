@@ -4,6 +4,7 @@ add_executable(unit_tests
   test_gamedata.cpp
   test_database.cpp
   test_match_engine.cpp
+  test_transfer_market.cpp
 )
 
 target_link_libraries(unit_tests PRIVATE

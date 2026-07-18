@@ -74,5 +74,13 @@ CREATE TABLE IF NOT EXISTS LeaguePoints (
 INSERT OR IGNORE INTO Teams (id, league_id, name, balance)
 VALUES (0, -1, 'Free agents', -1);
 
+-- Transfer list for the transfer market
+CREATE TABLE IF NOT EXISTS TransferList (
+    player_id INTEGER PRIMARY KEY,
+    asking_price INTEGER NOT NULL DEFAULT 0,
+    listing_date TEXT NOT NULL,
+    FOREIGN KEY(player_id) REFERENCES Players(id)
+);
+
 -- Enable WAL mode
 PRAGMA journal_mode=WAL;

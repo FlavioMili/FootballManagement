@@ -31,9 +31,10 @@ class Game
   /**
    * @brief Constructs a new Game object.
    * @param gd Shared pointer to the GameData instance.
-   * @param db_path Path to the SQLite database file for this game.
+   * @param conn Shared pointer to the DatabaseConnection.
    */
-  explicit Game(std::shared_ptr<class GameData> gd, const std::string& db_path);
+  explicit Game(std::shared_ptr<class GameData> gd,
+                std::shared_ptr<DatabaseConnection> conn);
 
   /**
    * @brief Advances the game time by one day, simulating any matches or events
