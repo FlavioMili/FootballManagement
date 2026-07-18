@@ -228,7 +228,8 @@ class GameController
 
   static float randomFloat(float min, float max)
   {
-    static std::mt19937 gen(std::random_device{}());
+    static std::mt19937 gen(
+        std::random_device{}());  // NOSONAR (Not used for cryptography)
     std::uniform_real_distribution<float> dis(min, max);
     return dis(gen);
   }

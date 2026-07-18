@@ -12,6 +12,7 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <array>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
@@ -24,13 +25,16 @@ TransferMarketScene::TransferMarketScene(GUIView* parent) : GUIScene(parent) {}
 
 void TransferMarketScene::onEnter() { refreshData(); }
 
-void TransferMarketScene::update(float /*deltaTime*/) {}
+void TransferMarketScene::update(float /*deltaTime*/)
+{
+  // No update logic required for this scene yet.
+}
 
 SceneID TransferMarketScene::getID() const { return SceneID::TRANSFER_MARKET; }
 
 void TransferMarketScene::refreshData()
 {
-  auto& controller = guiView->getController();
+  const auto& controller = guiView->getController();
   TeamID my_team = controller.getGame()->getManagedTeamId();
 
   cached_listings = controller.getListingsExcludingTeam(my_team);
@@ -50,7 +54,7 @@ void TransferMarketScene::render()
 
   if (ImGui::Begin(LOC("TRANSFER_TITLE"), nullptr, window_flags))
   {
-    auto& controller = guiView->getController();
+    const auto& controller = guiView->getController();
     TeamID my_team = controller.getGame()->getManagedTeamId();
 
     uint32_t budget = controller.transferBudgetForTeam(my_team);
@@ -104,26 +108,26 @@ void TransferMarketScene::render()
 
 void TransferMarketScene::renderBuyTab()
 {
-  auto& controller = guiView->getController();
+  const auto& controller = guiView->getController();
 
   ImGui::Text("%s", LOC("TRANSFER_FILTERS"));
 
   // Filters (Simplified for space)
-  const char* roles[] = {LOC("TRANSFER_ALL"),
-                         "GK",
-                         "CB",
-                         "LB",
-                         "RB",
-                         "CDM",
-                         "CM",
-                         "CAM",
-                         "LM",
-                         "RM",
-                         "LW",
-                         "RW",
-                         "ST"};
-  ImGui::Combo(LOC("TRANSFER_FILTER_ROLE"), &filter_role_index, roles,
-               IM_ARRAYSIZE(roles));
+  static const std::array<const char*, 13> roles = {LOC("TRANSFER_ALL"),
+                                                    "GK",
+                                                    "CB",
+                                                    "LB",
+                                                    "RB",
+                                                    "CDM",
+                                                    "CM",
+                                                    "CAM",
+                                                    "LM",
+                                                    "RM",
+                                                    "LW",
+                                                    "RW",
+                                                    "ST"};
+  ImGui::Combo(LOC("TRANSFER_FILTER_ROLE"), &filter_role_index, roles.data(),
+               static_cast<int>(roles.size()));
   ImGui::SliderInt(LOC("TRANSFER_FILTER_AGE"), &filter_max_age, 15, 45);
   ImGui::SliderFloat(LOC("TRANSFER_FILTER_PRICE"), &filter_max_price, 0.0f,
                      200000000.0f, "%.0f");
@@ -173,7 +177,7 @@ void TransferMarketScene::renderBuyTab()
       ImGui::TableNextColumn();
       ImGui::Text("%s", RoleUtils::toString(p.getRole()).c_str());
       ImGui::TableNextColumn();
-      ImGui::Text("%d", static_cast<int>(p.getAge()));
+      ImGui::Text("%d", p.getAge());
       ImGui::TableNextColumn();
       ImGui::Text("%d", static_cast<int>(p.getOverall(
                             controller.getGameData()->getStatsConfig())));
@@ -233,7 +237,7 @@ void TransferMarketScene::renderBuyTab()
       ImGui::TableNextColumn();
       ImGui::Text("%s", RoleUtils::toString(p.getRole()).c_str());
       ImGui::TableNextColumn();
-      ImGui::Text("%d", static_cast<int>(p.getAge()));
+      ImGui::Text("%d", p.getAge());
       ImGui::TableNextColumn();
       ImGui::Text("%d", static_cast<int>(p.getOverall(
                             controller.getGameData()->getStatsConfig())));
@@ -276,8 +280,9 @@ void TransferMarketScene::renderListingsTab()
     if (list_player_index >= static_cast<int>(listable_players.size()))
       list_player_index = 0;
 
-    std::string combo_preview = listable_players[list_player_index]->getName();
-    if (ImGui::BeginCombo(LOC("TRANSFER_SELECT_PLAYER"), combo_preview.c_str()))
+    if (std::string combo_preview =
+            listable_players[list_player_index]->getName();
+        ImGui::BeginCombo(LOC("TRANSFER_SELECT_PLAYER"), combo_preview.c_str()))
     {
       for (size_t i = 0; i < listable_players.size(); i++)
       {
@@ -405,17 +410,17 @@ void TransferMarketScene::renderBidsTab()
       ImGui::Text("%.1f%%", static_cast<double>(vs_val));
 
       ImGui::TableNextColumn();
-      std::string accept_id =
-          fmt::format("{}##{}", LOC("TRANSFER_ACCEPT"), pid);
-      if (ImGui::Button(accept_id.c_str()))
+      if (std::string accept_id =
+              fmt::format("{}##{}", LOC("TRANSFER_ACCEPT"), pid);
+          ImGui::Button(accept_id.c_str()))
       {
         controller.acceptBid(pid);
         refreshData();
       }
       ImGui::SameLine();
-      std::string reject_id =
-          fmt::format("{}##{}", LOC("TRANSFER_REJECT"), pid);
-      if (ImGui::Button(reject_id.c_str()))
+      if (std::string reject_id =
+              fmt::format("{}##{}", LOC("TRANSFER_REJECT"), pid);
+          ImGui::Button(reject_id.c_str()))
       {
         controller.rejectBid(pid);
         refreshData();
@@ -445,10 +450,9 @@ void TransferMarketScene::renderConfirmDialog()
                              ImGuiWindowFlags_AlwaysAutoResize))
   {
     auto& controller = guiView->getController();
-    auto player_opt =
-        controller.getGameData()->getPlayer(confirm_state.player_id);
-
-    if (player_opt.has_value())
+    if (auto player_opt =
+            controller.getGameData()->getPlayer(confirm_state.player_id);
+        player_opt.has_value())
     {
       if (confirm_state.is_free_agent)
       {
@@ -515,9 +519,8 @@ void TransferMarketScene::renderCounterDialog()
   {
     auto& controller = guiView->getController();
     const auto& all_listings = controller.getAllListings();
-    auto it = all_listings.find(counter_state.player_id);
-
-    if (it != all_listings.end())
+    if (auto it = all_listings.find(counter_state.player_id);
+        it != all_listings.end())
     {
       ImGui::Text("%s: €%u", LOC("TRANSFER_CURRENT_BID"),
                   it->second.highest_bid);

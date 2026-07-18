@@ -15,7 +15,6 @@ TransferListing::TransferListing(PlayerID pid, TeamID seller, uint32_t price,
       asking_price(price),
       listing_date(date),
       highest_bidder_id(std::nullopt),
-      highest_bid(0),
       attention_score(attention)
 {
 }

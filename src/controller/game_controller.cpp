@@ -854,8 +854,8 @@ void GameController::evaluateAndActForTeam(TeamID team_id)
     uint32_t max_price = calculateMaxPrice(target, team_id, needs);
 
     uint32_t market_val = getPlayerMarketValue(target);
-    uint32_t initial_bid = static_cast<uint32_t>(
-        static_cast<float>(market_val) * randomFloat(0.6f, 1.2f));
+    auto initial_bid = static_cast<uint32_t>(static_cast<float>(market_val) *
+                                             randomFloat(0.6f, 1.2f));
     uint32_t bid = std::min(initial_bid, max_price);
 
     if (bid > 0 && static_cast<int64_t>(bid) <= static_cast<int64_t>(budget))
@@ -906,7 +906,7 @@ void GameController::evaluateAndActForTeam(TeamID team_id)
         });
 
     PlayerID to_sell = candidates[0];
-    uint32_t asking = static_cast<uint32_t>(
+    auto asking = static_cast<uint32_t>(
         static_cast<float>(getPlayerMarketValue(to_sell)) *
         randomFloat(0.8f, 1.3f));
     if (asking > 0)
@@ -928,27 +928,28 @@ void GameController::evaluateAndActForTeam(TeamID team_id)
 
 PlayerRole GameController::getRoleCategory(PlayerRole role) const
 {
+  using enum PlayerRole;
   switch (role)
   {
-    case PlayerRole::GK:
-      return PlayerRole::GK;
-    case PlayerRole::CB:
-    case PlayerRole::LB:
-    case PlayerRole::RB:
-      return PlayerRole::CB;
-    case PlayerRole::CDM:
-    case PlayerRole::CM:
-    case PlayerRole::CAM:
-      return PlayerRole::CM;
-    case PlayerRole::LM:
-    case PlayerRole::RM:
-    case PlayerRole::LW:
-    case PlayerRole::RW:
-      return PlayerRole::LW;
-    case PlayerRole::ST:
-      return PlayerRole::ST;
+    case GK:
+      return GK;
+    case CB:
+    case LB:
+    case RB:
+      return CB;
+    case CDM:
+    case CM:
+    case CAM:
+      return CM;
+    case LM:
+    case RM:
+    case LW:
+    case RW:
+      return LW;
+    case ST:
+      return ST;
     default:
-      return PlayerRole::UNKNOWN;
+      return UNKNOWN;
   }
 }
 
@@ -971,8 +972,8 @@ void GameController::processAITransferActivity()
 {
   for (const auto& [team_id, team] : gamedata->getTeams())
   {
-    auto managed_team_opt = game->getManagedTeamId();
-    if (team_id == FREE_AGENTS_TEAM_ID || team_id == managed_team_opt)
+    if (auto managed_team_opt = game->getManagedTeamId();
+        team_id == FREE_AGENTS_TEAM_ID || team_id == managed_team_opt)
     {
       continue;
     }

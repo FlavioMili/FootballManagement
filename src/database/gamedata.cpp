@@ -430,9 +430,9 @@ GameData::loadAllTransferListings() const
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
-    PlayerID pid = static_cast<PlayerID>(sqlite3_column_int(stmt, 0));
-    uint32_t price = static_cast<uint32_t>(sqlite3_column_int(stmt, 1));
-    const char* date_str =
+    auto pid = static_cast<PlayerID>(sqlite3_column_int(stmt, 0));
+    auto price = static_cast<uint32_t>(sqlite3_column_int(stmt, 1));
+    auto* date_str =
         reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
 
     TransferListing listing;
