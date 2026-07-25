@@ -250,6 +250,7 @@ class GameController
   void executeTransfer(PlayerID pid, TeamID buyer_id, TeamID seller_id,
                        uint32_t price);
   void processAITransferActivity();
+  void evaluateIncomingAIBids();
 
   std::string getSavePath(int slot) const;
 };

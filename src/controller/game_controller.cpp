@@ -441,19 +441,25 @@ void GameController::executeTransfer(PlayerID pid, TeamID buyer_id,
 
 bool GameController::buyPlayer(PlayerID pid, TeamID buyer_id, uint32_t price)
 {
+  auto player_opt = gamedata->getPlayer(pid);
+  if (!player_opt.has_value()) return false;
+
+  TeamID seller_id = player_opt->get().getTeamId();
+  if (seller_id == buyer_id) return false;
+
   auto it = transfer_listings.find(pid);
-  if (it == transfer_listings.end()) return false;
-
-  TransferListing& listing = it->second;
-
-  if (price != listing.asking_price && price != listing.highest_bid)
+  if (it != transfer_listings.end())
   {
-    return false;
+    const TransferListing& listing = it->second;
+    if (price != listing.asking_price && price != listing.highest_bid)
+    {
+      return false;
+    }
   }
 
   if (!canAffordPlayer(buyer_id, pid, price)) return false;
 
-  executeTransfer(pid, buyer_id, listing.seller_team_id, price);
+  executeTransfer(pid, buyer_id, seller_id, price);
   return true;
 }
 
@@ -825,6 +831,21 @@ std::vector<PlayerID> GameController::findTargetsForRole(
     }
   }
 
+  const auto& free_agents = gamedata->getPlayersForTeam(FREE_AGENTS_TEAM_ID);
+  for (const auto& ref : free_agents)
+  {
+    const Player& p = ref.get();
+    if (getRoleCategory(p.getRole()) != broad_cat) continue;
+
+    float score = calculateAttentionScore(p.getId());
+    if (p.getRole() == role) score *= 1.2f;
+
+    if (canAffordPlayer(buyer_id, p.getId(), 0))
+    {
+      candidates.emplace_back(p.getId(), score);
+    }
+  }
+
   std::ranges::sort(candidates, [](const auto& a, const auto& b)
                     { return a.second > b.second; });
 
@@ -851,6 +872,15 @@ void GameController::evaluateAndActForTeam(TeamID team_id)
     if (targets.empty()) return;
 
     PlayerID target = targets[0];
+    auto player_opt = gamedata->getPlayer(target);
+    if (!player_opt.has_value()) return;
+
+    if (player_opt->get().getTeamId() == FREE_AGENTS_TEAM_ID)
+    {
+      signFreeAgent(target, team_id);
+      return;
+    }
+
     uint32_t max_price = calculateMaxPrice(target, team_id, needs);
 
     uint32_t market_val = getPlayerMarketValue(target);
@@ -879,7 +909,7 @@ void GameController::evaluateAndActForTeam(TeamID team_id)
 
   auto trySell = [&](PlayerRole role, int surplus_count)
   {
-    if (surplus_count <= 1) return;
+    if (surplus_count <= 0) return;
 
     const auto& team_players = gamedata->getPlayersForTeam(team_id);
     std::vector<PlayerID> candidates;
@@ -934,9 +964,11 @@ PlayerRole GameController::getRoleCategory(PlayerRole role) const
     case GK:
       return GK;
     case CB:
-    case LB:
-    case RB:
       return CB;
+    case LB:
+      return LB;
+    case RB:
+      return RB;
     case CDM:
     case CM:
     case CAM:
@@ -968,8 +1000,60 @@ uint32_t GameController::transferBudgetForTeam(TeamID team_id) const
                                std::clamp(ratio, 0.0f, 1.0f));
 }
 
+void GameController::evaluateIncomingAIBids()
+{
+  auto managed_team_opt = game->getManagedTeamId();
+  std::vector<PlayerID> to_accept;
+  std::vector<PlayerID> to_reject;
+
+  for (const auto& [pid, listing] : transfer_listings)
+  {
+    if (listing.seller_team_id == FREE_AGENTS_TEAM_ID ||
+        listing.seller_team_id == managed_team_opt)
+    {
+      continue;
+    }
+
+    if (listing.highest_bidder_id.has_value() && listing.highest_bid > 0)
+    {
+      if (listing.highest_bid >= listing.asking_price)
+      {
+        to_accept.push_back(pid);
+      }
+      else if (listing.highest_bid >=
+               static_cast<uint32_t>(static_cast<float>(listing.asking_price) *
+                                     0.85f))
+      {
+        if (randomFloat(0.0f, 1.0f) < 0.30f)
+        {
+          to_accept.push_back(pid);
+        }
+        else
+        {
+          to_reject.push_back(pid);
+        }
+      }
+      else
+      {
+        to_reject.push_back(pid);
+      }
+    }
+  }
+
+  for (PlayerID pid : to_accept)
+  {
+    acceptBid(pid);
+  }
+  for (PlayerID pid : to_reject)
+  {
+    rejectBid(pid);
+  }
+}
+
 void GameController::processAITransferActivity()
 {
+  evaluateIncomingAIBids();
+
   for (const auto& [team_id, team] : gamedata->getTeams())
   {
     if (auto managed_team_opt = game->getManagedTeamId();

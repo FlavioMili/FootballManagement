@@ -16,6 +16,13 @@
 #include "global/paths.h"
 #include "gui/gui_view.h"
 
+#if defined(__clang__) || defined(__GNUC__)
+extern "C" const char* __lsan_default_suppressions()
+{
+  return "leak:libSDL3.so\n";
+}
+#endif
+
 int main()
 {
   Logger::init();

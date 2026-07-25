@@ -13,6 +13,13 @@
 #include <memory>
 #include <string>
 
+#if defined(__clang__) || defined(__GNUC__)
+extern "C" const char* __lsan_default_suppressions()
+{
+  return "leak:libSDL3.so\n";
+}
+#endif
+
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
 #include "global/logger.h"

@@ -9,6 +9,7 @@
 #include "gui/scenes/transfer_market_scene.h"
 
 #include <fmt/format.h>
+#include <fmt/printf.h>
 #include <imgui.h>
 
 #include <algorithm>
@@ -41,6 +42,15 @@ void TransferMarketScene::refreshData()
   cached_bids = controller.getIncomingBids();
   cached_free_agents =
       controller.getGameData()->getPlayersForTeam(FREE_AGENTS_TEAM_ID);
+
+  cached_all_players.clear();
+  for (const auto& [pid, player] : controller.getGameData()->getPlayers())
+  {
+    if (player.getTeamId() != my_team)
+    {
+      cached_all_players.push_back(&player);
+    }
+  }
 }
 
 void TransferMarketScene::render()
@@ -112,7 +122,9 @@ void TransferMarketScene::renderBuyTab()
 
   ImGui::Text("%s", LOC("TRANSFER_FILTERS"));
 
-  // Filters (Simplified for space)
+  ImGui::InputText("Search Name", filter_search_name,
+                   sizeof(filter_search_name));
+
   static const std::array<const char*, 13> roles = {LOC("TRANSFER_ALL"),
                                                     "GK",
                                                     "CB",
@@ -134,105 +146,194 @@ void TransferMarketScene::renderBuyTab()
 
   ImGui::Separator();
 
-  if (ImGui::BeginTable("BuyTable", 8,
-                        ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
-                            ImGuiTableFlags_ScrollY,
-                        ImVec2(0, 300)))
+  std::vector<const Player*> display_players;
+  display_players.reserve(cached_all_players.size());
+
+  std::string search_str = filter_search_name;
+  std::transform(search_str.begin(), search_str.end(), search_str.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+
+  const auto& all_listings = controller.getAllListings();
+
+  for (const auto* p_ptr : cached_all_players)
   {
-    ImGui::TableSetupScrollFreeze(0, 1);
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_NAME"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_TEAM"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_ROLE"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_AGE"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_OVR"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_VALUE"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_PRICE"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_ACTION"));
-    ImGui::TableHeadersRow();
+    const Player& p = *p_ptr;
 
-    for (const auto* listing : cached_listings)
+    if (!search_str.empty())
     {
-      auto player_opt = controller.getGameData()->getPlayer(listing->player_id);
-      if (!player_opt.has_value()) continue;
-
-      const Player& p = player_opt->get();
-
-      if (filter_role_index > 0 &&
-          p.getRole() != static_cast<PlayerRole>(filter_role_index))
-        continue;
-      if (p.getAge() > filter_max_age) continue;
-      if (static_cast<float>(listing->asking_price) > filter_max_price)
-        continue;
-
-      ImGui::TableNextRow();
-      ImGui::TableNextColumn();
-      ImGui::Text("%s", p.getName().c_str());
-      ImGui::TableNextColumn();
-      auto seller_opt =
-          controller.getGameData()->getTeam(listing->seller_team_id);
-      ImGui::Text("%s", seller_opt.has_value()
-                            ? seller_opt->get().getName().c_str()
-                            : "Unknown");
-
-      ImGui::TableNextColumn();
-      ImGui::Text("%s", RoleUtils::toString(p.getRole()).c_str());
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", p.getAge());
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", static_cast<int>(p.getOverall(
-                            controller.getGameData()->getStatsConfig())));
-      ImGui::TableNextColumn();
-      ImGui::Text("€%d", controller.getPlayerMarketValue(p.getId()));
-      ImGui::TableNextColumn();
-      ImGui::Text("€%u", listing->asking_price);
-
-      ImGui::TableNextColumn();
-      std::string btn_id =
-          fmt::format("{}##{}", LOC("TRANSFER_BUY"), p.getId());
-      if (ImGui::Button(btn_id.c_str()))
-      {
-        confirm_state = {true, p.getId(), listing->seller_team_id,
-                         listing->asking_price, false};
-      }
+      std::string name_lower = p.getName();
+      std::transform(name_lower.begin(), name_lower.end(), name_lower.begin(),
+                     [](unsigned char c) { return std::tolower(c); });
+      if (name_lower.find(search_str) == std::string::npos) continue;
     }
-    ImGui::EndTable();
+
+    if (filter_role_index > 0 &&
+        p.getRole() != static_cast<PlayerRole>(filter_role_index))
+      continue;
+    if (p.getAge() > filter_max_age) continue;
+
+    uint32_t price = 0;
+    if (p.getTeamId() == FREE_AGENTS_TEAM_ID)
+    {
+      price = 0;
+    }
+    else if (auto it = all_listings.find(p.getId()); it != all_listings.end())
+    {
+      price = it->second.asking_price;
+    }
+    else
+    {
+      price = controller.getPlayerMarketValue(p.getId());
+    }
+
+    if (static_cast<float>(price) > filter_max_price) continue;
+
+    display_players.push_back(p_ptr);
   }
 
-  ImGui::Spacing();
-  ImGui::Separator();
-  ImGui::Text("%s", LOC("TRANSFER_FREE_AGENTS"));
+  ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                          ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable;
 
-  if (ImGui::BeginTable("FreeAgentsTable", 8,
-                        ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
-                            ImGuiTableFlags_ScrollY,
-                        ImVec2(0, 300)))
+  if (ImGui::BeginTable("BuyTable", 8, flags, ImVec2(0, 450)))
   {
     ImGui::TableSetupScrollFreeze(0, 1);
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_NAME"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_TEAM"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_ROLE"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_AGE"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_OVR"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_VALUE"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_PRICE"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_ACTION"));
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_NAME"),
+                            ImGuiTableColumnFlags_DefaultSort, 0.0f, 0);
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_TEAM"), 0, 0.0f, 1);
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_ROLE"), 0, 0.0f, 2);
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_AGE"), 0, 0.0f, 3);
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_OVR"), 0, 0.0f, 4);
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_VALUE"), 0, 0.0f, 5);
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_PRICE"), 0, 0.0f, 6);
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_ACTION"),
+                            ImGuiTableColumnFlags_NoSort, 0.0f, 7);
     ImGui::TableHeadersRow();
 
-    for (const auto& ref : cached_free_agents)
+    if (ImGuiTableSortSpecs* sort_specs = ImGui::TableGetSortSpecs())
     {
-      const Player& p = ref.get();
+      if (sort_specs->SpecsCount > 0)
+      {
+        const ImGuiTableColumnSortSpecs* spec = &sort_specs->Specs[0];
+        bool ascending = (spec->SortDirection == ImGuiSortDirection_Ascending);
 
-      if (filter_role_index > 0 &&
-          p.getRole() != static_cast<PlayerRole>(filter_role_index))
-        continue;
-      if (p.getAge() > filter_max_age) continue;
+        std::ranges::sort(
+            display_players,
+            [&](const Player* a, const Player* b)
+            {
+              int cmp = 0;
+              switch (spec->ColumnUserID)
+              {
+                case 0:  // Name
+                  cmp = a->getName().compare(b->getName());
+                  break;
+                case 1:  // Team
+                {
+                  std::string teamA = (a->getTeamId() == FREE_AGENTS_TEAM_ID)
+                                          ? "Free Agent"
+                                          : (controller.getGameData()
+                                                     ->getTeam(a->getTeamId())
+                                                     .has_value()
+                                                 ? controller.getGameData()
+                                                       ->getTeam(a->getTeamId())
+                                                       ->get()
+                                                       .getName()
+                                                 : "");
+                  std::string teamB = (b->getTeamId() == FREE_AGENTS_TEAM_ID)
+                                          ? "Free Agent"
+                                          : (controller.getGameData()
+                                                     ->getTeam(b->getTeamId())
+                                                     .has_value()
+                                                 ? controller.getGameData()
+                                                       ->getTeam(b->getTeamId())
+                                                       ->get()
+                                                       .getName()
+                                                 : "");
+                  cmp = teamA.compare(teamB);
+                  break;
+                }
+                case 2:  // Role
+                  cmp = static_cast<int>(a->getRole()) -
+                        static_cast<int>(b->getRole());
+                  break;
+                case 3:  // Age
+                  cmp = a->getAge() - b->getAge();
+                  break;
+                case 4:  // OVR
+                {
+                  int ovrA = static_cast<int>(a->getOverall(
+                      controller.getGameData()->getStatsConfig()));
+                  int ovrB = static_cast<int>(b->getOverall(
+                      controller.getGameData()->getStatsConfig()));
+                  cmp = ovrA - ovrB;
+                  break;
+                }
+                case 5:  // Market Value
+                {
+                  uint32_t valA = controller.getPlayerMarketValue(a->getId());
+                  uint32_t valB = controller.getPlayerMarketValue(b->getId());
+                  cmp = (valA < valB) ? -1 : (valA > valB ? 1 : 0);
+                  break;
+                }
+                case 6:  // Price
+                {
+                  auto getPrice = [&](const Player* p) -> uint32_t
+                  {
+                    if (p->getTeamId() == FREE_AGENTS_TEAM_ID) return 0;
+                    if (auto it = all_listings.find(p->getId());
+                        it != all_listings.end())
+                      return it->second.asking_price;
+                    return controller.getPlayerMarketValue(p->getId());
+                  };
+                  uint32_t priceA = getPrice(a);
+                  uint32_t priceB = getPrice(b);
+                  cmp = (priceA < priceB) ? -1 : (priceA > priceB ? 1 : 0);
+                  break;
+                }
+              }
+              return ascending ? (cmp < 0) : (cmp > 0);
+            });
+      }
+    }
+
+    for (const auto* p_ptr : display_players)
+    {
+      const Player& p = *p_ptr;
+
+      bool is_listed = false;
+      uint32_t price = 0;
+      bool is_free_agent = (p.getTeamId() == FREE_AGENTS_TEAM_ID);
+
+      if (is_free_agent)
+      {
+        price = 0;
+      }
+      else if (auto it = all_listings.find(p.getId()); it != all_listings.end())
+      {
+        is_listed = true;
+        price = it->second.asking_price;
+      }
+      else
+      {
+        price = controller.getPlayerMarketValue(p.getId());
+      }
 
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
       ImGui::Text("%s", p.getName().c_str());
+
       ImGui::TableNextColumn();
-      ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%s",
-                         LOC("TRANSFER_FREE_AGENT_LABEL"));
+      if (is_free_agent)
+      {
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%s",
+                           LOC("TRANSFER_FREE_AGENT_LABEL"));
+      }
+      else
+      {
+        auto seller_opt = controller.getGameData()->getTeam(p.getTeamId());
+        ImGui::Text("%s", seller_opt.has_value()
+                              ? seller_opt->get().getName().c_str()
+                              : "Unknown");
+      }
 
       ImGui::TableNextColumn();
       ImGui::Text("%s", RoleUtils::toString(p.getRole()).c_str());
@@ -243,15 +344,39 @@ void TransferMarketScene::renderBuyTab()
                             controller.getGameData()->getStatsConfig())));
       ImGui::TableNextColumn();
       ImGui::Text("€%d", controller.getPlayerMarketValue(p.getId()));
-      ImGui::TableNextColumn();
-      ImGui::Text("%s", LOC("TRANSFER_FREE"));
 
       ImGui::TableNextColumn();
-      std::string btn_id =
-          fmt::format("{}##{}", LOC("TRANSFER_SIGN"), p.getId());
-      if (ImGui::Button(btn_id.c_str()))
+      if (is_free_agent)
       {
-        confirm_state = {true, p.getId(), FREE_AGENTS_TEAM_ID, 0, true};
+        ImGui::Text("%s", LOC("TRANSFER_FREE"));
+      }
+      else if (is_listed)
+      {
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 0.2f, 1.0f), "€%u", price);
+      }
+      else
+      {
+        ImGui::Text("€%u", price);
+      }
+
+      ImGui::TableNextColumn();
+      if (is_free_agent)
+      {
+        std::string btn_id =
+            fmt::format("{}##{}", LOC("TRANSFER_SIGN"), p.getId());
+        if (ImGui::Button(btn_id.c_str()))
+        {
+          confirm_state = {true, p.getId(), FREE_AGENTS_TEAM_ID, 0, true};
+        }
+      }
+      else
+      {
+        std::string btn_id =
+            fmt::format("{}##{}", LOC("TRANSFER_BUY"), p.getId());
+        if (ImGui::Button(btn_id.c_str()))
+        {
+          confirm_state = {true, p.getId(), p.getTeamId(), price, false};
+        }
       }
     }
     ImGui::EndTable();
@@ -456,13 +581,16 @@ void TransferMarketScene::renderConfirmDialog()
     {
       if (confirm_state.is_free_agent)
       {
-        ImGui::Text("%s: %s", LOC("TRANSFER_CONFIRM_SIGN"),
-                    player_opt->get().getName().c_str());
+        ImGui::Text("%s", fmt::sprintf(LOC("TRANSFER_CONFIRM_SIGN"),
+                                       player_opt->get().getName())
+                              .c_str());
       }
       else
       {
-        ImGui::Text("%s: %s for €%u?", LOC("TRANSFER_CONFIRM_BUY"),
-                    player_opt->get().getName().c_str(), confirm_state.price);
+        ImGui::Text(
+            "%s", fmt::sprintf(LOC("TRANSFER_CONFIRM_BUY"),
+                               player_opt->get().getName(), confirm_state.price)
+                      .c_str());
       }
       ImGui::Separator();
 

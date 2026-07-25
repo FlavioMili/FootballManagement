@@ -34,11 +34,14 @@ GUIView::GUIView(GameController& controller_ref)
 
 GUIView::~GUIView()
 {
-  // Clean up any overlaid scenes
+  // Clean up any overlaid scenes and active scenes before shutting down
+  // renderer
   while (!sceneStack.empty())
   {
     sceneStack.pop();
   }
+  currentScene.reset();
+  pendingScene.reset();
 
   if (renderer != nullptr)
   {

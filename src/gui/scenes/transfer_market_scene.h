@@ -46,6 +46,7 @@ class TransferMarketScene : public GUIScene
   Tab active_tab = Tab::BUY;
 
   // Filters for Buy tab
+  char filter_search_name[64] = "";
   int filter_role_index = 0;
   int filter_max_age = 40;
   float filter_max_price = 100000000.0f;
@@ -73,6 +74,7 @@ class TransferMarketScene : public GUIScene
   std::vector<const TransferListing*> cached_listings;
   std::vector<std::pair<PlayerID, TransferListing>> cached_bids;
   std::vector<std::reference_wrapper<const Player>> cached_free_agents;
+  std::vector<const Player*> cached_all_players;
 
   // Listing input cache
   int list_player_index = 0;

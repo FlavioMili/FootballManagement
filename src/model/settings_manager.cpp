@@ -21,8 +21,8 @@ SettingsManager::SettingsManager() {}
 
 SettingsManager* SettingsManager::instance()
 {
-  static auto* instance = new SettingsManager();
-  return instance;
+  static SettingsManager instance;
+  return &instance;
 }
 
 void SettingsManager::load()

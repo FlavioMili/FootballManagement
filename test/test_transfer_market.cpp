@@ -87,3 +87,31 @@ TEST_F(TransferMarketTest, BidOnPlayer)
 
   EXPECT_TRUE(success);
 }
+
+TEST_F(TransferMarketTest, AIEvaluatesAndAcceptsBid)
+{
+  auto all_teams = controller->getTeams();
+  ASSERT_GE(all_teams.size(), 2u);
+
+  TeamID buyer_team_id = all_teams[0].get().getId();
+  TeamID seller_team_id = all_teams[1].get().getId();
+
+  auto seller_players = controller->getPlayersForTeam(seller_team_id);
+  ASSERT_FALSE(seller_players.empty());
+  PlayerID test_player_id = seller_players.front().get().getId();
+
+  controller->listPlayerForTransfer(test_player_id, 10000);
+
+  auto gamedata = controller->getGameData();
+  gamedata->getTeams().at(buyer_team_id).getFinances().addBalance(10000000LL);
+
+  bool bid_submitted =
+      controller->submitBid(test_player_id, buyer_team_id, 15000);
+  EXPECT_TRUE(bid_submitted);
+
+  // Advance day to trigger AI activity and bid processing
+  controller->advanceDay();
+
+  // The transfer should have been completed by the AI accepting the bid
+  EXPECT_FALSE(controller->isPlayerListed(test_player_id));
+}
