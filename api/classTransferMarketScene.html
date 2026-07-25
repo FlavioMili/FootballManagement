@@ -187,6 +187,8 @@ Private Member Functions</h2></td></tr>
 Private Attributes</h2></td></tr>
 <tr class="memitem:a9aa4667f8cfef4939aa11dd2216bb362" id="r_a9aa4667f8cfef4939aa11dd2216bb362"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTransferMarketScene.html#ae5144e61574b3067d50aa54d0f023b57">Tab</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#a9aa4667f8cfef4939aa11dd2216bb362">active_tab</a> = <a class="el" href="classTransferMarketScene.html#ae5144e61574b3067d50aa54d0f023b57ac45b496ec0828772c8088e4118f09b33">Tab::BUY</a></td></tr>
 <tr class="separator:a9aa4667f8cfef4939aa11dd2216bb362"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5f379a87e9e1f899545a2e0fce77a94" id="r_ac5f379a87e9e1f899545a2e0fce77a94"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#ac5f379a87e9e1f899545a2e0fce77a94">filter_search_name</a> [64] = &quot;&quot;</td></tr>
+<tr class="separator:ac5f379a87e9e1f899545a2e0fce77a94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c1470134dd3f7ac94ae3dd2d03253dd" id="r_a4c1470134dd3f7ac94ae3dd2d03253dd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#a4c1470134dd3f7ac94ae3dd2d03253dd">filter_role_index</a> = 0</td></tr>
 <tr class="separator:a4c1470134dd3f7ac94ae3dd2d03253dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab0935a9d100abea479a90a1b796bf9e" id="r_aab0935a9d100abea479a90a1b796bf9e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#aab0935a9d100abea479a90a1b796bf9e">filter_max_age</a> = 40</td></tr>
@@ -203,6 +205,8 @@ Private Attributes</h2></td></tr>
 <tr class="separator:af9a34ab1219af57fc5d821ea8eb4dfce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a31daea44d7a5bef2d8b72a41f019743c" id="r_a31daea44d7a5bef2d8b72a41f019743c"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#a31daea44d7a5bef2d8b72a41f019743c">cached_free_agents</a></td></tr>
 <tr class="separator:a31daea44d7a5bef2d8b72a41f019743c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4880e7ce3c95dc3784b0403a5fcf55b1" id="r_a4880e7ce3c95dc3784b0403a5fcf55b1"><td class="memItemLeft" align="right" valign="top">std::vector&lt; const <a class="el" href="classPlayer.html">Player</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#a4880e7ce3c95dc3784b0403a5fcf55b1">cached_all_players</a></td></tr>
+<tr class="separator:a4880e7ce3c95dc3784b0403a5fcf55b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6e721455a3cf7eb9026eaee6f25da0fc" id="r_a6e721455a3cf7eb9026eaee6f25da0fc"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#a6e721455a3cf7eb9026eaee6f25da0fc">list_player_index</a> = 0</td></tr>
 <tr class="separator:a6e721455a3cf7eb9026eaee6f25da0fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac490327b8796e45fb3725ac2384f7f66" id="r_ac490327b8796e45fb3725ac2384f7f66"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#ac490327b8796e45fb3725ac2384f7f66">list_price_input</a> = 0.0f</td></tr>
@@ -614,6 +618,28 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a4880e7ce3c95dc3784b0403a5fcf55b1" name="a4880e7ce3c95dc3784b0403a5fcf55b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4880e7ce3c95dc3784b0403a5fcf55b1">&#9670;&#160;</a></span>cached_all_players</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;const <a class="el" href="classPlayer.html">Player</a>*&gt; TransferMarketScene::cached_all_players</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="af9a34ab1219af57fc5d821ea8eb4dfce" name="af9a34ab1219af57fc5d821ea8eb4dfce"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af9a34ab1219af57fc5d821ea8eb4dfce">&#9670;&#160;</a></span>cached_bids</h2>
 
@@ -801,6 +827,28 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">int TransferMarketScene::filter_role_index = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac5f379a87e9e1f899545a2e0fce77a94" name="ac5f379a87e9e1f899545a2e0fce77a94"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac5f379a87e9e1f899545a2e0fce77a94">&#9670;&#160;</a></span>filter_search_name</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">char TransferMarketScene::filter_search_name[64] = &quot;&quot;</td>
         </tr>
       </table>
   </td>

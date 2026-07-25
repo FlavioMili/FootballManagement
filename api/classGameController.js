@@ -11,6 +11,7 @@ var classGameController =
     [ "canAffordPlayer", "classGameController.html#a487ca11eaf9014f8d6eeedfe9b9ea45e", null ],
     [ "counterOffer", "classGameController.html#a5da48e820b170006b3579fb4cbcc18e2", null ],
     [ "evaluateAndActForTeam", "classGameController.html#a7089a7f1a1a23afb47242d531389cf99", null ],
+    [ "evaluateIncomingAIBids", "classGameController.html#aa43c459dab87c6bb63de663cf2fe30d9", null ],
     [ "evaluateSquadNeeds", "classGameController.html#a4fcb21b4454400d115de6ad0728de70e", null ],
     [ "executeTransfer", "classGameController.html#a4263db08d9861d0263cf63f45940fd9e", null ],
     [ "findTargetsForRole", "classGameController.html#a949eb34210c2a9b1561aaaba09421051", null ],

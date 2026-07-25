@@ -1,6 +1,7 @@
 var NAVTREEINDEX1 =
 {
-"classGameController.html#afcbf97d3dd20effc95b76cf0679c7cf9":[3,0,13,50],
+"classGameController.html#af80b0d72158dd7150e250423896de8e1":[3,0,13,28],
+"classGameController.html#afcbf97d3dd20effc95b76cf0679c7cf9":[3,0,13,51],
 "classGameData.html":[3,0,14],
 "classGameData.html#a02aba4cd6aaef8cd1e8ebe80a06948af":[3,0,14,26],
 "classGameData.html#a123e2a349374cc053a74502c8ca8941c":[3,0,14,7],
@@ -248,6 +249,5 @@ var NAVTREEINDEX1 =
 "classPlayer.html#a7886d960aa9873e05225f13795aa37d5":[3,0,35,9],
 "classPlayer.html#a8685d7c544df408712e7360d5e723701":[3,0,35,38],
 "classPlayer.html#a878ae112a4f5d0d1787788ea1442f3e0":[3,0,35,2],
-"classPlayer.html#a8f57f0b7dadaebd55cd7a99807a6da4f":[3,0,35,30],
-"classPlayer.html#a96afedde0e2f0672eda0f5df82abbf23":[3,0,35,26]
+"classPlayer.html#a8f57f0b7dadaebd55cd7a99807a6da4f":[3,0,35,30]
 };

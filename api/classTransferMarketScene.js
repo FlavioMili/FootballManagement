@@ -20,6 +20,7 @@ var classTransferMarketScene =
     [ "renderListingsTab", "classTransferMarketScene.html#a276a0941ab9c59c8e96e28709460bf44", null ],
     [ "update", "classTransferMarketScene.html#ab643aafb65842913a52a76ee5f89396d", null ],
     [ "active_tab", "classTransferMarketScene.html#a9aa4667f8cfef4939aa11dd2216bb362", null ],
+    [ "cached_all_players", "classTransferMarketScene.html#a4880e7ce3c95dc3784b0403a5fcf55b1", null ],
     [ "cached_bids", "classTransferMarketScene.html#af9a34ab1219af57fc5d821ea8eb4dfce", null ],
     [ "cached_free_agents", "classTransferMarketScene.html#a31daea44d7a5bef2d8b72a41f019743c", null ],
     [ "cached_listings", "classTransferMarketScene.html#a84d58d44d5e14b01a897f9dc426a9dc2", null ],
@@ -29,6 +30,7 @@ var classTransferMarketScene =
     [ "filter_max_age", "classTransferMarketScene.html#aab0935a9d100abea479a90a1b796bf9e", null ],
     [ "filter_max_price", "classTransferMarketScene.html#a7f78fdc3ae8ad032ba8e22f2df7c5b02", null ],
     [ "filter_role_index", "classTransferMarketScene.html#a4c1470134dd3f7ac94ae3dd2d03253dd", null ],
+    [ "filter_search_name", "classTransferMarketScene.html#ac5f379a87e9e1f899545a2e0fce77a94", null ],
     [ "list_player_index", "classTransferMarketScene.html#a6e721455a3cf7eb9026eaee6f25da0fc", null ],
     [ "list_price_input", "classTransferMarketScene.html#ac490327b8796e45fb3725ac2384f7f66", null ]
 ];
