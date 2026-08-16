@@ -9,7 +9,9 @@
 #include "lineup.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <limits>
 #include <sstream>
 
 #include "database/gamedata.h"
@@ -22,6 +24,12 @@ Lineup::Lineup() { clear(); }
 void Lineup::setGoalkeeper(const Player* gk)
 {
   goalkeeper = gk;  // nullptr allowed
+  if (gk)
+  {
+    removeOutfieldPlayer(gk->getId());
+    std::erase_if(reserves, [gk](const Player* player)
+                  { return player && player->getId() == gk->getId(); });
+  }
 }
 
 const Player* Lineup::getGoalkeeper() const { return goalkeeper; }
@@ -30,6 +38,19 @@ const Player* Lineup::getGoalkeeper() const { return goalkeeper; }
 void Lineup::addOutfieldPlayer(const Player* player, Vector2F position)
 {
   if (!player) return;
+  if (goalkeeper && goalkeeper->getId() == player->getId()) return;
+  if (std::ranges::any_of(outfield_players,
+                          [player](const auto& positioned)
+                          {
+                            return positioned.player &&
+                                   positioned.player->getId() ==
+                                       player->getId();
+                          }))
+  {
+    return;
+  }
+  position.x = std::clamp(position.x, 0.0f, 1.0f);
+  position.y = std::clamp(position.y, 0.0f, 1.0f);
   outfield_players.push_back({player, position});
 }
 
@@ -39,7 +60,8 @@ bool Lineup::moveOutfieldPlayer(PlayerID playerID, Vector2F newPosition)
   {
     if (posPlayer.player && posPlayer.player->getId() == playerID)
     {
-      posPlayer.position = newPosition;
+      posPlayer.position = {std::clamp(newPosition.x, 0.0f, 1.0f),
+                            std::clamp(newPosition.y, 0.0f, 1.0f)};
       return true;
     }
   }
@@ -94,7 +116,23 @@ bool Lineup::swapPlayers(PlayerID benchPlayerID, PlayerID pitchPlayerID)
 // -------------- Reserves ---------------
 void Lineup::setReserves(const std::vector<const Player*>& subs)
 {
-  reserves = subs;  // copies the pointers; nullptrs allowed
+  reserves.clear();
+  for (const Player* player : subs)
+  {
+    if (!player || (goalkeeper && goalkeeper->getId() == player->getId()) ||
+        std::ranges::any_of(outfield_players,
+                            [player](const auto& positioned)
+                            {
+                              return positioned.player &&
+                                     positioned.player->getId() ==
+                                         player->getId();
+                            }) ||
+        std::ranges::contains(reserves, player))
+    {
+      continue;
+    }
+    reserves.push_back(player);
+  }
 }
 
 const std::vector<const Player*>& Lineup::getReserves() const
@@ -150,7 +188,14 @@ void Lineup::generateStartingXI(const class GameData& gamedata,
     {
       if (!bestGK ||
           p.getOverall(stats_config) > bestGK->getOverall(stats_config))
+      {
+        if (bestGK) reserves.push_back(bestGK);
         bestGK = &p;
+      }
+      else
+      {
+        reserves.push_back(&p);
+      }
     }
     else
     {
@@ -158,73 +203,86 @@ void Lineup::generateStartingXI(const class GameData& gamedata,
     }
   }
 
-  // Sort outfield players by overall descending to pick the best 10
-  std::ranges::sort(
-      potentialOutfieldPlayers, [&](const Player* a, const Player* b)
-      { return a->getOverall(stats_config) > b->getOverall(stats_config); });
-
   // If no GK found, try to use the worst outfield player as GK
   if (!bestGK && !potentialOutfieldPlayers.empty())
   {
-    bestGK = potentialOutfieldPlayers.back();
-    potentialOutfieldPlayers.pop_back();
+    const auto emergencyGoalkeeper = std::ranges::min_element(
+        potentialOutfieldPlayers, [&](const Player* a, const Player* b)
+        { return a->getOverall(stats_config) < b->getOverall(stats_config); });
+    bestGK = *emergencyGoalkeeper;
+    potentialOutfieldPlayers.erase(emergencyGoalkeeper);
   }
 
   goalkeeper = bestGK;
   if (!goalkeeper) return;  // Still no players at all
 
-  // Take top 10 (or less if not enough players)
-  std::vector<const Player*> startingOutfield;
-  for (size_t i = 0; i < potentialOutfieldPlayers.size(); ++i)
+  // Fill a balanced 4-4-2. Pure overall sorting routinely produced teams with
+  // no defenders because ratings from unlike roles are not interchangeable.
+  static constexpr std::array<PlayerRole, 10> SLOT_ROLES = {
+      PlayerRole::LB, PlayerRole::CB, PlayerRole::CB, PlayerRole::RB,
+      PlayerRole::LM, PlayerRole::CM, PlayerRole::CM, PlayerRole::RM,
+      PlayerRole::ST, PlayerRole::ST};
+  static constexpr std::array<Vector2F, 10> SLOT_POSITIONS = {
+      Vector2F{0.20f, 0.12f}, Vector2F{0.20f, 0.38f}, Vector2F{0.20f, 0.62f},
+      Vector2F{0.20f, 0.88f}, Vector2F{0.43f, 0.12f}, Vector2F{0.43f, 0.38f},
+      Vector2F{0.43f, 0.62f}, Vector2F{0.43f, 0.88f}, Vector2F{0.78f, 0.38f},
+      Vector2F{0.78f, 0.62f}};
+
+  const auto isDefender = [](PlayerRole role)
   {
-    if (i < 10)
+    return role == PlayerRole::LB || role == PlayerRole::CB ||
+           role == PlayerRole::RB;
+  };
+  const auto isCentralMidfielder = [](PlayerRole role)
+  {
+    return role == PlayerRole::CDM || role == PlayerRole::CM ||
+           role == PlayerRole::CAM;
+  };
+  const auto roleFit = [&](PlayerRole actual, PlayerRole expected)
+  {
+    if (actual == expected) return 30.0;
+    if (expected == PlayerRole::CB && isDefender(actual)) return 16.0;
+    if ((expected == PlayerRole::LB || expected == PlayerRole::RB) &&
+        isDefender(actual))
+      return 13.0;
+    if (expected == PlayerRole::CM && isCentralMidfielder(actual)) return 24.0;
+    if (expected == PlayerRole::LM &&
+        (actual == PlayerRole::LW || actual == PlayerRole::LB))
+      return 18.0;
+    if (expected == PlayerRole::RM &&
+        (actual == PlayerRole::RW || actual == PlayerRole::RB))
+      return 18.0;
+    if ((expected == PlayerRole::LM || expected == PlayerRole::RM) &&
+        (isCentralMidfielder(actual) || actual == PlayerRole::LM ||
+         actual == PlayerRole::RM || actual == PlayerRole::LW ||
+         actual == PlayerRole::RW))
+      return 10.0;
+    if (expected == PlayerRole::ST &&
+        (actual == PlayerRole::LW || actual == PlayerRole::RW))
+      return 15.0;
+    return -15.0;
+  };
+
+  for (size_t slot = 0;
+       slot < SLOT_ROLES.size() && !potentialOutfieldPlayers.empty(); ++slot)
+  {
+    auto best = potentialOutfieldPlayers.end();
+    double bestScore = -std::numeric_limits<double>::infinity();
+    for (auto candidate = potentialOutfieldPlayers.begin();
+         candidate != potentialOutfieldPlayers.end(); ++candidate)
     {
-      startingOutfield.push_back(potentialOutfieldPlayers[i]);
+      const double score = (*candidate)->getOverall(stats_config) +
+                           roleFit((*candidate)->getRole(), SLOT_ROLES[slot]);
+      if (score > bestScore)
+      {
+        bestScore = score;
+        best = candidate;
+      }
     }
-    else
-    {
-      reserves.push_back(potentialOutfieldPlayers[i]);
-    }
+    addOutfieldPlayer(*best, SLOT_POSITIONS[slot]);
+    potentialOutfieldPlayers.erase(best);
   }
 
-  // Sort the starting 10 by their role's natural X coordinate descending
-  // (Strikers first), then by Y ascending
-  std::ranges::sort(startingOutfield,
-                    [](const Player* a, const Player* b)
-                    {
-                      auto posA = RoleUtils::getBaseCoordinate(a->getRole());
-                      auto posB = RoleUtils::getBaseCoordinate(b->getRole());
-                      if (posA.x != posB.x) return posA.x > posB.x;
-                      return posA.y < posB.y;
-                    });
-
-  // Fixed 4-4-2 formation coordinates (Horizontal Pitch: x is length, y is
-  // width)
-  static const std::vector<Vector2F> formation442 = {
-      // 2 Strikers (Front: x = 0.8)
-      {0.8f, 0.35f},
-      {0.8f, 0.65f},
-      // 4 Midfielders (Middle: x = 0.5)
-      {0.5f, 0.15f},
-      {0.5f, 0.35f},
-      {0.5f, 0.65f},
-      {0.5f, 0.85f},
-      // 4 Defenders (Back: x = 0.2)
-      {0.2f, 0.15f},
-      {0.2f, 0.35f},
-      {0.2f, 0.65f},
-      {0.2f, 0.85f}};
-
-  // Assign positions
-  for (size_t i = 0; i < startingOutfield.size(); ++i)
-  {
-    if (i < formation442.size())
-    {
-      addOutfieldPlayer(startingOutfield[i], formation442[i]);
-    }
-    else
-    {
-      reserves.push_back(startingOutfield[i]);
-    }
-  }
+  reserves.insert(reserves.end(), potentialOutfieldPlayers.begin(),
+                  potentialOutfieldPlayers.end());
 }

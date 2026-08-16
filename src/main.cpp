@@ -26,7 +26,6 @@ extern "C" const char* __lsan_default_suppressions()
 int main()
 {
   Logger::init();
-  srand(static_cast<uint>(time(0)));
   try
   {
     auto controller = std::make_unique<GameController>();

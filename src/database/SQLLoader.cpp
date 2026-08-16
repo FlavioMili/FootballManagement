@@ -58,6 +58,7 @@ std::string SQLLoader::readFile(const std::string& filepath)
 
 void SQLLoader::parseQueries(const std::string& content)
 {
+  queries_.clear();
   std::istringstream stream(content);
   std::string line;
   std::string current_query_str;
@@ -95,7 +96,6 @@ void SQLLoader::parseQueries(const std::string& content)
       {
         throw std::runtime_error("Unknown query ID: " + id);
       }
-      current_query_enum = it->second;
       current_query_enum = it->second;
 
       current_query_str.clear();

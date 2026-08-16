@@ -10,7 +10,9 @@
 
 #include <algorithm>
 #include <fstream>
+#include <limits>
 #include <nlohmann/json.hpp>
+#include <utility>
 
 #include "database/SQLLoader.h"
 #include "database/database_connection.h"
@@ -23,6 +25,48 @@
 #include "global/paths.h"
 #include "global/queries.h"
 #include "model/transfer_listing.h"
+
+namespace
+{
+bool restoreLineup(Team& team, const StoredLineup& stored,
+                   const std::unordered_map<PlayerID, Player>& players)
+{
+  if (!stored.persisted) return false;
+  Lineup& lineup = team.getLineup();
+  lineup.clear();
+
+  const auto resolvePlayer = [&](PlayerID playerId) -> const Player*
+  {
+    const auto found = players.find(playerId);
+    if (found == players.end() || found->second.getTeamId() != team.getId())
+      return nullptr;
+    return &found->second;
+  };
+
+  if (stored.goalkeeperId)
+  {
+    const Player* goalkeeper = resolvePlayer(*stored.goalkeeperId);
+    if (!goalkeeper) return false;
+    lineup.setGoalkeeper(goalkeeper);
+  }
+  for (const StoredPositionedPlayer& positioned : stored.outfield)
+  {
+    const Player* player = resolvePlayer(positioned.playerId);
+    if (!player) return false;
+    lineup.addOutfieldPlayer(player, positioned.position);
+  }
+  std::vector<const Player*> reserves;
+  reserves.reserve(stored.reserves.size());
+  for (PlayerID playerId : stored.reserves)
+  {
+    const Player* player = resolvePlayer(playerId);
+    if (!player) return false;
+    reserves.push_back(player);
+  }
+  lineup.setReserves(reserves);
+  return true;
+}
+}  // namespace
 
 GameData::GameData() = default;
 
@@ -63,7 +107,10 @@ bool GameData::loadFromDB(std::shared_ptr<DatabaseConnection> database_ptr)
 
   _teamsVec.clear();
   _teamsVec.reserve(_teams.size());
-  for (auto& [id, team] : _teams) _teamsVec.push_back(team);
+  for (auto& [id, team] : _teams)
+  {
+    if (id != FREE_AGENTS_TEAM_ID) _teamsVec.push_back(team);
+  }
 
   _playersVec.clear();
   _playersVec.reserve(_players.size());
@@ -94,91 +141,99 @@ void GameData::generateAndSaveInitialData()
   auto all_teams = DataGenerator::generateTeams();
 
   db_conn->beginTransaction();
-  for (const auto& team : all_teams)
+  try
   {
-    _teams.try_emplace(team.getId(), team);
-  }
-
-  // Populate _teamsVec so we can use insertTeamsWithId
-  _teamsVec.clear();
-  _teamsVec.reserve(_teams.size());
-  for (auto& [id, team] : _teams) _teamsVec.push_back(team);
-
-  teamRepo.insertTeamsWithId(_teamsVec);
-
-  std::map<uint8_t, std::vector<TeamID>> league_teams_map;
-  for (const auto& team : all_teams)
-  {
-    league_teams_map[team.getLeagueId()].push_back(team.getId());
-  }
-
-  for (const auto& league_data : leagues_data)
-  {
-    leagueRepo.insertLeagueWithId(league_data);
-    _leagues.try_emplace(league_data.getId(),
-                         League(league_data.getId(), league_data.getName(),
-                                league_teams_map[league_data.getId()]));
-  }
-
-  // DataGenerator::generatePlayers depends on GameData::getTeamsVector() being
-  // populated!
-  _teamsVec.clear();
-  _teamsVec.reserve(_teams.size());
-  for (auto& [id, team] : _teams) _teamsVec.push_back(team);
-
-  auto players = DataGenerator::generatePlayers(*this);
-  for (const auto& player : players)
-  {
-    auto it = _players.try_emplace(player.getId(), player).first;
-    _teamPlayers[player.getTeamId()].push_back(it->second);
-
-    // Add to Team's player list
-    auto team_it = _teams.find(player.getTeamId());
-    if (team_it != _teams.end())
+    _teams.try_emplace(FREE_AGENTS_TEAM_ID, FREE_AGENTS_TEAM_ID,
+                       std::numeric_limits<LeagueID>::max(), "Free agents", -1);
+    for (const auto& team : all_teams)
     {
-      team_it->second.addPlayerID(player.getId());
+      _teams.try_emplace(team.getId(), team);
     }
+
+    // Populate _teamsVec so we can use insertTeamsWithId
+    _teamsVec.clear();
+    _teamsVec.reserve(_teams.size());
+    for (auto& [id, team] : _teams) _teamsVec.push_back(team);
+
+    teamRepo.insertTeamsWithId(_teamsVec);
+
+    std::map<uint8_t, std::vector<TeamID>> league_teams_map;
+    for (const auto& team : all_teams)
+    {
+      league_teams_map[team.getLeagueId()].push_back(team.getId());
+    }
+
+    for (const auto& league_data : leagues_data)
+    {
+      leagueRepo.insertLeagueWithId(league_data);
+      _leagues.try_emplace(league_data.getId(),
+                           League(league_data.getId(), league_data.getName(),
+                                  league_teams_map[league_data.getId()]));
+    }
+
+    // DataGenerator::generatePlayers depends on GameData::getTeamsVector()
+    // being populated!
+    _teamsVec.clear();
+    _teamsVec.reserve(_teams.size());
+    for (auto& [id, team] : _teams) _teamsVec.push_back(team);
+
+    auto players = DataGenerator::generatePlayers(*this);
+    for (const auto& player : players)
+    {
+      auto it = _players.try_emplace(player.getId(), player).first;
+      _teamPlayers[player.getTeamId()].push_back(it->second);
+
+      // Add to Team's player list
+      auto team_it = _teams.find(player.getTeamId());
+      if (team_it != _teams.end())
+      {
+        team_it->second.addPlayerID(player.getId());
+      }
+    }
+
+    _playersVec.clear();
+    _playersVec.reserve(_players.size());
+    for (auto& [id, player] : _players) _playersVec.push_back(player);
+
+    playerRepo.insertPlayers(_playersVec);
+
+    for (auto& [id, team] : _teams)
+    {
+      team.generateStartingXI(*this, stats_config);
+    }
+    teamRepo.updateTeamsState(_teamsVec);
+
+    db_conn->commitTransaction();
   }
-
-  _playersVec.clear();
-  _playersVec.reserve(_players.size());
-  for (auto& [id, player] : _players) _playersVec.push_back(player);
-
-  playerRepo.insertPlayers(_playersVec);
-
-  for (auto& [id, team] : _teams)
+  catch (...)
   {
-    team.generateStartingXI(*this, stats_config);
+    db_conn->rollbackTransaction();
+    throw;
   }
-
-  db_conn->commitTransaction();
 }
 
 void GameData::loadExistingData()
 {
-  // Clean up any duplicate players that might have been inserted in previous
-  // runs due to initialization bugs
-  sqlite3_exec(db_conn->getRaw(),
-               "DELETE FROM Players WHERE id NOT IN (SELECT MIN(id) FROM "
-               "Players GROUP BY team_id, first_name, last_name);",
-               nullptr, nullptr, nullptr);
-
   TeamRepository teamRepo(db_conn);
   LeagueRepository leagueRepo(db_conn);
   PlayerRepository playerRepo(db_conn);
 
   auto leagues_from_db = leagueRepo.loadAllLeagues();
   auto all_teams = teamRepo.loadAllTeams();
-
-  for (const auto& team : all_teams)
-  {
-    _teams.try_emplace(team.getId(), team);
-  }
+  const auto storedLineups = teamRepo.loadAllLineups();
 
   std::map<uint8_t, std::vector<TeamID>> league_teams_map;
   for (const auto& team : all_teams)
   {
     league_teams_map[team.getLeagueId()].push_back(team.getId());
+  }
+
+  _teams.reserve(all_teams.size());
+  _teamPlayers.reserve(all_teams.size());
+  for (auto& team : all_teams)
+  {
+    const TeamID teamId = team.getId();
+    _teams.try_emplace(teamId, std::move(team));
   }
 
   for (auto& league_from_db : leagues_from_db)
@@ -187,20 +242,24 @@ void GameData::loadExistingData()
     {
       league_from_db.addTeamID(tid);
     }
-    _leagues.try_emplace(league_from_db.getId(), league_from_db);
+    const LeagueID leagueId = league_from_db.getId();
+    _leagues.try_emplace(leagueId, std::move(league_from_db));
   }
 
   auto players = playerRepo.loadAllPlayers();
-  for (const auto& player : players)
+  _players.reserve(players.size());
+  for (auto& player : players)
   {
-    auto it = _players.try_emplace(player.getId(), player).first;
-    _teamPlayers[player.getTeamId()].push_back(it->second);
+    const PlayerID playerId = player.getId();
+    const TeamID teamId = player.getTeamId();
+    auto it = _players.try_emplace(playerId, std::move(player)).first;
+    _teamPlayers[teamId].push_back(it->second);
 
     // Add to Team's player list
-    auto team_it = _teams.find(player.getTeamId());
+    auto team_it = _teams.find(teamId);
     if (team_it != _teams.end())
     {
-      team_it->second.addPlayerID(player.getId());
+      team_it->second.addPlayerID(playerId);
     }
   }
 
@@ -214,7 +273,12 @@ void GameData::loadExistingData()
 
   for (auto& [id, team] : _teams)
   {
-    team.generateStartingXI(*this, stats_config);
+    const auto stored = storedLineups.find(id);
+    if (stored == storedLineups.end() ||
+        !restoreLineup(team, stored->second, _players))
+    {
+      team.generateStartingXI(*this, stats_config);
+    }
   }
 
   Logger::debug("Loaded all data from database.");
@@ -225,12 +289,21 @@ bool GameData::saveToDB() const
   if (!db_conn) return false;
 
   db_conn->beginTransaction();
-  PlayerRepository playerRepo(db_conn);
-
-  playerRepo.updatePlayers(_playersVec);
-
-  db_conn->commitTransaction();
-  return true;
+  try
+  {
+    PlayerRepository playerRepo(db_conn);
+    TeamRepository teamRepo(db_conn);
+    playerRepo.updatePlayers(_playersVec);
+    teamRepo.updateTeamsState(_teamsVec);
+    db_conn->commitTransaction();
+    return true;
+  }
+  catch (const std::exception& exception)
+  {
+    db_conn->rollbackTransaction();
+    Logger::error("Failed to save game data: " + std::string(exception.what()));
+    return false;
+  }
 }
 
 // ---------------- League ----------------
@@ -337,6 +410,43 @@ void GameData::ageAllPlayers()
   }
 }
 
+std::vector<PlayerID> GameData::advanceContractsAndReleasePlayers()
+{
+  std::vector<std::pair<PlayerID, TeamID>> expiringPlayers;
+  expiringPlayers.reserve(_players.size());
+  for (auto& [id, player] : _players)
+  {
+    if (player.getTeamId() != FREE_AGENTS_TEAM_ID &&
+        player.advanceContractYear())
+    {
+      expiringPlayers.emplace_back(id, player.getTeamId());
+    }
+  }
+
+  std::vector<PlayerID> releasedPlayers;
+  releasedPlayers.reserve(expiringPlayers.size());
+  std::vector<TeamID> affectedTeams;
+  affectedTeams.reserve(expiringPlayers.size());
+  for (const auto& [playerId, oldTeamId] : expiringPlayers)
+  {
+    if (auto team = getTeam(oldTeamId)) team->get().removePlayerID(playerId);
+    if (auto freeAgents = getTeam(FREE_AGENTS_TEAM_ID))
+      freeAgents->get().addPlayerID(playerId);
+    transferPlayer(playerId, FREE_AGENTS_TEAM_ID);
+    _players.at(playerId).setTransferStatus(TransferStatus::NotListed);
+    releasedPlayers.push_back(playerId);
+    if (!std::ranges::contains(affectedTeams, oldTeamId))
+      affectedTeams.push_back(oldTeamId);
+  }
+
+  for (TeamID teamId : affectedTeams)
+  {
+    if (auto team = getTeam(teamId))
+      team->get().generateStartingXI(*this, stats_config);
+  }
+  return releasedPlayers;
+}
+
 const std::vector<std::reference_wrapper<const Player>>&
 GameData::getPlayersForTeam(TeamID team_id) const
 {
@@ -352,29 +462,19 @@ GameData::getPlayersForTeam(TeamID team_id) const
 bool GameData::removePlayer(PlayerID id)
 {
   auto player_it = _players.find(id);
-  if (player_it != _players.end())
+  if (player_it == _players.end())
   {
-    TeamID team_id = player_it->second.getTeamId();
-    auto& team_players = _teamPlayers[team_id];
-    std::erase_if(team_players,
-                  [id](const auto& ref) { return ref.get().getId() == id; });
+    return false;
   }
 
-  bool erased = _players.erase(id) > 0;
-  if (erased && !_playersVec.empty())
-  {
-    auto it = std::ranges::find_if(
-        _playersVec, [id](const Player& p) { return p.getId() == id; });
-    if (it != _playersVec.end())
-    {
-      if (it != _playersVec.end() - 1)
-      {
-        std::swap(*it, _playersVec.back());
-      }
-      _playersVec.pop_back();
-    }
-  }
-  return erased;
+  const TeamID team_id = player_it->second.getTeamId();
+  auto& team_players = _teamPlayers[team_id];
+  std::erase_if(team_players,
+                [id](const auto& ref) { return ref.get().getId() == id; });
+  std::erase_if(_playersVec,
+                [id](const auto& ref) { return ref.get().getId() == id; });
+  _players.erase(player_it);
+  return true;
 }
 
 void GameData::transferPlayer(PlayerID id, TeamID new_team_id)
@@ -404,6 +504,15 @@ void GameData::saveTransferListing(const TransferListing& listing) const
   sqlite3_bind_int(stmt, 2, static_cast<int>(listing.asking_price));
   std::string date_str = listing.listing_date.toString();
   sqlite3_bind_text(stmt, 3, date_str.c_str(), -1, SQLITE_TRANSIENT);
+  if (listing.highest_bidder_id)
+  {
+    sqlite3_bind_int(stmt, 4, static_cast<int>(*listing.highest_bidder_id));
+  }
+  else
+  {
+    sqlite3_bind_null(stmt, 4);
+  }
+  sqlite3_bind_int64(stmt, 5, static_cast<sqlite3_int64>(listing.highest_bid));
 
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
@@ -425,6 +534,17 @@ GameData::loadAllTransferListings() const
 {
   std::unordered_map<PlayerID, TransferListing> listings;
 
+  // Forward-compatible migration for save files created before bids were
+  // persisted. Duplicate-column errors are intentionally ignored.
+  sqlite3_exec(db_conn->getRaw(),
+               "ALTER TABLE TransferList ADD COLUMN highest_bidder_id "
+               "INTEGER;",
+               nullptr, nullptr, nullptr);
+  sqlite3_exec(db_conn->getRaw(),
+               "ALTER TABLE TransferList ADD COLUMN highest_bid INTEGER NOT "
+               "NULL DEFAULT 0;",
+               nullptr, nullptr, nullptr);
+
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       SQLLoader::getQuery(Query::LOAD_ALL_TRANSFER_LISTINGS));
 
@@ -440,6 +560,12 @@ GameData::loadAllTransferListings() const
     listing.asking_price = price;
     listing.listing_date =
         GameDateValue::fromString(date_str ? date_str : "2025-07-01");
+    if (sqlite3_column_type(stmt, 3) != SQLITE_NULL)
+    {
+      listing.highest_bidder_id =
+          static_cast<TeamID>(sqlite3_column_int(stmt, 3));
+    }
+    listing.highest_bid = static_cast<uint32_t>(sqlite3_column_int64(stmt, 4));
 
     listings[pid] = listing;
   }

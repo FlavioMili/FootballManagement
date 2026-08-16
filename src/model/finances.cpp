@@ -39,9 +39,12 @@ int64_t Finances::getCurrentWageSpending(const class GameData& gamedata,
   int64_t wages{};
   const auto& playerIDs = team.getPlayerIDs();
 
-  for (auto& pID : playerIDs)
+  for (const auto player_id : playerIDs)
   {
-    wages += gamedata.getPlayer(pID)->get().getWage();
+    if (const auto player = gamedata.getPlayer(player_id))
+    {
+      wages += player->get().getWage();
+    }
   }
   return wages;
 }

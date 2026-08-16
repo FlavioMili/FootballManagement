@@ -9,8 +9,10 @@
 #pragma once
 #include <SDL3/SDL.h>
 
+#include <array>
 #include <memory>
 #include <stack>
+#include <string_view>
 
 #include "controller/game_controller.h"
 
@@ -97,6 +99,9 @@ class GUIView
    */
   GameController& getController() const;
 
+  /** Captures the current renderer contents as a BMP image. */
+  bool captureScreenshot(std::string_view path) const;
+
  private:
   friend class GameFlowTest_GUIFlowLifecycle_Test;
   bool initialize();
@@ -113,6 +118,15 @@ class GUIView
   SDL_Window* window;
   SDL_Renderer* renderer;
   bool running;
+  bool screenshotPending = false;
+
+  // Render diagnostics (Priority 0)
+  static constexpr int STARTUP_FRAME_TIMING_COUNT = 120;
+  bool rendererIsSoftware = false;
+  std::array<float, STARTUP_FRAME_TIMING_COUNT> startupFrameTimes{};
+  int startupFramesTimed = 0;
+  bool startupTimingsReported = false;
+  void reportStartupRenderTimings();
 
   // Main scene
   std::unique_ptr<GUIScene> currentScene;

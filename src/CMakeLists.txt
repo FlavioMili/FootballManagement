@@ -18,6 +18,7 @@ set(IMGUI_SOURCES
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
 )
+set_source_files_properties(${IMGUI_SOURCES} PROPERTIES COMPILE_OPTIONS "-w")
 
 set(CORE_SOURCES
     # Controller
@@ -66,10 +67,15 @@ set(CORE_SOURCES
     gui/gui_scene.cpp
     gui/gui_view.h
     gui/gui_view.cpp
+    gui/render/imatch_renderer.h
+    gui/render/match_render_snapshot.h
+    gui/render/match_renderer_2d.h
+    gui/render/match_renderer_2d.cpp
     gui/scenes/lineup_scene.h
     gui/scenes/lineup_scene.cpp
     gui/scenes/match_scene.h
     gui/scenes/match_scene.cpp
+    gui/scenes/match_scene_tuning.h
     gui/scenes/main_game_scene.h
     gui/scenes/main_game_scene.cpp
     gui/scenes/main_menu_scene.h
@@ -84,6 +90,7 @@ set(CORE_SOURCES
     gui/scenes/team_selection_scene.cpp
     gui/scenes/transfer_market_scene.h
     gui/scenes/transfer_market_scene.cpp
+    gui/scenes/transfer_market_scene_tuning.h
 
     # Model
     model/calendar.h
@@ -102,6 +109,7 @@ set(CORE_SOURCES
     model/match.cpp
     model/match_engine.h
     model/match_engine.cpp
+    model/match_tuning.h
     model/player.h
     model/player.cpp
     model/role_utils.h
@@ -114,6 +122,7 @@ set(CORE_SOURCES
     model/team.cpp
     model/transfer_listing.h
     model/transfer_listing.cpp
+    model/transfer_tuning.h
 )
 
 add_library(core_lib STATIC ${CORE_SOURCES})
@@ -129,6 +138,9 @@ target_include_directories(core_lib PUBLIC
   ${PROJECT_SOURCE_DIR}/src/database
   ${PROJECT_SOURCE_DIR}/src/gui
   ${PROJECT_SOURCE_DIR}/src/gui/scenes
+)
+
+target_include_directories(core_lib SYSTEM PUBLIC
   ${imgui_SOURCE_DIR}
   ${imgui_SOURCE_DIR}/backends
 )
@@ -156,7 +168,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE core_lib)
 # -----------------------------
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(core_lib PRIVATE DEBUG)
-    target_compile_options(core_lib PUBLIC -Og -g3 -fsanitize=address,undefined ${DEBUG_WARNINGS})
+    target_compile_options(core_lib PRIVATE -Og -g3 -fsanitize=address,undefined ${DEBUG_WARNINGS})
+    target_compile_options(core_lib INTERFACE -fsanitize=address,undefined)
     target_link_options(core_lib PUBLIC -fsanitize=address,undefined)
 
     target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
@@ -178,4 +191,4 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 endif()
 
 # Enforce strict unused variable checking for ALL builds
-target_compile_options(core_lib PUBLIC -Wall -Wextra -Wunused)
+target_compile_options(core_lib PRIVATE -Wall -Wextra -Wunused)

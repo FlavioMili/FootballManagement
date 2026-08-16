@@ -31,6 +31,9 @@ void FixtureRepository::insertFixture(const Match& match) const
   sqlite3_bind_int(stmt, 2, match.getHomeTeamId());
   sqlite3_bind_int(stmt, 3, match.getAwayTeamId());
   sqlite3_bind_int(stmt, 4, std::to_underlying(match.getMatchType()));
+  sqlite3_bind_int(stmt, 5, match.getHomeScore());
+  sqlite3_bind_int(stmt, 6, match.getAwayScore());
+  sqlite3_bind_int(stmt, 7, match.isPlayed() ? 1 : 0);
 
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
@@ -40,8 +43,8 @@ std::vector<Match> FixtureRepository::loadAllMatches() const
 {
   std::vector<Match> matches;
   sqlite3_stmt* stmt = db_conn->prepareStatement(
-      "SELECT home_team_id, away_team_id, game_date, match_type FROM "
-      "Fixtures;");
+      "SELECT home_team_id, away_team_id, game_date, match_type, home_goals, "
+      "away_goals, played FROM Fixtures;");
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
@@ -51,8 +54,14 @@ std::vector<Match> FixtureRepository::loadAllMatches() const
         reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
     auto match_type = static_cast<MatchType>(sqlite3_column_int(stmt, 3));
 
-    matches.emplace_back(home_id, away_id, GameDateValue::fromString(date_str),
-                         match_type);
+    Match match(home_id, away_id, GameDateValue::fromString(date_str),
+                match_type);
+    if (sqlite3_column_int(stmt, 6) != 0)
+    {
+      match.setPlayedResult(static_cast<uint8_t>(sqlite3_column_int(stmt, 4)),
+                            static_cast<uint8_t>(sqlite3_column_int(stmt, 5)));
+    }
+    matches.push_back(std::move(match));
   }
 
   sqlite3_finalize(stmt);
@@ -77,6 +86,9 @@ void FixtureRepository::saveCalendar(const Calendar& calendar) const
       sqlite3_bind_int(stmt, 2, match.getHomeTeamId());
       sqlite3_bind_int(stmt, 3, match.getAwayTeamId());
       sqlite3_bind_int(stmt, 4, std::to_underlying(match.getMatchType()));
+      sqlite3_bind_int(stmt, 5, match.getHomeScore());
+      sqlite3_bind_int(stmt, 6, match.getAwayScore());
+      sqlite3_bind_int(stmt, 7, match.isPlayed() ? 1 : 0);
 
       db_conn->executeStep(stmt);
       sqlite3_clear_bindings(stmt);

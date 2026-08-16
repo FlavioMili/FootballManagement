@@ -53,7 +53,7 @@ class Team
   LeagueID getLeagueId() const;
 
   /** @brief Gets the name of the team. */
-  const std::string getName() const;
+  const std::string& getName() const;
 
   /** @brief Gets the list of player IDs in the team. */
   const std::vector<PlayerID>& getPlayerIDs() const;

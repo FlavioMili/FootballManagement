@@ -29,6 +29,7 @@ DatabaseConnection::DatabaseConnection(const std::string& db_path)
   }
 
   db.reset(raw_db);
+  sqlite3_busy_timeout(db.get(), 5'000);
   sqlite3_exec(db.get(), "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
 
   loadSQLFiles();
@@ -60,9 +61,11 @@ void DatabaseConnection::initialize() const
                      &err_msg) != SQLITE_OK)
     {
       std::string error_str =
-          "SQL error during schema initialization: " + std::string(err_msg);
-      sqlite3_free(err_msg);
+          "SQL error during schema initialization: " +
+          std::string(err_msg ? err_msg : "unknown SQLite error");
+      if (err_msg) sqlite3_free(err_msg);
       Logger::error(error_str);
+      throw DatabaseException(error_str);
     }
     else
     {

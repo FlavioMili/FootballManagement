@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <algorithm>
+
 /* TODO: These might later become a JSON file so that they can be modded
  *
  * DESCRIPTION OF ALL SLIDERS
@@ -98,24 +100,39 @@ class Strategy
   float getDefenseWeight(int roleIndex, int gridPosition) const;
 
   /** @brief Sets the pressing slider value. */
-  void setPressing(float value) { sliders.pressing = value; }
+  void setPressing(float value)
+  {
+    sliders.pressing = std::clamp(value, 0.0f, 1.0f);
+  }
 
   /** @brief Sets the risk taking slider value. */
-  void setRiskTaking(float value) { sliders.riskTaking = value; }
+  void setRiskTaking(float value)
+  {
+    sliders.riskTaking = std::clamp(value, 0.0f, 1.0f);
+  }
 
   /** @brief Sets the offensive bias slider value. */
-  void setOffensiveBias(float value) { sliders.offensiveBias = value; }
+  void setOffensiveBias(float value)
+  {
+    sliders.offensiveBias = std::clamp(value, 0.0f, 1.0f);
+  }
 
   /** @brief Sets the width usage slider value. */
-  void setWidthUsage(float value) { sliders.widthUsage = value; }
+  void setWidthUsage(float value)
+  {
+    sliders.widthUsage = std::clamp(value, 0.0f, 1.0f);
+  }
 
   /** @brief Sets the compactness slider value. */
-  void setCompactness(float value) { sliders.compactness = value; }
+  void setCompactness(float value)
+  {
+    sliders.compactness = std::clamp(value, 0.0f, 1.0f);
+  }
 
   // --- Setters for player role weights ---
   /**
    * @brief Sets the role weights for a specific outfield player.
-   * @param playerIndex The index of the player (1-10).
+   * @param playerIndex The zero-based outfield index (0-9).
    * @param attack The attack weight to set.
    * @param defense The defense weight to set.
    * @param radius The movement radius to set.
@@ -162,6 +179,6 @@ class Strategy
   StrategySliders sliders;
 
   // Per-role weight definitions
-  RoleWeights goalkeeper = {0.0, 1.0, 1};  // single goalkeeper
-  RoleWeights outfield[10];                // 10 outfield players
+  RoleWeights goalkeeper = {0.0f, 1.0f, 1};  // single goalkeeper
+  RoleWeights outfield[10];                  // 10 outfield players
 };

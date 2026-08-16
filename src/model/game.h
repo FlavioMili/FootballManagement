@@ -42,6 +42,10 @@ class Game
    */
   void advanceDay();
 
+  /** Records a managed match exactly once and applies its consequences. */
+  bool setMatchResult(const GameDateValue& date, TeamID home_id, TeamID away_id,
+                      uint8_t home_score, uint8_t away_score);
+
   /**
    * @brief Retrieves the current in-game date.
    * @return A constant reference to the current GameDateValue.

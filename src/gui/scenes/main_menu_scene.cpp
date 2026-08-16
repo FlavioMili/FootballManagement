@@ -8,8 +8,10 @@
 
 #include "gui/scenes/main_menu_scene.h"
 
+#include <fmt/printf.h>
 #include <imgui.h>
 
+#include <chrono>
 #include <format>
 
 #include "global/language_manager.h"
@@ -41,25 +43,53 @@ void MainMenuScene::update(float deltaTime)
 
   if (loading_slot > 0 && is_loading_rendered)
   {
-    if (is_new_game)
+    if (!loading_operation_started)
     {
-      guiView->getController().newGame(loading_slot);
+      const int slot = loading_slot;
+      const bool createNewGame = is_new_game;
+      GameController* controller = &guiView->getController();
+      loading_operation = std::async(std::launch::async,
+                                     [controller, slot, createNewGame]()
+                                     {
+                                       if (createNewGame)
+                                       {
+                                         controller->newGame(slot);
+                                         return true;
+                                       }
+                                       return controller->loadGame(slot);
+                                     });
+      loading_operation_started = true;
+      return;
+    }
+
+    if (loading_operation.wait_for(std::chrono::seconds::zero()) !=
+        std::future_status::ready)
+    {
+      return;
+    }
+
+    bool succeeded = false;
+    try
+    {
+      succeeded = loading_operation.get();
+    }
+    catch (const std::exception& exception)
+    {
+      Logger::error(std::format("Failed to initialize slot {}: {}",
+                                loading_slot, exception.what()));
+    }
+    loading_operation_started = false;
+
+    if (succeeded)
+    {
       auto gameScene = std::make_unique<MainGameScene>(guiView);
       changeScene(std::move(gameScene));
     }
     else
     {
-      if (guiView->getController().loadGame(loading_slot))
-      {
-        auto gameScene = std::make_unique<MainGameScene>(guiView);
-        changeScene(std::move(gameScene));
-      }
-      else
-      {
-        Logger::error(
-            std::format("Failed to load game from slot {}", loading_slot));
-        loading_slot = 0;  // reset
-      }
+      Logger::error(
+          std::format("Failed to load game from slot {}", loading_slot));
+      loading_slot = 0;
     }
   }
 }
@@ -163,8 +193,9 @@ void MainMenuScene::render()
       if (metadata.exists && !metadata.real_date.empty() &&
           ImGui::IsItemHovered())
       {
-        ImGui::SetTooltip(LOC("MENU_SAVE_SLOT_LAST_SAVED"),
-                          metadata.real_date.c_str());
+        const std::string tooltip =
+            fmt::sprintf(LOC("MENU_SAVE_SLOT_LAST_SAVED"), metadata.real_date);
+        ImGui::SetTooltip("%s", tooltip.c_str());
       }
     }
 

@@ -14,6 +14,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <limits>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
@@ -21,6 +23,38 @@
 #include "global/language_manager.h"
 #include "model/game.h"
 #include "model/role_utils.h"
+#include "model/transfer_tuning.h"
+
+namespace
+{
+enum class BuyColumn : ImGuiID
+{
+  NAME,
+  TEAM,
+  ROLE,
+  AGE,
+  OVERALL,
+  VALUE,
+  PRICE,
+  WAGE,
+  CONTRACT,
+  ACTION
+};
+
+constexpr std::array<PlayerRole, 12> FILTER_ROLES = {
+    PlayerRole::GK,  PlayerRole::CB, PlayerRole::LB,  PlayerRole::RB,
+    PlayerRole::CDM, PlayerRole::CM, PlayerRole::CAM, PlayerRole::LM,
+    PlayerRole::RM,  PlayerRole::LW, PlayerRole::RW,  PlayerRole::ST};
+
+uint32_t currencyFromInput(float value)
+{
+  if (!std::isfinite(value) || value <= 0.0f) return 0;
+  const double clamped =
+      std::min(static_cast<double>(value),
+               static_cast<double>(std::numeric_limits<uint32_t>::max()));
+  return static_cast<uint32_t>(clamped);
+}
+}  // namespace
 
 TransferMarketScene::TransferMarketScene(GUIView* parent) : GUIScene(parent) {}
 
@@ -68,8 +102,11 @@ void TransferMarketScene::render()
     TeamID my_team = controller.getGame()->getManagedTeamId();
 
     uint32_t budget = controller.transferBudgetForTeam(my_team);
-    ImGui::Text(LOC("TRANSFER_BUDGET"), fmt::format("{:L}", budget).c_str());
-    ImGui::SameLine(ImGui::GetWindowWidth() - 300);
+    const std::string budgetText =
+        fmt::sprintf(LOC("TRANSFER_BUDGET"), fmt::format("{:L}", budget));
+    ImGui::TextUnformatted(budgetText.c_str());
+    ImGui::SameLine(ImGui::GetWindowWidth() -
+                    TransferMarketSceneTuning::Layout::STATUS_RIGHT_OFFSET);
     if (controller.isTransferWindowOpen())
     {
       ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s", LOC("TRANSFER_WINDOW_OPEN"));
@@ -80,7 +117,10 @@ void TransferMarketScene::render()
                          LOC("TRANSFER_WINDOW_CLOSED"));
     }
 
-    if (ImGui::Button(LOC("ROSTER_BACK"), ImVec2(120, 30)))
+    if (ImGui::Button(
+            LOC("ROSTER_BACK"),
+            ImVec2(TransferMarketSceneTuning::Layout::BACK_BUTTON_WIDTH,
+                   TransferMarketSceneTuning::Layout::BUTTON_HEIGHT)))
     {
       guiView->popScene();
     }
@@ -140,9 +180,11 @@ void TransferMarketScene::renderBuyTab()
                                                     "ST"};
   ImGui::Combo(LOC("TRANSFER_FILTER_ROLE"), &filter_role_index, roles.data(),
                static_cast<int>(roles.size()));
-  ImGui::SliderInt(LOC("TRANSFER_FILTER_AGE"), &filter_max_age, 15, 45);
+  ImGui::SliderInt(LOC("TRANSFER_FILTER_AGE"), &filter_max_age,
+                   TransferMarketSceneTuning::Filters::MINIMUM_AGE,
+                   TransferMarketSceneTuning::Filters::MAXIMUM_AGE);
   ImGui::SliderFloat(LOC("TRANSFER_FILTER_PRICE"), &filter_max_price, 0.0f,
-                     200000000.0f, "%.0f");
+                     TransferMarketSceneTuning::Filters::MAXIMUM_PRICE, "%.0f");
 
   ImGui::Separator();
 
@@ -158,6 +200,9 @@ void TransferMarketScene::renderBuyTab()
   for (const auto* p_ptr : cached_all_players)
   {
     const Player& p = *p_ptr;
+    const bool is_free_agent = p.getTeamId() == FREE_AGENTS_TEAM_ID;
+    const auto listing_it = all_listings.find(p.getId());
+    if (!is_free_agent && listing_it == all_listings.end()) continue;
 
     if (!search_str.empty())
     {
@@ -168,22 +213,19 @@ void TransferMarketScene::renderBuyTab()
     }
 
     if (filter_role_index > 0 &&
-        p.getRole() != static_cast<PlayerRole>(filter_role_index))
+        p.getRole() !=
+            FILTER_ROLES[static_cast<std::size_t>(filter_role_index - 1)])
       continue;
     if (p.getAge() > filter_max_age) continue;
 
     uint32_t price = 0;
-    if (p.getTeamId() == FREE_AGENTS_TEAM_ID)
+    if (is_free_agent)
     {
       price = 0;
     }
-    else if (auto it = all_listings.find(p.getId()); it != all_listings.end())
+    else if (listing_it != all_listings.end())
     {
-      price = it->second.asking_price;
-    }
-    else
-    {
-      price = controller.getPlayerMarketValue(p.getId());
+      price = listing_it->second.asking_price;
     }
 
     if (static_cast<float>(price) > filter_max_price) continue;
@@ -194,19 +236,35 @@ void TransferMarketScene::renderBuyTab()
   ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                           ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable;
 
-  if (ImGui::BeginTable("BuyTable", 8, flags, ImVec2(0, 450)))
+  if (ImGui::BeginTable(
+          "BuyTable", TransferMarketSceneTuning::Tables::BUY_COLUMN_COUNT,
+          flags,
+          ImVec2(0, TransferMarketSceneTuning::Layout::BUY_TABLE_HEIGHT)))
   {
-    ImGui::TableSetupScrollFreeze(0, 1);
+    ImGui::TableSetupScrollFreeze(
+        0, TransferMarketSceneTuning::Tables::HEADER_ROW_COUNT);
     ImGui::TableSetupColumn(LOC("TRANSFER_COL_NAME"),
-                            ImGuiTableColumnFlags_DefaultSort, 0.0f, 0);
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_TEAM"), 0, 0.0f, 1);
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_ROLE"), 0, 0.0f, 2);
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_AGE"), 0, 0.0f, 3);
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_OVR"), 0, 0.0f, 4);
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_VALUE"), 0, 0.0f, 5);
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_PRICE"), 0, 0.0f, 6);
+                            ImGuiTableColumnFlags_DefaultSort, 0.0f,
+                            static_cast<ImGuiID>(BuyColumn::NAME));
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_TEAM"), 0, 0.0f,
+                            static_cast<ImGuiID>(BuyColumn::TEAM));
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_ROLE"), 0, 0.0f,
+                            static_cast<ImGuiID>(BuyColumn::ROLE));
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_AGE"), 0, 0.0f,
+                            static_cast<ImGuiID>(BuyColumn::AGE));
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_OVR"), 0, 0.0f,
+                            static_cast<ImGuiID>(BuyColumn::OVERALL));
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_VALUE"), 0, 0.0f,
+                            static_cast<ImGuiID>(BuyColumn::VALUE));
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_PRICE"), 0, 0.0f,
+                            static_cast<ImGuiID>(BuyColumn::PRICE));
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_WAGE"), 0, 0.0f,
+                            static_cast<ImGuiID>(BuyColumn::WAGE));
+    ImGui::TableSetupColumn(LOC("TRANSFER_COL_CONTRACT"), 0, 0.0f,
+                            static_cast<ImGuiID>(BuyColumn::CONTRACT));
     ImGui::TableSetupColumn(LOC("TRANSFER_COL_ACTION"),
-                            ImGuiTableColumnFlags_NoSort, 0.0f, 7);
+                            ImGuiTableColumnFlags_NoSort, 0.0f,
+                            static_cast<ImGuiID>(BuyColumn::ACTION));
     ImGui::TableHeadersRow();
 
     if (ImGuiTableSortSpecs* sort_specs = ImGui::TableGetSortSpecs())
@@ -221,12 +279,12 @@ void TransferMarketScene::renderBuyTab()
             [&](const Player* a, const Player* b)
             {
               int cmp = 0;
-              switch (spec->ColumnUserID)
+              switch (static_cast<BuyColumn>(spec->ColumnUserID))
               {
-                case 0:  // Name
+                case BuyColumn::NAME:
                   cmp = a->getName().compare(b->getName());
                   break;
-                case 1:  // Team
+                case BuyColumn::TEAM:
                 {
                   std::string teamA = (a->getTeamId() == FREE_AGENTS_TEAM_ID)
                                           ? "Free Agent"
@@ -251,14 +309,14 @@ void TransferMarketScene::renderBuyTab()
                   cmp = teamA.compare(teamB);
                   break;
                 }
-                case 2:  // Role
+                case BuyColumn::ROLE:
                   cmp = static_cast<int>(a->getRole()) -
                         static_cast<int>(b->getRole());
                   break;
-                case 3:  // Age
+                case BuyColumn::AGE:
                   cmp = a->getAge() - b->getAge();
                   break;
-                case 4:  // OVR
+                case BuyColumn::OVERALL:
                 {
                   int ovrA = static_cast<int>(a->getOverall(
                       controller.getGameData()->getStatsConfig()));
@@ -267,14 +325,14 @@ void TransferMarketScene::renderBuyTab()
                   cmp = ovrA - ovrB;
                   break;
                 }
-                case 5:  // Market Value
+                case BuyColumn::VALUE:
                 {
                   uint32_t valA = controller.getPlayerMarketValue(a->getId());
                   uint32_t valB = controller.getPlayerMarketValue(b->getId());
                   cmp = (valA < valB) ? -1 : (valA > valB ? 1 : 0);
                   break;
                 }
-                case 6:  // Price
+                case BuyColumn::PRICE:
                 {
                   auto getPrice = [&](const Player* p) -> uint32_t
                   {
@@ -289,6 +347,17 @@ void TransferMarketScene::renderBuyTab()
                   cmp = (priceA < priceB) ? -1 : (priceA > priceB ? 1 : 0);
                   break;
                 }
+                case BuyColumn::WAGE:
+                  cmp = a->getWage() < b->getWage()
+                            ? -1
+                            : (a->getWage() > b->getWage() ? 1 : 0);
+                  break;
+                case BuyColumn::CONTRACT:
+                  cmp = static_cast<int>(a->getContractYears()) -
+                        static_cast<int>(b->getContractYears());
+                  break;
+                case BuyColumn::ACTION:
+                  break;
               }
               return ascending ? (cmp < 0) : (cmp > 0);
             });
@@ -360,13 +429,27 @@ void TransferMarketScene::renderBuyTab()
       }
 
       ImGui::TableNextColumn();
+      ImGui::Text("€%u/w", p.getWage());
+      ImGui::TableNextColumn();
+      ImGui::Text("%u y", static_cast<unsigned>(p.getContractYears()));
+
+      ImGui::TableNextColumn();
       if (is_free_agent)
       {
         std::string btn_id =
             fmt::format("{}##{}", LOC("TRANSFER_SIGN"), p.getId());
         if (ImGui::Button(btn_id.c_str()))
         {
-          confirm_state = {true, p.getId(), FREE_AGENTS_TEAM_ID, 0, true};
+          const GameController::ContractTerms demand =
+              controller.getContractDemand(p.getId(), true);
+          confirm_state = {true,
+                           p.getId(),
+                           FREE_AGENTS_TEAM_ID,
+                           0,
+                           true,
+                           static_cast<float>(demand.weekly_wage),
+                           static_cast<int>(demand.years),
+                           {}};
         }
       }
       else
@@ -375,7 +458,16 @@ void TransferMarketScene::renderBuyTab()
             fmt::format("{}##{}", LOC("TRANSFER_BUY"), p.getId());
         if (ImGui::Button(btn_id.c_str()))
         {
-          confirm_state = {true, p.getId(), p.getTeamId(), price, false};
+          const GameController::ContractTerms demand =
+              controller.getContractDemand(p.getId(), false);
+          confirm_state = {true,
+                           p.getId(),
+                           p.getTeamId(),
+                           price,
+                           false,
+                           static_cast<float>(demand.weekly_wage),
+                           static_cast<int>(demand.years),
+                           {}};
         }
       }
     }
@@ -406,7 +498,7 @@ void TransferMarketScene::renderListingsTab()
       list_player_index = 0;
 
     if (std::string combo_preview =
-            listable_players[list_player_index]->getName();
+            listable_players[static_cast<size_t>(list_player_index)]->getName();
         ImGui::BeginCombo(LOC("TRANSFER_SELECT_PLAYER"), combo_preview.c_str()))
     {
       for (size_t i = 0; i < listable_players.size(); i++)
@@ -425,12 +517,14 @@ void TransferMarketScene::renderListingsTab()
     }
 
     ImGui::InputFloat(LOC("TRANSFER_ASKING_PRICE"), &list_price_input,
-                      100000.0f, 1000000.0f, "%.0f");
+                      TransferMarketSceneTuning::MoneyInput::SMALL_STEP,
+                      TransferMarketSceneTuning::MoneyInput::LARGE_STEP,
+                      "%.0f");
     if (ImGui::Button(LOC("TRANSFER_LIST_PLAYER")))
     {
       controller.listPlayerForTransfer(
-          listable_players[list_player_index]->getId(),
-          static_cast<uint32_t>(list_price_input));
+          listable_players[static_cast<size_t>(list_player_index)]->getId(),
+          currencyFromInput(list_price_input));
       refreshData();
     }
   }
@@ -438,12 +532,15 @@ void TransferMarketScene::renderListingsTab()
   ImGui::Separator();
   ImGui::Text("%s", LOC("TRANSFER_YOUR_LISTINGS"));
 
-  if (ImGui::BeginTable("MyListingsTable", 5,
-                        ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
-                            ImGuiTableFlags_ScrollY,
-                        ImVec2(0, 300)))
+  if (ImGui::BeginTable(
+          "MyListingsTable",
+          TransferMarketSceneTuning::Tables::LISTINGS_COLUMN_COUNT,
+          ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+              ImGuiTableFlags_ScrollY,
+          ImVec2(0, TransferMarketSceneTuning::Layout::SECONDARY_TABLE_HEIGHT)))
   {
-    ImGui::TableSetupScrollFreeze(0, 1);
+    ImGui::TableSetupScrollFreeze(
+        0, TransferMarketSceneTuning::Tables::HEADER_ROW_COUNT);
     ImGui::TableSetupColumn(LOC("TRANSFER_COL_NAME"));
     ImGui::TableSetupColumn(LOC("TRANSFER_COL_ROLE"));
     ImGui::TableSetupColumn(LOC("TRANSFER_COL_OVR"));
@@ -497,12 +594,14 @@ void TransferMarketScene::renderBidsTab()
     return;
   }
 
-  if (ImGui::BeginTable("BidsTable", 6,
-                        ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
-                            ImGuiTableFlags_ScrollY,
-                        ImVec2(0, 300)))
+  if (ImGui::BeginTable(
+          "BidsTable", TransferMarketSceneTuning::Tables::BIDS_COLUMN_COUNT,
+          ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+              ImGuiTableFlags_ScrollY,
+          ImVec2(0, TransferMarketSceneTuning::Layout::SECONDARY_TABLE_HEIGHT)))
   {
-    ImGui::TableSetupScrollFreeze(0, 1);
+    ImGui::TableSetupScrollFreeze(
+        0, TransferMarketSceneTuning::Tables::HEADER_ROW_COUNT);
     ImGui::TableSetupColumn(LOC("TRANSFER_COL_NAME"));
     ImGui::TableSetupColumn(LOC("TRANSFER_COL_BIDDER"));
     ImGui::TableSetupColumn(LOC("TRANSFER_COL_AMOUNT"));
@@ -521,8 +620,10 @@ void TransferMarketScene::renderBidsTab()
           bidder_opt.has_value() ? bidder_opt->get().getName() : "Unknown";
 
       uint32_t value = controller.getPlayerMarketValue(pid);
-      float vs_val = static_cast<float>(listing.highest_bid) /
-                     static_cast<float>(value) * 100.0f;
+      float vs_val = value > 0 ? static_cast<float>(listing.highest_bid) /
+                                     static_cast<float>(value) *
+                                     TransferMarketSceneTuning::PERCENT_SCALE
+                               : 0.0f;
 
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
@@ -582,52 +683,90 @@ void TransferMarketScene::renderConfirmDialog()
       if (confirm_state.is_free_agent)
       {
         ImGui::Text("%s", fmt::sprintf(LOC("TRANSFER_CONFIRM_SIGN"),
-                                       player_opt->get().getName())
+                                       player_opt->get().getName().c_str())
                               .c_str());
       }
       else
       {
-        ImGui::Text(
-            "%s", fmt::sprintf(LOC("TRANSFER_CONFIRM_BUY"),
-                               player_opt->get().getName(), confirm_state.price)
-                      .c_str());
+        ImGui::Text("%s", fmt::sprintf(LOC("TRANSFER_CONFIRM_BUY"),
+                                       player_opt->get().getName().c_str(),
+                                       confirm_state.price)
+                              .c_str());
       }
       ImGui::Separator();
 
       TeamID my_team = controller.getGame()->getManagedTeamId();
-      bool can_afford = controller.canAffordPlayer(
-          my_team, confirm_state.player_id, confirm_state.price);
+      const GameController::ContractTerms demand = controller.getContractDemand(
+          confirm_state.player_id, confirm_state.is_free_agent);
+      ImGui::TextUnformatted(fmt::sprintf(LOC("TRANSFER_PLAYER_DEMANDS"),
+                                          demand.weekly_wage, demand.years)
+                                 .c_str());
+      ImGui::InputFloat(
+          LOC("TRANSFER_OFFER_WAGE"), &confirm_state.offered_weekly_wage,
+          TransferMarketSceneTuning::MoneyInput::WAGE_SMALL_STEP,
+          TransferMarketSceneTuning::MoneyInput::WAGE_LARGE_STEP, "%.0f");
+      ImGui::SliderInt(LOC("TRANSFER_OFFER_YEARS"),
+                       &confirm_state.offered_years,
+                       TransferTuning::Contract::MINIMUM_YEARS,
+                       TransferTuning::Contract::MAXIMUM_YEARS);
 
-      if (!can_afford)
+      const uint32_t offeredWage =
+          currencyFromInput(confirm_state.offered_weekly_wage);
+      const GameController::ContractTerms offer{
+          offeredWage, static_cast<uint8_t>(confirm_state.offered_years)};
+      const bool acceptable = controller.isContractOfferAcceptable(
+          confirm_state.player_id, confirm_state.is_free_agent, offer);
+      const bool canAfford =
+          controller.canAffordPlayer(my_team, confirm_state.player_id,
+                                     confirm_state.price, offer.weekly_wage);
+
+      if (!acceptable)
+      {
+        ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s",
+                           LOC("TRANSFER_CONTRACT_REJECTED"));
+      }
+      if (!canAfford)
       {
         ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s",
                            LOC("TRANSFER_NOT_ENOUGH_BUDGET"));
-        if (ImGui::Button(LOC("TRANSFER_CANCEL"), ImVec2(120, 0)))
-        {
-          ImGui::CloseCurrentPopup();
-        }
       }
-      else
+      if (!confirm_state.status.empty())
       {
-        if (ImGui::Button(LOC("TRANSFER_CONFIRM"), ImVec2(120, 0)))
+        ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s",
+                           confirm_state.status.c_str());
+      }
+
+      ImGui::BeginDisabled(!acceptable || !canAfford);
+      if (ImGui::Button(
+              LOC("TRANSFER_CONFIRM"),
+              ImVec2(TransferMarketSceneTuning::Layout::STANDARD_BUTTON_WIDTH,
+                     0.0f)))
+      {
+        const bool completed =
+            confirm_state.is_free_agent
+                ? controller.signFreeAgentWithContract(confirm_state.player_id,
+                                                       my_team, offer)
+                : controller.buyPlayerWithContract(confirm_state.player_id,
+                                                   my_team, confirm_state.price,
+                                                   offer);
+        if (completed)
         {
-          if (confirm_state.is_free_agent)
-          {
-            controller.signFreeAgent(confirm_state.player_id, my_team);
-          }
-          else
-          {
-            controller.buyPlayer(confirm_state.player_id, my_team,
-                                 confirm_state.price);
-          }
           refreshData();
           ImGui::CloseCurrentPopup();
         }
-        ImGui::SameLine();
-        if (ImGui::Button(LOC("TRANSFER_CANCEL"), ImVec2(120, 0)))
+        else
         {
-          ImGui::CloseCurrentPopup();
+          confirm_state.status = LOC("TRANSFER_CONTRACT_REJECTED");
         }
+      }
+      ImGui::EndDisabled();
+      ImGui::SameLine();
+      if (ImGui::Button(
+              LOC("TRANSFER_CANCEL"),
+              ImVec2(TransferMarketSceneTuning::Layout::STANDARD_BUTTON_WIDTH,
+                     0.0f)))
+      {
+        ImGui::CloseCurrentPopup();
       }
     }
     ImGui::EndPopup();
@@ -653,12 +792,14 @@ void TransferMarketScene::renderCounterDialog()
       ImGui::Text("%s: €%u", LOC("TRANSFER_CURRENT_BID"),
                   it->second.highest_bid);
       ImGui::InputFloat(LOC("TRANSFER_NEW_PRICE"), &counter_price_input,
-                        100000.0f, 1000000.0f, "%.0f");
+                        TransferMarketSceneTuning::MoneyInput::SMALL_STEP,
+                        TransferMarketSceneTuning::MoneyInput::LARGE_STEP,
+                        "%.0f");
 
       if (ImGui::Button(LOC("TRANSFER_SUBMIT_COUNTER"), ImVec2(120, 0)))
       {
         controller.counterOffer(counter_state.player_id,
-                                static_cast<uint32_t>(counter_price_input));
+                                currencyFromInput(counter_price_input));
         refreshData();
         ImGui::CloseCurrentPopup();
       }

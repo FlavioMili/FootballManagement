@@ -12,17 +12,26 @@
 #include <sqlite3.h>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
+#include <cmath>
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 
 #include "database/gamedata.h"
 #include "database/repositories/player_repository.h"
+#include "database/repositories/team_repository.h"
 #include "global/global.h"
+#include "global/logger.h"
+#include "model/transfer_tuning.h"
 
-GameController::GameController() : game(nullptr), gamedata(nullptr) {}
+GameController::GameController()
+    : game(nullptr), gamedata(nullptr), transfer_rng(std::random_device{}())
+{
+}
 
 std::string GameController::getSavePath(int slot) const
 {
@@ -41,6 +50,7 @@ std::string GameController::getSavePath(int slot) const
 
 void GameController::newGame(int slot)
 {
+  const auto startedAt = std::chrono::steady_clock::now();
   std::string path = getSavePath(slot);
   if (std::filesystem::exists(path))
   {
@@ -56,10 +66,17 @@ void GameController::newGame(int slot)
   {
     processAITransferActivity();
   }
+  last_initialization_milliseconds =
+      std::chrono::duration<float, std::milli>(
+          std::chrono::steady_clock::now() - startedAt)
+          .count();
+  Logger::info(std::format("New game initialized in {:.2f} ms",
+                           last_initialization_milliseconds));
 }
 
 bool GameController::loadGame(int slot)
 {
+  const auto startedAt = std::chrono::steady_clock::now();
   std::string path = getSavePath(slot);
   if (!std::filesystem::exists(path))
   {
@@ -70,6 +87,7 @@ bool GameController::loadGame(int slot)
   game = std::make_unique<Game>(gamedata, db_conn);
 
   // Load transfer listings
+  transfer_listings.clear();
   auto loaded = gamedata->loadAllTransferListings();
   for (auto& [pid, listing] : loaded)
   {
@@ -83,6 +101,13 @@ bool GameController::loadGame(int slot)
     }
   }
 
+  last_initialization_milliseconds =
+      std::chrono::duration<float, std::milli>(
+          std::chrono::steady_clock::now() - startedAt)
+          .count();
+  Logger::info(std::format("Save loaded in {:.2f} ms",
+                           last_initialization_milliseconds));
+
   return true;
 }
 
@@ -93,16 +118,17 @@ bool GameController::isGameLoaded() const
 
 int GameController::getCurrentSeason() const
 {
-  return game->getCurrentSeason();
+  return game ? game->getCurrentSeason() : 0;
 }
 
 GameDateValue GameController::getCurrentDate() const
 {
-  return game->getCurrentDate();
+  return game ? game->getCurrentDate() : GameDateValue{};
 }
 
 bool GameController::hasSelectedTeam() const
 {
+  if (!game || !gamedata) return false;
   auto managed_id = game->getManagedTeamId();
   return managed_id != FREE_AGENTS_TEAM_ID &&
          (*gamedata).getTeam(managed_id).has_value();
@@ -110,18 +136,24 @@ bool GameController::hasSelectedTeam() const
 
 std::optional<std::reference_wrapper<Team>> GameController::getManagedTeam()
 {
+  if (!game || !gamedata) return std::nullopt;
   return (*gamedata).getTeam(game->getManagedTeamId());
 }
 
 std::optional<std::reference_wrapper<const Team>>
 GameController::getManagedTeam() const
 {
+  if (!game || !gamedata) return std::nullopt;
   return (*gamedata).getTeam(game->getManagedTeamId());
 }
 
 void GameController::selectManagedTeam(uint16_t team_id)
 {
-  game->setManagedTeamId(team_id);
+  if (game && gamedata && team_id != FREE_AGENTS_TEAM_ID &&
+      gamedata->getTeam(team_id).has_value())
+  {
+    game->setManagedTeamId(team_id);
+  }
 }
 
 const std::vector<std::reference_wrapper<const League>>&
@@ -175,32 +207,49 @@ const StatsConfig& GameController::getStatsConfig() const
 
 void GameController::advanceDay()
 {
+  if (!game) return;
+  const int previousSeason = game->getCurrentSeason();
   game->advanceDay();
+  if (game->getCurrentSeason() != previousSeason)
+  {
+    purgeReleasedPlayerListings();
+  }
   if (isTransferWindowOpen())
   {
     processAITransferActivity();
   }
 }
 
-void GameController::setMatchResult(GameDateValue date, uint16_t home_id,
-                                    uint16_t away_id, uint8_t home_score,
-                                    uint8_t away_score)
+void GameController::purgeReleasedPlayerListings()
 {
-  if (game)
+  std::vector<PlayerID> releasedListings;
+  releasedListings.reserve(transfer_listings.size());
+  for (const auto& [playerId, listing] : transfer_listings)
   {
-    auto& matches = game->getCalendar().getMatchesForDateMutable(date);
-    for (auto& m : matches)
-    {
-      if (m.getHomeTeamId() == home_id && m.getAwayTeamId() == away_id)
-      {
-        m.setPlayedResult(home_score, away_score);
-        break;
-      }
-    }
+    (void)listing;
+    const auto player = gamedata->getPlayer(playerId);
+    if (!player || player->get().getTeamId() == FREE_AGENTS_TEAM_ID)
+      releasedListings.push_back(playerId);
+  }
+  for (PlayerID playerId : releasedListings)
+  {
+    transfer_listings.erase(playerId);
+    gamedata->deleteTransferListing(playerId);
   }
 }
 
-void GameController::saveGame() { game->saveGame(); }
+bool GameController::setMatchResult(GameDateValue date, uint16_t home_id,
+                                    uint16_t away_id, uint8_t home_score,
+                                    uint8_t away_score)
+{
+  return game &&
+         game->setMatchResult(date, home_id, away_id, home_score, away_score);
+}
+
+void GameController::saveGame()
+{
+  if (game) game->saveGame();
+}
 
 GameController::SaveSlotMetadata GameController::getSaveSlotMetadata(
     int slot) const
@@ -283,6 +332,7 @@ GameController::SaveSlotMetadata GameController::getSaveSlotMetadata(
 
 void GameController::listPlayerForTransfer(PlayerID pid, uint32_t asking_price)
 {
+  if (!isGameLoaded() || !isTransferWindowOpen() || asking_price == 0) return;
   auto player_opt = gamedata->getPlayer(pid);
   if (!player_opt.has_value()) return;
 
@@ -292,13 +342,35 @@ void GameController::listPlayerForTransfer(PlayerID pid, uint32_t asking_price)
   float attention = calculateAttentionScore(pid);
   TransferListing listing(pid, player_opt->get().getTeamId(), asking_price,
                           game->getCurrentDate(), attention);
+  const auto existing_listing = transfer_listings.find(pid);
+  const std::optional<TransferListing> old_listing =
+      existing_listing == transfer_listings.end()
+          ? std::nullopt
+          : std::optional<TransferListing>(existing_listing->second);
   transfer_listings[pid] = listing;
 
   // Update player status bitmask
-  gamedata->getPlayers().at(pid).setTransferStatus(TransferStatus::Listed);
+  Player& player = gamedata->getPlayers().at(pid);
+  const TransferStatus old_status = player.getTransferStatus();
+  player.setTransferStatus(TransferStatus::Listed);
 
-  // Persist to DB
-  gamedata->saveTransferListing(listing);
+  try
+  {
+    db_conn->beginTransaction();
+    gamedata->saveTransferListing(listing);
+    PlayerRepository(db_conn).updatePlayer(player);
+    db_conn->commitTransaction();
+  }
+  catch (...)
+  {
+    db_conn->rollbackTransaction();
+    player.setTransferStatus(old_status);
+    if (old_listing)
+      transfer_listings[pid] = *old_listing;
+    else
+      transfer_listings.erase(pid);
+    throw;
+  }
 }
 
 void GameController::removePlayerFromTransfer(PlayerID pid)
@@ -306,17 +378,35 @@ void GameController::removePlayerFromTransfer(PlayerID pid)
   auto it = transfer_listings.find(pid);
   if (it == transfer_listings.end()) return;
 
+  const TransferListing removed_listing = it->second;
   transfer_listings.erase(it);
 
   // Update player status bitmask
   auto player_opt = gamedata->getPlayer(pid);
-  if (player_opt.has_value())
+  if (!player_opt.has_value())
   {
-    gamedata->getPlayers().at(pid).setTransferStatus(TransferStatus::NotListed);
+    transfer_listings[pid] = removed_listing;
+    return;
   }
 
-  // Remove from DB
-  gamedata->deleteTransferListing(pid);
+  Player& player = gamedata->getPlayers().at(pid);
+  const TransferStatus old_status = player.getTransferStatus();
+  player.setTransferStatus(TransferStatus::NotListed);
+
+  try
+  {
+    db_conn->beginTransaction();
+    PlayerRepository(db_conn).updatePlayer(player);
+    gamedata->deleteTransferListing(pid);
+    db_conn->commitTransaction();
+  }
+  catch (...)
+  {
+    db_conn->rollbackTransaction();
+    player.setTransferStatus(old_status);
+    transfer_listings[pid] = removed_listing;
+    throw;
+  }
 }
 
 bool GameController::isPlayerListed(PlayerID pid) const
@@ -353,7 +443,8 @@ std::vector<const TransferListing*> GameController::getListingsByRole(
   for (const auto& [pid, listing] : transfer_listings)
   {
     auto player_opt = gamedata->getPlayer(pid);
-    if (player_opt.has_value() && player_opt->get().getRole() == role)
+    if (player_opt.has_value() &&
+        getRoleCategory(player_opt->get().getRole()) == getRoleCategory(role))
     {
       result.push_back(&listing);
     }
@@ -366,6 +457,16 @@ std::vector<const TransferListing*> GameController::getListingsByRole(
 bool GameController::canAffordPlayer(TeamID buyer_id, PlayerID pid,
                                      uint32_t target_price) const
 {
+  auto player_opt = gamedata->getPlayer(pid);
+  if (!player_opt.has_value()) return false;
+  return canAffordPlayer(buyer_id, pid, target_price,
+                         player_opt->get().getWage());
+}
+
+bool GameController::canAffordPlayer(TeamID buyer_id, PlayerID pid,
+                                     uint32_t target_price,
+                                     uint32_t offered_weekly_wage) const
+{
   auto buyer_opt = gamedata->getTeam(buyer_id);
   auto player_opt = gamedata->getPlayer(pid);
   if (!buyer_opt.has_value() || !player_opt.has_value()) return false;
@@ -373,7 +474,8 @@ bool GameController::canAffordPlayer(TeamID buyer_id, PlayerID pid,
   const Player& player = player_opt->get();
   const Finances& finances = buyer_opt->get().getFinances();
 
-  if (finances.getBalance() < static_cast<int64_t>(target_price))
+  if (buyer_id == player.getTeamId() ||
+      transferBudgetForTeam(buyer_id) < target_price)
   {
     return false;
   }
@@ -381,97 +483,198 @@ bool GameController::canAffordPlayer(TeamID buyer_id, PlayerID pid,
   int64_t current_wages =
       finances.getCurrentWageSpending(*gamedata, buyer_opt->get());
   int64_t new_wage_total =
-      current_wages + static_cast<int64_t>(player.getWage());
+      current_wages + static_cast<int64_t>(offered_weekly_wage);
 
-  return new_wage_total <
-         std::max(finances.getBalance() / 2, static_cast<int64_t>(100000));
+  const auto wage_budget = std::max(
+      TransferTuning::Contract::MINIMUM_WEEKLY_WAGE_BUDGET,
+      static_cast<int64_t>(
+          static_cast<double>(finances.getBalance()) *
+          (1.0 - static_cast<double>(finances.getTransferToWagesRatio())) /
+          TransferTuning::Contract::WEEKS_PER_YEAR));
+  return new_wage_total <= wage_budget;
+}
+
+GameController::ContractTerms GameController::getContractDemand(
+    PlayerID pid, bool free_agent) const
+{
+  const auto player = gamedata->getPlayer(pid);
+  if (!player) return {};
+
+  const float wageRaise = free_agent
+                              ? TransferTuning::Contract::FREE_AGENT_WAGE_RAISE
+                              : TransferTuning::Contract::TRANSFER_WAGE_RAISE;
+  const auto requestedWage = static_cast<uint32_t>(
+      std::ceil(static_cast<float>(player->get().getWage()) * wageRaise));
+
+  uint8_t requestedYears = TransferTuning::Contract::VETERAN_MINIMUM_YEARS;
+  if (player->get().getAge() <=
+      TransferTuning::Contract::YOUNG_PLAYER_MAXIMUM_AGE)
+  {
+    requestedYears = TransferTuning::Contract::YOUNG_PLAYER_MINIMUM_YEARS;
+  }
+  else if (player->get().getAge() <=
+           TransferTuning::Contract::PRIME_PLAYER_MAXIMUM_AGE)
+  {
+    requestedYears = TransferTuning::Contract::PRIME_PLAYER_MINIMUM_YEARS;
+  }
+
+  return {
+      std::max(requestedWage, TransferTuning::Contract::MINIMUM_WEEKLY_WAGE),
+      requestedYears};
+}
+
+bool GameController::isContractOfferAcceptable(PlayerID pid, bool free_agent,
+                                               ContractTerms terms) const
+{
+  if (terms.years < TransferTuning::Contract::MINIMUM_YEARS ||
+      terms.years > TransferTuning::Contract::MAXIMUM_YEARS)
+  {
+    return false;
+  }
+  const ContractTerms demand = getContractDemand(pid, free_agent);
+  return demand.weekly_wage > 0 && terms.weekly_wage >= demand.weekly_wage &&
+         terms.years >= demand.years;
 }
 
 // ========== Core Transfer Execution ==========
 
-void GameController::executeTransfer(PlayerID pid, TeamID buyer_id,
-                                     TeamID seller_id, uint32_t price)
+bool GameController::executeTransfer(PlayerID pid, TeamID buyer_id,
+                                     TeamID seller_id, uint32_t price,
+                                     std::optional<ContractTerms> contract)
 {
   auto buyer_opt = gamedata->getTeam(buyer_id);
   auto seller_opt = gamedata->getTeam(seller_id);
-  if (!buyer_opt.has_value() || !seller_opt.has_value()) return;
+  auto player_it = gamedata->getPlayers().find(pid);
+  if (!buyer_opt || !seller_opt || player_it == gamedata->getPlayers().end() ||
+      buyer_id == seller_id || player_it->second.getTeamId() != seller_id ||
+      !canAffordPlayer(
+          buyer_id, pid, price,
+          contract ? contract->weekly_wage : player_it->second.getWage()))
+  {
+    return false;
+  }
 
   Team& buyer = buyer_opt->get();
   Team& seller = seller_opt->get();
-  Player& player = gamedata->getPlayers().at(pid);
+  Player& player = player_it->second;
+  const TransferStatus old_status = player.getTransferStatus();
+  const uint32_t old_wage = player.getWage();
+  const uint8_t old_contract_years = player.getContractYears();
+  const bool moves_money = seller_id != FREE_AGENTS_TEAM_ID && price > 0;
 
   db_conn->beginTransaction();
   try
   {
-    PlayerRepository playerRepo(db_conn);
-    playerRepo.transferPlayer(pid, buyer_id);
-
+    if (moves_money)
+    {
+      seller.getFinances().addBalance(static_cast<int64_t>(price));
+      buyer.getFinances().subtractBalance(static_cast<int64_t>(price));
+    }
+    seller.removePlayerID(pid);
+    buyer.addPlayerID(pid);
+    gamedata->transferPlayer(pid, buyer_id);
     player.setTransferStatus(TransferStatus::NotListed);
-    playerRepo.updatePlayer(player);
+    if (contract)
+    {
+      player.setWage(contract->weekly_wage);
+      player.setContractYears(contract->years);
+    }
 
+    PlayerRepository playerRepo(db_conn);
+    playerRepo.updatePlayer(player);
+    TeamRepository team_repo(db_conn);
+    team_repo.updateTeamState(buyer);
+    if (moves_money) team_repo.updateTeamState(seller);
     gamedata->deleteTransferListing(pid);
     db_conn->commitTransaction();
   }
-  catch (const std::exception& e)
+  catch (const std::exception& exception)
   {
     db_conn->rollbackTransaction();
-    player.setTransferStatus(TransferStatus::Listed);
-    throw;
+    gamedata->transferPlayer(pid, seller_id);
+    buyer.removePlayerID(pid);
+    seller.addPlayerID(pid);
+    if (moves_money)
+    {
+      buyer.getFinances().addBalance(static_cast<int64_t>(price));
+      seller.getFinances().subtractBalance(static_cast<int64_t>(price));
+    }
+    player.setTransferStatus(old_status);
+    player.setWage(old_wage);
+    player.setContractYears(old_contract_years);
+    Logger::error("Transfer failed: " + std::string(exception.what()));
+    return false;
   }
 
-  if (seller_id != FREE_AGENTS_TEAM_ID && price > 0)
-  {
-    seller.getFinances().addBalance(static_cast<int64_t>(price));
-    buyer.getFinances().subtractBalance(static_cast<int64_t>(price));
-  }
-
-  if (seller_id != FREE_AGENTS_TEAM_ID)
-  {
-    seller.removePlayerID(pid);
-  }
-  buyer.addPlayerID(pid);
-
-  gamedata->transferPlayer(pid, buyer_id);
+  buyer.generateStartingXI(*gamedata, gamedata->getStatsConfig());
+  seller.generateStartingXI(*gamedata, gamedata->getStatsConfig());
   transfer_listings.erase(pid);
-
-  saveGame();
+  return true;
 }
 
 // ========== Buy + Sign + Market Value ==========
 
 bool GameController::buyPlayer(PlayerID pid, TeamID buyer_id, uint32_t price)
 {
+  return buyPlayerWithContract(pid, buyer_id, price,
+                               getContractDemand(pid, false));
+}
+
+bool GameController::buyPlayerWithContract(PlayerID pid, TeamID buyer_id,
+                                           uint32_t price, ContractTerms terms)
+{
   auto player_opt = gamedata->getPlayer(pid);
   if (!player_opt.has_value()) return false;
 
   TeamID seller_id = player_opt->get().getTeamId();
   if (seller_id == buyer_id) return false;
+  if (!isTransferWindowOpen()) return false;
 
   auto it = transfer_listings.find(pid);
-  if (it != transfer_listings.end())
+  if (it == transfer_listings.end() || it->second.seller_team_id != seller_id)
+  {
+    return false;
+  }
+  else
   {
     const TransferListing& listing = it->second;
-    if (price != listing.asking_price && price != listing.highest_bid)
+    const bool paysAskingPrice = price == listing.asking_price;
+    const bool ownsHighestBid =
+        listing.highest_bidder_id == buyer_id && price == listing.highest_bid;
+    if (!paysAskingPrice && !ownsHighestBid)
     {
       return false;
     }
   }
 
-  if (!canAffordPlayer(buyer_id, pid, price)) return false;
+  if (!isContractOfferAcceptable(pid, false, terms) ||
+      !canAffordPlayer(buyer_id, pid, price, terms.weekly_wage))
+  {
+    return false;
+  }
 
-  executeTransfer(pid, buyer_id, seller_id, price);
-  return true;
+  return executeTransfer(pid, buyer_id, seller_id, price, terms);
 }
 
 bool GameController::signFreeAgent(PlayerID pid, TeamID buyer_id)
+{
+  return signFreeAgentWithContract(pid, buyer_id, getContractDemand(pid, true));
+}
+
+bool GameController::signFreeAgentWithContract(PlayerID pid, TeamID buyer_id,
+                                               ContractTerms terms)
 {
   auto player_opt = gamedata->getPlayer(pid);
   if (!player_opt.has_value()) return false;
 
   if (player_opt->get().getTeamId() != FREE_AGENTS_TEAM_ID) return false;
+  if (!isContractOfferAcceptable(pid, true, terms) ||
+      !canAffordPlayer(buyer_id, pid, 0, terms.weekly_wage))
+  {
+    return false;
+  }
 
-  executeTransfer(pid, buyer_id, FREE_AGENTS_TEAM_ID, 0);
-  return true;
+  return executeTransfer(pid, buyer_id, FREE_AGENTS_TEAM_ID, 0, terms);
 }
 
 uint32_t GameController::getPlayerMarketValue(PlayerID pid) const
@@ -480,7 +683,7 @@ uint32_t GameController::getPlayerMarketValue(PlayerID pid) const
   if (!player_opt.has_value()) return 0;
 
   const Player& player = player_opt->get();
-  const_cast<Player&>(player).updateMarketValue(gamedata->getStatsConfig());
+  player.updateMarketValue(gamedata->getStatsConfig());
   return player.getMarketValue();
 }
 
@@ -502,6 +705,7 @@ bool GameController::submitBid(PlayerID pid, TeamID bidder_id,
   {
     it->second.highest_bid = bid_amount;
     it->second.highest_bidder_id = bidder_id;
+    gamedata->saveTransferListing(it->second);
     return true;
   }
 
@@ -513,10 +717,17 @@ bool GameController::acceptBid(PlayerID pid)
   auto it = transfer_listings.find(pid);
   if (it == transfer_listings.end()) return false;
   if (!it->second.highest_bidder_id.has_value()) return false;
+  const ContractTerms contract = getContractDemand(pid, false);
+  if (!isTransferWindowOpen() ||
+      !canAffordPlayer(*it->second.highest_bidder_id, pid,
+                       it->second.highest_bid, contract.weekly_wage))
+  {
+    return false;
+  }
 
-  executeTransfer(pid, it->second.highest_bidder_id.value(),
-                  it->second.seller_team_id, it->second.highest_bid);
-  return true;
+  return executeTransfer(pid, *it->second.highest_bidder_id,
+                         it->second.seller_team_id, it->second.highest_bid,
+                         contract);
 }
 
 bool GameController::rejectBid(PlayerID pid)
@@ -526,6 +737,7 @@ bool GameController::rejectBid(PlayerID pid)
 
   it->second.highest_bid = 0;
   it->second.highest_bidder_id = std::nullopt;
+  gamedata->saveTransferListing(it->second);
   return true;
 }
 
@@ -533,6 +745,7 @@ bool GameController::counterOffer(PlayerID pid, uint32_t new_price)
 {
   auto it = transfer_listings.find(pid);
   if (it == transfer_listings.end()) return false;
+  if (new_price == 0) return false;
 
   it->second.asking_price = new_price;
   it->second.highest_bid = 0;
@@ -544,7 +757,7 @@ bool GameController::counterOffer(PlayerID pid, uint32_t new_price)
 
 bool GameController::isTransferWindowOpen() const
 {
-  return game->getCurrentDate().isTransferWindowOpen();
+  return game && game->getCurrentDate().isTransferWindowOpen();
 }
 
 std::vector<std::pair<PlayerID, TransferListing>>
@@ -616,8 +829,8 @@ GameController::SquadNeeds GameController::evaluateSquadNeeds(
   }
 
   // Target squad sizes per role group
-  constexpr int TARGET_GK = 2, TARGET_CB = 3, TARGET_LB = 1, TARGET_RB = 1;
-  constexpr int TARGET_MID = 4, TARGET_WING = 2, TARGET_ST = 2;
+  constexpr int TARGET_GK = 3, TARGET_CB = 5, TARGET_LB = 2, TARGET_RB = 2;
+  constexpr int TARGET_MID = 6, TARGET_WING = 4, TARGET_ST = 3;
 
   auto calc = [](int current, int target, int& missing, int& surplus)
   {
@@ -645,7 +858,35 @@ GameController::SquadNeeds GameController::evaluateSquadNeeds(
   if (team_opt.has_value() &&
       team_opt->get().getFinances().getBalance() > 10000000)
   {
-    // Find the starting position with lowest overall to target an upgrade
+    static constexpr std::array<PlayerRole, 7> CATEGORIES = {
+        PlayerRole::GK, PlayerRole::CB, PlayerRole::LB, PlayerRole::RB,
+        PlayerRole::CM, PlayerRole::LW, PlayerRole::ST};
+    float weakestAverage = std::numeric_limits<float>::max();
+    for (const PlayerRole category : CATEGORIES)
+    {
+      float total = 0.0f;
+      int count = 0;
+      for (const auto& reference : team_players)
+      {
+        const Player& player = reference.get();
+        if (!isPlayerListed(player.getId()) &&
+            getRoleCategory(player.getRole()) == category)
+        {
+          total +=
+              static_cast<float>(player.getOverall(gamedata->getStatsConfig()));
+          ++count;
+        }
+      }
+      if (count > 0)
+      {
+        const float average = total / static_cast<float>(count);
+        if (average < weakestAverage)
+        {
+          weakestAverage = average;
+          needs.upgrade_target = category;
+        }
+      }
+    }
   }
 
   return needs;
@@ -794,12 +1035,11 @@ uint32_t GameController::calculateMaxPrice(PlayerID pid, TeamID buyer_id,
     prestige_mult = 0.6f;
 
   uint32_t budget = transferBudgetForTeam(buyer_id);
-  float budget_cap =
-      static_cast<float>(budget) / static_cast<float>(market_value);
-
-  return static_cast<uint32_t>(static_cast<float>(market_value) * need_mult *
-                               scarcity_mult * prestige_mult *
-                               std::min(1.0f, budget_cap));
+  const double valuation =
+      static_cast<double>(market_value) * static_cast<double>(need_mult) *
+      static_cast<double>(scarcity_mult) * static_cast<double>(prestige_mult);
+  return static_cast<uint32_t>(
+      std::min<double>(valuation, static_cast<double>(budget)));
 }
 
 // ========== Find Targets ==========
@@ -862,54 +1102,60 @@ std::vector<PlayerID> GameController::findTargetsForRole(
 void GameController::evaluateAndActForTeam(TeamID team_id)
 {
   SquadNeeds needs = evaluateSquadNeeds(team_id);
-  uint32_t budget = transferBudgetForTeam(team_id);
-  if (budget == 0) return;
+  const uint32_t budget = transferBudgetForTeam(team_id);
 
-  auto tryBuy = [&](PlayerRole role, int missing_count)
+  auto tryBuy = [&](PlayerRole role, int priority) -> bool
   {
-    if (missing_count <= 0) return;
+    if (priority <= 0 || budget == 0) return false;
     auto targets = findTargetsForRole(role, team_id, needs);
-    if (targets.empty()) return;
+    if (targets.empty()) return false;
 
-    PlayerID target = targets[0];
+    const PlayerID target = targets.front();
     auto player_opt = gamedata->getPlayer(target);
-    if (!player_opt.has_value()) return;
+    if (!player_opt.has_value()) return false;
 
     if (player_opt->get().getTeamId() == FREE_AGENTS_TEAM_ID)
     {
-      signFreeAgent(target, team_id);
-      return;
+      return signFreeAgent(target, team_id);
     }
 
-    uint32_t max_price = calculateMaxPrice(target, team_id, needs);
+    const uint32_t max_price = calculateMaxPrice(target, team_id, needs);
 
-    uint32_t market_val = getPlayerMarketValue(target);
-    auto initial_bid = static_cast<uint32_t>(static_cast<float>(market_val) *
-                                             randomFloat(0.6f, 1.2f));
-    uint32_t bid = std::min(initial_bid, max_price);
+    const uint32_t marketValue = getPlayerMarketValue(target);
+    const auto initialBid = static_cast<uint32_t>(
+        static_cast<float>(marketValue) * randomFloat(0.75f, 1.15f));
+    const uint32_t bid = std::min(initialBid, max_price);
 
-    if (bid > 0 && static_cast<int64_t>(bid) <= static_cast<int64_t>(budget))
+    if (bid > 0 && bid <= budget)
     {
-      submitBid(target, team_id, bid);
+      return submitBid(target, team_id, bid);
     }
+    return false;
   };
 
-  tryBuy(PlayerRole::GK, needs.missing_gk);
-  tryBuy(PlayerRole::CB, needs.missing_cb);
-  tryBuy(PlayerRole::LB, needs.missing_lb);
-  tryBuy(PlayerRole::RB, needs.missing_rb);
-  tryBuy(PlayerRole::CM, needs.missing_mid);
-  tryBuy(PlayerRole::LW, needs.missing_wing);
-  tryBuy(PlayerRole::ST, needs.missing_st);
-
-  if (needs.upgrade_target.has_value())
+  const std::array<std::pair<PlayerRole, int>, 7> shortages = {{
+      {PlayerRole::GK, needs.missing_gk},
+      {PlayerRole::CB, needs.missing_cb},
+      {PlayerRole::LB, needs.missing_lb},
+      {PlayerRole::RB, needs.missing_rb},
+      {PlayerRole::CM, needs.missing_mid},
+      {PlayerRole::LW, needs.missing_wing},
+      {PlayerRole::ST, needs.missing_st},
+  }};
+  for (const auto& [role, missing] : shortages)
   {
-    tryBuy(needs.upgrade_target.value(), 1);
+    if (tryBuy(role, missing)) return;
   }
 
-  auto trySell = [&](PlayerRole role, int surplus_count)
+  if (needs.upgrade_target && !transfer_listings.empty() &&
+      randomFloat(0.0f, 1.0f) < 0.45f && tryBuy(*needs.upgrade_target, 1))
   {
-    if (surplus_count <= 0) return;
+    return;
+  }
+
+  auto trySell = [&](PlayerRole role, int surplus_count) -> bool
+  {
+    if (surplus_count <= 0) return false;
 
     const auto& team_players = gamedata->getPlayersForTeam(team_id);
     std::vector<PlayerID> candidates;
@@ -922,7 +1168,7 @@ void GameController::evaluateAndActForTeam(TeamID team_id)
       }
     }
 
-    if (candidates.empty()) return;
+    if (candidates.empty()) return false;
 
     std::ranges::sort(
         candidates,
@@ -935,23 +1181,33 @@ void GameController::evaluateAndActForTeam(TeamID team_id)
                  pb->get().getOverall(gamedata->getStatsConfig());
         });
 
-    PlayerID to_sell = candidates[0];
-    auto asking = static_cast<uint32_t>(
-        static_cast<float>(getPlayerMarketValue(to_sell)) *
-        randomFloat(0.8f, 1.3f));
+    const PlayerID toSell = candidates.front();
+    const auto asking =
+        static_cast<uint32_t>(static_cast<float>(getPlayerMarketValue(toSell)) *
+                              randomFloat(0.8f, 1.3f));
     if (asking > 0)
     {
-      listPlayerForTransfer(to_sell, asking);
+      listPlayerForTransfer(toSell, asking);
+      return isPlayerListed(toSell);
     }
+    return false;
   };
 
-  trySell(PlayerRole::GK, needs.surplus_gk);
-  trySell(PlayerRole::CB, needs.surplus_cb);
-  trySell(PlayerRole::LB, needs.surplus_lb);
-  trySell(PlayerRole::RB, needs.surplus_rb);
-  trySell(PlayerRole::CM, needs.surplus_mid);
-  trySell(PlayerRole::LW, needs.surplus_wing);
-  trySell(PlayerRole::ST, needs.surplus_st);
+  const std::array<std::pair<PlayerRole, int>, 7> surpluses = {{
+      {PlayerRole::GK, needs.surplus_gk},
+      {PlayerRole::CB, needs.surplus_cb},
+      {PlayerRole::LB, needs.surplus_lb},
+      {PlayerRole::RB, needs.surplus_rb},
+      {PlayerRole::CM, needs.surplus_mid},
+      {PlayerRole::LW, needs.surplus_wing},
+      {PlayerRole::ST, needs.surplus_st},
+  }};
+  for (const auto& [role, surplus] : surpluses)
+  {
+    if (trySell(role, surplus)) return;
+  }
+
+  if (needs.upgrade_target) tryBuy(*needs.upgrade_target, 1);
 }
 
 // ========== Helpers ==========
@@ -996,8 +1252,10 @@ uint32_t GameController::transferBudgetForTeam(TeamID team_id) const
   if (balance <= 0) return 0;
 
   float ratio = finances.getTransferToWagesRatio();
-  return static_cast<uint32_t>(static_cast<float>(balance) *
-                               std::clamp(ratio, 0.0f, 1.0f));
+  const double budget = static_cast<double>(balance) *
+                        std::clamp(static_cast<double>(ratio), 0.0, 1.0);
+  return static_cast<uint32_t>(std::min<double>(
+      budget, static_cast<double>(std::numeric_limits<uint32_t>::max())));
 }
 
 void GameController::evaluateIncomingAIBids()

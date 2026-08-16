@@ -214,7 +214,7 @@ class ButtonManager
    * @brief Gets a copy of the list of buttons.
    * @return A vector of buttons.
    */
-  const std::vector<Button> getButtons() { return buttons; }
+  const std::vector<Button>& getButtons() const { return buttons; }
 
   /**
    * @brief Recreates textures for all buttons (e.g. on text change).

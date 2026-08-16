@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "gui/gui_scene.h"
+#include "gui/scenes/transfer_market_scene_tuning.h"
 #include "model/player.h"
 #include "model/transfer_listing.h"
 
@@ -46,10 +47,12 @@ class TransferMarketScene : public GUIScene
   Tab active_tab = Tab::BUY;
 
   // Filters for Buy tab
-  char filter_search_name[64] = "";
+  char filter_search_name
+      [TransferMarketSceneTuning::Filters::SEARCH_BUFFER_SIZE] = "";
   int filter_role_index = 0;
-  int filter_max_age = 40;
-  float filter_max_price = 100000000.0f;
+  int filter_max_age = TransferMarketSceneTuning::Filters::DEFAULT_MAXIMUM_AGE;
+  float filter_max_price =
+      TransferMarketSceneTuning::Filters::DEFAULT_MAXIMUM_PRICE;
 
   // Confirm transfer dialog
   struct ConfirmState
@@ -59,6 +62,9 @@ class TransferMarketScene : public GUIScene
     TeamID seller_id = 0;
     uint32_t price = 0;
     bool is_free_agent = false;
+    float offered_weekly_wage = 0.0f;
+    int offered_years = 0;
+    std::string status;
   };
   ConfirmState confirm_state;
 

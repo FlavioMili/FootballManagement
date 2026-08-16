@@ -1,4 +1,5 @@
 build/*
+build-release/
 FootballManagement*
 compile_commands.json
 .cache

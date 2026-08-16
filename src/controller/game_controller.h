@@ -33,6 +33,12 @@
 class GameController
 {
  public:
+  struct ContractTerms
+  {
+    uint32_t weekly_wage = 0;
+    uint8_t years = 0;
+  };
+
   struct SaveSlotMetadata
   {
     bool exists = false;
@@ -56,6 +62,12 @@ class GameController
    * @return True if loaded successfully, false otherwise.
    */
   bool loadGame(int slot);
+
+  /** Duration of the most recent load/new-game initialization. */
+  float getLastInitializationMilliseconds() const
+  {
+    return last_initialization_milliseconds;
+  }
 
   /**
    * @brief Checks if a game is currently loaded.
@@ -153,7 +165,7 @@ class GameController
    */
   void advanceDay();
 
-  void setMatchResult(GameDateValue date, uint16_t home_id, uint16_t away_id,
+  bool setMatchResult(GameDateValue date, uint16_t home_id, uint16_t away_id,
                       uint8_t home_score, uint8_t away_score);
 
   /**
@@ -180,8 +192,18 @@ class GameController
   // ========== Transfer Market: Buying ==========
   bool canAffordPlayer(TeamID buyer_id, PlayerID player_id,
                        uint32_t target_price) const;
+  bool canAffordPlayer(TeamID buyer_id, PlayerID player_id,
+                       uint32_t target_price,
+                       uint32_t offered_weekly_wage) const;
   bool buyPlayer(PlayerID player_id, TeamID buyer_id, uint32_t price);
+  bool buyPlayerWithContract(PlayerID player_id, TeamID buyer_id,
+                             uint32_t price, ContractTerms terms);
   bool signFreeAgent(PlayerID player_id, TeamID buyer_id);
+  bool signFreeAgentWithContract(PlayerID player_id, TeamID buyer_id,
+                                 ContractTerms terms);
+  ContractTerms getContractDemand(PlayerID player_id, bool free_agent) const;
+  bool isContractOfferAcceptable(PlayerID player_id, bool free_agent,
+                                 ContractTerms terms) const;
   uint32_t getPlayerMarketValue(PlayerID player_id) const;
 
   // ========== Transfer Market: Bids & Negotiation ==========
@@ -226,11 +248,10 @@ class GameController
   PlayerRole getRoleCategory(PlayerRole role) const;
   uint32_t transferBudgetForTeam(TeamID team_id) const;
 
-  static float randomFloat(float min, float max)
+  float randomFloat(float min, float max)
   {
-    std::random_device rd;
     std::uniform_real_distribution<float> dis(min, max);
-    return dis(rd);
+    return dis(transfer_rng);
   }
 
   const Game* getGame() const { return game.get(); }
@@ -247,10 +268,14 @@ class GameController
   std::shared_ptr<class GameData> gamedata;
 
   std::unordered_map<PlayerID, TransferListing> transfer_listings;
-  void executeTransfer(PlayerID pid, TeamID buyer_id, TeamID seller_id,
-                       uint32_t price);
+  std::mt19937 transfer_rng;
+  float last_initialization_milliseconds = 0.0f;
+  bool executeTransfer(PlayerID pid, TeamID buyer_id, TeamID seller_id,
+                       uint32_t price,
+                       std::optional<ContractTerms> contract = std::nullopt);
   void processAITransferActivity();
   void evaluateIncomingAIBids();
+  void purgeReleasedPlayerListings();
 
   std::string getSavePath(int slot) const;
 };

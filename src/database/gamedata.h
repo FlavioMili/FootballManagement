@@ -91,6 +91,9 @@ class GameData
 
   void ageAllPlayers();
 
+  /** Advances contracts and releases newly out-of-contract players. */
+  std::vector<PlayerID> advanceContractsAndReleasePlayers();
+
   void addPlayer(PlayerID id, const Player& player);
   std::optional<std::reference_wrapper<const Player>> getPlayer(
       PlayerID id) const;

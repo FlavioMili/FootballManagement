@@ -79,6 +79,8 @@ CREATE TABLE IF NOT EXISTS TransferList (
     player_id INTEGER PRIMARY KEY,
     asking_price INTEGER NOT NULL DEFAULT 0,
     listing_date TEXT NOT NULL,
+    highest_bidder_id INTEGER,
+    highest_bid INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY(player_id) REFERENCES Players(id)
 );
 

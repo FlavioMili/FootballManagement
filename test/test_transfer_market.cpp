@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <filesystem>
 #include <memory>
 
@@ -86,6 +87,29 @@ TEST_F(TransferMarketTest, BidOnPlayer)
   bool success = controller->submitBid(player_id, manager_team_id, bid_amount);
 
   EXPECT_TRUE(success);
+
+  const auto otherBuyer =
+      std::ranges::find_if(all_teams,
+                           [manager_team_id, test_team_id](const auto& team)
+                           {
+                             return team.get().getId() != manager_team_id &&
+                                    team.get().getId() != test_team_id;
+                           });
+  ASSERT_NE(otherBuyer, all_teams.end());
+  gamedata->getTeams()
+      .at(otherBuyer->get().getId())
+      .getFinances()
+      .addBalance(1000000000LL);
+  EXPECT_FALSE(controller->buyPlayer(player_id, otherBuyer->get().getId(),
+                                     static_cast<uint32_t>(bid_amount)))
+      << "A club must not reuse another club's winning bid";
+
+  ASSERT_TRUE(controller->counterOffer(
+      player_id, static_cast<uint32_t>(bid_amount + 500)));
+  const auto countered = controller->getAllListings().find(player_id);
+  ASSERT_NE(countered, controller->getAllListings().end());
+  EXPECT_FALSE(countered->second.highest_bidder_id.has_value());
+  EXPECT_EQ(countered->second.highest_bid, 0u);
 }
 
 TEST_F(TransferMarketTest, AIEvaluatesAndAcceptsBid)
@@ -114,4 +138,111 @@ TEST_F(TransferMarketTest, AIEvaluatesAndAcceptsBid)
 
   // The transfer should have been completed by the AI accepting the bid
   EXPECT_FALSE(controller->isPlayerListed(test_player_id));
+}
+
+TEST_F(TransferMarketTest, BidSurvivesSaveAndReload)
+{
+  const auto teams = controller->getTeams();
+  ASSERT_GE(teams.size(), 2u);
+  const TeamID buyerId = teams[0].get().getId();
+  const TeamID sellerId = teams[1].get().getId();
+
+  const auto sellerPlayers = controller->getPlayersForTeam(sellerId);
+  const auto target = std::ranges::find_if(
+      sellerPlayers, [this](const auto& player)
+      { return !controller->isPlayerListed(player.get().getId()); });
+  ASSERT_NE(target, sellerPlayers.end());
+  const PlayerID playerId = target->get().getId();
+
+  controller->getGameData()->getTeams().at(buyerId).getFinances().addBalance(
+      1'000'000'000LL);
+  controller->listPlayerForTransfer(playerId, 2'000'000);
+  ASSERT_TRUE(controller->submitBid(playerId, buyerId, 2'100'000));
+  controller->saveGame();
+
+  controller = std::make_unique<GameController>();
+  ASSERT_TRUE(controller->loadGame(0));
+  const auto listing = controller->getAllListings().find(playerId);
+  ASSERT_NE(listing, controller->getAllListings().end());
+  ASSERT_TRUE(listing->second.highest_bidder_id.has_value());
+  EXPECT_EQ(*listing->second.highest_bidder_id, buyerId);
+  EXPECT_EQ(listing->second.highest_bid, 2'100'000u);
+}
+
+TEST_F(TransferMarketTest, AcceptedTransferAndBalancesSurviveReload)
+{
+  const auto teams = controller->getTeams();
+  ASSERT_GE(teams.size(), 2u);
+  const TeamID buyerId = teams[0].get().getId();
+  const TeamID sellerId = teams[1].get().getId();
+
+  const auto sellerPlayers = controller->getPlayersForTeam(sellerId);
+  const auto target = std::ranges::find_if(
+      sellerPlayers, [this](const auto& player)
+      { return !controller->isPlayerListed(player.get().getId()); });
+  ASSERT_NE(target, sellerPlayers.end());
+  const PlayerID playerId = target->get().getId();
+
+  auto gameData = controller->getGameData();
+  gameData->getTeams().at(buyerId).getFinances().addBalance(1'000'000'000LL);
+  controller->listPlayerForTransfer(playerId, 1'500'000);
+  ASSERT_TRUE(controller->submitBid(playerId, buyerId, 1'600'000));
+  ASSERT_TRUE(controller->acceptBid(playerId));
+  const int64_t buyerBalance =
+      gameData->getTeams().at(buyerId).getFinances().getBalance();
+  const int64_t sellerBalance =
+      gameData->getTeams().at(sellerId).getFinances().getBalance();
+  controller->saveGame();
+
+  controller = std::make_unique<GameController>();
+  ASSERT_TRUE(controller->loadGame(0));
+  gameData = controller->getGameData();
+  const auto player = gameData->getPlayer(playerId);
+  ASSERT_TRUE(player.has_value());
+  EXPECT_EQ(player->get().getTeamId(), buyerId);
+  EXPECT_EQ(gameData->getTeams().at(buyerId).getFinances().getBalance(),
+            buyerBalance);
+  EXPECT_EQ(gameData->getTeams().at(sellerId).getFinances().getBalance(),
+            sellerBalance);
+  EXPECT_FALSE(controller->isPlayerListed(playerId));
+}
+
+TEST_F(TransferMarketTest, ContractTermsAreNegotiatedAndPersisted)
+{
+  const auto teams = controller->getTeams();
+  ASSERT_GE(teams.size(), 2u);
+  const TeamID buyerId = teams[0].get().getId();
+  const TeamID sellerId = teams[1].get().getId();
+  const auto sellerPlayers = controller->getPlayersForTeam(sellerId);
+  ASSERT_FALSE(sellerPlayers.empty());
+  const PlayerID playerId = sellerPlayers.front().get().getId();
+  constexpr uint32_t ASKING_PRICE = 1'000'000;
+
+  auto gameData = controller->getGameData();
+  gameData->getTeams().at(buyerId).getFinances().addBalance(1'000'000'000LL);
+  controller->listPlayerForTransfer(playerId, ASKING_PRICE);
+
+  const GameController::ContractTerms demand =
+      controller->getContractDemand(playerId, false);
+  ASSERT_GT(demand.weekly_wage, 0u);
+  GameController::ContractTerms insufficient = demand;
+  --insufficient.weekly_wage;
+  EXPECT_FALSE(controller->buyPlayerWithContract(playerId, buyerId,
+                                                 ASKING_PRICE, insufficient));
+  EXPECT_EQ(gameData->getPlayer(playerId)->get().getTeamId(), sellerId);
+
+  ASSERT_TRUE(controller->buyPlayerWithContract(playerId, buyerId, ASKING_PRICE,
+                                                demand));
+  EXPECT_EQ(gameData->getPlayer(playerId)->get().getWage(), demand.weekly_wage);
+  EXPECT_EQ(gameData->getPlayer(playerId)->get().getContractYears(),
+            demand.years);
+  controller->saveGame();
+
+  controller = std::make_unique<GameController>();
+  ASSERT_TRUE(controller->loadGame(0));
+  const auto reloadedPlayer = controller->getGameData()->getPlayer(playerId);
+  ASSERT_TRUE(reloadedPlayer.has_value());
+  EXPECT_EQ(reloadedPlayer->get().getTeamId(), buyerId);
+  EXPECT_EQ(reloadedPlayer->get().getWage(), demand.weekly_wage);
+  EXPECT_EQ(reloadedPlayer->get().getContractYears(), demand.years);
 }

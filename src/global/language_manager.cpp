@@ -26,8 +26,6 @@ using json = nlohmann::json;
 
 bool LanguageManager::loadLanguage(Language lang)
 {
-  translations.clear();
-
   // Map the Language enum to a filename
   auto it = languageToString.find(lang);
   if (it == languageToString.end()) return false;
@@ -45,10 +43,13 @@ bool LanguageManager::loadLanguage(Language lang)
   {
     json j;
     file >> j;
-    for (auto& [key, value] : j.items())
+    std::unordered_map<std::string, std::string> loadedTranslations;
+    loadedTranslations.reserve(j.size());
+    for (const auto& [key, value] : j.items())
     {
-      translations[key] = value.get<std::string>();
+      loadedTranslations[key] = value.get<std::string>();
     }
+    translations.swap(loadedTranslations);
   }
   catch (const std::exception& e)
   {

@@ -10,11 +10,97 @@
 
 #include <sqlite3.h>
 
+#include <map>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
 
 #include "database/SQLLoader.h"
 #include "model/role_utils.h"
+
+namespace
+{
+class StatsSaxParser final : public nlohmann::json_sax<nlohmann::json>
+{
+ public:
+  bool null() override { return false; }
+  bool boolean(bool /*value*/) override { return false; }
+
+  bool number_integer(number_integer_t value) override
+  {
+    return addValue(static_cast<float>(value));
+  }
+
+  bool number_unsigned(number_unsigned_t value) override
+  {
+    return addValue(static_cast<float>(value));
+  }
+
+  bool number_float(number_float_t value, const string_t& /*token*/) override
+  {
+    return addValue(static_cast<float>(value));
+  }
+
+  bool string(string_t& /*value*/) override { return false; }
+  bool binary(binary_t& /*value*/) override { return false; }
+
+  bool start_object(std::size_t /*elements*/) override
+  {
+    ++depth;
+    return depth == ROOT_OBJECT_DEPTH;
+  }
+
+  bool key(string_t& value) override
+  {
+    currentKey = std::move(value);
+    return depth == ROOT_OBJECT_DEPTH;
+  }
+
+  bool end_object() override
+  {
+    if (depth != ROOT_OBJECT_DEPTH) return false;
+    --depth;
+    return true;
+  }
+
+  bool start_array(std::size_t /*elements*/) override { return false; }
+  bool end_array() override { return false; }
+
+  bool parse_error(std::size_t /*position*/, const std::string& /*lastToken*/,
+                   const nlohmann::detail::exception& /*exception*/) override
+  {
+    return false;
+  }
+
+  std::map<std::string, float> takeStats() { return std::move(stats); }
+
+ private:
+  bool addValue(float value)
+  {
+    if (depth != ROOT_OBJECT_DEPTH || currentKey.empty()) return false;
+    stats.emplace(std::move(currentKey), value);
+    currentKey.clear();
+    return true;
+  }
+
+  static constexpr std::size_t ROOT_OBJECT_DEPTH = 1;
+  std::size_t depth = 0;
+  std::string currentKey;
+  std::map<std::string, float> stats;
+};
+
+std::map<std::string, float> parsePlayerStats(std::string_view encodedStats)
+{
+  StatsSaxParser parser;
+  if (!nlohmann::json::sax_parse(encodedStats, &parser))
+  {
+    throw std::runtime_error("Invalid player stats JSON in database");
+  }
+  return parser.takeStats();
+}
+}  // namespace
 
 PlayerRepository::PlayerRepository(std::shared_ptr<DatabaseConnection> conn)
     : db_conn(conn)
@@ -26,6 +112,14 @@ std::vector<Player> PlayerRepository::loadAllPlayers() const
   sqlite3_stmt* stmt =
       db_conn->prepareStatement(SQLLoader::getQuery(Query::SELECT_ALL_PLAYERS));
   std::vector<Player> players;
+  sqlite3_stmt* count_stmt =
+      db_conn->prepareStatement("SELECT COUNT(*) FROM Players;");
+  if (sqlite3_step(count_stmt) == SQLITE_ROW)
+  {
+    players.reserve(
+        static_cast<std::size_t>(sqlite3_column_int64(count_stmt, 0)));
+  }
+  sqlite3_finalize(count_stmt);
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
@@ -54,15 +148,13 @@ std::vector<Player> PlayerRepository::loadAllPlayers() const
         (it != stringToLanguage.end()) ? it->second : Language::EN;
     Foot foot = (std::string(foot_str) == "Left") ? Foot::Left : Foot::Right;
 
-    nlohmann::json stats_json = nlohmann::json::parse(stats_str);
-    std::map<std::string, float> stats =
-        stats_json.get<std::map<std::string, float>>();
+    std::map<std::string, float> stats = parsePlayerStats(stats_str);
 
     PlayerRole playerRole = RoleUtils::fromString(role);
 
     players.emplace_back(id, team_id, first_name, last_name, playerRole,
                          nationality, wage, status, age, contract_years, height,
-                         foot, stats);
+                         foot, std::move(stats));
   }
 
   sqlite3_finalize(stmt);
@@ -116,12 +208,13 @@ void PlayerRepository::insertPlayer(const Player& player) const
 void PlayerRepository::insertPlayers(
     const std::vector<std::reference_wrapper<const Player>>& players) const
 {
-  sqlite3_stmt* stmt =
-      db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_PLAYER));
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      SQLLoader::getQuery(Query::INSERT_PLAYER_WITH_ID));
   for (const auto& player_ref : players)
   {
     const Player& player = player_ref.get();
-    bindPlayerParams(stmt, player, 1);
+    sqlite3_bind_int(stmt, 1, static_cast<int>(player.getId()));
+    bindPlayerParams(stmt, player, 2);
     db_conn->executeStep(stmt);
     sqlite3_clear_bindings(stmt);
     sqlite3_reset(stmt);

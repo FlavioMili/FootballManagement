@@ -27,6 +27,8 @@ void SettingsScene::onEnter()
 {
   languageOptions.clear();
   availableLanguageEnums.clear();
+  resolutionOptions.clear();
+  fpsOptionsStrings.clear();
   for (const auto& [lang, str] : languageToString)
   {
     std::string filePath =
@@ -36,6 +38,11 @@ void SettingsScene::onEnter()
       languageOptions.push_back(str);
       availableLanguageEnums.push_back(lang);
     }
+  }
+  if (languageOptions.empty())
+  {
+    languageOptions.push_back("English");
+    availableLanguageEnums.push_back(Language::EN);
   }
   for (const auto& res : GUIConstants::RESOLUTIONS)
   {
@@ -100,8 +107,9 @@ void SettingsScene::render()
   ImGui::Separator();
   ImGui::Spacing();
 
-  if (ImGui::BeginCombo(LOC("SETTINGS_LANGUAGE"),
-                        languageOptions[selectedLanguage].c_str()))
+  if (ImGui::BeginCombo(
+          LOC("SETTINGS_LANGUAGE"),
+          languageOptions[static_cast<size_t>(selectedLanguage)].c_str()))
   {
     for (size_t i = 0; i < languageOptions.size(); i++)
     {
@@ -113,8 +121,9 @@ void SettingsScene::render()
     ImGui::EndCombo();
   }
 
-  if (ImGui::BeginCombo(LOC("SETTINGS_RESOLUTION"),
-                        resolutionOptions[selectedResolution].c_str()))
+  if (ImGui::BeginCombo(
+          LOC("SETTINGS_RESOLUTION"),
+          resolutionOptions[static_cast<size_t>(selectedResolution)].c_str()))
   {
     for (size_t i = 0; i < resolutionOptions.size(); i++)
     {
@@ -126,8 +135,9 @@ void SettingsScene::render()
     ImGui::EndCombo();
   }
 
-  if (ImGui::BeginCombo(LOC("SETTINGS_REFRESH_RATE"),
-                        fpsOptionsStrings[selectedFPS].c_str()))
+  if (ImGui::BeginCombo(
+          LOC("SETTINGS_REFRESH_RATE"),
+          fpsOptionsStrings[static_cast<size_t>(selectedFPS)].c_str()))
   {
     for (size_t i = 0; i < fpsOptionsStrings.size(); i++)
     {
@@ -167,7 +177,8 @@ void SettingsScene::render()
     {
       ImGui::BeginDisabled();
       char buf[32];
-      snprintf(buf, sizeof(buf), "Confirm (%.1fs)", wipeDataTimer);
+      snprintf(buf, sizeof(buf), "Confirm (%.1fs)",
+               static_cast<double>(wipeDataTimer));
       ImGui::Button(buf, ImVec2(120, 0));
       ImGui::EndDisabled();
     }

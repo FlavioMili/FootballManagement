@@ -8,6 +8,7 @@
 
 #include "main_game_scene.h"
 
+#include <fmt/printf.h>
 #include <imgui.h>
 
 #include <algorithm>
@@ -88,12 +89,14 @@ void MainGameScene::render()
 void MainGameScene::renderTopBar()
 {
   std::string dateStr = guiView->getController().getCurrentDate().toString();
-  ImGui::Text(LOC("MAIN_GAME_DATE"), dateStr.c_str());
+  const std::string dateLabel = fmt::sprintf(LOC("MAIN_GAME_DATE"), dateStr);
+  ImGui::TextUnformatted(dateLabel.c_str());
   ImGui::SameLine(ImGui::GetWindowWidth() - NEXT_DAY_BUTTON_OFFSET);
 
   // Check if managed team has a match today
   bool has_match_today = false;
-  uint16_t opp_id = 0;
+  uint16_t home_id = 0;
+  uint16_t away_id = 0;
   if (auto managed = guiView->getController().getManagedTeam())
   {
     uint16_t tid = managed->get().getId();
@@ -102,11 +105,12 @@ void MainGameScene::renderTopBar()
             guiView->getController().getCurrentDate());
     for (const auto& m : matches)
     {
-      if (m.getHomeTeamId() == tid || m.getAwayTeamId() == tid)
+      if (!m.isPlayed() &&
+          (m.getHomeTeamId() == tid || m.getAwayTeamId() == tid))
       {
         has_match_today = true;
-        opp_id =
-            (m.getHomeTeamId() == tid) ? m.getAwayTeamId() : m.getHomeTeamId();
+        home_id = m.getHomeTeamId();
+        away_id = m.getAwayTeamId();
         break;
       }
     }
@@ -117,8 +121,8 @@ void MainGameScene::renderTopBar()
     if (ImGui::Button("Play Match",
                       ImVec2(NEXT_DAY_BUTTON_WIDTH, NEXT_DAY_BUTTON_HEIGHT)))
     {
-      uint16_t tid = guiView->getController().getManagedTeam()->get().getId();
-      guiView->overlayScene(std::make_unique<MatchScene>(guiView, tid, opp_id));
+      guiView->overlayScene(
+          std::make_unique<MatchScene>(guiView, home_id, away_id));
     }
   }
   else

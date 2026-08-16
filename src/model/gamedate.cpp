@@ -8,6 +8,8 @@
 
 #include "gamedate.h"
 
+#include <algorithm>
+#include <cctype>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
@@ -36,6 +38,7 @@ bool GameDateValue::isLeapYear(uint16_t y)
 
 uint8_t GameDateValue::daysInMonth(uint8_t m, uint16_t y)
 {
+  if (m < 1 || m > 12) throw std::out_of_range("Month must be 1-12");
   if (m == 2 && isLeapYear(y)) return 29;
   return DAYS_PER_MONTH[m - 1];
 }
@@ -122,10 +125,20 @@ std::string GameDateValue::toString() const
 
 GameDateValue GameDateValue::fromString(const std::string& str)
 {
-  if (str.size() != 10) throw std::runtime_error("Invalid date string");
-  uint16_t y = static_cast<uint16_t>(std::stoi(str.substr(0, 4)));
-  uint8_t m = static_cast<uint8_t>(std::stoi(str.substr(5, 2)));
-  uint8_t d = static_cast<uint8_t>(std::stoi(str.substr(8, 2)));
+  const bool valid_shape =
+      str.size() == 10 && str[4] == '-' && str[7] == '-' &&
+      std::ranges::all_of(
+          str, [](unsigned char character)
+          { return std::isdigit(character) || character == '-'; });
+  if (!valid_shape) throw std::runtime_error("Invalid date string: " + str);
+
+  const auto y = static_cast<uint16_t>(std::stoi(str.substr(0, 4)));
+  const auto m = static_cast<uint8_t>(std::stoi(str.substr(5, 2)));
+  const auto d = static_cast<uint8_t>(std::stoi(str.substr(8, 2)));
+  if (m < 1 || m > 12 || d < 1 || d > daysInMonth(m, y))
+  {
+    throw std::runtime_error("Invalid calendar date: " + str);
+  }
   return GameDateValue(y, m, d);
 }
 

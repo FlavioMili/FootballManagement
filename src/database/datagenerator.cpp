@@ -8,6 +8,8 @@
 
 #include "database/datagenerator.h"
 
+#include <algorithm>
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -56,10 +58,10 @@ void DataGenerator::loadNames()
 }
 
 Player DataGenerator::generateRandomPlayer(const GameData& gamedata,
-                                           TeamID team_id)
+                                           PlayerID player_id, TeamID team_id,
+                                           PlayerRole role)
 {
-  static uint32_t next_player_id = 50000;
-  auto stats_config = gamedata.getStatsConfig();
+  const auto& stats_config = gamedata.getStatsConfig();
   static std::mt19937 gen(std::random_device{}());
   std::uniform_int_distribution<size_t> name_dist(0, first_names.size() - 1);
   std::uniform_int_distribution<size_t> last_name_dist(0,
@@ -68,8 +70,6 @@ Player DataGenerator::generateRandomPlayer(const GameData& gamedata,
   std::uniform_int_distribution<int> contract_dist(1, 5);
   std::uniform_int_distribution<int> height_dist(165, 200);
   std::uniform_int_distribution<int> wage_dist(500, 10000);
-  std::uniform_int_distribution<size_t> role_dist(
-      0, stats_config.role_focus.size() - 1);
   std::uniform_int_distribution<int> foot_dist(0, 1);
 
   std::string first_name = first_names[name_dist(gen)];
@@ -78,10 +78,6 @@ Player DataGenerator::generateRandomPlayer(const GameData& gamedata,
   int contract_years = contract_dist(gen);
   int height = height_dist(gen);
   int wage = wage_dist(gen);
-
-  auto it = stats_config.role_focus.begin();
-  std::advance(it, role_dist(gen));
-  std::string role = it->first;
 
   Foot foot = (foot_dist(gen) == 0) ? Foot::Left : Foot::Right;
 
@@ -93,9 +89,7 @@ Player DataGenerator::generateRandomPlayer(const GameData& gamedata,
     stats[stat_name] = stat_dist(gen);
   }
 
-  Logger::debug("Generated Player with ID: " + std::to_string(next_player_id));
-  return Player(next_player_id++, team_id, first_name, last_name,
-                RoleUtils::fromString(role), Language::EN,
+  return Player(player_id, team_id, first_name, last_name, role, Language::EN,
                 static_cast<uint32_t>(wage), 0, static_cast<uint8_t>(age),
                 static_cast<uint8_t>(contract_years),
                 static_cast<uint8_t>(height), foot, stats);
@@ -137,7 +131,8 @@ std::vector<Team> DataGenerator::generateTeams()
       {
         teams.emplace_back(item.at("id").get<uint16_t>(),
                            item.at("league_id").get<uint8_t>(),
-                           item.at("name").get<std::string>(), 0);
+                           item.at("name").get<std::string>(),
+                           item.value<int64_t>("balance", 50'000'000));
       }
     }
   }
@@ -150,6 +145,7 @@ std::vector<Player> DataGenerator::generatePlayers(const GameData& gamedata)
   loadNames();
   std::vector<Player> players;
   std::map<uint16_t, int> player_counts;
+  PlayerID next_player_id = 50'000;
 
   // Load pre-defined players from JSON and count them
   for (const auto& entry : fs::directory_iterator(PLAYERS_DIR))
@@ -181,32 +177,46 @@ std::vector<Player> DataGenerator::generatePlayers(const GameData& gamedata)
             item.at("contract_years").get<uint8_t>(),
             item.at("height").get<uint8_t>(), foot,
             item.at("stats").get<std::map<std::string, float>>());
+        next_player_id =
+            std::max(next_player_id, item.at("id").get<PlayerID>() + 1U);
       }
     }
   }
 
   // Ensure every team has at least 30 players
+  static constexpr std::array<PlayerRole, 30> SQUAD_ROLES = {
+      PlayerRole::GK,  PlayerRole::GK,  PlayerRole::GK,  PlayerRole::CB,
+      PlayerRole::CB,  PlayerRole::CB,  PlayerRole::CB,  PlayerRole::CB,
+      PlayerRole::LB,  PlayerRole::LB,  PlayerRole::RB,  PlayerRole::RB,
+      PlayerRole::CDM, PlayerRole::CDM, PlayerRole::CM,  PlayerRole::CM,
+      PlayerRole::CM,  PlayerRole::CM,  PlayerRole::CAM, PlayerRole::CAM,
+      PlayerRole::LM,  PlayerRole::RM,  PlayerRole::LW,  PlayerRole::LW,
+      PlayerRole::RW,  PlayerRole::RW,  PlayerRole::ST,  PlayerRole::ST,
+      PlayerRole::ST,  PlayerRole::ST};
+
   auto teams = gamedata.getTeamsVector();
   Logger::debug("Ensuring player rosters for " + std::to_string(teams.size()) +
                 " teams.");
+  size_t generated_players = 0;
   for (const auto& teamRef : teams)
   {
     const Team& team = teamRef.get();
     int current_player_count = player_counts[team.getId()];
-    Logger::debug("Team " + team.getName() +
-                  " (ID: " + std::to_string(team.getId()) + ") has " +
-                  std::to_string(current_player_count) + " players.");
 
     int players_to_generate = 30 - current_player_count;
     if (players_to_generate > 0)
     {
-      Logger::debug("Generating " + std::to_string(players_to_generate) +
-                    " new players for " + team.getName());
       for (int i = 0; i < players_to_generate; ++i)
       {
-        players.push_back(generateRandomPlayer(gamedata, team.getId()));
+        const auto role_index =
+            static_cast<size_t>(current_player_count + i) % SQUAD_ROLES.size();
+        players.push_back(generateRandomPlayer(
+            gamedata, next_player_id++, team.getId(), SQUAD_ROLES[role_index]));
+        ++generated_players;
       }
     }
   }
+  Logger::debug("Generated " + std::to_string(generated_players) +
+                " players to complete all rosters.");
   return players;
 }

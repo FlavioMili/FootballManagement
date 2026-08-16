@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "database/database_connection.h"
+#include "database/repositories/fixture_repository.h"
 #include "database/repositories/league_repository.h"
 #include "database/repositories/player_repository.h"
 #include "database/repositories/team_repository.h"
@@ -86,6 +87,23 @@ TEST_F(DatabaseTest, InsertAndLoadTeam)
   TeamRepository teamRepo(getDbConn());
 
   Team t(1, 1, "Test Team", 1000000);
+  StrategySliders savedSliders;
+  savedSliders.pressing = 0.81f;
+  savedSliders.riskTaking = 0.67f;
+  savedSliders.offensiveBias = 0.73f;
+  savedSliders.widthUsage = 0.42f;
+  savedSliders.compactness = 0.58f;
+  t.getStrategy().setAllSliders(savedSliders);
+  Player goalkeeper(101, 1, "Test", "Keeper", PlayerRole::GK, Language::EN,
+                    1000, 0, 25, 3, 188, Foot::Right, {});
+  Player striker(102, 1, "Test", "Striker", PlayerRole::ST, Language::EN, 1000,
+                 0, 24, 3, 182, Foot::Right, {});
+  Player reserve(103, 1, "Test", "Reserve", PlayerRole::CM, Language::EN, 1000,
+                 0, 23, 3, 178, Foot::Right, {});
+  constexpr Vector2F SAVED_STRIKER_POSITION{0.79f, 0.46f};
+  t.getLineup().setGoalkeeper(&goalkeeper);
+  t.getLineup().addOutfieldPlayer(&striker, SAVED_STRIKER_POSITION);
+  t.getLineup().setReserves({&reserve});
   teamRepo.insertTeamWithId(t);
 
   auto teams = teamRepo.loadAllTeams();
@@ -96,10 +114,30 @@ TEST_F(DatabaseTest, InsertAndLoadTeam)
     if (team.getName() == "Test Team")
     {
       EXPECT_EQ(team.getFinances().getBalance(), 1000000);
+      const StrategySliders loadedSliders = team.getStrategy().getSliders();
+      EXPECT_FLOAT_EQ(loadedSliders.pressing, savedSliders.pressing);
+      EXPECT_FLOAT_EQ(loadedSliders.riskTaking, savedSliders.riskTaking);
+      EXPECT_FLOAT_EQ(loadedSliders.offensiveBias, savedSliders.offensiveBias);
+      EXPECT_FLOAT_EQ(loadedSliders.widthUsage, savedSliders.widthUsage);
+      EXPECT_FLOAT_EQ(loadedSliders.compactness, savedSliders.compactness);
       found = true;
     }
   }
   EXPECT_TRUE(found);
+
+  const auto storedLineups = teamRepo.loadAllLineups();
+  const auto storedLineup = storedLineups.find(t.getId());
+  ASSERT_NE(storedLineup, storedLineups.end());
+  EXPECT_TRUE(storedLineup->second.persisted);
+  EXPECT_EQ(storedLineup->second.goalkeeperId, goalkeeper.getId());
+  ASSERT_EQ(storedLineup->second.outfield.size(), 1u);
+  EXPECT_EQ(storedLineup->second.outfield.front().playerId, striker.getId());
+  EXPECT_FLOAT_EQ(storedLineup->second.outfield.front().position.x,
+                  SAVED_STRIKER_POSITION.x);
+  EXPECT_FLOAT_EQ(storedLineup->second.outfield.front().position.y,
+                  SAVED_STRIKER_POSITION.y);
+  ASSERT_EQ(storedLineup->second.reserves.size(), 1u);
+  EXPECT_EQ(storedLineup->second.reserves.front(), reserve.getId());
 }
 
 TEST_F(DatabaseTest, Transactions)
@@ -125,4 +163,24 @@ TEST_F(DatabaseTest, Transactions)
 
   players = playerRepo.loadAllPlayers();
   EXPECT_EQ(players.size(), 2);
+}
+
+TEST_F(DatabaseTest, PlayedFixtureRoundTripsWithItsScore)
+{
+  FixtureRepository fixtureRepo(getDbConn());
+  Calendar calendar;
+  const GameDateValue matchDate(2025, 9, 14);
+  Match match(11, 12, matchDate, MatchType::LEAGUE);
+  match.setPlayedResult(3, 2);
+  calendar.addMatch(match);
+
+  fixtureRepo.saveCalendar(calendar);
+
+  Calendar loaded;
+  fixtureRepo.loadCalendar(loaded);
+  const auto& matches = loaded.getMatchesForDate(matchDate);
+  ASSERT_EQ(matches.size(), 1u);
+  EXPECT_TRUE(matches.front().isPlayed());
+  EXPECT_EQ(matches.front().getHomeScore(), 3);
+  EXPECT_EQ(matches.front().getAwayScore(), 2);
 }

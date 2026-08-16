@@ -38,7 +38,7 @@ void renderPlayerTooltip(const Player* p, const StatsConfig& stats_config)
     ImGui::Separator();
     for (const auto& [stat_name, value] : p->getStats())
     {
-      ImGui::Text("%s: %.1f", stat_name.c_str(), value);
+      ImGui::Text("%s: %.1f", stat_name.c_str(), static_cast<double>(value));
     }
 
     if (ImGui::GetIO().KeyShift)
@@ -241,7 +241,7 @@ void LineupScene::renderPitch()
               ImGui::AcceptDragDropPayload("BENCH_PLAYER"))
       {
         IM_ASSERT(payload->DataSize == sizeof(PlayerID));
-        PlayerID bench_pid = *(const PlayerID*)payload->Data;
+        const PlayerID bench_pid = *static_cast<const PlayerID*>(payload->Data);
         current_lineup->swapPlayers(bench_pid, gk->getId());
       }
       ImGui::EndDragDropTarget();
@@ -324,7 +324,7 @@ void LineupScene::renderPitch()
               ImGui::AcceptDragDropPayload("BENCH_PLAYER"))
       {
         IM_ASSERT(payload->DataSize == sizeof(PlayerID));
-        PlayerID bench_pid = *(const PlayerID*)payload->Data;
+        const PlayerID bench_pid = *static_cast<const PlayerID*>(payload->Data);
         current_lineup->swapPlayers(bench_pid, posPlayer.player->getId());
       }
       ImGui::EndDragDropTarget();

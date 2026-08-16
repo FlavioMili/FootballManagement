@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <future>
 #include <vector>
 
 #include "gui/gui_scene.h"
@@ -56,6 +57,8 @@ class MainMenuScene : public GUIScene
   bool is_new_game = false;
   int loading_slot = 0;
   bool is_loading_rendered = false;
+  bool loading_operation_started = false;
+  std::future<bool> loading_operation;
   std::vector<GameController::SaveSlotMetadata> cached_metadata;
 
   void loadCachedMetadata();

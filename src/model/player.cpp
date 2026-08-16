@@ -8,6 +8,7 @@
 
 #include "player.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <map>
@@ -23,7 +24,7 @@ Player::Player(PlayerID new_id, TeamID new_team_id,
                PlayerRole new_role, Language new_nationality, uint32_t new_wage,
                uint32_t new_status, uint8_t new_age, uint8_t new_contract_years,
                uint8_t new_height, Foot new_foot,
-               const std::map<std::string, float>& new_stats)
+               std::map<std::string, float> new_stats)
     : _id(new_id),
       _team_id(new_team_id),
       _wage(new_wage),
@@ -36,7 +37,7 @@ Player::Player(PlayerID new_id, TeamID new_team_id,
       _contract_years(new_contract_years),
       _height(new_height),
       _foot(new_foot),
-      _stats(new_stats)
+      _stats(std::move(new_stats))
 {
   _transfer_status = (_status & TRANSFER_LISTED_BIT)
                          ? TransferStatus::Listed
@@ -51,13 +52,17 @@ void Player::setTeamId(TeamID id) { _team_id = id; }
 
 std::string Player::getName() const { return _first_name + " " + _last_name; }
 
-std::string Player::getFirstName() const { return _first_name; }
+const std::string& Player::getFirstName() const { return _first_name; }
 
-std::string Player::getLastName() const { return _last_name; }
+const std::string& Player::getLastName() const { return _last_name; }
 
 int Player::getAge() const { return _age; }
 
-void Player::setAge(uint8_t new_age) { _age = new_age; }
+void Player::setAge(uint8_t new_age)
+{
+  _age = new_age;
+  _cached_market_value = 0;
+}
 
 PlayerRole Player::getRole() const { return _role; }
 
@@ -65,7 +70,18 @@ Language Player::getNationality() const { return _nationality; }
 
 uint32_t Player::getWage() const { return _wage; }
 
+void Player::setWage(uint32_t wage) { _wage = wage; }
+
 uint8_t Player::getContractYears() const { return _contract_years; }
+
+void Player::setContractYears(uint8_t years) { _contract_years = years; }
+
+bool Player::advanceContractYear()
+{
+  if (_contract_years == 0) return false;
+  --_contract_years;
+  return _contract_years == 0;
+}
 
 uint8_t Player::getHeight() const { return _height; }
 
@@ -78,17 +94,23 @@ const std::map<std::string, float>& Player::getStats() const { return _stats; }
 void Player::setStats(const std::map<std::string, float>& new_stats)
 {
   _stats = new_stats;
+  _cached_market_value = 0;
 }
 
 double Player::getOverall(const StatsConfig& stats_config) const
 {
   double overall = 0.0;
-  const auto& role_config =
-      stats_config.role_focus.at(RoleUtils::getBroadCategory(_role));
+  const auto role_config_it =
+      stats_config.role_focus.find(RoleUtils::getBroadCategory(_role));
+  if (role_config_it == stats_config.role_focus.end())
+  {
+    return 0.0;
+  }
+  const auto& role_config = role_config_it->second;
   const auto& weights = role_config.weights;
   const auto& stat_names = role_config.stats;
 
-  for (size_t i = 0; i < stat_names.size(); ++i)
+  for (size_t i = 0; i < std::min(stat_names.size(), weights.size()); ++i)
   {
     const std::string& stat_name = stat_names[i];
     auto it = _stats.find(stat_name);
@@ -103,6 +125,7 @@ double Player::getOverall(const StatsConfig& stats_config) const
 void Player::agePlayer()
 {
   ++_age;
+  _cached_market_value = 0;
 
   if (_age < PLAYER_AGE_FACTOR_DECLINE_AGE) return;
 
@@ -154,13 +177,14 @@ void Player::train(const std::vector<std::string>& focus_stats)
   auto it = _stats.find(random_stat);
   if (it == _stats.end()) return;
 
-  float age_factor =
-      ((PLAYER_AGE_FACTOR_DECLINE_AGE - static_cast<float>(_age)) *
-       PLAYER_AGE_FACTOR_DECAY_RATE);
+  const float age_factor = std::clamp(
+      1.0f - std::max(0.0f, static_cast<float>(_age) - 18.0f) / 25.0f, 0.1f,
+      1.0f);
   float random_factor = rand_dist(gen);
 
   float increment = PLAYER_STAT_INCREASE_BASE * (random_factor * age_factor);
   it->second += increment;
+  _cached_market_value = 0;
 
   if (it->second > MAX_STAT_VAL) it->second = MAX_STAT_VAL;
 }
@@ -169,7 +193,7 @@ void Player::train(const std::vector<std::string>& focus_stats)
 
 uint32_t Player::getMarketValue() const { return _cached_market_value; }
 
-void Player::updateMarketValue(const StatsConfig& stats_config)
+void Player::updateMarketValue(const StatsConfig& stats_config) const
 {
   // Simple algorithm for market value
   // Value = (Overall^2 * 1000) * AgeFactor

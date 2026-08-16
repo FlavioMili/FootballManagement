@@ -8,6 +8,7 @@
 
 #include "model/game.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include "database/database_connection.h"
@@ -15,6 +16,8 @@
 #include "database/repositories/fixture_repository.h"
 #include "database/repositories/game_state_repository.h"
 #include "database/repositories/league_repository.h"
+#include "database/repositories/player_repository.h"
+#include "database/repositories/team_repository.h"
 #include "global/global.h"
 #include "global/logger.h"
 #include "global/paths.h"
@@ -68,6 +71,8 @@ void Game::saveGame()
     GameStateRepository gameStateRepo(db_conn);
     FixtureRepository fixtureRepo(db_conn);
     LeagueRepository leagueRepo(db_conn);
+    PlayerRepository playerRepo(db_conn);
+    TeamRepository teamRepo(db_conn);
 
     gameStateRepo.updateGameState(current_season, managed_team_id,
                                   currentDate.toString());
@@ -77,6 +82,8 @@ void Game::saveGame()
     {
       leagueRepo.saveLeaguePoints(league);
     }
+    playerRepo.updatePlayers(gamedata->getPlayersVector());
+    teamRepo.updateTeamsState(gamedata->getTeamsVector());
     db_conn->commitTransaction();
   }
   catch (const std::exception& e)
@@ -100,11 +107,10 @@ void Game::advanceDay()
     return;
   }
 
-  const auto& matches_today = calendar.getMatchesForDate(currentDate);
+  auto& matches_today = calendar.getMatchesForDateMutable(currentDate);
   if (!matches_today.empty())
   {
-    auto matches_to_simulate = matches_today;
-    simulateMatches(matches_to_simulate);
+    simulateMatches(matches_today);
   }
 }
 
@@ -112,6 +118,12 @@ void Game::simulateMatches(std::vector<Match>& matches)
 {
   for (auto& match : matches)
   {
+    if (match.isPlayed() || match.getHomeTeamId() == managed_team_id ||
+        match.getAwayTeamId() == managed_team_id)
+    {
+      continue;
+    }
+
     match.simulate((*gamedata));
 
     auto home_team_opt = (*gamedata).getTeam(match.getHomeTeamId());
@@ -139,6 +151,37 @@ void Game::simulateMatches(std::vector<Match>& matches)
   }
 }
 
+bool Game::setMatchResult(const GameDateValue& date, TeamID home_id,
+                          TeamID away_id, uint8_t home_score,
+                          uint8_t away_score)
+{
+  auto& matches = calendar.getMatchesForDateMutable(date);
+  const auto match_it = std::find_if(
+      matches.begin(), matches.end(),
+      [&](const Match& match)
+      {
+        return !match.isPlayed() && match.getHomeTeamId() == home_id &&
+               match.getAwayTeamId() == away_id;
+      });
+  if (match_it == matches.end())
+  {
+    return false;
+  }
+
+  match_it->setPlayedResult(home_score, away_score);
+  updateStandings(*match_it);
+
+  if (const auto home_team = gamedata->getTeam(home_id))
+  {
+    trainPlayers(home_team->get().getPlayerIDs());
+  }
+  if (const auto away_team = gamedata->getTeam(away_id))
+  {
+    trainPlayers(away_team->get().getPlayerIDs());
+  }
+  return true;
+}
+
 void Game::updateStandings(const Match& match)
 {
   if (match.getMatchType() != MatchType::LEAGUE)
@@ -155,7 +198,10 @@ void Game::updateStandings(const Match& match)
   if (!away_team_opt) return;
   Team& away_team = away_team_opt->get();
 
-  League& league = (*gamedata).getLeagues().at(home_team.getLeagueId());
+  if (home_team.getLeagueId() != away_team.getLeagueId()) return;
+  const auto league_it = gamedata->getLeagues().find(home_team.getLeagueId());
+  if (league_it == gamedata->getLeagues().end()) return;
+  League& league = league_it->second;
 
   if (match.getHomeScore() > match.getAwayScore())
   {
@@ -178,6 +224,7 @@ void Game::endSeason()
             << " has concluded. ---"
             << "\n";
   (*gamedata).ageAllPlayers();
+  (*gamedata).advanceContractsAndReleasePlayers();
   current_season++;
 }
 
@@ -210,14 +257,15 @@ void Game::setManagedTeamId(uint16_t id) { managed_team_id = id; }
 
 void Game::trainPlayers(const std::vector<uint32_t>& player_ids)
 {
-  auto stats_config = (*gamedata).getStatsConfig();
-  for (auto& player_id : player_ids)
+  const auto& stats_config = (*gamedata).getStatsConfig();
+  for (const auto player_id : player_ids)
   {
-    Player& player = (*gamedata).getPlayers().at(player_id);
-    const auto& focus_stats =
-        stats_config.role_focus
-            .at(RoleUtils::getBroadCategory(player.getRole()))
-            .stats;
-    player.train(focus_stats);
+    const auto player_it = gamedata->getPlayers().find(player_id);
+    if (player_it == gamedata->getPlayers().end()) continue;
+    Player& player = player_it->second;
+    const auto focus = stats_config.role_focus.find(
+        RoleUtils::getBroadCategory(player.getRole()));
+    if (focus != stats_config.role_focus.end())
+      player.train(focus->second.stats);
   }
 }

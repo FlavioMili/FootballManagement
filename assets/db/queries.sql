@@ -136,7 +136,7 @@ UPDATE Players SET team_id = ? WHERE id = ?;
 -- ==========================================
 
 -- @QUERY_ID: INSERT_FIXTURE
-INSERT OR IGNORE INTO Fixtures (game_date, home_team_id, away_team_id, match_type) VALUES (?, ?, ?, ?);
+INSERT OR REPLACE INTO Fixtures (game_date, home_team_id, away_team_id, match_type, home_goals, away_goals, played) VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- @QUERY_ID: UPDATE_FIXTURE_RESULT
 UPDATE Fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE game_date = ? AND home_team_id = ? AND away_team_id = ?;
@@ -174,11 +174,11 @@ UPDATE LeaguePoints SET points = 0 WHERE 1=1;
 -- ==========================================
 
 -- @QUERY_ID: UPSERT_TRANSFER_LISTING
-INSERT OR REPLACE INTO TransferList (player_id, asking_price, listing_date)
-VALUES (?, ?, ?);
+INSERT OR REPLACE INTO TransferList (player_id, asking_price, listing_date, highest_bidder_id, highest_bid)
+VALUES (?, ?, ?, ?, ?);
 
 -- @QUERY_ID: DELETE_TRANSFER_LISTING
 DELETE FROM TransferList WHERE player_id = ?;
 
 -- @QUERY_ID: LOAD_ALL_TRANSFER_LISTINGS
-SELECT player_id, asking_price, listing_date FROM TransferList;
+SELECT player_id, asking_price, listing_date, highest_bidder_id, highest_bid FROM TransferList;

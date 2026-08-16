@@ -9,12 +9,28 @@
 #pragma once
 
 #include <memory>
+#include <optional>
+#include <unordered_map>
 #include <vector>
 
 #include "database/database_connection.h"
 #include "model/team.h"
 
 struct sqlite3_stmt;
+
+struct StoredPositionedPlayer
+{
+  PlayerID playerId = 0;
+  Vector2F position{};
+};
+
+struct StoredLineup
+{
+  bool persisted = false;
+  std::optional<PlayerID> goalkeeperId;
+  std::vector<StoredPositionedPlayer> outfield;
+  std::vector<PlayerID> reserves;
+};
 
 /**
  * @class TeamRepository
@@ -35,6 +51,9 @@ class TeamRepository
    */
   std::vector<Team> loadAllTeams() const;
 
+  /** Load pointer-free lineup data so GameData can resolve player IDs. */
+  std::unordered_map<TeamID, StoredLineup> loadAllLineups() const;
+
   /**
    * @brief Insert a new team into the database.
    * @param team The Team object to insert.
@@ -54,9 +73,17 @@ class TeamRepository
   void insertTeamsWithId(
       const std::vector<std::reference_wrapper<const Team>>& teams) const;
 
+  /** Persist mutable team state without overwriting lineup data. */
+  void updateTeamState(const Team& team) const;
+
+  /** Persist multiple team states with one prepared statement. */
+  void updateTeamsState(
+      const std::vector<std::reference_wrapper<const Team>>& teams) const;
+
  private:
   std::shared_ptr<DatabaseConnection> db_conn;
 
   void bindTeamParams(sqlite3_stmt* stmt, const Team& team,
                       int startIndex) const;
+  void bindTeamStateParams(sqlite3_stmt* stmt, const Team& team) const;
 };

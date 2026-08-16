@@ -75,10 +75,12 @@ void Strategy::setAllOutfieldWeights(float attack, float defense, int radius)
 // -------------------- Role Weight Getters --------------------
 RoleWeights& Strategy::getRole(int roleIndex)
 {
+  roleIndex = std::clamp(roleIndex, 0, 10);
   return (roleIndex == 0) ? goalkeeper : outfield[roleIndex - 1];
 }
 
 const RoleWeights& Strategy::getRole(int roleIndex) const
 {
+  roleIndex = std::clamp(roleIndex, 0, 10);
   return (roleIndex == 0) ? goalkeeper : outfield[roleIndex - 1];
 }

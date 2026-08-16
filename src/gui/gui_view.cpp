@@ -10,12 +10,19 @@
 
 #include <SDL3_ttf/SDL_ttf.h>
 
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <stack>
+#include <string_view>
+#include <vector>
 
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
 #include "controller/game_controller.h"
+#include "global/logger.h"
 #include "global/paths.h"
 #include "gui/gui_scene.h"
 #include "gui/scenes/main_menu_scene.h"
@@ -89,6 +96,19 @@ bool GUIView::initialize()
     std::cerr << "Failed to create renderer: " << SDL_GetError() << '\n';
     return false;
   }
+  const char* rendererName = SDL_GetRendererName(renderer);
+  Logger::info(std::string("SDL renderer driver: ") +
+               (rendererName ? rendererName : "unknown"));
+  rendererIsSoftware = (rendererName != nullptr &&
+                        std::string_view(rendererName).find("software") !=
+                            std::string_view::npos);
+  if (rendererIsSoftware)
+  {
+    Logger::warn(
+        "Software renderer active (SDL chose a CPU rendering driver). Match "
+        "performance and responsiveness may be poor; install/select a GPU "
+        "driver if the match appears slow.");
+  }
 
   SettingsManager::instance()->load();
   SettingsManager::instance()->apply(window);
@@ -132,6 +152,7 @@ void GUIView::run()
 
   while (running)
   {
+    const Uint64 frameStart = SDL_GetTicks();
     Uint64 currentTime = SDL_GetTicks();
     float deltaTime = static_cast<float>(currentTime - lastTime) / 1000.0f;
     lastTime = currentTime;
@@ -142,10 +163,12 @@ void GUIView::run()
     update(deltaTime);
     render();
 
-    // Cap framerate to ~60 FPS
-    // TODO check framerate of computer and update this
-    // or edit in settings
-    SDL_Delay(16);
+    const int fpsLimit =
+        std::clamp(SettingsManager::instance()->get().fps_limit, 15, 360);
+    const Uint64 frameBudget = static_cast<Uint64>(1000 / fpsLimit);
+    const Uint64 elapsed = SDL_GetTicks() - frameStart;
+    if (elapsed < frameBudget)
+      SDL_Delay(static_cast<Uint32>(frameBudget - elapsed));
   }
 }
 
@@ -158,6 +181,11 @@ void GUIView::handleEvents()
     if (event.type == SDL_EVENT_QUIT)
     {
       running = false;
+    }
+
+    if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_F12)
+    {
+      screenshotPending = true;
     }
 
     if (event.type == SDL_EVENT_WINDOW_RESIZED)
@@ -195,6 +223,8 @@ void GUIView::update(float deltaTime)
 
 void GUIView::render()
 {
+  const auto renderStart = std::chrono::steady_clock::now();
+
   // Clear screen with dark background
   SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
   SDL_RenderClear(renderer);
@@ -214,8 +244,50 @@ void GUIView::render()
   ImGui::Render();
   ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
 
+  bool capturedScreenshot = false;
+  if (screenshotPending)
+  {
+    const char* configuredPath = std::getenv("FM_SCREENSHOT_PATH");
+    const std::string path = configuredPath && *configuredPath
+                                 ? configuredPath
+                                 : "/tmp/football_management_screenshot.bmp";
+    if (!captureScreenshot(path))
+      std::cerr << "Failed to capture screenshot: " << SDL_GetError() << '\n';
+    screenshotPending = false;
+    capturedScreenshot = true;
+  }
+
   // Present the rendered frame
   SDL_RenderPresent(renderer);
+
+  // Keep screenshot encoding outside normal frame timing. Screenshot frames
+  // are excluded from the startup statistics.
+  if (!capturedScreenshot && startupFramesTimed < STARTUP_FRAME_TIMING_COUNT)
+  {
+    const float renderMs =
+        static_cast<float>(std::chrono::duration<double, std::milli>(
+                               std::chrono::steady_clock::now() - renderStart)
+                               .count());
+    startupFrameTimes[static_cast<size_t>(startupFramesTimed++)] = renderMs;
+    if (startupFramesTimed == STARTUP_FRAME_TIMING_COUNT)
+    {
+      reportStartupRenderTimings();
+    }
+  }
+}
+
+void GUIView::reportStartupRenderTimings()
+{
+  std::vector<float> samples(startupFrameTimes.begin(),
+                             startupFrameTimes.end());
+  std::sort(samples.begin(), samples.end());
+  const float median = samples[samples.size() / 2];
+  const float p95 = samples[static_cast<size_t>(
+      std::floor(0.95 * static_cast<double>(samples.size() - 1)))];
+  const float worst = samples.back();
+  Logger::info("Render/present timings over the first 120 frames: median " +
+               std::to_string(median) + " ms, p95 " + std::to_string(p95) +
+               " ms, worst " + std::to_string(worst) + " ms");
 }
 
 void GUIView::changeScene(std::unique_ptr<GUIScene> newScene)
@@ -294,6 +366,16 @@ SDL_Renderer* GUIView::getRenderer() const { return renderer; }
 SDL_Window* GUIView::getWindow() const { return window; }
 
 GameController& GUIView::getController() const { return controller; }
+
+bool GUIView::captureScreenshot(std::string_view path) const
+{
+  if (!renderer || path.empty()) return false;
+  SDL_Surface* surface = SDL_RenderReadPixels(renderer, nullptr);
+  if (!surface) return false;
+  const bool saved = SDL_SaveBMP(surface, std::string(path).c_str());
+  SDL_DestroySurface(surface);
+  return saved;
+}
 
 // Return the topmost scene
 // (overlay if exists, otherwise current scene)

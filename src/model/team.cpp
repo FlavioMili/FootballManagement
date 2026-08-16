@@ -33,11 +33,17 @@ Team::Team(TeamID team_id, uint8_t team_league_id, std::string_view team_name,
 // Accessors
 uint16_t Team::getId() const { return id; }
 uint8_t Team::getLeagueId() const { return league_id; }
-const std::string Team::getName() const { return name; }
+const std::string& Team::getName() const { return name; }
 
 const std::vector<PlayerID>& Team::getPlayerIDs() const { return player_ids; }
 
-void Team::addPlayerID(PlayerID player_id) { player_ids.push_back(player_id); }
+void Team::addPlayerID(PlayerID player_id)
+{
+  if (!std::ranges::contains(player_ids, player_id))
+  {
+    player_ids.push_back(player_id);
+  }
+}
 
 bool Team::removePlayerID(PlayerID player_id)
 {

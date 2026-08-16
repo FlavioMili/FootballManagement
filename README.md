@@ -18,6 +18,7 @@ We welcome contributions from humans and AI alike! Before you start, please chec
 * **[AI Guidelines](AI_GUIDELINES.md)**: We are proudly **pro-AI**. However, all AI-assisted code must be explicitly declared and heavily human-reviewed. Read this file to understand our philosophy.
 * **[Code of Conduct](CODE_OF_CONDUCT.md)**: We are committed to fostering a welcoming and inclusive environment.
 * **[Agent Context](AGENT.md)**: If you are an autonomous AI Agent, read this file for specific architectural constraints and tooling requirements.
+* **[Development Handoff](docs/DEVELOPMENT_HANDOFF.md)**: Verified implementation state, exact tests, performance workflow, debug artifacts, and bounded next tasks for continuing match AI, presentation, and transfers.
 
 ---
 
@@ -114,18 +115,20 @@ Adherence to these principles is crucial for long-term development success.
   - [x] Player retirement
   - [ ] Regen logic to maintain player pool
 - **Transfers & Contracts:**
-  - [ ] Transfer market system
-  - [ ] Player contracts and salaries
+  - [x] Persistent listings, bids, AI activity, transactional transfers, and free-agent signings
+  - [x] Persisted wages and contract duration
+  - [ ] Player/club contract negotiation and contract expiry
   - [ ] Player selection before starting the game
 - **Team Finances:**
-  - [ ] Track team balance
+  - [x] Track and persist team balance through transfers
   - [ ] Bankruptcy consequences
 
 ### Phase 3: Advanced Simulation
 - **Calendar Overhaul:**
   - [ ] Replace "matchday" structure with 365-day time model
 - **Tactics & Strategy:**
-  - [ ] Link team tactics to match AI behavior
+  - [x] Link core team tactics to match AI behavior
+  - [ ] Add role-specific tactical instructions and team phases
 - **Player Morale, Form and training:**
   - [ ] Dynamic player morale based on playtime and results
   - [ ] Add training sessions

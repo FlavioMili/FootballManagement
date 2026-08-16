@@ -48,5 +48,6 @@ class DataGenerator
 
   static void loadNames();
   static Player generateRandomPlayer(const class GameData& gamedata,
-                                     TeamID team_id);
+                                     PlayerID player_id, TeamID team_id,
+                                     PlayerRole role);
 };

@@ -11,6 +11,7 @@
 #include <algorithm>
 
 #include "database/gamedata.h"
+#include "global/global.h"
 #include "model/player.h"
 
 class GameDataTest : public ::testing::Test
@@ -77,4 +78,31 @@ TEST_F(GameDataTest, TestTransferPlayer)
 
   EXPECT_EQ(gamedata.getPlayer(pid)->get().getTeamId(), target_tid);
   gamedata.removePlayer(pid);
+}
+
+TEST_F(GameDataTest, ExpiredContractReleasesPlayerToFreeAgents)
+{
+  constexpr PlayerID PLAYER_ID = 77777;
+  constexpr TeamID SOURCE_TEAM_ID = 333;
+  gamedata.addTeam(FREE_AGENTS_TEAM_ID,
+                   Team(FREE_AGENTS_TEAM_ID, 0, "Free agents", 0));
+  gamedata.addTeam(SOURCE_TEAM_ID,
+                   Team(SOURCE_TEAM_ID, 1, "Source", 1'000'000));
+  Player player(PLAYER_ID, SOURCE_TEAM_ID, "End", "Contract", PlayerRole::CM,
+                Language::EN, 1'000, 0, 27, 1, 180, Foot::Right, {});
+  gamedata.addPlayer(PLAYER_ID, player);
+  gamedata.getTeams().at(SOURCE_TEAM_ID).addPlayerID(PLAYER_ID);
+
+  const std::vector<PlayerID> released =
+      gamedata.advanceContractsAndReleasePlayers();
+
+  EXPECT_TRUE(std::ranges::contains(released, PLAYER_ID));
+  ASSERT_TRUE(gamedata.getPlayer(PLAYER_ID).has_value());
+  EXPECT_EQ(gamedata.getPlayer(PLAYER_ID)->get().getTeamId(),
+            FREE_AGENTS_TEAM_ID);
+  EXPECT_EQ(gamedata.getPlayer(PLAYER_ID)->get().getContractYears(), 0);
+  EXPECT_FALSE(std::ranges::contains(
+      gamedata.getTeams().at(SOURCE_TEAM_ID).getPlayerIDs(), PLAYER_ID));
+  EXPECT_TRUE(std::ranges::contains(
+      gamedata.getTeams().at(FREE_AGENTS_TEAM_ID).getPlayerIDs(), PLAYER_ID));
 }

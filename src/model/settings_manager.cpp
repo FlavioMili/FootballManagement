@@ -8,6 +8,7 @@
 
 #include "settings_manager.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -34,20 +35,29 @@ void SettingsManager::load()
     return;
   }
 
-  json j;
-  in >> j;
-
-  settings_.language = j.value("language", settings_.language);
-  auto res =
-      j.value("resolution", std::vector<int>{settings_.resolution_width,
-                                             settings_.resolution_height});
-  if (res.size() == 2)
+  try
   {
-    settings_.resolution_width = res[0];
-    settings_.resolution_height = res[1];
+    json j;
+    in >> j;
+
+    settings_.language = j.value("language", settings_.language);
+    const auto resolution =
+        j.value("resolution", std::vector<int>{settings_.resolution_width,
+                                               settings_.resolution_height});
+    if (resolution.size() == 2 && resolution[0] >= 640 && resolution[1] >= 480)
+    {
+      settings_.resolution_width = resolution[0];
+      settings_.resolution_height = resolution[1];
+    }
+    settings_.fullscreen = j.value("fullscreen", settings_.fullscreen);
+    settings_.fps_limit =
+        std::clamp(j.value("fps_limit", settings_.fps_limit), 15, 360);
   }
-  settings_.fullscreen = j.value("fullscreen", settings_.fullscreen);
-  settings_.fps_limit = j.value("fps_limit", settings_.fps_limit);
+  catch (const json::exception& exception)
+  {
+    std::cerr << "Invalid settings file, using defaults: " << exception.what()
+              << '\n';
+  }
 
   LanguageManager::instance().loadLanguage(settings_.language);
 }

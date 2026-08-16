@@ -19,7 +19,13 @@
 namespace
 {
 std::shared_ptr<spdlog::logger> logger;
+
+spdlog::logger& getLogger()
+{
+  if (!logger) Logger::init();
+  return *logger;
 }
+}  // namespace
 
 void Logger::init()
 {
@@ -39,12 +45,12 @@ void Logger::init()
   }
 }
 
-void Logger::info(const std::string& msg) { logger->info(msg); }
-void Logger::error(const std::string& msg) { logger->error(msg); }
-void Logger::warn(const std::string& msg) { logger->warn(msg); }
+void Logger::info(const std::string& msg) { getLogger().info(msg); }
+void Logger::error(const std::string& msg) { getLogger().error(msg); }
+void Logger::warn(const std::string& msg) { getLogger().warn(msg); }
 
 #ifdef DEBUG
-void Logger::debug(const std::string& msg) { logger->debug(msg); }
+void Logger::debug(const std::string& msg) { getLogger().debug(msg); }
 #else
 void Logger::debug(const std::string& msg) { (void)msg; }
 #endif

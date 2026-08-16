@@ -65,7 +65,7 @@ class Player
          std::string_view new_last_name, PlayerRole new_role,
          Language new_nationality, uint32_t new_wage, uint32_t new_status,
          uint8_t new_age, uint8_t new_contract_years, uint8_t new_height,
-         Foot new_foot, const std::map<std::string, float>& new_stats);
+         Foot new_foot, std::map<std::string, float> new_stats);
 
   /** @brief Gets the player's ID. */
   PlayerID getId() const;
@@ -80,10 +80,10 @@ class Player
   std::string getName() const;
 
   /** @brief Gets the player's first name. */
-  std::string getFirstName() const;
+  const std::string& getFirstName() const;
 
   /** @brief Gets the player's last name. */
-  std::string getLastName() const;
+  const std::string& getLastName() const;
 
   /** @brief Gets the player's age. */
   int getAge() const;
@@ -100,8 +100,17 @@ class Player
   /** @brief Gets the player's wage. */
   uint32_t getWage() const;
 
+  /** Updates the weekly wage after a successful contract negotiation. */
+  void setWage(uint32_t wage);
+
   /** @brief Gets the player's remaining contract years. */
   uint8_t getContractYears() const;
+
+  /** Updates the remaining contract duration. */
+  void setContractYears(uint8_t years);
+
+  /** Decrements a non-zero contract and returns true when it expires. */
+  bool advanceContractYear();
 
   /** @brief Gets the player's height. */
   uint8_t getHeight() const;
@@ -150,7 +159,7 @@ class Player
    * @brief Updates the player's market value.
    * @param stats_config The stats configuration to use for the calculation.
    */
-  void updateMarketValue(const StatsConfig& stats_config);
+  void updateMarketValue(const StatsConfig& stats_config) const;
 
   /** @brief Bitmask bit for transfer-listed status. */
   static constexpr uint32_t TRANSFER_LISTED_BIT = 0x01U;
@@ -167,7 +176,7 @@ class Player
   TeamID _team_id;
   uint32_t _wage;
   uint32_t _status;
-  uint32_t _cached_market_value = 0;
+  mutable uint32_t _cached_market_value = 0;
 
   // strings (non-POD, heap allocated, alignment not a problem)
   std::string _first_name;

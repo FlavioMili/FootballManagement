@@ -78,8 +78,12 @@ int ButtonManager::addButton(float x, float y, float w, float h,
 
 void ButtonManager::removeButton(int buttonId)
 {
-  std::erase_if(buttons,
-                [buttonId](const Button& btn) { return btn.id == buttonId; });
+  const auto button =
+      std::ranges::find_if(buttons, [buttonId](const Button& candidate)
+                           { return candidate.id == buttonId; });
+  if (button == buttons.end()) return;
+  if (button->textTexture) SDL_DestroyTexture(button->textTexture);
+  buttons.erase(button);
 }
 
 void ButtonManager::clearButtons()
@@ -89,6 +93,7 @@ void ButtonManager::clearButtons()
     if (button.textTexture)
     {
       SDL_DestroyTexture(button.textTexture);
+      button.textTexture = nullptr;
     }
   }
   buttons.clear();
@@ -230,7 +235,11 @@ bool ButtonManager::isPointInButton(float x, float y,
 void ButtonManager::createButtonTexture(Button& btn)
 {
   if (!font || !renderer) return;
-  if (btn.textTexture) SDL_DestroyTexture(btn.textTexture);
+  if (btn.textTexture)
+  {
+    SDL_DestroyTexture(btn.textTexture);
+    btn.textTexture = nullptr;
+  }
 
   SDL_Color color = btn.style.textColor;
   SDL_Surface* surf = TTF_RenderText_Blended(font, btn.label.c_str(), 0, color);

@@ -50,10 +50,6 @@ const std::vector<Match>& Calendar::getMatchesForDate(
 std::vector<Match>& Calendar::getMatchesForDateMutable(
     const GameDateValue& date)
 {
-  static std::vector<Match>
-      no_matches;  // Need to be careful here, better return schedule[date] or
-                   // an existing one. Wait, if it doesn't exist, we can just
-                   // return schedule[date] which creates it.
   return schedule[date];
 }
 void Calendar::generateSeasonFixtures(const class GameData& gamedata,
@@ -148,12 +144,13 @@ void Calendar::generateFriendlies(const class GameData& gamedata,
   }
 
   GameDateValue currentDate = startDate;
+  const GameDateValue season_start(startDate.year, 9, 1);
   currentDate.nextDay();  // Start friendlies the day after season start
 
   for (size_t round = 0; round < numFriendlies; ++round)
   {
     currentDate.nextWeek();  // Schedule friendlies weekly for a few weeks.
-    if (currentDate < START_SEASON_DATE)
+    if (currentDate < season_start)
     {
       for (size_t i = 0; i < num_teams / 2; ++i)
       {
