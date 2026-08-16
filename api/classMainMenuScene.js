@@ -10,5 +10,7 @@ var classMainMenuScene =
     [ "cached_metadata", "classMainMenuScene.html#a3705375d7970c287728a99aab4580a7f", null ],
     [ "is_loading_rendered", "classMainMenuScene.html#ab3910b44918a74b4241a99f3c8d6fdcf", null ],
     [ "is_new_game", "classMainMenuScene.html#a35aeb52ce00f58d80034b08cdaf3c724", null ],
+    [ "loading_operation", "classMainMenuScene.html#a86eb159784afbfa36601150b33becc60", null ],
+    [ "loading_operation_started", "classMainMenuScene.html#a1f24ba4653643c0590bb76964524e5ad", null ],
     [ "loading_slot", "classMainMenuScene.html#a31e54e2a52f0380e1eeb80913dd40bed", null ]
 ];

@@ -94,30 +94,359 @@ $(document).ready(function(){initNavTree('match__engine_8h.html',''); initResiza
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">match_engine.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;string&gt;</code><br />
+<div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;limits&gt;</code><br />
+<code>#include &lt;optional&gt;</code><br />
+<code>#include &lt;random&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
+<code>#include &lt;string_view&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 <code>#include &quot;<a class="el" href="stats__config_8h_source.html">global/stats_config.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="types_8h_source.html">global/types.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="lineup_8h_source.html">model/lineup.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="match__scenario_8h_source.html">model/match_scenario.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="match__tuning_8h_source.html">model/match_tuning.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="strategy_8h_source.html">model/strategy.h</a>&quot;</code><br />
 </div>
 <p><a href="match__engine_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structPassDecision.html">PassDecision</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structScenarioDecision.html">ScenarioDecision</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchPlayer.html">MatchPlayer</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchBall.html">MatchBall</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html">MatchEvent</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchStats.html">MatchStats</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html">MatchEngine</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEngine_1_1PassOption.html">MatchEngine::PassOption</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:aca6448151e924d2cb062632532d9081f" id="r_aca6448151e924d2cb062632532d9081f"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081f">MatchState</a> { <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081fa526aadb8564a9c50374ebe55ec7bade0">KICK_OFF</a>
+, <a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081fa50366a49630a416ab3ccaa004196027e">PLAYING</a>
+, <a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081fa4652c1e0327ad75fd82cbc5e7bf322bf">THROW_IN</a>
+, <a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081fa0fdbca2289dacdc8f12ccf9b31c3ed08">GOAL_KICK</a>
+, <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081fa472f3d45de8018bfb63987a203dca8e4">CORNER_KICK</a>
+, <a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081faefda66f5bcbc157a7bbfe70d58456e51">FREE_KICK</a>
+, <a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081fa0e9bc37ec6da933200c9464b9585415e">PENALTY</a>
+, <a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081fa007a3c4175ca4f86d9dc49e4f2e9cf8a">GOAL</a>
+, <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081fab763f44331074a91fe69ede12eac324b">HALF_TIME</a>
+, <a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081fa2e84354d070a36b67c6c60953de6feaa">FULL_TIME</a>
+<br />
+ }</td></tr>
+<tr class="separator:aca6448151e924d2cb062632532d9081f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ededa6f6de89342dc3fe73bea6330cd" id="r_a2ededa6f6de89342dc3fe73bea6330cd"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="match__engine_8h.html#a2ededa6f6de89342dc3fe73bea6330cd">TeamPhase</a> { <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#a2ededa6f6de89342dc3fe73bea6330cda9edda5a1c726a51344b63941e1befca3">STOPPAGE</a>
+, <a class="el" href="match__engine_8h.html#a2ededa6f6de89342dc3fe73bea6330cda3d024ff901fe0aa1d1f3c3b95445b5da">SET_PIECE</a>
+, <a class="el" href="match__engine_8h.html#a2ededa6f6de89342dc3fe73bea6330cda1c068b0d5df5b30242152478ac00da50">DEFENSIVE_BLOCK</a>
+, <a class="el" href="match__engine_8h.html#a2ededa6f6de89342dc3fe73bea6330cdaada925b8b71d318152547102a2a9bc36">DEFENSIVE_TRANSITION</a>
+, <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#a2ededa6f6de89342dc3fe73bea6330cdaddfd55130238e21ca6e6136eebaec8f5">ATTACKING_TRANSITION</a>
+, <a class="el" href="match__engine_8h.html#a2ededa6f6de89342dc3fe73bea6330cda1150f485a3f2cbd83548ffec80a1d3c9">POSSESSION</a>
+, <a class="el" href="match__engine_8h.html#a2ededa6f6de89342dc3fe73bea6330cda5ff14e9c370e065b4adf67903ed9affe">FINAL_THIRD</a>
+<br />
+ }</td></tr>
+<tr class="separator:a2ededa6f6de89342dc3fe73bea6330cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a142c3c51fd70298c409fad612830d4b5" id="r_a142c3c51fd70298c409fad612830d4b5"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5">PlayerIntent</a> { <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5a0add921fe4a3799dff66c02c152397f1">HOLD_SHAPE</a>
+, <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5aa83978a083117e13eda145329e49a307">CARRY_BALL</a>
+, <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5a645241f84353158b119ab3fb43682270">OFFER_SUPPORT</a>
+, <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5aba7dc3fa9bc0b1cd90bb51e1159d59d8">RECEIVE_PASS</a>
+, <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5a6138a561a15b22039d70fd22ad8e0ae6">RUN_IN_BEHIND</a>
+, <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5a03a3aa4e6aa463d259e28920e690e58b">ATTACK_BOX</a>
+, <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5a8c009c8dd4d4f9dde7515c00d5cd4661">OVERLAP</a>
+, <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5afd4e0ff8ee8dc47e60f024f3d5118334">PRESS_BALL</a>
+, <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5ae7881c36017dd3ceab7007083e8b04f7">COVER_PRESS</a>
+, <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5a1e1ebc223eafc2cab20218201333f11b">BLOCK_PASSING_LANE</a>
+, <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5a6d001f8ce2541502c7e90ea500d8741a">MARK_OPPONENT</a>
+, <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5ac8fbfa5cac00835edb87c04b17d94f55">CLAIM_LOOSE_BALL</a>
+, <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5ae91c44c2b8b855e752f6fa0dc6829df7">RECOVER_SHAPE</a>
+, <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5a5c8ddc458c995122c904463d104b3176">GOALKEEP</a>
+<br />
+ }</td></tr>
+<tr class="separator:a142c3c51fd70298c409fad612830d4b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3f2bffb7346b7caffae490d09ed55083" id="r_a3f2bffb7346b7caffae490d09ed55083"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083">PassIntent</a> { <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083a202d1374a15b796f137f5844deebdabe">RECYCLE</a>
+, <a class="el" href="match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083a9bc5e7fe934fe08249e3aa2e0d3678ed">PROGRESSIVE</a>
+, <a class="el" href="match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083a15851c15f42a0dec84897b249d5d213d">THROUGH_BALL</a>
+, <a class="el" href="match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083a04dd53a8e6c2306e9bbf944c1d6047f2">CROSS</a>
+, <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083ac68b44122d5cca12cc6eb6bd20591f67">CUTBACK</a>
+, <a class="el" href="match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083a6168e24f07af99ad1236789bd2a9e993">SWITCH_PLAY</a>
+, <a class="el" href="match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083a330fc6503c860962996e8d349a0c8f44">PRESSURE_RELEASE</a>
+, <a class="el" href="match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083a3d024ff901fe0aa1d1f3c3b95445b5da">SET_PIECE</a>
+<br />
+ }</td></tr>
+<tr class="separator:a3f2bffb7346b7caffae490d09ed55083"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af57570b9a86811e45240a606a963cfe6" id="r_af57570b9a86811e45240a606a963cfe6"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="match__engine_8h.html#af57570b9a86811e45240a606a963cfe6">ScenarioAction</a> { <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#af57570b9a86811e45240a606a963cfe6ab50339a10e1de285ac99d4c3990b8693">NONE</a>
+, <a class="el" href="match__engine_8h.html#af57570b9a86811e45240a606a963cfe6afe92f0e834026a1c16e620212f2cc9a4">SHOT</a>
+, <a class="el" href="match__engine_8h.html#af57570b9a86811e45240a606a963cfe6a7a95bf926a0333f57705aeac07a362a2">PASS</a>
+, <a class="el" href="match__engine_8h.html#af57570b9a86811e45240a606a963cfe6a4854ee643ec24fa27e31fa4bec9f5e3f">CARRY</a>
+, <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#af57570b9a86811e45240a606a963cfe6afa210a33410373b3274f91cd1f289fb1">SHIELD</a>
+<br />
+ }</td></tr>
+<tr class="separator:af57570b9a86811e45240a606a963cfe6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f9ca6c5dc389f4fcac901c486ee4cc5" id="r_a9f9ca6c5dc389f4fcac901c486ee4cc5"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5">GoalkeeperState</a> { <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5ab9d6ef2a1efa6bdb8b1dd80680c5ff90">SET_POSITION</a>
+, <a class="el" href="match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5a836ede1239c3fef77fa9c7df2eaf67e9">SWEEP</a>
+, <a class="el" href="match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5ace9981238b60cb4e5e43c548093127ef">RUSH</a>
+, <a class="el" href="match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5a35a99ca7087899687b9d08a1348a02cf">CLAIM</a>
+, <br />
+&#160;&#160;<a class="el" href="match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5a0c6d9dfb485b43c6fba87439f9f73ac4">HOLD</a>
+, <a class="el" href="match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5ad7d6bb34546c601f4ddcd7d9d964814e">DISTRIBUTE</a>
+, <a class="el" href="match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5aea625ca593694ee20079bd188f84fa29">RECOVER</a>
+<br />
+ }</td></tr>
+<tr class="separator:a9f9ca6c5dc389f4fcac901c486ee4cc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a7de987d5e8db90ceecccf0168d78cff9" id="r_a7de987d5e8db90ceecccf0168d78cff9"><td class="memItemLeft" align="right" valign="top">std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="match__engine_8h.html#a7de987d5e8db90ceecccf0168d78cff9">goalkeeperStateName</a> (<a class="el" href="match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5">GoalkeeperState</a> state)</td></tr>
+<tr class="separator:a7de987d5e8db90ceecccf0168d78cff9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a9f9ca6c5dc389f4fcac901c486ee4cc5" name="a9f9ca6c5dc389f4fcac901c486ee4cc5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f9ca6c5dc389f4fcac901c486ee4cc5">&#9670;&#160;</a></span>GoalkeeperState</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5">GoalkeeperState</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Semantic goalkeeper state. Animation stays out of the engine. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a9f9ca6c5dc389f4fcac901c486ee4cc5ab9d6ef2a1efa6bdb8b1dd80680c5ff90" name="a9f9ca6c5dc389f4fcac901c486ee4cc5ab9d6ef2a1efa6bdb8b1dd80680c5ff90"></a>SET_POSITION&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a9f9ca6c5dc389f4fcac901c486ee4cc5a836ede1239c3fef77fa9c7df2eaf67e9" name="a9f9ca6c5dc389f4fcac901c486ee4cc5a836ede1239c3fef77fa9c7df2eaf67e9"></a>SWEEP&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a9f9ca6c5dc389f4fcac901c486ee4cc5ace9981238b60cb4e5e43c548093127ef" name="a9f9ca6c5dc389f4fcac901c486ee4cc5ace9981238b60cb4e5e43c548093127ef"></a>RUSH&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a9f9ca6c5dc389f4fcac901c486ee4cc5a35a99ca7087899687b9d08a1348a02cf" name="a9f9ca6c5dc389f4fcac901c486ee4cc5a35a99ca7087899687b9d08a1348a02cf"></a>CLAIM&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a9f9ca6c5dc389f4fcac901c486ee4cc5a0c6d9dfb485b43c6fba87439f9f73ac4" name="a9f9ca6c5dc389f4fcac901c486ee4cc5a0c6d9dfb485b43c6fba87439f9f73ac4"></a>HOLD&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a9f9ca6c5dc389f4fcac901c486ee4cc5ad7d6bb34546c601f4ddcd7d9d964814e" name="a9f9ca6c5dc389f4fcac901c486ee4cc5ad7d6bb34546c601f4ddcd7d9d964814e"></a>DISTRIBUTE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a9f9ca6c5dc389f4fcac901c486ee4cc5aea625ca593694ee20079bd188f84fa29" name="a9f9ca6c5dc389f4fcac901c486ee4cc5aea625ca593694ee20079bd188f84fa29"></a>RECOVER&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<a id="aca6448151e924d2cb062632532d9081f" name="aca6448151e924d2cb062632532d9081f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca6448151e924d2cb062632532d9081f">&#9670;&#160;</a></span>MatchState</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="match__engine_8h.html#aca6448151e924d2cb062632532d9081f">MatchState</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aca6448151e924d2cb062632532d9081fa526aadb8564a9c50374ebe55ec7bade0" name="aca6448151e924d2cb062632532d9081fa526aadb8564a9c50374ebe55ec7bade0"></a>KICK_OFF&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aca6448151e924d2cb062632532d9081fa50366a49630a416ab3ccaa004196027e" name="aca6448151e924d2cb062632532d9081fa50366a49630a416ab3ccaa004196027e"></a>PLAYING&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aca6448151e924d2cb062632532d9081fa4652c1e0327ad75fd82cbc5e7bf322bf" name="aca6448151e924d2cb062632532d9081fa4652c1e0327ad75fd82cbc5e7bf322bf"></a>THROW_IN&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aca6448151e924d2cb062632532d9081fa0fdbca2289dacdc8f12ccf9b31c3ed08" name="aca6448151e924d2cb062632532d9081fa0fdbca2289dacdc8f12ccf9b31c3ed08"></a>GOAL_KICK&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aca6448151e924d2cb062632532d9081fa472f3d45de8018bfb63987a203dca8e4" name="aca6448151e924d2cb062632532d9081fa472f3d45de8018bfb63987a203dca8e4"></a>CORNER_KICK&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aca6448151e924d2cb062632532d9081faefda66f5bcbc157a7bbfe70d58456e51" name="aca6448151e924d2cb062632532d9081faefda66f5bcbc157a7bbfe70d58456e51"></a>FREE_KICK&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aca6448151e924d2cb062632532d9081fa0e9bc37ec6da933200c9464b9585415e" name="aca6448151e924d2cb062632532d9081fa0e9bc37ec6da933200c9464b9585415e"></a>PENALTY&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aca6448151e924d2cb062632532d9081fa007a3c4175ca4f86d9dc49e4f2e9cf8a" name="aca6448151e924d2cb062632532d9081fa007a3c4175ca4f86d9dc49e4f2e9cf8a"></a>GOAL&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aca6448151e924d2cb062632532d9081fab763f44331074a91fe69ede12eac324b" name="aca6448151e924d2cb062632532d9081fab763f44331074a91fe69ede12eac324b"></a>HALF_TIME&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aca6448151e924d2cb062632532d9081fa2e84354d070a36b67c6c60953de6feaa" name="aca6448151e924d2cb062632532d9081fa2e84354d070a36b67c6c60953de6feaa"></a>FULL_TIME&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<a id="a3f2bffb7346b7caffae490d09ed55083" name="a3f2bffb7346b7caffae490d09ed55083"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3f2bffb7346b7caffae490d09ed55083">&#9670;&#160;</a></span>PassIntent</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083">PassIntent</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Tactical purpose of the most recently executed pass. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a3f2bffb7346b7caffae490d09ed55083a202d1374a15b796f137f5844deebdabe" name="a3f2bffb7346b7caffae490d09ed55083a202d1374a15b796f137f5844deebdabe"></a>RECYCLE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a3f2bffb7346b7caffae490d09ed55083a9bc5e7fe934fe08249e3aa2e0d3678ed" name="a3f2bffb7346b7caffae490d09ed55083a9bc5e7fe934fe08249e3aa2e0d3678ed"></a>PROGRESSIVE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a3f2bffb7346b7caffae490d09ed55083a15851c15f42a0dec84897b249d5d213d" name="a3f2bffb7346b7caffae490d09ed55083a15851c15f42a0dec84897b249d5d213d"></a>THROUGH_BALL&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a3f2bffb7346b7caffae490d09ed55083a04dd53a8e6c2306e9bbf944c1d6047f2" name="a3f2bffb7346b7caffae490d09ed55083a04dd53a8e6c2306e9bbf944c1d6047f2"></a>CROSS&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a3f2bffb7346b7caffae490d09ed55083ac68b44122d5cca12cc6eb6bd20591f67" name="a3f2bffb7346b7caffae490d09ed55083ac68b44122d5cca12cc6eb6bd20591f67"></a>CUTBACK&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a3f2bffb7346b7caffae490d09ed55083a6168e24f07af99ad1236789bd2a9e993" name="a3f2bffb7346b7caffae490d09ed55083a6168e24f07af99ad1236789bd2a9e993"></a>SWITCH_PLAY&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a3f2bffb7346b7caffae490d09ed55083a330fc6503c860962996e8d349a0c8f44" name="a3f2bffb7346b7caffae490d09ed55083a330fc6503c860962996e8d349a0c8f44"></a>PRESSURE_RELEASE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a3f2bffb7346b7caffae490d09ed55083a3d024ff901fe0aa1d1f3c3b95445b5da" name="a3f2bffb7346b7caffae490d09ed55083a3d024ff901fe0aa1d1f3c3b95445b5da"></a>SET_PIECE&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<a id="a142c3c51fd70298c409fad612830d4b5" name="a142c3c51fd70298c409fad612830d4b5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a142c3c51fd70298c409fad612830d4b5">&#9670;&#160;</a></span>PlayerIntent</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5">PlayerIntent</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>High-level decision currently driving a player's renderer-independent AI. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5a0add921fe4a3799dff66c02c152397f1" name="a142c3c51fd70298c409fad612830d4b5a0add921fe4a3799dff66c02c152397f1"></a>HOLD_SHAPE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5aa83978a083117e13eda145329e49a307" name="a142c3c51fd70298c409fad612830d4b5aa83978a083117e13eda145329e49a307"></a>CARRY_BALL&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5a645241f84353158b119ab3fb43682270" name="a142c3c51fd70298c409fad612830d4b5a645241f84353158b119ab3fb43682270"></a>OFFER_SUPPORT&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5aba7dc3fa9bc0b1cd90bb51e1159d59d8" name="a142c3c51fd70298c409fad612830d4b5aba7dc3fa9bc0b1cd90bb51e1159d59d8"></a>RECEIVE_PASS&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5a6138a561a15b22039d70fd22ad8e0ae6" name="a142c3c51fd70298c409fad612830d4b5a6138a561a15b22039d70fd22ad8e0ae6"></a>RUN_IN_BEHIND&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5a03a3aa4e6aa463d259e28920e690e58b" name="a142c3c51fd70298c409fad612830d4b5a03a3aa4e6aa463d259e28920e690e58b"></a>ATTACK_BOX&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5a8c009c8dd4d4f9dde7515c00d5cd4661" name="a142c3c51fd70298c409fad612830d4b5a8c009c8dd4d4f9dde7515c00d5cd4661"></a>OVERLAP&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5afd4e0ff8ee8dc47e60f024f3d5118334" name="a142c3c51fd70298c409fad612830d4b5afd4e0ff8ee8dc47e60f024f3d5118334"></a>PRESS_BALL&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5ae7881c36017dd3ceab7007083e8b04f7" name="a142c3c51fd70298c409fad612830d4b5ae7881c36017dd3ceab7007083e8b04f7"></a>COVER_PRESS&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5a1e1ebc223eafc2cab20218201333f11b" name="a142c3c51fd70298c409fad612830d4b5a1e1ebc223eafc2cab20218201333f11b"></a>BLOCK_PASSING_LANE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5a6d001f8ce2541502c7e90ea500d8741a" name="a142c3c51fd70298c409fad612830d4b5a6d001f8ce2541502c7e90ea500d8741a"></a>MARK_OPPONENT&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5ac8fbfa5cac00835edb87c04b17d94f55" name="a142c3c51fd70298c409fad612830d4b5ac8fbfa5cac00835edb87c04b17d94f55"></a>CLAIM_LOOSE_BALL&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5ae91c44c2b8b855e752f6fa0dc6829df7" name="a142c3c51fd70298c409fad612830d4b5ae91c44c2b8b855e752f6fa0dc6829df7"></a>RECOVER_SHAPE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a142c3c51fd70298c409fad612830d4b5a5c8ddc458c995122c904463d104b3176" name="a142c3c51fd70298c409fad612830d4b5a5c8ddc458c995122c904463d104b3176"></a>GOALKEEP&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<a id="af57570b9a86811e45240a606a963cfe6" name="af57570b9a86811e45240a606a963cfe6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af57570b9a86811e45240a606a963cfe6">&#9670;&#160;</a></span>ScenarioAction</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="match__engine_8h.html#af57570b9a86811e45240a606a963cfe6">ScenarioAction</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Best and runner-up pass candidates plus the final chosen reason. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="af57570b9a86811e45240a606a963cfe6ab50339a10e1de285ac99d4c3990b8693" name="af57570b9a86811e45240a606a963cfe6ab50339a10e1de285ac99d4c3990b8693"></a>NONE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af57570b9a86811e45240a606a963cfe6afe92f0e834026a1c16e620212f2cc9a4" name="af57570b9a86811e45240a606a963cfe6afe92f0e834026a1c16e620212f2cc9a4"></a>SHOT&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af57570b9a86811e45240a606a963cfe6a7a95bf926a0333f57705aeac07a362a2" name="af57570b9a86811e45240a606a963cfe6a7a95bf926a0333f57705aeac07a362a2"></a>PASS&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af57570b9a86811e45240a606a963cfe6a4854ee643ec24fa27e31fa4bec9f5e3f" name="af57570b9a86811e45240a606a963cfe6a4854ee643ec24fa27e31fa4bec9f5e3f"></a>CARRY&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af57570b9a86811e45240a606a963cfe6afa210a33410373b3274f91cd1f289fb1" name="af57570b9a86811e45240a606a963cfe6afa210a33410373b3274f91cd1f289fb1"></a>SHIELD&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<a id="a2ededa6f6de89342dc3fe73bea6330cd" name="a2ededa6f6de89342dc3fe73bea6330cd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ededa6f6de89342dc3fe73bea6330cd">&#9670;&#160;</a></span>TeamPhase</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="match__engine_8h.html#a2ededa6f6de89342dc3fe73bea6330cd">TeamPhase</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Team-level context shared by individual player decisions. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a2ededa6f6de89342dc3fe73bea6330cda9edda5a1c726a51344b63941e1befca3" name="a2ededa6f6de89342dc3fe73bea6330cda9edda5a1c726a51344b63941e1befca3"></a>STOPPAGE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a2ededa6f6de89342dc3fe73bea6330cda3d024ff901fe0aa1d1f3c3b95445b5da" name="a2ededa6f6de89342dc3fe73bea6330cda3d024ff901fe0aa1d1f3c3b95445b5da"></a>SET_PIECE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a2ededa6f6de89342dc3fe73bea6330cda1c068b0d5df5b30242152478ac00da50" name="a2ededa6f6de89342dc3fe73bea6330cda1c068b0d5df5b30242152478ac00da50"></a>DEFENSIVE_BLOCK&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a2ededa6f6de89342dc3fe73bea6330cdaada925b8b71d318152547102a2a9bc36" name="a2ededa6f6de89342dc3fe73bea6330cdaada925b8b71d318152547102a2a9bc36"></a>DEFENSIVE_TRANSITION&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a2ededa6f6de89342dc3fe73bea6330cdaddfd55130238e21ca6e6136eebaec8f5" name="a2ededa6f6de89342dc3fe73bea6330cdaddfd55130238e21ca6e6136eebaec8f5"></a>ATTACKING_TRANSITION&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a2ededa6f6de89342dc3fe73bea6330cda1150f485a3f2cbd83548ffec80a1d3c9" name="a2ededa6f6de89342dc3fe73bea6330cda1150f485a3f2cbd83548ffec80a1d3c9"></a>POSSESSION&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a2ededa6f6de89342dc3fe73bea6330cda5ff14e9c370e065b4adf67903ed9affe" name="a2ededa6f6de89342dc3fe73bea6330cda5ff14e9c370e065b4adf67903ed9affe"></a>FINAL_THIRD&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a7de987d5e8db90ceecccf0168d78cff9" name="a7de987d5e8db90ceecccf0168d78cff9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7de987d5e8db90ceecccf0168d78cff9">&#9670;&#160;</a></span>goalkeeperStateName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string_view goalkeeperStateName </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5">GoalkeeperState</a>&#160;</td>
+          <td class="paramname"><em>state</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

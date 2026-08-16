@@ -98,6 +98,7 @@ $(document).ready(function(){initNavTree('classGUIView.html',''); initResizable(
 <a href="#pri-types">Private Types</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
+<a href="#pri-static-attribs">Static Private Attributes</a> &#124;
 <a href="#friends">Friends</a> &#124;
 <a href="classGUIView-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">GUIView Class Reference</div></div>
@@ -141,6 +142,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac5bea47bc5df7db30835588a13255e2d" id="r_ac5bea47bc5df7db30835588a13255e2d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classGameController.html">GameController</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ac5bea47bc5df7db30835588a13255e2d">getController</a> () const</td></tr>
 <tr class="memdesc:ac5bea47bc5df7db30835588a13255e2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the game controller.  <br /></td></tr>
 <tr class="separator:ac5bea47bc5df7db30835588a13255e2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef8b9291f46a97b275a2d9f05ebd6831" id="r_aef8b9291f46a97b275a2d9f05ebd6831"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#aef8b9291f46a97b275a2d9f05ebd6831">captureScreenshot</a> (std::string_view path) const</td></tr>
+<tr class="separator:aef8b9291f46a97b275a2d9f05ebd6831"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-types" name="pri-types"></a>
 Private Types</h2></td></tr>
@@ -165,6 +168,8 @@ Private Member Functions</h2></td></tr>
 <tr class="separator:aab2105ec50a97925112d97cdd5456a15"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3e3aa698f5e4cc219cca1a7e1f43f127" id="r_a3e3aa698f5e4cc219cca1a7e1f43f127"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classGUIScene.html">GUIScene</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a3e3aa698f5e4cc219cca1a7e1f43f127">getActiveScene</a> () const</td></tr>
 <tr class="separator:a3e3aa698f5e4cc219cca1a7e1f43f127"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab353119633830f2ff099c43a8efba4c9" id="r_ab353119633830f2ff099c43a8efba4c9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ab353119633830f2ff099c43a8efba4c9">reportStartupRenderTimings</a> ()</td></tr>
+<tr class="separator:ab353119633830f2ff099c43a8efba4c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e525473cca5a2272288c71e65d703bb" id="r_a7e525473cca5a2272288c71e65d703bb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a7e525473cca5a2272288c71e65d703bb">applyPendingSceneChanges</a> ()</td></tr>
 <tr class="separator:a7e525473cca5a2272288c71e65d703bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -178,6 +183,16 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a0c4d2af0aad819e66b1f32a94d782595"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb591d44135de010b50b2c2068803f50" id="r_adb591d44135de010b50b2c2068803f50"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#adb591d44135de010b50b2c2068803f50">running</a></td></tr>
 <tr class="separator:adb591d44135de010b50b2c2068803f50"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8592805a6ad9454cbfabcde9d1da7d13" id="r_a8592805a6ad9454cbfabcde9d1da7d13"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a8592805a6ad9454cbfabcde9d1da7d13">screenshotPending</a> = false</td></tr>
+<tr class="separator:a8592805a6ad9454cbfabcde9d1da7d13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeba6e4d5c303ecb6f7257a512503fe5b" id="r_aeba6e4d5c303ecb6f7257a512503fe5b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#aeba6e4d5c303ecb6f7257a512503fe5b">rendererIsSoftware</a> = false</td></tr>
+<tr class="separator:aeba6e4d5c303ecb6f7257a512503fe5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f31560fd964fa2051cff0ffc6a067ff" id="r_a7f31560fd964fa2051cff0ffc6a067ff"><td class="memItemLeft" align="right" valign="top">std::array&lt; float, <a class="el" href="classGUIView.html#a3068db5b8acdd5adad4758d9057ed02d">STARTUP_FRAME_TIMING_COUNT</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a7f31560fd964fa2051cff0ffc6a067ff">startupFrameTimes</a> {}</td></tr>
+<tr class="separator:a7f31560fd964fa2051cff0ffc6a067ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a185b4945cb7d244db0c8eb143c10b6c8" id="r_a185b4945cb7d244db0c8eb143c10b6c8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a185b4945cb7d244db0c8eb143c10b6c8">startupFramesTimed</a> = 0</td></tr>
+<tr class="separator:a185b4945cb7d244db0c8eb143c10b6c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d4203d115af0c5e8bdcfd9a6c74f7d1" id="r_a7d4203d115af0c5e8bdcfd9a6c74f7d1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a7d4203d115af0c5e8bdcfd9a6c74f7d1">startupTimingsReported</a> = false</td></tr>
+<tr class="separator:a7d4203d115af0c5e8bdcfd9a6c74f7d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a088b9d0eb634232916dae175698c7b10" id="r_a088b9d0eb634232916dae175698c7b10"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classGUIScene.html">GUIScene</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a088b9d0eb634232916dae175698c7b10">currentScene</a></td></tr>
 <tr class="separator:a088b9d0eb634232916dae175698c7b10"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab98bc5a6f48ee51be2f5d60f1e8e7693" id="r_ab98bc5a6f48ee51be2f5d60f1e8e7693"><td class="memItemLeft" align="right" valign="top">std::stack&lt; std::unique_ptr&lt; <a class="el" href="classGUIScene.html">GUIScene</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ab98bc5a6f48ee51be2f5d60f1e8e7693">sceneStack</a></td></tr>
@@ -186,6 +201,11 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a295b0d82742d1e6d5a332459c7cc9ee0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aad7c197e9593027bfa285e436e222690" id="r_aad7c197e9593027bfa285e436e222690"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classGUIScene.html">GUIScene</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#aad7c197e9593027bfa285e436e222690">pendingScene</a></td></tr>
 <tr class="separator:aad7c197e9593027bfa285e436e222690"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-static-attribs" name="pri-static-attribs"></a>
+Static Private Attributes</h2></td></tr>
+<tr class="memitem:a3068db5b8acdd5adad4758d9057ed02d" id="r_a3068db5b8acdd5adad4758d9057ed02d"><td class="memItemLeft" align="right" valign="top">static constexpr int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a3068db5b8acdd5adad4758d9057ed02d">STARTUP_FRAME_TIMING_COUNT</a> = 120</td></tr>
+<tr class="separator:a3068db5b8acdd5adad4758d9057ed02d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
@@ -325,6 +345,25 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="aef8b9291f46a97b275a2d9f05ebd6831" name="aef8b9291f46a97b275a2d9f05ebd6831"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef8b9291f46a97b275a2d9f05ebd6831">&#9670;&#160;</a></span>captureScreenshot()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GUIView::captureScreenshot </td>
+          <td>(</td>
+          <td class="paramtype">std::string_view&#160;</td>
+          <td class="paramname"><em>path</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Captures the current renderer contents as a BMP image. </p>
 
 </div>
 </div>
@@ -581,6 +620,31 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="ab353119633830f2ff099c43a8efba4c9" name="ab353119633830f2ff099c43a8efba4c9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab353119633830f2ff099c43a8efba4c9">&#9670;&#160;</a></span>reportStartupRenderTimings()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GUIView::reportStartupRenderTimings </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a0fef49a04f8ef5111d45273bc21ceb44" name="a0fef49a04f8ef5111d45273bc21ceb44"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0fef49a04f8ef5111d45273bc21ceb44">&#9670;&#160;</a></span>run()</h2>
 
@@ -760,6 +824,28 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="aeba6e4d5c303ecb6f7257a512503fe5b" name="aeba6e4d5c303ecb6f7257a512503fe5b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeba6e4d5c303ecb6f7257a512503fe5b">&#9670;&#160;</a></span>rendererIsSoftware</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GUIView::rendererIsSoftware = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="adb591d44135de010b50b2c2068803f50" name="adb591d44135de010b50b2c2068803f50"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#adb591d44135de010b50b2c2068803f50">&#9670;&#160;</a></span>running</h2>
 
@@ -793,6 +879,116 @@ Friends</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::stack&lt;std::unique_ptr&lt;<a class="el" href="classGUIScene.html">GUIScene</a>&gt; &gt; GUIView::sceneStack</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8592805a6ad9454cbfabcde9d1da7d13" name="a8592805a6ad9454cbfabcde9d1da7d13"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8592805a6ad9454cbfabcde9d1da7d13">&#9670;&#160;</a></span>screenshotPending</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GUIView::screenshotPending = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3068db5b8acdd5adad4758d9057ed02d" name="a3068db5b8acdd5adad4758d9057ed02d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3068db5b8acdd5adad4758d9057ed02d">&#9670;&#160;</a></span>STARTUP_FRAME_TIMING_COUNT</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr int GUIView::STARTUP_FRAME_TIMING_COUNT = 120</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a185b4945cb7d244db0c8eb143c10b6c8" name="a185b4945cb7d244db0c8eb143c10b6c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a185b4945cb7d244db0c8eb143c10b6c8">&#9670;&#160;</a></span>startupFramesTimed</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int GUIView::startupFramesTimed = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7f31560fd964fa2051cff0ffc6a067ff" name="a7f31560fd964fa2051cff0ffc6a067ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f31560fd964fa2051cff0ffc6a067ff">&#9670;&#160;</a></span>startupFrameTimes</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::array&lt;float, <a class="el" href="classGUIView.html#a3068db5b8acdd5adad4758d9057ed02d">STARTUP_FRAME_TIMING_COUNT</a>&gt; GUIView::startupFrameTimes {}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7d4203d115af0c5e8bdcfd9a6c74f7d1" name="a7d4203d115af0c5e8bdcfd9a6c74f7d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d4203d115af0c5e8bdcfd9a6c74f7d1">&#9670;&#160;</a></span>startupTimingsReported</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GUIView::startupTimingsReported = false</td>
         </tr>
       </table>
   </td>

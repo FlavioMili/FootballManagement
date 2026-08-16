@@ -120,6 +120,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af91b4e9d9e7bd53679073d1dbf472e01" id="r_af91b4e9d9e7bd53679073d1dbf472e01"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#af91b4e9d9e7bd53679073d1dbf472e01">onEnter</a> () override</td></tr>
 <tr class="memdesc:af91b4e9d9e7bd53679073d1dbf472e01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the scene is entered/becomes active.  <br /></td></tr>
 <tr class="separator:af91b4e9d9e7bd53679073d1dbf472e01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc9923738982e799df4004b997193944" id="r_acc9923738982e799df4004b997193944"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#acc9923738982e799df4004b997193944">handleEvent</a> (const SDL_Event &amp;event) override</td></tr>
+<tr class="memdesc:acc9923738982e799df4004b997193944"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handles SDL events for the scene.  <br /></td></tr>
+<tr class="separator:acc9923738982e799df4004b997193944"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9838b9f36c987dc77cea8ea7965623e0" id="r_a9838b9f36c987dc77cea8ea7965623e0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a9838b9f36c987dc77cea8ea7965623e0">update</a> (float deltaTime) override</td></tr>
 <tr class="memdesc:a9838b9f36c987dc77cea8ea7965623e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates scene logic.  <br /></td></tr>
 <tr class="separator:a9838b9f36c987dc77cea8ea7965623e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -136,9 +139,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ada9a23ed72426396b25f46f1ec4ebf97 inherit pub_methods_classGUIScene" id="r_ada9a23ed72426396b25f46f1ec4ebf97"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#ada9a23ed72426396b25f46f1ec4ebf97">~GUIScene</a> ()=default</td></tr>
 <tr class="memdesc:ada9a23ed72426396b25f46f1ec4ebf97 inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys the <a class="el" href="classGUIScene.html" title="Base class for all GUI scenes.">GUIScene</a>.  <br /></td></tr>
 <tr class="separator:ada9a23ed72426396b25f46f1ec4ebf97 inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a234a16aa00d64053c910e99c07a1122a inherit pub_methods_classGUIScene" id="r_a234a16aa00d64053c910e99c07a1122a"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a234a16aa00d64053c910e99c07a1122a">handleEvent</a> (const SDL_Event &amp;event)</td></tr>
-<tr class="memdesc:a234a16aa00d64053c910e99c07a1122a inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handles SDL events for the scene.  <br /></td></tr>
-<tr class="separator:a234a16aa00d64053c910e99c07a1122a inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene" id="r_afcc66fd1ac7245d74c3a139590d14cba"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#afcc66fd1ac7245d74c3a139590d14cba">onExit</a> ()</td></tr>
 <tr class="memdesc:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the scene is exited/becomes inactive.  <br /></td></tr>
 <tr class="separator:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -163,18 +163,30 @@ Private Attributes</h2></td></tr>
 <tr class="separator:ae9eba81443ab208d2222cab655bc7c86"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6ea50d899a0eb9d7c38b9784f6c061e" id="r_aa6ea50d899a0eb9d7c38b9784f6c061e"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classMatchEngine.html">MatchEngine</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aa6ea50d899a0eb9d7c38b9784f6c061e">engine</a></td></tr>
 <tr class="separator:aa6ea50d899a0eb9d7c38b9784f6c061e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6331db93014987e4630d24f782bfdb21" id="r_a6331db93014987e4630d24f782bfdb21"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classIMatchRenderer.html">IMatchRenderer</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a6331db93014987e4630d24f782bfdb21">matchRenderer</a></td></tr>
+<tr class="separator:a6331db93014987e4630d24f782bfdb21"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabcf0aab040c0c8d69ac21a17b9d5de8" id="r_aabcf0aab040c0c8d69ac21a17b9d5de8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aabcf0aab040c0c8d69ac21a17b9d5de8">match_finished</a> = false</td></tr>
 <tr class="separator:aabcf0aab040c0c8d69ac21a17b9d5de8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17eb41ed8b1a302ee0baa34aecaeda70" id="r_a17eb41ed8b1a302ee0baa34aecaeda70"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a17eb41ed8b1a302ee0baa34aecaeda70">match_speed</a> = 1.0f</td></tr>
+<tr class="memitem:a17eb41ed8b1a302ee0baa34aecaeda70" id="r_a17eb41ed8b1a302ee0baa34aecaeda70"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a17eb41ed8b1a302ee0baa34aecaeda70">match_speed</a> = <a class="el" href="structMatchSceneTuning_1_1Controls.html#a64d95e340c0444b6079ad40e6a319587">MatchSceneTuning::Controls::DEFAULT_MATCH_SPEED</a></td></tr>
 <tr class="separator:a17eb41ed8b1a302ee0baa34aecaeda70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26361a657c95eafd5235ca232441af0d" id="r_a26361a657c95eafd5235ca232441af0d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a26361a657c95eafd5235ca232441af0d">is_paused</a> = false</td></tr>
 <tr class="separator:a26361a657c95eafd5235ca232441af0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac6a1b653f0f64ff20bd06fb4e180f45" id="r_aac6a1b653f0f64ff20bd06fb4e180f45"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aac6a1b653f0f64ff20bd06fb4e180f45">show_substitutions</a> = false</td></tr>
 <tr class="separator:aac6a1b653f0f64ff20bd06fb4e180f45"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a813b5594414d773bbd782db3b78d0559" id="r_a813b5594414d773bbd782db3b78d0559"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a813b5594414d773bbd782db3b78d0559">selected_pitch_player</a> = 0</td></tr>
-<tr class="separator:a813b5594414d773bbd782db3b78d0559"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a98793d19bc9c2755dfeeb34ea683e03f" id="r_a98793d19bc9c2755dfeeb34ea683e03f"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a98793d19bc9c2755dfeeb34ea683e03f">selected_bench_player</a> = 0</td></tr>
-<tr class="separator:a98793d19bc9c2755dfeeb34ea683e03f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8efad9e46dd4ecceef563b1ab7435bbe" id="r_a8efad9e46dd4ecceef563b1ab7435bbe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a8efad9e46dd4ecceef563b1ab7435bbe">selected_pitch_player</a> {}</td></tr>
+<tr class="separator:a8efad9e46dd4ecceef563b1ab7435bbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af83747dfefa1a83cbfe6c8cc282af6eb" id="r_af83747dfefa1a83cbfe6c8cc282af6eb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#af83747dfefa1a83cbfe6c8cc282af6eb">selected_bench_player</a> {}</td></tr>
+<tr class="separator:af83747dfefa1a83cbfe6c8cc282af6eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e120dc6adffc3f47513284a25c9a427" id="r_a5e120dc6adffc3f47513284a25c9a427"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a5e120dc6adffc3f47513284a25c9a427">debug_status</a></td></tr>
+<tr class="separator:a5e120dc6adffc3f47513284a25c9a427"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7acb9e27157f90da7fd96ec4ca14ecec" id="r_a7acb9e27157f90da7fd96ec4ca14ecec"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a7acb9e27157f90da7fd96ec4ca14ecec">scene_entry_milliseconds</a> = 0.0f</td></tr>
+<tr class="separator:a7acb9e27157f90da7fd96ec4ca14ecec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9af98fe45584bc12df65e7a5d09ebe63" id="r_a9af98fe45584bc12df65e7a5d09ebe63"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a9af98fe45584bc12df65e7a5d09ebe63">last_update_milliseconds</a> = 0.0f</td></tr>
+<tr class="separator:a9af98fe45584bc12df65e7a5d09ebe63"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab405efd5cde1ff68cbb9abf450fc1771" id="r_ab405efd5cde1ff68cbb9abf450fc1771"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ab405efd5cde1ff68cbb9abf450fc1771">maximum_update_milliseconds</a> = 0.0f</td></tr>
+<tr class="separator:ab405efd5cde1ff68cbb9abf450fc1771"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07c57d0e89102daa45aba4d88fdb4ad8" id="r_a07c57d0e89102daa45aba4d88fdb4ad8"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a07c57d0e89102daa45aba4d88fdb4ad8">slow_update_count</a> = 0</td></tr>
+<tr class="separator:a07c57d0e89102daa45aba4d88fdb4ad8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -262,6 +274,42 @@ Additional Inherited Members</h2></td></tr>
 <p>This function might be used to check what we are rendering. we would simply do something like this: <a class="el" href="classMainMenuScene.html#ac65f4aa576ae71cb9fac4a1154edca49" title="Gets the ID of this scene.">MainMenuScene::getID()</a> { return <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942faa16d505f03a4b6f35486f65f6a61317e">SceneID::MAIN_MENU</a>; } TODO : remove or not? </p>
 
 <p>Implements <a class="el" href="classGUIScene.html#adc23f98639a131403f09cc46133fcd04">GUIScene</a>.</p>
+
+</div>
+</div>
+<a id="acc9923738982e799df4004b997193944" name="acc9923738982e799df4004b997193944"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acc9923738982e799df4004b997193944">&#9670;&#160;</a></span>handleEvent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::handleEvent </td>
+          <td>(</td>
+          <td class="paramtype">const SDL_Event &amp;&#160;</td>
+          <td class="paramname"><em>event</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Handles SDL events for the scene. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">event</td><td>The SDL event to process. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Reimplemented from <a class="el" href="classGUIScene.html#a234a16aa00d64053c910e99c07a1122a">GUIScene</a>.</p>
 
 </div>
 </div>
@@ -429,6 +477,28 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a5e120dc6adffc3f47513284a25c9a427" name="a5e120dc6adffc3f47513284a25c9a427"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e120dc6adffc3f47513284a25c9a427">&#9670;&#160;</a></span>debug_status</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MatchScene::debug_status</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="aa6ea50d899a0eb9d7c38b9784f6c061e" name="aa6ea50d899a0eb9d7c38b9784f6c061e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa6ea50d899a0eb9d7c38b9784f6c061e">&#9670;&#160;</a></span>engine</h2>
 
@@ -517,6 +587,28 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a9af98fe45584bc12df65e7a5d09ebe63" name="a9af98fe45584bc12df65e7a5d09ebe63"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9af98fe45584bc12df65e7a5d09ebe63">&#9670;&#160;</a></span>last_update_milliseconds</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchScene::last_update_milliseconds = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="aabcf0aab040c0c8d69ac21a17b9d5de8" name="aabcf0aab040c0c8d69ac21a17b9d5de8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aabcf0aab040c0c8d69ac21a17b9d5de8">&#9670;&#160;</a></span>match_finished</h2>
 
@@ -549,7 +641,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">float MatchScene::match_speed = 1.0f</td>
+          <td class="memname">float MatchScene::match_speed = <a class="el" href="structMatchSceneTuning_1_1Controls.html#a64d95e340c0444b6079ad40e6a319587">MatchSceneTuning::Controls::DEFAULT_MATCH_SPEED</a></td>
         </tr>
       </table>
   </td>
@@ -561,8 +653,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a98793d19bc9c2755dfeeb34ea683e03f" name="a98793d19bc9c2755dfeeb34ea683e03f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a98793d19bc9c2755dfeeb34ea683e03f">&#9670;&#160;</a></span>selected_bench_player</h2>
+<a id="a6331db93014987e4630d24f782bfdb21" name="a6331db93014987e4630d24f782bfdb21"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6331db93014987e4630d24f782bfdb21">&#9670;&#160;</a></span>matchRenderer</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -571,7 +663,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">uint32_t MatchScene::selected_bench_player = 0</td>
+          <td class="memname">std::unique_ptr&lt;<a class="el" href="classIMatchRenderer.html">IMatchRenderer</a>&gt; MatchScene::matchRenderer</td>
         </tr>
       </table>
   </td>
@@ -583,8 +675,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a813b5594414d773bbd782db3b78d0559" name="a813b5594414d773bbd782db3b78d0559"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a813b5594414d773bbd782db3b78d0559">&#9670;&#160;</a></span>selected_pitch_player</h2>
+<a id="ab405efd5cde1ff68cbb9abf450fc1771" name="ab405efd5cde1ff68cbb9abf450fc1771"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab405efd5cde1ff68cbb9abf450fc1771">&#9670;&#160;</a></span>maximum_update_milliseconds</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -593,7 +685,73 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">uint32_t MatchScene::selected_pitch_player = 0</td>
+          <td class="memname">float MatchScene::maximum_update_milliseconds = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7acb9e27157f90da7fd96ec4ca14ecec" name="a7acb9e27157f90da7fd96ec4ca14ecec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7acb9e27157f90da7fd96ec4ca14ecec">&#9670;&#160;</a></span>scene_entry_milliseconds</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchScene::scene_entry_milliseconds = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af83747dfefa1a83cbfe6c8cc282af6eb" name="af83747dfefa1a83cbfe6c8cc282af6eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af83747dfefa1a83cbfe6c8cc282af6eb">&#9670;&#160;</a></span>selected_bench_player</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> MatchScene::selected_bench_player {}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8efad9e46dd4ecceef563b1ab7435bbe" name="a8efad9e46dd4ecceef563b1ab7435bbe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8efad9e46dd4ecceef563b1ab7435bbe">&#9670;&#160;</a></span>selected_pitch_player</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> MatchScene::selected_pitch_player {}</td>
         </tr>
       </table>
   </td>
@@ -616,6 +774,28 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">bool MatchScene::show_substitutions = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a07c57d0e89102daa45aba4d88fdb4ad8" name="a07c57d0e89102daa45aba4d88fdb4ad8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a07c57d0e89102daa45aba4d88fdb4ad8">&#9670;&#160;</a></span>slow_update_count</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t MatchScene::slow_update_count = 0</td>
         </tr>
       </table>
   </td>

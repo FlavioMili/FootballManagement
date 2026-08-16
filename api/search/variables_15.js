@@ -1,8 +1,7 @@
 var searchData=
 [
-  ['weights_0',['weights',['../structRoleFocus.html#a3e983ef211a2426681a4b5bfbb602724',1,'RoleFocus']]],
-  ['width_1',['width',['../structGUIConstants_1_1Resolution.html#a5c7c35d4ae64010fc467201bdd4b33fd',1,'GUIConstants::Resolution']]],
-  ['widthusage_2',['widthUsage',['../structStrategySliders.html#a35c87fdf3e3b41efc46cd18607c9dd2a',1,'StrategySliders']]],
-  ['window_3',['window',['../classGUIView.html#a5ca054ab5ecd4413d6adaa2a8c01a851',1,'GUIView']]],
-  ['wipedatatimer_4',['wipeDataTimer',['../classSettingsScene.html#ad66ad8800e74f11925b0be6b6bead540',1,'SettingsScene']]]
+  ['velocity_0',['velocity',['../structMatchPlayer.html#ac3e428863122a510aac7bb51a31908ce',1,'MatchPlayer::velocity'],['../structMatchBall.html#a0a0953c6d32de7d26fbe47a3e8dd7a29',1,'MatchBall::velocity']]],
+  ['velocityz_1',['velocityZ',['../structMatchBall.html#a7e88be49bffbbc187dc01c63883078b5',1,'MatchBall']]],
+  ['veteran_5fminimum_5fyears_2',['VETERAN_MINIMUM_YEARS',['../structTransferTuning_1_1Contract.html#aa3256b3848846e02b0d952554d3ec76f',1,'TransferTuning::Contract']]],
+  ['vision_5fnoise_5fscale_3',['VISION_NOISE_SCALE',['../structMatchTuning_1_1Decision.html#a730e1ef6b258aed65a9d83a8678d0706',1,'MatchTuning::Decision']]]
 ];

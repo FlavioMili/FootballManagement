@@ -9,7 +9,7 @@ var classButtonManager =
     [ "clearButtons", "classButtonManager.html#a7463a7f8fea0bc624778c72e26fc6867", null ],
     [ "createButtonTexture", "classButtonManager.html#add747f2557bdfefc5993e02f54ae3ffd", null ],
     [ "getButtonCount", "classButtonManager.html#ad90b0f2c8152d6835c85690088fc78f9", null ],
-    [ "getButtons", "classButtonManager.html#a213e38e848ea19f14f5c4cd010333e7c", null ],
+    [ "getButtons", "classButtonManager.html#a1dee6ba543a253bd8c0efb68195ca760", null ],
     [ "getFont", "classButtonManager.html#a1f964f72a43ffedd1e19c4e887364584", null ],
     [ "handleMouseClick", "classButtonManager.html#a391ea31a3674d670ee489a0a1c1a970f", null ],
     [ "handleMouseMove", "classButtonManager.html#a2f54fe273199aded230c947a6a8d3d1f", null ],

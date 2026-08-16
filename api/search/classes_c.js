@@ -1,4 +1,22 @@
 var searchData=
 [
-  ['vector2f_0',['Vector2F',['../structVector2F.html',1,'']]]
+  ['saveslotmetadata_0',['SaveSlotMetadata',['../structGameController_1_1SaveSlotMetadata.html',1,'GameController']]],
+  ['scenariodecision_1',['ScenarioDecision',['../structScenarioDecision.html',1,'']]],
+  ['scoreboard_2',['Scoreboard',['../structMatchSceneTuning_1_1Scoreboard.html',1,'MatchSceneTuning']]],
+  ['settings_3',['Settings',['../structSettings.html',1,'']]],
+  ['settingsmanager_4',['SettingsManager',['../classSettingsManager.html',1,'']]],
+  ['settingsscene_5',['SettingsScene',['../classSettingsScene.html',1,'']]],
+  ['shape_6',['Shape',['../structMatchTuning_1_1Shape.html',1,'MatchTuning']]],
+  ['shooting_7',['Shooting',['../structMatchTuning_1_1Shooting.html',1,'MatchTuning']]],
+  ['sqlloader_8',['SQLLoader',['../classSQLLoader.html',1,'']]],
+  ['squadneeds_9',['SquadNeeds',['../structGameController_1_1SquadNeeds.html',1,'GameController']]],
+  ['stadium_10',['Stadium',['../structMatchSceneTuning_1_1Stadium.html',1,'MatchSceneTuning']]],
+  ['statistics_11',['Statistics',['../structMatchTuning_1_1Statistics.html',1,'MatchTuning']]],
+  ['statsconfig_12',['StatsConfig',['../structStatsConfig.html',1,'']]],
+  ['storedlineup_13',['StoredLineup',['../structStoredLineup.html',1,'']]],
+  ['storedpositionedplayer_14',['StoredPositionedPlayer',['../structStoredPositionedPlayer.html',1,'']]],
+  ['strategy_15',['Strategy',['../classStrategy.html',1,'']]],
+  ['strategyscene_16',['StrategyScene',['../classStrategyScene.html',1,'']]],
+  ['strategysliders_17',['StrategySliders',['../structStrategySliders.html',1,'']]],
+  ['substitutions_18',['Substitutions',['../structMatchSceneTuning_1_1Substitutions.html',1,'MatchSceneTuning']]]
 ];

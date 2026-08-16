@@ -1,8 +1,9 @@
 var searchData=
 [
-  ['team_0',['Team',['../classTeam.html',1,'']]],
-  ['teamrepository_1',['TeamRepository',['../classTeamRepository.html',1,'']]],
-  ['teamselectionscene_2',['TeamSelectionScene',['../classTeamSelectionScene.html',1,'']]],
-  ['transferlisting_3',['TransferListing',['../structTransferListing.html',1,'']]],
-  ['transfermarketscene_4',['TransferMarketScene',['../classTransferMarketScene.html',1,'']]]
+  ['resolution_0',['Resolution',['../structGUIConstants_1_1Resolution.html',1,'GUIConstants']]],
+  ['rolefocus_1',['RoleFocus',['../structRoleFocus.html',1,'']]],
+  ['roleutils_2',['RoleUtils',['../classRoleUtils.html',1,'']]],
+  ['roleweights_3',['RoleWeights',['../structRoleWeights.html',1,'']]],
+  ['rosterscene_4',['RosterScene',['../classRosterScene.html',1,'']]],
+  ['rules_5',['Rules',['../structMatchTuning_1_1Rules.html',1,'MatchTuning']]]
 ];

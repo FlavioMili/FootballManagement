@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['pendingaction_0',['PendingAction',['../classGUIView.html#a5599174075b54d4caad80c213daedad0',1,'GUIView']]],
-  ['playerrole_1',['PlayerRole',['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900',1,'types.h']]]
+  ['matchstate_0',['MatchState',['../match__engine_8h.html#aca6448151e924d2cb062632532d9081f',1,'match_engine.h']]],
+  ['matchtype_1',['MatchType',['../types_8h.html#a06be3d3918a8700cf086896e9f03e885',1,'types.h']]]
 ];

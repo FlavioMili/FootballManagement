@@ -187,13 +187,13 @@ Private Member Functions</h2></td></tr>
 Private Attributes</h2></td></tr>
 <tr class="memitem:a9aa4667f8cfef4939aa11dd2216bb362" id="r_a9aa4667f8cfef4939aa11dd2216bb362"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTransferMarketScene.html#ae5144e61574b3067d50aa54d0f023b57">Tab</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#a9aa4667f8cfef4939aa11dd2216bb362">active_tab</a> = <a class="el" href="classTransferMarketScene.html#ae5144e61574b3067d50aa54d0f023b57ac45b496ec0828772c8088e4118f09b33">Tab::BUY</a></td></tr>
 <tr class="separator:a9aa4667f8cfef4939aa11dd2216bb362"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac5f379a87e9e1f899545a2e0fce77a94" id="r_ac5f379a87e9e1f899545a2e0fce77a94"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#ac5f379a87e9e1f899545a2e0fce77a94">filter_search_name</a> [64] = &quot;&quot;</td></tr>
-<tr class="separator:ac5f379a87e9e1f899545a2e0fce77a94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad22b492faad5d05fdb3040c29020f521" id="r_ad22b492faad5d05fdb3040c29020f521"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#ad22b492faad5d05fdb3040c29020f521">filter_search_name</a> [<a class="el" href="structTransferMarketSceneTuning_1_1Filters.html#a8665ae25d7c0c2dba6ac818da0243e03">TransferMarketSceneTuning::Filters::SEARCH_BUFFER_SIZE</a>] = &quot;&quot;</td></tr>
+<tr class="separator:ad22b492faad5d05fdb3040c29020f521"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c1470134dd3f7ac94ae3dd2d03253dd" id="r_a4c1470134dd3f7ac94ae3dd2d03253dd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#a4c1470134dd3f7ac94ae3dd2d03253dd">filter_role_index</a> = 0</td></tr>
 <tr class="separator:a4c1470134dd3f7ac94ae3dd2d03253dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab0935a9d100abea479a90a1b796bf9e" id="r_aab0935a9d100abea479a90a1b796bf9e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#aab0935a9d100abea479a90a1b796bf9e">filter_max_age</a> = 40</td></tr>
+<tr class="memitem:aab0935a9d100abea479a90a1b796bf9e" id="r_aab0935a9d100abea479a90a1b796bf9e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#aab0935a9d100abea479a90a1b796bf9e">filter_max_age</a> = <a class="el" href="structTransferMarketSceneTuning_1_1Filters.html#a22c75e016cad20e280a7a339dd94f8b0">TransferMarketSceneTuning::Filters::DEFAULT_MAXIMUM_AGE</a></td></tr>
 <tr class="separator:aab0935a9d100abea479a90a1b796bf9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f78fdc3ae8ad032ba8e22f2df7c5b02" id="r_a7f78fdc3ae8ad032ba8e22f2df7c5b02"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#a7f78fdc3ae8ad032ba8e22f2df7c5b02">filter_max_price</a> = 100000000.0f</td></tr>
+<tr class="memitem:a7f78fdc3ae8ad032ba8e22f2df7c5b02" id="r_a7f78fdc3ae8ad032ba8e22f2df7c5b02"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#a7f78fdc3ae8ad032ba8e22f2df7c5b02">filter_max_price</a></td></tr>
 <tr class="separator:a7f78fdc3ae8ad032ba8e22f2df7c5b02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae4fcbe0af9fb378bff4f3ae8d4066e91" id="r_ae4fcbe0af9fb378bff4f3ae8d4066e91"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structTransferMarketScene_1_1ConfirmState.html">ConfirmState</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html#ae4fcbe0af9fb378bff4f3ae8d4066e91">confirm_state</a></td></tr>
 <tr class="separator:ae4fcbe0af9fb378bff4f3ae8d4066e91"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -782,7 +782,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">int TransferMarketScene::filter_max_age = 40</td>
+          <td class="memname">int TransferMarketScene::filter_max_age = <a class="el" href="structTransferMarketSceneTuning_1_1Filters.html#a22c75e016cad20e280a7a339dd94f8b0">TransferMarketSceneTuning::Filters::DEFAULT_MAXIMUM_AGE</a></td>
         </tr>
       </table>
   </td>
@@ -804,7 +804,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">float TransferMarketScene::filter_max_price = 100000000.0f</td>
+          <td class="memname">float TransferMarketScene::filter_max_price</td>
         </tr>
       </table>
   </td>
@@ -813,7 +813,10 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">      <a class="code hl_variable" href="structTransferMarketSceneTuning_1_1Filters.html#aff2b84ed357d5791167b0d8ce89a6a57">TransferMarketSceneTuning::Filters::DEFAULT_MAXIMUM_PRICE</a></div>
+<div class="ttc" id="astructTransferMarketSceneTuning_1_1Filters_html_aff2b84ed357d5791167b0d8ce89a6a57"><div class="ttname"><a href="structTransferMarketSceneTuning_1_1Filters.html#aff2b84ed357d5791167b0d8ce89a6a57">TransferMarketSceneTuning::Filters::DEFAULT_MAXIMUM_PRICE</a></div><div class="ttdeci">static constexpr float DEFAULT_MAXIMUM_PRICE</div><div class="ttdef"><b>Definition</b> transfer_market_scene_tuning.h:31</div></div>
+</div><!-- fragment -->
 </div>
 </div>
 <a id="a4c1470134dd3f7ac94ae3dd2d03253dd" name="a4c1470134dd3f7ac94ae3dd2d03253dd"></a>
@@ -838,8 +841,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="ac5f379a87e9e1f899545a2e0fce77a94" name="ac5f379a87e9e1f899545a2e0fce77a94"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac5f379a87e9e1f899545a2e0fce77a94">&#9670;&#160;</a></span>filter_search_name</h2>
+<a id="ad22b492faad5d05fdb3040c29020f521" name="ad22b492faad5d05fdb3040c29020f521"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad22b492faad5d05fdb3040c29020f521">&#9670;&#160;</a></span>filter_search_name</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -848,7 +851,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">char TransferMarketScene::filter_search_name[64] = &quot;&quot;</td>
+          <td class="memname">char TransferMarketScene::filter_search_name[<a class="el" href="structTransferMarketSceneTuning_1_1Filters.html#a8665ae25d7c0c2dba6ac818da0243e03">TransferMarketSceneTuning::Filters::SEARCH_BUFFER_SIZE</a>] = &quot;&quot;</td>
         </tr>
       </table>
   </td>

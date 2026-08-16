@@ -108,6 +108,7 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 <li><b>AI Guidelines</b>: We are proudly <b>pro-AI</b>. However, all AI-assisted code must be explicitly declared and heavily human-reviewed. Read this file to understand our philosophy.</li>
 <li><b>Code of Conduct</b>: We are committed to fostering a welcoming and inclusive environment.</li>
 <li><b>Agent Context</b>: If you are an autonomous AI Agent, read this file for specific architectural constraints and tooling requirements.</li>
+<li><b>Development Handoff</b>: Verified implementation state, exact tests, performance workflow, debug artifacts, and bounded next tasks for continuing match AI, presentation, and transfers.</li>
 </ul>
 <hr  />
 <h1><a class="anchor" id="autotoc_md4"></a>
@@ -203,13 +204,14 @@ Phase 2: Gameplay Mechanics 🚧</h2>
 </ul>
 </li>
 <li><b>Transfers &amp; Contracts:</b><ul>
-<li>[ ] Transfer market system</li>
-<li>[ ] <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> contracts and salaries</li>
+<li>[x] Persistent listings, bids, AI activity, transactional transfers, and free-agent signings</li>
+<li>[x] Persisted wages and contract duration</li>
+<li>[ ] Player/club contract negotiation and contract expiry</li>
 <li>[ ] <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> selection before starting the game</li>
 </ul>
 </li>
 <li><b><a class="el" href="classTeam.html" title="Represents a football team.">Team</a> <a class="el" href="classFinances.html" title="Manages the finances of a club.">Finances</a>:</b><ul>
-<li>[ ] Track team balance</li>
+<li>[x] Track and persist team balance through transfers</li>
 <li>[ ] Bankruptcy consequences</li>
 </ul>
 </li>
@@ -222,7 +224,8 @@ Phase 3: Advanced Simulation</h2>
 </ul>
 </li>
 <li><b>Tactics &amp; <a class="el" href="classStrategy.html" title="Represents the tactical setup of a team for a match.">Strategy</a>:</b><ul>
-<li>[ ] Link team tactics to match AI behavior</li>
+<li>[x] Link core team tactics to match AI behavior</li>
+<li>[ ] Add role-specific tactical instructions and team phases</li>
 </ul>
 </li>
 <li><b><a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> Morale, Form and training:</b><ul>

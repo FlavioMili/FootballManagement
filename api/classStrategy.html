@@ -155,7 +155,7 @@ Public Member Functions</h2></td></tr>
 Private Attributes</h2></td></tr>
 <tr class="memitem:ad3b1cb86285ac93d86850d3a9736107a" id="r_ad3b1cb86285ac93d86850d3a9736107a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structStrategySliders.html">StrategySliders</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStrategy.html#ad3b1cb86285ac93d86850d3a9736107a">sliders</a></td></tr>
 <tr class="separator:ad3b1cb86285ac93d86850d3a9736107a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2773d90551bb30e59c0f681ce4faf30b" id="r_a2773d90551bb30e59c0f681ce4faf30b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structRoleWeights.html">RoleWeights</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStrategy.html#a2773d90551bb30e59c0f681ce4faf30b">goalkeeper</a> = {0.0, 1.0, 1}</td></tr>
+<tr class="memitem:a2773d90551bb30e59c0f681ce4faf30b" id="r_a2773d90551bb30e59c0f681ce4faf30b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structRoleWeights.html">RoleWeights</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStrategy.html#a2773d90551bb30e59c0f681ce4faf30b">goalkeeper</a> = {0.0f, 1.0f, 1}</td></tr>
 <tr class="separator:a2773d90551bb30e59c0f681ce4faf30b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa4083f7ef292d6078637698df290799d" id="r_aa4083f7ef292d6078637698df290799d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structRoleWeights.html">RoleWeights</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStrategy.html#aa4083f7ef292d6078637698df290799d">outfield</a> [10]</td></tr>
 <tr class="separator:aa4083f7ef292d6078637698df290799d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -505,7 +505,7 @@ Private Attributes</h2></td></tr>
 <p>Sets the role weights for a specific outfield player. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">playerIndex</td><td>The index of the player (1-10). </td></tr>
+    <tr><td class="paramname">playerIndex</td><td>The zero-based outfield index (0-9). </td></tr>
     <tr><td class="paramname">attack</td><td>The attack weight to set. </td></tr>
     <tr><td class="paramname">defense</td><td>The defense weight to set. </td></tr>
     <tr><td class="paramname">radius</td><td>The movement radius to set. </td></tr>
@@ -610,7 +610,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structRoleWeights.html">RoleWeights</a> Strategy::goalkeeper = {0.0, 1.0, 1}</td>
+          <td class="memname"><a class="el" href="structRoleWeights.html">RoleWeights</a> Strategy::goalkeeper = {0.0f, 1.0f, 1}</td>
         </tr>
       </table>
   </td>

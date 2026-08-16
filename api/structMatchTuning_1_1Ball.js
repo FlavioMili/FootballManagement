@@ -1,0 +1,26 @@
+var structMatchTuning_1_1Ball =
+[
+    [ "BASE_CONTROL_CHANCE", "structMatchTuning_1_1Ball.html#a281269b67b9a13cf158227ab733ca000", null ],
+    [ "BASE_TRAP_TIME", "structMatchTuning_1_1Ball.html#a5bbda1a1299d009545101908a2443c0e", null ],
+    [ "BOUNCE_FACTOR", "structMatchTuning_1_1Ball.html#a1d2d641b2a68a0ce727959626e193016", null ],
+    [ "CURVE_DECAY", "structMatchTuning_1_1Ball.html#a08e4a37c569f707c558f2030bb5b042c", null ],
+    [ "FAILED_TOUCH_DELAY", "structMatchTuning_1_1Ball.html#ab60edfad0c375c0dc21afc11c1593a7f", null ],
+    [ "FAILED_TRAP_TIME", "structMatchTuning_1_1Ball.html#a4d7d59b62a745823c0d184cd4fe82ed8", null ],
+    [ "GOAL_NET_BALL_DEPTH", "structMatchTuning_1_1Ball.html#a94083c55e50839ee8fc4430c986e035c", null ],
+    [ "GOALKEEPER_CONTROL_RADIUS", "structMatchTuning_1_1Ball.html#a8b5d8189cc4998f3e836ea0cf6816eb9", null ],
+    [ "GRAVITY", "structMatchTuning_1_1Ball.html#aba8b91ca77cc2db90dad8db6f4580890", null ],
+    [ "MAX_CONTROL_CHANCE", "structMatchTuning_1_1Ball.html#a37c74abaa9ae3afd89f685df8bb136b7", null ],
+    [ "MAX_POST_TOUCH_DELAY", "structMatchTuning_1_1Ball.html#ab19466aa4247fc7d537a7529143f7600", null ],
+    [ "MIN_BOUNCE_SPEED", "structMatchTuning_1_1Ball.html#acfb3acbbeb6345a95467947992efe943", null ],
+    [ "MIN_CONTROL_CHANCE", "structMatchTuning_1_1Ball.html#a635b3b3b3c5d9711518f9edb713ae0ba", null ],
+    [ "MIN_POST_TOUCH_DELAY", "structMatchTuning_1_1Ball.html#acf480607cc8f2c3fcdce49cccfc80308", null ],
+    [ "OUTFIELD_CONTROL_RADIUS", "structMatchTuning_1_1Ball.html#a459569c66863ae96a92e5b0af6161f0c", null ],
+    [ "PASSING_TOUCH_WEIGHT", "structMatchTuning_1_1Ball.html#ab543fcbc4228fb859512beede2c3338e", null ],
+    [ "SAVE_ACTION_COOLDOWN", "structMatchTuning_1_1Ball.html#aa574d5e13a05ef94bbaeb166542625a7", null ],
+    [ "SAVE_DISTANCE", "structMatchTuning_1_1Ball.html#ac0b5dafd22d82b376bf163bb10d609c8", null ],
+    [ "SAVE_DIVE_TIME", "structMatchTuning_1_1Ball.html#aa23aab76e7ebd70c2d1fe2a4cc5ba508", null ],
+    [ "SPEED_CONTROL_PENALTY", "structMatchTuning_1_1Ball.html#abbdf25d16c61659fe98641acecea5a33", null ],
+    [ "STOP_SPEED", "structMatchTuning_1_1Ball.html#a0f0cecfee2626115c0972c634a0ed7b7", null ],
+    [ "TOUCH_SKILL_BONUS", "structMatchTuning_1_1Ball.html#ae61ff59c931810c77b9e86320bad639e", null ],
+    [ "TRAP_SKILL_PENALTY", "structMatchTuning_1_1Ball.html#a84fa9f4bd825530c49e9e088e6c4f529", null ]
+];

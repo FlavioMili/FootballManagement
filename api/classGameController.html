@@ -96,7 +96,6 @@ $(document).ready(function(){initNavTree('classGameController.html',''); initRes
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classGameController-members.html">List of all members</a>  </div>
@@ -111,6 +110,8 @@ $(document).ready(function(){initNavTree('classGameController.html',''); initRes
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1ContractTerms.html">ContractTerms</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1SaveSlotMetadata.html">SaveSlotMetadata</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1SquadNeeds.html">SquadNeeds</a></td></tr>
@@ -127,6 +128,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4ddd3105f8d7d1abd3e336aca9511da5" id="r_a4ddd3105f8d7d1abd3e336aca9511da5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a4ddd3105f8d7d1abd3e336aca9511da5">loadGame</a> (int slot)</td></tr>
 <tr class="memdesc:a4ddd3105f8d7d1abd3e336aca9511da5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads an existing game from the given save slot.  <br /></td></tr>
 <tr class="separator:a4ddd3105f8d7d1abd3e336aca9511da5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9e82c960287e2d2f406f99411ad4350" id="r_af9e82c960287e2d2f406f99411ad4350"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#af9e82c960287e2d2f406f99411ad4350">getLastInitializationMilliseconds</a> () const</td></tr>
+<tr class="separator:af9e82c960287e2d2f406f99411ad4350"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5bd3d0ee7f48a540c50c251243bdcc66" id="r_a5bd3d0ee7f48a540c50c251243bdcc66"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a5bd3d0ee7f48a540c50c251243bdcc66">isGameLoaded</a> () const</td></tr>
 <tr class="memdesc:a5bd3d0ee7f48a540c50c251243bdcc66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if a game is currently loaded.  <br /></td></tr>
 <tr class="separator:a5bd3d0ee7f48a540c50c251243bdcc66"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -172,8 +175,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3ead30a10cc3aa32e3a5cba32b5e4e46" id="r_a3ead30a10cc3aa32e3a5cba32b5e4e46"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a3ead30a10cc3aa32e3a5cba32b5e4e46">advanceDay</a> ()</td></tr>
 <tr class="memdesc:a3ead30a10cc3aa32e3a5cba32b5e4e46"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advances the game date by one day.  <br /></td></tr>
 <tr class="separator:a3ead30a10cc3aa32e3a5cba32b5e4e46"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afcbf97d3dd20effc95b76cf0679c7cf9" id="r_afcbf97d3dd20effc95b76cf0679c7cf9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#afcbf97d3dd20effc95b76cf0679c7cf9">setMatchResult</a> (<a class="el" href="structGameDateValue.html">GameDateValue</a> date, uint16_t home_id, uint16_t away_id, uint8_t home_score, uint8_t away_score)</td></tr>
-<tr class="separator:afcbf97d3dd20effc95b76cf0679c7cf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19deb7ca2c681a949a1127e42261f236" id="r_a19deb7ca2c681a949a1127e42261f236"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a19deb7ca2c681a949a1127e42261f236">setMatchResult</a> (<a class="el" href="structGameDateValue.html">GameDateValue</a> date, uint16_t home_id, uint16_t away_id, uint8_t home_score, uint8_t away_score)</td></tr>
+<tr class="separator:a19deb7ca2c681a949a1127e42261f236"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad17fdc5ff712b8903cdb32bae7255726" id="r_ad17fdc5ff712b8903cdb32bae7255726"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#ad17fdc5ff712b8903cdb32bae7255726">saveGame</a> ()</td></tr>
 <tr class="memdesc:ad17fdc5ff712b8903cdb32bae7255726"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the current state of the game.  <br /></td></tr>
 <tr class="separator:ad17fdc5ff712b8903cdb32bae7255726"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -194,10 +197,20 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:abd859c43ba76ce4d67be479a4564f7db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a487ca11eaf9014f8d6eeedfe9b9ea45e" id="r_a487ca11eaf9014f8d6eeedfe9b9ea45e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a487ca11eaf9014f8d6eeedfe9b9ea45e">canAffordPlayer</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> buyer_id, <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> player_id, uint32_t target_price) const</td></tr>
 <tr class="separator:a487ca11eaf9014f8d6eeedfe9b9ea45e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad640dd1b8d126c16033e30bef0438a0b" id="r_ad640dd1b8d126c16033e30bef0438a0b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#ad640dd1b8d126c16033e30bef0438a0b">canAffordPlayer</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> buyer_id, <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> player_id, uint32_t target_price, uint32_t offered_weekly_wage) const</td></tr>
+<tr class="separator:ad640dd1b8d126c16033e30bef0438a0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae4a881212df3bfeb4204a6f28a6db33c" id="r_ae4a881212df3bfeb4204a6f28a6db33c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#ae4a881212df3bfeb4204a6f28a6db33c">buyPlayer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> player_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> buyer_id, uint32_t price)</td></tr>
 <tr class="separator:ae4a881212df3bfeb4204a6f28a6db33c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03e7ac0933511423b9128647e91605d6" id="r_a03e7ac0933511423b9128647e91605d6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a03e7ac0933511423b9128647e91605d6">buyPlayerWithContract</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> player_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> buyer_id, uint32_t price, <a class="el" href="structGameController_1_1ContractTerms.html">ContractTerms</a> terms)</td></tr>
+<tr class="separator:a03e7ac0933511423b9128647e91605d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a045dd2b96564226fe72d4d6c76b88be1" id="r_a045dd2b96564226fe72d4d6c76b88be1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a045dd2b96564226fe72d4d6c76b88be1">signFreeAgent</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> player_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> buyer_id)</td></tr>
 <tr class="separator:a045dd2b96564226fe72d4d6c76b88be1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5fe3979d031e86230e3222ee0515bea2" id="r_a5fe3979d031e86230e3222ee0515bea2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a5fe3979d031e86230e3222ee0515bea2">signFreeAgentWithContract</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> player_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> buyer_id, <a class="el" href="structGameController_1_1ContractTerms.html">ContractTerms</a> terms)</td></tr>
+<tr class="separator:a5fe3979d031e86230e3222ee0515bea2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52428f4d7ccd5c46757ec734e4b1e1f7" id="r_a52428f4d7ccd5c46757ec734e4b1e1f7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameController_1_1ContractTerms.html">ContractTerms</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a52428f4d7ccd5c46757ec734e4b1e1f7">getContractDemand</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> player_id, bool free_agent) const</td></tr>
+<tr class="separator:a52428f4d7ccd5c46757ec734e4b1e1f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a64200a3d673ebdaf88bddadcc6cb96cf" id="r_a64200a3d673ebdaf88bddadcc6cb96cf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a64200a3d673ebdaf88bddadcc6cb96cf">isContractOfferAcceptable</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> player_id, bool free_agent, <a class="el" href="structGameController_1_1ContractTerms.html">ContractTerms</a> terms) const</td></tr>
+<tr class="separator:a64200a3d673ebdaf88bddadcc6cb96cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a95836a400844e19689c3a632e6890916" id="r_a95836a400844e19689c3a632e6890916"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a95836a400844e19689c3a632e6890916">getPlayerMarketValue</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> player_id) const</td></tr>
 <tr class="separator:a95836a400844e19689c3a632e6890916"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a69f3fd6ab54064d2c7d2fb12530a124a" id="r_a69f3fd6ab54064d2c7d2fb12530a124a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a69f3fd6ab54064d2c7d2fb12530a124a">submitBid</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> player_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> bidder_id, uint32_t bid_amount)</td></tr>
@@ -228,6 +241,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:acd7b2770f1e613bcf0043bede4a2fcd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a67b6df6d228ff3857833f9bc7a7e8a2d" id="r_a67b6df6d228ff3857833f9bc7a7e8a2d"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a67b6df6d228ff3857833f9bc7a7e8a2d">transferBudgetForTeam</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id) const</td></tr>
 <tr class="separator:a67b6df6d228ff3857833f9bc7a7e8a2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a276f17cd0bcb63db65a9cb6b672d5192" id="r_a276f17cd0bcb63db65a9cb6b672d5192"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a276f17cd0bcb63db65a9cb6b672d5192">randomFloat</a> (float min, float max)</td></tr>
+<tr class="separator:a276f17cd0bcb63db65a9cb6b672d5192"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac3217b7afd7177bdad6d66d97479c0e9" id="r_ac3217b7afd7177bdad6d66d97479c0e9"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classGame.html">Game</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#ac3217b7afd7177bdad6d66d97479c0e9">getGame</a> () const</td></tr>
 <tr class="separator:ac3217b7afd7177bdad6d66d97479c0e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6732a9f57ebb9bf70f5584204a0beb37" id="r_a6732a9f57ebb9bf70f5584204a0beb37"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="el" href="classDatabaseConnection.html">DatabaseConnection</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a6732a9f57ebb9bf70f5584204a0beb37">getDbConn</a> () const</td></tr>
@@ -237,19 +252,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ac3e7c67b1516d1a579bb693a1bb51ff4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the game data cache.  <br /></td></tr>
 <tr class="separator:ac3e7c67b1516d1a579bb693a1bb51ff4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a95a62951abc8869cec53b87442e07716" id="r_a95a62951abc8869cec53b87442e07716"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a95a62951abc8869cec53b87442e07716">randomFloat</a> (float min, float max)</td></tr>
-<tr class="separator:a95a62951abc8869cec53b87442e07716"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
-<tr class="memitem:a4263db08d9861d0263cf63f45940fd9e" id="r_a4263db08d9861d0263cf63f45940fd9e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a4263db08d9861d0263cf63f45940fd9e">executeTransfer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> pid, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> buyer_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> seller_id, uint32_t price)</td></tr>
-<tr class="separator:a4263db08d9861d0263cf63f45940fd9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3be65a46db62f7982aad5b54bad7dc8a" id="r_a3be65a46db62f7982aad5b54bad7dc8a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a3be65a46db62f7982aad5b54bad7dc8a">executeTransfer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> pid, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> buyer_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> seller_id, uint32_t price, std::optional&lt; <a class="el" href="structGameController_1_1ContractTerms.html">ContractTerms</a> &gt; contract=std::nullopt)</td></tr>
+<tr class="separator:a3be65a46db62f7982aad5b54bad7dc8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0dc4d0d18e4a4ed29d26f37d6ab4473b" id="r_a0dc4d0d18e4a4ed29d26f37d6ab4473b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a0dc4d0d18e4a4ed29d26f37d6ab4473b">processAITransferActivity</a> ()</td></tr>
 <tr class="separator:a0dc4d0d18e4a4ed29d26f37d6ab4473b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa43c459dab87c6bb63de663cf2fe30d9" id="r_aa43c459dab87c6bb63de663cf2fe30d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#aa43c459dab87c6bb63de663cf2fe30d9">evaluateIncomingAIBids</a> ()</td></tr>
 <tr class="separator:aa43c459dab87c6bb63de663cf2fe30d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87255e61356eca2ff2cbcb80c6e339bb" id="r_a87255e61356eca2ff2cbcb80c6e339bb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a87255e61356eca2ff2cbcb80c6e339bb">purgeReleasedPlayerListings</a> ()</td></tr>
+<tr class="separator:a87255e61356eca2ff2cbcb80c6e339bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee9a52b289607970790733dcc30cf6e5" id="r_aee9a52b289607970790733dcc30cf6e5"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#aee9a52b289607970790733dcc30cf6e5">getSavePath</a> (int slot) const</td></tr>
 <tr class="separator:aee9a52b289607970790733dcc30cf6e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -263,6 +275,10 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a266b4394730984e1a6ee72e23f6cd1b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40e1c7f81a8cb93f20e56d402ae3799c" id="r_a40e1c7f81a8cb93f20e56d402ae3799c"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>, <a class="el" href="structTransferListing.html">TransferListing</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#a40e1c7f81a8cb93f20e56d402ae3799c">transfer_listings</a></td></tr>
 <tr class="separator:a40e1c7f81a8cb93f20e56d402ae3799c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed7af6750db7b6fa50210631c08c3e14" id="r_aed7af6750db7b6fa50210631c08c3e14"><td class="memItemLeft" align="right" valign="top">std::mt19937&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#aed7af6750db7b6fa50210631c08c3e14">transfer_rng</a></td></tr>
+<tr class="separator:aed7af6750db7b6fa50210631c08c3e14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae56a7494817782486345571510ae786d" id="r_ae56a7494817782486345571510ae786d"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameController.html#ae56a7494817782486345571510ae786d">last_initialization_milliseconds</a> = 0.0f</td></tr>
+<tr class="separator:ae56a7494817782486345571510ae786d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Manages the core game logic, interacting with teams, leagues, and players. </p>
@@ -359,6 +375,46 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a03e7ac0933511423b9128647e91605d6" name="a03e7ac0933511423b9128647e91605d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a03e7ac0933511423b9128647e91605d6">&#9670;&#160;</a></span>buyPlayerWithContract()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GameController::buyPlayerWithContract </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>player_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>buyer_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t&#160;</td>
+          <td class="paramname"><em>price</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structGameController_1_1ContractTerms.html">ContractTerms</a>&#160;</td>
+          <td class="paramname"><em>terms</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a1f33b2569465d6400fd130bb73cccfdb" name="a1f33b2569465d6400fd130bb73cccfdb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1f33b2569465d6400fd130bb73cccfdb">&#9670;&#160;</a></span>calculateAttentionScore()</h2>
 
@@ -412,7 +468,7 @@ Private Attributes</h2></td></tr>
 </div>
 </div>
 <a id="a487ca11eaf9014f8d6eeedfe9b9ea45e" name="a487ca11eaf9014f8d6eeedfe9b9ea45e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a487ca11eaf9014f8d6eeedfe9b9ea45e">&#9670;&#160;</a></span>canAffordPlayer()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a487ca11eaf9014f8d6eeedfe9b9ea45e">&#9670;&#160;</a></span>canAffordPlayer() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -434,6 +490,46 @@ Private Attributes</h2></td></tr>
           <td></td>
           <td class="paramtype">uint32_t&#160;</td>
           <td class="paramname"><em>target_price</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad640dd1b8d126c16033e30bef0438a0b" name="ad640dd1b8d126c16033e30bef0438a0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad640dd1b8d126c16033e30bef0438a0b">&#9670;&#160;</a></span>canAffordPlayer() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GameController::canAffordPlayer </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>buyer_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>player_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t&#160;</td>
+          <td class="paramname"><em>target_price</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t&#160;</td>
+          <td class="paramname"><em>offered_weekly_wage</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -534,8 +630,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a4263db08d9861d0263cf63f45940fd9e" name="a4263db08d9861d0263cf63f45940fd9e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4263db08d9861d0263cf63f45940fd9e">&#9670;&#160;</a></span>executeTransfer()</h2>
+<a id="a3be65a46db62f7982aad5b54bad7dc8a" name="a3be65a46db62f7982aad5b54bad7dc8a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3be65a46db62f7982aad5b54bad7dc8a">&#9670;&#160;</a></span>executeTransfer()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -544,7 +640,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void GameController::executeTransfer </td>
+          <td class="memname">bool GameController::executeTransfer </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
           <td class="paramname"><em>pid</em>, </td>
@@ -565,7 +661,13 @@ Private Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">uint32_t&#160;</td>
-          <td class="paramname"><em>price</em>&#160;</td>
+          <td class="paramname"><em>price</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; <a class="el" href="structGameController_1_1ContractTerms.html">ContractTerms</a> &gt;&#160;</td>
+          <td class="paramname"><em>contract</em> = <code>std::nullopt</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -627,6 +729,34 @@ Private Attributes</h2></td></tr>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a52428f4d7ccd5c46757ec734e4b1e1f7" name="a52428f4d7ccd5c46757ec734e4b1e1f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52428f4d7ccd5c46757ec734e4b1e1f7">&#9670;&#160;</a></span>getContractDemand()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structGameController_1_1ContractTerms.html">GameController::ContractTerms</a> GameController::getContractDemand </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>player_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>free_agent</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -766,6 +896,32 @@ Private Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="af9e82c960287e2d2f406f99411ad4350" name="af9e82c960287e2d2f406f99411ad4350"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af9e82c960287e2d2f406f99411ad4350">&#9670;&#160;</a></span>getLastInitializationMilliseconds()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float GameController::getLastInitializationMilliseconds </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Duration of the most recent load/new-game initialization. </p>
 
 </div>
 </div>
@@ -1133,6 +1289,40 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a64200a3d673ebdaf88bddadcc6cb96cf" name="a64200a3d673ebdaf88bddadcc6cb96cf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a64200a3d673ebdaf88bddadcc6cb96cf">&#9670;&#160;</a></span>isContractOfferAcceptable()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GameController::isContractOfferAcceptable </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>player_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>free_agent</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structGameController_1_1ContractTerms.html">ContractTerms</a>&#160;</td>
+          <td class="paramname"><em>terms</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a5bd3d0ee7f48a540c50c251243bdcc66" name="a5bd3d0ee7f48a540c50c251243bdcc66"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5bd3d0ee7f48a540c50c251243bdcc66">&#9670;&#160;</a></span>isGameLoaded()</h2>
 
@@ -1281,8 +1471,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a95a62951abc8869cec53b87442e07716" name="a95a62951abc8869cec53b87442e07716"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a95a62951abc8869cec53b87442e07716">&#9670;&#160;</a></span>randomFloat()</h2>
+<a id="a87255e61356eca2ff2cbcb80c6e339bb" name="a87255e61356eca2ff2cbcb80c6e339bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a87255e61356eca2ff2cbcb80c6e339bb">&#9670;&#160;</a></span>purgeReleasedPlayerListings()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1291,7 +1481,32 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static float GameController::randomFloat </td>
+          <td class="memname">void GameController::purgeReleasedPlayerListings </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a276f17cd0bcb63db65a9cb6b672d5192" name="a276f17cd0bcb63db65a9cb6b672d5192"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a276f17cd0bcb63db65a9cb6b672d5192">&#9670;&#160;</a></span>randomFloat()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float GameController::randomFloat </td>
           <td>(</td>
           <td class="paramtype">float&#160;</td>
           <td class="paramname"><em>min</em>, </td>
@@ -1310,7 +1525,7 @@ Private Attributes</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -1398,14 +1613,14 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="afcbf97d3dd20effc95b76cf0679c7cf9" name="afcbf97d3dd20effc95b76cf0679c7cf9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afcbf97d3dd20effc95b76cf0679c7cf9">&#9670;&#160;</a></span>setMatchResult()</h2>
+<a id="a19deb7ca2c681a949a1127e42261f236" name="a19deb7ca2c681a949a1127e42261f236"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19deb7ca2c681a949a1127e42261f236">&#9670;&#160;</a></span>setMatchResult()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void GameController::setMatchResult </td>
+          <td class="memname">bool GameController::setMatchResult </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td>
           <td class="paramname"><em>date</em>, </td>
@@ -1461,6 +1676,40 @@ Private Attributes</h2></td></tr>
           <td></td>
           <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
           <td class="paramname"><em>buyer_id</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5fe3979d031e86230e3222ee0515bea2" name="a5fe3979d031e86230e3222ee0515bea2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5fe3979d031e86230e3222ee0515bea2">&#9670;&#160;</a></span>signFreeAgentWithContract()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GameController::signFreeAgentWithContract </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>player_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>buyer_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structGameController_1_1ContractTerms.html">ContractTerms</a>&#160;</td>
+          <td class="paramname"><em>terms</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1591,6 +1840,28 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="ae56a7494817782486345571510ae786d" name="ae56a7494817782486345571510ae786d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae56a7494817782486345571510ae786d">&#9670;&#160;</a></span>last_initialization_milliseconds</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float GameController::last_initialization_milliseconds = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a40e1c7f81a8cb93f20e56d402ae3799c" name="a40e1c7f81a8cb93f20e56d402ae3799c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a40e1c7f81a8cb93f20e56d402ae3799c">&#9670;&#160;</a></span>transfer_listings</h2>
 
@@ -1602,6 +1873,28 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::unordered_map&lt;<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>, <a class="el" href="structTransferListing.html">TransferListing</a>&gt; GameController::transfer_listings</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aed7af6750db7b6fa50210631c08c3e14" name="aed7af6750db7b6fa50210631c08c3e14"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aed7af6750db7b6fa50210631c08c3e14">&#9670;&#160;</a></span>transfer_rng</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::mt19937 GameController::transfer_rng</td>
         </tr>
       </table>
   </td>

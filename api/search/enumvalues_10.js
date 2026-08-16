@@ -1,15 +1,21 @@
 var searchData=
 [
-  ['rb_0',['rb',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42cac8ee22e1fc2165dfd3d2b04aef93b2f2',1,'RB:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900ac8ee22e1fc2165dfd3d2b04aef93b2f2',1,'RB:&#160;types.h']]],
-  ['regular_5fseason_1',['REGULAR_SEASON',['../types_8h.html#a8325bf9916560fc79fd7726e212dfd76ac663a387e6443fa515a47be8a657606a',1,'types.h']]],
-  ['reset_5fall_5fleague_5fpoints_2',['RESET_ALL_LEAGUE_POINTS',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a427d3fd26f7834023b17223907b83911',1,'queries.h']]],
-  ['rf_3',['RF',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca3fe3de84275c2edcd95efff999764322',1,'roles.h']]],
-  ['right_4',['Right',['../player_8h.html#a29a274bfa86b6e9dbfae8cddbae6e606a92b09c7c48c520c3c55e497875da437c',1,'player.h']]],
-  ['rm_5',['rm',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca2622e9b348f05f74e3e4bb9b7d213dc8',1,'RM:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900a2622e9b348f05f74e3e4bb9b7d213dc8',1,'RM:&#160;types.h']]],
-  ['ro_6',['RO',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf5b15f58cabad73d1bf2de7bcb89db6c',1,'languages.h']]],
-  ['roster_7',['ROSTER',['../gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa97477211836fb90e5bc0c0080d8cb282',1,'gui_scene.h']]],
-  ['ru_8',['RU',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf9308c5d059650ee40cab30bad1e96d0',1,'languages.h']]],
-  ['rw_9',['rw',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca5c6dc3d436504b7a65191cafe28212ee',1,'RW:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900a5c6dc3d436504b7a65191cafe28212ee',1,'RW:&#160;types.h']]],
-  ['rwb_10',['RWB',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca1455d5a38ecb5b9ab813b37088529644',1,'roles.h']]],
-  ['rwm_11',['RWM',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca948ed29c1a129599611e105a56bc9a4c',1,'roles.h']]]
+  ['rb_0',['rb',['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900ac8ee22e1fc2165dfd3d2b04aef93b2f2',1,'RB:&#160;types.h'],['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42cac8ee22e1fc2165dfd3d2b04aef93b2f2',1,'RB:&#160;roles.h']]],
+  ['receive_5fpass_1',['RECEIVE_PASS',['../match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5aba7dc3fa9bc0b1cd90bb51e1159d59d8',1,'match_engine.h']]],
+  ['recover_2',['RECOVER',['../match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5aea625ca593694ee20079bd188f84fa29',1,'match_engine.h']]],
+  ['recover_5fshape_3',['RECOVER_SHAPE',['../match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5ae91c44c2b8b855e752f6fa0dc6829df7',1,'match_engine.h']]],
+  ['recycle_4',['RECYCLE',['../match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083a202d1374a15b796f137f5844deebdabe',1,'match_engine.h']]],
+  ['regular_5fseason_5',['REGULAR_SEASON',['../types_8h.html#a8325bf9916560fc79fd7726e212dfd76ac663a387e6443fa515a47be8a657606a',1,'types.h']]],
+  ['reset_5fall_5fleague_5fpoints_6',['RESET_ALL_LEAGUE_POINTS',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a427d3fd26f7834023b17223907b83911',1,'queries.h']]],
+  ['rf_7',['RF',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca3fe3de84275c2edcd95efff999764322',1,'roles.h']]],
+  ['right_8',['Right',['../player_8h.html#a29a274bfa86b6e9dbfae8cddbae6e606a92b09c7c48c520c3c55e497875da437c',1,'player.h']]],
+  ['rm_9',['rm',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca2622e9b348f05f74e3e4bb9b7d213dc8',1,'RM:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900a2622e9b348f05f74e3e4bb9b7d213dc8',1,'RM:&#160;types.h']]],
+  ['ro_10',['RO',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf5b15f58cabad73d1bf2de7bcb89db6c',1,'languages.h']]],
+  ['roster_11',['ROSTER',['../gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa97477211836fb90e5bc0c0080d8cb282',1,'gui_scene.h']]],
+  ['ru_12',['RU',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0caf9308c5d059650ee40cab30bad1e96d0',1,'languages.h']]],
+  ['run_5fin_5fbehind_13',['RUN_IN_BEHIND',['../match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5a6138a561a15b22039d70fd22ad8e0ae6',1,'match_engine.h']]],
+  ['rush_14',['RUSH',['../match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5ace9981238b60cb4e5e43c548093127ef',1,'match_engine.h']]],
+  ['rw_15',['rw',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca5c6dc3d436504b7a65191cafe28212ee',1,'RW:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900a5c6dc3d436504b7a65191cafe28212ee',1,'RW:&#160;types.h']]],
+  ['rwb_16',['RWB',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca1455d5a38ecb5b9ab813b37088529644',1,'roles.h']]],
+  ['rwm_17',['RWM',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca948ed29c1a129599611e105a56bc9a4c',1,'roles.h']]]
 ];

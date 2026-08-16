@@ -16,6 +16,8 @@ var dir_5dd65160827af56e6353642206b80129 =
     [ "match.h", "match_8h.html", "match_8h" ],
     [ "match_engine.cpp", "match__engine_8cpp.html", null ],
     [ "match_engine.h", "match__engine_8h.html", "match__engine_8h" ],
+    [ "match_scenario.h", "match__scenario_8h.html", "match__scenario_8h" ],
+    [ "match_tuning.h", "match__tuning_8h.html", "match__tuning_8h" ],
     [ "player.cpp", "player_8cpp.html", null ],
     [ "player.h", "player_8h.html", "player_8h" ],
     [ "role_utils.cpp", "role__utils_8cpp.html", null ],
@@ -27,5 +29,6 @@ var dir_5dd65160827af56e6353642206b80129 =
     [ "team.cpp", "team_8cpp.html", null ],
     [ "team.h", "team_8h.html", "team_8h" ],
     [ "transfer_listing.cpp", "transfer__listing_8cpp.html", null ],
-    [ "transfer_listing.h", "transfer__listing_8h.html", "transfer__listing_8h" ]
+    [ "transfer_listing.h", "transfer__listing_8h.html", "transfer__listing_8h" ],
+    [ "transfer_tuning.h", "transfer__tuning_8h.html", "transfer__tuning_8h" ]
 ];

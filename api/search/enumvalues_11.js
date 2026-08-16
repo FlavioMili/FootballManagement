@@ -8,8 +8,15 @@ var searchData=
   ['select_5fleagues_5',['SELECT_LEAGUES',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85af07232de01d7635dcf4622543344e637',1,'queries.h']]],
   ['select_5fplayers_5fby_5fteam_6',['SELECT_PLAYERS_BY_TEAM',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a12dd4782b53e9cefc77968a07d1b9f0c',1,'queries.h']]],
   ['select_5fteams_5fby_5fleague_7',['SELECT_TEAMS_BY_LEAGUE',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a05f64ae10cdbca53d98636e2be057947',1,'queries.h']]],
-  ['settings_8',['SETTINGS',['../gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942faed6f7aca7887a927b9ed3d62aa347a86',1,'gui_scene.h']]],
-  ['sk_9',['SK',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca13dd621f27110108a10a88e99fe9ceaf',1,'languages.h']]],
-  ['st_10',['st',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42caec8e57d71f07e31203035548b79d03c8',1,'ST:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900aec8e57d71f07e31203035548b79d03c8',1,'ST:&#160;types.h']]],
-  ['strategy_11',['STRATEGY',['../gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942faa35ebfc4db62c49ea3ee50dc144c1ea9',1,'gui_scene.h']]]
+  ['set_5fpiece_8',['set_piece',['../match__engine_8h.html#a2ededa6f6de89342dc3fe73bea6330cda3d024ff901fe0aa1d1f3c3b95445b5da',1,'SET_PIECE:&#160;match_engine.h'],['../match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083a3d024ff901fe0aa1d1f3c3b95445b5da',1,'SET_PIECE:&#160;match_engine.h']]],
+  ['set_5fposition_9',['SET_POSITION',['../match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5ab9d6ef2a1efa6bdb8b1dd80680c5ff90',1,'match_engine.h']]],
+  ['settings_10',['SETTINGS',['../gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942faed6f7aca7887a927b9ed3d62aa347a86',1,'gui_scene.h']]],
+  ['shield_11',['SHIELD',['../match__engine_8h.html#af57570b9a86811e45240a606a963cfe6afa210a33410373b3274f91cd1f289fb1',1,'match_engine.h']]],
+  ['shot_12',['SHOT',['../match__engine_8h.html#af57570b9a86811e45240a606a963cfe6afe92f0e834026a1c16e620212f2cc9a4',1,'match_engine.h']]],
+  ['sk_13',['SK',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca13dd621f27110108a10a88e99fe9ceaf',1,'languages.h']]],
+  ['st_14',['st',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42caec8e57d71f07e31203035548b79d03c8',1,'ST:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900aec8e57d71f07e31203035548b79d03c8',1,'ST:&#160;types.h']]],
+  ['stoppage_15',['STOPPAGE',['../match__engine_8h.html#a2ededa6f6de89342dc3fe73bea6330cda9edda5a1c726a51344b63941e1befca3',1,'match_engine.h']]],
+  ['strategy_16',['STRATEGY',['../gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942faa35ebfc4db62c49ea3ee50dc144c1ea9',1,'gui_scene.h']]],
+  ['sweep_17',['SWEEP',['../match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5a836ede1239c3fef77fa9c7df2eaf67e9',1,'match_engine.h']]],
+  ['switch_5fplay_18',['SWITCH_PLAY',['../match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083a6168e24f07af99ad1236789bd2a9e993',1,'match_engine.h']]]
 ];

@@ -1,4 +1,24 @@
 var searchData=
 [
-  ['x_0',['x',['../structVector2F.html#a1e66924a52a2955bc44472527fb89264',1,'Vector2F']]]
+  ['wage_5flarge_5fstep_0',['WAGE_LARGE_STEP',['../structTransferMarketSceneTuning_1_1MoneyInput.html#a1e843cd84536683f392bdee08400ea1d',1,'TransferMarketSceneTuning::MoneyInput']]],
+  ['wage_5fsmall_5fstep_1',['WAGE_SMALL_STEP',['../structTransferMarketSceneTuning_1_1MoneyInput.html#aac2f1744c88479a3f7cf3bf91dc53e79',1,'TransferMarketSceneTuning::MoneyInput']]],
+  ['weekly_5fwage_2',['weekly_wage',['../structGameController_1_1ContractTerms.html#a8dde9e738e173995d1ccf454d8df8977',1,'GameController::ContractTerms']]],
+  ['weeks_5fper_5fyear_3',['WEEKS_PER_YEAR',['../structTransferTuning_1_1Contract.html#a5f1569973133fc73560142f664547a50',1,'TransferTuning::Contract']]],
+  ['weights_4',['weights',['../structRoleFocus.html#a3e983ef211a2426681a4b5bfbb602724',1,'RoleFocus']]],
+  ['wide_5fattack_5fmaximum_5fy_5',['WIDE_ATTACK_MAXIMUM_Y',['../structMatchTuning_1_1Passing.html#a8ffea0ca9a41e3226802f8c3e9f08c8f',1,'MatchTuning::Passing']]],
+  ['wide_5fattack_5fminimum_5fy_6',['WIDE_ATTACK_MINIMUM_Y',['../structMatchTuning_1_1Passing.html#a670503b80d6c7e43c633f96eb442bd8b',1,'MatchTuning::Passing']]],
+  ['wide_5frecycle_5fbonus_7',['WIDE_RECYCLE_BONUS',['../structMatchTuning_1_1Decision.html#a264be6766cbdb5bf7477a941c1f99896',1,'MatchTuning::Decision']]],
+  ['wide_5fshot_5fdiscount_8',['WIDE_SHOT_DISCOUNT',['../structMatchTuning_1_1Decision.html#abc2e1f1ff56a868cd73cb6e044a3e30f',1,'MatchTuning::Decision']]],
+  ['wide_5fshot_5fwidth_5fdeviation_9',['WIDE_SHOT_WIDTH_DEVIATION',['../structMatchTuning_1_1Decision.html#a2daa4fc5a92be31c96320052cbd82ce6',1,'MatchTuning::Decision']]],
+  ['wide_5ftarget_5fmax_5fy_10',['WIDE_TARGET_MAX_Y',['../structMatchTuning_1_1Shooting.html#a489fa0d1df1de447d6e60e3cf165c553',1,'MatchTuning::Shooting']]],
+  ['wide_5ftarget_5fmin_5fy_11',['WIDE_TARGET_MIN_Y',['../structMatchTuning_1_1Shooting.html#a21460b1f807b3dbe9a115aa9a9a93802',1,'MatchTuning::Shooting']]],
+  ['wide_5ftarget_5fpost_5fmargin_12',['WIDE_TARGET_POST_MARGIN',['../structMatchTuning_1_1Shooting.html#ae931a549bb9fd45c92e54b2c6ec460bb',1,'MatchTuning::Shooting']]],
+  ['wide_5ftarget_5ftop_5fside_5fchance_13',['WIDE_TARGET_TOP_SIDE_CHANCE',['../structMatchTuning_1_1Shooting.html#a42b317c2d0853480e7f02fb3b7194c8f',1,'MatchTuning::Shooting']]],
+  ['width_14',['width',['../structGUIConstants_1_1Resolution.html#a5c7c35d4ae64010fc467201bdd4b33fd',1,'GUIConstants::Resolution::width'],['../structMatchViewport.html#a10f124bcfa980e9f9e7695812877879e',1,'MatchViewport::width'],['../structMatchSceneTuning_1_1Pitch.html#a646bbf0ebd8e22af1e8551d3b0ccd287',1,'MatchSceneTuning::Pitch::WIDTH']]],
+  ['width_5fmetres_15',['WIDTH_METRES',['../structMatchTuning_1_1Pitch.html#ae9abe83b37475facb52f9ac9579d6b5d',1,'MatchTuning::Pitch']]],
+  ['width_5fslider_5fscale_16',['WIDTH_SLIDER_SCALE',['../structMatchTuning_1_1Shape.html#ae76f7aa80e1d552a564b7cf2313126ab',1,'MatchTuning::Shape']]],
+  ['widthusage_17',['widthUsage',['../structStrategySliders.html#a35c87fdf3e3b41efc46cd18607c9dd2a',1,'StrategySliders']]],
+  ['window_18',['window',['../classGUIView.html#a5ca054ab5ecd4413d6adaa2a8c01a851',1,'GUIView']]],
+  ['winger_5frun_5fpriority_19',['WINGER_RUN_PRIORITY',['../structMatchTuning_1_1Shape.html#a5758d35794a94ce0eeaf2869031b149d',1,'MatchTuning::Shape']]],
+  ['wipedatatimer_20',['wipeDataTimer',['../classSettingsScene.html#ad66ad8800e74f11925b0be6b6bead540',1,'SettingsScene']]]
 ];

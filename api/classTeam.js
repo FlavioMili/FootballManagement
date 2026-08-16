@@ -9,7 +9,7 @@ var classTeam =
     [ "getLeagueId", "classTeam.html#af91fb8a1aaed180245ccd07fe7932a8d", null ],
     [ "getLineup", "classTeam.html#ac8dd234be85d4335cfb5003ebfe3b8cc", null ],
     [ "getLineup", "classTeam.html#aeec06a081ef83b9684acdecd95bb0b4e", null ],
-    [ "getName", "classTeam.html#a480da19d8b480153a9a8545ac9c39ccd", null ],
+    [ "getName", "classTeam.html#a491cc48cda0cfaca9ef65059a52ef54a", null ],
     [ "getPlayerIDs", "classTeam.html#a9c8b9367f47a776cd8b895906dd2ac16", null ],
     [ "getStrategy", "classTeam.html#a2a102394423417d53b76c289961faecf", null ],
     [ "getStrategy", "classTeam.html#a087483d7a318f8f2b3a90dc034db3b54", null ],

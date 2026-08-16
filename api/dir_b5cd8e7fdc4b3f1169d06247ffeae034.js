@@ -8,6 +8,7 @@ var dir_b5cd8e7fdc4b3f1169d06247ffeae034 =
     [ "main_menu_scene.h", "main__menu__scene_8h.html", "main__menu__scene_8h" ],
     [ "match_scene.cpp", "match__scene_8cpp.html", null ],
     [ "match_scene.h", "match__scene_8h.html", "match__scene_8h" ],
+    [ "match_scene_tuning.h", "match__scene__tuning_8h.html", "match__scene__tuning_8h" ],
     [ "roster_scene.cpp", "roster__scene_8cpp.html", null ],
     [ "roster_scene.h", "roster__scene_8h.html", "roster__scene_8h" ],
     [ "settings_scene.cpp", "settings__scene_8cpp.html", null ],
@@ -17,5 +18,6 @@ var dir_b5cd8e7fdc4b3f1169d06247ffeae034 =
     [ "team_selection_scene.cpp", "team__selection__scene_8cpp.html", null ],
     [ "team_selection_scene.h", "team__selection__scene_8h.html", "team__selection__scene_8h" ],
     [ "transfer_market_scene.cpp", "transfer__market__scene_8cpp.html", null ],
-    [ "transfer_market_scene.h", "transfer__market__scene_8h.html", "transfer__market__scene_8h" ]
+    [ "transfer_market_scene.h", "transfer__market__scene_8h.html", "transfer__market__scene_8h" ],
+    [ "transfer_market_scene_tuning.h", "transfer__market__scene__tuning_8h.html", "transfer__market__scene__tuning_8h" ]
 ];

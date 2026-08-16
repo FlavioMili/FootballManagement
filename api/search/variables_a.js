@@ -1,19 +1,6 @@
 var searchData=
 [
-  ['label_0',['label',['../structButton.html#ae0495ded918806414811aef215ade634',1,'Button']]],
-  ['language_1',['language',['../structSettings.html#ad87f4c5f2f2385700f45fdc9dcec5b61',1,'Settings']]],
-  ['languageoptions_2',['languageOptions',['../classSettingsScene.html#aa81b72a3bdf4b16491fa54343e11c028',1,'SettingsScene']]],
-  ['languagetostring_3',['languageToString',['../languages_8h.html#a2f07d9425b4166af10feff3f67f349ae',1,'languages.h']]],
-  ['last_5fnames_4',['last_names',['../classDataGenerator.html#a717560a67cc0db67c47d8fadfb8b64a8',1,'DataGenerator']]],
-  ['lastpossessor_5',['lastPossessor',['../structMatchBall.html#aaec17c4c7e38c74702fe8592a06ea7b8',1,'MatchBall']]],
-  ['leaderboard_6',['leaderboard',['../classLeague.html#a2d3cfc5ef5eff1951cbf35221343a386',1,'League']]],
-  ['league_5fid_7',['league_id',['../classTeam.html#a9bdecbf757a79bcd566d324f5fec61e9',1,'Team']]],
-  ['lineup_8',['lineup',['../classTeam.html#a23d04ef150824d8cbc1189fb3fde3456',1,'Team']]],
-  ['lineup_5fgrid_5fcols_9',['LINEUP_GRID_COLS',['../global_8h.html#a22ad9e4a9c0282a6f6a197e55d57db7e',1,'global.h']]],
-  ['lineup_5fgrid_5frows_10',['LINEUP_GRID_ROWS',['../global_8h.html#a5490d8954e233c9eca52690f69a7e172',1,'global.h']]],
-  ['lineup_5fgrid_5fsize_11',['LINEUP_GRID_SIZE',['../global_8h.html#a9b9674d857525b2867a17b849de0d0b4',1,'global.h']]],
-  ['list_5fplayer_5findex_12',['list_player_index',['../classTransferMarketScene.html#a6e721455a3cf7eb9026eaee6f25da0fc',1,'TransferMarketScene']]],
-  ['list_5fprice_5finput_13',['list_price_input',['../classTransferMarketScene.html#ac490327b8796e45fb3725ac2384f7f66',1,'TransferMarketScene']]],
-  ['listing_5fdate_14',['listing_date',['../structTransferListing.html#a9c30ddf0db70f02cfa97b1c58f663f50',1,'TransferListing']]],
-  ['loading_5fslot_15',['loading_slot',['../classMainMenuScene.html#a31e54e2a52f0380e1eeb80913dd40bed',1,'MainMenuScene']]]
+  ['kickoff_5fdelay_5fseconds_0',['KICKOFF_DELAY_SECONDS',['../structMatchTuning_1_1Timing.html#aefc6161db0b7babe9e765962442a39b0',1,'MatchTuning::Timing']]],
+  ['kickoff_5fformation_5finset_1',['KICKOFF_FORMATION_INSET',['../structMatchTuning_1_1Pitch.html#a332278a33340912e4f7d40ce26fa6bcc',1,'MatchTuning::Pitch']]],
+  ['kickoff_5fformation_5fscale_2',['KICKOFF_FORMATION_SCALE',['../structMatchTuning_1_1Pitch.html#a5973ae6fa4b41532ec2a89047c831012',1,'MatchTuning::Pitch']]]
 ];

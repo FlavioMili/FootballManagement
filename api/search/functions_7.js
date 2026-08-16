@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['handleevent_0',['handleevent',['../classDropdown.html#a907aea87dbad183bbe0d2058b08922dd',1,'Dropdown::handleEvent()'],['../classGUIScene.html#a234a16aa00d64053c910e99c07a1122a',1,'GUIScene::handleEvent()']]],
+  ['handleevent_0',['handleevent',['../classDropdown.html#a907aea87dbad183bbe0d2058b08922dd',1,'Dropdown::handleEvent()'],['../classGUIScene.html#a234a16aa00d64053c910e99c07a1122a',1,'GUIScene::handleEvent()'],['../classMatchScene.html#acc9923738982e799df4004b997193944',1,'MatchScene::handleEvent()']]],
   ['handleevents_1',['handleEvents',['../classGUIView.html#af9726402be6b2677c160c7213be0868a',1,'GUIView']]],
   ['handlemouseclick_2',['handleMouseClick',['../classButtonManager.html#a391ea31a3674d670ee489a0a1c1a970f',1,'ButtonManager']]],
   ['handlemousemove_3',['handleMouseMove',['../classButtonManager.html#a2f54fe273199aded230c947a6a8d3d1f',1,'ButtonManager']]],

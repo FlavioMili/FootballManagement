@@ -11,11 +11,16 @@ var searchData=
   ['addpoints_8',['addPoints',['../classLeague.html#ac9eb84e3e36f651bc4c195e1dec3b580',1,'League']]],
   ['addteam_9',['addTeam',['../classGameData.html#aaedfb80a0b79775c3959c0e0ddcf8617',1,'GameData']]],
   ['addteamid_10',['addTeamID',['../classLeague.html#a3de2aa75b184ef5a8315fe6fda3c1aa8',1,'League']]],
-  ['advanceday_11',['advanceday',['../classGameController.html#a3ead30a10cc3aa32e3a5cba32b5e4e46',1,'GameController::advanceDay()'],['../classGame.html#a3a07e7c96e055f2ac28ce7a05d2573ce',1,'Game::advanceDay()']]],
-  ['ageallplayers_12',['ageAllPlayers',['../classGameData.html#aaf8cf08f6a17b02c21f1d95907a3263c',1,'GameData']]],
-  ['ageplayer_13',['agePlayer',['../classPlayer.html#a6e12b3575e64a3fb25b7bd6c8f1a0624',1,'Player']]],
-  ['apply_14',['apply',['../classSettingsManager.html#aed41cfc1aac9518e1aad970bfc463ad1',1,'SettingsManager']]],
-  ['applyandsavesettings_15',['applyAndSaveSettings',['../classSettingsScene.html#a632d92d08b373c375693efecfb55ccb5',1,'SettingsScene']]],
-  ['applycatppuccinlattetheme_16',['applyCatppuccinLatteTheme',['../classGUIView.html#a5aae1d5de2be5b50378d51fcfb2ec38b',1,'GUIView']]],
-  ['applypendingscenechanges_17',['applyPendingSceneChanges',['../classGUIView.html#a7e525473cca5a2272288c71e65d703bb',1,'GUIView']]]
+  ['advancecontractsandreleaseplayers_11',['advanceContractsAndReleasePlayers',['../classGameData.html#a85837121f45469a08519fe9566cd8c18',1,'GameData']]],
+  ['advancecontractyear_12',['advanceContractYear',['../classPlayer.html#af23b45a1706279bae92aa8573a109417',1,'Player']]],
+  ['advanceday_13',['advanceday',['../classGameController.html#a3ead30a10cc3aa32e3a5cba32b5e4e46',1,'GameController::advanceDay()'],['../classGame.html#a3a07e7c96e055f2ac28ce7a05d2573ce',1,'Game::advanceDay()']]],
+  ['ageallplayers_14',['ageAllPlayers',['../classGameData.html#aaf8cf08f6a17b02c21f1d95907a3263c',1,'GameData']]],
+  ['ageplayer_15',['agePlayer',['../classPlayer.html#a6e12b3575e64a3fb25b7bd6c8f1a0624',1,'Player']]],
+  ['apply_16',['apply',['../classSettingsManager.html#aed41cfc1aac9518e1aad970bfc463ad1',1,'SettingsManager']]],
+  ['applyandsavesettings_17',['applyAndSaveSettings',['../classSettingsScene.html#a632d92d08b373c375693efecfb55ccb5',1,'SettingsScene']]],
+  ['applycatppuccinlattetheme_18',['applyCatppuccinLatteTheme',['../classGUIView.html#a5aae1d5de2be5b50378d51fcfb2ec38b',1,'GUIView']]],
+  ['applypendingscenechanges_19',['applyPendingSceneChanges',['../classGUIView.html#a7e525473cca5a2272288c71e65d703bb',1,'GUIView']]],
+  ['applyscenario_20',['applyScenario',['../classMatchEngine.html#a037b1b7d6e0622cb776d9abd3f52fa21',1,'MatchEngine']]],
+  ['attempttackle_21',['attemptTackle',['../classMatchEngine.html#a70e520e67c66fe3db2a7af2f3524517a',1,'MatchEngine']]],
+  ['attribute_22',['attribute',['../classMatchEngine.html#a8a5ca6bdb1a138a7ae355ff6c7306fb7',1,'MatchEngine']]]
 ];

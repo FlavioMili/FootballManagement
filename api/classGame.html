@@ -115,6 +115,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3a07e7c96e055f2ac28ce7a05d2573ce" id="r_a3a07e7c96e055f2ac28ce7a05d2573ce"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a3a07e7c96e055f2ac28ce7a05d2573ce">advanceDay</a> ()</td></tr>
 <tr class="memdesc:a3a07e7c96e055f2ac28ce7a05d2573ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advances the game time by one day, simulating any matches or events scheduled for the current date.  <br /></td></tr>
 <tr class="separator:a3a07e7c96e055f2ac28ce7a05d2573ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3fbd9b84e4d3699eb60020c56edef6bd" id="r_a3fbd9b84e4d3699eb60020c56edef6bd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a3fbd9b84e4d3699eb60020c56edef6bd">setMatchResult</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> home_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> away_id, uint8_t home_score, uint8_t away_score)</td></tr>
+<tr class="separator:a3fbd9b84e4d3699eb60020c56edef6bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70674da80f5f875018c666dfcb92fe51" id="r_a70674da80f5f875018c666dfcb92fe51"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a70674da80f5f875018c666dfcb92fe51">getCurrentDate</a> () const</td></tr>
 <tr class="memdesc:a70674da80f5f875018c666dfcb92fe51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the current in-game date.  <br /></td></tr>
 <tr class="separator:a70674da80f5f875018c666dfcb92fe51"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -451,6 +453,53 @@ Private Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a3fbd9b84e4d3699eb60020c56edef6bd" name="a3fbd9b84e4d3699eb60020c56edef6bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3fbd9b84e4d3699eb60020c56edef6bd">&#9670;&#160;</a></span>setMatchResult()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Game::setMatchResult </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;&#160;</td>
+          <td class="paramname"><em>date</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>home_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>away_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>home_score</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>away_score</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Records a managed match exactly once and applies its consequences. </p>
 
 </div>
 </div>

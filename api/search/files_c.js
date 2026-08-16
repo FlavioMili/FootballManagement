@@ -1,14 +1,14 @@
 var searchData=
 [
-  ['team_2ecpp_0',['team.cpp',['../team_8cpp.html',1,'']]],
-  ['team_2eh_1',['team.h',['../team_8h.html',1,'']]],
-  ['team_5frepository_2ecpp_2',['team_repository.cpp',['../team__repository_8cpp.html',1,'']]],
-  ['team_5frepository_2eh_3',['team_repository.h',['../team__repository_8h.html',1,'']]],
-  ['team_5fselection_5fscene_2ecpp_4',['team_selection_scene.cpp',['../team__selection__scene_8cpp.html',1,'']]],
-  ['team_5fselection_5fscene_2eh_5',['team_selection_scene.h',['../team__selection__scene_8h.html',1,'']]],
-  ['transfer_5flisting_2ecpp_6',['transfer_listing.cpp',['../transfer__listing_8cpp.html',1,'']]],
-  ['transfer_5flisting_2eh_7',['transfer_listing.h',['../transfer__listing_8h.html',1,'']]],
-  ['transfer_5fmarket_5fscene_2ecpp_8',['transfer_market_scene.cpp',['../transfer__market__scene_8cpp.html',1,'']]],
-  ['transfer_5fmarket_5fscene_2eh_9',['transfer_market_scene.h',['../transfer__market__scene_8h.html',1,'']]],
-  ['types_2eh_10',['types.h',['../types_8h.html',1,'']]]
+  ['settings_5fmanager_2ecpp_0',['settings_manager.cpp',['../settings__manager_8cpp.html',1,'']]],
+  ['settings_5fmanager_2eh_1',['settings_manager.h',['../settings__manager_8h.html',1,'']]],
+  ['settings_5fscene_2ecpp_2',['settings_scene.cpp',['../settings__scene_8cpp.html',1,'']]],
+  ['settings_5fscene_2eh_3',['settings_scene.h',['../settings__scene_8h.html',1,'']]],
+  ['sqlloader_2ecpp_4',['SQLLoader.cpp',['../SQLLoader_8cpp.html',1,'']]],
+  ['sqlloader_2eh_5',['SQLLoader.h',['../SQLLoader_8h.html',1,'']]],
+  ['stats_5fconfig_2eh_6',['stats_config.h',['../stats__config_8h.html',1,'']]],
+  ['strategy_2ecpp_7',['strategy.cpp',['../strategy_8cpp.html',1,'']]],
+  ['strategy_2eh_8',['strategy.h',['../strategy_8h.html',1,'']]],
+  ['strategy_5fscene_2ecpp_9',['strategy_scene.cpp',['../strategy__scene_8cpp.html',1,'']]],
+  ['strategy_5fscene_2eh_10',['strategy_scene.h',['../strategy__scene_8h.html',1,'']]]
 ];

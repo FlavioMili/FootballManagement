@@ -5,6 +5,7 @@ var classGameData =
     [ "addLeague", "classGameData.html#a34e24171f65f9d65926080ce0e08f462", null ],
     [ "addPlayer", "classGameData.html#a54d5efeb2ac5ceeb5b6288a096edc079", null ],
     [ "addTeam", "classGameData.html#aaedfb80a0b79775c3959c0e0ddcf8617", null ],
+    [ "advanceContractsAndReleasePlayers", "classGameData.html#a85837121f45469a08519fe9566cd8c18", null ],
     [ "ageAllPlayers", "classGameData.html#aaf8cf08f6a17b02c21f1d95907a3263c", null ],
     [ "deleteTransferListing", "classGameData.html#ac9cfafc8f902d6769d31668add6a4407", null ],
     [ "generateAndSaveInitialData", "classGameData.html#a123e2a349374cc053a74502c8ca8941c", null ],

@@ -1,14 +1,22 @@
 var searchData=
 [
   ['cam_0',['cam',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca94bf53c56990d9ef19cd5c64d493ad39',1,'CAM:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900a94bf53c56990d9ef19cd5c64d493ad39',1,'CAM:&#160;types.h']]],
-  ['cb_1',['cb',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca834cb54b61bbed9d4296c995e4c5d8b2',1,'CB:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900a834cb54b61bbed9d4296c995e4c5d8b2',1,'CB:&#160;types.h']]],
-  ['cdm_2',['cdm',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42cadd15a7c4d52bc4cfd3fbe832cd458a24',1,'CDM:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900add15a7c4d52bc4cfd3fbe832cd458a24',1,'CDM:&#160;types.h']]],
-  ['cf_3',['CF',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca758951cac5e62129e654698c8ca0333b',1,'roles.h']]],
-  ['ch_4',['CH',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca1ee0bf89c5d1032317d13a2e022793c8',1,'languages.h']]],
-  ['change_5',['CHANGE',['../classGUIView.html#a5599174075b54d4caad80c213daedad0a421cfd143e450c3f5814a0495409e073',1,'GUIView']]],
-  ['cm_6',['cm',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca707354872d4e8210a2a573b99721b1fb',1,'CM:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900a707354872d4e8210a2a573b99721b1fb',1,'CM:&#160;types.h']]],
-  ['cn_7',['CN',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca1c2903397d8833382673bab22aa8b937',1,'languages.h']]],
-  ['count_8',['COUNT',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a4905ac9d6a22bdfc1ae096094ce6248d',1,'queries.h']]],
-  ['cup_9',['CUP',['../types_8h.html#a06be3d3918a8700cf086896e9f03e885a5b11962dcbe85de55770d22d3e5fb85a',1,'types.h']]],
-  ['cz_10',['CZ',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca928568b84963ceb76aaaa2cae9afdbfa',1,'languages.h']]]
+  ['carry_1',['CARRY',['../match__engine_8h.html#af57570b9a86811e45240a606a963cfe6a4854ee643ec24fa27e31fa4bec9f5e3f',1,'match_engine.h']]],
+  ['carry_5fball_2',['CARRY_BALL',['../match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5aa83978a083117e13eda145329e49a307',1,'match_engine.h']]],
+  ['cb_3',['cb',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca834cb54b61bbed9d4296c995e4c5d8b2',1,'CB:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900a834cb54b61bbed9d4296c995e4c5d8b2',1,'CB:&#160;types.h']]],
+  ['cdm_4',['cdm',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42cadd15a7c4d52bc4cfd3fbe832cd458a24',1,'CDM:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900add15a7c4d52bc4cfd3fbe832cd458a24',1,'CDM:&#160;types.h']]],
+  ['cf_5',['CF',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca758951cac5e62129e654698c8ca0333b',1,'roles.h']]],
+  ['ch_6',['CH',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca1ee0bf89c5d1032317d13a2e022793c8',1,'languages.h']]],
+  ['change_7',['CHANGE',['../classGUIView.html#a5599174075b54d4caad80c213daedad0a421cfd143e450c3f5814a0495409e073',1,'GUIView']]],
+  ['claim_8',['CLAIM',['../match__engine_8h.html#a9f9ca6c5dc389f4fcac901c486ee4cc5a35a99ca7087899687b9d08a1348a02cf',1,'match_engine.h']]],
+  ['claim_5floose_5fball_9',['CLAIM_LOOSE_BALL',['../match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5ac8fbfa5cac00835edb87c04b17d94f55',1,'match_engine.h']]],
+  ['cm_10',['cm',['../roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca707354872d4e8210a2a573b99721b1fb',1,'CM:&#160;roles.h'],['../types_8h.html#ae1e198be4ce1cfce8be42795524c8900a707354872d4e8210a2a573b99721b1fb',1,'CM:&#160;types.h']]],
+  ['cn_11',['CN',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca1c2903397d8833382673bab22aa8b937',1,'languages.h']]],
+  ['corner_5fkick_12',['CORNER_KICK',['../match__engine_8h.html#aca6448151e924d2cb062632532d9081fa472f3d45de8018bfb63987a203dca8e4',1,'match_engine.h']]],
+  ['count_13',['COUNT',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85a4905ac9d6a22bdfc1ae096094ce6248d',1,'queries.h']]],
+  ['cover_5fpress_14',['COVER_PRESS',['../match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5ae7881c36017dd3ceab7007083e8b04f7',1,'match_engine.h']]],
+  ['cross_15',['CROSS',['../match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083a04dd53a8e6c2306e9bbf944c1d6047f2',1,'match_engine.h']]],
+  ['cup_16',['CUP',['../types_8h.html#a06be3d3918a8700cf086896e9f03e885a5b11962dcbe85de55770d22d3e5fb85a',1,'types.h']]],
+  ['cutback_17',['CUTBACK',['../match__engine_8h.html#a3f2bffb7346b7caffae490d09ed55083ac68b44122d5cca12cc6eb6bd20591f67',1,'match_engine.h']]],
+  ['cz_18',['CZ',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca928568b84963ceb76aaaa2cae9afdbfa',1,'languages.h']]]
 ];

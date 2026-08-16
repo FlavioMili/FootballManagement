@@ -1,0 +1,25 @@
+var structMatchTuning_1_1Defending =
+[
+    [ "BASE_BLOCK_CHANCE", "structMatchTuning_1_1Defending.html#a0b54008af9f914c451157c7e710445a0", null ],
+    [ "BASE_FOUL_CHANCE", "structMatchTuning_1_1Defending.html#a70ab14ecd29ad25e0ec58f1509b5bbbc", null ],
+    [ "BASE_WIN_CHANCE", "structMatchTuning_1_1Defending.html#a16c4c6a85527402513b202de123ce686", null ],
+    [ "BLOCK_DISTANCE", "structMatchTuning_1_1Defending.html#a29d3cdab936c31fe594ec01bdf78a95b", null ],
+    [ "DEFENDING_BLOCK_BONUS", "structMatchTuning_1_1Defending.html#a6c7b342f31331ab1fd5375fe789b6e16", null ],
+    [ "DEFENDING_WIN_BONUS", "structMatchTuning_1_1Defending.html#ab1c8eeb623ba2ece0ae4a69e09548ced", null ],
+    [ "DEFLECTION_COOLDOWN", "structMatchTuning_1_1Defending.html#ac8f1d11f73a83f4fcf9adac75321379a", null ],
+    [ "DEFLECTION_SPEED_FACTOR", "structMatchTuning_1_1Defending.html#adf3f9b24e66773fa7dc37ebc30dd7431", null ],
+    [ "DRIBBLING_WIN_PENALTY", "structMatchTuning_1_1Defending.html#a357725a312b23b029e01c649c7d4c10b", null ],
+    [ "MAX_DEFLECTION_Y_SPEED", "structMatchTuning_1_1Defending.html#a48be2a283f07176f9ec3bf57f8050051", null ],
+    [ "MAX_RECOVERY_COOLDOWN", "structMatchTuning_1_1Defending.html#a8b6d96311e45b5731d77ebf0efbb1d46", null ],
+    [ "MAX_TACKLE_COOLDOWN", "structMatchTuning_1_1Defending.html#a24eae64b6bbe81253cf0da66b5ed9ad8", null ],
+    [ "MAX_WIN_CHANCE", "structMatchTuning_1_1Defending.html#ae3671fb5728b1511b42c4877236cf578", null ],
+    [ "MIN_RECOVERY_COOLDOWN", "structMatchTuning_1_1Defending.html#ac74d4afad7acab011d0364984fbdbbab", null ],
+    [ "MIN_TACKLE_COOLDOWN", "structMatchTuning_1_1Defending.html#a07cee942c805954f682a5ea7e2a39d7b", null ],
+    [ "MIN_WIN_CHANCE", "structMatchTuning_1_1Defending.html#a4f868a1774afbe3807dbc20d7312ed10", null ],
+    [ "PRESSING_COOLDOWN_REDUCTION", "structMatchTuning_1_1Defending.html#a136bd6c870b201ac00e20af836230d03", null ],
+    [ "PRESSING_WIN_BONUS", "structMatchTuning_1_1Defending.html#a8282db51271f66a8ce1e393ace71a796", null ],
+    [ "RISK_FOUL_BONUS", "structMatchTuning_1_1Defending.html#a97002e29b6cf4b1a45669c17709240a1", null ],
+    [ "TACKLE_COOLDOWN_BASE_MULTIPLIER", "structMatchTuning_1_1Defending.html#a1aa8ce57d9f0bd84e2ec4b57116437af", null ],
+    [ "TACKLE_DISTANCE", "structMatchTuning_1_1Defending.html#ae350059e46bf40cf7967cac3cd981cee", null ],
+    [ "YELLOW_CARD_CHANCE", "structMatchTuning_1_1Defending.html#af427f7d5d82b455e67da7ff71cc1e011", null ]
+];
