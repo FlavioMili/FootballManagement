@@ -10,5 +10,6 @@ var dir_99d0482cf009f9d97a0877749b817f19 =
     [ "gui_scene.cpp", "gui__scene_8cpp.html", null ],
     [ "gui_scene.h", "gui__scene_8h.html", "gui__scene_8h" ],
     [ "gui_view.cpp", "gui__view_8cpp.html", null ],
-    [ "gui_view.h", "gui__view_8h.html", "gui__view_8h" ]
+    [ "gui_view.h", "gui__view_8h.html", "gui__view_8h" ],
+    [ "player_ui.h", "player__ui_8h.html", "player__ui_8h" ]
 ];

@@ -14,7 +14,7 @@ var searchData=
   ['final_5fthird_5fmidfield_5farrival_11',['FINAL_THIRD_MIDFIELD_ARRIVAL',['../structMatchTuning_1_1Shape.html#a1032f17998e2bf03fc79df856bbc572d',1,'MatchTuning::Shape']]],
   ['final_5fthird_5fselection_5fcontinuity_12',['FINAL_THIRD_SELECTION_CONTINUITY',['../structMatchTuning_1_1Shape.html#a6e91ea11bf60cf406f080fbb756c06a8',1,'MatchTuning::Shape']]],
   ['final_5fthird_5fshot_5fbonus_13',['FINAL_THIRD_SHOT_BONUS',['../structMatchTuning_1_1Decision.html#a25501d75f4d4586e21410e94a5ebb826',1,'MatchTuning::Decision']]],
-  ['finances_14',['finances',['../classFinances.html',1,'Finances'],['../classTeam.html#afe825e2db13282c3d10ce7c89ef3307c',1,'Team::finances'],['../classFinances.html#abc8e83033194f90323cb7dc476f95e68',1,'Finances::Finances()']]],
+  ['finances_14',['finances',['../classFinances.html',1,'Finances'],['../classFinances.html#abc8e83033194f90323cb7dc476f95e68',1,'Finances::Finances()'],['../classTeam.html#afe825e2db13282c3d10ce7c89ef3307c',1,'Team::finances']]],
   ['finances_2ecpp_15',['finances.cpp',['../finances_8cpp.html',1,'']]],
   ['finances_2eh_16',['finances.h',['../finances_8h.html',1,'']]],
   ['findclosestplayer_17',['findClosestPlayer',['../classMatchEngine.html#ad5407925814dd1dc9b4da6730aa79fd2',1,'MatchEngine']]],

@@ -41,6 +41,7 @@ var NAVTREE =
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
         [ "All", "namespacemembers.html", null ],
+        [ "Functions", "namespacemembers_func.html", null ],
         [ "Variables", "namespacemembers_vars.html", null ]
       ] ]
     ] ],
@@ -73,14 +74,14 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "SQLLoader_8cpp.html",
-"classGameController.html#ac3217b7afd7177bdad6d66d97479c0e9",
-"classMatchEngine.html#a70e520e67c66fe3db2a7af2f3524517a",
-"classTeam.html#af91fb8a1aaed180245ccd07fe7932a8d",
-"index.html#autotoc_md22",
-"settings__manager_8h.html",
-"structMatchSceneTuning_1_1Marker.html#aa19b5d91b69c590c6a15ad38894f2428",
-"structMatchTuning_1_1Passing.html#a67b1e3cf414ed77ca7e0f7c27c86376b",
-"structMatchTuning_1_1Timing.html#a08d7cc3e03e87f0730a6db9703a7afc4"
+"classGameController.html#abedfd4fe4de4d6c41547259c8d84905c",
+"classMatchEngine.html#a60d449e1560e5439bc7f717363524341",
+"classTeam.html#a5791d1f6408652605c5939e544690e1b",
+"index.html",
+"roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca618441d41cce47dbcfd9bed6e5ff64e6",
+"structMatchSceneTuning_1_1GoalFrame.html#ada43460dd9e233f9a724a9a31403edb8",
+"structMatchTuning_1_1Passing.html#a23b0c0bf4434450db631ad3cea5928e0",
+"structMatchTuning_1_1Shooting.html#a7eb753b6e5c5a430aa0f1bc897475d5b"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

@@ -7,6 +7,7 @@ var classMatchScene =
     [ "render", "classMatchScene.html#a50d79994d90b5b7fa7d24ee61bdc3ade", null ],
     [ "renderSubstitutionsModal", "classMatchScene.html#a17270b3aebf325666d9dde0aaf2aceb4", null ],
     [ "update", "classMatchScene.html#a9838b9f36c987dc77cea8ea7965623e0", null ],
+    [ "GameFlowTest_GUIFlowLifecycle_Test", "classMatchScene.html#af70851c82f5c5d3e1b6b40e55b6d8532", null ],
     [ "away_name", "classMatchScene.html#ae9eba81443ab208d2222cab655bc7c86", null ],
     [ "away_team_id", "classMatchScene.html#aa35e7a6583990a339c928a33eda6da43", null ],
     [ "debug_status", "classMatchScene.html#a5e120dc6adffc3f47513284a25c9a427", null ],

@@ -97,6 +97,7 @@ $(document).ready(function(){initNavTree('classRosterScene.html',''); initResiza
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classRosterScene-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">RosterScene Class Reference</div></div>
 </div><!--header-->
@@ -157,11 +158,24 @@ Public Member Functions</h2></td></tr>
 Private Member Functions</h2></td></tr>
 <tr class="memitem:a02b1f87c530c8b62c7589a76d7b59af3" id="r_a02b1f87c530c8b62c7589a76d7b59af3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRosterScene.html#a02b1f87c530c8b62c7589a76d7b59af3">loadRoster</a> ()</td></tr>
 <tr class="separator:a02b1f87c530c8b62c7589a76d7b59af3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a85c4364bec0f336e3f15d03b133b906e" id="r_a85c4364bec0f336e3f15d03b133b906e"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classPlayer.html">Player</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRosterScene.html#a85c4364bec0f336e3f15d03b133b906e">selectedPlayer</a> () const</td></tr>
+<tr class="separator:a85c4364bec0f336e3f15d03b133b906e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
 <tr class="memitem:a1476a31572f1726172a207eef60520ae" id="r_a1476a31572f1726172a207eef60520ae"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRosterScene.html#a1476a31572f1726172a207eef60520ae">roster_players</a></td></tr>
 <tr class="separator:a1476a31572f1726172a207eef60520ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a42fe7f117ec06d28bf6a6aae618378" id="r_a4a42fe7f117ec06d28bf6a6aae618378"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRosterScene.html#a4a42fe7f117ec06d28bf6a6aae618378">selected_player_id</a></td></tr>
+<tr class="separator:a4a42fe7f117ec06d28bf6a6aae618378"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9553ee142a2ffa1d8b0d6d749a1de83c" id="r_a9553ee142a2ffa1d8b0d6d749a1de83c"><td class="memItemLeft" align="right" valign="top">std::array&lt; char, 64 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRosterScene.html#a9553ee142a2ffa1d8b0d6d749a1de83c">search_text</a> {}</td></tr>
+<tr class="separator:a9553ee142a2ffa1d8b0d6d749a1de83c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4345986b06ca0a1a188cafd7e79b180d" id="r_a4345986b06ca0a1a188cafd7e79b180d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRosterScene.html#a4345986b06ca0a1a188cafd7e79b180d">role_filter_index</a> = 0</td></tr>
+<tr class="separator:a4345986b06ca0a1a188cafd7e79b180d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:af70851c82f5c5d3e1b6b40e55b6d8532" id="r_af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRosterScene.html#af70851c82f5c5d3e1b6b40e55b6d8532">GameFlowTest_GUIFlowLifecycle_Test</a></td></tr>
+<tr class="separator:af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -363,6 +377,31 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a85c4364bec0f336e3f15d03b133b906e" name="a85c4364bec0f336e3f15d03b133b906e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a85c4364bec0f336e3f15d03b133b906e">&#9670;&#160;</a></span>selectedPlayer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classPlayer.html">Player</a> * RosterScene::selectedPlayer </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a6f292151c3a7c6d1d06897f5a05dc1f7" name="a6f292151c3a7c6d1d06897f5a05dc1f7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6f292151c3a7c6d1d06897f5a05dc1f7">&#9670;&#160;</a></span>update()</h2>
 
@@ -399,7 +438,52 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<h2 class="groupheader">Friends And Related Symbol Documentation</h2>
+<a id="af70851c82f5c5d3e1b6b40e55b6d8532" name="af70851c82f5c5d3e1b6b40e55b6d8532"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af70851c82f5c5d3e1b6b40e55b6d8532">&#9670;&#160;</a></span>GameFlowTest_GUIFlowLifecycle_Test</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class GameFlowTest_GUIFlowLifecycle_Test</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a id="a4345986b06ca0a1a188cafd7e79b180d" name="a4345986b06ca0a1a188cafd7e79b180d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4345986b06ca0a1a188cafd7e79b180d">&#9670;&#160;</a></span>role_filter_index</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int RosterScene::role_filter_index = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a1476a31572f1726172a207eef60520ae" name="a1476a31572f1726172a207eef60520ae"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1476a31572f1726172a207eef60520ae">&#9670;&#160;</a></span>roster_players</h2>
 
@@ -411,6 +495,50 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::vector&lt;std::reference_wrapper&lt;const <a class="el" href="classPlayer.html">Player</a>&gt; &gt; RosterScene::roster_players</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9553ee142a2ffa1d8b0d6d749a1de83c" name="a9553ee142a2ffa1d8b0d6d749a1de83c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9553ee142a2ffa1d8b0d6d749a1de83c">&#9670;&#160;</a></span>search_text</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::array&lt;char, 64&gt; RosterScene::search_text {}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4a42fe7f117ec06d28bf6a6aae618378" name="a4a42fe7f117ec06d28bf6a6aae618378"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4a42fe7f117ec06d28bf6a6aae618378">&#9670;&#160;</a></span>selected_player_id</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&gt; RosterScene::selected_player_id</td>
         </tr>
       </table>
   </td>
