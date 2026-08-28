@@ -26,6 +26,7 @@
 #include "global/paths.h"
 #include "gui/gui_scene.h"
 #include "gui/scenes/main_menu_scene.h"
+#include "gui/scenes/match_scene.h"
 #include "gui/scenes/team_selection_scene.h"
 #include "imgui.h"
 #include "settings_manager.h"
@@ -172,6 +173,65 @@ void GUIView::run()
   }
 }
 
+bool GUIView::runMatchRenderProfile()
+{
+  if (!controller.isGameLoaded())
+  {
+    Logger::error("Match render profiling requires an existing loaded save");
+    return false;
+  }
+
+  const auto& teams = controller.getTeams();
+  if (teams.size() < 2)
+  {
+    Logger::error("Match render profiling requires at least two teams");
+    return false;
+  }
+
+  TeamID homeTeamId = teams.front().get().getId();
+  if (const auto managedTeam = controller.getManagedTeam();
+      managedTeam.has_value())
+  {
+    homeTeamId = managedTeam->get().getId();
+  }
+  else
+  {
+    controller.selectManagedTeam(homeTeamId);
+  }
+
+  const auto opponent = std::ranges::find_if(
+      teams, [homeTeamId](const std::reference_wrapper<const Team>& team)
+      { return team.get().getId() != homeTeamId; });
+  if (opponent == teams.end())
+  {
+    Logger::error("Match render profiling could not find an opponent");
+    return false;
+  }
+
+  if (!initialize()) return false;
+
+  applyPendingSceneChanges();
+  overlayScene(
+      std::make_unique<MatchScene>(this, homeTeamId, opponent->get().getId()));
+  applyPendingSceneChanges();
+
+  running = true;
+  while (running && matchFramesTimed < MATCH_FRAME_TIMING_COUNT)
+  {
+    handleEvents();
+    update(MATCH_PROFILE_FRAME_SECONDS);
+    render();
+  }
+
+  const bool completed = matchFramesTimed == MATCH_FRAME_TIMING_COUNT;
+  if (!completed)
+  {
+    Logger::warn("Match render profiling ended before collecting 120 frames");
+  }
+  running = false;
+  return completed;
+}
+
 void GUIView::handleEvents()
 {
   SDL_Event event;
@@ -260,34 +320,42 @@ void GUIView::render()
   // Present the rendered frame
   SDL_RenderPresent(renderer);
 
-  // Keep screenshot encoding outside normal frame timing. Screenshot frames
-  // are excluded from the startup statistics.
-  if (!capturedScreenshot && startupFramesTimed < STARTUP_FRAME_TIMING_COUNT)
+  // Keep screenshot encoding outside normal frame timing. A negative count
+  // means no live match has been entered yet.
+  if (!capturedScreenshot && matchFramesTimed >= 0 &&
+      matchFramesTimed < MATCH_FRAME_TIMING_COUNT)
   {
     const float renderMs =
         static_cast<float>(std::chrono::duration<double, std::milli>(
                                std::chrono::steady_clock::now() - renderStart)
                                .count());
-    startupFrameTimes[static_cast<size_t>(startupFramesTimed++)] = renderMs;
-    if (startupFramesTimed == STARTUP_FRAME_TIMING_COUNT)
+    matchFrameTimes[static_cast<size_t>(matchFramesTimed++)] = renderMs;
+    if (matchFramesTimed == MATCH_FRAME_TIMING_COUNT)
     {
-      reportStartupRenderTimings();
+      reportMatchRenderTimings();
     }
   }
 }
 
-void GUIView::reportStartupRenderTimings()
+void GUIView::beginMatchRenderTimings()
 {
-  std::vector<float> samples(startupFrameTimes.begin(),
-                             startupFrameTimes.end());
+  matchFrameTimes.fill(0.0f);
+  matchFramesTimed = 0;
+  Logger::info("Measuring the first 120 live-match render/present frames");
+}
+
+void GUIView::reportMatchRenderTimings()
+{
+  std::vector<float> samples(matchFrameTimes.begin(), matchFrameTimes.end());
   std::sort(samples.begin(), samples.end());
   const float median = samples[samples.size() / 2];
   const float p95 = samples[static_cast<size_t>(
       std::floor(0.95 * static_cast<double>(samples.size() - 1)))];
   const float worst = samples.back();
-  Logger::info("Render/present timings over the first 120 frames: median " +
-               std::to_string(median) + " ms, p95 " + std::to_string(p95) +
-               " ms, worst " + std::to_string(worst) + " ms");
+  Logger::info(
+      "Live-match render/present timings over the first 120 frames: median " +
+      std::to_string(median) + " ms, p95 " + std::to_string(p95) +
+      " ms, worst " + std::to_string(worst) + " ms");
 }
 
 void GUIView::changeScene(std::unique_ptr<GUIScene> newScene)
@@ -344,6 +412,10 @@ void GUIView::applyPendingSceneChanges()
       if (sceneToApply)
       {
         sceneToApply->onEnter();
+        if (sceneToApply->getID() == SceneID::MATCH)
+        {
+          beginMatchRenderTimings();
+        }
         sceneStack.push(std::move(sceneToApply));
       }
     }

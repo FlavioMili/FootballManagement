@@ -7,6 +7,8 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
+#include <array>
+#include <optional>
 #include <vector>
 
 #include "gui/gui_scene.h"
@@ -52,6 +54,11 @@ class RosterScene : public GUIScene
   [[nodiscard]] SceneID getID() const override;
 
  private:
+  friend class GameFlowTest_GUIFlowLifecycle_Test;
   void loadRoster();
+  [[nodiscard]] const Player* selectedPlayer() const;
   std::vector<std::reference_wrapper<const Player>> roster_players;
+  std::optional<PlayerID> selected_player_id;
+  std::array<char, 64> search_text{};
+  int role_filter_index = 0;
 };

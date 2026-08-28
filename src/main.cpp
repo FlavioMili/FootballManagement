@@ -9,6 +9,8 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <string>
+#include <string_view>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
@@ -23,12 +25,54 @@ extern "C" const char* __lsan_default_suppressions()
 }
 #endif
 
-int main()
+namespace
+{
+constexpr std::string_view PROFILE_MATCH_ARGUMENT = "--profile-match";
+constexpr int FIRST_SAVE_SLOT = 1;
+constexpr int LAST_SAVE_SLOT = 3;
+
+bool loadFirstExistingSave(GameController& controller)
+{
+  for (int slot = FIRST_SAVE_SLOT; slot <= LAST_SAVE_SLOT; ++slot)
+  {
+    if (controller.getSaveSlotMetadata(slot).exists &&
+        controller.loadGame(slot))
+    {
+      Logger::info("Profiling match rendering with save slot " +
+                   std::to_string(slot));
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
+int main(int argc, char* argv[])
 {
   Logger::init();
   try
   {
     auto controller = std::make_unique<GameController>();
+
+    const bool profileMatch =
+        argc == 2 && std::string_view(argv[1]) == PROFILE_MATCH_ARGUMENT;
+    if (argc > 1 && !profileMatch)
+    {
+      std::cerr << "Usage: " << argv[0] << " [--profile-match]\n";
+      return 2;
+    }
+
+    if (profileMatch)
+    {
+      if (!loadFirstExistingSave(*controller))
+      {
+        std::cerr << "No save is available for match profiling.\n";
+        return 2;
+      }
+
+      GUIView profileView(*controller);
+      return profileView.runMatchRenderProfile() ? 0 : 1;
+    }
 
     GUIView view(*controller);
     view.run();

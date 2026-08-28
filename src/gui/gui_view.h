@@ -42,6 +42,12 @@ class GUIView
   void run();
 
   /**
+   * @brief Profiles the first live-match frames and exits automatically.
+   * @return True when all profiling frames were rendered.
+   */
+  bool runMatchRenderProfile();
+
+  /**
    * @brief Changes the current scene.
    * @param newScene The new scene to switch to.
    *
@@ -120,13 +126,14 @@ class GUIView
   bool running;
   bool screenshotPending = false;
 
-  // Render diagnostics (Priority 0)
-  static constexpr int STARTUP_FRAME_TIMING_COUNT = 120;
+  // Live-match render diagnostics (Priority 0)
+  static constexpr int MATCH_FRAME_TIMING_COUNT = 120;
+  static constexpr float MATCH_PROFILE_FRAME_SECONDS = 1.0f / 60.0f;
   bool rendererIsSoftware = false;
-  std::array<float, STARTUP_FRAME_TIMING_COUNT> startupFrameTimes{};
-  int startupFramesTimed = 0;
-  bool startupTimingsReported = false;
-  void reportStartupRenderTimings();
+  std::array<float, MATCH_FRAME_TIMING_COUNT> matchFrameTimes{};
+  int matchFramesTimed = -1;
+  void beginMatchRenderTimings();
+  void reportMatchRenderTimings();
 
   // Main scene
   std::unique_ptr<GUIScene> currentScene;

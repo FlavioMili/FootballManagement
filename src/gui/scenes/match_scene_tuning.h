@@ -162,9 +162,9 @@ struct MatchSceneTuning final
 
   struct Substitutions final
   {
-    static constexpr int SINGLE_COLUMN_COUNT = 1;
-    static constexpr int COLUMN_COUNT = 2;
-    static constexpr float ACTION_BUTTON_WIDTH = 120.0f;
+    static constexpr float MODAL_WIDTH = 820.0f;
+    static constexpr float MODAL_HEIGHT = 700.0f;
+    static constexpr float ACTION_BUTTON_WIDTH = 190.0f;
     static constexpr float ACTION_BUTTON_HEIGHT = 30.0f;
   };
 };

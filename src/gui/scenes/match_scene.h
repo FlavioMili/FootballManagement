@@ -25,6 +25,7 @@ class MatchScene : public GUIScene
   SceneID getID() const override;
 
  private:
+  friend class GameFlowTest_GUIFlowLifecycle_Test;
   uint16_t home_team_id;
   uint16_t away_team_id;
 

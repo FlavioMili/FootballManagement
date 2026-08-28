@@ -67,6 +67,7 @@ set(CORE_SOURCES
     gui/gui_scene.cpp
     gui/gui_view.h
     gui/gui_view.cpp
+    gui/player_ui.h
     gui/render/imatch_renderer.h
     gui/render/match_render_snapshot.h
     gui/render/match_renderer_2d.h

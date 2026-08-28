@@ -34,13 +34,17 @@ class LineupScene : public GUIScene
   [[nodiscard]] SceneID getID() const override { return SceneID::LINEUP; }
 
  private:
+  friend class GameFlowTest_GUIFlowLifecycle_Test;
   void loadLineup();
-  void renderPitch();
+  void renderPitch(float width, float height);
   void renderBench();
+  [[nodiscard]] const Player* selectedPitchPlayer() const;
+  [[nodiscard]] const Player* selectedBenchPlayer() const;
 
   PlayerID dragging_player_id = 0;
   bool is_dragging = false;
 
   Lineup* current_lineup = nullptr;
-  PlayerID selected_player_id = 0;
+  PlayerID selected_pitch_player_id = 0;
+  PlayerID selected_bench_player_id = 0;
 };

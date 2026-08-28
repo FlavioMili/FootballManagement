@@ -27,8 +27,10 @@ extern "C" const char* __lsan_default_suppressions()
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
+#include "global/language_manager.h"
 #include "global/logger.h"
 #include "gui/gui_view.h"
+#include "gui/scenes/lineup_scene.h"
 #include "gui/scenes/main_game_scene.h"
 #include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/match_scene.h"
@@ -43,7 +45,7 @@ extern "C" const char* __lsan_default_suppressions()
 namespace
 {
 constexpr std::chrono::milliseconds MAX_MATCH_SCENE_ENTRY_TIME{100};
-constexpr std::chrono::milliseconds MAX_FIRST_MATCH_RENDER_TIME{100};
+constexpr std::chrono::milliseconds MAX_FIRST_HARDWARE_MATCH_RENDER_TIME{100};
 constexpr int LIVE_MATCH_WARMUP_FRAMES = 40;
 #ifdef DEBUG
 constexpr int AI_DEBUG_WARMUP_FRAMES = 160;
@@ -51,6 +53,14 @@ constexpr int AI_DEBUG_WARMUP_FRAMES = 160;
 constexpr float LIVE_MATCH_TEST_FRAME_SECONDS = 0.05f;
 constexpr std::string_view MATCH_SCREENSHOT_PATH =
     "/tmp/football_management_screenshot.bmp";
+constexpr std::string_view ROSTER_SCREENSHOT_PATH =
+    "/tmp/football_management_roster.bmp";
+constexpr std::string_view ITALIAN_ROSTER_SCREENSHOT_PATH =
+    "/tmp/football_management_roster_italian.bmp";
+constexpr std::string_view LINEUP_SCREENSHOT_PATH =
+    "/tmp/football_management_lineup.bmp";
+constexpr std::string_view SUBSTITUTION_SCREENSHOT_PATH =
+    "/tmp/football_management_substitution.bmp";
 #ifdef DEBUG
 constexpr std::string_view AI_DEBUG_SCREENSHOT_PATH =
     "/tmp/football_management_ai_debug.bmp";
@@ -176,15 +186,66 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   view.popScene();
   EXPECT_NO_THROW(step_frame());
 
+  const auto uiTeams = controller->getTeams();
+  ASSERT_FALSE(uiTeams.empty());
+  controller->selectManagedTeam(uiTeams.front().get().getId());
+
   // 5. Roster Scene Overlay
   view.overlayScene(std::make_unique<RosterScene>(&view));
   EXPECT_NO_THROW(step_frame());
+  ASSERT_NE(view.getActiveScene(), nullptr);
+  EXPECT_EQ(view.getActiveScene()->getID(), SceneID::ROSTER);
+  EXPECT_EQ(view.matchFramesTimed, -1);
+  auto* rosterScene = dynamic_cast<RosterScene*>(view.getActiveScene());
+  ASSERT_NE(rosterScene, nullptr);
+  ASSERT_FALSE(rosterScene->roster_players.empty());
+  rosterScene->selected_player_id =
+      rosterScene->roster_players.front().get().getId();
+  view.render();
+  const std::filesystem::path rosterScreenshotPath = ROSTER_SCREENSHOT_PATH;
+  std::filesystem::remove(rosterScreenshotPath);
+  EXPECT_TRUE(view.captureScreenshot(rosterScreenshotPath.string()));
+  ASSERT_TRUE(std::filesystem::exists(rosterScreenshotPath));
+  EXPECT_GT(std::filesystem::file_size(rosterScreenshotPath), 1'000u);
+
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::IT));
+  view.render();
+  const std::filesystem::path italianRosterScreenshotPath =
+      ITALIAN_ROSTER_SCREENSHOT_PATH;
+  std::filesystem::remove(italianRosterScreenshotPath);
+  EXPECT_TRUE(view.captureScreenshot(italianRosterScreenshotPath.string()));
+  ASSERT_TRUE(std::filesystem::exists(italianRosterScreenshotPath));
+  EXPECT_GT(std::filesystem::file_size(italianRosterScreenshotPath), 1'000u);
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::EN));
 
   // Pop Roster Scene
   view.popScene();
   EXPECT_NO_THROW(step_frame());
 
-  // 6. Strategy Scene Overlay
+  // 6. Lineup Scene Overlay
+  view.overlayScene(std::make_unique<LineupScene>(&view));
+  EXPECT_NO_THROW(step_frame());
+  ASSERT_NE(view.getActiveScene(), nullptr);
+  EXPECT_EQ(view.getActiveScene()->getID(), SceneID::LINEUP);
+  auto* lineupScene = dynamic_cast<LineupScene*>(view.getActiveScene());
+  ASSERT_NE(lineupScene, nullptr);
+  ASSERT_NE(lineupScene->current_lineup, nullptr);
+  ASSERT_FALSE(lineupScene->current_lineup->getOutfieldPlayers().empty());
+  ASSERT_FALSE(lineupScene->current_lineup->getReserves().empty());
+  lineupScene->selected_pitch_player_id =
+      lineupScene->current_lineup->getOutfieldPlayers().front().player->getId();
+  lineupScene->selected_bench_player_id =
+      lineupScene->current_lineup->getReserves().front()->getId();
+  view.render();
+  const std::filesystem::path lineupScreenshotPath = LINEUP_SCREENSHOT_PATH;
+  std::filesystem::remove(lineupScreenshotPath);
+  EXPECT_TRUE(view.captureScreenshot(lineupScreenshotPath.string()));
+  ASSERT_TRUE(std::filesystem::exists(lineupScreenshotPath));
+  EXPECT_GT(std::filesystem::file_size(lineupScreenshotPath), 1'000u);
+  view.popScene();
+  EXPECT_NO_THROW(step_frame());
+
+  // 7. Strategy Scene Overlay
   view.overlayScene(std::make_unique<StrategyScene>(&view));
   EXPECT_NO_THROW(step_frame());
 
@@ -192,14 +253,16 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   view.popScene();
   EXPECT_NO_THROW(step_frame());
 
-  // 7. Render a live match and export a frame for visual/headless debugging.
+  // 8. Render a live match and export a frame for visual/headless debugging.
   const auto teams = controller->getTeams();
   ASSERT_GE(teams.size(), 2u);
   controller->selectManagedTeam(teams[0].get().getId());
   view.overlayScene(std::make_unique<MatchScene>(&view, teams[0].get().getId(),
                                                  teams[1].get().getId()));
+  EXPECT_EQ(view.matchFramesTimed, -1);
   const auto matchSceneEntryStart = std::chrono::steady_clock::now();
   view.applyPendingSceneChanges();
+  EXPECT_EQ(view.matchFramesTimed, 0);
   const auto matchSceneEntryDuration =
       std::chrono::steady_clock::now() - matchSceneEntryStart;
   const auto matchSceneEntryMicroseconds =
@@ -209,8 +272,31 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   RecordProperty("match_scene_entry_microseconds", matchSceneEntryMicroseconds);
   EXPECT_LT(matchSceneEntryDuration, MAX_MATCH_SCENE_ENTRY_TIME)
       << "Match scene initialization blocked the UI thread";
+  auto* matchScene = dynamic_cast<MatchScene*>(view.getActiveScene());
+  ASSERT_NE(matchScene, nullptr);
+  const Lineup& managedLineup = teams[0].get().getLineup();
+  ASSERT_FALSE(managedLineup.getOutfieldPlayers().empty());
+  ASSERT_FALSE(managedLineup.getReserves().empty());
+  matchScene->show_substitutions = true;
+  matchScene->is_paused = true;
+  matchScene->selected_pitch_player =
+      managedLineup.getOutfieldPlayers().front().player->getId();
+  matchScene->selected_bench_player =
+      managedLineup.getReserves().front()->getId();
+  view.render();
+  view.render();
+  const std::filesystem::path substitutionScreenshotPath =
+      SUBSTITUTION_SCREENSHOT_PATH;
+  std::filesystem::remove(substitutionScreenshotPath);
+  EXPECT_TRUE(view.captureScreenshot(substitutionScreenshotPath.string()));
+  ASSERT_TRUE(std::filesystem::exists(substitutionScreenshotPath));
+  EXPECT_GT(std::filesystem::file_size(substitutionScreenshotPath), 1'000u);
+  matchScene->show_substitutions = false;
+  matchScene->is_paused = false;
+  view.beginMatchRenderTimings();
   const auto firstMatchRenderStart = std::chrono::steady_clock::now();
   view.render();
+  EXPECT_EQ(view.matchFramesTimed, 1);
   const auto firstMatchRenderDuration =
       std::chrono::steady_clock::now() - firstMatchRenderStart;
   const auto firstMatchRenderMicroseconds =
@@ -219,8 +305,11 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
           .count();
   RecordProperty("first_match_render_microseconds",
                  firstMatchRenderMicroseconds);
-  EXPECT_LT(firstMatchRenderDuration, MAX_FIRST_MATCH_RENDER_TIME)
-      << "The first match render blocked the UI thread";
+  if (!view.rendererIsSoftware)
+  {
+    EXPECT_LT(firstMatchRenderDuration, MAX_FIRST_HARDWARE_MATCH_RENDER_TIME)
+        << "The first hardware-rendered match frame blocked the UI thread";
+  }
   for (int frame = 0; frame < LIVE_MATCH_WARMUP_FRAMES; ++frame)
   {
     view.update(LIVE_MATCH_TEST_FRAME_SECONDS);

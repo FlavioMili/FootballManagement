@@ -21,6 +21,7 @@
 
 #include "global/logger.h"
 #include "gui/gui_view.h"
+#include "gui/player_ui.h"
 #include "gui/render/match_renderer_2d.h"
 #include "model/role_utils.h"
 #include "model/team.h"
@@ -95,10 +96,7 @@ MatchScene::MatchScene(GUIView* guiView_ptr, uint16_t home_id, uint16_t away_id)
 {
 }
 
-SceneID MatchScene::getID() const
-{
-  return SceneID::GAME_MENU; /* Re-use for now */
-}
+SceneID MatchScene::getID() const { return SceneID::MATCH; }
 
 void MatchScene::onEnter()
 {
@@ -398,9 +396,13 @@ void MatchScene::render()
 
 void MatchScene::renderSubstitutionsModal()
 {
-  ImGui::OpenPopup("Substitutions");
-  if (ImGui::BeginPopupModal("Substitutions", &show_substitutions,
-                             ImGuiWindowFlags_AlwaysAutoResize))
+  ImGui::OpenPopup(LOC("SUBSTITUTION_TITLE"));
+  ImGui::SetNextWindowSize(
+      ImVec2(MatchSceneTuning::Substitutions::MODAL_WIDTH,
+             MatchSceneTuning::Substitutions::MODAL_HEIGHT),
+      ImGuiCond_Appearing);
+  if (ImGui::BeginPopupModal(LOC("SUBSTITUTION_TITLE"), &show_substitutions,
+                             ImGuiWindowFlags_NoResize))
   {
     auto managed_opt = guiView->getController().getManagedTeam();
     if (!managed_opt)
@@ -411,65 +413,92 @@ void MatchScene::renderSubstitutionsModal()
     Team& managed_team = managed_opt->get();
     Lineup& lineup = managed_team.getLineup();
 
-    ImGui::Text(
-        "Select one player from the pitch and one from the bench to swap.");
+    ImGui::TextWrapped("%s", LOC("SUBSTITUTION_HELP"));
     ImGui::Separator();
 
-    ImGui::Columns(MatchSceneTuning::Substitutions::COLUMN_COUNT, "SubCols",
-                   true);
-    ImGui::Text("On Pitch");
-    ImGui::Separator();
-
-    // GK
-    if (lineup.getGoalkeeper())
+    if (ImGui::BeginTable(
+            "SubstitutionChoices", 2,
+            ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable))
     {
-      bool selected =
-          (selected_pitch_player == lineup.getGoalkeeper()->getId());
-      std::string label =
-          std::format("GK - {}##{}", lineup.getGoalkeeper()->getName(),
-                      lineup.getGoalkeeper()->getId());
-      if (ImGui::Selectable(label.c_str(), selected))
-      {
-        selected_pitch_player =
-            selected ? PlayerID{} : lineup.getGoalkeeper()->getId();
-      }
-    }
-    for (const auto& posPlayer : lineup.getOutfieldPlayers())
-    {
-      if (!posPlayer.player) continue;
-      bool selected = (selected_pitch_player == posPlayer.player->getId());
-      std::string label = std::format(
-          "{} - {}##{}", RoleUtils::toString(posPlayer.player->getRole()),
-          posPlayer.player->getName(), posPlayer.player->getId());
-      if (ImGui::Selectable(label.c_str(), selected))
-      {
-        selected_pitch_player =
-            selected ? PlayerID{} : posPlayer.player->getId();
-      }
-    }
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", LOC("SUBSTITUTION_ON_PITCH"));
+      ImGui::BeginChild("PitchChoices", ImVec2(0.0f, 185.0f), true);
 
-    ImGui::NextColumn();
-    ImGui::Text("Bench");
+      if (lineup.getGoalkeeper())
+      {
+        bool selected =
+            (selected_pitch_player == lineup.getGoalkeeper()->getId());
+        std::string label =
+            std::format("GK - {}##{}", lineup.getGoalkeeper()->getName(),
+                        lineup.getGoalkeeper()->getId());
+        if (ImGui::Selectable(label.c_str(), selected))
+          selected_pitch_player =
+              selected ? PlayerID{} : lineup.getGoalkeeper()->getId();
+      }
+      for (const auto& posPlayer : lineup.getOutfieldPlayers())
+      {
+        if (!posPlayer.player) continue;
+        bool selected = (selected_pitch_player == posPlayer.player->getId());
+        std::string label = std::format(
+            "{} - {}##{}", RoleUtils::toString(posPlayer.player->getRole()),
+            posPlayer.player->getName(), posPlayer.player->getId());
+        if (ImGui::Selectable(label.c_str(), selected))
+          selected_pitch_player =
+              selected ? PlayerID{} : posPlayer.player->getId();
+      }
+      ImGui::EndChild();
+
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", LOC("SUBSTITUTION_BENCH"));
+      ImGui::BeginChild("BenchChoices", ImVec2(0.0f, 185.0f), true);
+
+      for (const auto& res : lineup.getReserves())
+      {
+        if (!res) continue;
+        bool selected = (selected_bench_player == res->getId());
+        std::string label =
+            std::format("{} - {}##{}", RoleUtils::toString(res->getRole()),
+                        res->getName(), res->getId());
+        if (ImGui::Selectable(label.c_str(), selected))
+          selected_bench_player = selected ? PlayerID{} : res->getId();
+      }
+      ImGui::EndChild();
+      ImGui::EndTable();
+    }
     ImGui::Separator();
 
-    for (const auto& res : lineup.getReserves())
+    const Player* outgoingPlayer = nullptr;
+    const Player* incomingPlayer = nullptr;
+    if (lineup.getGoalkeeper() &&
+        lineup.getGoalkeeper()->getId() == selected_pitch_player)
+      outgoingPlayer = lineup.getGoalkeeper();
+    for (const auto& positioned : lineup.getOutfieldPlayers())
+      if (positioned.player &&
+          positioned.player->getId() == selected_pitch_player)
+        outgoingPlayer = positioned.player;
+    for (const Player* reserve : lineup.getReserves())
+      if (reserve && reserve->getId() == selected_bench_player)
+        incomingPlayer = reserve;
+
+    if (ImGui::BeginTable("SubstitutionComparison", 2,
+                          ImGuiTableFlags_BordersInnerV))
     {
-      if (!res) continue;
-      bool selected = (selected_bench_player == res->getId());
-      std::string label =
-          std::format("{} - {}##{}", RoleUtils::toString(res->getRole()),
-                      res->getName(), res->getId());
-      if (ImGui::Selectable(label.c_str(), selected))
-      {
-        selected_bench_player = selected ? PlayerID{} : res->getId();
-      }
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted(LOC("SUBSTITUTION_ON_PITCH"));
+      PlayerUI::detailPanel("OutgoingPlayer", outgoingPlayer,
+                            guiView->getController().getStatsConfig(), nullptr,
+                            250.0f);
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted(LOC("SUBSTITUTION_BENCH"));
+      PlayerUI::detailPanel("IncomingPlayer", incomingPlayer,
+                            guiView->getController().getStatsConfig(),
+                            outgoingPlayer, 250.0f);
+      ImGui::EndTable();
     }
 
-    ImGui::Columns(MatchSceneTuning::Substitutions::SINGLE_COLUMN_COUNT);
-    ImGui::Separator();
-
+    ImGui::BeginDisabled(!outgoingPlayer || !incomingPlayer);
     if (ImGui::Button(
-            "Swap Selected",
+            LOC("SUBSTITUTION_CONFIRM"),
             ImVec2(MatchSceneTuning::Substitutions::ACTION_BUTTON_WIDTH,
                    MatchSceneTuning::Substitutions::ACTION_BUTTON_HEIGHT)) &&
         selected_pitch_player != PlayerID{} &&
@@ -489,9 +518,10 @@ void MatchScene::renderSubstitutionsModal()
         selected_bench_player = PlayerID{};
       }
     }
+    ImGui::EndDisabled();
     ImGui::SameLine();
     if (ImGui::Button(
-            "Close",
+            LOC("SUBSTITUTION_CLOSE"),
             ImVec2(MatchSceneTuning::Substitutions::ACTION_BUTTON_WIDTH,
                    MatchSceneTuning::Substitutions::ACTION_BUTTON_HEIGHT)))
     {

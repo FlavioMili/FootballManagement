@@ -17,15 +17,16 @@
 #include "global/language_manager.h"
 #include "gui/gui_constants.h"
 #include "gui/gui_view.h"
+#include "gui/player_ui.h"
 #include "model/game.h"
 #include "model/role_utils.h"
 #include "model/team.h"
 
 namespace
 {
-constexpr float PITCH_WIDTH = 800.0f;
-constexpr float PITCH_HEIGHT = 500.0f;
 constexpr float PLAYER_RADIUS = 15.0f;
+constexpr float PITCH_ASPECT_RATIO = 1.6f;
+constexpr float MINIMUM_PITCH_WIDTH = 320.0f;
 
 void renderPlayerTooltip(const Player* p, const StatsConfig& stats_config)
 {
@@ -80,7 +81,7 @@ void LineupScene::render()
   ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos);
   ImGui::SetNextWindowSize(ImGui::GetMainViewport()->Size);
   ImGui::Begin(
-      "Lineup", nullptr,
+      LOC("LINEUP_TITLE"), nullptr,
       ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
 
   if (ImGui::Button(LOC("ROSTER_BACK"), ImVec2(GUIConstants::BUTTON_WIDTH,
@@ -98,31 +99,35 @@ void LineupScene::render()
     return;
   }
 
-  // Two columns: Pitch on top, Bench on bottom? Actually let's do Pitch taking
-  // up most space, Bench on right
-  ImGui::Columns(2, "LineupColumns", false);
-  ImGui::SetColumnWidth(0, PITCH_WIDTH + 40.0f);
-
-  renderPitch();
-
-  ImGui::NextColumn();
-
-  renderBench();
-
-  ImGui::Columns(1);
+  ImGui::TextDisabled("%s", LOC("LINEUP_HELP"));
+  if (ImGui::BeginTable(
+          "LineupWorkspace", 2,
+          ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV))
+  {
+    ImGui::TableSetupColumn("pitch", ImGuiTableColumnFlags_WidthStretch, 0.72f);
+    ImGui::TableSetupColumn("utility", ImGuiTableColumnFlags_WidthStretch,
+                            0.28f);
+    ImGui::TableNextColumn();
+    const float pitchWidth =
+        std::max(MINIMUM_PITCH_WIDTH, ImGui::GetContentRegionAvail().x - 8.0f);
+    renderPitch(pitchWidth, pitchWidth / PITCH_ASPECT_RATIO);
+    ImGui::TableNextColumn();
+    renderBench();
+    ImGui::EndTable();
+  }
   ImGui::End();
 }
 
-void LineupScene::renderPitch()
+void LineupScene::renderPitch(float pitchWidth, float pitchHeight)
 {
-  ImGui::Text("Starting XI (Drag players)");
+  ImGui::Text("%s", LOC("LINEUP_STARTING_XI"));
 
   ImVec2 p = ImGui::GetCursorScreenPos();
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
   // Draw Pitch background
   ImVec2 pitch_min = p;
-  auto pitch_max = ImVec2(p.x + PITCH_WIDTH, p.y + PITCH_HEIGHT);
+  auto pitch_max = ImVec2(p.x + pitchWidth, p.y + pitchHeight);
   draw_list->AddRectFilled(pitch_min, pitch_max,
                            IM_COL32(34, 139, 34, 255));  // Green pitch
 
@@ -130,21 +135,21 @@ void LineupScene::renderPitch()
   draw_list->AddRect(pitch_min, pitch_max, line_color, 0.0f, 0,
                      2.0f);  // White border
 
-  float center_y = pitch_min.y + PITCH_HEIGHT * 0.5f;
-  float center_x = pitch_min.x + PITCH_WIDTH * 0.5f;
+  float center_y = pitch_min.y + pitchHeight * 0.5f;
+  float center_x = pitch_min.x + pitchWidth * 0.5f;
 
   // Center line (vertical)
   draw_list->AddLine(ImVec2(center_x, pitch_min.y),
                      ImVec2(center_x, pitch_max.y), line_color, 2.0f);
 
   // Center circle
-  draw_list->AddCircle(ImVec2(center_x, center_y), PITCH_HEIGHT * 0.15f,
+  draw_list->AddCircle(ImVec2(center_x, center_y), pitchHeight * 0.15f,
                        line_color, 32, 2.0f);
   draw_list->AddCircleFilled(ImVec2(center_x, center_y), 4.0f, line_color);
 
   // Penalty Boxes
-  float pen_box_w = PITCH_WIDTH * 0.15f;
-  float pen_box_h = PITCH_HEIGHT * 0.5f;
+  float pen_box_w = pitchWidth * 0.15f;
+  float pen_box_h = pitchHeight * 0.5f;
   float pen_box_y = center_y - pen_box_h * 0.5f;
 
   // Left Penalty Box
@@ -157,8 +162,8 @@ void LineupScene::renderPitch()
                      0.0f, 0, 2.0f);
 
   // Goal Boxes
-  float goal_box_w = PITCH_WIDTH * 0.05f;
-  float goal_box_h = PITCH_HEIGHT * 0.25f;
+  float goal_box_w = pitchWidth * 0.05f;
+  float goal_box_h = pitchHeight * 0.25f;
   float goal_box_y = center_y - goal_box_h * 0.5f;
 
   // Left Goal Box
@@ -171,7 +176,7 @@ void LineupScene::renderPitch()
                      0.0f, 0, 2.0f);
 
   // Corner arcs
-  float corner_r = PITCH_HEIGHT * 0.03f;
+  float corner_r = pitchHeight * 0.03f;
   const float PI = std::numbers::pi_v<float>;
   // Top-left
   draw_list->PathArcTo(ImVec2(pitch_min.x, pitch_min.y), corner_r, 0.0f,
@@ -194,7 +199,7 @@ void LineupScene::renderPitch()
   if (const Player* gk = current_lineup->getGoalkeeper())
   {
     auto pos = ImVec2(pitch_min.x + PLAYER_RADIUS + 10.0f,
-                      pitch_min.y + PITCH_HEIGHT * 0.5f);
+                      pitch_min.y + pitchHeight * 0.5f);
 
     // Invisible button for Drag & Drop
     ImGui::SetCursorScreenPos(
@@ -205,22 +210,11 @@ void LineupScene::renderPitch()
 
     if (ImGui::IsItemClicked())
     {
-      if (selected_player_id == 0)
-      {
-        selected_player_id = gk->getId();
-      }
-      else if (selected_player_id == gk->getId())
-      {
-        selected_player_id = 0;
-      }
-      else
-      {
-        current_lineup->swapPlayers(selected_player_id, gk->getId());
-        selected_player_id = 0;
-      }
+      selected_pitch_player_id =
+          selected_pitch_player_id == gk->getId() ? PlayerID{} : gk->getId();
     }
 
-    if (selected_player_id == gk->getId())
+    if (selected_pitch_player_id == gk->getId())
     {
       draw_list->AddCircle(pos, PLAYER_RADIUS + 3.0f,
                            IM_COL32(255, 255, 0, 255), 0, 2.0f);
@@ -243,6 +237,8 @@ void LineupScene::renderPitch()
         IM_ASSERT(payload->DataSize == sizeof(PlayerID));
         const PlayerID bench_pid = *static_cast<const PlayerID*>(payload->Data);
         current_lineup->swapPlayers(bench_pid, gk->getId());
+        selected_pitch_player_id = PlayerID{};
+        selected_bench_player_id = PlayerID{};
       }
       ImGui::EndDragDropTarget();
     }
@@ -254,8 +250,8 @@ void LineupScene::renderPitch()
   {
     if (!posPlayer.player) continue;
 
-    auto player_pos = ImVec2(pitch_min.x + posPlayer.position.x * PITCH_WIDTH,
-                             pitch_min.y + posPlayer.position.y * PITCH_HEIGHT);
+    auto player_pos = ImVec2(pitch_min.x + posPlayer.position.x * pitchWidth,
+                             pitch_min.y + posPlayer.position.y * pitchHeight);
 
     // Invisible button for dragging & swapping
     ImGui::SetCursorScreenPos(
@@ -266,23 +262,13 @@ void LineupScene::renderPitch()
 
     if (ImGui::IsItemClicked())
     {
-      if (selected_player_id == 0)
-      {
-        selected_player_id = posPlayer.player->getId();
-      }
-      else if (selected_player_id == posPlayer.player->getId())
-      {
-        selected_player_id = 0;
-      }
-      else
-      {
-        current_lineup->swapPlayers(selected_player_id,
-                                    posPlayer.player->getId());
-        selected_player_id = 0;
-      }
+      selected_pitch_player_id =
+          selected_pitch_player_id == posPlayer.player->getId()
+              ? PlayerID{}
+              : posPlayer.player->getId();
     }
 
-    if (selected_player_id == posPlayer.player->getId())
+    if (selected_pitch_player_id == posPlayer.player->getId())
     {
       draw_list->AddCircle(player_pos, PLAYER_RADIUS + 3.0f,
                            IM_COL32(255, 255, 0, 255), 0, 2.0f);
@@ -292,16 +278,16 @@ void LineupScene::renderPitch()
     {
       // Update position based on mouse delta
       ImVec2 delta = io.MouseDelta;
-      float new_x = (player_pos.x + delta.x - pitch_min.x) / PITCH_WIDTH;
-      float new_y = (player_pos.y + delta.y - pitch_min.y) / PITCH_HEIGHT;
+      float new_x = (player_pos.x + delta.x - pitch_min.x) / pitchWidth;
+      float new_y = (player_pos.y + delta.y - pitch_min.y) / pitchHeight;
 
       new_x = std::clamp(new_x, 0.0f, 1.0f);
       new_y = std::clamp(new_y, 0.0f, 1.0f);
 
       current_lineup->moveOutfieldPlayer(posPlayer.player->getId(),
                                          {new_x, new_y});
-      player_pos = ImVec2(pitch_min.x + new_x * PITCH_WIDTH,
-                          pitch_min.y + new_y * PITCH_HEIGHT);
+      player_pos = ImVec2(pitch_min.x + new_x * pitchWidth,
+                          pitch_min.y + new_y * pitchHeight);
     }
 
     ImU32 color = ImGui::IsItemHovered() ? IM_COL32(100, 100, 255, 255)
@@ -326,18 +312,20 @@ void LineupScene::renderPitch()
         IM_ASSERT(payload->DataSize == sizeof(PlayerID));
         const PlayerID bench_pid = *static_cast<const PlayerID*>(payload->Data);
         current_lineup->swapPlayers(bench_pid, posPlayer.player->getId());
+        selected_pitch_player_id = PlayerID{};
+        selected_bench_player_id = PlayerID{};
       }
       ImGui::EndDragDropTarget();
     }
   }
 
-  ImGui::Dummy(ImVec2(PITCH_WIDTH, PITCH_HEIGHT));
+  ImGui::Dummy(ImVec2(pitchWidth, pitchHeight));
 }
 
 void LineupScene::renderBench()
 {
-  ImGui::Text("Substitutes");
-  ImGui::BeginChild("BenchList", ImVec2(0, 0), true);
+  ImGui::Text("%s", LOC("LINEUP_BENCH"));
+  ImGui::BeginChild("BenchList", ImVec2(0, 220.0f), true);
 
   for (const Player* p : current_lineup->getReserves())
   {
@@ -346,22 +334,10 @@ void LineupScene::renderBench()
       std::string label =
           std::format("[{}] {}##{}", RoleUtils::toString(p->getRole()),
                       p->getName(), p->getId());
-      if (bool is_selected = (selected_player_id == p->getId());
+      if (bool is_selected = (selected_bench_player_id == p->getId());
           ImGui::Selectable(label.c_str(), is_selected))
       {
-        if (selected_player_id == 0)
-        {
-          selected_player_id = p->getId();
-        }
-        else if (selected_player_id == p->getId())
-        {
-          selected_player_id = 0;
-        }
-        else
-        {
-          current_lineup->swapPlayers(selected_player_id, p->getId());
-          selected_player_id = 0;
-        }
+        selected_bench_player_id = is_selected ? PlayerID{} : p->getId();
       }
       renderPlayerTooltip(p, guiView->getController().getStatsConfig());
 
@@ -377,4 +353,46 @@ void LineupScene::renderBench()
   }
 
   ImGui::EndChild();
+
+  const Player* pitchPlayer = selectedPitchPlayer();
+  const Player* benchPlayer = selectedBenchPlayer();
+  const bool canSwap = pitchPlayer && benchPlayer;
+  ImGui::BeginDisabled(!canSwap);
+  if (ImGui::Button(LOC("LINEUP_SWAP_SELECTED"), ImVec2(-1.0f, 36.0f)) &&
+      current_lineup->swapPlayers(selected_bench_player_id,
+                                  selected_pitch_player_id))
+  {
+    selected_pitch_player_id = PlayerID{};
+    selected_bench_player_id = PlayerID{};
+  }
+  ImGui::EndDisabled();
+  ImGui::TextUnformatted(LOC("LINEUP_COMPARISON"));
+  PlayerUI::detailPanel("LineupComparison", benchPlayer,
+                        guiView->getController().getStatsConfig(), pitchPlayer);
+}
+
+const Player* LineupScene::selectedPitchPlayer() const
+{
+  if (!current_lineup || selected_pitch_player_id == PlayerID{}) return nullptr;
+  if (const Player* goalkeeper = current_lineup->getGoalkeeper();
+      goalkeeper && goalkeeper->getId() == selected_pitch_player_id)
+    return goalkeeper;
+  const auto found = std::ranges::find_if(current_lineup->getOutfieldPlayers(),
+                                          [this](const auto& positioned)
+                                          {
+                                            return positioned.player &&
+                                                   positioned.player->getId() ==
+                                                       selected_pitch_player_id;
+                                          });
+  return found == current_lineup->getOutfieldPlayers().end() ? nullptr
+                                                             : found->player;
+}
+
+const Player* LineupScene::selectedBenchPlayer() const
+{
+  if (!current_lineup || selected_bench_player_id == PlayerID{}) return nullptr;
+  const auto found = std::ranges::find_if(
+      current_lineup->getReserves(), [this](const Player* player)
+      { return player && player->getId() == selected_bench_player_id; });
+  return found == current_lineup->getReserves().end() ? nullptr : *found;
 }

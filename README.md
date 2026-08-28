@@ -18,7 +18,7 @@ We welcome contributions from humans and AI alike! Before you start, please chec
 * **[AI Guidelines](AI_GUIDELINES.md)**: We are proudly **pro-AI**. However, all AI-assisted code must be explicitly declared and heavily human-reviewed. Read this file to understand our philosophy.
 * **[Code of Conduct](CODE_OF_CONDUCT.md)**: We are committed to fostering a welcoming and inclusive environment.
 * **[Agent Context](AGENT.md)**: If you are an autonomous AI Agent, read this file for specific architectural constraints and tooling requirements.
-* **[Development Handoff](docs/DEVELOPMENT_HANDOFF.md)**: Verified implementation state, exact tests, performance workflow, debug artifacts, and bounded next tasks for continuing match AI, presentation, and transfers.
+* **[Development Handoff](DEVELOPMENT_HANDOFF.md)**: Verified implementation state, exact tests, performance workflow, debug artifacts, and bounded next tasks for continuing match AI, presentation, and transfers.
 
 ---
 

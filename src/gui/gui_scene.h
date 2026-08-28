@@ -28,6 +28,7 @@ enum class SceneID : uint8_t
   ROSTER,          /**< Team roster scene */
   STRATEGY,        /**< Strategy management scene */
   TRANSFER_MARKET, /**< Transfer market scene */
+  MATCH,           /**< Live match scene */
 };
 
 /**
