@@ -82,7 +82,4 @@ class PlayerRepository
 
  private:
   std::shared_ptr<DatabaseConnection> db_conn;
-
-  void bindPlayerParams(sqlite3_stmt* stmt, const Player& player,
-                        int startIndex) const;
 };

@@ -70,6 +70,10 @@ void SettingsManager::load()
     settings_.screen_tips = j.value("screen_tips", settings_.screen_tips);
     settings_.screen_tips_seen =
         j.value("screen_tips_seen", settings_.screen_tips_seen);
+    settings_.autosave_frequency = std::clamp(
+        j.value("autosave_frequency", settings_.autosave_frequency), 0, 5);
+    settings_.autosave_backups = std::clamp(
+        j.value("autosave_backups", settings_.autosave_backups), 0, 9);
   }
   catch (const json::exception& exception)
   {
@@ -95,6 +99,8 @@ void SettingsManager::save() const
   j["reduced_motion"] = settings_.reduced_motion;
   j["screen_tips"] = settings_.screen_tips;
   j["screen_tips_seen"] = settings_.screen_tips_seen;
+  j["autosave_frequency"] = settings_.autosave_frequency;
+  j["autosave_backups"] = settings_.autosave_backups;
 
   std::ofstream out(RuntimePaths::settingsPath());
   out << j.dump(2);

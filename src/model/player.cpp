@@ -275,3 +275,13 @@ void Player::setTransferStatus(TransferStatus status)
 }
 
 TransferStatus Player::getTransferStatus() const { return _transfer_status; }
+
+void Player::setAcademyPlayer(bool academy)
+{
+  if (academy)
+    _status |= ACADEMY_BIT;
+  else
+    _status &= ~ACADEMY_BIT;
+}
+
+bool Player::isAcademyPlayer() const { return (_status & ACADEMY_BIT) != 0; }

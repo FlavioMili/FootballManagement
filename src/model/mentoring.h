@@ -69,7 +69,8 @@ struct MentoringGroup
  * Viechtbauer 2006). Each week a mentee's professionalism and temperament
  * move a small share of the gap towards the mentor's, scaled by the
  * youngster's receptiveness (age) and the mentor's standing (age and
- * experience), at most 0.2 points a week and 10 points in total. A
+ * experience), at most 0.1 points a week (about five a season) and 10
+ * points in total. A
  * professional mentor also adds up to 4% to the youngster's development;
  * an unhappy mentor spreads his mood instead.
  */
@@ -80,7 +81,7 @@ inline constexpr int MENTEE_MAX_AGE = 23;
 inline constexpr std::size_t MAX_MENTEES = 3;
 /** Share of the trait gap closed per week at full receptiveness. [P] */
 inline constexpr float WEEKLY_RATE = 0.006f;
-inline constexpr float MAX_WEEKLY_STEP = 0.2f;
+inline constexpr float MAX_WEEKLY_STEP = 0.1f;
 inline constexpr float MAX_TOTAL_SHIFT = 10.0f;
 inline constexpr float MAX_DEVELOPMENT_BONUS = 0.04f;
 /** Below this morale the mentor's gloom rubs off (0.5 morale a week). */
@@ -129,7 +130,6 @@ class MentoringSystem
   float developmentMultiplier(const GameData& gamedata,
                               PlayerID player_id) const;
 
-  const std::vector<MentoringGroup>& groups() const { return all; }
   std::vector<MentoringGroup> groupsFor(TeamID team_id) const;
   /** Group containing a player as mentor or mentee (nullptr if none). */
   const MentoringGroup* groupOf(PlayerID player_id) const;

@@ -428,6 +428,10 @@ TEST(TrainingWorldTest, PlansFocusAndWorkloadSurviveSaveAndLoad)
   auto controller = makeWorld(slot.slot);
   const TeamID managed = controller->getTeams().front().get().getId();
   controller->selectManagedTeam(managed);
+  // The default (balanced) delegation lets the assistant set intensity and
+  // congestion every day; this test owns the schedule.
+  ASSERT_TRUE(
+      controller->setDutyOwner(Duty::TrainingSchedule, DutyOwner::Manager));
   const PlayerID player_id =
       controller->getPlayersForTeam(managed).front().get().getId();
   ASSERT_TRUE(controller->setTrainingPreset(TrainingPreset::Attacking));

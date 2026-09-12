@@ -48,8 +48,8 @@ class ClubScene : public ManagementScene
     std::string movements;
   };
 
-  void renderBoard(float width, float height);
-  void renderStadium(float width, float height);
+  void renderBoard(float width);
+  void renderStadium(float width);
   void renderHistory();
 
   std::vector<HistoryRow> history;

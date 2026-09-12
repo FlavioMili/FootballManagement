@@ -336,6 +336,52 @@ void badge(const char* text, const ImVec4& color)
   ImGui::Dummy(size);
 }
 
+void drawClubBadge(ImDrawList* drawList, ImVec2 min, float height,
+                   const char* code, uint32_t primary, uint32_t secondary)
+{
+  const float h = height;
+  const float w = std::round(h * 0.84f);
+  // Shield outline: flat top, straight sides, curved point at the bottom.
+  const auto shield = [&]()
+  {
+    drawList->PathLineTo(min);
+    drawList->PathLineTo(ImVec2(min.x + w, min.y));
+    drawList->PathLineTo(ImVec2(min.x + w, min.y + h * 0.52f));
+    drawList->PathBezierQuadraticCurveTo(ImVec2(min.x + w, min.y + h * 0.86f),
+                                         ImVec2(min.x + w * 0.5f, min.y + h));
+    drawList->PathBezierQuadraticCurveTo(ImVec2(min.x, min.y + h * 0.86f),
+                                         ImVec2(min.x, min.y + h * 0.52f));
+  };
+  shield();
+  drawList->PathFillConvex(Theme::toU32(Theme::unpackRgb(primary)));
+  // Right half in the second colour (halved kit).
+  drawList->PushClipRect(ImVec2(min.x + w * 0.5f, min.y),
+                         ImVec2(min.x + w, min.y + h), true);
+  shield();
+  drawList->PathFillConvex(Theme::toU32(Theme::unpackRgb(secondary)));
+  drawList->PopClipRect();
+  shield();
+  drawList->PathStroke(Theme::toU32(Theme::palette().border),
+                       ImDrawFlags_Closed, std::max(1.0f, scaled(1.0f)));
+  if (code == nullptr || *code == '\0' || h < scaled(32.0f)) return;
+  Theme::ScopedText caption(Theme::Text::CAPTION);
+  const ImVec2 textSize = ImGui::CalcTextSize(code);
+  const ImVec2 at(std::round(min.x + (w - textSize.x) * 0.5f),
+                  std::round(min.y + h * 0.42f - textSize.y * 0.5f));
+  drawList->AddText(ImVec2(at.x + 1.0f, at.y + 1.0f), IM_COL32(0, 0, 0, 170),
+                    code);
+  drawList->AddText(at, IM_COL32(255, 255, 255, 255), code);
+}
+
+void clubBadge(const char* code, uint32_t primary, uint32_t secondary,
+               float height)
+{
+  const float h = scaled(height);
+  const ImVec2 min = ImGui::GetCursorScreenPos();
+  drawClubBadge(ImGui::GetWindowDrawList(), min, h, code, primary, secondary);
+  ImGui::Dummy(ImVec2(std::round(h * 0.84f), h));
+}
+
 void formStrip(std::span<const Outcome> outcomes)
 {
   const Theme::Palette& palette = Theme::palette();

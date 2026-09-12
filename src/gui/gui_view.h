@@ -143,6 +143,9 @@ class GUIView
   /** Re-applies appearance settings (theme, scale, density) live. */
   void refreshTheme();
 
+  /** Hands the saved autosave frequency and backup count to the controller. */
+  void applySavePolicy();
+
   /** Captures the current renderer contents as a BMP image. */
   bool captureScreenshot(std::string_view path) const;
 

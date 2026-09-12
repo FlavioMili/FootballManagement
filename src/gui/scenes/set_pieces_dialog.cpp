@@ -196,8 +196,10 @@ bool SetPiecesDialog::render(GameController& controller)
   }
   const char* done = LOC("SET_PIECES_DONE");
   ImGui::SameLine(ImGui::GetContentRegionMax().x - UI::buttonWidth(done));
-  if (UI::primaryButton(done) || ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+  if (UI::primaryButton(done) || ImGui::IsKeyPressed(ImGuiKey_Escape, false) ||
+      close_requested)
     ImGui::CloseCurrentPopup();
+  close_requested = false;
   ImGui::EndPopup();
   return changed;
 }

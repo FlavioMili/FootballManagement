@@ -10,12 +10,14 @@
 
 #include <sqlite3.h>
 
+#include <cstdint>
 #include <stdexcept>
+#include <unordered_map>
 #include <utility>
 
-#include "database/SQLLoader.h"
 #include "global/logger.h"
 #include "model/match_report.h"
+#include "model/world_rng.h"
 
 namespace
 {
@@ -61,6 +63,50 @@ void bindFixture(sqlite3_stmt* stmt, const Match& match)
   }
 }
 
+/** Columns of a fixture that change after it was scheduled. */
+struct FixtureState
+{
+  int match_type = 0;
+  int home_goals = 0;
+  int away_goals = 0;
+  int played = 0;
+  int competition_id = 0;
+  int stage = 0;
+  int extra_time = 0;
+  int home_penalties = -1;  ///< -1: NULL (no shoot-out).
+  int away_penalties = -1;
+
+  bool operator==(const FixtureState&) const = default;
+};
+
+FixtureState stateOf(const Match& match)
+{
+  FixtureState state;
+  state.match_type = std::to_underlying(match.getMatchType());
+  state.home_goals = match.getHomeScore();
+  state.away_goals = match.getAwayScore();
+  state.played = match.isPlayed() ? 1 : 0;
+  state.competition_id = match.getCompetitionId();
+  state.stage = match.getStage();
+  state.extra_time = match.wentToExtraTime() ? 1 : 0;
+  if (match.wentToPenalties())
+  {
+    state.home_penalties = match.getHomePenalties();
+    state.away_penalties = match.getAwayPenalties();
+  }
+  return state;
+}
+
+/** Natural key of a fixture (UNIQUE(game_date, home, away)). */
+std::uint64_t fixtureKey(const GameDateValue& date, int home, int away)
+{
+  return (static_cast<std::uint64_t>(static_cast<std::uint32_t>(
+              dayOrdinal(date)))
+          << 32) |
+         (static_cast<std::uint64_t>(home & 0xFFFF) << 16) |
+         static_cast<std::uint64_t>(away & 0xFFFF);
+}
+
 MatchReport readReport(sqlite3_stmt* stmt)
 {
   MatchReport report;
@@ -90,38 +136,6 @@ FixtureRepository::FixtureRepository(std::shared_ptr<DatabaseConnection> conn)
 {
 }
 
-void FixtureRepository::ensureSchema() const
-{
-  // Forward-compatible migration for saves created before competitions were
-  // stored. Duplicate-column errors are intentionally ignored.
-  static constexpr const char* MIGRATIONS[] = {
-      "ALTER TABLE Fixtures ADD COLUMN competition_id INTEGER NOT NULL "
-      "DEFAULT 0;",
-      "ALTER TABLE Fixtures ADD COLUMN stage INTEGER NOT NULL DEFAULT 0;",
-      "ALTER TABLE Fixtures ADD COLUMN extra_time INTEGER NOT NULL DEFAULT 0;",
-      "ALTER TABLE Fixtures ADD COLUMN home_penalties INTEGER;",
-      "ALTER TABLE Fixtures ADD COLUMN away_penalties INTEGER;"};
-  for (const char* migration : MIGRATIONS)
-    sqlite3_exec(db_conn->getRaw(), migration, nullptr, nullptr, nullptr);
-
-  // Same definition as assets/db/schema.sql, for saves that predate it.
-  sqlite3_exec(
-      db_conn->getRaw(),
-      "CREATE TABLE IF NOT EXISTS MatchReports (game_date TEXT NOT NULL, "
-      "home_team_id INTEGER NOT NULL, away_team_id INTEGER NOT NULL, season "
-      "INTEGER NOT NULL, match_type INTEGER NOT NULL DEFAULT 0, "
-      "competition_id INTEGER NOT NULL DEFAULT 0, stage INTEGER NOT NULL "
-      "DEFAULT 0, home_goals INTEGER NOT NULL DEFAULT 0, away_goals INTEGER "
-      "NOT NULL DEFAULT 0, extra_time INTEGER NOT NULL DEFAULT 0, "
-      "home_penalties INTEGER, away_penalties INTEGER, attendance INTEGER NOT "
-      "NULL DEFAULT 0, stats TEXT NOT NULL DEFAULT '{}', events TEXT NOT NULL "
-      "DEFAULT '[]', players TEXT NOT NULL DEFAULT '[]', PRIMARY "
-      "KEY(game_date, home_team_id, away_team_id));"
-      "CREATE INDEX IF NOT EXISTS idx_match_reports_season ON "
-      "MatchReports(season);",
-      nullptr, nullptr, nullptr);
-}
-
 void FixtureRepository::insertFixture(const Match& match) const
 {
   sqlite3_stmt* stmt = db_conn->prepareStatement(INSERT_FIXTURE_SQL);
@@ -132,7 +146,6 @@ void FixtureRepository::insertFixture(const Match& match) const
 
 std::vector<Match> FixtureRepository::loadAllMatches() const
 {
-  ensureSchema();
   std::vector<Match> matches;
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       "SELECT home_team_id, away_team_id, game_date, match_type, home_goals, "
@@ -169,23 +182,100 @@ std::vector<Match> FixtureRepository::loadAllMatches() const
 
 void FixtureRepository::saveCalendar(const Calendar& calendar) const
 {
-  sqlite3_stmt* stmt_delete = db_conn->prepareStatement(
-      SQLLoader::getQuery(Query::DELETE_ALL_FIXTURES));
-  db_conn->executeStep(stmt_delete);
-  sqlite3_finalize(stmt_delete);
-
-  sqlite3_stmt* stmt = db_conn->prepareStatement(INSERT_FIXTURE_SQL);
-  for (const auto& [matchDay, matches] : calendar.getFullCalendar())
+  // Only fixtures added, changed (results, cup draws) or dropped since the
+  // last save are written: a season holds thousands of fixtures.
+  struct Stored
   {
-    for (const auto& match : matches)
+    sqlite3_int64 id = 0;
+    FixtureState state;
+    bool seen = false;
+  };
+  std::unordered_map<std::uint64_t, Stored> stored;
+  sqlite3_stmt* select = db_conn->prepareStatement(
+      "SELECT id, game_date, home_team_id, away_team_id, match_type, "
+      "home_goals, away_goals, played, competition_id, stage, extra_time, "
+      "home_penalties, away_penalties FROM Fixtures;");
+  while (sqlite3_step(select) == SQLITE_ROW)
+  {
+    Stored row;
+    row.id = sqlite3_column_int64(select, 0);
+    FixtureState& state = row.state;
+    state.match_type = sqlite3_column_int(select, 4);
+    state.home_goals = sqlite3_column_int(select, 5);
+    state.away_goals = sqlite3_column_int(select, 6);
+    state.played = sqlite3_column_int(select, 7);
+    state.competition_id = sqlite3_column_int(select, 8);
+    state.stage = sqlite3_column_int(select, 9);
+    state.extra_time = sqlite3_column_int(select, 10);
+    if (sqlite3_column_type(select, 11) != SQLITE_NULL)
     {
-      bindFixture(stmt, match);
-      db_conn->executeStep(stmt);
-      sqlite3_clear_bindings(stmt);
-      sqlite3_reset(stmt);
+      state.home_penalties = sqlite3_column_int(select, 11);
+      state.away_penalties = sqlite3_column_int(select, 12);
+    }
+    stored.emplace(
+        fixtureKey(GameDateValue::fromString(columnText(select, 1)),
+                   sqlite3_column_int(select, 2), sqlite3_column_int(select, 3)),
+        row);
+  }
+  sqlite3_finalize(select);
+
+  sqlite3_stmt* insert = db_conn->prepareStatement(INSERT_FIXTURE_SQL);
+  sqlite3_stmt* update = db_conn->prepareStatement(
+      "UPDATE Fixtures SET match_type = ?, home_goals = ?, away_goals = ?, "
+      "played = ?, competition_id = ?, stage = ?, extra_time = ?, "
+      "home_penalties = ?, away_penalties = ? WHERE id = ?;");
+  for (const auto& [day, matches] : calendar.getFullCalendar())
+  {
+    for (const Match& match : matches)
+    {
+      const auto found = stored.find(
+          fixtureKey(day, match.getHomeTeamId(), match.getAwayTeamId()));
+      if (found == stored.end())
+      {
+        bindFixture(insert, match);
+        db_conn->executeStep(insert);
+        sqlite3_reset(insert);
+        continue;
+      }
+      found->second.seen = true;
+      const FixtureState state = stateOf(match);
+      if (state == found->second.state) continue;
+      sqlite3_bind_int(update, 1, state.match_type);
+      sqlite3_bind_int(update, 2, state.home_goals);
+      sqlite3_bind_int(update, 3, state.away_goals);
+      sqlite3_bind_int(update, 4, state.played);
+      sqlite3_bind_int(update, 5, state.competition_id);
+      sqlite3_bind_int(update, 6, state.stage);
+      sqlite3_bind_int(update, 7, state.extra_time);
+      if (state.home_penalties >= 0)
+      {
+        sqlite3_bind_int(update, 8, state.home_penalties);
+        sqlite3_bind_int(update, 9, state.away_penalties);
+      }
+      else
+      {
+        sqlite3_bind_null(update, 8);
+        sqlite3_bind_null(update, 9);
+      }
+      sqlite3_bind_int64(update, 10, found->second.id);
+      db_conn->executeStep(update);
+      sqlite3_reset(update);
+      found->second.state = state;
     }
   }
-  sqlite3_finalize(stmt);
+  sqlite3_finalize(insert);
+  sqlite3_finalize(update);
+
+  sqlite3_stmt* remove =
+      db_conn->prepareStatement("DELETE FROM Fixtures WHERE id = ?;");
+  for (const auto& [key, row] : stored)
+  {
+    if (row.seen) continue;
+    sqlite3_bind_int64(remove, 1, row.id);
+    db_conn->executeStep(remove);
+    sqlite3_reset(remove);
+  }
+  sqlite3_finalize(remove);
 }
 
 void FixtureRepository::loadCalendar(Calendar& calendar) const

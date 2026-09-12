@@ -30,9 +30,15 @@
 #include "database/database_connection.h"
 #include "database/gamedata.h"
 #include "database/migrations/migrations.h"
+#include "database/repositories/fixture_repository.h"
+#include "database/repositories/player_repository.h"
 #include "database/save_manager.h"
+#include "global/global.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
+#include "model/calendar.h"
+#include "model/match.h"
+#include "model/player.h"
 #include "model/world_rng.h"
 
 namespace fs = std::filesystem;
@@ -824,4 +830,163 @@ TEST(SaveSafety, SaveAndLoadTimesAtStandardWorldSize)
                  std::to_string(reloaded.getLastInitializationMilliseconds()));
   // Generous bound: catches pathological regressions, not machine noise.
   EXPECT_LT(best_save, 2000.0);
+}
+
+
+// ---- Incremental writes ---------------------------------------------------------
+
+TEST(SaveWrites, PlayerRowsRoundTripExactly)
+{
+  Logger::init();
+  auto connection = std::make_shared<DatabaseConnection>(":memory:");
+  Migrations::migrate(*connection);
+  Player player(7, 3, "Ada", "Quote\"Back\\slash", PlayerRole::ST, Language::IT,
+                1500, 0, 24, 3, 181, Foot::Left,
+                {{"Pace", 78.00740814208984f},
+                 {"Shooting", 1e-7f},
+                 {"Vision", 99.99999f}});
+  player.setPotential(83.25f);
+  PlayerDynamics& dynamics = player.mutableDynamics();
+  dynamics.condition = 71.234f;
+  dynamics.injury_days = 0;
+  dynamics.last_match_day = 20281;
+  dynamics.rating_count = 2;
+  dynamics.recent_ratings = {6.7f, 7.26f, 0.0f, 0.0f, 0.0f};
+  PlayerRepository repository(connection);
+  repository.updatePlayers({std::cref(player)});  // Inserted.
+  player.mutableDynamics().morale = 12.5f;
+  repository.updatePlayers({std::cref(player)});  // Updated.
+
+  const auto loaded = repository.loadAllPlayers();
+  ASSERT_EQ(loaded.size(), 1u);
+  const Player& copy = loaded.front();
+  EXPECT_EQ(copy.getStats(), player.getStats()) << "stats must be exact";
+  EXPECT_EQ(copy.getLastName(), player.getLastName());
+  EXPECT_EQ(copy.getNationality(), Language::IT);
+  EXPECT_EQ(copy.getFoot(), Foot::Left);
+  EXPECT_FLOAT_EQ(copy.getPotential(), 83.25f);
+  EXPECT_NEAR(copy.getDynamics().condition, 71.23f, 1e-4f);
+  EXPECT_FLOAT_EQ(copy.getDynamics().morale, 12.5f);
+  EXPECT_EQ(copy.getDynamics().last_match_day, 20281);
+  EXPECT_FLOAT_EQ(copy.getDynamics().recent_ratings[1], 7.3f);
+}
+
+TEST(SaveWrites, CalendarWritesOnlyChangedFixtures)
+{
+  Logger::init();
+  auto connection = std::make_shared<DatabaseConnection>(":memory:");
+  Migrations::migrate(*connection);
+  FixtureRepository repository(connection);
+  const GameDateValue day(2025, 9, 6);
+  Calendar calendar;
+  calendar.addMatch(Match(1, 2, day, MatchType::LEAGUE, 1, 1));
+  calendar.addMatch(Match(3, 4, day, MatchType::LEAGUE, 1, 1));
+  calendar.addMatch(Match(5, 6, GameDateValue(2025, 9, 13), MatchType::CUP, 9, 1));
+  repository.saveCalendar(calendar);
+  sqlite3* db = connection->getRaw();
+  const int first_id =
+      queryInt(db, "SELECT id FROM Fixtures WHERE home_team_id = 3;");
+
+  // A result, a shoot-out and a new fixture; nothing else is rewritten.
+  calendar.findMatch(day, 1, 2)->setPlayedResult(2, 1);
+  calendar.findMatch(GameDateValue(2025, 9, 13), 5, 6)
+      ->setKnockoutResult(1, 1, true, std::make_pair(uint8_t{4}, uint8_t{3}));
+  calendar.addMatch(Match(7, 8, GameDateValue(2025, 9, 20), MatchType::LEAGUE, 1, 2));
+  sqlite3_exec(db, "CREATE TEMP TABLE writes (n INTEGER);"
+                   "CREATE TEMP TRIGGER count_updates AFTER UPDATE ON Fixtures "
+                   "BEGIN INSERT INTO writes VALUES (1); END;",
+               nullptr, nullptr, nullptr);
+  repository.saveCalendar(calendar);
+  EXPECT_EQ(queryInt(db, "SELECT COUNT(*) FROM writes;"), 2);
+  EXPECT_EQ(queryInt(db, "SELECT id FROM Fixtures WHERE home_team_id = 3;"),
+            first_id);
+  EXPECT_EQ(queryInt(db, "SELECT COUNT(*) FROM Fixtures;"), 4);
+
+  // Fixtures gone from the calendar (a new season) are removed.
+  Calendar next;
+  next.addMatch(Match(1, 2, day, MatchType::LEAGUE, 1, 1));
+  next.findMatch(day, 1, 2)->setPlayedResult(2, 1);
+  repository.saveCalendar(next);
+  EXPECT_EQ(queryInt(db, "SELECT COUNT(*) FROM Fixtures;"), 1);
+
+  Calendar loaded;
+  repository.loadCalendar(loaded);
+  const Match* stored = loaded.findMatch(day, 1, 2);
+  ASSERT_NE(stored, nullptr);
+  EXPECT_TRUE(stored->isPlayed());
+  EXPECT_EQ(stored->getHomeScore(), 2);
+}
+
+TEST(SaveWrites, CareerStateRoundTripsExactly)
+{
+  const SlotCleanup slot{26};
+  auto controller = makeCareer(slot.slot);
+  controller->setAutosavePolicy({AutosaveFrequency::Off, 3});
+  advance(*controller, 9);
+  const TeamID managed = controller->getManagedTeam()->get().getId();
+  ASSERT_TRUE(controller->setDutyOwner(Duty::TrainingSchedule,
+                                       DutyOwner::Manager));
+  ASSERT_TRUE(controller->setTrainingIntensity(TrainingIntensity::High));
+  ASSERT_TRUE(controller->saveGame());
+  // A second save with (almost) nothing changed writes only differences.
+  advance(*controller, 1);
+  ASSERT_TRUE(controller->saveGame());
+
+  GameController reloaded;
+  ASSERT_TRUE(reloaded.loadGame(slot.slot));
+  const auto gd = controller->getGameData();
+  const auto copy = reloaded.getGameData();
+  ASSERT_EQ(copy->getPlayers().size(), gd->getPlayers().size());
+  for (const auto& [id, player] : gd->getPlayers())
+  {
+    const auto other = copy->getPlayer(id);
+    ASSERT_TRUE(other.has_value()) << id;
+    EXPECT_EQ(other->get().getStats(), player.getStats()) << id;
+    EXPECT_EQ(other->get().getTeamId(), player.getTeamId()) << id;
+  }
+  for (const auto& [id, team] : gd->getTeams())
+  {
+    if (id == FREE_AGENTS_TEAM_ID) continue;  // Its lineup is never saved.
+    const Team& other = copy->getTeam(id)->get();
+    const Lineup& a = team.getLineup();
+    const Lineup& b = other.getLineup();
+    ASSERT_EQ(a.getOutfieldPlayers().size(), b.getOutfieldPlayers().size())
+        << id;
+    for (std::size_t i = 0; i < a.getOutfieldPlayers().size(); ++i)
+    {
+      EXPECT_EQ(a.getOutfieldPlayers()[i].player->getId(),
+                b.getOutfieldPlayers()[i].player->getId());
+      EXPECT_EQ(a.getOutfieldPlayers()[i].position.x,
+                b.getOutfieldPlayers()[i].position.x);
+      EXPECT_EQ(a.getOutfieldPlayers()[i].position.y,
+                b.getOutfieldPlayers()[i].position.y);
+    }
+    EXPECT_EQ(a.getDesignations(), b.getDesignations()) << id;
+    const StrategySliders sa = team.getStrategy().getSliders();
+    const StrategySliders sb = other.getStrategy().getSliders();
+    EXPECT_EQ(sa.pressing, sb.pressing);
+    EXPECT_EQ(sa.compactness, sb.compactness);
+    EXPECT_EQ(sa.widthUsage, sb.widthUsage);
+  }
+  EXPECT_EQ(copy->getStaff().all().size(), gd->getStaff().all().size());
+  for (const auto& [id, member] : gd->getStaff().all())
+  {
+    const auto found = copy->getStaff().all().find(id);
+    ASSERT_NE(found, copy->getStaff().all().end());
+    EXPECT_EQ(found->second.team_id, member.team_id);
+    EXPECT_EQ(found->second.attributes, member.attributes);
+    EXPECT_EQ(found->second.wage, member.wage);
+  }
+  const TeamTrainingPlan* plan = copy->getTraining().findPlan(managed);
+  ASSERT_NE(plan, nullptr);
+  EXPECT_EQ(plan->intensity, TrainingIntensity::High);
+  EXPECT_EQ(plan->familiarity,
+            gd->getTraining().findPlan(managed)->familiarity);
+  for (const auto& [id, state] : gd->getTraining().players())
+  {
+    const auto* other = copy->getTraining().findPlayer(id);
+    ASSERT_NE(other, nullptr) << id;
+    EXPECT_EQ(other->acute, state.acute);
+    EXPECT_EQ(other->chronic, state.chronic);
+  }
 }

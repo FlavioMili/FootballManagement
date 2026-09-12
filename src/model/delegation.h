@@ -20,12 +20,12 @@
  */
 enum class Duty : std::uint8_t
 {
-  LineupFixes = 0,     /*!< Replace injured/suspended players before kick-off. */
-  Substitutions,       /*!< In-match changes of the managed side. */
-  TrainingSchedule,    /*!< Squad intensity and congestion weeks. */
-  ContractRenewals,    /*!< Final-year renewals of players outside the core. */
+  LineupFixes = 0,  /*!< Replace injured/suspended players before kick-off. */
+  Substitutions,    /*!< In-match changes of the managed side. */
+  TrainingSchedule, /*!< Squad intensity and congestion weeks. */
+  ContractRenewals, /*!< Final-year renewals of players outside the core. */
   ScoutingAssignments, /*!< Idle scouts are sent out. */
-  Friendlies,          /*!< Pre-season friendlies (always scheduled). */
+  Friendlies,          /*!< Pre-season friendly opponents. */
   YouthContracts,      /*!< Contracts for the youth intake trialists. */
   COUNT
 };
@@ -52,8 +52,8 @@ enum class DelegationPreset : std::uint8_t
  * @brief Who handles each duty of the managed club.
  *
  * Other systems read the policy through GameController::isDelegated(); the
- * policy itself holds no game logic. Friendlies have no manual workflow yet,
- * so they are fixed to the assistant (isFixed()).
+ * policy itself holds no game logic. When the manager changes something by
+ * hand that the assistant owns, GameController takes the duty back for him.
  */
 class DelegationPolicy
 {
@@ -65,16 +65,16 @@ class DelegationPolicy
   static DelegationPolicy preset(DelegationPreset preset);
 
   DutyOwner owner(Duty duty) const;
-  bool delegated(Duty duty) const { return owner(duty) == DutyOwner::Assistant; }
-  /** Changes one duty; fixed duties keep their owner (returns false). */
+  bool delegated(Duty duty) const
+  {
+    return owner(duty) == DutyOwner::Assistant;
+  }
+  /** Changes one duty; false for an unknown duty. */
   bool set(Duty duty, DutyOwner owner);
-  /** Replaces every configurable duty with the preset's owners. */
+  /** Replaces every duty with the preset's owners. */
   void apply(DelegationPreset preset);
   /** The preset this policy matches exactly, if any. */
   std::optional<DelegationPreset> matchingPreset() const;
-
-  /** Duties without a manual workflow (always the assistant). */
-  static bool isFixed(Duty duty);
 
   const std::array<DutyOwner, DUTY_COUNT>& owners() const { return duties; }
 

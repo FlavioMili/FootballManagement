@@ -14,6 +14,7 @@
 #include <array>
 #include <charconv>
 #include <format>
+#include <iterator>
 #include <map>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
@@ -22,6 +23,7 @@
 #include <utility>
 
 #include "database/SQLLoader.h"
+#include "database/repositories/text_encoding.h"
 #include "model/role_utils.h"
 
 namespace
@@ -116,11 +118,18 @@ std::array<double, N> parseNumbers(std::string_view text, std::size_t& count)
   return values;
 }
 
-std::string encodeTraits(const PlayerTraits& traits)
+void appendTraits(std::string& out, const PlayerTraits& traits)
 {
-  return std::format("{},{},{},{},{}", traits.professionalism, traits.ambition,
-                     traits.temperament, traits.loyalty,
-                     traits.injury_proneness);
+  using TextEncoding::appendInt;
+  appendInt(out, int{traits.professionalism});
+  out.push_back(',');
+  appendInt(out, int{traits.ambition});
+  out.push_back(',');
+  appendInt(out, int{traits.temperament});
+  out.push_back(',');
+  appendInt(out, int{traits.loyalty});
+  out.push_back(',');
+  appendInt(out, int{traits.injury_proneness});
 }
 
 PlayerTraits decodeTraits(std::string_view text)
@@ -141,21 +150,115 @@ PlayerTraits decodeTraits(std::string_view text)
 
 constexpr std::size_t DYNAMICS_FIELDS = 14 + PlayerDynamics::FORM_WINDOW;
 
-std::string encodeDynamics(const PlayerDynamics& dynamics)
+// CSV: condition, sharpness, morale (2 decimals), playing share (3), the
+// integer fields, then the recent ratings (1 decimal).
+void appendDynamics(std::string& out, const PlayerDynamics& dynamics)
 {
-  std::string text =
-      std::format("{:.2f},{:.2f},{:.2f},{:.3f},{},{},{},{},{},{},{},{},{},{}",
-                  dynamics.condition, dynamics.sharpness, dynamics.morale,
-                  dynamics.playing_share, static_cast<int>(dynamics.injury),
-                  dynamics.injury_days, static_cast<int>(dynamics.last_injury),
-                  dynamics.last_injury_day, dynamics.last_match_day,
-                  dynamics.season_appearances, dynamics.season_minutes,
-                  dynamics.week_minutes, dynamics.transfer_interest_weeks,
-                  dynamics.rating_count);
+  using TextEncoding::appendFixed;
+  using TextEncoding::appendInt;
+  appendFixed(out, dynamics.condition, 2);
+  out.push_back(',');
+  appendFixed(out, dynamics.sharpness, 2);
+  out.push_back(',');
+  appendFixed(out, dynamics.morale, 2);
+  out.push_back(',');
+  appendFixed(out, dynamics.playing_share, 3);
+  for (const int value :
+       {static_cast<int>(dynamics.injury), int{dynamics.injury_days},
+        static_cast<int>(dynamics.last_injury), dynamics.last_injury_day,
+        dynamics.last_match_day, int{dynamics.season_appearances},
+        int{dynamics.season_minutes}, int{dynamics.week_minutes},
+        int{dynamics.transfer_interest_weeks}, int{dynamics.rating_count}})
+  {
+    out.push_back(',');
+    appendInt(out, value);
+  }
   for (const float rating : dynamics.recent_ratings)
-    text += std::format(",{:.1f}", rating);
-  return text;
+  {
+    out.push_back(',');
+    appendFixed(out, rating, 1);
+  }
 }
+
+/** JSON object of the stats; floats in their shortest round-trip form. */
+void appendStats(std::string& out, const std::map<std::string, float>& stats)
+{
+  out.push_back('{');
+  bool first = true;
+  for (const auto& [name, value] : stats)
+  {
+    if (!first) out.push_back(',');
+    first = false;
+    out.push_back('"');
+    for (const char c : name)
+    {
+      if (c == '"' || c == '\\') out.push_back('\\');
+      if (static_cast<unsigned char>(c) < 0x20)
+        std::format_to(std::back_inserter(out), "\\u{:04x}",
+                       static_cast<unsigned>(c));
+      else
+        out.push_back(c);
+    }
+    out += "\":";
+    TextEncoding::appendShortest(out, value);
+  }
+  out.push_back('}');
+}
+
+/**
+ * Encodes and binds the columns of a player row (team_id ... dynamics).
+ * Buffers are reused across rows and must outlive the statement step.
+ */
+class PlayerRowBinder
+{
+ public:
+  void bind(sqlite3_stmt* stmt, const Player& player, int index)
+  {
+    stats.clear();
+    appendStats(stats, player.getStats());
+    role = RoleUtils::toString(player.getRole());
+    traits.clear();
+    appendTraits(traits, player.getTraits());
+    dynamics.clear();
+    appendDynamics(dynamics, player.getDynamics());
+    const auto nationality = languageToString.find(player.getNationality());
+    const std::string_view nationality_text =
+        nationality != languageToString.end()
+            ? std::string_view(nationality->second)
+            : std::string_view("English");
+    const std::string_view foot =
+        player.getFoot() == Foot::Left ? "Left" : "Right";
+
+    sqlite3_bind_int(stmt, index++, static_cast<int>(player.getTeamId()));
+    bindText(stmt, index++, player.getFirstName());
+    bindText(stmt, index++, player.getLastName());
+    sqlite3_bind_int(stmt, index++, player.getAge());
+    bindText(stmt, index++, role);
+    bindText(stmt, index++, nationality_text);
+    sqlite3_bind_int(stmt, index++, static_cast<int>(player.getWage()));
+    sqlite3_bind_int(stmt, index++, player.getContractYears());
+    sqlite3_bind_int(stmt, index++, player.getHeight());
+    bindText(stmt, index++, foot);
+    bindText(stmt, index++, stats);
+    sqlite3_bind_int(stmt, index++, static_cast<int>(player.getStatus()));
+    sqlite3_bind_double(stmt, index++,
+                        static_cast<double>(player.getPotential()));
+    bindText(stmt, index++, traits);
+    bindText(stmt, index++, dynamics);
+  }
+
+ private:
+  static void bindText(sqlite3_stmt* stmt, int index, std::string_view text)
+  {
+    sqlite3_bind_text(stmt, index, text.data(), static_cast<int>(text.size()),
+                      SQLITE_STATIC);
+  }
+
+  std::string stats;
+  std::string role;
+  std::string traits;
+  std::string dynamics;
+};
 
 PlayerDynamics decodeDynamics(std::string_view text)
 {
@@ -273,52 +376,12 @@ std::vector<Player> PlayerRepository::loadAllPlayers() const
   return players;
 }
 
-void PlayerRepository::bindPlayerParams(sqlite3_stmt* stmt,
-                                        const Player& player,
-                                        int startIndex) const
-{
-  nlohmann::json stats_json = player.getStats();
-  std::string stats_str = stats_json.dump();
-
-  sqlite3_bind_int(stmt, startIndex++, static_cast<int>(player.getTeamId()));
-  sqlite3_bind_text(stmt, startIndex++, player.getFirstName().c_str(), -1,
-                    SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, startIndex++, player.getLastName().c_str(), -1,
-                    SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, startIndex++, player.getAge());
-  std::string role_str = RoleUtils::toString(player.getRole());
-  sqlite3_bind_text(stmt, startIndex++, role_str.c_str(), -1, SQLITE_TRANSIENT);
-
-  auto it = languageToString.find(player.getNationality());
-  std::string nationality_str =
-      (it != languageToString.end()) ? std::string(it->second) : "English";
-  sqlite3_bind_text(stmt, startIndex++, nationality_str.c_str(), -1,
-                    SQLITE_TRANSIENT);
-
-  sqlite3_bind_int(stmt, startIndex++, static_cast<int>(player.getWage()));
-  sqlite3_bind_int(stmt, startIndex++, player.getContractYears());
-  sqlite3_bind_int(stmt, startIndex++, player.getHeight());
-
-  std::string foot_str = (player.getFoot() == Foot::Left) ? "Left" : "Right";
-  sqlite3_bind_text(stmt, startIndex++, foot_str.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, startIndex++, stats_str.c_str(), -1,
-                    SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, startIndex++, static_cast<int>(player.getStatus()));
-  sqlite3_bind_double(stmt, startIndex++,
-                      static_cast<double>(player.getPotential()));
-  const std::string traits = encodeTraits(player.getTraits());
-  sqlite3_bind_text(stmt, startIndex++, traits.c_str(), -1, SQLITE_TRANSIENT);
-  const std::string dynamics = encodeDynamics(player.getDynamics());
-  sqlite3_bind_text(stmt, startIndex++, dynamics.c_str(), -1, SQLITE_TRANSIENT);
-}
-
 void PlayerRepository::insertPlayer(const Player& player) const
 {
   sqlite3_stmt* stmt =
       db_conn->prepareStatement(SQLLoader::getQuery(Query::INSERT_PLAYER));
-
-  bindPlayerParams(stmt, player, 1);
-
+  PlayerRowBinder binder;
+  binder.bind(stmt, player, 1);
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }
@@ -328,13 +391,13 @@ void PlayerRepository::insertPlayers(
 {
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       SQLLoader::getQuery(Query::INSERT_PLAYER_WITH_ID));
+  PlayerRowBinder binder;
   for (const auto& player_ref : players)
   {
     const Player& player = player_ref.get();
     sqlite3_bind_int(stmt, 1, static_cast<int>(player.getId()));
-    bindPlayerParams(stmt, player, 2);
+    binder.bind(stmt, player, 2);
     db_conn->executeStep(stmt);
-    sqlite3_clear_bindings(stmt);
     sqlite3_reset(stmt);
   }
   sqlite3_finalize(stmt);
@@ -342,58 +405,43 @@ void PlayerRepository::insertPlayers(
 
 void PlayerRepository::insertPlayerWithId(const Player& player) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(
-      SQLLoader::getQuery(Query::INSERT_PLAYER_WITH_ID));
-
-  sqlite3_bind_int(stmt, 1, static_cast<int>(player.getId()));
-  bindPlayerParams(stmt, player, 2);
-
-  db_conn->executeStep(stmt);
-  sqlite3_finalize(stmt);
+  insertPlayers({std::cref(player)});
 }
 
 void PlayerRepository::updatePlayer(const Player& player) const
 {
-  sqlite3_stmt* stmt =
-      db_conn->prepareStatement(SQLLoader::getQuery(Query::UPDATE_PLAYER));
-
-  bindPlayerParams(stmt, player, 1);
-  sqlite3_bind_int(stmt, PLAYER_PARAM_COUNT + 1,
-                   static_cast<int>(player.getId()));
-
-  db_conn->executeStep(stmt);
-  sqlite3_finalize(stmt);
+  updatePlayers({std::cref(player)});
 }
 
 void PlayerRepository::updatePlayers(
     const std::vector<std::reference_wrapper<const Player>>& players) const
 {
-  // Upsert so that players created since the last save (youth intake) are
-  // inserted and existing ones updated in the same pass.
-  sqlite3_stmt* stmt = db_conn->prepareStatement(
-      "INSERT INTO Players (team_id, first_name, last_name, age, role, "
-      "nationality, wage, contract_years, height, foot, stats, status, "
-      "potential, traits, dynamics, id) VALUES "
-      "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-      "ON CONFLICT(id) DO UPDATE SET team_id = excluded.team_id, "
-      "first_name = excluded.first_name, last_name = excluded.last_name, "
-      "age = excluded.age, role = excluded.role, "
-      "nationality = excluded.nationality, wage = excluded.wage, "
-      "contract_years = excluded.contract_years, height = excluded.height, "
-      "foot = excluded.foot, stats = excluded.stats, "
-      "status = excluded.status, potential = excluded.potential, "
-      "traits = excluded.traits, dynamics = excluded.dynamics;");
+  // Every player changes daily (condition, training), so rows are rewritten;
+  // the cost is kept down by reusing statements and encoding buffers. Players
+  // created since the last save (youth intake) are inserted.
+  sqlite3_stmt* update =
+      db_conn->prepareStatement(SQLLoader::getQuery(Query::UPDATE_PLAYER));
+  sqlite3_stmt* insert = nullptr;
+  PlayerRowBinder binder;
   for (const auto& player_ref : players)
   {
     const Player& player = player_ref.get();
-    bindPlayerParams(stmt, player, 1);
-    sqlite3_bind_int(stmt, PLAYER_PARAM_COUNT + 1,
+    binder.bind(update, player, 1);
+    sqlite3_bind_int(update, PLAYER_PARAM_COUNT + 1,
                      static_cast<int>(player.getId()));
-    db_conn->executeStep(stmt);
-    sqlite3_clear_bindings(stmt);
-    sqlite3_reset(stmt);
+    db_conn->executeStep(update);
+    sqlite3_reset(update);
+    if (sqlite3_changes(db_conn->getRaw()) > 0) continue;
+    if (!insert)
+      insert = db_conn->prepareStatement(
+          SQLLoader::getQuery(Query::INSERT_PLAYER_WITH_ID));
+    sqlite3_bind_int(insert, 1, static_cast<int>(player.getId()));
+    binder.bind(insert, player, 2);
+    db_conn->executeStep(insert);
+    sqlite3_reset(insert);
   }
-  sqlite3_finalize(stmt);
+  sqlite3_finalize(update);
+  sqlite3_finalize(insert);
 }
 
 void PlayerRepository::deletePlayer(PlayerID player_id) const

@@ -137,13 +137,24 @@ TEST(YouthUiTest, AcademyScreenThroughTheIntakeCycle)
   const SlotCleanup slot{uniqueSlot(0)};
   GameController controller;
   controller.newGame(slot.slot, WORLD_SEED);
+  // The club of the league with the most teenagers (progress charts).
   TeamID club = 0;
-  for (const TeamID id :
-       controller.getLeagueById(OWN_LEAGUE)->get().getTeamIDs())
   {
-    if (club == 0 || controller.getTeamById(id)->get().getReputation() >
-                         controller.getTeamById(club)->get().getReputation())
-      club = id;
+    YouthAcademy census(controller.getGameData());
+    census.ensureReady();
+    std::size_t most = 0;
+    for (const TeamID id :
+         controller.getLeagueById(OWN_LEAGUE)->get().getTeamIDs())
+    {
+      const std::size_t teenagers =
+          census.members(id, YouthStatus::Squad).size();
+      if (club == 0 || teenagers > most)
+      {
+        club = id;
+        most = teenagers;
+      }
+    }
+    ASSERT_GT(most, 0u);
   }
   controller.selectManagedTeam(club);
 

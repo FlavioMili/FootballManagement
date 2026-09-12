@@ -40,8 +40,7 @@ constexpr const char* RESIGN_POPUP_ID = "##resign_job";
 constexpr const char* ACCEPT_POPUP_ID = "##accept_job";
 constexpr const char* INTERVIEW_POPUP_ID = "##job_interview";
 constexpr int MAX_YEARS = 4;
-constexpr std::array<const char*, MAX_YEARS> YEAR_LABELS = {"1", "2", "3",
-                                                            "4"};
+constexpr std::array<const char*, MAX_YEARS> YEAR_LABELS = {"1", "2", "3", "4"};
 
 std::string nationName(Language nationality)
 {
@@ -247,9 +246,8 @@ ManagerSetupPanel::Action ManagerSetupPanel::render(
   const int per_row = std::clamp(
       static_cast<int>((available + gap) / (FIELD_MIN_WIDTH * scale + gap)), 1,
       5);
-  const float field =
-      (available - gap * static_cast<float>(per_row - 1)) /
-      static_cast<float>(per_row);
+  const float field = (available - gap * static_cast<float>(per_row - 1)) /
+                      static_cast<float>(per_row);
   int placed = 0;
   const auto next = [&](const char* label)
   {
@@ -316,8 +314,7 @@ ManagerSetupPanel::Action ManagerSetupPanel::render(
 
   // What the experience means, then the way out of the club choice.
   const auto chosen = static_cast<ManagerBackground>(background);
-  const float start_reputation =
-      ManagerMarketModel::startingReputation(chosen);
+  const float start_reputation = ManagerMarketModel::startingReputation(chosen);
   const std::string summary = formatLocalized(
       "MANAGER_SETUP_SUMMARY",
       {std::format("{:.0f}", start_reputation),
@@ -350,9 +347,8 @@ ManagerSetupPanel::Action ManagerSetupPanel::render(
 ManagerScene::ManagerScene(GUIView* parent, std::optional<Tab> initial)
     : ManagementScene(parent)
 {
-  tab = initial.value_or(parent->getController().isUnemployed()
-                             ? Tab::JOB_CENTRE
-                             : Tab::PROFILE);
+  tab = initial.value_or(
+      parent->getController().isUnemployed() ? Tab::JOB_CENTRE : Tab::PROFILE);
 }
 
 void ManagerScene::update(float /*deltaTime*/) {}
@@ -373,10 +369,9 @@ void ManagerScene::refresh()
   const GameDateValue today = controller.getCurrentDate();
 
   // ---- Profile ----
-  subtitle = std::format("{}  ·  {}  ·  {}", profile->name(),
-                         nationName(profile->nationality),
-                         formatLocalized("MANAGER_AGE",
-                                         {std::to_string(profile->age)}));
+  subtitle = std::format(
+      "{}  ·  {}  ·  {}", profile->name(), nationName(profile->nationality),
+      formatLocalized("MANAGER_AGE", {std::to_string(profile->age)}));
   reputation = profile->reputation;
   reputation_value = std::format("{:.0f}", profile->reputation);
   reputation_tier_key = ManagerMarketModel::reputationTierKey(
@@ -389,9 +384,9 @@ void ManagerScene::refresh()
   if (const auto club = controller.getManagedTeam())
   {
     club_value = club->get().getName();
-    club_note = formatLocalized(
-        "MANAGER_CONTRACT_NOTE", {Format::money(profile->contract.weekly_wage),
-                                  Format::date(profile->contract.expires)});
+    club_note = formatLocalized("MANAGER_CONTRACT_NOTE",
+                                {Format::money(profile->contract.weekly_wage),
+                                 Format::date(profile->contract.expires)});
   }
   else
   {
@@ -418,28 +413,24 @@ void ManagerScene::refresh()
     row.club = stint.club_name;
     row.league = leagueName(controller, stint.league_id);
     row.current = stint.reason == DepartureReason::Current;
-    row.period =
-        std::format("{} – {}", Format::date(stint.start),
-                    row.current ? std::string(LOC("MANAGER_PRESENT"))
-                                : Format::date(stint.end));
+    row.period = std::format("{} – {}", Format::date(stint.start),
+                             row.current ? std::string(LOC("MANAGER_PRESENT"))
+                                         : Format::date(stint.end));
     row.record = std::format("{}-{}-{}", stint.won, stint.drawn, stint.lost);
-    row.win_rate =
-        stint.played == 0
-            ? std::string("–")
-            : std::format("{:.0f}%", stint.winRate() * 100.0f);
+    row.win_rate = stint.played == 0
+                       ? std::string("–")
+                       : std::format("{:.0f}%", stint.winRate() * 100.0f);
     row.trophies = std::to_string(stint.trophies);
     row.departure_key = ManagerMarketModel::departureKey(stint.reason);
     stints.push_back(std::move(row));
   }
   std::ranges::reverse(stints);
   record_value = std::format("{}-{}-{}", won, drawn, lost);
-  record_note =
-      played == 0
-          ? std::string(LOC("MANAGER_RECORD_NONE"))
-          : formatLocalized(
-                "MANAGER_RECORD_NOTE",
-                {std::format("{:.0f}%", 100.0 * won / played),
-                 std::to_string(trophies)});
+  record_note = played == 0 ? std::string(LOC("MANAGER_RECORD_NONE"))
+                            : formatLocalized(
+                                  "MANAGER_RECORD_NOTE",
+                                  {std::format("{:.0f}%", 100.0 * won / played),
+                                   std::to_string(trophies)});
 
   profile_facts = {
       {"MANAGER_FACT_BACKGROUND",
@@ -466,9 +457,9 @@ void ManagerScene::refresh()
     SeasonRow row;
     row.season = seasonLabel(line.start_year);
     row.club = line.club_name;
-    row.finish = formatLocalized("MANAGER_FINISH",
-                                 {std::to_string(line.position),
-                                  std::to_string(line.league_size)});
+    row.finish = formatLocalized(
+        "MANAGER_FINISH",
+        {std::to_string(line.position), std::to_string(line.league_size)});
     row.expected = std::to_string(line.expected_position);
     row.margin = line.expected_position - line.position;
     seasons.push_back(std::move(row));
@@ -488,8 +479,8 @@ void ManagerScene::refresh()
     row.club = clubName(controller, view.team_id);
     row.league = leagueName(controller, view.league_id);
     row.reputation = std::to_string(view.reputation);
-    row.expectation = std::format("{} ({})", LOC(view.objective_key),
-                                  view.expected_position);
+    row.expectation =
+        std::format("{} ({})", LOC(view.objective_key), view.expected_position);
     row.owner_key = ManagerMarketModel::ownerKey(view.owner);
     row.licence_key = ManagerMarketModel::licenceKey(view.required_licence);
     row.licence_missing = profile->licence < view.required_licence;
@@ -510,15 +501,15 @@ void ManagerScene::refresh()
     row.club = clubName(controller, offer.team_id);
     if (const auto team = controller.getTeamById(offer.team_id))
       row.league = leagueName(controller, team->get().getLeagueId());
-    row.wage = formatLocalized("MANAGER_PER_WEEK",
-                               {Format::money(offer.weekly_wage)});
+    row.wage =
+        formatLocalized("MANAGER_PER_WEEK", {Format::money(offer.weekly_wage)});
     row.terms = formatLocalized(
         "JOB_OFFER_TERMS",
         {std::to_string(offer.years), Format::money(offer.release_compensation),
          Format::date(offer.expires)});
     if (offer.compensation > 0 && !unemployed)
-      row.compensation = formatLocalized(
-          "JOB_OFFER_COMPENSATION", {Format::money(offer.compensation)});
+      row.compensation = formatLocalized("JOB_OFFER_COMPENSATION",
+                                         {Format::money(offer.compensation)});
     row.unsolicited = offer.unsolicited;
     row.weekly_wage = offer.weekly_wage;
     row.years = offer.years;
@@ -596,10 +587,10 @@ void ManagerScene::renderProfileCard(float width)
             palette.info, meter_value.c_str());
   // Scale marks: local, national, continental, world.
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() + key_width);
-  const std::string scale_text = std::format(
-      "{}  ·  {}  ·  {}  ·  {}", LOC("MANAGER_REP_LOCAL"),
-      LOC("MANAGER_REP_NATIONAL"), LOC("MANAGER_REP_CONTINENTAL"),
-      LOC("MANAGER_REP_WORLD"));
+  const std::string scale_text =
+      std::format("{}  ·  {}  ·  {}  ·  {}", LOC("MANAGER_REP_LOCAL"),
+                  LOC("MANAGER_REP_NATIONAL"), LOC("MANAGER_REP_CONTINENTAL"),
+                  LOC("MANAGER_REP_WORLD"));
   UI::textFitted(scale_text, ImGui::GetContentRegionAvail().x, palette.faint);
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale));
   for (const auto& [key, value] : profile_facts)
@@ -628,8 +619,7 @@ void ManagerScene::renderHonours(float width)
     ImGui::SameLine(90.0f * Theme::scale());
     ImGui::TextUnformatted(LOC(award.award_key));
     ImGui::SameLine();
-    UI::textFitted(award.club, ImGui::GetContentRegionAvail().x,
-                   palette.faint);
+    UI::textFitted(award.club, ImGui::GetContentRegionAvail().x, palette.faint);
   }
   UI::endCard();
 }
@@ -696,11 +686,10 @@ void ManagerScene::renderSeasons()
         UI::textFitted(row.club, ImGui::GetContentRegionAvail().x,
                        palette.text);
       if (UI::cell(mask, 2))
-        ImGui::TextColored(row.margin > 0
-                               ? palette.positive
-                               : (row.margin < 0 ? palette.negative
-                                                 : palette.text),
-                           "%s", row.finish.c_str());
+        ImGui::TextColored(
+            row.margin > 0 ? palette.positive
+                           : (row.margin < 0 ? palette.negative : palette.text),
+            "%s", row.finish.c_str());
       if (UI::cell(mask, 3))
         ImGui::TextColored(palette.muted, "%s", row.expected.c_str());
     }
@@ -783,8 +772,7 @@ void ManagerScene::renderOffers()
         else
         {
           accept_candidate = offer.id;
-          const auto club =
-              guiView->getController().getManagedTeam();
+          const auto club = guiView->getController().getManagedTeam();
           accept_text = formatLocalized(
               "JOB_ACCEPT_BODY",
               {club ? club->get().getName() : std::string(), offer.club});
@@ -884,9 +872,9 @@ void ManagerScene::renderVacancies()
         UI::textFitted(row.expectation, ImGui::GetContentRegionAvail().x,
                        palette.text);
       if (UI::cell(mask, 4))
-        ImGui::TextColored(row.licence_missing ? palette.warning
-                                               : palette.muted,
-                           "%s", LOC(row.licence_key));
+        ImGui::TextColored(
+            row.licence_missing ? palette.warning : palette.muted, "%s",
+            LOC(row.licence_key));
       if (UI::cell(mask, 5))
         ImGui::TextColored(chanceColor(row.chance), "%s",
                            row.chance_text.c_str());
@@ -908,16 +896,15 @@ void ManagerScene::renderVacancyDetail(const VacancyRow& row)
   const Theme::Palette& palette = Theme::palette();
   ImGui::PushID(static_cast<int>(row.team_id));
   Strip strip;
-  ImGui::TextColored(palette.muted, "%s",
-                     formatLocalized("JOB_DETAIL_BOARD",
-                                     {LOC(row.owner_key), row.expectation,
-                                      row.opened})
-                         .c_str());
+  ImGui::TextColored(
+      palette.muted, "%s",
+      formatLocalized("JOB_DETAIL_BOARD",
+                      {LOC(row.owner_key), row.expectation, row.opened})
+          .c_str());
   if (row.licence_missing)
-    ImGui::TextColored(palette.warning, "%s",
-                       formatLocalized("JOB_DETAIL_LICENCE",
-                                       {LOC(row.licence_key)})
-                           .c_str());
+    ImGui::TextColored(
+        palette.warning, "%s",
+        formatLocalized("JOB_DETAIL_LICENCE", {LOC(row.licence_key)}).c_str());
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
   if (!row.stage)
   {
@@ -957,8 +944,9 @@ void ManagerScene::renderInterviewDialog()
     return;
   {
     Theme::ScopedText title(Theme::Text::TITLE);
-    UI::textFitted(formatLocalized("JOB_INTERVIEW_TITLE", {interview_club_name}),
-                   ImGui::GetContentRegionAvail().x, palette.text);
+    UI::textFitted(
+        formatLocalized("JOB_INTERVIEW_TITLE", {interview_club_name}),
+        ImGui::GetContentRegionAvail().x, palette.text);
   }
   ImGui::PushTextWrapPos(ImGui::GetCursorPosX() +
                          ImGui::GetContentRegionAvail().x);
@@ -997,11 +985,11 @@ void ManagerScene::renderInterviewDialog()
 
   // One question at a time keeps the dialog short on small windows.
   const auto topic = static_cast<InterviewTopic>(interview_step);
-  ImGui::TextColored(palette.faint, "%s",
-                     formatLocalized("JOB_INTERVIEW_STEP",
-                                     {std::to_string(interview_step + 1),
-                                      std::to_string(INTERVIEW_TOPICS)})
-                         .c_str());
+  ImGui::TextColored(
+      palette.faint, "%s",
+      formatLocalized("JOB_INTERVIEW_STEP", {std::to_string(interview_step + 1),
+                                             std::to_string(INTERVIEW_TOPICS)})
+          .c_str());
   ImGui::TextUnformatted(LOC(ManagerMarketModel::interviewQuestionKey(topic)));
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale));
   int& answer = interview_answers[interview_step];
@@ -1053,8 +1041,8 @@ void ManagerScene::renderConfirmations()
     resign_requested = false;
     ImGui::OpenPopup(RESIGN_POPUP_ID);
   }
-  const std::string resign_body = formatLocalized(
-      "MANAGER_RESIGN_BODY", {club_value});
+  const std::string resign_body =
+      formatLocalized("MANAGER_RESIGN_BODY", {club_value});
   if (UI::confirmDialog(RESIGN_POPUP_ID, LOC("MANAGER_RESIGN_TITLE"),
                         resign_body.c_str(), LOC("MANAGER_RESIGN"),
                         LOC("SETTINGS_CANCEL")) == UI::DialogResult::CONFIRM)
@@ -1087,11 +1075,11 @@ void ManagerScene::runPendingAction()
     {
       const ApplyResult result =
           controller.applyForJob(static_cast<TeamID>(action.id));
-      showToast(LOC(result == ApplyResult::Ok ? "JOB_APPLIED_TOAST"
-                    : result == ApplyResult::RecentlyLeft
-                        ? "JOB_RECENTLY_LEFT_TOAST"
-                        : "JOB_APPLY_FAILED_TOAST"),
-                result != ApplyResult::Ok);
+      showToast(
+          LOC(result == ApplyResult::Ok             ? "JOB_APPLIED_TOAST"
+              : result == ApplyResult::RecentlyLeft ? "JOB_RECENTLY_LEFT_TOAST"
+                                                    : "JOB_APPLY_FAILED_TOAST"),
+          result != ApplyResult::Ok);
       break;
     }
     case PendingAction::Kind::ACCEPT:
@@ -1112,7 +1100,8 @@ void ManagerScene::runPendingAction()
     case PendingAction::Kind::NEGOTIATE:
     {
       const OfferReply reply = controller.negotiateJobOffer(
-          action.id, counter_wage, static_cast<std::uint8_t>(counter_years + 1));
+          action.id, counter_wage,
+          static_cast<std::uint8_t>(counter_years + 1));
       negotiating = 0;
       showToast(LOC(reply == OfferReply::Accepted   ? "JOB_TERMS_AGREED_TOAST"
                     : reply == OfferReply::Improved ? "JOB_TERMS_IMPROVED_TOAST"
@@ -1133,10 +1122,9 @@ void ManagerScene::runPendingAction()
       for (std::size_t topic = 0; topic < INTERVIEW_TOPICS; ++topic)
         answers[topic] =
             static_cast<std::uint8_t>(std::max(interview_answers[topic], 0));
-      interview_result = controller.attendInterview(
-          static_cast<TeamID>(action.id), answers);
-      if (!interview_result)
-        showToast(LOC("JOB_INTERVIEW_GONE_TOAST"), true);
+      interview_result =
+          controller.attendInterview(static_cast<TeamID>(action.id), answers);
+      if (!interview_result) showToast(LOC("JOB_INTERVIEW_GONE_TOAST"), true);
       break;
     }
     case PendingAction::Kind::NONE:
@@ -1175,8 +1163,7 @@ void ManagerScene::renderUnemployedHome(GUIView* view)
   const std::string applied = std::to_string(applications);
   const std::string offered = std::to_string(offer_count);
   tiles.next();
-  UI::statTile("reputation", LOC("MANAGER_TILE_REPUTATION"),
-               reputation.c_str(),
+  UI::statTile("reputation", LOC("MANAGER_TILE_REPUTATION"), reputation.c_str(),
                LOC(ManagerMarketModel::reputationTierKey(
                    ManagerMarketModel::reputationTier(profile->reputation))),
                palette.text, tile);

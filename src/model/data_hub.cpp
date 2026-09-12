@@ -22,15 +22,15 @@ namespace
 using nlohmann::json;
 
 constexpr std::array<const char*, HUB_METRIC_COUNT> METRIC_KEYS = {
-    "HUB_METRIC_GOALS_FOR",    "HUB_METRIC_GOALS_AGAINST",
-    "HUB_METRIC_XG_FOR",       "HUB_METRIC_XG_AGAINST",
-    "HUB_METRIC_SHOTS_FOR",    "HUB_METRIC_SHOTS_AGAINST",
+    "HUB_METRIC_GOALS_FOR",      "HUB_METRIC_GOALS_AGAINST",
+    "HUB_METRIC_XG_FOR",         "HUB_METRIC_XG_AGAINST",
+    "HUB_METRIC_SHOTS_FOR",      "HUB_METRIC_SHOTS_AGAINST",
     "HUB_METRIC_PASS_COMPLETION"};
 
 constexpr std::array<const char*, HUB_METRIC_COUNT> METRIC_HELP_KEYS = {
-    "HUB_HELP_GOALS_FOR",    "HUB_HELP_GOALS_AGAINST",
-    "HUB_HELP_XG_FOR",       "HUB_HELP_XG_AGAINST",
-    "HUB_HELP_SHOTS_FOR",    "HUB_HELP_SHOTS_AGAINST",
+    "HUB_HELP_GOALS_FOR",      "HUB_HELP_GOALS_AGAINST",
+    "HUB_HELP_XG_FOR",         "HUB_HELP_XG_AGAINST",
+    "HUB_HELP_SHOTS_FOR",      "HUB_HELP_SHOTS_AGAINST",
     "HUB_HELP_PASS_COMPLETION"};
 
 /** Per-match totals of one side, the raw material of every metric. */
@@ -98,8 +98,7 @@ bool lowerIsBetter(HubMetric metric)
 json shotToJson(const ShotRecord& shot)
 {
   return json::array({shot.minute, shot.period, shot.home ? 1 : 0, shot.player,
-                      shot.x, shot.y, shot.xg,
-                      static_cast<int>(shot.outcome)});
+                      shot.x, shot.y, shot.xg, static_cast<int>(shot.outcome)});
 }
 
 std::optional<ShotRecord> shotFromJson(const json& value)
@@ -130,8 +129,7 @@ template <typename T>
 void pairFromJson(const json& object, const char* key, std::array<T, 2>& out)
 {
   const auto found = object.find(key);
-  if (found == object.end() || !found->is_array() || found->size() != 2)
-    return;
+  if (found == object.end() || !found->is_array() || found->size() != 2) return;
   out[0] = (*found)[0].get<T>();
   out[1] = (*found)[1].get<T>();
 }
@@ -144,10 +142,10 @@ std::string ManagedMatchSnapshot::toJson() const
   json players_json = json::array();
   for (const PlayerMatchSnapshot& line : players)
   {
-    players_json.push_back(json::array(
-        {line.player, line.minutes, line.passes_attempted,
-         line.passes_completed, line.key_passes, line.shots, line.xg,
-         line.tackles_won, line.interceptions}));
+    players_json.push_back(
+        json::array({line.player, line.minutes, line.passes_attempted,
+                     line.passes_completed, line.key_passes, line.shots,
+                     line.xg, line.tackles_won, line.interceptions}));
   }
   const json object = {{"date", dateToInt(date)},
                        {"home", home_id},
@@ -238,8 +236,7 @@ ManagedMatchSnapshot captureSnapshot(const MatchEngine& engine,
   snapshot.shots = extractShots(engine.getEvents());
   for (const PlayerMatchStats& line : engine.getPlayerStats())
   {
-    if (line.isHomeTeam != managed_home || line.minutesPlayed <= 0.0f)
-      continue;
+    if (line.isHomeTeam != managed_home || line.minutesPlayed <= 0.0f) continue;
     PlayerMatchSnapshot entry;
     entry.player = line.playerId;
     entry.minutes = static_cast<std::uint8_t>(
@@ -293,8 +290,8 @@ TeamAnalytics DataHub::buildTeamAnalytics(const DataHubInput& input)
     const TeamMatchStats& other =
         home ? report->away_stats : report->home_stats;
     analytics.trend.push_back(
-        {report->date, home ? report->away_team_id : report->home_team_id,
-         home, home ? report->home_goals : report->away_goals,
+        {report->date, home ? report->away_team_id : report->home_team_id, home,
+         home ? report->home_goals : report->away_goals,
          home ? report->away_goals : report->home_goals, own.expected_goals,
          other.expected_goals, own.shots, other.shots});
   }
@@ -334,6 +331,7 @@ TeamAnalytics DataHub::buildTeamAnalytics(const DataHubInput& input)
     if (report->match_type == MatchType::LEAGUE)
       team.add(*report, report->home_team_id == input.team_id);
   }
+  analytics.team_league_matches = team.matches;
   const bool leagueTeamFound = by_team.contains(input.team_id);
   for (std::size_t index = 0; index < HUB_METRIC_COUNT; ++index)
   {
@@ -391,7 +389,8 @@ std::vector<PlayerAnalyticsRow> DataHub::buildPlayerAnalytics(
   };
 
   std::vector<const MatchReport*> reports;
-  for (const MatchReport& report : input.team_reports) reports.push_back(&report);
+  for (const MatchReport& report : input.team_reports)
+    reports.push_back(&report);
   std::ranges::sort(reports, {}, [](const MatchReport* report)
                     { return dayOrdinal(report->date); });
   for (const MatchReport* report : reports)
@@ -421,13 +420,12 @@ std::vector<PlayerAnalyticsRow> DataHub::buildPlayerAnalytics(
         std::accumulate(row.ratings.end() - static_cast<std::ptrdiff_t>(recent),
                         row.ratings.end(), 0.0f) /
         static_cast<float>(recent);
-    row.rating_trend = row.ratings.size() > recent
-                           ? recent_mean - row.average_rating
-                           : 0.0f;
+    row.rating_trend =
+        row.ratings.size() > recent ? recent_mean - row.average_rating : 0.0f;
     if (row.ratings.size() > RATING_HISTORY)
-      row.ratings.erase(row.ratings.begin(),
-                        row.ratings.end() -
-                            static_cast<std::ptrdiff_t>(RATING_HISTORY));
+      row.ratings.erase(
+          row.ratings.begin(),
+          row.ratings.end() - static_cast<std::ptrdiff_t>(RATING_HISTORY));
   }
 
   // Tracked matches: per-player passing and shooting. The pass share is

@@ -20,6 +20,7 @@
 #include "gui/gui_scene.h"
 #include "gui/render/imatch_renderer.h"
 #include "gui/scenes/match_scene_tuning.h"
+#include "gui/scenes/match_analysis_panel.h"
 #include "gui/scenes/team_talk_dialog.h"
 #include "model/match_engine.h"
 
@@ -119,6 +120,7 @@ class MatchScene : public GUIScene
   bool highlights_only = false;
   bool is_paused = false;
   TeamTalkDialog team_talk;
+  MatchAnalysisPanel analysis_panel;
 
   bool show_substitutions = false;
 #ifdef DEBUG

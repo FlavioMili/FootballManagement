@@ -105,8 +105,7 @@ TEST(NextActionTest, DelegatedLineupFixIsLowPriority)
   facts.assistant_fixes_lineup = true;
   const auto actions = rankNextActions(facts);
   EXPECT_EQ(actions.front().kind, NextActionKind::BoardWarning);
-  const NextAction* lineup =
-      find(actions, NextActionKind::UnavailableInLineup);
+  const NextAction* lineup = find(actions, NextActionKind::UnavailableInLineup);
   ASSERT_NE(lineup, nullptr);
   EXPECT_EQ(lineup->reason.key, "NEXT_LINEUP_REASON_ASSISTANT");
 }
@@ -118,7 +117,8 @@ TEST(NextActionTest, OffersAreRankedByDeadlineAndFolded)
   const auto actions = rankNextActions(facts);
   std::vector<std::uint32_t> refs;
   for (const NextAction& action : actions)
-    if (action.kind == NextActionKind::IncomingOffer) refs.push_back(action.ref);
+    if (action.kind == NextActionKind::IncomingOffer)
+      refs.push_back(action.ref);
   // Two individual offers (soonest deadline first) and one "more" entry.
   ASSERT_EQ(refs.size(), NextActionRules::MAX_OFFER_ACTIONS + 1);
   EXPECT_EQ(refs[0], 2U);
@@ -215,9 +215,10 @@ TEST(NextActionTest, ControllerReportsUnavailableStarters)
   const Team& club = controller.getManagedTeam()->get();
   const Player* keeper = club.getLineup().getGoalkeeper();
   ASSERT_NE(keeper, nullptr);
-  PlayerDynamics& dynamics =
-      controller.getGameData()->getPlayers().at(keeper->getId())
-          .mutableDynamics();
+  PlayerDynamics& dynamics = controller.getGameData()
+                                 ->getPlayers()
+                                 .at(keeper->getId())
+                                 .mutableDynamics();
   dynamics.injury = InjuryType::HamstringStrain;
   dynamics.injury_days = 20;
 

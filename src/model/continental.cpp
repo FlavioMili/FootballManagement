@@ -14,6 +14,7 @@
 #include <cmath>
 #include <numeric>
 #include <random>
+#include <set>
 #include <nlohmann/json.hpp>
 
 #include "database/database_connection.h"
@@ -24,6 +25,7 @@
 #include "model/league.h"
 #include "model/match.h"
 #include "model/team.h"
+#include "model/world_rng.h"
 #include "model/world_tuning.h"
 
 using Continental::CompetitionRules;
@@ -513,8 +515,10 @@ std::vector<Continental::LeagueFixture> Continental::drawLeaguePhase(
     uint8_t limit;
     bool allow_own;
   };
-  constexpr std::array<Level, 3> LEVELS = {
-      {{2, false}, {RELAXED_ASSOCIATION_LIMIT, false},
+  constexpr std::array<Level, 4> LEVELS = {
+      {{2, false},
+       {RELAXED_ASSOCIATION_LIMIT, false},
+       {NO_ASSOCIATION_LIMIT, false},
        {NO_ASSOCIATION_LIMIT, true}}};
   std::optional<DrawState> solved;
   for (const Level& level : LEVELS)
@@ -909,8 +913,38 @@ void ContinentalCompetitions::assignPots(Season& season) const
                     });
   const size_t pots = std::max<size_t>(1, season.matches / 2);
   const size_t pot_size = std::max<size_t>(1, season.entrants.size() / pots);
-  for (size_t index = 0; index < season.entrants.size(); ++index)
-    season.entrants[index].pot = static_cast<uint8_t>(index / pot_size);
+  // Clubs meet two pot-mates each and never one of their association, so a
+  // pot holds at most half its clubs from one association; the others move
+  // down to the next pot with room (coefficient order otherwise).
+  const size_t per_association = std::max<size_t>(1, pot_size / 2);
+  std::vector<std::map<LeagueID, size_t>> counts(pots);
+  std::vector<size_t> filled(pots, 0);
+  std::vector<Entrant> ordered;
+  ordered.reserve(season.entrants.size());
+  std::vector<Entrant> waiting = season.entrants;
+  for (size_t pot = 0; pot < pots; ++pot)
+  {
+    for (auto it = waiting.begin(); it != waiting.end() && filled[pot] < pot_size;)
+    {
+      const bool last_pot = pot + 1 == pots;
+      if (!last_pot && counts[pot][it->association] >= per_association)
+      {
+        ++it;
+        continue;
+      }
+      ++counts[pot][it->association];
+      ++filled[pot];
+      it->pot = static_cast<uint8_t>(pot);
+      ordered.push_back(*it);
+      it = waiting.erase(it);
+    }
+  }
+  for (Entrant& entrant : waiting)
+  {
+    entrant.pot = static_cast<uint8_t>(pots - 1);
+    ordered.push_back(entrant);
+  }
+  season.entrants = std::move(ordered);
 }
 
 void ContinentalCompetitions::startSeason(uint16_t season_year,
@@ -962,7 +996,15 @@ void ContinentalCompetitions::startSeason(uint16_t season_year,
     season.draw_date = draw_date;
     season.entrants = std::move(entrants);
     assignPots(season);
-    season.entrants.resize(size);  // Lowest coefficients drop out.
+    // The lowest coefficients drop out, then the pots are drawn up again.
+    std::ranges::sort(season.entrants,
+                      [](const Entrant& left, const Entrant& right)
+                      {
+                        if (left.coefficient != right.coefficient)
+                          return left.coefficient > right.coefficient;
+                        return left.team_id < right.team_id;
+                      });
+    season.entrants.resize(size);
     assignPots(season);
     seasons.push_back(std::move(season));
   }
@@ -1043,6 +1085,23 @@ void ContinentalCompetitions::drawLeaguePhase(Calendar& calendar,
       SeasonCalendar::continentalWeeks(season.season_year);
   const size_t last_week = Continental::KNOCKOUT_STAGE_BASE / 2 - 1;
   std::map<uint8_t, size_t> per_matchday;
+  // Domestic fixtures already in the calendar (normally none in these
+  // weeks; older saves generated their calendar before them).
+  std::set<std::pair<TeamID, int32_t>> busy;
+  for (const auto& [date, matches] : calendar.getFullCalendar())
+    for (const Match& match : matches)
+      if (match.getMatchType() != MatchType::CONTINENTAL)
+      {
+        busy.emplace(match.getHomeTeamId(), dayOrdinal(date));
+        busy.emplace(match.getAwayTeamId(), dayOrdinal(date));
+      }
+  const auto clear = [&busy](TeamID home, TeamID away, const GameDateValue& date)
+  {
+    const int32_t day = dayOrdinal(date);
+    for (int32_t near = day - 1; near <= day + 1; ++near)
+      if (busy.contains({home, near}) || busy.contains({away, near})) return false;
+    return true;
+  };
   for (const Continental::LeagueFixture& fixture : fixtures)
   {
     // Matchdays spread over the eight league-phase weeks.
@@ -1055,6 +1114,14 @@ void ContinentalCompetitions::drawLeaguePhase(Calendar& calendar,
     const size_t half = per_matchday[fixture.matchday]++ % 2;
     int offset = rules->weekday_offsets[half];
     if (fixture.matchday > season.matches) offset = 3;  // Extra round.
+    for (const int candidate : {offset, 0, 1, 2})
+    {
+      if (clear(fixture.home_id, fixture.away_id, plusDays(weeks[week], candidate)))
+      {
+        offset = candidate;
+        break;
+      }
+    }
     calendar.addMatch(Match(fixture.home_id, fixture.away_id,
                             plusDays(weeks[week], offset),
                             MatchType::CONTINENTAL, season.competition_id,
@@ -1285,10 +1352,16 @@ void ContinentalCompetitions::advanceKnockouts(Calendar& calendar,
                           ? tie.seeded_id
                           : tie.unseeded_id;
     }
-    else if (const auto winner = score.second_leg->getWinnerId();
-             winner && score.second_leg->wentToPenalties())
+    else if (score.second_leg->wentToPenalties() &&
+             score.second_leg->getHomePenalties() !=
+                 score.second_leg->getAwayPenalties())
     {
-      tie.winner_id = *winner;
+      // The deciding match is hosted by the seeded club (also the final's
+      // nominal home side); the leg score itself may differ.
+      tie.winner_id = score.second_leg->getHomePenalties() >
+                              score.second_leg->getAwayPenalties()
+                          ? tie.seeded_id
+                          : tie.unseeded_id;
     }
   }
   if (season.ties.empty()) return;

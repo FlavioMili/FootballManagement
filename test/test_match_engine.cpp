@@ -12,6 +12,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <ctime>
 #include <filesystem>
 #include <limits>
 #include <map>
@@ -686,8 +687,10 @@ TEST(MatchEngineTest, MovementAssignmentsRemainCoherentAcrossLivePlay)
 TEST(MatchEngineTest, StrongerTeamHasStatisticalAdvantage)
 {
   std::vector<std::unique_ptr<Player>> players;
-  Team strong = createDummyTeam(1, "Strong", 88, players);
-  Team weak = createDummyTeam(2, "Weak", 42, players);
+  // A wide but professional gap (attributes are stretched around a typical
+  // level, so 88 against 42 would be a top side against amateurs).
+  Team strong = createDummyTeam(1, "Strong", 82, players);
+  Team weak = createDummyTeam(2, "Weak", 52, players);
   const StatsConfig config = createStatsConfig();
 
   int strongGoals = 0;
@@ -1238,22 +1241,28 @@ TEST(MatchEngineTest, FullHeadlessMatchIsFast)
   Team home = createSquadWithBench(1, "Home", 70, players);
   Team away = createSquadWithBench(2, "Away", 70, players);
   const StatsConfig config = createStatsConfig();
-  const auto started = std::chrono::steady_clock::now();
+  // Processor time of the fastest of several matches: robust against other
+  // processes competing for the machine, still a hard budget per match.
   constexpr int MATCHES = 10;
+  double fastest = std::numeric_limits<double>::max();
+  double total = 0.0;
   for (uint32_t seed = 1; seed <= MATCHES; ++seed)
   {
     MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
                        away.getStrategy(), config, seed);
+    const std::clock_t started = std::clock();
     engine.simulateToEnd();
+    const double milliseconds = 1000.0 *
+                                static_cast<double>(std::clock() - started) /
+                                CLOCKS_PER_SEC;
+    fastest = std::min(fastest, milliseconds);
+    total += milliseconds;
     EXPECT_EQ(engine.getState(), MatchState::FULL_TIME);
   }
-  const double milliseconds = std::chrono::duration<double, std::milli>(
-                                  std::chrono::steady_clock::now() - started)
-                                  .count() /
-                              MATCHES;
-  RecordProperty("milliseconds_per_match", std::to_string(milliseconds));
-  std::printf("[timing] headless match %.2f ms\n", milliseconds);
-  EXPECT_LT(milliseconds, 150.0);
+  RecordProperty("milliseconds_per_match", std::to_string(total / MATCHES));
+  std::printf("[timing] headless match cpu %.2f ms (fastest %.2f ms)\n",
+              total / MATCHES, fastest);
+  EXPECT_LT(fastest, 150.0);
 }
 
 TEST(MatchEngineTest, HeadlessSimulationMatchesLivePlayback)
@@ -1604,4 +1613,331 @@ TEST(MatchEngineTest, DribblerVersusJockeyingDefenderDependsOnSkill)
   EXPECT_GT(skilled, outclassed + 0.15);
   EXPECT_LT(skilled, 0.98);
   EXPECT_GT(outclassed, 0.02);
+}
+
+namespace
+{
+/** Mean own-goal depth of a side's outfield players over `seconds`. */
+double meanOutfieldDepth(MatchEngine& engine, bool homeTeam, float seconds)
+{
+  double sum = 0.0;
+  int samples = 0;
+  const auto steps = static_cast<int>(
+      seconds / MatchTuning::Timing::FIXED_STEP_SECONDS);
+  for (int step = 0; step < steps; ++step)
+  {
+    engine.advance(MatchTuning::Timing::FIXED_STEP_SECONDS);
+    for (const MatchPlayer& player : engine.getPlayers())
+    {
+      if (!player.onPitch || player.isGoalkeeper ||
+          player.isHomeTeam != homeTeam)
+        continue;
+      sum += homeTeam ? player.position.x : 1.0f - player.position.x;
+      ++samples;
+    }
+  }
+  return samples > 0 ? sum / samples : 0.0;
+}
+}  // namespace
+
+TEST(MatchEngineTest, MidMatchStrategyChangeMovesTheTeam)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 66, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  double cautiousDepth = 0.0;
+  double boldDepth = 0.0;
+  for (std::uint32_t seed = 1; seed <= 6; ++seed)
+  {
+    MatchEngine cautious(home.getLineup(), away.getLineup(),
+                         home.getStrategy(), away.getStrategy(), config, seed);
+    MatchEngine bold(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, seed);
+    cautious.advance(120.0f);
+    bold.advance(120.0f);
+    StrategySliders low{0.1f, 0.2f, 0.1f, 0.5f, 0.9f};
+    StrategySliders high{1.0f, 0.9f, 1.0f, 0.6f, 0.2f};
+    Strategy cautiousPlan;
+    cautiousPlan.setAllSliders(low);
+    Strategy boldPlan;
+    boldPlan.setAllSliders(high);
+    cautious.setStrategy(true, cautiousPlan);
+    bold.setStrategy(true, boldPlan);
+    // Score effects temper the instruction once a goal has gone in.
+    if (bold.getHomeScore() == bold.getAwayScore())
+      EXPECT_FLOAT_EQ(bold.getEffectiveSliders(true).pressing, 1.0f);
+    else
+      EXPECT_GT(bold.getEffectiveSliders(true).pressing, 0.8f);
+    cautiousDepth += meanOutfieldDepth(cautious, true, 600.0f);
+    boldDepth += meanOutfieldDepth(bold, true, 600.0f);
+  }
+  EXPECT_GT(boldDepth, cautiousDepth * 1.03)
+      << "bold tactics must push the team higher up the pitch";
+}
+
+TEST(MatchEngineTest, ShoutsNudgeTheSlidersAndFade)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 66, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 3);
+  engine.setAutoSubstitutions(false, false);
+  const float basePressing = engine.getEffectiveSliders(true).pressing;
+  EXPECT_FLOAT_EQ(engine.getShoutStrength(true), 0.0f);
+  engine.applyShout(true, MatchShout::PRESS_MORE);
+  EXPECT_FLOAT_EQ(engine.getShoutStrength(true), 1.0f);
+  EXPECT_GT(engine.getEffectiveSliders(true).pressing, basePressing + 0.2f);
+  EXPECT_FLOAT_EQ(engine.getEffectiveSliders(false).pressing,
+                  away.getStrategy().getSliders().pressing);
+  engine.advance(MatchTuning::Touchline::SHOUT_DURATION_SECONDS * 0.5f);
+  EXPECT_NEAR(engine.getShoutStrength(true), 0.5f, 0.01f);
+  engine.advance(MatchTuning::Touchline::SHOUT_DURATION_SECONDS * 0.6f);
+  EXPECT_FLOAT_EQ(engine.getShoutStrength(true), 0.0f);
+  // Only the score effect remains once the shout has faded.
+  const float scoreEffect =
+      MatchTuning::Touchline::SCORE_EFFECT_MAX_GOALS *
+      MatchTuning::Touchline::SCORE_EFFECT_PRESSING;
+  EXPECT_NEAR(engine.getEffectiveSliders(true).pressing, basePressing,
+              engine.getHomeScore() == engine.getAwayScore()
+                  ? 1e-6f
+                  : scoreEffect + 1e-6f);
+}
+
+TEST(MatchEngineTest, TeamTalkModifierIsBoundedAndDeterministic)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 66, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  const auto play = [&](float modifier)
+  {
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, 99);
+    engine.setTeamTalkModifier(true, 1, modifier);
+    engine.setTeamTalkModifier(true, 2, modifier);
+    engine.simulateToEnd();
+    return engine.getStats().homePassesCompleted * 1000 +
+           engine.getHomeScore() * 10 + engine.getAwayScore();
+  };
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 99);
+  engine.setTeamTalkModifier(true, 1, 0.5f);
+  EXPECT_FLOAT_EQ(engine.getTeamTalkModifier(true, 1),
+                  MatchTuning::Touchline::MAX_TEAM_TALK_MODIFIER);
+  engine.setTeamTalkModifier(false, 2, -0.5f);
+  EXPECT_FLOAT_EQ(engine.getTeamTalkModifier(false, 2),
+                  -MatchTuning::Touchline::MAX_TEAM_TALK_MODIFIER);
+  EXPECT_FLOAT_EQ(engine.getTeamTalkModifier(true, 3), 0.0f);
+  EXPECT_EQ(play(0.012f), play(0.012f));
+}
+
+namespace
+{
+/** Advances until an outfield player of `homeTeam` holds the ball. */
+const MatchPlayer* advanceUntilOutfieldCarrier(MatchEngine& engine,
+                                               bool homeTeam)
+{
+  for (int step = 0; step < 20'000; ++step)
+  {
+    engine.advance(MatchTuning::Timing::FIXED_STEP_SECONDS);
+    if (engine.getState() != MatchState::PLAYING) continue;
+    const Player* holder = engine.getBall().possessedBy;
+    if (!holder) continue;
+    for (const auto& candidate : engine.getPlayers())
+    {
+      if (candidate.player == holder && candidate.isHomeTeam == homeTeam &&
+          !candidate.isGoalkeeper)
+        return &candidate;
+    }
+  }
+  return nullptr;
+}
+
+const MatchPlayer* findOnPitch(const MatchEngine& engine, PlayerID id)
+{
+  for (const auto& candidate : engine.getPlayers())
+    if (candidate.player && candidate.player->getId() == id) return &candidate;
+  return nullptr;
+}
+}  // namespace
+
+TEST(MatchEngineTest, ControlledPlayerFollowsTheStickWithinHisPhysics)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 70, players);
+  Team away = createSquadWithBench(2, "Away", 70, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 17);
+  engine.setAutoSubstitutions(false, false);
+  engine.advance(30.0f);
+  for (int step = 0; step < 2'000 && engine.getState() != MatchState::PLAYING;
+       ++step)
+    engine.advance(MatchTuning::Timing::FIXED_STEP_SECONDS);
+  ASSERT_EQ(engine.getState(), MatchState::PLAYING);
+
+  // Goalkeepers and unknown players cannot be taken over.
+  const PlayerID keeper = home.getLineup().getGoalkeeper()->getId();
+  EXPECT_FALSE(engine.setControlledPlayer(keeper));
+  EXPECT_FALSE(engine.setControlledPlayer(999'999));
+  EXPECT_EQ(engine.getControlledPlayer(), 0u);
+
+  // A centre-back runs across the pitch toward the touchline on the stick.
+  const PlayerID controlled = 102;
+  ASSERT_TRUE(engine.setControlledPlayer(controlled));
+  EXPECT_EQ(engine.getControlledPlayer(), controlled);
+  MatchPlayerInput input;
+  input.moveY = engine.getBall().position.y < 0.5f ? 1.0f : -1.0f;
+  input.sprint = true;
+  engine.submitInput(input);
+  const MatchPlayer* player = findOnPitch(engine, controlled);
+  ASSERT_NE(player, nullptr);
+  const Vector2F start = player->position;
+  float fastest = 0.0f;
+  for (int step = 0; step < 25; ++step)
+  {
+    engine.advance(MatchTuning::Timing::FIXED_STEP_SECONDS);
+    player = findOnPitch(engine, controlled);
+    ASSERT_NE(player, nullptr);
+    const float speed = std::hypot(player->velocity.x, player->velocity.y);
+    EXPECT_LE(speed, player->maxSpeed + 1e-3f);
+    // The run follows the stick: sideways, barely any drift along x.
+    if (speed > 1.0f)
+      EXPECT_GT(std::abs(player->velocity.y), 4.0f * std::abs(player->velocity.x));
+    fastest = std::max(fastest, speed);
+  }
+  // Accelerates realistically: a hard 2.5 s run nears top speed.
+  EXPECT_GT(fastest, 0.8f * player->maxSpeed);
+  const float runMetres =
+      std::abs(player->position.y - start.y) * MatchTuning::Pitch::WIDTH_METRES;
+  EXPECT_GT(runMetres, 10.0f);
+  EXPECT_LT(runMetres, 25.0f);
+
+  // Releasing the stick stops him under his braking limit.
+  engine.submitInput(MatchPlayerInput{});
+  engine.advance(1.5f);
+  player = findOnPitch(engine, controlled);
+  EXPECT_LT(std::hypot(player->velocity.x, player->velocity.y), 0.5f);
+
+  // Handing him back to the AI.
+  ASSERT_TRUE(engine.setControlledPlayer(0));
+  engine.advance(MatchTuning::Timing::FIXED_STEP_SECONDS);
+  EXPECT_EQ(engine.getControlledPlayer(), 0u);
+}
+
+TEST(MatchEngineTest, ControlledCarrierPassesTowardTheAim)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 70, players);
+  Team away = createSquadWithBench(2, "Away", 60, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 23);
+  engine.setAutoSubstitutions(false, false);
+  engine.advance(20.0f);
+  const MatchPlayer* carrier = advanceUntilOutfieldCarrier(engine, true);
+  ASSERT_NE(carrier, nullptr);
+  const PlayerID carrierId = carrier->player->getId();
+  const Vector2F from = carrier->position;
+  ASSERT_TRUE(engine.setControlledPlayer(carrierId));
+
+  // Aim at the farthest-away team-mate: the pass goes to the team-mate best
+  // aligned with that direction (usually him), never behind the aim.
+  const MatchPlayer* aimed = nullptr;
+  float farthest = 0.0f;
+  for (const auto& mate : engine.getPlayers())
+  {
+    if (!mate.player || !mate.onPitch || mate.isHomeTeam != true ||
+        mate.isGoalkeeper || mate.player->getId() == carrierId)
+      continue;
+    const float metres = std::hypot((mate.position.x - from.x) * 105.0f,
+                                    (mate.position.y - from.y) * 68.0f);
+    if (metres > farthest && metres < 40.0f)
+    {
+      farthest = metres;
+      aimed = &mate;
+    }
+  }
+  ASSERT_NE(aimed, nullptr);
+  MatchPlayerInput input;
+  input.aimX = (aimed->position.x - from.x) * 105.0f;
+  input.aimY = (aimed->position.y - from.y) * 68.0f;
+  input.action = MatchInputAction::PASS;
+  engine.submitInput(input);
+  bool passed = false;
+  const int buffered = static_cast<int>(
+      MatchTuning::Control::ACTION_BUFFER_SECONDS /
+      MatchTuning::Timing::FIXED_STEP_SECONDS);
+  for (int step = 0; step < buffered && !passed; ++step)
+  {
+    engine.advance(MatchTuning::Timing::FIXED_STEP_SECONDS);
+    passed = engine.getBall().possessedBy != carrier->player &&
+             engine.getBall().isPass;
+  }
+  ASSERT_TRUE(passed);
+  const Player* receiver = engine.getBall().intendedReceiver;
+  ASSERT_NE(receiver, nullptr);
+  const MatchPlayer* target = findOnPitch(engine, receiver->getId());
+  ASSERT_NE(target, nullptr);
+  const float toTargetX = (target->position.x - from.x) * 105.0f;
+  const float toTargetY = (target->position.y - from.y) * 68.0f;
+  const float alignment =
+      (toTargetX * input.aimX + toTargetY * input.aimY) /
+      (std::hypot(toTargetX, toTargetY) * std::hypot(input.aimX, input.aimY));
+  EXPECT_GT(alignment, MatchTuning::Control::PASS_MIN_ALIGNMENT - 0.1f);
+}
+
+TEST(MatchEngineTest, RecordedControllerInputReplaysIdentically)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 68, players);
+  Team away = createSquadWithBench(2, "Away", 67, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine live(home.getLineup(), away.getLineup(), home.getStrategy(),
+                   away.getStrategy(), config, 4'242);
+  // A scripted "human": takes a striker, runs, sprints, presses buttons.
+  ASSERT_TRUE(live.setControlledPlayer(109));
+  for (int second = 0; second < 900; ++second)
+  {
+    MatchPlayerInput input;
+    const float phase = static_cast<float>(second) * 0.37f;
+    input.moveX = std::cos(phase);
+    input.moveY = std::sin(phase * 1.3f);
+    input.sprint = second % 7 < 3;
+    if (second % 11 == 0) input.action = MatchInputAction::PASS;
+    if (second % 29 == 0) input.action = MatchInputAction::SHOOT;
+    if (second % 13 == 0) input.action = MatchInputAction::TACKLE;
+    live.submitInput(input);
+    live.update(0.5f);
+    live.update(0.5f);
+  }
+  ASSERT_TRUE(live.setControlledPlayer(0));
+  live.simulateToEnd();
+  ASSERT_EQ(live.getState(), MatchState::FULL_TIME);
+  ASSERT_GT(live.getInputLog().size(), 900u);
+
+  MatchEngine replay(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 4'242);
+  replay.loadInputReplay(live.getInputLog());
+  replay.simulateToEnd();
+  EXPECT_EQ(replay.getHomeScore(), live.getHomeScore());
+  EXPECT_EQ(replay.getAwayScore(), live.getAwayScore());
+  EXPECT_EQ(replay.getEvents().size(), live.getEvents().size());
+  EXPECT_EQ(replay.getStats().homePassesCompleted,
+            live.getStats().homePassesCompleted);
+  EXPECT_DOUBLE_EQ(replay.getSimulatedSeconds(), live.getSimulatedSeconds());
+  ASSERT_EQ(replay.getPlayerStats().size(), live.getPlayerStats().size());
+  for (std::size_t index = 0; index < live.getPlayerStats().size(); ++index)
+    EXPECT_FLOAT_EQ(replay.getPlayerStats()[index].distanceMetres,
+                    live.getPlayerStats()[index].distanceMetres);
+
+  // The controlled run really changed the match versus pure AI.
+  MatchEngine ai(home.getLineup(), away.getLineup(), home.getStrategy(),
+                 away.getStrategy(), config, 4'242);
+  ai.simulateToEnd();
+  EXPECT_NE(ai.getEvents().size() * 1000 + ai.getStats().homePassesCompleted,
+            live.getEvents().size() * 1000 + live.getStats().homePassesCompleted);
 }

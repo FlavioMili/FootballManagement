@@ -80,11 +80,10 @@ ManagedMatchSnapshot snapshot(int day, TeamID home, TeamID away)
 
 TEST(DataHubTest, TrendAndRollingAverageReconcileWithReports)
 {
-  std::vector<MatchReport> reports = {
-      report(9, CLUB, 20, 2, 0, 2.0f, 0.5f),
-      report(2, 21, CLUB, 1, 1, 1.0f, 1.0f),
-      report(16, CLUB, 22, 0, 1, 0.6f, 1.4f),
-      report(23, 23, CLUB, 0, 3, 0.4f, 3.0f)};
+  std::vector<MatchReport> reports = {report(9, CLUB, 20, 2, 0, 2.0f, 0.5f),
+                                      report(2, 21, CLUB, 1, 1, 1.0f, 1.0f),
+                                      report(16, CLUB, 22, 0, 1, 0.6f, 1.4f),
+                                      report(23, 23, CLUB, 0, 3, 0.4f, 3.0f)};
   DataHubInput input;
   input.team_id = CLUB;
   input.team_reports = reports;
@@ -123,11 +122,10 @@ TEST(DataHubTest, FewMatchesAndScoreOnlyReportsGiveAnEmptyState)
 TEST(DataHubTest, LeagueAveragesAndRanks)
 {
   // Club creates 2.0 xG a match, the others 1.0: best in the league.
-  std::vector<MatchReport> league = {
-      report(1, CLUB, 20, 2, 0, 2.0f, 1.0f),
-      report(2, 21, CLUB, 0, 1, 1.0f, 2.0f),
-      report(3, 20, 21, 1, 1, 1.0f, 1.0f),
-      report(4, 22, 20, 1, 1, 1.0f, 1.0f)};
+  std::vector<MatchReport> league = {report(1, CLUB, 20, 2, 0, 2.0f, 1.0f),
+                                     report(2, 21, CLUB, 0, 1, 1.0f, 2.0f),
+                                     report(3, 20, 21, 1, 1, 1.0f, 1.0f),
+                                     report(4, 22, 20, 1, 1, 1.0f, 1.0f)};
   DataHubInput input;
   input.team_id = CLUB;
   input.team_reports = std::span(league).first(2);

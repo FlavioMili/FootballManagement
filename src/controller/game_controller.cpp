@@ -297,6 +297,13 @@ std::optional<std::reference_wrapper<const Team>> GameController::getTeamById(
   return (*gamedata).getTeam(team_id);
 }
 
+const ClubIdentity* GameController::getClubIdentity(TeamID team_id) const
+{
+  if (!club_identities) club_identities = DataGenerator::loadClubIdentities();
+  const auto found = club_identities->find(team_id);
+  return found != club_identities->end() ? &found->second : nullptr;
+}
+
 const StatsConfig& GameController::getStatsConfig() const
 {
   return (*gamedata).getStatsConfig();
@@ -531,6 +538,40 @@ std::vector<PlayerSeasonStats> GameController::getPlayerCareer(
 {
   if (!game) return {};
   return game->getCompetitions().getPlayerCareer(player_id);
+}
+
+const ContinentalCompetitions* GameController::getContinental() const
+{
+  return game ? &game->getCompetitions().getContinental() : nullptr;
+}
+
+ContinentalCompetitions::TieScore GameController::getContinentalTieScore(
+    LeagueID competition_id, const ContinentalCompetitions::Tie& tie) const
+{
+  if (!game) return {};
+  const ContinentalCompetitions& continental =
+      game->getCompetitions().getContinental();
+  const auto* season = continental.getSeason(competition_id);
+  if (!season) return {};
+  return continental.tieScore(game->getCalendar(), *season, tie);
+}
+
+const NationalTeams* GameController::getNationalTeams() const
+{
+  return game ? &game->getNationalTeams() : nullptr;
+}
+
+const International::Record* GameController::getInternationalRecord(
+    PlayerID player_id) const
+{
+  return game ? game->getNationalTeams().getRecord(player_id) : nullptr;
+}
+
+std::optional<Language> GameController::getInternationalDuty(
+    PlayerID player_id) const
+{
+  if (!game) return std::nullopt;
+  return game->getNationalTeams().dutyNation(player_id, game->getCurrentDate());
 }
 
 uint8_t GameController::getSuspensionMatches(PlayerID player_id,
@@ -1131,8 +1172,8 @@ uint32_t GameController::getPlayerMarketValue(PlayerID pid) const
   // Recent honours raise the price (at most +25%).
   return static_cast<uint32_t>(std::lround(
       static_cast<double>(player.getMarketValue()) *
-      game->getWorld().getAwards().valueMultiplier(pid,
-                                                   game->getCurrentDate())));
+      static_cast<double>(game->getWorld().getAwards().valueMultiplier(
+          pid, game->getCurrentDate()))));
 }
 
 // ========== Negotiation ==========
@@ -2732,8 +2773,10 @@ ScoutAssignError GameController::startScoutAssignment(uint32_t scout_id,
 
 bool GameController::cancelScoutAssignment(uint32_t assignment_id)
 {
-  return game &&
-         game->getWorld().getScouting().cancelAssignment(assignment_id);
+  if (!game || !game->getWorld().getScouting().cancelAssignment(assignment_id))
+    return false;
+  reclaimDuty(Duty::ScoutingAssignments);
+  return true;
 }
 
 const std::vector<ScoutReport>& GameController::getScoutReports() const
@@ -3031,6 +3074,7 @@ bool GameController::setTrainingPreset(TrainingPreset preset)
   plan.preset = preset;
   if (preset != TrainingPreset::Custom)
     plan.slots = TrainingModel::presetMicrocycle(preset);
+  reclaimDuty(Duty::TrainingSchedule);
   return true;
 }
 
@@ -3046,6 +3090,7 @@ bool GameController::setTrainingSlot(MicrocycleDay day, TrainingSlot slot)
   if (current == slot) return true;
   current = slot;
   plan.preset = TrainingPreset::Custom;
+  reclaimDuty(Duty::TrainingSchedule);
   return true;
 }
 
@@ -3053,7 +3098,11 @@ bool GameController::setTrainingIntensity(TrainingIntensity intensity)
 {
   const auto team = managedClub();
   if (!team || !gamedata || intensity == TrainingIntensity::COUNT) return false;
-  gamedata->getTraining().plan(team->get().getId()).intensity = intensity;
+  TrainingIntensity& current =
+      gamedata->getTraining().plan(team->get().getId()).intensity;
+  if (current == intensity) return true;
+  current = intensity;
+  reclaimDuty(Duty::TrainingSchedule);
   return true;
 }
 
@@ -3061,7 +3110,11 @@ bool GameController::setCongestionAutoAdjust(bool enabled)
 {
   const auto team = managedClub();
   if (!team || !gamedata) return false;
-  gamedata->getTraining().plan(team->get().getId()).auto_congestion = enabled;
+  bool& current =
+      gamedata->getTraining().plan(team->get().getId()).auto_congestion;
+  if (current == enabled) return true;
+  current = enabled;
+  reclaimDuty(Duty::TrainingSchedule);
   return true;
 }
 
@@ -3661,10 +3714,13 @@ bool GameController::setPreseasonFriendly(GameDateValue date,
                                           bool tour)
 {
   const auto team = managedClub();
-  if (!team || !game) return false;
-  return game->getWorld().getPreseason().setFriendly(
-      game->getCalendar(), *gamedata, team->get().getId(), date, opponent_id,
-      home, tour, game->getCurrentDate());
+  if (!team || !game ||
+      !game->getWorld().getPreseason().setFriendly(
+          game->getCalendar(), *gamedata, team->get().getId(), date,
+          opponent_id, home, tour, game->getCurrentDate()))
+    return false;
+  reclaimDuty(Duty::Friendlies);
+  return true;
 }
 
 std::vector<FriendlySuggestion> GameController::getPreseasonSuggestion() const
@@ -3689,7 +3745,7 @@ size_t GameController::applyPreseasonSuggestion()
 CampQuote GameController::getCampQuote(TrainingCamp camp) const
 {
   const auto team = managedClub();
-  if (!team || !game) return {};
+  if (!team || !game) return CampQuote();
   return game->getWorld().getPreseason().campQuote(
       *gamedata, game->getCalendar(), team->get().getId(), camp);
 }
@@ -3799,9 +3855,11 @@ std::optional<GameDateValue> GameController::getHolidayTarget(
 {
   if (!game || !hasSelectedTeam()) return std::nullopt;
   const TeamID managed = game->getManagedTeamId();
+  // The next fixture after today: a match due today is left to the
+  // assistant once the manager leaves.
   std::optional<GameDateValue> next_match;
   const auto& schedule = game->getCalendar().getFullCalendar();
-  for (auto day = schedule.lower_bound(game->getCurrentDate());
+  for (auto day = schedule.upper_bound(game->getCurrentDate());
        day != schedule.end() && !next_match; ++day)
     for (const Match& match : day->second)
       if (!match.isPlayed() && (match.getHomeTeamId() == managed ||
@@ -3815,7 +3873,7 @@ std::optional<GameDateValue> GameController::getHolidayTarget(
 
 int GameController::goOnHoliday(const HolidayPlan& plan)
 {
-  holiday_summary = HolidaySummary{};
+  holiday_summary = HolidaySummary();
   if (!game || !hasSelectedTeam()) return 0;
   const TeamID managed = game->getManagedTeamId();
   WorldSimulation& world = game->getWorld();
@@ -3834,16 +3892,18 @@ int GameController::goOnHoliday(const HolidayPlan& plan)
   summary.start = game->getCurrentDate();
   const Team& club = gamedata->getTeam(managed)->get();
   const LeagueID league_id = club.getLeagueId();
-  const auto tableSpot = [&](int& position, int& points)
+  const auto tableSpot = [&](int& position, int& points, int* played)
   {
     for (const StandingRow& row : getStandings(league_id))
       if (row.team_id == managed)
       {
         position = row.position;
         points = row.points;
+        if (played) *played = row.played;
       }
   };
-  tableSpot(summary.position_before, summary.points_before);
+  tableSpot(summary.position_before, summary.points_before,
+            &summary.played_before);
   summary.balance_before = club.getFinances().getBalance();
   const size_t history_before = game->getTransfers().history().size();
   const auto& messages = world.getInbox().getMessages();
@@ -3995,7 +4055,7 @@ int GameController::goOnHoliday(const HolidayPlan& plan)
         {record.player_id, player ? player->get().getName() : std::string(),
          incoming ? record.from_team : record.to_team, record.fee, incoming});
   }
-  tableSpot(summary.position_after, summary.points_after);
+  tableSpot(summary.position_after, summary.points_after, nullptr);
   summary.balance_after = club.getFinances().getBalance();
   if (summary.start < summary.end)
   {

@@ -177,7 +177,8 @@ TEST(OppositionReportTest, PossessionSidesAreCounteredCompactly)
   const auto counter = [&](const char* key)
   {
     return std::ranges::find(result.counters, std::string(key),
-                             [](const CounterTactic& c) { return c.action.key; });
+                             [](const CounterTactic& c)
+                             { return c.action.key; });
   };
   // 62% possession but only 66% passing: press them and stay compact.
   ASSERT_NE(counter("OPPOSITION_COUNTER_PRESS"), result.counters.end());
@@ -260,10 +261,10 @@ TEST(OppositionReportTest, ControllerReportUsesScoutedEstimatesOnly)
   counter.shift.pressing = 0.1f;
   counter.mark = result.likely_xi.front().player;
   ASSERT_TRUE(controller.applyCounterTactic(counter));
-  EXPECT_NEAR(controller.getManagedTeam()->get().getStrategy().getSliders()
-                  .pressing,
-              std::min(1.0f, before.pressing + 0.1f), 1e-4f);
-  EXPECT_EQ(controller.getOppositionInstruction(fixture->opponent,
-                                                counter.mark),
-            OppositionInstruction::TightMark);
+  EXPECT_NEAR(
+      controller.getManagedTeam()->get().getStrategy().getSliders().pressing,
+      std::min(1.0f, before.pressing + 0.1f), 1e-4f);
+  EXPECT_EQ(
+      controller.getOppositionInstruction(fixture->opponent, counter.mark),
+      OppositionInstruction::TightMark);
 }

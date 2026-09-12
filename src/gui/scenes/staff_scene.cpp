@@ -9,7 +9,6 @@
 #include "gui/scenes/staff_scene.h"
 
 #include <imgui.h>
-#include <imgui_internal.h>
 
 #include <algorithm>
 #include <array>
@@ -391,10 +390,7 @@ void StaffScene::renderGroups(const char* id, const std::vector<StaffRow>& rows,
         const bool isSelected = selected == row.id;
         if (ImGui::Selectable(row.name.c_str(), isSelected,
                               ImGuiSelectableFlags_SpanAllColumns))
-        {
           selected = isSelected ? 0 : row.id;
-          reveal_selected = selected != 0;
-        }
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
           ImGui::SetTooltip("%s", LOC("STAFF_ROW_HINT"));
         if (UI::cell(mask, 1))
@@ -497,14 +493,6 @@ void StaffScene::renderDetail(const StaffRow& row, bool market)
   ImGui::PopID();
   ImGui::EndGroup();
   const float bottom = ImGui::GetItemRectMax().y + pad;
-  if (reveal_selected)
-  {
-    // The strip may open below the fold: bring it into the page viewport.
-    ImGui::ScrollToRect(ImGui::GetCurrentWindow(),
-                        ImRect(start, ImVec2(start.x + width, bottom)),
-                        ImGuiScrollFlags_KeepVisibleEdgeY);
-    reveal_selected = false;
-  }
   drawList->ChannelsSetCurrent(0);
   drawList->AddRectFilled(start, ImVec2(start.x + width, bottom),
                           Theme::toU32(palette.accent, 0.07f), 4.0f * scale);

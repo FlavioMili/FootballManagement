@@ -164,13 +164,16 @@ double retirementProbability(const Player& player, bool free_agent,
                              double overall)
 {
   const int age = player.getAge();
+  // A year without a club ends most careers below the top level: released
+  // players drop out of professional football. [P]
+  if (free_agent && age < 30) return age < 21 ? 0.15 : 0.35;
   if (age < 30) return 0.0;
   if (age >= 41) return 1.0;
   // Goalkeepers play on about a year and a half longer. [P]
   const double shift = player.getRole() == PlayerRole::GK ? 1.5 : 0.0;
   double probability =
       1.0 / (1.0 + std::exp(-(static_cast<double>(age) - shift - 35.5) / 1.2));
-  if (free_agent) probability += 0.25;
+  if (free_agent) probability += 0.5;
   if (overall < 45.0) probability += 0.10;
   return std::clamp(probability, 0.0, 1.0);
 }
@@ -287,11 +290,22 @@ void WorldSimulation::setStandingsProvider(
   standings_provider = std::move(provider);
 }
 
+void WorldSimulation::setLoanCheck(std::function<bool(PlayerID)> is_on_loan)
+{
+  loan_check = std::move(is_on_loan);
+}
+
 void WorldSimulation::setFixtureOutlookProvider(
     std::function<void(const GameDateValue&, TrainingSystem::FixtureOutlook&)>
         provider)
 {
   fixture_outlook_provider = std::move(provider);
+}
+
+void WorldSimulation::setInjuryRiskProvider(
+    std::function<double(PlayerID, const GameDateValue&)> provider)
+{
+  injury_risk_provider = std::move(provider);
 }
 
 std::uint16_t WorldSimulation::seasonYear(const GameDateValue& date)
@@ -451,9 +465,11 @@ void WorldSimulation::processDaily(const GameDateValue& date,
     const double exposure =
         TrainingSystem::trainPlayer(*gamedata, player, ordinal);
     if (exposure <= 0.0) continue;
-    const double hazard = Fitness::TRAINING_INJURY_RATE_PER_HOUR *
-                          Fitness::TRAINING_HOURS_PER_DAY * exposure *
-                          injuryMultiplier(player, ordinal);
+    const double hazard =
+        Fitness::TRAINING_INJURY_RATE_PER_HOUR *
+        Fitness::TRAINING_HOURS_PER_DAY * exposure *
+        injuryMultiplier(player, ordinal) *
+        (injury_risk_provider ? injury_risk_provider(player_id, date) : 1.0);
     if (WorldRng::hashUniform(seed, RngDomain::TrainingInjury,
                               static_cast<std::uint64_t>(ordinal),
                               player_id) < 1.0 - std::exp(-hazard))
@@ -688,15 +704,16 @@ void WorldSimulation::updateWeeklyMorale(Team& team)
         team.getId() == board.team_id
             ? squad_statuses.get(player.getId(), team.getId())
             : std::nullopt;
+    const SquadStatus deserved =
+        SquadStatusModel::deserved(rank, player.getAge());
     const float expected = expectedShare(
-        status ? SquadStatusModel::toSquadRole(*status) : roleForRank(rank),
+        status ? SquadStatusModel::toSquadRole(
+                     SquadStatusModel::expectation(*status, deserved))
+               : roleForRank(rank),
         player.getAge());
     const float playing_term =
         std::min(5.0f, (dynamics.playing_share - expected) * 40.0f * ambition) +
-        (status ? SquadStatusModel::moraleOffset(
-                      *status,
-                      SquadStatusModel::deserved(rank, player.getAge()),
-                      ambition)
+        (status ? SquadStatusModel::moraleOffset(*status, deserved, ambition)
                 : 0.0f);
 
     float wage_term = 0.0f;
@@ -1032,12 +1049,15 @@ void WorldSimulation::postPreseasonSchedule(
     const GameDateValue& date, const Team& team,
     const std::vector<UpcomingFixture>& schedule)
 {
-  const auto opponent = [&](const UpcomingFixture& fixture)
+  // "vs" marks a home match, "@" an away one (a lone "@" is not read as a
+  // language key by formatLocalized()).
+  const auto venue = [](const UpcomingFixture& fixture)
+  { return std::string(fixture.home ? "vs" : "@"); };
+  const auto opponentName = [&](const UpcomingFixture& fixture)
   {
     const auto other = gamedata->getTeam(fixture.opponent_id);
-    const std::string name =
-        other ? other->get().getName() : std::string(FREE_AGENTS_TEAM_NAME);
-    return (fixture.home ? "vs " : "@ ") + name;
+    return other ? other->get().getName()
+                 : std::string(FREE_AGENTS_TEAM_NAME);
   };
   std::string friendlies;
   const UpcomingFixture* opener = nullptr;
@@ -1049,8 +1069,9 @@ void WorldSimulation::postPreseasonSchedule(
       break;
     }
     if (!friendlies.empty()) friendlies += '\n';
-    friendlies += std::format("{:02}/{:02}  {}", fixture.date.day,
-                              fixture.date.month, opponent(fixture));
+    friendlies += std::format("{:02}/{:02}  {} {}", fixture.date.day,
+                              fixture.date.month, venue(fixture),
+                              opponentName(fixture));
   }
   if (friendlies.empty() && !opener) return;
   if (friendlies.empty()) friendlies = "@INBOX_NONE";
@@ -1061,7 +1082,7 @@ void WorldSimulation::postPreseasonSchedule(
          {friendlies,
           std::format("{:02}/{:02}/{}", opener->date.day, opener->date.month,
                       opener->date.year),
-          opponent(*opener)},
+          venue(*opener), opponentName(*opener)},
          std::nullopt, team.getId());
     return;
   }
@@ -1176,7 +1197,10 @@ bool WorldSimulation::applyMatchConsequences(
     const double hazard = Fitness::MATCH_INJURY_RATE_PER_HOUR *
                           static_cast<double>(minutes) / 60.0 *
                           workload_multiplier *
-                          injuryMultiplier(player, ordinal);
+                          injuryMultiplier(player, ordinal) *
+                          (injury_risk_provider
+                               ? injury_risk_provider(player.getId(), date)
+                               : 1.0);
     injured =
         WorldRng::hashUniform(gamedata->getWorldSeed(), RngDomain::MatchInjury,
                               static_cast<std::uint64_t>(ordinal),
@@ -1445,12 +1469,6 @@ SquadRole WorldSimulation::squadRole(PlayerID player_id) const
 {
   const auto player = gamedata->getPlayer(player_id);
   if (!player) return SquadRole::Fringe;
-  // Only the managed club's statuses count (a former club's are stale).
-  if (const auto status =
-          player->get().getTeamId() == board.team_id
-              ? squad_statuses.get(player_id, board.team_id)
-              : std::nullopt)
-    return SquadStatusModel::toSquadRole(*status);
   const StatsConfig& config = gamedata->getStatsConfig();
   const double overall = player->get().getOverall(config);
   std::size_t rank = 0;
@@ -1462,6 +1480,13 @@ SquadRole WorldSimulation::squadRole(PlayerID player_id) const
         (other_overall == overall && other.get().getId() < player_id))
       ++rank;
   }
+  // Only the managed club's statuses count (a former club's are stale).
+  if (const auto status =
+          player->get().getTeamId() == board.team_id
+              ? squad_statuses.get(player_id, board.team_id)
+              : std::nullopt)
+    return SquadStatusModel::toSquadRole(SquadStatusModel::expectation(
+        *status, SquadStatusModel::deserved(rank, player->get().getAge())));
   return roleForRank(rank);
 }
 
@@ -1582,6 +1607,7 @@ void WorldSimulation::onSeasonEnd(const GameDateValue& date,
     }
   }
   renewAiContracts(managed_team_id);
+  trimAiSquads(managed_team_id);
   youth.onSeasonEnd(date, managed_team_id);
   // Veterans' ceilings follow their decline: no hidden growth after ~29.
   const StatsConfig& config = gamedata->getStatsConfig();
@@ -1628,6 +1654,8 @@ void WorldSimulation::awardPrizeMoney(const GameDateValue& date,
     const std::vector<TeamID> order = standings(league_id);
     const std::vector<std::int64_t> prizes =
         ClubEconomy::prizeMoney(economy->second, order.size());
+    const std::vector<std::int64_t> merit =
+        ClubEconomy::meritMoney(economy->second, order.size());
 
     // Clubs ordered by reputation give the expected finish. [P]
     std::vector<TeamID> by_reputation = order;
@@ -1645,9 +1673,14 @@ void WorldSimulation::awardPrizeMoney(const GameDateValue& date,
       const auto team_ref = gamedata->getTeam(order[position]);
       if (!team_ref) continue;
       Team& team = team_ref->get();
-      if (prizes[position] > 0)
+      // Merit money is part of the league's broadcasting deal; the rest is
+      // continental prize money.
+      if (merit[position] > 0)
+        team.getFinances().record(date, FinanceCategory::Broadcasting,
+                                  merit[position]);
+      if (prizes[position] > merit[position])
         team.getFinances().record(date, FinanceCategory::PrizeMoney,
-                                  prizes[position]);
+                                  prizes[position] - merit[position]);
 
       // Reputation moves with performance against expectation. [P]
       const auto expected = static_cast<double>(
@@ -1694,7 +1727,9 @@ void WorldSimulation::renewAiContracts(TeamID managed_team_id)
     for (std::size_t rank = 0; rank < ranked.size() && rank < 22; ++rank)
     {
       Player& player = gamedata->getPlayers().at(ranked[rank].second);
-      if (player.getContractYears() != 1 || player.getAge() > 32) continue;
+      if (player.getContractYears() != 1 || player.getAge() > 32 ||
+          (loan_check && loan_check(player.getId())))
+        continue;
       if (WorldRng::hashUniform(seed, RngDomain::Transfers, player.getId(),
                                 static_cast<std::uint64_t>(player.getAge())) >
           0.85)
@@ -1708,6 +1743,39 @@ void WorldSimulation::renewAiContracts(TeamID managed_team_id)
         years = 2;
       player.setContractYears(static_cast<std::uint8_t>(1 + years));
       player.setWage(player.getWage() + player.getWage() / 20);
+    }
+  }
+}
+
+void WorldSimulation::trimAiSquads(TeamID managed_team_id)
+{
+  using Youth = WorldTuning::Youth;
+  const StatsConfig& config = gamedata->getStatsConfig();
+  std::vector<std::pair<double, Player*>> ranked;
+  for (auto& [team_id, team] : gamedata->getTeams())
+  {
+    if (team_id == FREE_AGENTS_TEAM_ID || team_id == managed_team_id) continue;
+    ranked.clear();
+    for (const PlayerID player_id : team.getPlayerIDs())
+    {
+      Player& player = gamedata->getPlayers().at(player_id);
+      if (!player.isAcademyPlayer() && !(loan_check && loan_check(player_id)))
+        ranked.emplace_back(player.getOverall(config), &player);
+    }
+    if (ranked.size() <= Youth::AI_SQUAD_TARGET) continue;
+    std::ranges::sort(ranked, [](const auto& a, const auto& b)
+                      { return a.first > b.first; });
+    // Beyond the matchday squad the weakest players are not kept, except
+    // prospects with room to grow: their contracts run out this summer.
+    std::size_t surplus = ranked.size() - Youth::AI_SQUAD_TARGET;
+    for (std::size_t rank = ranked.size(); rank > 22 && surplus > 0; --rank)
+    {
+      const auto& [overall, player] = ranked[rank - 1];
+      if (player->getAge() <= 20 &&
+          static_cast<double>(player->getPotential()) > overall + 8.0)
+        continue;
+      player->setContractYears(1);
+      --surplus;
     }
   }
 }

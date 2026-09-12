@@ -15,6 +15,7 @@
 #include <array>
 #include <cmath>
 #include <format>
+#include <optional>
 
 #include "database/gamedata.h"
 #include "global/language_manager.h"
@@ -44,8 +45,7 @@ std::string decimal(float value) { return std::format("{:.2f}", value); }
 
 std::string metricValue(HubMetric metric, float value)
 {
-  if (metric == HubMetric::PassCompletion)
-    return std::format("{:.0f}%", value);
+  if (metric == HubMetric::PassCompletion) return std::format("{:.0f}%", value);
   if (metric == HubMetric::ShotsFor || metric == HubMetric::ShotsAgainst)
     return std::format("{:.1f}", value);
   return decimal(value);
@@ -124,9 +124,9 @@ void DataHubScene::refresh()
 
 void DataHubScene::renderContent()
 {
-  const std::string subtitle =
-      fmt::sprintf(LOC("HUB_SUBTITLE"), guiView->getController().getCurrentSeason(),
-                   hub.team.trend.size(), hub.team.tracked_matches);
+  const std::string subtitle = fmt::sprintf(
+      LOC("HUB_SUBTITLE"), guiView->getController().getCurrentSeason(),
+      hub.team.trend.size(), hub.team.tracked_matches);
   UI::pageHeader(LOC("HUB_TITLE"), subtitle.c_str());
   const std::array<const char*, 2> tabs = {LOC("HUB_TAB_TEAM"),
                                            LOC("HUB_TAB_PLAYERS")};
@@ -143,9 +143,8 @@ void DataHubScene::renderTeam()
   const TeamAnalytics& team = hub.team;
   if (!team.hasEnoughMatches())
   {
-    const std::string body =
-        fmt::sprintf(LOC("HUB_EMPTY_BODY"), DataHub::MIN_MATCHES,
-                     team.trend.size());
+    const std::string body = fmt::sprintf(
+        LOC("HUB_EMPTY_BODY"), DataHub::MIN_MATCHES, team.trend.size());
     UI::emptyState(LOC("HUB_EMPTY_TITLE"), body.c_str());
     return;
   }
@@ -158,9 +157,12 @@ void DataHubScene::renderTeam()
     row.next();
     const MetricComparison& value =
         team.metrics[static_cast<std::size_t>(metric)];
-    const std::string text = metricValue(metric, value.team);
+    const bool league = team.team_league_matches > 0;
+    const std::string text =
+        league ? metricValue(metric, value.team) : std::string("–");
     const std::string note =
-        value.rank > 0
+        !league ? std::string(LOC("HUB_TILE_NO_LEAGUE"))
+        : value.rank > 0
             ? fmt::sprintf(LOC("HUB_TILE_NOTE"),
                            metricValue(metric, value.league).c_str(),
                            value.rank, value.ranked_teams)
@@ -218,8 +220,8 @@ void DataHubScene::renderTrendChart(float width)
 
   float top = 0.5f;
   for (std::size_t index = 0; index < team.trend.size(); ++index)
-    top = std::max({top, team.trend[index].xg_for,
-                    team.trend[index].xg_against});
+    top =
+        std::max({top, team.trend[index].xg_for, team.trend[index].xg_against});
   top = std::ceil(top * 2.0f) / 2.0f;
   const float left = origin.x + CHART_LEFT_AXIS * scale;
   const float right = origin.x + plotWidth - Theme::Space::S * scale;
@@ -236,7 +238,8 @@ void DataHubScene::renderTrendChart(float width)
   };
 
   // Recessive grid with axis labels in text ink.
-  Theme::ScopedText small(Theme::Text::SMALL);
+  std::optional<Theme::ScopedText> small;
+  small.emplace(Theme::Text::SMALL);
   for (int step = 0; step <= 2; ++step)
   {
     const float value = top * static_cast<float>(step) / 2.0f;
@@ -251,18 +254,18 @@ void DataHubScene::renderTrendChart(float width)
   const std::string last = Format::dayMonth(team.trend.back().date);
   drawList->AddText(ImVec2(left, bottom + 2.0f * scale),
                     Theme::toU32(palette.muted), first.c_str());
-  drawList->AddText(
-      ImVec2(right - ImGui::CalcTextSize(last.c_str()).x, bottom + 2.0f * scale),
-      Theme::toU32(palette.muted), last.c_str());
+  drawList->AddText(ImVec2(right - ImGui::CalcTextSize(last.c_str()).x,
+                           bottom + 2.0f * scale),
+                    Theme::toU32(palette.muted), last.c_str());
 
-  const auto series = [&](const std::vector<float>& rolling, bool against,
-                          const ImVec4& color)
+  const auto series =
+      [&](const std::vector<float>& rolling, bool against, const ImVec4& color)
   {
     for (std::size_t index = 0; index < count; ++index)
     {
       // Match values as small markers, the rolling mean as the line.
-      const float raw = against ? team.trend[index].xg_against
-                                : team.trend[index].xg_for;
+      const float raw =
+          against ? team.trend[index].xg_against : team.trend[index].xg_for;
       drawList->AddCircleFilled(ImVec2(xOf(index), yOf(raw)), 2.5f * scale,
                                 Theme::toU32(color, 0.45f));
       if (index > 0)
@@ -282,20 +285,20 @@ void DataHubScene::renderTrendChart(float width)
       if (std::abs(xOf(index) - mouse) < std::abs(xOf(nearest) - mouse))
         nearest = index;
     drawList->AddLine(ImVec2(xOf(nearest), ceiling),
-                      ImVec2(xOf(nearest), bottom),
-                      Theme::toU32(palette.faint), 1.0f);
+                      ImVec2(xOf(nearest), bottom), Theme::toU32(palette.faint),
+                      1.0f);
     const TeamTrendPoint& point = team.trend[nearest];
     ImGui::SetTooltip(
-        "%s",
-        fmt::sprintf(LOC("HUB_TREND_TOOLTIP"),
-                     Format::dayMonth(point.date).c_str(),
-                     opponent_names[nearest].c_str(), point.goals_for,
-                     point.goals_against, decimal(point.xg_for).c_str(),
-                     decimal(point.xg_against).c_str(),
-                     decimal(team.rolling_xg_for[nearest]).c_str(),
-                     decimal(team.rolling_xg_against[nearest]).c_str())
-            .c_str());
+        "%s", fmt::sprintf(LOC("HUB_TREND_TOOLTIP"),
+                           Format::dayMonth(point.date).c_str(),
+                           opponent_names[nearest].c_str(), point.goals_for,
+                           point.goals_against, decimal(point.xg_for).c_str(),
+                           decimal(point.xg_against).c_str(),
+                           decimal(team.rolling_xg_for[nearest]).c_str(),
+                           decimal(team.rolling_xg_against[nearest]).c_str())
+                  .c_str());
   }
+  small.reset();
   footnote(fmt::sprintf(LOC("HUB_TREND_NOTE"), DataHub::ROLLING_WINDOW,
                         team.trend.size()));
   UI::endCard();
@@ -387,8 +390,7 @@ void DataHubScene::renderShotMap(float width)
 void DataHubScene::renderSetPieces(float width)
 {
   const SetPieceSummary& set = hub.team.set_pieces;
-  UI::beginAutoHeightCard("hub_set_pieces", LOC("HUB_SET_PIECES_TITLE"),
-                          width);
+  UI::beginAutoHeightCard("hub_set_pieces", LOC("HUB_SET_PIECES_TITLE"), width);
   if (set.matches == 0)
   {
     footnote(LOC("HUB_SET_PIECES_NONE"));
@@ -423,6 +425,12 @@ void DataHubScene::renderComparison(float width)
   const Theme::Palette& palette = Theme::palette();
   const TeamAnalytics& team = hub.team;
   UI::beginAutoHeightCard("hub_league", LOC("HUB_LEAGUE_TITLE"), width);
+  if (team.team_league_matches == 0)
+  {
+    footnote(LOC("HUB_TILE_NO_LEAGUE"));
+    UI::endCard();
+    return;
+  }
   static const UI::Column COLUMNS[] = {{"HUB_COL_METRIC", 0.0f, 0},
                                        {"HUB_COL_CLUB", 64.0f, 0},
                                        {"HUB_COL_LEAGUE", 64.0f, 1},
@@ -478,11 +486,11 @@ void DataHubScene::renderPlayers()
   }
   UI::beginAutoHeightCard("hub_players", nullptr, 0.0f);
   static const UI::Column COLUMNS[] = {
-      {"HUB_COL_PLAYER", 0.0f, 0},   {"HUB_COL_APPS", 44.0f, 3},
-      {"HUB_COL_MINUTES", 56.0f, 2}, {"HUB_COL_GOALS90", 56.0f, 1},
+      {"HUB_COL_PLAYER", 0.0f, 0},     {"HUB_COL_APPS", 44.0f, 3},
+      {"HUB_COL_MINUTES", 56.0f, 2},   {"HUB_COL_GOALS90", 56.0f, 1},
       {"HUB_COL_ASSISTS90", 56.0f, 2}, {"HUB_COL_XG90", 56.0f, 3},
-      {"HUB_COL_KEY90", 60.0f, 4},   {"HUB_COL_PASS", 56.0f, 4},
-      {"HUB_COL_SHARE", 60.0f, 5},   {"HUB_COL_RATING", 56.0f, 1},
+      {"HUB_COL_KEY90", 60.0f, 4},     {"HUB_COL_PASS", 56.0f, 4},
+      {"HUB_COL_SHARE", 60.0f, 5},     {"HUB_COL_RATING", 56.0f, 1},
       {"HUB_COL_TREND", 96.0f, 3}};
   constexpr std::size_t COLUMN_COUNT = std::size(COLUMNS);
   std::array<UI::Column, COLUMN_COUNT> columns{};
@@ -495,9 +503,9 @@ void DataHubScene::renderPlayers()
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
   const auto per90 = [](float value, int minutes)
   {
-    return minutes > 0
-               ? std::format("{:.2f}", PlayerAnalyticsRow::per90(value, minutes))
-               : std::string("–");
+    return minutes > 0 ? std::format("{:.2f}",
+                                     PlayerAnalyticsRow::per90(value, minutes))
+                       : std::string("–");
   };
   if (UI::beginResponsiveTable("hub_player_table", columns, mask,
                                ImGuiTableFlags_RowBg))
@@ -512,7 +520,8 @@ void DataHubScene::renderPlayers()
         Navigation::openPlayer(guiView, row.id);
       ImGui::SameLine();
       ImGui::TextColored(palette.faint, "%s", row.role.c_str());
-      if (UI::cell(mask, 1)) UI::textRight(std::to_string(s.appearances).c_str());
+      if (UI::cell(mask, 1))
+        UI::textRight(std::to_string(s.appearances).c_str());
       if (UI::cell(mask, 2)) UI::textRight(std::to_string(s.minutes).c_str());
       if (UI::cell(mask, 3))
         UI::textRight(per90(static_cast<float>(s.goals), s.minutes).c_str());
@@ -536,8 +545,9 @@ void DataHubScene::renderPlayers()
       if (UI::cell(mask, 8))
       {
         const std::string share =
-            s.tracked_minutes > 0 ? std::format("{:.0f}%", 100.0f * s.pass_share)
-                                  : std::string("–");
+            s.tracked_minutes > 0
+                ? std::format("{:.0f}%", 100.0f * s.pass_share)
+                : std::string("–");
         UI::textRight(share.c_str());
       }
       if (UI::cell(mask, 9))
@@ -549,16 +559,17 @@ void DataHubScene::renderPlayers()
       }
       if (UI::cell(mask, 10) && s.ratings.size() >= 2)
       {
-        UI::sparkline("##trend", s.ratings,
-                      ImVec2(ImGui::GetContentRegionAvail().x,
-                             ImGui::GetTextLineHeight()),
-                      s.rating_trend >= 0.0f ? palette.positive
-                                             : palette.negative);
+        UI::sparkline(
+            "##trend", s.ratings,
+            ImVec2(ImGui::GetContentRegionAvail().x,
+                   ImGui::GetTextLineHeight()),
+            s.rating_trend >= 0.0f ? palette.positive : palette.negative);
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
-          ImGui::SetTooltip("%s", fmt::sprintf(LOC("HUB_TREND_PLAYER_TOOLTIP"),
-                                               s.rating_trend >= 0.0f ? "+" : "",
-                                               s.rating_trend, s.ratings.size())
-                                      .c_str());
+          ImGui::SetTooltip("%s",
+                            fmt::sprintf(LOC("HUB_TREND_PLAYER_TOOLTIP"),
+                                         s.rating_trend >= 0.0f ? "+" : "",
+                                         s.rating_trend, s.ratings.size())
+                                .c_str());
       }
       ImGui::PopID();
     }

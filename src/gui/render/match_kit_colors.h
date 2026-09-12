@@ -14,6 +14,8 @@
 
 #include "global/types.h"
 
+struct ClubIdentity;
+
 /** Colours of one strip, packed as `IM_COL32`. */
 struct KitColors
 {
@@ -32,13 +34,41 @@ struct MatchKits
   KitColors awayGoalkeeper;
 };
 
+/** A club's own colours, packed as `IM_COL32`. */
+struct ClubColours
+{
+  ImU32 primary = 0;
+  ImU32 secondary = 0;
+};
+
 /**
- * Picks deterministic, original strips from the team ids. The away side falls
- * back to a change strip when its shirt is too close to the home shirt, and
- * both goalkeepers wear colours distinct from every outfield shirt and from
- * each other.
+ * Picks the strips of a match. Clubs with colours in the data pack wear them
+ * (primary shirt, secondary trim and shorts); others get a deterministic
+ * original strip from their id. The away side switches to its reversed
+ * colours, then to a change strip, when its shirt is too close to the home
+ * shirt, and both goalkeepers wear colours distinct from every outfield
+ * shirt and from each other. Every view (2D, 3D, HUD swatches) uses this so
+ * a club always looks the same.
  */
 MatchKits chooseMatchKits(TeamID homeTeam, TeamID awayTeam);
+
+/** Same, with explicit club colours (null: the hashed original strip). */
+MatchKits chooseMatchKits(TeamID homeTeam, TeamID awayTeam,
+                          const ClubColours* homeColours,
+                          const ClubColours* awayColours);
+
+/**
+ * The club's data-pack identity (short name, colours, stadium), read once
+ * per process and cached; null for clubs the pack does not describe.
+ */
+const ClubIdentity* findClubIdentity(TeamID team);
+
+/** Converts a 0xRRGGBB colour to an opaque `IM_COL32`. */
+constexpr ImU32 kitColorFromRgb(std::uint32_t rgb)
+{
+  return IM_COL32((rgb >> 16U) & 0xFFU, (rgb >> 8U) & 0xFFU, rgb & 0xFFU,
+                  255);
+}
 
 /** Perceptual ("redmean") RGB distance between two packed colours. */
 float kitColorDistance(ImU32 first, ImU32 second);

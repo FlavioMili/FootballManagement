@@ -39,13 +39,6 @@
 - Test it: upgrade a save built in-test without the column (see
   `test/test_save_migrations.cpp`), check values, run the upgrade twice.
 
-Known remaining ad hoc paths (not owned by the save layer):
-`LeagueRepository::ensureSchema`, `FixtureRepository::ensureSchema` and
-`CompetitionRepository::ensureSchema` still issue `ALTER TABLE` /
-`CREATE TABLE IF NOT EXISTS` statements whose errors are ignored. They are
-no-ops on migrated saves (migrations 0002 and 0003 cover their columns) and
-can be deleted.
-
 ## Save protocol
 
 A career is played on an in-memory working database. Nothing reaches the slot
@@ -57,7 +50,10 @@ Commit points (`GameController::saveGame()` / autosave):
 
 1. `Game::saveGame()` flushes the in-memory aggregates (game state, calendar,
    competitions, world, transfers, players, teams) to the working database in
-   one transaction; dirty flags are cleared only after the commit.
+   one transaction; dirty flags are cleared only after the commit. Fixtures
+   are diffed against the stored rows (only new, changed and dropped ones are
+   written); every player changes daily, so player rows are rewritten with
+   reused statements and allocation-free encoders.
 2. `SaveManager::stampMetadata()` updates `save_meta` (game version, world
    seed, last saved in-game date, playtime, UTC timestamp).
 3. `SaveManager::persist()`:

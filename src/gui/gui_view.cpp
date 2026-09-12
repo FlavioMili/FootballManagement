@@ -130,6 +130,7 @@ bool GUIView::initialize()
 
   SettingsManager::instance()->load();
   SettingsManager::instance()->apply(window);
+  applySavePolicy();
 
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
@@ -588,6 +589,17 @@ void GUIView::applyManagementTheme()
 }
 
 void GUIView::refreshTheme() { applyManagementTheme(); }
+
+void GUIView::applySavePolicy()
+{
+  const Settings& settings = SettingsManager::instance()->get();
+  AutosavePolicy policy;
+  policy.frequency = static_cast<AutosaveFrequency>(
+      std::clamp(settings.autosave_frequency, 0,
+                 static_cast<int>(AutosaveFrequency::SeasonEnd)));
+  policy.backups = std::clamp(settings.autosave_backups, 0, 9);
+  controller.setAutosavePolicy(policy);
+}
 
 void GUIView::requestBackdropCapture() { backdropPending = true; }
 

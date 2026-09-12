@@ -18,7 +18,13 @@
 #include "model/inbox.h"
 
 /**
- * @brief Club inbox with category filters and digest grouping.
+ * @brief Club inbox: pinned decisions with their actions in place, and the
+ * information feed with category filters and digest grouping.
+ *
+ * Decisions (offers for the club's players, player requests, youth
+ * trialists) stay on the Decisions tab until resolved, with accept /
+ * reject / reply / sign buttons right there. Read information older than
+ * Inbox::ARCHIVE_DAYS moves to the archive.
  *
  * Routine messages of the same kind that arrive in the same week are folded
  * into one digest row, so a busy matchday reads as a single entry instead of
@@ -55,7 +61,27 @@ class InboxScene : public ManagementScene
     size_t unread = 0;
   };
 
+  /** @brief A pending decision with what can be done about it. */
+  struct Decision
+  {
+    size_t message = 0; /**< Index into the inbox. */
+    InboxAction action = InboxAction::None;
+    PlayerID player = 0;
+    std::string title;
+    std::string body;
+    std::string date_text;
+    struct Option
+    {
+      uint32_t id = 0; /**< Offer id or trialist player id. */
+      std::string text;
+    };
+    std::vector<Option> options;
+  };
+
   void rebuildThreads();
+  void rebuildDecisions();
+  void renderDecisions();
+  void renderDecision(const Decision& decision);
   void renderFilters(float width, float height);
   void renderThreads(float width, float height);
   void renderReader(float height);
@@ -69,6 +95,12 @@ class InboxScene : public ManagementScene
   std::array<size_t, CATEGORY_COUNT> total_by_category{};
   int category_filter = -1; /**< -1 = all categories. */
   bool unread_only = false;
+  int tab = -1; /**< 0 = decisions, 1 = information (-1: pick). */
+  bool show_archived = false;
+  size_t archived_count = 0;
+  std::vector<Decision> decisions;
+  /** Messages hidden from the feed (pending decisions, archive). */
+  std::vector<bool> hidden;
   int selected_thread = -1;
   int expanded_thread = -1;
   size_t selected_message = SIZE_MAX;

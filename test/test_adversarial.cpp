@@ -16,6 +16,7 @@
 // Product bugs that are known and routed are marked with GTEST_SKIP()
 // messages starting with "KNOWN BUG:" and the finding they reference.
 //
+// FM_ADVERSARIAL_LONG=1 also plays a whole season (rollover with open deals).
 // Label "adversarial;slow" (own executable): exclude with `-LE adversarial`.
 
 #include <SDL3/SDL.h>
@@ -369,12 +370,31 @@ class Driver
     frame();
   }
 
-  /** Point on the top bar's (right-aligned) Continue button. */
-  ImVec2 continuePoint() const
+  /**
+   * Point on the top bar's Continue button, found by its ID ("###shell_
+   * continue" in the top bar window) along the bar's centre line.
+   */
+  std::optional<ImVec2> continuePoint()
   {
+    ImGuiID id = 0;
+    for (ImGuiWindow* window : GImGui->Windows)
+      if (window->Active &&
+          std::string_view(window->Name).find("##topbar") !=
+              std::string_view::npos)
+        id = window->GetID("###shell_continue");
+    if (id == 0) return std::nullopt;
     const ImVec2 display = ImGui::GetIO().DisplaySize;
-    return {display.x - (Theme::Space::XL + 40.0f) * Theme::scale(),
-            30.0f * Theme::scale()};
+    const float y = 30.0f * Theme::scale();
+    std::optional<ImVec2> found;
+    for (float x = display.x - 4.0f; x > display.x * 0.3f && !found; x -= 8.0f)
+    {
+      ImGui::GetIO().AddMousePosEvent(x, y);
+      frame();
+      if (GImGui->HoveredId == id) found = ImVec2(x, y);
+    }
+    ImGui::GetIO().AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+    frame();
+    return found;
   }
 
   bool advancing() const { return hub() != nullptr && hub()->isAdvancing(); }
@@ -519,7 +539,9 @@ TEST_F(Adversarial, TripleClickContinueIsOneContinue)
   const auto next = Bridge::nextFixtureDate(*hub);
   ASSERT_TRUE(next.has_value());
   ASSERT_FALSE(*next == controller->getCurrentDate());
-  driver->click(driver->continuePoint(), 3);
+  const auto button = driver->continuePoint();
+  ASSERT_TRUE(button.has_value()) << "Continue button not found";
+  driver->click(*button, 3);
   ASSERT_TRUE(driver->settle());
   EXPECT_EQ(controller->getCurrentDate().toString(), next->toString())
       << "Continue should stop on the next managed fixture";
@@ -542,6 +564,8 @@ TEST_F(Adversarial, InputDuringContinueIsIgnored)
   disableAutosave(*controller);
   const std::string saved = savedDate(WORK_SLOT);
   ASSERT_FALSE(saved.empty());
+  const auto button = driver->continuePoint();
+  ASSERT_TRUE(button.has_value()) << "Continue button not found";
   driver->space();
   int mashes = 0;
   const auto start = Clock::now();
@@ -569,7 +593,7 @@ TEST_F(Adversarial, InputDuringContinueIsIgnored)
         driver->key(SDLK_K, SDL_SCANCODE_K, SDL_KMOD_LCTRL);
         break;
       default:
-        driver->click(driver->continuePoint());
+        driver->click(*button);
         break;
     }
     if (driver->advancing())
@@ -582,10 +606,16 @@ TEST_F(Adversarial, InputDuringContinueIsIgnored)
   EXPECT_EQ(driver->imgui_errors, 0);
   EXPECT_EQ(savedDate(WORK_SLOT), saved)
       << "Ctrl+S pressed during Continue saved the game mid-simulation";
-  // Saving works again once the days are done (a key mashed in the frame
-  // Continue finished may have opened the palette: close it first).
+  // Saving works again once the days are done. A key mashed in the very
+  // frame Continue finished is applied (Space kicks off today's match,
+  // Ctrl+K opens the palette): return to the hub first.
   driver->escape();
   driver->escape();
+  if (driver->activeId() != SceneID::GAME_MENU)
+  {
+    Navigation::open(view.get(), NavSection::HOME);
+    driver->frames(3);
+  }
   const std::string state = std::format(
       "scene {} overlays {} popup {} active id {} text input {} nav {} "
       "mashes {}",
@@ -608,12 +638,14 @@ TEST_F(Adversarial, ContinueWhileDialogOpen)
   auto* shell = dynamic_cast<ManagementScene*>(driver->active());
   ASSERT_NE(shell, nullptr);
   const std::string today = controller->getCurrentDate().toString();
+  const auto button = driver->continuePoint();
+  ASSERT_TRUE(button.has_value()) << "Continue button not found";
   Bridge::requestMainMenu(*shell);
   driver->frames(2);
   ASSERT_TRUE(ImGui::IsPopupOpen(
       "", ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel));
   driver->space();
-  driver->click(driver->continuePoint(), 2);
+  driver->click(*button, 2);
   driver->settle();
   EXPECT_EQ(controller->getCurrentDate().toString(), today)
       << "Continue ran behind a modal dialog";
@@ -858,6 +890,38 @@ TEST_F(Adversarial, ReleasePlayerInLineup)
   EXPECT_TRUE(Bridge::quickResult(*match));
   driver->settle();
   expectWorldConsistent("after the match without the released player");
+}
+
+/** Releasing a non-starter must not undo the manager's chosen XI. */
+TEST_F(Adversarial, ReleasingAReserveKeepsTheChosenLineup)
+{
+  Lineup& lineup = mutableClub().getLineup();
+  const auto& reserves = lineup.getReserves();
+  ASSERT_GE(reserves.size(), 2u);
+  ASSERT_FALSE(lineup.getOutfieldPlayers().empty());
+  // The manager's call: a reserve starts instead of a regular.
+  const PlayerID pick = reserves.front()->getId();
+  const PlayerID dropped = lineup.getOutfieldPlayers().front().player->getId();
+  ASSERT_TRUE(lineup.swapPlayers(pick, dropped));
+  // A player outside the starting XI leaves.
+  std::unordered_set<PlayerID> starting{dropped};
+  if (lineup.getGoalkeeper()) starting.insert(lineup.getGoalkeeper()->getId());
+  for (const auto& positioned : lineup.getOutfieldPlayers())
+    starting.insert(positioned.player->getId());
+  std::optional<PlayerID> fringe;
+  for (const PlayerID id : club().getPlayerIDs())
+    if (!starting.contains(id)) fringe = id;
+  ASSERT_TRUE(fringe.has_value());
+  ASSERT_TRUE(controller->releasePlayer(*fringe));
+  const auto& starters = club().getLineup().getOutfieldPlayers();
+  const bool kept = std::ranges::any_of(
+      starters, [pick](const auto& positioned)
+      { return positioned.player && positioned.player->getId() == pick; });
+  if (!kept)
+    GTEST_SKIP() << "KNOWN BUG: F-XI-RESET - releasing a player outside the "
+                    "starting XI regenerated the managed XI "
+                    "(TransferMarket::movePlayer calls generateStartingXI on "
+                    "both clubs), undoing the manager's selection";
 }
 
 /** Sell/release the squad down to ten, then try to play. */

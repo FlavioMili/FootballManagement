@@ -44,7 +44,6 @@ const std::array<UI::Column, 6>& historyColumns()
 }
 
 constexpr float TWO_COLUMN_MIN_WIDTH = 860.0f;
-constexpr float CARD_HEIGHT = 262.0f;
 constexpr float KEY_WIDTH = 170.0f;
 constexpr int MAX_TICKET_PRICE = 1000;
 
@@ -148,7 +147,15 @@ void ClubScene::renderContent()
   const BoardState& board = controller.getBoardState();
   const ClubProfile& profile = club.getProfile();
 
-  UI::pageHeader(LOC("CLUB_TITLE"), LOC("CLUB_SUBTITLE"));
+  // Data-pack identity: nickname and founding year lead the subtitle.
+  const ClubIdentity* identity = controller.getClubIdentity(club.getId());
+  std::string subtitle = LOC("CLUB_SUBTITLE");
+  if (identity != nullptr && identity->founded > 0)
+    subtitle = fmt::sprintf(LOC("CLUB_FOUNDED_VALUE"), identity->founded) +
+               "  ·  " + subtitle;
+  if (identity != nullptr && !identity->nickname.empty())
+    subtitle = identity->nickname + "  ·  " + subtitle;
+  UI::pageHeader(club.getName().c_str(), subtitle.c_str());
 
   const float gap = ImGui::GetStyle().ItemSpacing.x;
   UI::TileRow tiles(4);
@@ -175,25 +182,28 @@ void ClubScene::renderContent()
   tiles.next();
   const std::string capacity = Format::thousands(profile.stadium_capacity);
   UI::statTile("stadium", LOC("CLUB_TILE_STADIUM"), capacity.c_str(),
-               LOC("CLUB_STADIUM_NOTE"), palette.text, tile);
+               identity != nullptr && !identity->stadium_name.empty()
+                   ? identity->stadium_name.c_str()
+                   : LOC("CLUB_STADIUM_NOTE"),
+               palette.text, tile);
 
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
   const float available = ImGui::GetContentRegionAvail().x;
   const bool twoColumns = available >= TWO_COLUMN_MIN_WIDTH * Theme::scale();
-  const float cardHeight = CARD_HEIGHT * Theme::scale();
   const float half =
       twoColumns ? std::floor((available - gap) * 0.5f) : available;
-  renderBoard(half, cardHeight);
+  // Both cards size to their content: nothing clips at any scale.
+  renderBoard(half);
   if (twoColumns) ImGui::SameLine();
-  renderStadium(twoColumns ? available - gap - half : available, cardHeight);
+  renderStadium(twoColumns ? available - gap - half : available);
   renderHistory();
 }
 
-void ClubScene::renderBoard(float width, float height)
+void ClubScene::renderBoard(float width)
 {
   const Theme::Palette& palette = Theme::palette();
   const BoardState& board = guiView->getController().getBoardState();
-  UI::beginCard("club_board", LOC("CLUB_BOARD"), ImVec2(width, height));
+  UI::beginAutoHeightCard("club_board", LOC("CLUB_BOARD"), width);
   const float keyWidth = KEY_WIDTH * Theme::scale();
   UI::keyValue(LOC("CLUB_OBJECTIVE"),
                LOC(BoardModel::objectiveKey(board.objective)), keyWidth);
@@ -242,12 +252,12 @@ void ClubScene::renderBoard(float width, float height)
   UI::endCard();
 }
 
-void ClubScene::renderStadium(float width, float height)
+void ClubScene::renderStadium(float width)
 {
   GameController& controller = guiView->getController();
   const Theme::Palette& palette = Theme::palette();
   const ClubProfile& profile = controller.getManagedTeam()->get().getProfile();
-  UI::beginCard("club_stadium", LOC("CLUB_MATCHDAY"), ImVec2(width, height));
+  UI::beginAutoHeightCard("club_stadium", LOC("CLUB_MATCHDAY"), width);
   const float keyWidth = KEY_WIDTH * Theme::scale();
   const std::string price = Format::moneyFull(profile.ticket_price);
   UI::keyValue(LOC("CLUB_TICKET_PRICE"), price.c_str(), keyWidth);

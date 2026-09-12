@@ -208,7 +208,7 @@ float tackleWinChance(const TackleContext& context)
           context.dribbling * D::DRIBBLING_WIN_PENALTY +
           (context.defenderPhysicality - context.carrierPhysicality) *
               D::PHYSICALITY_DUEL_WEIGHT +
-          context.pressing * D::PRESSING_WIN_BONUS +
+          context.pressing * D::PRESSING_WIN_EFFECT +
           std::clamp(context.exposure, 0.0f, 1.0f) * D::EXPOSURE_WIN_BONUS -
           (context.shielding
                ? context.carrierPhysicality * D::SHIELD_PHYSICALITY_PENALTY
@@ -225,6 +225,7 @@ float tackleFoulPropensity(const TackleContext& context)
   // player picks his challenges, and a challenge while the ball is away from
   // the attacker's foot rarely catches the man.
   return (D::BASE_FOUL_CHANCE + context.riskTaking * D::RISK_FOUL_BONUS +
+          context.pressing * D::PRESSING_FOUL_BONUS +
           (1.0f - context.defending) * D::TECHNIQUE_FOUL_BONUS) *
          (context.defenderBooked ? MatchTuning::Discipline::BOOKED_PLAYER_CAUTION
                                  : 1.0f) *

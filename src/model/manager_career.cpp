@@ -217,9 +217,11 @@ namespace ManagerMarketModel
 {
 ReputationTier reputationTier(float reputation)
 {
-  if (reputation >= 75.0f) return ReputationTier::World;
-  if (reputation >= 50.0f) return ReputationTier::Continental;
-  if (reputation >= 25.0f) return ReputationTier::National;
+  // Same scale as club reputation, where the smallest professional clubs
+  // sit in the forties and the giants near 100.
+  if (reputation >= 82.0f) return ReputationTier::World;
+  if (reputation >= 65.0f) return ReputationTier::Continental;
+  if (reputation >= 45.0f) return ReputationTier::National;
   return ReputationTier::Local;
 }
 
@@ -353,18 +355,18 @@ float startingReputation(ManagerBackground background)
   switch (background)
   {
     case ManagerBackground::SundayLeague:
-      return 8.0f;
+      return 30.0f;
     case ManagerBackground::SemiProfessional:
-      return 18.0f;
+      return 38.0f;
     case ManagerBackground::TopFlightPlayer:
-      return 42.0f;
-    case ManagerBackground::FormerInternational:
       return 55.0f;
+    case ManagerBackground::FormerInternational:
+      return 65.0f;
     case ManagerBackground::ProfessionalPlayer:
     case ManagerBackground::COUNT:
       break;
   }
-  return 30.0f;
+  return 46.0f;
 }
 
 CoachingLicence startingLicence(ManagerBackground background)
@@ -387,24 +389,24 @@ CoachingLicence startingLicence(ManagerBackground background)
 
 CoachingLicence requiredLicence(std::uint8_t club_reputation, std::uint8_t tier)
 {
-  // Top divisions need the highest licence, the second tier the one below;
-  // part-time football asks little. [S] (licence ladder, research 1.1)
+  // Elite top-flight clubs need the highest licence, the rest of the top
+  // flight the one below; lower divisions ask less. [S] (research 1.1)
   if (tier <= 1)
-    return club_reputation >= 45 ? CoachingLicence::Pro : CoachingLicence::A;
-  if (tier == 2) return CoachingLicence::A;
-  if (tier == 3) return CoachingLicence::B;
+    return club_reputation >= 75 ? CoachingLicence::Pro : CoachingLicence::A;
+  if (tier == 2) return CoachingLicence::B;
   return CoachingLicence::C;
 }
 
 float applicationChance(float manager_reputation, CoachingLicence licence,
-                        std::uint8_t club_reputation, std::uint8_t tier)
+                        std::uint8_t club_reputation, std::uint8_t tier,
+                        float fit)
 {
   const int missing =
       std::max(0, static_cast<int>(requiredLicence(club_reputation, tier)) -
                       static_cast<int>(licence));
   const float x =
       (manager_reputation - static_cast<float>(club_reputation) + 8.0f) / 7.0f -
-      1.2f * static_cast<float>(missing);
+      0.5f * static_cast<float>(missing) + fit;
   return std::clamp(1.0f / (1.0f + std::exp(-x)), 0.02f, 0.95f);
 }
 
@@ -439,10 +441,13 @@ float weeklyDismissalHazard(float confidence, std::uint16_t matches,
           ? 1.0f
           : 0.25f + 0.75f * static_cast<float>(matches) /
                         static_cast<float>(HONEYMOON_MATCHES);
+  // Boards grow more patient with a manager who has lasted: most sacked
+  // managers go within their first year or so. [S] (CT-W27)
+  const float standing = matches < 40 ? 1.3f : (matches < 80 ? 0.8f : 0.5f);
   return std::min(0.6f,
                   BASE_WEEKLY_HAZARD *
                       std::exp(-HAZARD_BETA * (confidence - 50.0f) / 25.0f) *
-                      honeymoon * ownerFactor(owner));
+                      honeymoon * standing * ownerFactor(owner));
 }
 
 float seasonEndDismissalChance(int position, int expected_position,
@@ -812,9 +817,17 @@ ClubVision ManagerCareer::visionOf(TeamID team_id) const
 
 float ManagerCareer::applicationChance(TeamID team_id) const
 {
+  // Boards prefer a coach who plays their way, and many favour their own
+  // country's coaches. [S] (research 1.2)
+  float fit = 0.0f;
+  if (visionOf(team_id).preferred_style == profile.style) fit += 0.6f;
+  if (const auto team = gamedata->getTeam(team_id);
+      team && leagueProfile(team->get().getLeagueId()).domestic_nationality ==
+                  profile.nationality)
+    fit += 0.3f;
   return ManagerMarketModel::applicationChance(
       profile.reputation, profile.licence, clubReputation(team_id),
-      leagueTier(team_id));
+      leagueTier(team_id), fit);
 }
 
 ApplyResult ManagerCareer::apply(TeamID team_id, const GameDateValue& date)
@@ -1347,7 +1360,9 @@ void ManagerCareer::weeklyReviews(const GameDateValue& date,
   for (const Vacancy& vacancy : vacancies)
   {
     const std::uint8_t reputation = clubReputation(vacancy.team_id);
-    if (static_cast<float>(reputation) > profile.reputation + 3.0f ||
+    // The smallest clubs always consider a coach who is available.
+    if (static_cast<float>(reputation) >
+            std::max(profile.reputation + 5.0f, 44.0f) ||
         std::ranges::any_of(offers, [&](const JobOffer& offer)
                             { return offer.team_id == vacancy.team_id; }))
       continue;
@@ -1363,12 +1378,12 @@ void ManagerCareer::weeklyReviews(const GameDateValue& date,
       if (manager.team_id == FREE_AGENTS_TEAM_ID ||
           manager.team_id == managed_team_id ||
           static_cast<float>(clubReputation(manager.team_id)) >
-              profile.reputation + 5.0f)
+              std::max(profile.reputation + 5.0f, 50.0f))
         continue;
       if (!weakest || manager.confidence < weakest->confidence)
         weakest = &manager;
     }
-    if (weakest && weakest->confidence < 50.0f)
+    if (weakest && weakest->confidence < INITIAL_CONFIDENCE)
     {
       pick = weakest->team_id;
       dismissAi(*weakest, date, inbox, managed_team_id);

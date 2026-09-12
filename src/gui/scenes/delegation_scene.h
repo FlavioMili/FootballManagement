@@ -35,7 +35,7 @@ class DelegationScene : public ManagementScene
   void refresh() override;
 
  private:
-  friend class GameFlowTest_GuidanceScreens_Test;
+  friend class GameFlowTest_GUIFlowLifecycle_Test;
 
   void renderDuty(Duty duty, float width);
 

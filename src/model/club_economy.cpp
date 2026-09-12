@@ -219,8 +219,8 @@ double monthlyFacilityCosts(const LeagueEconomy& economy,
 
 double playerWageShare(const LeagueEconomy& economy)
 {
-  // [S] ECFIL: player wages ~47% of revenue on average; leagues with a high
-  // total wage ratio spend more on players. Kept within 46-60%.
+  // [S] ECFIL: wages are 57-73% of revenue by league; leagues with a high
+  // total wage ratio spend more on players. Kept within 55-70%.
   return std::clamp(
       static_cast<double>(Finance::PLAYER_WAGE_SHARE_BASE) +
           static_cast<double>(Finance::PLAYER_WAGE_SHARE_SLOPE) *
@@ -240,6 +240,18 @@ std::vector<std::int64_t> prizeMoney(const LeagueEconomy& economy,
                      continentalPrize(economy, position, league_size)));
   }
   return prizes;
+}
+
+std::vector<std::int64_t> meritMoney(const LeagueEconomy& economy,
+                                     std::size_t league_size)
+{
+  std::vector<std::int64_t> merit(league_size, 0);
+  for (std::size_t position = 0; position < league_size; ++position)
+  {
+    merit[position] = static_cast<std::int64_t>(
+        std::llround(meritPrize(economy, position, league_size)));
+  }
+  return merit;
 }
 
 std::int64_t seasonTransferBudget(std::int64_t balance, double revenue)

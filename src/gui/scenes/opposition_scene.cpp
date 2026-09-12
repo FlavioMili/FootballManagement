@@ -79,11 +79,11 @@ void OppositionScene::renderContent()
     UI::emptyState(LOC("OPPOSITION_NO_FIXTURE"), nullptr);
     return;
   }
-  const std::string subtitle = fmt::sprintf(
-      LOC("OPPOSITION_SUBTITLE"), opponent_name.c_str(),
-      Format::date(fixture->date).c_str(),
-      LOC(fixture->home ? "FIXTURE_HOME" : "FIXTURE_AWAY"),
-      static_cast<int>(report.confidence));
+  const std::string subtitle =
+      fmt::sprintf(LOC("OPPOSITION_SUBTITLE"), opponent_name.c_str(),
+                   Format::date(fixture->date).c_str(),
+                   LOC(fixture->home ? "FIXTURE_HOME" : "FIXTURE_AWAY"),
+                   static_cast<int>(report.confidence));
   UI::pageHeader(LOC("OPPOSITION_TITLE"), subtitle.c_str());
   renderSummary();
 
@@ -121,11 +121,10 @@ void OppositionScene::renderSummary()
   for (const int result : report.form) points += result > 0 ? 3 : result == 0;
   UI::TileRow row(4);
   row.next();
-  const std::string form =
-      report.form.empty()
-          ? std::string("–")
-          : fmt::sprintf(LOC("OPPOSITION_FORM_VALUE"), points,
-                         3 * report.form.size());
+  const std::string form = report.form.empty()
+                               ? std::string("–")
+                               : fmt::sprintf(LOC("OPPOSITION_FORM_VALUE"),
+                                              points, 3 * report.form.size());
   const std::string formNote =
       fmt::sprintf(LOC("OPPOSITION_FORM_NOTE"), report.form.size());
   UI::statTile("opp_form", LOC("OPPOSITION_FORM"), form.c_str(),
@@ -138,10 +137,9 @@ void OppositionScene::renderSummary()
   UI::statTile("opp_goals", LOC("OPPOSITION_GOALS"), goals.c_str(),
                LOC("OPPOSITION_PER_MATCH"), palette.text, row.width());
   row.next();
-  const std::string xg = recent.matches > 0
-                             ? decimal(recent.xg_for) + " – " +
-                                   decimal(recent.xg_against)
-                             : std::string("–");
+  const std::string xg = recent.matches > 0 ? decimal(recent.xg_for) + " – " +
+                                                  decimal(recent.xg_against)
+                                            : std::string("–");
   const std::string xgNote =
       fmt::sprintf(LOC("OPPOSITION_LEAGUE_XG"), decimal(league.xg_for).c_str());
   UI::statTile("opp_xg", LOC("OPPOSITION_XG"), xg.c_str(), xgNote.c_str(),
@@ -149,16 +147,14 @@ void OppositionScene::renderSummary()
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
     ImGui::SetTooltip("%s", LOC("OPPOSITION_XG_HELP"));
   row.next();
-  const std::string possession =
-      recent.matches > 0 ? std::format("{:.0f}%", recent.possession)
-                         : std::string("–");
-  const std::string passNote =
-      fmt::sprintf(LOC("OPPOSITION_PASSING_NOTE"),
-                   static_cast<int>(recent.pass_completion),
-                   static_cast<int>(league.pass_completion));
+  const std::string possession = recent.matches > 0
+                                     ? std::format("{:.0f}%", recent.possession)
+                                     : std::string("–");
+  const std::string passNote = fmt::sprintf(
+      LOC("OPPOSITION_PASSING_NOTE"), static_cast<int>(recent.pass_completion),
+      static_cast<int>(league.pass_completion));
   UI::statTile("opp_possession", LOC("OPPOSITION_POSSESSION"),
-               possession.c_str(), passNote.c_str(), palette.text,
-               row.width());
+               possession.c_str(), passNote.c_str(), palette.text, row.width());
 }
 
 void OppositionScene::renderCounters(float width)
@@ -178,17 +174,16 @@ void OppositionScene::renderCounters(float width)
     }
     note(GuidanceUI::text(counter.reason));
     const StrategySliders& shift = counter.shift;
-    const bool actionable = counter.mark != 0 || shift.pressing != 0.0f ||
-                            shift.riskTaking != 0.0f ||
-                            shift.offensiveBias != 0.0f ||
-                            shift.widthUsage != 0.0f ||
-                            shift.compactness != 0.0f;
+    const bool actionable =
+        counter.mark != 0 || shift.pressing != 0.0f ||
+        shift.riskTaking != 0.0f || shift.offensiveBias != 0.0f ||
+        shift.widthUsage != 0.0f || shift.compactness != 0.0f;
     if (actionable)
     {
       ImGui::BeginDisabled(applied[index]);
-      if (UI::secondaryButton(LOC(applied[index] ? "OPPOSITION_APPLIED"
-                                                 : "OPPOSITION_APPLY"),
-                              ImVec2(0.0f, 0.0f), UI::ButtonSize::COMPACT) &&
+      if (UI::secondaryButton(
+              LOC(applied[index] ? "OPPOSITION_APPLIED" : "OPPOSITION_APPLY"),
+              ImVec2(0.0f, 0.0f), UI::ButtonSize::COMPACT) &&
           controller.applyCounterTactic(counter))
       {
         applied[index] = true;
@@ -212,7 +207,8 @@ void OppositionScene::renderProfile(float width)
   UI::beginAutoHeightCard("opp_profile", LOC("OPPOSITION_PROFILE"), width);
   if (!report.enough_data)
   {
-    note(fmt::sprintf(LOC("OPPOSITION_PROFILE_NO_DATA"), report.recent.matches));
+    note(
+        fmt::sprintf(LOC("OPPOSITION_PROFILE_NO_DATA"), report.recent.matches));
     UI::endCard();
     return;
   }
@@ -254,16 +250,15 @@ void OppositionScene::renderLikelyXi(float width)
 {
   const Theme::Palette& palette = Theme::palette();
   const std::string title =
-      report.formation.empty()
-          ? std::string(LOC("OPPOSITION_LIKELY_XI"))
-          : fmt::sprintf(LOC("OPPOSITION_LIKELY_XI_SHAPE"),
-                         report.formation.c_str());
+      report.formation.empty() ? std::string(LOC("OPPOSITION_LIKELY_XI"))
+                               : fmt::sprintf(LOC("OPPOSITION_LIKELY_XI_SHAPE"),
+                                              report.formation.c_str());
   UI::beginAutoHeightCard("opp_xi", title.c_str(), width);
-  static const UI::Column COLUMNS[] = {{"OPPOSITION_COL_PLAYER", 0.0f, 0},
-                                       {"OPPOSITION_COL_ESTIMATE", 70.0f, 1},
-                                       {"OPPOSITION_COL_FOOT", 56.0f, 2},
-                                       {"OPPOSITION_COL_INSTRUCTION",
-                                        INSTRUCTION_WIDTH, 0}};
+  static const UI::Column COLUMNS[] = {
+      {"OPPOSITION_COL_PLAYER", 0.0f, 0},
+      {"OPPOSITION_COL_ESTIMATE", 70.0f, 1},
+      {"OPPOSITION_COL_FOOT", 56.0f, 2},
+      {"OPPOSITION_COL_INSTRUCTION", INSTRUCTION_WIDTH, 0}};
   std::array<UI::Column, 4> columns{};
   for (std::size_t index = 0; index < columns.size(); ++index)
   {
@@ -272,11 +267,12 @@ void OppositionScene::renderLikelyXi(float width)
   }
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 120.0f);
-  std::array<const char*, static_cast<std::size_t>(OppositionInstruction::COUNT)>
+  std::array<const char*,
+             static_cast<std::size_t>(OppositionInstruction::COUNT)>
       labels{};
   for (std::size_t index = 0; index < labels.size(); ++index)
-    labels[index] =
-        LOC(oppositionInstructionKey(static_cast<OppositionInstruction>(index)));
+    labels[index] = LOC(
+        oppositionInstructionKey(static_cast<OppositionInstruction>(index)));
   if (UI::beginResponsiveTable("opp_xi_table", columns, mask,
                                ImGuiTableFlags_RowBg))
   {
@@ -286,7 +282,9 @@ void OppositionScene::renderLikelyXi(float width)
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
       ImGui::PushID(static_cast<int>(index));
-      ImGui::AlignTextToFramePadding();
+      // Links have no frame: centre them on the instruction combo's row.
+      ImGui::SetCursorPosY(ImGui::GetCursorPosY() +
+                           ImGui::GetStyle().FramePadding.y);
       if (UI::link(player.name.c_str(), "player"))
         Navigation::openPlayer(guiView, player.player);
       ImGui::SameLine();
@@ -296,9 +294,8 @@ void OppositionScene::renderLikelyXi(float width)
       {
         ImGui::AlignTextToFramePadding();
         const std::string estimate =
-            player.estimate >= 0.0f
-                ? std::format("{:.0f}", player.estimate)
-                : std::string("?");
+            player.estimate >= 0.0f ? std::format("{:.0f}", player.estimate)
+                                    : std::string("?");
         UI::textRight(estimate.c_str());
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
           ImGui::SetTooltip("%s",
@@ -309,9 +306,9 @@ void OppositionScene::renderLikelyXi(float width)
       if (UI::cell(mask, 2))
       {
         ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted(
-            LOC(player.right_footed ? "OPPOSITION_FOOT_RIGHT"
-                                    : "OPPOSITION_FOOT_LEFT"));
+        ImGui::TextUnformatted(LOC(player.right_footed
+                                       ? "OPPOSITION_FOOT_RIGHT"
+                                       : "OPPOSITION_FOOT_LEFT"));
       }
       if (UI::cell(mask, 3))
       {
@@ -329,6 +326,7 @@ void OppositionScene::renderLikelyXi(float width)
     }
     ImGui::EndTable();
   }
-  note(fmt::sprintf(LOC("OPPOSITION_INSTRUCTIONS_NOTE"), opponent_name.c_str()));
+  note(
+      fmt::sprintf(LOC("OPPOSITION_INSTRUCTIONS_NOTE"), opponent_name.c_str()));
   UI::endCard();
 }

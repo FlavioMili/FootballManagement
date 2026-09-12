@@ -110,19 +110,11 @@ void reputationStars(uint8_t reputation)
   ImGui::Dummy(ImVec2(static_cast<float>(STARS) * (size + gap), size));
 }
 
-void clubColours(uint32_t shirt, uint32_t trim)
+/** Packed ImGui colour (ABGR) to 0xRRGGBB. */
+uint32_t toRgb(ImU32 colour)
 {
-  const float size = ImGui::GetTextLineHeight() * 0.8f;
-  const ImVec2 start = ImGui::GetCursorScreenPos();
-  const float top = start.y + (ImGui::GetTextLineHeight() - size) * 0.5f;
-  ImDrawList* drawList = ImGui::GetWindowDrawList();
-  drawList->AddRectFilled(ImVec2(start.x, top),
-                          ImVec2(start.x + size * 0.5f, top + size), shirt,
-                          2.0f * Theme::scale(), ImDrawFlags_RoundCornersLeft);
-  drawList->AddRectFilled(ImVec2(start.x + size * 0.5f, top),
-                          ImVec2(start.x + size, top + size), trim,
-                          2.0f * Theme::scale(), ImDrawFlags_RoundCornersRight);
-  ImGui::Dummy(ImVec2(size, size));
+  return ((colour & 0xFFU) << 16U) | (colour & 0xFF00U) |
+         ((colour >> 16U) & 0xFFU);
 }
 }  // namespace
 
@@ -303,7 +295,7 @@ void TeamSelectionScene::renderClubTable(float height)
       // Colour swatch drawn in front of a real, named selectable so the row
       // is findable by label (automation, screen readers of the item tree).
       const float rowStart = ImGui::GetCursorPosX();
-      clubColours(club.shirt, club.trim);
+      UI::clubBadge(nullptr, club.primary, club.secondary, 18.0f);
       ImGui::SameLine();
       ImGui::SetCursorPosX(std::max(ImGui::GetCursorPosX(), rowStart));
       if (ImGui::Selectable(club.name.c_str(), selected_team_id == club.id,
@@ -361,13 +353,18 @@ void TeamSelectionScene::renderSelectedClub(float width, float height)
     return;
   }
   const ClubSummary& club = *selected;
-  clubColours(club.shirt, club.trim);
+  UI::clubBadge(club.code.c_str(), club.primary, club.secondary, 48.0f);
   ImGui::SameLine();
+  ImGui::BeginGroup();
   {
     Theme::ScopedText title(Theme::Text::HEADING);
     UI::textFitted(club.name, ImGui::GetContentRegionAvail().x, palette.text);
   }
+  if (!club.nickname.empty())
+    UI::textFitted(club.nickname, ImGui::GetContentRegionAvail().x,
+                   palette.muted);
   reputationStars(club.reputation);
+  ImGui::EndGroup();
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
 
   const float keyWidth = 150.0f * Theme::scale();
@@ -380,6 +377,8 @@ void TeamSelectionScene::renderSelectedClub(float width, float height)
   ImGui::PopStyleColor();
   UI::keyValue(LOC("TEAM_SELECTION_STADIUM"), club.stadium_text.c_str(),
                keyWidth);
+  if (!club.founded.empty())
+    UI::keyValue(LOC("CLUB_FOUNDED"), club.founded.c_str(), keyWidth);
   UI::keyValue(LOC("TEAM_SELECTION_BALANCE"), club.balance_text.c_str(),
                keyWidth);
   UI::keyValue(LOC("TEAM_SELECTION_WAGES"), club.wages_text.c_str(), keyWidth);
@@ -460,14 +459,28 @@ void TeamSelectionScene::loadAvailableTeams()
   {
     const Team& team = teamRef.get();
     ClubSummary summary;
+    std::string venue;
     summary.id = team.getId();
     summary.name = team.getName();
     summary.reputation = team.getReputation();
     summary.stadium = team.getStadiumCapacity();
     summary.balance = team.getFinances().getBalance();
-    const KitColors kit = chooseMatchKits(team.getId(), 0).home;
-    summary.shirt = kit.shirt;
-    summary.trim = kit.trim;
+    if (const ClubIdentity* identity = controller.getClubIdentity(team.getId()))
+    {
+      summary.code = identity->short_name;
+      summary.primary = identity->primary_colour;
+      summary.secondary = identity->secondary_colour;
+      summary.nickname = identity->nickname;
+      if (identity->founded > 0)
+        summary.founded = std::to_string(identity->founded);
+      venue = identity->stadium_name;
+    }
+    else
+    {
+      const KitColors kit = chooseMatchKits(team.getId(), 0).home;
+      summary.primary = toRgb(kit.shirt);
+      summary.secondary = toRgb(kit.trim);
+    }
     std::vector<std::pair<std::string, float>> players;
     double total = 0.0;
     for (const auto& playerRef : controller.getPlayersForTeam(team.getId()))
@@ -494,7 +507,10 @@ void TeamSelectionScene::loadAvailableTeams()
     summary.key_players = std::move(players);
     summary.balance_text = Format::money(summary.balance);
     summary.wages_text = Format::money(summary.weekly_wages);
-    summary.stadium_text = Format::thousands(summary.stadium);
+    summary.stadium_text =
+        venue.empty()
+            ? Format::thousands(summary.stadium)
+            : std::format("{} ({})", venue, Format::thousands(summary.stadium));
     club_summaries.push_back(std::move(summary));
   }
 

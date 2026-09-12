@@ -167,15 +167,12 @@ TEST(NationalTeamsTest, CycleRunsQualifiersAndFinals)
   EXPECT_EQ(nations.getFinals().front().competition, Competition::WorldFinals);
   for (const auto& team : nations.getTeams()) EXPECT_FALSE(team.coach.empty());
 
-  std::map<TeamID, int64_t> balances;
-  for (const auto& [id, team] : gamedata->getTeams())
-    balances[id] = team.getFinances().getBalance();
-
   bool saw_duty = false;
   const GameDateValue end(2026, 7, 12);
   while (day < end)
   {
     day = SeasonCalendar::addDays(day, 1);
+    world.onDayAdvanced(day, FREE_AGENTS_TEAM_ID);  // Injuries heal.
     nations.onDay(day, scheduler, world, FREE_AGENTS_TEAM_ID);
     for (const auto& squad : nations.getSquads())
     {
@@ -207,9 +204,14 @@ TEST(NationalTeamsTest, CycleRunsQualifiersAndFinals)
   }
   // Everyone is back and clubs were paid for their finals players.
   EXPECT_TRUE(nations.getSquads().empty());
+  // Nothing else pays competition money in this standalone world.
   bool compensated = false;
   for (const auto& [id, team] : gamedata->getTeams())
-    if (team.getFinances().getBalance() > balances[id]) compensated = true;
+    for (const FinanceTransaction& entry : team.getFinances().getLedger())
+      if (entry.category == FinanceCategory::PrizeMoney &&
+          GameDateValue(2026, 6, 1) < entry.date &&
+          entry.amount % NationalTeams::COMPENSATION_PER_DAY == 0)
+        compensated = true;
   EXPECT_TRUE(compensated);
   const auto leaders = nations.capsLeaders(10);
   ASSERT_FALSE(leaders.empty());

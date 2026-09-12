@@ -27,12 +27,14 @@
 #include "global/logger.h"
 #include "global/paths.h"
 #include "global/runtime_paths.h"
+#include "database/datagenerator.h"
 #include "gui/gui_view.h"
 #include "gui/render/match_camera_3d.h"
 #include "gui/render/match_kit_colors.h"
 #include "gui/render/match_render_3d_tuning.h"
 #include "gui/render/match_render_math.h"
 #include "gui/scenes/match_scene.h"
+#include "gui/widgets/theme.h"
 
 namespace
 {
@@ -435,6 +437,48 @@ TEST(MatchKitColorsTest, KitsNeverClash)
   EXPECT_EQ(first.away.shirt, second.away.shirt);
 }
 
+TEST(MatchKitColorsTest, ClubsWearTheirOwnColoursWithoutClashes)
+{
+  // Every pairing of data-pack clubs stays readable.
+  std::vector<TeamID> clubs;
+  for (TeamID team = 1; team < 2000; ++team)
+    if (findClubIdentity(team)) clubs.push_back(team);
+  ASSERT_FALSE(clubs.empty());
+  for (const TeamID home : clubs)
+  {
+    const ClubIdentity* identity = findClubIdentity(home);
+    const MatchKits alone = chooseMatchKits(home, 0);
+    EXPECT_EQ(alone.home.shirt, kitColorFromRgb(identity->primary_colour));
+    EXPECT_EQ(alone.home.trim, kitColorFromRgb(identity->secondary_colour));
+    for (const TeamID away : clubs)
+    {
+      if (away == home) continue;
+      const MatchKits kits = chooseMatchKits(home, away);
+      EXPECT_GE(kitColorDistance(kits.home.shirt, kits.away.shirt),
+                KIT_CLASH_DISTANCE)
+          << home << " vs " << away;
+      for (const ImU32 keeper :
+           {kits.homeGoalkeeper.shirt, kits.awayGoalkeeper.shirt})
+      {
+        EXPECT_GE(kitColorDistance(keeper, kits.home.shirt),
+                  KIT_CLASH_DISTANCE)
+            << home << " vs " << away;
+        EXPECT_GE(kitColorDistance(keeper, kits.away.shirt),
+                  KIT_CLASH_DISTANCE)
+            << home << " vs " << away;
+      }
+    }
+  }
+
+  // A clash sends the away side to its reversed colours first.
+  const ClubColours red{IM_COL32(200, 20, 30, 255), IM_COL32(250, 250, 250, 255)};
+  const ClubColours crimson{IM_COL32(190, 30, 40, 255),
+                            IM_COL32(20, 30, 90, 255)};
+  const MatchKits clash = chooseMatchKits(1, 2, &red, &crimson);
+  EXPECT_EQ(clash.home.shirt, red.primary);
+  EXPECT_EQ(clash.away.shirt, crimson.secondary);
+}
+
 class MatchRenderer3DSceneTest : public ::testing::Test
 {
  protected:
@@ -466,7 +510,8 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
   const std::string fontPath = AssetPaths::font();
   ASSERT_NE(ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.c_str(), 20.0f),
             nullptr);
-  ImGui::StyleColorsDark();
+  // The real theme, so HUD buttons and accents look as in the game.
+  Theme::apply(Theme::Appearance{}, 1.0f);
   ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
   ImGui_ImplSDLRenderer3_Init(renderer);
 
@@ -588,6 +633,10 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
       return timings[timings.size() / 2];
     };
     press(SDLK_1);
+    // Back to the default broadcast framing after the zoom checks.
+    scene.pending_zoom_steps =
+        std::log(1.0f / MatchRender3DTuning::Camera::MAX_ZOOM) /
+        std::log(MatchRender3DTuning::Camera::ZOOM_STEP);
     press(SDLK_F);
     EXPECT_TRUE(scene.pitch_focus);
     const float focusMedian = medianRenderMilliseconds(90);
@@ -597,6 +646,9 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
     capture("match_3d_focus_broadcast.bmp");
     press(SDLK_2);
     for (int index = 0; index < 80; ++index) frame(FRAME_SECONDS);
+    std::cout << "[match-3d] focus 1280x800 tactical render CPU median "
+              << medianRenderMilliseconds(60) << " ms, draw list "
+              << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
     capture("match_3d_focus_tactical.bmp");
 
     // A left drag over the view hands the camera to the free orbit camera.
@@ -637,6 +689,9 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
     EXPECT_TRUE(scene.free_follow_ball);
     press(SDLK_R);
     for (int index = 0; index < 90; ++index) frame(FRAME_SECONDS);
+    std::cout << "[match-3d] focus 1280x800 free overview render CPU median "
+              << medianRenderMilliseconds(60) << " ms, draw list "
+              << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
     capture("match_3d_focus_free_reset.bmp");
     io.AddMousePosEvent(-1000.0f, -1000.0f);
 
@@ -652,6 +707,12 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
     RecordProperty("render_3d_focus_1440p_median_microseconds",
                    static_cast<int>(largeMedian * 1000.0f));
     capture("match_3d_focus_1440p_broadcast.bmp");
+    press(SDLK_2);
+    for (int index = 0; index < 90; ++index) frame(FRAME_SECONDS);
+    std::cout << "[match-3d] focus 2560x1440 tactical render CPU median "
+              << medianRenderMilliseconds(60) << " ms, draw list "
+              << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
+    capture("match_3d_focus_1440p_tactical.bmp");
     press(SDLK_4);
     for (int index = 0; index < 90; ++index) frame(FRAME_SECONDS);
     capture("match_3d_focus_1440p_follow.bmp");

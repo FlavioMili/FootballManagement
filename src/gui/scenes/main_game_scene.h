@@ -80,6 +80,12 @@ class MainGameScene : public ManagementScene
   void requestContinue();
 
   /**
+   * @brief Returns to the hub and simulates days with the assistant in
+   * charge until the plan ends; the report opens when it is done.
+   */
+  void requestHoliday(const HolidayPlan& plan);
+
+  /**
    * @brief Draws the Continue progress card over a dimmed snapshot of the
    * screen. Reads only the controller's thread-safe progress, never game
    * state, because days are being simulated on a worker thread.
@@ -126,6 +132,8 @@ class MainGameScene : public ManagementScene
   std::future<int> continue_operation;
   bool continuation_running = false;
   bool continuation_requested = false;
+  std::optional<HolidayPlan> pending_holiday;
+  bool holiday_running = false;
 
   // Continue overlay state (progress snapshots only, see update()).
   void trackContinueProgress();

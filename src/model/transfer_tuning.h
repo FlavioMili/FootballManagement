@@ -196,20 +196,20 @@ struct TransferTuning final
     /** Clubs evaluated per window day and completed deals per day. The
      * deadline-day spike carries ~10-15% of window spend. [S/P] */
     static constexpr int BASE_TEAM_EVALUATIONS = 24;
-    static constexpr int BASE_DAILY_DEALS = 16;
+    static constexpr int BASE_DAILY_DEALS = 24;
     static constexpr float LATE_WINDOW_WEIGHT = 1.8f;
     static constexpr float DEADLINE_DAY_WEIGHT = 6.0f;
     static constexpr int LATE_WINDOW_DAYS = 7;
     /** Free-agent signings per day while the window is shut. */
-    static constexpr int CLOSED_WINDOW_FREE_SIGNINGS = 2;
+    static constexpr int CLOSED_WINDOW_FREE_SIGNINGS = 4;
     /** Pre-contract approaches per day from 1 January. */
-    static constexpr int DAILY_PRE_CONTRACTS = 2;
+    static constexpr int DAILY_PRE_CONTRACTS = 3;
     /** Squad size AI clubs aim for; above it they loan-list prospects,
      * two above it they release veterans, and they stop buying at
      * AI_MAX_SQUAD + 2. [P] */
     static constexpr std::size_t AI_TARGET_SQUAD = 26;
     static constexpr std::size_t AI_MAX_SQUAD = 30;
-    static constexpr int MAX_LOAN_LISTED_PER_CLUB = 4;
+    static constexpr int MAX_LOAN_LISTED_PER_CLUB = 6;
     /** Clubs sounded out when placing a loan-listed prospect. */
     static constexpr int LOAN_PLACEMENT_TRIES = 8;
     /** AI clubs loan out prospects ranked beyond the matchday squad. */
@@ -217,6 +217,8 @@ struct TransferTuning final
     /** Veterans beyond this rank and age are released by AI clubs. */
     static constexpr std::size_t RELEASE_MIN_RANK = 22;
     static constexpr int RELEASE_MIN_AGE = 30;
+    /** Above AI_MAX_SQUAD any surplus player past prospect age may go. */
+    static constexpr int SURPLUS_RELEASE_MIN_AGE = 24;
     /** A weakest starter this far below the squad level is an upgrade
      * need; a signing must beat him by UPGRADE_MARGIN. A missing position
      * accepts players down to SHORTAGE_LEVEL_MARGIN below the level. [P] */
@@ -224,7 +226,7 @@ struct TransferTuning final
     static constexpr float UPGRADE_MARGIN = 1.0f;
     static constexpr float SHORTAGE_LEVEL_MARGIN = 12.0f;
     /** Share of needs a club first tries to fill with a loan. [P] */
-    static constexpr double LOAN_BEFORE_FEE_CHANCE = 0.7;
+    static constexpr double LOAN_BEFORE_FEE_CHANCE = 0.9;
     /** A loanee may be this far below the level asked of a signing. [P] */
     static constexpr float LOAN_LEVEL_SLACK = 4.0f;
     /** Fee route: players sampled beyond the list, offers tried, and the

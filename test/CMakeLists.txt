@@ -181,6 +181,68 @@ gtest_discover_tests(
     TIMEOUT 600
 )
 
+# Medical centre, calendar, squad planner, comparison and set-piece dialog
+# through the real GUIView (screenshots in the runtime captures folder;
+# FM_KEEP_TEST_ARTIFACTS=1 keeps them).
+add_executable(squad_ui_tests test_squad_screens.cpp)
+target_link_libraries(squad_ui_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET squad_ui_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  squad_ui_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "squad_ui::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "unit;gui"
+    TIMEOUT 600
+)
+
+# Manager career screens through the real GUIView (screenshots in the
+# runtime captures folder; FM_KEEP_TEST_ARTIFACTS=1 keeps them).
+add_executable(manager_ui_tests test_manager_ui.cpp)
+target_link_libraries(manager_ui_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET manager_ui_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  manager_ui_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "manager_ui::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "unit;gui"
+    TIMEOUT 600
+)
+
+# Guidance screens (checklist, next steps, delegation, opposition report,
+# data hub, inbox decisions, half-time analysis) through the real GUIView at
+# several window sizes and UI scales; screenshots in the captures folder.
+add_executable(guidance_ui_tests test_guidance_ui.cpp)
+target_link_libraries(guidance_ui_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET guidance_ui_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  guidance_ui_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "guidance_ui::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "unit;gui"
+    TIMEOUT 600
+)
+
+# Planning, holiday, awards and records screens through the real GUIView
+# (screenshots in the runtime captures folder).
+add_executable(career_ui_tests test_career_ui.cpp)
+target_link_libraries(career_ui_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET career_ui_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  career_ui_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "career_ui::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "unit;gui"
+    TIMEOUT 900
+)
+
 # Adversarial user scenarios (double Continue, saves during Continue, empty
 # squads, old saves, corrupt settings, HiDPI). Exclude with `-LE adversarial`.
 add_executable(adversarial_tests test_adversarial.cpp)

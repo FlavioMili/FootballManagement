@@ -28,7 +28,9 @@
 
 namespace
 {
-constexpr float TWO_COLUMN_MIN_WIDTH = 1000.0f;
+constexpr float TWO_COLUMN_MIN_WIDTH = 900.0f;
+/** Bars longer than this are hard to compare at a glance. */
+constexpr float BAR_MAX_WIDTH = 520.0f;
 constexpr float RADAR_MAX_SIZE = 420.0f;
 constexpr std::size_t PICKER_MAX_RESULTS = 40;
 
@@ -342,9 +344,13 @@ void PlayerCompareScene::renderRadar(float width)
   UI::beginAutoHeightCard("compare_radar", LOC("COMPARE_RADAR"), width);
   const float inner = ImGui::GetContentRegionAvail().x;
   const float size = std::min(inner, RADAR_MAX_SIZE * scale);
-  const float labelRoom = ImGui::CalcTextSize("Goalkeeping").x * 0.5f +
-                          8.0f * scale;
-  const float radius = std::max(40.0f * scale, size * 0.5f - labelRoom);
+  // Side labels sit fully outside the rings: leave room for the widest.
+  float widest = 0.0f;
+  for (const std::string& label : axis_labels)
+    widest = std::max(widest, ImGui::CalcTextSize(label.c_str()).x);
+  const float labelRoom = widest + 8.0f * scale;
+  const float radius = std::max(
+      40.0f * scale, std::min(size * 0.5f, inner * 0.5f - labelRoom));
   const ImVec2 start = ImGui::GetCursorScreenPos();
   const ImVec2 centre(start.x + inner * 0.5f,
                       start.y + radius + ImGui::GetTextLineHeight() + 6.0f * scale);
@@ -460,7 +466,8 @@ void PlayerCompareScene::renderBars(float width)
       const std::size_t position =
           static_cast<std::size_t>(found - slot.attributes.begin());
       const ImVec2 at = ImGui::GetCursorScreenPos();
-      const float barWidth = std::max(0.0f, inner - valueWidth);
+      const float barWidth = std::clamp(inner - valueWidth, 0.0f,
+                                        BAR_MAX_WIDTH * scale);
       const float y = at.y + (line - barHeight) * 0.5f;
       const ImVec4 color = seriesColor(index);
       drawList->AddRectFilled(ImVec2(at.x, y),

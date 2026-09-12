@@ -32,9 +32,6 @@ class FixtureRepository
    */
   explicit FixtureRepository(std::shared_ptr<DatabaseConnection> db_conn);
 
-  /** @brief Adds the competition columns and MatchReports to older saves. */
-  void ensureSchema() const;
-
   /**
    * @brief Load all matches from the database.
    * @return A vector of Match objects.

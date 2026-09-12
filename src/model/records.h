@@ -181,10 +181,6 @@ class RecordBook
       TeamID team_id,
       const std::function<int(PlayerID, TeamID)>& honours) const;
 
-  /** Competitive totals of a player at a club (zeros when none). */
-  ClubPlayerTotal playerTotals(TeamID team_id, PlayerID player_id) const;
-
-  bool empty() const { return records.empty() && club_players.empty(); }
   void clear();
   /** Loads the book; a save written before it existed is rebuilt from the
    * stored match reports and transfer history. */

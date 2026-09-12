@@ -240,7 +240,8 @@ void YouthScene::refresh()
   std::vector<const Row*> ranked;
   for (const Row& row : development_rows)
   {
-    if (row.view.progress.size() >= 2) ranked.push_back(&row);
+    if (row.view.progress.size() >= 2 && row.growth > 0.05f)
+      ranked.push_back(&row);
   }
   std::ranges::sort(ranked, [](const Row* a, const Row* b)
                     { return a->growth > b->growth; });
@@ -249,10 +250,8 @@ void YouthScene::refresh()
   for (const Row* row : ranked) improver_values.push_back(row->growth_text);
   const Theme::Palette& palette = Theme::palette();
   for (std::size_t i = 0; i < ranked.size(); ++i)
-    improvers.push_back({ranked[i]->view.name, std::max(0.0f, ranked[i]->growth),
-                         ranked[i]->growth >= 0.0f ? palette.positive
-                                                   : palette.negative,
-                         improver_values[i]});
+    improvers.push_back({ranked[i]->view.name, ranked[i]->growth,
+                         palette.positive, improver_values[i]});
 
   // Overview texts.
   head_rating = overview.head.id != 0 ? std::to_string(overview.ratings.head)

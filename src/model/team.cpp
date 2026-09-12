@@ -74,15 +74,23 @@ void Team::setStrategy(const Strategy& strategy) { team_strategy = strategy; }
 void Team::generateStartingXI(const class GameData& gamedata,
                               const StatsConfig& stats_config)
 {
+  // Academy players only fill in when the senior squad runs short.
+  constexpr std::size_t MIN_SENIORS = 14;
   std::vector<PlayerID> available;
+  std::vector<PlayerID> academy;
   available.reserve(player_ids.size());
   const auto& players = gamedata.getPlayers();
   for (const PlayerID player_id : player_ids)
   {
     const auto found = players.find(player_id);
-    if (found != players.end() && found->second.isAvailable())
+    if (found == players.end() || !found->second.isAvailable()) continue;
+    if (found->second.isAcademyPlayer())
+      academy.push_back(player_id);
+    else
       available.push_back(player_id);
   }
+  if (available.size() < MIN_SENIORS)
+    available.insert(available.end(), academy.begin(), academy.end());
   lineup.generateStartingXI(gamedata, available, stats_config);
 }
 

@@ -117,7 +117,8 @@ struct Scenario
 TEST(MatchAnalysisTest, ShotsAreMirroredIntoAttackingFramesWithOutcomes)
 {
   std::vector<MatchEvent> events = {
-      shot(true, 9, 0.9f, 0.2f, 0.3f), outcome(MatchEventType::GOAL, true, 9),
+      shot(true, 9, 0.9f, 0.2f, 0.3f),
+      outcome(MatchEventType::GOAL, true, 9),
       shot(false, 20, 0.1f, 0.2f, 0.1f),
       outcome(MatchEventType::WOODWORK, false, 20),
       outcome(MatchEventType::SAVE, true, 1),
@@ -148,9 +149,9 @@ TEST(MatchAnalysisTest, FlankPatternAndSuggestionsCarryTheirEvidence)
   // All of the away xG came down its left, i.e. the managed side's right.
   EXPECT_NEAR(analysis.opponent.flank_xg[0], 1.0f, 1e-4f);
   ASSERT_TRUE(suggests(analysis, AnalysisSuggestion::Kind::ProtectFlank));
-  const auto protect = std::ranges::find(
-      analysis.suggestions, AnalysisSuggestion::Kind::ProtectFlank,
-      &AnalysisSuggestion::kind);
+  const auto protect = std::ranges::find(analysis.suggestions,
+                                         AnalysisSuggestion::Kind::ProtectFlank,
+                                         &AnalysisSuggestion::kind);
   EXPECT_EQ(protect->action.args.front(), "@ANALYSIS_FLANK_RIGHT");
   EXPECT_EQ(protect->reason.args.front(), "100%");
   // The tired player is the first change, with his condition as reason.
@@ -162,9 +163,10 @@ TEST(MatchAnalysisTest, FlankPatternAndSuggestionsCarryTheirEvidence)
   EXPECT_LE(analysis.suggestions.size(),
             static_cast<std::size_t>(MatchAnalysisRules::MAX_SUGGESTIONS));
   // Lots of the ball, few chances.
-  EXPECT_TRUE(suggests(analysis, AnalysisSuggestion::Kind::CreateMore) ||
-              analysis.suggestions.size() ==
-                  static_cast<std::size_t>(MatchAnalysisRules::MAX_SUGGESTIONS));
+  EXPECT_TRUE(
+      suggests(analysis, AnalysisSuggestion::Kind::CreateMore) ||
+      analysis.suggestions.size() ==
+          static_cast<std::size_t>(MatchAnalysisRules::MAX_SUGGESTIONS));
 }
 
 TEST(MatchAnalysisTest, RatingOutliersAndFatigueAreNoted)
@@ -173,8 +175,9 @@ TEST(MatchAnalysisTest, RatingOutliersAndFatigueAreNoted)
   const MatchAnalysis analysis = analyseMatch(scenario.input());
   const auto has = [&](PlayerNote::Kind kind, PlayerID id)
   {
-    return std::ranges::any_of(analysis.notes, [&](const PlayerNote& note)
-                               { return note.kind == kind && note.player == id; });
+    return std::ranges::any_of(
+        analysis.notes, [&](const PlayerNote& note)
+        { return note.kind == kind && note.player == id; });
   };
   EXPECT_TRUE(has(PlayerNote::Kind::Standout, 4));
   EXPECT_TRUE(has(PlayerNote::Kind::Struggling, 9));
@@ -235,9 +238,9 @@ TEST(MatchAnalysisTest, PatternsNeedShotsNotJustMinutes)
   EXPECT_FALSE(suggests(analysis, AnalysisSuggestion::Kind::ProtectFlank));
   EXPECT_FALSE(suggests(analysis, AnalysisSuggestion::Kind::CreateMore));
   EXPECT_FALSE(suggests(analysis, AnalysisSuggestion::Kind::PressHigher));
-  EXPECT_TRUE(std::ranges::none_of(
-      analysis.observations, [](const AnalysisLine& line)
-      { return line.key == "ANALYSIS_OBS_THEIR_FLANK"; }));
+  EXPECT_TRUE(
+      std::ranges::none_of(analysis.observations, [](const AnalysisLine& line)
+                           { return line.key == "ANALYSIS_OBS_THEIR_FLANK"; }));
 
   // A flank pattern also needs enough shots from that side.
   Scenario lopsided;

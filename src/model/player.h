@@ -252,6 +252,18 @@ class Player
   /** @brief Gets the player's transfer status. */
   TransferStatus getTransferStatus() const;
 
+  /** @brief Bitmask bit for players of a youth academy (U18 or trialist). */
+  static constexpr uint32_t ACADEMY_BIT = 0x02U;
+
+  /**
+   * @brief Marks the player as part of his club's academy: he is not a
+   * first-team player (squad counts, automatic line-ups).
+   */
+  void setAcademyPlayer(bool academy);
+
+  /** @brief True for U18 players and intake trialists. */
+  bool isAcademyPlayer() const;
+
  private:
   // 32-bit fields first
   PlayerID _id;

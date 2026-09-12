@@ -26,6 +26,7 @@
 #include "gui/scenes/team_selection_scene.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/inbox.h"
 
 SceneID MainMenuScene::getID() const { return SceneID::MAIN_MENU; }
 
@@ -74,17 +75,22 @@ void MainMenuScene::update(float deltaTime)
     {
       const int slot = loading_slot;
       const bool createNewGame = is_new_game;
+      const std::filesystem::path restore = pending_restore;
+      pending_restore.clear();
       GameController* controller = &guiView->getController();
-      loading_operation = std::async(std::launch::async,
-                                     [controller, slot, createNewGame]()
-                                     {
-                                       if (createNewGame)
-                                       {
-                                         controller->newGame(slot);
-                                         return true;
-                                       }
-                                       return controller->loadGame(slot);
-                                     });
+      loading_operation =
+          std::async(std::launch::async,
+                     [controller, slot, createNewGame, restore]()
+                     {
+                       if (createNewGame)
+                       {
+                         controller->newGame(slot);
+                         return true;
+                       }
+                       if (!restore.empty())
+                         return controller->restoreBackup(slot, restore);
+                       return controller->loadGame(slot);
+                     });
       loading_operation_started = true;
       return;
     }
@@ -116,7 +122,16 @@ void MainMenuScene::update(float deltaTime)
     {
       Logger::error(
           std::format("Failed to load game from slot {}", loading_slot));
+      // Explain why and offer the slot's backups.
+      const auto& error = guiView->getController().getLastLoadError();
+      load_error_text = formatLocalized(
+          error ? error->langKey() : "SAVE_ERROR_IO",
+          {std::to_string(error ? error->found_version : 0),
+           std::to_string(error ? error->supported_version : 0)});
+      load_error_slot = loading_slot;
+      load_error_requested = true;
       loading_slot = 0;
+      loadCachedMetadata();
     }
   }
 }
@@ -265,9 +280,184 @@ void MainMenuScene::render()
   if (UI::secondaryButton(LOC("MENU_QUIT"), buttonSize)) quit();
   ImGui::PopFont();
   renderSlotPicker();
+  renderLoadError();
+  renderBackups();
   ImGui::EndGroup();
 
   ImGui::End();
+}
+
+void MainMenuScene::openBackups(int slot)
+{
+  backups_slot = slot;
+  backups = guiView->getController().getSaveBackups(slot);
+  backup_labels.clear();
+  backup_labels.reserve(backups.size());
+  for (const SaveBackup& backup : backups)
+  {
+    const SaveInspection& info = backup.inspection;
+    const std::string club =
+        info.club_name.empty() ? std::string(LOC("MENU_SAVE_SLOT_NOT_STARTED"))
+                               : info.club_name;
+    backup_labels.push_back(
+        backup.kind == SaveBackup::Kind::PreMigration
+            ? formatLocalized("SAVE_BACKUP_PRE_UPGRADE",
+                              {std::to_string(backup.index)})
+            : formatLocalized(
+                  "SAVE_BACKUP_ENTRY",
+                  {std::to_string(backup.index), club, info.game_date}));
+  }
+  backups_requested = true;
+}
+
+void MainMenuScene::renderSlotActions(
+    int slot, const GameController::SaveSlotMetadata& metadata)
+{
+  if (!metadata.exists) return;
+  ImGui::PushID(slot);
+  ImGui::SameLine();
+  ImGui::BeginGroup();
+  ImGui::BeginDisabled(metadata.backups == 0);
+  if (UI::secondaryButton(LOC("SAVE_BACKUPS_TITLE"), ImVec2(0.0f, 0.0f),
+                          UI::ButtonSize::COMPACT))
+    openBackups(slot);
+  ImGui::EndDisabled();
+  // The career currently held in memory cannot be deleted under it.
+  const bool loaded = guiView->getController().getCurrentSlot() == slot;
+  ImGui::BeginDisabled(loaded);
+  const bool deleteClicked = UI::dangerButton(
+      LOC("SAVE_DELETE"), ImVec2(0.0f, 0.0f), UI::ButtonSize::COMPACT);
+  ImGui::EndDisabled();
+  if (deleteClicked)
+  {
+    delete_slot = slot;
+    delete_text =
+        formatLocalized("SAVE_DELETE_BODY",
+                        {std::to_string(slot),
+                         metadata.team_name.empty()
+                             ? std::string(LOC("MENU_SAVE_SLOT_NOT_STARTED"))
+                             : metadata.team_name});
+  }
+  ImGui::EndGroup();
+  ImGui::PopID();
+}
+
+void MainMenuScene::renderLoadError()
+{
+  if (load_error_requested)
+  {
+    ImGui::OpenPopup("##load_error");
+    load_error_requested = false;
+  }
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Appearing,
+                          ImVec2(0.5f, 0.5f));
+  if (!ImGui::BeginPopupModal(
+          "##load_error", nullptr,
+          ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar))
+    return;
+  {
+    Theme::ScopedText heading(Theme::Text::TITLE);
+    ImGui::TextUnformatted(LOC("SAVE_LOAD_FAILED_TITLE"));
+  }
+  ImGui::PushTextWrapPos(420.0f * Theme::scale());
+  ImGui::TextColored(Theme::palette().muted, "%s", load_error_text.c_str());
+  ImGui::PopTextWrapPos();
+  ImGui::Spacing();
+  const bool hasBackups =
+      load_error_slot > 0 &&
+      static_cast<size_t>(load_error_slot) <= cached_metadata.size() &&
+      cached_metadata[static_cast<size_t>(load_error_slot - 1)].backups > 0;
+  if (hasBackups && UI::primaryButton(LOC("SAVE_BACKUPS_TITLE")))
+  {
+    openBackups(load_error_slot);
+    ImGui::CloseCurrentPopup();
+  }
+  if (hasBackups) ImGui::SameLine();
+  if (UI::secondaryButton(LOC("TALK_CLOSE")) ||
+      ImGui::IsKeyPressed(ImGuiKey_Escape))
+    ImGui::CloseCurrentPopup();
+  ImGui::EndPopup();
+}
+
+void MainMenuScene::renderBackups()
+{
+  if (backups_requested)
+  {
+    ImGui::OpenPopup("##save_backups");
+    backups_requested = false;
+  }
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Appearing,
+                          ImVec2(0.5f, 0.5f));
+  if (!ImGui::BeginPopupModal(
+          "##save_backups", nullptr,
+          ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar))
+    return;
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  {
+    Theme::ScopedText heading(Theme::Text::TITLE);
+    ImGui::TextUnformatted(
+        fmt::sprintf("%s  ·  %s", LOC("SAVE_BACKUPS_TITLE"),
+                     fmt::sprintf(LOC("MENU_SLOT_LABEL"), backups_slot))
+            .c_str());
+  }
+  ImGui::Spacing();
+  if (backups.empty())
+    ImGui::TextColored(palette.muted, "%s", LOC("SAVE_BACKUPS_EMPTY"));
+  const float rowWidth = 460.0f * scale;
+  for (size_t index = 0; index < backups.size(); ++index)
+  {
+    const SaveBackup& backup = backups[index];
+    const bool usable = backup.inspection.status == SaveStatus::Ok;
+    ImGui::PushID(static_cast<int>(index));
+    const float buttonWidth =
+        UI::buttonWidth(LOC("SAVE_BACKUP_RESTORE"), UI::ButtonSize::COMPACT);
+    ImGui::AlignTextToFramePadding();
+    UI::textFitted(backup_labels[index],
+                   rowWidth - buttonWidth - ImGui::GetStyle().ItemSpacing.x,
+                   usable ? palette.text : palette.faint);
+    ImGui::SameLine(rowWidth - buttonWidth);
+    ImGui::BeginDisabled(!usable);
+    if (UI::primaryButton(LOC("SAVE_BACKUP_RESTORE"), ImVec2(0.0f, 0.0f),
+                          UI::ButtonSize::COMPACT))
+      restore_candidate = backup.path;
+    ImGui::EndDisabled();
+    if (!usable && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+      ImGui::SetTooltip(
+          "%s", LOC(backup.inspection.status == SaveStatus::FutureVersion
+                        ? "SAVE_STATUS_NEWER"
+                        : "SAVE_STATUS_DAMAGED"));
+    ImGui::PopID();
+  }
+  ImGui::Spacing();
+  if (UI::secondaryButton(LOC("TALK_CLOSE")))
+  {
+    backups_slot = 0;
+    ImGui::CloseCurrentPopup();
+  }
+
+  if (!restore_candidate.empty() && !ImGui::IsPopupOpen("##confirm_restore"))
+    ImGui::OpenPopup("##confirm_restore");
+  const UI::DialogResult result =
+      UI::confirmDialog("##confirm_restore", LOC("SAVE_BACKUP_RESTORE"),
+                        LOC("SAVE_BACKUP_RESTORE_CONFIRM"),
+                        LOC("SAVE_BACKUP_RESTORE"), LOC("SETTINGS_CANCEL"));
+  if (result == UI::DialogResult::CONFIRM)
+  {
+    // Restoring loads the career: run it on the loader like a normal load.
+    pending_restore = restore_candidate;
+    restore_candidate.clear();
+    startSlot(backups_slot, false);
+    backups_slot = 0;
+    ImGui::CloseCurrentPopup();
+  }
+  else if (result == UI::DialogResult::CANCEL)
+  {
+    restore_candidate.clear();
+  }
+  ImGui::EndPopup();
 }
 
 void MainMenuScene::renderSlotPicker()
@@ -315,6 +505,11 @@ void MainMenuScene::renderSlotPicker()
         {
           overwrite_slot = i;
         }
+        else if (!is_new_game && metadata.status != SaveStatus::Ok)
+        {
+          // A damaged or newer save cannot load: offer its backups.
+          openBackups(i);
+        }
         else
         {
           startSlot(i, is_new_game);
@@ -334,7 +529,28 @@ void MainMenuScene::renderSlotPicker()
                                     ImGui::GetTextLineHeight() - 8.0f * scale),
                          Theme::toU32(palette.muted), detail,
                          slotSize.x - 28.0f * scale);
+      if (metadata.exists && metadata.status != SaveStatus::Ok)
+      {
+        // Status badge in the slot's top-right corner.
+        Theme::ScopedText caption(Theme::Text::CAPTION);
+        const char* status = LOC(metadata.status_key);
+        const ImVec2 textSize = ImGui::CalcTextSize(status);
+        const ImVec2 pad(6.0f * scale, 2.0f * scale);
+        const ImVec2 badgeMin(slotStart.x + slotSize.x - textSize.x -
+                                  2.0f * pad.x - 10.0f * scale,
+                              slotStart.y + 8.0f * scale);
+        const ImVec4 tone = metadata.status == SaveStatus::FutureVersion
+                                ? palette.warning
+                                : palette.negative;
+        drawList->AddRectFilled(badgeMin,
+                                ImVec2(badgeMin.x + textSize.x + 2.0f * pad.x,
+                                       badgeMin.y + textSize.y + 2.0f * pad.y),
+                                Theme::toU32(tone, 0.2f), 3.0f * scale);
+        drawList->AddText(ImVec2(badgeMin.x + pad.x, badgeMin.y + pad.y),
+                          Theme::toU32(tone), status);
+      }
       ImGui::EndDisabled();
+      renderSlotActions(i, metadata);
 
       if (metadata.exists && !metadata.real_date.empty() && hovered)
       {
@@ -361,6 +577,24 @@ void MainMenuScene::renderSlotPicker()
     const UI::DialogResult result = UI::confirmDialog(
         "##confirm_overwrite", LOC("MENU_OVERWRITE_TITLE"), body.c_str(),
         LOC("MENU_OVERWRITE_CONFIRM"), LOC("SETTINGS_CANCEL"));
+    // Deleting a save (and its backups) is permanent: ask first.
+    if (delete_slot > 0 && !ImGui::IsPopupOpen("##confirm_delete"))
+      ImGui::OpenPopup("##confirm_delete");
+    const UI::DialogResult deletion = UI::confirmDialog(
+        "##confirm_delete", LOC("SAVE_DELETE_TITLE"), delete_text.c_str(),
+        LOC("SAVE_DELETE"), LOC("SETTINGS_CANCEL"));
+    if (deletion == UI::DialogResult::CONFIRM)
+    {
+      if (!guiView->getController().deleteSave(delete_slot))
+        Logger::error(std::format("Could not delete slot {}", delete_slot));
+      delete_slot = 0;
+      loadCachedMetadata();
+    }
+    else if (deletion == UI::DialogResult::CANCEL)
+    {
+      delete_slot = 0;
+    }
+    renderBackups();
     if (result == UI::DialogResult::CONFIRM)
     {
       startSlot(overwrite_slot, true);

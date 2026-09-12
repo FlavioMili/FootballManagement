@@ -25,9 +25,9 @@
 
 namespace
 {
-constexpr float TWO_COLUMN_MIN_WIDTH = 1000.0f;
-constexpr float CELL_MIN_HEIGHT = 58.0f;
-constexpr float CELL_MAX_HEIGHT = 104.0f;
+constexpr float TWO_COLUMN_MIN_WIDTH = 900.0f;
+constexpr float CELL_MIN_HEIGHT = 54.0f;
+constexpr float CELL_MAX_HEIGHT = 92.0f;
 constexpr int SEASON_MONTHS = 12;
 
 constexpr std::array<const char*, 12> MONTH_KEYS = {
@@ -288,7 +288,7 @@ void CalendarScene::renderGrid(float width)
   const float inner = ImGui::GetContentRegionAvail().x;
   const float spacing = 3.0f * scale;
   const float cellWidth = std::floor((inner - 6.0f * spacing) / 7.0f);
-  const float cellHeight = std::clamp(cellWidth * 0.72f,
+  const float cellHeight = std::clamp(cellWidth * 0.62f,
                                       CELL_MIN_HEIGHT * scale,
                                       CELL_MAX_HEIGHT * scale);
   ImDrawList* drawList = ImGui::GetWindowDrawList();

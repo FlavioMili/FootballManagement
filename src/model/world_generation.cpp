@@ -627,47 +627,12 @@ std::vector<Player> generateSquad(const Team& team,
   return players;
 }
 
-Player generateYouthPlayer(const Team& team, PlayerID player_id, WorldRng& rng,
-                           const StatsConfig& stats_config, double wage_scale,
-                           NameRegistry& registry, SquadSurnames& squad)
-{
-  using Youth = WorldTuning::Youth;
-  static constexpr std::array<PlayerRole, 12> ROLES = {
-      PlayerRole::GK,  PlayerRole::CB, PlayerRole::LB,  PlayerRole::RB,
-      PlayerRole::CDM, PlayerRole::CM, PlayerRole::CAM, PlayerRole::LM,
-      PlayerRole::RM,  PlayerRole::LW, PlayerRole::RW,  PlayerRole::ST};
-  static constexpr std::array<float, 12> ROLE_WEIGHTS = {
-      1.0f, 3.0f, 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 0.5f, 0.5f, 1.0f, 1.0f, 2.0f};
-
-  const ClubProfile& profile = team.getProfile();
-  const PlayerRole role = ROLES[rng.weightedIndex(ROLE_WEIGHTS)];
-  const int age = rng.uniformInt(15, 17);
-  const float facility_bonus =
-      Youth::FACILITY_POTENTIAL_BONUS *
-      (static_cast<float>(profile.youth_facilities) - 50.0f) / 50.0f;
-  const float potential =
-      std::clamp(rng.normal(teamLevel(profile.reputation) +
-                                Youth::POTENTIAL_OFFSET + facility_bonus,
-                            Youth::POTENTIAL_STDDEV),
-                 30.0f, 95.0f);
-  const float current =
-      std::max(15.0f, potential * rng.uniform(0.50f, 0.62f) -
-                          1.5f * static_cast<float>(17 - age));
-
-  Player player =
-      makePlayer(rng, player_id, team.getId(), role, age, current,
-                 leagueProfile(team.getLeagueId()), stats_config, registry,
-                 squad);
-  player.setPotential(potential);
-  player.setContractYears(3);
-  player.setWage(
-      roundWage(wage_scale * ClubEconomy::wageIndex(current, age), 300.0));
-  return player;
-}
-
 void initializeHiddenAttributes(Player& player, WorldRng& rng,
                                 const StatsConfig& stats_config)
 {
+  // A predefined player keeps his name; generated players must not repeat
+  // it.
+  generationRegistry().claim(player.getName());
   player.setTraits(drawTraits(rng));
   player.setPotential(
       drawPotential(rng, static_cast<float>(player.getOverall(stats_config)),

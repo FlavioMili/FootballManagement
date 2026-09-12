@@ -23,6 +23,7 @@
 
 namespace
 {
+constexpr float BADGE_HEIGHT = 16.0f;
 // Club fixture columns (unscaled widths); priority 0 never hides.
 const std::array<UI::Column, 6>& clubFixtureColumns()
 {
@@ -225,6 +226,13 @@ void FixturesScene::renderClubFixtures(float height)
         ImGui::PushID(line);
         const std::string& opponentName =
             home ? fixture.away_name : fixture.home_name;
+        if (const ClubIdentity* identity =
+                guiView->getController().getClubIdentity(opponent))
+        {
+          UI::clubBadge(nullptr, identity->primary_colour,
+                        identity->secondary_colour, BADGE_HEIGHT);
+          ImGui::SameLine(0.0f, Theme::Space::S * Theme::scale());
+        }
         if (ImGui::Selectable(opponentName.c_str(), false,
                               ImGuiSelectableFlags_SpanAllColumns))
         {

@@ -246,7 +246,7 @@ TEST(Awards, MonthlyAwardsFromMatchReports)
                     a_home ? 0 : 2);
     report.players.push_back(line(star, a, 90, 7.6f, 1));
     report.players.push_back(line(keeper, a, 90, 7.0f));
-    report.players.push_back(line(youngster, b, 90, 6.9f));
+    report.players.push_back(line(youngster, b, 90, 7.4f));
     // A brilliant substitute who never reaches the minimum minutes.
     report.players.push_back(line(cameo, b, 30, 9.6f));
     MatchReportEvent late;

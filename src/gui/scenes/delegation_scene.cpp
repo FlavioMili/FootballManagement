@@ -39,11 +39,11 @@ void DelegationScene::refresh()
   GameController& controller = guiView->getController();
   policy = controller.getDelegation();
   if (const StaffMember* delegate = controller.getDelegate())
-    delegate_line = fmt::sprintf(
-        LOC(delegate->role == StaffRole::AssistantManager
-                ? "DELEGATION_DELEGATE_ASSISTANT"
-                : "DELEGATION_DELEGATE_COACH"),
-        delegate->name());
+    delegate_line =
+        fmt::sprintf(LOC(delegate->role == StaffRole::AssistantManager
+                             ? "DELEGATION_DELEGATE_ASSISTANT"
+                             : "DELEGATION_DELEGATE_COACH"),
+                     delegate->name());
   else
     delegate_line = LOC("DELEGATION_DELEGATE_NONE");
 }
@@ -52,9 +52,8 @@ void DelegationScene::renderContent()
 {
   GameController& controller = guiView->getController();
   UI::pageHeader(LOC("DELEGATION_TITLE"), delegate_line.c_str());
-  const float width =
-      std::min(ImGui::GetContentRegionAvail().x,
-               CONTENT_MAX_WIDTH * Theme::scale());
+  const float width = std::min(ImGui::GetContentRegionAvail().x,
+                               CONTENT_MAX_WIDTH * Theme::scale());
 
   UI::beginAutoHeightCard("delegation_presets", LOC("DELEGATION_PRESETS"),
                           width);
@@ -73,14 +72,13 @@ void DelegationScene::renderContent()
   }
   ImGui::PushTextWrapPos(0.0f);
   ImGui::TextColored(Theme::palette().muted, "%s",
-                     matching ? LOC(PRESET_HELP_KEYS[static_cast<size_t>(
-                                    *matching)])
-                              : LOC("DELEGATION_PRESET_CUSTOM_HELP"));
+                     matching
+                         ? LOC(PRESET_HELP_KEYS[static_cast<size_t>(*matching)])
+                         : LOC("DELEGATION_PRESET_CUSTOM_HELP"));
   ImGui::PopTextWrapPos();
   UI::endCard();
 
-  UI::beginAutoHeightCard("delegation_duties", LOC("DELEGATION_DUTIES"),
-                          width);
+  UI::beginAutoHeightCard("delegation_duties", LOC("DELEGATION_DUTIES"), width);
   for (std::size_t index = 0; index < DUTY_COUNT; ++index)
   {
     if (index > 0) ImGui::Separator();
@@ -94,11 +92,9 @@ void DelegationScene::renderDuty(Duty duty, float width)
   const Theme::Palette& palette = Theme::palette();
   const float scale = Theme::scale();
   const bool stacked = width < STACK_BELOW * scale;
-  const float controlWidth =
-      stacked ? width : OWNER_CONTROL_WIDTH * scale;
+  const float controlWidth = stacked ? width : OWNER_CONTROL_WIDTH * scale;
   const float textWidth =
-      stacked ? width
-              : width - controlWidth - Theme::Space::L * scale;
+      stacked ? width : width - controlWidth - Theme::Space::L * scale;
   ImGui::PushID(static_cast<int>(duty));
   const float startX = ImGui::GetCursorPosX();
   const float startY = ImGui::GetCursorPosY();
@@ -119,27 +115,21 @@ void DelegationScene::renderDuty(Duty duty, float width)
         startX + width - controlWidth,
         startY + std::max(0.0f, (textHeight - UI::buttonHeight()) * 0.5f)));
   }
-  if (DelegationPolicy::isFixed(duty))
+  const std::array<const char*, 2> owners = {LOC("DELEGATION_OWNER_MANAGER"),
+                                             LOC("DELEGATION_OWNER_ASSISTANT")};
+  int owner = policy.delegated(duty) ? 1 : 0;
+  if (UI::segmented("##owner", owner, owners, controlWidth))
   {
-    ImGui::AlignTextToFramePadding();
-    UI::badge(LOC("DELEGATION_ALWAYS_ASSISTANT"), palette.info);
-  }
-  else
-  {
-    const std::array<const char*, 2> owners = {
-        LOC("DELEGATION_OWNER_MANAGER"), LOC("DELEGATION_OWNER_ASSISTANT")};
-    int owner = policy.delegated(duty) ? 1 : 0;
-    if (UI::segmented("##owner", owner, owners, controlWidth))
-    {
-      guiView->getController().setDutyOwner(
-          duty, owner == 1 ? DutyOwner::Assistant : DutyOwner::Manager);
-      refresh();
-      showToast(LOC("DELEGATION_SAVED"));
-    }
+    guiView->getController().setDutyOwner(
+        duty, owner == 1 ? DutyOwner::Assistant : DutyOwner::Manager);
+    refresh();
+    showToast(LOC("DELEGATION_SAVED"));
   }
   if (!stacked)
-    ImGui::SetCursorPosY(std::max(ImGui::GetCursorPosY(),
-                                  startY + textHeight +
-                                      ImGui::GetStyle().ItemSpacing.y));
+  {
+    const float bottom = startY + textHeight;
+    if (ImGui::GetCursorPosY() < bottom)
+      ImGui::Dummy(ImVec2(0.0f, bottom - ImGui::GetCursorPosY()));
+  }
   ImGui::PopID();
 }

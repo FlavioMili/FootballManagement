@@ -56,6 +56,9 @@ Game::Game(std::shared_ptr<GameData> gd,
         if (ours) message.team_id = managed_team_id;
         world.getInbox().add(std::move(message));
       });
+  world.setInjuryRiskProvider(
+      [this](PlayerID player_id, const GameDateValue& date)
+      { return international.injuryRiskMultiplier(player_id, date); });
   world.setStandingsProvider(
       [this](LeagueID league_id)
       {
@@ -65,6 +68,8 @@ Game::Game(std::shared_ptr<GameData> gd,
           order.push_back(row.team_id);
         return order;
       });
+  world.setLoanCheck([this](PlayerID player_id)
+                     { return transfers.findLoan(player_id) != nullptr; });
   world.setFixtureOutlookProvider(
       [this](const GameDateValue& date, TrainingSystem::FixtureOutlook& outlook)
       {

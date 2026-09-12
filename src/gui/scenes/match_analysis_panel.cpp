@@ -113,13 +113,15 @@ void MatchAnalysisPanel::build(GameController& controller,
     const auto player = std::as_const(*data).getPlayer(id);
     return player ? player->get().getName() : std::string();
   };
-  const MatchAnalysis analysis = analyseLiveMatch(engine, managed_home, name_of);
+  const MatchAnalysis analysis =
+      analyseLiveMatch(engine, managed_home, name_of);
   const MatchState state = engine.getState();
-  title = analysis.full_time ? LOC("ANALYSIS_TITLE_FULL")
-          : state == MatchState::HALF_TIME
-              ? LOC("ANALYSIS_TITLE_HALF")
-              : fmt::sprintf(LOC("ANALYSIS_TITLE_LIVE"),
-                             static_cast<int>(engine.getMatchTimeMinutes()) + 1);
+  title =
+      analysis.full_time ? LOC("ANALYSIS_TITLE_FULL")
+      : state == MatchState::HALF_TIME
+          ? LOC("ANALYSIS_TITLE_HALF")
+          : fmt::sprintf(LOC("ANALYSIS_TITLE_LIVE"),
+                         static_cast<int>(engine.getMatchTimeMinutes()) + 1);
 
   const SideSummary& own = analysis.own;
   const SideSummary& other = analysis.opponent;
@@ -139,13 +141,19 @@ void MatchAnalysisPanel::build(GameController& controller,
                   percentText(other.passCompletion())});
   rows.push_back(
       {LOC("ANALYSIS_ROW_PRESS"),
-       std::format("{:.1f}", own.passesAllowedPerAction(other.passes_attempted)),
-       std::format("{:.1f}", other.passesAllowedPerAction(own.passes_attempted))});
-  rows.push_back(
-      {LOC("ANALYSIS_ROW_AERIALS"),
-       std::format("{}/{}", own.aerials_won, own.aerials_won + own.aerials_lost),
-       std::format("{}/{}", other.aerials_won,
-                   other.aerials_won + other.aerials_lost)});
+       std::format("{:.1f}",
+                   own.passesAllowedPerAction(other.passes_attempted)),
+       std::format("{:.1f}",
+                   other.passesAllowedPerAction(own.passes_attempted))});
+  // The engine only counts aerial duels in some situations; no row at 0/0.
+  if (own.aerials_won + own.aerials_lost + other.aerials_won +
+          other.aerials_lost >
+      0)
+    rows.push_back({LOC("ANALYSIS_ROW_AERIALS"),
+                    std::format("{}/{}", own.aerials_won,
+                                own.aerials_won + own.aerials_lost),
+                    std::format("{}/{}", other.aerials_won,
+                                other.aerials_won + other.aerials_lost)});
 
   observations.clear();
   for (const AnalysisLine& line : analysis.observations)
@@ -193,6 +201,8 @@ void MatchAnalysisPanel::render()
     return;
   }
   const Theme::Palette& palette = Theme::palette();
+  // Explicit wrap edge: an auto-resizing popup would otherwise grow instead.
+  const float wrap = ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x;
   {
     Theme::ScopedText heading(Theme::Text::TITLE);
     UI::textFitted(title, ImGui::GetContentRegionAvail().x, palette.text);
@@ -217,15 +227,16 @@ void MatchAnalysisPanel::render()
     columns(row.label.c_str(), row.own, row.other, palette.text);
   {
     Theme::ScopedText small(Theme::Text::SMALL);
-    ImGui::PushTextWrapPos(0.0f);
+    ImGui::PushTextWrapPos(wrap);
     ImGui::TextColored(palette.muted, "%s", LOC("ANALYSIS_PRESS_HELP"));
     ImGui::PopTextWrapPos();
   }
 
   ImGui::Dummy(ImVec2(0.0f, scaled(Theme::Space::XS)));
   UI::sectionLabel(LOC("ANALYSIS_OBSERVATIONS"));
-  ImGui::PushTextWrapPos(0.0f);
-  for (const std::string& line : observations) ImGui::BulletText("%s", line.c_str());
+  ImGui::PushTextWrapPos(wrap);
+  for (const std::string& line : observations)
+    ImGui::BulletText("%s", line.c_str());
   for (const std::string& line : notes) ImGui::BulletText("%s", line.c_str());
   ImGui::PopTextWrapPos();
 
@@ -233,13 +244,13 @@ void MatchAnalysisPanel::render()
   UI::sectionLabel(LOC("ANALYSIS_SUGGESTIONS"));
   {
     Theme::ScopedText small(Theme::Text::SMALL);
-    ImGui::PushTextWrapPos(0.0f);
+    ImGui::PushTextWrapPos(wrap);
     ImGui::TextColored(palette.muted, "%s", sample.c_str());
     ImGui::PopTextWrapPos();
   }
   for (std::size_t index = 0; index < suggestions.size(); ++index)
   {
-    ImGui::PushTextWrapPos(0.0f);
+    ImGui::PushTextWrapPos(wrap);
     ImGui::Text("%zu. %s", index + 1, suggestions[index].action.c_str());
     {
       Theme::ScopedText small(Theme::Text::SMALL);

@@ -73,8 +73,6 @@ struct MatchRenderOptions
   /** Short team labels for the in-view score bug; may be null. */
   const char* homeLabel = nullptr;
   const char* awayLabel = nullptr;
-  /** Match clock for the score bug (e.g. "45+2'"); may be null. */
-  const char* clockLabel = nullptr;
 };
 
 /**

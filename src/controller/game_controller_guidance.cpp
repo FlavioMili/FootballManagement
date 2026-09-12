@@ -103,11 +103,35 @@ bool GameController::isDelegated(Duty duty) const
   return getDelegation().delegated(duty);
 }
 
+namespace
+{
+/** Marks changes made by the assistant (they never reclaim a duty). */
+class AssistantActing
+{
+ public:
+  explicit AssistantActing(bool& flag) : flag(flag), previous(flag)
+  {
+    flag = true;
+  }
+  ~AssistantActing() { flag = previous; }
+  AssistantActing(const AssistantActing&) = delete;
+  AssistantActing& operator=(const AssistantActing&) = delete;
+
+ private:
+  bool& flag;
+  bool previous;
+};
+}  // namespace
+
 bool GameController::setDutyOwner(Duty duty, DutyOwner owner)
 {
   if (!game || !game->getGuidance().delegation.set(duty, owner)) return false;
+  if (reclaimed_duty == duty) reclaimed_duty.reset();
   if (duty == Duty::TrainingSchedule && owner == DutyOwner::Assistant)
+  {
+    const AssistantActing acting(assistant_acting);
     setCongestionAutoAdjust(true);
+  }
   return true;
 }
 
@@ -115,7 +139,27 @@ void GameController::applyDelegationPreset(DelegationPreset preset)
 {
   if (!game) return;
   game->getGuidance().delegation.apply(preset);
-  if (isDelegated(Duty::TrainingSchedule)) setCongestionAutoAdjust(true);
+  reclaimed_duty.reset();
+  if (isDelegated(Duty::TrainingSchedule))
+  {
+    const AssistantActing acting(assistant_acting);
+    setCongestionAutoAdjust(true);
+  }
+}
+
+void GameController::reclaimDuty(Duty duty)
+{
+  if (assistant_acting || !game || !isDelegated(duty)) return;
+  game->getGuidance().delegation.set(duty, DutyOwner::Manager);
+  reclaimed_duty = duty;
+}
+
+void GameController::undoReclaimedDuty()
+{
+  if (!reclaimed_duty) return;
+  const Duty duty = *reclaimed_duty;
+  setDutyOwner(duty, DutyOwner::Assistant);
+  reclaimed_duty.reset();
 }
 
 const StaffMember* GameController::getDelegate() const
@@ -134,15 +178,37 @@ void GameController::runDelegatedDuties()
 {
   const auto club = managedClub();
   if (!club || !gamedata) return;
+  const AssistantActing acting(assistant_acting);
   const TeamID club_id = club->get().getId();
   const GameDateValue today = game->getCurrentDate();
   Inbox& inbox = game->getWorld().getInbox();
+
+  if (isDelegated(Duty::Friendlies))
+  {
+    // Open pre-season dates get the assistant's opponents once.
+    const std::vector<FriendlySuggestion> suggestion = getPreseasonSuggestion();
+    const std::vector<FriendlySlot> slots = getPreseasonFriendlies();
+    const bool differs =
+        std::ranges::any_of(suggestion,
+                            [&slots](const FriendlySuggestion& pick)
+                            {
+                              return std::ranges::none_of(
+                                  slots,
+                                  [&pick](const FriendlySlot& slot)
+                                  {
+                                    return slot.date == pick.date &&
+                                           slot.opponent_id == pick.opponent_id;
+                                  });
+                            });
+    if (differs) applyPreseasonSuggestion();
+  }
 
   if (isDelegated(Duty::TrainingSchedule))
   {
     if (const TeamTrainingPlan* plan = getTrainingPlan())
     {
       if (!plan->auto_congestion) setCongestionAutoAdjust(true);
+      plan = getTrainingPlan();  // The plan may be rebuilt by the change.
       int match_days = 0;
       for (const TrainingDayPreview& day : getTrainingWeekPreview())
         if (day.opponent != 0) ++match_days;
@@ -154,9 +220,8 @@ void GameController::runDelegatedDuties()
         condition += player.get().getDynamics().condition;
         ++fit;
       }
-      const bool tired =
-          fit > 0 && condition / static_cast<float>(fit) <
-                         LIGHT_TRAINING_CONDITION;
+      const bool tired = fit > 0 && condition / static_cast<float>(fit) <
+                                        LIGHT_TRAINING_CONDITION;
       const TrainingIntensity wanted = match_days >= 2 || tired
                                            ? TrainingIntensity::Low
                                            : TrainingIntensity::Normal;
@@ -201,7 +266,9 @@ void GameController::runDelegatedDuties()
       if (getScoutingKnowledge(entry.player_id) < SCOUT_KNOWLEDGE_TARGET)
         targets.push_back(entry.player_id);
     const std::int64_t cash = club->get().getFinances().getBalance();
-    for (const ScoutProfile& scout : getScouts())
+    // Starting an assignment may touch the scouting state: iterate a copy.
+    const std::vector<ScoutProfile> scouts = getScouts();
+    for (const ScoutProfile& scout : scouts)
     {
       if (std::ranges::contains(busy, scout.id)) continue;
       ScoutTargetKind kind = ScoutTargetKind::League;
@@ -219,13 +286,11 @@ void GameController::runDelegatedDuties()
           ScoutAssignError::None)
         continue;
       if (!targets.empty()) targets.erase(targets.begin());
-      inbox.add(assistantNote(today, InboxCategory::Transfer,
-                              "INBOX_DELEGATE_SCOUT_TITLE",
-                              kind == ScoutTargetKind::Player
-                                  ? "INBOX_DELEGATE_SCOUT_PLAYER_BODY"
-                                  : "INBOX_DELEGATE_SCOUT_LEAGUE_BODY",
-                              {scout.name, std::to_string(days),
-                               formatMoney(cost)}));
+      inbox.add(assistantNote(
+          today, InboxCategory::Transfer, "INBOX_DELEGATE_SCOUT_TITLE",
+          kind == ScoutTargetKind::Player ? "INBOX_DELEGATE_SCOUT_PLAYER_BODY"
+                                          : "INBOX_DELEGATE_SCOUT_LEAGUE_BODY",
+          {scout.name, std::to_string(days), formatMoney(cost)}));
     }
   }
 
@@ -242,8 +307,8 @@ void GameController::runDelegatedDuties()
       int counted = 0;
       for (const auto& player : getPlayersForTeam(club_id))
       {
-        squad_level += static_cast<float>(
-            player.get().getOverall(getStatsConfig()));
+        squad_level +=
+            static_cast<float>(player.get().getOverall(getStatsConfig()));
         ++counted;
       }
       if (counted > 0) squad_level /= static_cast<float>(counted);
@@ -251,9 +316,8 @@ void GameController::runDelegatedDuties()
       for (const YouthPlayerView& trialist :
            getYouthPlayers(YouthStatus::Candidate))
       {
-        const float ceiling =
-            0.5f * (trialist.estimate.potential_low +
-                    trialist.estimate.potential_high);
+        const float ceiling = 0.5f * (trialist.estimate.potential_low +
+                                      trialist.estimate.potential_high);
         if (ceiling >= squad_level &&
             signYouthCandidate(trialist.id) == YouthActionResult::Ok)
           signed_names.push_back(trialist.name);
@@ -324,8 +388,8 @@ std::vector<MatchReport> leagueReports(const GameController& controller,
         continue;
       const auto home = controller.getTeamById(match.getHomeTeamId());
       if (!home || home->get().getLeagueId() != league_id) continue;
-      if (auto report = controller.getMatchReport(
-              date, match.getHomeTeamId(), match.getAwayTeamId()))
+      if (auto report = controller.getMatchReport(date, match.getHomeTeamId(),
+                                                  match.getAwayTeamId()))
         reports.push_back(std::move(*report));
     }
   }
@@ -380,7 +444,8 @@ OppositionReport GameController::getOppositionReport(TeamID opponent) const
       rating_total += stats.rating_total;
       rated += stats.rated_matches;
     }
-    if (rated > 0) entry.average_rating = rating_total / static_cast<float>(rated);
+    if (rated > 0)
+      entry.average_rating = rating_total / static_cast<float>(rated);
     input.squad.push_back(std::move(entry));
   }
   return buildOppositionReport(input);
@@ -468,13 +533,14 @@ GameController::DataHubView GameController::getDataHub() const
   for (const ManagedMatchSnapshot& snapshot :
        game->getGuidance().getSnapshots())
   {
-    const bool this_season = std::ranges::any_of(
-        reports, [&snapshot](const MatchReport& report)
-        {
-          return report.date == snapshot.date &&
-                 report.home_team_id == snapshot.home_id &&
-                 report.away_team_id == snapshot.away_id;
-        });
+    const bool this_season =
+        std::ranges::any_of(reports,
+                            [&snapshot](const MatchReport& report)
+                            {
+                              return report.date == snapshot.date &&
+                                     report.home_team_id == snapshot.home_id &&
+                                     report.away_team_id == snapshot.away_id;
+                            });
     if (this_season) snapshots.push_back(snapshot);
   }
   DataHubInput input;
@@ -495,9 +561,9 @@ bool GameController::isInboxDecisionPending(const InboxMessage& message) const
   {
     case InboxAction::RespondOffer:
       return message.player_id &&
-             std::ranges::any_of(getIncomingOffers(),
-                                 [&message](const IncomingOffer& offer)
-                                 { return offer.player_id == *message.player_id; });
+             std::ranges::any_of(
+                 getIncomingOffers(), [&message](const IncomingOffer& offer)
+                 { return offer.player_id == *message.player_id; });
     case InboxAction::ReplyToPlayer:
       return message.player_id && hasPendingTalk(*message.player_id);
     case InboxAction::YouthTrialists:

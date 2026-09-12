@@ -229,6 +229,33 @@ void alignActions(std::initializer_list<const char*> labels)
                        std::max(0.0f, ImGui::GetContentRegionAvail().x - total));
 }
 
+/**
+ * Card-looking panel for dialogs, built on a one-cell table instead of a
+ * child window so an auto-sized dialog fits its content on the first frame.
+ * Pair with endPanel() when it returns true.
+ */
+bool beginPanel(const char* id, const char* title)
+{
+  const float pad = Theme::Space::M * scale();
+  ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(pad, pad));
+  ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, Theme::palette().border);
+  const bool open = ImGui::BeginTable(
+      id, 1, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_PadOuterX,
+      ImVec2(-FLT_MIN, 0.0f));
+  ImGui::PopStyleColor();
+  ImGui::PopStyleVar();
+  if (!open) return false;
+  ImGui::TableSetupColumn("##panel", ImGuiTableColumnFlags_WidthStretch);
+  ImGui::TableNextRow();
+  ImGui::TableNextColumn();
+  ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg,
+                         Theme::toU32(Theme::palette().surface));
+  if (title != nullptr && *title != '\0') UI::sectionLabel(title);
+  return true;
+}
+
+void endPanel() { ImGui::EndTable(); }
+
 /** An offer structure that fits the budget, if any. */
 struct Suggestion
 {
@@ -1975,8 +2002,9 @@ void TransferMarketScene::renderOfferDialog()
   const std::string title =
       fmt::sprintf(LOC("TRANSFER_OFFER_TITLE"), offer_dialog.player) +
       "###transfer_offer";
-  if (!ImGui::BeginPopupModal(title.c_str(), nullptr,
-                              ImGuiWindowFlags_NoSavedSettings))
+  if (!ImGui::BeginPopupModal(
+          title.c_str(), nullptr,
+          ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize))
     return;
   auto& controller = guiView->getController();
   const Theme::Palette& palette = Theme::palette();
@@ -2053,7 +2081,7 @@ void TransferMarketScene::renderOfferDialog()
     }
 
     ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
-    UI::beginAutoHeightCard("offer_add_ons", LOC("TRANSFER_ADD_ONS"));
+    const bool addOns = beginPanel("##offer_add_ons", LOC("TRANSFER_ADD_ONS"));
     const auto bonusRow = [&](const char* label, const char* id,
                               uint32_t& bonus, uint16_t& target,
                               std::span<const uint16_t> options,
@@ -2094,12 +2122,12 @@ void TransferMarketScene::renderOfferDialog()
     int sellOnIndex = optionIndex(SELL_ON_OPTIONS, terms.sell_on_percent);
     if (UI::segmented("##sell_on", sellOnIndex, SELL_ON_LABELS))
       terms.sell_on_percent = SELL_ON_OPTIONS[static_cast<size_t>(sellOnIndex)];
-    UI::endCard();
+    if (addOns) endPanel();
   };
 
   const auto summaryColumn = [&]
   {
-    UI::beginAutoHeightCard("offer_summary", LOC("TRANSFER_SUMMARY_TITLE"));
+    const bool panel = beginPanel("##offer_summary", LOC("TRANSFER_SUMMARY_TITLE"));
     UI::summaryRow(LOC("TRANSFER_SUMMARY_FEE"),
                    Format::moneyFull(terms.fee).c_str());
     UI::summaryRow(LOC("TRANSFER_SUMMARY_UPFRONT"),
@@ -2131,7 +2159,7 @@ void TransferMarketScene::renderOfferDialog()
             .c_str());
     UI::budgetImpact(LOC("TRANSFER_WAGE_IMPACT"), wage_room,
                      wage_room - expected_wage, LOC("TRANSFER_WAGE_WARNING"));
-    UI::endCard();
+    if (panel) endPanel();
 
     if (over_budget && !accepted)
     {
@@ -2224,8 +2252,9 @@ void TransferMarketScene::renderContractDialog()
   const std::string title =
       fmt::sprintf(LOC("TRANSFER_CONTRACT_TITLE"), contract_dialog.player) +
       "###transfer_contract";
-  if (!ImGui::BeginPopupModal(title.c_str(), nullptr,
-                              ImGuiWindowFlags_NoSavedSettings))
+  if (!ImGui::BeginPopupModal(
+          title.c_str(), nullptr,
+          ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize))
     return;
   auto& controller = guiView->getController();
   const Theme::Palette& palette = Theme::palette();
@@ -2315,7 +2344,7 @@ void TransferMarketScene::renderContractDialog()
 
   const auto summaryColumn = [&]
   {
-    UI::beginAutoHeightCard("agent_demands", LOC("TRANSFER_AGENT_DEMANDS"));
+    const bool demands = beginPanel("##agent_demands", LOC("TRANSFER_AGENT_DEMANDS"));
     UI::summaryRow(LOC("TRANSFER_FIELD_AGENT_ASK"),
                    fmt::sprintf(LOC("TRANSFER_PER_WEEK"),
                                 Format::moneyFull(demand.asking_wage))
@@ -2338,10 +2367,10 @@ void TransferMarketScene::renderContractDialog()
                    LOC(squadRoleKey(demand.desired_role)));
     UI::summaryRow(LOC("TRANSFER_FIELD_PROJECTED_ROLE"),
                    LOC(squadRoleKey(contract_dialog.projected)));
-    UI::endCard();
+    if (demands) endPanel();
 
     ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
-    UI::beginAutoHeightCard("contract_summary", LOC("TRANSFER_SUMMARY_TITLE"));
+    const bool panel = beginPanel("##contract_summary", LOC("TRANSFER_SUMMARY_TITLE"));
     const int64_t yearly = static_cast<int64_t>(offer.weekly_wage) *
                            static_cast<int64_t>(WEEKS_PER_YEAR);
     UI::summaryRow(LOC("TRANSFER_SUMMARY_YEARLY"),
@@ -2359,7 +2388,7 @@ void TransferMarketScene::renderContractDialog()
         palette.faint, "%s",
         fmt::sprintf(LOC("TRANSFER_ROUNDS_LEFT"), contract_dialog.rounds_left)
             .c_str());
-    UI::endCard();
+    if (panel) endPanel();
 
     if (contract_dialog.response)
     {
@@ -2430,8 +2459,9 @@ void TransferMarketScene::renderLoanDialog()
   const std::string title =
       fmt::sprintf(LOC("TRANSFER_LOAN_TITLE"), loan_dialog.player) +
       "###transfer_loan";
-  if (!ImGui::BeginPopupModal(title.c_str(), nullptr,
-                              ImGuiWindowFlags_NoSavedSettings))
+  if (!ImGui::BeginPopupModal(
+          title.c_str(), nullptr,
+          ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize))
     return;
   auto& controller = guiView->getController();
   const Theme::Palette& palette = Theme::palette();
@@ -2484,7 +2514,7 @@ void TransferMarketScene::renderLoanDialog()
 
   const auto summaryColumn = [&]
   {
-    UI::beginAutoHeightCard("loan_summary", LOC("TRANSFER_SUMMARY_TITLE"));
+    const bool panel = beginPanel("##loan_summary", LOC("TRANSFER_SUMMARY_TITLE"));
     UI::summaryRow(LOC("TRANSFER_SUMMARY_WEEKLY_SHARE"),
                    fmt::sprintf(LOC("TRANSFER_PER_WEEK"),
                                 Format::moneyFull(weekly))
@@ -2500,7 +2530,7 @@ void TransferMarketScene::renderLoanDialog()
                      LOC("TRANSFER_NOT_ENOUGH_BUDGET"));
     UI::budgetImpact(LOC("TRANSFER_WAGE_IMPACT"), wage_room,
                      wage_room - weekly, LOC("TRANSFER_WAGE_OVER_ROOM"));
-    UI::endCard();
+    if (panel) endPanel();
     if (loan_dialog.response)
     {
       const ClubResponse& response = *loan_dialog.response;
@@ -2563,8 +2593,9 @@ void TransferMarketScene::renderCounterDialog()
                            Tuning::Layout::DIALOG_VIEWPORT_SHARE));
   const std::string title =
       std::string(LOC("TRANSFER_COUNTER_TITLE")) + "###transfer_counter";
-  if (!ImGui::BeginPopupModal(title.c_str(), nullptr,
-                              ImGuiWindowFlags_NoSavedSettings))
+  if (!ImGui::BeginPopupModal(
+          title.c_str(), nullptr,
+          ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize))
     return;
   auto& controller = guiView->getController();
   const OfferRow& offer = counter_dialog.offer;
@@ -2639,8 +2670,9 @@ void TransferMarketScene::renderListingDialog()
   const std::string title =
       fmt::sprintf(LOC("TRANSFER_LIST_TITLE"), listing_dialog.player) +
       "###transfer_listing";
-  if (!ImGui::BeginPopupModal(title.c_str(), nullptr,
-                              ImGuiWindowFlags_NoSavedSettings))
+  if (!ImGui::BeginPopupModal(
+          title.c_str(), nullptr,
+          ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize))
     return;
   formLabel(LOC("TRANSFER_ASKING_PRICE"));
   int64_t price = listing_dialog.price;

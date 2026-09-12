@@ -1115,11 +1115,15 @@ bool TransferMarket::aiShedSurplus(
   using M = TransferTuning::Market;
   if (ranked.size() > M::AI_TARGET_SQUAD + 2)
   {
+    // A bloated squad lets any surplus senior go; prospects are loaned.
+    const int min_age = ranked.size() > M::AI_MAX_SQUAD
+                            ? M::SURPLUS_RELEASE_MIN_AGE
+                            : M::RELEASE_MIN_AGE;
     for (std::size_t rank = ranked.size(); rank-- > M::RELEASE_MIN_RANK;)
     {
       const PlayerID player_id = ranked[rank].second;
       const auto player = gamedata->getPlayer(player_id);
-      if (player && player->get().getAge() >= M::RELEASE_MIN_AGE &&
+      if (player && player->get().getAge() >= min_age &&
           player->get().getContractYears() > 0 && canBeTraded(player_id) &&
           releasePlayer(player_id, date, managed_team_id))
         return true;

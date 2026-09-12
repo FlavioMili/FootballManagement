@@ -47,6 +47,10 @@ enum class SceneID : uint8_t
   DELEGATION,      /**< Who handles which duty */
   DATA_HUB,        /**< Team and player analytics */
   OPPOSITION,      /**< Pre-match opposition report */
+  INTERNATIONAL,   /**< Continental competitions and national teams */
+  AWARDS,          /**< League honours */
+  RECORDS,         /**< Records book and hall of fame */
+  PLANNING,        /**< Pre-season, facility projects and mentoring */
 };
 
 /**

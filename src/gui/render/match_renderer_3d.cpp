@@ -509,9 +509,15 @@ void MatchRenderer3D::State::drawShadows(const MatchRenderSnapshot& snapshot,
               (Tuning::Player::MARKER_MAX_PIXELS * 0.5f),
           0.0f, 1.0f);
       const float radius = Tuning::Player::MARKER_RADIUS;
+      // A shirt close to the grass colour would vanish: use the trim.
+      const ImU32 marker =
+          kitColorDistance(kit.shirt, Tuning::Grass::PITCH_COLOR) <
+                  KIT_CLASH_DISTANCE
+              ? kit.trim
+              : kit.shirt;
       drawGroundEllipse(
           root, {radius, 0.0f, 0.0f}, {0.0f, radius, 0.0f},
-          withAlpha(kit.shirt,
+          withAlpha(marker,
                     static_cast<std::uint8_t>(
                         static_cast<float>(Tuning::Player::MARKER_ALPHA) *
                         fade)));
@@ -622,20 +628,24 @@ void MatchRenderer3D::State::drawCrowd(const Stadium3D::Face& face)
     const float seatPixels = seatFocal * clumpInverse;
     if (seatPixels < C::CLUMP_PIXELS)
     {
-      // Far: one billboard in the members' average colour.
+      // Far: one quad up the tier in the members' average colour.
       const float halfWidth =
           clump.halfWidth * projection.focalPixels * clumpInverse;
       if (halfWidth * 2.0f < C::MIN_CLUMP_PIXELS) continue;
+      const Vec4 topClip = projection.toClip(clump.top);
+      if (topClip.w < projection.nearPlane) continue;
       const ScreenPoint base = projection.clipToScreen(clumpClip);
-      const float dx = upX * clump.height * clumpInverse;
-      const float dy = upY * clump.height * clumpInverse;
-      if (base.x + halfWidth < left || base.x - halfWidth > right ||
-          base.y + dy > bottom || base.y < top)
+      const ScreenPoint upper = projection.clipToScreen(topClip);
+      const float topHalf =
+          clump.halfWidth * projection.focalPixels / topClip.w;
+      if (std::max(base.x, upper.x) + halfWidth < left ||
+          std::min(base.x, upper.x) - halfWidth > right ||
+          std::min(base.y, upper.y) > bottom ||
+          std::max(base.y, upper.y) < top)
         continue;
       emitQuad({base.x - halfWidth, base.y}, {base.x + halfWidth, base.y},
-               {base.x + halfWidth + dx, base.y + dy},
-               {base.x - halfWidth + dx, base.y + dy},
-               shadeColor(clump.color, 0.8f), clump.color);
+               {upper.x + topHalf, upper.y}, {upper.x - topHalf, upper.y},
+               shadeColor(clump.color, 0.85f), clump.color);
       ++quads;
       continue;
     }
@@ -1405,14 +1415,11 @@ void MatchRenderer3D::State::drawScoreBug(const MatchRenderSnapshot& snapshot,
   char score[16];
   std::snprintf(score, sizeof(score), "%d - %d", snapshot.homeScore,
                 snapshot.awayScore);
-  char fallbackClock[16];
-  const char* clock = options.clockLabel;
-  if (!clock)
-  {
-    std::snprintf(fallbackClock, sizeof(fallbackClock), "%d'",
-                  static_cast<int>(snapshot.matchTimeMinutes) + 1);
-    clock = fallbackClock;
-  }
+  const int minute = static_cast<int>(snapshot.matchTimeMinutes);
+  const int second = static_cast<int>(
+      (snapshot.matchTimeMinutes - static_cast<float>(minute)) * 60.0f);
+  char clock[16];
+  std::snprintf(clock, sizeof(clock), "%02d:%02d", minute, second);
 
   const ImVec2 homeSize = ImGui::CalcTextSize(options.homeLabel);
   const ImVec2 awaySize = ImGui::CalcTextSize(options.awayLabel);

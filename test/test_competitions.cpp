@@ -23,6 +23,7 @@
 
 #include "database/database_connection.h"
 #include "database/gamedata.h"
+#include "database/migrations/migrations.h"
 #include "database/repositories/competition_repository.h"
 #include "database/repositories/fixture_repository.h"
 #include "database/repositories/league_repository.h"
@@ -931,6 +932,7 @@ TEST(CompetitionMigrationTest, LegacyFixturesTableLoads)
                "match_type, home_goals, away_goals, played) VALUES "
                "('2025-09-14', 11, 12, 0, 3, 2, 1);",
                nullptr, nullptr, nullptr);
+  Migrations::migrate(*db_conn);  // What opening the save does.
   const auto matches = FixtureRepository(db_conn).loadAllMatches();
   ASSERT_EQ(matches.size(), 1u);
   EXPECT_EQ(matches[0].getHomeScore(), 3);

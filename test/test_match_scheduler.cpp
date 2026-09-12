@@ -391,6 +391,8 @@ TEST(MatchSchedulerTest, SchedulerKeepsTheFixtureVenue)
       MatchEngine engine(venue.home_lineup, venue.away_lineup,
                          venue.home_strategy, venue.away_strategy, config,
                          venue.seed);
+      MatchdaySquad::carryCondition(engine, venue.home_lineup);
+      MatchdaySquad::carryCondition(engine, venue.away_lineup);
       while (engine.getState() != MatchState::FULL_TIME) engine.update(0.25f);
       EXPECT_EQ(result.home_goals, engine.getHomeScore()) << "match " << i;
       EXPECT_EQ(result.away_goals, engine.getAwayScore()) << "match " << i;

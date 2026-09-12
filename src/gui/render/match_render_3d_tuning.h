@@ -188,15 +188,17 @@ struct MatchRender3DTuning final
     static constexpr float NOISE_SEATS = 9.0f;
     static constexpr float NOISE_ROWS = 5.0f;
     static constexpr float LIGHT_SWING = 0.14f;
-    static constexpr float LIGHT_JITTER = 0.06f;
+    static constexpr float LIGHT_JITTER = 0.04f;
     static constexpr int CLUMP_SEATS = 4;
     static constexpr int CLUMP_ROWS = 2;
+    /** Clump quads reach this share of a spectator above the next row. */
+    static constexpr float CLUMP_TOP_SHARE = 0.6f;
     /** Seat pitch on screen below which clumps replace spectators. */
     static constexpr float CLUMP_PIXELS = 3.2f;
     /** Clump width below which the stand face alone shows the crowd. */
     static constexpr float MIN_CLUMP_PIXELS = 1.4f;
     /** Seat pitch at which a spectator shows its own colour fully. */
-    static constexpr float FULL_DETAIL_PIXELS = 8.0f;
+    static constexpr float FULL_DETAIL_PIXELS = 14.0f;
     /** Spectators wider than this get a separate head block. */
     static constexpr float HEAD_DETAIL_PIXELS = 5.0f;
     static constexpr float BODY_SHARE = 0.66f;
@@ -373,7 +375,8 @@ struct MatchRender3DTuning final
     static constexpr float TARGET_MAX_X = 93.0f;
     static constexpr float TARGET_MIN_Y = 14.0f;
     static constexpr float TARGET_MAX_Y = 54.0f;
-    static constexpr float FOV = 0.42f;
+    /** About 29 degrees: TV framing with a little more context. */
+    static constexpr float FOV = 0.5f;
   };
 
   struct Tactical final
@@ -381,7 +384,8 @@ struct MatchRender3DTuning final
     static constexpr float LENGTH_FOLLOW = 0.15f;
     static constexpr float TARGET_Y_OFFSET = 1.5f;
     static constexpr float PITCH = 1.08f;
-    static constexpr float DISTANCE = 100.0f;
+    /** Far enough for the whole pitch in a 16:10 or 16:9 view. */
+    static constexpr float DISTANCE = 114.0f;
     static constexpr float FOV = 0.66f;
   };
 

@@ -60,7 +60,8 @@ struct LeagueProfile
  * League profiles keyed by the ids in assets/user_made_data/leagues. The top
  * five rows use ECFIL 2025 (FY2024) average revenue, revenue mix and wage
  * ratios [S]; the remaining leagues are [P] estimates in the "leagues 6-22"
- * range reported by the same source. Lower divisions overshoot on wages [S].
+ * range reported by the same source, with broadcasting as the largest
+ * stream as in most leagues. Lower divisions overshoot on wages [S].
  */
 inline constexpr std::array<LeagueProfile, 12> LEAGUE_PROFILES = {{
     {3, 92, 372e6f, 0.46f, 0.05f, 0.14f, 0.35f, 0.64f, 38000.0f, Language::EN,
@@ -73,19 +74,19 @@ inline constexpr std::array<LeagueProfile, 12> LEAGUE_PROFILES = {{
      0.72f, WorldRegion::Europe},
     {5, 80, 140e6f, 0.19f, 0.09f, 0.18f, 0.54f, 0.73f, 26000.0f, Language::FR,
      0.75f, WorldRegion::Europe},
-    {12, 70, 35e6f, 0.30f, 0.20f, 0.12f, 0.38f, 0.70f, 12000.0f, Language::PT,
+    {12, 70, 35e6f, 0.38f, 0.15f, 0.12f, 0.35f, 0.70f, 12000.0f, Language::PT,
      0.72f, WorldRegion::Europe},
-    {11, 70, 55e6f, 0.35f, 0.05f, 0.15f, 0.45f, 0.75f, 20000.0f, Language::BR,
+    {11, 70, 55e6f, 0.45f, 0.05f, 0.15f, 0.35f, 0.75f, 20000.0f, Language::BR,
      0.85f, WorldRegion::SouthAmerica},
-    {10, 64, 20e6f, 0.30f, 0.05f, 0.25f, 0.40f, 0.80f, 22000.0f, Language::ES,
+    {10, 64, 20e6f, 0.40f, 0.05f, 0.22f, 0.33f, 0.80f, 22000.0f, Language::ES,
      0.85f, WorldRegion::SouthAmerica},
-    {9, 62, 40e6f, 0.35f, 0.03f, 0.20f, 0.42f, 0.70f, 24000.0f, Language::MX,
+    {9, 62, 40e6f, 0.45f, 0.03f, 0.18f, 0.34f, 0.70f, 24000.0f, Language::MX,
      0.78f, WorldRegion::NorthAmerica},
-    {8, 62, 35e6f, 0.25f, 0.08f, 0.10f, 0.57f, 0.75f, 15000.0f, Language::RU,
+    {8, 62, 35e6f, 0.40f, 0.08f, 0.12f, 0.40f, 0.75f, 15000.0f, Language::RU,
      0.78f, WorldRegion::EasternEurope},
-    {7, 60, 45e6f, 0.20f, 0.02f, 0.30f, 0.48f, 0.60f, 20000.0f, Language::US,
+    {7, 60, 45e6f, 0.35f, 0.02f, 0.28f, 0.35f, 0.60f, 20000.0f, Language::US,
      0.72f, WorldRegion::NorthAmerica},
-    {6, 55, 15e6f, 0.30f, 0.00f, 0.15f, 0.55f, 0.95f, 9000.0f, Language::IT,
+    {6, 55, 15e6f, 0.45f, 0.00f, 0.15f, 0.40f, 0.95f, 9000.0f, Language::IT,
      0.85f, WorldRegion::Europe},
 }};
 
@@ -111,7 +112,7 @@ struct WorldTuning final
   {
     /** Reputation offsets by league rank bucket (giants .. strugglers). [P] */
     static constexpr std::array<float, 5> TIER_REPUTATION_OFFSET = {
-        10.0f, 5.0f, 1.0f, -3.0f, -7.0f};
+        15.0f, 8.0f, 2.0f, -5.0f, -10.0f};
     /** Share of a league's clubs in each bucket (sums to 1). [P] */
     static constexpr std::array<float, 5> TIER_SHARE = {0.10f, 0.15f, 0.25f,
                                                         0.25f, 0.25f};
@@ -145,15 +146,17 @@ struct WorldTuning final
      * budgets on; the rest is upside. [P] */
     static constexpr float BUDGETED_CONTINENTAL_SHARE = 0.5f;
     /** Player wages / expected income = base + slope * (league wage ratio
-     * - 0.65), within [min, max]. [S: ECFIL player wages 47% of revenue,
-     * total wages 57-73% by league] */
-    static constexpr float PLAYER_WAGE_SHARE_BASE = 0.50f;
+     * - 0.65), within [min, max]. Cups and continental money lift the
+     * realised revenue about 10% above the budgeted income, so wages end
+     * near 57-65% of revenue in top divisions. [S: ECFIL wages 57-73% of
+     * revenue by league; lower tiers overshoot] */
+    static constexpr float PLAYER_WAGE_SHARE_BASE = 0.63f;
     static constexpr float PLAYER_WAGE_SHARE_SLOPE = 0.60f;
-    static constexpr float PLAYER_WAGE_SHARE_MIN = 0.46f;
-    static constexpr float PLAYER_WAGE_SHARE_MAX = 0.60f;
+    static constexpr float PLAYER_WAGE_SHARE_MIN = 0.55f;
+    static constexpr float PLAYER_WAGE_SHARE_MAX = 0.70f;
     /** Non-player wages / expected income. [S: ~18% of revenue in ECFIL,
      * including admin staff paid out of other income] */
-    static constexpr float STAFF_SHARE = 0.14f;
+    static constexpr float STAFF_SHARE = 0.12f;
     /** Floor of other operating costs (stadium, travel, admin). [P] */
     static constexpr float MIN_OPERATING_SHARE = 0.15f;
     /** Clubs budget this total cost / expected income ratio, so a club that
@@ -236,15 +239,15 @@ struct WorldTuning final
 
   struct Youth final
   {
-    static constexpr int MIN_INTAKE = 3;
-    static constexpr int MAX_INTAKE = 8;
     /** Potential mean relative to first-team level. [S: ~4-5% of scholars
      * reach the top tier; sd 9 puts 1.67 sd above the mean at team level] */
     static constexpr float POTENTIAL_OFFSET = -15.0f;
     static constexpr float POTENTIAL_STDDEV = 9.0f;
     static constexpr float FACILITY_POTENTIAL_BONUS = 5.0f;
-    /** AI clubs keep their squads below this size after an intake. [P] */
-    static constexpr std::size_t AI_SQUAD_LIMIT = 36;
+    /** AI clubs trim their first-team squad (academy players excluded) to
+     * this size at the season end, releasing the weakest players outside the
+     * matchday squad. [P: real senior squads hold 25-30 players] */
+    static constexpr std::size_t AI_SQUAD_TARGET = 28;
   };
 
   struct Board final

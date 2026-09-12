@@ -71,6 +71,7 @@ class SettingsScene : public GUIScene
   void renderGeneral();
   void renderAppearance();
   void renderData();
+  void renderSaving();
   void previewAppearance();
 
   std::vector<std::string> languageOptions;

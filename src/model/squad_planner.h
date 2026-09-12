@@ -17,8 +17,8 @@
 
 /**
  * @enum PlannerGroup
- * @brief Position groups of the depth chart (the groups the transfer AI
- * counts when it looks for missing or surplus players).
+ * @brief Position groups of the depth chart (the groups computer-managed
+ * clubs count when they look for missing or surplus players).
  */
 enum class PlannerGroup : std::uint8_t
 {

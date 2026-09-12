@@ -18,6 +18,7 @@
 #include "gui/gui_view.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/delegation.h"
 #include "model/inbox.h"
 #include "model/settings_manager.h"
 
@@ -251,26 +252,69 @@ void renderScreenTip(NavSection section)
                           Theme::toU32(palette.info), 2.0f * scale);
 
   ImGui::PushID("screen_tip");
-  ImGui::SetCursorScreenPos(ImVec2(
-      start.x + 2.0f * padding, start.y + (rowHeight - textHeight) * 0.5f));
+  ImGui::SetCursorScreenPos(ImVec2(start.x + 2.0f * padding,
+                                   start.y + (rowHeight - textHeight) * 0.5f));
   ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + textWidth);
   ImGui::TextUnformatted(LOC(key));
   ImGui::PopTextWrapPos();
   const float buttonY =
-      start.y +
-      (rowHeight - UI::buttonHeight(UI::ButtonSize::COMPACT)) * 0.5f;
+      start.y + (rowHeight - UI::buttonHeight(UI::ButtonSize::COMPACT)) * 0.5f;
   ImGui::SetCursorScreenPos(
       ImVec2(start.x + width - buttons - padding, buttonY));
   if (UI::secondaryButton(gotIt, ImVec2(0.0f, 0.0f), UI::ButtonSize::COMPACT))
     shown_tip = NavSection::NONE;
   ImGui::SameLine();
-  if (UI::secondaryButton(turnOff, ImVec2(0.0f, 0.0f),
-                          UI::ButtonSize::COMPACT))
+  if (UI::secondaryButton(turnOff, ImVec2(0.0f, 0.0f), UI::ButtonSize::COMPACT))
   {
     settings.screen_tips = false;
     SettingsManager::instance()->save();
     shown_tip = NavSection::NONE;
   }
+  ImGui::PopID();
+  ImGui::SetCursorScreenPos(ImVec2(start.x, start.y + rowHeight));
+  ImGui::Dummy(ImVec2(width, Theme::Space::S * scale));
+}
+}  // namespace GuidanceUI
+
+namespace GuidanceUI
+{
+void renderReclaimNotice(GUIView* view)
+{
+  GameController& controller = view->getController();
+  const auto duty = controller.getReclaimedDuty();
+  if (!duty) return;
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  const std::string text =
+      fmt::sprintf(LOC("RECLAIM_NOTICE"), LOC(dutyKey(*duty)));
+  const char* undo = LOC("RECLAIM_UNDO");
+  const char* ok = LOC("RECLAIM_OK");
+  const float buttons = UI::buttonWidth(undo, UI::ButtonSize::COMPACT) +
+                        UI::buttonWidth(ok, UI::ButtonSize::COMPACT) +
+                        ImGui::GetStyle().ItemSpacing.x;
+  const float width = ImGui::GetContentRegionAvail().x;
+  const float padding = Theme::Space::S * scale;
+  const float rowHeight =
+      UI::buttonHeight(UI::ButtonSize::COMPACT) + 2.0f * padding;
+  const ImVec2 start = ImGui::GetCursorScreenPos();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  drawList->AddRectFilled(start, ImVec2(start.x + width, start.y + rowHeight),
+                          Theme::toU32(palette.raised), 6.0f * scale);
+  drawList->AddRectFilled(start,
+                          ImVec2(start.x + 3.0f * scale, start.y + rowHeight),
+                          Theme::toU32(palette.warning), 2.0f * scale);
+  ImGui::PushID("reclaim_notice");
+  ImGui::SetCursorScreenPos(
+      ImVec2(start.x + 2.0f * padding,
+             start.y + (rowHeight - ImGui::GetTextLineHeight()) * 0.5f));
+  UI::textFitted(text, width - buttons - 4.0f * padding, palette.text);
+  ImGui::SetCursorScreenPos(
+      ImVec2(start.x + width - buttons - padding, start.y + padding));
+  if (UI::secondaryButton(undo, ImVec2(0.0f, 0.0f), UI::ButtonSize::COMPACT))
+    controller.undoReclaimedDuty();
+  ImGui::SameLine();
+  if (UI::secondaryButton(ok, ImVec2(0.0f, 0.0f), UI::ButtonSize::COMPACT))
+    controller.dismissReclaimedDuty();
   ImGui::PopID();
   ImGui::SetCursorScreenPos(ImVec2(start.x, start.y + rowHeight));
   ImGui::Dummy(ImVec2(width, Theme::Space::S * scale));
@@ -326,7 +370,8 @@ void NextStepsCard::render(GUIView* view, float width)
       stepMarker(checklist.isDone(task));
       ImGui::SameLine();
       ImGui::PushID(static_cast<int>(index));
-      if (UI::link(label, "step")) Navigation::open(view, GuidanceUI::sectionForTask(task));
+      if (UI::link(label, "step"))
+        Navigation::open(view, GuidanceUI::sectionForTask(task));
       ImGui::PopID();
       ImGui::EndGroup();
       if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
@@ -337,11 +382,7 @@ void NextStepsCard::render(GUIView* view, float width)
   }
 
   if (rows.empty())
-  {
     ImGui::TextColored(palette.muted, "%s", LOC("NEXT_STEPS_NONE"));
-    UI::endCard();
-    return;
-  }
   const float spacing = ImGui::GetStyle().ItemSpacing.x;
   for (std::size_t index = 0; index < rows.size(); ++index)
   {
@@ -351,8 +392,8 @@ void NextStepsCard::render(GUIView* view, float width)
     const float buttonWidth = UI::buttonWidth(button, UI::ButtonSize::COMPACT);
     const float right = ImGui::GetContentRegionAvail().x;
     const float dot = 10.0f * scale;
-    const float textWidth = std::max(right - buttonWidth - dot - 2.0f * spacing,
-                                     60.0f * scale);
+    const float textWidth =
+        std::max(right - buttonWidth - dot - 2.0f * spacing, 60.0f * scale);
     const ImVec2 start = ImGui::GetCursorScreenPos();
     const float lineHeight = ImGui::GetTextLineHeight();
     ImGui::GetWindowDrawList()->AddCircleFilled(
@@ -370,8 +411,8 @@ void NextStepsCard::render(GUIView* view, float width)
     ImGui::SameLine();
     ImGui::SetCursorScreenPos(ImVec2(
         start.x + right - buttonWidth,
-        start.y + (blockHeight - UI::buttonHeight(UI::ButtonSize::COMPACT)) *
-                      0.5f));
+        start.y +
+            (blockHeight - UI::buttonHeight(UI::ButtonSize::COMPACT)) * 0.5f));
     if (UI::secondaryButton(button, ImVec2(0.0f, 0.0f),
                             UI::ButtonSize::COMPACT))
     {
@@ -381,12 +422,14 @@ void NextStepsCard::render(GUIView* view, float width)
       GuidanceUI::openAction(view, action);
       return;
     }
-    ImGui::SetCursorScreenPos(
-        ImVec2(start.x, start.y + std::max(blockHeight,
-                                           UI::buttonHeight(
-                                               UI::ButtonSize::COMPACT))));
+    ImGui::SetCursorScreenPos(ImVec2(
+        start.x,
+        start.y +
+            std::max(blockHeight, UI::buttonHeight(UI::ButtonSize::COMPACT))));
     ImGui::Dummy(ImVec2(0.0f, 2.0f * scale));
     ImGui::PopID();
   }
+  if (UI::link(LOC("NEXT_STEPS_DELEGATION"), "delegation"))
+    Navigation::open(view, NavSection::DELEGATION);
   UI::endCard();
 }

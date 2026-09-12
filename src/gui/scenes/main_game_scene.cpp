@@ -114,11 +114,15 @@ void MainGameScene::update(float /*deltaTime*/)
           fmt::sprintf(Format::plural("DASHBOARD_ADVANCED_DAYS", advancedDays),
                        advancedDays));
       refreshData();
+      if (holiday_running)
+        holidayDialog().showSummary(guiView->getController(),
+                                    guiView->getController().getHolidaySummary());
     }
     catch (const std::exception&)
     {
       showToast(LOC("DASHBOARD_ADVANCE_FAILED"), true);
     }
+    holiday_running = false;
   }
 
   // Team selection is an overlay, so the dashboard does not re-enter when the
@@ -182,6 +186,16 @@ void MainGameScene::requestContinue()
   if (guiView->getOverlayDepth() > 0) guiView->navigateTo(nullptr);
 }
 
+void MainGameScene::requestHoliday(const HolidayPlan& plan)
+{
+  const GameController& controller = guiView->getController();
+  if (continuation_running || !controller.hasSelectedTeam()) return;
+  pending_holiday = plan;
+  continuation_requested = true;
+  guiView->requestBackdropCapture();
+  if (guiView->getOverlayDepth() > 0) guiView->navigateTo(nullptr);
+}
+
 void MainGameScene::startContinuation()
 {
   continuation_running = true;
@@ -193,6 +207,15 @@ void MainGameScene::startContinuation()
   continue_started_at = ImGui::GetTime();
   continue_overlay_shown = false;
   GameController* controllerPtr = &guiView->getController();
+  holiday_running = pending_holiday.has_value();
+  if (pending_holiday)
+  {
+    continue_operation =
+        std::async(std::launch::async, [controllerPtr, plan = *pending_holiday]()
+                   { return controllerPtr->goOnHoliday(plan); });
+    pending_holiday.reset();
+    return;
+  }
   continue_operation =
       std::async(std::launch::async,
                  [controllerPtr, hasFixture = cached_next.has_value(),

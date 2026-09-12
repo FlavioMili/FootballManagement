@@ -51,8 +51,17 @@ const char* nameKey(SquadStatus status);
 /** One-line playing-time expectation of @p status (language key). */
 const char* expectationKey(SquadStatus status);
 
-/** Playing-time expectation used by morale, requests and negotiations. */
+/** Playing-time expectation of a status. */
 SquadRole toSquadRole(SquadStatus status);
+
+/**
+ * Status whose minutes a player expects once the manager gave him
+ * @p assigned: the assigned one, but never more than one level below what
+ * his ability rank earns in his eyes (@p deserved). A promotion raises the
+ * expectation; a demotion only lowers it a little and is resented on its own
+ * (moraleOffset()).
+ */
+SquadStatus expectation(SquadStatus assigned, SquadStatus deserved);
 
 /**
  * Status a player's ability rank in his squad earns (0 = best), as the

@@ -136,6 +136,7 @@ struct HolidaySummary
   int position_before = 0;
   int position_after = 0;
   int points_before = 0;
+  int played_before = 0; /*!< League matches before the holiday. */
   int points_after = 0;
   std::int64_t balance_before = 0;
   std::int64_t balance_after = 0;
@@ -171,9 +172,8 @@ GameDateValue windowEndDate(const GameDateValue& today);
 std::optional<HolidayStop> checkStop(const HolidayPlan& plan,
                                      const HolidayDay& day);
 
-/** Language keys (e.g. "HOLIDAY_STOP_BIG_BID", "HOLIDAY_MODE_UNTIL_DATE"). */
+/** Language key of @p stop (e.g. "HOLIDAY_STOP_BIG_BID"). */
 const char* stopKey(HolidayStop stop);
-const char* modeKey(HolidayMode mode);
 
 HolidayPreferences loadPreferences(
     const std::shared_ptr<DatabaseConnection>& db_conn);

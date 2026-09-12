@@ -217,6 +217,7 @@ void SettingsScene::render()
       ImVec2(width, ImGui::GetContentRegionAvail().y - footerHeight));
   renderGeneral();
   renderAppearance();
+  renderSaving();
   if (!in_career) renderData();
   ImGui::EndChild();
 
@@ -343,6 +344,42 @@ void SettingsScene::renderAppearance()
                LOC("SETTINGS_REDUCED_MOTION_HELP"));
   if (ImGui::Checkbox("##reduced_motion", &settings.reduced_motion))
     previewAppearance();
+
+  settingLabel(LOC("SETTINGS_SCREEN_TIPS"), LOC("SETTINGS_SCREEN_TIPS_HELP"));
+  // Turning tips back on explains every screen again.
+  if (ImGui::Checkbox("##screen_tips", &settings.screen_tips) &&
+      settings.screen_tips)
+    settings.screen_tips_seen = 0;
+  UI::endCard();
+}
+
+void SettingsScene::renderSaving()
+{
+  Settings& settings = SettingsManager::instance()->get();
+  UI::beginAutoHeightCard("settings_saving", LOC("SETTINGS_SECTION_SAVING"));
+  static constexpr std::array<const char*, 6> FREQUENCY_KEYS = {
+      "AUTOSAVE_OFF",     "AUTOSAVE_DAILY",    "AUTOSAVE_WEEKLY",
+      "AUTOSAVE_MONTHLY", "AUTOSAVE_MATCHDAY", "AUTOSAVE_SEASON"};
+  settingLabel(LOC("SETTINGS_AUTOSAVE"), LOC("SETTINGS_AUTOSAVE_HELP"));
+  const int frequency = std::clamp(settings.autosave_frequency, 0,
+                                   static_cast<int>(FREQUENCY_KEYS.size()) - 1);
+  ImGui::SetNextItemWidth(260.0f * Theme::scale());
+  if (ImGui::BeginCombo("##autosave_frequency",
+                        LOC(FREQUENCY_KEYS[static_cast<size_t>(frequency)])))
+  {
+    for (int index = 0; index < static_cast<int>(FREQUENCY_KEYS.size());
+         ++index)
+    {
+      if (ImGui::Selectable(LOC(FREQUENCY_KEYS[static_cast<size_t>(index)]),
+                            index == frequency))
+        settings.autosave_frequency = index;
+    }
+    ImGui::EndCombo();
+  }
+  settingLabel(LOC("SETTINGS_AUTOSAVE_BACKUPS"),
+               LOC("SETTINGS_AUTOSAVE_BACKUPS_HELP"));
+  ImGui::SetNextItemWidth(260.0f * Theme::scale());
+  ImGui::SliderInt("##autosave_backups", &settings.autosave_backups, 0, 9);
   UI::endCard();
 }
 
@@ -448,6 +485,7 @@ void SettingsScene::applyAndSaveSettings()
   settingsManager->apply(guiView->getWindow());
   settingsManager->save();
   guiView->refreshTheme();
+  guiView->applySavePolicy();
 
   leave();
 }

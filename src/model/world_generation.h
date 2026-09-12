@@ -145,16 +145,10 @@ std::vector<Player> generateSquad(const Team& team,
                                   const StatsConfig& stats_config);
 
 /**
- * Generates an academy graduate aged 15-17 whose potential scales with the
- * club level and youth facilities. @p wage_scale converts the wage index to
- * euros for this club (weekly payroll / sum of wage indices). The name is
- * drawn against @p registry (every name in the world) and @p squad.
+ * Draws potential and personality for a player that has none yet (a
+ * predefined or legacy player) and reserves his name for the world being
+ * generated.
  */
-Player generateYouthPlayer(const Team& team, PlayerID player_id, WorldRng& rng,
-                           const StatsConfig& stats_config, double wage_scale,
-                           NameRegistry& registry, SquadSurnames& squad);
-
-/** Draws potential and personality for a player that has none yet. */
 void initializeHiddenAttributes(Player& player, WorldRng& rng,
                                 const StatsConfig& stats_config);
 

@@ -109,6 +109,10 @@ double playerWageShare(const LeagueEconomy& economy);
 std::vector<std::int64_t> prizeMoney(const LeagueEconomy& economy,
                                      std::size_t league_size);
 
+/** The merit (broadcasting) part of prizeMoney() by final position. */
+std::vector<std::int64_t> meritMoney(const LeagueEconomy& economy,
+                                     std::size_t league_size);
+
 /** Board's transfer allowance for a new season. */
 std::int64_t seasonTransferBudget(std::int64_t balance, double revenue);
 

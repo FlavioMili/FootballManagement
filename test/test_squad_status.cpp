@@ -120,6 +120,22 @@ TEST(SquadStatusTest, DemotionBeyondOneLevelCostsMoraleScaledByAmbition)
             0.0f);
 }
 
+TEST(SquadStatusTest, ExpectationNeverDropsFarBelowTheDeservedStatus)
+{
+  using SquadStatusModel::expectation;
+  EXPECT_EQ(expectation(SquadStatus::Star, SquadStatus::Rotation),
+            SquadStatus::Star)
+      << "a promotion raises the expectation";
+  EXPECT_EQ(expectation(SquadStatus::Important, SquadStatus::Star),
+            SquadStatus::Important);
+  EXPECT_EQ(expectation(SquadStatus::Backup, SquadStatus::Star),
+            SquadStatus::Important);
+  EXPECT_EQ(expectation(SquadStatus::Prospect, SquadStatus::Backup),
+            SquadStatus::Prospect);
+  EXPECT_EQ(expectation(SquadStatus::Prospect, SquadStatus::Regular),
+            SquadStatus::Rotation);
+}
+
 TEST(SquadStatusTest, BookOnlyCountsWhileThePlayerStaysAtTheClub)
 {
   SquadStatusBook book;
@@ -149,7 +165,8 @@ TEST(SquadStatusTest, ControllerValidatesAndStatusesSurviveSaveAndLoad)
   ASSERT_TRUE(controller->setSquadStatus(benched, SquadStatus::Rotation));
   EXPECT_EQ(controller->getSquadRole(star), SquadRole::KeyPlayer)
       << "the status replaces the ability-rank expectation";
-  EXPECT_EQ(controller->getSquadRole(benched), SquadRole::Rotation);
+  EXPECT_EQ(controller->getSquadRole(benched), SquadRole::FirstTeam)
+      << "a demoted star still expects the minutes of an important player";
 
   // Other clubs' players and over-age prospects are refused.
   const TeamID other = controller->getTeams().back().get().getId();

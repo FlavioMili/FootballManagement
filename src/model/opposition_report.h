@@ -134,8 +134,8 @@ struct OppositionReport
   TeamID opponent = 0;
   /** Latest results, oldest first: 1 win, 0 draw, -1 defeat. */
   std::vector<int> form;
-  OppositionAverages recent;  /*!< Last OppositionRules::RECENT_MATCHES. */
-  OppositionAverages league;  /*!< League average per team and match. */
+  OppositionAverages recent; /*!< Last OppositionRules::RECENT_MATCHES. */
+  OppositionAverages league; /*!< League average per team and match. */
   bool enough_data = false;
   /** "4-3-3" from the likely XI (empty when unknown). */
   std::string formation;

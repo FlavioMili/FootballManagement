@@ -18,7 +18,7 @@ constexpr std::array<std::array<DutyOwner, DUTY_COUNT>,
                      static_cast<std::size_t>(DelegationPreset::COUNT)>
     PRESETS = {{
         // Lineup, subs, training, renewals, scouting, friendlies, youth
-        {M, M, M, M, M, A, M},  // Hands-on
+        {M, M, M, M, M, M, M},  // Hands-on
         {A, M, A, M, M, A, M},  // Balanced
         {A, A, A, A, A, A, A},  // Assistant runs daily operations
     }};
@@ -62,7 +62,7 @@ DutyOwner DelegationPolicy::owner(Duty duty) const
 bool DelegationPolicy::set(Duty duty, DutyOwner owner)
 {
   const auto index = static_cast<std::size_t>(duty);
-  if (index >= DUTY_COUNT || isFixed(duty)) return false;
+  if (index >= DUTY_COUNT) return false;
   duties[index] = owner;
   return true;
 }
@@ -71,10 +71,7 @@ void DelegationPolicy::apply(DelegationPreset preset)
 {
   const auto index = static_cast<std::size_t>(preset);
   if (index >= PRESETS.size()) return;
-  for (std::size_t duty = 0; duty < DUTY_COUNT; ++duty)
-  {
-    if (!isFixed(static_cast<Duty>(duty))) duties[duty] = PRESETS[index][duty];
-  }
+  duties = PRESETS[index];
 }
 
 std::optional<DelegationPreset> DelegationPolicy::matchingPreset() const
@@ -84,11 +81,6 @@ std::optional<DelegationPreset> DelegationPolicy::matchingPreset() const
     if (duties == PRESETS[index]) return static_cast<DelegationPreset>(index);
   }
   return std::nullopt;
-}
-
-bool DelegationPolicy::isFixed(Duty duty)
-{
-  return duty == Duty::Friendlies;
 }
 
 const char* dutyKey(Duty duty)

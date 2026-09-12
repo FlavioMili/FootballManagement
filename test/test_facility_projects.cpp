@@ -207,11 +207,8 @@ TEST(FacilityProjects, ProjectsRunPayAndComplete)
   ASSERT_EQ(controller->requestFacilityProject(FacilityProjectType::MedicalCentre),
             ProjectVerdict::Approved);
   const GameDateValue medical_end = controller->getFacilityProjects()[0].end;
-  while (day < medical_end)
-  {
-    day = SeasonCalendar::addDays(day, 1);
-    projects.onDay(*gamedata, day, managed, game->getWorld().getInbox());
-  }
+  projects.onDay(*gamedata, SeasonCalendar::addDays(medical_end, 1), managed,
+                 game->getWorld().getInbox());
   EXPECT_EQ(controller->getMedicalLevel(managed), 60u);
   EXPECT_LT(projects.layoffMultiplier(managed), 1.0f);
 }

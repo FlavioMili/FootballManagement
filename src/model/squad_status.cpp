@@ -93,6 +93,16 @@ SquadRole SquadStatusModel::toSquadRole(SquadStatus status)
   return SquadRole::Fringe;
 }
 
+SquadStatus SquadStatusModel::expectation(SquadStatus assigned,
+                                          SquadStatus deserved)
+{
+  const int floor = level(deserved) + TOLERATED_LEVELS;
+  if (level(assigned) <= floor) return assigned;
+  // A prospect who deserves little keeps his own, modest expectation.
+  return static_cast<SquadStatus>(
+      std::min(floor, static_cast<int>(SquadStatus::Backup)));
+}
+
 SquadStatus SquadStatusModel::deserved(std::size_t rank, int age)
 {
   if (rank < 3) return SquadStatus::Star;

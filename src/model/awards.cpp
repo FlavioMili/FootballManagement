@@ -24,6 +24,9 @@
 namespace
 {
 constexpr const char* NOT_AWARDED = "@AWARDS_NOT_AWARDED";
+constexpr std::array<const char*, 12> MONTH_KEYS = {
+    "MONTH_JAN", "MONTH_FEB", "MONTH_MAR", "MONTH_APR", "MONTH_MAY", "MONTH_JUN",
+    "MONTH_JUL", "MONTH_AUG", "MONTH_SEP", "MONTH_OCT", "MONTH_NOV", "MONTH_DEC"};
 /** Morale lift of a winner. [P] */
 constexpr float MONTH_MORALE = 4.0f;
 constexpr float SEASON_MORALE = 6.0f;
@@ -801,7 +804,8 @@ std::vector<AwardRecord> AwardSystem::onMonthStart(GameData& gamedata,
       message.body_key = "INBOX_AWARDS_MONTH_BODY";
       message.args = {
           league_name,
-          std::format("{:02}/{}", previous.month, previous.year),
+          std::string("@") + MONTH_KEYS[previous.month - 1U],
+          std::to_string(previous.year),
           line(AwardType::PlayerOfMonth, player),
           line(AwardType::YoungPlayerOfMonth, player),
           line(AwardType::ManagerOfMonth, managerLine),

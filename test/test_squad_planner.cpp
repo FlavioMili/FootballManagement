@@ -71,7 +71,7 @@ std::vector<PlannerPlayer> healthySquad()
 }
 }  // namespace
 
-TEST(SquadPlannerTest, GroupsMatchTheTransferAiTargets)
+TEST(SquadPlannerTest, GroupsMatchTheClubsRecruitmentTargets)
 {
   EXPECT_EQ(SquadPlanner::groupOf(PlayerRole::GK), PlannerGroup::Goalkeeper);
   EXPECT_EQ(SquadPlanner::groupOf(PlayerRole::CDM), PlannerGroup::Midfield);

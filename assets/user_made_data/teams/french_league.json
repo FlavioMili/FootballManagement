@@ -1,5 +1,5 @@
 [
-  {"id": 501, "name": "Paris", "short_name": "PAI", "league_id": 5, "colours": {"primary": "#023E8A", "secondary": "#FFD60A"}, "stadium": {"name": "Stade Municipal de Paris", "capacity": 26400}, "founded": 1898, "nickname": "Les Dunois"},
+  {"id": 501, "name": "Paris", "short_name": "PAR", "league_id": 5, "colours": {"primary": "#023E8A", "secondary": "#FFD60A"}, "stadium": {"name": "Stade Municipal de Paris", "capacity": 26400}, "founded": 1898, "nickname": "Les Dunois"},
   {"id": 502, "name": "Marseille", "short_name": "MAR", "league_id": 5, "colours": {"primary": "#9E0059", "secondary": "#FFFFFF"}, "stadium": {"name": "Stade Municipal de Marseille", "capacity": 19800}, "founded": 1939, "nickname": "Les Riverains"},
   {"id": 503, "name": "Lyon", "short_name": "LYO", "league_id": 5, "colours": {"primary": "#005F73", "secondary": "#EE9B00"}, "stadium": {"name": "Stade Municipal de Lyon", "capacity": 13500}, "founded": 1918, "nickname": "Les Hérons"},
   {"id": 504, "name": "Nice", "short_name": "NIC", "league_id": 5, "colours": {"primary": "#0F6B4A", "secondary": "#F4F4F0"}, "stadium": {"name": "Stade Municipal de Nice", "capacity": 17900}, "founded": 1902, "nickname": "Les Clairons"},

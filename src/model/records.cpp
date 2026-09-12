@@ -457,17 +457,6 @@ std::vector<LegendEntry> RecordBook::hallOfFame(
   return result;
 }
 
-ClubPlayerTotal RecordBook::playerTotals(TeamID team_id,
-                                         PlayerID player_id) const
-{
-  const auto found = club_players.find({team_id, player_id});
-  if (found != club_players.end()) return found->second;
-  ClubPlayerTotal none;
-  none.team_id = team_id;
-  none.player_id = player_id;
-  return none;
-}
-
 // ---------------------------------------------------------------------------
 // Persistence
 // ---------------------------------------------------------------------------

@@ -61,15 +61,16 @@ struct CrowdDot
 
 /**
  * A few neighbouring spectators (up to CLUMP_SEATS x CLUMP_ROWS) drawn as
- * one billboard when they are far away. Members are stored back row first
- * so nearer rows overlap the ones behind them.
+ * one quad when they are far away. The quad runs up the tier from the front
+ * row to the heads of the next clump's front row, so clumps tile the stand
+ * without gaps from any angle. Members are stored back row first so nearer
+ * rows overlap the ones behind them.
  */
 struct CrowdClump
 {
   Vec3 base; /**< Bottom centre on the front row. */
+  Vec3 top;  /**< Top centre, over the row behind the clump. */
   float halfWidth = 0.0f;
-  /** Billboard height covering every member row, metres. */
-  float height = 0.0f;
   /** Average colour of the members (the far-away look). */
   ImU32 color = 0;
   std::uint32_t dotBegin = 0;

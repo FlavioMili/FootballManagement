@@ -22,19 +22,8 @@ LeagueRepository::LeagueRepository(std::shared_ptr<DatabaseConnection> conn)
 {
 }
 
-void LeagueRepository::ensureSchema() const
-{
-  // Saves created before per-league tie-break rules; duplicate-column errors
-  // are intentionally ignored.
-  sqlite3_exec(db_conn->getRaw(),
-               "ALTER TABLE Leagues ADD COLUMN tiebreak INTEGER NOT NULL "
-               "DEFAULT 0;",
-               nullptr, nullptr, nullptr);
-}
-
 std::vector<League> LeagueRepository::loadAllLeagues() const
 {
-  ensureSchema();
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       "SELECT id, name, parent_league_id, tiebreak FROM Leagues;");
   std::vector<League> leagues;
@@ -112,7 +101,6 @@ void LeagueRepository::insertLeagueWithId(const League& league) const
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 
-  ensureSchema();
   sqlite3_stmt* rule_stmt = db_conn->prepareStatement(
       "UPDATE Leagues SET tiebreak = ? WHERE id = ?;");
   sqlite3_bind_int(rule_stmt, 1, std::to_underlying(league.getTieBreakRule()));

@@ -971,11 +971,12 @@ void ScoutingScene::renderSendFlow(const ScoutLine& line)
   {
     const float height = std::max(PICKER_STACKED_HEIGHT * dpi(),
                                   ImGui::GetContentRegionAvail().y);
-    renderWorldPicker(available * 0.44f, height);
+    renderWorldPicker(available * 0.46f, height);
     ImGui::SameLine();
-    ImGui::BeginGroup();
+    // A child (not a group) so the summary's own layout starts at its left.
+    ImGui::BeginChild("##send_summary", ImVec2(0.0f, height));
     renderSendSummary(line);
-    ImGui::EndGroup();
+    ImGui::EndChild();
     return;
   }
   renderWorldPicker(0.0f, PICKER_STACKED_HEIGHT * dpi());
@@ -994,17 +995,19 @@ void ScoutingScene::renderWorldPicker(float width, float height)
     send_target = id;
     send_dirty = true;
   };
-  // Right-aligned expected effectiveness of an entry.
+  // Expected effectiveness of an entry in the second column.
   const auto multiplierTag = [&](ScoutTargetKind kind, uint32_t id)
   {
+    ImGui::TableNextColumn();
     const auto found = picker_multipliers.find(pickerKey(kind, id));
     if (found == picker_multipliers.end()) return;
-    ImGui::SameLine();
     UI::textRightColored(multiplierColor(found->second),
                          multiplierText(found->second).c_str());
   };
   const auto leaf = [&](const char* label, ScoutTargetKind kind, uint32_t id)
   {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
     ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf |
                                  ImGuiTreeNodeFlags_NoTreePushOnOpen |
                                  ImGuiTreeNodeFlags_SpanAvailWidth |
@@ -1017,6 +1020,8 @@ void ScoutingScene::renderWorldPicker(float width, float height)
   const auto branch = [&](const char* label, ScoutTargetKind kind, uint32_t id,
                           bool defaultOpen)
   {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
     const bool open = ImGui::TreeNodeEx(
         label, ImGuiTreeNodeFlags_OpenOnArrow |
                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
@@ -1031,7 +1036,17 @@ void ScoutingScene::renderWorldPicker(float width, float height)
   };
 
   UI::sectionLabel(LOC("SCOUTING_PICK_TITLE"));
+  if (!ImGui::BeginTable("##picker", 2, ImGuiTableFlags_SizingFixedFit))
+  {
+    ImGui::EndChild();
+    return;
+  }
+  ImGui::TableSetupColumn("##entry", ImGuiTableColumnFlags_WidthStretch);
+  ImGui::TableSetupColumn("##effect", ImGuiTableColumnFlags_WidthFixed,
+                          ImGui::CalcTextSize("×0.00").x);
   leaf(LOC("SCOUTING_TARGET_FREE_AGENTS"), ScoutTargetKind::FreeAgents, 0);
+  ImGui::TableNextRow();
+  ImGui::TableNextColumn();
   ImGui::TreeNodeEx(
       LOC("SCOUTING_PICK_PLAYER"),
       ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen |
@@ -1069,8 +1084,11 @@ void ScoutingScene::renderWorldPicker(float width, float height)
     }
     ImGui::PopID();
   }
+  ImGui::EndTable();
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * dpi()));
+  ImGui::PushTextWrapPos(0.0f);
   ImGui::TextColored(palette.faint, "%s", LOC("SCOUTING_PICK_HINT"));
+  ImGui::PopTextWrapPos();
   ImGui::EndChild();
 }
 

@@ -101,7 +101,6 @@ class StaffScene : public ManagementScene
   int min_rating = 0;
   int hire_years = 2;
   StaffID selected = 0; /*!< Row whose detail strip is open (0: none). */
-  bool reveal_selected = false; /*!< Scroll the new strip into view. */
   StaffID release_candidate = 0;
   std::string release_text;
   bool release_requested = false;

@@ -66,7 +66,7 @@ TEST(DelegationTest, PresetsDifferAndAreRecognised)
   {
     const auto duty = static_cast<Duty>(index);
     EXPECT_TRUE(assistant.delegated(duty));
-    if (!DelegationPolicy::isFixed(duty)) EXPECT_FALSE(hands_on.delegated(duty));
+    EXPECT_FALSE(hands_on.delegated(duty));
     EXPECT_STRNE(dutyKey(duty), "");
     EXPECT_STRNE(dutyHelpKey(duty), "");
   }
@@ -74,15 +74,15 @@ TEST(DelegationTest, PresetsDifferAndAreRecognised)
   EXPECT_TRUE(balanced.delegated(Duty::LineupFixes));
 }
 
-TEST(DelegationTest, CustomChangesLeaveThePresetAndFixedDutiesStay)
+TEST(DelegationTest, CustomChangesLeaveThePreset)
 {
   DelegationPolicy policy;
   EXPECT_TRUE(policy.set(Duty::Substitutions, DutyOwner::Assistant));
   EXPECT_FALSE(policy.matchingPreset().has_value());
-  EXPECT_FALSE(policy.set(Duty::Friendlies, DutyOwner::Manager));
-  EXPECT_TRUE(policy.delegated(Duty::Friendlies));
+  EXPECT_TRUE(policy.set(Duty::Friendlies, DutyOwner::Manager));
+  EXPECT_FALSE(policy.delegated(Duty::Friendlies));
+  EXPECT_FALSE(policy.set(Duty::COUNT, DutyOwner::Manager));
   policy.apply(DelegationPreset::HandsOn);
-  EXPECT_TRUE(policy.delegated(Duty::Friendlies));
   EXPECT_EQ(policy.matchingPreset(), DelegationPreset::HandsOn);
 }
 
@@ -110,7 +110,8 @@ TEST(DelegationTest, GuidanceStateSurvivesSaveAndLoad)
   SlotCleanup slot{uniqueSlot(1)};
   auto controller = makeCareer(slot.slot);
   controller->applyDelegationPreset(DelegationPreset::AssistantRuns);
-  ASSERT_TRUE(controller->setDutyOwner(Duty::Substitutions, DutyOwner::Manager));
+  ASSERT_TRUE(
+      controller->setDutyOwner(Duty::Substitutions, DutyOwner::Manager));
   controller->completeOnboardingTask(OnboardingTask::ReviewTactics);
   controller->completeOnboardingTask(OnboardingTask::SetTraining);
   const TeamID opponent = controller->getTeams().back().get().getId();
@@ -149,7 +150,8 @@ TEST(DelegationTest, LineupToggleAndDelegationAreOneSetting)
   auto controller = makeCareer(slot.slot);
   controller->setAssistantFixesLineup(false);
   EXPECT_FALSE(controller->isDelegated(Duty::LineupFixes));
-  ASSERT_TRUE(controller->setDutyOwner(Duty::LineupFixes, DutyOwner::Assistant));
+  ASSERT_TRUE(
+      controller->setDutyOwner(Duty::LineupFixes, DutyOwner::Assistant));
   EXPECT_TRUE(controller->getAssistantFixesLineup());
 }
 
@@ -183,9 +185,9 @@ TEST(DelegationTest, CareersFromBeforeTheChecklistSkipIt)
   ASSERT_TRUE(controller->saveGame());
   {
     sqlite3* db = nullptr;
-    ASSERT_EQ(sqlite3_open(RuntimePaths::savePath(slot.slot).string().c_str(),
-                           &db),
-              SQLITE_OK);
+    ASSERT_EQ(
+        sqlite3_open(RuntimePaths::savePath(slot.slot).string().c_str(), &db),
+        SQLITE_OK);
     ASSERT_EQ(sqlite3_exec(db,
                            "DELETE FROM GuidanceState; DELETE FROM "
                            "DelegatedDuties;",
@@ -197,4 +199,55 @@ TEST(DelegationTest, CareersFromBeforeTheChecklistSkipIt)
   ASSERT_TRUE(reloaded.loadGame(slot.slot));
   EXPECT_FALSE(reloaded.getOnboarding().isVisible());
   EXPECT_EQ(reloaded.getDelegation(), DelegationPolicy());
+}
+
+TEST(DelegationTest, ManualChangeTakesTheDutyBackWithUndo)
+{
+  SlotCleanup slot{uniqueSlot(5)};
+  auto controller = makeCareer(slot.slot);
+  ASSERT_TRUE(controller->isDelegated(Duty::TrainingSchedule));
+  // The assistant's own adjustments never hand the duty back.
+  for (int day = 0; day < 3; ++day) controller->advanceDay();
+  EXPECT_TRUE(controller->isDelegated(Duty::TrainingSchedule));
+  EXPECT_FALSE(controller->getReclaimedDuty().has_value());
+
+  // The manager sets the intensity by hand: he now owns training and the
+  // assistant stops overriding it.
+  ASSERT_TRUE(controller->setTrainingIntensity(TrainingIntensity::High));
+  EXPECT_FALSE(controller->isDelegated(Duty::TrainingSchedule));
+  EXPECT_EQ(controller->getReclaimedDuty(), Duty::TrainingSchedule);
+  for (int day = 0; day < 3; ++day) controller->advanceDay();
+  EXPECT_EQ(controller->getTrainingPlan()->intensity, TrainingIntensity::High);
+
+  // Undo hands it back.
+  controller->undoReclaimedDuty();
+  EXPECT_TRUE(controller->isDelegated(Duty::TrainingSchedule));
+  EXPECT_FALSE(controller->getReclaimedDuty().has_value());
+
+  // Setting the same value is no change and keeps the delegation.
+  const TrainingIntensity current = controller->getTrainingPlan()->intensity;
+  ASSERT_TRUE(controller->setTrainingIntensity(current));
+  EXPECT_TRUE(controller->isDelegated(Duty::TrainingSchedule));
+
+  // Cancelling one of the assistant's scouting trips takes scouting back.
+  ASSERT_TRUE(controller->setDutyOwner(Duty::ScoutingAssignments,
+                                       DutyOwner::Assistant));
+  for (int day = 0; day < 7; ++day) controller->advanceDay();
+  const auto active = std::ranges::find_if(controller->getScoutAssignments(),
+                                           [](const ScoutAssignment& assignment)
+                                           { return !assignment.finished; });
+  if (active != controller->getScoutAssignments().end())
+  {
+    ASSERT_TRUE(controller->cancelScoutAssignment(active->id));
+    EXPECT_FALSE(controller->isDelegated(Duty::ScoutingAssignments));
+    EXPECT_EQ(controller->getReclaimedDuty(), Duty::ScoutingAssignments);
+    controller->dismissReclaimedDuty();
+    EXPECT_FALSE(controller->getReclaimedDuty().has_value());
+    EXPECT_FALSE(controller->isDelegated(Duty::ScoutingAssignments));
+  }
+
+  // A duty the manager already owns is not "taken back".
+  controller->applyDelegationPreset(DelegationPreset::HandsOn);
+  ASSERT_TRUE(controller->setTrainingIntensity(TrainingIntensity::Low));
+  EXPECT_FALSE(controller->getReclaimedDuty().has_value());
 }

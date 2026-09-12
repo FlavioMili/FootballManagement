@@ -44,9 +44,15 @@ std::string text(const AnalysisLine& line);
 /**
  * One-line tip at the top of a screen on its first visit. It stays for the
  * rest of that visit and never comes back once seen; "Got it" hides it and
- * "Turn off tips" disables tips (Settings > Guidance brings them back).
+ * "Turn off tips" disables tips (the Settings screen brings them back).
  */
 void renderScreenTip(NavSection section);
+
+/**
+ * Notice after the manager took a delegated duty back by changing it by
+ * hand, with Undo (hand it back) and OK.
+ */
+void renderReclaimNotice(GUIView* view);
 
 /** Language key of a section's tip (nullptr when it has none). */
 const char* tipKey(NavSection section);

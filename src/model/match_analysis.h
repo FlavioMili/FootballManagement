@@ -205,6 +205,5 @@ inline constexpr int MAX_SUGGESTIONS = 3;
 MatchAnalysis analyseMatch(const AnalysisInput& input);
 
 /** Collects the facts from a live engine and analyses them. */
-MatchAnalysis analyseLiveMatch(
-    const MatchEngine& engine, bool managed_home,
-    std::function<std::string(PlayerID)> name_of);
+MatchAnalysis analyseLiveMatch(const MatchEngine& engine, bool managed_home,
+                               std::function<std::string(PlayerID)> name_of);

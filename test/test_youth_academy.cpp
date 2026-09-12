@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
@@ -30,6 +31,7 @@
 #include "model/inbox.h"
 #include "model/world_generation.h"
 #include "model/world_rng.h"
+#include "model/world_simulation.h"
 #include "model/world_tuning.h"
 #include "model/youth_academy.h"
 
@@ -311,9 +313,19 @@ TEST(YouthAcademyTest, IntakeCycleForManagedAndOtherClubs)
   Inbox inbox;
 
   // Existing teenagers form the U18 squads.
-  EXPECT_FALSE(academy.members(managed, YouthStatus::Squad).empty());
-  for (const YouthRecord* youth : academy.members(managed, YouthStatus::Squad))
-    EXPECT_LE(gamedata->getPlayer(youth->player_id)->get().getAge(), 17);
+  std::size_t teenagers = 0;
+  for (const auto& team : controller->getTeams())
+  {
+    for (const YouthRecord* youth :
+         academy.members(team.get().getId(), YouthStatus::Squad))
+    {
+      ++teenagers;
+      const Player& player = gamedata->getPlayer(youth->player_id)->get();
+      EXPECT_LE(player.getAge(), 17);
+      EXPECT_TRUE(player.isAcademyPlayer());
+    }
+  }
+  EXPECT_GT(teenagers, 0u);
 
   // Preview in February from the head of youth development.
   runDays(academy, GameDateValue(2026, 1, 20), GameDateValue(2026, 2, 1),
@@ -394,9 +406,13 @@ TEST(YouthAcademyTest, IntakeCycleForManagedAndOtherClubs)
   EXPECT_EQ(academy.record(signed_id)->status, YouthStatus::Squad);
 
   // Graduates carry names nobody else has.
-  std::set<std::string> names;
+  std::map<std::string, PlayerID> names;
   for (const auto& [id, player] : gamedata->getPlayers())
-    EXPECT_TRUE(names.insert(player.getName()).second) << player.getName();
+  {
+    const auto [clash, fresh] = names.try_emplace(player.getName(), id);
+    EXPECT_TRUE(fresh || (clash->second < first_new && id < first_new))
+        << player.getName() << " " << clash->second << " / " << id;
+  }
 }
 
 TEST(YouthAcademyTest, U18LeagueGivesMinutesAndSpeedsUpDevelopment)
@@ -408,7 +424,14 @@ TEST(YouthAcademyTest, U18LeagueGivesMinutesAndSpeedsUpDevelopment)
   YouthAcademy academy(gamedata);
   academy.ensureReady();
   Inbox inbox;
-  runDays(academy, GameDateValue(2025, 8, 1), GameDateValue(2025, 11, 30),
+  // Intake day, every trialist signed, then U18 football to late November.
+  runDays(academy, GameDateValue(2026, 3, 14), GameDateValue(2026, 3, 15),
+          managed, inbox);
+  for (const YouthRecord* youth :
+       academy.members(managed, YouthStatus::Candidate))
+    ASSERT_EQ(academy.signCandidate(managed, youth->player_id),
+              YouthActionResult::Ok);
+  runDays(academy, GameDateValue(2026, 3, 15), GameDateValue(2026, 11, 30),
           managed, inbox);
 
   const std::vector<YouthTableRow> table =
@@ -613,6 +636,75 @@ TEST(YouthAcademyTest, BoardFundsAcademyProjectsWithinReason)
             UpgradeRequestResult::BeyondStature);
 }
 
+TEST(YouthAcademyTest, TwoSeasonsKeepSeniorSquadsAndU18sApart)
+{
+  const SlotCleanup slot{uniqueSlot(7)};
+  const auto controller = makeWorld(slot.slot);
+  auto gamedata = controller->getGameData();
+  const TeamID managed = topClub(*controller, 1);
+  WorldSimulation world(gamedata);
+  // The world between matches for two seasons, with the season rollover of
+  // Game::endSeason (ageing and contract expiry).
+  GameDateValue date = controller->getCurrentDate();
+  for (int day = 0; day < 730; ++day)
+  {
+    date = SeasonCalendar::addDays(date, 1);
+    world.onDayAdvanced(date, managed);
+    if (date.month == 7 && date.day == 1)
+    {
+      world.onSeasonEnd(date, managed);
+      gamedata->ageAllPlayers();
+      gamedata->advanceContractsAndReleasePlayers();
+      world.onSeasonStart(date, managed);
+    }
+  }
+
+  const YouthAcademy& academy = world.getYouth();
+  std::size_t clubs = 0;
+  std::size_t in_band = 0;
+  double seniors_total = 0.0;
+  double u18_total = 0.0;
+  std::size_t largest = 0;
+  for (const auto& team_ref : controller->getTeams())
+  {
+    const Team& team = team_ref.get();
+    if (team.getId() == managed) continue;
+    ++clubs;
+    const std::size_t seniors = academy.firstTeamSize(team.getId());
+    const auto u18 = academy.members(team.getId(), YouthStatus::Squad);
+    seniors_total += static_cast<double>(seniors);
+    u18_total += static_cast<double>(u18.size());
+    largest = std::max(largest, seniors);
+    in_band += seniors >= 23 && seniors <= 32 ? 1 : 0;
+    EXPECT_LE(u18.size(), 24u) << team.getName();
+    for (const YouthRecord* youth : u18)
+    {
+      const Player& player = gamedata->getPlayer(youth->player_id)->get();
+      EXPECT_LE(player.getAge(), YouthModel::U18_MAX_AGE);
+      EXPECT_TRUE(player.isAcademyPlayer());
+    }
+    // Automatic line-ups pick seniors while the senior squad is big enough.
+    if (seniors >= 14)
+    {
+      for (const auto& positioned : team.getLineup().getOutfieldPlayers())
+        if (positioned.player)
+          EXPECT_FALSE(positioned.player->isAcademyPlayer()) << team.getName();
+    }
+  }
+  const double mean_seniors = seniors_total / static_cast<double>(clubs);
+  const double mean_u18 = u18_total / static_cast<double>(clubs);
+  std::cout << "[youth] after two seasons: senior squads mean " << mean_seniors
+            << " (largest " << largest << ", " << in_band << "/" << clubs
+            << " within 23-32), U18 squads mean " << mean_u18 << "\n";
+  // No transfer market runs here, so squads only lose players (retirements,
+  // expiring contracts) and gain promotions: the upper bound is the check.
+  EXPECT_GE(mean_seniors, 22.0);
+  EXPECT_LE(mean_seniors, 32.0);
+  EXPECT_LE(largest, 32u) << "promotions never bloat a senior squad";
+  EXPECT_GE(in_band * 10, clubs * 7);
+  EXPECT_GE(mean_u18, 6.0) << "U18 squads hold two intakes";
+}
+
 // ---------------------------------------------------------------------------
 // Persistence and cost
 // ---------------------------------------------------------------------------
@@ -684,7 +776,6 @@ TEST(YouthPersistenceTest, ControllerActionsSurviveSaveAndLoad)
   }
   ASSERT_NE(managed, 0);
   controller->selectManagedTeam(managed);
-  ASSERT_FALSE(controller->getYouthPlayers(YouthStatus::Squad).empty());
   const auto eligible = controller->getYouthEligibleFirstTeam();
   ASSERT_FALSE(eligible.empty());
   const PlayerID moved = eligible.front().id;

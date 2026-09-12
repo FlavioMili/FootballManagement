@@ -102,7 +102,7 @@ struct MetricComparison
 {
   float team = 0.0f;
   float league = 0.0f;
-  int rank = 0;        /*!< 1 = best in the league (0: unranked). */
+  int rank = 0; /*!< 1 = best in the league (0: unranked). */
   int ranked_teams = 0;
   bool lower_is_better = false;
 };
@@ -129,6 +129,8 @@ struct TeamAnalytics
   std::vector<float> rolling_xg_against;
   std::array<MetricComparison, HUB_METRIC_COUNT> metrics{};
   int league_matches = 0; /*!< League fixtures behind the league averages. */
+  /** The club's own league matches behind its values in metrics. */
+  int team_league_matches = 0;
   SetPieceSummary set_pieces;
   /** Shots of tracked matches (attacking frames). */
   std::vector<ShotRecord> shots_for;

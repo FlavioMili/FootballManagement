@@ -333,10 +333,12 @@ CoachingLicence requiredLicence(std::uint8_t club_reputation,
 /**
  * Probability that a board invites the manager to an interview: logistic in
  * manager reputation minus club reputation, minus a penalty per missing
- * licence level; clamped to [0.02, 0.95].
+ * licence level, plus @p fit (style and nationality match with the board,
+ * in logistic units); clamped to [0.02, 0.95].
  */
 float applicationChance(float manager_reputation, CoachingLicence licence,
-                        std::uint8_t club_reputation, std::uint8_t tier);
+                        std::uint8_t club_reputation, std::uint8_t tier,
+                        float fit = 0.0f);
 
 /** Weekly wage a club offers (whole euros). */
 std::int64_t offerWage(std::uint8_t club_reputation, float manager_reputation,

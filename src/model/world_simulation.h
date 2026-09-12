@@ -190,6 +190,20 @@ class WorldSimulation
       std::function<void(const GameDateValue&, TrainingSystem::FixtureOutlook&)>
           provider);
 
+  /**
+   * Supplies an extra injury-risk multiplier (>= 1) per player and day, e.g.
+   * after long international trips. Without a provider it is 1.
+   */
+  void setInjuryRiskProvider(
+      std::function<double(PlayerID, const GameDateValue&)> provider);
+
+  /**
+   * Tells whether a player is on loan at his current club; loanees'
+   * contracts belong to the parent club, so AI squad planning leaves them
+   * alone.
+   */
+  void setLoanCheck(std::function<bool(PlayerID)> is_on_loan);
+
   // ---- Transfer events (called by the controller) ----
 
   /** A club bid for a player; unsettles ambitious players. */
@@ -288,6 +302,7 @@ class WorldSimulation
   void sendContractNotices(const GameDateValue& date, TeamID managed_team_id);
   void awardPrizeMoney(const GameDateValue& date, TeamID managed_team_id);
   void renewAiContracts(TeamID managed_team_id);
+  void trimAiSquads(TeamID managed_team_id);
   void retirePlayers(const GameDateValue& date, TeamID managed_team_id);
   void ensureBoard(const GameDateValue& date, TeamID managed_team_id,
                    bool new_season, bool post_objective = true);
@@ -330,7 +345,9 @@ class WorldSimulation
   std::function<std::vector<TeamID>(LeagueID)> standings_provider;
   std::function<void(const GameDateValue&, TrainingSystem::FixtureOutlook&)>
       fixture_outlook_provider;
+  std::function<double(PlayerID, const GameDateValue&)> injury_risk_provider;
   TrainingSystem::FixtureOutlook fixture_outlook;
+  std::function<bool(PlayerID)> loan_check;
   std::unordered_set<TeamID> lineup_dirty;
   /** Managed-club medical news of the current week, sent as one digest. */
   std::vector<std::string> week_recoveries;

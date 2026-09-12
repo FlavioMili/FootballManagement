@@ -13,6 +13,7 @@
 #include <charconv>
 #include <format>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -162,17 +163,67 @@ TrainingRepository::loadPlayers() const
 
 void TrainingRepository::replaceAll(const TrainingRegistry& registry) const
 {
-  sqlite3_exec(db_conn->getRaw(),
-               "DELETE FROM TeamTraining; DELETE FROM PlayerTraining;", nullptr,
-               nullptr, nullptr);
+  // Rows are compared with what is stored: only changed, new and removed
+  // plans and players are written.
+  struct StoredPlan
+  {
+    int preset = 0;
+    int intensity = 0;
+    int auto_congestion = 0;
+    std::string schedule;
+    double familiarity = 0.0;
+    std::string tactic;
+    double week_load = 0.0;
+    double last_week_load = 0.0;
+    int last_match_day = 0;
+    bool seen = false;
+  };
+  std::unordered_map<TeamID, StoredPlan> stored_plans;
+  sqlite3_stmt* select = db_conn->prepareStatement(
+      "SELECT team_id, preset, intensity, auto_congestion, schedule, "
+      "familiarity, tactic, week_load, last_week_load, last_match_day FROM "
+      "TeamTraining;");
+  while (sqlite3_step(select) == SQLITE_ROW)
+  {
+    StoredPlan row;
+    row.preset = sqlite3_column_int(select, 1);
+    row.intensity = sqlite3_column_int(select, 2);
+    row.auto_congestion = sqlite3_column_int(select, 3);
+    row.schedule = columnText(select, 4);
+    row.familiarity = sqlite3_column_double(select, 5);
+    row.tactic = columnText(select, 6);
+    row.week_load = sqlite3_column_double(select, 7);
+    row.last_week_load = sqlite3_column_double(select, 8);
+    row.last_match_day = sqlite3_column_int(select, 9);
+    stored_plans.emplace(static_cast<TeamID>(sqlite3_column_int(select, 0)),
+                         std::move(row));
+  }
+  sqlite3_finalize(select);
+
   sqlite3_stmt* plan_stmt = db_conn->prepareStatement(
-      "INSERT INTO TeamTraining (team_id, preset, intensity, "
+      "INSERT OR REPLACE INTO TeamTraining (team_id, preset, intensity, "
       "auto_congestion, schedule, familiarity, tactic, week_load, "
       "last_week_load, last_match_day) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
   for (const auto& [team_id, plan] : registry.plans())
   {
     const std::string schedule = encodeSchedule(plan.slots);
     const std::string tactic = encodeTactic(plan.tactic);
+    const auto found = stored_plans.find(team_id);
+    if (found != stored_plans.end())
+    {
+      StoredPlan& row = found->second;
+      row.seen = true;
+      if (row.preset == static_cast<int>(plan.preset) &&
+          row.intensity == static_cast<int>(plan.intensity) &&
+          row.auto_congestion == (plan.auto_congestion ? 1 : 0) &&
+          row.schedule == schedule &&
+          row.familiarity == static_cast<double>(plan.familiarity) &&
+          row.tactic == tactic &&
+          row.week_load == static_cast<double>(plan.week_load) &&
+          row.last_week_load == static_cast<double>(plan.last_week_load) &&
+          row.last_match_day == plan.last_match_day)
+        continue;
+    }
     sqlite3_bind_int(plan_stmt, 1, team_id);
     sqlite3_bind_int(plan_stmt, 2, static_cast<int>(plan.preset));
     sqlite3_bind_int(plan_stmt, 3, static_cast<int>(plan.intensity));
@@ -187,12 +238,60 @@ void TrainingRepository::replaceAll(const TrainingRegistry& registry) const
     sqlite3_reset(plan_stmt);
   }
   sqlite3_finalize(plan_stmt);
+  sqlite3_stmt* remove_plan =
+      db_conn->prepareStatement("DELETE FROM TeamTraining WHERE team_id = ?;");
+  for (const auto& [team_id, row] : stored_plans)
+  {
+    if (row.seen) continue;
+    sqlite3_bind_int(remove_plan, 1, team_id);
+    db_conn->executeStep(remove_plan);
+    sqlite3_reset(remove_plan);
+  }
+  sqlite3_finalize(remove_plan);
+
+  struct StoredPlayer
+  {
+    int focus = 0;
+    double acute = 0.0;
+    double chronic = 0.0;
+    double pending = 0.0;
+    double trend = 0.0;
+    bool seen = false;
+  };
+  std::unordered_map<PlayerID, StoredPlayer> stored_players;
+  stored_players.reserve(registry.players().size());
+  select = db_conn->prepareStatement(
+      "SELECT player_id, focus, acute, chronic, pending, trend FROM "
+      "PlayerTraining;");
+  while (sqlite3_step(select) == SQLITE_ROW)
+  {
+    stored_players.emplace(
+        static_cast<PlayerID>(sqlite3_column_int64(select, 0)),
+        StoredPlayer{sqlite3_column_int(select, 1),
+                     sqlite3_column_double(select, 2),
+                     sqlite3_column_double(select, 3),
+                     sqlite3_column_double(select, 4),
+                     sqlite3_column_double(select, 5), false});
+  }
+  sqlite3_finalize(select);
 
   sqlite3_stmt* player_stmt = db_conn->prepareStatement(
-      "INSERT INTO PlayerTraining (player_id, focus, acute, chronic, pending, "
-      "trend) VALUES (?, ?, ?, ?, ?, ?);");
+      "INSERT OR REPLACE INTO PlayerTraining (player_id, focus, acute, "
+      "chronic, pending, trend) VALUES (?, ?, ?, ?, ?, ?);");
   for (const auto& [player_id, state] : registry.players())
   {
+    const auto found = stored_players.find(player_id);
+    if (found != stored_players.end())
+    {
+      StoredPlayer& row = found->second;
+      row.seen = true;
+      if (row.focus == static_cast<int>(state.focus) &&
+          row.acute == static_cast<double>(state.acute) &&
+          row.chronic == static_cast<double>(state.chronic) &&
+          row.pending == static_cast<double>(state.pending) &&
+          row.trend == static_cast<double>(state.trend))
+        continue;
+    }
     sqlite3_bind_int64(player_stmt, 1, player_id);
     sqlite3_bind_int(player_stmt, 2, static_cast<int>(state.focus));
     sqlite3_bind_double(player_stmt, 3, static_cast<double>(state.acute));
@@ -203,4 +302,14 @@ void TrainingRepository::replaceAll(const TrainingRegistry& registry) const
     sqlite3_reset(player_stmt);
   }
   sqlite3_finalize(player_stmt);
+  sqlite3_stmt* remove_player = db_conn->prepareStatement(
+      "DELETE FROM PlayerTraining WHERE player_id = ?;");
+  for (const auto& [player_id, row] : stored_players)
+  {
+    if (row.seen) continue;
+    sqlite3_bind_int64(remove_player, 1, player_id);
+    db_conn->executeStep(remove_player);
+    sqlite3_reset(remove_player);
+  }
+  sqlite3_finalize(remove_player);
 }

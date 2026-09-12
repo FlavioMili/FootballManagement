@@ -15,6 +15,7 @@
 
 #include "global/types.h"
 #include "gui/gui_scene.h"
+#include "gui/scenes/holiday_dialog.h"
 #include "model/gamedate.h"
 #include "model/next_action.h"
 
@@ -45,6 +46,10 @@ enum class NavSection : uint8_t
   DELEGATION,
   DATA_HUB,
   OPPOSITION,
+  INTERNATIONAL,
+  AWARDS,
+  RECORDS,
+  PLANNING,
   NONE
 };
 
@@ -106,6 +111,9 @@ class ManagementScene : public GUIScene
   /** @brief Shows a short confirmation message in the top bar. */
   void showToast(std::string message, bool isError = false);
 
+  /** @brief Holiday planner and return report of this screen. */
+  HolidayDialog& holidayDialog() { return holiday_dialog; }
+
  private:
   friend class GameFlowTest_GUIFlowLifecycle_Test;
   friend class GameFlowTest_ManagementScreensMidSeason_Test;
@@ -141,6 +149,12 @@ class ManagementScene : public GUIScene
   float toast_seconds = 0.0f;
   bool toast_is_error = false;
 
+  /** Top-bar save indicator, refreshed about once per second. */
+  std::string save_label;
+  float save_poll_seconds = 0.0f;
+  bool save_failed = false;
+  void pollSaveStatus();
+
   bool palette_requested = false;
   bool palette_focus_input = false;
   std::array<char, 64> palette_query{};
@@ -151,6 +165,7 @@ class ManagementScene : public GUIScene
   int palette_selection = 0;
 
   bool main_menu_confirm_requested = false;
+  HolidayDialog holiday_dialog;
   /** Whether the sidebar navigation needed scrolling last frame. */
   bool sidebar_nav_overflow = false;
 };

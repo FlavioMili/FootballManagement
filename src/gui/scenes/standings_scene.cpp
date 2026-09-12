@@ -24,6 +24,17 @@
 
 namespace
 {
+constexpr float BADGE_HEIGHT = 16.0f;
+/** Kit-coloured mini shield in front of a club name (same line). */
+void teamBadge(const GameController& controller, TeamID team)
+{
+  const ClubIdentity* identity = controller.getClubIdentity(team);
+  if (identity == nullptr) return;
+  UI::clubBadge(nullptr, identity->primary_colour, identity->secondary_colour,
+                BADGE_HEIGHT);
+  ImGui::SameLine(0.0f, Theme::Space::S * Theme::scale());
+}
+
 // League table columns (unscaled widths); priority 0 never hides.
 const std::array<UI::Column, 11>& standingsColumns()
 {
@@ -272,6 +283,7 @@ void StandingsScene::renderTable(float width, float height)
                          "%zu", index + 1);
       ImGui::TableNextColumn();
       ImGui::PushID(static_cast<int>(row.team_id));
+      teamBadge(guiView->getController(), row.team_id);
       if (ImGui::Selectable(row.name.c_str(), false,
                             ImGuiSelectableFlags_SpanAllColumns))
         Navigation::openClub(guiView, row.team_id);

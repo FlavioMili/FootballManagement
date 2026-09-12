@@ -36,6 +36,10 @@ struct Settings
   // Guidance
   bool screen_tips = true;         /**< One-line tip on a screen's first visit */
   uint64_t screen_tips_seen = 0;   /**< Bit per NavSection already explained */
+
+  // Saving (applied to the controller's AutosavePolicy)
+  int autosave_frequency = 2; /**< AutosaveFrequency: 0 Off .. 5 season end */
+  int autosave_backups = 3;   /**< Previous saves kept per slot, 0-9 */
 };
 
 /**

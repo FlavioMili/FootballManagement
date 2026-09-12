@@ -70,34 +70,6 @@ CompetitionRepository::CompetitionRepository(
 {
 }
 
-void CompetitionRepository::ensureSchema() const
-{
-  // Same definitions as assets/db/schema.sql, for saves that predate them.
-  sqlite3_exec(
-      db_conn->getRaw(),
-      "CREATE TABLE IF NOT EXISTS PlayerSeasonStats (season INTEGER NOT NULL, "
-      "player_id INTEGER NOT NULL, team_id INTEGER NOT NULL, competition_type "
-      "INTEGER NOT NULL, appearances INTEGER NOT NULL DEFAULT 0, starts "
-      "INTEGER NOT NULL DEFAULT 0, minutes INTEGER NOT NULL DEFAULT 0, goals "
-      "INTEGER NOT NULL DEFAULT 0, assists INTEGER NOT NULL DEFAULT 0, "
-      "yellow_cards INTEGER NOT NULL DEFAULT 0, red_cards INTEGER NOT NULL "
-      "DEFAULT 0, rating_total REAL NOT NULL DEFAULT 0, rated_matches INTEGER "
-      "NOT NULL DEFAULT 0, PRIMARY KEY(season, player_id, team_id, "
-      "competition_type));"
-      "CREATE TABLE IF NOT EXISTS SeasonHistory (season INTEGER NOT NULL, "
-      "start_year INTEGER NOT NULL, competition_type INTEGER NOT NULL, "
-      "competition_id INTEGER NOT NULL, competition_name TEXT NOT NULL, "
-      "champion_id INTEGER, runner_up_id INTEGER, promoted TEXT NOT NULL "
-      "DEFAULT '[]', relegated TEXT NOT NULL DEFAULT '[]', top_scorer_id "
-      "INTEGER, top_scorer_goals INTEGER NOT NULL DEFAULT 0, PRIMARY "
-      "KEY(season, competition_type, competition_id));"
-      "CREATE TABLE IF NOT EXISTS PlayerDiscipline (player_id INTEGER NOT "
-      "NULL, competition_type INTEGER NOT NULL, season_yellows INTEGER NOT "
-      "NULL DEFAULT 0, season_reds INTEGER NOT NULL DEFAULT 0, ban_matches "
-      "INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(player_id, competition_type));",
-      nullptr, nullptr, nullptr);
-}
-
 void CompetitionRepository::saveSeasonHistory(
     const std::vector<SeasonHistoryEntry>& entries) const
 {

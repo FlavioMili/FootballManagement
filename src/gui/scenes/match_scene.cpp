@@ -24,6 +24,7 @@
 #include <optional>
 #include <string_view>
 
+#include "database/datagenerator.h"
 #include "database/gamedata.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
@@ -490,6 +491,7 @@ void MatchScene::startMatch()
       true, controller.getTacticalFamiliarity(home_team_id));
   engine->setTacticalFamiliarity(
       false, controller.getTacticalFamiliarity(away_team_id));
+  assistant_substitutions = controller.isDelegated(Duty::Substitutions);
   applySubstitutionPolicy();
   setPlaybackSpeed(lastPlaybackSpeed);
   setHighlightsOnly(lastHighlightsOnly);
@@ -685,6 +687,8 @@ void MatchScene::setCameraMode(MatchCameraMode mode)
 {
   camera_mode = mode;
   lastCameraMode = mode;
+  // A preset ends ball following, so the next drag starts from its pose.
+  if (mode != MatchCameraMode::FREE) free_follow_ball = false;
   setViewMode(MatchViewMode::BROADCAST_3D);
 }
 
@@ -863,6 +867,8 @@ void MatchScene::render()
   if (show_substitutions) renderSubstitutionsModal();
   team_talk.renderForMatch(guiView->getController(), *engine, home_team_id,
                            away_team_id);
+  analysis_panel.renderForMatch(guiView->getController(), *engine,
+                                home_team_id, away_team_id, team_talk.isOpen());
 
   // The pitch takes the free space; statistics and events sit beside it on
   // wide windows and below it (tabbed) on narrow ones.
@@ -1223,6 +1229,13 @@ void MatchScene::renderControls()
     if (ImGui::IsItemHovered())
       ImGui::SetTooltip("%s", LOC("MATCH_QUICK_RESULT_HINT"));
   }
+  if (managed_is_home)
+  {
+    UI::sameLineIfFits(UI::buttonWidth(LOC("MATCH_ANALYSIS")));
+    if (ImGui::Button(LOC("MATCH_ANALYSIS")))
+      analysis_panel.openNow(guiView->getController(), *engine, home_team_id,
+                             away_team_id);
+  }
 
   // Segmented speed control: real time up to 16x, or highlights only.
   const auto& speeds = MatchSceneTuning::Controls::SPEED_STEPS;
@@ -1304,7 +1317,12 @@ void MatchScene::renderControls()
   if (ImGui::BeginPopup("##assistant"))
   {
     if (ImGui::Checkbox(LOC("MATCH_ASSISTANT_SUBS"), &assistant_substitutions))
+    {
+      guiView->getController().setDutyOwner(
+          Duty::Substitutions, assistant_substitutions ? DutyOwner::Assistant
+                                                       : DutyOwner::Manager);
       applySubstitutionPolicy();
+    }
     if (ImGui::IsItemHovered())
       ImGui::SetTooltip("%s", LOC("MATCH_ASSISTANT_SUBS_HINT"));
     if (bool fixes = guiView->getController().getAssistantFixesLineup();
@@ -1372,11 +1390,13 @@ void MatchScene::renderViewControls()
   UI::sameLineIfFits(ImGui::CalcTextSize(LOC("MATCH_SHOW_NAMES")).x +
                      ImGui::GetFrameHeight() * 1.5f);
   ImGui::Checkbox(LOC("MATCH_SHOW_NAMES"), &show_player_names);
-  UI::sameLineIfFits(ImGui::CalcTextSize(LOC("MATCH_ZOOM_HINT")).x);
+  // Mouse controls are explained on hover to keep the row short.
+  UI::sameLineIfFits(ImGui::CalcTextSize("(?)").x);
   ImGui::AlignTextToFramePadding();
-  ImGui::TextDisabled("%s", LOC("MATCH_ZOOM_HINT"));
+  ImGui::TextDisabled("(?)");
   if (ImGui::IsItemHovered())
-    ImGui::SetTooltip("%s", LOC("MATCH_CAMERA_HELP"));
+    ImGui::SetTooltip("%s\n\n%s", LOC("MATCH_ZOOM_HINT"),
+                      LOC("MATCH_CAMERA_HELP"));
 }
 
 #ifdef DEBUG
@@ -1557,7 +1577,15 @@ void MatchScene::renderFocusHud(ImVec2 origin, ImVec2 size)
   const ImGuiWindowFlags chipWindow =
       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
 
-  // Score bug, top left.
+  // Score bug, top left: club codes, score, clock and the venue.
+  const ClubIdentity* homeIdentity = findClubIdentity(home_team_id);
+  const ClubIdentity* awayIdentity = findClubIdentity(away_team_id);
+  const auto code = [](const ClubIdentity* identity, const std::string& name)
+  {
+    return identity && !identity->short_name.empty()
+               ? identity->short_name.c_str()
+               : name.c_str();
+  };
   ImGui::SetCursorScreenPos(ImVec2(origin.x + margin, origin.y + margin));
   if (ImGui::BeginChild("##focus_score", ImVec2(0.0f, 0.0f), chip, chipWindow))
   {
@@ -1572,7 +1600,10 @@ void MatchScene::renderFocusHud(ImVec2 origin, ImVec2 size)
       ImGui::Dummy(ImVec2(swatch, ImGui::GetFrameHeight()));
       ImGui::SameLine();
       ImGui::AlignTextToFramePadding();
-      ImGui::TextUnformatted(home ? home_name.c_str() : away_name.c_str());
+      ImGui::TextUnformatted(home ? code(homeIdentity, home_name)
+                                  : code(awayIdentity, away_name));
+      if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("%s", home ? home_name.c_str() : away_name.c_str());
     };
     teamChip(true);
     ImGui::SameLine();
@@ -1588,17 +1619,26 @@ void MatchScene::renderFocusHud(ImVec2 origin, ImVec2 size)
     teamChip(false);
     ImGui::SameLine();
     ImGui::AlignTextToFramePadding();
-    ImGui::TextColored(Theme::palette().accent, "%s", clockText().c_str());
+    ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.3f, 1.0f), "%s",
+                       clockText().c_str());
+    if (homeIdentity && !homeIdentity->stadium_name.empty())
+    {
+      Theme::ScopedText caption(Theme::Text::CAPTION);
+      ImGui::TextColored(muted, "%s", homeIdentity->stadium_name.c_str());
+    }
   }
   ImGui::EndChild();
   const ImVec2 scoreSize = ImGui::GetItemRectSize();
 
   // Controls, top right (below the score when the window is narrow).
+  // (Its width is known from the previous frame; until then it sits below.)
   const bool besideScore =
+      focus_controls_width > 0.0f &&
       scoreSize.x + focus_controls_width + 3.0f * margin <= size.x;
   ImGui::SetCursorScreenPos(
       besideScore
-          ? ImVec2(origin.x + size.x - margin - focus_controls_width,
+          ? ImVec2(std::max(origin.x + margin,
+                            origin.x + size.x - margin - focus_controls_width),
                    origin.y + margin)
           : ImVec2(origin.x + margin, origin.y + 2.0f * margin + scoreSize.y));
   if (ImGui::BeginChild("##focus_controls", ImVec2(0.0f, 0.0f), chip,

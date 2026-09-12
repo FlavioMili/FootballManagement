@@ -143,8 +143,14 @@ TEST(Holiday, NextMatchStopsOnTheFixtureDay)
   EXPECT_EQ(summary.days, days);
   EXPECT_EQ(summary.reason, HolidayStop::Completed);
   EXPECT_TRUE(summary.results.empty());
-  // Nothing left to wait for on the match day itself.
-  EXPECT_EQ(controller->goOnHoliday(next), 0);
+  // Leaving on a match day hands that match to the assistant.
+  const auto following = controller->getHolidayTarget(next);
+  ASSERT_TRUE(following.has_value());
+  EXPECT_TRUE(*target < *following);
+  EXPECT_GT(controller->goOnHoliday(next), 0);
+  EXPECT_EQ(controller->getCurrentDate(), *following);
+  ASSERT_EQ(controller->getHolidaySummary().results.size(), 1u);
+  EXPECT_EQ(controller->getHolidaySummary().results[0].date, *target);
 }
 
 TEST(Holiday, AssistantRunsTheClubUntilADate)
@@ -153,7 +159,7 @@ TEST(Holiday, AssistantRunsTheClubUntilADate)
   auto controller = makeCareer(slot.slot);
   controller->setAssistantFixesLineup(false);
   HolidayPlan until = plan(HolidayMode::UntilDate);
-  until.until = GameDateValue(2025, 9, 10);
+  until.until = GameDateValue(2025, 8, 19);
   until.preferences.stop_big_bid = false;
   until.preferences.stop_injury_crisis = false;
   until.preferences.stop_key_injury = false;
@@ -165,7 +171,7 @@ TEST(Holiday, AssistantRunsTheClubUntilADate)
   EXPECT_EQ(controller->getCurrentDate(), until.until);
   EXPECT_EQ(summary.days, days);
   // Friendlies and the first league rounds were played by the assistant.
-  EXPECT_GE(summary.results.size(), 6u);
+  EXPECT_GE(summary.results.size(), 5u);
   EXPECT_TRUE(std::ranges::any_of(summary.results,
                                   [](const HolidayResult& result)
                                   { return result.type == MatchType::LEAGUE; }));

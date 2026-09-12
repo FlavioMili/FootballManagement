@@ -43,6 +43,7 @@ set(FM_CORE_SOURCES
     database/repositories/training_repository.cpp
     database/repositories/transfer_repository.h
     database/repositories/transfer_repository.cpp
+    database/repositories/text_encoding.h
     database/datagenerator.h
     database/datagenerator.cpp
     database/SQLLoader.h
@@ -292,10 +293,32 @@ set(FM_UI_SOURCES
     gui/scenes/fixtures_scene.cpp
     gui/scenes/standings_scene.h
     gui/scenes/standings_scene.cpp
+    gui/scenes/international_scene.h
+    gui/scenes/international_scene.cpp
     gui/scenes/inbox_scene.h
     gui/scenes/inbox_scene.cpp
+    gui/scenes/data_hub_scene.h
+    gui/scenes/data_hub_scene.cpp
+    gui/scenes/delegation_scene.h
+    gui/scenes/delegation_scene.cpp
+    gui/scenes/match_analysis_panel.h
+    gui/scenes/match_analysis_panel.cpp
+    gui/scenes/onboarding_overlay.h
+    gui/scenes/onboarding_overlay.cpp
+    gui/scenes/opposition_scene.h
+    gui/scenes/opposition_scene.cpp
     gui/scenes/club_scene.h
     gui/scenes/club_scene.cpp
+    gui/scenes/awards_scene.h
+    gui/scenes/awards_scene.cpp
+    gui/scenes/records_scene.h
+    gui/scenes/records_scene.cpp
+    gui/scenes/preseason_scene.h
+    gui/scenes/preseason_scene.cpp
+    gui/scenes/holiday_dialog.h
+    gui/scenes/holiday_dialog.cpp
+    gui/scenes/mentoring_dialog.h
+    gui/scenes/mentoring_dialog.cpp
     gui/scenes/match_report_scene.h
     gui/scenes/match_report_scene.cpp
     gui/scenes/scouting_scene.h

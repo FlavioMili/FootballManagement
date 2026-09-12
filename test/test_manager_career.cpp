@@ -188,10 +188,10 @@ TEST(ManagerCareerModel, ChanceFollowsReputationAndLicence)
   EXPECT_LT(applicationChance(55.0f, CoachingLicence::B, 60, 1), known)
       << "a missing licence costs chances at top-flight clubs";
   EXPECT_EQ(requiredLicence(80, 1), CoachingLicence::Pro);
-  EXPECT_EQ(requiredLicence(40, 3), CoachingLicence::B);
-  EXPECT_EQ(reputationTier(10.0f), ReputationTier::Local);
-  EXPECT_EQ(reputationTier(30.0f), ReputationTier::National);
-  EXPECT_EQ(reputationTier(60.0f), ReputationTier::Continental);
+  EXPECT_EQ(requiredLicence(50, 2), CoachingLicence::B);
+  EXPECT_EQ(reputationTier(30.0f), ReputationTier::Local);
+  EXPECT_EQ(reputationTier(50.0f), ReputationTier::National);
+  EXPECT_EQ(reputationTier(70.0f), ReputationTier::Continental);
   EXPECT_EQ(reputationTier(90.0f), ReputationTier::World);
   EXPECT_LT(startingReputation(ManagerBackground::SundayLeague),
             startingReputation(ManagerBackground::FormerInternational));
@@ -325,8 +325,8 @@ TEST(ManagerCareerMarket, TopFlightChangesMatchRealRates)
   };
   holders = snapshot();
 
-  constexpr int SEASONS = 6;
-  constexpr int WARMUP_SEASONS = 1;
+  constexpr int SEASONS = 8;
+  constexpr int WARMUP_SEASONS = 3;
   int changes = 0;
   std::vector<int> tenures;
   double career_seconds = 0.0;
@@ -438,7 +438,7 @@ TEST(ManagerCareerFlow, NewGameManagerStepAndFirstClub)
   ASSERT_NE(profile, nullptr);
   EXPECT_EQ(profile->name(), "Ada Rossetti");
   EXPECT_EQ(profile->licence, CoachingLicence::A);
-  EXPECT_FLOAT_EQ(profile->reputation, 55.0f);
+  EXPECT_FLOAT_EQ(profile->reputation, 65.0f);
 
   // Every club has a manager before the human arrives.
   for (const auto& team : controller->getTeams())
@@ -522,12 +522,15 @@ TEST(ManagerCareerFlow, SackedManagerIsPaidOffAndFindsANewClub)
   const float reputation = controller->getManagerProfile()->reputation;
 
   // The board dismisses him: severance, unemployment, no game over.
-  game.leaveManagedTeam(DepartureReason::Sacked);
   const GameDateValue sacked_on = game.getCurrentDate();
+  const std::int64_t staff_before =
+      staffLedger(controller->getTeamById(first)->get(), sacked_on);
+  game.leaveManagedTeam(DepartureReason::Sacked);
   EXPECT_TRUE(controller->isUnemployed());
   EXPECT_TRUE(
       inboxHas(game.getWorld().getInbox(), "INBOX_MANAGER_SACKED_TITLE"));
-  EXPECT_EQ(staffLedger(controller->getTeamById(first)->get(), sacked_on),
+  EXPECT_EQ(staffLedger(controller->getTeamById(first)->get(), sacked_on) -
+                staff_before,
             -wage * 52)
       << "a year of wages on a three-year contract";
   EXPECT_EQ(controller->getManagerProfile()->career_earnings, wage * 52);
@@ -662,7 +665,7 @@ TEST(ManagerCareerFlow, LongUnemploymentFadesReputationAndBringsCalls)
   {
     date.nextDay();
     const CareerDayEvents events = career.onDayAdvanced(
-        date, FREE_AGENTS_TEAM_ID, 50.0f, 0, [](TeamID) { return 10; }, inbox);
+        date, FREE_AGENTS_TEAM_ID, 50.0f, 0, [](TeamID) { return 0; }, inbox);
     offered = events.new_offer;
   }
   EXPECT_TRUE(offered) << "clubs call a manager out of work for long";

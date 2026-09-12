@@ -25,7 +25,14 @@ class SetPiecesDialog
 {
  public:
   /** @brief Opens the dialog on the next render(). */
-  void open() { open_requested = true; }
+  void open()
+  {
+    open_requested = true;
+    close_requested = false;
+  }
+
+  /** @brief Closes the dialog on the next render(). */
+  void close() { close_requested = true; }
 
   /**
    * @brief Draws the dialog while it is open.
@@ -48,6 +55,7 @@ class SetPiecesDialog
   void rebuild(const GameController& controller);
 
   bool open_requested = false;
+  bool close_requested = false;
   std::array<std::vector<Choice>, SET_PIECE_DUTY_COUNT> choices;
   std::array<std::string, SET_PIECE_DUTY_COUNT> automatic; /*!< Previews. */
   std::array<std::string, SET_PIECE_DUTY_COUNT> current;   /*!< Previews. */

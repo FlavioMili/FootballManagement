@@ -103,10 +103,9 @@ void CareerGuidance::load(const std::shared_ptr<DatabaseConnection>& db_conn)
         if (instruction <= 0 ||
             instruction >= static_cast<int>(OppositionInstruction::COUNT))
           return;
-        orders.push_back(
-            {static_cast<TeamID>(sqlite3_column_int(stmt, 0)),
-             static_cast<PlayerID>(sqlite3_column_int64(stmt, 1)),
-             static_cast<OppositionInstruction>(instruction)});
+        orders.push_back({static_cast<TeamID>(sqlite3_column_int(stmt, 0)),
+                          static_cast<PlayerID>(sqlite3_column_int64(stmt, 1)),
+                          static_cast<OppositionInstruction>(instruction)});
       });
   opposition.restore(std::move(orders));
   forEachRow(*db_conn,
@@ -122,9 +121,9 @@ void CareerGuidance::load(const std::shared_ptr<DatabaseConnection>& db_conn)
              });
   if (snapshots.size() > MAX_SNAPSHOTS)
   {
-    snapshots.erase(snapshots.begin(),
-                    snapshots.end() -
-                        static_cast<std::ptrdiff_t>(MAX_SNAPSHOTS));
+    snapshots.erase(
+        snapshots.begin(),
+        snapshots.end() - static_cast<std::ptrdiff_t>(MAX_SNAPSHOTS));
     pruned = true;
   }
   unsaved_from = snapshots.size();
@@ -149,8 +148,8 @@ void CareerGuidance::save(
   for (std::size_t duty = 0; duty < DUTY_COUNT; ++duty)
   {
     sqlite3_bind_int(stmt, 1, static_cast<int>(duty));
-    sqlite3_bind_int(stmt, 2,
-                     static_cast<int>(delegation.owner(static_cast<Duty>(duty))));
+    sqlite3_bind_int(
+        stmt, 2, static_cast<int>(delegation.owner(static_cast<Duty>(duty))));
     db.executeStep(stmt);
     sqlite3_reset(stmt);
   }

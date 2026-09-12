@@ -150,6 +150,11 @@ struct MatchPlayer
   Vector2F movementTarget{MatchTuning::Pitch::CENTRE,
                           MatchTuning::Pitch::CENTRE};
   PlayerIntent intent = PlayerIntent::HOLD_SHAPE;
+  /** Latest tactical target (refreshed at the tactical rate) and whether it
+   * is chased urgently. */
+  Vector2F tacticalTarget{MatchTuning::Pitch::CENTRE,
+                          MatchTuning::Pitch::CENTRE};
+  bool urgentMovement = false;
 
   float facingAngle = 0.0f;
   float targetAngle = 0.0f;
@@ -313,6 +318,66 @@ struct MatchStats
   float ballInPlayMinutes = 0.0f;
 };
 
+/** Touchline instructions a manager can shout during play. */
+enum class MatchShout : std::uint8_t
+{
+  PUSH_HIGHER,
+  DROP_DEEPER,
+  PRESS_MORE,
+  CALM_DOWN,
+  ENCOURAGE,
+  WORK_BALL_INTO_BOX,
+  SHOOT_ON_SIGHT
+};
+
+/** One-shot action requested by an external controller (play mode). */
+enum class MatchInputAction : std::uint8_t
+{
+  NONE,
+  PASS,
+  LOFTED_PASS,
+  SHOOT,
+  CLEAR,
+  TACKLE,
+  SLIDE_TACKLE
+};
+
+/**
+ * Controller state for the externally controlled player, e.g. a human's pad
+ * in play mode. Directions are in pitch metres (x along the length toward
+ * x=105, y across toward y=68); only the direction and a magnitude up to 1
+ * matter.
+ */
+struct MatchPlayerInput
+{
+  /** Stick: run direction, magnitude 0..1 of the run speed (0 = stand). */
+  float moveX = 0.0f;
+  float moveY = 0.0f;
+  /** Sprint button: run at top speed instead of the jog share. */
+  bool sprint = false;
+  /**
+   * Action button, performed at the first step it is possible (carrying the
+   * ball for passes, shots and clearances; near the opposing carrier for
+   * tackles) or dropped after MatchTuning::Control::ACTION_BUFFER_SECONDS.
+   * It fires on the press: holding the same action in later inputs does not
+   * repeat it; release (NONE) or a different action re-arms.
+   */
+  MatchInputAction action = MatchInputAction::NONE;
+  /** Pass aim direction; zero aims along the stick (or the facing). */
+  float aimX = 0.0f;
+  float aimY = 0.0f;
+};
+
+/** A controller change, stamped with the fixed step it takes effect on. */
+struct MatchInputRecord
+{
+  /** Fixed step (see MatchEngine::getSimulatedSteps()) that applies it. */
+  std::uint64_t step = 0;
+  /** Controlled player from this step; 0 hands the player back to the AI. */
+  PlayerID player = 0;
+  MatchPlayerInput input;
+};
+
 /** How advancePlayback() presents the match. */
 enum class MatchPlaybackMode
 {
@@ -425,6 +490,53 @@ class MatchEngine
   {
     return homeTeam ? homeFamiliarity : awayFamiliarity;
   }
+  /** Replaces a side's tactics mid-match; used from the next decision. */
+  void setStrategy(bool homeTeam, const Strategy& strategy);
+  /**
+   * A touchline shout: a temporary nudge to the side's sliders or shot
+   * appetite that fades out over MatchTuning::Touchline::SHOUT_DURATION_SECONDS.
+   * A new shout replaces the previous one.
+   */
+  void applyShout(bool homeTeam, MatchShout shout);
+  /** Remaining strength of the side's shout in [0, 1] (0 when none). */
+  float getShoutStrength(bool homeTeam) const;
+  /** Strategy sliders in force: the tactics plus any fading shout. */
+  StrategySliders getEffectiveSliders(bool homeTeam) const;
+  /**
+   * Team-talk execution modifier for one half (clamped to
+   * +-MatchTuning::Touchline::MAX_TEAM_TALK_MODIFIER): positive values make
+   * execution and decisions slightly sharper and work rate slightly higher.
+   */
+  void setTeamTalkModifier(bool homeTeam, int half, float modifier);
+  float getTeamTalkModifier(bool homeTeam, int half) const;
+
+  /**
+   * Play-mode seam: hands one outfield player to an external controller from
+   * the next fixed step (0 hands him back to the AI). While controlled, the
+   * player moves by the stick (at MatchTuning::Control::PHYSICS_SUBSTEPS per
+   * step, with the same acceleration, braking, turning and fatigue model) and
+   * acts only on the action button; team-mates and opponents stay AI. Set
+   * pieces and goalkeeping remain AI-driven. Returns false (and changes
+   * nothing) for goalkeepers and players not on the pitch.
+   */
+  bool setControlledPlayer(PlayerID playerId);
+  /** The controlled player, or 0 when the AI controls everyone. */
+  PlayerID getControlledPlayer() const;
+  /**
+   * Latest controller state for the controlled player; it holds until the
+   * next call and takes effect on the next fixed step. Ignored when nobody is
+   * controlled. Submitting input during a replay discards the rest of it.
+   */
+  void submitInput(const MatchPlayerInput& input);
+  /**
+   * Every controller change so far, step-stamped. Replaying it on a new
+   * engine with the same lineups, tactics and seed reproduces the match.
+   */
+  const std::vector<MatchInputRecord>& getInputLog() const { return inputLog; }
+  /** Schedules a recorded input log (records applied at their steps). */
+  void loadInputReplay(std::vector<MatchInputRecord> log);
+  /** Fixed steps simulated since kick-off. */
+  std::uint64_t getSimulatedSteps() const { return stepCounter; }
 
   const std::vector<MatchPlayer>& getPlayers() const { return players; }
   const MatchBall& getBall() const { return ball; }
@@ -645,14 +757,39 @@ class MatchEngine
   float substepBallZ = 0.0f;
   float homeFamiliarity = 1.0f;
   float awayFamiliarity = 1.0f;
+  struct ShoutState
+  {
+    MatchShout shout = MatchShout::ENCOURAGE;
+    float remainingSeconds = 0.0f;
+  };
+  /** Index 0 is the home side, 1 the away side. */
+  std::array<ShoutState, 2> shouts{};
+  /** Sliders in force (tactics plus shout), refreshed when they change. */
+  std::array<StrategySliders, 2> effectiveSliders{};
+  /** Team-talk modifiers by side and half. */
+  std::array<std::array<float, 2>, 2> teamTalks{};
   /** Per-step target blends: home tactical/urgent, away tactical/urgent. */
   std::array<float, 4> targetBlends{};
   std::array<std::uint8_t, 32> separationOrder{};
   std::size_t separationCount = 0;
+  /** Ball situation at the last tactical refresh (event-driven refresh). */
+  const Player* tacticalOwner = nullptr;
+  std::uint8_t tacticalFlags = 0;
+  /** Seconds and anchor positions since the last load accounting. */
+  float loadSeconds = 0.0f;
+  std::vector<Vector2F> loadAnchors;
   /** Opponent slot each outfield player marks (-1 when unassigned). */
   std::array<std::int8_t, 32> markAssignments{};
   /** Pre-match condition of bench players, applied when they come on. */
   std::vector<std::pair<PlayerID, float>> benchConditions;
+
+  /** External control (play mode); an index keeps the engine copyable. */
+  std::optional<std::size_t> controlledIndex;
+  MatchPlayerInput controlInput;
+  float controlActionRemaining = 0.0f;
+  MatchInputAction lastInputAction = MatchInputAction::NONE;
+  std::vector<MatchInputRecord> inputLog;
+  std::size_t inputCursor = 0;
 
   std::vector<MatchHighlight> highlights;
   std::uint64_t highlightTriggerCount = 0;
@@ -757,6 +894,18 @@ class MatchEngine
   void setRestartTaker(MatchPlayer* taker);
   std::size_t slotOf(const MatchPlayer& player) const;
   float familiarityOf(const MatchPlayer& player) const;
+  /** Current team-talk modifier of a side (by the current half). */
+  float talkOf(bool homeTeam) const;
+  StrategySliders computeEffectiveSliders(bool homeTeam) const;
+  void refreshEffectiveSliders();
+  /** Team execution edge: home crowd, team talk and numerical advantage. */
+  float teamEdge(bool homeTeam) const;
+  /** Shot appetite added by a shout (positive shoots more). */
+  float shoutShotBias(bool homeTeam) const;
+  /** Work-rate bonus from an encouraging shout. */
+  float shoutWorkRate(bool homeTeam) const;
+  /** AI managers adjust with shouts to the score late in the game. */
+  void runAiTouchline(bool homeTeam);
   void refreshTargetBlends();
   void assignMarks();
   float hashNoise(std::uint32_t salt, std::uint32_t key) const;
@@ -786,6 +935,17 @@ class MatchEngine
   void attemptTackle(MatchPlayer& carrier, MatchPlayer& defender,
                      bool sliding);
   void decideAction(MatchPlayer& carrier);
+  /** Applies input records due at the current step. */
+  void applyDueInputs();
+  bool isControlled(const MatchPlayer& player) const;
+  /** Stick-driven movement of the controlled player (fine sub-steps). */
+  void integrateControlled(MatchPlayer& player, float dt);
+  /** Performs the controlled carrier's action; true if the ball left him. */
+  bool performControlledAction(MatchPlayer& carrier);
+  /** Acceleration, braking, lateral limit, position and facing update. */
+  void stepKinematics(MatchPlayer& player, Vector2F desired,
+                      float desiredSpeed, float topSpeed, float fatigue,
+                      float dt);
   void passBall(MatchPlayer& passer, const PassOption& option,
                 bool forceLofted = false);
   void takeShot(MatchPlayer& shooter, float forcedXG = -1.0f,

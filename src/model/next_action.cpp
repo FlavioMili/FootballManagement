@@ -71,10 +71,9 @@ std::vector<NextAction> rankNextActions(const NextActionFacts& facts,
   if (!facts.unavailable_selected.empty() && facts.days_to_match >= 0)
   {
     // The assistant replaces them at kick-off when he is in charge of it.
-    const int priority =
-        facts.assistant_fixes_lineup
-            ? 30
-            : urgency(facts.days_to_match, 95, 80, 50);
+    const int priority = facts.assistant_fixes_lineup
+                             ? 30
+                             : urgency(facts.days_to_match, 95, 80, 50);
     add(NextActionKind::UnavailableInLineup, ActionTarget::Lineup, 0, priority,
         {"NEXT_LINEUP_TITLE",
          {std::to_string(facts.unavailable_selected.size())}},
@@ -152,8 +151,7 @@ std::vector<NextAction> rankNextActions(const NextActionFacts& facts,
   {
     add(NextActionKind::BoardWarning, ActionTarget::Club, 0, 75,
         {"NEXT_BOARD_TITLE", {}},
-        {"NEXT_BOARD_REASON",
-         {std::format("{:.0f}", facts.board_confidence)}});
+        {"NEXT_BOARD_REASON", {std::format("{:.0f}", facts.board_confidence)}});
   }
 
   if (facts.window_open && facts.window_days_left >= 0 &&
@@ -249,9 +247,9 @@ NextActionFacts gatherNextActionFacts(const GameController& controller)
   for (const ScoutReport& report : controller.getScoutReports())
   {
     if (report.grade == ScoutGrade::A && !report.seen)
-      facts.unseen_grade_a.push_back(
-          {report.player_id, playerName(controller, report.player_id),
-           report.scout_name});
+      facts.unseen_grade_a.push_back({report.player_id,
+                                      playerName(controller, report.player_id),
+                                      report.scout_name});
   }
 
   for (const auto& day : controller.getTrainingWeekPreview())
@@ -267,9 +265,12 @@ NextActionFacts gatherNextActionFacts(const GameController& controller)
     const GameController::SquadNeeds needs =
         controller.evaluateSquadNeeds(club_id);
     const std::pair<int, PlayerRole> holes[] = {
-        {needs.missing_gk, PlayerRole::GK},  {needs.missing_cb, PlayerRole::CB},
-        {needs.missing_lb, PlayerRole::LB},  {needs.missing_rb, PlayerRole::RB},
-        {needs.missing_mid, PlayerRole::CM}, {needs.missing_wing, PlayerRole::LW},
+        {needs.missing_gk, PlayerRole::GK},
+        {needs.missing_cb, PlayerRole::CB},
+        {needs.missing_lb, PlayerRole::LB},
+        {needs.missing_rb, PlayerRole::RB},
+        {needs.missing_mid, PlayerRole::CM},
+        {needs.missing_wing, PlayerRole::LW},
         {needs.missing_st, PlayerRole::ST}};
     for (const auto& [missing, role] : holes)
       if (missing > 0) facts.squad_holes.push_back(RoleUtils::toString(role));

@@ -379,8 +379,8 @@ class StandBuilder
       return unitHash(key, 4U, 0U) < 0.75f ? kit.shirt : kit.trim;
     }
     constexpr std::array<ImU32, 9> NEUTRAL{
-        IM_COL32(34, 40, 62, 255),    IM_COL32(30, 30, 34, 255),
-        IM_COL32(92, 96, 104, 255),   IM_COL32(176, 178, 184, 255),
+        IM_COL32(34, 40, 62, 255),    IM_COL32(40, 40, 46, 255),
+        IM_COL32(92, 96, 104, 255),   IM_COL32(138, 140, 146, 255),
         IM_COL32(52, 70, 104, 255),   IM_COL32(96, 56, 46, 255),
         IM_COL32(70, 78, 56, 255),    IM_COL32(150, 132, 108, 255),
         IM_COL32(120, 36, 40, 255)};
@@ -495,8 +495,10 @@ class StandBuilder
             static_cast<float>(seats);
         clump.base =
             RenderMath::lerp(shape.left(front), shape.right(front), centre);
-        const ProfilePoint back = rowPoint(endRow - 1);
-        clump.height = back.z - front.z + C::DOT_HEIGHT;
+        const ProfilePoint beyond = rowPoint(endRow);
+        clump.top = RenderMath::lerp(shape.left(beyond), shape.right(beyond),
+                                     centre) +
+                    UP * (C::DOT_HEIGHT * C::CLUMP_TOP_SHARE);
         clump.halfWidth = members * C::SEAT_SPACING * 0.5f;
         clump.color = average(
             clumpSum, static_cast<float>(clump.dotEnd - clump.dotBegin));

@@ -182,11 +182,13 @@ TEST(Records, CareerBookRoundTripsAndRebuildsOldSaves)
   auto controller = makeCareer(slot.slot);
   const TeamID managed = controller->getManagedTeam()->get().getId();
   const LeagueID league = controller->getManagedTeam()->get().getLeagueId();
-  while (controller->getCurrentDate() < GameDateValue(2025, 9, 8))
+  while (controller->getCurrentDate() < GameDateValue(2025, 8, 26))
     controller->advanceDay();
   const auto records = controller->getClubRecords(managed);
   ASSERT_FALSE(records.empty());
-  EXPECT_NE(find(records, RecordKind::HighestAttendance), nullptr);
+  EXPECT_NE(find(controller->getLeagueRecords(league),
+                 RecordKind::HighestAttendance),
+            nullptr);
   const auto table = controller->getAllTimeTable(league);
   ASSERT_EQ(table.size(),
             controller->getLeagueById(league)->get().getTeamIDs().size());

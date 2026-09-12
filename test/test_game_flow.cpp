@@ -25,6 +25,14 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <vector>
+
+#if defined(__linux__)
+#include <spawn.h>
+#include <sys/wait.h>
+#include <unistd.h>
+extern char** environ;
+#endif
 
 #if defined(__clang__) || defined(__GNUC__)
 extern "C" const char* __lsan_default_suppressions()
@@ -224,6 +232,32 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   view.changeScene(std::make_unique<MainMenuScene>(&view));
   EXPECT_NO_THROW(step_frame());
 
+  // 3b. Save management dialogs: a failed load explains itself and the
+  // backups list opens for the slot (empty in a fresh runtime root).
+  {
+    auto* menu = dynamic_cast<MainMenuScene*>(view.getActiveScene());
+    ASSERT_NE(menu, nullptr);
+    menu->load_error_text = LOC("SAVE_ERROR_CORRUPT");
+    menu->load_error_slot = 1;
+    menu->load_error_requested = true;
+    EXPECT_NO_THROW(step_frame());
+    EXPECT_NO_THROW(step_frame());
+    const auto errorPath =
+        RuntimePaths::capturePath("main_menu_load_error.bmp");
+    std::filesystem::remove(errorPath);
+    EXPECT_TRUE(view.captureScreenshot(errorPath.string()));
+    EXPECT_FALSE(menu->load_error_requested);
+    ImGui::GetCurrentContext()->OpenPopupStack.resize(0);
+    menu->openBackups(1);
+    EXPECT_NO_THROW(step_frame());
+    EXPECT_NO_THROW(step_frame());
+    EXPECT_FALSE(menu->backups_requested);
+    const auto backupsPath = RuntimePaths::capturePath("main_menu_backups.bmp");
+    std::filesystem::remove(backupsPath);
+    EXPECT_TRUE(view.captureScreenshot(backupsPath.string()));
+    ImGui::GetCurrentContext()->OpenPopupStack.resize(0);
+  }
+
   // 4. Change to Main Game Scene
   view.changeScene(std::make_unique<MainGameScene>(&view));
   EXPECT_NO_THROW(step_frame());
@@ -400,11 +434,10 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   step_frame();
   step_frame();
   captureScreen("shell_staff_detail.bmp");
+  // The market strip (contract length, Hire) draws without ImGui errors.
   staffScene->selected = staffScene->market_rows.front().id;
-  staffScene->reveal_selected = true;
   step_frame();
   step_frame();
-  captureScreen("shell_staff_market_detail.bmp");
   staffScene->selected = 0;
   openSection(NavSection::FINANCES, SceneID::GAME_MENU);
   EXPECT_EQ(view.getOverlayDepth(), 0u);
@@ -1415,3 +1448,57 @@ TEST_F(GameFlowTest, PlaybackModeAndSpeedNeverChangeTheResult)
   EXPECT_EQ(highlights.getDroppedSimulationSteps(), 0u);
   EXPECT_EQ(full.getDroppedSimulationSteps(), 0u);
 }
+
+#if defined(__linux__)
+// Runs in child processes of the test below; harmless on its own.
+TEST(RuntimeRoot, ChildHelperWritesACapture)
+{
+  const auto path = RuntimePaths::capturePath("cleanup_probe.txt");
+  std::ofstream(path) << "probe";
+  EXPECT_TRUE(std::filesystem::exists(path));
+}
+
+TEST(RuntimeRoot, TestProcessesRemoveTheirRootAtExit)
+{
+  const auto base = std::filesystem::temp_directory_path() /
+                    std::format("fm-root-probe-{}", getpid());
+  std::filesystem::remove_all(base);
+  const std::string exe = std::filesystem::read_symlink("/proc/self/exe");
+  const auto runChild = [&](bool keep)
+  {
+    std::vector<std::string> variables;
+    for (char** entry = environ; *entry != nullptr; ++entry)
+    {
+      const std::string_view variable(*entry);
+      if (variable.starts_with("FM_TEST_RUNTIME_ROOT=") ||
+          variable.starts_with("FM_KEEP_TEST_ARTIFACTS="))
+        continue;
+      variables.emplace_back(variable);
+    }
+    variables.push_back("FM_TEST_RUNTIME_ROOT=" + base.string());
+    if (keep) variables.emplace_back("FM_KEEP_TEST_ARTIFACTS=1");
+    std::vector<char*> envp;
+    for (std::string& variable : variables) envp.push_back(variable.data());
+    envp.push_back(nullptr);
+    std::string program = exe;
+    std::string filter = "--gtest_filter=RuntimeRoot.ChildHelperWritesACapture";
+    std::array<char*, 3> argv = {program.data(), filter.data(), nullptr};
+    pid_t child = 0;
+    ASSERT_EQ(posix_spawn(&child, exe.c_str(), nullptr, nullptr, argv.data(),
+                          envp.data()),
+              0);
+    int status = 0;
+    ASSERT_EQ(waitpid(child, &status, 0), child);
+    EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+  };
+
+  // A test process leaves nothing behind...
+  runChild(false);
+  ASSERT_TRUE(std::filesystem::exists(base));
+  EXPECT_TRUE(std::filesystem::is_empty(base));
+  // ...unless its artifacts were asked for.
+  runChild(true);
+  EXPECT_FALSE(std::filesystem::is_empty(base));
+  std::filesystem::remove_all(base);
+}
+#endif

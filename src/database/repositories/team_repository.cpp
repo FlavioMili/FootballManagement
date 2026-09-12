@@ -16,20 +16,35 @@
 
 #include "database/SQLLoader.h"
 #include "database/repositories/finance_repository.h"
+#include "database/repositories/text_encoding.h"
 
 namespace
 {
 constexpr int LINEUP_FORMAT_VERSION = 1;
 
+// JSON written by hand: this runs for every club on every save.
 std::string serializeStrategy(const Strategy& strategy)
 {
   const StrategySliders sliders = strategy.getSliders();
-  return nlohmann::json{{"pressing", sliders.pressing},
-                        {"risk_taking", sliders.riskTaking},
-                        {"offensive_bias", sliders.offensiveBias},
-                        {"width_usage", sliders.widthUsage},
-                        {"compactness", sliders.compactness}}
-      .dump();
+  std::string text;
+  text.reserve(128);
+  const std::pair<const char*, float> fields[] = {
+      {"compactness", sliders.compactness},
+      {"offensive_bias", sliders.offensiveBias},
+      {"pressing", sliders.pressing},
+      {"risk_taking", sliders.riskTaking},
+      {"width_usage", sliders.widthUsage}};
+  text.push_back('{');
+  for (const auto& [name, value] : fields)
+  {
+    if (text.size() > 1) text.push_back(',');
+    text.push_back('"');
+    text += name;
+    text += "\":";
+    TextEncoding::appendShortest(text, value);
+  }
+  text.push_back('}');
+  return text;
 }
 
 Strategy deserializeStrategy(const unsigned char* strategyText)
@@ -59,28 +74,53 @@ Strategy deserializeStrategy(const unsigned char* strategyText)
 
 std::string serializeLineup(const Lineup& lineup)
 {
-  nlohmann::json value;
-  value["version"] = LINEUP_FORMAT_VERSION;
-  value["goalkeeper"] = lineup.getGoalkeeper()
-                            ? nlohmann::json(lineup.getGoalkeeper()->getId())
-                            : nlohmann::json(nullptr);
-  value["outfield"] = nlohmann::json::array();
+  using TextEncoding::appendInt;
+  using TextEncoding::appendShortest;
+  std::string text;
+  text.reserve(512);
+  text += "{\"goalkeeper\":";
+  if (lineup.getGoalkeeper())
+    appendInt(text, lineup.getGoalkeeper()->getId());
+  else
+    text += "null";
+  text += ",\"outfield\":[";
+  bool first = true;
   for (const auto& positioned : lineup.getOutfieldPlayers())
   {
     if (!positioned.player) continue;
-    value["outfield"].push_back({{"player_id", positioned.player->getId()},
-                                 {"x", positioned.position.x},
-                                 {"y", positioned.position.y}});
+    if (!first) text.push_back(',');
+    first = false;
+    text += "{\"player_id\":";
+    appendInt(text, positioned.player->getId());
+    text += ",\"x\":";
+    appendShortest(text, positioned.position.x);
+    text += ",\"y\":";
+    appendShortest(text, positioned.position.y);
+    text.push_back('}');
   }
-  value["reserves"] = nlohmann::json::array();
+  text += "],\"reserves\":[";
+  first = true;
   for (const Player* reserve : lineup.getReserves())
   {
-    if (reserve) value["reserves"].push_back(reserve->getId());
+    if (!reserve) continue;
+    if (!first) text.push_back(',');
+    first = false;
+    appendInt(text, reserve->getId());
   }
   // Captain and set-piece takers by SetPieceDuty (0 = automatic); older
   // saves simply lack the key.
-  value["set_pieces"] = lineup.getDesignations();
-  return value.dump();
+  text += "],\"set_pieces\":[";
+  first = true;
+  for (const PlayerID designated : lineup.getDesignations())
+  {
+    if (!first) text.push_back(',');
+    first = false;
+    appendInt(text, designated);
+  }
+  text += "],\"version\":";
+  appendInt(text, LINEUP_FORMAT_VERSION);
+  text.push_back('}');
+  return text;
 }
 
 StoredLineup deserializeLineup(const unsigned char* lineupText)

@@ -67,10 +67,6 @@ void CompetitionManager::load(Calendar& calendar, uint16_t season)
   dirty_leagues.clear();
   history_dirty = false;
 
-  // Older saves lack the competition tables and columns.
-  FixtureRepository(db_conn).ensureSchema();
-  CompetitionRepository(db_conn).ensureSchema();
-
   // Fixtures of older saves carry no competition: derive it from the teams.
   for (const auto& [date, day_matches] : calendar.getFullCalendar())
   {

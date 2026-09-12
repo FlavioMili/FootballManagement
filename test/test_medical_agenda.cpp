@@ -20,6 +20,7 @@
 #include "database/gamedata.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
+#include "model/calendar.h"
 #include "model/match.h"
 #include "model/medical_centre.h"
 #include "model/season_agenda.h"
@@ -162,7 +163,9 @@ TEST(SeasonAgendaTest, SeasonListsEveryKindOfEventInOrder)
   // January, and the next summer window opens in June.
   EXPECT_EQ(count(agenda, AgendaKind::TransferDeadline), 2u);
   EXPECT_EQ(count(agenda, AgendaKind::TransferWindowOpens), 2u);
-  EXPECT_EQ(count(agenda, AgendaKind::InternationalBreak), 4u);
+  EXPECT_EQ(count(agenda, AgendaKind::InternationalBreak),
+            SeasonCalendar::internationalWindows(2025).size());
+  EXPECT_GE(count(agenda, AgendaKind::InternationalBreak), 4u);
   EXPECT_EQ(count(agenda, AgendaKind::WinterBreak), 1u);
   EXPECT_EQ(count(agenda, AgendaKind::BoardReview), 9u);
   EXPECT_EQ(count(agenda, AgendaKind::ContractReminder), 2u);

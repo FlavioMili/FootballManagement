@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "database/datagenerator.h"
 #include "database/save_manager.h"
 #include "global/stats_config.h"
 #include "model/competition.h"
@@ -227,6 +228,14 @@ class GameController
       uint16_t team_id) const;
 
   /**
+   * @brief Descriptive identity of a club from the data pack (short code,
+   * kit colours, stadium, founding year, nickname). Loaded once on first
+   * use and cached; UI thread only.
+   * @return nullptr when the pack has no entry for this club.
+   */
+  const ClubIdentity* getClubIdentity(TeamID team_id) const;
+
+  /**
    * @brief Gets the configuration settings for player stats.
    * @return A reference to the StatsConfig.
    */
@@ -306,6 +315,20 @@ class GameController
                                                size_t limit = 10) const;
   std::vector<PlayerSeasonStats> getPlayerSeasonStats(PlayerID player_id) const;
   std::vector<PlayerSeasonStats> getPlayerCareer(PlayerID player_id) const;
+
+  // ========== International ==========
+  /** Continental club competitions (nullptr without a game). */
+  const ContinentalCompetitions* getContinental() const;
+  /** Aggregate score of a continental knockout tie. */
+  ContinentalCompetitions::TieScore getContinentalTieScore(
+      LeagueID competition_id, const ContinentalCompetitions::Tie& tie) const;
+  /** National teams: calendar, squads, finals, ratings (nullptr without a
+   * game). */
+  const NationalTeams* getNationalTeams() const;
+  /** Caps, goals and finals matches of a player; nullptr when uncapped. */
+  const International::Record* getInternationalRecord(PlayerID player_id) const;
+  /** Nation a player is called up by (announced or away) today. */
+  std::optional<Language> getInternationalDuty(PlayerID player_id) const;
   /** Matches still to serve in league or cup (0 = eligible). */
   uint8_t getSuspensionMatches(PlayerID player_id, MatchType scope) const;
   /** Players of a team with an outstanding suspension. */
@@ -607,9 +630,10 @@ class GameController
   /** Status the player's ability rank in his squad earns in his own eyes. */
   SquadStatus getDeservedSquadStatus(PlayerID player_id) const;
   /**
-   * Gives a managed player a status (nullopt clears it). It becomes his
-   * playing-time expectation (getSquadRole()) for morale, requests and
-   * contract talks. Prospect is only for players up to
+   * Gives a managed player a status (nullopt clears it). It sets his
+   * playing-time expectation (getSquadRole(), never more than one level
+   * below his standing; see SquadStatusModel::expectation()) for morale,
+   * requests and contract talks. Prospect is only for players up to
    * SquadStatusModel::PROSPECT_MAX_AGE.
    */
   bool setSquadStatus(PlayerID player_id, std::optional<SquadStatus> status);
@@ -898,6 +922,14 @@ class GameController
   void applyDelegationPreset(DelegationPreset preset);
   /** Staff member acting for the manager (assistant, else best coach). */
   const StaffMember* getDelegate() const;
+  /**
+   * A duty the manager took back by changing it by hand (training plan,
+   * cancelled scouting trip, friendly); shown with an undo until dismissed.
+   */
+  std::optional<Duty> getReclaimedDuty() const { return reclaimed_duty; }
+  /** Hands the reclaimed duty back to the assistant. */
+  void undoReclaimedDuty();
+  void dismissReclaimedDuty() { reclaimed_duty.reset(); }
 
   /** The managed club's next fixture. */
   struct NextFixture
@@ -1003,7 +1035,8 @@ class GameController
   // ========== Holiday / continue until ==========
   HolidayPreferences getHolidayPreferences() const;
   void setHolidayPreferences(const HolidayPreferences& preferences);
-  /** Day a plan would end on (nullopt: open-ended or nothing to wait for). */
+  /** Day a plan would end on (nullopt: open-ended or nothing to wait for);
+   * "next match" means the next fixture after today. */
   std::optional<GameDateValue> getHolidayTarget(const HolidayPlan& plan) const;
   /**
    * Simulates days on the Continue machinery (progress in
@@ -1045,6 +1078,9 @@ class GameController
   std::int64_t playtime_before_session = 0;
   std::chrono::steady_clock::time_point session_started;
   std::optional<SaveError> last_load_error;
+  /** Data-pack club identities, read on the first getClubIdentity(). */
+  mutable std::optional<std::unordered_map<TeamID, ClubIdentity>>
+      club_identities;
   mutable std::mutex save_status_mutex;
   SaveStatusInfo save_status;
   /** Flushes the game and atomically replaces the slot file. */
@@ -1072,6 +1108,11 @@ class GameController
   std::vector<TeamID> viewed_opposition;
   /** The assistant's delegated daily jobs (after each simulated day). */
   void runDelegatedDuties();
+  /** Set while the assistant changes things on the manager's behalf. */
+  bool assistant_acting = false;
+  std::optional<Duty> reclaimed_duty;
+  /** A manual change of something the assistant owns hands it back. */
+  void reclaimDuty(Duty duty);
   /** Match snapshot and checklist after a managed live match. */
   void recordManagedMatch(GameDateValue date, TeamID home_id, TeamID away_id,
                           const MatchEngine& engine);

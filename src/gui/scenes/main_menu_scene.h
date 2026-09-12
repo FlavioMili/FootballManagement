@@ -8,7 +8,9 @@
 
 #pragma once
 
+#include <filesystem>
 #include <future>
+#include <string>
 #include <vector>
 
 #include "gui/gui_scene.h"
@@ -64,8 +66,26 @@ class MainMenuScene : public GUIScene
   int latest_career_slot = 0; /**< Most recently saved career, 0 = none. */
   int overwrite_slot = 0;     /**< Occupied slot awaiting confirmation. */
 
+  // Save management: backups, restore, delete and load errors.
+  int backups_slot = 0; /**< Slot whose backups dialog is open. */
+  bool backups_requested = false;
+  std::vector<SaveBackup> backups; /**< Read when the dialog opens. */
+  std::vector<std::string> backup_labels;
+  std::filesystem::path restore_candidate; /**< Awaiting confirmation. */
+  std::filesystem::path pending_restore;   /**< Restored by the loader. */
+  int delete_slot = 0; /**< Slot awaiting delete confirmation. */
+  std::string delete_text;
+  int load_error_slot = 0; /**< Slot whose load just failed. */
+  bool load_error_requested = false;
+  std::string load_error_text;
+
   void loadCachedMetadata();
   void renderBackdrop();
   void renderSlotPicker();
+  void renderSlotActions(int slot,
+                         const GameController::SaveSlotMetadata& metadata);
+  void renderBackups();
+  void renderLoadError();
+  void openBackups(int slot);
   void startSlot(int slot, bool newGame);
 };

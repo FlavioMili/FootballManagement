@@ -106,8 +106,10 @@ DrawCheck checkDraw(const std::vector<Continental::DrawTeam>& teams,
     if (++by_association[a.team_id][h.association] > 2) check.over_two = true;
     EXPECT_GE(fixture.matchday, 1);
     EXPECT_LE(fixture.matchday, matches);
-    EXPECT_EQ(++per_matchday[std::pair{h.team_id, fixture.matchday}], 1);
-    EXPECT_EQ(++per_matchday[std::pair{a.team_id, fixture.matchday}], 1);
+    const int home_count = ++per_matchday[std::pair{h.team_id, fixture.matchday}];
+    const int away_count = ++per_matchday[std::pair{a.team_id, fixture.matchday}];
+    EXPECT_EQ(home_count, 1);
+    EXPECT_EQ(away_count, 1);
   }
   for (const auto& team : teams)
   {
@@ -134,10 +136,10 @@ std::unique_ptr<GameController> makeWorld(int slot)
 void playUntil(Calendar& calendar, ContinentalCompetitions& continental,
                const GameDateValue& date, uint32_t salt)
 {
-  std::vector<GameDateValue> days;
-  for (const auto& [day, matches] : calendar.getFullCalendar())
-    if (!(date < day)) days.push_back(day);
-  for (const GameDateValue& day : days)
+  // Day by day: knockout rounds are added to the calendar as they are drawn.
+  if (calendar.getFullCalendar().empty()) return;
+  for (GameDateValue day = calendar.getFullCalendar().begin()->first;
+       !(date < day); day = SeasonCalendar::addDays(day, 1))
   {
     for (Match& match : calendar.getMatchesForDateMutable(day))
     {
@@ -196,7 +198,7 @@ TEST(ContinentalTest, SwissDrawIsValidForManySeeds)
   // Seven associations as in the default world.
   const auto teams = drawTeams({6, 6, 5, 5, 5, 5, 4}, 4);
   int relaxed = 0;
-  for (uint32_t seed = 1; seed <= 300; ++seed)
+  for (uint32_t seed = 1; seed <= 1000; ++seed)
   {
     const auto fixtures = Continental::drawLeaguePhase(teams, 4, seed);
     const DrawCheck check = checkDraw(teams, fixtures, 4);
@@ -322,8 +324,20 @@ TEST(ContinentalTest, FullCompetitionRunsToAWinnerAndPays)
   for (const auto& season : continental.getSeasons())
     for (const auto& entrant : season.entrants)
       EXPECT_TRUE(seen.insert(entrant.team_id).second);
-  for (size_t i = 1; i < top->entrants.size(); ++i)
-    EXPECT_GE(top->entrants[i - 1].coefficient, top->entrants[i].coefficient);
+  // Pots in order, coefficient order inside a pot, and at most half a pot
+  // from one association (so the own-association ban stays satisfiable).
+  std::map<std::pair<uint8_t, LeagueID>, int> per_pot;
+  for (size_t i = 0; i < top->entrants.size(); ++i)
+  {
+    const auto& entrant = top->entrants[i];
+    const int same = ++per_pot[std::pair{entrant.pot, entrant.association}];
+    EXPECT_LE(same, 4);
+    if (i == 0) continue;
+    const auto& previous = top->entrants[i - 1];
+    EXPECT_LE(previous.pot, entrant.pot);
+    if (previous.pot == entrant.pot)
+      EXPECT_GE(previous.coefficient, entrant.coefficient);
+  }
 
   const TeamID champion_club = top->entrants.front().team_id;
   const int64_t balance_before =
@@ -341,6 +355,15 @@ TEST(ContinentalTest, FullCompetitionRunsToAWinnerAndPays)
       EXPECT_EQ(match.getMatchType(), MatchType::CONTINENTAL);
     }
   EXPECT_EQ(fixtures, 36u * 4 + 24u * 3 + 24u * 3);
+  // Never a club of the same association in the league phase.
+  for (const auto& [date, matches] : calendar.getFullCalendar())
+    for (const Match& match : matches)
+      EXPECT_NE(Competitions::rootLeague(
+                    *gamedata,
+                    gamedata->getTeam(match.getHomeTeamId())->get().getLeagueId()),
+                Competitions::rootLeague(
+                    *gamedata,
+                    gamedata->getTeam(match.getAwayTeamId())->get().getLeagueId()));
   EXPECT_GT(gamedata->getTeam(champion_club)->get().getFinances().getBalance(),
             balance_before);
   EXPECT_FALSE(news.empty());
@@ -364,7 +387,14 @@ TEST(ContinentalTest, FullCompetitionRunsToAWinnerAndPays)
                                      ? tie.seeded_id
                                      : tie.unseeded_id);
       else
+      {
         EXPECT_TRUE(score.second_leg->wentToExtraTime());
+        if (score.second_leg->wentToPenalties())
+          EXPECT_EQ(tie.winner_id, score.second_leg->getHomePenalties() >
+                                           score.second_leg->getAwayPenalties()
+                                       ? tie.seeded_id
+                                       : tie.unseeded_id);
+      }
     }
   }
   const auto* finished = continental.getSeason(Continental::CHAMPIONS_CUP_ID);

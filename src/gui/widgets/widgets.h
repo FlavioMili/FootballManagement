@@ -178,6 +178,18 @@ void ratingChip(double rating);
 /** @brief Small coloured badge with text. */
 void badge(const char* text, const ImVec4& color);
 
+/**
+ * @brief Two-colour club shield (kit colours 0xRRGGBB) with the short code
+ * drawn inside when the shield is tall enough to read it.
+ * @param height Unscaled shield height; the width follows (0.84 ratio).
+ */
+void clubBadge(const char* code, uint32_t primary, uint32_t secondary,
+               float height);
+
+/** @brief clubBadge() drawn at a position (height in pixels), no layout. */
+void drawClubBadge(ImDrawList* drawList, ImVec2 min, float height,
+                   const char* code, uint32_t primary, uint32_t secondary);
+
 /** @brief Row of W/D/L markers (latest last). */
 void formStrip(std::span<const Outcome> outcomes);
 

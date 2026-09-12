@@ -12,6 +12,10 @@
 #include <cmath>
 #include <cstddef>
 #include <initializer_list>
+#include <optional>
+#include <unordered_map>
+
+#include "database/datagenerator.h"
 
 namespace
 {
@@ -76,7 +80,36 @@ KitColors pickGoalkeeperKit(TeamID team, std::initializer_list<ImU32> avoid)
   }
   return GOALKEEPER_KITS[start];
 }
+
+const std::unordered_map<TeamID, ClubIdentity>& clubIdentities()
+{
+  // The pack is read-only while the game runs: parse it once.
+  static const std::unordered_map<TeamID, ClubIdentity> identities =
+      DataGenerator::loadClubIdentities();
+  return identities;
+}
+
+std::optional<ClubColours> packColours(TeamID team)
+{
+  const ClubIdentity* identity = findClubIdentity(team);
+  if (!identity) return std::nullopt;
+  return ClubColours{kitColorFromRgb(identity->primary_colour),
+                     kitColorFromRgb(identity->secondary_colour)};
+}
+
+KitColors clubKit(const ClubColours& colours)
+{
+  return {colours.primary, colours.secondary, colours.secondary,
+          colours.primary};
+}
 }  // namespace
+
+const ClubIdentity* findClubIdentity(TeamID team)
+{
+  const auto& identities = clubIdentities();
+  const auto found = identities.find(team);
+  return found != identities.end() ? &found->second : nullptr;
+}
 
 float kitColorDistance(ImU32 first, ImU32 second)
 {
@@ -96,11 +129,33 @@ float kitColorDistance(ImU32 first, ImU32 second)
 
 MatchKits chooseMatchKits(TeamID homeTeam, TeamID awayTeam)
 {
+  const std::optional<ClubColours> home = packColours(homeTeam);
+  const std::optional<ClubColours> away = packColours(awayTeam);
+  return chooseMatchKits(homeTeam, awayTeam, home ? &*home : nullptr,
+                         away ? &*away : nullptr);
+}
+
+MatchKits chooseMatchKits(TeamID homeTeam, TeamID awayTeam,
+                          const ClubColours* homeColours,
+                          const ClubColours* awayColours)
+{
   MatchKits kits;
-  kits.home = HOME_KITS[cosmeticHash(homeTeam) % HOME_KITS.size()];
-  kits.away = HOME_KITS[cosmeticHash(awayTeam) % HOME_KITS.size()];
-  if (homeTeam == awayTeam ||
-      !contrastsWithAll(kits.away.shirt, {kits.home.shirt}))
+  kits.home = homeColours
+                  ? clubKit(*homeColours)
+                  : HOME_KITS[cosmeticHash(homeTeam) % HOME_KITS.size()];
+  kits.away = awayColours
+                  ? clubKit(*awayColours)
+                  : HOME_KITS[cosmeticHash(awayTeam) % HOME_KITS.size()];
+  const bool clash = homeTeam == awayTeam ||
+                     !contrastsWithAll(kits.away.shirt, {kits.home.shirt});
+  // A club's own reversed colours come before any generic change strip.
+  if (clash && awayColours && homeTeam != awayTeam &&
+      contrastsWithAll(awayColours->secondary, {kits.home.shirt}))
+  {
+    kits.away = {awayColours->secondary, awayColours->primary,
+                 awayColours->primary, awayColours->secondary};
+  }
+  else if (clash)
   {
     for (const KitColors& change : CHANGE_KITS)
     {

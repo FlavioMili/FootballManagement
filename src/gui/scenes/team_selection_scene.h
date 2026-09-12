@@ -73,9 +73,12 @@ class TeamSelectionScene : public GUIScene
     int64_t weekly_wages = 0;
     int expected_position = 0;
     const char* objective_key = "";
-    int difficulty = 0; /**< 0 easy .. 3 very hard. */
-    uint32_t shirt = 0;
-    uint32_t trim = 0;
+    int difficulty = 0;   /**< 0 easy .. 3 very hard. */
+    std::string code;     /**< Short code shown on the badge. */
+    uint32_t primary = 0; /**< Kit colours, 0xRRGGBB. */
+    uint32_t secondary = 0;
+    std::string nickname; /**< Empty when the pack has none. */
+    std::string founded;  /**< Year, empty when unknown. */
     std::string balance_text;
     std::string wages_text;
     std::string stadium_text;

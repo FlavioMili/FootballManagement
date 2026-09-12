@@ -21,10 +21,9 @@ namespace R = OppositionRules;
 
 constexpr std::array<const char*,
                      static_cast<std::size_t>(OppositionInstruction::COUNT)>
-    INSTRUCTION_KEYS = {"OPPOSITION_INSTRUCTION_NONE",
-                        "OPPOSITION_INSTRUCTION_TIGHT",
-                        "OPPOSITION_INSTRUCTION_PRESS",
-                        "OPPOSITION_INSTRUCTION_WEAK_FOOT"};
+    INSTRUCTION_KEYS = {
+        "OPPOSITION_INSTRUCTION_NONE", "OPPOSITION_INSTRUCTION_TIGHT",
+        "OPPOSITION_INSTRUCTION_PRESS", "OPPOSITION_INSTRUCTION_WEAK_FOOT"};
 
 std::string oneDecimal(float value) { return std::format("{:.1f}", value); }
 std::string twoDecimals(float value) { return std::format("{:.2f}", value); }
@@ -42,11 +41,11 @@ void accumulate(OppositionAverages& totals, const MatchReport& report,
   totals.shots_for += own.shots;
   totals.shots_against += other.shots;
   totals.possession += own.possession;
-  totals.pass_completion +=
-      own.passes_attempted > 0
-          ? 100.0f * static_cast<float>(own.passes_completed) /
-                static_cast<float>(own.passes_attempted)
-          : 0.0f;
+  totals.pass_completion += own.passes_attempted > 0
+                                ? 100.0f *
+                                      static_cast<float>(own.passes_completed) /
+                                      static_cast<float>(own.passes_attempted)
+                                : 0.0f;
   ++totals.matches;
 }
 
@@ -88,10 +87,9 @@ bool isForward(PlayerRole role)
 
 float threatScore(const OppositionPlayer& player)
 {
-  const float rating =
-      player.appearances >= 2 && player.average_rating > 0.0f
-          ? std::max(0.0f, player.average_rating - 6.5f) * 2.0f
-          : 0.0f;
+  const float rating = player.appearances >= 2 && player.average_rating > 0.0f
+                           ? std::max(0.0f, player.average_rating - 6.5f) * 2.0f
+                           : 0.0f;
   return static_cast<float>(player.goals) +
          0.7f * static_cast<float>(player.assists) + rating +
          (player.estimate > 0.0f ? player.estimate / 100.0f : 0.0f);
@@ -107,8 +105,9 @@ const char* oppositionInstructionKey(OppositionInstruction instruction)
 void OppositionPlan::set(TeamID opponent, PlayerID player,
                          OppositionInstruction instruction)
 {
-  std::erase_if(orders, [&](const OppositionOrder& order)
-                { return order.opponent == opponent && order.player == player; });
+  std::erase_if(
+      orders, [&](const OppositionOrder& order)
+      { return order.opponent == opponent && order.player == player; });
   if (instruction == OppositionInstruction::None ||
       instruction >= OppositionInstruction::COUNT)
     return;
@@ -222,8 +221,7 @@ OppositionReport buildOppositionReport(const OppositionInput& input)
   }
   report.formation = formationLabel(roles);
   if (!report.likely_xi.empty())
-    report.confidence =
-        knowledge / static_cast<float>(report.likely_xi.size());
+    report.confidence = knowledge / static_cast<float>(report.likely_xi.size());
 
   // Key players: goals, assists and ratings this season.
   std::vector<const OppositionPlayer*> ranked;
@@ -238,22 +236,20 @@ OppositionReport buildOppositionReport(const OppositionInput& input)
     if (player->appearances == 0) continue;
     KeyOpponent key;
     key.player = *player;
-    key.reason = {"OPPOSITION_KEY_REASON",
-                  {std::to_string(player->goals),
-                   std::to_string(player->assists),
-                   std::to_string(player->appearances),
-                   player->average_rating > 0.0f
-                       ? oneDecimal(player->average_rating)
-                       : std::string("-")}};
+    key.reason = {
+        "OPPOSITION_KEY_REASON",
+        {std::to_string(player->goals), std::to_string(player->assists),
+         std::to_string(player->appearances),
+         player->average_rating > 0.0f ? oneDecimal(player->average_rating)
+                                       : std::string("-")}};
     report.key_players.push_back(std::move(key));
   }
 
   if (!report.enough_data)
   {
-    report.counters.push_back(
-        {{"OPPOSITION_COUNTER_NO_DATA", {}},
-         {"OPPOSITION_REASON_NO_DATA",
-          {std::to_string(report.recent.matches)}}});
+    report.counters.push_back({{"OPPOSITION_COUNTER_NO_DATA", {}},
+                               {"OPPOSITION_REASON_NO_DATA",
+                                {std::to_string(report.recent.matches)}}});
     return report;
   }
 
@@ -262,29 +258,29 @@ OppositionReport buildOppositionReport(const OppositionInput& input)
   const OppositionAverages& l = report.league;
   const std::string sample = std::to_string(r.matches);
   if (ratio(r.xg_for, l.xg_for) >= R::HIGH_RATIO)
-    report.strengths.push_back({"OPPOSITION_STRENGTH_ATTACK",
-                                {twoDecimals(r.xg_for), twoDecimals(l.xg_for),
-                                 sample}});
+    report.strengths.push_back(
+        {"OPPOSITION_STRENGTH_ATTACK",
+         {twoDecimals(r.xg_for), twoDecimals(l.xg_for), sample}});
   else if (ratio(r.xg_for, l.xg_for) <= R::LOW_RATIO)
-    report.weaknesses.push_back({"OPPOSITION_WEAKNESS_ATTACK",
-                                 {twoDecimals(r.xg_for),
-                                  twoDecimals(l.xg_for), sample}});
+    report.weaknesses.push_back(
+        {"OPPOSITION_WEAKNESS_ATTACK",
+         {twoDecimals(r.xg_for), twoDecimals(l.xg_for), sample}});
   if (ratio(r.xg_against, l.xg_against) <= R::LOW_RATIO)
-    report.strengths.push_back({"OPPOSITION_STRENGTH_DEFENCE",
-                                {twoDecimals(r.xg_against),
-                                 twoDecimals(l.xg_against), sample}});
+    report.strengths.push_back(
+        {"OPPOSITION_STRENGTH_DEFENCE",
+         {twoDecimals(r.xg_against), twoDecimals(l.xg_against), sample}});
   else if (ratio(r.xg_against, l.xg_against) >= R::HIGH_RATIO)
-    report.weaknesses.push_back({"OPPOSITION_WEAKNESS_DEFENCE",
-                                 {twoDecimals(r.xg_against),
-                                  twoDecimals(l.xg_against), sample}});
+    report.weaknesses.push_back(
+        {"OPPOSITION_WEAKNESS_DEFENCE",
+         {twoDecimals(r.xg_against), twoDecimals(l.xg_against), sample}});
   if (r.pass_completion >= l.pass_completion + R::PASSING_MARGIN)
-    report.strengths.push_back({"OPPOSITION_STRENGTH_PASSING",
-                                {whole(r.pass_completion),
-                                 whole(l.pass_completion)}});
+    report.strengths.push_back(
+        {"OPPOSITION_STRENGTH_PASSING",
+         {whole(r.pass_completion), whole(l.pass_completion)}});
   else if (r.pass_completion <= l.pass_completion - R::PASSING_MARGIN)
-    report.weaknesses.push_back({"OPPOSITION_WEAKNESS_PASSING",
-                                 {whole(r.pass_completion),
-                                  whole(l.pass_completion)}});
+    report.weaknesses.push_back(
+        {"OPPOSITION_WEAKNESS_PASSING",
+         {whole(r.pass_completion), whole(l.pass_completion)}});
   const int max_points = 3 * r.matches;
   if (r.matches >= 3 && points * 3 >= max_points * 2)
     report.strengths.push_back(

@@ -24,9 +24,6 @@ class CompetitionRepository
  public:
   explicit CompetitionRepository(std::shared_ptr<DatabaseConnection> db_conn);
 
-  /** @brief Creates the competition tables missing from older saves. */
-  void ensureSchema() const;
-
   /** @brief Inserts or replaces history rows (season, type, competition). */
   void saveSeasonHistory(const std::vector<SeasonHistoryEntry>& entries) const;
 

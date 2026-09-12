@@ -398,6 +398,8 @@ class YouthAcademy
   /** Managed club's U18 results this season, oldest first. */
   const std::vector<YouthResult>& results() const { return managed_results; }
   bool isHomegrown(PlayerID player_id) const;
+  /** Players of a club's senior squad (academy players excluded). */
+  std::size_t firstTeamSize(TeamID team_id) const;
   /** Weekly wage of an academy contract for @p player at @p team_id. */
   std::uint32_t contractWage(TeamID team_id, const Player& player,
                              YouthContract contract) const;
@@ -421,6 +423,12 @@ class YouthAcademy
 
  private:
   void bootstrap();
+  /** Sets Player::isAcademyPlayer() from the records (after loading). */
+  void syncFlags();
+  /** Removes a youngster from the world: he drops out of professional
+   * football (released trialists and scholars nobody keeps). */
+  void leaveFootball(TeamID team_id, PlayerID player_id);
+  void promoteComputerAcademies(TeamID managed_team_id);
   AcademyClub& clubState(TeamID team_id);
   void prune();
   void postPreview(const GameDateValue& date, TeamID managed_team_id,

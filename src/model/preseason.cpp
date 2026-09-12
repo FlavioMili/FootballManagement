@@ -323,7 +323,7 @@ CampQuote PreseasonPlanner::campQuote(const GameData& gamedata,
 {
   const auto managed = gamedata.getTeam(managed_team_id);
   const auto first = firstFriendly(calendar, managed_team_id);
-  if (!managed || !first) return {};
+  if (!managed || !first) return CampQuote();
   return Preseason::campQuote(camp, seasonIncome(gamedata, managed->get()),
                               *first);
 }
@@ -437,11 +437,11 @@ void PreseasonPlanner::onMatchPlayed(GameData& gamedata,
 
 void PreseasonPlanner::onSeasonStart(std::uint16_t season_year)
 {
-  state = PreseasonState{};
+  state = PreseasonState();
   state.season_year = season_year;
 }
 
-void PreseasonPlanner::clear() { state = PreseasonState{}; }
+void PreseasonPlanner::clear() { state = PreseasonState(); }
 
 void PreseasonPlanner::load(const std::shared_ptr<DatabaseConnection>& db_conn)
 {

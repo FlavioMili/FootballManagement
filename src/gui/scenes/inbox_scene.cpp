@@ -14,11 +14,13 @@
 #include <algorithm>
 
 #include "controller/game_controller.h"
+#include "database/gamedata.h"
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/role_utils.h"
 
 namespace
 {
@@ -70,7 +72,81 @@ InboxScene::InboxScene(GUIView* parent) : ManagementScene(parent) {}
 
 void InboxScene::update(float /*deltaTime*/) {}
 
-void InboxScene::refresh() { rebuildThreads(); }
+void InboxScene::refresh()
+{
+  rebuildDecisions();
+  rebuildThreads();
+}
+
+void InboxScene::rebuildDecisions()
+{
+  GameController& controller = guiView->getController();
+  const auto& messages = controller.getInbox();
+  const GameDateValue today = controller.getCurrentDate();
+  decisions.clear();
+  hidden.assign(messages.size(), false);
+  archived_count = 0;
+  std::vector<std::pair<InboxAction, PlayerID>> seen;
+  // Newest first: one entry per decision (repeated bids fold into one).
+  for (size_t reverse = messages.size(); reverse > 0; --reverse)
+  {
+    const size_t index = reverse - 1;
+    const InboxMessage& message = messages[index];
+    const InboxAction action = Inbox::actionFor(message.title_key);
+    if (Inbox::isDecision(action) && controller.isInboxDecisionPending(message))
+    {
+      hidden[index] = true;
+      const PlayerID player = message.player_id.value_or(0);
+      if (std::ranges::contains(seen, std::pair{action, player})) continue;
+      seen.emplace_back(action, player);
+      Decision& decision = decisions.emplace_back();
+      decision.message = index;
+      decision.action = action;
+      decision.player = player;
+      decision.title = message.formatTitle();
+      decision.body = message.formatBody();
+      decision.date_text = Format::dayMonth(message.date);
+      if (action == InboxAction::RespondOffer)
+      {
+        for (const IncomingOffer& offer : controller.getIncomingOffers())
+        {
+          if (offer.player_id != player) continue;
+          const auto buyer = controller.getTeamById(offer.buyer);
+          const int days =
+              std::max(0, dayNumber(offer.expires) - dayNumber(today));
+          decision.options.push_back(
+              {offer.id,
+               fmt::sprintf(LOC(offer.loan ? "INBOX_DECISION_LOAN_OPTION"
+                                           : "INBOX_DECISION_OFFER_OPTION"),
+                            buyer ? buyer->get().getName().c_str() : "",
+                            Format::money(offer.loan ? offer.loan_terms.loan_fee
+                                                     : offer.terms.fee)
+                                .c_str(),
+                            days)});
+        }
+      }
+      else if (action == InboxAction::YouthTrialists)
+      {
+        for (const auto& trialist :
+             controller.getYouthPlayers(YouthStatus::Candidate))
+          decision.options.push_back(
+              {trialist.id,
+               fmt::sprintf(
+                   LOC("INBOX_DECISION_TRIALIST_OPTION"), trialist.name.c_str(),
+                   RoleUtils::toString(trialist.role).c_str(), trialist.age,
+                   static_cast<int>(trialist.estimate.potential_low),
+                   static_cast<int>(trialist.estimate.potential_high))});
+      }
+      continue;
+    }
+    if (Inbox::isArchived(message, today))
+    {
+      ++archived_count;
+      if (!show_archived) hidden[index] = true;
+    }
+  }
+  if (tab < 0) tab = decisions.empty() ? 1 : 0;
+}
 
 void InboxScene::rebuildThreads()
 {
@@ -78,10 +154,13 @@ void InboxScene::rebuildThreads()
   threads.clear();
   unread_by_category.fill(0);
   total_by_category.fill(0);
-  for (const InboxMessage& message : messages)
+  const auto isHidden = [this](size_t index)
+  { return index < hidden.size() && hidden[index]; };
+  for (size_t index = 0; index < messages.size(); ++index)
   {
+    const InboxMessage& message = messages[index];
     const auto category = static_cast<size_t>(message.category);
-    if (category >= CATEGORY_COUNT) continue;
+    if (category >= CATEGORY_COUNT || isHidden(index)) continue;
     ++total_by_category[category];
     if (!message.read) ++unread_by_category[category];
   }
@@ -92,6 +171,7 @@ void InboxScene::rebuildThreads()
   {
     const size_t index = reverse - 1;
     const InboxMessage& message = messages[index];
+    if (isHidden(index)) continue;
     if (category_filter >= 0 &&
         static_cast<int>(message.category) != category_filter)
       continue;
@@ -158,6 +238,17 @@ void InboxScene::renderContent()
       fmt::sprintf(LOC("INBOX_SUBTITLE"), controller.getUnreadInboxCount(),
                    controller.getInbox().size());
   UI::pageHeader(LOC("INBOX_TITLE"), subtitle.c_str());
+  const std::string decisionsLabel =
+      fmt::sprintf(LOC("INBOX_TAB_DECISIONS"), decisions.size());
+  const std::array<const char*, 2> tabs = {decisionsLabel.c_str(),
+                                           LOC("INBOX_TAB_INFO")};
+  UI::segmented("##inbox_tab", tab, tabs);
+  if (tab == 0)
+  {
+    renderDecisions();
+    return;
+  }
+  ImGui::SameLine();
   ImGui::BeginDisabled(controller.getUnreadInboxCount() == 0);
   if (UI::secondaryButton(LOC("INBOX_MARK_ALL_READ")))
   {
@@ -167,6 +258,18 @@ void InboxScene::renderContent()
   ImGui::EndDisabled();
   ImGui::SameLine();
   if (ImGui::Checkbox(LOC("INBOX_UNREAD_ONLY"), &unread_only)) rebuildThreads();
+  ImGui::SameLine();
+  const std::string archivedLabel =
+      fmt::sprintf(LOC("INBOX_SHOW_ARCHIVED"), archived_count);
+  if (ImGui::Checkbox(archivedLabel.c_str(), &show_archived))
+  {
+    selected_message = SIZE_MAX;
+    refresh();
+  }
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+    ImGui::SetTooltip(
+        "%s",
+        fmt::sprintf(LOC("INBOX_ARCHIVE_HELP"), Inbox::ARCHIVE_DAYS).c_str());
 
   const float height = ImGui::GetContentRegionAvail().y;
   const float available = ImGui::GetContentRegionAvail().x;
@@ -338,7 +441,145 @@ void InboxScene::renderReader(float height)
   if (message.player_id && message.team_id) ImGui::SameLine();
   if (message.team_id && UI::secondaryButton(LOC("INBOX_OPEN_CLUB")))
     Navigation::openClub(guiView, *message.team_id);
-  talk_dialog.inboxAction(guiView->getController(), message);
-  talk_dialog.render(guiView->getController());
+  GameController& controller = guiView->getController();
+  if (Inbox::actionFor(message.title_key) == InboxAction::Shortlist &&
+      message.player_id && !controller.isShortlisted(*message.player_id) &&
+      controller.getManagedTeam() &&
+      controller.getScoutedRow(*message.player_id).has_value())
+  {
+    const auto player = controller.getGameData()->getPlayer(*message.player_id);
+    if (player &&
+        player->get().getTeamId() != controller.getManagedTeam()->get().getId())
+    {
+      if (message.player_id || message.team_id) ImGui::SameLine();
+      if (UI::primaryButton(LOC("INBOX_SHORTLIST")) &&
+          controller.addToShortlist(*message.player_id))
+        showToast(LOC("INBOX_SHORTLISTED"));
+    }
+  }
+  talk_dialog.inboxAction(controller, message);
+  talk_dialog.render(controller);
   UI::endCard();
+}
+
+void InboxScene::renderDecisions()
+{
+  GameController& controller = guiView->getController();
+  if (decisions.empty())
+  {
+    UI::emptyState(LOC("INBOX_DECISIONS_EMPTY_TITLE"),
+                   LOC("INBOX_DECISIONS_EMPTY_BODY"));
+    talk_dialog.render(controller);
+    return;
+  }
+  const size_t count = decisions.size();
+  for (size_t index = 0; index < count && index < decisions.size(); ++index)
+  {
+    ImGui::PushID(static_cast<int>(index));
+    renderDecision(decisions[index]);
+    ImGui::PopID();
+  }
+  if (talk_dialog.render(controller)) refresh();
+}
+
+void InboxScene::renderDecision(const Decision& decision)
+{
+  GameController& controller = guiView->getController();
+  const Theme::Palette& palette = Theme::palette();
+  const auto& messages = controller.getInbox();
+  if (decision.message >= messages.size()) return;
+  const InboxMessage& message = messages[decision.message];
+  UI::beginAutoHeightCard("decision", nullptr, 0.0f);
+  UI::badge(LOC(inboxCategoryKey(message.category)),
+            categoryColor(message.category));
+  ImGui::SameLine();
+  ImGui::TextColored(palette.muted, "%s", decision.date_text.c_str());
+  {
+    Theme::ScopedText title(Theme::Text::TITLE);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextUnformatted(decision.title.c_str());
+    ImGui::PopTextWrapPos();
+  }
+  ImGui::PushTextWrapPos(0.0f);
+  ImGui::TextColored(palette.muted, "%s", decision.body.c_str());
+  ImGui::PopTextWrapPos();
+
+  bool changed = false;
+  const auto act = [&](bool ok, const char* done)
+  {
+    controller.markInboxMessageRead(message.id);
+    showToast(LOC(ok ? done : "INBOX_DECISION_FAILED"), !ok);
+    changed = true;
+  };
+  const auto optionRow =
+      [&](const Decision::Option& option, const char* yes, const char* no)
+  {
+    ImGui::PushID(static_cast<int>(option.id));
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(option.text.c_str());
+    const float buttons = UI::buttonWidth(yes, UI::ButtonSize::COMPACT) +
+                          UI::buttonWidth(no, UI::ButtonSize::COMPACT) +
+                          ImGui::GetStyle().ItemSpacing.x;
+    if (UI::sameLineIfFits(buttons))
+      ImGui::SetCursorPosX(std::max(ImGui::GetCursorPosX(),
+                                    ImGui::GetContentRegionMax().x - buttons));
+    const bool accepted =
+        UI::primaryButton(yes, ImVec2(0.0f, 0.0f), UI::ButtonSize::COMPACT);
+    ImGui::SameLine();
+    const bool rejected =
+        UI::secondaryButton(no, ImVec2(0.0f, 0.0f), UI::ButtonSize::COMPACT);
+    ImGui::PopID();
+    return accepted ? 1 : rejected ? -1 : 0;
+  };
+
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  switch (decision.action)
+  {
+    case InboxAction::RespondOffer:
+      for (const Decision::Option& option : decision.options)
+      {
+        const int answer = optionRow(option, LOC("INBOX_DECISION_ACCEPT"),
+                                     LOC("INBOX_DECISION_REJECT"));
+        if (answer > 0)
+          act(controller.acceptIncomingOffer(option.id),
+              "INBOX_DECISION_ACCEPTED");
+        else if (answer < 0)
+          act(controller.rejectIncomingOffer(option.id),
+              "INBOX_DECISION_REJECTED");
+        if (changed) break;
+      }
+      break;
+    case InboxAction::YouthTrialists:
+      for (const Decision::Option& option : decision.options)
+      {
+        const int answer = optionRow(option, LOC("INBOX_DECISION_SIGN"),
+                                     LOC("INBOX_DECISION_RELEASE"));
+        if (answer > 0)
+          act(controller.signYouthCandidate(option.id) == YouthActionResult::Ok,
+              "INBOX_DECISION_SIGNED");
+        else if (answer < 0)
+          act(controller.releaseYouthCandidate(option.id) ==
+                  YouthActionResult::Ok,
+              "INBOX_DECISION_RELEASED");
+        if (changed) break;
+      }
+      break;
+    case InboxAction::ReplyToPlayer:
+      if (UI::primaryButton(LOC("TALK_INBOX_REPLY")))
+      {
+        controller.markInboxMessageRead(message.id);
+        talk_dialog.open(controller, decision.player);
+      }
+      break;
+    case InboxAction::Shortlist:
+    case InboxAction::None:
+      break;
+  }
+  if (!changed && decision.player != 0)
+  {
+    if (UI::link(LOC("INBOX_OPEN_PLAYER"), "open_player"))
+      Navigation::openPlayer(guiView, decision.player);
+  }
+  UI::endCard();
+  if (changed) refresh();
 }

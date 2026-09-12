@@ -18,37 +18,42 @@
 #include "global/global.h"
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
+#include "gui/scenes/awards_scene.h"
+#include "gui/scenes/calendar_scene.h"
 #include "gui/scenes/club_scene.h"
 #include "gui/scenes/data_hub_scene.h"
 #include "gui/scenes/delegation_scene.h"
 #include "gui/scenes/fixtures_scene.h"
 #include "gui/scenes/inbox_scene.h"
-#include "gui/scenes/manager_scene.h"
-#include "gui/scenes/medical_scene.h"
-#include "gui/scenes/calendar_scene.h"
-#include "gui/scenes/player_compare_scene.h"
-#include "gui/scenes/squad_planner_scene.h"
+#include "gui/scenes/international_scene.h"
 #include "gui/scenes/lineup_scene.h"
 #include "gui/scenes/main_game_scene.h"
 #include "gui/scenes/main_menu_scene.h"
+#include "gui/scenes/manager_scene.h"
+#include "gui/scenes/match_report_scene.h"
+#include "gui/scenes/medical_scene.h"
 #include "gui/scenes/onboarding_overlay.h"
 #include "gui/scenes/opposition_scene.h"
-#include "gui/scenes/match_report_scene.h"
+#include "gui/scenes/player_compare_scene.h"
 #include "gui/scenes/player_profile_scene.h"
+#include "gui/scenes/preseason_scene.h"
+#include "gui/scenes/records_scene.h"
 #include "gui/scenes/roster_scene.h"
 #include "gui/scenes/scouting_scene.h"
 #include "gui/scenes/settings_scene.h"
+#include "gui/scenes/squad_planner_scene.h"
 #include "gui/scenes/staff_scene.h"
-#include "gui/scenes/youth_scene.h"
 #include "gui/scenes/standings_scene.h"
 #include "gui/scenes/strategy_scene.h"
 #include "gui/scenes/training_scene.h"
 #include "gui/scenes/transfer_market_scene.h"
+#include "gui/scenes/youth_scene.h"
 #include "gui/view_models/player_view.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/icons.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/inbox.h"
 #include "model/role_utils.h"
 
 namespace
@@ -60,7 +65,7 @@ constexpr float ICON_SIZE = 16.0f;
 constexpr float TOP_BAR_HEIGHT = 60.0f;
 constexpr float NAV_ITEM_HEIGHT = 34.0f;
 /** Items shrink down to this height before the navigation has to scroll. */
-constexpr float NAV_ITEM_MIN_HEIGHT = 24.0f;
+constexpr float NAV_ITEM_MIN_HEIGHT = 22.0f;
 constexpr float CLUB_BADGE_SIZE = 38.0f;
 constexpr float CONTINUE_MIN_WIDTH = 200.0f;
 constexpr float PALETTE_WIDTH = 620.0f;
@@ -68,6 +73,7 @@ constexpr float PALETTE_TOP_OFFSET = 70.0f;
 constexpr size_t PALETTE_MAX_RESULTS = 14;
 constexpr size_t PALETTE_MAX_ACTIONS = 4;
 constexpr float TOAST_SECONDS = 3.5f;
+constexpr float SAVE_POLL_SECONDS = 1.0f;
 constexpr const char* PALETTE_POPUP_ID = "##command_palette";
 constexpr const char* MAIN_MENU_CONFIRM_ID = "##confirm_main_menu";
 
@@ -83,7 +89,7 @@ struct NavEntry
 struct NavGroup
 {
   const char* title_key;
-  std::array<const NavEntry*, 5> entries;
+  std::array<const NavEntry*, 6> entries;
 };
 
 // clang-format off
@@ -109,26 +115,33 @@ constexpr NavEntry NAV_COMPARE{NavSection::COMPARE, "NAV_COMPARE", nullptr, ImGu
 constexpr NavEntry NAV_OPPOSITION{NavSection::OPPOSITION, "NAV_OPPOSITION", nullptr, ImGuiKey_None, UI::Icon::TACTICS};
 constexpr NavEntry NAV_DATA_HUB{NavSection::DATA_HUB, "NAV_DATA_HUB", nullptr, ImGuiKey_None, UI::Icon::STANDINGS};
 constexpr NavEntry NAV_DELEGATION{NavSection::DELEGATION, "NAV_DELEGATION", nullptr, ImGuiKey_None, UI::Icon::SETTINGS};
+constexpr NavEntry NAV_INTERNATIONAL{NavSection::INTERNATIONAL, "NAV_INTERNATIONAL", nullptr, ImGuiKey_None, UI::Icon::STANDINGS};
+constexpr NavEntry NAV_AWARDS{NavSection::AWARDS, "NAV_AWARDS", nullptr, ImGuiKey_None, UI::Icon::STANDINGS};
+constexpr NavEntry NAV_RECORDS{NavSection::RECORDS, "NAV_RECORDS", nullptr, ImGuiKey_None, UI::Icon::STANDINGS};
+constexpr NavEntry NAV_PLANNING{NavSection::PLANNING, "NAV_PLANNING", nullptr, ImGuiKey_None, UI::Icon::FIXTURES};
 // clang-format on
 
 // The comparison screen is reached from player lists and the palette only.
 // Delegation is reached from Home and the palette.
-constexpr std::array<const NavEntry*, 22> ALL_NAV = {
-    &NAV_HOME,     &NAV_INBOX,     &NAV_SQUAD,     &NAV_LINEUP,
-    &NAV_TACTICS,  &NAV_FIXTURES,  &NAV_STANDINGS, &NAV_TRANSFERS,
-    &NAV_FINANCES, &NAV_CLUB,      &NAV_SCOUTING,  &NAV_TRAINING,
-    &NAV_STAFF,    &NAV_YOUTH,     &NAV_MANAGER,   &NAV_MEDICAL,
-    &NAV_CALENDAR, &NAV_PLANNER,   &NAV_COMPARE,   &NAV_OPPOSITION,
-    &NAV_DATA_HUB, &NAV_DELEGATION};
+// Awards and records are reached from the palette and from each other.
+constexpr std::array<const NavEntry*, 26> ALL_NAV = {
+    &NAV_HOME,     &NAV_INBOX,      &NAV_SQUAD,         &NAV_LINEUP,
+    &NAV_TACTICS,  &NAV_FIXTURES,   &NAV_STANDINGS,     &NAV_TRANSFERS,
+    &NAV_FINANCES, &NAV_CLUB,       &NAV_SCOUTING,      &NAV_TRAINING,
+    &NAV_STAFF,    &NAV_YOUTH,      &NAV_MANAGER,       &NAV_MEDICAL,
+    &NAV_CALENDAR, &NAV_PLANNER,    &NAV_COMPARE,       &NAV_OPPOSITION,
+    &NAV_DATA_HUB, &NAV_DELEGATION, &NAV_INTERNATIONAL, &NAV_AWARDS,
+    &NAV_RECORDS,  &NAV_PLANNING};
 
 constexpr std::array<NavGroup, 4> NAV_GROUPS = {{
     {"NAV_GROUP_CLUB",
-     {&NAV_HOME, &NAV_INBOX, &NAV_FINANCES, &NAV_CLUB, &NAV_MANAGER}},
+     {&NAV_HOME, &NAV_INBOX, &NAV_FINANCES, &NAV_CLUB, &NAV_PLANNING,
+      &NAV_MANAGER}},
     {"NAV_GROUP_TEAM",
      {&NAV_SQUAD, &NAV_LINEUP, &NAV_TACTICS, &NAV_TRAINING, &NAV_MEDICAL}},
     {"NAV_GROUP_COMPETITION",
-     {&NAV_FIXTURES, &NAV_CALENDAR, &NAV_STANDINGS, &NAV_OPPOSITION,
-      &NAV_DATA_HUB}},
+     {&NAV_FIXTURES, &NAV_CALENDAR, &NAV_STANDINGS, &NAV_INTERNATIONAL,
+      &NAV_OPPOSITION, &NAV_DATA_HUB}},
     {"NAV_GROUP_RECRUITMENT",
      {&NAV_TRANSFERS, &NAV_SCOUTING, &NAV_PLANNER, &NAV_YOUTH, &NAV_STAFF}},
 }};
@@ -138,7 +151,9 @@ bool sectionOpen(NavSection section, bool unemployed)
 {
   if (!unemployed) return true;
   return section == NavSection::HOME || section == NavSection::INBOX ||
-         section == NavSection::STANDINGS || section == NavSection::MANAGER;
+         section == NavSection::STANDINGS || section == NavSection::MANAGER ||
+         section == NavSection::INTERNATIONAL ||
+         section == NavSection::AWARDS || section == NavSection::RECORDS;
 }
 
 MainGameScene* careerHub(GUIView* view)
@@ -228,6 +243,36 @@ bool navItem(const char* label, const char* shortcut, bool selected,
                          labelRight - textX) &&
       hovered)
     ImGui::SetTooltip("%s", label);
+  return pressed;
+}
+
+/** Icon-only sidebar action (label and shortcut in the tooltip). */
+bool footerIcon(const char* label, const char* shortcut, UI::Icon icon,
+                float width, float height)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const ImVec2 start = ImGui::GetCursorScreenPos();
+  ImGui::PushID(label);
+  const bool pressed =
+      ImGui::InvisibleButton("##footer", ImVec2(width, height));
+  ImGui::PopID();
+  const bool hovered = ImGui::IsItemHovered();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  if (hovered)
+    drawList->AddRectFilled(start, ImVec2(start.x + width, start.y + height),
+                            Theme::toU32(palette.raised),
+                            4.0f * Theme::scale());
+  const float iconSize = std::min(18.0f * Theme::scale(), height * 0.7f);
+  UI::drawIcon(drawList, icon,
+               ImVec2(start.x + width * 0.5f, start.y + height * 0.5f),
+               iconSize, Theme::toU32(hovered ? palette.text : palette.muted));
+  if (hovered)
+  {
+    if (shortcut != nullptr)
+      ImGui::SetTooltip("%s  (%s)", label, shortcut);
+    else
+      ImGui::SetTooltip("%s", label);
+  }
   return pressed;
 }
 
@@ -334,6 +379,18 @@ void open(GUIView* view, NavSection section)
     case NavSection::OPPOSITION:
       view->navigateTo(std::make_unique<OppositionScene>(view));
       return;
+    case NavSection::INTERNATIONAL:
+      view->navigateTo(std::make_unique<InternationalScene>(view));
+      return;
+    case NavSection::AWARDS:
+      view->navigateTo(std::make_unique<AwardsScene>(view));
+      return;
+    case NavSection::RECORDS:
+      view->navigateTo(std::make_unique<RecordsScene>(view));
+      return;
+    case NavSection::PLANNING:
+      view->navigateTo(std::make_unique<PreseasonScene>(view));
+      return;
     case NavSection::NONE:
       return;
   }
@@ -424,6 +481,12 @@ void ManagementScene::render()
   if (hub != nullptr) hub->refreshIfStale();
   syncClubAccent();
   toast_seconds = std::max(0.0f, toast_seconds - ImGui::GetIO().DeltaTime);
+  save_poll_seconds -= ImGui::GetIO().DeltaTime;
+  if (save_poll_seconds <= 0.0f)
+  {
+    save_poll_seconds = SAVE_POLL_SECONDS;
+    pollSaveStatus();
+  }
   handleShortcuts();
 
   const bool collapsed = ImGui::GetMainViewport()->WorkSize.x <
@@ -438,6 +501,7 @@ void ManagementScene::render()
   ImGui::BeginChild("##content", ImVec2(0.0f, 0.0f),
                     ImGuiChildFlags_AlwaysUseWindowPadding);
   ImGui::PopStyleVar();
+  GuidanceUI::renderReclaimNotice(guiView);
   GuidanceUI::renderScreenTip(navSection());
   renderContent();
   ImGui::EndChild();
@@ -445,6 +509,8 @@ void ManagementScene::render()
 
   renderPalette();
   renderMainMenuConfirm();
+  if (const auto plan = holiday_dialog.render(guiView->getController()))
+    if (hub != nullptr) hub->requestHoliday(*plan);
   if (hub != nullptr)
     if (const float fade = hub->continueFadeOut(); fade > 0.0f)
     {
@@ -482,7 +548,7 @@ void ManagementScene::renderSidebar(bool collapsed)
   const bool unemployed = controller.isUnemployed();
   const auto visible = [unemployed](const NavEntry* entry)
   { return entry != nullptr && sectionOpen(entry->section, unemployed); };
-  size_t itemCount = 3;  // Footer actions.
+  size_t itemCount = 0;  // Navigation entries (footer rows added below).
   size_t groupCount = 0;
   for (const NavGroup& group : NAV_GROUPS)
   {
@@ -500,22 +566,28 @@ void ManagementScene::renderSidebar(bool collapsed)
                                ImGui::GetTextLineHeight() + 3.0f * spacing;
   const float separatorOverhead =
       (Theme::Space::S + 3.0f) * Theme::scale() + 3.0f * spacing;
-  const auto fitHeight = [&](float groupOverhead)
+  const auto fitHeight = [&](float groupOverhead, size_t footerRows)
   {
-    const float fixedHeight =
-        clubBlock + static_cast<float>(groupCount) * groupOverhead +
-        Theme::Space::S * Theme::scale() + 2.0f * spacing;
+    const float fixedHeight = clubBlock +
+                              static_cast<float>(groupCount) * groupOverhead +
+                              Theme::Space::S * Theme::scale() + 2.0f * spacing;
     return (ImGui::GetContentRegionAvail().y - fixedHeight) /
-               static_cast<float>(itemCount) -
+               static_cast<float>(itemCount + footerRows) -
            spacing;
   };
   const bool groupSeparators =
-      collapsed || fitHeight(titledOverhead) < NAV_ITEM_MIN_HEIGHT * Theme::scale();
+      collapsed ||
+      fitHeight(titledOverhead, 3) < NAV_ITEM_MIN_HEIGHT * Theme::scale();
+  // Short windows: Save / Settings / Main menu share one row of icons.
+  const bool compactFooter = groupSeparators && !collapsed;
+  const size_t footerRows = compactFooter ? 1 : 3;
   const float itemHeight = std::clamp(
-      fitHeight(groupSeparators ? separatorOverhead : titledOverhead),
+      fitHeight(groupSeparators ? separatorOverhead : titledOverhead,
+                footerRows),
       NAV_ITEM_MIN_HEIGHT * Theme::scale(), NAV_ITEM_HEIGHT * Theme::scale());
   const float footerHeight =
-      3.0f * (itemHeight + spacing) + Theme::Space::S * Theme::scale();
+      static_cast<float>(footerRows) * (itemHeight + spacing) +
+      Theme::Space::S * Theme::scale();
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
   ImGui::BeginChild(
       "##sidebar_nav",
@@ -536,11 +608,20 @@ void ManagementScene::renderSidebar(bool collapsed)
             : start.x + Theme::Space::XS * Theme::scale(),
         start.y);
     ImDrawList* drawList = ImGui::GetWindowDrawList();
-    drawList->AddRectFilled(
-        badgeMin, ImVec2(badgeMin.x + badgeSize, badgeMin.y + badgeSize),
-        Theme::toU32(palette.accent), 8.0f * Theme::scale());
-    const std::string initials = clubInitials(club.getName());
+    if (const ClubIdentity* identity = controller.getClubIdentity(club.getId()))
     {
+      // Kit-coloured shield with the club's short code.
+      UI::drawClubBadge(drawList,
+                        ImVec2(badgeMin.x + badgeSize * 0.08f, badgeMin.y),
+                        badgeSize, identity->short_name.c_str(),
+                        identity->primary_colour, identity->secondary_colour);
+    }
+    else
+    {
+      drawList->AddRectFilled(
+          badgeMin, ImVec2(badgeMin.x + badgeSize, badgeMin.y + badgeSize),
+          Theme::toU32(palette.accent), 8.0f * Theme::scale());
+      const std::string initials = clubInitials(club.getName());
       Theme::ScopedText heading(Theme::Text::TITLE);
       const ImVec2 initialsSize = ImGui::CalcTextSize(initials.c_str());
       drawList->AddText(
@@ -613,17 +694,26 @@ void ManagementScene::renderSidebar(bool collapsed)
 
   // Footer actions pinned to the bottom of the sidebar.
   ImGui::Separator();
-  if (navItem(LOC("MAIN_GAME_SAVE_GAME"), "Ctrl+S", false, UI::Icon::SAVE,
-              collapsed, itemHeight))
+  const float footerWidth =
+      compactFooter ? (ImGui::GetContentRegionAvail().x - 2.0f * spacing) / 3.0f
+                    : 0.0f;
+  const auto footerAction =
+      [&](const char* label, const char* shortcut, UI::Icon icon)
+  {
+    if (!compactFooter)
+      return navItem(label, shortcut, false, icon, collapsed, itemHeight);
+    return footerIcon(label, shortcut, icon, footerWidth, itemHeight);
+  };
+  if (footerAction(LOC("MAIN_GAME_SAVE_GAME"), "Ctrl+S", UI::Icon::SAVE))
   {
     controller.saveGame();
     showToast(LOC("DASHBOARD_SAVED"));
   }
-  if (navItem(LOC("MENU_SETTINGS"), nullptr, false, UI::Icon::SETTINGS,
-              collapsed, itemHeight))
+  if (compactFooter) ImGui::SameLine(0.0f, spacing);
+  if (footerAction(LOC("MENU_SETTINGS"), nullptr, UI::Icon::SETTINGS))
     guiView->navigateTo(std::make_unique<SettingsScene>(guiView, true));
-  if (navItem(LOC("MAIN_GAME_MAIN_MENU"), nullptr, false, UI::Icon::EXIT,
-              collapsed, itemHeight))
+  if (compactFooter) ImGui::SameLine(0.0f, spacing);
+  if (footerAction(LOC("MAIN_GAME_MAIN_MENU"), nullptr, UI::Icon::EXIT))
     main_menu_confirm_requested = true;
 
   ImGui::EndChild();
@@ -684,11 +774,30 @@ void ManagementScene::renderTopBar(float height)
   const float fullSearchWidth = 300.0f * Theme::scale();
   const float compactSearchWidth = frameHeight + 2.0f * Theme::scale();
   const float balanceBlock = balanceWidth + gap;
-  const float continueBlock = continueWidth > 0.0f ? continueWidth + gap : 0.0f;
+  // The calendar button next to Continue opens the holiday planner.
+  const float holidayWidth =
+      hub != nullptr && continueWidth > 0.0f && controller.hasSelectedTeam()
+          ? UI::buttonHeight()
+          : 0.0f;
+  const float continueBlock =
+      continueWidth > 0.0f
+          ? continueWidth + gap +
+                (holidayWidth > 0.0f ? holidayWidth + style.ItemSpacing.x
+                                     : 0.0f)
+          : 0.0f;
   const float available = rightEdge - leftEdge - backWidth - continueBlock -
                           balanceBlock - style.ItemSpacing.x;
   const bool showDate = available - dateWidth - gap >= compactSearchWidth;
-  const float searchRoom = available - (showDate ? dateWidth + gap : 0.0f);
+  // The save indicator is the first thing to go when space runs out.
+  const float saveWidth = save_label.empty()
+                              ? 0.0f
+                              : ImGui::CalcTextSize(save_label.c_str()).x + gap;
+  const bool showSave =
+      showDate && saveWidth > 0.0f &&
+      available - dateWidth - gap - saveWidth >= fullSearchWidth;
+  const float dateBlock =
+      showDate ? dateWidth + gap + (showSave ? saveWidth : 0.0f) : 0.0f;
+  const float searchRoom = available - dateBlock;
   const bool fullSearch = searchRoom >= fullSearchWidth;
   const float searchWidth = fullSearch ? fullSearchWidth : compactSearchWidth;
 
@@ -735,9 +844,8 @@ void ManagementScene::renderTopBar(float height)
         Theme::reducedMotion() ? 1.0f : std::min(1.0f, toast_seconds / 0.4f);
     ImGui::SameLine(0.0f, gap);
     ImGui::SetCursorPosY(textY);
-    const float toastRoom = rightEdge - (showDate ? dateWidth + gap : 0.0f) -
-                            balanceBlock - continueBlock - gap -
-                            ImGui::GetCursorPosX();
+    const float toastRoom = rightEdge - dateBlock - balanceBlock -
+                            continueBlock - gap - ImGui::GetCursorPosX();
     const ImVec4& tone = toast_is_error ? palette.negative : palette.positive;
     const ImVec2 clipMin = ImGui::GetCursorScreenPos();
     ImGui::PushClipRect(
@@ -749,11 +857,17 @@ void ManagementScene::renderTopBar(float height)
     ImGui::PopClipRect();
   }
 
-  const float clusterWidth =
-      (showDate ? dateWidth + gap : 0.0f) + balanceWidth + continueBlock;
+  const float clusterWidth = dateBlock + balanceWidth + continueBlock;
   ImGui::SameLine();
   ImGui::SetCursorPos(ImVec2(
       std::max(ImGui::GetCursorPosX(), rightEdge - clusterWidth), textY));
+  if (showSave)
+  {
+    ImGui::TextColored(save_failed ? palette.negative : palette.faint, "%s",
+                       save_label.c_str());
+    ImGui::SameLine(0.0f, gap);
+    ImGui::SetCursorPosY(textY);
+  }
   if (showDate)
   {
     ImGui::TextColored(palette.muted, "%s", dateText.c_str());
@@ -772,12 +886,60 @@ void ManagementScene::renderTopBar(float height)
       hub->requestContinue();
     if (ImGui::IsItemHovered())
       ImGui::SetTooltip("%s", LOC("SHELL_CONTINUE_TOOLTIP"));
+    if (holidayWidth > 0.0f)
+    {
+      ImGui::SameLine();
+      ImGui::SetCursorPosY((height - UI::buttonHeight()) * 0.5f);
+      if (UI::secondaryButton("###shell_holiday",
+                              ImVec2(holidayWidth, UI::buttonHeight())))
+        holiday_dialog.open(controller);
+      const ImVec2 min = ImGui::GetItemRectMin();
+      const ImVec2 max = ImGui::GetItemRectMax();
+      UI::drawIcon(drawList, UI::Icon::FIXTURES,
+                   ImVec2((min.x + max.x) * 0.5f, (min.y + max.y) * 0.5f),
+                   ICON_SIZE * Theme::scale(), Theme::toU32(palette.text));
+      if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("%s", LOC("SHELL_HOLIDAY_TOOLTIP"));
+    }
   }
   ImGui::EndChild();
   const ImVec2 barMin = ImGui::GetItemRectMin();
   const ImVec2 barMax = ImGui::GetItemRectMax();
   ImGui::GetWindowDrawList()->AddRectFilled(
       ImVec2(barMin.x, barMax.y - 1.0f), barMax, Theme::toU32(palette.border));
+}
+
+void ManagementScene::pollSaveStatus()
+{
+  const GameController::SaveStatusInfo status =
+      guiView->getController().getSaveStatus();
+  // A failure is announced once per career session, not once per screen.
+  static int announced_failure_after = -1;
+  save_failed = !status.ok;
+  if (!status.ok)
+  {
+    save_label = LOC("SAVE_STATUS_FAILED");
+    if (announced_failure_after != status.successful_saves)
+    {
+      announced_failure_after = status.successful_saves;
+      showToast(
+          formatLocalized(status.error.langKey(),
+                          {std::to_string(status.error.found_version),
+                           std::to_string(status.error.supported_version)}),
+          true);
+    }
+    return;
+  }
+  announced_failure_after = -1;
+  if (status.successful_saves == 0 || status.game_date.empty())
+  {
+    save_label.clear();
+    return;
+  }
+  save_label = std::format(
+      "{} \u00B7 {}",
+      LOC(status.autosave ? "SAVE_AUTOSAVED" : "SAVE_STATUS_OK"),
+      Format::dayMonth(GameDateValue::fromString(status.game_date)));
 }
 
 void ManagementScene::handleShortcuts()
@@ -838,7 +1000,8 @@ void ManagementScene::buildPaletteIndex()
   palette_actions = controller.getNextActions(PALETTE_MAX_ACTIONS);
   for (size_t index = 0; index < palette_actions.size(); ++index)
   {
-    PaletteEntry item{PaletteEntry::Kind::ACTION, static_cast<uint32_t>(index),
+    PaletteEntry item{PaletteEntry::Kind::ACTION,
+                      static_cast<uint32_t>(index),
                       GuidanceUI::text(palette_actions[index].title),
                       {},
                       std::string(LOC("PALETTE_KIND_NEXT_STEP"))};

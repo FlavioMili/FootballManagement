@@ -17,6 +17,7 @@
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
 #include "global/logger.h"
+#include "gui/gui_view.h"
 #include "gui/render_scale.h"
 #include "gui/view_models/competition_view.h"
 #include "gui/view_models/formation.h"
@@ -242,6 +243,32 @@ TEST(SettingsPersistenceTest, AppearanceOptionsRoundTrip)
   manager->save();
 }
 
+TEST(SettingsPersistenceTest, AutosavePolicyRoundTripsAndReachesTheController)
+{
+  SettingsManager* manager = SettingsManager::instance();
+  const Settings original = manager->get();
+  Settings& settings = manager->get();
+  settings.autosave_frequency = static_cast<int>(AutosaveFrequency::Matchday);
+  settings.autosave_backups = 7;
+  manager->save();
+
+  settings = Settings{};
+  manager->load();
+  EXPECT_EQ(manager->get().autosave_frequency,
+            static_cast<int>(AutosaveFrequency::Matchday));
+  EXPECT_EQ(manager->get().autosave_backups, 7);
+
+  GameController controller;
+  GUIView view(controller);
+  view.applySavePolicy();  // also runs once when the window initializes
+  const AutosavePolicy policy = controller.getAutosavePolicy();
+  EXPECT_EQ(policy.frequency, AutosaveFrequency::Matchday);
+  EXPECT_EQ(policy.backups, 7);
+
+  settings = original;
+  manager->save();
+}
+
 TEST(ThemeTest, PackedAccentRoundTripsAndRatingScaleIsMonotonic)
 {
   EXPECT_EQ(Theme::packRgb(Theme::unpackRgb(0x21A663)), 0x21A663U);
@@ -276,7 +303,7 @@ TEST(WidgetsTest, ParseMoneyAcceptsSuffixesAndSeparators)
   int64_t value = 0;
   ASSERT_TRUE(UI::parseMoney("15m", value));
   EXPECT_EQ(value, 15'000'000);
-  ASSERT_TRUE(UI::parseMoney("\xE2\x82\xAC14.4M", value));
+  ASSERT_TRUE(UI::parseMoney("€14.4M", value));
   EXPECT_EQ(value, 14'400'000);
   ASSERT_TRUE(UI::parseMoney("850k", value));
   EXPECT_EQ(value, 850'000);

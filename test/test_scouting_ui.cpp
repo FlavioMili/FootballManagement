@@ -172,8 +172,9 @@ TEST(ScoutingUiTest, ScoutPagesFollowWhatEachScoutIsDoing)
     target = controller.getPlayersForTeam(id).front().get().getId();
     break;
   }
+  // Domestic rivals are known best: reports come quickly.
   ASSERT_EQ(controller.startScoutAssignment(assigned, ScoutTargetKind::League,
-                                            FOREIGN_LEAGUE, 40),
+                                            OWN_LEAGUE, 40),
             ScoutAssignError::None);
   ASSERT_EQ(controller.startScoutAssignment(experienced,
                                             ScoutTargetKind::Player, target, 4),
@@ -198,7 +199,14 @@ TEST(ScoutingUiTest, ScoutPagesFollowWhatEachScoutIsDoing)
   ASSERT_NE(Bridge::selectedLine(*scene), nullptr);
   EXPECT_EQ(Bridge::selectedLine(*scene)->summary.status,
             ScoutStatus::OnAssignment);
-  EXPECT_GT(Bridge::reportRows(*scene), 0u);
+  const uint32_t active =
+      Bridge::selectedLine(*scene)->summary.active_assignment_id;
+  const auto filed = static_cast<size_t>(std::ranges::count_if(
+      controller.getScoutReports(),
+      [active](const ScoutReport& report)
+      { return report.assignment_id == active; }));
+  EXPECT_GT(filed, 0u);
+  EXPECT_EQ(Bridge::reportRows(*scene), filed);
   EXPECT_GT(Bridge::effectLines(*scene), 0u);
   capture(view, "scouting_scout_on_assignment.bmp");
 

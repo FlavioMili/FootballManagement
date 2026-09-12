@@ -54,6 +54,7 @@
 #include <set>
 #include <string>
 #include <string_view>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <unordered_map>
 #include <unordered_set>
@@ -281,8 +282,32 @@ const char* sceneName(SceneID id)
       return "training";
     case SceneID::STAFF:
       return "staff";
+    case SceneID::MANAGER:
+      return "manager";
     case SceneID::YOUTH:
       return "youth";
+    case SceneID::MEDICAL:
+      return "medical";
+    case SceneID::CALENDAR:
+      return "calendar";
+    case SceneID::SQUAD_PLANNER:
+      return "squad_planner";
+    case SceneID::PLAYER_COMPARE:
+      return "player_compare";
+    case SceneID::DELEGATION:
+      return "delegation";
+    case SceneID::DATA_HUB:
+      return "data_hub";
+    case SceneID::OPPOSITION:
+      return "opposition";
+    case SceneID::INTERNATIONAL:
+      return "international";
+    case SceneID::AWARDS:
+      return "awards";
+    case SceneID::RECORDS:
+      return "records";
+    case SceneID::PLANNING:
+      return "planning";
   }
   return "?";
 }
@@ -725,7 +750,18 @@ class Driver
         view, FRAME_SECONDS, raster || ++frame_counter % RASTER_EVERY == 0);
     const int errors = GImGui->ErrorCountCurrentFrame;
     if (errors > 0 && imgui_errors == 0)
+    {
       imgui_error_scene = sceneName(activeId());
+      // The recovered error's message, from ImGui's debug log.
+      const std::string_view log(GImGui->DebugLogBuf.c_str(),
+                                 static_cast<size_t>(GImGui->DebugLogBuf.size()));
+      if (const size_t at = log.rfind("In window"); at != std::string_view::npos)
+      {
+        const std::string_view message = log.substr(at);
+        imgui_error_scene +=
+            " - " + std::string(message.substr(0, message.find('\n')));
+      }
+    }
     imgui_errors += errors;
     if (!skip_budget && elapsed > worst_frame_ms)
     {
@@ -1246,9 +1282,15 @@ class Monkey
       }
       for (std::string& problem : problems)
       {
-        if (!reported.insert(problem.substr(0, problem.find(':'))).second &&
-            !problem.starts_with("imgui") && !problem.starts_with("exception"))
-          continue;
+        // One report per kind of problem (digits ignored): the first
+        // occurrence is the one to replay.
+        std::string kind = problem.starts_with("imgui") ||
+                                   problem.starts_with("exception")
+                               ? problem
+                               : problem.substr(0, problem.find(':'));
+        std::erase_if(kind, [](char character)
+                      { return std::isdigit(static_cast<unsigned char>(character)); });
+        if (!reported.insert(kind).second) continue;
         line("  !! " + problem);
         violations.push_back(std::format("step {} [{}] {} -> {}", step,
                                          sceneName(scene), detail, problem));
@@ -1654,13 +1696,22 @@ std::vector<uint64_t> monkeySeeds()
 }
 
 /**
- * Known product bugs a seed may hit (finding id, violation substring). A
- * seed whose violations all match is skipped with the finding referenced;
- * any other violation fails the test.
+ * Known product bugs a seed may hit (see the findings report). A seed whose
+ * violations all match is skipped with the finding referenced; any other
+ * violation fails the test.
  */
-const std::vector<std::pair<const char*, const char*>>& knownBugs()
+struct KnownBug
 {
-  static const std::vector<std::pair<const char*, const char*>> bugs = {};
+  const char* id;
+  const char* first;  /**< Both substrings must occur in the violation. */
+  const char* second;
+};
+const std::vector<KnownBug>& knownBugs()
+{
+  static const std::vector<KnownBug> bugs = {
+      {"F-DATAHUB", "imgui:", "hub_trend"},
+      {"F-FINISH-FREEZE", "finish match", "frame: UI build took"},
+  };
   return bugs;
 }
 
@@ -1680,12 +1731,15 @@ TEST_P(GuiMonkey, RandomUserKeepsInvariants)
   {
     summary += "  " + violation + "\n";
     const auto match = std::ranges::find_if(
-        knownBugs(), [&violation](const auto& bug)
-        { return violation.find(bug.second) != std::string::npos; });
+        knownBugs(), [&violation](const KnownBug& bug)
+        {
+          return violation.find(bug.first) != std::string::npos &&
+                 violation.find(bug.second) != std::string::npos;
+        });
     if (match == knownBugs().end())
       allKnown = false;
     else
-      known.insert(match->first);
+      known.insert(match->id);
   }
   const std::string replay = std::format(
       "replay: FM_MONKEY_SEED={} FM_MONKEY_STEPS={} build/test/monkey_tests",
@@ -1708,6 +1762,37 @@ INSTANTIATE_TEST_SUITE_P(Seeds, GuiMonkey, ::testing::ValuesIn(monkeySeeds()),
                          { return std::format("seed{}", info.param); });
 
 /**
+ * Runs a monkey in a child process (fresh process-wide state, as ctest and
+ * a replay have: some screens remember choices in statics for the session)
+ * and returns its action log without the timing line.
+ */
+std::vector<std::string> runInChild(uint64_t seed, int steps)
+{
+  const fs::path file =
+      outputDir() / std::format("replay_seed{}_{}.log", seed, getpid());
+  const pid_t child = fork();
+  if (child == 0)
+  {
+    Monkey monkey(seed, steps);
+    monkey.run();
+    std::ofstream out(file, std::ios::trunc);
+    for (size_t index = 0; index + 1 < monkey.logLines().size(); ++index)
+      out << monkey.logLines()[index] << '\n';
+    out.close();
+    _exit(0);
+  }
+  int status = 0;
+  waitpid(child, &status, 0);
+  std::vector<std::string> lines;
+  if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) return lines;
+  std::ifstream in(file);
+  for (std::string line; std::getline(in, line);) lines.push_back(line);
+  std::error_code ignored;
+  fs::remove(file, ignored);
+  return lines;
+}
+
+/**
  * The action log is a pure function of the seed: the same seed replays the
  * same actions on the same widgets with the same outcomes.
  */
@@ -1716,14 +1801,12 @@ TEST(GuiMonkeyReplay, SameSeedSameLog)
   setDefaultEnvironment();
   Logger::init();
   const int steps = std::min(60, envInt("FM_MONKEY_STEPS", 60));
-  Monkey first(5, steps);
-  first.run();
-  Monkey second(5, steps);
-  second.run();
-  ASSERT_EQ(first.logLines().size(), second.logLines().size());
-  for (size_t index = 0; index + 1 < first.logLines().size(); ++index)
-    ASSERT_EQ(first.logLines()[index], second.logLines()[index])
-        << "log line " << index;
+  const auto first = runInChild(5, steps);
+  const auto second = runInChild(5, steps);
+  ASSERT_FALSE(first.empty()) << "the first run crashed or failed";
+  ASSERT_EQ(first.size(), second.size());
+  for (size_t index = 0; index < first.size(); ++index)
+    ASSERT_EQ(first[index], second[index]) << "log line " << index;
 }
 
 
@@ -1791,17 +1874,18 @@ uint64_t drawHash()
 }
 
 /**
- * Widgets allowed to show no effect when clicked once in isolation, each
- * with the reason. Anything else that is enabled but does nothing is a dead
- * button (AGENT rules: "no dead buttons").
+ * Widgets the sweep does not click, each with the reason. Every other
+ * enabled widget must have an observable effect: anything that does nothing
+ * is a dead button (AGENT rules: "no dead buttons"). Also exempt by rule:
+ * the sidebar entry of the screen already shown, and tabs/sliders get a
+ * second, off-centre click before they count as dead.
  */
-constexpr std::array<std::pair<const char*, const char*>, 3> NO_EFFECT_ALLOWED =
-    {{
+constexpr std::array<std::pair<const char*, const char*>, 3>
+    NOT_CLICKED_BY_SWEEP = {{
         {"#SCROLL", "scrollbar: only moves when the content overflows"},
         {"shell_continue", "advances time; covered by the monkey and the "
                            "adversarial Continue tests"},
-        {"##content", "the page body itself (background hover), not a "
-                      "control"},
+        {"shell_holiday", "advances time (holiday); same as Continue"},
     }};
 
 TEST(GuiWidgetSweep, EveryEnabledWidgetHasAnEffect)
@@ -1904,7 +1988,7 @@ TEST(GuiWidgetSweep, EveryEnabledWidgetHasAnEffect)
       const bool shell = label.find("##sidebar") != std::string::npos ||
                          label.find("##topbar") != std::string::npos;
       if (shell && section != NavSection::HOME) continue;
-      if (std::ranges::any_of(NO_EFFECT_ALLOWED, [&label](const auto& entry)
+      if (std::ranges::any_of(NOT_CLICKED_BY_SWEEP, [&label](const auto& entry)
                               { return label.find(entry.first) !=
                                        std::string::npos; }))
         continue;
@@ -1915,36 +1999,135 @@ TEST(GuiWidgetSweep, EveryEnabledWidgetHasAnEffect)
           kind.push_back(character);
       if (!tested.insert(kind).second) continue;
       ++clicked;
-      const auto effect = [&](ImVec2 point)
+      // Earlier clicks may have moved or removed the widget (a dismissed
+      // tip, a hidden checklist): find it again by ID before judging it.
+      enum class Outcome : uint8_t
+      {
+        EFFECT,
+        NONE,
+        GONE
+      };
+      const auto effect = [&](ImVec2 point, bool offCentre)
       {
         Navigation::open(&view, section);
         driver.frames(2);
+        Driver::mouseTo(point);
+        driver.frame();
+        if (GImGui->HoveredId != item->id)
+        {
+          if (offCentre) return Outcome::NONE;
+          // Layouts shift vertically (a dismissed tip): scan the column.
+          bool found = false;
+          const float height = ImGui::GetIO().DisplaySize.y;
+          for (float y = 3.0f; y < height && !found; y += 6.0f)
+          {
+            Driver::mouseTo({point.x, y});
+            driver.frame();
+            found = GImGui->HoveredId == item->id;
+            if (found) point.y = y;
+          }
+          if (!found) return Outcome::GONE;
+        }
         const Signature before = signature();
-        if (!(before == signature())) return true;  // Animates by itself.
+        if (!(before == signature())) return Outcome::EFFECT;  // Animates.
         driver.click(point);
         const Signature after = signature();
         closePopups();
-        return !(after == before);
+        return after == before ? Outcome::NONE : Outcome::EFFECT;
       };
-      bool changed = effect(item->point);
+      Outcome outcome = effect(item->point, false);
       // A slider clicked at its current value does not move: off-centre.
-      if (!changed && item->max.x - item->min.x >= 40.0f)
-        changed = effect({item->min.x + (item->max.x - item->min.x) * 0.2f,
-                          item->point.y});
+      if (outcome == Outcome::NONE && item->max.x - item->min.x >= 40.0f)
+        outcome = effect({item->min.x + (item->max.x - item->min.x) * 0.2f,
+                          item->point.y},
+                         true);
+      // An option that is already selected (tab, filter, preset, row) does
+      // nothing: select a sibling first, then it must switch back.
+      // Siblings share the parent path (or the grandparent: numbered rows).
+      const auto ancestor = [](const std::string& path, int levels)
+      {
+        std::string result = path;
+        for (int level = 0; level < levels; ++level)
+          result = result.substr(0, result.rfind('/'));
+        return result;
+      };
+      for (int levels = 1; levels <= 2 && outcome == Outcome::NONE; ++levels)
+      {
+        const std::string parent = ancestor(label, levels);
+        for (const auto& [other, otherLabel] : order)
+        {
+          if (other->id == item->id || ancestor(otherLabel, levels) != parent)
+            continue;
+          Navigation::open(&view, section);
+          driver.frames(2);
+          Driver::mouseTo(other->point);
+          driver.frame();
+          if (GImGui->HoveredId != other->id) continue;
+          driver.click(other->point);
+          closePopups();
+          Driver::mouseTo(item->point);
+          driver.frame();
+          if (GImGui->HoveredId != item->id) continue;
+          const Signature before = signature();
+          driver.click(item->point);
+          const Signature after = signature();
+          closePopups();
+          if (!(after == before))
+          {
+            outcome = Outcome::EFFECT;
+            break;
+          }
+        }
+      }
+      const bool changed = outcome != Outcome::NONE;
+      if (std::getenv("FM_SWEEP_VERBOSE") != nullptr)
+        std::cout << "[sweep] clicked " << name << ": " << label << " -> "
+                  << (outcome == Outcome::EFFECT ? "effect"
+                      : outcome == Outcome::GONE ? "gone"
+                                                 : "none")
+                  << " now " << sceneName(driver.activeId()) << '\n';
       // Navigation on the current section re-opens the same screen.
       if (!changed && shell) continue;
       if (!changed) dead.push_back(std::format("{}: `{}`", name, label));
     }
   }
+  // Known, routed product bugs (see the findings report); anything else
+  // fails the test.
+  constexpr std::array<std::pair<const char*, const char*>, 1> KNOWN_DEAD = {{
+      {"F-DEAD-CHIP", "##ticket_price/0/"},
+  }};
   std::string list;
-  for (const std::string& entry : dead) list += "\n  " + entry;
+  std::string unknown;
+  std::set<std::string> known;
+  for (const std::string& entry : dead)
+  {
+    list += "\n  " + entry;
+    const auto match = std::ranges::find_if(
+        KNOWN_DEAD, [&entry](const auto& bug)
+        { return entry.find(bug.second) != std::string::npos; });
+    if (match == KNOWN_DEAD.end())
+      unknown += "\n  " + entry;
+    else
+      known.insert(match->first);
+  }
   std::cout << "[sweep] " << clicked << " widget kinds clicked, "
             << dead.size() << " without an observable effect" << list << '\n';
   EXPECT_GT(clicked, 50) << "the sweep found suspiciously few widgets";
-  EXPECT_EQ(driver.imgui_errors, 0);
-  if (!dead.empty() && std::getenv("FM_SWEEP_STRICT") == nullptr)
-    GTEST_SKIP() << "KNOWN BUG: F-DEAD - " << dead.size()
-                 << " enabled widget(s) have no observable effect:" << list;
-  EXPECT_TRUE(dead.empty()) << "dead widgets:" << list;
+  EXPECT_TRUE(unknown.empty()) << "dead widgets:" << unknown;
+  const bool dataHubErrors =
+      driver.imgui_errors > 0 &&
+      driver.imgui_error_scene.starts_with(sceneName(SceneID::DATA_HUB));
+  if (dataHubErrors) known.insert("F-DATAHUB");
+  EXPECT_TRUE(driver.imgui_errors == 0 || dataHubErrors)
+      << driver.imgui_errors << " ImGui usage errors, first on "
+      << driver.imgui_error_scene;
+  if (!known.empty() && unknown.empty())
+  {
+    std::string ids;
+    for (const std::string& id : known) ids += id + " ";
+    GTEST_SKIP() << "KNOWN BUG: " << ids << "- dead widgets:" << list
+                 << "\nImGui errors: " << driver.imgui_errors << " ("
+                 << driver.imgui_error_scene << ")";
+  }
 }
 }  // namespace

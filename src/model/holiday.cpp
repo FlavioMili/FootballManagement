@@ -109,23 +109,6 @@ const char* stopKey(HolidayStop stop)
   return "HOLIDAY_STOP_DAY_LIMIT";
 }
 
-const char* modeKey(HolidayMode mode)
-{
-  switch (mode)
-  {
-    case HolidayMode::UntilDate:
-      return "HOLIDAY_MODE_UNTIL_DATE";
-    case HolidayMode::NextMatch:
-      return "HOLIDAY_MODE_NEXT_MATCH";
-    case HolidayMode::NextDecision:
-      return "HOLIDAY_MODE_NEXT_DECISION";
-    case HolidayMode::WindowEnd:
-    case HolidayMode::COUNT:
-      break;
-  }
-  return "HOLIDAY_MODE_WINDOW_END";
-}
-
 HolidayPreferences loadPreferences(
     const std::shared_ptr<DatabaseConnection>& db_conn)
 {

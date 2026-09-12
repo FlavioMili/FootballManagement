@@ -222,8 +222,7 @@ MatchAnalysis analyseMatch(const AnalysisInput& input)
   // Players: ratings far from the baseline and low condition.
   for (const PlayerMatchStats& line : input.players)
   {
-    if (line.isHomeTeam != home ||
-        line.minutesPlayed < R::RATING_MIN_MINUTES)
+    if (line.isHomeTeam != home || line.minutesPlayed < R::RATING_MIN_MINUTES)
       continue;
     if (line.rating >= R::STANDOUT_RATING)
       analysis.notes.push_back(
@@ -238,8 +237,8 @@ MatchAnalysis analyseMatch(const AnalysisInput& input)
     if (condition < R::TIRED_CONDITION)
       analysis.notes.push_back({PlayerNote::Kind::Tired, player, condition});
   }
-  std::ranges::stable_sort(analysis.notes, [](const PlayerNote& a,
-                                              const PlayerNote& b)
+  std::ranges::stable_sort(analysis.notes,
+                           [](const PlayerNote& a, const PlayerNote& b)
                            { return a.kind < b.kind; });
 
   // Observations: what happened, with the numbers behind it.
@@ -255,14 +254,14 @@ MatchAnalysis analyseMatch(const AnalysisInput& input)
           std::to_string(own.set_piece_shots),
           std::to_string(own.headed_shots)}});
   }
-  if (const auto flank = analysis.enough_data ? dominantFlank(opp)
-                                              : std::nullopt)
+  if (const auto flank =
+          analysis.enough_data ? dominantFlank(opp) : std::nullopt)
   {
     analysis.observations.push_back(
         {"ANALYSIS_OBS_THEIR_FLANK",
          {percent(flank->second), flankKey(mirrored(flank->first)),
-          std::to_string(opp.flank_shots[static_cast<std::size_t>(
-              flank->first)])}});
+          std::to_string(
+              opp.flank_shots[static_cast<std::size_t>(flank->first)])}});
   }
   const float allowed = own.passesAllowedPerAction(opp.passes_attempted);
   analysis.observations.push_back(
@@ -285,33 +284,32 @@ MatchAnalysis analyseMatch(const AnalysisInput& input)
   for (const PlayerNote& note : analysis.notes)
   {
     if (note.kind != PlayerNote::Kind::Tired || !canSubstitute) continue;
-    addSuggestion(analysis, AnalysisSuggestion::Kind::SubstituteTired, 90,
-                  {"ANALYSIS_SUGGEST_SUB_TIRED", {name(note.player)}},
-                  {"ANALYSIS_REASON_SUB_TIRED",
-                   {name(note.player), percent(note.value)}},
-                  note.player);
+    addSuggestion(
+        analysis, AnalysisSuggestion::Kind::SubstituteTired, 90,
+        {"ANALYSIS_SUGGEST_SUB_TIRED", {name(note.player)}},
+        {"ANALYSIS_REASON_SUB_TIRED", {name(note.player), percent(note.value)}},
+        note.player);
     break;  // One fatigue change at a time.
   }
   if (analysis.enough_data)
   {
     if (const auto flank = dominantFlank(opp))
     {
-      addSuggestion(
-          analysis, AnalysisSuggestion::Kind::ProtectFlank, 80,
-          {"ANALYSIS_SUGGEST_PROTECT_FLANK", {flankKey(mirrored(flank->first))}},
-          {"ANALYSIS_REASON_PROTECT_FLANK",
-           {percent(flank->second), decimal(opp.xg)}});
+      addSuggestion(analysis, AnalysisSuggestion::Kind::ProtectFlank, 80,
+                    {"ANALYSIS_SUGGEST_PROTECT_FLANK",
+                     {flankKey(mirrored(flank->first))}},
+                    {"ANALYSIS_REASON_PROTECT_FLANK",
+                     {percent(flank->second), decimal(opp.xg)}});
     }
     if (const auto flank = dominantFlank(own))
     {
-      addSuggestion(
-          analysis, AnalysisSuggestion::Kind::AttackFlank, 50,
-          {"ANALYSIS_SUGGEST_ATTACK_FLANK", {flankKey(flank->first)}},
-          {"ANALYSIS_REASON_ATTACK_FLANK",
-           {percent(flank->second), decimal(own.xg)}});
+      addSuggestion(analysis, AnalysisSuggestion::Kind::AttackFlank, 50,
+                    {"ANALYSIS_SUGGEST_ATTACK_FLANK", {flankKey(flank->first)}},
+                    {"ANALYSIS_REASON_ATTACK_FLANK",
+                     {percent(flank->second), decimal(own.xg)}});
     }
-    if (own.possession >= 55.0f && own.xg < opp.xg &&
-        own.shots <= opp.shots && own.passes_attempted >= R::CREATE_MIN_PASSES)
+    if (own.possession >= 55.0f && own.xg < opp.xg && own.shots <= opp.shots &&
+        own.passes_attempted >= R::CREATE_MIN_PASSES)
     {
       addSuggestion(analysis, AnalysisSuggestion::Kind::CreateMore, 70,
                     {"ANALYSIS_SUGGEST_CREATE", {}},
@@ -332,18 +330,19 @@ MatchAnalysis analyseMatch(const AnalysisInput& input)
         static_cast<float>(own.aerials_lost) / static_cast<float>(aerials) >=
             R::AERIAL_LOSS_SHARE)
     {
-      addSuggestion(analysis, AnalysisSuggestion::Kind::KeepBallOnGround, 55,
-                    {"ANALYSIS_SUGGEST_GROUND", {}},
-                    {"ANALYSIS_REASON_GROUND",
-                     {std::to_string(own.aerials_lost), std::to_string(aerials)}});
+      addSuggestion(
+          analysis, AnalysisSuggestion::Kind::KeepBallOnGround, 55,
+          {"ANALYSIS_SUGGEST_GROUND", {}},
+          {"ANALYSIS_REASON_GROUND",
+           {std::to_string(own.aerials_lost), std::to_string(aerials)}});
     }
     if (own.goals > opp.goals && opp.xg > own.xg + 0.4f &&
         opp.shots >= R::TIGHTEN_MIN_SHOTS)
     {
-      addSuggestion(analysis, AnalysisSuggestion::Kind::TightenUp, 75,
-                    {"ANALYSIS_SUGGEST_TIGHTEN", {}},
-                    {"ANALYSIS_REASON_TIGHTEN",
-                     {decimal(opp.xg), decimal(own.xg)}});
+      addSuggestion(
+          analysis, AnalysisSuggestion::Kind::TightenUp, 75,
+          {"ANALYSIS_SUGGEST_TIGHTEN", {}},
+          {"ANALYSIS_REASON_TIGHTEN", {decimal(opp.xg), decimal(own.xg)}});
     }
     for (const PlayerNote& note : analysis.notes)
     {

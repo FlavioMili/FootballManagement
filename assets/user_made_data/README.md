@@ -4,7 +4,8 @@ This directory is the world that a new career starts from. Clubs are named
 after real cities (including the Apulian towns of the Italian second
 division, Acaya among them), but the pack contains **no real crests, kits,
 stadiums or professional players**: kit colours, nicknames, founding years
-and every player are made up, and stadiums use generic municipal names. Keep it that way when you edit:
+and every player are made up, and stadiums use a generic municipal naming
+pattern (which can coincide with a real municipal stadium's name). Keep it that way when you edit:
 do not add real players, real club badges or copied kits.
 
 Files are read at startup from the asset root (`AssetPaths` in
@@ -26,8 +27,8 @@ Array of leagues.
 
 ## `teams/*.json`
 
-Array of clubs. Keep every league at an even number of clubs (the default
-pack uses 20, which the season calendar is built around).
+Array of clubs. The default pack uses 20 clubs per league; keep leagues at
+an even size and check `src/model/match_scheduler.*` before changing it.
 
 | Field                 | Required | Meaning                                                   |
 |-----------------------|----------|-----------------------------------------------------------|

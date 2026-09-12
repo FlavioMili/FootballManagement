@@ -718,7 +718,10 @@ TEST_F(TransferMarketTest, SummerMarketIsMostlyFreeAndLoanMoves)
       moves > 0 ? static_cast<double>(fee_moves) / moves : 0.0;
   std::cout << "[transfer-calibration] moves=" << moves << " fee=" << fee_moves
             << " free=" << free_moves << " loans=" << loans
-            << " fee_share=" << fee_share << " seconds=" << seconds << "\n";
+            << " fee_share=" << fee_share << " per_club="
+            << static_cast<double>(moves) /
+                   static_cast<double>(controller->getTeams().size())
+            << " seconds=" << seconds << "\n";
   EXPECT_GT(moves, 150);
   EXPECT_GT(fee_moves, 0);
   EXPECT_GT(loans, 0);
