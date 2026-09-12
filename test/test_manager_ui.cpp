@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <format>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -194,6 +195,33 @@ TEST(ManagerUiTest, ClubChoiceShowsTheManagerStep)
 namespace
 {
 /**
+ * Scroll surfaces of the team selection page: nothing scrolls sideways,
+ * and when the page itself scrolls no card inside it scrolls as well.
+ * Returns a description of the offending windows (empty when fine).
+ */
+std::string scrollViolations()
+{
+  std::string found;
+  bool pageScrolls = false;
+  std::string inner;
+  for (const ImGuiWindow* window : GImGui->Windows)
+  {
+    if (!window->Active || window->Hidden) continue;
+    const std::string_view name(window->Name);
+    if (name.find("##team_selection") == std::string_view::npos) continue;
+    if (window->ScrollbarX) found += std::format(" [sideways: {}]", name);
+    if (!window->ScrollbarY) continue;
+    if (name == "##team_selection")
+      pageScrolls = true;
+    else
+      inner += std::format(" [{}]", name);
+  }
+  if (pageScrolls && !inner.empty())
+    found += " page scrolls and so do:" + inner;
+  return found;
+}
+
+/**
  * True when the start button of the club card can be hovered on screen: a
  * grid of mouse probes over the card must land on it inside the window.
  */
@@ -255,13 +283,37 @@ TEST(ManagerUiTest, TeamSelectionKeepsStartVisibleAtEverySize)
     frames(view, 3);
     capture(view, name);
     EXPECT_TRUE(startButtonReachable(view)) << name;
+    EXPECT_EQ(scrollViolations(), "") << name;
   }
-  // Too short for the club browser at scale 2: the page scrolls instead of
-  // squeezing it.
+  // Too short for the club browser at scale 2 (the manager card alone fills
+  // the window): the cards stack at their natural height and only the page
+  // scrolls; the club strip with the start button comes first.
   setUiScale(view, 2.0f);
   resize(view, 1280, 720);
   frames(view, 3);
   capture(view, "team_selection_1280_scale2.bmp");
+  EXPECT_EQ(scrollViolations(), "") << "1280x720 at scale 2";
+  // Scrolling to the club strip brings the start button into view.
+  {
+    ImGuiWindow* page = ImGui::FindWindowByName("##team_selection");
+    const ImGuiWindow* strip = nullptr;
+    for (const ImGuiWindow* window : GImGui->Windows)
+      if (window->Active &&
+          std::string_view(window->Name).find("/##selected_club_strip") !=
+              std::string_view::npos)
+        strip = window;
+    ASSERT_NE(page, nullptr);
+    ASSERT_NE(strip, nullptr) << "the stacked layout shows the club strip";
+    ImGui::SetScrollY(page, page->Scroll.y + strip->Pos.y - page->Pos.y);
+    frames(view, 3);
+    EXPECT_TRUE(startButtonReachable(view)) << "scrolled to the club strip";
+    capture(view, "team_selection_1280_scale2_strip.bmp");
+  }
+  // Scrolled to the bottom: still one scroll surface, the club list whole.
+  ImGui::SetScrollY(ImGui::FindWindowByName("##team_selection"), 1.0e6f);
+  frames(view, 3);
+  capture(view, "team_selection_1280_scale2_scrolled.bmp");
+  EXPECT_EQ(scrollViolations(), "") << "scrolled";
   setUiScale(view, 0.0f);
 }
 

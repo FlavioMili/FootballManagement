@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <filesystem>
 #include <iostream>
@@ -33,6 +34,8 @@
 #include "gui/render/match_kit_colors.h"
 #include "gui/render/match_render_3d_tuning.h"
 #include "gui/render/match_render_math.h"
+#include "gui/render/match_renderer_2d.h"
+#include "gui/render/match_renderer_3d.h"
 #include "gui/scenes/match_scene.h"
 #include "gui/widgets/theme.h"
 
@@ -160,6 +163,94 @@ TEST(MatchCamera3DTest, DampingIsFrameRateIndependent)
     EXPECT_NEAR(coarse.eye().y, fine.eye().y, 1e-3f);
     EXPECT_NEAR(coarse.eye().z, fine.eye().z, 1e-3f);
   }
+}
+
+TEST(MatchCamera3DTest, DirectorCutsForGoalsShotsAndAttacks)
+{
+  using D = MatchRender3DTuning::Director;
+  constexpr float STEP = 1.0f / 60.0f;
+  MatchCamera3D camera;
+  MatchCameraFocus focus = focusAt(52.5f, 34.0f);
+  focus.livePlay = true;
+  camera.snap(focus, MatchCameraMode::DIRECTOR);
+  const auto run = [&](const MatchCameraFocus& at, float seconds)
+  {
+    for (float t = 0.0f; t < seconds; t += STEP)
+      camera.update(at, MatchCameraMode::DIRECTOR, {}, STEP);
+  };
+  run(focus, 5.0f);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::BROADCAST);
+  EXPECT_EQ(camera.directorCuts(), 0);
+
+  // A goal cuts (not glides) straight to the close-up of the scorer.
+  MatchCameraFocus goal = focus;
+  goal.goalCelebration = true;
+  goal.celebration = {100.0f, 60.0f, 0.0f};
+  goal.hasCelebration = true;
+  camera.update(goal, MatchCameraMode::DIRECTOR, {}, STEP);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::CLOSE_UP);
+  EXPECT_NEAR(camera.target().x, 100.0f, 0.5f);
+  EXPECT_LT(camera.distance(), D::CLOSE_UP_DISTANCE + 0.5f);
+  run(goal, 3.0f);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::CLOSE_UP);
+  // Once the celebration is over the main camera is back.
+  camera.update(focus, MatchCameraMode::DIRECTOR, {}, STEP);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::BROADCAST);
+  EXPECT_EQ(camera.directorCuts(), 2);
+
+  // A shot at goal: the goal-line camera, held briefly after it is over.
+  MatchCameraFocus shot = focusAt(88.0f, 30.0f);
+  shot.livePlay = true;
+  shot.hasCarrier = false;
+  shot.shotInFlight = true;
+  shot.ballVelocity = {25.0f, 1.0f, 0.0f};
+  camera.update(shot, MatchCameraMode::DIRECTOR, {}, STEP);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::GOAL_LINE);
+  const Vec3 goalLineEye = camera.eye();
+  EXPECT_NEAR(goalLineEye.x, 105.0f + D::GOAL_LINE_BACK, 0.5f);
+  EXPECT_LT(goalLineEye.z, D::GOAL_LINE_HEIGHT + 0.5f);
+  MatchCameraFocus loose = shot;
+  loose.shotInFlight = false;
+  run(loose, D::GOAL_LINE_HOLD * 0.5f);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::GOAL_LINE);
+  run(loose, D::GOAL_LINE_HOLD);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::BROADCAST);
+  // A second shot inside the cooldown stays on the main camera.
+  camera.update(shot, MatchCameraMode::DIRECTOR, {}, STEP);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::BROADCAST);
+
+  // An attack building in the final third earns one reverse angle, held for
+  // a while and not repeated within its cooldown.
+  MatchCameraFocus attack = focusAt(80.0f, 30.0f);
+  attack.livePlay = true;
+  run(attack, D::MIN_SHOT_SECONDS + D::ATTACK_BUILD_SECONDS + 0.5f);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::REVERSE_ANGLE);
+  EXPECT_GT(camera.eye().y, 68.0f);
+  run(attack, D::REVERSE_HOLD + 0.1f);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::BROADCAST);
+  // The reverse angle came about MIN_SHOT_SECONDS into the attack.
+  run(attack, D::REVERSE_COOLDOWN - D::REVERSE_HOLD - D::MIN_SHOT_SECONDS -
+                  1.5f);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::BROADCAST);
+  run(attack, 3.0f);
+  EXPECT_EQ(camera.directorShot(), MatchDirectorShot::REVERSE_ANGLE);
+  const int cutsSoFar = camera.directorCuts();
+
+  // Reduced motion keeps the main camera, goals and shots included.
+  MatchCamera3D calm;
+  MatchCameraFocus calmGoal = goal;
+  calmGoal.reducedMotion = true;
+  calm.snap(focus, MatchCameraMode::DIRECTOR);
+  for (int frame = 0; frame < 300; ++frame)
+  {
+    calm.update(calmGoal, MatchCameraMode::DIRECTOR, {}, STEP);
+    MatchCameraFocus calmShot = shot;
+    calmShot.reducedMotion = true;
+    calm.update(calmShot, MatchCameraMode::DIRECTOR, {}, STEP);
+  }
+  EXPECT_EQ(calm.directorShot(), MatchDirectorShot::BROADCAST);
+  EXPECT_EQ(calm.directorCuts(), 0);
+  EXPECT_EQ(cutsSoFar, 7);
 }
 
 TEST(MatchCamera3DTest, PresetsConvergeAndStayOutOfTheStands)
@@ -864,6 +955,11 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
                 << medianRenderMilliseconds(60) << " ms, draw list "
                 << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
       capture("match_3d_goal_celebration.bmp");
+      // The TV director cuts to a close-up of the celebration.
+      scene.camera_mode = MatchCameraMode::DIRECTOR;
+      for (int index = 0; index < 30; ++index) frame(FRAME_SECONDS);
+      if (scene.engine->getState() == MatchState::GOAL)
+        capture("match_3d_director_goal.bmp");
       press(SDLK_3);
       for (int index = 0; index < 60; ++index) frame(FRAME_SECONDS);
       capture("match_3d_goal_end.bmp");
@@ -880,6 +976,115 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
     EXPECT_EQ(scene.view_mode, MatchViewMode::PITCH_2D);
     frame(FRAME_SECONDS);
     capture("match_2d_after_toggle.bmp");
+
+    // The 2D tactical view: cost and captures with panels, then in pitch
+    // focus at 1440p and 720p, in open play after any celebration.
+    for (int step = 0; step < 600 && scene.engine->getState() !=
+                                         MatchState::PLAYING;
+         ++step)
+      scene.engine->advance(0.5f);
+    scene.engine->advance(8.0f);
+    for (int index = 0; index < 30; ++index) frame(FRAME_SECONDS);
+    std::cout << "[match-2d] 1280x800 panels render CPU median "
+              << medianRenderMilliseconds(90) << " ms, draw list "
+              << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
+    capture("match_2d_panels.bmp");
+    SDL_SetWindowSize(window, 2560, 1440);
+    SDL_PumpEvents();
+    press(SDLK_F);
+    for (int index = 0; index < 30; ++index) frame(FRAME_SECONDS);
+    const float focus2d = medianRenderMilliseconds(90);
+    std::cout << "[match-2d] focus 2560x1440 render CPU median " << focus2d
+              << " ms, draw list " << ImGui::GetDrawData()->TotalVtxCount
+              << " vertices\n";
+    RecordProperty("render_2d_focus_1440p_median_microseconds",
+                   static_cast<int>(focus2d * 1000.0f));
+    EXPECT_LT(focus2d, 12.0f);
+    capture("match_2d_focus_1440p.bmp");
+    SDL_SetWindowSize(window, 1280, 720);
+    SDL_PumpEvents();
+    for (int index = 0; index < 30; ++index) frame(FRAME_SECONDS);
+    std::cout << "[match-2d] focus 1280x720 render CPU median "
+              << medianRenderMilliseconds(90) << " ms, draw list "
+              << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
+    capture("match_2d_focus_720p.bmp");
+    press(SDLK_ESCAPE);
+    SDL_SetWindowSize(window, 1280, 800);
+    SDL_PumpEvents();
+
+    // Presentation options the scene does not expose yet, rendered straight
+    // through the renderers: the daylight preset and, in 2D, the pressure
+    // overlay with an offside flash.
+    const auto direct = [&](IMatchRenderer& target,
+                            const MatchRenderOptions& options, int frames,
+                            const std::vector<MatchEvent>* events)
+    {
+      std::vector<float> timings;
+      timings.reserve(static_cast<std::size_t>(frames));
+      for (int index = 0; index < frames; ++index)
+      {
+        ImGui_ImplSDLRenderer3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+        scene.engine->advance(FRAME_SECONDS);
+        const ImVec2 display = ImGui::GetIO().DisplaySize;
+        ImGui::SetNextWindowPos({0.0f, 0.0f});
+        ImGui::SetNextWindowSize(display);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0f, 0.0f});
+        ImGui::Begin("direct", nullptr,
+                     ImGuiWindowFlags_NoDecoration |
+                         ImGuiWindowFlags_NoBackground);
+        MatchRenderSnapshot snapshot = buildMatchRenderSnapshot(*scene.engine);
+        if (events && index > 0) snapshot.events = events;
+        // The 2D pitch keeps its proportions inside an apron.
+        const MatchViewport pitch =
+            options.pressureOverlay
+                ? computeMatchViewport(40.0f, 40.0f, display.x - 80.0f,
+                                       display.y - 80.0f)
+                : MatchViewport{0.0f, 0.0f, display.x, display.y};
+        const auto started = std::chrono::steady_clock::now();
+        target.render(snapshot, options, pitch);
+        timings.push_back(std::chrono::duration<float, std::milli>(
+                              std::chrono::steady_clock::now() - started)
+                              .count());
+        ImGui::End();
+        ImGui::PopStyleVar();
+        ImGui::Render();
+        SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
+        SDL_RenderClear(renderer);
+        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+      }
+      std::sort(timings.begin(), timings.end());
+      return timings[timings.size() / 2];
+    };
+    MatchRenderer3D dayRenderer;
+    MatchRenderOptions dayOptions;
+    dayOptions.frameSeconds = FRAME_SECONDS;
+    dayOptions.dayLook = true;
+    dayOptions.cameraMode = MatchCameraMode::BROADCAST;
+    std::cout << "[match-3d] day look 1280x800 broadcast render CPU median "
+              << direct(dayRenderer, dayOptions, 90, nullptr)
+              << " ms (renderer only), draw list "
+              << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
+    capture("match_3d_day_broadcast.bmp");
+    dayOptions.cameraMode = MatchCameraMode::PLAYER_FOLLOW;
+    direct(dayRenderer, dayOptions, 90, nullptr);
+    capture("match_3d_day_follow.bmp");
+
+    MatchRenderer2D overlayRenderer;
+    MatchRenderOptions overlayOptions;
+    overlayOptions.frameSeconds = FRAME_SECONDS;
+    overlayOptions.pressureOverlay = true;
+    std::vector<MatchEvent> offsideEvents = scene.engine->getEvents();
+    MatchEvent& offside = offsideEvents.emplace_back();
+    offside.type = MatchEventType::OFFSIDE;
+    offside.hasTeam = true;
+    offside.position = {0.7f, 0.4f};
+    std::cout << "[match-2d] pressure overlay 1280x800 render CPU median "
+              << direct(overlayRenderer, overlayOptions, 40, &offsideEvents)
+              << " ms (renderer only), draw list "
+              << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
+    capture("match_2d_pressure_offside.bmp");
   }
 
   ImGui_ImplSDLRenderer3_Shutdown();

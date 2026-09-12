@@ -24,10 +24,16 @@
 
 namespace
 {
-constexpr const char* POPUP_ID = "##match_analysis";
-constexpr float DIALOG_WIDTH = 620.0f;
-constexpr float VIEWPORT_WIDTH_SHARE = 0.94f;
-constexpr float VIEWPORT_HEIGHT_SHARE = 0.9f;
+constexpr const char* WINDOW_ID = "##match_analysis";
+constexpr float PANEL_WIDTH = 460.0f;
+constexpr float PANEL_MIN_WIDTH = 300.0f;
+/** Share of the window width the panel may take at most. */
+constexpr float VIEWPORT_WIDTH_SHARE = 0.45f;
+/**
+ * Share of the window height the panel may take at most: it hangs from the
+ * bottom-right corner and never reaches the match controls at the top.
+ */
+constexpr float VIEWPORT_HEIGHT_SHARE = 0.6f;
 /** The break is over for the auto-opening after this second-half minute. */
 constexpr float HALF_TIME_OFFER_UNTIL = 50.0f;
 
@@ -60,21 +66,21 @@ void MatchAnalysisPanel::renderForMatch(GameController& controller,
 {
   const auto team = controller.getManagedTeam();
   const TeamID managed = team ? team->get().getId() : 0;
-  if (team && (managed == home_id || managed == away_id) && !visible &&
-      !open_requested && !other_dialog_open)
+  if (team && (managed == home_id || managed == away_id) && !other_dialog_open)
   {
     const MatchState state = engine.getState();
     const bool break_time =
         state == MatchState::HALF_TIME ||
         (engine.getPeriod() == 2 &&
          engine.getMatchTimeMinutes() < HALF_TIME_OFFER_UNTIL);
+    // Full time also refreshes a panel still open from earlier.
     if (!full_offered && state == MatchState::FULL_TIME)
     {
       full_offered = true;
       half_offered = true;
       openNow(controller, engine, home_id, away_id);
     }
-    else if (!half_offered && break_time)
+    else if (!half_offered && !visible && break_time)
     {
       half_offered = true;
       openNow(controller, engine, home_id, away_id);
@@ -100,7 +106,8 @@ void MatchAnalysisPanel::openNow(GameController& controller,
   own_name = name(managed);
   other_name = name(home ? away_id : home_id);
   build(controller, engine, home);
-  open_requested = true;
+  visible = true;
+  focus_requested = true;
 }
 
 void MatchAnalysisPanel::build(GameController& controller,
@@ -176,49 +183,69 @@ void MatchAnalysisPanel::build(GameController& controller,
 
 void MatchAnalysisPanel::render()
 {
-  if (open_requested)
-  {
-    open_requested = false;
-    ImGui::OpenPopup(POPUP_ID);
-  }
-  visible = ImGui::IsPopupOpen(POPUP_ID);
   if (!visible) return;
 
+  // A panel in the bottom-right corner, not a modal: the match controls
+  // (Pause, Finish, speed) stay visible and clickable while it is open.
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
-  const float width = std::min(scaled(DIALOG_WIDTH),
-                               viewport->WorkSize.x * VIEWPORT_WIDTH_SHARE);
-  ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always,
-                          ImVec2(0.5f, 0.5f));
+  const float margin = scaled(Theme::Space::M);
+  const float width =
+      std::min(scaled(PANEL_WIDTH),
+               std::max(scaled(PANEL_MIN_WIDTH),
+                        viewport->WorkSize.x * VIEWPORT_WIDTH_SHARE));
+  ImGui::SetNextWindowPos(
+      ImVec2(viewport->WorkPos.x + viewport->WorkSize.x - margin,
+             viewport->WorkPos.y + viewport->WorkSize.y - margin),
+      ImGuiCond_Always, ImVec2(1.0f, 1.0f));
   ImGui::SetNextWindowSizeConstraints(
       ImVec2(width, 0.0f),
       ImVec2(width, viewport->WorkSize.y * VIEWPORT_HEIGHT_SHARE));
-  if (!ImGui::BeginPopupModal(POPUP_ID, nullptr,
-                              ImGuiWindowFlags_AlwaysAutoResize |
-                                  ImGuiWindowFlags_NoTitleBar |
-                                  ImGuiWindowFlags_NoSavedSettings))
+  if (focus_requested)
   {
-    visible = false;
+    focus_requested = false;
+    ImGui::SetNextWindowFocus();
+  }
+  const bool shown = ImGui::Begin(
+      WINDOW_ID, nullptr,
+      ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar |
+          ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse |
+          ImGuiWindowFlags_NoMove);
+  if (!shown)
+  {
+    ImGui::End();
     return;
   }
   const Theme::Palette& palette = Theme::palette();
-  // Explicit wrap edge: an auto-resizing popup would otherwise grow instead.
+  // Explicit wrap edge: an auto-resizing window would otherwise grow instead.
   const float wrap = ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x;
+  // Title with the close button beside it, so closing never needs scrolling.
+  const char* close = LOC("ANALYSIS_CLOSE");
+  const float closeWidth = UI::buttonWidth(close, UI::ButtonSize::COMPACT);
+  const float titleWidth =
+      std::max(0.0f, ImGui::GetContentRegionAvail().x - closeWidth -
+                         ImGui::GetStyle().ItemSpacing.x);
+  ImGui::BeginGroup();
   {
     Theme::ScopedText heading(Theme::Text::TITLE);
-    UI::textFitted(title, ImGui::GetContentRegionAvail().x, palette.text);
+    UI::textFitted(title, titleWidth, palette.text);
   }
+  ImGui::EndGroup();
+  ImGui::SameLine(wrap - closeWidth);
+  if (UI::secondaryButton(close, ImVec2(0.0f, 0.0f), UI::ButtonSize::COMPACT))
+    visible = false;
   ImGui::Separator();
 
   // Side-by-side numbers: label, managed club, opponent.
   const float full = ImGui::GetContentRegionAvail().x;
   const float valueWidth = std::max(scaled(90.0f), full * 0.22f);
+  const float cellGap = ImGui::GetStyle().ItemSpacing.x;
   const auto columns = [&](const char* label, const std::string& own,
                            const std::string& other, const ImVec4& color)
   {
     const float x = ImGui::GetCursorPosX();
-    UI::textFitted(label, full - 2.0f * valueWidth, color);
+    UI::textFitted(label, full - 2.0f * valueWidth - cellGap, color);
     ImGui::SameLine(x + full - 2.0f * valueWidth);
-    UI::textFitted(own, valueWidth, color);
+    UI::textFitted(own, valueWidth - cellGap, color);
     ImGui::SameLine(x + full - valueWidth);
     UI::textFitted(other, valueWidth, color);
   };
@@ -234,10 +261,14 @@ void MatchAnalysisPanel::render()
 
   ImGui::Dummy(ImVec2(0.0f, scaled(Theme::Space::XS)));
   UI::sectionLabel(LOC("ANALYSIS_OBSERVATIONS"));
+  // Bullet + wrapped text (BulletText itself never wraps).
   ImGui::PushTextWrapPos(wrap);
-  for (const std::string& line : observations)
-    ImGui::BulletText("%s", line.c_str());
-  for (const std::string& line : notes) ImGui::BulletText("%s", line.c_str());
+  for (const auto* lines : {&observations, &notes})
+    for (const std::string& line : *lines)
+    {
+      ImGui::Bullet();
+      ImGui::TextUnformatted(line.c_str());
+    }
   ImGui::PopTextWrapPos();
 
   ImGui::Dummy(ImVec2(0.0f, scaled(Theme::Space::XS)));
@@ -261,12 +292,5 @@ void MatchAnalysisPanel::render()
     }
     ImGui::PopTextWrapPos();
   }
-
-  ImGui::Dummy(ImVec2(0.0f, scaled(Theme::Space::S)));
-  if (UI::primaryButton(LOC("ANALYSIS_CLOSE"), ImVec2(-FLT_MIN, 0.0f)))
-  {
-    ImGui::CloseCurrentPopup();
-    visible = false;
-  }
-  ImGui::EndPopup();
+  ImGui::End();
 }

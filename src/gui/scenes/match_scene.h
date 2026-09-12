@@ -22,6 +22,9 @@
 #include "gui/render/imatch_renderer.h"
 #include "gui/scenes/match_scene_tuning.h"
 #include "gui/scenes/match_analysis_panel.h"
+#include "gui/scenes/match_subs_panel.h"
+#include "gui/scenes/match_tactics_panel.h"
+#include "gui/scenes/match_touchline.h"
 #include "gui/scenes/team_talk_dialog.h"
 #include "model/match_engine.h"
 
@@ -106,6 +109,12 @@ class MatchScene : public GUIScene
   MatchViewMode view_mode = MatchViewMode::PITCH_2D;
   MatchCameraMode camera_mode = MatchCameraMode::BROADCAST;
   bool show_player_names = false;
+  /** Kick-off of today's fixture (minutes after midnight, -1 unknown). */
+  int kickoff_minutes = -1;
+  /** Daylight 3D presentation (default for day kick-offs). */
+  bool day_look = false;
+  /** Pitch-control overlay on the 2D view. */
+  bool pressure_overlay = false;
   float pending_zoom_steps = 0.0f;
   /** Mouse input over the 3D view waiting for the next rendered frame. */
   MatchCameraInput pending_camera_input;
@@ -132,13 +141,22 @@ class MatchScene : public GUIScene
   MatchAnalysisPanel analysis_panel;
 
   bool show_substitutions = false;
-  /** The substitutions popup was opened (it is opened once per showing). */
-  bool substitutions_popup_opened = false;
+  /** Substitutions dialog: planned changes, swaps and the assistant. */
+  MatchSubsPanel subs_panel;
+  bool show_tactics = false;
+  /** Tactics dialog: style, instructions and formation during play. */
+  MatchTacticsPanel tactics_panel;
+  /** Play was paused by opening a matchday dialog (resumes on close). */
+  bool paused_for_dialog = false;
+  /** The match was in a break (half-time, around extra time, shootout)
+   * last frame: entering one pauses the managed club's match. */
+  bool in_break = false;
+  /** The last update skipped ahead: the next frame's time (which includes
+   * the skip's own work) is clamped so play does not jump. */
+  bool skipped_last_update = false;
 #ifdef DEBUG
   bool show_ai_debug = false;
 #endif
-  PlayerID selected_pitch_player{};
-  PlayerID selected_bench_player{};
   std::string substitution_status;
   /** Feed rows: indices into the engine's events (key moments by default). */
   std::vector<std::size_t> visible_events;
@@ -162,10 +180,19 @@ class MatchScene : public GUIScene
   void startMatch();
   /** AI substitutions: opponent always, managed side only via assistant. */
   void applySubstitutionPolicy();
-  /** Performs a manual change; false (with a reason) when refused. */
+  /** Performs a manual change now; false (with a reason) when refused. */
   bool substitute(PlayerID outgoing, PlayerID incoming);
-  /** Why the managed side cannot make a change now (nullptr if it can). */
-  [[nodiscard]] std::string substitutionBlockReason() const;
+  /** The managed side's touchline (only when the managed club plays). */
+  [[nodiscard]] std::optional<TouchlineContext> touchline();
+  /** Shows or hides a matchday dialog (pausing play if the user wants). */
+  void showSubstitutions(bool show);
+  void showTactics(bool show);
+  /** Resumes play once no matchday dialog is left open. */
+  void dialogClosed();
+  /** The view with the shouts bar under it (managed matches). */
+  void renderPitchArea(ImVec2 size);
+  /** Shouts chip in the bottom-right corner of the focus view. */
+  void renderFocusShouts(ImVec2 origin, ImVec2 size);
   /** Records the result with the full engine report and shows the report. */
   bool finishMatch();
   /** Plays the rest of the match instantly, then finishes it. */
@@ -173,6 +200,8 @@ class MatchScene : public GUIScene
   [[nodiscard]] std::string clockText() const;
   [[nodiscard]] ImU32 teamColor(bool home) const;
 
+  /** Pauses the managed club's match when it has just reached a break. */
+  void pauseAtBreak();
   void setPlaybackSpeed(float speed);
   void setHighlightsOnly(bool enabled);
   void setViewMode(MatchViewMode mode);
@@ -201,6 +230,7 @@ class MatchScene : public GUIScene
   void renderStatistics(ImVec2 size);
   void renderEvents(ImVec2 size);
   void renderSubstitutionsModal();
+  void renderTacticsModal();
 #ifdef DEBUG
   void renderDebugLines();
   void exportDebugSnapshot();

@@ -397,7 +397,6 @@ class GameController
   bool rejectBid(PlayerID player_id);
   bool counterOffer(PlayerID player_id, uint32_t new_price);
   bool isTransferWindowOpen() const;
-  std::vector<std::pair<PlayerID, TransferListing>> getIncomingBids() const;
 
   // ========== Transfer Market: structured deals ==========
   /** Transfer window on the current date (deadline countdown). */
@@ -440,14 +439,67 @@ class GameController
   /** Buys a player on loan at the managed club for the option fee. */
   bool exerciseLoanOption(PlayerID player_id);
 
-  /** AI offers for the managed club's players (loans included). */
+  /** AI offers for the managed club's players (loans included). Bids of
+   * AI clubs on the club's listed players arrive here too. */
   const std::vector<IncomingOffer>& getIncomingOffers() const;
+
+  /** Everything the talks over an incoming transfer offer show. */
+  struct IncomingOfferView
+  {
+    std::uint32_t offer_id = 0;
+    PlayerID player_id = 0;
+    TeamID buyer = 0;
+    std::string player_name;
+    std::string buyer_name;
+    int age = 0;
+    SquadRole role{};
+    std::uint32_t market_value = 0;
+    std::uint32_t asking_price = 0; /*!< Listing price, 0 if not listed. */
+    std::uint8_t contract_years = 0;
+    BuyerNegotiation::PlayerStance stance = BuyerNegotiation::PlayerStance::Open;
+    std::uint8_t rivals = 0; /*!< Other clubs bidding for him. */
+    OfferStatus status = OfferStatus::AwaitingClub;
+    GameDateValue expires;
+    GameDateValue respond_on;
+    TransferNegotiation::OfferTerms terms; /*!< The bid on the table. */
+    TransferNegotiation::OfferTerms asked; /*!< The club's pending counter. */
+    std::vector<OfferRound> history;
+    bool final_offer = false; /*!< The bid is the buyer's last word. */
+    bool window_open = false;
+    int days_to_deadline = -1;
+  };
+  std::optional<IncomingOfferView> getIncomingOfferView(
+      std::uint32_t offer_id) const;
+
+  /** What became of an action on an incoming offer. */
+  enum class OfferOutcome : std::uint8_t
+  {
+    Sold,          /*!< The player moved (or left on loan). */
+    AwaitingReply, /*!< The buyer answers on a later day. */
+    Countered,     /*!< The buyer answered at once (deadline) with terms. */
+    WalkedAway,    /*!< The buyer ended the talks. */
+    Rejected,      /*!< The club turned the offer down. */
+    TermsRefused,  /*!< The clubs agreed but the player would not sign. */
+    Failed         /*!< Not possible now (window, budget, player gone). */
+  };
+  /** Accepts the bid on the table: the player agrees personal terms with
+   * the buyer (or, rarely, refuses) and the sale completes. */
+  OfferOutcome settleIncomingOffer(std::uint32_t offer_id);
+  /** settleIncomingOffer() that only reports whether the player moved. */
   bool acceptIncomingOffer(std::uint32_t offer_id);
+  /** Turns the offer down; a player keen on the move takes it badly. */
   bool rejectIncomingOffer(std::uint32_t offer_id);
-  /** Asks the bidder for @p fee: accepted (sale completes), improved
-   * (Counter with the new fee) or withdrawn (Reject). */
-  TransferNegotiation::ClubResponse counterIncomingOffer(std::uint32_t offer_id,
-                                                         uint32_t fee);
+  /** Proposes a full structure to the bidder. It answers in a day or two
+   * (the same day near the deadline): accepts, counters or walks away. */
+  OfferOutcome counterIncomingOffer(
+      std::uint32_t offer_id, const TransferNegotiation::OfferTerms& terms);
+  /** Lists the player at @p price and gives the bidder that figure as
+   * a take-it-or-leave-it price (it meets it, makes its final offer or
+   * leaves). */
+  OfferOutcome nameAskingPrice(std::uint32_t offer_id, uint32_t price);
+  /** Rejects every bid for the offer's player and tells the clubs he is
+   * not for sale until the window closes. */
+  bool declareNotForSale(std::uint32_t offer_id);
 
   /** Remaining wages owed if a managed player is released today. */
   int64_t getReleaseCost(PlayerID player_id) const;
@@ -1108,6 +1160,22 @@ class GameController
                        std::optional<ContractTerms> contract = std::nullopt);
   void processAITransferActivity();
   void evaluateIncomingAIBids();
+  /** Buyers' answers to the club's counters that are due today. */
+  void processOfferReplies();
+  /** Applies the buyer's answer to the counter of offer @p offer_id. */
+  OfferOutcome answerCounter(std::uint32_t offer_id);
+  OfferOutcome sendCounter(std::uint32_t offer_id,
+                           const TransferNegotiation::OfferTerms& terms,
+                           bool firm);
+  /** An AI club's bid on a listed managed player becomes an offer the
+   * manager can negotiate. */
+  bool routeListingBid(PlayerID pid, TeamID bidder_id, uint32_t bid,
+                       bool announce = true);
+  /** Listing bids for managed players (older saves) become offers. */
+  void absorbListingBids();
+  /** How a managed player feels about joining @p buyer. */
+  BuyerNegotiation::PlayerStance playerStance(PlayerID pid,
+                                              TeamID buyer) const;
   /** Drops listings of players who moved, left or may not be traded. */
   void purgeStaleListings();
   /** Withdraws the bids a club placed while it had no manager. */

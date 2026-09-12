@@ -46,6 +46,10 @@ struct Settings
   float crowd_volume = 0.8f;
   float effects_volume = 0.8f;
   bool audio_muted = false;
+
+  // Live match
+  bool pause_for_match_changes = true; /**< Substitutions/tactics pause play */
+  bool pause_at_breaks = true; /**< Managed match stops at half-time etc. */
 };
 
 /**

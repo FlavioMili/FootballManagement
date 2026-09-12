@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "gui/scenes/management_scene.h"
+#include "gui/scenes/offer_negotiation_dialog.h"
 #include "gui/scenes/player_talk_dialog.h"
 #include "model/inbox.h"
 
@@ -22,8 +23,9 @@
  * information feed with category filters and digest grouping.
  *
  * Decisions (offers for the club's players, player requests, youth
- * trialists) stay on the Decisions tab until resolved, with accept /
- * reject / reply / sign buttons right there. Read information older than
+ * trialists) stay on the Decisions tab until resolved, with negotiate /
+ * accept / reject / reply / sign buttons right there; transfer bids open
+ * the talks dialog (OfferNegotiationDialog). Read information older than
  * Inbox::ARCHIVE_DAYS moves to the archive.
  *
  * Routine messages of the same kind that arrive in the same week are folded
@@ -74,6 +76,8 @@ class InboxScene : public ManagementScene
     {
       uint32_t id = 0; /**< Offer id or trialist player id. */
       std::string text;
+      bool negotiable = false; /**< A transfer bid (talks dialog). */
+      bool awaiting = false;   /**< The buyer considers a counter. */
     };
     std::vector<Option> options;
   };
@@ -108,4 +112,5 @@ class InboxScene : public ManagementScene
   std::string selected_title;
   std::string selected_body;
   PlayerTalkDialog talk_dialog;
+  OfferNegotiationDialog offer_dialog;
 };

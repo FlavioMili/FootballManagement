@@ -211,6 +211,7 @@ NextActionFacts gatherNextActionFacts(const GameController& controller)
 
   for (const IncomingOffer& offer : controller.getIncomingOffers())
   {
+    if (offer.status != OfferStatus::AwaitingClub) continue;
     NextActionFacts::Offer entry;
     entry.id = offer.id;
     entry.player = offer.player_id;

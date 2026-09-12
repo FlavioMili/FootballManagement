@@ -8,59 +8,30 @@
 
 #pragma once
 
+#include <imgui.h>
+
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "global/types.h"
 #include "gui/gui_scene.h"
+#include "gui/nav_history.h"
 #include "gui/scenes/holiday_dialog.h"
+#include "gui/swipe_gesture.h"
 #include "model/gamedate.h"
 #include "model/next_action.h"
-
-/**
- * @brief Screens of the management shell. The sidebar groups them into a
- * few hubs (Home, Inbox, Squad, Training, Matches, Recruitment, Club) whose
- * screens are shown as tabs above the page.
- */
-enum class NavSection : uint8_t
-{
-  HOME,
-  INBOX,
-  CLUB,
-  SQUAD,
-  LINEUP,
-  TACTICS,
-  FIXTURES,
-  STANDINGS,
-  TRANSFERS,
-  FINANCES,
-  SCOUTING,
-  TRAINING,
-  STAFF,
-  YOUTH,
-  MANAGER,
-  MEDICAL,
-  CALENDAR,
-  SQUAD_PLANNER,
-  COMPARE,
-  DELEGATION,
-  DATA_HUB,
-  OPPOSITION,
-  INTERNATIONAL,
-  AWARDS,
-  RECORDS,
-  PLANNING,
-  NONE
-};
 
 /**
  * @brief Navigation between management screens.
  *
  * Sections replace whatever is stacked above the club dashboard (one routine
  * screen at a time, no overlay pile-up). Detail screens such as a player
- * profile stack on top of the current section and close with Back.
+ * profile stack on top of the current section. Every screen shown is
+ * recorded in the view's history (GUIView::navHistory()), which Back and
+ * Forward walk like a browser's.
  */
 namespace Navigation
 {
@@ -80,8 +51,35 @@ void openClub(GUIView* view, TeamID teamId);
 /** @brief Compares players side by side (0 = pick one on the screen). */
 void openCompare(GUIView* view, PlayerID first, PlayerID second = 0);
 
-/** @brief Closes the top screen (back to the previous one or Home). */
+/**
+ * @brief Goes back to the previous screen of the history (Back button,
+ * Alt+Left, mouse button 4, a swipe to the right), skipping screens that
+ * can no longer be opened. With no history it closes the top screen. Does
+ * nothing unless a career screen is shown (never leaves a live match, the
+ * club choice or the career).
+ */
 void back(GUIView* view);
+
+/** @brief Re-opens the screen Back left (Alt+Right, mouse button 5). */
+void forward(GUIView* view);
+
+/**
+ * @brief Closes the top screen, back to the one beneath it or Home (Esc).
+ * When that is the previous screen of the history, this is a step back.
+ */
+void close(GUIView* view);
+
+/** @brief Whether back() would change the screen. */
+[[nodiscard]] bool canGoBack(GUIView* view);
+
+/** @brief Whether forward() would change the screen. */
+[[nodiscard]] bool canGoForward(GUIView* view);
+
+/**
+ * @brief Whether a history entry can still be opened: its player or clubs
+ * still exist and its section is available (out of work only a few are).
+ */
+[[nodiscard]] bool canOpen(const GUIView* view, const NavEntry& entry);
 }  // namespace Navigation
 
 /**
@@ -99,6 +97,10 @@ class ManagementScene : public GUIScene
   void render() final;
   void onEnter() override;
   void onResume() override;
+  /** Mouse side buttons and the sideways touchpad swipe (Back / Forward). */
+  void handleEvent(const SDL_Event& event) override;
+  /** The screen's sidebar section; detail screens override it. */
+  [[nodiscard]] std::optional<NavEntry> historyEntry() const override;
 
  protected:
   /** @brief Draws the page body inside the content region. */
@@ -137,10 +139,14 @@ class ManagementScene : public GUIScene
   };
 
   void renderSidebar(bool collapsed);
+  /** @brief Screens of the hovered hub beside the collapsed sidebar. */
+  void renderSidebarFlyout();
   void renderTopBar(float height);
   void renderPalette();
   void renderMainMenuConfirm();
   void handleShortcuts();
+  /** Arrow bubble at the window edge while a sideways swipe is under way. */
+  void renderSwipeIndicator();
   void openPalette();
   void buildPaletteIndex();
   void filterPalette();
@@ -166,8 +172,15 @@ class ManagementScene : public GUIScene
   std::vector<NextAction> palette_actions;
   int palette_selection = 0;
 
+  /** Back / Forward asked for by a side button or swipe, done next frame. */
+  SwipeGesture::Step pending_history_step = SwipeGesture::Step::NONE;
+
   bool main_menu_confirm_requested = false;
   HolidayDialog holiday_dialog;
   /** Whether the sidebar navigation needed scrolling last frame. */
   bool sidebar_nav_overflow = false;
+  /** Hub whose flyout is open beside the collapsed sidebar (-1: none). */
+  int flyout_hub = -1;
+  ImVec2 flyout_anchor{};
+  float flyout_grace = 0.0f; /*!< Seconds left once the mouse has left. */
 };

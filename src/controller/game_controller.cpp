@@ -185,6 +185,7 @@ bool GameController::loadGame(int slot)
     }
   }
   purgeStaleListings();
+  absorbListingBids();
   if (game->getManagedTeamId() != FREE_AGENTS_TEAM_ID)
     game->getWorld().getScouting().setManagedTeam(game->getManagedTeamId());
   startSession(slot, inspection.metadata.playtime_seconds);
@@ -1250,6 +1251,11 @@ bool GameController::submitBid(PlayerID pid, TeamID bidder_id,
 
   if (!canAffordPlayer(bidder_id, pid, bid_amount)) return false;
 
+  // The managed club negotiates bids for its own players.
+  if (hasSelectedTeam() &&
+      it->second.seller_team_id == game->getManagedTeamId())
+    return routeListingBid(pid, bidder_id, bid_amount);
+
   if (bid_amount > it->second.highest_bid)
   {
     it->second.highest_bid = bid_amount;
@@ -1309,23 +1315,6 @@ bool GameController::counterOffer(PlayerID pid, uint32_t new_price)
 bool GameController::isTransferWindowOpen() const
 {
   return game && game->getCurrentDate().isTransferWindowOpen();
-}
-
-std::vector<std::pair<PlayerID, TransferListing>>
-GameController::getIncomingBids() const
-{
-  std::vector<std::pair<PlayerID, TransferListing>> bids;
-  uint16_t managed_id = game->getManagedTeamId();
-
-  for (const auto& [pid, listing] : transfer_listings)
-  {
-    if (listing.seller_team_id == managed_id &&
-        listing.highest_bidder_id.has_value() && listing.highest_bid > 0)
-    {
-      bids.emplace_back(pid, listing);
-    }
-  }
-  return bids;
 }
 
 // ========== AI Squad Evaluation ==========
@@ -1987,6 +1976,7 @@ void GameController::processAITransferActivity()
   std::ranges::sort(clubs);
   rng.shuffle(std::span<TeamID>(clubs));
 
+  processOfferReplies();
   market.runAiPreContracts(
       today, managed, rng,
       Market::perDay(clubs.size(), Market::DAILY_PRE_CONTRACT_SHARE));
@@ -2336,98 +2326,6 @@ const std::vector<IncomingOffer>& GameController::getIncomingOffers() const
 {
   static const std::vector<IncomingOffer> EMPTY;
   return game ? game->getTransfers().incomingOffers() : EMPTY;
-}
-
-bool GameController::acceptIncomingOffer(std::uint32_t offer_id)
-{
-  if (!game || !isTransferWindowOpen()) return false;
-  TransferMarket& market = game->getTransfers();
-  const IncomingOffer* found = market.findIncomingOffer(offer_id);
-  if (!found) return false;
-  const IncomingOffer offer = *found;
-  const TeamID managed = game->getManagedTeamId();
-  const GameDateValue today = game->getCurrentDate();
-  const auto player = gamedata->getPlayer(offer.player_id);
-  if (!player || player->get().getTeamId() != managed ||
-      !market.canBeTraded(offer.player_id))
-  {
-    market.removeIncomingOffer(offer_id);
-    return false;
-  }
-  bool completed = false;
-  if (offer.loan)
-  {
-    completed = market.startLoan(offer.player_id, offer.buyer, offer.loan_terms,
-                                 today, managed);
-  }
-  else
-  {
-    const auto context =
-        market.playerContext(offer.player_id, offer.buyer,
-                             TransferNegotiation::ContractKind::Transfer);
-    TransferMarket::Deal deal;
-    deal.player_id = offer.player_id;
-    deal.buyer_id = offer.buyer;
-    deal.terms = offer.terms;
-    deal.contract = TransferNegotiation::demandedOffer(
-        TransferNegotiation::contractDemand(context));
-    // The bidder may have spent its budget since making the offer.
-    completed =
-        canPayDeal(deal) && market.completeTransfer(deal, today, managed);
-  }
-  market.removeIncomingOffer(offer_id);
-  if (completed) purgeStaleListings();
-  return completed;
-}
-
-bool GameController::rejectIncomingOffer(std::uint32_t offer_id)
-{
-  return game && game->getTransfers().removeIncomingOffer(offer_id);
-}
-
-TransferNegotiation::ClubResponse GameController::counterIncomingOffer(
-    std::uint32_t offer_id, uint32_t fee)
-{
-  using TransferNegotiation::ClubResponse;
-  using TransferNegotiation::Reason;
-  constexpr std::uint8_t BUYER_PATIENCE = 2;
-  constexpr double FEE_ROUNDING = 10'000.0;
-  ClubResponse response;
-  if (!game) return response;
-  TransferMarket& market = game->getTransfers();
-  const IncomingOffer* found = market.findIncomingOffer(offer_id);
-  if (!found || found->loan || fee == 0) return response;
-  IncomingOffer offer = *found;
-  if (fee <= offer.max_fee)
-  {
-    offer.terms = TransferNegotiation::aiOfferTerms(fee);
-    market.updateIncomingOffer(offer);
-    if (acceptIncomingOffer(offer_id))
-    {
-      response.decision = ClubResponse::Decision::Accept;
-      response.reasons.push_back(Reason::OfferAccepted);
-    }
-    return response;
-  }
-  if (offer.round >= BUYER_PATIENCE)
-  {
-    market.removeIncomingOffer(offer_id);
-    response.reasons.push_back(Reason::TalksBroken);
-    return response;
-  }
-  // The bidder meets the seller halfway, up to its ceiling.
-  const double halfway = 0.5 * (static_cast<double>(offer.terms.fee) + fee);
-  const auto improved = static_cast<uint32_t>(
-      std::min(static_cast<double>(offer.max_fee),
-               std::round(halfway / FEE_ROUNDING) * FEE_ROUNDING));
-  offer.terms =
-      TransferNegotiation::aiOfferTerms(std::max(improved, offer.terms.fee));
-  ++offer.round;
-  market.updateIncomingOffer(offer);
-  response.decision = ClubResponse::Decision::Counter;
-  response.counter_fee = offer.terms.fee;
-  response.reasons.push_back(Reason::CounterOffer);
-  return response;
 }
 
 int64_t GameController::getReleaseCost(PlayerID player_id) const

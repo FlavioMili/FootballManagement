@@ -160,6 +160,8 @@ MatchCamera3D::Rig MatchCamera3D::desiredRig(const MatchCameraFocus& focus,
     case MatchCameraMode::FREE:
       rig = freeRig;
       break;
+    case MatchCameraMode::DIRECTOR:
+      return directorRig(focus);
   }
   // The free camera may also use the gantry positions of the presets (the
   // stand behind the eye is not drawn), so taking over never jumps.
@@ -170,6 +172,134 @@ MatchCamera3D::Rig MatchCamera3D::desiredRig(const MatchCameraFocus& focus,
           : EyeBounds{};
   clampToBowl(rig.target, rig.yaw, rig.pitch, rig.distance, bounds);
   return rig;
+}
+
+MatchCamera3D::Rig MatchCamera3D::directorRig(
+    const MatchCameraFocus& focus) const
+{
+  using D = Tuning::Director;
+  const auto aimFrom = [](Vec3 eye, Vec3 target, float fov)
+  {
+    Rig rig;
+    rig.target = target;
+    const Vec3 offset = target - eye;
+    rig.distance = std::max(RenderMath::length(offset), 1.0f);
+    rig.yaw = std::atan2(offset.y, offset.x);
+    rig.pitch = std::asin(std::clamp(-offset.z / rig.distance, -1.0f, 1.0f));
+    rig.fov = fov;
+    return rig;
+  };
+  switch (shot)
+  {
+    case MatchDirectorShot::BROADCAST:
+      break;
+    case MatchDirectorShot::REVERSE_ANGLE:
+    {
+      // The main camera's framing mirrored into the opposite stand.
+      Rig rig = desiredRig(focus, MatchCameraMode::BROADCAST);
+      const Vec3 eye{HALF_LENGTH + (rig.target.x - HALF_LENGTH) *
+                                       Tuning::Broadcast::RAIL_FOLLOW,
+                     PITCH_WIDTH - Tuning::Broadcast::EYE_Y,
+                     Tuning::Broadcast::EYE_HEIGHT};
+      return aimFrom(eye, rig.target, rig.fov);
+    }
+    case MatchDirectorShot::CLOSE_UP:
+    {
+      // Tight and low from the main camera's side of the pitch.
+      Rig rig;
+      rig.target = focus.hasCelebration ? focus.celebration : focus.ball;
+      rig.target.z = D::CLOSE_UP_HEIGHT;
+      rig.yaw = std::numbers::pi_v<float> * 0.5f +
+                (rig.target.x < HALF_LENGTH ? D::CLOSE_UP_YAW_OFFSET
+                                            : -D::CLOSE_UP_YAW_OFFSET);
+      rig.pitch = D::CLOSE_UP_PITCH;
+      rig.distance = D::CLOSE_UP_DISTANCE * zoomFactor;
+      rig.fov = D::CLOSE_UP_FOV;
+      clampToBowl(rig.target, rig.yaw, rig.pitch, rig.distance, EyeBounds{});
+      return rig;
+    }
+    case MatchDirectorShot::GOAL_LINE:
+    {
+      // Low on the goal line beside the posts, looking out at the shooter.
+      const float outward = goalLineX < HALF_LENGTH ? -1.0f : 1.0f;
+      const Vec3 eye{goalLineX + outward * D::GOAL_LINE_BACK,
+                     HALF_WIDTH - D::GOAL_LINE_SIDE, D::GOAL_LINE_HEIGHT};
+      const Vec3 goalMouth{goalLineX, HALF_WIDTH, 1.0f};
+      Vec3 target = RenderMath::lerp(goalMouth, focus.ball, D::GOAL_LINE_BALL_SHARE);
+      target.z = 1.0f;
+      return aimFrom(eye, target, D::GOAL_LINE_FOV);
+    }
+  }
+  return desiredRig(focus, MatchCameraMode::BROADCAST);
+}
+
+bool MatchCamera3D::direct(const MatchCameraFocus& focus, float deltaSeconds)
+{
+  using D = Tuning::Director;
+  shotSeconds += deltaSeconds;
+  sinceReverse += deltaSeconds;
+  sinceGoalLine += deltaSeconds;
+  // An attack building in the final third earns a reverse angle.
+  const float towardsGoal = focus.attackDirection >= 0.0f
+                                ? PITCH_LENGTH - focus.ball.x
+                                : focus.ball.x;
+  const bool finalThird = towardsGoal < D::FINAL_THIRD_METRES;
+  attackSeconds = focus.livePlay && focus.hasCarrier && finalThird
+                      ? attackSeconds + deltaSeconds
+                      : 0.0f;
+
+  MatchDirectorShot next = shot;
+  if (focus.reducedMotion)
+  {
+    next = MatchDirectorShot::BROADCAST;
+  }
+  else if (focus.goalCelebration)
+  {
+    next = MatchDirectorShot::CLOSE_UP;
+  }
+  else if (shot == MatchDirectorShot::CLOSE_UP)
+  {
+    next = MatchDirectorShot::BROADCAST;
+  }
+  else if (focus.shotInFlight && shot != MatchDirectorShot::GOAL_LINE &&
+           sinceGoalLine >= D::GOAL_LINE_COOLDOWN)
+  {
+    // The goal the ball is flying at, when it is close enough to matter.
+    const float heading = focus.ballVelocity.x;
+    const float goal = std::abs(heading) > 1.0f
+                           ? (heading > 0.0f ? PITCH_LENGTH : 0.0f)
+                           : (focus.attackDirection >= 0.0f ? PITCH_LENGTH
+                                                            : 0.0f);
+    if (std::abs(goal - focus.ball.x) < D::SHOT_RANGE_METRES)
+    {
+      next = MatchDirectorShot::GOAL_LINE;
+      goalLineX = goal;
+    }
+  }
+  else if (shot == MatchDirectorShot::GOAL_LINE)
+  {
+    if (!focus.shotInFlight && shotSeconds >= D::GOAL_LINE_HOLD)
+      next = MatchDirectorShot::BROADCAST;
+  }
+  else if (shot == MatchDirectorShot::REVERSE_ANGLE)
+  {
+    if (shotSeconds >= D::REVERSE_HOLD ||
+        (!finalThird && shotSeconds >= D::MIN_SHOT_SECONDS))
+      next = MatchDirectorShot::BROADCAST;
+  }
+  else if (shotSeconds >= D::MIN_SHOT_SECONDS &&
+           sinceReverse >= D::REVERSE_COOLDOWN &&
+           attackSeconds >= D::ATTACK_BUILD_SECONDS)
+  {
+    next = MatchDirectorShot::REVERSE_ANGLE;
+  }
+  if (next == shot) return false;
+  shot = next;
+  shotSeconds = 0.0f;
+  if (next == MatchDirectorShot::REVERSE_ANGLE) sinceReverse = 0.0f;
+  if (next == MatchDirectorShot::GOAL_LINE) sinceGoalLine = 0.0f;
+  ++cuts;
+  return true;
 }
 
 void MatchCamera3D::steerFree(const MatchCameraFocus& focus,
@@ -244,6 +374,24 @@ void MatchCamera3D::update(const MatchCameraFocus& focus, MatchCameraMode mode,
           Tuning::Camera::MIN_ZOOM, Tuning::Camera::MAX_ZOOM);
     }
   }
+  const float dt =
+      std::clamp(deltaSeconds, 0.0f, Tuning::Camera::MAX_FRAME_SECONDS);
+  if (mode == MatchCameraMode::DIRECTOR)
+  {
+    // A cut jumps straight to the new shot, like a vision mixer.
+    if (direct(focus, dt) && initialized)
+    {
+      chaseYaw = chaseHeading(focus);
+      current = desiredRig(focus, mode);
+      return;
+    }
+  }
+  else
+  {
+    shot = MatchDirectorShot::BROADCAST;
+    shotSeconds = 0.0f;
+    attackSeconds = 0.0f;
+  }
   if (!initialized)
   {
     snap(focus, mode);
@@ -251,8 +399,6 @@ void MatchCamera3D::update(const MatchCameraFocus& focus, MatchCameraMode mode,
   }
   if (mode == MatchCameraMode::FREE) steerFree(focus, control);
 
-  const float dt =
-      std::clamp(deltaSeconds, 0.0f, Tuning::Camera::MAX_FRAME_SECONDS);
   chaseYaw = RenderMath::lerpAngle(
       chaseYaw, chaseHeading(focus),
       RenderMath::dampingFactor(Tuning::Follow::YAW_RATE, dt));

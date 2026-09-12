@@ -560,10 +560,16 @@ bool GameController::isInboxDecisionPending(const InboxMessage& message) const
   switch (Inbox::actionFor(message.title_key))
   {
     case InboxAction::RespondOffer:
+      // While a buyer considers the club's counter there is nothing to do.
       return message.player_id &&
-             std::ranges::any_of(
-                 getIncomingOffers(), [&message](const IncomingOffer& offer)
-                 { return offer.player_id == *message.player_id; });
+             std::ranges::any_of(getIncomingOffers(),
+                                 [&message](const IncomingOffer& offer)
+                                 {
+                                   return offer.player_id ==
+                                              *message.player_id &&
+                                          offer.status ==
+                                              OfferStatus::AwaitingClub;
+                                 });
     case InboxAction::ReplyToPlayer:
       return message.player_id && hasPendingTalk(*message.player_id);
     case InboxAction::YouthTrialists:

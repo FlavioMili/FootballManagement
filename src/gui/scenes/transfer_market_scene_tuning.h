@@ -27,12 +27,11 @@ struct TransferMarketSceneTuning final
     static constexpr float SEARCH_WIDTH = 220.0f;
     static constexpr float COMBO_WIDTH = 150.0f;
     static constexpr float SLIDER_WIDTH = 170.0f;
-    /** Tables scroll horizontally below these widths (unscaled). */
-    static constexpr float TARGET_TABLE_MIN_WIDTH = 780.0f;
+    /** Tables scroll horizontally below this width (unscaled). */
     static constexpr float WIDE_TABLE_MIN_WIDTH = 720.0f;
-    /** Stretch weights of the name and club columns. */
-    static constexpr float NAME_COLUMN_WEIGHT = 1.6f;
-    static constexpr float CLUB_COLUMN_WEIGHT = 1.0f;
+    /** Target tables scroll on their own only with this much room below
+     * the filters (unscaled); otherwise the page scrolls. */
+    static constexpr float TARGET_TABLE_MIN_HEIGHT = 240.0f;
     /** Summary tiles per row before they wrap. */
     static constexpr int SUMMARY_TILES = 5;
     static constexpr float SUMMARY_TILE_MIN_WIDTH = 170.0f;
@@ -60,9 +59,7 @@ struct TransferMarketSceneTuning final
 
   struct Tables final
   {
-    static constexpr int TARGET_COLUMN_COUNT = 12;
     static constexpr int SQUAD_COLUMN_COUNT = 9;
-    static constexpr int OFFER_COLUMN_COUNT = 7;
     static constexpr int TALK_COLUMN_COUNT = 6;
     static constexpr int LOAN_COLUMN_COUNT = 7;
     static constexpr int HISTORY_COLUMN_COUNT = 6;

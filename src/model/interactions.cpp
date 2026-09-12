@@ -1581,6 +1581,42 @@ void InteractionSystem::onTransferCompleted(
   }
 }
 
+float InteractionSystem::onBidRejected(const GameDateValue& date,
+                                       PlayerID player_id,
+                                       const std::string& buyer_name,
+                                       float morale_delta, float trust_delta,
+                                       bool transfer_request, Inbox& inbox)
+{
+  auto& players = gamedata->getPlayers();
+  const auto found = players.find(player_id);
+  if (found == players.end() ||
+      (morale_delta == 0.0f && trust_delta == 0.0f && !transfer_request))
+    return 0.0f;
+  Player& player = found->second;
+  PlayerDynamics& dynamics = player.mutableDynamics();
+  const float before = dynamics.morale;
+  dynamics.morale = clampMorale(dynamics.morale +
+                                morale_delta * temperamentScale(player.getTraits()));
+  PlayerRelation& rel = relationFor(player_id);
+  rel.trust = clampTrust(rel.trust + trust_delta);
+  const bool asks = transfer_request && rel.request != TalkRequest::Transfer;
+  if (asks)
+  {
+    rel.request = TalkRequest::Transfer;
+    rel.request_day = dayOrdinal(date);
+    rel.escalations = 0;
+  }
+  if (asks)
+    post(inbox, date, InboxCategory::Contract, "OFFER_REJECTED_REQUEST_TITLE",
+         "OFFER_REJECTED_REQUEST_BODY", {player.getName(), buyer_name},
+         player_id);
+  else
+    post(inbox, date, InboxCategory::General, "OFFER_REJECTED_UPSET_TITLE",
+         "OFFER_REJECTED_UPSET_BODY", {player.getName(), buyer_name},
+         player_id);
+  return dynamics.morale - before;
+}
+
 std::vector<Promise> InteractionSystem::promisesFor(PlayerID player_id) const
 {
   std::vector<Promise> result;

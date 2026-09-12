@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "global/types.h"
+#include "model/buyer_negotiation.h"
 #include "model/gamedate.h"
 #include "model/inbox.h"
 #include "model/transfer_listing.h"
@@ -110,18 +111,36 @@ struct PreContractDeal
   TransferNegotiation::ContractOffer terms;
 };
 
-/** Contract extras and loan-list flag of a player. */
+/** Contract extras, loan-list and not-for-sale flags of a player. */
 struct PlayerMarketFlags
 {
   std::uint32_t release_clause = 0;
   std::optional<SquadRole> promised_role;
   GameDateValue promise_date;
   bool loan_listed = false;
+  /** Declared not for sale until this day (0 = never). */
+  std::int32_t not_for_sale_until = 0;
 
   bool empty() const
   {
-    return release_clause == 0 && !promised_role && !loan_listed;
+    return release_clause == 0 && !promised_role && !loan_listed &&
+           not_for_sale_until == 0;
   }
+};
+
+/** Whose move an incoming offer waits for (values are persisted). */
+enum class OfferStatus : std::uint8_t
+{
+  AwaitingClub = 0, /*!< The managed club has to answer. */
+  AwaitingBuyer     /*!< The buyer answers the club's counter on respond_on. */
+};
+
+/** One step of the talks over an incoming offer. */
+struct OfferRound
+{
+  GameDateValue date;
+  BuyerNegotiation::Move move = BuyerNegotiation::Move::Bid;
+  TransferNegotiation::OfferTerms terms;
 };
 
 /** An AI club's offer for one of the managed club's players. */
@@ -131,12 +150,31 @@ struct IncomingOffer
   PlayerID player_id = 0;
   TeamID buyer = 0;
   bool loan = false;
-  TransferNegotiation::OfferTerms terms;
+  TransferNegotiation::OfferTerms terms; /*!< The buyer's offer on the table. */
   TransferNegotiation::LoanTerms loan_terms;
-  std::uint32_t max_fee = 0; /*!< Hidden ceiling of the buyer. */
+  /** Hidden ceiling of the buyer: the most the deal may cost it, in
+   * BuyerNegotiation::buyerCost() terms (present value). */
+  std::uint32_t max_fee = 0;
   GameDateValue created;
-  GameDateValue expires;
-  std::uint8_t round = 0;
+  GameDateValue expires; /*!< Last day to answer (AwaitingClub). */
+  std::uint8_t round = 0; /*!< Counters the buyer has answered. */
+  /** Counters the buyer answers before it stops; 0 = not drawn yet. */
+  std::uint8_t patience = 0;
+  std::uint8_t insults = 0; /*!< Unrealistic demands so far. */
+  OfferStatus status = OfferStatus::AwaitingClub;
+  GameDateValue respond_on; /*!< AwaitingBuyer: the day of its answer. */
+  TransferNegotiation::OfferTerms asked; /*!< AwaitingBuyer: the counter. */
+  bool firm = false; /*!< The counter is a named price. */
+  std::vector<OfferRound> history; /*!< Oldest first. */
+};
+
+/** A club whose talks for a managed player ended (rejected, withdrawn,
+ * ignored) does not bid for him again before @c until. */
+struct TalksCooldown
+{
+  PlayerID player_id = 0;
+  TeamID buyer = 0;
+  GameDateValue until;
 };
 
 /** The managed club's talks as a buyer. */
@@ -183,8 +221,13 @@ class TransferMarket
   // ---- Lifecycle ----
 
   /** Loan wages and returns, pre-contracts (1 July), instalments,
-   * add-ons, promises, offer expiry and the weekly news digest. */
+   * add-ons, promises, offer expiry and the weekly news digest. Offers and
+   * talks of players who left football (retired, released youngsters) are
+   * dropped first. */
   void onDayAdvanced(const GameDateValue& date, TeamID managed_team_id);
+  /** Drops offers, talks, flags and cooldowns of players who no longer
+   * exist (retirement, youth releases). */
+  void forgetRemovedPlayers();
 
   void load(const std::shared_ptr<DatabaseConnection>& db_conn);
   /** Writes the market state inside the caller's transaction. */
@@ -277,9 +320,24 @@ class TransferMarket
 
   const std::vector<IncomingOffer>& incomingOffers() const { return incoming; }
   const IncomingOffer* findIncomingOffer(std::uint32_t offer_id) const;
+  /** Adds an offer with a fresh id; a transfer offer without history gets
+   * its opening bid as the first round, and a default patience. */
   std::uint32_t addIncomingOffer(IncomingOffer offer);
   bool updateIncomingOffer(const IncomingOffer& offer);
   bool removeIncomingOffer(std::uint32_t offer_id);
+  /** Transfer offers whose buyer answers on or before @p date, by id. */
+  std::vector<std::uint32_t> dueOfferReplies(const GameDateValue& date) const;
+  /** Other clubs with a transfer offer for the same player. */
+  std::uint8_t rivalBids(const IncomingOffer& offer) const;
+  /** Last day to answer an offer made on @p date: @p days later, but
+   * never after the transfer window closes. */
+  static GameDateValue answerDeadline(const GameDateValue& date, int days);
+  /** Talks of @p buyer for @p player_id ended on @p date: the club does
+   * not come back for him for a while (at most until the window closes). */
+  void closeTalks(PlayerID player_id, TeamID buyer, const GameDateValue& date);
+  bool talksClosed(PlayerID player_id, TeamID buyer,
+                   const GameDateValue& date) const;
+  const std::vector<TalksCooldown>& closedTalks() const { return cooldowns; }
 
   /** Open talks of the managed club by player. */
   const std::unordered_map<PlayerID, Negotiation>& talks() const
@@ -295,6 +353,10 @@ class TransferMarket
   const PlayerMarketFlags* flags(PlayerID player_id) const;
   void setLoanListed(PlayerID player_id, bool listed);
   bool isLoanListed(PlayerID player_id) const;
+  /** Clubs are told the player is not for sale until @p until (they do
+   * not approach him before then). */
+  void setNotForSale(PlayerID player_id, const GameDateValue& until);
+  bool isNotForSale(PlayerID player_id, const GameDateValue& date) const;
 
   // ---- Queries ----
 
@@ -407,6 +469,7 @@ class TransferMarket
   std::unordered_map<PlayerID, PlayerMarketFlags> player_flags;
   std::vector<IncomingOffer> incoming;
   std::unordered_map<PlayerID, Negotiation> negotiations;
+  std::vector<TalksCooldown> cooldowns;
   std::uint32_t next_id = 1;
 
   // Instalments due before season end, per payer (rebuilt when dirty).

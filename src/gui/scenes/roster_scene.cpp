@@ -124,6 +124,12 @@ RosterScene::RosterScene(GUIView* parent, TeamID teamId)
 
 void RosterScene::update(float deltaTime) { (void)deltaTime; }
 
+std::optional<NavEntry> RosterScene::historyEntry() const
+{
+  return team_id ? NavEntry::ofClub(*team_id)
+                 : NavEntry::ofSection(NavSection::SQUAD);
+}
+
 NavSection RosterScene::navSection() const
 {
   return isManagedClub() ? NavSection::SQUAD : NavSection::NONE;

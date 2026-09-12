@@ -44,6 +44,14 @@ struct MatchRender3DTuning final
     /** A new attacking side must hold the ball this long to turn the end
      * camera. */
     static constexpr float ATTACK_SWITCH_SECONDS = 2.0f;
+    /**
+     * A frame advancing the match clock by more than this (s), or moving
+     * the ball further than JUMP_METRES, is a playback jump: the camera
+     * cuts to the new framing instead of easing towards it. Both stay above
+     * what 30x playback covers in one slow frame.
+     */
+    static constexpr float JUMP_SIM_SECONDS = 4.0f;
+    static constexpr float JUMP_METRES = 30.0f;
   };
 
   /** Official pitch markings (Laws of the Game), metres. */
@@ -86,9 +94,12 @@ struct MatchRender3DTuning final
     static constexpr float NOISE_STRENGTH = 0.09f;
     static constexpr float FINE_NOISE_METRES = 2.2f;
     static constexpr float FINE_NOISE_STRENGTH = 0.05f;
-    /** Worn patches: dry, yellowed grass over bare soil. */
-    static constexpr ImU32 WEAR_COLOR = IM_COL32(112, 104, 62, 255);
-    static constexpr std::uint8_t WEAR_ALPHA = 85;
+    /**
+     * Worn patches: scuffed turf over soil. Darker than the grass, so the
+     * blend never reads as a light spot on the darker stripes.
+     */
+    static constexpr ImU32 WEAR_COLOR = IM_COL32(78, 70, 40, 255);
+    static constexpr std::uint8_t WEAR_ALPHA = 78;
     static constexpr float SPOT_WEAR_RADIUS = 1.3f;
     static constexpr float GOALMOUTH_DEPTH = 2.4f;
     static constexpr float GOALMOUTH_WIDTH = 3.4f;
@@ -276,7 +287,8 @@ struct MatchRender3DTuning final
    * (top of the head at 1.80 m, shoulders about 0.5 m across the arms); a
    * player is scaled by his real height. Animation is driven by ground
    * speed: stride length grows with speed, the leg phase advances with the
-   * distance actually covered on screen, and slow players idle.
+   * distance actually covered on screen, and slow players idle. Swing
+   * amplitudes come from the Gait shapes.
    */
   struct Player final
   {
@@ -314,13 +326,16 @@ struct MatchRender3DTuning final
     static constexpr float FOREARM_HALF_WIDTH = 0.04f;
     static constexpr float NECK_LENGTH = 0.19f;
     static constexpr float HEAD_RADIUS = 0.11f;
-    static constexpr float THIGH_SWING = 0.62f;
-    static constexpr float KNEE_FLEX = 1.05f;
-    static constexpr float ARM_SWING = 0.7f;
     static constexpr float ELBOW_BEND = 0.35f;
-    static constexpr float ELBOW_RUN_BEND = 0.9f;
-    static constexpr float RUN_LEAN = 0.2f;
-    static constexpr float RUN_BOB = 0.05f;
+    /**
+     * Rounded bodies up close: above this projected height the torso and
+     * limbs become prisms (TORSO_SIDES, LIMB_SIDES) instead of boxes.
+     */
+    static constexpr float ROUND_MIN_PIXELS = 80.0f;
+    static constexpr int TORSO_SIDES = 8;
+    static constexpr int LIMB_SIDES = 6;
+    /** The sole under the boot, seen on raised feet up close. */
+    static constexpr float SOLE_HALF_HEIGHT = 0.012f;
     /**
      * One stride cycle (two steps) covers BASE + PER_SPEED * speed metres:
      * ~1.8 m walking, ~2.5 m jogging, ~4 m sprinting (0.9-2.3 cycles/s).
@@ -340,10 +355,37 @@ struct MatchRender3DTuning final
     static constexpr float MARKER_RADIUS = 0.42f;
     static constexpr std::uint8_t MARKER_ALPHA = 150;
     static constexpr ImU32 BOOT_COLOR = IM_COL32(26, 26, 30, 255);
+    static constexpr ImU32 SOLE_COLOR = IM_COL32(222, 222, 214, 255);
     /** Hands (keeper gloves) are only modelled above this projected height. */
     static constexpr float HAND_MIN_PIXELS = 44.0f;
     static constexpr float HAND_HALF_SIZE = 0.045f;
     static constexpr float GLOVE_HALF_SIZE = 0.06f;
+  };
+
+  /**
+   * Walk, jog and sprint gaits blended by ground speed (m/s): swing
+   * amplitudes (radians), lean, bob (metres) and elbow bend of each.
+   */
+  struct Gait final
+  {
+    struct Shape
+    {
+      float speed;
+      float thigh;
+      float knee;
+      float arm;
+      float elbow;
+      float lean;
+      float bob;
+    };
+    static constexpr Shape WALK{1.4f, 0.34f, 0.42f, 0.28f, 0.2f, 0.03f,
+                                0.018f};
+    static constexpr Shape JOG{4.0f, 0.52f, 0.95f, 0.55f, 0.95f, 0.1f,
+                               0.042f};
+    static constexpr Shape SPRINT{7.5f, 0.78f, 1.45f, 0.95f, 1.3f, 0.26f,
+                                  0.06f};
+    /** Speed (m/s) is smoothed at this rate before choosing the blend. */
+    static constexpr float SPEED_RATE = 5.0f;
   };
 
   /**
@@ -454,6 +496,9 @@ struct MatchRender3DTuning final
 
   struct Ball final
   {
+    /** Visual spin: panels turn with the ground covered, capped per frame
+     * so fast balls never strobe. */
+    static constexpr float SPIN_MAX_PER_FRAME = 0.7f;
     /** Real radius (0.22 m ball); boosted only when far for readability. */
     static constexpr float RADIUS = 0.11f;
     static constexpr float BOOST_START_DEPTH = 30.0f;
@@ -475,13 +520,27 @@ struct MatchRender3DTuning final
     static constexpr int SEGMENTS = 10;
     static constexpr ImU32 CONTACT_COLOR = IM_COL32(0, 0, 0, 120);
     /** Darkness of one floodlight blade at an equal share of the light. */
-    static constexpr std::uint8_t BLADE_ALPHA = 50;
+    static constexpr std::uint8_t BLADE_ALPHA = 36;
+    /**
+     * Up close the four blades would read as a hard "X": they fade to
+     * CLOSE_SHARE of their darkness between these projected player heights.
+     */
+    static constexpr float CLOSE_FADE_START_PIXELS = 70.0f;
+    static constexpr float CLOSE_FADE_FULL_PIXELS = 190.0f;
+    static constexpr float CLOSE_SHARE = 0.5f;
+    /** Soft profile: a ring at this share of the radius keeps this share of
+     * the centre darkness (a flatter core, a long feathered edge). */
+    static constexpr float CORE_RADIUS_SHARE = 0.5f;
+    static constexpr float CORE_ALPHA_SHARE = 0.62f;
+    /** Daylight: one sun shadow per player instead of four blades. */
+    static constexpr std::uint8_t SUN_ALPHA = 92;
+    static constexpr float SUN_LENGTH_SHARE = 0.95f;
     static constexpr float MIN_LAMP_SHARE = 0.45f;
     static constexpr float MAX_LAMP_SHARE = 1.8f;
     static constexpr float MIN_BLADE = 0.8f;
     static constexpr float MAX_BLADE = 2.6f;
     /** Soft edge added around each blade (metres). */
-    static constexpr float PENUMBRA = 0.12f;
+    static constexpr float PENUMBRA = 0.2f;
     static constexpr float RING_RADIUS = 0.62f;
     static constexpr int RING_SEGMENTS = 20;
     static constexpr float RING_THICKNESS = 2.2f;
@@ -498,6 +557,29 @@ struct MatchRender3DTuning final
     static constexpr float DIRECTION_X = 0.3f;
     static constexpr float DIRECTION_Y = -0.62f;
     static constexpr float DIRECTION_Z = 0.72f;
+  };
+
+  /**
+   * Daylight preset: an afternoon sun high over the main stand's left
+   * shoulder, a brighter sward and a blue sky. Chosen from the kick-off time
+   * (DAY_FROM_MINUTES to DAY_UNTIL_MINUTES) or by the view's day toggle.
+   */
+  struct Day final
+  {
+    static constexpr int DAY_FROM_MINUTES = 10 * 60;
+    static constexpr int DAY_UNTIL_MINUTES = 17 * 60 + 30;
+    static constexpr float AMBIENT = 0.58f;
+    static constexpr float DIFFUSE = 0.62f;
+    static constexpr float SKY = 0.1f;
+    /** Towards the sun (normalised on use). */
+    static constexpr float SUN_X = -0.45f;
+    static constexpr float SUN_Y = -0.55f;
+    static constexpr float SUN_Z = 0.7f;
+    static constexpr float GRASS_LIGHT = 1.12f;
+    static constexpr ImU32 TOP_COLOR = IM_COL32(58, 118, 196, 255);
+    static constexpr ImU32 MIDDLE_COLOR = IM_COL32(116, 170, 226, 255);
+    static constexpr ImU32 HORIZON_COLOR = IM_COL32(200, 222, 236, 255);
+    static constexpr ImU32 VIGNETTE_COLOR = IM_COL32(0, 0, 0, 48);
   };
 
   struct Sky final
@@ -619,6 +701,29 @@ struct MatchRender3DTuning final
     static constexpr float ORBIT_RADIANS_PER_PIXEL = 0.0065f;
     /** How quickly the view catches up with the user's input (1/s). */
     static constexpr float RESPONSE_RATE = 14.0f;
+  };
+
+  /** TV director: holds, cooldowns (real seconds) and its extra shots. */
+  struct Director final
+  {
+    static constexpr float MIN_SHOT_SECONDS = 3.0f;
+    static constexpr float FINAL_THIRD_METRES = 35.0f;
+    static constexpr float ATTACK_BUILD_SECONDS = 2.5f;
+    static constexpr float REVERSE_HOLD = 5.0f;
+    static constexpr float REVERSE_COOLDOWN = 25.0f;
+    static constexpr float SHOT_RANGE_METRES = 38.0f;
+    static constexpr float GOAL_LINE_HOLD = 2.2f;
+    static constexpr float GOAL_LINE_COOLDOWN = 10.0f;
+    static constexpr float GOAL_LINE_BACK = 1.5f;
+    static constexpr float GOAL_LINE_SIDE = 15.0f;
+    static constexpr float GOAL_LINE_HEIGHT = 2.6f;
+    static constexpr float GOAL_LINE_BALL_SHARE = 0.4f;
+    static constexpr float GOAL_LINE_FOV = 0.74f;
+    static constexpr float CLOSE_UP_HEIGHT = 1.15f;
+    static constexpr float CLOSE_UP_DISTANCE = 11.0f;
+    static constexpr float CLOSE_UP_PITCH = 0.2f;
+    static constexpr float CLOSE_UP_YAW_OFFSET = 0.3f;
+    static constexpr float CLOSE_UP_FOV = 0.56f;
   };
 
   struct Follow final

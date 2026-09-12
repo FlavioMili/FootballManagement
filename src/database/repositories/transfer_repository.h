@@ -20,8 +20,8 @@
 /**
  * @class TransferRepository
  * @brief Persists the transfer market: history (append-only), payments and
- * clauses, loans, pre-contracts, player market flags, incoming offers and
- * the managed club's open talks.
+ * clauses, loans, pre-contracts, player market flags, incoming offers with
+ * the rounds of their talks, and the managed club's open talks.
  *
  * Everything but the history is small and rewritten on every save; all
  * writes run inside the caller's transaction.
@@ -52,10 +52,11 @@ class TransferRepository
       const std::unordered_map<PlayerID, PlayerMarketFlags>& flags) const;
 
   void loadOffers(std::vector<IncomingOffer>& offers,
-                  std::unordered_map<PlayerID, Negotiation>& talks) const;
-  void replaceOffers(
-      const std::vector<IncomingOffer>& offers,
-      const std::unordered_map<PlayerID, Negotiation>& talks) const;
+                  std::unordered_map<PlayerID, Negotiation>& talks,
+                  std::vector<TalksCooldown>& cooldowns) const;
+  void replaceOffers(const std::vector<IncomingOffer>& offers,
+                     const std::unordered_map<PlayerID, Negotiation>& talks,
+                     const std::vector<TalksCooldown>& cooldowns) const;
 
  private:
   std::shared_ptr<DatabaseConnection> db_conn;

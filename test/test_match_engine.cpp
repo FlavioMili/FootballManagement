@@ -2104,6 +2104,57 @@ TEST(MatchEngineTest, MidMatchStrategyChangeMovesTheTeam)
       << "bold tactics must push the team higher up the pitch";
 }
 
+TEST(MatchEngineTest, MidMatchPressingChangeDisruptsTheOpponent)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 66, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  // Opponent passes (attempted, completed) in the half hour after the
+  // change, summed over the seeds.
+  struct Window
+  {
+    int attempted = 0;
+    int completed = 0;
+  };
+  const auto play = [&](const StrategySliders& sliders, std::uint32_t seed)
+  {
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, seed);
+    engine.setAutoSubstitutions(false, false);
+    engine.advance(120.0f);
+    Strategy plan;
+    plan.setAllSliders(sliders);
+    engine.setStrategy(true, plan);
+    const MatchStats before = engine.getStats();
+    engine.advance(1'800.0f);
+    const MatchStats& after = engine.getStats();
+    Window window;
+    window.attempted = after.awayPassesAttempted - before.awayPassesAttempted;
+    window.completed = after.awayPassesCompleted - before.awayPassesCompleted;
+    return window;
+  };
+  Window standOff;
+  Window press;
+  for (std::uint32_t seed = 1; seed <= 6; ++seed)
+  {
+    const Window low = play({0.1f, 0.5f, 0.5f, 0.5f, 0.6f}, seed);
+    const Window high = play({1.0f, 0.5f, 0.5f, 0.5f, 0.4f}, seed);
+    standOff.attempted += low.attempted;
+    standOff.completed += low.completed;
+    press.attempted += high.attempted;
+    press.completed += high.completed;
+  }
+  ASSERT_GT(standOff.attempted, 0);
+  ASSERT_GT(press.attempted, 0);
+  const double standOffCompletion =
+      static_cast<double>(standOff.completed) / standOff.attempted;
+  const double pressCompletion =
+      static_cast<double>(press.completed) / press.attempted;
+  EXPECT_LT(pressCompletion, standOffCompletion - 0.01)
+      << "a high press must cost the opponent passes";
+}
+
 TEST(MatchEngineTest, ShoutsNudgeTheSlidersAndFade)
 {
   std::vector<std::unique_ptr<Player>> players;
@@ -2132,6 +2183,176 @@ TEST(MatchEngineTest, ShoutsNudgeTheSlidersAndFade)
               engine.getHomeScore() == engine.getAwayScore()
                   ? 1e-6f
                   : scoreEffect + 1e-6f);
+}
+
+TEST(MatchEngineTest, RepeatedShoutsLoseEffectAndNewShoutsNudgeTheSliders)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 66, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 5);
+  engine.setAutoSubstitutions(false, false);
+  const StrategySliders base = engine.getEffectiveSliders(true);
+  EXPECT_FALSE(engine.getActiveShout(true).has_value());
+
+  engine.applyShout(true, MatchShout::KEEP_POSSESSION);
+  EXPECT_EQ(engine.getActiveShout(true), MatchShout::KEEP_POSSESSION);
+  EXPECT_LT(engine.getEffectiveSliders(true).riskTaking, base.riskTaking - 0.1f);
+  EXPECT_GT(engine.getEffectiveSliders(true).widthUsage, base.widthUsage);
+  // Shouting again at once works only half as well, then a third of it.
+  engine.applyShout(true, MatchShout::STAND_OFF);
+  EXPECT_NEAR(engine.getShoutStrength(true), 0.5f, 1e-5f);
+  EXPECT_LT(engine.getEffectiveSliders(true).pressing, base.pressing);
+  engine.applyShout(true, MatchShout::HIT_ON_COUNTER);
+  EXPECT_NEAR(engine.getShoutStrength(true), 1.0f / 3.0f, 1e-5f);
+  EXPECT_GT(engine.getEffectiveSliders(true).riskTaking, base.riskTaking);
+  EXPECT_FLOAT_EQ(engine.getEffectiveSliders(false).pressing,
+                  away.getStrategy().getSliders().pressing);
+
+  // Once the three shouts are forgotten, a new one has its full effect again.
+  engine.advance(3.0f * MatchTuning::Touchline::SHOUT_REPEAT_FADE_SECONDS +
+                 10.0f);
+  EXPECT_FALSE(engine.getActiveShout(true).has_value());
+  engine.applyShout(true, MatchShout::DEMAND_MORE);
+  EXPECT_FLOAT_EQ(engine.getShoutStrength(true), 1.0f);
+  EXPECT_GE(engine.getEffectiveSliders(true).offensiveBias,
+            base.offensiveBias + 0.05f -
+                MatchTuning::Touchline::SCORE_EFFECT_MAX_GOALS *
+                    MatchTuning::Touchline::SCORE_EFFECT_OFFENSIVE);
+}
+
+TEST(MatchEngineTest, FormationChangeReshapesTheSideForAWhile)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 66, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  double changedDepth = 0.0;
+  double keptDepth = 0.0;
+  for (std::uint32_t seed = 1; seed <= 4; ++seed)
+  {
+    MatchEngine changed(home.getLineup(), away.getLineup(), home.getStrategy(),
+                        away.getStrategy(), config, seed);
+    MatchEngine kept(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, seed);
+    changed.advance(120.0f);
+    kept.advance(120.0f);
+    std::vector<Vector2F> shape = changed.getFormation(true);
+    ASSERT_EQ(shape.size(), 10U);
+    EXPECT_FLOAT_EQ(shape[0].x, 0.18f);
+    // Wrong sizes and non-finite spots are refused.
+    EXPECT_FALSE(changed.setFormation(
+        true, std::span<const Vector2F>(shape.data(), shape.size() - 1)));
+    std::vector<Vector2F> broken = shape;
+    broken[3].x = std::numeric_limits<float>::quiet_NaN();
+    EXPECT_FALSE(changed.setFormation(true, broken));
+    // Everyone ten metres further up the pitch.
+    for (Vector2F& spot : shape) spot.x += 10.0f / MatchTuning::Pitch::LENGTH_METRES;
+    ASSERT_TRUE(changed.setFormation(true, shape));
+    EXPECT_NEAR(changed.getFormation(true)[0].x, shape[0].x, 1e-6f);
+    const float reshaped = changed.getTacticalFamiliarity(true);
+    EXPECT_LT(reshaped, 1.0f);
+    EXPECT_GE(reshaped, 1.0f - MatchTuning::Touchline::MAX_RESHAPE_FAMILIARITY_COST);
+    EXPECT_FLOAT_EQ(changed.getTacticalFamiliarity(false), 1.0f);
+    changedDepth += meanOutfieldDepth(changed, true, 300.0f);
+    keptDepth += meanOutfieldDepth(kept, true, 300.0f);
+    EXPECT_GT(changed.getTacticalFamiliarity(true), reshaped);
+    changed.advance(MatchTuning::Touchline::RESHAPE_RECOVERY_SECONDS);
+    EXPECT_FLOAT_EQ(changed.getTacticalFamiliarity(true), 1.0f);
+  }
+  EXPECT_GT(changedDepth, keptDepth * 1.03)
+      << "a higher shape must move the side up the pitch";
+}
+
+TEST(MatchEngineTest, PlayersSwapSlotsAndSubstitutesTakeAChosenSlot)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 66, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 11);
+  engine.setAutoSubstitutions(false, false);
+  const auto baseOf = [&engine](PlayerID id)
+  {
+    for (const MatchPlayer& player : engine.getPlayers())
+      if (player.player && player.player->getId() == id)
+        return player.basePosition;
+    return Vector2F{-1.0f, -1.0f};
+  };
+  EXPECT_FALSE(engine.getFormationSlot(100).has_value()) << "keeper";
+  ASSERT_EQ(engine.getFormationSlot(101), 0U);
+  ASSERT_EQ(engine.getFormationSlot(109), 8U);
+  const Vector2F leftBack = baseOf(101);
+  const Vector2F striker = baseOf(109);
+  // The left-back and a striker swap places.
+  ASSERT_TRUE(engine.movePlayerToSlot(101, 8));
+  EXPECT_EQ(engine.getFormationSlot(101), 8U);
+  EXPECT_EQ(engine.getFormationSlot(109), 0U);
+  EXPECT_FLOAT_EQ(baseOf(101).x, striker.x);
+  EXPECT_FLOAT_EQ(baseOf(109).y, leftBack.y);
+  EXPECT_FALSE(engine.movePlayerToSlot(101, 10));
+  EXPECT_FALSE(engine.movePlayerToSlot(100, 3)) << "keeper";
+  EXPECT_FALSE(engine.movePlayerToSlot(999, 3)) << "not playing";
+  EXPECT_FLOAT_EQ(engine.getTacticalFamiliarity(true), 1.0f)
+      << "the shape itself did not change";
+
+  // A substitute can come on in another slot; its occupant moves over.
+  const Player* substitute = home.getLineup().getReserves()[5];
+  ASSERT_TRUE(engine.substitutePlayer(110, substitute, 4));
+  EXPECT_EQ(engine.getFormationSlot(substitute->getId()), 4U);
+  EXPECT_EQ(engine.getFormationSlot(105), 9U);
+  EXPECT_FALSE(engine.substitutePlayer(
+      106, home.getLineup().getReserves()[4], 10))
+      << "no such slot";
+  EXPECT_EQ(engine.getSubstitutionsUsed(true), 1);
+}
+
+TEST(MatchEngineTest, RecordedTouchlineChangesReplayExactly)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 66, players);
+  Team away = createSquadWithBench(2, "Away", 64, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine live(home.getLineup(), away.getLineup(), home.getStrategy(),
+                   away.getStrategy(), config, 21);
+  live.setAutoSubstitutions(false, true);
+  live.advance(600.0f);
+  Strategy bold;
+  bold.setAllSliders({0.9f, 0.8f, 0.9f, 0.6f, 0.3f});
+  live.setStrategy(true, bold);
+  live.applyShout(true, MatchShout::PRESS_MORE);
+  live.advance(900.0f);
+  std::vector<Vector2F> shape = live.getFormation(true);
+  shape[4] = {0.30f, 0.50f};
+  ASSERT_TRUE(live.setFormation(true, shape));
+  live.applyShout(false, MatchShout::KEEP_POSSESSION);
+  live.advance(1'200.0f);
+  ASSERT_TRUE(advanceToNextStoppage(live));
+  ASSERT_TRUE(live.substitutePlayer(109, home.getLineup().getReserves()[5], 2));
+  ASSERT_TRUE(live.movePlayerToSlot(101, 7));
+  EXPECT_FALSE(live.movePlayerToSlot(101, 42)) << "refused changes are not logged";
+  live.simulateToEnd();
+  ASSERT_EQ(live.getState(), MatchState::FULL_TIME);
+  ASSERT_EQ(live.getCommandLog().size(), 6U);
+
+  MatchEngine replay(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 21);
+  replay.setAutoSubstitutions(false, true);
+  replay.loadCommandReplay(live.getCommandLog());
+  replay.simulateToEnd();
+  EXPECT_EQ(replay.getHomeScore(), live.getHomeScore());
+  EXPECT_EQ(replay.getAwayScore(), live.getAwayScore());
+  EXPECT_EQ(replay.getSimulatedSteps(), live.getSimulatedSteps());
+  EXPECT_EQ(replay.getEvents().size(), live.getEvents().size());
+  EXPECT_FLOAT_EQ(replay.getStats().homePossession,
+                  live.getStats().homePossession);
+  EXPECT_EQ(replay.getStats().homePassesCompleted,
+            live.getStats().homePassesCompleted);
+  EXPECT_EQ(replay.getSubstitutions().size(), live.getSubstitutions().size());
+  EXPECT_EQ(replay.getFormationSlot(101), live.getFormationSlot(101));
 }
 
 TEST(MatchEngineTest, TeamTalkModifierIsBoundedAndDeterministic)

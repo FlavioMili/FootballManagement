@@ -26,7 +26,8 @@ enum class OfferRow : int
 {
   IncomingTransfer = 0,
   IncomingLoan = 1,
-  Negotiation = 2
+  Negotiation = 2,
+  ClosedTalks = 3 /*!< A club's ended talks: expires = end of the cooldown. */
 };
 
 std::string columnText(sqlite3_stmt* stmt, int column)
@@ -329,7 +330,7 @@ std::unordered_map<PlayerID, PlayerMarketFlags> TransferRepository::loadFlags()
   std::unordered_map<PlayerID, PlayerMarketFlags> flags;
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       "SELECT player_id, release_clause, promised_role, promise_date, "
-      "loan_listed FROM PlayerMarketFlags;");
+      "loan_listed, not_for_sale_until FROM PlayerMarketFlags;");
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
     PlayerMarketFlags entry;
@@ -339,6 +340,7 @@ std::unordered_map<PlayerID, PlayerMarketFlags> TransferRepository::loadFlags()
     if (const int date = sqlite3_column_int(stmt, 3); date > 0)
       entry.promise_date = dateFromInt(date);
     entry.loan_listed = sqlite3_column_int(stmt, 4) != 0;
+    entry.not_for_sale_until = sqlite3_column_int(stmt, 5);
     flags[static_cast<PlayerID>(sqlite3_column_int64(stmt, 0))] = entry;
   }
   sqlite3_finalize(stmt);
@@ -351,7 +353,8 @@ void TransferRepository::replaceFlags(
   execute(*db_conn, "DELETE FROM PlayerMarketFlags;");
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       "INSERT INTO PlayerMarketFlags (player_id, release_clause, "
-      "promised_role, promise_date, loan_listed) VALUES (?, ?, ?, ?, ?);");
+      "promised_role, promise_date, loan_listed, not_for_sale_until) VALUES "
+      "(?, ?, ?, ?, ?, ?);");
   for (const auto& [player_id, entry] : flags)
   {
     if (entry.empty()) continue;
@@ -361,6 +364,7 @@ void TransferRepository::replaceFlags(
     sqlite3_bind_int(stmt, 4,
                      entry.promised_role ? dateToInt(entry.promise_date) : 0);
     sqlite3_bind_int(stmt, 5, entry.loan_listed ? 1 : 0);
+    sqlite3_bind_int(stmt, 6, entry.not_for_sale_until);
     finishRow(*db_conn, stmt);
   }
   sqlite3_finalize(stmt);
@@ -370,11 +374,12 @@ void TransferRepository::replaceFlags(
 
 void TransferRepository::loadOffers(
     std::vector<IncomingOffer>& offers,
-    std::unordered_map<PlayerID, Negotiation>& talks) const
+    std::unordered_map<PlayerID, Negotiation>& talks,
+    std::vector<TalksCooldown>& cooldowns) const
 {
   sqlite3_stmt* stmt = db_conn->prepareStatement(
-      "SELECT id, kind, player_id, club_id, created, expires, rounds, terms "
-      "FROM TransferOffers ORDER BY id;");
+      "SELECT id, kind, player_id, club_id, created, expires, rounds, terms, "
+      "status, respond_on FROM TransferOffers ORDER BY id;");
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
     const auto row = static_cast<OfferRow>(sqlite3_column_int(stmt, 1));
@@ -384,6 +389,11 @@ void TransferRepository::loadOffers(
     const auto player_id = static_cast<PlayerID>(sqlite3_column_int64(stmt, 2));
     const auto club_id = static_cast<TeamID>(sqlite3_column_int(stmt, 3));
     const GameDateValue expires = dateFromInt(sqlite3_column_int(stmt, 5));
+    if (row == OfferRow::ClosedTalks)
+    {
+      cooldowns.push_back({player_id, club_id, expires});
+      continue;
+    }
     if (row == OfferRow::Negotiation)
     {
       Negotiation talk;
@@ -411,26 +421,63 @@ void TransferRepository::loadOffers(
     offer.loan_terms =
         loanFromJson(json.value("loan", nlohmann::json::object()));
     offer.max_fee = json.value("max_fee", 0U);
+    offer.patience = json.value("patience", std::uint8_t{0});
+    offer.insults = json.value("insults", std::uint8_t{0});
+    offer.firm = json.value("firm", false);
+    offer.asked = offerFromJson(json.value("asked", nlohmann::json::object()));
+    offer.status = static_cast<OfferStatus>(sqlite3_column_int(stmt, 8));
+    if (const int respond_on = sqlite3_column_int(stmt, 9); respond_on > 0)
+      offer.respond_on = dateFromInt(respond_on);
     offers.push_back(offer);
+  }
+  sqlite3_finalize(stmt);
+
+  // Rounds of the talks, oldest first per offer.
+  stmt = db_conn->prepareStatement(
+      "SELECT offer_id, game_date, move, terms FROM TransferOfferRounds "
+      "ORDER BY offer_id, seq;");
+  while (sqlite3_step(stmt) == SQLITE_ROW)
+  {
+    const auto offer_id = static_cast<std::uint32_t>(sqlite3_column_int64(stmt, 0));
+    const auto offer = std::ranges::find(offers, offer_id, &IncomingOffer::id);
+    const auto move = sqlite3_column_int(stmt, 2);
+    if (offer == offers.end() || move < 0 ||
+        move >= static_cast<int>(BuyerNegotiation::Move::COUNT))
+      continue;
+    const auto json =
+        nlohmann::json::parse(columnText(stmt, 3), nullptr, false);
+    OfferRound round;
+    round.date = dateFromInt(sqlite3_column_int(stmt, 1));
+    round.move = static_cast<BuyerNegotiation::Move>(move);
+    round.terms = offerFromJson(json.is_object() ? json
+                                                 : nlohmann::json::object());
+    offer->history.push_back(round);
   }
   sqlite3_finalize(stmt);
 }
 
 void TransferRepository::replaceOffers(
     const std::vector<IncomingOffer>& offers,
-    const std::unordered_map<PlayerID, Negotiation>& talks) const
+    const std::unordered_map<PlayerID, Negotiation>& talks,
+    const std::vector<TalksCooldown>& cooldowns) const
 {
   execute(*db_conn, "DELETE FROM TransferOffers;");
+  execute(*db_conn, "DELETE FROM TransferOfferRounds;");
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       "INSERT INTO TransferOffers (id, kind, player_id, club_id, created, "
-      "expires, rounds, terms) VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
+      "expires, rounds, terms, status, respond_on) VALUES (?, ?, ?, ?, ?, ?, "
+      "?, ?, ?, ?);");
   for (const IncomingOffer& offer : offers)
   {
-    const std::string terms = nlohmann::json{
-        {"offer", toJson(offer.terms)},
-        {"loan", toJson(offer.loan_terms)},
-        {"max_fee",
-         offer.max_fee}}.dump();
+    const std::string terms =
+        nlohmann::json{{"offer", toJson(offer.terms)},
+                       {"loan", toJson(offer.loan_terms)},
+                       {"max_fee", offer.max_fee},
+                       {"patience", offer.patience},
+                       {"insults", offer.insults},
+                       {"firm", offer.firm},
+                       {"asked", toJson(offer.asked)}}
+            .dump();
     sqlite3_bind_int64(stmt, 1, offer.id);
     sqlite3_bind_int(stmt, 2,
                      static_cast<int>(offer.loan ? OfferRow::IncomingLoan
@@ -441,6 +488,11 @@ void TransferRepository::replaceOffers(
     sqlite3_bind_int(stmt, 6, dateToInt(offer.expires));
     sqlite3_bind_int(stmt, 7, offer.round);
     sqlite3_bind_text(stmt, 8, terms.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 9, static_cast<int>(offer.status));
+    sqlite3_bind_int(stmt, 10,
+                     offer.status == OfferStatus::AwaitingBuyer
+                         ? dateToInt(offer.respond_on)
+                         : 0);
     finishRow(*db_conn, stmt);
   }
   for (const auto& [player_id, talk] : talks)
@@ -459,7 +511,42 @@ void TransferRepository::replaceOffers(
     sqlite3_bind_int(stmt, 6, dateToInt(talk.expires));
     sqlite3_bind_int(stmt, 7, talk.club_rounds);
     sqlite3_bind_text(stmt, 8, terms.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 9, 0);
+    sqlite3_bind_int(stmt, 10, 0);
     finishRow(*db_conn, stmt);
+  }
+  for (const TalksCooldown& cooldown : cooldowns)
+  {
+    sqlite3_bind_int64(stmt, 1, 0);
+    sqlite3_bind_int(stmt, 2, static_cast<int>(OfferRow::ClosedTalks));
+    sqlite3_bind_int64(stmt, 3, cooldown.player_id);
+    sqlite3_bind_int(stmt, 4, cooldown.buyer);
+    sqlite3_bind_int(stmt, 5, dateToInt(cooldown.until));
+    sqlite3_bind_int(stmt, 6, dateToInt(cooldown.until));
+    sqlite3_bind_int(stmt, 7, 0);
+    sqlite3_bind_text(stmt, 8, "{}", -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 9, 0);
+    sqlite3_bind_int(stmt, 10, 0);
+    finishRow(*db_conn, stmt);
+  }
+  sqlite3_finalize(stmt);
+
+  stmt = db_conn->prepareStatement(
+      "INSERT INTO TransferOfferRounds (offer_id, seq, game_date, move, "
+      "terms) VALUES (?, ?, ?, ?, ?);");
+  for (const IncomingOffer& offer : offers)
+  {
+    for (std::size_t seq = 0; seq < offer.history.size(); ++seq)
+    {
+      const OfferRound& round = offer.history[seq];
+      const std::string terms = toJson(round.terms).dump();
+      sqlite3_bind_int64(stmt, 1, offer.id);
+      sqlite3_bind_int64(stmt, 2, static_cast<sqlite3_int64>(seq));
+      sqlite3_bind_int(stmt, 3, dateToInt(round.date));
+      sqlite3_bind_int(stmt, 4, static_cast<int>(round.move));
+      sqlite3_bind_text(stmt, 5, terms.c_str(), -1, SQLITE_TRANSIENT);
+      finishRow(*db_conn, stmt);
+    }
   }
   sqlite3_finalize(stmt);
 }

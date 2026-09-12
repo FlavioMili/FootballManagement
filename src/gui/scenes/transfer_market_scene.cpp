@@ -23,6 +23,7 @@
 #include "global/global.h"
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
+#include "gui/scenes/transfer_terms_editor.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
@@ -38,6 +39,7 @@ namespace
 using TransferNegotiation::ClubResponse;
 using TransferNegotiation::ContractKind;
 using Tuning = TransferMarketSceneTuning;
+using namespace TransferTermsEditor;
 
 enum class TargetColumn : ImGuiID
 {
@@ -54,6 +56,57 @@ enum class TargetColumn : ImGuiID
   CONTRACT,
   ACTION
 };
+
+constexpr ImGuiID columnId(TargetColumn column)
+{
+  return static_cast<ImGuiID>(column);
+}
+
+/**
+ * Target table columns in display order (labels are lang keys). Widths are
+ * minimums in unscaled pixels (headers widen them); higher priorities hide
+ * first on narrow windows and their values move into the row's Actions menu.
+ */
+const std::array<UI::Column, 12>& targetColumns()
+{
+  constexpr ImGuiTableColumnFlags DESCENDING =
+      ImGuiTableColumnFlags_PreferSortDescending;
+  static const std::array<UI::Column, 12> columns = {{
+      {"TRANSFER_COL_SHORTLIST", 28.0f, 0, ImGuiTableColumnFlags_NoHide,
+       columnId(TargetColumn::SHORTLIST)},
+      {"TRANSFER_COL_NAME", 0.0f, 0, ImGuiTableColumnFlags_NoHide,
+       columnId(TargetColumn::NAME)},
+      {"TRANSFER_COL_TEAM", 130.0f, 4, ImGuiTableColumnFlags_None,
+       columnId(TargetColumn::CLUB)},
+      {"TRANSFER_COL_ROLE", 44.0f, 3, ImGuiTableColumnFlags_None,
+       columnId(TargetColumn::ROLE)},
+      {"TRANSFER_COL_AGE", 36.0f, 5, ImGuiTableColumnFlags_None,
+       columnId(TargetColumn::AGE)},
+      {"TRANSFER_COL_EST_OVR", 64.0f, 0, DESCENDING,
+       columnId(TargetColumn::OVERALL)},
+      {"TRANSFER_COL_POTENTIAL", 64.0f, 3, DESCENDING,
+       columnId(TargetColumn::POTENTIAL)},
+      {"TRANSFER_COL_FIT", 100.0f, 0,
+       DESCENDING | ImGuiTableColumnFlags_DefaultSort,
+       columnId(TargetColumn::FIT)},
+      {"TRANSFER_COL_EST_VALUE", 80.0f, 1, DESCENDING,
+       columnId(TargetColumn::VALUE)},
+      {"TRANSFER_COL_WAGE", 80.0f, 6, ImGuiTableColumnFlags_None,
+       columnId(TargetColumn::WAGE)},
+      {"TRANSFER_COL_CONTRACT", 44.0f, 7, ImGuiTableColumnFlags_None,
+       columnId(TargetColumn::CONTRACT)},
+      {"TRANSFER_COL_ACTION", 64.0f, 0,
+       ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_NoHide,
+       columnId(TargetColumn::ACTION)},
+  }};
+  return columns;
+}
+
+/** Index of a column in targetColumns(). */
+constexpr int targetIndex(TargetColumn column)
+{
+  return static_cast<int>(column) - static_cast<int>(TargetColumn::SHORTLIST);
+}
 
 constexpr std::array<PlayerRole, 12> FILTER_ROLES = {
     PlayerRole::GK,  PlayerRole::CB, PlayerRole::LB,  PlayerRole::RB,
@@ -147,42 +200,12 @@ ImVec4 fitColor(TransferNegotiation::FitKind kind)
 
 constexpr int64_t BID_ROUNDING = 10'000;
 constexpr int64_t WAGE_ROUNDING = 100;
-constexpr uint8_t DEFAULT_INSTALMENT_YEARS = 2;
 constexpr int64_t WEEKS_PER_YEAR =
     static_cast<int64_t>(TransferTuning::Contract::WEEKS_PER_YEAR);
 
-constexpr std::array<uint8_t, 5> UPFRONT_OPTIONS = {100, 80, 60, 40, 20};
-constexpr std::array<const char*, 5> UPFRONT_LABELS = {"100%", "80%", "60%",
-                                                       "40%", "20%"};
-constexpr std::array<const char*, 5> YEAR_LABELS = {"1", "2", "3", "4", "5"};
-constexpr std::array<uint16_t, 4> APPEARANCE_TARGETS = {10, 20, 30, 50};
-constexpr std::array<uint16_t, 4> GOAL_TARGETS = {5, 10, 15, 20};
-constexpr std::array<uint8_t, 5> SELL_ON_OPTIONS = {0, 10, 15, 20, 30};
-constexpr std::array<const char*, 5> SELL_ON_LABELS = {"0%", "10%", "15%",
-                                                       "20%", "30%"};
 constexpr std::array<uint8_t, 5> WAGE_SHARE_OPTIONS = {0, 25, 50, 75, 100};
 constexpr std::array<const char*, 5> WAGE_SHARE_LABELS = {"0%", "25%", "50%",
                                                           "75%", "100%"};
-
-/** Index of @p value among @p options (the nearest one if absent). */
-template <typename T, typename V>
-int optionIndex(std::span<const T> options, V value)
-{
-  size_t best = 0;
-  for (size_t index = 1; index < options.size(); ++index)
-  {
-    if (std::abs(static_cast<int>(options[index]) - static_cast<int>(value)) <
-        std::abs(static_cast<int>(options[best]) - static_cast<int>(value)))
-      best = index;
-  }
-  return static_cast<int>(best);
-}
-
-template <typename T, size_t N, typename V>
-int optionIndex(const std::array<T, N>& options, V value)
-{
-  return optionIndex(std::span<const T>(options), value);
-}
 
 uint32_t clampFee(int64_t fee)
 {
@@ -204,58 +227,6 @@ int64_t scaledWage(int64_t wage, double factor)
                       static_cast<double>(WAGE_ROUNDING)) *
          WAGE_ROUNDING;
 }
-
-/** Small muted caption above a dialog field. */
-void formLabel(const char* text)
-{
-  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale()));
-  Theme::ScopedText caption(Theme::Text::SMALL);
-  ImGui::TextColored(Theme::palette().muted, "%s", text);
-}
-
-/** Moves the cursor so the buttons labelled @p labels end at the right
- * edge (null labels are skipped). */
-void alignActions(std::initializer_list<const char*> labels)
-{
-  float total = 0.0f;
-  int count = 0;
-  for (const char* label : labels)
-  {
-    if (label == nullptr) continue;
-    total += UI::buttonWidth(label);
-    ++count;
-  }
-  total += ImGui::GetStyle().ItemSpacing.x * static_cast<float>(count - 1);
-  ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
-                       std::max(0.0f, ImGui::GetContentRegionAvail().x - total));
-}
-
-/**
- * Card-looking panel for dialogs, built on a one-cell table instead of a
- * child window so an auto-sized dialog fits its content on the first frame.
- * Pair with endPanel() when it returns true.
- */
-bool beginPanel(const char* id, const char* title)
-{
-  const float pad = Theme::Space::M * scale();
-  ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(pad, pad));
-  ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, Theme::palette().border);
-  const bool open = ImGui::BeginTable(
-      id, 1, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_PadOuterX,
-      ImVec2(-FLT_MIN, 0.0f));
-  ImGui::PopStyleColor();
-  ImGui::PopStyleVar();
-  if (!open) return false;
-  ImGui::TableSetupColumn("##panel", ImGuiTableColumnFlags_WidthStretch);
-  ImGui::TableNextRow();
-  ImGui::TableNextColumn();
-  ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg,
-                         Theme::toU32(Theme::palette().surface));
-  if (title != nullptr && *title != '\0') UI::sectionLabel(title);
-  return true;
-}
-
-void endPanel() { ImGui::EndTable(); }
 
 /** An offer structure that fits the budget, if any. */
 struct Suggestion
@@ -360,13 +331,6 @@ std::string loanTermsText(const TransferNegotiation::LoanTerms& terms)
   return text;
 }
 
-std::string offerTermsText(const TransferNegotiation::OfferTerms& terms)
-{
-  if (terms.instalment_years == 0) return LOC("TRANSFER_TERMS_CASH");
-  return fmt::sprintf(LOC("TRANSFER_TERMS_INSTALMENTS"),
-                      static_cast<int>(terms.upfront_percent),
-                      static_cast<int>(terms.instalment_years));
-}
 }  // namespace
 
 TransferMarketScene::TransferMarketScene(GUIView* parent)
@@ -814,7 +778,7 @@ void TransferMarketScene::refreshOffers()
     row.amount_text = incoming.loan ? LOC("TRANSFER_KIND_LOAN")
                                     : Format::money(incoming.terms.fee);
     row.terms_text = incoming.loan ? loanTermsText(incoming.loan_terms)
-                                   : offerTermsText(incoming.terms);
+                                   : TransferTermsEditor::structureText(incoming.terms);
     const uint32_t value = controller.getPlayerMarketValue(incoming.player_id);
     row.value = value;
     row.value_ratio = !incoming.loan && value > 0
@@ -822,25 +786,14 @@ void TransferMarketScene::refreshOffers()
                                 static_cast<float>(value) *
                                 Tuning::PERCENT_SCALE
                           : 0.0f;
-    row.expires_text = Format::dayMonth(incoming.expires);
-    offers.push_back(std::move(row));
-  }
-  for (const auto& [player_id, listing] : controller.getIncomingBids())
-  {
-    OfferRow row;
-    row.player_id = player_id;
-    row.player = playerName(*data, player_id);
-    row.club = teamName(controller, *listing.highest_bidder_id);
-    row.fee = listing.highest_bid;
-    row.amount_text = Format::money(listing.highest_bid);
-    row.terms_text = fmt::sprintf(LOC("TRANSFER_TERMS_LISTED"),
-                                  Format::money(listing.asking_price));
-    const uint32_t value = controller.getPlayerMarketValue(player_id);
-    row.value = value;
-    row.value_ratio = value > 0 ? static_cast<float>(listing.highest_bid) /
-                                      static_cast<float>(value) *
-                                      Tuning::PERCENT_SCALE
-                                : 0.0f;
+    row.ratio_text = fmt::sprintf(LOC("TRANSFER_VS_VALUE_SHORT"),
+                                  static_cast<double>(row.value_ratio));
+    row.awaiting = incoming.status == OfferStatus::AwaitingBuyer;
+    row.expires_text =
+        row.awaiting
+            ? fmt::sprintf(LOC("TRANSFER_OFFER_AWAITING"),
+                           Format::dayMonth(incoming.respond_on))
+            : Format::dayMonth(incoming.expires);
     offers.push_back(std::move(row));
   }
 
@@ -1008,7 +961,7 @@ void TransferMarketScene::renderContent()
   renderOfferDialog();
   renderContractDialog();
   renderLoanDialog();
-  renderCounterDialog();
+  if (negotiation_dialog.render(guiView->getController())) refreshData();
   renderListingDialog();
   renderReleaseDialog();
 }
@@ -1304,46 +1257,37 @@ void TransferMarketScene::renderTargetTable(const char* id,
 {
   const Theme::Palette& palette = Theme::palette();
   auto& controller = guiView->getController();
+  // Columns that do not fit hide (never sideways scrolling); their values
+  // are listed in the row's Actions menu.
+  std::array<UI::Column, 12> columns = targetColumns();
+  const float scale = Theme::scale();
+  const float sortArrow = ImGui::GetFontSize();
+  for (UI::Column& column : columns)
+  {
+    column.label = LOC(column.label);
+    if (column.width > 0.0f)
+      column.width =
+          std::max(column.width,
+                   (ImGui::CalcTextSize(column.label).x + sortArrow) / scale);
+  }
+  const UI::ColumnMask mask =
+      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
+  target_mask = mask;
+  // The table fills the rest of the page and scrolls itself; on short
+  // windows (big UI scales) it takes its natural height instead and the
+  // page is the only scroll surface (the clipper keeps long lists cheap).
+  const float room = ImGui::GetContentRegionAvail().y;
+  const bool fill = room >= Tuning::Layout::TARGET_TABLE_MIN_HEIGHT * scale;
   const ImGuiTableFlags flags =
       ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-      ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
-      ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_Hideable;
-  if (!UI::beginDataTable(id, Tuning::Tables::TARGET_COLUMN_COUNT, flags,
-                          Tuning::Layout::TARGET_TABLE_MIN_WIDTH,
-                          ImVec2(0.0f, ImGui::GetContentRegionAvail().y), 2))
+      ImGuiTableFlags_Sortable | ImGuiTableFlags_Hideable |
+      (fill ? ImGuiTableFlags_ScrollY : ImGuiTableFlags_None);
+  if (!UI::beginResponsiveTable(id, columns, mask, flags, UI::TableHeader::NONE,
+                                ImVec2(0.0f, fill ? room : 0.0f)))
     return;
-  const auto column = [](const char* key, TargetColumn columnId,
-                         ImGuiTableColumnFlags extra = 0, float weight = 0.0f)
-  {
-    ImGui::TableSetupColumn(LOC(key), extra, weight,
-                            static_cast<ImGuiID>(columnId));
-  };
-  column("TRANSFER_COL_SHORTLIST", TargetColumn::SHORTLIST,
-         ImGuiTableColumnFlags_NoHide);
-  column("TRANSFER_COL_NAME", TargetColumn::NAME,
-         ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoHide,
-         Tuning::Layout::NAME_COLUMN_WEIGHT);
-  column("TRANSFER_COL_TEAM", TargetColumn::CLUB,
-         ImGuiTableColumnFlags_WidthStretch,
-         Tuning::Layout::CLUB_COLUMN_WEIGHT);
-  column("TRANSFER_COL_ROLE", TargetColumn::ROLE);
-  column("TRANSFER_COL_AGE", TargetColumn::AGE);
-  column("TRANSFER_COL_EST_OVR", TargetColumn::OVERALL,
-         ImGuiTableColumnFlags_PreferSortDescending);
-  column("TRANSFER_COL_POTENTIAL", TargetColumn::POTENTIAL,
-         ImGuiTableColumnFlags_PreferSortDescending);
-  column("TRANSFER_COL_FIT", TargetColumn::FIT,
-         ImGuiTableColumnFlags_PreferSortDescending |
-             ImGuiTableColumnFlags_DefaultSort);
-  column("TRANSFER_COL_EST_VALUE", TargetColumn::VALUE,
-         ImGuiTableColumnFlags_PreferSortDescending);
-  column("TRANSFER_COL_WAGE", TargetColumn::WAGE);
-  column("TRANSFER_COL_CONTRACT", TargetColumn::CONTRACT);
-  column("TRANSFER_COL_ACTION", TargetColumn::ACTION,
-         ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_NoHide);
   // Sortable columns get clickable headers; the action column's is a label.
   ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
-  for (int index = 0; index < Tuning::Tables::TARGET_COLUMN_COUNT; ++index)
+  for (int index = 0; index < ImGui::TableGetColumnCount(); ++index)
   {
     if (!ImGui::TableSetColumnIndex(index)) continue;
     const char* name = ImGui::TableGetColumnName(index);
@@ -1415,30 +1359,33 @@ void TransferMarketScene::renderTargetTable(const char* id,
         ImGui::SameLine();
         UI::badge(LOC("TRANSFER_BADGE_EXPIRING"), palette.warning);
       }
-      ImGui::TableNextColumn();
-      UI::textFitted(row.club, ImGui::GetContentRegionAvail().x,
-                     row.free_agent ? palette.faint : palette.muted);
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(row.role.c_str());
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.age);
-      ImGui::TableNextColumn();
-      estimateChip(row.overall, row.ranged, row.overall_text);
-      if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("%s", fmt::sprintf(LOC("TRANSFER_KNOWLEDGE_TIP"),
-                                             row.overall_low, row.overall_high,
-                                             row.knowledge)
-                                    .c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextColored(palette.muted, "%s", row.potential_text.c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextColored(fitColor(row.fit.kind), "%s", row.fit_text.c_str());
-      ImGui::TableNextColumn();
-      UI::textRight(row.value_text.c_str());
-      ImGui::TableNextColumn();
-      UI::textRight(row.wage_text.c_str());
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.contract_years);
+      if (UI::cell(mask, targetIndex(TargetColumn::CLUB)))
+        UI::textFitted(row.club, ImGui::GetContentRegionAvail().x,
+                       row.free_agent ? palette.faint : palette.muted);
+      if (UI::cell(mask, targetIndex(TargetColumn::ROLE)))
+        ImGui::TextUnformatted(row.role.c_str());
+      if (UI::cell(mask, targetIndex(TargetColumn::AGE)))
+        ImGui::Text("%d", row.age);
+      if (UI::cell(mask, targetIndex(TargetColumn::OVERALL)))
+      {
+        estimateChip(row.overall, row.ranged, row.overall_text);
+        if (ImGui::IsItemHovered())
+          ImGui::SetTooltip(
+              "%s", fmt::sprintf(LOC("TRANSFER_KNOWLEDGE_TIP"), row.overall_low,
+                                 row.overall_high, row.knowledge)
+                        .c_str());
+      }
+      if (UI::cell(mask, targetIndex(TargetColumn::POTENTIAL)))
+        ImGui::TextColored(palette.muted, "%s", row.potential_text.c_str());
+      if (UI::cell(mask, targetIndex(TargetColumn::FIT)))
+        UI::textFitted(row.fit_text, ImGui::GetContentRegionAvail().x,
+                       fitColor(row.fit.kind));
+      if (UI::cell(mask, targetIndex(TargetColumn::VALUE)))
+        UI::textRight(row.value_text.c_str());
+      if (UI::cell(mask, targetIndex(TargetColumn::WAGE)))
+        UI::textRight(row.wage_text.c_str());
+      if (UI::cell(mask, targetIndex(TargetColumn::CONTRACT)))
+        ImGui::Text("%d", row.contract_years);
       ImGui::TableNextColumn();
       renderTargetActions(row);
       ImGui::PopID();
@@ -1461,6 +1408,7 @@ void TransferMarketScene::renderTargetActions(const TargetRow& row)
   const auto& controller = guiView->getController();
   if (ImGui::SmallButton(LOC("TRANSFER_ACTIONS"))) ImGui::OpenPopup("actions");
   if (!ImGui::BeginPopup("actions")) return;
+  renderHiddenTargetValues(row);
   const auto talk = controller.getContractTalkKind(row.id);
   if (row.free_agent)
   {
@@ -1494,6 +1442,42 @@ void TransferMarketScene::renderTargetActions(const TargetRow& row)
   ImGui::EndPopup();
 }
 
+void TransferMarketScene::renderHiddenTargetValues(const TargetRow& row) const
+{
+  const Theme::Palette& palette = Theme::palette();
+  const std::array<UI::Column, 12>& columns = targetColumns();
+  const auto hidden = [this](TargetColumn column)
+  { return (target_mask & (UI::ColumnMask{1} << targetIndex(column))) == 0; };
+  float keyWidth = 0.0f;
+  for (const TargetColumn column :
+       {TargetColumn::CLUB, TargetColumn::ROLE, TargetColumn::AGE,
+        TargetColumn::POTENTIAL, TargetColumn::VALUE, TargetColumn::WAGE,
+        TargetColumn::CONTRACT})
+    if (hidden(column))
+      keyWidth = std::max(
+          keyWidth,
+          ImGui::CalcTextSize(
+              LOC(columns[static_cast<size_t>(targetIndex(column))].label))
+              .x);
+  if (keyWidth <= 0.0f) return;  // Every column is on screen.
+  keyWidth += ImGui::GetStyle().ItemSpacing.x * 2.0f;
+  const auto line = [&](TargetColumn column, const std::string& value)
+  {
+    if (!hidden(column)) return;
+    UI::keyValue(LOC(columns[static_cast<size_t>(targetIndex(column))].label),
+                 value.c_str(), keyWidth);
+  };
+  ImGui::TextColored(palette.text, "%s", row.name.c_str());
+  line(TargetColumn::CLUB, row.club);
+  line(TargetColumn::ROLE, row.role);
+  line(TargetColumn::AGE, std::to_string(row.age));
+  line(TargetColumn::POTENTIAL, row.potential_text);
+  line(TargetColumn::VALUE, row.value_text);
+  line(TargetColumn::WAGE, row.wage_text);
+  line(TargetColumn::CONTRACT, std::to_string(row.contract_years));
+  ImGui::Separator();
+}
+
 // ---------------------------------------------------------------------------
 // Offers, loans, squad and history
 // ---------------------------------------------------------------------------
@@ -1508,79 +1492,103 @@ void TransferMarketScene::renderOffersTab()
   {
     ImGui::TextColored(palette.muted, "%s", LOC("TRANSFER_NO_BIDS"));
   }
-  else if (UI::beginDataTable(
-               "IncomingOffers", Tuning::Tables::OFFER_COLUMN_COUNT,
-               ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-                   ImGuiTableFlags_SizingFixedFit,
-               Tuning::Layout::WIDE_TABLE_MIN_WIDTH, ImVec2(0, 0)))
+  else
   {
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_NAME"),
-                            ImGuiTableColumnFlags_WidthStretch);
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_BIDDER"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_AMOUNT"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_TERMS"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_VS_VALUE"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_EXPIRES"));
-    ImGui::TableSetupColumn(LOC("TRANSFER_COL_ACTION"));
-    ImGui::TableHeadersRow();
-    for (const OfferRow& row : offers)
+    // Player, bidder, fee and action always stay; the rest hides on narrow
+    // windows and moves to a line under the player's name.
+    const char* negotiate = LOC("TRANSFER_NEGOTIATE");
+    const char* viewTalks = LOC("TRANSFER_VIEW_TALKS");
+    const char* accept = LOC("TRANSFER_ACCEPT");
+    const char* reject = LOC("TRANSFER_REJECT");
+    constexpr UI::ButtonSize COMPACT = UI::ButtonSize::COMPACT;
+    const float actionWidth =
+        std::max({UI::buttonWidth(negotiate, COMPACT),
+                  UI::buttonWidth(viewTalks, COMPACT),
+                  UI::buttonWidth(accept, COMPACT) +
+                      ImGui::GetStyle().ItemSpacing.x +
+                      UI::buttonWidth(reject, COMPACT)}) /
+        scale();
+    std::array<UI::Column, 7> columns = {{
+        {LOC("TRANSFER_COL_NAME"), 0.0f, 0},
+        {LOC("TRANSFER_COL_BIDDER"), 120.0f, 0},
+        {LOC("TRANSFER_COL_AMOUNT"), 80.0f, 0},
+        {LOC("TRANSFER_COL_TERMS"), 150.0f, 2},
+        {LOC("TRANSFER_COL_VS_VALUE"), 70.0f, 1},
+        {LOC("TRANSFER_COL_EXPIRES"), 100.0f, 3},
+        {LOC("TRANSFER_COL_ACTION"), actionWidth, 0},
+    }};
+    for (UI::Column& column : columns)
+      if (column.width > 0.0f)
+        column.width = std::max(
+            column.width, ImGui::CalcTextSize(column.label).x / scale());
+    const UI::ColumnMask mask =
+        UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
+    const auto shown = [mask](int index)
+    { return (mask & (UI::ColumnMask{1} << index)) != 0; };
+    if (UI::beginResponsiveTable("IncomingOffers", columns, mask,
+                                 ImGuiTableFlags_RowBg |
+                                     ImGuiTableFlags_BordersInnerH))
     {
-      ImGui::TableNextRow();
-      ImGui::PushID(static_cast<int>(row.offer_id));
-      ImGui::PushID(static_cast<int>(row.player_id));
-      ImGui::TableNextColumn();
-      if (UI::link(row.player.c_str(), "name"))
-        Navigation::openPlayer(guiView, row.player_id);
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(row.club.c_str());
-      ImGui::TableNextColumn();
-      UI::textRight(row.amount_text.c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextColored(palette.muted, "%s", row.terms_text.c_str());
-      ImGui::TableNextColumn();
-      if (!row.loan)
-        ImGui::TextColored(row.value_ratio >= Tuning::PERCENT_SCALE
-                               ? palette.positive
-                               : palette.warning,
-                           "%.0f%%", static_cast<double>(row.value_ratio));
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(row.expires_text.c_str());
-      ImGui::TableNextColumn();
-      ImGui::BeginDisabled(!window.open);
-      if (UI::primaryButton(LOC("TRANSFER_ACCEPT")))
+      for (const OfferRow& row : offers)
       {
-        const bool done = row.offer_id != 0
-                              ? controller.acceptIncomingOffer(row.offer_id)
-                              : controller.acceptBid(row.player_id);
-        showToast(done ? fmt::sprintf(LOC("TRANSFER_SOLD_TOAST"), row.player)
-                       : std::string(LOC("TRANSFER_DEAL_FAILED")),
-                  !done);
-        changed = true;
-      }
-      ImGui::EndDisabled();
-      ImGui::SameLine();
-      if (ImGui::Button(LOC("TRANSFER_REJECT")))
-      {
-        if (row.offer_id != 0)
-          controller.rejectIncomingOffer(row.offer_id);
+        ImGui::TableNextRow();
+        ImGui::PushID(static_cast<int>(row.offer_id));
+        UI::cell(mask, 0);
+        if (UI::link(row.player.c_str(), "name"))
+          Navigation::openPlayer(guiView, row.player_id);
+        if (!shown(3) || !shown(4) || !shown(5))
+        {
+          // Values of the hidden columns.
+          Theme::ScopedText small(Theme::Text::SMALL);
+          if (!shown(3)) ImGui::TextColored(palette.muted, "%s", row.terms_text.c_str());
+          if (!shown(4) && !row.loan)
+            ImGui::TextColored(palette.muted, "%s", row.ratio_text.c_str());
+          if (!shown(5))
+            ImGui::TextColored(palette.muted, "%s", row.expires_text.c_str());
+        }
+        if (UI::cell(mask, 1)) ImGui::TextUnformatted(row.club.c_str());
+        if (UI::cell(mask, 2)) UI::textRight(row.amount_text.c_str());
+        if (UI::cell(mask, 3))
+          ImGui::TextColored(palette.muted, "%s", row.terms_text.c_str());
+        if (UI::cell(mask, 4) && !row.loan)
+          ImGui::TextColored(row.value_ratio >= Tuning::PERCENT_SCALE
+                                 ? palette.positive
+                                 : palette.warning,
+                             "%s", row.ratio_text.c_str());
+        if (UI::cell(mask, 5)) ImGui::TextUnformatted(row.expires_text.c_str());
+        UI::cell(mask, 6);
+        if (!row.loan)
+        {
+          // Transfer bids are negotiated in the talks dialog.
+          if (UI::primaryButton(row.awaiting ? viewTalks : negotiate,
+                                ImVec2(0.0f, 0.0f), COMPACT))
+            negotiation_dialog.open(controller, row.offer_id);
+        }
         else
-          controller.rejectBid(row.player_id);
-        changed = true;
+        {
+          ImGui::BeginDisabled(!window.open);
+          if (UI::primaryButton(accept, ImVec2(0.0f, 0.0f), COMPACT))
+          {
+            const bool done = controller.acceptIncomingOffer(row.offer_id);
+            showToast(done ? fmt::sprintf(LOC("TRANSFER_LOANED_TOAST"),
+                                          row.player)
+                           : std::string(LOC("TRANSFER_DEAL_FAILED")),
+                      !done);
+            changed = true;
+          }
+          ImGui::EndDisabled();
+          ImGui::SameLine();
+          if (UI::secondaryButton(reject, ImVec2(0.0f, 0.0f), COMPACT))
+          {
+            controller.rejectIncomingOffer(row.offer_id);
+            changed = true;
+          }
+        }
+        ImGui::PopID();
+        if (changed) break;
       }
-      if (!row.loan)
-      {
-        // A counter can only be accepted while the window is open.
-        ImGui::SameLine();
-        ImGui::BeginDisabled(!window.open);
-        if (ImGui::Button(LOC("TRANSFER_COUNTER")))
-          counter_dialog = {true, row, row.fee, std::nullopt};
-        ImGui::EndDisabled();
-      }
-      ImGui::PopID();
-      ImGui::PopID();
-      if (changed) break;
+      ImGui::EndTable();
     }
-    ImGui::EndTable();
   }
   if (changed)
   {
@@ -2061,8 +2069,7 @@ void TransferMarketScene::renderOfferDialog()
                            .c_str());
     ImGui::PopTextWrapPos();
 
-    formLabel(LOC("TRANSFER_FIELD_FEE"));
-    int64_t fee = terms.fee;
+    const int64_t fee = terms.fee;
     std::vector<UI::MoneyChip> chips;
     if (offer_dialog.asking_price > 0)
       chips.push_back({LOC("TRANSFER_CHIP_ASKING"), offer_dialog.asking_price});
@@ -2071,77 +2078,7 @@ void TransferMarketScene::renderOfferDialog()
       chips.push_back({LOC("TRANSFER_CHIP_COUNTER"), response->counter_fee});
     chips.push_back({LOC("TRANSFER_CHIP_MINUS_10"), scaledAmount(fee, 0.9)});
     chips.push_back({LOC("TRANSFER_CHIP_PLUS_10"), scaledAmount(fee, 1.1)});
-    if (UI::moneyInput("##fee", fee,
-                       {.minimum = BID_ROUNDING,
-                        .maximum = std::numeric_limits<uint32_t>::max(),
-                        .chips = chips}))
-      terms.fee = clampFee(fee);
-
-    formLabel(LOC("TRANSFER_FIELD_UPFRONT"));
-    int upfrontIndex = optionIndex(UPFRONT_OPTIONS, terms.upfront_percent);
-    if (UI::segmented("##upfront", upfrontIndex, UPFRONT_LABELS))
-    {
-      terms.upfront_percent = UPFRONT_OPTIONS[static_cast<size_t>(upfrontIndex)];
-      if (terms.upfront_percent < 100 && terms.instalment_years == 0)
-        terms.instalment_years = DEFAULT_INSTALMENT_YEARS;
-    }
-    if (terms.upfront_percent < 100)
-    {
-      formLabel(LOC("TRANSFER_FIELD_INSTALMENTS"));
-      int yearIndex = std::max(0, terms.instalment_years - 1);
-      if (UI::segmented("##years", yearIndex,
-                        std::span(YEAR_LABELS).first(
-                            TransferTuning::Offer::MAX_INSTALMENT_YEARS)))
-        terms.instalment_years = static_cast<uint8_t>(yearIndex + 1);
-    }
-    else
-    {
-      terms.instalment_years = 0;
-    }
-
-    ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
-    const bool addOns = beginPanel("##offer_add_ons", LOC("TRANSFER_ADD_ONS"));
-    const auto bonusRow = [&](const char* label, const char* id,
-                              uint32_t& bonus, uint16_t& target,
-                              std::span<const uint16_t> options,
-                              const char* target_key)
-    {
-      formLabel(label);
-      int64_t amount = bonus;
-      if (UI::moneyInput(id, amount,
-                         {.maximum = std::numeric_limits<uint32_t>::max()}))
-        bonus = static_cast<uint32_t>(amount);
-      if (bonus == 0)
-      {
-        target = 0;
-        return;
-      }
-      std::array<std::string, 4> texts;
-      std::array<const char*, 4> labels{};
-      for (size_t index = 0; index < options.size(); ++index)
-      {
-        texts[index] = fmt::sprintf(LOC(target_key), options[index]);
-        labels[index] = texts[index].c_str();
-      }
-      int targetIndex = optionIndex(options, target);
-      if (target == 0) target = options[static_cast<size_t>(targetIndex)];
-      ImGui::PushID(id);
-      if (UI::segmented("##target", targetIndex,
-                        std::span(labels).first(options.size())))
-        target = options[static_cast<size_t>(targetIndex)];
-      ImGui::PopID();
-    };
-    bonusRow(LOC("TRANSFER_FIELD_APPEARANCE_BONUS"), "##app_bonus",
-             terms.appearance_bonus, terms.appearance_target,
-             APPEARANCE_TARGETS, "TRANSFER_APPS_SHORT");
-    bonusRow(LOC("TRANSFER_FIELD_GOAL_BONUS"), "##goal_bonus",
-             terms.goal_bonus, terms.goal_target, GOAL_TARGETS,
-             "TRANSFER_GOALS_SHORT");
-    formLabel(LOC("TRANSFER_FIELD_SELL_ON"));
-    int sellOnIndex = optionIndex(SELL_ON_OPTIONS, terms.sell_on_percent);
-    if (UI::segmented("##sell_on", sellOnIndex, SELL_ON_LABELS))
-      terms.sell_on_percent = SELL_ON_OPTIONS[static_cast<size_t>(sellOnIndex)];
-    if (addOns) endPanel();
+    edit(terms, chips);
   };
 
   const auto summaryColumn = [&]
@@ -2597,82 +2534,6 @@ void TransferMarketScene::renderLoanDialog()
       ImGui::CloseCurrentPopup();
     }
   }
-  ImGui::EndPopup();
-}
-
-void TransferMarketScene::renderCounterDialog()
-{
-  if (counter_dialog.requested)
-  {
-    ImGui::OpenPopup("###transfer_counter");
-    counter_dialog.requested = false;
-  }
-  placeDialog(std::min(Tuning::Layout::DIALOG_WIDTH * scale(),
-                       ImGui::GetMainViewport()->Size.x *
-                           Tuning::Layout::DIALOG_VIEWPORT_SHARE));
-  const std::string title =
-      std::string(LOC("TRANSFER_COUNTER_TITLE")) + "###transfer_counter";
-  if (!ImGui::BeginPopupModal(
-          title.c_str(), nullptr,
-          ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize))
-    return;
-  auto& controller = guiView->getController();
-  const OfferRow& offer = counter_dialog.offer;
-  ImGui::PushTextWrapPos(0.0f);
-  ImGui::TextUnformatted(fmt::sprintf(LOC("TRANSFER_COUNTER_HEADER"),
-                                      offer.club, offer.player,
-                                      offer.amount_text)
-                             .c_str());
-  ImGui::PopTextWrapPos();
-  formLabel(LOC("TRANSFER_NEW_PRICE"));
-  int64_t fee = counter_dialog.fee;
-  const std::array<UI::MoneyChip, 4> chips = {
-      {{LOC("TRANSFER_CHIP_THEIR_OFFER"), offer.fee},
-       {LOC("TRANSFER_CHIP_VALUE"), offer.value},
-       {LOC("TRANSFER_CHIP_PLUS_10"), scaledAmount(offer.fee, 1.1)},
-       {LOC("TRANSFER_CHIP_PLUS_25"), scaledAmount(offer.fee, 1.25)}}};
-  if (UI::moneyInput("##counter_fee", fee,
-                     {.maximum = std::numeric_limits<uint32_t>::max(),
-                      .chips = chips}))
-    counter_dialog.fee = static_cast<uint32_t>(fee);
-  if (counter_dialog.response)
-  {
-    const ClubResponse& response = *counter_dialog.response;
-    renderClubResponse(
-        response, response.decision == ClubResponse::Decision::Counter
-                      ? fmt::sprintf(LOC("TRANSFER_COUNTER_IMPROVED"),
-                                     Format::moneyFull(response.counter_fee))
-                      : std::string());
-  }
-  ImGui::Separator();
-  alignActions({LOC("TRANSFER_CANCEL"), LOC("TRANSFER_SUBMIT_COUNTER")});
-  if (UI::secondaryButton(LOC("TRANSFER_CANCEL")) ||
-      ImGui::IsKeyPressed(ImGuiKey_Escape, false))
-    ImGui::CloseCurrentPopup();
-  ImGui::SameLine();
-  ImGui::BeginDisabled(counter_dialog.fee == 0);
-  if (UI::primaryButton(LOC("TRANSFER_SUBMIT_COUNTER")))
-  {
-    if (offer.offer_id == 0)
-    {
-      // A bid on a listed player: the new price becomes the asking price.
-      controller.counterOffer(offer.player_id, counter_dialog.fee);
-      refreshData();
-      ImGui::CloseCurrentPopup();
-    }
-    else
-    {
-      counter_dialog.response =
-          controller.counterIncomingOffer(offer.offer_id, counter_dialog.fee);
-      if (counter_dialog.response->decision == ClubResponse::Decision::Accept)
-      {
-        showToast(fmt::sprintf(LOC("TRANSFER_SOLD_TOAST"), offer.player));
-        ImGui::CloseCurrentPopup();
-      }
-      refreshData();
-    }
-  }
-  ImGui::EndDisabled();
   ImGui::EndPopup();
 }
 

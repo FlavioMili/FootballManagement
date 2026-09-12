@@ -23,6 +23,7 @@ add_executable(unit_tests
   test_match_scenarios.cpp
   test_transfer_market.cpp
   test_transfer_negotiation.cpp
+  test_buyer_negotiation.cpp
   test_competitions.cpp
   test_staggered_rounds.cpp
   test_view_models.cpp
@@ -49,6 +50,7 @@ add_executable(unit_tests
   test_preseason.cpp
   test_mentoring.cpp
   test_holiday.cpp
+  test_nav_history.cpp
 )
 target_link_libraries(unit_tests PRIVATE GTest::gtest_main fm_ui)
 set_property(TARGET unit_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
@@ -70,6 +72,7 @@ add_executable(core_unit_tests
   test_match_rules.cpp
   test_transfer_market.cpp
   test_transfer_negotiation.cpp
+  test_buyer_negotiation.cpp
   test_competitions.cpp
   test_staggered_rounds.cpp
   test_finances.cpp
@@ -230,6 +233,37 @@ gtest_discover_tests(
     TIMEOUT 600
 )
 
+# Back / Forward history driven by touchpad swipes, mouse side buttons and
+# Alt+arrows through the real GUIView.
+add_executable(navigation_ui_tests test_navigation_ui.cpp)
+target_link_libraries(navigation_ui_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET navigation_ui_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  navigation_ui_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "navigation_ui::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "unit;gui"
+    TIMEOUT 600
+)
+
+# Talks over an AI club's bid for a managed player, from the inbox and the
+# transfer market, through the real GUIView at several window sizes and UI
+# scales (screenshots in the runtime captures folder).
+add_executable(transfer_ui_tests test_transfer_ui.cpp)
+target_link_libraries(transfer_ui_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET transfer_ui_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  transfer_ui_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "transfer_ui::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "unit;gui"
+    TIMEOUT 600
+)
+
 # Guidance screens (checklist, next steps, delegation, opposition report,
 # data hub, inbox decisions, half-time analysis) through the real GUIView at
 # several window sizes and UI scales; screenshots in the captures folder.
@@ -240,6 +274,22 @@ gtest_discover_tests(
   guidance_ui_tests
   DISCOVERY_MODE PRE_TEST
   TEST_PREFIX "guidance_ui::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "unit;gui"
+    TIMEOUT 600
+)
+
+# Matchday controls of the live match (substitutions, tactics, shouts)
+# through the real GUIView at several sizes; screenshots in the captures
+# folder.
+add_executable(match_controls_ui_tests test_match_controls_ui.cpp)
+target_link_libraries(match_controls_ui_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET match_controls_ui_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  match_controls_ui_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "match_ui::"
   PROPERTIES
     ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
     LABELS "unit;gui"

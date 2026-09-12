@@ -15,7 +15,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
-#include <stack>
 #include <string_view>
 #include <vector>
 
@@ -49,7 +48,7 @@ GUIView::~GUIView()
   // renderer
   while (!sceneStack.empty())
   {
-    sceneStack.pop();
+    sceneStack.pop_back();
   }
   currentScene.reset();
   pendingScene.reset();
@@ -197,7 +196,7 @@ void GUIView::run()
 
   // Release scenes before the caller saves controller state. A scene may own
   // bounded background work, and its destructor joins that work safely.
-  while (!sceneStack.empty()) sceneStack.pop();
+  while (!sceneStack.empty()) sceneStack.pop_back();
   currentScene.reset();
   pendingScene.reset();
 }
@@ -424,28 +423,54 @@ void GUIView::changeScene(std::unique_ptr<GUIScene> newScene)
 {
   pendingAction = PendingAction::CHANGE;
   pendingScene = std::move(newScene);
+  history_step = false;
 }
 
 void GUIView::overlayScene(std::unique_ptr<GUIScene> overlay)
 {
   pendingAction = PendingAction::OVERLAY;
   pendingScene = std::move(overlay);
+  history_step = false;
 }
 
-void GUIView::popScene() { pendingAction = PendingAction::POP; }
+void GUIView::popScene()
+{
+  pendingAction = PendingAction::POP;
+  history_step = false;
+}
 
 void GUIView::navigateTo(std::unique_ptr<GUIScene> scene)
 {
   pendingAction = PendingAction::NAVIGATE;
   pendingScene = std::move(scene);
+  history_step = false;
 }
 
 GUIScene* GUIView::getBaseScene() const { return currentScene.get(); }
 
 size_t GUIView::getOverlayDepth() const { return sceneStack.size(); }
 
+GUIScene* GUIView::getSceneBelowTop() const
+{
+  if (sceneStack.empty()) return nullptr;
+  return sceneStack.size() > 1 ? sceneStack[sceneStack.size() - 2].get()
+                               : currentScene.get();
+}
+
+void GUIView::recordHistory()
+{
+  const bool step = history_step;
+  history_step = false;
+  // A step through the history already moved to the entry being shown.
+  if (step) return;
+  if (const GUIScene* shown = getActiveScene())
+    if (const std::optional<NavEntry> entry = shown->historyEntry())
+      nav_history.visit(*entry);
+}
+
 void GUIView::applyPendingSceneChanges()
 {
+  if (pendingAction == PendingAction::NONE) return;
   while (pendingAction != PendingAction::NONE)
   {
     PendingAction currentAction = pendingAction;
@@ -457,11 +482,15 @@ void GUIView::applyPendingSceneChanges()
 
     if (currentAction == PendingAction::CHANGE)
     {
+      // A new base scene starts a new career (or leaves it): its history
+      // must not lead back into the previous one.
+      nav_history.clear();
+      swipe_gesture.reset();
       // Clear any overlays when changing main scene
       while (!sceneStack.empty())
       {
-        sceneStack.top()->onExit();
-        sceneStack.pop();
+        sceneStack.back()->onExit();
+        sceneStack.pop_back();
       }
 
       // Exit current scene
@@ -488,7 +517,7 @@ void GUIView::applyPendingSceneChanges()
         {
           beginMatchRenderTimings();
         }
-        sceneStack.push(std::move(sceneToApply));
+        sceneStack.push_back(std::move(sceneToApply));
       }
     }
     else if (currentAction == PendingAction::POP)
@@ -496,8 +525,8 @@ void GUIView::applyPendingSceneChanges()
       if (!sceneStack.empty())
       {
         // Exit the top overlay scene
-        sceneStack.top()->onExit();
-        sceneStack.pop();
+        sceneStack.back()->onExit();
+        sceneStack.pop_back();
         if (GUIScene* revealed = getActiveScene()) revealed->onResume();
       }
     }
@@ -506,8 +535,8 @@ void GUIView::applyPendingSceneChanges()
       const bool hadOverlays = !sceneStack.empty();
       while (!sceneStack.empty())
       {
-        sceneStack.top()->onExit();
-        sceneStack.pop();
+        sceneStack.back()->onExit();
+        sceneStack.pop_back();
       }
       if (sceneToApply)
       {
@@ -516,7 +545,7 @@ void GUIView::applyPendingSceneChanges()
         {
           beginMatchRenderTimings();
         }
-        sceneStack.push(std::move(sceneToApply));
+        sceneStack.push_back(std::move(sceneToApply));
       }
       else if (hadOverlays && currentScene)
       {
@@ -524,6 +553,7 @@ void GUIView::applyPendingSceneChanges()
       }
     }
   }
+  recordHistory();
 }
 
 void GUIView::quit() { running = false; }
@@ -558,7 +588,7 @@ GUIScene* GUIView::getActiveScene() const
 {
   if (!sceneStack.empty())
   {
-    return sceneStack.top().get();
+    return sceneStack.back().get();
   }
   return currentScene.get();
 }

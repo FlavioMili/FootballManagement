@@ -41,10 +41,12 @@ struct ActionEntry
   InboxAction action;
 };
 
-constexpr std::array<ActionEntry, 11> ACTION_TITLES = {{
+constexpr std::array<ActionEntry, 13> ACTION_TITLES = {{
     {"INBOX_BID_TITLE", InboxAction::RespondOffer},
     {"INBOX_LOAN_OFFER_TITLE", InboxAction::RespondOffer},
+    {"INBOX_OFFER_REPLY_TITLE", InboxAction::RespondOffer},
     {"TALK_REQUEST_TITLE", InboxAction::ReplyToPlayer},
+    {"OFFER_REJECTED_REQUEST_TITLE", InboxAction::ReplyToPlayer},
     {"TALK_ESCALATED_TITLE", InboxAction::ReplyToPlayer},
     {"STORY_SAGA_TITLE", InboxAction::ReplyToPlayer},
     {"STORY_CAPTAIN_TITLE", InboxAction::ReplyToPlayer},

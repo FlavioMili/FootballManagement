@@ -70,6 +70,15 @@ class MainGameScene : public ManagementScene
   /** @brief True while days are being simulated in the background. */
   [[nodiscard]] bool isAdvancing() const { return continuation_running; }
 
+  /**
+   * @brief True from the Continue request until the days are simulated,
+   * including the frames spent closing the screens above the hub first.
+   */
+  [[nodiscard]] bool isContinuing() const
+  {
+    return continuation_running || continuation_requested;
+  }
+
   /** @brief Label of the context-aware Continue / Play Match button. */
   [[nodiscard]] std::string continueLabel() const;
 

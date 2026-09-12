@@ -13,6 +13,7 @@ set(FM_CORE_SOURCES
     controller/game_controller.h
     controller/game_controller.cpp
     controller/game_controller_guidance.cpp
+    controller/game_controller_offers.cpp
     controller/game_controller_squad.cpp
 
     database/database_connection.h
@@ -181,6 +182,8 @@ set(FM_CORE_SOURCES
     model/transfer_market.cpp
     model/transfer_negotiation.h
     model/transfer_negotiation.cpp
+    model/buyer_negotiation.h
+    model/buyer_negotiation.cpp
     model/world_generation.h
     model/world_generation.cpp
     model/world_rng.h
@@ -264,12 +267,18 @@ set(FM_UI_SOURCES
     gui/gui_scene.cpp
     gui/gui_view.h
     gui/gui_view.cpp
+    gui/nav_history.h
+    gui/nav_history.cpp
+    gui/swipe_gesture.h
+    gui/swipe_gesture.cpp
     gui/render_scale.h
     gui/player_ui.h
     gui/render/imatch_renderer.h
     gui/render/match_render_snapshot.h
     gui/render/match_renderer_2d.h
     gui/render/match_renderer_2d.cpp
+    gui/render/match_render_2d_tuning.h
+    gui/render/match_shirt_numbers.h
     gui/render/match_camera_3d.h
     gui/render/match_camera_3d.cpp
     gui/render/match_kit_colors.h
@@ -308,6 +317,10 @@ set(FM_UI_SOURCES
     gui/scenes/player_profile_scene.cpp
     gui/scenes/player_talk_dialog.h
     gui/scenes/player_talk_dialog.cpp
+    gui/scenes/offer_negotiation_dialog.h
+    gui/scenes/offer_negotiation_dialog.cpp
+    gui/scenes/transfer_terms_editor.h
+    gui/scenes/transfer_terms_editor.cpp
     gui/scenes/team_talk_dialog.h
     gui/scenes/team_talk_dialog.cpp
     gui/scenes/fixtures_scene.h
@@ -324,6 +337,14 @@ set(FM_UI_SOURCES
     gui/scenes/delegation_scene.cpp
     gui/scenes/match_analysis_panel.h
     gui/scenes/match_analysis_panel.cpp
+    gui/scenes/match_touchline.h
+    gui/scenes/match_touchline.cpp
+    gui/scenes/match_subs_panel.h
+    gui/scenes/match_subs_panel.cpp
+    gui/scenes/match_tactics_panel.h
+    gui/scenes/match_tactics_panel.cpp
+    gui/scenes/match_shouts_bar.h
+    gui/scenes/match_shouts_bar.cpp
     gui/scenes/onboarding_overlay.h
     gui/scenes/onboarding_overlay.cpp
     gui/scenes/opposition_scene.h
@@ -366,6 +387,8 @@ set(FM_UI_SOURCES
     gui/view_models/competition_view.cpp
     gui/view_models/formation.h
     gui/view_models/formation.cpp
+    gui/view_models/match_changes.h
+    gui/view_models/match_changes.cpp
     gui/view_models/match_clock.h
     gui/view_models/match_clock.cpp
     gui/view_models/player_view.h

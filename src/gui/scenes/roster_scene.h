@@ -55,6 +55,9 @@ class RosterScene : public ManagementScene
    */
   [[nodiscard]] SceneID getID() const override;
 
+  /** The managed squad, or the club it was opened for. */
+  [[nodiscard]] std::optional<NavEntry> historyEntry() const override;
+
  protected:
   void renderContent() override;
   [[nodiscard]] NavSection navSection() const override;

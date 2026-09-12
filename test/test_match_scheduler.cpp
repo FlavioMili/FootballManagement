@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
@@ -706,14 +707,23 @@ TEST(MatchContextTest, LeaguesCarryTheirOwnMatchStyle)
             1.3f * context(FRANCE).refereeStrictnessMean);
   EXPECT_LT(context(ENGLAND).refereeStrictnessMean, 1.0f);
   // Goals grow faster than the scale (it sharpens shooting): 3.19 against
-  // 2.05 goals a match is about a 1.35x scale.
+  // 2.05 goals a match is about a 1.4x scale.
   EXPECT_GT(context(GERMANY).goalRateScale,
             1.25f * context(ARGENTINA).goalRateScale);
   EXPECT_GT(context(BRAZIL_2).homeAdvantageScale,
             1.5f * context(PORTUGAL_2).homeAdvantageScale);
   EXPECT_GT(context(ENGLAND_2).refereeStrictnessSd,
             1.5f * context(ENGLAND).refereeStrictnessSd);
-  EXPECT_LT(context(ENGLAND_2).goalRateScale, context(ENGLAND).goalRateScale);
+  // Each tier has its own neutral goal level, so compare the goals the
+  // contexts aim for: the Championship scores less than the Premier League.
+  using Reference = WorldTuning::MatchContext;
+  const auto expectedGoals = [&](LeagueID league, float neutral)
+  {
+    return neutral * std::pow(context(league).goalRateScale,
+                              Reference::GOAL_RESPONSE_EXPONENT);
+  };
+  EXPECT_LT(expectedGoals(ENGLAND_2, Reference::REFERENCE_GOALS_SECOND),
+            0.9f * expectedGoals(ENGLAND, Reference::REFERENCE_GOALS_TOP));
 
   // Every league's context is inside the engine's accepted ranges.
   for (const LeagueProfile& profile : LEAGUE_PROFILES)

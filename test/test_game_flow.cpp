@@ -531,6 +531,85 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   captureScreen("shell_home_narrow.bmp");
   openSection(NavSection::TRANSFERS, SceneID::TRANSFER_MARKET);
   captureScreen("shell_transfers_narrow.bmp");
+  // Target tables hide columns instead of scrolling sideways, down to a
+  // 640-point wide window (1280x720 at UI scale 2), and never scroll inside
+  // a page that scrolls itself.
+  const auto targetTableProblems = [](bool& shown)
+  {
+    std::string problems;
+    const ImGuiWindow* page = nullptr;
+    constexpr std::string_view PAGE = "##management_shell/##content";
+    for (const ImGuiWindow* window : GImGui->Windows)
+    {
+      const std::string_view name(window->Name);
+      if (window->Active && name.starts_with(PAGE) &&
+          name.find('/', PAGE.size()) == std::string_view::npos)
+        page = window;
+    }
+    if (page == nullptr) return std::string("no page");
+    for (int index = 0; index < GImGui->Tables.GetMapSize(); ++index)
+    {
+      const ImGuiTable* table = GImGui->Tables.TryGetMapData(index);
+      if (table == nullptr || table->LastFrameActive < GImGui->FrameCount - 1 ||
+          table->ColumnsCount < 4)
+        continue;
+      shown = true;
+      if ((table->Flags & ImGuiTableFlags_ScrollX) != 0)
+        problems += " [scrolls sideways]";
+      if ((table->Flags & ImGuiTableFlags_ScrollY) != 0 && page->ScrollbarY)
+        problems += " [scrolls inside the scrolling page]";
+    }
+    return problems;
+  };
+  {
+    // The Search tab always lists players (Recommended can be empty).
+    bool searchSelected = false;
+    for (int index = 0; index < GImGui->TabBars.GetMapSize(); ++index)
+      if (ImGuiTabBar* bar = GImGui->TabBars.TryGetMapData(index))
+        for (ImGuiTabItem& tab : bar->Tabs)
+          if (std::string_view(ImGui::TabBarGetTabName(bar, &tab)) ==
+              LOC("TRANSFER_TAB_SEARCH"))
+          {
+            bar->NextSelectedTabId = tab.ID;
+            searchSelected = true;
+          }
+    ASSERT_TRUE(searchSelected);
+    // Everyone, not only the affordable players (the wage room may be 0).
+    auto* market = dynamic_cast<TransferMarketScene*>(view.getActiveScene());
+    ASSERT_NE(market, nullptr);
+    market->filters.affordable_only = false;
+    market->search_dirty = true;
+    step_frame();
+    step_frame();
+    step_frame();
+    captureScreen("shell_transfers_search_narrow.bmp");
+    bool shown = false;
+    EXPECT_EQ(targetTableProblems(shown), "") << "1024x700";
+    EXPECT_TRUE(shown) << "no target table on the transfers screen";
+    Settings& scaled = SettingsManager::instance()->get();
+    const float originalScale = scaled.ui_scale;
+    scaled.ui_scale = 2.0f;
+    view.refreshTheme();
+    resizeTo(1280, 720);
+    step_frame();
+    // Scroll the page down to the table for the screenshot.
+    for (ImGuiWindow* window : GImGui->Windows)
+      if (window->Active &&
+          std::string_view(window->Name)
+              .starts_with("##management_shell/##content") &&
+          std::string_view(window->Name).find('/', 29) ==
+              std::string_view::npos)
+        ImGui::SetScrollY(window, 1150.0f);
+    step_frame();
+    step_frame();
+    captureScreen("shell_transfers_scale2.bmp");
+    shown = false;
+    EXPECT_EQ(targetTableProblems(shown), "") << "1280x720 at scale 2";
+    EXPECT_TRUE(shown) << "no target table at scale 2";
+    scaled.ui_scale = originalScale;
+    view.refreshTheme();
+    resizeTo(1024, 700);
+  }
   openSection(NavSection::LINEUP, SceneID::LINEUP);
   captureScreen("shell_lineup_narrow.bmp");
   resizeTo(1280, 720);
@@ -562,9 +641,9 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   ASSERT_FALSE(managedLineup.getReserves().empty());
   matchScene->show_substitutions = true;
   matchScene->is_paused = true;
-  matchScene->selected_pitch_player =
+  matchScene->subs_panel.selected_out =
       managedLineup.getOutfieldPlayers().front().player->getId();
-  matchScene->selected_bench_player =
+  matchScene->subs_panel.selected_in =
       managedLineup.getReserves().front()->getId();
   view.render();
   view.render();

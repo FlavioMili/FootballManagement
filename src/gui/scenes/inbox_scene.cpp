@@ -125,19 +125,28 @@ void InboxScene::rebuildDecisions()
         {
           if (offer.player_id != player) continue;
           const auto buyer = controller.getTeamById(offer.buyer);
+          const char* buyer_name =
+              buyer ? buyer->get().getName().c_str() : "";
+          const bool awaiting = offer.status == OfferStatus::AwaitingBuyer;
           const int days =
               std::max(0, dayNumber(offer.expires) - dayNumber(today));
           decision.options.push_back(
               {offer.id,
-               fmt::sprintf(
-                   Format::plural(offer.loan ? "INBOX_DECISION_LOAN_OPTION"
-                                             : "INBOX_DECISION_OFFER_OPTION",
-                                  days),
-                   buyer ? buyer->get().getName().c_str() : "",
-                   Format::money(offer.loan ? offer.loan_terms.loan_fee
-                                            : offer.terms.fee)
-                       .c_str(),
-                   days)});
+               awaiting
+                   ? fmt::sprintf(LOC("INBOX_DECISION_AWAITING_OPTION"),
+                                  buyer_name,
+                                  Format::dayMonth(offer.respond_on).c_str())
+                   : fmt::sprintf(
+                         Format::plural(offer.loan
+                                            ? "INBOX_DECISION_LOAN_OPTION"
+                                            : "INBOX_DECISION_OFFER_OPTION",
+                                        days),
+                         buyer_name,
+                         Format::money(offer.loan ? offer.loan_terms.loan_fee
+                                                  : offer.terms.fee)
+                             .c_str(),
+                         days),
+               !offer.loan, awaiting});
         }
       }
       else if (action == InboxAction::YouthTrialists)
@@ -491,6 +500,8 @@ void InboxScene::renderDecisions()
     UI::emptyState(LOC("INBOX_DECISIONS_EMPTY_TITLE"),
                    LOC("INBOX_DECISIONS_EMPTY_BODY"));
     talk_dialog.render(controller);
+    // Still drawn when the talks just ended the last decision.
+    offer_dialog.render(controller);
     return;
   }
   const size_t count = decisions.size();
@@ -501,6 +512,7 @@ void InboxScene::renderDecisions()
     ImGui::PopID();
   }
   if (talk_dialog.render(controller)) refresh();
+  if (offer_dialog.render(controller)) refresh();
 }
 
 void InboxScene::renderDecision(const Decision& decision)
@@ -562,6 +574,28 @@ void InboxScene::renderDecision(const Decision& decision)
     case InboxAction::RespondOffer:
       for (const Decision::Option& option : decision.options)
       {
+        if (option.negotiable)
+        {
+          // Transfer bids are answered in the talks: accept, reject,
+          // counter, name a price or not for sale.
+          ImGui::PushID(static_cast<int>(option.id));
+          ImGui::AlignTextToFramePadding();
+          ImGui::TextUnformatted(option.text.c_str());
+          const char* label = LOC(option.awaiting ? "INBOX_DECISION_VIEW_TALKS"
+                                                  : "INBOX_DECISION_NEGOTIATE");
+          const float button = UI::buttonWidth(label, UI::ButtonSize::COMPACT);
+          if (UI::sameLineIfFits(button))
+            ImGui::SetCursorPosX(std::max(
+                ImGui::GetCursorPosX(), ImGui::GetContentRegionMax().x - button));
+          if (UI::primaryButton(label, ImVec2(0.0f, 0.0f),
+                                UI::ButtonSize::COMPACT))
+          {
+            controller.markInboxMessageRead(messageId);
+            offer_dialog.open(controller, option.id);
+          }
+          ImGui::PopID();
+          continue;
+        }
         const int answer = optionRow(option, LOC("INBOX_DECISION_ACCEPT"),
                                      LOC("INBOX_DECISION_REJECT"));
         if (answer > 0)

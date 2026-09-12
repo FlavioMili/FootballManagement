@@ -597,9 +597,14 @@ void MatchEngine::initializePlayers(const Lineup& lineup, bool isHomeTeam)
       players);
   if (lineup.getGoalkeeper() && !players.empty())
     players.back().isGoalkeeper = true;
+  auto& formation = formations[isHomeTeam ? 0 : 1];
   for (const auto& positioned : lineup.getOutfieldPlayers())
   {
+    const std::size_t before = players.size();
     addPlayer(positioned.player, positioned.position, players);
+    if (players.size() > before)
+      players.back().formationSlot = static_cast<std::int8_t>(formation.size());
+    formation.push_back(positioned.position);
   }
 }
 
@@ -719,7 +724,7 @@ void MatchEngine::refreshTargetBlends()
   using P = MatchTuning::Player;
   for (std::size_t team = 0; team < 2; ++team)
   {
-    const float familiarity = team == 0 ? homeFamiliarity : awayFamiliarity;
+    const float familiarity = effectiveFamiliarity(team);
     const float response =
         1.0f - P::FAMILIARITY_RESPONSE_LOSS * (1.0f - familiarity);
     targetBlends[team * 2] =
@@ -753,29 +758,280 @@ bool MatchEngine::periodElapsed(std::uint64_t ticks) const
 
 float MatchEngine::familiarityOf(const MatchPlayer& player) const
 {
-  return player.isHomeTeam ? homeFamiliarity : awayFamiliarity;
+  return effectiveFamiliarity(player.isHomeTeam ? 0 : 1);
+}
+
+float MatchEngine::effectiveFamiliarity(std::size_t team) const
+{
+  const float drilled = team == 0 ? homeFamiliarity : awayFamiliarity;
+  if (reshapeSecondsRemaining[team] <= 0.0f) return drilled;
+  return std::max(0.0f, drilled - reshapeFamiliarityCost[team] *
+                                      reshapeSecondsRemaining[team] /
+                                      MatchTuning::Touchline::
+                                          RESHAPE_RECOVERY_SECONDS);
 }
 
 void MatchEngine::setStrategy(bool homeTeam, const Strategy& strategy)
 {
-  (homeTeam ? homeStrategy : awayStrategy) = strategy;
-  refreshEffectiveSliders();
-  ++inputRevision;
+  MatchCommandRecord command;
+  command.type = MatchCommandType::STRATEGY;
+  command.homeTeam = homeTeam;
+  command.strategy = strategy;
+  recordCommand(command);
 }
 
 void MatchEngine::applyShout(bool homeTeam, MatchShout shout)
 {
-  shouts[homeTeam ? 0 : 1] = {shout,
-                              MatchTuning::Touchline::SHOUT_DURATION_SECONDS};
+  MatchCommandRecord command;
+  command.type = MatchCommandType::SHOUT;
+  command.homeTeam = homeTeam;
+  command.shout = shout;
+  recordCommand(command);
+}
+
+void MatchEngine::startShout(bool homeTeam, MatchShout shout)
+{
+  ShoutState& current = shouts[homeTeam ? 0 : 1];
+  current.shout = shout;
+  current.remainingSeconds = MatchTuning::Touchline::SHOUT_DURATION_SECONDS;
+  current.impact = 1.0f / (1.0f + current.repeats);
+  current.repeats += 1.0f;
   refreshEffectiveSliders();
   ++inputRevision;
 }
 
 float MatchEngine::getShoutStrength(bool homeTeam) const
 {
-  return std::clamp(shouts[homeTeam ? 0 : 1].remainingSeconds /
+  const ShoutState& shout = shouts[homeTeam ? 0 : 1];
+  return std::clamp(shout.remainingSeconds /
                         MatchTuning::Touchline::SHOUT_DURATION_SECONDS,
-                    0.0f, 1.0f);
+                    0.0f, 1.0f) *
+         shout.impact;
+}
+
+std::optional<MatchShout> MatchEngine::getActiveShout(bool homeTeam) const
+{
+  const ShoutState& shout = shouts[homeTeam ? 0 : 1];
+  if (shout.remainingSeconds <= 0.0f) return std::nullopt;
+  return shout.shout;
+}
+
+std::vector<Vector2F> MatchEngine::getFormation(bool homeTeam) const
+{
+  return formations[homeTeam ? 0 : 1];
+}
+
+bool MatchEngine::setFormation(bool homeTeam, std::span<const Vector2F> shape)
+{
+  MatchCommandRecord command;
+  command.type = MatchCommandType::FORMATION;
+  command.homeTeam = homeTeam;
+  command.formation.assign(shape.begin(), shape.end());
+  return recordCommand(command);
+}
+
+std::optional<std::size_t> MatchEngine::getFormationSlot(
+    PlayerID playerId) const
+{
+  for (const MatchPlayer& player : players)
+  {
+    if (active(player) && !player.isGoalkeeper && player.formationSlot >= 0 &&
+        player.player->getId() == playerId)
+      return static_cast<std::size_t>(player.formationSlot);
+  }
+  return std::nullopt;
+}
+
+bool MatchEngine::movePlayerToSlot(PlayerID playerId, std::size_t slot)
+{
+  MatchCommandRecord command;
+  command.type = MatchCommandType::MOVE_TO_SLOT;
+  command.player = playerId;
+  command.slot = slot;
+  for (const MatchPlayer& player : players)
+    if (player.player && player.player->getId() == playerId)
+      command.homeTeam = player.isHomeTeam;
+  return recordCommand(command);
+}
+
+void MatchEngine::loadCommandReplay(std::vector<MatchCommandRecord> log)
+{
+  std::stable_sort(log.begin(), log.end(),
+                   [](const MatchCommandRecord& first,
+                      const MatchCommandRecord& second)
+                   { return first.step < second.step; });
+  commandLog = std::move(log);
+  commandCursor = 0;
+  ++inputRevision;
+}
+
+bool MatchEngine::recordCommand(const MatchCommandRecord& command)
+{
+  if (!executeCommand(command)) return false;
+  // A live change ends any replay still pending.
+  commandLog.resize(commandCursor);
+  commandLog.push_back(command);
+  commandLog.back().step = stepCounter;
+  commandCursor = commandLog.size();
+  ++inputRevision;
+  return true;
+}
+
+void MatchEngine::applyDueCommands()
+{
+  while (commandCursor < commandLog.size() &&
+         commandLog[commandCursor].step <= stepCounter)
+    executeCommand(commandLog[commandCursor++]);
+}
+
+bool MatchEngine::executeCommand(const MatchCommandRecord& command)
+{
+  const std::size_t team = command.homeTeam ? 0 : 1;
+  switch (command.type)
+  {
+    case MatchCommandType::STRATEGY:
+      (command.homeTeam ? homeStrategy : awayStrategy) = command.strategy;
+      refreshEffectiveSliders();
+      ++inputRevision;
+      return true;
+    case MatchCommandType::SHOUT:
+      startShout(command.homeTeam, command.shout);
+      return true;
+    case MatchCommandType::FORMATION:
+    {
+      auto& formation = formations[team];
+      if (command.formation.size() != formation.size() ||
+          state == MatchState::FULL_TIME)
+        return false;
+      using Pitch = MatchTuning::Pitch;
+      float moved = 0.0f;
+      std::vector<Vector2F> shape;
+      shape.reserve(formation.size());
+      for (std::size_t slot = 0; slot < formation.size(); ++slot)
+      {
+        const Vector2F wanted = command.formation[slot];
+        if (!std::isfinite(wanted.x) || !std::isfinite(wanted.y)) return false;
+        shape.push_back(
+            {std::clamp(wanted.x, Pitch::PLAYER_MIN_X, Pitch::PLAYER_MAX_X),
+             std::clamp(wanted.y, Pitch::PLAYER_MIN_Y, Pitch::PLAYER_MAX_Y)});
+        moved += distance(shape.back(), formation[slot]);
+      }
+      formation = std::move(shape);
+      using T = MatchTuning::Touchline;
+      const float cost = std::min(
+          T::MAX_RESHAPE_FAMILIARITY_COST,
+          moved / static_cast<float>(std::max<std::size_t>(formation.size(), 1)) *
+              T::RESHAPE_FAMILIARITY_PER_METRE);
+      if (cost > 0.0f)
+      {
+        // A second change before the first has sunk in adds to what is left.
+        reshapeFamiliarityCost[team] = std::min(
+            T::MAX_RESHAPE_FAMILIARITY_COST,
+            cost + reshapeFamiliarityCost[team] * reshapeSecondsRemaining[team] /
+                       T::RESHAPE_RECOVERY_SECONDS);
+        reshapeSecondsRemaining[team] = T::RESHAPE_RECOVERY_SECONDS;
+        refreshTargetBlends();
+      }
+      placeFormation(command.homeTeam);
+      ++inputRevision;
+      return true;
+    }
+    case MatchCommandType::MOVE_TO_SLOT:
+    {
+      if (!command.slot || *command.slot >= formations[team].size() ||
+          state == MatchState::FULL_TIME)
+        return false;
+      const auto mover = std::ranges::find_if(
+          players, [&](const MatchPlayer& player)
+          {
+            return active(player) && !player.isGoalkeeper &&
+                   player.formationSlot >= 0 &&
+                   player.isHomeTeam == command.homeTeam &&
+                   player.player->getId() == command.player;
+          });
+      if (mover == players.end()) return false;
+      const auto slot = static_cast<std::int8_t>(*command.slot);
+      for (MatchPlayer& occupant : players)
+      {
+        if (active(occupant) && !occupant.isGoalkeeper &&
+            occupant.isHomeTeam == command.homeTeam &&
+            occupant.formationSlot == slot)
+          occupant.formationSlot = mover->formationSlot;
+      }
+      mover->formationSlot = slot;
+      placeFormation(command.homeTeam);
+      ++inputRevision;
+      return true;
+    }
+    case MatchCommandType::SUBSTITUTION:
+    {
+      const auto& bench = command.homeTeam ? homeBench : awayBench;
+      const auto incoming = std::ranges::find_if(
+          bench, [&](const Player* player)
+          { return player && player->getId() == command.incoming; });
+      if (incoming == bench.end() ||
+          (command.slot && *command.slot >= formations[team].size()))
+        return false;
+      const Player* inPlayer = *incoming;
+      const auto outgoing = std::ranges::find_if(
+          players, [&](const MatchPlayer& player)
+          { return active(player) && player.player->getId() == command.player; });
+      if (outgoing == players.end() ||
+          outgoing->isHomeTeam != command.homeTeam ||
+          !canSubstitute(command.homeTeam))
+        return false;
+      // A change made while the ball is live stops play for it; several
+      // changes made together share that stoppage (and window).
+      if (state == MatchState::PLAYING && manualSubstitutionStep != stepCounter)
+      {
+        beginStoppage();
+        manualSubstitutionStep = stepCounter;
+      }
+      if (!canSubstitute(outgoing->isHomeTeam)) return false;
+      ++inputRevision;
+      const bool changed = performSubstitution(
+          *outgoing, inPlayer, SubstitutionReason::MANUAL);
+      if (changed && command.slot && !outgoing->isGoalkeeper &&
+          outgoing->formationSlot >= 0)
+      {
+        MatchCommandRecord move;
+        move.type = MatchCommandType::MOVE_TO_SLOT;
+        move.homeTeam = command.homeTeam;
+        move.player = inPlayer->getId();
+        move.slot = command.slot;
+        executeCommand(move);
+      }
+      describePendingEvents();
+      return changed;
+    }
+  }
+  return false;
+}
+
+void MatchEngine::placeFormation(bool homeTeam)
+{
+  const auto& formation = formations[homeTeam ? 0 : 1];
+  int sideSize = 0;
+  int onPitch = 0;
+  for (const MatchPlayer& player : players)
+  {
+    if (!player.player || player.isHomeTeam != homeTeam) continue;
+    ++sideSize;
+    if (active(player)) ++onPitch;
+  }
+  const float drop = static_cast<float>(sideSize - onPitch) *
+                     MatchTuning::Rules::SHORT_HANDED_DROP;
+  for (MatchPlayer& player : players)
+  {
+    if (!active(player) || player.isHomeTeam != homeTeam ||
+        player.isGoalkeeper || player.formationSlot < 0 ||
+        static_cast<std::size_t>(player.formationSlot) >= formation.size())
+      continue;
+    const Vector2F spot = formation[static_cast<std::size_t>(player.formationSlot)];
+    const float x = std::clamp(spot.x - drop, MatchTuning::Pitch::PLAYER_MIN_X,
+                               MatchTuning::Pitch::PLAYER_MAX_X);
+    player.basePosition = {homeTeam ? x : 1.0f - x, spot.y};
+  }
 }
 
 StrategySliders MatchEngine::getEffectiveSliders(bool homeTeam) const
@@ -862,9 +1118,7 @@ StrategySliders MatchEngine::computeEffectiveSliders(bool homeTeam) const
     sliders.pressing -= underdog * T::UNDERDOG_PRESSING;
     sliders.compactness += underdog * T::UNDERDOG_COMPACTNESS;
     sliders.offensiveBias -= underdog * T::UNDERDOG_OFFENSIVE;
-    sliders.riskTaking -= underdog * T::UNDERDOG_RISK;
     clampSlider(sliders.pressing);
-    clampSlider(sliders.riskTaking);
     clampSlider(sliders.offensiveBias);
     clampSlider(sliders.compactness);
   }
@@ -897,6 +1151,24 @@ StrategySliders MatchEngine::computeEffectiveSliders(bool homeTeam) const
       break;
     case MatchShout::ENCOURAGE:
       break;
+    case MatchShout::STAND_OFF:
+      sliders.pressing -= step * 1.25f;
+      sliders.compactness += step * 0.5f;
+      break;
+    case MatchShout::DEMAND_MORE:
+      sliders.pressing += step * 0.5f;
+      sliders.offensiveBias += step * 0.5f;
+      break;
+    case MatchShout::HIT_ON_COUNTER:
+      sliders.pressing -= step * 0.5f;
+      sliders.compactness += step * 0.5f;
+      sliders.riskTaking += step;
+      break;
+    case MatchShout::KEEP_POSSESSION:
+      sliders.riskTaking -= step;
+      sliders.offensiveBias -= step * 0.5f;
+      sliders.widthUsage += step * 0.5f;
+      break;
   }
   clampSlider(sliders.pressing);
   clampSlider(sliders.riskTaking);
@@ -919,12 +1191,10 @@ float MatchEngine::shoutShotBias(bool homeTeam) const
 [[gnu::always_inline]] inline float MatchEngine::shoutWorkRate(
     bool homeTeam) const
 {
-  const ShoutState& shout = shouts[homeTeam ? 0 : 1];
-  return shout.shout == MatchShout::ENCOURAGE
+  const MatchShout shout = shouts[homeTeam ? 0 : 1].shout;
+  return shout == MatchShout::ENCOURAGE || shout == MatchShout::DEMAND_MORE
              ? MatchTuning::Touchline::ENCOURAGE_WORK_RATE *
-                   std::clamp(shout.remainingSeconds /
-                                  MatchTuning::Touchline::SHOUT_DURATION_SECONDS,
-                              0.0f, 1.0f)
+                   getShoutStrength(homeTeam)
              : 0.0f;
 }
 
@@ -971,11 +1241,11 @@ void MatchEngine::runAiTouchline(bool homeTeam)
   if (period < 2 || getShoutStrength(homeTeam) > 0.0f) return;
   const int lead = homeTeam ? homeScore - awayScore : awayScore - homeScore;
   if (lead < 0 && matchTimeMinutes >= T::AI_SHOOT_ON_SIGHT_MINUTE)
-    applyShout(homeTeam, MatchShout::SHOOT_ON_SIGHT);
+    startShout(homeTeam, MatchShout::SHOOT_ON_SIGHT);
   else if (lead < 0 && matchTimeMinutes >= T::AI_CHASE_MINUTE)
-    applyShout(homeTeam, MatchShout::PUSH_HIGHER);
+    startShout(homeTeam, MatchShout::PUSH_HIGHER);
   else if (lead > 0 && matchTimeMinutes >= T::AI_PROTECT_MINUTE)
-    applyShout(homeTeam, MatchShout::DROP_DEEPER);
+    startShout(homeTeam, MatchShout::DROP_DEEPER);
 }
 
 void MatchEngine::refreshRatings()
@@ -1170,7 +1440,31 @@ bool MatchEngine::advancePlayback(float wallSeconds)
                               ? scheduledHighlight->startSeconds
                               : now + PREDICTION_HORIZON;
     if (target - now < STEP_SECONDS) return false;
-    advance(static_cast<float>(target - now));
+    // The skip never jumps across a break (half-time, the breaks around
+    // extra time, the shootout): it stops where one begins so the viewer
+    // sees it, and the next call looks ahead again from there. The steps
+    // are the same as without the stop, so the match does not change.
+    const auto steps = static_cast<std::int64_t>(std::ceil(
+        (target - now) / STEP_SECONDS - static_cast<double>(EPSILON)));
+    const auto inBreak = [this]
+    {
+      return state == MatchState::HALF_TIME ||
+             state == MatchState::PENALTY_SHOOTOUT;
+    };
+    std::int64_t done = 0;
+    while (done < steps && state != MatchState::FULL_TIME)
+    {
+      const bool wasInBreak = inBreak();
+      simulateStep(MatchTuning::Timing::FIXED_STEP_SECONDS);
+      ++done;
+      if (!wasInBreak && inBreak())
+      {
+        scheduledHighlight.reset();
+        break;
+      }
+    }
+    lastUpdateStepCount = static_cast<int>(
+        std::min<std::int64_t>(done, std::numeric_limits<int>::max()));
     accumulator = 0.0f;
     return true;
   }
@@ -1199,12 +1493,18 @@ std::optional<MatchHighlight> MatchEngine::predictNextHighlight(
   const std::uint64_t triggersBefore = lookahead.highlightTriggerCount;
   const auto steps = static_cast<std::int64_t>(
       std::ceil(horizonSeconds / MatchTuning::Timing::FIXED_STEP_SECONDS));
+  // When the ball last came back into play before the trigger: a highlight
+  // never opens on players standing at a dead ball.
+  std::optional<double> lastRestart;
   for (std::int64_t step = 0;
        step < steps && lookahead.state != MatchState::FULL_TIME &&
        lookahead.highlightTriggerCount == triggersBefore;
        ++step)
   {
+    const bool wasLive = lookahead.state == MatchState::PLAYING;
     lookahead.simulateStep(MatchTuning::Timing::FIXED_STEP_SECONDS);
+    if (!wasLive && lookahead.state == MatchState::PLAYING)
+      lastRestart = lookahead.getSimulatedSeconds();
   }
   if (lookahead.highlightTriggerCount == triggersBefore) return std::nullopt;
   MatchHighlight highlight;
@@ -1213,6 +1513,12 @@ std::optional<MatchHighlight> MatchEngine::predictNextHighlight(
   highlight.triggerMinute = lookahead.lastTriggerMinute;
   highlight.startSeconds =
       std::max(getSimulatedSeconds(), highlight.triggerSeconds - HIGHLIGHT_LEAD);
+  // Play resumed inside the build-up (a restart, a set piece): open just
+  // before the ball is played rather than during the wait for it.
+  if (lastRestart)
+    highlight.startSeconds = std::max(
+        highlight.startSeconds,
+        *lastRestart - MatchTuning::Playback::RESTART_LEAD_SECONDS);
   highlight.endSeconds = highlight.triggerSeconds + HIGHLIGHT_TAIL;
   return highlight;
 }
@@ -1252,6 +1558,8 @@ void MatchEngine::simulateStep(float dt)
 
 void MatchEngine::simulateStepBody(float dt)
 {
+  // Replayed touchline changes happen between the same two steps as live.
+  if (commandCursor < commandLog.size()) applyDueCommands();
   captureInterpolationFrame();
   stepCounter += stepTicks;
   if (inputCursor < inputLog.size()) applyDueInputs();
@@ -1273,7 +1581,18 @@ void MatchEngine::simulateStepBody(float dt)
   const bool shouting =
       shouts[0].remainingSeconds > 0.0f || shouts[1].remainingSeconds > 0.0f;
   for (auto& shout : shouts)
+  {
     shout.remainingSeconds = std::max(0.0f, shout.remainingSeconds - dt);
+    shout.repeats = std::max(
+        0.0f,
+        shout.repeats - dt / MatchTuning::Touchline::SHOUT_REPEAT_FADE_SECONDS);
+  }
+  if (reshapeSecondsRemaining[0] > 0.0f || reshapeSecondsRemaining[1] > 0.0f)
+  {
+    for (float& remaining : reshapeSecondsRemaining)
+      remaining = std::max(0.0f, remaining - dt);
+    refreshTargetBlends();
+  }
   if (shouting || homeScore != awayScore || slidersStale)
   {
     refreshEffectiveSliders();
@@ -7605,34 +7924,17 @@ void MatchEngine::setAutoSubstitutions(bool home, bool away)
   awayAutoSubstitutions = away;
 }
 
-bool MatchEngine::substitutePlayer(uint32_t outPlayerId, const Player* inPlayer)
+bool MatchEngine::substitutePlayer(uint32_t outPlayerId, const Player* inPlayer,
+                                   std::optional<std::size_t> slot)
 {
-  if (!inPlayer || state == MatchState::FULL_TIME ||
-      std::ranges::any_of(players, [inPlayer](const MatchPlayer& player)
-                          { return player.player == inPlayer; }) ||
-      findPlayerStats(inPlayer->getId()) != nullptr)
-  {
-    return false;
-  }
-
-  const auto outgoing = std::ranges::find_if(
-      players, [outPlayerId](const MatchPlayer& player)
-      { return active(player) && player.player->getId() == outPlayerId; });
-  if (outgoing == players.end()) return false;
-  if (outgoing->player->getTeamId() != inPlayer->getTeamId()) return false;
-  // A change made while the ball is live stops play for it; several changes
-  // made together share that stoppage (and window).
-  if (state == MatchState::PLAYING && manualSubstitutionStep != stepCounter)
-  {
-    beginStoppage();
-    manualSubstitutionStep = stepCounter;
-  }
-  if (!canSubstitute(outgoing->isHomeTeam)) return false;
-  ++inputRevision;
-  const bool changed =
-      performSubstitution(*outgoing, inPlayer, SubstitutionReason::MANUAL);
-  describePendingEvents();
-  return changed;
+  if (!inPlayer || state == MatchState::FULL_TIME) return false;
+  MatchCommandRecord command;
+  command.type = MatchCommandType::SUBSTITUTION;
+  command.homeTeam = std::ranges::find(homeBench, inPlayer) != homeBench.end();
+  command.player = outPlayerId;
+  command.incoming = inPlayer->getId();
+  command.slot = slot;
+  return recordCommand(command);
 }
 
 bool MatchEngine::performSubstitution(MatchPlayer& outgoing,
@@ -7671,8 +7973,14 @@ bool MatchEngine::performSubstitution(MatchPlayer& outgoing,
     // A replacement keeper takes over from any emergency keeper.
     for (auto& teammate : players)
     {
-      if (teammate.isHomeTeam == homeTeam && teammate.isGoalkeeper)
-        teammate.isGoalkeeper = false;
+      if (teammate.isHomeTeam != homeTeam || !teammate.isGoalkeeper) continue;
+      teammate.isGoalkeeper = false;
+      // An emergency keeper goes back out to the slot the new one frees.
+      if (active(teammate) && outgoing.formationSlot >= 0)
+      {
+        teammate.formationSlot = outgoing.formationSlot;
+        placeFormation(homeTeam);
+      }
     }
     outgoing.basePosition = {
         homeTeam ? MatchTuning::Pitch::LINEUP_GOALKEEPER_X
@@ -7916,6 +8224,7 @@ void MatchEngine::removeFromPitch(MatchPlayer& player)
   if (!active(player)) return;
   const bool homeTeam = player.isHomeTeam;
   const Vector2F vacated = player.basePosition;
+  const std::int8_t vacatedSlot = player.formationSlot;
   const bool wasKeeper = player.isGoalkeeper;
   statsOf(player).condition = player.stamina;
   if (ball.possessedBy == player.player)
@@ -7948,7 +8257,7 @@ void MatchEngine::removeFromPitch(MatchPlayer& player)
       ball.possessedBy = replacement->player;
   }
   if (wasKeeper) ensureGoalkeeper(homeTeam);
-  rebalanceShape(homeTeam, vacated);
+  rebalanceShape(homeTeam, vacated, wasKeeper ? -1 : vacatedSlot);
 
   // Law 3: a match cannot continue with fewer than seven players a side.
   const auto remaining = std::ranges::count_if(
@@ -7963,7 +8272,8 @@ void MatchEngine::removeFromPitch(MatchPlayer& player)
   }
 }
 
-void MatchEngine::rebalanceShape(bool homeTeam, Vector2F vacatedBase)
+void MatchEngine::rebalanceShape(bool homeTeam, Vector2F vacatedBase,
+                                 std::int8_t vacatedSlot)
 {
   // A side reduced to ten fills a defensive hole with the nearest midfielder
   // and drops a little deeper overall.
@@ -7987,7 +8297,11 @@ void MatchEngine::rebalanceShape(bool homeTeam, Vector2F vacatedBase)
         cover = &player;
       }
     }
-    if (cover) cover->basePosition = vacatedBase;
+    if (cover)
+    {
+      cover->basePosition = vacatedBase;
+      cover->formationSlot = vacatedSlot;
+    }
   }
   for (auto& player : players)
   {

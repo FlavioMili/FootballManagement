@@ -11,8 +11,10 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 
 #include "gui/gui_view.h"
+#include "gui/nav_history.h"
 
 /**
  * @brief Identifiers for different GUI scenes.
@@ -125,6 +127,15 @@ class GUIScene
    * TODO : remove or not?
    */
   virtual SceneID getID() const = 0;
+
+  /**
+   * @brief How to open this screen again from the navigation history, or
+   * nothing for scenes outside it (menus, team selection, the live match).
+   */
+  [[nodiscard]] virtual std::optional<NavEntry> historyEntry() const
+  {
+    return std::nullopt;
+  }
 
  protected:
   // Helper methods for derived classes

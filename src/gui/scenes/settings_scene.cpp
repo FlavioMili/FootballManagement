@@ -273,6 +273,15 @@ void SettingsScene::renderGeneral()
   optionCombo("##fps", fpsOptionsStrings, selectedFPS);
   settingLabel(LOC("SETTINGS_FULLSCREEN"), nullptr);
   ImGui::Checkbox("##fullscreen", &fullscreen);
+  // Live match behaviour (applied at once, Cancel restores it).
+  Settings& settings = SettingsManager::instance()->get();
+  settingLabel(LOC("SETTINGS_MATCH_PAUSE_BREAKS"),
+               LOC("SETTINGS_MATCH_PAUSE_BREAKS_HELP"));
+  ImGui::Checkbox("##pause_at_breaks", &settings.pause_at_breaks);
+  settingLabel(LOC("SETTINGS_MATCH_PAUSE_CHANGES"),
+               LOC("MATCH_PAUSE_FOR_CHANGES_HINT"));
+  ImGui::Checkbox("##pause_for_match_changes",
+                  &settings.pause_for_match_changes);
   UI::endCard();
 }
 

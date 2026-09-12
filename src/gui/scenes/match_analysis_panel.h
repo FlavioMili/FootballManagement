@@ -24,7 +24,8 @@ class MatchEngine;
  *
  * Self-driving like TeamTalkDialog: call renderForMatch() once per frame.
  * It opens at the break (after the team talk) and at full time, and
- * openNow() shows it on demand. The match keeps running while it is open.
+ * openNow() shows it on demand. It is a panel in the bottom-right corner,
+ * never a modal: the match keeps running and its controls stay usable.
  */
 class MatchAnalysisPanel
 {
@@ -35,6 +36,8 @@ class MatchAnalysisPanel
   /** Opens the analysis of the match so far (the managed side only). */
   void openNow(GameController& controller, const MatchEngine& engine,
                TeamID home_id, TeamID away_id);
+
+  void close() { visible = false; }
 
   [[nodiscard]] bool isOpen() const { return visible; }
 
@@ -50,8 +53,8 @@ class MatchAnalysisPanel
              bool managed_home);
   void render();
 
-  bool open_requested = false;
   bool visible = false;
+  bool focus_requested = false;
   bool half_offered = false;
   bool full_offered = false;
 

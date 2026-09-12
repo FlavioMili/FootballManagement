@@ -41,6 +41,8 @@ struct MatchSceneTuning final
                                                          8.0f, 16.0f, 30.0f};
     static constexpr float SPEED_BUTTON_GAP = 2.0f;
     static constexpr float SKIP_INDICATOR_SECONDS = 1.5f;
+    /** Longest frame time played right after a highlight skip. */
+    static constexpr float MAX_DELTA_AFTER_SKIP = 1.0f / 30.0f;
     static constexpr float VIEW_BUTTON_WIDTH = 130.0f;
   };
 

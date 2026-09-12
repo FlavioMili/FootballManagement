@@ -29,6 +29,7 @@ enum class MatchCameraMode : std::uint8_t
   END,           /**< Behind the play, looking along the attack. */
   PLAYER_FOLLOW, /**< Low chase camera behind the ball carrier. */
   FREE,          /**< User-driven orbit camera (drag, pan, zoom). */
+  DIRECTOR,      /**< TV director cutting between broadcast shots. */
 };
 
 /**
@@ -73,6 +74,12 @@ struct MatchRenderOptions
   /** Short team labels for the in-view score bug; may be null. */
   const char* homeLabel = nullptr;
   const char* awayLabel = nullptr;
+  /** Kick-off in minutes after midnight (venue time); -1 when unknown. */
+  int kickoffMinutes = -1;
+  /** Daylight presentation regardless of the kick-off time (3D view). */
+  bool dayLook = false;
+  /** Pitch-control overlay in the team colours (2D view). */
+  bool pressureOverlay = false;
 };
 
 /**

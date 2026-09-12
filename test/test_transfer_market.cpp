@@ -12,6 +12,7 @@
 #include <chrono>
 #include <filesystem>
 #include <iostream>
+#include <limits>
 #include <memory>
 
 #include "controller/game_controller.h"
@@ -19,8 +20,10 @@
 #include "database/gamedata.h"
 #include "database/repositories/competition_repository.h"
 #include "global/logger.h"
+#include "model/buyer_negotiation.h"
 #include "model/calendar.h"
 #include "model/competition_manager.h"
+#include "model/interactions.h"
 #include "model/season_history.h"
 #include "model/transfer_listing.h"
 #include "model/transfer_market.h"
@@ -662,41 +665,499 @@ TEST_F(TransferMarketTest, ReleasedPlayerIsPaidOffAndBecomesFreeAgent)
   EXPECT_FALSE(ended.completed);
 }
 
-TEST_F(TransferMarketTest, IncomingOffersCanBeCounteredAndAccepted)
+// ---------------------------------------------------------------------------
+// Talks over the AI clubs' bids for the managed club's players
+// ---------------------------------------------------------------------------
+
+namespace
 {
-  const TeamID managed = manageFirstClub(*controller);
+using OfferOutcome = GameController::OfferOutcome;
+
+/** Manages the club with the lowest reputation, so bigger buyers exist. */
+TeamID manageSmallClub(GameController& controller)
+{
+  TeamID club = 0;
+  int lowest = std::numeric_limits<int>::max();
+  for (const auto& team : controller.getTeams())
+  {
+    const TeamID id = team.get().getId();
+    if (id != FREE_AGENTS_TEAM_ID && team.get().getReputation() < lowest &&
+        !controller.getPlayersForTeam(id).empty())
+    {
+      lowest = team.get().getReputation();
+      club = id;
+    }
+  }
+  controller.selectManagedTeam(club);
+  return club;
+}
+
+struct KeenOffer
+{
+  PlayerID player = 0;
+  TeamID buyer = 0;
+  std::uint32_t offer_id = 0;
+};
+
+/**
+ * Stands in for an AI club's approach: a bid of @p fee (hidden ceiling
+ * @p ceiling) from a clearly bigger, well funded club for a managed player
+ * who wants the move, so personal terms never fail. The player is made
+ * ambitious for the test.
+ */
+KeenOffer openKeenOffer(GameController& controller, TeamID managed,
+                        std::uint32_t fee, std::uint32_t ceiling)
+{
+  auto data = controller.getGameData();
+  TransferMarket& market = controller.getGame()->getTransfers();
+  std::vector<TeamID> buyers;
+  for (const auto& team : controller.getTeams())
+    if (team.get().getId() != managed &&
+        team.get().getId() != FREE_AGENTS_TEAM_ID)
+      buyers.push_back(team.get().getId());
+  std::ranges::sort(buyers,
+                    [&](TeamID a, TeamID b)
+                    {
+                      return controller.getTeamById(a)->get().getReputation() >
+                             controller.getTeamById(b)->get().getReputation();
+                    });
+  const GameDateValue today = controller.getCurrentDate();
+  // The best players are likeliest to be first-teamers at a bigger club.
+  std::vector<PlayerID> candidates;
+  for (const auto& reference : controller.getPlayersForTeam(managed))
+    candidates.push_back(reference.get().getId());
+  const StatsConfig& config = data->getStatsConfig();
+  std::ranges::sort(candidates,
+                    [&](PlayerID a, PlayerID b)
+                    {
+                      return data->getPlayer(a)->get().getOverall(config) >
+                             data->getPlayer(b)->get().getOverall(config);
+                    });
+  for (const PlayerID candidate : candidates)
+  {
+    Player& player = data->getPlayers().at(candidate);
+    if (!market.canBeTraded(player.getId())) continue;
+    PlayerTraits traits = player.getTraits();
+    traits.ambition = 90;
+    traits.loyalty = 20;
+    player.setTraits(traits);
+    for (const TeamID buyer : buyers)
+    {
+      IncomingOffer offer;
+      offer.player_id = player.getId();
+      offer.buyer = buyer;
+      offer.terms.fee = fee;
+      offer.max_fee = ceiling;
+      offer.patience = 3;
+      offer.created = today;
+      offer.expires = today + 5;
+      const std::uint32_t id = market.addIncomingOffer(offer);
+      const auto view = controller.getIncomingOfferView(id);
+      if (view &&
+          (view->stance == BuyerNegotiation::PlayerStance::WantsBiggerClub ||
+           view->stance == BuyerNegotiation::PlayerStance::AskedToLeave))
+      {
+        data->getTeams().at(buyer).getFinances().addBalance(500'000'000LL);
+        return {player.getId(), buyer, id};
+      }
+      market.removeIncomingOffer(id);
+    }
+  }
+  return {};
+}
+
+/** Days until the buyer has answered the club's counter (at most three). */
+void waitForAnswer(GameController& controller, std::uint32_t offer_id)
+{
+  for (int day = 0; day < 3; ++day)
+  {
+    const IncomingOffer* offer =
+        controller.getGame()->getTransfers().findIncomingOffer(offer_id);
+    if (offer == nullptr || offer->status != OfferStatus::AwaitingBuyer) return;
+    controller.advanceDay();
+  }
+}
+}  // namespace
+
+TEST_F(TransferMarketTest, IncomingOfferIsNegotiatedOverDaysAndPaidUpfront)
+{
+  const TeamID managed = manageSmallClub(*controller);
+  ASSERT_TRUE(controller->isTransferWindowOpen());
+  const KeenOffer keen =
+      openKeenOffer(*controller, managed, 1'000'000, 1'500'000);
+  ASSERT_NE(keen.offer_id, 0u) << "no managed player keen on a bigger club";
   auto gamedata = controller->getGameData();
-  const TeamID buyer = controller->getTeams()[9].get().getId();
-  gamedata->getTeams().at(buyer).getFinances().addBalance(500'000'000LL);
+  const int age = gamedata->getPlayer(keen.player)->get().getAge();
+  const double opening = BuyerNegotiation::buyerCost(
+      controller->getIncomingOfferView(keen.offer_id)->terms, age);
+
+  // Nearly 1.5x the ceiling: not insulting, but out of reach even with
+  // rivals and the deadline, so the buyer comes back with its own offer.
+  TransferNegotiation::OfferTerms asked;
+  asked.fee = 2'200'000;
+  asked.upfront_percent = 60;
+  asked.instalment_years = 2;
+  ASSERT_EQ(controller->counterIncomingOffer(keen.offer_id, asked),
+            OfferOutcome::AwaitingReply);
+  auto view = controller->getIncomingOfferView(keen.offer_id);
+  ASSERT_TRUE(view);
+  EXPECT_EQ(view->status, OfferStatus::AwaitingBuyer);
+  EXPECT_LT(controller->getCurrentDate(), view->respond_on)
+      << "the answer comes on a later day";
+  EXPECT_EQ(controller->settleIncomingOffer(keen.offer_id), OfferOutcome::Failed)
+      << "nothing to accept while the buyer thinks it over";
+
+  waitForAnswer(*controller, keen.offer_id);
+  view = controller->getIncomingOfferView(keen.offer_id);
+  ASSERT_TRUE(view) << "the buyer answered with an offer";
+  EXPECT_EQ(view->status, OfferStatus::AwaitingClub);
+  ASSERT_GE(view->history.size(), 3u);
+  EXPECT_EQ(view->history[0].move, BuyerNegotiation::Move::Bid);
+  EXPECT_EQ(view->history[1].move, BuyerNegotiation::Move::Counter);
+  EXPECT_EQ(view->history[1].terms.fee, asked.fee);
+  const BuyerNegotiation::Move answer = view->history.back().move;
+  EXPECT_TRUE(answer == BuyerNegotiation::Move::Improved ||
+              answer == BuyerNegotiation::Move::FinalOffer)
+      << BuyerNegotiation::moveKey(answer);
+  const double improved = BuyerNegotiation::buyerCost(view->terms, age);
+  EXPECT_GT(improved, opening);
+  EXPECT_LE(improved, 1'500'000.0 * 1.2 * 1.06) << "within its ceiling";
+  EXPECT_TRUE(std::ranges::any_of(
+      controller->getInbox(), [](const InboxMessage& message)
+      { return message.title_key == "INBOX_OFFER_REPLY_TITLE"; }));
+
+  // Accepting completes the sale: the upfront part reaches the ledger now,
+  // the rest is owed by the buyer as yearly instalments.
+  const TransferNegotiation::OfferTerms agreed = view->terms;
+  const Finances& finances = gamedata->getTeams().at(managed).getFinances();
+  const int64_t before = categoryTotal(finances, FinanceCategory::TransferFeeIn);
+  ASSERT_EQ(controller->settleIncomingOffer(keen.offer_id), OfferOutcome::Sold);
+  EXPECT_EQ(gamedata->getPlayer(keen.player)->get().getTeamId(), keen.buyer);
+  EXPECT_EQ(categoryTotal(finances, FinanceCategory::TransferFeeIn) - before,
+            static_cast<int64_t>(TransferNegotiation::upfrontAmount(agreed)));
+  int64_t owed = 0;
+  for (const TransferObligation& obligation : marketOf(*controller).obligations())
+    if (obligation.player_id == keen.player &&
+        obligation.kind == ObligationKind::Instalment)
+    {
+      EXPECT_EQ(obligation.payer, keen.buyer);
+      EXPECT_EQ(obligation.payee, managed);
+      owed += obligation.amount;
+    }
+  EXPECT_EQ(owed, static_cast<int64_t>(agreed.fee) -
+                      TransferNegotiation::upfrontAmount(agreed));
+  EXPECT_TRUE(controller->getIncomingOffers().empty() ||
+              std::ranges::none_of(controller->getIncomingOffers(),
+                                   [&](const IncomingOffer& offer)
+                                   { return offer.player_id == keen.player; }));
+}
+
+TEST_F(TransferMarketTest, BuyerAcceptsACounterWithinItsCeiling)
+{
+  const TeamID managed = manageSmallClub(*controller);
+  const KeenOffer keen =
+      openKeenOffer(*controller, managed, 1'000'000, 1'500'000);
+  ASSERT_NE(keen.offer_id, 0u);
+  TransferNegotiation::OfferTerms asked;
+  asked.fee = 1'400'000;
+  ASSERT_EQ(controller->counterIncomingOffer(keen.offer_id, asked),
+            OfferOutcome::AwaitingReply);
+  auto gamedata = controller->getGameData();
+  waitForAnswer(*controller, keen.offer_id);
+  EXPECT_EQ(gamedata->getPlayer(keen.player)->get().getTeamId(), keen.buyer)
+      << "the buyer accepted the club's terms and the sale went through";
+  EXPECT_FALSE(controller->getIncomingOfferView(keen.offer_id).has_value());
+  const auto moves = marketOf(*controller).historyFor(keen.player);
+  ASSERT_FALSE(moves.empty());
+  EXPECT_EQ(moves.back().fee, asked.fee);
+}
+
+TEST_F(TransferMarketTest, InsultingDemandsEndTheTalks)
+{
+  const TeamID managed = manageSmallClub(*controller);
+  const KeenOffer keen =
+      openKeenOffer(*controller, managed, 1'000'000, 1'500'000);
+  ASSERT_NE(keen.offer_id, 0u);
+  TransferNegotiation::OfferTerms asked;
+  asked.fee = 10'000'000;  // Beyond any stretch of its ceiling.
+  ASSERT_EQ(controller->counterIncomingOffer(keen.offer_id, asked),
+            OfferOutcome::AwaitingReply);
+  waitForAnswer(*controller, keen.offer_id);
+  EXPECT_FALSE(controller->getIncomingOfferView(keen.offer_id).has_value());
+  EXPECT_EQ(controller->getGameData()->getPlayer(keen.player)->get().getTeamId(),
+            managed);
+  EXPECT_TRUE(std::ranges::any_of(
+      controller->getInbox(), [](const InboxMessage& message)
+      { return message.body_key == "INBOX_OFFER_WITHDRAWN_INSULT_BODY"; }));
+}
+
+TEST_F(TransferMarketTest, RejectingABigBidUpsetsAPlayerWhoWantsToGo)
+{
+  const TeamID managed = manageSmallClub(*controller);
+  const KeenOffer probe = openKeenOffer(*controller, managed, 10'000, 20'000);
+  ASSERT_NE(probe.offer_id, 0u);
+  TransferMarket& market = controller->getGame()->getTransfers();
+  // The same pairing with a bid above his market value.
+  IncomingOffer offer = *market.findIncomingOffer(probe.offer_id);
+  const uint32_t value = controller->getPlayerMarketValue(probe.player);
+  offer.terms.fee = std::max<uint32_t>(value, 100'000);
+  offer.max_fee = offer.terms.fee * 2;
+  ASSERT_TRUE(market.updateIncomingOffer(offer));
+
+  const float morale = controller->getGameData()
+                           ->getPlayer(probe.player)
+                           ->get()
+                           .getDynamics()
+                           .morale;
+  // A player who has not asked to leave yet does so now.
+  const bool asked_before =
+      controller->getIncomingOfferView(probe.offer_id)->stance ==
+      BuyerNegotiation::PlayerStance::AskedToLeave;
+  ASSERT_TRUE(controller->rejectIncomingOffer(probe.offer_id));
+  EXPECT_LT(controller->getGameData()
+                ->getPlayer(probe.player)
+                ->get()
+                .getDynamics()
+                .morale,
+            morale);
+  const PlayerRelation* relation = controller->getPlayerRelation(probe.player);
+  ASSERT_NE(relation, nullptr);
+  EXPECT_EQ(relation->request, TalkRequest::Transfer)
+      << "an ambitious player asks to leave";
+  EXPECT_TRUE(std::ranges::any_of(
+      controller->getInbox(), [&](const InboxMessage& message)
+      {
+        return message.title_key == (asked_before
+                                         ? "OFFER_REJECTED_UPSET_TITLE"
+                                         : "OFFER_REJECTED_REQUEST_TITLE") &&
+               message.player_id == probe.player;
+      }));
+}
+
+TEST_F(TransferMarketTest, NotForSaleRejectsEveryBidAndKeepsClubsAway)
+{
+  const TeamID managed = manageSmallClub(*controller);
+  const KeenOffer keen =
+      openKeenOffer(*controller, managed, 1'000'000, 1'500'000);
+  ASSERT_NE(keen.offer_id, 0u);
+  TransferMarket& market = controller->getGame()->getTransfers();
+  // A rival bid for the same player.
+  IncomingOffer rival = *market.findIncomingOffer(keen.offer_id);
+  rival.history.clear();
+  rival.buyer = 0;
+  for (const auto& team : controller->getTeams())
+  {
+    const TeamID id = team.get().getId();
+    if (id != managed && id != keen.buyer && id != FREE_AGENTS_TEAM_ID)
+      rival.buyer = id;
+  }
+  ASSERT_NE(rival.buyer, 0);
+  const std::uint32_t rival_id = market.addIncomingOffer(rival);
+  EXPECT_EQ(controller->getIncomingOfferView(keen.offer_id)->rivals, 1);
+
+  ASSERT_TRUE(controller->declareNotForSale(keen.offer_id));
+  EXPECT_EQ(market.findIncomingOffer(keen.offer_id), nullptr);
+  EXPECT_EQ(market.findIncomingOffer(rival_id), nullptr);
+  EXPECT_TRUE(market.isNotForSale(keen.player, controller->getCurrentDate()));
+  // Bids on the transfer list are refused as well.
+  EXPECT_FALSE(controller->isPlayerListed(keen.player));
+}
+
+TEST_F(TransferMarketTest, ListingBidsForManagedPlayersBecomeOffers)
+{
+  const TeamID managed = manageSmallClub(*controller);
+  auto gamedata = controller->getGameData();
   const PlayerID player =
-      controller->getPlayersForTeam(managed).back().get().getId();
+      controller->getPlayersForTeam(managed).front().get().getId();
+  controller->listPlayerForTransfer(player, 1'000'000);
+  ASSERT_TRUE(controller->isPlayerListed(player));
+  TeamID bidder = 0;
+  for (const auto& team : controller->getTeams())
+    if (team.get().getId() != managed &&
+        team.get().getId() != FREE_AGENTS_TEAM_ID)
+      bidder = team.get().getId();
+  gamedata->getTeams().at(bidder).getFinances().addBalance(500'000'000LL);
 
-  // The test stands in for an AI club making an approach.
-  TransferMarket& market =
-      const_cast<Game*>(controller->getGame())->getTransfers();
-  IncomingOffer offer;
-  offer.player_id = player;
-  offer.buyer = buyer;
-  offer.terms.fee = 1'000'000;
-  offer.max_fee = 1'500'000;
-  offer.created = controller->getCurrentDate();
-  offer.expires = controller->getCurrentDate() + 5;
-  const std::uint32_t id = market.addIncomingOffer(offer);
-  ASSERT_EQ(controller->getIncomingOffers().size(), 1u);
+  ASSERT_TRUE(controller->submitBid(player, bidder, 900'000));
+  const auto listing = controller->getAllListings().find(player);
+  ASSERT_NE(listing, controller->getAllListings().end());
+  EXPECT_FALSE(listing->second.highest_bidder_id.has_value());
+  const auto offer = std::ranges::find_if(
+      controller->getIncomingOffers(), [&](const IncomingOffer& candidate)
+      { return candidate.player_id == player && candidate.buyer == bidder; });
+  ASSERT_NE(offer, controller->getIncomingOffers().end());
+  EXPECT_EQ(offer->terms.fee, 900'000u);
+  EXPECT_GE(offer->max_fee, 900'000u);
+  const auto view = controller->getIncomingOfferView(offer->id);
+  ASSERT_TRUE(view);
+  EXPECT_EQ(view->asking_price, 1'000'000u);
+  ASSERT_EQ(view->history.size(), 1u);
+  EXPECT_EQ(view->history.front().move, BuyerNegotiation::Move::Bid);
+  EXPECT_FALSE(controller->submitBid(player, bidder, 950'000))
+      << "one set of talks per club";
+}
 
-  const ClubResponse improved = controller->counterIncomingOffer(id, 3'000'000);
-  EXPECT_EQ(improved.decision, ClubResponse::Decision::Counter);
-  EXPECT_EQ(improved.counter_fee, 1'500'000u) << "capped at the ceiling";
+TEST_F(TransferMarketTest, ASpurnedClubDoesNotComeStraightBack)
+{
+  const TeamID managed = manageSmallClub(*controller);
+  const KeenOffer keen =
+      openKeenOffer(*controller, managed, 1'000'000, 1'500'000);
+  ASSERT_NE(keen.offer_id, 0u);
+  TransferMarket& market = controller->getGame()->getTransfers();
+  const GameDateValue today = controller->getCurrentDate();
+  ASSERT_TRUE(controller->rejectIncomingOffer(keen.offer_id));
+  EXPECT_TRUE(market.talksClosed(keen.player, keen.buyer, today));
+  EXPECT_TRUE(market.talksClosed(keen.player, keen.buyer, today + 10));
+  EXPECT_FALSE(market.talksClosed(
+      keen.player, keen.buyer,
+      today + static_cast<std::size_t>(
+                  TransferTuning::Buyer::TALKS_COOLDOWN_DAYS + 1)));
 
-  const int64_t balance =
-      gamedata->getTeams().at(managed).getFinances().getBalance();
-  const ClubResponse accepted = controller->counterIncomingOffer(id, 1'400'000);
-  ASSERT_EQ(accepted.decision, ClubResponse::Decision::Accept);
-  EXPECT_EQ(gamedata->getPlayer(player)->get().getTeamId(), buyer);
-  EXPECT_EQ(
-      gamedata->getTeams().at(managed).getFinances().getBalance() - balance,
-      1'400'000);
-  EXPECT_TRUE(controller->getIncomingOffers().empty());
+  // Listed later, the same club's bid is refused; another club may bid.
+  controller->listPlayerForTransfer(keen.player, 2'000'000);
+  ASSERT_TRUE(controller->isPlayerListed(keen.player));
+  EXPECT_FALSE(controller->submitBid(keen.player, keen.buyer, 1'800'000));
+  TeamID other = 0;
+  for (const auto& team : controller->getTeams())
+  {
+    const TeamID id = team.get().getId();
+    if (id != managed && id != keen.buyer && id != FREE_AGENTS_TEAM_ID)
+      other = id;
+  }
+  controller->getGameData()->getTeams().at(other).getFinances().addBalance(
+      500'000'000LL);
+  EXPECT_TRUE(controller->submitBid(keen.player, other, 1'800'000));
+
+  // An offer left to expire counts as turned down too.
+  IncomingOffer ignored;
+  ignored.player_id = keen.player;
+  for (const auto& team : controller->getTeams())
+  {
+    const TeamID id = team.get().getId();
+    if (ignored.buyer == 0 && id != managed && id != keen.buyer &&
+        id != other && id != FREE_AGENTS_TEAM_ID)
+      ignored.buyer = id;
+  }
+  ASSERT_NE(ignored.buyer, 0);
+  ignored.terms.fee = 500'000;
+  ignored.created = today;
+  ignored.expires = today;
+  market.addIncomingOffer(ignored);
+  controller->advanceDay();
+  EXPECT_TRUE(market.talksClosed(keen.player, ignored.buyer,
+                                 controller->getCurrentDate()));
+}
+
+TEST_F(TransferMarketTest, OffersForARetiredPlayerAreDropped)
+{
+  const TeamID managed = manageSmallClub(*controller);
+  const KeenOffer keen =
+      openKeenOffer(*controller, managed, 1'000'000, 1'500'000);
+  ASSERT_NE(keen.offer_id, 0u);
+  TransferMarket& market = controller->getGame()->getTransfers();
+  market.closeTalks(keen.player, keen.buyer, controller->getCurrentDate());
+  market.setNotForSale(keen.player, controller->getCurrentDate() + 10);
+
+  // What WorldSimulation::retirePlayers does to a retiring player.
+  auto gamedata = controller->getGameData();
+  Team& club = gamedata->getTeams().at(managed);
+  club.removePlayerID(keen.player);
+  club.generateStartingXI(*gamedata, gamedata->getStatsConfig());
+  ASSERT_TRUE(gamedata->removePlayer(keen.player));
+
+  // The market's day starts with this sweep (retirements happen on the
+  // same day, before it).
+  market.forgetRemovedPlayers();
+  EXPECT_EQ(market.findIncomingOffer(keen.offer_id), nullptr);
+  EXPECT_TRUE(std::ranges::none_of(
+      market.incomingOffers(), [&](const IncomingOffer& offer)
+      { return offer.player_id == keen.player; }));
+  EXPECT_TRUE(std::ranges::none_of(
+      market.closedTalks(), [&](const TalksCooldown& cooldown)
+      { return cooldown.player_id == keen.player; }));
+  EXPECT_EQ(market.flags(keen.player), nullptr);
+  EXPECT_FALSE(controller->getIncomingOfferView(keen.offer_id).has_value());
+}
+
+TEST_F(TransferMarketTest, NegotiationStateSurvivesSaveAndReload)
+{
+  const TeamID managed = manageSmallClub(*controller);
+  const KeenOffer keen =
+      openKeenOffer(*controller, managed, 1'000'000, 1'500'000);
+  ASSERT_NE(keen.offer_id, 0u);
+  TransferNegotiation::OfferTerms asked;
+  asked.fee = 2'000'000;
+  asked.upfront_percent = 40;
+  asked.instalment_years = 3;
+  asked.appearance_bonus = 250'000;
+  asked.appearance_target = 20;
+  asked.goal_bonus = 100'000;
+  asked.goal_target = 10;
+  asked.sell_on_percent = 15;
+  ASSERT_EQ(controller->counterIncomingOffer(keen.offer_id, asked),
+            OfferOutcome::AwaitingReply);
+  TransferMarket& market = controller->getGame()->getTransfers();
+  // A second player declared not for sale.
+  PlayerID protected_player = 0;
+  for (const auto& player : controller->getPlayersForTeam(managed))
+    if (player.get().getId() != keen.player)
+      protected_player = player.get().getId();
+  market.setNotForSale(protected_player, controller->getCurrentDate() + 20);
+  // A club that walked away from talks for him.
+  const TeamID spurned = keen.buyer == controller->getTeams().front().get().getId()
+                             ? controller->getTeams().back().get().getId()
+                             : controller->getTeams().front().get().getId();
+  market.closeTalks(protected_player, spurned, controller->getCurrentDate());
+  const bool spurned_before = market.talksClosed(
+      protected_player, spurned, controller->getCurrentDate() + 5);
+  const IncomingOffer before = *market.findIncomingOffer(keen.offer_id);
+  controller->saveGame();
+
+  controller = std::make_unique<GameController>();
+  ASSERT_TRUE(controller->loadGame(0));
+  const TransferMarket& reloaded = marketOf(*controller);
+  const IncomingOffer* after = reloaded.findIncomingOffer(keen.offer_id);
+  ASSERT_NE(after, nullptr);
+  EXPECT_EQ(after->status, OfferStatus::AwaitingBuyer);
+  EXPECT_EQ(after->respond_on, before.respond_on);
+  EXPECT_EQ(after->expires, before.expires);
+  EXPECT_EQ(after->max_fee, before.max_fee);
+  EXPECT_EQ(after->patience, before.patience);
+  EXPECT_EQ(after->insults, before.insults);
+  EXPECT_EQ(after->round, before.round);
+  EXPECT_EQ(after->firm, before.firm);
+  EXPECT_EQ(after->asked.fee, asked.fee);
+  EXPECT_EQ(after->asked.upfront_percent, asked.upfront_percent);
+  EXPECT_EQ(after->asked.instalment_years, asked.instalment_years);
+  EXPECT_EQ(after->asked.appearance_bonus, asked.appearance_bonus);
+  EXPECT_EQ(after->asked.appearance_target, asked.appearance_target);
+  EXPECT_EQ(after->asked.goal_bonus, asked.goal_bonus);
+  EXPECT_EQ(after->asked.goal_target, asked.goal_target);
+  EXPECT_EQ(after->asked.sell_on_percent, asked.sell_on_percent);
+  ASSERT_EQ(after->history.size(), before.history.size());
+  for (size_t index = 0; index < before.history.size(); ++index)
+  {
+    EXPECT_EQ(after->history[index].move, before.history[index].move);
+    EXPECT_EQ(after->history[index].date, before.history[index].date);
+    EXPECT_EQ(after->history[index].terms.fee, before.history[index].terms.fee);
+    EXPECT_EQ(after->history[index].terms.sell_on_percent,
+              before.history[index].terms.sell_on_percent);
+  }
+  EXPECT_TRUE(reloaded.isNotForSale(protected_player,
+                                    controller->getCurrentDate() + 20));
+  EXPECT_FALSE(reloaded.isNotForSale(protected_player,
+                                     controller->getCurrentDate() + 21));
+  EXPECT_EQ(reloaded.talksClosed(protected_player, spurned,
+                                 controller->getCurrentDate() + 5),
+            spurned_before);
+  EXPECT_TRUE(reloaded.talksClosed(protected_player, spurned,
+                                   controller->getCurrentDate()));
+
+  // The reloaded talks carry on: the buyer still answers.
+  waitForAnswer(*controller, keen.offer_id);
+  const IncomingOffer* answered = reloaded.findIncomingOffer(keen.offer_id);
+  EXPECT_TRUE(answered == nullptr ||
+              answered->status == OfferStatus::AwaitingClub);
 }
 
 TEST_F(TransferMarketTest, SummerMarketIsMostlyFreeAndLoanMoves)

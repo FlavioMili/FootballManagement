@@ -11,6 +11,7 @@
 #include <imgui.h>
 
 #include <array>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -33,6 +34,11 @@ class PlayerCompareScene : public ManagementScene
   [[nodiscard]] SceneID getID() const override
   {
     return SceneID::PLAYER_COMPARE;
+  }
+  /** The players it was opened with, whatever was picked since. */
+  [[nodiscard]] std::optional<NavEntry> historyEntry() const override
+  {
+    return NavEntry::ofCompare(opened_with[0], opened_with[1]);
   }
 
   static constexpr std::size_t MAX_PLAYERS = 3;
@@ -83,6 +89,7 @@ class PlayerCompareScene : public ManagementScene
 
   std::array<Slot, MAX_PLAYERS> slots;
   std::array<PlayerID, MAX_PLAYERS> requested{};
+  std::array<PlayerID, 2> opened_with{};
   /** Attribute names on the radar (union of the compared players'). */
   std::vector<std::string> axes;
   std::vector<std::string> axis_labels; /*!< Localised, same order. */

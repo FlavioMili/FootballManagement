@@ -99,7 +99,11 @@ class TeamSelectionScene : public GUIScene
   void loadAvailableLeagues();
   void loadAvailableTeams();
   void sortClubs();
+  /** @brief Short windows: natural-height cards, only the page scrolls. */
+  void renderStackedBrowser(float width);
+  /** @brief Height 0 = natural height (no inner scrolling). */
   void renderLeagueList(float width, float height);
+  /** @brief Height 0 = every row at natural height (no inner scrolling). */
   void renderClubTable(float height);
   /** @brief Club card beside the table; the start button sits at its top. */
   void renderSelectedClub(float width, float height);

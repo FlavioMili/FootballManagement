@@ -395,19 +395,33 @@ CREATE TABLE IF NOT EXISTS PlayerMarketFlags (
   release_clause INTEGER NOT NULL DEFAULT 0,
   promised_role INTEGER,
   promise_date INTEGER NOT NULL DEFAULT 0,
-  loan_listed INTEGER NOT NULL DEFAULT 0
+  loan_listed INTEGER NOT NULL DEFAULT 0,
+  not_for_sale_until INTEGER NOT NULL DEFAULT 0 -- day ordinal, 0 = none
 );
 
 -- AI offers for the managed club's players and its own open talks
 CREATE TABLE IF NOT EXISTS TransferOffers (
   id INTEGER NOT NULL,
-  kind INTEGER NOT NULL,          -- 0 transfer offer, 1 loan offer, 2 talks
+  kind INTEGER NOT NULL,          -- 0 transfer offer, 1 loan offer, 2 talks,
+                                  -- 3 a club's ended talks (cooldown until expires)
   player_id INTEGER NOT NULL,
   club_id INTEGER NOT NULL,
   created INTEGER NOT NULL,
   expires INTEGER NOT NULL,
   rounds INTEGER NOT NULL DEFAULT 0,
-  terms TEXT NOT NULL DEFAULT '{}' -- JSON offer / loan terms
+  terms TEXT NOT NULL DEFAULT '{}', -- JSON offer / loan terms and talks state
+  status INTEGER NOT NULL DEFAULT 0,     -- OfferStatus
+  respond_on INTEGER NOT NULL DEFAULT 0  -- YYYYMMDD of the buyer's answer
+);
+
+-- Rounds of the talks over an incoming offer, oldest first
+CREATE TABLE IF NOT EXISTS TransferOfferRounds (
+  offer_id INTEGER NOT NULL,
+  seq INTEGER NOT NULL,
+  game_date INTEGER NOT NULL,       -- YYYYMMDD
+  move INTEGER NOT NULL,            -- BuyerNegotiation::Move
+  terms TEXT NOT NULL DEFAULT '{}', -- JSON offer terms
+  PRIMARY KEY (offer_id, seq)
 );
 
 -- Save versioning (owned by src/database/migrations; keep both in sync).

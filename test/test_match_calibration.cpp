@@ -630,6 +630,14 @@ TEST(MatchEngineCalibration, WeakerLeaguesScoreLessThanStrongerOnes)
   const int lowGoals = low.homeGoals + low.awayGoals;
   const int highGoals = high.homeGoals + high.awayGoals;
   EXPECT_LT(lowGoals, highGoals);
+  // The difference is in the finishing, not in the shot count: second tiers
+  // convert about 0.93 as many shots as top tiers.
+  ASSERT_GT(low.shots, 0);
+  ASSERT_GT(high.shots, 0);
+  const double lowConversion = static_cast<double>(lowGoals) / low.shots;
+  const double highConversion = static_cast<double>(highGoals) / high.shots;
+  EXPECT_LT(lowConversion, highConversion * 0.98);
+  EXPECT_GT(lowConversion, highConversion * 0.75);
   EXPECT_LE(low.perMatch(low.homeWins), 0.55);
 }
 

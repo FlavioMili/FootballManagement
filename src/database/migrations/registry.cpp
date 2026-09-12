@@ -133,9 +133,21 @@ constexpr std::array FIXTURE_KICKOFF = {
     Migrations::ColumnSpec{"Fixtures", "kickoff", "INTEGER NOT NULL DEFAULT 0"},
 };
 
+// Offers for the managed club's players are negotiated: whose move it is
+// and when the buyer answers, and players declared not for sale. Offers of
+// older saves wait for the club (their bid opens the rounds on load).
+constexpr std::array OFFER_NEGOTIATIONS = {
+    Migrations::ColumnSpec{"TransferOffers", "status",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"TransferOffers", "respond_on",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"PlayerMarketFlags", "not_for_sale_until",
+                           "INTEGER NOT NULL DEFAULT 0"},
+};
+
 // Append new migrations at the end with the next number; never renumber,
 // edit or remove a released one (see README.md).
-constexpr std::array<Migrations::Migration, 8> REGISTRY = {{
+constexpr std::array<Migrations::Migration, 9> REGISTRY = {{
     {1, "0001_version_metadata", {}, &versionMetadata},
     {2, "0002_league_tiebreak", LEAGUE_TIEBREAK, nullptr},
     {3, "0003_fixture_competitions", FIXTURE_COMPETITIONS, nullptr},
@@ -144,6 +156,7 @@ constexpr std::array<Migrations::Migration, 8> REGISTRY = {{
     {6, "0006_scout_report_details", SCOUT_REPORT_DETAILS, nullptr},
     {7, "0007_staff_id_counter", STAFF_ID_COUNTER, nullptr},
     {8, "0008_fixture_kickoff", FIXTURE_KICKOFF, nullptr},
+    {9, "0009_offer_negotiations", OFFER_NEGOTIATIONS, nullptr},
 }};
 
 static_assert(std::ranges::is_sorted(REGISTRY, {}, &Migrations::Migration::number),

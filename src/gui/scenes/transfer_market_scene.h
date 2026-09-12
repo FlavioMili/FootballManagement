@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "gui/scenes/management_scene.h"
+#include "gui/scenes/offer_negotiation_dialog.h"
 #include "gui/scenes/transfer_market_scene_tuning.h"
 #include "gui/view_models/player_view.h"
 #include "model/transfer_negotiation.h"
@@ -34,8 +35,8 @@ struct ScoutSearchFilter;
  * Offers & talks
  * (incoming offers, open negotiations, pre-contracts), Loans, My squad
  * (list, loan-list, release) and History. Dialogs: structured transfer
- * offer, personal terms, loan offer, counter-offer, asking price and
- * release confirmation.
+ * offer, personal terms, loan offer, talks over an incoming bid, asking
+ * price and release confirmation.
  *
  * Every table is built from cached view models in refresh(); rendering
  * only draws them (clipped), never queries SQL or sorts per frame.
@@ -122,10 +123,10 @@ class TransferMarketScene : public ManagementScene
     std::string asking_text;
   };
 
-  /** An AI offer for a managed player (structured or a listing bid). */
+  /** An AI offer for a managed player. */
   struct OfferRow
   {
-    uint32_t offer_id = 0; /**< 0 = bid on a listed player. */
+    uint32_t offer_id = 0;
     PlayerID player_id = 0;
     std::string player;
     std::string club;
@@ -135,7 +136,9 @@ class TransferMarketScene : public ManagementScene
     std::string amount_text;
     std::string terms_text;
     float value_ratio = 0.0f;
-    std::string expires_text;
+    std::string ratio_text; /**< "112% of value". */
+    std::string expires_text; /**< Or when the buyer answers. */
+    bool awaiting = false;    /**< The buyer considers a counter. */
   };
 
   /** The managed club's open negotiation or agreed pre-contract. */
@@ -260,14 +263,6 @@ class TransferMarketScene : public ManagementScene
     std::optional<TransferNegotiation::ClubResponse> response;
   };
 
-  struct CounterDialog
-  {
-    bool requested = false;
-    OfferRow offer;
-    uint32_t fee = 0;
-    std::optional<TransferNegotiation::ClubResponse> response;
-  };
-
   struct ListingDialog
   {
     bool requested = false;
@@ -315,6 +310,8 @@ class TransferMarketScene : public ManagementScene
   void renderTargetTable(const char* id, const std::vector<TargetRow>& rows,
                          std::vector<size_t>& visible, SortState& sort);
   void renderTargetActions(const TargetRow& row);
+  /** Values of the columns the last target table hid for lack of width. */
+  void renderHiddenTargetValues(const TargetRow& row) const;
   void renderOffersTab();
   void renderLoansTab();
   void renderSquadTab();
@@ -326,7 +323,6 @@ class TransferMarketScene : public ManagementScene
   void renderOfferDialog();
   void renderContractDialog();
   void renderLoanDialog();
-  void renderCounterDialog();
   void renderListingDialog();
   void renderReleaseDialog();
   void renderReasons(const std::vector<TransferNegotiation::Reason>& reasons,
@@ -364,6 +360,8 @@ class TransferMarketScene : public ManagementScene
   SortState search_sort;
   SortState shortlist_sort;
   SortState recommended_sort;
+  /** Columns the target table shows at the current width (UI::ColumnMask). */
+  uint32_t target_mask = ~uint32_t{0};
 
   int64_t available_budget = 0;
   bool embargo = false; /**< Board has frozen transfer spending. */
@@ -375,7 +373,7 @@ class TransferMarketScene : public ManagementScene
   OfferDialog offer_dialog;
   ContractDialog contract_dialog;
   LoanDialog loan_dialog;
-  CounterDialog counter_dialog;
+  OfferNegotiationDialog negotiation_dialog;
   ListingDialog listing_dialog;
   ReleaseDialog release_dialog;
   /** Player whose deal dialog opens on entry (0 = none). */

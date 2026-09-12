@@ -8,10 +8,15 @@
 
 #include "gui/scenes/management_scene.h"
 
+#include <SDL3/SDL.h>
 #include <imgui.h>
+#include <imgui_internal.h>
 
 #include <algorithm>
+#include <cmath>
 #include <format>
+#include <memory>
+#include <utility>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
@@ -68,6 +73,11 @@ constexpr float NAV_ITEM_HEIGHT = 40.0f;
 /** Items shrink down to this height before the navigation has to scroll. */
 constexpr float NAV_ITEM_MIN_HEIGHT = 22.0f;
 constexpr float HUB_TAB_HEIGHT = 36.0f;
+/** Height of a hub's screen entry relative to a hub entry. */
+constexpr float SUB_ITEM_RATIO = 0.82f;
+/** Seconds a collapsed sidebar's flyout stays open after the mouse left. */
+constexpr float FLYOUT_GRACE_SECONDS = 0.3f;
+constexpr const char* FLYOUT_WINDOW_ID = "##nav_flyout";
 constexpr float CLUB_BADGE_SIZE = 38.0f;
 constexpr float CONTINUE_MIN_WIDTH = 200.0f;
 constexpr float PALETTE_WIDTH = 620.0f;
@@ -78,9 +88,21 @@ constexpr float TOAST_SECONDS = 3.5f;
 constexpr float SAVE_POLL_SECONDS = 1.0f;
 constexpr const char* PALETTE_POPUP_ID = "##command_palette";
 constexpr const char* MAIN_MENU_CONFIRM_ID = "##confirm_main_menu";
+/** Radius of the Back / Forward bubble shown while swiping. */
+constexpr float SWIPE_BUBBLE_RADIUS = 22.0f;
+/** Gap between the window edge and the bubble once the swipe is complete. */
+constexpr float SWIPE_BUBBLE_MARGIN = 14.0f;
+/**
+ * Sign turning a wheel sample into finger travel for the swipe. SDL reports
+ * scrolling to the right as positive x; with natural scrolling the value is
+ * inverted and flagged SDL_MOUSEWHEEL_FLIPPED, which is undone first. Fingers
+ * moving right then read as positive, which is Back (the previous page slides
+ * in from the left, as in a web browser).
+ */
+constexpr float SWIPE_BACK_SIGN = 1.0f;
 
 /** One screen of the shell (a tab of its hub). */
-struct NavEntry
+struct NavScreen
 {
   NavSection section;
   const char* label_key;
@@ -102,7 +124,7 @@ struct NavHub
 };
 
 // Every screen, in palette order.
-constexpr std::array<NavEntry, 26> ALL_NAV = {{
+constexpr std::array<NavScreen, 26> ALL_NAV = {{
     {NavSection::HOME, "NAV_HOME"},
     {NavSection::INBOX, "NAV_INBOX"},
     {NavSection::SQUAD, "NAV_SQUAD"},
@@ -160,7 +182,7 @@ constexpr std::array<NavHub, 7> NAV_HUBS = {{
 
 constexpr bool everyScreenHasOneHub()
 {
-  for (const NavEntry& entry : ALL_NAV)
+  for (const NavScreen& entry : ALL_NAV)
   {
     int hubs = 0;
     for (const NavHub& hub : NAV_HUBS)
@@ -172,6 +194,13 @@ constexpr bool everyScreenHasOneHub()
 }
 static_assert(everyScreenHasOneHub(),
               "every screen belongs to exactly one sidebar hub");
+
+/**
+ * Arrow keys walk the current hub's screens while the sidebar has the
+ * keyboard: set by a sidebar click or a hub's F-key, cleared by a click
+ * anywhere else. Kept across screens (each screen is a new scene).
+ */
+bool sidebarHasKeyboard = false;
 
 /** Out of work only the manager's own screens and the world stay open. */
 bool sectionOpen(NavSection section, bool unemployed)
@@ -185,7 +214,7 @@ bool sectionOpen(NavSection section, bool unemployed)
 
 const char* labelKeyOf(NavSection section)
 {
-  const auto found = std::ranges::find(ALL_NAV, section, &NavEntry::section);
+  const auto found = std::ranges::find(ALL_NAV, section, &NavScreen::section);
   return found != ALL_NAV.end() ? found->label_key : "NAV_HOME";
 }
 
@@ -204,6 +233,16 @@ NavSection firstOpenSection(const NavHub& hub, bool unemployed)
   for (const NavSection section : hub.sections)
     if (sectionOpen(section, unemployed)) return section;
   return NavSection::NONE;
+}
+
+/** Screens of a hub the manager can use, in sidebar order. */
+size_t openSections(const NavHub& hub, bool unemployed,
+                    std::array<NavSection, MAX_HUB_SECTIONS>& out)
+{
+  size_t count = 0;
+  for (const NavSection section : hub.sections)
+    if (sectionOpen(section, unemployed)) out[count++] = section;
+  return count;
 }
 
 /** Unread count shown next to a screen (inbox, new scout reports). */
@@ -250,9 +289,11 @@ float countPillWidth(size_t count)
 }
 
 /**
- * Tabs of the current screen's hub above the page (hubs with one usable
- * screen draw nothing). The current tab is not a button: it has nothing to
- * do. Tabs share the width when their labels do not fit, with ellipsis.
+ * Tabs of the current screen's hub above the page, shown only while the
+ * sidebar is collapsed to icons (the full sidebar lists the hub's screens
+ * itself). Hubs with one usable screen draw nothing. The current tab is not
+ * a button: it has nothing to do. Tabs share the width when their labels do
+ * not fit, with ellipsis.
  */
 void renderHubTabs(GUIView* view, NavSection current)
 {
@@ -261,9 +302,7 @@ void renderHubTabs(GUIView* view, NavSection current)
   const GameController& controller = view->getController();
   const bool unemployed = controller.isUnemployed();
   std::array<NavSection, MAX_HUB_SECTIONS> shown{};
-  size_t count = 0;
-  for (const NavSection section : hub->sections)
-    if (sectionOpen(section, unemployed)) shown[count++] = section;
+  const size_t count = openSections(*hub, unemployed, shown);
   if (count < 2) return;
 
   const Theme::Palette& palette = Theme::palette();
@@ -357,8 +396,14 @@ MainGameScene* careerHub(GUIView* view)
   return dynamic_cast<MainGameScene*>(view->getBaseScene());
 }
 
+/**
+ * Sidebar entry. @p parent marks the hub whose screens are listed below it
+ * (drawn in full ink, the selection fill goes to the current screen).
+ * @p tooltip false: a collapsed entry shows a flyout instead of a tooltip.
+ */
 bool navItem(const char* label, const char* shortcut, bool selected,
-             UI::Icon icon, bool collapsed, float height, size_t badge = 0)
+             UI::Icon icon, bool collapsed, float height, size_t badge = 0,
+             bool parent = false, bool tooltip = true)
 {
   const Theme::Palette& palette = Theme::palette();
   const ImVec2 start = ImGui::GetCursorScreenPos();
@@ -382,14 +427,14 @@ bool navItem(const char* label, const char* shortcut, bool selected,
     drawList->AddRectFilled(start, end, Theme::toU32(palette.raised),
                             4.0f * Theme::scale());
   }
-  const ImU32 color =
-      Theme::toU32(selected || hovered ? palette.text : palette.muted);
+  const ImU32 color = Theme::toU32(
+      selected || parent || hovered ? palette.text : palette.muted);
   const float iconSize = ICON_SIZE * Theme::scale();
   const float iconX =
       collapsed ? start.x + size.x * 0.5f
                 : start.x + Theme::Space::M * Theme::scale() + iconSize * 0.5f;
   UI::drawIcon(drawList, icon, ImVec2(iconX, start.y + size.y * 0.5f), iconSize,
-               selected ? Theme::toU32(palette.accent) : color);
+               selected || parent ? Theme::toU32(palette.accent) : color);
   if (badge > 0)
   {
     // Unread count pill (top-right of the icon when collapsed).
@@ -411,7 +456,7 @@ bool navItem(const char* label, const char* shortcut, bool selected,
   }
   if (collapsed)
   {
-    if (hovered)
+    if (hovered && tooltip)
       ImGui::SetTooltip("%s%s%s", label, shortcut ? "   " : "",
                         shortcut ? shortcut : "");
     return pressed;
@@ -433,6 +478,60 @@ bool navItem(const char* label, const char* shortcut, bool selected,
   }
   if (UI::drawTextFitted(drawList, ImVec2(textX, textY), color, label,
                          labelRight - textX) &&
+      hovered)
+    ImGui::SetTooltip("%s", label);
+  return pressed;
+}
+
+/**
+ * One screen of the expanded hub, indented under the hub's label with a
+ * guide line; the current screen gets the selection fill.
+ */
+bool subNavItem(const char* label, bool selected, float height, size_t badge)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  const ImVec2 start = ImGui::GetCursorScreenPos();
+  const ImVec2 size(ImGui::GetContentRegionAvail().x, height);
+  ImGui::PushID(label);
+  const bool pressed = ImGui::InvisibleButton("##sub", size);
+  ImGui::PopID();
+  const bool hovered = ImGui::IsItemHovered();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  const float iconSize = ICON_SIZE * scale;
+  const float guideX = start.x + Theme::Space::M * scale + iconSize * 0.5f;
+  const float textX = guideX + iconSize * 0.5f + Theme::Space::S * scale;
+  const ImVec2 end(start.x + size.x, start.y + size.y);
+  const float spacing = ImGui::GetStyle().ItemSpacing.y;
+  drawList->AddLine(ImVec2(guideX, start.y - spacing), ImVec2(guideX, end.y),
+                    Theme::toU32(palette.border), 1.0f * scale);
+  if (selected)
+  {
+    drawList->AddRectFilled(ImVec2(textX - Theme::Space::S * scale, start.y),
+                            end, Theme::toU32(palette.accent, 0.16f),
+                            4.0f * scale);
+    drawList->AddRectFilled(ImVec2(guideX - 1.5f * scale, start.y),
+                            ImVec2(guideX + 1.5f * scale, end.y),
+                            Theme::toU32(palette.accent), 1.5f * scale);
+  }
+  else if (hovered)
+  {
+    drawList->AddRectFilled(ImVec2(textX - Theme::Space::S * scale, start.y),
+                            end, Theme::toU32(palette.raised), 4.0f * scale);
+  }
+  float labelRight = end.x - Theme::Space::S * scale;
+  if (badge > 0)
+  {
+    const float pill = countPillWidth(badge);
+    drawCountPill(drawList, ImVec2(labelRight - pill, start.y), size.y, badge);
+    labelRight -= pill + Theme::Space::XS * scale;
+  }
+  const ImU32 color =
+      Theme::toU32(selected || hovered ? palette.text : palette.muted);
+  if (UI::drawTextFitted(
+          drawList,
+          ImVec2(textX, start.y + (size.y - ImGui::GetTextLineHeight()) * 0.5f),
+          color, label, labelRight - textX) &&
       hovered)
     ImGui::SetTooltip("%s", label);
   return pressed;
@@ -602,6 +701,13 @@ void openMatchReport(GUIView* view, GameDateValue date, TeamID homeId,
 
 void openClub(GUIView* view, TeamID teamId)
 {
+  // The managed club's list is the Squad screen (one history entry for it).
+  if (const auto managed = view->getController().getManagedTeam();
+      managed && managed->get().getId() == teamId)
+  {
+    open(view, NavSection::SQUAD);
+    return;
+  }
   view->navigateTo(std::make_unique<RosterScene>(view, teamId));
 }
 
@@ -610,9 +716,175 @@ void openCompare(GUIView* view, PlayerID first, PlayerID second)
   view->overlayScene(std::make_unique<PlayerCompareScene>(view, first, second));
 }
 
+bool canOpen(const GUIView* view, const NavEntry& entry)
+{
+  const GameController& controller = view->getController();
+  const bool namesPlayers = entry.kind == NavEntry::Kind::PLAYER ||
+                            entry.kind == NavEntry::Kind::COMPARE;
+  const std::shared_ptr<GameData> data =
+      namesPlayers ? controller.getGameData() : nullptr;
+  const GameData* players = data.get();
+  const auto playerKnown = [players](PlayerID id)
+  { return id == 0 || (players != nullptr && players->getPlayer(id)); };
+  const bool unemployed = controller.isUnemployed();
+  switch (entry.kind)
+  {
+    case NavEntry::Kind::SECTION:
+      return sectionOpen(entry.section, unemployed);
+    case NavEntry::Kind::PLAYER:
+      return entry.player != 0 && playerKnown(entry.player);
+    case NavEntry::Kind::CLUB:
+      return controller.getTeamById(entry.team).has_value();
+    case NavEntry::Kind::MATCH_REPORT:
+      return controller.getTeamById(entry.team).has_value() &&
+             controller.getTeamById(entry.away_team).has_value();
+    case NavEntry::Kind::COMPARE:
+      return sectionOpen(NavSection::COMPARE, unemployed) &&
+             playerKnown(entry.player) && playerKnown(entry.second_player);
+  }
+  return false;
+}
+
+namespace
+{
+/** History entries the manager can still open. */
+auto opensIn(GUIView* view)
+{
+  return [view](const NavEntry& entry) { return canOpen(view, entry); };
+}
+
+/**
+ * A career screen is shown (not a match, the club choice or a menu) and no
+ * Continue is under way: a screen opened while the hub is closing the ones
+ * above it would hold the simulation back.
+ */
+bool onCareerScreen(GUIView* view)
+{
+  if (const MainGameScene* hub = careerHub(view);
+      hub != nullptr && hub->isContinuing())
+    return false;
+  const GUIScene* top = view->getTopScene();
+  return top != nullptr && top->historyEntry().has_value();
+}
+
+/**
+ * Shows a history entry. Going back to the screen right beneath the top one
+ * just closes the top one, so the screen beneath keeps its state (filters,
+ * selection, scroll). Going forward re-opens a detail screen above the
+ * current one, where it was opened the first time; otherwise the entry
+ * replaces what is shown.
+ */
+void showEntry(GUIView* view, const NavEntry& entry, bool forward)
+{
+  if (!forward)
+    if (const GUIScene* below = view->getSceneBelowTop();
+        below != nullptr && below->historyEntry() == entry)
+    {
+      view->popScene();
+      view->markHistoryStep();
+      return;
+    }
+  const bool above = forward && entry.isDetail();
+  const auto place = [view, above](std::unique_ptr<GUIScene> scene)
+  {
+    if (above)
+      view->overlayScene(std::move(scene));
+    else
+      view->navigateTo(std::move(scene));
+  };
+  switch (entry.kind)
+  {
+    case NavEntry::Kind::SECTION:
+      open(view, entry.section);
+      break;
+    case NavEntry::Kind::CLUB:
+      openClub(view, entry.team);
+      break;
+    case NavEntry::Kind::PLAYER:
+      place(std::make_unique<PlayerProfileScene>(view, entry.player));
+      break;
+    case NavEntry::Kind::MATCH_REPORT:
+      place(std::make_unique<MatchReportScene>(view, entry.date, entry.team,
+                                               entry.away_team));
+      break;
+    case NavEntry::Kind::COMPARE:
+      place(std::make_unique<PlayerCompareScene>(view, entry.player,
+                                                 entry.second_player));
+      break;
+  }
+  view->markHistoryStep();
+}
+}  // namespace
+
 void back(GUIView* view)
 {
-  if (view->getOverlayDepth() > 0) view->popScene();
+  if (!onCareerScreen(view)) return;
+  const auto valid = opensIn(view);
+  if (const std::optional<NavEntry> target = view->navHistory().back(valid))
+  {
+    showEntry(view, *target, false);
+    return;
+  }
+  // Nothing earlier to go to: close the top screen, as a step back onto the
+  // screen beneath so Forward can bring the closed one back.
+  if (view->getOverlayDepth() == 0) return;
+  const GUIScene* below = view->getSceneBelowTop();
+  const std::optional<NavEntry> revealed =
+      below != nullptr ? below->historyEntry() : std::nullopt;
+  view->popScene();
+  if (revealed)
+  {
+    view->navHistory().stepBackTo(*revealed);
+    view->markHistoryStep();
+  }
+}
+
+void forward(GUIView* view)
+{
+  if (!onCareerScreen(view)) return;
+  const auto valid = opensIn(view);
+  if (const std::optional<NavEntry> target = view->navHistory().forward(valid))
+    showEntry(view, *target, true);
+}
+
+void close(GUIView* view)
+{
+  if (!onCareerScreen(view)) return;
+  const NavEntry home = NavEntry::ofSection(NavSection::HOME);
+  const bool atBase = view->getOverlayDepth() == 0;
+  // Beneath a hub page (Finances) is Home; Home itself has nothing beneath.
+  if (atBase && view->getTopScene()->historyEntry() == home) return;
+  const GUIScene* below = view->getSceneBelowTop();
+  const std::optional<NavEntry> beneath =
+      atBase ? std::optional<NavEntry>(home)
+             : (below != nullptr ? below->historyEntry() : std::nullopt);
+  const auto valid = opensIn(view);
+  if (const std::optional<NavEntry> previous =
+          view->navHistory().peekBack(valid);
+      previous && beneath == previous)
+  {
+    back(view);
+    return;
+  }
+  if (atBase)
+    open(view, NavSection::HOME);
+  else
+    view->popScene();
+}
+
+bool canGoBack(GUIView* view)
+{
+  if (!onCareerScreen(view)) return false;
+  const auto valid = opensIn(view);
+  return view->getOverlayDepth() > 0 ||
+         view->navHistory().peekBack(valid).has_value();
+}
+
+bool canGoForward(GUIView* view)
+{
+  if (!onCareerScreen(view)) return false;
+  const auto valid = opensIn(view);
+  return view->navHistory().peekForward(valid).has_value();
 }
 
 }  // namespace Navigation
@@ -626,6 +898,77 @@ void ManagementScene::onEnter()
 }
 
 void ManagementScene::onResume() { refresh(); }
+
+std::optional<NavEntry> ManagementScene::historyEntry() const
+{
+  const NavSection section = navSection();
+  if (section == NavSection::NONE) return std::nullopt;
+  return NavEntry::ofSection(section);
+}
+
+namespace
+{
+/**
+ * The sideways swipe is left to the page while it cannot mean Back or
+ * Forward: text is being edited, a widget is held, a dialog or menu is open,
+ * or the mouse is over something that scrolls sideways itself. Reads the
+ * previous frame's state (events arrive between frames).
+ */
+bool swipeBelongsToPage()
+{
+  const ImGuiContext* context = ImGui::GetCurrentContext();
+  if (context == nullptr) return true;
+  if (context->IO.WantTextInput || context->ActiveId != 0 ||
+      context->OpenPopupStack.Size > 0)
+    return true;
+  // Only surfaces meant to scroll sideways count, not a clipped wide item.
+  for (const ImGuiWindow* window = context->HoveredWindow; window != nullptr;
+       window = window->ParentWindow)
+    if (window->ScrollbarX ||
+        (window->Flags & ImGuiWindowFlags_HorizontalScrollbar) != 0)
+      return true;
+  return false;
+}
+}  // namespace
+
+void ManagementScene::handleEvent(const SDL_Event& event)
+{
+  // Nothing to step to while Continue is under way (see Navigation::back).
+  if (const MainGameScene* hub = careerHub(guiView);
+      hub != nullptr && hub->isContinuing())
+    return;
+  if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+  {
+    if (event.button.button == SDL_BUTTON_X1)
+      pending_history_step = SwipeGesture::Step::BACK;
+    else if (event.button.button == SDL_BUTTON_X2)
+      pending_history_step = SwipeGesture::Step::FORWARD;
+    return;
+  }
+  if (event.type != SDL_EVENT_MOUSE_WHEEL) return;
+  SwipeGesture& swipe = guiView->swipeGesture();
+  const Uint64 timestamp =
+      event.wheel.timestamp != 0 ? event.wheel.timestamp : SDL_GetTicksNS();
+  if (swipeBelongsToPage())
+  {
+    swipe.suppress(timestamp);
+    return;
+  }
+  const float unflip =
+      event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.0f : 1.0f;
+  const SwipeGesture::Step step =
+      swipe.feed(event.wheel.x * unflip * SWIPE_BACK_SIGN,
+                 event.wheel.y * unflip, timestamp);
+  if (step == SwipeGesture::Step::NONE) return;
+  // With nowhere to go the bubble just disappears instead of completing.
+  const bool possible = step == SwipeGesture::Step::BACK
+                            ? Navigation::canGoBack(guiView)
+                            : Navigation::canGoForward(guiView);
+  if (possible)
+    pending_history_step = step;
+  else
+    swipe.suppress(timestamp);
+}
 
 void ManagementScene::showToast(std::string message, bool isError)
 {
@@ -664,6 +1007,7 @@ void ManagementScene::render()
 
   if (advancing)
   {
+    pending_history_step = SwipeGesture::Step::NONE;
     hub->renderContinueOverlay();
     ImGui::End();
     return;
@@ -697,13 +1041,14 @@ void ManagementScene::render()
   // hub tabs and no tip of the section they were opened from.
   const bool detailScreen =
       getID() == SceneID::PLAYER_PROFILE || getID() == SceneID::MATCH_REPORT;
-  if (!detailScreen) renderHubTabs(guiView, navSection());
+  if (!detailScreen && collapsed) renderHubTabs(guiView, navSection());
   GuidanceUI::renderReclaimNotice(guiView);
   if (!detailScreen) GuidanceUI::renderScreenTip(navSection());
   renderContent();
   ImGui::EndChild();
   ImGui::EndGroup();
 
+  renderSwipeIndicator();
   renderPalette();
   renderMainMenuConfirm();
   if (const auto plan = holiday_dialog.render(guiView->getController()))
@@ -746,6 +1091,15 @@ void ManagementScene::renderSidebar(bool collapsed)
   const size_t itemCount = static_cast<size_t>(std::ranges::count_if(
       NAV_HUBS, [unemployed](const NavHub& hub)
       { return firstOpenSection(hub, unemployed) != NavSection::NONE; }));
+  // The current hub lists its screens under its label (one hub expanded at
+  // a time: the one being worked in). Collapsed, a flyout lists them.
+  const NavHub* currentHub = hubOf(navSection());
+  std::array<NavSection, MAX_HUB_SECTIONS> subSections{};
+  size_t subCount = currentHub != nullptr
+                        ? openSections(*currentHub, unemployed, subSections)
+                        : 0;
+  if (collapsed || subCount < 2) subCount = 0;
+  const float subRows = SUB_ITEM_RATIO * static_cast<float>(subCount);
   const float clubBlock =
       controller.getManagedTeam()
           ? (CLUB_BADGE_SIZE + Theme::Space::M) * Theme::scale() + spacing
@@ -754,9 +1108,9 @@ void ManagementScene::renderSidebar(bool collapsed)
   {
     const float fixedHeight =
         clubBlock + 2.0f * Theme::Space::S * Theme::scale() + 3.0f * spacing;
-    return (ImGui::GetContentRegionAvail().y - fixedHeight) /
-               static_cast<float>(itemCount + footerRows) -
-           spacing;
+    const auto rows = static_cast<float>(itemCount + footerRows + subCount);
+    return (ImGui::GetContentRegionAvail().y - fixedHeight - rows * spacing) /
+           (static_cast<float>(itemCount + footerRows) + subRows);
   };
   // Short windows: Save / Settings / Main menu share one row of icons.
   const bool compactFooter =
@@ -839,23 +1193,57 @@ void ManagementScene::renderSidebar(bool collapsed)
                                   ImGui::GetStyle().ItemSpacing.y));
   }
 
-  const NavHub* currentHub = hubOf(navSection());
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
+  const float subHeight = itemHeight * SUB_ITEM_RATIO;
+  const NavHub* hoveredHub = nullptr;
+  ImVec2 hoveredAnchor;
   for (const NavHub& hub : NAV_HUBS)
   {
     const NavSection first = firstOpenSection(hub, unemployed);
     if (first == NavSection::NONE) continue;
+    std::array<NavSection, MAX_HUB_SECTIONS> sections{};
+    const size_t count = openSections(hub, unemployed, sections);
     size_t badge = 0U;
-    for (const NavSection section : hub.sections)
-      if (sectionOpen(section, unemployed))
-        badge += sectionBadge(controller, section);
-    if (navItem(LOC(hub.label_key), hub.shortcut, currentHub == &hub, hub.icon,
-                collapsed, itemHeight, badge))
+    for (size_t index = 0; index < count; ++index)
+      badge += sectionBadge(controller, sections[index]);
+    const bool current = currentHub == &hub;
+    const bool expanded = current && subCount > 0;
+    // Collapsed: hubs with several screens open a flyout on hover.
+    const bool flyout = collapsed && count > 1;
+    if (navItem(LOC(hub.label_key), hub.shortcut, current && !expanded,
+                hub.icon, collapsed, itemHeight, badge, expanded, !flyout))
+    {
+      sidebarHasKeyboard = true;
       Navigation::open(guiView, first);
+    }
+    if (flyout && ImGui::IsItemHovered())
+    {
+      hoveredHub = &hub;
+      hoveredAnchor =
+          ImVec2(ImGui::GetItemRectMax().x, ImGui::GetItemRectMin().y);
+    }
+    if (!expanded) continue;
+    for (size_t index = 0; index < subCount; ++index)
+    {
+      const NavSection section = subSections[index];
+      if (subNavItem(LOC(labelKeyOf(section)), section == navSection(),
+                     subHeight, sectionBadge(controller, section)) &&
+          section != navSection())
+      {
+        sidebarHasKeyboard = true;
+        Navigation::open(guiView, section);
+      }
+    }
   }
   sidebar_nav_overflow = ImGui::GetScrollMaxY() > 0.0f;
 
   ImGui::EndChild();
+  if (hoveredHub != nullptr)
+  {
+    flyout_hub = static_cast<int>(hoveredHub - NAV_HUBS.data());
+    flyout_anchor = hoveredAnchor;
+    flyout_grace = FLYOUT_GRACE_SECONDS;
+  }
 
   // Footer actions pinned to the bottom of the sidebar.
   ImGui::Separator();
@@ -881,9 +1269,74 @@ void ManagementScene::renderSidebar(bool collapsed)
   if (footerAction(LOC("MAIN_GAME_MAIN_MENU"), nullptr, UI::Icon::EXIT))
     main_menu_confirm_requested = true;
 
+  // A click anywhere else hands the keyboard back to the page.
+  if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) &&
+      !ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows))
+    sidebarHasKeyboard = false;
   ImGui::EndChild();
   ImGui::PopStyleVar(2);
   ImGui::PopStyleColor();
+  if (collapsed) renderSidebarFlyout();
+}
+
+void ManagementScene::renderSidebarFlyout()
+{
+  if (flyout_hub < 0) return;
+  const NavHub& hub = NAV_HUBS[static_cast<size_t>(flyout_hub)];
+  const GameController& controller = guiView->getController();
+  std::array<NavSection, MAX_HUB_SECTIONS> sections{};
+  const size_t count = openSections(hub, controller.isUnemployed(), sections);
+  if (count < 2)
+  {
+    flyout_hub = -1;
+    return;
+  }
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  ImGui::SetNextWindowPos(flyout_anchor);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,
+                      ImVec2(Theme::Space::S * scale, Theme::Space::S * scale));
+  ImGui::Begin(FLYOUT_WINDOW_ID, nullptr,
+               ImGuiWindowFlags_NoDecoration |
+                   ImGuiWindowFlags_AlwaysAutoResize |
+                   ImGuiWindowFlags_NoSavedSettings |
+                   ImGuiWindowFlags_NoFocusOnAppearing |
+                   ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove);
+  ImGui::PopStyleVar();
+  {
+    Theme::ScopedText caption(Theme::Text::CAPTION);
+    ImGui::TextColored(palette.muted, "%s   %s", LOC(hub.label_key),
+                       hub.shortcut);
+  }
+  float width = 0.0f;
+  for (size_t index = 0; index < count; ++index)
+    width = std::max(width,
+                     ImGui::CalcTextSize(LOC(labelKeyOf(sections[index]))).x);
+  width += countPillWidth(99) + 2.0f * Theme::Space::M * scale;
+  bool chosen = false;
+  for (size_t index = 0; index < count; ++index)
+  {
+    const NavSection section = sections[index];
+    const size_t badge = sectionBadge(controller, section);
+    const ImVec2 start = ImGui::GetCursorScreenPos();
+    if (ImGui::Selectable(LOC(labelKeyOf(section)), section == navSection(), 0,
+                          ImVec2(width, NAV_ITEM_MIN_HEIGHT * scale)) &&
+        section != navSection())
+    {
+      sidebarHasKeyboard = true;
+      chosen = true;
+      Navigation::open(guiView, section);
+    }
+    if (badge > 0)
+      drawCountPill(ImGui::GetWindowDrawList(),
+                    ImVec2(start.x + width - countPillWidth(badge), start.y),
+                    NAV_ITEM_MIN_HEIGHT * scale, badge);
+  }
+  const bool hovered = ImGui::IsWindowHovered();
+  ImGui::End();
+  if (hovered) flyout_grace = FLYOUT_GRACE_SECONDS;
+  flyout_grace -= ImGui::GetIO().DeltaTime;
+  if (chosen || flyout_grace <= 0.0f) flyout_hub = -1;
 }
 
 void ManagementScene::renderTopBar(float height)
@@ -930,12 +1383,15 @@ void ManagementScene::renderTopBar(float height)
   const float rightEdge = ImGui::GetWindowContentRegionMax().x;
   const float leftEdge = ImGui::GetCursorPosX();
 
+  // Back and Forward walk the history like a browser's; each is disabled
+  // while there is nothing to go to.
   const std::string backLabel =
       std::string("‹  ") + LOC("NAV_BACK") + "###shell_back";
-  const bool canGoBack = guiView->getOverlayDepth() > 0;
-  const float backWidth =
-      canGoBack ? UI::buttonWidth(backLabel.c_str()) + style.ItemSpacing.x
-                : 0.0f;
+  const bool canGoBack = Navigation::canGoBack(guiView);
+  const bool canGoForward = Navigation::canGoForward(guiView);
+  const float forwardWidth = UI::buttonHeight();
+  const float backWidth = UI::buttonWidth(backLabel.c_str()) + forwardWidth +
+                          2.0f * style.ItemSpacing.x;
   const float fullSearchWidth = 300.0f * Theme::scale();
   const float compactSearchWidth = frameHeight + 2.0f * Theme::scale();
   const float balanceBlock = balanceWidth + gap;
@@ -966,13 +1422,27 @@ void ManagementScene::renderTopBar(float height)
   const bool fullSearch = searchRoom >= fullSearchWidth;
   const float searchWidth = fullSearch ? fullSearchWidth : compactSearchWidth;
 
-  ImGui::SetCursorPosY(centeredY);
-  if (canGoBack)
   {
+    const ImGuiHoveredFlags hint =
+        ImGuiHoveredFlags_AllowWhenDisabled | ImGuiHoveredFlags_DelayNormal;
     ImGui::SetCursorPosY((height - UI::buttonHeight()) * 0.5f);
-    if (UI::secondaryButton(backLabel.c_str())) Navigation::back(guiView);
-    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    ImGui::BeginDisabled(!canGoBack);
+    const bool backPressed = UI::secondaryButton(backLabel.c_str());
+    ImGui::EndDisabled();
+    if (ImGui::IsItemHovered(hint))
       ImGui::SetTooltip("%s", LOC("NAV_BACK_HINT"));
+    ImGui::SameLine();
+    ImGui::SetCursorPosY((height - UI::buttonHeight()) * 0.5f);
+    ImGui::BeginDisabled(!canGoForward);
+    const bool forwardPressed = UI::secondaryButton(
+        "›###shell_forward", ImVec2(forwardWidth, UI::buttonHeight()));
+    ImGui::EndDisabled();
+    if (ImGui::IsItemHovered(hint))
+      ImGui::SetTooltip("%s", LOC("NAV_FORWARD_HINT"));
+    if (backPressed)
+      Navigation::back(guiView);
+    else if (forwardPressed)
+      Navigation::forward(guiView);
     ImGui::SameLine();
     ImGui::SetCursorPosY(centeredY);
   }
@@ -1109,6 +1579,10 @@ void ManagementScene::pollSaveStatus()
 
 void ManagementScene::handleShortcuts()
 {
+  // A side button or swipe from this frame's events; dropped below when a
+  // dialog or text field has the input.
+  const SwipeGesture::Step historyStep =
+      std::exchange(pending_history_step, SwipeGesture::Step::NONE);
   if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_K, ImGuiInputFlags_RouteGlobal))
     openPalette();
   if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S, ImGuiInputFlags_RouteGlobal))
@@ -1130,10 +1604,35 @@ void ManagementScene::handleShortcuts()
     const NavSection first = firstOpenSection(hub, unemployed);
     if (first != NavSection::NONE && ImGui::IsKeyPressed(hub.key, false))
     {
+      sidebarHasKeyboard = true;
       Navigation::open(guiView, first);
       return;
     }
   }
+  // Up/Down walk the current hub's screens while the sidebar has the
+  // keyboard (claimed so keyboard navigation does not move as well).
+  if (sidebarHasKeyboard)
+    if (const NavHub* hub = hubOf(navSection()))
+    {
+      const ImGuiInputFlags route =
+          ImGuiInputFlags_RouteGlobal | ImGuiInputFlags_Repeat;
+      const int step = ImGui::Shortcut(ImGuiKey_DownArrow, route) ? 1
+                       : ImGui::Shortcut(ImGuiKey_UpArrow, route) ? -1
+                                                                  : 0;
+      std::array<NavSection, MAX_HUB_SECTIONS> sections{};
+      const auto count =
+          static_cast<int>(openSections(*hub, unemployed, sections));
+      const auto current = static_cast<int>(
+          std::ranges::find(sections.begin(), sections.begin() + count,
+                            navSection()) -
+          sections.begin());
+      const int next = current + step;
+      if (step != 0 && current < count && next >= 0 && next < count)
+      {
+        Navigation::open(guiView, sections[static_cast<size_t>(next)]);
+        return;
+      }
+    }
   // Space / Enter continue only while keyboard navigation is not driving a
   // focused widget, so they never double as widget activation.
   if (!io.NavVisible && (ImGui::IsKeyPressed(ImGuiKey_Space, false) ||
@@ -1144,10 +1643,60 @@ void ManagementScene::handleShortcuts()
   }
   // Escape is claimed through the shortcut router so keyboard navigation
   // does not also treat it as "cancel" and light up a focus frame.
-  if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal) ||
-      ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_LeftArrow,
-                      ImGuiInputFlags_RouteGlobal))
+  if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
+  {
+    Navigation::close(guiView);
+    return;
+  }
+  if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_LeftArrow,
+                      ImGuiInputFlags_RouteGlobal) ||
+      historyStep == SwipeGesture::Step::BACK)
     Navigation::back(guiView);
+  else if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_RightArrow,
+                           ImGuiInputFlags_RouteGlobal) ||
+           historyStep == SwipeGesture::Step::FORWARD)
+    Navigation::forward(guiView);
+}
+
+void ManagementScene::renderSwipeIndicator()
+{
+  const float progress = guiView->swipeGesture().progress(SDL_GetTicksNS());
+  if (progress == 0.0f) return;
+  const bool back = progress > 0.0f;
+  const float amount = std::fabs(progress);
+  const bool available =
+      amount >= 1.0f || (back ? Navigation::canGoBack(guiView)
+                              : Navigation::canGoForward(guiView));
+  const float scale = Theme::scale();
+  const float radius = SWIPE_BUBBLE_RADIUS * scale;
+  // The bubble slides in from the edge as the fingers travel.
+  const float travel = amount * (2.0f * radius + SWIPE_BUBBLE_MARGIN * scale);
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  const float left = viewport->WorkPos.x;
+  const float right = viewport->WorkPos.x + viewport->WorkSize.x;
+  const ImVec2 centre(back ? left - radius + travel : right + radius - travel,
+                      viewport->WorkPos.y + viewport->WorkSize.y * 0.5f);
+  const float alpha = std::min(1.0f, amount * 1.5f);
+  // A complete swipe has taken its step (see handleEvent()).
+  const bool armed = amount >= 1.0f;
+  const Theme::Palette& palette = Theme::palette();
+  ImDrawList* drawList = ImGui::GetForegroundDrawList();
+  drawList->AddCircleFilled(centre, radius,
+                            Theme::toU32(palette.raised, alpha));
+  drawList->AddCircle(centre, radius, Theme::toU32(palette.border, alpha), 0,
+                      1.0f * scale);
+  const ImU32 ink = Theme::toU32(armed       ? palette.accent
+                                 : available ? palette.text
+                                             : palette.faint,
+                                 alpha);
+  const float arm = radius * 0.36f;
+  const float pointing = back ? -1.0f : 1.0f;
+  const ImVec2 tip(centre.x + pointing * arm * 0.5f, centre.y);
+  const float thickness = 2.5f * scale;
+  drawList->AddLine(tip, ImVec2(tip.x - pointing * arm, centre.y - arm), ink,
+                    thickness);
+  drawList->AddLine(tip, ImVec2(tip.x - pointing * arm, centre.y + arm), ink,
+                    thickness);
 }
 
 void ManagementScene::openPalette()
@@ -1175,7 +1724,7 @@ void ManagementScene::buildPaletteIndex()
     palette_entries.push_back(std::move(item));
   }
   const bool unemployed = controller.isUnemployed();
-  for (const NavEntry& entry : ALL_NAV)
+  for (const NavScreen& entry : ALL_NAV)
   {
     if (!sectionOpen(entry.section, unemployed)) continue;
     // A hub's first screen shows its shortcut, the others their hub.

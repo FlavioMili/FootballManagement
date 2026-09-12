@@ -62,7 +62,7 @@ std::string statLabel(const std::string& name)
 
 PlayerCompareScene::PlayerCompareScene(GUIView* parent, PlayerID first,
                                        PlayerID second)
-    : ManagementScene(parent)
+    : ManagementScene(parent), opened_with{first, second}
 {
   requested[0] = first;
   requested[1] = second;

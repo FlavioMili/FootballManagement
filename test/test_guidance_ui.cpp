@@ -23,6 +23,7 @@
 #include <string_view>
 
 #include "controller/game_controller.h"
+#include "global/language_manager.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
 #include "gui/gui_view.h"
@@ -145,6 +146,53 @@ void hoverEverywhere(GUIView& view, float step = 40.0f)
   Bridge::frame(view);
 }
 
+/**
+ * True when the match control with this label can be hovered: no modal and
+ * no panel sits over it. Scans the band under the scoreboard, where the
+ * controls sit, row by row and stops at the first hit.
+ */
+bool matchControlHoverable(GUIView& view, const char* label)
+{
+  const ImGuiWindow* match = ImGui::FindWindowByName("MatchScene");
+  const ImGuiWindow* scoreboard = nullptr;
+  for (const ImGuiWindow* window : GImGui->Windows)
+    if (window->Active &&
+        std::string_view(window->Name).find("/##match_scoreboard") !=
+            std::string_view::npos)
+      scoreboard = window;
+  if (match == nullptr || scoreboard == nullptr) return false;
+  const ImGuiID button = ImHashStr(label, 0, match->ID);
+  ImGuiIO& io = ImGui::GetIO();
+  const float top = scoreboard->Rect().Max.y;
+  const float bottom = top + 3.0f * ImGui::GetFrameHeightWithSpacing();
+  bool found = false;
+  for (float y = top + 3.0f; y < bottom && !found; y += 6.0f)
+    for (float x = 4.0f; x < io.DisplaySize.x && !found; x += 24.0f)
+    {
+      io.AddMousePosEvent(x, y);
+      Bridge::frame(view);
+      found = GImGui->HoveredId == button;
+    }
+  io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+  Bridge::frame(view);
+  return found;
+}
+
+/** The analysis panel is the window under its own centre (still on top). */
+bool analysisPanelOnTop(GUIView& view)
+{
+  const ImGuiWindow* panel = ImGui::FindWindowByName("##match_analysis");
+  if (panel == nullptr || !panel->Active) return false;
+  ImGuiIO& io = ImGui::GetIO();
+  io.AddMousePosEvent(panel->Rect().GetCenter().x, panel->Rect().GetCenter().y);
+  Bridge::frame(view);
+  const bool onTop = GImGui->HoveredWindow != nullptr &&
+                     GImGui->HoveredWindow->RootWindow == panel;
+  io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+  Bridge::frame(view);
+  return onTop;
+}
+
 void setUiScale(GUIView& view, float scale)
 {
   SettingsManager::instance()->get().ui_scale = scale;
@@ -250,6 +298,39 @@ TEST(GuidanceUiTest, GuidanceScreensAtEverySize)
   capture(view, "guidance_data_hub_team.bmp");
   // Chart tooltips keep the font stack balanced.
   hoverEverywhere(view);
+  // A click on the xG trend opens the report of the match under the cursor.
+  {
+    const ImGuiWindow* card = nullptr;
+    for (const ImGuiWindow* window : GImGui->Windows)
+      if (window->Active && std::string_view(window->Name).find("/hub_trend") !=
+                                std::string_view::npos)
+        card = window;
+    ASSERT_NE(card, nullptr);
+    const ImGuiID plot = ImHashStr("##trend_plot", 0, card->ID);
+    ImGuiIO& io = ImGui::GetIO();
+    const ImVec2 centre = card->Rect().GetCenter();
+    bool found = false;
+    for (float y = card->Rect().Min.y; y < card->Rect().Max.y && !found;
+         y += 6.0f)
+    {
+      io.AddMousePosEvent(centre.x, y);
+      Bridge::frame(view);
+      found = GImGui->HoveredId == plot;
+    }
+    ASSERT_TRUE(found) << "xG trend chart not hoverable";
+    io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
+    Bridge::frame(view);
+    io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+    frames(view, 2);
+    io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+    frames(view, 1);
+    EXPECT_EQ(Bridge::activeScene(view)->getID(), SceneID::MATCH_REPORT);
+    capture(view, "guidance_data_hub_trend_report.bmp");
+    Navigation::back(&view);
+    frames(view, 2);
+    hub = dynamic_cast<DataHubScene*>(Bridge::activeScene(view));
+    ASSERT_NE(hub, nullptr);
+  }
   Bridge::showPlayers(*hub);
   frames(view, 2);
   hoverEverywhere(view);
@@ -322,12 +403,49 @@ TEST(GuidanceUiTest, HalfTimeAnalysisOpensAtTheBreak)
   ASSERT_EQ(engine->getState(), MatchState::HALF_TIME);
   frames(view, 3);
   EXPECT_TRUE(MatchBridge::analysisOpen(*scene));
+  // A side panel, not a modal: the match controls stay usable. The match
+  // stops at the break, so the control is Resume.
+  EXPECT_TRUE(matchControlHoverable(view, LOC("MATCH_RESUME")))
+      << "the half-time analysis covers or blocks the Resume button";
   capture(view, "guidance_half_time_analysis.bmp");
   resize(view, 2560, 1440);
   setUiScale(view, 2.0f);
   frames(view, 3);
   capture(view, "guidance_half_time_analysis_hidpi.bmp");
+  EXPECT_TRUE(matchControlHoverable(view, LOC("MATCH_RESUME")))
+      << "at UI scale 2";
   setUiScale(view, 0.0f);
+  resize(view, 1280, 720);
+  frames(view, 2);
+
+  // Full time: the analysis opens again and the Finish button stays
+  // reachable (it used to sit under a modal).
+  for (int step = 0;
+       step < 400000 && engine->getState() != MatchState::FULL_TIME; ++step)
+    engine->update(0.05f);
+  ASSERT_EQ(engine->getState(), MatchState::FULL_TIME);
+  frames(view, 3);
+  EXPECT_TRUE(MatchBridge::analysisOpen(*scene));
+  EXPECT_TRUE(matchControlHoverable(view, LOC("MATCH_FINISH")))
+      << "the full-time analysis covers or blocks the Finish button";
+  capture(view, "guidance_full_time_analysis.bmp");
+  // Clicking the pitch does not bury the panel under the match window.
+  ImGuiIO& io = ImGui::GetIO();
+  const ImVec2 pitch(io.DisplaySize.x * 0.3f, io.DisplaySize.y * 0.6f);
+  io.AddMousePosEvent(pitch.x, pitch.y);
+  io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
+  frames(view, 1);
+  io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+  frames(view, 2);
+  EXPECT_TRUE(MatchBridge::analysisOpen(*scene));
+  EXPECT_TRUE(analysisPanelOnTop(view));
+  // Narrow window: the panel still leaves the controls free.
+  resize(view, 900, 700);
+  frames(view, 3);
+  EXPECT_TRUE(matchControlHoverable(view, LOC("MATCH_FINISH"))) << "900x700";
+  capture(view, "guidance_full_time_analysis_narrow.bmp");
+  resize(view, 1280, 720);
+  frames(view, 2);
 }
 
 /**

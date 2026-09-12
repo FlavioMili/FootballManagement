@@ -104,11 +104,11 @@ struct MatchTuning final
     // throw-in ~18 s, goal kick ~30 s, corner ~37 s), slightly longer here
     // because fewer balls go out of play than in a real match.
     static constexpr float KICKOFF_DELAY_SECONDS = 4.0f;
-    static constexpr float THROW_IN_DELAY_SECONDS = 24.0f;
-    static constexpr float GOAL_KICK_DELAY_SECONDS = 36.0f;
+    static constexpr float THROW_IN_DELAY_SECONDS = 21.0f;
+    static constexpr float GOAL_KICK_DELAY_SECONDS = 33.0f;
     static constexpr float CORNER_DELAY_SECONDS = 40.0f;
-    static constexpr float FREE_KICK_DELAY_SECONDS = 24.0f;
-    static constexpr float SET_PIECE_FREE_KICK_DELAY_SECONDS = 30.0f;
+    static constexpr float FREE_KICK_DELAY_SECONDS = 22.0f;
+    static constexpr float SET_PIECE_FREE_KICK_DELAY_SECONDS = 28.0f;
     static constexpr float PENALTY_DELAY_SECONDS = 55.0f;
     static constexpr float CARD_DELAY_SECONDS = 15.0f;
     static constexpr float INJURY_DELAY_SECONDS = 50.0f;
@@ -134,6 +134,9 @@ struct MatchTuning final
     static constexpr float DEFAULT_HIGHLIGHT_SPEED = 1.0f;
     /** Build-up shown before a highlight trigger (shot, card, penalty...). */
     static constexpr float HIGHLIGHT_LEAD_SECONDS = 15.0f;
+    /** A build-up that starts with a restart opens this long before the
+     * ball is played (the setup before it is dead time). */
+    static constexpr double RESTART_LEAD_SECONDS = 1.2;
     /** Aftermath shown once the trigger happened. */
     static constexpr float HIGHLIGHT_TAIL_SECONDS = 6.0f;
     /** How far ahead a highlight prediction simulates before giving up. */
@@ -969,19 +972,19 @@ struct MatchTuning final
   {
     static constexpr int MAX_WINDOWS = 3;
     static constexpr float EARLIEST_TACTICAL_MINUTE = 68.0f;
-    static constexpr float FATIGUE_THRESHOLD = 0.63f;
+    static constexpr float FATIGUE_THRESHOLD = 0.60f;
     static constexpr float FATIGUE_THRESHOLD_LATE_GAIN = 0.12f;
     static constexpr float LATE_GAME_MINUTE = 80.0f;
     static constexpr float CARD_RISK_MINUTE = 64.0f;
     static constexpr float CARD_RISK_NEED = 0.22f;
     static constexpr float TRAILING_CHASE_MINUTE = 66.0f;
     static constexpr float LEADING_PROTECT_MINUTE = 75.0f;
-    static constexpr float TACTICAL_NEED = 0.18f;
+    static constexpr float TACTICAL_NEED = 0.12f;
     static constexpr float MINIMUM_NEED = 0.22f;
     /** Share of the minimum need that suffices in the last minutes. */
     static constexpr float LATE_NEED_SHARE = 0.4f;
     /** Share of the minimum need that joins a change already being made. */
-    static constexpr float WINDOW_NEED_SHARE = 0.9f;
+    static constexpr float WINDOW_NEED_SHARE = 0.95f;
     static constexpr float MINUTE_NEED_GAIN = 0.012f;
     static constexpr float FATIGUE_NEED_SCALE = 2.2f;
     /** Forwards lose their sharpness first and are replaced most often. */
@@ -1066,6 +1069,16 @@ struct MatchTuning final
     static constexpr float SHOUT_DURATION_SECONDS = 600.0f;
     static constexpr float SHOUT_SLIDER_STEP = 0.2f;
     static constexpr float SHOUT_SHOT_BIAS = 0.6f;
+    /** Each recent shout divides the next one's effect by (1 + recent
+     * shouts); one recent shout is forgotten per this many seconds (less
+     * than a shout lasts, so a shout made once the last has faded is at
+     * full strength). */
+    static constexpr float SHOUT_REPEAT_FADE_SECONDS = 480.0f;
+    /** A new shape costs tactical familiarity per metre the slots move on
+     * average (at most MAX), recovered linearly over RECOVERY seconds. */
+    static constexpr float RESHAPE_FAMILIARITY_PER_METRE = 0.02f;
+    static constexpr float MAX_RESHAPE_FAMILIARITY_COST = 0.2f;
+    static constexpr float RESHAPE_RECOVERY_SECONDS = 300.0f;
     static constexpr float ENCOURAGE_WORK_RATE = 0.03f;
     static constexpr float MAX_TEAM_TALK_MODIFIER = 0.05f;
     // Score effects on the sliders per goal of lead (at most two), from
@@ -1079,15 +1092,16 @@ struct MatchTuning final
     /** A side two or more goals up also stops committing men forward (per
      * goal of lead from Decision::COMFORTABLE_LEAD, at full urgency). */
     static constexpr float GAME_MANAGEMENT_OFFENSIVE = 0.12f;
-    // A clearly weaker side sits deeper and more compact and commits fewer
-    // men forward, from UNDERDOG_GAP_START of mean (stretched) outfield
-    // quality below the opponent to full effect UNDERDOG_GAP_RANGE later.
+    // A clearly weaker side sits deeper and more compact and commits a few
+    // fewer men forward, from UNDERDOG_GAP_START of mean (stretched) outfield
+    // quality below the opponent to full effect UNDERDOG_GAP_RANGE later. It
+    // still attacks with its forwards: taking them out of the game made big
+    // quality gaps far more decisive than real results (NFR-019).
     static constexpr float UNDERDOG_GAP_START = 0.08f;
     static constexpr float UNDERDOG_GAP_RANGE = 0.30f;
     static constexpr float UNDERDOG_PRESSING = 0.35f;
     static constexpr float UNDERDOG_COMPACTNESS = 0.40f;
-    static constexpr float UNDERDOG_OFFENSIVE = 0.30f;
-    static constexpr float UNDERDOG_RISK = 0.25f;
+    static constexpr float UNDERDOG_OFFENSIVE = 0.12f;
     // AI managers react to the score late in the game.
     static constexpr float AI_CHASE_MINUTE = 65.0f;
     static constexpr float AI_SHOOT_ON_SIGHT_MINUTE = 82.0f;

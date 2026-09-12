@@ -11,10 +11,12 @@
 
 #include <array>
 #include <memory>
-#include <stack>
 #include <string_view>
+#include <vector>
 
 #include "controller/game_controller.h"
+#include "gui/nav_history.h"
+#include "gui/swipe_gesture.h"
 
 class GUIScene;
 
@@ -95,6 +97,32 @@ class GUIView
 
   /** @brief Number of overlays currently stacked above the base scene. */
   size_t getOverlayDepth() const;
+
+  /** @brief The scene shown now (the top overlay, else the base scene). */
+  GUIScene* getTopScene() const { return getActiveScene(); }
+
+  /**
+   * @brief The scene popScene() would reveal (nullptr without overlays).
+   */
+  GUIScene* getSceneBelowTop() const;
+
+  /**
+   * @brief Screens visited in this career, recorded whenever the shown
+   * screen changes; cleared whenever the base scene changes (a career is
+   * started, loaded or left).
+   */
+  NavHistory& navHistory() { return nav_history; }
+  const NavHistory& navHistory() const { return nav_history; }
+
+  /**
+   * @brief Marks the scene change just requested as a step through the
+   * history (Back / Forward), so it is not recorded as a new visit. Any
+   * scene request made after it cancels the mark.
+   */
+  void markHistoryStep() { history_step = true; }
+
+  /** @brief Sideways touchpad swipe, shared by every career screen. */
+  SwipeGesture& swipeGesture() { return swipe_gesture; }
 
   /**
    * @brief Stops the run loop and quits.
@@ -191,8 +219,14 @@ class GUIView
   // Main scene
   std::unique_ptr<GUIScene> currentScene;
 
-  // Overlay scene stack
-  std::stack<std::unique_ptr<GUIScene>> sceneStack;
+  // Overlay scene stack (back() is the top)
+  std::vector<std::unique_ptr<GUIScene>> sceneStack;
+
+  NavHistory nav_history;
+  bool history_step = false;
+  SwipeGesture swipe_gesture;
+  /** Records the screen shown after a scene change. */
+  void recordHistory();
 
   // Deferred scene management
   enum class PendingAction

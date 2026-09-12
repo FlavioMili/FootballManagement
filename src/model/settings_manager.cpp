@@ -81,6 +81,10 @@ void SettingsManager::load()
     settings_.effects_volume = std::clamp(
         j.value("effects_volume", settings_.effects_volume), 0.0f, 1.0f);
     settings_.audio_muted = j.value("audio_muted", settings_.audio_muted);
+    settings_.pause_for_match_changes =
+        j.value("pause_for_match_changes", settings_.pause_for_match_changes);
+    settings_.pause_at_breaks =
+        j.value("pause_at_breaks", settings_.pause_at_breaks);
   }
   catch (const json::exception& exception)
   {
@@ -112,6 +116,8 @@ void SettingsManager::save() const
   j["crowd_volume"] = settings_.crowd_volume;
   j["effects_volume"] = settings_.effects_volume;
   j["audio_muted"] = settings_.audio_muted;
+  j["pause_for_match_changes"] = settings_.pause_for_match_changes;
+  j["pause_at_breaks"] = settings_.pause_at_breaks;
 
   std::ofstream out(RuntimePaths::settingsPath());
   out << j.dump(2);

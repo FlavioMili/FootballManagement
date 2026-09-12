@@ -214,7 +214,9 @@ void DataHubScene::renderTrendChart(float width)
   const float plotWidth = ImGui::GetContentRegionAvail().x;
   const float plotHeight = TREND_HEIGHT * scale;
   const ImVec2 origin = ImGui::GetCursorScreenPos();
-  ImGui::InvisibleButton("##trend_plot", ImVec2(plotWidth, plotHeight));
+  // Hover shows the match under the cursor; a click opens its report.
+  const bool clicked =
+      ImGui::InvisibleButton("##trend_plot", ImVec2(plotWidth, plotHeight));
   const bool hovered = ImGui::IsItemHovered();
   ImDrawList* drawList = ImGui::GetWindowDrawList();
 
@@ -277,26 +279,46 @@ void DataHubScene::renderTrendChart(float width)
   series(team.rolling_xg_for, false, palette.info);
   series(team.rolling_xg_against, true, palette.warning);
 
-  if (hovered && count > 0)
+  const auto nearestToMouse = [&]()
   {
     const float mouse = ImGui::GetIO().MousePos.x;
     std::size_t nearest = 0;
     for (std::size_t index = 1; index < count; ++index)
       if (std::abs(xOf(index) - mouse) < std::abs(xOf(nearest) - mouse))
         nearest = index;
+    return nearest;
+  };
+  if (hovered && count > 0)
+  {
+    const std::size_t nearest = nearestToMouse();
+    ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
     drawList->AddLine(ImVec2(xOf(nearest), ceiling),
                       ImVec2(xOf(nearest), bottom), Theme::toU32(palette.faint),
                       1.0f);
     const TeamTrendPoint& point = team.trend[nearest];
     ImGui::SetTooltip(
-        "%s", fmt::sprintf(LOC("HUB_TREND_TOOLTIP"),
-                           Format::dayMonth(point.date).c_str(),
-                           opponent_names[nearest].c_str(), point.goals_for,
-                           point.goals_against, decimal(point.xg_for).c_str(),
-                           decimal(point.xg_against).c_str(),
-                           decimal(team.rolling_xg_for[nearest]).c_str(),
-                           decimal(team.rolling_xg_against[nearest]).c_str())
-                  .c_str());
+        "%s\n%s",
+        fmt::sprintf(LOC("HUB_TREND_TOOLTIP"),
+                     Format::dayMonth(point.date).c_str(),
+                     opponent_names[nearest].c_str(), point.goals_for,
+                     point.goals_against, decimal(point.xg_for).c_str(),
+                     decimal(point.xg_against).c_str(),
+                     decimal(team.rolling_xg_for[nearest]).c_str(),
+                     decimal(team.rolling_xg_against[nearest]).c_str())
+            .c_str(),
+        LOC("FIXTURES_OPEN_REPORT_HINT"));
+  }
+  if (clicked && count > 0)
+  {
+    const auto managed = guiView->getController().getManagedTeam();
+    if (managed)
+    {
+      const TeamTrendPoint& point = team.trend[nearestToMouse()];
+      const TeamID club = managed->get().getId();
+      Navigation::openMatchReport(guiView, point.date,
+                                  point.home ? club : point.opponent,
+                                  point.home ? point.opponent : club);
+    }
   }
   small.reset();
   footnote(fmt::sprintf(LOC("HUB_TREND_NOTE"), DataHub::ROLLING_WINDOW,

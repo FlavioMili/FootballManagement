@@ -351,9 +351,55 @@ std::vector<ImVec2> hubTabPoints(GUIView& view)
   ImGui::GetIO().AddMousePosEvent(-FLT_MAX, -FLT_MAX);
   return points;
 }
+
+/** Centres of the sidebar navigation entries, top to bottom (hover probe). */
+std::vector<ImVec2> sidebarEntryPoints(GUIView& view)
+{
+  const ImGuiWindow* nav = nullptr;
+  for (const ImGuiWindow* window : GImGui->Windows)
+    if (window->Active &&
+        std::string_view(window->Name).find("/##sidebar_nav") !=
+            std::string_view::npos)
+      nav = window;
+  if (nav == nullptr) return {};
+  const float x = nav->Pos.x + nav->Size.x * 0.5f;
+  std::vector<ImVec2> points;
+  ImGuiID last = 0;
+  float first = 0.0f;
+  for (float y = nav->Pos.y + 1.0f; y < nav->Pos.y + nav->Size.y; y += 2.0f)
+  {
+    ImGui::GetIO().AddMousePosEvent(x, y);
+    Bridge::frame(view);
+    const ImGuiID hovered = GImGui->HoveredId;
+    if (hovered != last && last != 0)
+      points.emplace_back(x, (first + y - 2.0f) * 0.5f);
+    if (hovered != last) first = y;
+    last = hovered;
+  }
+  if (last != 0)
+    points.emplace_back(x, (first + nav->Pos.y + nav->Size.y) * 0.5f);
+  ImGui::GetIO().AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+  return points;
+}
+
+void click(GUIView& view, ImVec2 point)
+{
+  ImGui::GetIO().AddMousePosEvent(point.x, point.y);
+  Bridge::frame(view);
+  ImGui::GetIO().AddMouseButtonEvent(0, true);
+  Bridge::frame(view);
+  ImGui::GetIO().AddMouseButtonEvent(0, false);
+  frames(view, 3);
+}
+
+void setUiScale(GUIView& view, float scale)
+{
+  SettingsManager::instance()->get().ui_scale = scale;
+  view.refreshTheme();
+}
 }  // namespace
 
-TEST(SquadScreensTest, SidebarHubsOpenTheirScreensAsTabs)
+TEST(SquadScreensTest, SidebarHubsListTheirScreens)
 {
   SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
   Logger::init();
@@ -388,31 +434,125 @@ TEST(SquadScreensTest, SidebarHubsOpenTheirScreensAsTabs)
     EXPECT_LE(view.getOverlayDepth(), 1u);
   }
 
-  // The Squad hub shows its other five screens as tabs; each one opens.
+  // Every hub expanded (Club is the largest, seven screens) fits the
+  // sidebar without scrolling at 1280x720 and at 2560x1440 with scale 2.
+  const auto everyHubFits = [&](const char* size)
+  {
+    for (const NavSection section :
+         {NavSection::SQUAD, NavSection::TRAINING, NavSection::FIXTURES,
+          NavSection::TRANSFERS, NavSection::CLUB})
+    {
+      Navigation::open(&view, section);
+      frames(view, 3);
+      EXPECT_FALSE(Bridge::sidebarOverflows(view))
+          << size << " hub of section " << static_cast<int>(section);
+    }
+  };
+  everyHubFits("1280x720");
+  capture(view, "shell_submenu_club.bmp");
+  resize(view, 2560, 1440);
+  setUiScale(view, 2.0f);
+  frames(view, 3);
+  everyHubFits("2560x1440 scale 2");
+  capture(view, "shell_submenu_club_scale2.bmp");
+  setUiScale(view, 0.0f);
+  resize(view, 1280, 720);
+  frames(view, 3);
+
+  // The Squad hub lists its six screens under its label, between the
+  // Inbox and Training entries; each one opens, the tabs are gone.
   Navigation::open(&view, NavSection::SQUAD);
   frames(view, 3);
-  const std::vector<ImVec2> tabs = hubTabPoints(view);
-  ASSERT_EQ(tabs.size(), 5u) << "Lineup, Tactics, Planner, Medical, Compare";
-  std::vector<SceneID> reached;
-  for (const ImVec2 point : tabs)
+  const std::vector<ImVec2> entries = sidebarEntryPoints(view);
+  ASSERT_EQ(entries.size(), 13u) << "seven hubs and the six Squad screens";
+  EXPECT_TRUE(hubTabPoints(view).empty()) << "no tabs beside the full sidebar";
+  const std::array<std::pair<size_t, SceneID>, 7> screens = {{
+      {4, SceneID::LINEUP},
+      {5, SceneID::STRATEGY},
+      {6, SceneID::SQUAD_PLANNER},
+      {7, SceneID::MEDICAL},
+      {8, SceneID::PLAYER_COMPARE},
+      {3, SceneID::ROSTER},
+      {9, SceneID::TRAINING},
+  }};
+  for (const auto& [index, expected] : screens)
   {
-    Navigation::open(&view, NavSection::SQUAD);
+    Navigation::open(&view, NavSection::LINEUP);
     frames(view, 2);
-    ImGui::GetIO().AddMousePosEvent(point.x, point.y);
-    Bridge::frame(view);
-    ImGui::GetIO().AddMouseButtonEvent(0, true);
-    Bridge::frame(view);
-    ImGui::GetIO().AddMouseButtonEvent(0, false);
-    frames(view, 3);
-    reached.push_back(activeId(view));
+    click(view, entries[index]);
+    EXPECT_EQ(activeId(view), expected) << "sidebar entry " << index;
     EXPECT_LE(view.getOverlayDepth(), 1u);
   }
   ImGui::GetIO().AddMousePosEvent(-FLT_MAX, -FLT_MAX);
-  EXPECT_EQ(reached, (std::vector<SceneID>{
-                         SceneID::LINEUP, SceneID::STRATEGY,
-                         SceneID::SQUAD_PLANNER, SceneID::MEDICAL,
-                         SceneID::PLAYER_COMPARE}));
-  capture(view, "shell_hub_tabs_compare.bmp");
+  Navigation::open(&view, NavSection::MEDICAL);
+  frames(view, 3);
+  capture(view, "shell_submenu_squad.bmp");
+
+  // With the sidebar holding the keyboard (after its F-key), the arrows
+  // walk the hub's screens and stop at its ends.
+  pressKey(view, ImGuiKey_F3);
+  ASSERT_EQ(activeId(view), SceneID::ROSTER);
+  pressKey(view, ImGuiKey_UpArrow);
+  EXPECT_EQ(activeId(view), SceneID::ROSTER) << "first screen of the hub";
+  pressKey(view, ImGuiKey_DownArrow);
+  EXPECT_EQ(activeId(view), SceneID::LINEUP);
+  pressKey(view, ImGuiKey_DownArrow);
+  EXPECT_EQ(activeId(view), SceneID::STRATEGY);
+  pressKey(view, ImGuiKey_UpArrow);
+  EXPECT_EQ(activeId(view), SceneID::LINEUP);
+  // A click on the page hands the keyboard back to it.
+  {
+    const ImGuiWindow* topbar = nullptr;
+    for (const ImGuiWindow* window : GImGui->Windows)
+      if (window->Active && std::string_view(window->Name).find("/##topbar") !=
+                                std::string_view::npos)
+        topbar = window;
+    ASSERT_NE(topbar, nullptr);
+    click(view, ImVec2(topbar->Pos.x + topbar->Size.x * 0.45f,
+                       topbar->Pos.y + topbar->Size.y + 3.0f));
+    ASSERT_EQ(activeId(view), SceneID::LINEUP);
+    pressKey(view, ImGuiKey_DownArrow);
+    EXPECT_EQ(activeId(view), SceneID::LINEUP);
+  }
+
+  // Narrow window: icon-only sidebar. Hovering a hub opens a flyout with
+  // its screens; the tabs above the page come back.
+  resize(view, 1000, 700);
+  Navigation::open(&view, NavSection::SQUAD);
+  frames(view, 3);
+  EXPECT_EQ(hubTabPoints(view).size(), 5u) << "Squad's other five screens";
+  const std::vector<ImVec2> icons = sidebarEntryPoints(view);
+  ASSERT_EQ(icons.size(), 7u) << "seven hub icons";
+  ImGui::GetIO().AddMousePosEvent(icons[6].x, icons[6].y);
+  frames(view, 3);
+  const ImGuiWindow* flyout = ImGui::FindWindowByName("##nav_flyout");
+  ASSERT_NE(flyout, nullptr);
+  EXPECT_TRUE(flyout->Active);
+  capture(view, "shell_submenu_flyout.bmp");
+  // Travel into the flyout: seven entries; pick the third (Staff).
+  std::vector<ImVec2> choices;
+  {
+    ImGuiID last = 0;
+    const ImVec2 origin = flyout->Pos;
+    const ImVec2 extent = flyout->Size;
+    for (float y = origin.y + 1.0f; y < origin.y + extent.y; y += 2.0f)
+    {
+      ImGui::GetIO().AddMousePosEvent(origin.x + extent.x * 0.5f, y);
+      Bridge::frame(view);
+      const ImGuiID hovered = GImGui->HoveredId;
+      if (hovered != 0 && hovered != last)
+        choices.emplace_back(origin.x + extent.x * 0.5f, y + 4.0f);
+      last = hovered;
+    }
+  }
+  ASSERT_EQ(choices.size(), 7u) << "the Club hub's seven screens";
+  click(view, choices[2]);
+  EXPECT_EQ(activeId(view), SceneID::STAFF);
+  frames(view, 30);
+  EXPECT_FALSE(ImGui::FindWindowByName("##nav_flyout")->Active)
+      << "the flyout closes once used";
+  resize(view, 1280, 720);
+  frames(view, 3);
 
   // Out of work only the manager's own screens and the world stay: the
   // Squad hub is gone, Matches opens the table, Club the manager page.

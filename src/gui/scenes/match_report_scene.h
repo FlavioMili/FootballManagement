@@ -27,6 +27,10 @@ class MatchReportScene : public ManagementScene
 
   void update(float deltaTime) override;
   [[nodiscard]] SceneID getID() const override { return SceneID::MATCH_REPORT; }
+  [[nodiscard]] std::optional<NavEntry> historyEntry() const override
+  {
+    return NavEntry::ofMatchReport(date, home_id, away_id);
+  }
 
  protected:
   void renderContent() override;

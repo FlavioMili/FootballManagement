@@ -40,6 +40,10 @@ class PlayerProfileScene : public ManagementScene
   {
     return SceneID::PLAYER_PROFILE;
   }
+  [[nodiscard]] std::optional<NavEntry> historyEntry() const override
+  {
+    return NavEntry::ofPlayer(player_id);
+  }
 
  protected:
   void renderContent() override;

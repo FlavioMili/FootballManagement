@@ -24,15 +24,51 @@ active or a dialog is open.
 | Esc (in the palette) | Close the palette |
 | Ctrl+S | Save the career to its slot |
 | Space or Enter | Continue: advance the calendar to your next match, or open the match on match day. Ignored while keyboard navigation has a widget focused, so it never doubles as "press this button". |
-| Esc or Alt+Left | Back to the previous screen (does nothing on Home, which is the bottom of the stack) |
+| Alt+Left | Back to the previous screen you were on |
+| Alt+Right | Forward again to the screen Back left |
+| Esc | Close the current screen: a profile, report or comparison returns to the screen beneath it, any other screen (Finances included) to Home. Does nothing on Home. |
 | Tab / arrow keys | Keyboard navigation between widgets (Dear ImGui) |
+
+### Back and Forward
+
+Career screens keep a history like a web browser. Back returns to the
+screen you were on before, whether you got there from the sidebar, a
+shortcut, the palette or a link on a page; Forward re-opens what Back left.
+Opening a new screen after going back drops the screens ahead, as in a
+browser. The history holds the last 50 screens and starts afresh whenever a
+career is started or loaded. Screens that can no longer be opened are
+skipped: the profile of a player who has left the game, or one of your
+club's screens while you are out of work. The live match and the club choice are not part
+of the history, so Back never leaves a match or the career.
+
+| Input | Back | Forward |
+|-------|------|---------|
+| Keyboard | Alt+Left | Alt+Right |
+| Mouse side buttons | Button 4 (back) | Button 5 (forward) |
+| Touchpad | Two-finger swipe to the right | Two-finger swipe to the left |
+| Top bar | *Back* button | Arrow button next to it |
+
+One swipe is one step; a round arrow slides in from the edge of the window
+while you swipe and the step happens once it is fully out. The swipe is
+ignored while you scroll up or down, over a list that scrolls sideways,
+while a text field is being edited and while a dialog is open. The top-bar
+buttons are greyed out when there is nothing to go back or forward to.
 
 ### Sidebar hubs
 
-The sidebar has seven hubs. Each hub shows its screens as tabs above the
-page, and its F-key opens the first screen of the hub.
+The sidebar has seven hubs. The hub you are working in lists its screens
+underneath its name, with the current screen highlighted; click one to open
+it. Clicking a hub, or pressing its F-key, opens the hub's first screen.
+Right after a sidebar click or an F-key, Up and Down move between the
+screens of that hub; a click on the page gives the arrow keys back to the
+page. Counters (unread messages, new scout reports) appear next to their
+screen and, added up, next to the hub.
 
-| Key | Hub | Screens (tabs) |
+On narrow windows the sidebar shrinks to icons: hovering a hub's icon shows
+its screens in a small menu beside it, and the current hub's screens also
+appear as tabs above the page.
+
+| Key | Hub | Screens |
 |-----|-----|----------------|
 | F1 | Home | Home |
 | F2 | Inbox | Inbox |
@@ -57,7 +93,7 @@ a hub with none of them does nothing.
 | Calendar | Click a day to select it; double-click a fixture to open its match report (played) or the opponent's club page (upcoming) |
 | Lineup pitch | Click a starter to select him; drag an outfield player to move him on the pitch (the goalkeeper stays in goal); double-click for his profile |
 | Lineup bench | Click a substitute to select him, double-click for his profile, or drag him onto a starter to swap them. With one starter and one substitute selected, *Swap selected players* confirms the change. |
-| Top bar | *Back* returns to the previous screen; the search field opens the palette; the holiday button next to Continue opens the holiday planner |
+| Top bar | *Back* returns to the previous screen and the arrow next to it goes forward again; the search field opens the palette; the holiday button next to Continue opens the holiday planner |
 
 ## Match day
 

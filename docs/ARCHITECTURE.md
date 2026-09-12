@@ -208,7 +208,7 @@ GoogleTest suites in `test/`, discovered by CTest with labels:
 |-------|-------------|----------|
 | `unit` | `unit_tests`, plus the GUI and lab suites | Model, persistence and view-model tests |
 | `core` | `core_unit_tests` (prefix `core::`) | The headless tests linked against `fm_core` only; also `leak-check` |
-| `gui` | `scouting_ui_tests`, `youth_ui_tests`, `squad_ui_tests`, `manager_ui_tests`, `guidance_ui_tests`, `career_ui_tests` | Screens driven through a real `GUIView` with the dummy video driver, with captures at several sizes and scales |
+| `gui` | `scouting_ui_tests`, `youth_ui_tests`, `squad_ui_tests`, `manager_ui_tests`, `navigation_ui_tests`, `guidance_ui_tests`, `career_ui_tests` | Screens driven through a real `GUIView` with the dummy video driver, with captures at several sizes and scales |
 | `lab` | `lab_tests` | Balance lab reports |
 | `playtest`, `slow` | `playtest_tests` | A scripted career journey through the real UI |
 | `monkey`, `slow` | `monkey_tests` | Seeded random input with invariant checks, and a sweep that every enabled widget has an effect |

@@ -10,29 +10,39 @@
 
 #include <imgui.h>
 
+#include <memory>
+
 #include "gui/render/imatch_renderer.h"
 #include "gui/render/match_kit_colors.h"
 #include "gui/scenes/match_scene_tuning.h"
 
 /**
- * ImGui/SDL-agnostic 2D match renderer.
+ * ImGui/SDL-agnostic 2D tactical match renderer.
  *
- * Draws pitch markings, player markers, ball, labels, and the optional AI
- * movement-target overlay into the current ImGui draw list. Consumes only the
- * read-only snapshot and never touches the simulation.
+ * Draws the stadium surround, a lit and mown pitch with its markings and
+ * goals, top-down kit tokens (shirt, shorts ring, number, facing wedge), the
+ * ball with its shadow and trail, brief pass and shot paths, offside flashes
+ * and an optional pitch-control overlay into the current ImGui draw list.
+ * Consumes only the read-only snapshot and never touches the simulation;
+ * everything is interpolated with `snapshot.interpolationAlpha`.
  */
 class MatchRenderer2D final : public IMatchRenderer
 {
  public:
+  MatchRenderer2D();
+  ~MatchRenderer2D() override;
+  MatchRenderer2D(const MatchRenderer2D&) = delete;
+  MatchRenderer2D& operator=(const MatchRenderer2D&) = delete;
+  MatchRenderer2D(MatchRenderer2D&&) = delete;
+  MatchRenderer2D& operator=(MatchRenderer2D&&) = delete;
+
   void render(const MatchRenderSnapshot& snapshot,
               const MatchRenderOptions& options,
               const MatchViewport& viewport) override;
 
  private:
-  MatchKits kits;
-  TeamID kitHomeTeam = 0;
-  TeamID kitAwayTeam = 0;
-  bool kitsChosen = false;
+  struct State;
+  std::unique_ptr<State> state;
 };
 
 /**

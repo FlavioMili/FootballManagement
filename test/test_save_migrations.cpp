@@ -220,6 +220,9 @@ void downgradeToVersionZero(const fs::path& save)
         "ALTER TABLE Teams DROP COLUMN stadium_capacity;",
         "ALTER TABLE Teams DROP COLUMN recent_form;",
         "ALTER TABLE TransferList DROP COLUMN highest_bid;",
+        "ALTER TABLE TransferOffers DROP COLUMN status;",
+        "ALTER TABLE TransferOffers DROP COLUMN respond_on;",
+        "ALTER TABLE PlayerMarketFlags DROP COLUMN not_for_sale_until;",
         "ALTER TABLE Leagues DROP COLUMN tiebreak;"})
     execSql(db.get(), sql);
 }
@@ -274,7 +277,9 @@ TEST(SaveMigrations, LegacyVersionZeroLayoutUpgradesIdempotently)
          {std::pair{"Leagues", "tiebreak"}, {"Fixtures", "stage"},
           {"Fixtures", "home_penalties"}, {"TransferList", "highest_bid"},
           {"Players", "potential"}, {"Teams", "recent_form"},
-          {"WorldState", "next_staff_id"}})
+          {"WorldState", "next_staff_id"}, {"TransferOffers", "status"},
+          {"TransferOffers", "respond_on"},
+          {"PlayerMarketFlags", "not_for_sale_until"}})
       EXPECT_TRUE(Migrations::columnExists(db, table, column))
           << table << "." << column;
     for (const char* table : {"FinanceLedger", "WorldState", "Staff",
@@ -298,6 +303,52 @@ TEST(SaveMigrations, LegacyVersionZeroLayoutUpgradesIdempotently)
     EXPECT_EQ(databaseDigest(db), upgraded);
   }
   SaveManager::deleteSave(path);
+}
+
+TEST(SaveMigrations, OfferNegotiationsUpgradeASaveFromBeforeThem)
+{
+  Logger::init();
+  DatabaseConnection connection(":memory:");
+  Migrations::migrate(connection);
+  sqlite3* db = connection.getRaw();
+  // The layout of a version 8 save: no talks state, no not-for-sale flag,
+  // no rounds table, and an offer waiting for the club.
+  for (const char* sql :
+       {"ALTER TABLE TransferOffers DROP COLUMN status;",
+        "ALTER TABLE TransferOffers DROP COLUMN respond_on;",
+        "ALTER TABLE PlayerMarketFlags DROP COLUMN not_for_sale_until;",
+        "DROP TABLE TransferOfferRounds;",
+        "DELETE FROM schema_migrations WHERE number = 9;",
+        "UPDATE save_meta SET schema_version = 8;",
+        "INSERT INTO TransferOffers (id, kind, player_id, club_id, created, "
+        "expires, rounds, terms) VALUES (7, 0, 1, 2, 20250710, 20250715, 0, "
+        "'{\"offer\":{\"fee\":1000000},\"max_fee\":1200000}');",
+        "INSERT INTO PlayerMarketFlags (player_id, loan_listed) VALUES (1, 1);"})
+    execSql(db, sql);
+
+  const auto report = Migrations::migrate(connection);
+  EXPECT_EQ(report.from_version, 8);
+  ASSERT_EQ(report.applied, std::vector<int>{9});
+  for (const auto& [table, column] :
+       {std::pair{"TransferOffers", "status"}, {"TransferOffers", "respond_on"},
+        {"PlayerMarketFlags", "not_for_sale_until"}})
+    EXPECT_TRUE(Migrations::columnExists(db, table, column))
+        << table << "." << column;
+  EXPECT_TRUE(Migrations::tableExists(db, "TransferOfferRounds"));
+  // The old offer waits for the club and nobody is declared not for sale.
+  EXPECT_EQ(queryInt(db, "SELECT status FROM TransferOffers WHERE id = 7;"), 0);
+  EXPECT_EQ(queryInt(db, "SELECT respond_on FROM TransferOffers WHERE id = 7;"),
+            0);
+  EXPECT_EQ(queryInt(db, "SELECT not_for_sale_until FROM PlayerMarketFlags "
+                         "WHERE player_id = 1;"),
+            0);
+  EXPECT_EQ(queryInt(db, "SELECT loan_listed FROM PlayerMarketFlags;"), 1);
+
+  const std::string upgraded = databaseDigest(db);
+  const auto again = Migrations::migrate(connection);
+  EXPECT_TRUE(again.applied.empty());
+  EXPECT_TRUE(again.repaired.empty());
+  EXPECT_EQ(databaseDigest(db), upgraded);
 }
 
 TEST(SaveMigrations, FailingMigrationLeavesThePreviousVersion)

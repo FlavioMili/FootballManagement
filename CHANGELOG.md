@@ -13,9 +13,11 @@ development snapshots, so most of it is listed under *Added*.
 
 **Management shell**
 - Sidebar with seven hubs (Home, Inbox, Squad, Training, Matches,
-  Recruitment, Club) whose screens appear as tabs, F1-F7 shortcuts, and a
-  command palette (Ctrl+K) that finds players, clubs, screens and pending
-  tasks.
+  Recruitment, Club); the open hub lists its screens with counters (a hover
+  menu when the sidebar is collapsed), F1-F7 shortcuts, and a command
+  palette (Ctrl+K) that finds players, clubs, screens and pending tasks.
+- Browser-style Back and Forward between screens: two-finger touchpad
+  swipe, mouse side buttons, Alt+Left/Alt+Right and top-bar arrows.
 - Home dashboard with the next fixture, a "Next steps" card and a Continue
   button that advances the calendar on a background worker with a progress
   overlay.
@@ -54,8 +56,20 @@ development snapshots, so most of it is listed under *Added*.
 - Live match screen with 2D and 3D views of the same simulation, playback
   speeds from 1x to 30x, a Highlights mode, pitch focus, key-moment event
   feed with a timeline, statistics, substitutions and a Quick result button.
-- 3D view with five cameras (broadcast, tactical, end, player follow, free),
-  mouse orbit, pan and zoom, and a follow-ball option.
+- 3D view with six cameras (broadcast, tactical, end, player follow, free
+  and a TV director that cuts to goal close-ups, goal-line and reverse
+  angles), mouse orbit, pan and zoom, a follow-ball option and a daylight
+  look for afternoon kick-offs.
+- 2D tactical view with a mown pitch, stands, nets, shirt numbers, facing,
+  ball height and trail, pass and shot paths, offside flashes and an
+  optional pressure map.
+- In-match changes: a substitutions board (drag a substitute onto a player,
+  several changes made together at the next stoppage, position swaps and
+  assistant suggestions), a tactics panel (style presets, sliders and
+  formation presets with their familiarity cost, undo) and eleven touchline
+  shouts (Shift + number keys) whose effect fades when repeated.
+- Your match pauses at half-time and the other breaks at any speed
+  (optional), and Highlights mode opens each highlight on live play.
 - Pre-match and half-time team talks.
 - Lineup gate before kick-off: the assistant replaces injured or suspended
   players, or you fix the lineup yourself.
@@ -120,7 +134,12 @@ development snapshots, so most of it is listed under *Added*.
 - Transfer market with search, recommendations based on squad needs,
   affordability filters and a fit score.
 - Negotiations with counter-offers, instalments, loans, pre-contracts, free
-  agents, transfer listing and releases with severance. Selling clubs ask
+  agents, transfer listing and releases with severance.
+- Bids for your players are real negotiations: counter with fee,
+  instalments, add-ons and sell-on, name your price or declare a player not
+  for sale. Buyers answer on later days with their own structures, walk
+  away when pushed too far, compete with rival bids and push harder near
+  deadline day; a player who wanted the move can take a rejection badly. Selling clubs ask
   more for key players and long contracts; some refuse to sell key players.
 - Contract talks with agents who open high and soften round by round.
 - Scouts with nationalities, languages and regional experience; sending a
@@ -187,8 +206,10 @@ development snapshots, so most of it is listed under *Added*.
   settled by a statistical extra time and shootout instead of being awarded.
 - Players who play through an injury because nobody fit can replace them
   carry no extra risk of aggravating it.
-- Tactics can only be changed before the match. There are no touchline
-  shouts or in-match tactic changes yet.
+- Loan offers for your players can only be accepted or rejected, and a
+  buying club does not check its wage budget until the deal is settled.
+- The swipe direction and distance for Back/Forward are tuned for common
+  touchpads; natural-scrolling setups may need them flipped.
 - Team talks affect morale only; they do not change the match itself yet.
 - Opposition instructions are saved but not used by the engine yet.
 - Italian commentary uses club names without their articles.

@@ -454,6 +454,15 @@ class InteractionSystem
   void onTransferCompleted(const GameDateValue& date, PlayerID player_id,
                            TeamID from_team_id, TeamID to_team_id,
                            TeamID managed_team_id, Inbox& inbox);
+  /**
+   * The club turned down a bid the player wanted to hear more about: his
+   * morale falls by @p morale_delta scaled by his temperament, trust by
+   * @p trust_delta, and with @p transfer_request he asks to leave. Posts
+   * his reaction to the inbox. Returns the morale change applied.
+   */
+  float onBidRejected(const GameDateValue& date, PlayerID player_id,
+                      const std::string& buyer_name, float morale_delta,
+                      float trust_delta, bool transfer_request, Inbox& inbox);
   /** Weekly morale target offset of a player (trust and open requests). */
   float moraleTargetOffset(PlayerID player_id) const;
 

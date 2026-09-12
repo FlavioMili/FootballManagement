@@ -95,6 +95,7 @@ class GameFlowTest_GUIFlowLifecycle_Test
 
   static MatchEngine* engine(MatchScene& scene) { return scene.engine.get(); }
   static bool finished(const MatchScene& scene) { return scene.match_finished; }
+  static bool paused(const MatchScene& scene) { return scene.is_paused; }
   static void setSpeed(MatchScene& scene, float speed)
   {
     scene.match_speed = speed;
@@ -940,10 +941,21 @@ LiveMatchResult playLiveMatch(Tester& player, bool showcase,
   auto* hub = dynamic_cast<MainGameScene*>(player.view.getBaseScene());
   if (hub == nullptr) return result;
   player.step = "kick-off";
+  const std::string label = hub->continueLabel();
+  const SceneID before = player.activeId();
+  const bool advancing = hub->isContinuing();
   hub->requestContinue();
   player.frames(2);
   auto* match = dynamic_cast<MatchScene*>(player.active());
-  EXPECT_NE(match, nullptr) << "PLAY MATCH did not open the match";
+  const auto next = controller.getNextManagedFixture();
+  EXPECT_NE(match, nullptr)
+      << "PLAY MATCH did not open the match: label '" << label
+      << "', scene before " << static_cast<int>(before) << " after "
+      << static_cast<int>(player.activeId()) << ", advancing " << advancing
+      << ", overlays " << player.view.getOverlayDepth() << ", next fixture "
+      << (next ? dateText(next->date) : std::string("none")) << " type "
+      << (next ? static_cast<int>(next->type) : -1) << ", today "
+      << dateText(controller.getCurrentDate());
   if (match == nullptr) return result;
   if (Bridge::engine(*match) == nullptr)
   {
@@ -979,13 +991,45 @@ LiveMatchResult playLiveMatch(Tester& player, bool showcase,
 
   Bridge::setSpeed(*match, 5.0f);
   const auto simulateStart = Clock::now();
+  // The match stops at half-time (and the other breaks) until the manager
+  // presses Resume, like a real user does here.
+  const auto resumeAfterBreak = [&]
+  {
+    player.frames(1);
+    // The half-time talk opens first: the manager closes it with Escape
+    // (saying nothing), then resumes.
+    for (int attempt = 0;
+         attempt < 3 && ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId |
+                                                   ImGuiPopupFlags_AnyPopupLevel);
+         ++attempt)
+      player.key(ImGuiKey_Escape);
+    // Pause, Resume and Finish share the first slot of the match controls:
+    // found once, then clicked where it is.
+    if (!finishPoint)
+    {
+      const ImVec2 display = ImGui::GetIO().DisplaySize;
+      const auto items =
+          player.discover({0.0f, 0.0f}, {display.x, display.y * 0.3f});
+      if (const Item* resume = Tester::find(items, LOC("MATCH_RESUME")))
+        finishPoint = resume->point;
+    }
+    EXPECT_TRUE(finishPoint.has_value()) << "Resume button not found at a break";
+    if (!finishPoint) return false;
+    player.click(*finishPoint);
+    player.frames(1);
+    EXPECT_FALSE(Bridge::paused(*match)) << "Resume did not restart play";
+    return !Bridge::paused(*match);
+  };
   const auto runUntil = [&](float minute)
   {
     const auto begun = Clock::now();
     while (!Bridge::finished(*match) &&
            engine->getMatchTimeMinutes() < minute &&
            Clock::now() - begun < std::chrono::seconds(60))
+    {
+      if (Bridge::paused(*match) && !resumeAfterBreak()) break;
       Bridge::update(player.view, 0.1f);
+    }
   };
 
   if (showcase)
@@ -1067,11 +1111,11 @@ LiveMatchResult playLiveMatch(Tester& player, bool showcase,
   // Finish returns to the hub, which simulates the rest of the day on its
   // Continue worker and then shows the match report.
   const auto finishStart = Clock::now();
-  while ((player.activeId() != SceneID::MATCH_REPORT || hub->isAdvancing()) &&
+  while ((player.activeId() != SceneID::MATCH_REPORT || hub->isContinuing()) &&
          Clock::now() - finishStart < LOAD_DEADLINE)
     player.frame();
   player.frames(2);
-  EXPECT_FALSE(hub->isAdvancing()) << "the rest of the match day never ended";
+  EXPECT_FALSE(hub->isContinuing()) << "the rest of the match day never ended";
   // Back (Escape) from the report returns to the club hub.
   EXPECT_EQ(player.activeId(), SceneID::MATCH_REPORT)
       << "Finish Match did not show the match report";
@@ -1530,7 +1574,9 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
     const auto start = Clock::now();
     hub->requestContinue();
     player.frame();
-    while (hub->isAdvancing() && Clock::now() - start < LOAD_DEADLINE)
+    // Until the days are simulated, counting the frames before the worker
+    // starts (the hub first closes screens and captures its backdrop).
+    while (hub->isContinuing() && Clock::now() - start < LOAD_DEADLINE)
     {
       if (busyShots == 0)
       {
@@ -1539,6 +1585,7 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
       }
       player.frame();
     }
+    EXPECT_FALSE(hub->isContinuing()) << "Continue never finished";
     player.frames(2);
     const double wall = millisecondsSince(start);
     const int days = dayNumber(controller.getCurrentDate()) - dayNumber(from);

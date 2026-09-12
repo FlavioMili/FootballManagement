@@ -379,13 +379,16 @@ struct WorldTuning final
      * context inside the simulated world, where clubs of very different
      * strength meet. The engine already scores less in second divisions
      * (their lower finishing), so those have their own goal reference.
-     * [Measured with fm_lab season, 2 seasons x 22 leagues] */
-    static constexpr float REFERENCE_GOALS_TOP = 2.82f;
-    static constexpr float REFERENCE_GOALS_SECOND = 2.52f;
-    /** Goals grow about as goalRateScale^1.5 (the scale acts on shot
-     * precision), so the scale is the goal ratio to the power 1/1.5. */
-    static constexpr float GOAL_RESPONSE_EXPONENT = 1.5f;
-    static constexpr float REFERENCE_YELLOWS = 4.0f;
+     * [Fitted to fm_lab season: goals per league against the scale, 22
+     * leagues] */
+    static constexpr float REFERENCE_GOALS_TOP = 2.85f;
+    static constexpr float REFERENCE_GOALS_SECOND = 2.42f;
+    /** Goals grow about as goalRateScale^1.3 in the world (the scale acts on
+     * shot precision; the fit gives 1.35 in top and 1.24 in second
+     * divisions, 1.06 between two 65-rated lab sides), so the scale is the
+     * goal ratio to the power 1/1.3. */
+    static constexpr float GOAL_RESPONSE_EXPONENT = 1.3f;
+    static constexpr float REFERENCE_YELLOWS = 4.2f;
     static constexpr float REFERENCE_HOME_EDGE = 14.0f;
     /** SD of referees' mean yellows the engine's per-match spread stands
      * for; top divisions sit below it, second tiers above. [S: England

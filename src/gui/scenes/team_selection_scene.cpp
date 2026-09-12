@@ -36,6 +36,8 @@ constexpr float CARD_MIN_CONTENT = 1080.0f;
 constexpr float CONTENT_MAX_WIDTH = 1480.0f;
 // Below this the page scrolls rather than squeezing the club browser.
 constexpr float BROWSER_MIN_HEIGHT = 360.0f;
+/** Stacked layout: the club table sits beside the league list from here. */
+constexpr float STACKED_TABLE_MIN_WIDTH = 480.0f;
 constexpr size_t KEY_PLAYERS = 3;
 constexpr int STARS = 5;
 
@@ -162,35 +164,74 @@ void TeamSelectionScene::render()
   if (manager_panel.render(guiView->getController(), width) ==
       ManagerSetupPanel::Action::START_UNEMPLOYED)
     startUnemployed();
-  const float height = std::max(ImGui::GetContentRegionAvail().y,
-                                BROWSER_MIN_HEIGHT * Theme::scale());
+  // Room left under the manager card (the page's scroll does not change it).
+  const float room = ImGui::GetContentRegionAvail().y;
   const float gap = ImGui::GetStyle().ItemSpacing.x;
   const float listWidth = LEAGUE_LIST_WIDTH * Theme::scale();
-  const bool showCard = width >= CARD_MIN_CONTENT * Theme::scale();
-  const float cardWidth = showCard ? CARD_WIDTH * Theme::scale() : 0.0f;
-  renderLeagueList(listWidth, height);
-  ImGui::SameLine();
-  const float tableWidth =
-      width - listWidth - gap - (showCard ? cardWidth + gap : 0.0f);
-  ImGui::BeginChild(
-      "##club_area", ImVec2(tableWidth, height), ImGuiChildFlags_None,
-      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-  // Narrow windows: the club card becomes a strip above the table, so the
-  // start button stays in view.
-  if (!showCard) renderSelectedClubStrip();
-  if (selected_league_id)
-    renderClubTable(ImGui::GetContentRegionAvail().y);
-  else
-    UI::emptyState(LOC("TEAM_SELECTION_SELECT_LEAGUE_FIRST"), nullptr);
-  ImGui::EndChild();
-  if (showCard)
+  if (room < BROWSER_MIN_HEIGHT * Theme::scale())
   {
+    renderStackedBrowser(width);
+  }
+  else
+  {
+    // The browser fills the window exactly: the page does not scroll and
+    // the league list and club table scroll on their own.
+    const float height = room;
+    const bool showCard = width >= CARD_MIN_CONTENT * Theme::scale();
+    const float cardWidth = showCard ? CARD_WIDTH * Theme::scale() : 0.0f;
+    renderLeagueList(listWidth, height);
     ImGui::SameLine();
-    renderSelectedClub(cardWidth, height);
+    const float tableWidth =
+        width - listWidth - gap - (showCard ? cardWidth + gap : 0.0f);
+    ImGui::BeginChild(
+        "##club_area", ImVec2(tableWidth, height), ImGuiChildFlags_None,
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    // Narrow windows: the club card becomes a strip above the table, so the
+    // start button stays in view.
+    if (!showCard) renderSelectedClubStrip();
+    if (selected_league_id)
+      renderClubTable(ImGui::GetContentRegionAvail().y);
+    else
+      UI::emptyState(LOC("TEAM_SELECTION_SELECT_LEAGUE_FIRST"), nullptr);
+    ImGui::EndChild();
+    if (showCard)
+    {
+      ImGui::SameLine();
+      renderSelectedClub(cardWidth, height);
+    }
   }
   ImGui::EndGroup();
   if (measuring) ImGui::PopStyleVar();
   ImGui::End();
+}
+
+void TeamSelectionScene::renderStackedBrowser(float width)
+{
+  // Too short for the club browser (small window or big UI scale): every
+  // card takes its natural height and the page is the only scroll surface.
+  // The club strip with the start button comes first.
+  renderSelectedClubStrip();
+  const float gap = ImGui::GetStyle().ItemSpacing.x;
+  const float listWidth = LEAGUE_LIST_WIDTH * Theme::scale();
+  const bool sideBySide =
+      width - listWidth - gap >= STACKED_TABLE_MIN_WIDTH * Theme::scale();
+  if (sideBySide)
+  {
+    ImGui::BeginGroup();
+    renderLeagueList(listWidth, 0.0f);
+    ImGui::EndGroup();
+    ImGui::SameLine();
+  }
+  else
+  {
+    renderLeagueList(width, 0.0f);
+  }
+  ImGui::BeginGroup();
+  if (selected_league_id)
+    renderClubTable(0.0f);
+  else
+    UI::emptyState(LOC("TEAM_SELECTION_SELECT_LEAGUE_FIRST"), nullptr);
+  ImGui::EndGroup();
 }
 
 void TeamSelectionScene::selectLeague(const LeagueEntry& entry)
@@ -205,8 +246,13 @@ void TeamSelectionScene::selectLeague(const LeagueEntry& entry)
 void TeamSelectionScene::renderLeagueList(float width, float height)
 {
   const Theme::Palette& palette = Theme::palette();
-  UI::beginCard("##leagues", LOC("TEAM_SELECTION_LEAGUES_CAPTION"),
-                ImVec2(width, height), true);
+  // Height 0: the card takes the height of its rows (stacked layout).
+  if (height > 0.0f)
+    UI::beginCard("##leagues", LOC("TEAM_SELECTION_LEAGUES_CAPTION"),
+                  ImVec2(width, height), true);
+  else
+    UI::beginAutoHeightCard("##leagues", LOC("TEAM_SELECTION_LEAGUES_CAPTION"),
+                            width);
   // One row per country (its top division); the arrow lists the lower
   // divisions underneath, indented. Compact rows: every country fits.
   const float scale = Theme::scale();
@@ -268,12 +314,18 @@ void TeamSelectionScene::renderLeagueList(float width, float height)
 void TeamSelectionScene::renderClubTable(float height)
 {
   const Theme::Palette& palette = Theme::palette();
-  UI::beginCard("##clubs", LOC("TEAM_SELECTION_CLUBS_CAPTION"),
-                ImVec2(0.0f, std::max(height, 200.0f * Theme::scale())));
+  // Height 0: every club row, no inner scrolling (stacked layout).
+  const bool fill = height > 0.0f;
+  if (fill)
+    UI::beginCard("##clubs", LOC("TEAM_SELECTION_CLUBS_CAPTION"),
+                  ImVec2(0.0f, std::max(height, 200.0f * Theme::scale())));
+  else
+    UI::beginAutoHeightCard("##clubs", LOC("TEAM_SELECTION_CLUBS_CAPTION"),
+                            0.0f);
   const ImGuiTableFlags flags =
       ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-      ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
-      ImGuiTableFlags_SizingFixedFit;
+      ImGuiTableFlags_Sortable | ImGuiTableFlags_SizingFixedFit |
+      (fill ? ImGuiTableFlags_ScrollY : ImGuiTableFlags_None);
   // Narrow tables drop stadium and balance (both are on the club card),
   // then the expectation: columns hide instead of scrolling sideways.
   const float tableWidth = ImGui::GetContentRegionAvail().x;
@@ -282,7 +334,7 @@ void TeamSelectionScene::renderClubTable(float height)
   const int columnCount = (compact ? 4 : 6) + (showExpectation ? 1 : 0);
   if (ImGui::BeginTable("TeamsTable", columnCount, flags))
   {
-    ImGui::TableSetupScrollFreeze(0, 1);
+    if (fill) ImGui::TableSetupScrollFreeze(0, 1);
     ImGui::TableSetupColumn(LOC("MAIN_GAME_TEAM"),
                             ImGuiTableColumnFlags_WidthStretch, 0.0f,
                             static_cast<ImGuiID>(ClubColumn::NAME));

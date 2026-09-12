@@ -13,6 +13,7 @@
 #include <limits>
 #include <optional>
 #include <random>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -199,6 +200,9 @@ struct MatchPlayer
   /** Goalkeeper duties (the natural keeper, or an emergency replacement). */
   bool isGoalkeeper = false;
   bool isInjured = false;
+  /** Outfield slot of the side's formation (see MatchEngine::getFormation);
+   * -1 for the starting goalkeeper. Ignored while keeping goal. */
+  std::int8_t formationSlot = -1;
   int yellowCards = 0;
   /** Index into MatchEngine::getPlayerStats() for the current occupant. */
   std::size_t statsIndex = 0;
@@ -330,7 +334,44 @@ enum class MatchShout : std::uint8_t
   CALM_DOWN,
   ENCOURAGE,
   WORK_BALL_INTO_BOX,
-  SHOOT_ON_SIGHT
+  SHOOT_ON_SIGHT,
+  STAND_OFF,
+  DEMAND_MORE,
+  HIT_ON_COUNTER,
+  KEEP_POSSESSION
+};
+
+/** Kind of an external tactical change (see MatchCommandRecord). */
+enum class MatchCommandType : std::uint8_t
+{
+  STRATEGY,
+  SHOUT,
+  FORMATION,
+  MOVE_TO_SLOT,
+  SUBSTITUTION
+};
+
+/**
+ * A tactical change made from outside the engine (the touchline), stamped
+ * with the fixed step it was made after. Only the fields of its type are
+ * used.
+ */
+struct MatchCommandRecord
+{
+  /** Value of MatchEngine::getSimulatedSteps() when the change was made. */
+  std::uint64_t step = 0;
+  MatchCommandType type = MatchCommandType::STRATEGY;
+  bool homeTeam = true;
+  Strategy strategy;
+  MatchShout shout = MatchShout::ENCOURAGE;
+  /** Outfield slot positions in lineup coordinates (FORMATION). */
+  std::vector<Vector2F> formation;
+  /** Player moved (MOVE_TO_SLOT) or replaced (SUBSTITUTION). */
+  PlayerID player = 0;
+  /** Bench player coming on (SUBSTITUTION). */
+  PlayerID incoming = 0;
+  /** Target slot (MOVE_TO_SLOT, optional for SUBSTITUTION). */
+  std::optional<std::size_t> slot;
 };
 
 /** One-shot action requested by an external controller (play mode). */
@@ -534,20 +575,48 @@ class MatchEngine
    * looser.
    */
   void setTacticalFamiliarity(bool homeTeam, float familiarity);
+  /** Familiarity in force: the drilled level, less a temporary loss after a
+   * change of shape (setFormation). */
   float getTacticalFamiliarity(bool homeTeam) const
   {
-    return homeTeam ? homeFamiliarity : awayFamiliarity;
+    return effectiveFamiliarity(homeTeam ? 0 : 1);
   }
-  /** Replaces a side's tactics mid-match; used from the next decision. */
+  /**
+   * Replaces a side's tactics at any time; the sliders apply from the next
+   * step and the players re-form over a few seconds (their target response).
+   */
   void setStrategy(bool homeTeam, const Strategy& strategy);
   /**
    * A touchline shout: a temporary nudge to the side's sliders or shot
    * appetite that fades out over MatchTuning::Touchline::SHOUT_DURATION_SECONDS.
-   * A new shout replaces the previous one.
+   * A new shout replaces the previous one; shouts in quick succession have
+   * less effect (see MatchTuning::Touchline::SHOUT_REPEAT_FADE_SECONDS).
    */
   void applyShout(bool homeTeam, MatchShout shout);
   /** Remaining strength of the side's shout in [0, 1] (0 when none). */
   float getShoutStrength(bool homeTeam) const;
+  /** The shout in force, if any. */
+  std::optional<MatchShout> getActiveShout(bool homeTeam) const;
+  /**
+   * Positions of the side's outfield slots in lineup coordinates (own goal
+   * line at x = 0, as Lineup::addOutfieldPlayer), in the lineup's order; the
+   * goalkeeper has no slot.
+   */
+  std::vector<Vector2F> getFormation(bool homeTeam) const;
+  /**
+   * Changes the shape: one position per slot (same size as getFormation()),
+   * clamped to the pitch. The players walk to their new spots; a real change
+   * of shape costs some tactical familiarity for a few minutes. Returns false
+   * (and changes nothing) for a wrong size or non-finite positions.
+   */
+  bool setFormation(bool homeTeam, std::span<const Vector2F> shape);
+  /** Slot of an outfield player on the pitch (nullopt otherwise). */
+  std::optional<std::size_t> getFormationSlot(PlayerID playerId) const;
+  /**
+   * Moves an outfield player on the pitch to `slot`; the slot's occupant
+   * takes his old one (a slot left empty by a dismissal is simply taken).
+   */
+  bool movePlayerToSlot(PlayerID playerId, std::size_t slot);
   /** Strategy sliders in force: the tactics plus any fading shout. */
   StrategySliders getEffectiveSliders(bool homeTeam) const;
   /**
@@ -583,6 +652,20 @@ class MatchEngine
   const std::vector<MatchInputRecord>& getInputLog() const { return inputLog; }
   /** Schedules a recorded input log (records applied at their steps). */
   void loadInputReplay(std::vector<MatchInputRecord> log);
+  /**
+   * Every tactical change made from outside (strategy, shout, formation,
+   * slot move, substitution), step-stamped. Replaying it with
+   * loadCommandReplay() on a new engine with the same lineups, tactics and
+   * seed reproduces the match. AI touchline decisions are not logged: they
+   * replay by themselves.
+   */
+  const std::vector<MatchCommandRecord>& getCommandLog() const
+  {
+    return commandLog;
+  }
+  /** Schedules a recorded command log; a new change made during the replay
+   * discards the rest of it. */
+  void loadCommandReplay(std::vector<MatchCommandRecord> log);
   /** Fixed steps simulated since kick-off. */
   std::uint64_t getSimulatedSteps() const { return stepCounter; }
 
@@ -605,11 +688,14 @@ class MatchEngine
   const PassDecision& getLastPassDecision() const { return lastPassDecision; }
 
   /**
-   * Replaces an on-pitch player with a bench player of the same team.
-   * Enforces the substitution limit (5) and windows (3, half-time excluded);
-   * returns false when the change is not allowed.
+   * Replaces an on-pitch player with a bench player of the same team, who
+   * takes the outgoing player's slot or, if given, `slot` (its occupant then
+   * moves to the vacated one). Enforces the substitution limit (5, 6 in extra
+   * time) and windows (3, +1 in extra time, half-time excluded); returns
+   * false when the change is not allowed.
    */
-  bool substitutePlayer(uint32_t outPlayerId, const Player* inPlayer);
+  bool substitutePlayer(uint32_t outPlayerId, const Player* inPlayer,
+                        std::optional<std::size_t> slot = std::nullopt);
   /** Whether the side can still make a substitution right now. */
   bool canSubstitute(bool homeTeam) const;
   int getSubstitutionsUsed(bool homeTeam) const;
@@ -887,6 +973,10 @@ class MatchEngine
   {
     MatchShout shout = MatchShout::ENCOURAGE;
     float remainingSeconds = 0.0f;
+    /** Share of the full effect (lower for repeated shouts). */
+    float impact = 1.0f;
+    /** Recent shouts, fading by one per SHOUT_REPEAT_FADE_SECONDS. */
+    float repeats = 0.0f;
   };
   /** Index 0 is the home side, 1 the away side. */
   std::array<ShoutState, 2> shouts{};
@@ -924,6 +1014,13 @@ class MatchEngine
   MatchInputAction lastInputAction = MatchInputAction::NONE;
   std::vector<MatchInputRecord> inputLog;
   std::size_t inputCursor = 0;
+  std::vector<MatchCommandRecord> commandLog;
+  std::size_t commandCursor = 0;
+  /** Outfield slot positions by side (index 0 home), lineup coordinates. */
+  std::array<std::vector<Vector2F>, 2> formations{};
+  /** Familiarity lost to a change of shape and the seconds it still lasts. */
+  std::array<float, 2> reshapeFamiliarityCost{};
+  std::array<float, 2> reshapeSecondsRemaining{};
 
   std::vector<MatchHighlight> highlights;
   std::uint64_t highlightTriggerCount = 0;
@@ -984,7 +1081,8 @@ class MatchEngine
   void checkInjuries();
   void injurePlayer(MatchPlayer& player, bool fromContact);
   void removeFromPitch(MatchPlayer& player);
-  void rebalanceShape(bool homeTeam, Vector2F vacatedBase);
+  void rebalanceShape(bool homeTeam, Vector2F vacatedBase,
+                      std::int8_t vacatedSlot);
   void ensureGoalkeeper(bool homeTeam);
   void beginStoppage();
   /** Extends the current restart delay (card, treatment, substitution). */
@@ -1111,6 +1209,18 @@ class MatchEngine
   void decideAction(MatchPlayer& carrier);
   /** Applies input records due at the current step. */
   void applyDueInputs();
+  /** Performs an external tactical change (live or replayed); false when it
+   * is not allowed, in which case nothing changed. */
+  bool executeCommand(const MatchCommandRecord& command);
+  /** Logs a live change that executed (truncating any pending replay). */
+  bool recordCommand(const MatchCommandRecord& command);
+  void applyDueCommands();
+  void startShout(bool homeTeam, MatchShout shout);
+  /** Base positions of a side's outfield players from its formation slots
+   * (a side short of players also sits a little deeper). */
+  void placeFormation(bool homeTeam);
+  /** Tactical familiarity in force: the drilled level less a reshape cost. */
+  float effectiveFamiliarity(std::size_t team) const;
   bool isControlled(const MatchPlayer& player) const;
   /** Whether a wide forward in the final third is cutting inside toward
    * the box rather than going down the line to cross. */

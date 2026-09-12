@@ -120,6 +120,106 @@ struct TransferTuning final
     static constexpr std::uint32_t FREE_AGENT_FEE_WEEKS = 8;
   };
 
+  /**
+   * An AI club negotiating for one of the managed club's players. Real
+   * deals are structured: add-ons are typically 10-30% of the headline
+   * fee, sell-on clauses 10-20%, and big fees are spread over 2-4 years.
+   * The buyer reads a structure by its present cost: deferred money is
+   * cheaper for it than cash (it discounts faster than a seller, which is
+   * why instalments help both sides), add-ons cost their odds of being
+   * paid and a sell-on costs the expected share of a future sale. [P]
+   */
+  struct Buyer final
+  {
+    /** Buyer's discount of deferred money per year of delay. */
+    static constexpr float DEFERRED_DISCOUNT_PER_YEAR = 0.09f;
+    /** Odds of paying an add-on: appearance targets are likelier than
+     * goal targets; both fall with the target. */
+    static constexpr float APPEARANCE_ODDS_BASE = 0.90f;
+    static constexpr float APPEARANCE_ODDS_PER_MATCH = 0.012f;
+    static constexpr float GOAL_ODDS_BASE = 0.70f;
+    static constexpr float GOAL_ODDS_PER_GOAL = 0.025f;
+    static constexpr float MIN_ADD_ON_ODDS = 0.15f;
+    static constexpr float MAX_ADD_ON_ODDS = 0.85f;
+    /** Expected share of the fee a sell-on clause costs per percent point
+     * (resale odds times resale value), by age. */
+    static constexpr int SELL_ON_YOUNG_AGE = 21;
+    static constexpr int SELL_ON_PRIME_AGE = 24;
+    static constexpr int SELL_ON_SETTLED_AGE = 27;
+    static constexpr float SELL_ON_COST_YOUNG = 0.45f;
+    static constexpr float SELL_ON_COST_PRIME = 0.35f;
+    static constexpr float SELL_ON_COST_SETTLED = 0.20f;
+    static constexpr float SELL_ON_COST_VETERAN = 0.08f;
+    /** Opening bid as a share of the ceiling (more with rivals). */
+    static constexpr float OPENING_SHARE_MIN = 0.75f;
+    static constexpr float OPENING_SHARE_MAX = 0.92f;
+    static constexpr float OPENING_RIVAL_BONUS = 0.05f;
+    /** Share of opening bids that carry an appearance add-on. */
+    static constexpr float OPENING_ADD_ON_CHANCE = 0.35f;
+    /** Add-ons offered instead of cash, as a share of the fee. */
+    static constexpr float ADD_ON_SHARE = 0.15f;
+    static constexpr float MAX_ADD_ON_SHARE = 0.30f;
+    static constexpr std::uint16_t ADD_ON_APPEARANCES = 30;
+    static constexpr std::uint16_t ADD_ON_GOALS = 10;
+    /** Counters the buyer answers before it stops (drawn per offer). */
+    static constexpr std::uint8_t MIN_PATIENCE = 2;
+    static constexpr std::uint8_t MAX_PATIENCE = 4;
+    /** Patience of offers made before talks were drawn (older saves). */
+    static constexpr std::uint8_t DEFAULT_PATIENCE = 3;
+    /** Share of the gap to the seller's ask (capped by the ceiling) the
+     * buyer closes on each answer; the last answer is its final offer. */
+    static constexpr float FIRST_CONCESSION = 0.45f;
+    static constexpr float CONCESSION_STEP = 0.15f;
+    /** A counter worth more than this multiple of the ceiling insults the
+     * buyer; a second insult, or one beyond WALK_OUT_MULTIPLE, ends the
+     * talks. */
+    static constexpr float INSULT_MULTIPLE = 1.6f;
+    static constexpr float WALK_OUT_MULTIPLE = 2.5f;
+    static constexpr std::uint8_t MAX_INSULTS = 2;
+    /** Auction effect: each rival bidder lifts the ceiling and speeds up
+     * concessions, capped. */
+    static constexpr float RIVAL_CEILING_BONUS = 0.07f;
+    static constexpr float MAX_RIVAL_CEILING_BONUS = 0.20f;
+    static constexpr float RIVAL_CONCESSION_BONUS = 0.10f;
+    /** Deadline pressure: in the last days of a window the buyer stretches
+     * its ceiling, concedes faster and answers the same day. */
+    static constexpr int DEADLINE_DAYS = 2;
+    static constexpr float DEADLINE_CEILING_BONUS = 0.06f;
+    static constexpr float DEADLINE_CONCESSION_BONUS = 0.25f;
+    /** Days the buyer takes to answer a counter (outside the deadline),
+     * and days it leaves the club to answer its own proposal. */
+    static constexpr int MIN_REPLY_DAYS = 1;
+    static constexpr int MAX_REPLY_DAYS = 2;
+    static constexpr int ANSWER_DAYS = 4;
+    /** A club whose talks ended (turned down, walked away, ignored) does
+     * not bid for the player again for this long, nor in the same window. */
+    static constexpr int TALKS_COOLDOWN_DAYS = 30;
+    /** A second club bids for a player who already has an offer on this
+     * share of its approaches. */
+    static constexpr float RIVAL_APPROACH_CHANCE = 0.5f;
+    /** Chance the player fails to agree personal terms once the clubs
+     * agree, by his stance. */
+    static constexpr float TERMS_REFUSAL_OPEN = 0.05f;
+    static constexpr float TERMS_REFUSAL_HAPPY = 0.15f;
+    static constexpr float TERMS_REFUSAL_RELUCTANT = 0.60f;
+    /** Stance: ambitious players want a clearly bigger club. */
+    static constexpr std::uint8_t KEEN_AMBITION = 55;
+    static constexpr int KEEN_REPUTATION_GAP = 5;
+    static constexpr std::uint8_t HAPPY_LOYALTY = 75;
+    static constexpr float HAPPY_MORALE = 60.0f;
+    /** A bid worth this share of the market value is a big bid: turning
+     * it down upsets a player who wants the move. */
+    static constexpr float BIG_BID_VALUE_SHARE = 0.9f;
+    static constexpr float REJECTED_KEEN_MORALE = 10.0f;
+    static constexpr float REJECTED_ASKED_MORALE = 12.0f;
+    static constexpr float REJECTED_SMALL_BID_MORALE = 3.0f;
+    static constexpr float REJECTED_OPEN_MORALE = 3.0f;
+    static constexpr float REJECTED_TRUST = 6.0f;
+    /** Ambition from which a keen player asks to leave after a big bid is
+     * turned down. */
+    static constexpr std::uint8_t REQUEST_AMBITION = 70;
+  };
+
   /** Player side of a contract negotiation. */
   struct Negotiation final
   {
