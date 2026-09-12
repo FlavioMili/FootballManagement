@@ -23,8 +23,24 @@ set(FM_CORE_SOURCES
     database/repositories/league_repository.cpp
     database/repositories/fixture_repository.h
     database/repositories/fixture_repository.cpp
+    database/repositories/competition_repository.h
+    database/repositories/competition_repository.cpp
     database/repositories/game_state_repository.h
     database/repositories/game_state_repository.cpp
+    database/repositories/finance_repository.h
+    database/repositories/finance_repository.cpp
+    database/repositories/inbox_repository.h
+    database/repositories/inbox_repository.cpp
+    database/repositories/scouting_repository.h
+    database/repositories/scouting_repository.cpp
+    database/repositories/world_state_repository.h
+    database/repositories/world_state_repository.cpp
+    database/repositories/staff_repository.h
+    database/repositories/staff_repository.cpp
+    database/repositories/training_repository.h
+    database/repositories/training_repository.cpp
+    database/repositories/transfer_repository.h
+    database/repositories/transfer_repository.cpp
     database/datagenerator.h
     database/datagenerator.cpp
     database/SQLLoader.h
@@ -45,34 +61,74 @@ set(FM_CORE_SOURCES
     global/stats_config.h
     global/types.h
 
+    model/board.h
+    model/board.cpp
     model/calendar.h
     model/calendar.cpp
+    model/club_economy.h
+    model/club_economy.cpp
+    model/competition.h
+    model/competition.cpp
+    model/competition_manager.h
+    model/competition_manager.cpp
+    model/discipline.h
+    model/discipline.cpp
     model/finances.h
     model/finances.cpp
     model/game.h
     model/game.cpp
     model/gamedate.h
     model/gamedate.cpp
+    model/inbox.h
+    model/inbox.cpp
+    model/injury.h
+    model/injury.cpp
     model/league.h
     model/league.cpp
     model/lineup.h
     model/lineup.cpp
     model/match.h
     model/match.cpp
+    model/match_report.h
+    model/match_report.cpp
     model/match_engine.h
     model/match_engine.cpp
+    model/match_events.h
+    model/match_rules.h
+    model/match_rules.cpp
     model/match_scenario.h
     model/match_tuning.h
     model/player.h
     model/player.cpp
     model/role_utils.h
     model/role_utils.cpp
+    model/season_history.h
+    model/season_history.cpp
+    model/staff.h
+    model/staff.cpp
+    model/standings.h
+    model/standings.cpp
     model/strategy.h
     model/strategy.cpp
     model/team.h
     model/team.cpp
+    model/training.h
+    model/training.cpp
     model/transfer_listing.h
     model/transfer_listing.cpp
+    model/transfer_market.h
+    model/transfer_market.cpp
+    model/transfer_negotiation.h
+    model/transfer_negotiation.cpp
+    model/world_generation.h
+    model/world_generation.cpp
+    model/world_rng.h
+    model/world_rng.cpp
+    model/world_simulation.h
+    model/world_simulation.cpp
+    model/scouting.h
+    model/scouting.cpp
+    model/world_tuning.h
     model/transfer_tuning.h
 )
 
@@ -129,6 +185,16 @@ set(FM_UI_SOURCES
     gui/render/match_render_snapshot.h
     gui/render/match_renderer_2d.h
     gui/render/match_renderer_2d.cpp
+    gui/render/match_camera_3d.h
+    gui/render/match_camera_3d.cpp
+    gui/render/match_kit_colors.h
+    gui/render/match_kit_colors.cpp
+    gui/render/match_render_3d_tuning.h
+    gui/render/match_render_math.h
+    gui/render/match_renderer_3d.h
+    gui/render/match_renderer_3d.cpp
+    gui/render/match_stadium_3d.h
+    gui/render/match_stadium_3d.cpp
     gui/scenes/lineup_scene.h
     gui/scenes/lineup_scene.cpp
     gui/scenes/match_scene.h
@@ -149,6 +215,40 @@ set(FM_UI_SOURCES
     gui/scenes/transfer_market_scene.h
     gui/scenes/transfer_market_scene.cpp
     gui/scenes/transfer_market_scene_tuning.h
+    gui/scenes/management_scene.h
+    gui/scenes/management_scene.cpp
+    gui/scenes/player_profile_scene.h
+    gui/scenes/player_profile_scene.cpp
+    gui/scenes/fixtures_scene.h
+    gui/scenes/fixtures_scene.cpp
+    gui/scenes/standings_scene.h
+    gui/scenes/standings_scene.cpp
+    gui/scenes/inbox_scene.h
+    gui/scenes/inbox_scene.cpp
+    gui/scenes/club_scene.h
+    gui/scenes/club_scene.cpp
+    gui/scenes/match_report_scene.h
+    gui/scenes/match_report_scene.cpp
+    gui/scenes/scouting_scene.h
+    gui/scenes/scouting_scene.cpp
+    gui/scenes/training_scene.h
+    gui/scenes/training_scene.cpp
+    gui/scenes/staff_scene.h
+    gui/scenes/staff_scene.cpp
+    gui/view_models/competition_view.h
+    gui/view_models/competition_view.cpp
+    gui/view_models/formation.h
+    gui/view_models/formation.cpp
+    gui/view_models/player_view.h
+    gui/view_models/player_view.cpp
+    gui/widgets/format.h
+    gui/widgets/format.cpp
+    gui/widgets/icons.h
+    gui/widgets/icons.cpp
+    gui/widgets/theme.h
+    gui/widgets/theme.cpp
+    gui/widgets/widgets.h
+    gui/widgets/widgets.cpp
 )
 
 add_library(fm_ui STATIC ${FM_UI_SOURCES})

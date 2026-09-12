@@ -9,25 +9,71 @@
 #include "database/gamedata.h"
 
 #include <algorithm>
+#include <chrono>
+#include <cstdlib>
 #include <fstream>
 #include <limits>
 #include <nlohmann/json.hpp>
+#include <string>
 #include <utility>
 
 #include "database/SQLLoader.h"
 #include "database/database_connection.h"
 #include "database/datagenerator.h"
+#include "database/repositories/finance_repository.h"
 #include "database/repositories/game_state_repository.h"
 #include "database/repositories/league_repository.h"
 #include "database/repositories/player_repository.h"
+#include "database/repositories/staff_repository.h"
 #include "database/repositories/team_repository.h"
+#include "database/repositories/training_repository.h"
+#include "database/repositories/world_state_repository.h"
 #include "global/logger.h"
 #include "global/paths.h"
 #include "global/queries.h"
+#include "model/club_economy.h"
 #include "model/transfer_listing.h"
+#include "model/world_generation.h"
+#include "model/world_rng.h"
 
 namespace
 {
+// Columns added after the first release; ALTER fails harmlessly when the
+// column already exists.
+constexpr const char* LEGACY_COLUMN_MIGRATIONS[] = {
+    "ALTER TABLE Players ADD COLUMN potential REAL NOT NULL DEFAULT 0;",
+    "ALTER TABLE Players ADD COLUMN traits TEXT NOT NULL DEFAULT '';",
+    "ALTER TABLE Players ADD COLUMN dynamics TEXT NOT NULL DEFAULT '';",
+    "ALTER TABLE Teams ADD COLUMN reputation INTEGER NOT NULL DEFAULT 0;",
+    "ALTER TABLE Teams ADD COLUMN stadium_capacity INTEGER NOT NULL DEFAULT 0;",
+    "ALTER TABLE Teams ADD COLUMN ticket_price INTEGER NOT NULL DEFAULT 0;",
+    "ALTER TABLE Teams ADD COLUMN training_facilities INTEGER NOT NULL "
+    "DEFAULT 0;",
+    "ALTER TABLE Teams ADD COLUMN youth_facilities INTEGER NOT NULL DEFAULT "
+    "0;",
+    "ALTER TABLE Teams ADD COLUMN transfer_budget INTEGER NOT NULL DEFAULT 0;",
+    "ALTER TABLE Teams ADD COLUMN wage_budget INTEGER NOT NULL DEFAULT 0;",
+    "ALTER TABLE Teams ADD COLUMN recent_form TEXT NOT NULL DEFAULT '';",
+};
+
+std::uint64_t defaultWorldSeed()
+{
+  if (const char* configured = std::getenv("FM_WORLD_SEED"))
+  {
+    try
+    {
+      return std::stoull(configured);
+    }
+    catch (const std::exception&)
+    {
+      Logger::warn("Ignoring invalid FM_WORLD_SEED");
+    }
+  }
+  const auto now = static_cast<std::uint64_t>(
+      std::chrono::system_clock::now().time_since_epoch().count());
+  return mixHash(now, 0x5EEDULL);
+}
+
 bool restoreLineup(Team& team, const StoredLineup& stored,
                    const std::unordered_map<PlayerID, Player>& players)
 {
@@ -80,6 +126,7 @@ bool GameData::loadFromDB(std::shared_ptr<DatabaseConnection> database_ptr)
   _teamsVec.clear();
   _playersVec.clear();
   _teamPlayers.clear();
+  removed_player_ids.clear();
 
   loadStatsConfig();
   db_conn = database_ptr;
@@ -116,7 +163,22 @@ bool GameData::loadFromDB(std::shared_ptr<DatabaseConnection> database_ptr)
   _playersVec.reserve(_players.size());
   for (auto& [id, player] : _players) _playersVec.push_back(player);
 
+  restoreStaffAndTraining();
   return true;
+}
+
+void GameData::restoreStaffAndTraining()
+{
+  staff.restore(StaffRepository(db_conn).loadAll());
+  // New worlds and saves from before staff existed get a deterministic
+  // staff generated from the world seed.
+  if (staff.empty()) StaffModel::generateWorld(*this);
+  const TrainingRepository training_repo(db_conn);
+  training.restore(training_repo.loadPlans(), training_repo.loadPlayers());
+  for (const auto& [id, team] : _teams)
+  {
+    if (id != FREE_AGENTS_TEAM_ID) training.plan(id);
+  }
 }
 
 void GameData::generateAndSaveInitialData()
@@ -129,7 +191,10 @@ void GameData::generateAndSaveInitialData()
   sqlite3_exec(
       db_conn->getRaw(),
       "DELETE FROM Players; DELETE FROM Teams; DELETE FROM Leagues; DELETE "
-      "FROM GameState; DELETE FROM LeaguePoints; DELETE FROM Fixtures;",
+      "FROM GameState; DELETE FROM LeaguePoints; DELETE FROM Fixtures; "
+      "DELETE FROM FinanceLedger; DELETE FROM InboxMessages; DELETE FROM "
+      "BoardState; DELETE FROM WorldState; DELETE FROM Staff; DELETE FROM "
+      "TeamTraining; DELETE FROM PlayerTraining;",
       nullptr, nullptr, nullptr);
   sqlite3_exec(db_conn->getRaw(),
                "INSERT OR IGNORE INTO Teams (id, league_id, name, balance) "
@@ -137,6 +202,7 @@ void GameData::generateAndSaveInitialData()
                nullptr, nullptr, nullptr);
   Logger::debug("Database initialized. Generating data.");
 
+  if (!world_seed_set) world_seed = defaultWorldSeed();
   auto leagues_data = DataGenerator::generateLeagues();
   auto all_teams = DataGenerator::generateTeams();
 
@@ -149,6 +215,7 @@ void GameData::generateAndSaveInitialData()
     {
       _teams.try_emplace(team.getId(), team);
     }
+    WorldGeneration::generateClubProfiles(_teams, world_seed, true);
 
     // Populate _teamsVec so we can use insertTeamsWithId
     _teamsVec.clear();
@@ -168,7 +235,9 @@ void GameData::generateAndSaveInitialData()
       leagueRepo.insertLeagueWithId(league_data);
       _leagues.try_emplace(league_data.getId(),
                            League(league_data.getId(), league_data.getName(),
-                                  league_teams_map[league_data.getId()]));
+                                  league_teams_map[league_data.getId()],
+                                  league_data.getParentLeagueID(),
+                                  league_data.getTieBreakRule()));
     }
 
     // DataGenerator::generatePlayers depends on GameData::getTeamsVector()
@@ -197,11 +266,24 @@ void GameData::generateAndSaveInitialData()
 
     playerRepo.insertPlayers(_playersVec);
 
+    for (const auto& [id, player] : _players)
+      next_player_id = std::max(next_player_id, id + 1);
+    const auto economies = buildLeagueEconomies(*this);
+    for (auto& [id, team] : _teams)
+    {
+      const auto economy = economies.find(team.getLeagueId());
+      if (id == FREE_AGENTS_TEAM_ID || economy == economies.end()) continue;
+      WorldGeneration::applyOpeningBudgets(
+          team, economy->second,
+          team.getFinances().getCurrentWageSpending(*this, team));
+    }
+
     for (auto& [id, team] : _teams)
     {
       team.generateStartingXI(*this, stats_config);
     }
     teamRepo.updateTeamsState(_teamsVec);
+    WorldStateRepository(db_conn).saveWorldState(world_seed, next_player_id);
 
     db_conn->commitTransaction();
   }
@@ -210,10 +292,80 @@ void GameData::generateAndSaveInitialData()
     db_conn->rollbackTransaction();
     throw;
   }
+  for (auto& [id, team] : _teams) team.getFinances().markPersisted();
+}
+
+void GameData::migrateSchema() const
+{
+  // Creates tables introduced after this save was written (the schema is
+  // idempotent), then adds new columns to existing tables.
+  db_conn->initialize();
+  for (const char* migration : LEGACY_COLUMN_MIGRATIONS)
+    sqlite3_exec(db_conn->getRaw(), migration, nullptr, nullptr, nullptr);
+}
+
+void GameData::restoreWorldState()
+{
+  PlayerID max_player_id = 0;
+  for (const auto& [id, player] : _players)
+    max_player_id = std::max(max_player_id, id);
+  if (!WorldStateRepository(db_conn).loadWorldState(world_seed, next_player_id))
+  {
+    // Saves from before the world simulation get a stable derived seed.
+    world_seed = mixHash(0x1E6AC75EEDULL, max_player_id);
+  }
+  next_player_id = std::max(next_player_id, max_player_id + 1);
+
+  const auto ledgers = FinanceRepository(db_conn).loadAll();
+  for (auto& [id, team] : _teams)
+  {
+    const auto ledger = ledgers.find(id);
+    if (ledger == ledgers.end()) continue;  // Legacy: opening entry pending.
+    Finances& finances = team.getFinances();
+    const std::int64_t stored_balance = finances.getBalance();
+    finances.restoreLedger(ledger->second);
+    if (finances.getBalance() != stored_balance &&
+        !finances.getLedger().empty())
+    {
+      finances.record(finances.getLedger().back().date,
+                      FinanceCategory::Adjustment,
+                      stored_balance - finances.getBalance());
+    }
+  }
+
+  // Saves from before the world simulation: derive club profiles, budgets
+  // and hidden player attributes deterministically.
+  const bool legacy_clubs =
+      std::ranges::any_of(_teams,
+                          [](const auto& entry)
+                          {
+                            return entry.first != FREE_AGENTS_TEAM_ID &&
+                                   entry.second.getReputation() == 0;
+                          });
+  if (legacy_clubs)
+  {
+    WorldGeneration::generateClubProfiles(_teams, world_seed, false);
+    const auto economies = buildLeagueEconomies(*this);
+    for (auto& [id, team] : _teams)
+    {
+      const auto economy = economies.find(team.getLeagueId());
+      if (id == FREE_AGENTS_TEAM_ID || economy == economies.end()) continue;
+      WorldGeneration::applyOpeningBudgets(
+          team, economy->second,
+          team.getFinances().getCurrentWageSpending(*this, team));
+    }
+  }
+  for (auto& [id, player] : _players)
+  {
+    if (player.getPotential() > 0.0f) continue;
+    WorldRng rng = WorldRng::stream(world_seed, RngDomain::Migration, id);
+    WorldGeneration::initializeHiddenAttributes(player, rng, stats_config);
+  }
 }
 
 void GameData::loadExistingData()
 {
+  migrateSchema();
   TeamRepository teamRepo(db_conn);
   LeagueRepository leagueRepo(db_conn);
   PlayerRepository playerRepo(db_conn);
@@ -262,6 +414,8 @@ void GameData::loadExistingData()
       team_it->second.addPlayerID(playerId);
     }
   }
+
+  restoreWorldState();
 
   _teamsVec.clear();
   _teamsVec.reserve(_teams.size());
@@ -474,6 +628,7 @@ bool GameData::removePlayer(PlayerID id)
   std::erase_if(_playersVec,
                 [id](const auto& ref) { return ref.get().getId() == id; });
   _players.erase(player_it);
+  removed_player_ids.push_back(id);
   return true;
 }
 
@@ -493,6 +648,26 @@ void GameData::transferPlayer(PlayerID id, TeamID new_team_id)
 
   _teamPlayers[new_team_id].push_back(it->second);
 }
+
+// ---------------- World state ----------------
+void GameData::setWorldSeed(std::uint64_t seed)
+{
+  world_seed = seed;
+  world_seed_set = true;
+}
+
+std::uint64_t GameData::getWorldSeed() const { return world_seed; }
+
+PlayerID GameData::allocatePlayerId() { return next_player_id++; }
+
+PlayerID GameData::peekNextPlayerId() const { return next_player_id; }
+
+const std::vector<PlayerID>& GameData::getRemovedPlayerIds() const
+{
+  return removed_player_ids;
+}
+
+void GameData::clearRemovedPlayerIds() { removed_player_ids.clear(); }
 
 // ---------------- Transfer Market ----------------
 void GameData::saveTransferListing(const TransferListing& listing) const

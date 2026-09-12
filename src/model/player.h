@@ -8,15 +8,19 @@
 
 #pragma once
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include "global/global.h"
 #include "global/languages.h"
 #include "global/stats_config.h"
 #include "global/types.h"
+#include "model/injury.h"
 
 /**
  * @enum Foot
@@ -36,6 +40,52 @@ enum class TransferStatus
 {
   Listed,
   NotListed
+};
+
+/**
+ * @struct PlayerTraits
+ * @brief Hidden personality and physical traits on a 1-100 scale.
+ *
+ * Professionalism scales training effort and slows decline, ambition drives
+ * expectations about playing time and wages, temperament damps morale swings
+ * (high = composed), loyalty softens reactions to transfer interest and
+ * injury proneness scales the injury hazard (50 = average).
+ */
+struct PlayerTraits
+{
+  std::uint8_t professionalism = 50;
+  std::uint8_t ambition = 50;
+  std::uint8_t temperament = 50;
+  std::uint8_t loyalty = 50;
+  std::uint8_t injury_proneness = 50;
+};
+
+/**
+ * @struct PlayerDynamics
+ * @brief Day-to-day state that changes between matches.
+ *
+ * Day stamps are day ordinals (see dayOrdinal() in world_rng.h); 0 means
+ * "never".
+ */
+struct PlayerDynamics
+{
+  static constexpr std::size_t FORM_WINDOW = 5;
+
+  float condition = 100.0f;   /*!< 0-100 physical freshness. */
+  float sharpness = 60.0f;    /*!< 0-100 match fitness. */
+  float morale = 60.0f;       /*!< 0-100. */
+  float playing_share = 0.0f; /*!< Smoothed share of minutes played. */
+  InjuryType injury = InjuryType::None;
+  std::uint16_t injury_days = 0; /*!< Days until fit again. */
+  InjuryType last_injury = InjuryType::None;
+  std::int32_t last_injury_day = 0;
+  std::int32_t last_match_day = 0;
+  std::uint16_t season_appearances = 0;
+  std::uint16_t season_minutes = 0;
+  std::uint16_t week_minutes = 0;
+  std::uint8_t transfer_interest_weeks = 0; /*!< Unsettled by a bid. */
+  std::uint8_t rating_count = 0;
+  std::array<float, FORM_WINDOW> recent_ratings{}; /*!< Newest first. */
 };
 
 /**
@@ -135,20 +185,52 @@ class Player
   /** @brief Sets the player's stats map. */
   void setStats(const std::map<std::string, float>& new_stats);
 
-  /** @brief Increases the player's age by 1. */
+  /**
+   * @brief Increases the player's age by 1 and applies yearly ageing.
+   *
+   * Physical attributes decline first (-1%/year at 30-32, -3%/year after 32,
+   * stamina at half rate), technical attributes from 32 and vision from 35.
+   * Professional players decline more slowly.
+   */
   void agePlayer();
 
   /**
-   * @brief Checks if the player is ready for retirement.
-   * @return True if the player retires, false otherwise.
+   * @brief Improves every listed stat by @p amount (clamped to the maximum).
+   *
+   * Because role weights sum to one, training all of a role's focus stats by
+   * x raises the overall rating by x.
    */
-  bool checkRetirement() const;
+  void train(const std::vector<std::string>& focus_stats,
+             float amount = PLAYER_STAT_INCREASE_BASE);
 
-  /**
-   * @brief Trains the player, improving specific focus stats.
-   * @param focus_stats The stats to focus on during training.
-   */
-  void train(const std::vector<std::string>& focus_stats);
+  // Hidden attributes & dynamic state
+
+  /** @brief Hidden potential on the overall-rating scale (never shown raw). */
+  float getPotential() const;
+
+  /** @brief Sets the hidden potential. */
+  void setPotential(float potential);
+
+  /** @brief Hidden personality traits. */
+  const PlayerTraits& getTraits() const;
+
+  /** @brief Replaces the hidden personality traits. */
+  void setTraits(const PlayerTraits& traits);
+
+  /** @brief Condition, sharpness, morale, injury and form state. */
+  const PlayerDynamics& getDynamics() const;
+
+  /** @brief Mutable dynamic state for the world simulation. */
+  PlayerDynamics& mutableDynamics();
+
+  /** @brief True when the player is fit enough to be selected. */
+  bool isAvailable() const;
+
+  /** @brief Average of the recent match ratings, 0 when none. */
+  float getForm() const;
+
+  /** @brief Records a match rating (1-10) in the recent form window. */
+  void pushMatchRating(float rating);
 
   // Market Value & Transfer Logic
 
@@ -190,6 +272,10 @@ class Player
   uint8_t _contract_years;
   uint8_t _height;
   Foot _foot;
+
+  float _potential = 0.0f;
+  PlayerTraits _traits;
+  PlayerDynamics _dynamics;
 
   // stats container
   std::map<std::string, float> _stats;

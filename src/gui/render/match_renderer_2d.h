@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <imgui.h>
+
 #include "gui/render/imatch_renderer.h"
 #include "gui/scenes/match_scene_tuning.h"
 
@@ -32,3 +34,11 @@ class MatchRenderer2D final : public IMatchRenderer
  */
 MatchViewport computeMatchViewport(float topLeftX, float topLeftY,
                                    float availableWidth, float availableHeight);
+
+/** Short English description of a player's current intent (tooltips). */
+const char* playerIntentLabel(PlayerIntent intent);
+
+/** Goal flash and banner centred on the viewport; shared by both views. */
+void drawGoalCelebration(ImDrawList& drawList, const MatchViewport& viewport,
+                         int homeScore, int awayScore,
+                         float celebrationRemaining);

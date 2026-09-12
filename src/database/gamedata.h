@@ -20,7 +20,9 @@
 #include "global/types.h"
 #include "model/league.h"
 #include "model/player.h"
+#include "model/staff.h"
 #include "model/team.h"
+#include "model/training.h"
 
 struct TransferListing;
 
@@ -106,6 +108,40 @@ class GameData
   bool removePlayer(PlayerID id);
   void transferPlayer(PlayerID id, TeamID new_team_id);
 
+  // ---------------- World state ----------------
+  /**
+   * @brief Seeds the generation of a new world (call before loadFromDB).
+   *
+   * Without an explicit seed a new world uses FM_WORLD_SEED from the
+   * environment or, failing that, the system clock. Loaded saves use their
+   * stored seed.
+   */
+  void setWorldSeed(std::uint64_t seed);
+
+  /** @brief Seed of every random stream of the world simulation. */
+  std::uint64_t getWorldSeed() const;
+
+  /** @brief Returns a new, never reused player id. */
+  PlayerID allocatePlayerId();
+
+  /** @brief The id the next allocatePlayerId() call will return. */
+  PlayerID peekNextPlayerId() const;
+
+  /** @brief Players removed (retired) since the last save. */
+  const std::vector<PlayerID>& getRemovedPlayerIds() const;
+
+  /** @brief Forgets removed players once their deletion is persisted. */
+  void clearRemovedPlayerIds();
+
+  // ---------------- Staff & training ----------------
+  /** @brief Coaches, medics and scouts of every club plus the staff market. */
+  StaffRoster& getStaff() { return staff; }
+  const StaffRoster& getStaff() const { return staff; }
+
+  /** @brief Training plans, familiarity and player workloads. */
+  TrainingRegistry& getTraining() { return training; }
+  const TrainingRegistry& getTraining() const { return training; }
+
   // ---------------- Transfer Market ----------------
   /**
    * @brief Saves a transfer listing to the database (UPSERT).
@@ -133,8 +169,17 @@ class GameData
       _teamPlayers;
   StatsConfig stats_config;
   std::shared_ptr<DatabaseConnection> db_conn;
+  std::uint64_t world_seed = 0;
+  bool world_seed_set = false;
+  PlayerID next_player_id = 1;
+  std::vector<PlayerID> removed_player_ids;
+  StaffRoster staff;
+  TrainingRegistry training;
 
   void loadStatsConfig();
   void generateAndSaveInitialData();
   void loadExistingData();
+  void migrateSchema() const;
+  void restoreWorldState();
+  void restoreStaffAndTraining();
 };

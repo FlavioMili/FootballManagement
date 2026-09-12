@@ -22,6 +22,11 @@ void GUIScene::onExit()
   // Default implementation - can be overridden by derived classes
 }
 
+void GUIScene::onResume()
+{
+  // Default implementation - can be overridden by derived classes
+}
+
 void GUIScene::handleEvent(const SDL_Event& /*event*/)
 {
   // Default implementation

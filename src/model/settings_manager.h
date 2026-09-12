@@ -9,6 +9,8 @@
 #pragma once
 #include <SDL3/SDL.h>
 
+#include <cstdint>
+
 #include "global/languages.h"
 
 /**
@@ -22,6 +24,14 @@ struct Settings
   int resolution_height = 720;      /**< Screen resolution height */
   bool fullscreen = false;          /**< Fullscreen mode flag */
   int fps_limit = 60;               /**< Frames per second limit */
+
+  // Appearance (applied live by the GUI theme)
+  int theme_preset = 0;            /**< Index of the colour preset */
+  bool club_accent = true;         /**< Accent follows the managed club */
+  uint32_t accent_rgb = 0x21A663;  /**< Custom accent colour, 0xRRGGBB */
+  float ui_scale = 0.0f;           /**< 0 = automatic (display scale) */
+  bool compact_density = false;    /**< Denser tables and controls */
+  bool reduced_motion = false;     /**< Avoid non-essential animation */
 };
 
 /**

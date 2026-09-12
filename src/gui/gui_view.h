@@ -81,6 +81,22 @@ class GUIView
   void popScene();
 
   /**
+   * @brief Routine navigation: removes every overlay and shows a new screen.
+   * @param scene Screen to show above the base scene, or nullptr to return
+   * to the base scene itself.
+   *
+   * Unlike popScene() followed by overlayScene(), this is a single deferred
+   * action, so it can safely be requested from inside a scene's render().
+   */
+  void navigateTo(std::unique_ptr<GUIScene> scene);
+
+  /** @brief The scene underneath all overlays (e.g. the club dashboard). */
+  GUIScene* getBaseScene() const;
+
+  /** @brief Number of overlays currently stacked above the base scene. */
+  size_t getOverlayDepth() const;
+
+  /**
    * @brief Stops the run loop and quits.
    */
   void quit();
@@ -105,13 +121,18 @@ class GUIView
    */
   GameController& getController() const;
 
+  /** Re-applies appearance settings (theme, scale, density) live. */
+  void refreshTheme();
+
   /** Captures the current renderer contents as a BMP image. */
   bool captureScreenshot(std::string_view path) const;
 
  private:
   friend class GameFlowTest_GUIFlowLifecycle_Test;
+  friend class GameFlowTest_ManagementScreensMidSeason_Test;
   bool initialize();
-  void applyCatppuccinLatteTheme();
+  void applyManagementTheme();
+  float displayScale() const;
   void handleEvents();
   void update(float deltaTime);
   void render();
@@ -147,7 +168,8 @@ class GUIView
     NONE,
     CHANGE,
     OVERLAY,
-    POP
+    POP,
+    NAVIGATE
   };
   PendingAction pendingAction = PendingAction::NONE;
   std::unique_ptr<GUIScene> pendingScene;

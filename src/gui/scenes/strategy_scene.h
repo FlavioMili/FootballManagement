@@ -7,13 +7,13 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
-#include "gui/gui_scene.h"
+#include "gui/scenes/management_scene.h"
 #include "model/strategy.h"
 
 /**
  * @brief Scene for managing team strategy.
  */
-class StrategyScene : public GUIScene
+class StrategyScene : public ManagementScene
 {
  public:
   /**
@@ -28,20 +28,10 @@ class StrategyScene : public GUIScene
   ~StrategyScene() override = default;
 
   /**
-   * @brief Called when entering the scene.
-   */
-  void onEnter() override;
-
-  /**
    * @brief Updates scene logic.
    * @param deltaTime Time elapsed since last update.
    */
   void update(float deltaTime) override;
-
-  /**
-   * @brief Renders the scene.
-   */
-  void render() override;
 
   /**
    * @brief Gets the ID of this scene.
@@ -49,9 +39,22 @@ class StrategyScene : public GUIScene
    */
   [[nodiscard]] SceneID getID() const override;
 
+ protected:
+  void renderContent() override;
+  [[nodiscard]] NavSection navSection() const override
+  {
+    return NavSection::TACTICS;
+  }
+  void refresh() override { loadStrategy(); }
+
  private:
+  void renderInstructions(float width);
+  void renderSummary(float width);
+  [[nodiscard]] bool hasUnsavedChanges() const;
   void saveStrategy();
   void loadStrategy();
 
   StrategySliders current_sliders;
+  StrategySliders saved_sliders;
+  int selected_preset = -1;
 };

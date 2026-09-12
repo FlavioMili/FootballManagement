@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include "gui/render/match_render_snapshot.h"
 
 /** Screen-space rectangle the renderer draws the pitch into. */
@@ -19,10 +21,29 @@ struct MatchViewport
   float height = 500.0f;
 };
 
+/** Camera presets offered by the 3D broadcast renderer. */
+enum class MatchCameraMode : std::uint8_t
+{
+  BROADCAST,     /**< Elevated side-on TV camera tracking the ball. */
+  TACTICAL,      /**< High, near top-down view of the whole pitch. */
+  END,           /**< Behind the play, looking along the attack. */
+  PLAYER_FOLLOW, /**< Low chase camera behind the ball carrier. */
+};
+
 /** Presentation-only switches passed to a renderer. */
 struct MatchRenderOptions
 {
   bool showAiDebug = false;
+  /** Always label every player instead of only the ball carrier. */
+  bool showPlayerNames = false;
+  /** Real (unscaled) seconds since the previous rendered frame. */
+  float frameSeconds = 0.0f;
+  /** Mouse-wheel steps over the viewport since the previous frame. */
+  float zoomSteps = 0.0f;
+  MatchCameraMode cameraMode = MatchCameraMode::BROADCAST;
+  /** Short team labels for the in-view score bug; may be null. */
+  const char* homeLabel = nullptr;
+  const char* awayLabel = nullptr;
 };
 
 /**

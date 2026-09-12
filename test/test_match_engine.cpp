@@ -9,15 +9,18 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <cstdio>
 #include <filesystem>
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "gui/render/match_render_snapshot.h"
 #include "global/runtime_paths.h"
+#include "gui/render/match_render_snapshot.h"
 #include "model/match_engine.h"
 #include "model/player.h"
 #include "model/team.h"
@@ -96,12 +99,28 @@ TEST(MatchEngineTest, CompletesARealisticMatch)
   simulateToFullTime(engine);
 
   EXPECT_EQ(engine.getState(), MatchState::FULL_TIME);
-  EXPECT_FLOAT_EQ(engine.getMatchTimeMinutes(), 90.0f);
+  // The match ends once the second-half added time has been played.
+  const int addedMinutes = engine.getAddedMinutes(2);
+  EXPECT_GE(addedMinutes, MatchTuning::Stoppage::MIN_ADDED_MINUTES);
+  EXPECT_LE(addedMinutes, MatchTuning::Stoppage::MAX_ADDED_MINUTES);
+  EXPECT_GE(engine.getMatchTimeMinutes(), 90.0f + addedMinutes);
+  EXPECT_LE(engine.getMatchTimeMinutes(),
+            90.0f + MatchTuning::Stoppage::MAX_ADDED_MINUTES +
+                MatchTuning::Stoppage::MAX_OVERRUN_MINUTES);
+  EXPECT_GE(engine.getAddedMinutes(1),
+            MatchTuning::Stoppage::MIN_ADDED_MINUTES);
+  ASSERT_FALSE(engine.getEvents().empty());
+  EXPECT_EQ(engine.getEvents().back().type, MatchEventType::FULL_TIME);
   const MatchStats& stats = engine.getStats();
   EXPECT_GE(stats.homeShots + stats.awayShots, 4);
   EXPECT_LE(stats.homeShots + stats.awayShots, 40);
-  EXPECT_LE(engine.getHomeScore(), stats.homeOnTarget);
-  EXPECT_LE(engine.getAwayScore(), stats.awayOnTarget);
+  // Goals are shots on target, except own goals credited to the other side.
+  int homeOwnGoalsFor = 0;
+  int awayOwnGoalsFor = 0;
+  for (const PlayerMatchStats& entry : engine.getPlayerStats())
+    (entry.isHomeTeam ? awayOwnGoalsFor : homeOwnGoalsFor) += entry.ownGoals;
+  EXPECT_LE(engine.getHomeScore(), stats.homeOnTarget + homeOwnGoalsFor);
+  EXPECT_LE(engine.getAwayScore(), stats.awayOnTarget + awayOwnGoalsFor);
   EXPECT_NEAR(stats.homePossession + stats.awayPossession, 100.0f, 0.01f);
   EXPECT_NE(engine.getDebugSnapshotJson().find("\"full_time\""),
             std::string::npos);
@@ -666,6 +685,10 @@ TEST(MatchEngineTest, StrongerTeamHasStatisticalAdvantage)
 
   int strongGoals = 0;
   int weakGoals = 0;
+  int setPieceGoals = 0;
+  int penaltyGoals = 0;
+  int headedGoals = 0;
+  int strongShots = 0;
   int totalGoals = 0;
   int totalShots = 0;
   int totalPassesAttempted = 0;
@@ -680,6 +703,10 @@ TEST(MatchEngineTest, StrongerTeamHasStatisticalAdvantage)
     MatchEngine engine(strong.getLineup(), weak.getLineup(),
                        strong.getStrategy(), weak.getStrategy(), config, seed);
     simulateToFullTime(engine, 0.1f);
+    setPieceGoals += engine.getStats().homeSetPieceGoals;
+    penaltyGoals += engine.getStats().homePenaltyGoals;
+    headedGoals += engine.getStats().homeHeadedGoals;
+    strongShots += engine.getStats().homeShots;
     strongGoals += engine.getHomeScore();
     weakGoals += engine.getAwayScore();
     totalGoals += engine.getHomeScore() + engine.getAwayScore();
@@ -734,7 +761,11 @@ TEST(MatchEngineTest, StrongerTeamHasStatisticalAdvantage)
   EXPECT_GT(shotsPerMatch, 12.0f) << "goals/match=" << goalsPerMatch;
   EXPECT_LT(shotsPerMatch, 36.0f) << "goals/match=" << goalsPerMatch;
   EXPECT_GT(goalsPerMatch, 1.0f) << "shots/match=" << shotsPerMatch;
-  EXPECT_LT(goalsPerMatch, 5.5f) << "shots/match=" << shotsPerMatch;
+  EXPECT_LT(goalsPerMatch, 5.5f)
+      << "shots/match=" << shotsPerMatch << " strong=" << strongGoals
+      << " weak=" << weakGoals << " xG/shot=" << expectedGoalsPerShot
+      << " strongShots=" << strongShots << " setPieceGoals=" << setPieceGoals
+      << " penaltyGoals=" << penaltyGoals << " headedGoals=" << headedGoals;
   EXPECT_GT(expectedGoalsPerShot, 0.04f);
   EXPECT_LT(expectedGoalsPerShot, 0.28f);
   EXPECT_GT(passCompletion, 0.60f);
@@ -791,4 +822,429 @@ TEST(MatchEngineTest, ScoredGoalCelebratesBeforeKickoff)
   EXPECT_EQ(celebrations, goalsByEvent);
   EXPECT_TRUE(sawBallBeyondLine)
       << "The scored ball must visibly enter the net past the goal line";
+}
+
+namespace
+{
+/** A full squad: the dummy starting XI plus a seven-player bench. */
+Team createSquadWithBench(TeamID id, const std::string& name, int rating,
+                          std::vector<std::unique_ptr<Player>>& players)
+{
+  Team team = createDummyTeam(id, name, rating, players);
+  static constexpr PlayerRole BENCH[7] = {
+      PlayerRole::GK, PlayerRole::CB, PlayerRole::RB, PlayerRole::CM,
+      PlayerRole::LW, PlayerRole::ST, PlayerRole::ST};
+  std::vector<const Player*> reserves;
+  for (uint32_t index = 0; index < 7; ++index)
+  {
+    const float value = static_cast<float>(rating);
+    const std::map<std::string, float> stats = {
+        {"Pace", value},      {"Shooting", value},  {"Passing", value},
+        {"Dribbling", value}, {"Defending", value}, {"Physicality", value},
+        {"Stamina", value},   {"Vision", value},    {"Goalkeeping", value}};
+    auto player = std::make_unique<Player>(
+        static_cast<PlayerID>(id) * 100U + 50U + index, id, "Bench",
+        std::to_string(index), BENCH[index], Language::EN, 100'000, 0, 25, 3,
+        182, Foot::Right, stats);
+    reserves.push_back(player.get());
+    players.push_back(std::move(player));
+  }
+  team.getLineup().setReserves(reserves);
+  return team;
+}
+
+int activePlayers(const MatchEngine& engine, bool homeTeam)
+{
+  return static_cast<int>(std::ranges::count_if(
+      engine.getPlayers(), [homeTeam](const MatchPlayer& player)
+      { return player.onPitch && player.isHomeTeam == homeTeam; }));
+}
+
+/** Advances fixed steps until play next stops (a new restart begins). */
+bool advanceToNextStoppage(MatchEngine& engine)
+{
+  bool sawPlay = false;
+  for (int step = 0; step < 20'000; ++step)
+  {
+    if (engine.getState() == MatchState::FULL_TIME) return false;
+    engine.update(MatchTuning::Timing::FIXED_STEP_SECONDS);
+    const MatchState state = engine.getState();
+    if (state == MatchState::PLAYING)
+      sawPlay = true;
+    else if (sawPlay && state != MatchState::GOAL &&
+             state != MatchState::FULL_TIME)
+      return true;
+  }
+  return false;
+}
+}  // namespace
+
+TEST(MatchEngineTest, StructuredEventsAndPlayerStatsAreConsistent)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 72, players);
+  Team away = createSquadWithBench(2, "Away", 64, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 2024);
+  simulateToFullTime(engine, 0.1f);
+  ASSERT_EQ(engine.getState(), MatchState::FULL_TIME);
+
+  int homeGoals = 0;
+  int awayGoals = 0;
+  int homePassesAttempted = 0;
+  int awayPassesAttempted = 0;
+  for (const PlayerMatchStats& entry : engine.getPlayerStats())
+  {
+    EXPECT_NE(entry.playerId, 0u);
+    EXPECT_LE(entry.passesCompleted, entry.passesAttempted);
+    EXPECT_LE(entry.shotsOnTarget, entry.shots);
+    EXPECT_LE(entry.goals, entry.shotsOnTarget);
+    EXPECT_GE(entry.rating, MatchTuning::Rating::MINIMUM);
+    EXPECT_LE(entry.rating, MatchTuning::Rating::MAXIMUM);
+    EXPECT_GE(entry.condition, MatchTuning::Player::MINIMUM_STAMINA);
+    EXPECT_LE(entry.condition, 1.0f);
+    (entry.isHomeTeam ? homeGoals : awayGoals) += entry.goals;
+    (entry.isHomeTeam ? awayGoals : homeGoals) += entry.ownGoals;
+    (entry.isHomeTeam ? homePassesAttempted : awayPassesAttempted) +=
+        entry.passesAttempted;
+    if (entry.started && !entry.substitutedOff && !entry.sentOff &&
+        !entry.injured)
+    {
+      // A full-match player is on the pitch for every clock minute played.
+      EXPECT_NEAR(entry.minutesPlayed, engine.getElapsedMatchMinutes(), 0.05f);
+      if (entry.role != PlayerRole::GK)
+        EXPECT_GT(entry.distanceMetres, 4'000.0f);
+    }
+  }
+  EXPECT_EQ(homeGoals, engine.getHomeScore());
+  EXPECT_EQ(awayGoals, engine.getAwayScore());
+  EXPECT_EQ(homePassesAttempted, engine.getStats().homePassesAttempted);
+  EXPECT_EQ(awayPassesAttempted, engine.getStats().awayPassesAttempted);
+
+  int goalEvents = 0;
+  int addedTimeEvents = 0;
+  bool sawSecondHalf = false;
+  for (const MatchEvent& event : engine.getEvents())
+  {
+    EXPECT_TRUE(event.period == 1 || event.period == 2);
+    EXPECT_GE(event.addedMinute, 0.0f);
+    if (event.type == MatchEventType::GOAL ||
+        event.type == MatchEventType::OWN_GOAL)
+    {
+      ++goalEvents;
+      EXPECT_TRUE(event.hasTeam);
+      EXPECT_NE(event.primaryPlayerId, 0u);
+      EXPECT_EQ(event.description.rfind("GOAL!", 0), 0u);
+    }
+    if (event.type == MatchEventType::SHOT)
+    {
+      EXPECT_GT(event.xg, 0.0f);
+      EXPECT_NE(event.primaryPlayerId, 0u);
+    }
+    if (event.type == MatchEventType::ADDED_TIME) ++addedTimeEvents;
+    if (event.type == MatchEventType::SECOND_HALF)
+    {
+      sawSecondHalf = true;
+      EXPECT_FLOAT_EQ(event.timeMinute, MatchTuning::Timing::HALF_TIME_MINUTE);
+      EXPECT_EQ(event.period, 2);
+    }
+    if (event.type == MatchEventType::HALF_TIME)
+    {
+      EXPECT_GE(event.timeMinute,
+                MatchTuning::Timing::HALF_TIME_MINUTE +
+                    static_cast<float>(engine.getAddedMinutes(1)));
+    }
+    if (event.type == MatchEventType::SUBSTITUTION)
+    {
+      EXPECT_NE(event.primaryPlayerId, 0u);
+      EXPECT_NE(event.secondaryPlayerId, 0u);
+    }
+  }
+  EXPECT_EQ(goalEvents, engine.getHomeScore() + engine.getAwayScore());
+  EXPECT_EQ(addedTimeEvents, 2);
+  EXPECT_TRUE(sawSecondHalf);
+  EXPECT_NE(engine.getDebugSnapshotJson().find("\"clock\":{\"period\":2"),
+            std::string::npos);
+}
+
+TEST(MatchEngineTest, SentOffPlayerLeavesThePitchForGood)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 65, players);
+  Team away = createSquadWithBench(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+
+  bool inspected = false;
+  for (uint32_t seed = 1; seed <= 400 && !inspected; ++seed)
+  {
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, seed);
+    std::size_t seenEvents = 0;
+    PlayerID sentOff = 0;
+    bool sentOffHome = false;
+    while (engine.getState() != MatchState::FULL_TIME)
+    {
+      engine.update(0.1f);
+      const auto& events = engine.getEvents();
+      for (; seenEvents < events.size() && sentOff == 0; ++seenEvents)
+      {
+        const MatchEvent& event = events[seenEvents];
+        if (event.type != MatchEventType::RED_CARD &&
+            event.type != MatchEventType::SECOND_YELLOW)
+          continue;
+        sentOff = event.primaryPlayerId;
+        sentOffHome = event.isHomeTeam;
+      }
+      if (sentOff == 0) continue;
+      for (const MatchPlayer& player : engine.getPlayers())
+      {
+        if (player.player && player.player->getId() == sentOff)
+          EXPECT_FALSE(player.onPitch);
+      }
+      EXPECT_LE(activePlayers(engine, sentOffHome), 10);
+      EXPECT_NE(engine.getBall().possessedBy &&
+                    engine.getBall().possessedBy->getId() == sentOff,
+                true);
+      inspected = true;
+    }
+    if (sentOff != 0)
+    {
+      const PlayerMatchStats* entry = engine.findPlayerStats(sentOff);
+      ASSERT_NE(entry, nullptr);
+      EXPECT_TRUE(entry->sentOff);
+      EXPECT_EQ(entry->redCards, 1);
+      // A dismissed player cannot be replaced.
+      EXPECT_FALSE(engine.substitutePlayer(sentOff, players.back().get()));
+    }
+  }
+  EXPECT_TRUE(inspected) << "no red card in the sampled seeds";
+}
+
+TEST(MatchEngineTest, InjuredPlayersAreReplacedOrLeaveThePitch)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 65, players);
+  Team away = createSquadWithBench(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+
+  int injuriesChecked = 0;
+  for (uint32_t seed = 1; seed <= 120 && injuriesChecked < 3; ++seed)
+  {
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, seed);
+    simulateToFullTime(engine, 0.1f);
+    for (const MatchEvent& event : engine.getEvents())
+    {
+      if (event.type != MatchEventType::INJURY) continue;
+      const PlayerMatchStats* entry =
+          engine.findPlayerStats(event.primaryPlayerId);
+      ASSERT_NE(entry, nullptr);
+      EXPECT_TRUE(entry->injured);
+      const bool replaced = std::ranges::any_of(
+          engine.getSubstitutions(),
+          [&event](const MatchSubstitution& change)
+          {
+            return change.outgoingPlayerId == event.primaryPlayerId &&
+                   change.reason == SubstitutionReason::INJURY;
+          });
+      const bool stillOn = std::ranges::any_of(
+          engine.getPlayers(),
+          [&event](const MatchPlayer& player)
+          {
+            return player.onPitch && player.player &&
+                   player.player->getId() == event.primaryPlayerId;
+          });
+      // Injured players leave at the next stoppage unless play never stopped
+      // again before full time.
+      EXPECT_TRUE(replaced || !stillOn ||
+                  event.timeMinute > engine.getMatchTimeMinutes() - 2.0f)
+          << "injured player " << event.primaryPlayerId << " kept playing";
+      ++injuriesChecked;
+    }
+  }
+  EXPECT_GT(injuriesChecked, 0) << "no injury in the sampled seeds";
+}
+
+TEST(MatchEngineTest, AiSubstitutionsRespectTheLaws)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 66, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+
+  int totalSubstitutions = 0;
+  for (uint32_t seed = 1; seed <= 20; ++seed)
+  {
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, seed * 31U);
+    simulateToFullTime(engine, 0.1f);
+    for (const bool side : {true, false})
+    {
+      EXPECT_LE(engine.getSubstitutionsUsed(side),
+                MatchTuning::Rules::MAX_SUBSTITUTIONS_PER_TEAM);
+      EXPECT_LE(engine.getSubstitutionWindowsUsed(side),
+                MatchTuning::Substitution::MAX_WINDOWS);
+    }
+    std::vector<PlayerID> leftThePitch;
+    for (const MatchSubstitution& change : engine.getSubstitutions())
+    {
+      ++totalSubstitutions;
+      // Incoming players come from the bench and nobody returns.
+      EXPECT_GE(change.incomingPlayerId % 100U, 50u);
+      EXPECT_EQ(std::ranges::count(leftThePitch, change.incomingPlayerId), 0);
+      leftThePitch.push_back(change.outgoingPlayerId);
+      EXPECT_NE(change.reason, SubstitutionReason::MANUAL);
+    }
+  }
+  EXPECT_GT(totalSubstitutions, 20 * 2 * 2)
+      << "AI managers should use most of their substitutions";
+}
+
+TEST(MatchEngineTest, ManualSubstitutionsFollowLimitsAndWindows)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 66, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 99);
+  engine.setAutoSubstitutions(false, false);
+  const auto& bench = home.getLineup().getReserves();
+
+  // Two changes at the kick-off stoppage share one window.
+  EXPECT_TRUE(engine.substitutePlayer(109, bench[5]));
+  EXPECT_TRUE(engine.substitutePlayer(110, bench[6]));
+  EXPECT_EQ(engine.getSubstitutionWindowsUsed(true), 1);
+  // Nobody can come back on, and a bench player cannot come on twice.
+  EXPECT_FALSE(engine.substitutePlayer(107, bench[5]));
+  EXPECT_FALSE(engine.substitutePlayer(107, players[9].get()));
+
+  ASSERT_TRUE(advanceToNextStoppage(engine));
+  EXPECT_TRUE(engine.substitutePlayer(107, bench[4]));
+  EXPECT_EQ(engine.getSubstitutionWindowsUsed(true), 2);
+  ASSERT_TRUE(advanceToNextStoppage(engine));
+  EXPECT_TRUE(engine.substitutePlayer(105, bench[3]));
+  EXPECT_EQ(engine.getSubstitutionWindowsUsed(true), 3);
+  ASSERT_TRUE(advanceToNextStoppage(engine));
+  // The three windows are used: a fourth stoppage cannot open another.
+  EXPECT_FALSE(engine.canSubstitute(true));
+  EXPECT_FALSE(engine.substitutePlayer(102, bench[1]));
+  EXPECT_EQ(engine.getSubstitutionsUsed(true), 4);
+  EXPECT_TRUE(engine.canSubstitute(false));
+}
+
+TEST(MatchEngineTest, PenaltiesAreTakenByTheBestOutfieldShooter)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 65, players);
+  Team away = createSquadWithBench(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+  const Player* bestShooter = players[7].get();
+  std::map<std::string, float> sharp = bestShooter->getStats();
+  sharp["Shooting"] = 92.0f;
+  auto specialist = std::make_unique<Player>(
+      bestShooter->getId(), 1, "Spot", "Kick", PlayerRole::LW, Language::EN,
+      100'000, 0, 25, 3, 180, Foot::Right, sharp);
+  std::map<std::string, float> keeperStats = players[0]->getStats();
+  keeperStats["Shooting"] = 99.0f;
+  auto shootingKeeper = std::make_unique<Player>(
+      players[0]->getId(), 1, "Keeper", "Shooter", PlayerRole::GK, Language::EN,
+      100'000, 0, 25, 3, 190, Foot::Right, keeperStats);
+  home.getLineup().setGoalkeeper(shootingKeeper.get());
+  home.getLineup().removeOutfieldPlayer(bestShooter->getId());
+  home.getLineup().addOutfieldPlayer(specialist.get(), {0.68f, 0.16f});
+
+  int penaltiesChecked = 0;
+  for (uint32_t seed = 1; seed <= 300 && penaltiesChecked < 3; ++seed)
+  {
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, seed);
+    engine.setAutoSubstitutions(false, false);
+    simulateToFullTime(engine, 0.1f);
+    const PlayerMatchStats* specialistStats =
+        engine.findPlayerStats(specialist->getId());
+    ASSERT_NE(specialistStats, nullptr);
+    if (specialistStats->sentOff || specialistStats->injured) continue;
+    for (const MatchEvent& event : engine.getEvents())
+    {
+      if (event.type != MatchEventType::PENALTY || !event.isHomeTeam) continue;
+      EXPECT_EQ(event.primaryPlayerId, specialist->getId())
+          << "the penalty taker must be the best outfield shooter";
+      ++penaltiesChecked;
+    }
+  }
+  EXPECT_GT(penaltiesChecked, 0) << "no home penalty in the sampled seeds";
+}
+
+TEST(MatchEngineTest, ConditionCanBeCarriedBetweenMatches)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 65, players);
+  Team away = createSquadWithBench(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 5150);
+  engine.setAutoSubstitutions(false, false);
+  ASSERT_TRUE(engine.setPlayerCondition(105, 0.7f));
+  EXPECT_FLOAT_EQ(engine.getPlayerCondition(105).value_or(0.0f), 0.7f);
+  EXPECT_FALSE(engine.getPlayerCondition(999'999).has_value());
+
+  simulateToFullTime(engine, 0.1f);
+  EXPECT_FALSE(engine.setPlayerCondition(106, 0.5f))
+      << "condition can only be set before kick-off";
+  const float tired = engine.getPlayerCondition(105).value_or(1.0f);
+  const float fresh = engine.getPlayerCondition(106).value_or(0.0f);
+  EXPECT_LT(tired, 0.7f);
+  EXPECT_LT(fresh, 0.95f) << "a full match must cost condition";
+  EXPECT_GT(fresh, tired);
+  EXPECT_GE(tired, MatchTuning::Player::MINIMUM_STAMINA);
+}
+
+TEST(MatchEngineTest, GoalkeeperStateMachineCoversTheMatch)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 70, players);
+  Team away = createSquadWithBench(2, "Away", 70, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 4321);
+  std::map<GoalkeeperState, int> observed;
+  while (engine.getState() != MatchState::FULL_TIME)
+  {
+    engine.update(MatchTuning::Timing::FIXED_STEP_SECONDS * 2.0f);
+    ++observed[engine.getHomeGoalkeeperState()];
+    ++observed[engine.getAwayGoalkeeperState()];
+  }
+  EXPECT_GT(observed[GoalkeeperState::SET_POSITION], 0);
+  EXPECT_GT(observed[GoalkeeperState::DIVE], 0);
+  EXPECT_GT(observed[GoalkeeperState::HOLD], 0);
+  EXPECT_GT(observed[GoalkeeperState::DISTRIBUTE] +
+                observed[GoalkeeperState::RECOVER],
+            0);
+  EXPECT_EQ(goalkeeperStateName(GoalkeeperState::DIVE), "dive");
+}
+
+TEST(MatchEngineTest, FullHeadlessMatchIsFast)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 70, players);
+  Team away = createSquadWithBench(2, "Away", 70, players);
+  const StatsConfig config = createStatsConfig();
+  const auto started = std::chrono::steady_clock::now();
+  constexpr int MATCHES = 10;
+  for (uint32_t seed = 1; seed <= MATCHES; ++seed)
+  {
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, seed);
+    simulateToFullTime(engine, 0.25f);
+    EXPECT_EQ(engine.getState(), MatchState::FULL_TIME);
+  }
+  const double milliseconds = std::chrono::duration<double, std::milli>(
+                                  std::chrono::steady_clock::now() - started)
+                                  .count() /
+                              MATCHES;
+  RecordProperty("milliseconds_per_match", std::to_string(milliseconds));
+  std::printf("[timing] headless match %.2f ms\n", milliseconds);
+  EXPECT_LT(milliseconds, 100.0);
 }

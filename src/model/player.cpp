@@ -12,12 +12,12 @@
 #include <cmath>
 #include <cstdint>
 #include <map>
-#include <random>
 #include <string>
 #include <utility>
 
 #include "global/global.h"
 #include "role_utils.h"
+#include "world_tuning.h"
 
 Player::Player(PlayerID new_id, TeamID new_team_id,
                std::string_view new_first_name, std::string_view new_last_name,
@@ -74,12 +74,17 @@ void Player::setWage(uint32_t wage) { _wage = wage; }
 
 uint8_t Player::getContractYears() const { return _contract_years; }
 
-void Player::setContractYears(uint8_t years) { _contract_years = years; }
+void Player::setContractYears(uint8_t years)
+{
+  _contract_years = years;
+  _cached_market_value = 0;
+}
 
 bool Player::advanceContractYear()
 {
   if (_contract_years == 0) return false;
   --_contract_years;
+  _cached_market_value = 0;
   return _contract_years == 0;
 }
 
@@ -122,71 +127,112 @@ double Player::getOverall(const StatsConfig& stats_config) const
   return overall;
 }
 
+namespace
+{
+enum class StatGroup
+{
+  Physical,
+  Endurance,
+  Technical,
+  Mental
+};
+
+StatGroup statGroup(std::string_view stat)
+{
+  if (stat == "Pace" || stat == "Physicality") return StatGroup::Physical;
+  if (stat == "Stamina") return StatGroup::Endurance;
+  if (stat == "Vision") return StatGroup::Mental;
+  return StatGroup::Technical;
+}
+
+float yearlyDecline(StatGroup group, int age)
+{
+  using Tuning = WorldTuning::Development;
+  switch (group)
+  {
+    case StatGroup::Physical:
+    case StatGroup::Endurance:
+    {
+      float rate = 0.0f;
+      if (age > 32)
+        rate = Tuning::PHYSICAL_DECLINE_AFTER_32;
+      else if (age >= 30)
+        rate = Tuning::PHYSICAL_DECLINE_30_32;
+      return group == StatGroup::Endurance ? rate * 0.5f : rate;
+    }
+    case StatGroup::Technical:
+      if (age > 33) return Tuning::TECHNICAL_DECLINE_AFTER_33;
+      if (age >= 32) return Tuning::TECHNICAL_DECLINE_32_33;
+      return 0.0f;
+    case StatGroup::Mental:
+      return age > 34 ? Tuning::MENTAL_DECLINE_AFTER_34 : 0.0f;
+  }
+  return 0.0f;
+}
+}  // namespace
+
 void Player::agePlayer()
 {
   ++_age;
   _cached_market_value = 0;
 
-  if (_age < PLAYER_AGE_FACTOR_DECLINE_AGE) return;
-
-  float age_factor =
-      1.0f - (static_cast<float>(_age) - PLAYER_AGE_FACTOR_DECLINE_AGE + 1.0f) *
-                 PLAYER_AGE_FACTOR_DECAY_RATE;
-
-  // Ensure age_factor doesn't make decay negative (growth) unexpectedly here
-  // though formula suggests it decreases.
-  float decay = PLAYER_STAT_INCREASE_BASE * (1.0f - std::max(0.0f, age_factor));
-
-  for (auto& [statName, value] : _stats)
+  // Professional players look after themselves: 0.8x-1.2x decline. [P]
+  const float care =
+      1.2f - 0.4f * static_cast<float>(_traits.professionalism) / 100.0f;
+  for (auto& [stat_name, value] : _stats)
   {
-    value -= decay;
-
-    if (value < MIN_STAT_VAL) value = MIN_STAT_VAL;
+    const float rate = yearlyDecline(statGroup(stat_name), _age) * care;
+    value = std::max(static_cast<float>(MIN_STAT_VAL), value * (1.0f - rate));
   }
 }
 
-bool Player::checkRetirement() const
+void Player::train(const std::vector<std::string>& focus_stats, float amount)
 {
-  if (_age < PLAYER_RETIREMENT_AGE_THRESHOLD) return false;
-
-  static std::random_device rd;
-  static std::mt19937 gen(rd());
-  std::uniform_real_distribution<float> dis(0.0f, 1.0f);
-
-  float retirementChance =
-      PLAYER_RETIREMENT_BASE_CHANCE +
-      (static_cast<float>(_age) - PLAYER_RETIREMENT_AGE_THRESHOLD) *
-          PLAYER_RETIREMENT_CHANCE_INCREASE_PER_YEAR;
-
-  return dis(gen) < retirementChance;
+  for (const std::string& stat_name : focus_stats)
+  {
+    const auto it = _stats.find(stat_name);
+    if (it == _stats.end()) continue;
+    it->second =
+        std::clamp(it->second + amount, static_cast<float>(MIN_STAT_VAL),
+                   static_cast<float>(MAX_STAT_VAL));
+  }
+  _cached_market_value = 0;
 }
 
-void Player::train(const std::vector<std::string>& focus_stats)
+float Player::getPotential() const { return _potential; }
+
+void Player::setPotential(float potential)
 {
-  if (focus_stats.empty()) return;
-
-  static std::random_device rd;
-  static std::mt19937 gen(rd());
-  std::uniform_int_distribution<> stat_dis(
-      0, static_cast<int>(focus_stats.size() - 1));
-  std::uniform_real_distribution<float> rand_dist(0.0f, 1.0f);
-
-  const std::string& random_stat =
-      focus_stats[static_cast<size_t>(stat_dis(gen))];
-
-  auto it = _stats.find(random_stat);
-  if (it == _stats.end()) return;
-
-  const float age_factor = std::clamp(
-      1.0f - std::max(0.0f, static_cast<float>(_age) - 18.0f) / 25.0f, 0.1f,
-      1.0f);
-  float random_factor = rand_dist(gen);
-
-  float increment = PLAYER_STAT_INCREASE_BASE * (random_factor * age_factor);
-  it->second += increment;
+  _potential = std::clamp(potential, static_cast<float>(MIN_STAT_VAL),
+                          static_cast<float>(MAX_STAT_VAL));
   _cached_market_value = 0;
+}
 
-  if (it->second > MAX_STAT_VAL) it->second = MAX_STAT_VAL;
+const PlayerTraits& Player::getTraits() const { return _traits; }
+
+void Player::setTraits(const PlayerTraits& traits) { _traits = traits; }
+
+const PlayerDynamics& Player::getDynamics() const { return _dynamics; }
+
+PlayerDynamics& Player::mutableDynamics() { return _dynamics; }
+
+bool Player::isAvailable() const { return _dynamics.injury_days == 0; }
+
+float Player::getForm() const
+{
+  if (_dynamics.rating_count == 0) return 0.0f;
+  float total = 0.0f;
+  for (std::size_t i = 0; i < _dynamics.rating_count; ++i)
+    total += _dynamics.recent_ratings[i];
+  return total / static_cast<float>(_dynamics.rating_count);
+}
+
+void Player::pushMatchRating(float rating)
+{
+  auto& ratings = _dynamics.recent_ratings;
+  std::shift_right(ratings.begin(), ratings.end(), 1);
+  ratings[0] = std::clamp(rating, 1.0f, 10.0f);
+  if (_dynamics.rating_count < ratings.size()) ++_dynamics.rating_count;
 }
 
 // ---------------- Market Logic ----------------
@@ -195,42 +241,24 @@ uint32_t Player::getMarketValue() const { return _cached_market_value; }
 
 void Player::updateMarketValue(const StatsConfig& stats_config) const
 {
-  // Simple algorithm for market value
-  // Value = (Overall^2 * 1000) * AgeFactor
-  // AgeFactor: Younger players (18-25) have higher potential value.
-  // This is a placeholder algorithm.
+  // ln(value) = ability term + h(age) + potential premium + c(contract).
+  // Anchors [P]: overall 65 at 25 with a long contract ~ EUR 2M, each overall
+  // point ~ +21%; h(age) = -0.012 (age - 25)^2 (inverted U, age^2 sign from
+  // Mueller et al. 2017); c(y) = ln(1 - exp(-y / 1.2)) because remaining
+  // contract length is the dominant fee driver (CIES).
+  const double overall = getOverall(stats_config);
+  const double age_offset = static_cast<double>(_age) - 25.0;
+  double log_value = std::log(2'000'000.0) + 0.19 * (overall - 65.0) -
+                     0.012 * age_offset * age_offset;
+  if (_age < 24 && static_cast<double>(_potential) > overall)
+    log_value += 0.05 * (static_cast<double>(_potential) - overall);
+  const double contract_years = std::max<double>(_contract_years, 0.5);
+  log_value += std::log(1.0 - std::exp(-contract_years / 1.2));
 
-  double overall = getOverall(stats_config);
-
-  // Base value calculation
-  // E.g. Overall 50 -> 2500 * 1000 = 2.5M
-  // E.g. Overall 80 -> 6400 * 1000 = 6.4M (Need steeper curve)
-  // Let's try Overall^3
-
-  // Normalized overall (0-100) -> (0-1)
-  // But our overall is sum of weighted stats. Weights sum to 1?
-  // Let's assume overall is roughly 0-100.
-
-  double base_value = std::pow(overall, 3) * 10.0;
-  // 50^3 * 10 = 125,000 * 10 = 1,250,000
-  // 80^3 * 10 = 512,000 * 10 = 5,120,000
-  // 90^3 * 10 = 729,000 * 10 = 7,290,000
-
-  // Age multiplier
-  // Peak value at ~24-27
-  double age_multiplier = 1.0;
-  if (_age < 20)
-    age_multiplier = 1.5;
-  else if (_age < 24)
-    age_multiplier = 1.3;
-  else if (_age < 29)
-    age_multiplier = 1.1;
-  else if (_age < 32)
-    age_multiplier = 0.9;
-  else
-    age_multiplier = 0.6;  // Older players lose value
-
-  _cached_market_value = static_cast<uint32_t>(base_value * age_multiplier);
+  constexpr double MAX_VALUE = 250'000'000.0;
+  constexpr double MIN_VALUE = 10'000.0;
+  _cached_market_value = static_cast<uint32_t>(
+      std::clamp(std::exp(log_value), MIN_VALUE, MAX_VALUE));
 }
 
 void Player::setTransferStatus(TransferStatus status)

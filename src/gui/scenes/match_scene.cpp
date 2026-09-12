@@ -11,6 +11,7 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <cctype>
 #include <charconv>
 #include <chrono>
 #include <cstdint>
@@ -24,6 +25,7 @@
 #include "gui/gui_view.h"
 #include "gui/player_ui.h"
 #include "gui/render/match_renderer_2d.h"
+#include "gui/render/match_renderer_3d.h"
 #include "model/role_utils.h"
 #include "model/team.h"
 
@@ -41,6 +43,35 @@ std::optional<std::uint32_t> configuredMatchSeed()
   if (error != std::errc{} || end != seedText.data() + seedText.size())
     return std::nullopt;
   return seed;
+}
+
+// The last chosen presentation carries over to the next match this session.
+MatchViewMode lastViewMode = MatchViewMode::PITCH_2D;
+MatchCameraMode lastCameraMode = MatchCameraMode::BROADCAST;
+
+/// FM_MATCH_VIEW=3d|2d forces the initial view (profiling, screenshots).
+std::optional<MatchViewMode> configuredMatchView()
+{
+  const char* configuredView = std::getenv("FM_MATCH_VIEW");
+  if (!configuredView) return std::nullopt;
+  const std::string_view view(configuredView);
+  if (view == "3d") return MatchViewMode::BROADCAST_3D;
+  if (view == "2d") return MatchViewMode::PITCH_2D;
+  return std::nullopt;
+}
+
+/// Short broadcast-style team tag, e.g. "Northport" -> "NOR".
+std::string teamLabel(const std::string& name)
+{
+  std::string label;
+  for (const char character : name)
+  {
+    if (label.size() == MatchSceneTuning::View::TEAM_LABEL_LENGTH) break;
+    const auto byte = static_cast<unsigned char>(character);
+    if (std::isalnum(byte))
+      label.push_back(static_cast<char>(std::toupper(byte)));
+  }
+  return label.empty() ? name : label;
 }
 
 #ifdef DEBUG
@@ -112,6 +143,8 @@ void MatchScene::onEnter()
 
     home_name = home_team.getName();
     away_name = away_team.getName();
+    home_label = teamLabel(home_name);
+    away_label = teamLabel(away_name);
 
     const auto seed = configuredMatchSeed();
     if (seed)
@@ -127,7 +160,11 @@ void MatchScene::onEnter()
           home_team.getLineup(), away_team.getLineup(), home_team.getStrategy(),
           away_team.getStrategy(), guiView->getController().getStatsConfig());
     }
-    matchRenderer = std::make_unique<MatchRenderer2D>();
+    renderer_2d = std::make_unique<MatchRenderer2D>();
+    renderer_3d = std::make_unique<MatchRenderer3D>();
+    if (const auto view = configuredMatchView()) lastViewMode = *view;
+    view_mode = lastViewMode;
+    camera_mode = lastCameraMode;
   }
   scene_entry_milliseconds = std::chrono::duration<float, std::milli>(
                                  std::chrono::steady_clock::now() - startedAt)
@@ -144,6 +181,7 @@ void MatchScene::onEnter()
 
 void MatchScene::update(float deltaTime)
 {
+  frame_seconds = deltaTime;
   if (engine && !match_finished && !is_paused)
   {
     const auto startedAt = std::chrono::steady_clock::now();
@@ -165,9 +203,47 @@ void MatchScene::update(float deltaTime)
   }
 }
 
+void MatchScene::setViewMode(MatchViewMode mode)
+{
+  view_mode = mode;
+  lastViewMode = mode;
+}
+
+void MatchScene::setCameraMode(MatchCameraMode mode)
+{
+  camera_mode = mode;
+  lastCameraMode = mode;
+  setViewMode(MatchViewMode::BROADCAST_3D);
+}
+
 void MatchScene::handleEvent(const SDL_Event& event)
 {
   if (event.type != SDL_EVENT_KEY_DOWN) return;
+  if (!event.key.repeat && !ImGui::GetIO().WantTextInput)
+  {
+    switch (event.key.key)
+    {
+      case SDLK_V:
+        setViewMode(view_mode == MatchViewMode::PITCH_2D
+                        ? MatchViewMode::BROADCAST_3D
+                        : MatchViewMode::PITCH_2D);
+        return;
+      case SDLK_1:
+        setCameraMode(MatchCameraMode::BROADCAST);
+        return;
+      case SDLK_2:
+        setCameraMode(MatchCameraMode::TACTICAL);
+        return;
+      case SDLK_3:
+        setCameraMode(MatchCameraMode::END);
+        return;
+      case SDLK_4:
+        setCameraMode(MatchCameraMode::PLAYER_FOLLOW);
+        return;
+      default:
+        break;
+    }
+  }
 #ifdef DEBUG
   if (event.key.key == SDLK_F10)
   {
@@ -185,9 +261,10 @@ void MatchScene::exportDebugSnapshot()
 {
   if (!engine) return;
   const char* configuredPath = std::getenv("FM_MATCH_SNAPSHOT_PATH");
-  const std::string path = configuredPath && *configuredPath
-                               ? configuredPath
-                               : RuntimePaths::capturePath("match.json").string();
+  const std::string path =
+      configuredPath && *configuredPath
+          ? configuredPath
+          : RuntimePaths::capturePath("match.json").string();
   debug_status = engine->writeDebugSnapshot(path)
                      ? "Snapshot: " + path
                      : "Could not write snapshot: " + path;
@@ -250,6 +327,16 @@ void MatchScene::render()
     selected_pitch_player = PlayerID{};
     selected_bench_player = PlayerID{};
   }
+  ImGui::SameLine();
+  if (ImGui::Button(view_mode == MatchViewMode::PITCH_2D ? LOC("MATCH_VIEW_3D")
+                                                         : LOC("MATCH_VIEW_2D"),
+                    ImVec2(MatchSceneTuning::Controls::VIEW_BUTTON_WIDTH,
+                           MatchSceneTuning::Controls::BUTTON_HEIGHT)))
+  {
+    setViewMode(view_mode == MatchViewMode::PITCH_2D
+                    ? MatchViewMode::BROADCAST_3D
+                    : MatchViewMode::PITCH_2D);
+  }
 #ifdef DEBUG
   ImGui::SameLine();
   if (ImGui::Button("Export Debug (F11)",
@@ -267,6 +354,7 @@ void MatchScene::render()
   }
 #endif
   if (!debug_status.empty()) ImGui::TextUnformatted(debug_status.c_str());
+  if (view_mode == MatchViewMode::BROADCAST_3D) renderViewControls();
 
   const MatchStats& match_stats = engine->getStats();
   ImGui::Text(
@@ -292,11 +380,14 @@ void MatchScene::render()
 #ifdef DEBUG
   ImGui::Text(
       "Performance: entry %.2f ms | simulation %.2f ms (max %.2f ms) | "
-      "slow frames %llu",
+      "slow frames %llu | %s view %.2f ms (avg %.2f ms)",
       static_cast<double>(scene_entry_milliseconds),
       static_cast<double>(last_update_milliseconds),
       static_cast<double>(maximum_update_milliseconds),
-      static_cast<unsigned long long>(slow_update_count));
+      static_cast<unsigned long long>(slow_update_count),
+      view_mode == MatchViewMode::PITCH_2D ? "2D" : "3D",
+      static_cast<double>(last_render_milliseconds),
+      static_cast<double>(average_render_milliseconds));
   if (show_ai_debug)
   {
     ImGui::Text("Team phase: %s / %s | transition %.1f s",
@@ -323,29 +414,70 @@ void MatchScene::render()
     renderSubstitutionsModal();
   }
 
-  // Pitch rendering is delegated to the match renderer, which draws into the
-  // responsive viewport computed from the remaining window space. The pitch is
-  // inset by a fixed apron so the stadium band and goal nets stay visible.
-  const ImVec2 pitchOrigin = ImGui::GetCursorScreenPos();
-  const float apron = MatchSceneTuning::Stadium::APRON_WIDTH;
-  const float availableWidth =
-      std::max(1.0f, ImGui::GetWindowWidth() - pitchOrigin.x);
-  const float availableHeight =
-      std::max(1.0f, ImGui::GetWindowHeight() - pitchOrigin.y);
-  const MatchViewport viewport =
-      computeMatchViewport(pitchOrigin.x + apron, pitchOrigin.y + apron,
-                           std::max(1.0f, availableWidth - 2.0f * apron),
-                           std::max(1.0f, availableHeight - 2.0f * apron));
-  ImGui::Dummy(ImVec2(viewport.width, viewport.height));
-
-  if (engine && matchRenderer)
+  // Pitch rendering is delegated to the active match renderer. Both views
+  // consume the same snapshot; the space below stays reserved for the event
+  // log (and the finish button) so the HUD works in either view.
+  const ImGuiStyle& style = ImGui::GetStyle();
+  const ImVec2 viewOrigin = ImGui::GetCursorScreenPos();
+  const ImVec2 available = ImGui::GetContentRegionAvail();
+  float reservedBelow =
+      MatchSceneTuning::Events::PANEL_HEIGHT + style.ItemSpacing.y * 3.0f;
+  if (match_finished)
   {
-    MatchRenderOptions renderOptions;
+    reservedBelow +=
+        MatchSceneTuning::Controls::FINISH_BUTTON_HEIGHT + style.ItemSpacing.y;
+  }
+  const float viewWidth = std::max(1.0f, available.x);
+  const float viewHeight =
+      std::max(MatchSceneTuning::View::MIN_HEIGHT, available.y - reservedBelow);
+
+  MatchViewport viewport;
+  IMatchRenderer* renderer = nullptr;
+  MatchRenderOptions renderOptions;
+  renderOptions.frameSeconds = frame_seconds;
+  if (view_mode == MatchViewMode::BROADCAST_3D)
+  {
+    viewport = {viewOrigin.x, viewOrigin.y, viewWidth, viewHeight};
+    ImGui::InvisibleButton("MatchView3D", ImVec2(viewWidth, viewHeight));
+    // The wheel zooms the camera instead of scrolling the scene.
+    if (ImGui::SetItemKeyOwner(ImGuiKey_MouseWheelY))
+      pending_zoom_steps += ImGui::GetIO().MouseWheel;
+    renderer = renderer_3d.get();
+    renderOptions.cameraMode = camera_mode;
+    renderOptions.showPlayerNames = show_player_names;
+    renderOptions.zoomSteps = pending_zoom_steps;
+    renderOptions.homeLabel = home_label.c_str();
+    renderOptions.awayLabel = away_label.c_str();
+    pending_zoom_steps = 0.0f;
+  }
+  else
+  {
+    // The 2D pitch is inset by a fixed apron so the stadium band and goal
+    // nets stay visible.
+    const float apron = MatchSceneTuning::Stadium::APRON_WIDTH;
+    viewport = computeMatchViewport(viewOrigin.x + apron, viewOrigin.y + apron,
+                                    std::max(1.0f, viewWidth - 2.0f * apron),
+                                    std::max(1.0f, viewHeight - 2.0f * apron));
+    ImGui::Dummy(
+        ImVec2(viewport.width + 2.0f * apron, viewport.height + 2.0f * apron));
+    renderer = renderer_2d.get();
+  }
+
+  if (renderer)
+  {
 #ifdef DEBUG
     renderOptions.showAiDebug = show_ai_debug;
 #endif
-    matchRenderer->render(buildMatchRenderSnapshot(*engine), renderOptions,
-                          viewport);
+    const auto renderStartedAt = std::chrono::steady_clock::now();
+    renderer->render(buildMatchRenderSnapshot(*engine), renderOptions,
+                     viewport);
+    last_render_milliseconds =
+        std::chrono::duration<float, std::milli>(
+            std::chrono::steady_clock::now() - renderStartedAt)
+            .count();
+    average_render_milliseconds +=
+        (last_render_milliseconds - average_render_milliseconds) *
+        MatchSceneTuning::View::RENDER_TIME_SMOOTHING;
   }
 
   ImGui::Separator();
@@ -393,6 +525,25 @@ void MatchScene::render()
   }
 
   ImGui::End();
+}
+
+void MatchScene::renderViewControls()
+{
+  ImGui::AlignTextToFramePadding();
+  ImGui::TextUnformatted(LOC("MATCH_CAMERA"));
+  const auto cameraButton = [this](const char* label, MatchCameraMode mode)
+  {
+    ImGui::SameLine();
+    if (ImGui::RadioButton(label, camera_mode == mode)) setCameraMode(mode);
+  };
+  cameraButton(LOC("MATCH_CAMERA_BROADCAST"), MatchCameraMode::BROADCAST);
+  cameraButton(LOC("MATCH_CAMERA_TACTICAL"), MatchCameraMode::TACTICAL);
+  cameraButton(LOC("MATCH_CAMERA_END"), MatchCameraMode::END);
+  cameraButton(LOC("MATCH_CAMERA_FOLLOW"), MatchCameraMode::PLAYER_FOLLOW);
+  ImGui::SameLine();
+  ImGui::Checkbox(LOC("MATCH_SHOW_NAMES"), &show_player_names);
+  ImGui::SameLine();
+  ImGui::TextDisabled("%s", LOC("MATCH_ZOOM_HINT"));
 }
 
 void MatchScene::renderSubstitutionsModal()

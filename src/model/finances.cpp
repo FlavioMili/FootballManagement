@@ -9,37 +9,158 @@
 #include "finances.h"
 
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstdint>
+#include <utility>
 
 #include "gamedata.h"
 #include "team.h"
+#include "world_tuning.h"
 
-Finances::Finances(std::int64_t startingBalance, Team& /*team_ref*/)
-    : balance(startingBalance), transfer_to_wages_ratio(0.5) {};
-
-void Finances::setTransferToWagesRatio(float ratio)
+namespace
 {
-  transfer_to_wages_ratio = std::clamp(ratio, 0.0f, 1.0f);
+constexpr std::int64_t WEEKS_PER_SEASON = 52;
+
+constexpr std::array<const char*, FINANCE_CATEGORY_COUNT> CATEGORY_KEYS = {
+    "FIN_CAT_OPENING_BALANCE", "FIN_CAT_INVESTMENT",   "FIN_CAT_WAGES",
+    "FIN_CAT_TRANSFER_IN",     "FIN_CAT_TRANSFER_OUT", "FIN_CAT_MATCHDAY",
+    "FIN_CAT_BROADCASTING",    "FIN_CAT_SPONSORSHIP",  "FIN_CAT_PRIZE_MONEY",
+    "FIN_CAT_FACILITIES",      "FIN_CAT_STAFF",        "FIN_CAT_ADJUSTMENT"};
+
+std::int64_t reinvestedShare(std::int64_t fee)
+{
+  return static_cast<std::int64_t>(std::llround(
+      static_cast<double>(fee) *
+      static_cast<double>(WorldTuning::Finance::TRANSFER_INCOME_REINVESTMENT)));
+}
+}  // namespace
+
+const char* financeCategoryKey(FinanceCategory category)
+{
+  const auto index = static_cast<std::size_t>(category);
+  return index < CATEGORY_KEYS.size() ? CATEGORY_KEYS[index]
+                                      : "FIN_CAT_ADJUSTMENT";
 }
 
-void Finances::addBalance(std::int64_t amount) { balance += amount; }
+Finances::Finances(std::int64_t opening_balance, GameDateValue opening_date)
+{
+  record(opening_date, FinanceCategory::OpeningBalance, opening_balance);
+}
 
-void Finances::subtractBalance(std::int64_t amount) { balance -= amount; }
+void Finances::record(const GameDateValue& date, FinanceCategory category,
+                      std::int64_t amount)
+{
+  ledger.push_back({date, category, amount});
+  balance += amount;
+  if (category == FinanceCategory::TransferFeeOut)
+    transfer_budget = std::max<std::int64_t>(0, transfer_budget + amount);
+  else if (category == FinanceCategory::TransferFeeIn)
+    transfer_budget += reinvestedShare(amount);
+}
+
+bool Finances::revertLastTransaction()
+{
+  if (ledger.size() <= persisted || ledger.empty()) return false;
+  const FinanceTransaction last = ledger.back();
+  ledger.pop_back();
+  balance -= last.amount;
+  if (last.category == FinanceCategory::TransferFeeOut)
+    transfer_budget -= last.amount;
+  else if (last.category == FinanceCategory::TransferFeeIn)
+    transfer_budget = std::max<std::int64_t>(
+        0, transfer_budget - reinvestedShare(last.amount));
+  else if (last.category == FinanceCategory::Investment && last.amount > 0)
+  {
+    transfer_budget = std::max<std::int64_t>(0, transfer_budget - last.amount);
+    wage_budget =
+        std::max<std::int64_t>(0, wage_budget - last.amount / WEEKS_PER_SEASON);
+  }
+  return true;
+}
+
+void Finances::addBalance(std::int64_t amount)
+{
+  const GameDateValue date =
+      ledger.empty() ? GameDateValue(2025, 7, 2) : ledger.back().date;
+  record(date, FinanceCategory::Investment, amount);
+  if (amount > 0)
+  {
+    transfer_budget += amount;
+    wage_budget += amount / WEEKS_PER_SEASON;
+  }
+}
 
 std::int64_t Finances::getBalance() const noexcept { return balance; }
 
-float Finances::getTransferToWagesRatio() const noexcept
+std::int64_t Finances::getTransferBudget() const noexcept
 {
-  return transfer_to_wages_ratio;
+  return transfer_budget;
 }
 
-int64_t Finances::getCurrentWageSpending(const class GameData& gamedata,
+void Finances::setTransferBudget(std::int64_t budget)
+{
+  transfer_budget = std::max<std::int64_t>(0, budget);
+}
+
+std::int64_t Finances::getWageBudget() const noexcept { return wage_budget; }
+
+void Finances::setWageBudget(std::int64_t weekly_budget)
+{
+  wage_budget = std::max<std::int64_t>(0, weekly_budget);
+}
+
+bool Finances::moveTransferToWageBudget(std::int64_t transfer_amount,
+                                        std::int64_t current_weekly_wages)
+{
+  const std::int64_t weekly_delta = transfer_amount / WEEKS_PER_SEASON;
+  const std::int64_t new_transfer = transfer_budget - transfer_amount;
+  const std::int64_t new_wage = wage_budget + weekly_delta;
+  if (weekly_delta == 0 || new_transfer < 0 || new_wage < current_weekly_wages)
+    return false;
+  transfer_budget = new_transfer;
+  wage_budget = new_wage;
+  return true;
+}
+
+const std::vector<FinanceTransaction>& Finances::getLedger() const noexcept
+{
+  return ledger;
+}
+
+std::int64_t Finances::ledgerTotal() const
+{
+  std::int64_t total = 0;
+  for (const FinanceTransaction& transaction : ledger)
+    total += transaction.amount;
+  return total;
+}
+
+FinanceSummary Finances::summarize(const GameDateValue& from,
+                                   const GameDateValue& to) const
+{
+  // Linear scan: a result recorded a day late (a fixture simulated the next
+  // morning) may sit after later entries, so the ledger is not strictly
+  // date-ordered.
+  FinanceSummary summary;
+  for (const FinanceTransaction& transaction : ledger)
+  {
+    if (transaction.date < from || to < transaction.date) continue;
+    summary.by_category[static_cast<std::size_t>(transaction.category)] +=
+        transaction.amount;
+    if (transaction.amount >= 0)
+      summary.income += transaction.amount;
+    else
+      summary.expenses -= transaction.amount;
+  }
+  return summary;
+}
+
+int64_t Finances::getCurrentWageSpending(const GameData& gamedata,
                                          const Team& team) const
 {
   int64_t wages{};
-  const auto& playerIDs = team.getPlayerIDs();
-
-  for (const auto player_id : playerIDs)
+  for (const auto player_id : team.getPlayerIDs())
   {
     if (const auto player = gamedata.getPlayer(player_id))
     {
@@ -48,3 +169,19 @@ int64_t Finances::getCurrentWageSpending(const class GameData& gamedata,
   }
   return wages;
 }
+
+void Finances::restoreLedger(std::vector<FinanceTransaction> restored)
+{
+  ledger = std::move(restored);
+  persisted = ledger.size();
+  balance = ledgerTotal();
+}
+
+std::span<const FinanceTransaction> Finances::pendingTransactions() const
+{
+  return std::span<const FinanceTransaction>(ledger).subspan(persisted);
+}
+
+std::size_t Finances::persistedCount() const noexcept { return persisted; }
+
+void Finances::markPersisted() noexcept { persisted = ledger.size(); }

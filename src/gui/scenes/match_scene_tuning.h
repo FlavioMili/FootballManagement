@@ -10,7 +10,9 @@
 
 #include <imgui.h>
 
-/** Named tuning values used only by the current 2D match presentation. */
+#include <cstddef>
+
+/** Named tuning values of the live match scene and its 2D presentation. */
 struct MatchSceneTuning final
 {
   static constexpr float CELEBRATION_RADIANS_PER_PERIOD = 6.2831853f;
@@ -37,6 +39,14 @@ struct MatchSceneTuning final
     static constexpr float DEFAULT_MATCH_SPEED = 1.0f;
     static constexpr float FINISH_BUTTON_WIDTH = 150.0f;
     static constexpr float FINISH_BUTTON_HEIGHT = 40.0f;
+    static constexpr float VIEW_BUTTON_WIDTH = 130.0f;
+  };
+
+  struct View final
+  {
+    static constexpr float MIN_HEIGHT = 240.0f;
+    static constexpr float RENDER_TIME_SMOOTHING = 0.1f;
+    static constexpr std::size_t TEAM_LABEL_LENGTH = 3;
   };
 
   struct Pitch final

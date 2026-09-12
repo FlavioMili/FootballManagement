@@ -1,0 +1,574 @@
+// -----------------------------------------------------------------------------
+//  Football Management Project
+//  Copyright (c) 2025 - 2026 Flavio Milinanni. All Rights Reserved.
+//
+//  This file is part of the Football Management Project.
+//  See the LICENSE file in the project root.
+// -----------------------------------------------------------------------------
+
+#include "model/world_generation.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <fstream>
+#include <map>
+#include <nlohmann/json.hpp>
+#include <span>
+#include <stdexcept>
+#include <string_view>
+
+#include "global/global.h"
+#include "global/paths.h"
+#include "model/role_utils.h"
+#include "model/world_rng.h"
+
+namespace
+{
+constexpr std::array<std::string_view, 9> PROFILE_STATS = {
+    "Pace",        "Shooting", "Passing", "Dribbling",  "Defending",
+    "Physicality", "Stamina",  "Vision",  "Goalkeeping"};
+
+struct RoleProfile
+{
+  PlayerRole role;
+  std::array<float, PROFILE_STATS.size()> offsets;  // Relative to level.
+  float height_mean;
+  float left_foot_share;
+};
+
+// [P] Attribute shapes per role, in the PROFILE_STATS order: centre-backs
+// defend and win duels, wingers are quick dribblers, goalkeepers keep goal.
+constexpr std::array<RoleProfile, 12> ROLE_PROFILES = {{
+    {PlayerRole::GK,
+     {-20.0f, -35.0f, -10.0f, -25.0f, -15.0f, 0.0f, -10.0f, 0.0f, 12.0f},
+     187.0f,
+     0.20f},
+    {PlayerRole::CB,
+     {-5.0f, -20.0f, -5.0f, -12.0f, 10.0f, 8.0f, 0.0f, -3.0f, -45.0f},
+     187.0f,
+     0.20f},
+    {PlayerRole::LB,
+     {6.0f, -15.0f, 0.0f, 0.0f, 6.0f, 0.0f, 6.0f, -3.0f, -45.0f},
+     177.0f,
+     0.70f},
+    {PlayerRole::RB,
+     {6.0f, -15.0f, 0.0f, 0.0f, 6.0f, 0.0f, 6.0f, -3.0f, -45.0f},
+     177.0f,
+     0.10f},
+    {PlayerRole::CDM,
+     {-4.0f, -10.0f, 4.0f, -3.0f, 8.0f, 5.0f, 6.0f, 3.0f, -45.0f},
+     181.0f,
+     0.20f},
+    {PlayerRole::CM,
+     {-2.0f, -4.0f, 8.0f, 2.0f, 0.0f, 0.0f, 6.0f, 7.0f, -45.0f},
+     178.0f,
+     0.25f},
+    {PlayerRole::CAM,
+     {0.0f, 3.0f, 8.0f, 7.0f, -15.0f, -6.0f, 0.0f, 9.0f, -45.0f},
+     176.0f,
+     0.25f},
+    {PlayerRole::LM,
+     {7.0f, -2.0f, 4.0f, 5.0f, -8.0f, -4.0f, 7.0f, 2.0f, -45.0f},
+     176.0f,
+     0.60f},
+    {PlayerRole::RM,
+     {7.0f, -2.0f, 4.0f, 5.0f, -8.0f, -4.0f, 7.0f, 2.0f, -45.0f},
+     176.0f,
+     0.15f},
+    {PlayerRole::LW,
+     {10.0f, 2.0f, 0.0f, 9.0f, -18.0f, -6.0f, 2.0f, 0.0f, -45.0f},
+     175.0f,
+     0.55f},
+    {PlayerRole::RW,
+     {10.0f, 2.0f, 0.0f, 9.0f, -18.0f, -6.0f, 2.0f, 0.0f, -45.0f},
+     175.0f,
+     0.35f},
+    {PlayerRole::ST,
+     {4.0f, 10.0f, -4.0f, 4.0f, -22.0f, 5.0f, 0.0f, -2.0f, -45.0f},
+     183.0f,
+     0.25f},
+}};
+
+const RoleProfile& roleProfile(PlayerRole role)
+{
+  const auto found = std::ranges::find(ROLE_PROFILES, role, &RoleProfile::role);
+  return found == ROLE_PROFILES.end() ? ROLE_PROFILES[5] : *found;
+}
+
+enum class SquadTier : std::uint8_t
+{
+  Starter,
+  Rotation,
+  Backup,
+  Prospect
+};
+
+struct SquadSlot
+{
+  PlayerRole role;
+  SquadTier tier;
+};
+
+// Balanced 30-man squad: eleven starters for a 4-4-2 / 4-3-3 shape, depth in
+// every line and a few academy prospects.
+constexpr std::array<SquadSlot, 30> SQUAD_TEMPLATE = {{
+    {PlayerRole::GK, SquadTier::Starter},
+    {PlayerRole::GK, SquadTier::Backup},
+    {PlayerRole::GK, SquadTier::Prospect},
+    {PlayerRole::CB, SquadTier::Starter},
+    {PlayerRole::CB, SquadTier::Starter},
+    {PlayerRole::CB, SquadTier::Rotation},
+    {PlayerRole::CB, SquadTier::Backup},
+    {PlayerRole::CB, SquadTier::Prospect},
+    {PlayerRole::LB, SquadTier::Starter},
+    {PlayerRole::LB, SquadTier::Rotation},
+    {PlayerRole::RB, SquadTier::Starter},
+    {PlayerRole::RB, SquadTier::Rotation},
+    {PlayerRole::CDM, SquadTier::Starter},
+    {PlayerRole::CDM, SquadTier::Backup},
+    {PlayerRole::CM, SquadTier::Starter},
+    {PlayerRole::CM, SquadTier::Starter},
+    {PlayerRole::CM, SquadTier::Rotation},
+    {PlayerRole::CM, SquadTier::Prospect},
+    {PlayerRole::CAM, SquadTier::Rotation},
+    {PlayerRole::CAM, SquadTier::Backup},
+    {PlayerRole::LM, SquadTier::Rotation},
+    {PlayerRole::RM, SquadTier::Rotation},
+    {PlayerRole::LW, SquadTier::Starter},
+    {PlayerRole::LW, SquadTier::Prospect},
+    {PlayerRole::RW, SquadTier::Starter},
+    {PlayerRole::RW, SquadTier::Backup},
+    {PlayerRole::ST, SquadTier::Starter},
+    {PlayerRole::ST, SquadTier::Rotation},
+    {PlayerRole::ST, SquadTier::Backup},
+    {PlayerRole::ST, SquadTier::Prospect},
+}};
+
+// Foreign nationalities weighted by how common they are in European squads.
+// [P]
+struct NationalityWeight
+{
+  Language nationality;
+  float weight;
+};
+constexpr std::array<NationalityWeight, 26> FOREIGN_POOL = {{
+    {Language::BR, 9.0f}, {Language::FR, 8.0f}, {Language::ES, 6.0f},
+    {Language::PT, 6.0f}, {Language::DE, 4.0f}, {Language::NL, 4.0f},
+    {Language::IT, 3.0f}, {Language::EN, 3.0f}, {Language::BE, 3.0f},
+    {Language::HR, 3.0f}, {Language::DK, 2.5f}, {Language::SE, 2.0f},
+    {Language::NO, 2.0f}, {Language::CH, 2.0f}, {Language::PL, 2.5f},
+    {Language::CZ, 1.5f}, {Language::SK, 1.0f}, {Language::HU, 1.0f},
+    {Language::UA, 1.5f}, {Language::RO, 1.5f}, {Language::GR, 1.0f},
+    {Language::TR, 1.5f}, {Language::US, 1.5f}, {Language::MX, 1.5f},
+    {Language::JP, 1.5f}, {Language::KR, 1.0f},
+}};
+
+std::uint8_t clampTrait(float value)
+{
+  return static_cast<std::uint8_t>(
+      std::lround(std::clamp(value, 1.0f, 100.0f)));
+}
+
+PlayerTraits drawTraits(WorldRng& rng)
+{
+  PlayerTraits traits;
+  traits.professionalism = clampTrait(rng.normal(55.0f, 16.0f));
+  traits.ambition = clampTrait(rng.normal(50.0f, 18.0f));
+  traits.temperament = clampTrait(rng.normal(55.0f, 15.0f));
+  traits.loyalty = clampTrait(rng.normal(50.0f, 18.0f));
+  // Skewed: most players are robust, a few are chronically injury prone.
+  traits.injury_proneness = static_cast<std::uint8_t>(
+      std::lround(std::clamp(rng.lognormal(40.0f, 0.4f), 5.0f, 100.0f)));
+  return traits;
+}
+
+float potentialHeadroom(int age)
+{
+  // [P] Mean remaining growth by age; growth mostly ends by the mid-20s.
+  if (age <= 20) return 1.6f * static_cast<float>(25 - age) + 4.0f;
+  if (age <= 24) return 1.4f * static_cast<float>(25 - age) + 1.0f;
+  return 0.3f * static_cast<float>(std::max(0, 28 - age));
+}
+
+float drawPotential(WorldRng& rng, float current, int age)
+{
+  const float headroom = potentialHeadroom(age);
+  return std::min(
+      static_cast<float>(MAX_STAT_VAL) - 1.0f,
+      current + std::max(0.0f, rng.normal(headroom, 0.45f * headroom + 1.5f)));
+}
+
+Language drawNationality(WorldRng& rng, const LeagueProfile& league)
+{
+  if (rng.chance(static_cast<double>(league.domestic_share)))
+    return league.domestic_nationality;
+  std::array<float, FOREIGN_POOL.size()> weights{};
+  for (std::size_t i = 0; i < FOREIGN_POOL.size(); ++i)
+  {
+    weights[i] = FOREIGN_POOL[i].nationality == league.domestic_nationality
+                     ? 0.0f
+                     : FOREIGN_POOL[i].weight;
+  }
+  return FOREIGN_POOL[rng.weightedIndex(weights)].nationality;
+}
+
+std::map<std::string, float> drawStats(WorldRng& rng, PlayerRole role,
+                                       float target_overall,
+                                       const StatsConfig& stats_config)
+{
+  const RoleProfile& profile = roleProfile(role);
+  std::map<std::string, float> stats;
+  for (const std::string& stat_name : stats_config.possible_stats)
+  {
+    float offset = 0.0f;
+    for (std::size_t i = 0; i < PROFILE_STATS.size(); ++i)
+    {
+      if (PROFILE_STATS[i] == stat_name) offset = profile.offsets[i];
+    }
+    stats[stat_name] = target_overall + offset + rng.normal(0.0f, 4.5f);
+  }
+  // Shift every attribute so the role overall hits the target exactly; a
+  // few passes absorb the effect of clamping.
+  for (int pass = 0; pass < 3; ++pass)
+  {
+    const auto delta = static_cast<float>(
+        static_cast<double>(target_overall) -
+        WorldGeneration::overallFor(role, stats, stats_config));
+    for (auto& [name, value] : stats)
+    {
+      value = std::clamp(value + delta, static_cast<float>(MIN_STAT_VAL),
+                         static_cast<float>(MAX_STAT_VAL) - 1.0f);
+    }
+  }
+  return stats;
+}
+
+std::uint8_t drawHeight(WorldRng& rng, PlayerRole role)
+{
+  return static_cast<std::uint8_t>(std::lround(std::clamp(
+      rng.normal(roleProfile(role).height_mean, 5.5f), 160.0f, 205.0f)));
+}
+
+Foot drawFoot(WorldRng& rng, PlayerRole role)
+{
+  return rng.chance(static_cast<double>(roleProfile(role).left_foot_share))
+             ? Foot::Left
+             : Foot::Right;
+}
+
+int drawAge(WorldRng& rng, SquadTier tier)
+{
+  switch (tier)
+  {
+    case SquadTier::Starter:
+      return std::clamp(static_cast<int>(std::lround(rng.normal(27.0f, 3.0f))),
+                        21, 34);
+    case SquadTier::Rotation:
+      return std::clamp(static_cast<int>(std::lround(rng.normal(26.0f, 4.0f))),
+                        19, 35);
+    case SquadTier::Backup:
+      return rng.chance(0.5)
+                 ? std::clamp(
+                       static_cast<int>(std::lround(rng.normal(21.0f, 1.5f))),
+                       18, 23)
+                 : std::clamp(
+                       static_cast<int>(std::lround(rng.normal(31.0f, 2.0f))),
+                       27, 36);
+    case SquadTier::Prospect:
+      return rng.uniformInt(17, 20);
+  }
+  return 25;
+}
+
+float tierOffset(SquadTier tier)
+{
+  switch (tier)
+  {
+    case SquadTier::Starter:
+      return 2.0f;
+    case SquadTier::Rotation:
+      return -3.0f;
+    case SquadTier::Backup:
+      return -8.0f;
+    case SquadTier::Prospect:
+      return -14.0f;
+  }
+  return 0.0f;
+}
+
+std::uint8_t drawContractYears(WorldRng& rng, int age)
+{
+  if (age < 18) return 3;  // Contracts of minors are capped at three years.
+  if (age <= 21) return static_cast<std::uint8_t>(rng.uniformInt(3, 5));
+  if (age <= 29) return static_cast<std::uint8_t>(rng.uniformInt(1, 5));
+  return static_cast<std::uint8_t>(rng.uniformInt(1, 2));
+}
+
+std::uint8_t clampRating(float value, float lo)
+{
+  return static_cast<std::uint8_t>(std::lround(std::clamp(value, lo, 100.0f)));
+}
+
+Player makePlayer(WorldRng& rng, PlayerID player_id, TeamID team_id,
+                  PlayerRole role, int age, float target_overall,
+                  const LeagueProfile& league, const StatsConfig& stats_config)
+{
+  const NamePool& names = NamePool::instance();
+  const auto& first = names.first_names[static_cast<std::size_t>(
+      rng.uniformInt(0, static_cast<int>(names.first_names.size()) - 1))];
+  const auto& last = names.last_names[static_cast<std::size_t>(
+      rng.uniformInt(0, static_cast<int>(names.last_names.size()) - 1))];
+  const Language nationality = drawNationality(rng, league);
+  const std::uint8_t height = drawHeight(rng, role);
+  const Foot foot = drawFoot(rng, role);
+  auto stats = drawStats(rng, role, target_overall, stats_config);
+  Player player(player_id, team_id, first, last, role, nationality, 0, 0,
+                static_cast<std::uint8_t>(age), drawContractYears(rng, age),
+                height, foot, std::move(stats));
+  player.setTraits(drawTraits(rng));
+  player.setPotential(drawPotential(rng, target_overall, age));
+  return player;
+}
+
+std::uint32_t roundWage(double wage, double minimum)
+{
+  return static_cast<std::uint32_t>(
+      std::lround(std::max(minimum, wage) / 50.0) * 50);
+}
+}  // namespace
+
+const NamePool& NamePool::instance()
+{
+  static const NamePool pool = []
+  {
+    NamePool loaded;
+    const auto read = [](const char* path)
+    {
+      std::ifstream file(path);
+      if (!file.is_open())
+        throw std::runtime_error(std::string("Could not open ") + path);
+      return nlohmann::json::parse(file)
+          .at("names")
+          .get<std::vector<std::string>>();
+    };
+    loaded.first_names = read(FIRST_NAMES_PATH);
+    loaded.last_names = read(LAST_NAMES_PATH);
+    if (loaded.first_names.empty() || loaded.last_names.empty())
+      throw std::runtime_error("Name files must not be empty");
+    return loaded;
+  }();
+  return pool;
+}
+
+namespace WorldGeneration
+{
+float teamLevel(std::uint8_t reputation)
+{
+  return WorldTuning::Generation::TEAM_LEVEL_BASE +
+         WorldTuning::Generation::TEAM_LEVEL_SLOPE *
+             static_cast<float>(reputation);
+}
+
+double overallFor(PlayerRole role, const std::map<std::string, float>& stats,
+                  const StatsConfig& stats_config)
+{
+  const auto focus =
+      stats_config.role_focus.find(RoleUtils::getBroadCategory(role));
+  if (focus == stats_config.role_focus.end()) return 0.0;
+  double overall = 0.0;
+  const std::size_t count =
+      std::min(focus->second.stats.size(), focus->second.weights.size());
+  for (std::size_t i = 0; i < count; ++i)
+  {
+    const auto stat = stats.find(focus->second.stats[i]);
+    if (stat != stats.end())
+      overall += static_cast<double>(stat->second) * focus->second.weights[i];
+  }
+  return overall;
+}
+
+void generateClubProfiles(std::unordered_map<TeamID, Team>& teams,
+                          std::uint64_t world_seed, bool assign_opening_balance)
+{
+  using Generation = WorldTuning::Generation;
+  std::map<LeagueID, std::vector<TeamID>> by_league;
+  for (const auto& [team_id, team] : teams)
+  {
+    if (team_id != FREE_AGENTS_TEAM_ID)
+      by_league[team.getLeagueId()].push_back(team_id);
+  }
+
+  for (auto& [league_id, team_ids] : by_league)
+  {
+    std::ranges::sort(team_ids);
+    WorldRng rng =
+        WorldRng::stream(world_seed, RngDomain::Generation, league_id);
+    rng.shuffle(std::span<TeamID>(team_ids));
+    const LeagueProfile& league = leagueProfile(league_id);
+
+    std::vector<std::uint8_t> reputations;
+    reputations.reserve(team_ids.size());
+    std::size_t bucket = 0;
+    float bucket_end = Generation::TIER_SHARE[0];
+    for (std::size_t i = 0; i < team_ids.size(); ++i)
+    {
+      const float position =
+          (static_cast<float>(i) + 0.5f) / static_cast<float>(team_ids.size());
+      while (position > bucket_end &&
+             bucket + 1 < Generation::TIER_SHARE.size())
+      {
+        ++bucket;
+        bucket_end += Generation::TIER_SHARE[bucket];
+      }
+      ClubProfile profile;
+      profile.reputation =
+          clampRating(static_cast<float>(league.reputation) +
+                          Generation::TIER_REPUTATION_OFFSET[bucket] +
+                          rng.normal(0.0f, 2.0f),
+                      15.0f);
+      profile.training_facilities = clampRating(
+          static_cast<float>(profile.reputation) + rng.normal(0.0f, 8.0f),
+          10.0f);
+      profile.youth_facilities = clampRating(
+          static_cast<float>(profile.reputation) + rng.normal(0.0f, 10.0f),
+          10.0f);
+      teams.at(team_ids[i]).setProfile(profile);
+      reputations.push_back(profile.reputation);
+    }
+
+    const LeagueEconomy economy = makeLeagueEconomy(league_id, reputations);
+    for (const TeamID team_id : team_ids)
+    {
+      Team& team = teams.at(team_id);
+      ClubProfile profile = team.getProfile();
+      const double demand =
+          std::min(1.0, ClubEconomy::baseDemand(economy, profile.reputation));
+      const double capacity =
+          static_cast<double>(league.average_attendance) *
+          std::exp(0.045 * (static_cast<double>(profile.reputation) -
+                            static_cast<double>(economy.mean_reputation))) /
+          demand * static_cast<double>(rng.uniform(0.9f, 1.15f));
+      profile.stadium_capacity = static_cast<std::uint32_t>(
+          std::lround(std::clamp(capacity, 2'500.0, 99'000.0) / 100.0) * 100);
+      profile.ticket_price = static_cast<std::uint32_t>(
+          std::lround(ClubEconomy::fairTicketPrice(economy, profile)));
+      team.setProfile(profile);
+      if (!assign_opening_balance) continue;
+
+      const double revenue =
+          ClubEconomy::expectedRevenue(economy, profile.reputation);
+      const double opening = revenue * static_cast<double>(rng.uniform(
+                                           Generation::OPENING_BALANCE_MIN,
+                                           Generation::OPENING_BALANCE_MAX));
+      team.getFinances() = Finances(
+          static_cast<std::int64_t>(std::llround(opening / 1000.0)) * 1000);
+    }
+  }
+}
+
+std::vector<Player> generateSquad(const Team& team,
+                                  const LeagueEconomy& economy,
+                                  std::size_t existing_players,
+                                  std::int64_t existing_weekly_wages,
+                                  PlayerID& next_player_id,
+                                  std::uint64_t world_seed,
+                                  const StatsConfig& stats_config)
+{
+  std::vector<Player> players;
+  if (existing_players >= SQUAD_TEMPLATE.size()) return players;
+  WorldRng rng = WorldRng::stream(world_seed, RngDomain::Generation, 0x5C0AD,
+                                  team.getId());
+  const float level = teamLevel(team.getReputation());
+
+  std::vector<double> wage_indices;
+  players.reserve(SQUAD_TEMPLATE.size() - existing_players);
+  wage_indices.reserve(SQUAD_TEMPLATE.size() - existing_players);
+  for (std::size_t slot = existing_players; slot < SQUAD_TEMPLATE.size();
+       ++slot)
+  {
+    const SquadSlot& squad_slot = SQUAD_TEMPLATE[slot];
+    const int age = drawAge(rng, squad_slot.tier);
+    const float target =
+        std::clamp(level + tierOffset(squad_slot.tier) + rng.normal(0.0f, 2.5f),
+                   20.0f, 95.0f);
+    players.push_back(makePlayer(rng, next_player_id++, team.getId(),
+                                 squad_slot.role, age, target, *economy.profile,
+                                 stats_config));
+    wage_indices.push_back(ClubEconomy::wageIndex(target, age) *
+                           static_cast<double>(rng.uniform(0.85f, 1.15f)));
+  }
+
+  // Scale wages so the payroll matches the league's player wage share of the
+  // club's revenue (+-10%).
+  const double revenue =
+      ClubEconomy::expectedRevenue(economy, team.getReputation());
+  const double target_payroll =
+      revenue * ClubEconomy::playerWageShare(economy) / 52.0 *
+          static_cast<double>(rng.uniform(0.9f, 1.1f)) -
+      static_cast<double>(existing_weekly_wages);
+  double index_total = 0.0;
+  for (const double index : wage_indices) index_total += index;
+  const double scale =
+      index_total > 0.0 ? std::max(0.0, target_payroll) / index_total : 0.0;
+  for (std::size_t i = 0; i < players.size(); ++i)
+    players[i].setWage(roundWage(wage_indices[i] * scale, 300.0));
+  return players;
+}
+
+Player generateYouthPlayer(const Team& team, PlayerID player_id, WorldRng& rng,
+                           const StatsConfig& stats_config, double wage_scale)
+{
+  using Youth = WorldTuning::Youth;
+  static constexpr std::array<PlayerRole, 12> ROLES = {
+      PlayerRole::GK,  PlayerRole::CB, PlayerRole::LB,  PlayerRole::RB,
+      PlayerRole::CDM, PlayerRole::CM, PlayerRole::CAM, PlayerRole::LM,
+      PlayerRole::RM,  PlayerRole::LW, PlayerRole::RW,  PlayerRole::ST};
+  static constexpr std::array<float, 12> ROLE_WEIGHTS = {
+      1.0f, 3.0f, 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 0.5f, 0.5f, 1.0f, 1.0f, 2.0f};
+
+  const ClubProfile& profile = team.getProfile();
+  const PlayerRole role = ROLES[rng.weightedIndex(ROLE_WEIGHTS)];
+  const int age = rng.uniformInt(15, 17);
+  const float facility_bonus =
+      Youth::FACILITY_POTENTIAL_BONUS *
+      (static_cast<float>(profile.youth_facilities) - 50.0f) / 50.0f;
+  const float potential =
+      std::clamp(rng.normal(teamLevel(profile.reputation) +
+                                Youth::POTENTIAL_OFFSET + facility_bonus,
+                            Youth::POTENTIAL_STDDEV),
+                 30.0f, 95.0f);
+  const float current =
+      std::max(15.0f, potential * rng.uniform(0.50f, 0.62f) -
+                          1.5f * static_cast<float>(17 - age));
+
+  Player player = makePlayer(rng, player_id, team.getId(), role, age, current,
+                             leagueProfile(team.getLeagueId()), stats_config);
+  player.setPotential(potential);
+  player.setContractYears(3);
+  player.setWage(
+      roundWage(wage_scale * ClubEconomy::wageIndex(current, age), 300.0));
+  return player;
+}
+
+void initializeHiddenAttributes(Player& player, WorldRng& rng,
+                                const StatsConfig& stats_config)
+{
+  player.setTraits(drawTraits(rng));
+  player.setPotential(
+      drawPotential(rng, static_cast<float>(player.getOverall(stats_config)),
+                    player.getAge()));
+}
+
+void applyOpeningBudgets(Team& team, const LeagueEconomy& economy,
+                         std::int64_t weekly_payroll)
+{
+  Finances& finances = team.getFinances();
+  finances.setWageBudget(static_cast<std::int64_t>(std::llround(
+      static_cast<double>(weekly_payroll) *
+      static_cast<double>(WorldTuning::Generation::WAGE_BUDGET_HEADROOM))));
+  finances.setTransferBudget(ClubEconomy::seasonTransferBudget(
+      finances.getBalance(),
+      ClubEconomy::expectedRevenue(economy, team.getReputation())));
+}
+}  // namespace WorldGeneration

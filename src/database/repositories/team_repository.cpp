@@ -14,6 +14,7 @@
 #include <stdexcept>
 
 #include "database/SQLLoader.h"
+#include "database/repositories/finance_repository.h"
 
 namespace
 {
@@ -126,7 +127,9 @@ std::vector<Team> TeamRepository::loadAllTeams() const
 {
   std::vector<Team> teams;
   sqlite3_stmt* stmt = db_conn->prepareStatement(
-      "SELECT id, league_id, name, balance, strategy FROM Teams");
+      "SELECT id, league_id, name, balance, strategy, reputation, "
+      "stadium_capacity, ticket_price, training_facilities, youth_facilities, "
+      "transfer_budget, wage_budget, recent_form FROM Teams");
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
@@ -137,8 +140,24 @@ std::vector<Team> TeamRepository::loadAllTeams() const
         name_text ? reinterpret_cast<const char*>(name_text) : "";
     std::int64_t balance = sqlite3_column_int64(stmt, 3);
     Strategy strategy = deserializeStrategy(sqlite3_column_text(stmt, 4));
-    teams.emplace_back(id, league_id, name, balance, std::vector<PlayerID>{},
-                       strategy);
+    Team& team = teams.emplace_back(id, league_id, name, balance,
+                                    std::vector<PlayerID>{}, strategy);
+    // Legacy saves have zeros here; GameData migrates those clubs.
+    ClubProfile profile;
+    profile.reputation = static_cast<std::uint8_t>(sqlite3_column_int(stmt, 5));
+    profile.stadium_capacity =
+        static_cast<std::uint32_t>(sqlite3_column_int64(stmt, 6));
+    profile.ticket_price =
+        static_cast<std::uint32_t>(sqlite3_column_int64(stmt, 7));
+    profile.training_facilities =
+        static_cast<std::uint8_t>(sqlite3_column_int(stmt, 8));
+    profile.youth_facilities =
+        static_cast<std::uint8_t>(sqlite3_column_int(stmt, 9));
+    team.setProfile(profile);
+    team.getFinances().setTransferBudget(sqlite3_column_int64(stmt, 10));
+    team.getFinances().setWageBudget(sqlite3_column_int64(stmt, 11));
+    const unsigned char* form_text = sqlite3_column_text(stmt, 12);
+    if (form_text) team.setRecentForm(reinterpret_cast<const char*>(form_text));
   }
 
   sqlite3_finalize(stmt);
@@ -215,20 +234,24 @@ void TeamRepository::insertTeamsWithId(
   sqlite3_finalize(stmt);
 }
 
+namespace
+{
+constexpr const char* UPDATE_TEAM_STATE_SQL =
+    "UPDATE Teams SET balance = ?, strategy = ?, lineup = ?, reputation = ?, "
+    "stadium_capacity = ?, ticket_price = ?, training_facilities = ?, "
+    "youth_facilities = ?, transfer_budget = ?, wage_budget = ?, "
+    "recent_form = ? WHERE id = ?;";
+}  // namespace
+
 void TeamRepository::updateTeamState(const Team& team) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(
-      "UPDATE Teams SET balance = ?, strategy = ?, lineup = ? WHERE id = ?;");
-  bindTeamStateParams(stmt, team);
-  db_conn->executeStep(stmt);
-  sqlite3_finalize(stmt);
+  updateTeamsState({std::cref(team)});
 }
 
 void TeamRepository::updateTeamsState(
     const std::vector<std::reference_wrapper<const Team>>& teams) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(
-      "UPDATE Teams SET balance = ?, strategy = ?, lineup = ? WHERE id = ?;");
+  sqlite3_stmt* stmt = db_conn->prepareStatement(UPDATE_TEAM_STATE_SQL);
   for (const auto& team : teams)
   {
     bindTeamStateParams(stmt, team.get());
@@ -237,15 +260,28 @@ void TeamRepository::updateTeamsState(
     sqlite3_reset(stmt);
   }
   sqlite3_finalize(stmt);
+  // The balance above and the ledger rows stay consistent in one transaction.
+  FinanceRepository(db_conn).insertPending(teams);
 }
 
 void TeamRepository::bindTeamStateParams(sqlite3_stmt* stmt,
                                          const Team& team) const
 {
-  sqlite3_bind_int64(stmt, 1, team.getFinances().getBalance());
+  const Finances& finances = team.getFinances();
+  const ClubProfile& profile = team.getProfile();
+  sqlite3_bind_int64(stmt, 1, finances.getBalance());
   const std::string strategy = serializeStrategy(team.getStrategy());
   sqlite3_bind_text(stmt, 2, strategy.c_str(), -1, SQLITE_TRANSIENT);
   const std::string lineup = serializeLineup(team.getLineup());
   sqlite3_bind_text(stmt, 3, lineup.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int(stmt, 4, team.getId());
+  sqlite3_bind_int(stmt, 4, profile.reputation);
+  sqlite3_bind_int64(stmt, 5, profile.stadium_capacity);
+  sqlite3_bind_int64(stmt, 6, profile.ticket_price);
+  sqlite3_bind_int(stmt, 7, profile.training_facilities);
+  sqlite3_bind_int(stmt, 8, profile.youth_facilities);
+  sqlite3_bind_int64(stmt, 9, finances.getTransferBudget());
+  sqlite3_bind_int64(stmt, 10, finances.getWageBudget());
+  sqlite3_bind_text(stmt, 11, team.getRecentForm().c_str(), -1,
+                    SQLITE_TRANSIENT);
+  sqlite3_bind_int(stmt, 12, team.getId());
 }

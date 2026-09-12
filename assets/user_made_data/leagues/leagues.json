@@ -1,7 +1,7 @@
 [
-  { "id": 1, "name": "Italian League" },
-  { "id": 6, "name": "Italian Lower League", "parent_league": 1 },
-  { "id": 2, "name": "Spanish League" },
+  { "id": 1, "name": "Italian League", "tiebreak": "head_to_head" },
+  { "id": 6, "name": "Italian Lower League", "parent_league": 1, "tiebreak": "head_to_head" },
+  { "id": 2, "name": "Spanish League", "tiebreak": "head_to_head" },
   { "id": 3, "name": "English League" },
   { "id": 4, "name": "German League" },
   { "id": 5, "name": "French League" },

@@ -53,6 +53,17 @@ void SettingsManager::load()
     settings_.fullscreen = j.value("fullscreen", settings_.fullscreen);
     settings_.fps_limit =
         std::clamp(j.value("fps_limit", settings_.fps_limit), 15, 360);
+    settings_.theme_preset =
+        std::clamp(j.value("theme_preset", settings_.theme_preset), 0, 4);
+    settings_.club_accent = j.value("club_accent", settings_.club_accent);
+    settings_.accent_rgb =
+        j.value("accent_rgb", settings_.accent_rgb) & 0xFFFFFFU;
+    const float scale = j.value("ui_scale", settings_.ui_scale);
+    settings_.ui_scale = scale <= 0.0f ? 0.0f : std::clamp(scale, 0.75f, 2.0f);
+    settings_.compact_density =
+        j.value("compact_density", settings_.compact_density);
+    settings_.reduced_motion =
+        j.value("reduced_motion", settings_.reduced_motion);
   }
   catch (const json::exception& exception)
   {
@@ -70,6 +81,12 @@ void SettingsManager::save() const
   j["resolution"] = {settings_.resolution_width, settings_.resolution_height};
   j["fullscreen"] = settings_.fullscreen;
   j["fps_limit"] = settings_.fps_limit;
+  j["theme_preset"] = settings_.theme_preset;
+  j["club_accent"] = settings_.club_accent;
+  j["accent_rgb"] = settings_.accent_rgb;
+  j["ui_scale"] = settings_.ui_scale;
+  j["compact_density"] = settings_.compact_density;
+  j["reduced_motion"] = settings_.reduced_motion;
 
   std::ofstream out(RuntimePaths::settingsPath());
   out << j.dump(2);

@@ -112,42 +112,6 @@ void drawStadium(ImDrawList& drawList, const MatchViewport& viewport)
                 surroundMax.x - apron + cornerInset, apron - cornerInset);
 }
 
-const char* playerIntentLabel(PlayerIntent intent)
-{
-  switch (intent)
-  {
-    case PlayerIntent::HOLD_SHAPE:
-      return "Hold shape";
-    case PlayerIntent::CARRY_BALL:
-      return "Carry ball";
-    case PlayerIntent::OFFER_SUPPORT:
-      return "Offer support";
-    case PlayerIntent::RECEIVE_PASS:
-      return "Receive pass";
-    case PlayerIntent::RUN_IN_BEHIND:
-      return "Run in behind";
-    case PlayerIntent::ATTACK_BOX:
-      return "Attack box";
-    case PlayerIntent::OVERLAP:
-      return "Overlap";
-    case PlayerIntent::PRESS_BALL:
-      return "Press ball";
-    case PlayerIntent::COVER_PRESS:
-      return "Cover press";
-    case PlayerIntent::BLOCK_PASSING_LANE:
-      return "Block passing lane";
-    case PlayerIntent::MARK_OPPONENT:
-      return "Mark opponent";
-    case PlayerIntent::CLAIM_LOOSE_BALL:
-      return "Claim loose ball";
-    case PlayerIntent::RECOVER_SHAPE:
-      return "Recover shape";
-    case PlayerIntent::GOALKEEP:
-      return "Goalkeep";
-  }
-  return "Unknown";
-}
-
 #ifdef DEBUG
 ImU32 intentDebugColor(PlayerIntent intent)
 {
@@ -427,6 +391,42 @@ void drawPlayer(ImDrawList& drawList, const MatchRenderPlayer& player,
 }
 }  // namespace
 
+const char* playerIntentLabel(PlayerIntent intent)
+{
+  switch (intent)
+  {
+    case PlayerIntent::HOLD_SHAPE:
+      return "Hold shape";
+    case PlayerIntent::CARRY_BALL:
+      return "Carry ball";
+    case PlayerIntent::OFFER_SUPPORT:
+      return "Offer support";
+    case PlayerIntent::RECEIVE_PASS:
+      return "Receive pass";
+    case PlayerIntent::RUN_IN_BEHIND:
+      return "Run in behind";
+    case PlayerIntent::ATTACK_BOX:
+      return "Attack box";
+    case PlayerIntent::OVERLAP:
+      return "Overlap";
+    case PlayerIntent::PRESS_BALL:
+      return "Press ball";
+    case PlayerIntent::COVER_PRESS:
+      return "Cover press";
+    case PlayerIntent::BLOCK_PASSING_LANE:
+      return "Block passing lane";
+    case PlayerIntent::MARK_OPPONENT:
+      return "Mark opponent";
+    case PlayerIntent::CLAIM_LOOSE_BALL:
+      return "Claim loose ball";
+    case PlayerIntent::RECOVER_SHAPE:
+      return "Recover shape";
+    case PlayerIntent::GOALKEEP:
+      return "Goalkeep";
+  }
+  return "Unknown";
+}
+
 MatchViewport computeMatchViewport(float topLeftX, float topLeftY,
                                    float availableWidth, float availableHeight)
 {
@@ -445,7 +445,7 @@ MatchViewport computeMatchViewport(float topLeftX, float topLeftY,
 }
 
 void drawGoalCelebration(ImDrawList& drawList, const MatchViewport& viewport,
-                         bool scoredByHome, int homeScore, int awayScore,
+                         int homeScore, int awayScore,
                          float celebrationRemaining)
 {
   const float total = MatchTuning::Timing::GOAL_CELEBRATION_SECONDS;
@@ -495,7 +495,6 @@ void drawGoalCelebration(ImDrawList& drawList, const MatchViewport& viewport,
            bannerSize.y * MatchSceneTuning::Celebration::SCORE_OFFSET_RATIO},
       MatchSceneTuning::Celebration::SCORE_TEXT_COLOR, score.c_str());
   ImGui::PopFont();
-  (void)scoredByHome;
 }
 
 void MatchRenderer2D::render(const MatchRenderSnapshot& snapshot,
@@ -556,8 +555,7 @@ void MatchRenderer2D::render(const MatchRenderSnapshot& snapshot,
 
   if (snapshot.state == MatchState::GOAL)
   {
-    drawGoalCelebration(*draw_list, viewport, snapshot.goalScoredByHome,
-                        snapshot.homeScore, snapshot.awayScore,
-                        snapshot.goalCelebrationRemaining);
+    drawGoalCelebration(*draw_list, viewport, snapshot.homeScore,
+                        snapshot.awayScore, snapshot.goalCelebrationRemaining);
   }
 }

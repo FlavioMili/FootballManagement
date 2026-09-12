@@ -9,6 +9,7 @@
 #pragma once
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "gui/gui_scene.h"
@@ -55,10 +56,27 @@ class TeamSelectionScene : public GUIScene
   [[nodiscard]] SceneID getID() const override;
 
  private:
+  /** @brief Cached summary of one selectable club. */
+  struct ClubSummary
+  {
+    TeamID id = 0;
+    std::string name;
+    size_t squad_size = 0;
+    float average_overall = 0.0f;
+    float best_overall = 0.0f;
+    int64_t balance = 0;
+    std::string balance_text;
+  };
+
   void loadAvailableLeagues();
   void loadAvailableTeams();
+  void renderLeagueList(float width, float height);
+  void renderClubTable(float height);
+  void renderSelectedClub();
 
   std::vector<std::reference_wrapper<const League>> available_leagues;
   std::vector<std::reference_wrapper<const Team>> available_teams;
   std::optional<uint8_t> selected_league_id;
+  std::optional<TeamID> selected_team_id;
+  std::vector<ClubSummary> club_summaries;
 };

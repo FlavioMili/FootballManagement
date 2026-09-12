@@ -14,8 +14,12 @@
 
 #include "database/database_connection.h"
 #include "model/calendar.h"
+#include "model/competition_manager.h"
 #include "model/gamedate.h"
 #include "model/match.h"
+#include "model/match_report.h"
+#include "model/transfer_market.h"
+#include "model/world_simulation.h"
 
 /**
  * @class Game
@@ -45,6 +49,25 @@ class Game
   /** Records a managed match exactly once and applies its consequences. */
   bool setMatchResult(const GameDateValue& date, TeamID home_id, TeamID away_id,
                       uint8_t home_score, uint8_t away_score);
+
+  /**
+   * Records a managed match with its structured report (e.g. built from the
+   * live MatchEngine). A drawn cup tie is settled by extra time and
+   * penalties unless the report already carries them.
+   */
+  bool setMatchResult(const GameDateValue& date, TeamID home_id, TeamID away_id,
+                      MatchReport report);
+
+  /** Standings, cups, reports, player season stats and season history. */
+  const CompetitionManager& getCompetitions() const { return competitions; }
+
+  /** Inbox, board, injuries, finances and development between matches. */
+  WorldSimulation& getWorld() { return world; }
+  const WorldSimulation& getWorld() const { return world; }
+
+  /** Deals, loans, pre-contracts, scheduled payments and transfer history. */
+  TransferMarket& getTransfers() { return transfers; }
+  const TransferMarket& getTransfers() const { return transfers; }
 
   /**
    * @brief Retrieves the current in-game date.
@@ -89,16 +112,16 @@ class Game
   void handleSeasonTransition();
   void startNewSeason();
 
-  // Player training
-  void trainPlayers(const std::vector<uint32_t>& player_ids);
-
   // Matchday simulation helper
-  void simulateMatches(std::vector<Match>& matches);
-  void updateStandings(const Match& match);
+  void simulateMatches(std::vector<Match>& matches,
+                       bool include_managed = false);
 
   std::shared_ptr<DatabaseConnection> db_conn;
   std::shared_ptr<class GameData> gamedata;
   Calendar calendar;
+  CompetitionManager competitions;
+  WorldSimulation world;
+  TransferMarket transfers;
   GameDateValue currentDate;
   uint8_t current_season = 1;
   uint16_t managed_team_id;

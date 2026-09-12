@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -17,9 +18,26 @@
 #include "lineup.h"
 #include "strategy.h"
 
-// TODO change balance-related things with a Finances class
-// TODO add stadium
-// TODO add lineup and in controller lineupManager class
+/**
+ * @struct ClubProfile
+ * @brief Persistent club attributes that drive revenue and development.
+ */
+struct ClubProfile
+{
+  std::uint8_t reputation = 50; /*!< 1-100 club stature. */
+  std::uint32_t stadium_capacity = 10'000;
+  std::uint32_t ticket_price = 20;       /*!< Average yield per spectator. */
+  std::uint8_t training_facilities = 50; /*!< 1-100. */
+  std::uint8_t youth_facilities = 50;    /*!< 1-100. */
+};
+
+/** @brief Result letters stored in the recent-form string. */
+enum class MatchOutcome : char
+{
+  Win = 'W',
+  Draw = 'D',
+  Loss = 'L'
+};
 
 /**
  * @class Team
@@ -51,6 +69,9 @@ class Team
 
   /** @brief Gets the ID of the team's league. */
   LeagueID getLeagueId() const;
+
+  /** @brief Moves the team to another league (promotion/relegation). */
+  void setLeagueId(LeagueID new_league_id);
 
   /** @brief Gets the name of the team. */
   const std::string& getName() const;
@@ -94,6 +115,8 @@ class Team
 
   /**
    * @brief Generates the best starting XI automatically based on stats.
+   *
+   * Injured players are left out.
    * @param stats_config The configuration used to evaluate players.
    */
   void generateStartingXI(const class GameData& gamedata,
@@ -106,6 +129,29 @@ class Team
 
   /** @brief Gets the team's finances (const). */
   const Finances& getFinances() const noexcept;
+
+  // Club profile
+
+  /** @brief Reputation, stadium, ticket price and facilities. */
+  const ClubProfile& getProfile() const noexcept;
+
+  /** @brief Replaces the club profile. */
+  void setProfile(const ClubProfile& profile);
+
+  /** @brief Club reputation (1-100). */
+  std::uint8_t getReputation() const noexcept;
+
+  /** @brief Stadium capacity in seats. */
+  std::uint32_t getStadiumCapacity() const noexcept;
+
+  /** @brief Last results, newest first ("WDL..."), at most 5 letters. */
+  const std::string& getRecentForm() const noexcept;
+
+  /** @brief Restores the recent-form string (persistence). */
+  void setRecentForm(std::string_view form);
+
+  /** @brief Prepends a result to the recent form. */
+  void pushResult(MatchOutcome outcome);
 
  private:
   TeamID id;
@@ -121,4 +167,6 @@ class Team
   Strategy team_strategy;
   Lineup lineup;
   Finances finances;
+  ClubProfile profile;
+  std::string recent_form;
 };

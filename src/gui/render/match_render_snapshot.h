@@ -19,6 +19,11 @@
  * previous and current fixed-step positions plus the interpolation fraction,
  * so 2D and future 3D renderers can interpolate without touching the
  * simulation. Renderers must never mutate this data or the engine.
+ *
+ * Units: positions are normalised pitch coordinates (x along the 105 m
+ * length, home attacking +x; y across the 68 m width). Ball `currentZ` and
+ * `previousZ` are in length units (metres = z * 105); the `*HeightMetres`
+ * fields carry the same value already converted to metres.
  */
 struct MatchRenderPlayer
 {
@@ -35,6 +40,13 @@ struct MatchRenderPlayer
   float currentFacingAngle = 0.0f;
   float stamina = 1.0f;
   bool possessesBall = false;
+  /** False once sent off or forced off; such players wait by the bench. */
+  bool onPitch = true;
+  bool isGoalkeeper = false;
+  bool isDiving = false;
+  bool isInjured = false;
+  int yellowCards = 0;
+  float heightMetres = MatchTuning::Units::DEFAULT_PLAYER_HEIGHT_METRES;
 };
 
 struct MatchRenderBall
@@ -46,6 +58,10 @@ struct MatchRenderBall
   float previousZ = 0.0f;
   float currentZ = 0.0f;
   const Player* possessedBy = nullptr;
+  float previousHeightMetres = 0.0f;
+  float currentHeightMetres = 0.0f;
+  bool isShot = false;
+  bool isAerialDelivery = false;
 };
 
 struct MatchRenderSnapshot
@@ -64,6 +80,13 @@ struct MatchRenderSnapshot
   const std::vector<MatchEvent>* events = nullptr;
   const MatchStats* stats = nullptr;
   float interpolationAlpha = 0.0f;
+  /** 1 or 2; added minutes are 0 until announced. */
+  int period = 1;
+  int addedMinutesFirstHalf = 0;
+  int addedMinutesSecondHalf = 0;
+  GoalkeeperState homeGoalkeeperState = GoalkeeperState::SET_POSITION;
+  GoalkeeperState awayGoalkeeperState = GoalkeeperState::SET_POSITION;
+  const std::vector<PlayerMatchStats>* playerStats = nullptr;
 };
 
 /** Builds a read-only render snapshot from a live engine. */
@@ -87,6 +110,12 @@ inline MatchRenderSnapshot buildMatchRenderSnapshot(const MatchEngine& engine)
     renderPlayer.stamina = source.stamina;
     renderPlayer.possessesBall = source.player != nullptr &&
                                  engine.getBall().possessedBy == source.player;
+    renderPlayer.onPitch = source.onPitch;
+    renderPlayer.isGoalkeeper = source.isGoalkeeper;
+    renderPlayer.isDiving = source.isDiving;
+    renderPlayer.isInjured = source.isInjured;
+    renderPlayer.yellowCards = source.yellowCards;
+    renderPlayer.heightMetres = source.heightMetres;
     renderPlayer.previousPosition = index < previousPositions.size()
                                         ? previousPositions[index]
                                         : renderPlayer.currentPosition;
@@ -101,6 +130,12 @@ inline MatchRenderSnapshot buildMatchRenderSnapshot(const MatchEngine& engine)
   snapshot.ball.currentZ = ball.z;
   snapshot.ball.previousZ = engine.getPreviousBallZ();
   snapshot.ball.possessedBy = ball.possessedBy;
+  snapshot.ball.currentHeightMetres =
+      ball.z * MatchTuning::Units::BALL_Z_METRES;
+  snapshot.ball.previousHeightMetres =
+      engine.getPreviousBallZ() * MatchTuning::Units::BALL_Z_METRES;
+  snapshot.ball.isShot = ball.isShot;
+  snapshot.ball.isAerialDelivery = ball.isAerialDelivery;
 
   snapshot.state = engine.getState();
   snapshot.homePhase = engine.getHomePhase();
@@ -114,6 +149,12 @@ inline MatchRenderSnapshot buildMatchRenderSnapshot(const MatchEngine& engine)
   snapshot.events = &engine.getEvents();
   snapshot.stats = &engine.getStats();
   snapshot.interpolationAlpha = engine.getInterpolationAlpha();
+  snapshot.period = engine.getPeriod();
+  snapshot.addedMinutesFirstHalf = engine.getAddedMinutes(1);
+  snapshot.addedMinutesSecondHalf = engine.getAddedMinutes(2);
+  snapshot.homeGoalkeeperState = engine.getHomeGoalkeeperState();
+  snapshot.awayGoalkeeperState = engine.getAwayGoalkeeperState();
+  snapshot.playerStats = &engine.getPlayerStats();
   return snapshot;
 }
 

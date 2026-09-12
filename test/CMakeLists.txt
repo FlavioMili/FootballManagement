@@ -1,6 +1,9 @@
 set(FM_TEST_MATCH_SEED 424242)
+# Fixed world seed: generated leagues, players and world events are then
+# identical on every test run.
+set(FM_TEST_WORLD_SEED 20250702)
 set(FM_TEST_ENVIRONMENT
-  "SDL_VIDEODRIVER=dummy;FM_TEST_RUNTIME_ROOT=/tmp/football-management-tests;FM_MATCH_SEED=${FM_TEST_MATCH_SEED}")
+  "SDL_VIDEODRIVER=dummy;FM_TEST_RUNTIME_ROOT=/tmp/football-management-tests;FM_MATCH_SEED=${FM_TEST_MATCH_SEED};FM_WORLD_SEED=${FM_TEST_WORLD_SEED}")
 set(FM_TEST_LAUNCHER
   "${CMAKE_COMMAND};-E;env;${FM_TEST_ENVIRONMENT}")
 
@@ -10,8 +13,17 @@ add_executable(unit_tests
   test_gamedata.cpp
   test_database.cpp
   test_match_engine.cpp
+  test_match_renderer_3d.cpp
   test_match_scenarios.cpp
   test_transfer_market.cpp
+  test_transfer_negotiation.cpp
+  test_competitions.cpp
+  test_view_models.cpp
+  test_finances.cpp
+  test_world_sim.cpp
+  test_scouting.cpp
+  test_training.cpp
+  test_staff.cpp
 )
 target_link_libraries(unit_tests PRIVATE GTest::gtest_main fm_ui)
 set_property(TARGET unit_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
@@ -23,7 +35,16 @@ add_executable(core_unit_tests
   test_gamedata.cpp
   test_database.cpp
   test_match_scenarios.cpp
+  test_match_calibration.cpp
+  test_match_rules.cpp
   test_transfer_market.cpp
+  test_transfer_negotiation.cpp
+  test_competitions.cpp
+  test_finances.cpp
+  test_world_sim.cpp
+  test_scouting.cpp
+  test_training.cpp
+  test_staff.cpp
 )
 target_link_libraries(core_unit_tests PRIVATE GTest::gtest_main fm_core)
 set_property(TARGET core_unit_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")

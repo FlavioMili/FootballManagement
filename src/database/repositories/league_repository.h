@@ -27,6 +27,9 @@ class LeagueRepository
    */
   explicit LeagueRepository(std::shared_ptr<DatabaseConnection> db_conn);
 
+  /** @brief Adds the tie-break column to Leagues of older saves. */
+  void ensureSchema() const;
+
   /**
    * @brief Load all leagues from the database.
    * @return A vector of League objects.
@@ -56,6 +59,12 @@ class LeagueRepository
    * @param league The League object to populate with points.
    */
   void loadLeaguePoints(League& league) const;
+
+  /**
+   * @brief Persists the league membership (Teams.league_id) of its teams.
+   * @param league The League whose teams are stored.
+   */
+  void saveTeamMemberships(const League& league) const;
 
   /**
    * @brief Reset points for all leagues in the database.

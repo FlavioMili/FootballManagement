@@ -56,8 +56,11 @@ INSERT INTO Players (
   height,
   foot,
   stats,
-  status
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+  status,
+  potential,
+  traits,
+  dynamics
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- @QUERY_ID: INSERT_PLAYER_WITH_ID
 INSERT OR IGNORE INTO Players (
@@ -73,8 +76,11 @@ INSERT OR IGNORE INTO Players (
   height,
   foot,
   stats,
-  status
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+  status,
+  potential,
+  traits,
+  dynamics
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- @QUERY_ID: SELECT_PLAYERS_BY_TEAM
 SELECT id,
@@ -105,7 +111,10 @@ SELECT id,
   height,
   foot,
   stats,
-  status
+  status,
+  potential,
+  traits,
+  dynamics
 FROM Players;
 
 -- @QUERY_ID: UPDATE_PLAYER
@@ -122,7 +131,10 @@ SET
   height = ?, 
   foot = ?, 
   stats = ?, 
-  status = ?
+  status = ?,
+  potential = ?,
+  traits = ?,
+  dynamics = ?
 WHERE id = ?;
 
 -- @QUERY_ID: DELETE_PLAYER

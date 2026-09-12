@@ -29,6 +29,7 @@
 #include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/match_scene.h"
 #include "gui/scenes/team_selection_scene.h"
+#include "gui/widgets/theme.h"
 #include "imgui.h"
 #include "settings_manager.h"
 
@@ -124,11 +125,16 @@ bool GUIView::initialize()
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   static std::string iniPath = RuntimePaths::imguiIniPath().string();
   io.IniFilename = iniPath.c_str();
-  applyCatppuccinLatteTheme();
+  applyManagementTheme();
 
-  // Load high quality TTF font to replace the pixelated default
+  // One TTF serves every typography level: the dynamic atlas bakes glyphs
+  // on demand for each size requested through Theme::ScopedText.
   std::string fontPath = std::string(PROJECT_ROOT) + "assets/fonts/font.ttf";
-  if (io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 20.0f) == nullptr)
+  ImFontConfig fontConfig;
+  fontConfig.OversampleH = 2;
+  if (io.Fonts->AddFontFromFileTTF(fontPath.c_str(),
+                                   Theme::textSize(Theme::Text::BODY),
+                                   &fontConfig) == nullptr)
   {
     std::cerr << "Failed to load font: " << fontPath << '\n';
     return false;
@@ -172,6 +178,12 @@ void GUIView::run()
     if (elapsed < frameBudget)
       SDL_Delay(static_cast<Uint32>(frameBudget - elapsed));
   }
+
+  // Release scenes before the caller saves controller state. A scene may own
+  // bounded background work, and its destructor joins that work safely.
+  while (!sceneStack.empty()) sceneStack.pop();
+  currentScene.reset();
+  pendingScene.reset();
 }
 
 bool GUIView::runMatchRenderProfile()
@@ -249,6 +261,11 @@ void GUIView::handleEvents()
       screenshotPending = true;
     }
 
+    if (event.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED)
+    {
+      applyManagementTheme();
+    }
+
     if (event.type == SDL_EVENT_WINDOW_RESIZED)
     {
       int width = 0;
@@ -309,9 +326,10 @@ void GUIView::render()
   if (screenshotPending)
   {
     const char* configuredPath = std::getenv("FM_SCREENSHOT_PATH");
-    const std::string path = configuredPath && *configuredPath
-                                 ? configuredPath
-                                 : RuntimePaths::capturePath("screenshot.bmp").string();
+    const std::string path =
+        configuredPath && *configuredPath
+            ? configuredPath
+            : RuntimePaths::capturePath("screenshot.bmp").string();
     if (!captureScreenshot(path))
       std::cerr << "Failed to capture screenshot: " << SDL_GetError() << '\n';
     screenshotPending = false;
@@ -373,6 +391,16 @@ void GUIView::overlayScene(std::unique_ptr<GUIScene> overlay)
 
 void GUIView::popScene() { pendingAction = PendingAction::POP; }
 
+void GUIView::navigateTo(std::unique_ptr<GUIScene> scene)
+{
+  pendingAction = PendingAction::NAVIGATE;
+  pendingScene = std::move(scene);
+}
+
+GUIScene* GUIView::getBaseScene() const { return currentScene.get(); }
+
+size_t GUIView::getOverlayDepth() const { return sceneStack.size(); }
+
 void GUIView::applyPendingSceneChanges()
 {
   while (pendingAction != PendingAction::NONE)
@@ -427,6 +455,29 @@ void GUIView::applyPendingSceneChanges()
         // Exit the top overlay scene
         sceneStack.top()->onExit();
         sceneStack.pop();
+        if (GUIScene* revealed = getActiveScene()) revealed->onResume();
+      }
+    }
+    else if (currentAction == PendingAction::NAVIGATE)
+    {
+      const bool hadOverlays = !sceneStack.empty();
+      while (!sceneStack.empty())
+      {
+        sceneStack.top()->onExit();
+        sceneStack.pop();
+      }
+      if (sceneToApply)
+      {
+        sceneToApply->onEnter();
+        if (sceneToApply->getID() == SceneID::MATCH)
+        {
+          beginMatchRenderTimings();
+        }
+        sceneStack.push(std::move(sceneToApply));
+      }
+      else if (hadOverlays && currentScene)
+      {
+        currentScene->onResume();
       }
     }
   }
@@ -463,70 +514,28 @@ GUIScene* GUIView::getActiveScene() const
   return currentScene.get();
 }
 
-void GUIView::applyCatppuccinLatteTheme()
+float GUIView::displayScale() const
 {
-  ImGuiStyle& style = ImGui::GetStyle();
-  ImVec4* colors = style.Colors;
-
-  auto base = ImVec4(0.937f, 0.945f, 0.961f, 1.00f);
-  auto crust = ImVec4(0.863f, 0.878f, 0.910f, 1.00f);
-  auto mantle = ImVec4(0.902f, 0.914f, 0.937f, 1.00f);
-  auto text = ImVec4(0.298f, 0.310f, 0.412f, 1.00f);
-  auto sapphire = ImVec4(0.125f, 0.624f, 0.710f, 1.00f);
-  auto sapphireHover = ImVec4(0.125f, 0.7f, 0.8f, 1.00f);
-  auto sapphireActive = ImVec4(0.125f, 0.8f, 0.9f, 1.00f);
-
-  colors[ImGuiCol_Text] = text;
-  colors[ImGuiCol_TextDisabled] = ImVec4(0.424f, 0.435f, 0.522f, 1.00f);
-  colors[ImGuiCol_WindowBg] = base;
-  colors[ImGuiCol_ChildBg] = crust;
-  colors[ImGuiCol_PopupBg] = base;
-  colors[ImGuiCol_Border] = mantle;
-  colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-  colors[ImGuiCol_FrameBg] = mantle;
-  colors[ImGuiCol_FrameBgHovered] = crust;
-  colors[ImGuiCol_FrameBgActive] = crust;
-  colors[ImGuiCol_TitleBg] = mantle;
-  colors[ImGuiCol_TitleBgActive] = crust;
-  colors[ImGuiCol_TitleBgCollapsed] = base;
-  colors[ImGuiCol_MenuBarBg] = mantle;
-  colors[ImGuiCol_ScrollbarBg] = base;
-  colors[ImGuiCol_ScrollbarGrab] = crust;
-  colors[ImGuiCol_ScrollbarGrabHovered] = mantle;
-  colors[ImGuiCol_ScrollbarGrabActive] = text;
-  colors[ImGuiCol_CheckMark] = sapphire;
-  colors[ImGuiCol_SliderGrab] = sapphire;
-  colors[ImGuiCol_SliderGrabActive] = sapphireActive;
-  colors[ImGuiCol_Button] = sapphire;
-  colors[ImGuiCol_ButtonHovered] = sapphireHover;
-  colors[ImGuiCol_ButtonActive] = sapphireActive;
-  colors[ImGuiCol_Header] = mantle;
-  colors[ImGuiCol_HeaderHovered] = crust;
-  colors[ImGuiCol_HeaderActive] = crust;
-  colors[ImGuiCol_Separator] = mantle;
-  colors[ImGuiCol_SeparatorHovered] = crust;
-  colors[ImGuiCol_SeparatorActive] = crust;
-  colors[ImGuiCol_ResizeGrip] = sapphire;
-  colors[ImGuiCol_ResizeGripHovered] = sapphireHover;
-  colors[ImGuiCol_ResizeGripActive] = sapphireActive;
-  colors[ImGuiCol_TabHovered] = crust;
-  colors[ImGuiCol_Tab] = mantle;
-  colors[ImGuiCol_TabSelected] = crust;
-  colors[ImGuiCol_TabSelectedOverline] = sapphire;
-  colors[ImGuiCol_TabDimmed] = mantle;
-  colors[ImGuiCol_TabDimmedSelected] = mantle;
-  colors[ImGuiCol_TabDimmedSelectedOverline] =
-      ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-  colors[ImGuiCol_NavHighlight] = sapphireHover;
-  colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
-  colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-  colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
-
-  style.WindowRounding = 8.0f;
-  style.FrameRounding = 6.0f;
-  style.PopupRounding = 6.0f;
-  style.ScrollbarRounding = 6.0f;
-  style.GrabRounding = 4.0f;
-  style.ItemSpacing = ImVec2(10, 10);
-  style.FramePadding = ImVec2(10, 8);
+  const float scale =
+      window != nullptr ? SDL_GetWindowDisplayScale(window) : 1.0f;
+  return scale > 0.0f ? scale : 1.0f;
 }
+
+void GUIView::applyManagementTheme()
+{
+  // Palette, spacing and typography live in the shared design system so
+  // scenes and widgets draw from the same tokens. Re-applied when appearance
+  // settings change or the window moves to a display with another scale.
+  const Settings& settings = SettingsManager::instance()->get();
+  Theme::Appearance appearance;
+  appearance.preset = static_cast<Theme::Preset>(std::clamp(
+      settings.theme_preset, 0, static_cast<int>(Theme::Preset::COUNT) - 1));
+  appearance.club_accent = settings.club_accent;
+  appearance.custom_accent = Theme::unpackRgb(settings.accent_rgb);
+  appearance.ui_scale = settings.ui_scale;
+  appearance.compact = settings.compact_density;
+  appearance.reduced_motion = settings.reduced_motion;
+  Theme::apply(appearance, displayScale());
+}
+
+void GUIView::refreshTheme() { applyManagementTheme(); }

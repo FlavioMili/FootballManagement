@@ -8,10 +8,21 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <string>
+
 #include "gui/gui_scene.h"
 #include "gui/render/imatch_renderer.h"
 #include "gui/scenes/match_scene_tuning.h"
 #include "model/match_engine.h"
+
+/** Which renderer presents the live match. */
+enum class MatchViewMode : std::uint8_t
+{
+  PITCH_2D,
+  BROADCAST_3D,
+};
 
 class MatchScene : public GUIScene
 {
@@ -26,14 +37,24 @@ class MatchScene : public GUIScene
 
  private:
   friend class GameFlowTest_GUIFlowLifecycle_Test;
+  friend class MatchRenderer3DSceneTest_SwitchesViewsAndCapturesFrames_Test;
   uint16_t home_team_id;
   uint16_t away_team_id;
 
   std::string home_name;
   std::string away_name;
 
+  std::string home_label;
+  std::string away_label;
+
   std::unique_ptr<MatchEngine> engine;
-  std::unique_ptr<IMatchRenderer> matchRenderer;
+  std::unique_ptr<IMatchRenderer> renderer_2d;
+  std::unique_ptr<IMatchRenderer> renderer_3d;
+  MatchViewMode view_mode = MatchViewMode::PITCH_2D;
+  MatchCameraMode camera_mode = MatchCameraMode::BROADCAST;
+  bool show_player_names = false;
+  float pending_zoom_steps = 0.0f;
+  float frame_seconds = 0.0f;
 
   bool match_finished = false;
 
@@ -51,7 +72,12 @@ class MatchScene : public GUIScene
   float last_update_milliseconds = 0.0f;
   float maximum_update_milliseconds = 0.0f;
   std::uint64_t slow_update_count = 0;
+  float last_render_milliseconds = 0.0f;
+  float average_render_milliseconds = 0.0f;
 
+  void setViewMode(MatchViewMode mode);
+  void setCameraMode(MatchCameraMode mode);
+  void renderViewControls();
   void renderSubstitutionsModal();
 #ifdef DEBUG
   void exportDebugSnapshot();

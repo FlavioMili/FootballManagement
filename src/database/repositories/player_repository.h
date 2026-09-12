@@ -61,7 +61,7 @@ class PlayerRepository
   void updatePlayer(const Player& player) const;
 
   /**
-   * @brief Update multiple players in the database.
+   * @brief Update multiple players in the database, inserting new ones.
    * @param players A vector of reference wrappers to Player objects.
    */
   void updatePlayers(

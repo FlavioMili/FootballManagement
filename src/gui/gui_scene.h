@@ -29,6 +29,15 @@ enum class SceneID : uint8_t
   STRATEGY,        /**< Strategy management scene */
   TRANSFER_MARKET, /**< Transfer market scene */
   MATCH,           /**< Live match scene */
+  PLAYER_PROFILE,  /**< Single player profile */
+  FIXTURES,        /**< Fixtures and results */
+  STANDINGS,       /**< League table */
+  INBOX,           /**< Club inbox */
+  CLUB,            /**< Club, board and history */
+  MATCH_REPORT,    /**< Post-match report */
+  SCOUTING,        /**< Scouting and recruitment */
+  TRAINING,        /**< Training schedule and workload */
+  STAFF,           /**< Backroom staff and staff market */
 };
 
 /**
@@ -78,6 +87,13 @@ class GUIScene
    * @brief Called when the scene is exited/becomes inactive.
    */
   virtual void onExit();
+
+  /**
+   * @brief Called when an overlay above this scene closes and it becomes the
+   * active scene again. Screens use it to refresh cached view models after a
+   * match, a transfer or any other state change made elsewhere.
+   */
+  virtual void onResume();
 
   /**
    * @brief Called when the window is resized.

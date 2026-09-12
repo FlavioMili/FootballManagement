@@ -11,16 +11,19 @@
 #include <fmt/printf.h>
 #include <imgui.h>
 
+#include <algorithm>
 #include <chrono>
 #include <format>
+#include <string>
 
 #include "global/language_manager.h"
 #include "global/logger.h"
-#include "gui/gui_constants.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/main_game_scene.h"
 #include "gui/scenes/settings_scene.h"
 #include "gui/scenes/team_selection_scene.h"
+#include "gui/widgets/theme.h"
+#include "gui/widgets/widgets.h"
 
 SceneID MainMenuScene::getID() const { return SceneID::MAIN_MENU; }
 
@@ -96,102 +99,145 @@ void MainMenuScene::update(float deltaTime)
 
 void MainMenuScene::render()
 {
+  const float dpi = ImGui::GetStyle().FontScaleDpi;
+  const Theme::Palette& palette = Theme::palette();
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->WorkPos);
+  ImGui::SetNextWindowSize(viewport->WorkSize);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+  ImGui::Begin("##main_menu", nullptr,
+               ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+                   ImGuiWindowFlags_NoSavedSettings |
+                   ImGuiWindowFlags_NoBringToFrontOnFocus);
+  ImGui::PopStyleVar(2);
+
+  // Subtle pitch-line motif behind the menu.
+  ImDrawList* background = ImGui::GetWindowDrawList();
+  const ImVec2 center = viewport->GetCenter();
+  const float radius =
+      std::min(viewport->WorkSize.x, viewport->WorkSize.y) * 0.34f;
+  background->AddCircle(center, radius, Theme::toU32(palette.border, 0.6f), 96,
+                        2.0f * dpi);
+  background->AddLine(
+      ImVec2(center.x, viewport->WorkPos.y),
+      ImVec2(center.x, viewport->WorkPos.y + viewport->WorkSize.y),
+      Theme::toU32(palette.border, 0.45f), 2.0f * dpi);
+
+  const float buttonWidth = 320.0f * dpi;
+  const float buttonHeight = 46.0f * dpi;
   if (loading_slot > 0)
   {
-    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
-                            ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-    ImGui::Begin(
-        "Loading", nullptr,
-        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
-            ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove);
-    ImGui::Text("%s...", LOC(is_new_game ? "MENU_LOADING_INITIALIZING"
-                                         : "MENU_LOADING_LOAD"));
+    {
+      const char* message =
+          LOC(is_new_game ? "MENU_LOADING_INITIALIZING" : "MENU_LOADING_LOAD");
+      Theme::ScopedText title(Theme::Text::TITLE);
+      const ImVec2 size = ImGui::CalcTextSize(message);
+      ImGui::SetCursorScreenPos(
+          ImVec2(center.x - size.x * 0.5f, center.y - size.y * 0.5f));
+      ImGui::TextUnformatted(message);
+    }
     ImGui::End();
     is_loading_rendered = true;
     return;
   }
 
-  ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
-                          ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-  ImGui::Begin("Football Management", nullptr,
-               ImGuiWindowFlags_NoDecoration |
-                   ImGuiWindowFlags_AlwaysAutoResize |
-                   ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove);
-
-  ImGui::Text("%s", LOC("MENU_TITLE"));
-  ImGui::Separator();
-  ImGui::Spacing();
-
-  if (ImGui::Button(LOC("MENU_NEW_GAME"),
-                    ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
-                           GUIConstants::MENU_BUTTON_HEIGHT)))
   {
-    ImGui::OpenPopup("Select Save Slot");
+    ImGui::PushFont(nullptr, Theme::textSize(Theme::Text::DISPLAY) * 1.5f);
+    const char* title = LOC("MENU_TITLE");
+    const ImVec2 size = ImGui::CalcTextSize(title);
+    ImGui::SetCursorScreenPos(
+        ImVec2(center.x - size.x * 0.5f, center.y - 190.0f * dpi));
+    ImGui::TextUnformatted(title);
+    ImGui::PopFont();
+  }
+  {
+    Theme::ScopedText small(Theme::Text::BODY);
+    const char* tagline = LOC("MENU_TAGLINE");
+    const ImVec2 size = ImGui::CalcTextSize(tagline);
+    ImGui::SetCursorScreenPos(
+        ImVec2(center.x - size.x * 0.5f, ImGui::GetCursorScreenPos().y));
+    ImGui::TextColored(palette.muted, "%s", tagline);
+  }
+
+  ImGui::SetCursorScreenPos(
+      ImVec2(center.x - buttonWidth * 0.5f, center.y - 70.0f * dpi));
+  ImGui::BeginGroup();
+  if (UI::primaryButton(LOC("MENU_NEW_GAME"),
+                        ImVec2(buttonWidth, buttonHeight)))
+  {
+    ImGui::OpenPopup("###select_save_slot");
     is_new_game = true;
   }
-
-  if (ImGui::Button(LOC("MENU_LOAD_GAME"),
-                    ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
-                           GUIConstants::MENU_BUTTON_HEIGHT)))
+  if (ImGui::Button(LOC("MENU_LOAD_GAME"), ImVec2(buttonWidth, buttonHeight)))
   {
-    ImGui::OpenPopup("Select Save Slot");
+    ImGui::OpenPopup("###select_save_slot");
     is_new_game = false;
   }
+  if (ImGui::Button(LOC("MENU_SETTINGS"), ImVec2(buttonWidth, buttonHeight)))
+  {
+    auto settingsScene = std::make_unique<SettingsScene>(guiView);
+    changeScene(std::move(settingsScene));
+  }
+  if (ImGui::Button(LOC("MENU_QUIT"), ImVec2(buttonWidth, buttonHeight)))
+  {
+    quit();
+  }
+  ImGui::EndGroup();
 
-  if (ImGui::BeginPopupModal("Select Save Slot", nullptr,
+  ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+  const std::string popupTitle =
+      std::string(LOC(is_new_game ? "MENU_NEW_GAME" : "MENU_LOAD_GAME")) +
+      "###select_save_slot";
+  if (ImGui::BeginPopupModal(popupTitle.c_str(), nullptr,
                              ImGuiWindowFlags_AlwaysAutoResize))
   {
-    ImGui::Text("%s", is_new_game
-                          ? "Select a slot for your New Game (will overwrite):"
-                          : "Select a slot to Load:");
-    ImGui::Separator();
+    ImGui::TextColored(
+        palette.muted, "%s",
+        LOC(is_new_game ? "MENU_SLOT_PROMPT_NEW" : "MENU_SLOT_PROMPT_LOAD"));
+    ImGui::Spacing();
 
+    const ImVec2 slotSize(440.0f * dpi, 58.0f * dpi);
     for (int i = 1; i <= 3; ++i)
     {
       const auto& metadata = (cached_metadata.size() >= static_cast<size_t>(i))
                                  ? cached_metadata[static_cast<size_t>(i - 1)]
                                  : GameController::SaveSlotMetadata{};
-      std::string btn_label = std::format("Slot {}: ", i);
+      std::string detail;
       if (!metadata.exists)
-      {
-        btn_label += LOC("MENU_SAVE_SLOT_EMPTY");
-      }
+        detail = LOC("MENU_SAVE_SLOT_EMPTY");
+      else if (metadata.team_name.empty())
+        detail = LOC("MENU_SAVE_SLOT_NOT_STARTED");
       else
       {
-        if (metadata.team_name.empty())
-        {
-          btn_label += LOC("MENU_SAVE_SLOT_NOT_STARTED");
-        }
-        else
-        {
-          btn_label += metadata.team_name;
-          if (!metadata.game_date.empty())
-          {
-            btn_label += " (" + metadata.game_date + ")";
-          }
-        }
+        detail = metadata.team_name;
+        if (!metadata.game_date.empty()) detail += "  ·  " + metadata.game_date;
       }
 
-      bool disable_button = !is_new_game && !metadata.exists;
-      if (disable_button)
-      {
-        ImGui::BeginDisabled();
-      }
-
-      if (ImGui::Button(btn_label.c_str(), ImVec2(400, 40)))
+      const bool disableButton = !is_new_game && !metadata.exists;
+      ImGui::BeginDisabled(disableButton);
+      ImGui::PushID(i);
+      const ImVec2 slotStart = ImGui::GetCursorScreenPos();
+      if (ImGui::Button("##slot", slotSize))
       {
         loading_slot = i;
         is_loading_rendered = false;
         ImGui::CloseCurrentPopup();
       }
+      const bool hovered = ImGui::IsItemHovered();
+      ImGui::PopID();
+      ImDrawList* drawList = ImGui::GetWindowDrawList();
+      const std::string slotLabel = fmt::sprintf(LOC("MENU_SLOT_LABEL"), i);
+      drawList->AddText(
+          ImVec2(slotStart.x + 14.0f * dpi, slotStart.y + 8.0f * dpi),
+          Theme::toU32(palette.text), slotLabel.c_str());
+      drawList->AddText(ImVec2(slotStart.x + 14.0f * dpi,
+                               slotStart.y + slotSize.y -
+                                   ImGui::GetTextLineHeight() - 8.0f * dpi),
+                        Theme::toU32(palette.muted), detail.c_str());
+      ImGui::EndDisabled();
 
-      if (disable_button)
-      {
-        ImGui::EndDisabled();
-      }
-
-      if (metadata.exists && !metadata.real_date.empty() &&
-          ImGui::IsItemHovered())
+      if (metadata.exists && !metadata.real_date.empty() && hovered)
       {
         const std::string tooltip =
             fmt::sprintf(LOC("MENU_SAVE_SLOT_LAST_SAVED"), metadata.real_date);
@@ -199,26 +245,12 @@ void MainMenuScene::render()
       }
     }
 
-    ImGui::Separator();
-    if (ImGui::Button(LOC("SETTINGS_CANCEL"), ImVec2(400, 30)))
+    ImGui::Spacing();
+    if (ImGui::Button(LOC("SETTINGS_CANCEL"), ImVec2(slotSize.x, 0.0f)))
     {
       ImGui::CloseCurrentPopup();
     }
     ImGui::EndPopup();
-  }
-
-  if (ImGui::Button(LOC("MENU_SETTINGS"),
-                    ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
-                           GUIConstants::MENU_BUTTON_HEIGHT)))
-  {
-    auto settingsScene = std::make_unique<SettingsScene>(guiView);
-    changeScene(std::move(settingsScene));
-  }
-
-  if (ImGui::Button(LOC("MENU_QUIT"), ImVec2(GUIConstants::MENU_BUTTON_WIDTH,
-                                             GUIConstants::MENU_BUTTON_HEIGHT)))
-  {
-    quit();
   }
 
   ImGui::End();

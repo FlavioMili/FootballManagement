@@ -14,6 +14,7 @@
 
 #include "gui/gui_scene.h"
 #include "gui/gui_view.h"
+#include "settings_manager.h"
 
 /**
  * @brief Scene for managing application settings.
@@ -26,6 +27,14 @@ class SettingsScene : public GUIScene
    * @param guiView_ptr Pointer to the GUIView.
    */
   explicit SettingsScene(GUIView* guiView_ptr);
+
+  /**
+   * @brief Constructs a SettingsScene opened from inside a career.
+   * @param guiView_ptr Pointer to the GUIView.
+   * @param inCareer When true, leaving the scene returns to the career
+   * instead of the main menu, and save wiping is not offered.
+   */
+  SettingsScene(GUIView* guiView_ptr, bool inCareer);
 
   /**
    * @brief Destroys the SettingsScene.
@@ -55,7 +64,14 @@ class SettingsScene : public GUIScene
   SceneID getID() const override;
 
  private:
+  friend class GameFlowTest_GUIFlowLifecycle_Test;
   void applyAndSaveSettings();
+  void cancel();
+  void leave();
+  void renderGeneral();
+  void renderAppearance();
+  void renderData();
+  void previewAppearance();
 
   std::vector<std::string> languageOptions;
   std::vector<Language> availableLanguageEnums;
@@ -69,4 +85,8 @@ class SettingsScene : public GUIScene
 
   bool showWipeDataOverlay = false;
   float wipeDataTimer = 0.0f;
+
+  bool in_career = false;
+  Settings original_settings;
+  float pending_ui_scale = 1.0f;
 };

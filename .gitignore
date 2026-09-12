@@ -6,6 +6,8 @@ compile_commands.json
 game_state.json
 football_management.db*
 *report*
+!src/**/*report*
+!test/**/*report*
 heaptrack*
 assets/config/settings.json
 add_copyright_header.sh

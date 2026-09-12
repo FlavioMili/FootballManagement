@@ -8,9 +8,11 @@
 
 #include "settings_scene.h"
 
+#include <fmt/printf.h>
 #include <imgui.h>
 
 #include <algorithm>
+#include <array>
 #include <filesystem>
 
 #include "global/language_manager.h"
@@ -18,11 +20,18 @@
 #include "global/runtime_paths.h"
 #include "gui/gui_constants.h"
 #include "gui/scenes/main_menu_scene.h"
+#include "gui/widgets/theme.h"
+#include "gui/widgets/widgets.h"
 #include "settings_manager.h"
 
 SceneID SettingsScene::getID() const { return SceneID::SETTINGS; }
 
 SettingsScene::SettingsScene(GUIView* guiView_ptr) : GUIScene(guiView_ptr) {}
+
+SettingsScene::SettingsScene(GUIView* guiView_ptr, bool inCareer)
+    : GUIScene(guiView_ptr), in_career(inCareer)
+{
+}
 
 void SettingsScene::onEnter()
 {
@@ -85,6 +94,9 @@ void SettingsScene::onEnter()
                            : 0;
 
   fullscreen = settings.fullscreen;
+  original_settings = settings;
+  pending_ui_scale =
+      settings.ui_scale > 0.0f ? settings.ui_scale : Theme::scale();
 }
 
 void SettingsScene::update(float deltaTime)
@@ -95,132 +107,319 @@ void SettingsScene::update(float deltaTime)
   }
 }
 
+namespace
+{
+constexpr float CONTENT_MAX_WIDTH = 860.0f;
+constexpr float LABEL_WIDTH = 210.0f;
+constexpr float SWATCH_HEIGHT = 64.0f;
+constexpr float MIN_SCALE_PERCENT = 75.0f;
+constexpr float MAX_SCALE_PERCENT = 200.0f;
+
+void settingLabel(const char* label, const char* help)
+{
+  ImGui::AlignTextToFramePadding();
+  ImGui::TextUnformatted(label);
+  if (help != nullptr && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+    ImGui::SetTooltip("%s", help);
+  ImGui::SameLine(LABEL_WIDTH * Theme::scale());
+  ImGui::SetNextItemWidth(-FLT_MIN);
+}
+
+template <typename Options>
+void optionCombo(const char* id, const Options& options, int& selected)
+{
+  if (ImGui::BeginCombo(id, options[static_cast<size_t>(selected)].c_str()))
+  {
+    for (size_t index = 0; index < options.size(); ++index)
+    {
+      const bool isSelected = static_cast<size_t>(selected) == index;
+      if (ImGui::Selectable(options[index].c_str(), isSelected))
+        selected = static_cast<int>(index);
+      if (isSelected) ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
+}
+
+bool presetCard(Theme::Preset preset, bool selected, float width)
+{
+  const Theme::Swatch swatch = Theme::presetSwatch(preset);
+  const Theme::Palette& palette = Theme::palette();
+  const ImVec2 start = ImGui::GetCursorScreenPos();
+  const ImVec2 size(width, SWATCH_HEIGHT * Theme::scale());
+  ImGui::PushID(static_cast<int>(preset));
+  const bool pressed = ImGui::InvisibleButton("##preset", size);
+  const bool hovered = ImGui::IsItemHovered();
+  ImGui::PopID();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  const ImVec2 end(start.x + size.x, start.y + size.y);
+  const float rounding = 6.0f * Theme::scale();
+  drawList->AddRectFilled(start, end, Theme::toU32(swatch.background),
+                          rounding);
+  drawList->AddRectFilled(
+      ImVec2(start.x + 8.0f * Theme::scale(), start.y + 8.0f * Theme::scale()),
+      ImVec2(start.x + size.x * 0.45f, end.y - 8.0f * Theme::scale()),
+      Theme::toU32(swatch.surface), 4.0f * Theme::scale());
+  drawList->AddRectFilled(
+      ImVec2(start.x + size.x * 0.52f, start.y + 14.0f * Theme::scale()),
+      ImVec2(end.x - 10.0f * Theme::scale(), start.y + 20.0f * Theme::scale()),
+      Theme::toU32(swatch.text), 2.0f * Theme::scale());
+  drawList->AddRectFilled(
+      ImVec2(start.x + size.x * 0.52f, start.y + 26.0f * Theme::scale()),
+      ImVec2(end.x - 24.0f * Theme::scale(), start.y + 31.0f * Theme::scale()),
+      Theme::toU32(swatch.muted), 2.0f * Theme::scale());
+  drawList->AddRectFilled(
+      ImVec2(start.x + size.x * 0.52f, end.y - 20.0f * Theme::scale()),
+      ImVec2(start.x + size.x * 0.78f, end.y - 11.0f * Theme::scale()),
+      Theme::toU32(palette.accent), 2.0f * Theme::scale());
+  drawList->AddRect(start, end,
+                    Theme::toU32(selected  ? palette.accent
+                                 : hovered ? palette.muted
+                                           : palette.border),
+                    rounding, 0, selected ? 2.5f * Theme::scale() : 1.0f);
+  const char* name = LOC(Theme::presetKey(preset));
+  ImGui::PushFont(nullptr, Theme::textSize(Theme::Text::SMALL));
+  const float nameWidth = ImGui::CalcTextSize(name).x;
+  ImGui::SetCursorScreenPos(
+      ImVec2(start.x + std::max(0.0f, (width - nameWidth) * 0.5f),
+             end.y + 3.0f * Theme::scale()));
+  ImGui::TextColored(selected ? palette.text : palette.muted, "%s", name);
+  ImGui::PopFont();
+  return pressed;
+}
+}  // namespace
+
 void SettingsScene::render()
 {
-  ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
-                          ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-  ImGui::Begin("Settings", nullptr,
-               ImGuiWindowFlags_NoDecoration |
-                   ImGuiWindowFlags_AlwaysAutoResize |
-                   ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove);
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->WorkPos);
+  ImGui::SetNextWindowSize(viewport->WorkSize);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,
+                      ImVec2(Theme::Space::XL * Theme::scale(),
+                             Theme::Space::XL * Theme::scale()));
+  ImGui::Begin("##settings", nullptr,
+               ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+                   ImGuiWindowFlags_NoSavedSettings |
+                   ImGuiWindowFlags_NoBringToFrontOnFocus);
+  ImGui::PopStyleVar(3);
 
-  ImGui::Text("%s", LOC("SETTINGS_TITLE"));
-  ImGui::Separator();
-  ImGui::Spacing();
+  const float width = std::min(ImGui::GetContentRegionAvail().x,
+                               CONTENT_MAX_WIDTH * Theme::scale());
+  const float footerHeight =
+      ImGui::GetFrameHeightWithSpacing() + Theme::Space::L * Theme::scale();
+  ImGui::SetCursorPosX(std::max(ImGui::GetCursorPosX(),
+                                (ImGui::GetWindowWidth() - width) * 0.5f));
+  ImGui::BeginGroup();
+  UI::pageHeader(LOC("SETTINGS_TITLE"), LOC("SETTINGS_SUBTITLE"));
+  ImGui::BeginChild(
+      "##settings_body",
+      ImVec2(width, ImGui::GetContentRegionAvail().y - footerHeight));
+  renderGeneral();
+  renderAppearance();
+  if (!in_career) renderData();
+  ImGui::EndChild();
 
-  if (ImGui::BeginCombo(
-          LOC("SETTINGS_LANGUAGE"),
-          languageOptions[static_cast<size_t>(selectedLanguage)].c_str()))
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
+  const ImVec2 buttonSize(160.0f * Theme::scale(), 0.0f);
+  if (ImGui::Button(LOC("SETTINGS_CANCEL"), buttonSize)) cancel();
+  ImGui::SameLine();
+  if (UI::primaryButton(LOC("SETTINGS_APPLY"), buttonSize))
+    applyAndSaveSettings();
+  ImGui::EndGroup();
+
+  ImGui::End();
+}
+
+void SettingsScene::renderGeneral()
+{
+  UI::beginAutoHeightCard("settings_general", LOC("SETTINGS_SECTION_GENERAL"));
+  settingLabel(LOC("SETTINGS_LANGUAGE"), nullptr);
+  optionCombo("##language", languageOptions, selectedLanguage);
+  settingLabel(LOC("SETTINGS_RESOLUTION"), nullptr);
+  optionCombo("##resolution", resolutionOptions, selectedResolution);
+  settingLabel(LOC("SETTINGS_REFRESH_RATE"), nullptr);
+  optionCombo("##fps", fpsOptionsStrings, selectedFPS);
+  settingLabel(LOC("SETTINGS_FULLSCREEN"), nullptr);
+  ImGui::Checkbox("##fullscreen", &fullscreen);
+  UI::endCard();
+}
+
+void SettingsScene::renderAppearance()
+{
+  Settings& settings = SettingsManager::instance()->get();
+  UI::beginAutoHeightCard("settings_appearance",
+                          LOC("SETTINGS_SECTION_APPEARANCE"));
+
+  // Theme presets as live swatches.
+  ImGui::TextUnformatted(LOC("SETTINGS_THEME"));
+  const auto presetCount = static_cast<int>(Theme::Preset::COUNT);
+  const float gap = ImGui::GetStyle().ItemSpacing.x;
+  const float cardWidth = (ImGui::GetContentRegionAvail().x -
+                           gap * static_cast<float>(presetCount - 1)) /
+                          static_cast<float>(presetCount);
+  const float rowY = ImGui::GetCursorPosY();
+  for (int index = 0; index < presetCount; ++index)
   {
-    for (size_t i = 0; i < languageOptions.size(); i++)
+    ImGui::SetCursorPos(
+        ImVec2(ImGui::GetStyle().WindowPadding.x +
+                   static_cast<float>(index) * (cardWidth + gap),
+               rowY));
+    if (presetCard(static_cast<Theme::Preset>(index),
+                   settings.theme_preset == index, cardWidth))
     {
-      bool is_selected = (static_cast<size_t>(selectedLanguage) == i);
-      if (ImGui::Selectable(languageOptions[i].c_str(), is_selected))
-        selectedLanguage = static_cast<int>(i);
-      if (is_selected) ImGui::SetItemDefaultFocus();
+      settings.theme_preset = index;
+      previewAppearance();
     }
-    ImGui::EndCombo();
+  }
+  ImGui::SetCursorPosY(rowY + SWATCH_HEIGHT * Theme::scale() +
+                       ImGui::GetTextLineHeightWithSpacing() +
+                       Theme::Space::S * Theme::scale());
+
+  settingLabel(LOC("SETTINGS_ACCENT"), LOC("SETTINGS_ACCENT_HELP"));
+  if (ImGui::RadioButton(LOC("SETTINGS_ACCENT_CLUB"), settings.club_accent))
+  {
+    settings.club_accent = true;
+    previewAppearance();
+  }
+  ImGui::SameLine();
+  if (ImGui::RadioButton(LOC("SETTINGS_ACCENT_CUSTOM"), !settings.club_accent))
+  {
+    settings.club_accent = false;
+    previewAppearance();
+  }
+  if (!settings.club_accent)
+  {
+    ImGui::SameLine();
+    ImVec4 accent = Theme::unpackRgb(settings.accent_rgb);
+    if (ImGui::ColorEdit3(
+            "##accent", &accent.x,
+            ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel))
+    {
+      settings.accent_rgb = Theme::packRgb(accent);
+      previewAppearance();
+    }
   }
 
-  if (ImGui::BeginCombo(
-          LOC("SETTINGS_RESOLUTION"),
-          resolutionOptions[static_cast<size_t>(selectedResolution)].c_str()))
+  settingLabel(LOC("SETTINGS_UI_SCALE"), LOC("SETTINGS_UI_SCALE_HELP"));
+  bool automatic = settings.ui_scale <= 0.0f;
+  if (ImGui::Checkbox(LOC("SETTINGS_UI_SCALE_AUTO"), &automatic))
   {
-    for (size_t i = 0; i < resolutionOptions.size(); i++)
+    settings.ui_scale = automatic ? 0.0f : pending_ui_scale;
+    previewAppearance();
+  }
+  if (!automatic)
+  {
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    float percent = pending_ui_scale * 100.0f;
+    if (ImGui::SliderFloat("##ui_scale", &percent, MIN_SCALE_PERCENT,
+                           MAX_SCALE_PERCENT, "%.0f%%"))
+      pending_ui_scale = std::round(percent / 5.0f) * 0.05f;
+    // Rescaling moves the slider itself, so apply once the drag ends.
+    if (ImGui::IsItemDeactivatedAfterEdit())
     {
-      bool is_selected = (static_cast<size_t>(selectedResolution) == i);
-      if (ImGui::Selectable(resolutionOptions[i].c_str(), is_selected))
-        selectedResolution = static_cast<int>(i);
-      if (is_selected) ImGui::SetItemDefaultFocus();
+      settings.ui_scale = pending_ui_scale;
+      previewAppearance();
     }
-    ImGui::EndCombo();
   }
 
-  if (ImGui::BeginCombo(
-          LOC("SETTINGS_REFRESH_RATE"),
-          fpsOptionsStrings[static_cast<size_t>(selectedFPS)].c_str()))
+  settingLabel(LOC("SETTINGS_DENSITY"), LOC("SETTINGS_DENSITY_HELP"));
+  if (ImGui::RadioButton(LOC("SETTINGS_DENSITY_COMFORTABLE"),
+                         !settings.compact_density))
   {
-    for (size_t i = 0; i < fpsOptionsStrings.size(); i++)
-    {
-      bool is_selected = (static_cast<size_t>(selectedFPS) == i);
-      if (ImGui::Selectable(fpsOptionsStrings[i].c_str(), is_selected))
-        selectedFPS = static_cast<int>(i);
-      if (is_selected) ImGui::SetItemDefaultFocus();
-    }
-    ImGui::EndCombo();
+    settings.compact_density = false;
+    previewAppearance();
+  }
+  ImGui::SameLine();
+  if (ImGui::RadioButton(LOC("SETTINGS_DENSITY_COMPACT"),
+                         settings.compact_density))
+  {
+    settings.compact_density = true;
+    previewAppearance();
   }
 
-  ImGui::Checkbox(LOC("SETTINGS_FULLSCREEN"), &fullscreen);
+  settingLabel(LOC("SETTINGS_REDUCED_MOTION"),
+               LOC("SETTINGS_REDUCED_MOTION_HELP"));
+  if (ImGui::Checkbox("##reduced_motion", &settings.reduced_motion))
+    previewAppearance();
+  UI::endCard();
+}
 
-  ImGui::Spacing();
-
-  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.1f, 1.0f));
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.9f, 0.2f, 0.2f, 1.0f));
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
-  if (ImGui::Button("REMOVE ALL DATA", ImVec2(GUIConstants::BUTTON_WIDTH,
-                                              GUIConstants::BUTTON_HEIGHT)))
+void SettingsScene::renderData()
+{
+  const Theme::Palette& palette = Theme::palette();
+  UI::beginAutoHeightCard("settings_data", LOC("SETTINGS_SECTION_DATA"));
+  ImGui::PushTextWrapPos(0.0f);
+  ImGui::TextColored(palette.muted, "%s", LOC("SETTINGS_WIPE_HELP"));
+  ImGui::PopTextWrapPos();
+  ImGui::PushStyleColor(
+      ImGuiCol_Button,
+      ImVec4(palette.negative.x * 0.75f, palette.negative.y * 0.75f,
+             palette.negative.z * 0.75f, 1.0f));
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, palette.negative);
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, palette.negative);
+  if (ImGui::Button(LOC("SETTINGS_WIPE_BUTTON")))
   {
     showWipeDataOverlay = true;
     wipeDataTimer = 3.0f;
-    ImGui::OpenPopup("WipeDataPopup");
+    ImGui::OpenPopup("###WipeDataPopup");
   }
   ImGui::PopStyleColor(3);
 
-  if (ImGui::BeginPopupModal("WipeDataPopup", NULL,
+  const std::string popupTitle =
+      std::string(LOC("SETTINGS_WIPE_TITLE")) + "###WipeDataPopup";
+  if (ImGui::BeginPopupModal(popupTitle.c_str(), nullptr,
                              ImGuiWindowFlags_AlwaysAutoResize))
   {
-    ImGui::Text(
-        "WARNING: This will permanently delete the database.\nAre you "
-        "absolutely sure?");
+    ImGui::PushTextWrapPos(420.0f * Theme::scale());
+    ImGui::TextUnformatted(LOC("SETTINGS_WIPE_WARNING"));
+    ImGui::PopTextWrapPos();
     ImGui::Separator();
-
+    const ImVec2 buttonSize(150.0f * Theme::scale(), 0.0f);
+    if (ImGui::Button(LOC("SETTINGS_CANCEL"), buttonSize))
+    {
+      showWipeDataOverlay = false;
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::SetItemDefaultFocus();
+    ImGui::SameLine();
     if (wipeDataTimer > 0.0f)
     {
       ImGui::BeginDisabled();
-      char buf[32];
-      snprintf(buf, sizeof(buf), "Confirm (%.1fs)",
-               static_cast<double>(wipeDataTimer));
-      ImGui::Button(buf, ImVec2(120, 0));
+      const std::string waiting =
+          fmt::sprintf(LOC("SETTINGS_WIPE_CONFIRM_WAIT"),
+                       static_cast<double>(wipeDataTimer));
+      ImGui::Button(waiting.c_str(), buttonSize);
       ImGui::EndDisabled();
     }
-    else
+    else if (ImGui::Button(LOC("SETTINGS_WIPE_CONFIRM"), buttonSize))
     {
-      if (ImGui::Button("Confirm", ImVec2(120, 0)))
-      {
-        RuntimePaths::removeAllSaves();
-        showWipeDataOverlay = false;
-        ImGui::CloseCurrentPopup();
-      }
-    }
-
-    ImGui::SetItemDefaultFocus();
-    ImGui::SameLine();
-    if (ImGui::Button("Cancel", ImVec2(120, 0)))
-    {
+      RuntimePaths::removeAllSaves();
       showWipeDataOverlay = false;
       ImGui::CloseCurrentPopup();
     }
     ImGui::EndPopup();
   }
+  UI::endCard();
+}
 
-  ImGui::Spacing();
-  ImGui::Separator();
-  ImGui::Spacing();
+void SettingsScene::previewAppearance() { guiView->refreshTheme(); }
 
-  if (ImGui::Button(
-          LOC("SETTINGS_CANCEL"),
-          ImVec2(GUIConstants::BUTTON_WIDTH, GUIConstants::BUTTON_HEIGHT)))
-  {
+void SettingsScene::cancel()
+{
+  SettingsManager::instance()->get() = original_settings;
+  guiView->refreshTheme();
+  leave();
+}
+
+void SettingsScene::leave()
+{
+  if (in_career)
+    guiView->popScene();
+  else
     changeScene(std::make_unique<MainMenuScene>(guiView));
-  }
-  ImGui::SameLine();
-  if (ImGui::Button(LOC("SETTINGS_APPLY"), ImVec2(GUIConstants::BUTTON_WIDTH,
-                                                  GUIConstants::BUTTON_HEIGHT)))
-  {
-    applyAndSaveSettings();
-  }
-
-  ImGui::End();
 }
 
 void SettingsScene::applyAndSaveSettings()
@@ -256,6 +455,7 @@ void SettingsScene::applyAndSaveSettings()
 
   settingsManager->apply(guiView->getWindow());
   settingsManager->save();
+  guiView->refreshTheme();
 
-  changeScene(std::make_unique<MainMenuScene>(guiView));
+  leave();
 }

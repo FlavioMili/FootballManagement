@@ -37,17 +37,10 @@ class DataGenerator
   static std::vector<Team> generateTeams();
 
   /**
-   * @brief Generate a collection of players.
+   * @brief Loads the predefined players and completes every club's squad
+   * with generated players (see WorldGeneration). Club profiles must be
+   * assigned first; generation is deterministic for the world seed.
    * @return A vector of generated Player objects.
    */
   static std::vector<Player> generatePlayers(const class GameData& gamedata);
-
- private:
-  static std::vector<std::string> first_names;
-  static std::vector<std::string> last_names;
-
-  static void loadNames();
-  static Player generateRandomPlayer(const class GameData& gamedata,
-                                     PlayerID player_id, TeamID team_id,
-                                     PlayerRole role);
 };

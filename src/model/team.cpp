@@ -14,6 +14,12 @@
 #include <vector>
 
 #include "finances.h"
+#include "gamedata.h"
+
+namespace
+{
+constexpr std::size_t RECENT_FORM_LENGTH = 5;
+}
 
 // Constructor
 Team::Team(TeamID team_id, uint8_t team_league_id, std::string_view team_name,
@@ -26,13 +32,14 @@ Team::Team(TeamID team_id, uint8_t team_league_id, std::string_view team_name,
       player_ids(initial_player_ids),
       team_strategy(strategy),
       lineup(lineup_data),
-      finances(initial_balance, *this)
+      finances(initial_balance)
 {
 }
 
 // Accessors
 uint16_t Team::getId() const { return id; }
 uint8_t Team::getLeagueId() const { return league_id; }
+void Team::setLeagueId(LeagueID new_league_id) { league_id = new_league_id; }
 const std::string& Team::getName() const { return name; }
 
 const std::vector<PlayerID>& Team::getPlayerIDs() const { return player_ids; }
@@ -67,9 +74,41 @@ void Team::setStrategy(const Strategy& strategy) { team_strategy = strategy; }
 void Team::generateStartingXI(const class GameData& gamedata,
                               const StatsConfig& stats_config)
 {
-  lineup.generateStartingXI(gamedata, player_ids, stats_config);
+  std::vector<PlayerID> available;
+  available.reserve(player_ids.size());
+  const auto& players = gamedata.getPlayers();
+  for (const PlayerID player_id : player_ids)
+  {
+    const auto found = players.find(player_id);
+    if (found != players.end() && found->second.isAvailable())
+      available.push_back(player_id);
+  }
+  lineup.generateStartingXI(gamedata, available, stats_config);
 }
 
 // Finances access
 Finances& Team::getFinances() noexcept { return finances; }
 const Finances& Team::getFinances() const noexcept { return finances; }
+
+// Club profile
+const ClubProfile& Team::getProfile() const noexcept { return profile; }
+void Team::setProfile(const ClubProfile& new_profile) { profile = new_profile; }
+std::uint8_t Team::getReputation() const noexcept { return profile.reputation; }
+std::uint32_t Team::getStadiumCapacity() const noexcept
+{
+  return profile.stadium_capacity;
+}
+
+const std::string& Team::getRecentForm() const noexcept { return recent_form; }
+
+void Team::setRecentForm(std::string_view form)
+{
+  recent_form = form.substr(0, RECENT_FORM_LENGTH);
+}
+
+void Team::pushResult(MatchOutcome outcome)
+{
+  recent_form.insert(recent_form.begin(), static_cast<char>(outcome));
+  if (recent_form.size() > RECENT_FORM_LENGTH)
+    recent_form.resize(RECENT_FORM_LENGTH);
+}

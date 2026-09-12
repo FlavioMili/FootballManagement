@@ -12,282 +12,739 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <chrono>
+#include <format>
+#include <string>
 
+#include "database/gamedata.h"
 #include "global/language_manager.h"
-#include "gui/gui_constants.h"
 #include "gui/gui_view.h"
-#include "gui/scenes/lineup_scene.h"
-#include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/match_scene.h"
-#include "gui/scenes/roster_scene.h"
-#include "gui/scenes/strategy_scene.h"
 #include "gui/scenes/team_selection_scene.h"
-#include "gui/scenes/transfer_market_scene.h"
+#include "gui/view_models/competition_view.h"
+#include "gui/widgets/format.h"
+#include "gui/widgets/theme.h"
+#include "gui/widgets/widgets.h"
 #include "model/game.h"
-#include "model/role_utils.h"
 
 namespace
 {
-constexpr float SIDEBAR_WIDTH = 200.0f;
-constexpr float NEXT_DAY_BUTTON_WIDTH = 150.0f;
-constexpr float NEXT_DAY_BUTTON_HEIGHT = 30.0f;
-constexpr float NEXT_DAY_BUTTON_OFFSET = 160.0f;
-constexpr float SIDEBAR_BUTTON_HEIGHT = 40.0f;
-constexpr int STANDINGS_COLUMNS = 3;
-constexpr int TOP_PLAYERS_COLUMNS = 3;
-constexpr float POS_COL_WIDTH = 30.0f;
-constexpr float PTS_COL_WIDTH = 50.0f;
-constexpr float OVR_COL_WIDTH = 40.0f;
-constexpr size_t MAX_TOP_PLAYERS = 5;
+constexpr size_t MAX_KEY_PLAYERS = 11;
+constexpr size_t MAX_RECENT_RESULTS = 5;
+constexpr float TWO_COLUMN_MIN_WIDTH = 860.0f;
+constexpr float NEXT_MATCH_HEIGHT = 172.0f;
+constexpr int WEEKS_PER_YEAR = 52;
+constexpr uint8_t SEASON_START_MONTH = 7;
+constexpr size_t MAX_TREND_POINTS = 120;
+constexpr size_t FINANCE_MONTH_DAYS = 30;
+
+std::string ordinalPosition(size_t position)
+{
+  return fmt::sprintf(LOC("DASHBOARD_POSITION_VALUE"), position);
+}
+
+float tileWidth(int count)
+{
+  const float gap = ImGui::GetStyle().ItemSpacing.x;
+  return (ImGui::GetContentRegionAvail().x -
+          gap * static_cast<float>(count - 1)) /
+         static_cast<float>(count);
+}
 }  // namespace
 
 SceneID MainGameScene::getID() const { return SceneID::GAME_MENU; }
 
-MainGameScene::MainGameScene(GUIView* guiView_ptr) : GUIScene(guiView_ptr) {}
+MainGameScene::MainGameScene(GUIView* guiViewPtr) : ManagementScene(guiViewPtr)
+{
+}
+
+NavSection MainGameScene::navSection() const
+{
+  return active_page == Page::FINANCES ? NavSection::FINANCES
+                                       : NavSection::HOME;
+}
 
 void MainGameScene::onEnter()
 {
   if (!guiView->getController().hasSelectedTeam())
-  {
     guiView->overlayScene(std::make_unique<TeamSelectionScene>(guiView));
-  }
   else
-  {
     refreshData();
-  }
 }
 
-void MainGameScene::update(float deltaTime) { (void)deltaTime; }
-
-void MainGameScene::render()
+void MainGameScene::update(float /*deltaTime*/)
 {
-  ImGuiViewport* viewport = ImGui::GetMainViewport();
-  ImGui::SetNextWindowPos(viewport->WorkPos);
-  ImGui::SetNextWindowSize(viewport->WorkSize);
-  ImGui::Begin(LOC("MAIN_GAME_TITLE"), nullptr,
-               ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
-                   ImGuiWindowFlags_NoBringToFrontOnFocus |
-                   ImGuiWindowFlags_NoSavedSettings);
-
-  renderTopBar();
-  ImGui::Separator();
-
-  // Split into sidebar and main area
-  ImGui::Columns(2, "MainLayout", false);
-  ImGui::SetColumnWidth(0, SIDEBAR_WIDTH);
-
-  renderSidebar();
-
-  ImGui::NextColumn();
-
-  renderMainArea();
-
-  ImGui::Columns(1);
-  ImGui::End();
-}
-
-void MainGameScene::renderTopBar()
-{
-  std::string dateStr = guiView->getController().getCurrentDate().toString();
-  const std::string dateLabel = fmt::sprintf(LOC("MAIN_GAME_DATE"), dateStr);
-  ImGui::TextUnformatted(dateLabel.c_str());
-  ImGui::SameLine(ImGui::GetWindowWidth() - NEXT_DAY_BUTTON_OFFSET);
-
-  // Check if managed team has a match today
-  bool has_match_today = false;
-  uint16_t home_id = 0;
-  uint16_t away_id = 0;
-  if (auto managed = guiView->getController().getManagedTeam())
+  if (continuation_requested && !continuation_running)
   {
-    uint16_t tid = managed->get().getId();
-    const auto& matches =
-        guiView->getController().getGame()->getCalendar().getMatchesForDate(
-            guiView->getController().getCurrentDate());
-    for (const auto& m : matches)
-    {
-      if (!m.isPlayed() &&
-          (m.getHomeTeamId() == tid || m.getAwayTeamId() == tid))
-      {
-        has_match_today = true;
-        home_id = m.getHomeTeamId();
-        away_id = m.getAwayTeamId();
-        break;
-      }
-    }
+    continuation_requested = false;
+    startContinuation();
   }
 
-  if (has_match_today)
+  if (continuation_running &&
+      continue_operation.wait_for(std::chrono::seconds::zero()) ==
+          std::future_status::ready)
   {
-    if (ImGui::Button("Play Match",
-                      ImVec2(NEXT_DAY_BUTTON_WIDTH, NEXT_DAY_BUTTON_HEIGHT)))
+    continuation_running = false;
+    try
     {
-      guiView->overlayScene(
-          std::make_unique<MatchScene>(guiView, home_id, away_id));
-    }
-  }
-  else
-  {
-    if (ImGui::Button(LOC("MAIN_GAME_NEXT_DAY"),
-                      ImVec2(NEXT_DAY_BUTTON_WIDTH, NEXT_DAY_BUTTON_HEIGHT)))
-    {
-      guiView->getController().advanceDay();
+      const int advancedDays = continue_operation.get();
+      showToast(fmt::sprintf(LOC("DASHBOARD_ADVANCED_DAYS"), advancedDays));
       refreshData();
     }
-  }
-}
-
-void MainGameScene::renderSidebar()
-{
-  ImGui::BeginChild("Sidebar", ImVec2(0, 0), true);
-  if (ImGui::Button(LOC("MAIN_GAME_VIEW_ROSTER"),
-                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
-  {
-    guiView->overlayScene(std::make_unique<RosterScene>(guiView));
-  }
-  ImGui::Spacing();
-  if (ImGui::Button("Lineup", ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
-  {
-    guiView->overlayScene(std::make_unique<LineupScene>(guiView));
-  }
-  ImGui::Spacing();
-  if (ImGui::Button(LOC("MAIN_GAME_SET_STRATEGY"),
-                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
-  {
-    guiView->overlayScene(std::make_unique<StrategyScene>(guiView));
-  }
-  ImGui::Spacing();
-  if (ImGui::Button(LOC("MAIN_GAME_FINANCES"),
-                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
-  {
-  }
-  ImGui::Spacing();
-  if (ImGui::Button(LOC("MAIN_GAME_TRANSFER_MARKET"),
-                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
-  {
-    guiView->overlayScene(std::make_unique<TransferMarketScene>(guiView));
-  }
-  ImGui::Spacing();
-  if (ImGui::Button(LOC("MAIN_GAME_SAVE_GAME"),
-                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
-  {
-    guiView->getController().saveGame();
-  }
-  ImGui::Spacing();
-  if (ImGui::Button(LOC("MAIN_GAME_MAIN_MENU"),
-                    ImVec2(-FLT_MIN, SIDEBAR_BUTTON_HEIGHT)))
-  {
-    changeScene(std::make_unique<MainMenuScene>(guiView));
-  }
-  ImGui::EndChild();
-}
-
-void MainGameScene::renderMainArea()
-{
-  ImGui::BeginChild("MainArea", ImVec2(0, 0), false);
-
-  ImGui::Columns(2, "MainContent", false);
-
-  // Left: Standings
-  ImGui::Text("%s", LOC("MAIN_GAME_LEAGUE_STANDINGS"));
-  ImGui::Separator();
-
-  if (ImGui::BeginTable("Standings", STANDINGS_COLUMNS,
-                        ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
-  {
-    ImGui::TableSetupColumn(LOC("MAIN_GAME_POS"),
-                            ImGuiTableColumnFlags_WidthFixed, POS_COL_WIDTH);
-    ImGui::TableSetupColumn(LOC("MAIN_GAME_TEAM"));
-    ImGui::TableSetupColumn(LOC("MAIN_GAME_PTS"),
-                            ImGuiTableColumnFlags_WidthFixed, PTS_COL_WIDTH);
-    ImGui::TableHeadersRow();
-
-    int rank = 1;
-    for (const auto& [teamId, points] : cached_standings)
+    catch (const std::exception&)
     {
-      auto teamOpt =
-          guiView->getController().getTeamById(static_cast<uint16_t>(teamId));
-      if (!teamOpt.has_value())
+      showToast(LOC("DASHBOARD_ADVANCE_FAILED"), true);
+    }
+  }
+
+  // Team selection is an overlay, so the dashboard does not re-enter when the
+  // choice closes. Refresh once as soon as a club becomes available.
+  // Also refresh when the date moved on without this scene being told.
+  const GameController& controller = guiView->getController();
+  if (!continuation_running && controller.hasSelectedTeam() &&
+      (cached_squad.empty() || !(cached_date == controller.getCurrentDate())))
+    refreshData();
+}
+
+std::string MainGameScene::continueLabel() const
+{
+  const GameController& controller = guiView->getController();
+  if (!controller.hasSelectedTeam()) return {};
+  if (cached_next && cached_next->date == controller.getCurrentDate())
+    return LOC("DASHBOARD_PLAY_MATCH");
+  if (cached_next)
+    return fmt::sprintf(LOC("DASHBOARD_CONTINUE_TO"),
+                        Format::dayMonth(cached_next->date));
+  return LOC("DASHBOARD_CONTINUE");
+}
+
+void MainGameScene::requestContinue()
+{
+  const GameController& controller = guiView->getController();
+  if (continuation_running || !controller.hasSelectedTeam()) return;
+  if (cached_next && cached_next->date == controller.getCurrentDate())
+  {
+    guiView->navigateTo(std::make_unique<MatchScene>(
+        guiView, cached_next->home_id, cached_next->away_id));
+    return;
+  }
+  // Simulation starts from update() once every screen above the hub has
+  // closed, so no screen reads the game state while it changes.
+  continuation_requested = true;
+  if (guiView->getOverlayDepth() > 0) guiView->navigateTo(nullptr);
+}
+
+void MainGameScene::startContinuation()
+{
+  continuation_running = true;
+  GameController* controllerPtr = &guiView->getController();
+  continue_operation =
+      std::async(std::launch::async,
+                 [controllerPtr, hasFixture = cached_next.has_value()]()
+                 {
+                   if (hasFixture)
+                     return controllerPtr->advanceToNextManagedFixture();
+                   controllerPtr->advanceDay();
+                   return 1;
+                 });
+}
+
+void MainGameScene::renderContent()
+{
+  if (!guiView->getController().getManagedTeam())
+  {
+    UI::emptyState(LOC("DASHBOARD_CHOOSE_CLUB"), nullptr);
+    return;
+  }
+  if (active_page == Page::FINANCES)
+    renderFinances();
+  else
+    renderOverview();
+}
+
+void MainGameScene::renderOverview()
+{
+  GameController& controller = guiView->getController();
+  const Team& club = controller.getManagedTeam()->get();
+  const Theme::Palette& palette = Theme::palette();
+
+  const auto league = controller.getLeagueById(club.getLeagueId());
+  const std::string subtitle = fmt::sprintf(
+      LOC("DASHBOARD_SUBTITLE"), league ? league->get().getName().c_str() : "",
+      cached_season, Format::date(controller.getCurrentDate()).c_str());
+  UI::pageHeader(club.getName().c_str(), subtitle.c_str());
+
+  // Headline figures.
+  const float width = tileWidth(4);
+  const auto rank = std::ranges::find_if(
+      cached_table, [&club](const CompetitionView::StandingRow& row)
+      { return row.team_id == club.getId(); });
+  if (rank != cached_table.end())
+  {
+    const std::string value = ordinalPosition(
+        static_cast<size_t>(std::distance(cached_table.begin(), rank)) + 1);
+    const std::string footnote = fmt::sprintf(LOC("DASHBOARD_POINTS_PLAYED"),
+                                              rank->points, rank->played);
+    UI::statTile("tile_position", LOC("DASHBOARD_TILE_POSITION"), value.c_str(),
+                 footnote.c_str(), palette.text, width);
+  }
+  else
+  {
+    UI::statTile("tile_position", LOC("DASHBOARD_TILE_POSITION"), "–",
+                 LOC("DASHBOARD_NO_RESULTS"), palette.muted, width);
+  }
+  ImGui::SameLine();
+  const int64_t balance = club.getFinances().getBalance();
+  const std::string balanceText = Format::money(balance);
+  const std::string payrollText = fmt::sprintf(
+      LOC("DASHBOARD_PAYROLL_FOOTNOTE"), Format::money(cached_payroll).c_str());
+  UI::statTile("tile_balance", LOC("FINANCE_CASH"), balanceText.c_str(),
+               payrollText.c_str(),
+               balance < 0 ? palette.negative : palette.text, width);
+  ImGui::SameLine();
+  const std::string squadText = std::to_string(cached_squad.size());
+  const std::string averageText =
+      fmt::sprintf(LOC("DASHBOARD_AVERAGE_OVR"),
+                   static_cast<double>(cached_average_overall));
+  UI::statTile("tile_squad", LOC("DASHBOARD_TILE_SQUAD"), squadText.c_str(),
+               averageText.c_str(), palette.text, width);
+  ImGui::SameLine();
+  const std::string valueText = Format::money(cached_squad_value);
+  UI::statTile("tile_value", LOC("DASHBOARD_TILE_VALUE"), valueText.c_str(),
+               LOC("DASHBOARD_VALUE_FOOTNOTE"), palette.text, width);
+
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  const float available = ImGui::GetContentRegionAvail().x;
+  const float gap = ImGui::GetStyle().ItemSpacing.x;
+  if (available >= TWO_COLUMN_MIN_WIDTH * Theme::scale())
+  {
+    const float leftWidth = std::floor((available - gap) * 0.58f);
+    const float rightWidth = available - gap - leftWidth;
+    const float columnHeight =
+        std::max(ImGui::GetContentRegionAvail().y, 420.0f * Theme::scale());
+    const float nextHeight = NEXT_MATCH_HEIGHT * Theme::scale();
+    ImGui::BeginGroup();
+    renderNextMatchCard(leftWidth, nextHeight);
+    renderStandingsCard(
+        leftWidth, columnHeight - nextHeight - ImGui::GetStyle().ItemSpacing.y);
+    ImGui::EndGroup();
+    ImGui::SameLine();
+    ImGui::BeginGroup();
+    const float recentHeight =
+        std::min(columnHeight * 0.45f,
+                 ImGui::GetTextLineHeightWithSpacing() *
+                         (static_cast<float>(MAX_RECENT_RESULTS) + 2.5f) +
+                     2.0f * Theme::Space::M * Theme::scale());
+    renderRecentResultsCard(rightWidth, recentHeight);
+    renderKeyPlayersCard(rightWidth, columnHeight - recentHeight -
+                                         ImGui::GetStyle().ItemSpacing.y);
+    ImGui::EndGroup();
+  }
+  else
+  {
+    renderNextMatchCard(available, NEXT_MATCH_HEIGHT * Theme::scale());
+    renderRecentResultsCard(available, 230.0f * Theme::scale());
+    renderKeyPlayersCard(available, 320.0f * Theme::scale());
+    renderStandingsCard(available, 520.0f * Theme::scale());
+  }
+}
+
+void MainGameScene::renderNextMatchCard(float width, float height)
+{
+  GameController& controller = guiView->getController();
+  const Theme::Palette& palette = Theme::palette();
+  const TeamID clubId = controller.getManagedTeam()->get().getId();
+  UI::beginCard("next_match", LOC("DASHBOARD_NEXT_FIXTURE"),
+                ImVec2(width, height));
+  if (!cached_next)
+  {
+    UI::emptyState(LOC("DASHBOARD_NO_FIXTURE"), nullptr);
+    UI::endCard();
+    return;
+  }
+  const CompetitionView::FixtureRow& next = *cached_next;
+  const bool home = next.home_id == clubId;
+  const TeamID opponentId = home ? next.away_id : next.home_id;
+
+  UI::badge(LOC(CompetitionView::matchTypeKey(next.type)), palette.info);
+  ImGui::SameLine();
+  UI::badge(LOC(home ? "FIXTURE_HOME" : "FIXTURE_AWAY"),
+            home ? palette.positive : palette.warning);
+  ImGui::SameLine();
+  const bool today = next.date == controller.getCurrentDate();
+  ImGui::TextColored(
+      today ? palette.accent : palette.muted, "%s",
+      today ? LOC("FIXTURE_TODAY") : Format::date(next.date).c_str());
+
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  {
+    Theme::ScopedText heading(Theme::Text::HEADING);
+    const std::string versus = LOC("FIXTURE_VS");
+    const float inner = ImGui::GetContentRegionAvail().x;
+    const float versusWidth = ImGui::CalcTextSize(versus.c_str()).x;
+    const float side =
+        (inner - versusWidth) * 0.5f - Theme::Space::M * Theme::scale();
+    const float homeWidth = ImGui::CalcTextSize(next.home_name.c_str()).x;
+    const float startX = ImGui::GetCursorPosX();
+    ImGui::SetCursorPosX(startX + std::max(0.0f, side - homeWidth));
+    ImGui::PushClipRect(ImGui::GetCursorScreenPos(),
+                        ImVec2(ImGui::GetCursorScreenPos().x + side,
+                               ImGui::GetCursorScreenPos().y + 100.0f),
+                        true);
+    ImGui::TextUnformatted(next.home_name.c_str());
+    ImGui::PopClipRect();
+    ImGui::SameLine(startX + side + Theme::Space::M * Theme::scale());
+    ImGui::TextColored(palette.faint, "%s", versus.c_str());
+    ImGui::SameLine(startX + side + versusWidth +
+                    2.0f * Theme::Space::M * Theme::scale());
+    ImGui::TextUnformatted(next.away_name.c_str());
+  }
+
+  // Opponent context from the cached table.
+  const auto opponentRow = std::ranges::find_if(
+      cached_table, [opponentId](const CompetitionView::StandingRow& row)
+      { return row.team_id == opponentId; });
+  if (opponentRow != cached_table.end())
+  {
+    const auto position = static_cast<size_t>(
+        std::distance(cached_table.begin(), opponentRow) + 1);
+    const std::string context =
+        fmt::sprintf(LOC("DASHBOARD_OPPONENT_CONTEXT"),
+                     ordinalPosition(position).c_str(), opponentRow->points);
+    ImGui::TextColored(palette.muted, "%s", context.c_str());
+    ImGui::SameLine();
+    UI::formStrip(std::span(opponentRow->form.data(), opponentRow->form_count));
+  }
+
+  const float buttonsY =
+      height - ImGui::GetFrameHeight() - ImGui::GetStyle().WindowPadding.y;
+  ImGui::SetCursorPosY(std::max(ImGui::GetCursorPosY(), buttonsY));
+  if (ImGui::Button(LOC("NAV_LINEUP")))
+    Navigation::open(guiView, NavSection::LINEUP);
+  ImGui::SameLine();
+  if (ImGui::Button(LOC("NAV_TACTICS")))
+    Navigation::open(guiView, NavSection::TACTICS);
+  ImGui::SameLine();
+  if (ImGui::Button(LOC("DASHBOARD_SCOUT_OPPONENT")))
+    Navigation::openClub(guiView, opponentId);
+
+  // Match readiness on the same row, right-aligned.
+  const Lineup& lineup = controller.getManagedTeam()->get().getLineup();
+  const size_t starters = lineup.getOutfieldPlayers().size() +
+                          (lineup.getGoalkeeper() != nullptr ? 1U : 0U);
+  const std::string readiness =
+      fmt::sprintf(LOC("DASHBOARD_STARTING_XI"), starters);
+  const float readinessWidth = ImGui::CalcTextSize(readiness.c_str()).x;
+  ImGui::SameLine();
+  ImGui::SetCursorPosX(
+      std::max(ImGui::GetCursorPosX(),
+               ImGui::GetWindowContentRegionMax().x - readinessWidth));
+  ImGui::TextColored(starters == 11 ? palette.positive : palette.warning, "%s",
+                     readiness.c_str());
+  UI::endCard();
+}
+
+void MainGameScene::renderStandingsCard(float width, float height)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const TeamID clubId =
+      guiView->getController().getManagedTeam()->get().getId();
+  UI::beginCard("league_table", LOC("DASHBOARD_LEAGUE_TABLE"),
+                ImVec2(width, height));
+  if (ImGui::BeginTable("dashboard_table", 6,
+                        ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY |
+                            ImGuiTableFlags_BordersInnerH |
+                            ImGuiTableFlags_SizingFixedFit))
+  {
+    ImGui::TableSetupScrollFreeze(0, 1);
+    ImGui::TableSetupColumn(LOC("MAIN_GAME_POS"));
+    ImGui::TableSetupColumn(LOC("MAIN_GAME_TEAM"),
+                            ImGuiTableColumnFlags_WidthStretch);
+    ImGui::TableSetupColumn(LOC("TABLE_COL_PLAYED"));
+    ImGui::TableSetupColumn(LOC("TABLE_COL_GD"));
+    ImGui::TableSetupColumn(LOC("MAIN_GAME_PTS"));
+    ImGui::TableSetupColumn(LOC("TABLE_COL_FORM"));
+    ImGui::TableHeadersRow();
+    for (size_t index = 0; index < cached_table.size(); ++index)
+    {
+      const CompetitionView::StandingRow& row = cached_table[index];
+      const bool promoted = index < cached_zones.promotion;
+      const bool relegated =
+          index + cached_zones.relegation >= cached_table.size();
+      ImGui::TableNextRow();
+      if (row.team_id == clubId)
+        ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1,
+                               Theme::toU32(palette.accent, 0.16f));
+      ImGui::TableNextColumn();
+      ImGui::TextColored(promoted    ? palette.positive
+                         : relegated ? palette.negative
+                                     : palette.muted,
+                         "%zu", index + 1);
+      ImGui::TableNextColumn();
+      ImGui::PushID(static_cast<int>(row.team_id));
+      if (ImGui::Selectable(row.name.c_str(), false,
+                            ImGuiSelectableFlags_SpanAllColumns))
+        Navigation::openClub(guiView, row.team_id);
+      ImGui::PopID();
+      ImGui::TableNextColumn();
+      ImGui::Text("%d", row.played);
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted(Format::signedInt(row.goalDifference()).c_str());
+      ImGui::TableNextColumn();
+      ImGui::Text("%d", row.points);
+      ImGui::TableNextColumn();
+      UI::formStrip(std::span(row.form.data(), row.form_count));
+    }
+    ImGui::EndTable();
+  }
+  UI::endCard();
+}
+
+void MainGameScene::renderRecentResultsCard(float width, float height)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const TeamID clubId =
+      guiView->getController().getManagedTeam()->get().getId();
+  UI::beginCard("recent_results", LOC("DASHBOARD_RECENT_RESULTS"),
+                ImVec2(width, height));
+  if (cached_recent.empty())
+  {
+    UI::emptyState(LOC("DASHBOARD_NO_RESULTS"), nullptr);
+    UI::endCard();
+    return;
+  }
+  if (ImGui::BeginTable("recent", 4, ImGuiTableFlags_SizingFixedFit))
+  {
+    ImGui::TableSetupColumn("date");
+    ImGui::TableSetupColumn("opponent", ImGuiTableColumnFlags_WidthStretch);
+    ImGui::TableSetupColumn("score");
+    ImGui::TableSetupColumn("outcome");
+    for (const CompetitionView::FixtureRow& fixture : cached_recent)
+    {
+      const bool home = fixture.home_id == clubId;
+      const UI::Outcome outcome = CompetitionView::outcomeFor(fixture, clubId);
+      ImGui::TableNextRow();
+      ImGui::TableNextColumn();
+      ImGui::TextColored(palette.muted, "%s",
+                         Format::dayMonth(fixture.date).c_str());
+      ImGui::TableNextColumn();
+      ImGui::TextColored(
+          palette.faint, "%s",
+          LOC(home ? "FIXTURE_HOME_SHORT" : "FIXTURE_AWAY_SHORT"));
+      ImGui::SameLine();
+      ImGui::PushID(&fixture);
+      if (ImGui::Selectable(
+              home ? fixture.away_name.c_str() : fixture.home_name.c_str(),
+              false, ImGuiSelectableFlags_SpanAllColumns))
+        Navigation::openMatchReport(guiView, fixture.date, fixture.home_id,
+                                    fixture.away_id);
+      ImGui::PopID();
+      if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+        ImGui::SetTooltip("%s", LOC("FIXTURES_OPEN_REPORT_HINT"));
+      ImGui::TableNextColumn();
+      ImGui::Text("%u – %u", fixture.home_score, fixture.away_score);
+      ImGui::TableNextColumn();
+      UI::formStrip(std::span(&outcome, 1));
+    }
+    ImGui::EndTable();
+  }
+  UI::endCard();
+}
+
+void MainGameScene::renderKeyPlayersCard(float width, float height)
+{
+  const Theme::Palette& palette = Theme::palette();
+  UI::beginCard("key_players", LOC("DASHBOARD_KEY_PLAYERS"),
+                ImVec2(width, height));
+  if (ImGui::BeginTable(
+          "key_players_table", 3,
+          ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY))
+  {
+    ImGui::TableSetupColumn("name", ImGuiTableColumnFlags_WidthStretch);
+    ImGui::TableSetupColumn("role");
+    ImGui::TableSetupColumn("ovr");
+    for (size_t index = 0;
+         index < MAX_KEY_PLAYERS && index < cached_squad.size(); ++index)
+    {
+      const PlayerView::PlayerRow& player = cached_squad[index];
+      ImGui::TableNextRow();
+      ImGui::TableNextColumn();
+      ImGui::PushID(static_cast<int>(player.id));
+      if (ImGui::Selectable(player.name.c_str(), false,
+                            ImGuiSelectableFlags_SpanAllColumns))
+        Navigation::openPlayer(guiView, player.id);
+      ImGui::PopID();
+      ImGui::TableNextColumn();
+      ImGui::TextColored(palette.muted, "%s", player.role.c_str());
+      ImGui::TableNextColumn();
+      UI::ratingChip(player.overall);
+    }
+    ImGui::EndTable();
+  }
+  UI::endCard();
+}
+
+void MainGameScene::renderFinances()
+{
+  GameController& controller = guiView->getController();
+  const Team& club = controller.getManagedTeam()->get();
+  const Finances& finances = club.getFinances();
+  const Theme::Palette& palette = Theme::palette();
+
+  UI::pageHeader(LOC("FINANCE_TITLE"), LOC("FINANCE_SUBTITLE"));
+
+  const float width = tileWidth(4);
+  const std::string cash = Format::money(finances.getBalance());
+  const std::string cashFull = Format::moneyFull(finances.getBalance());
+  UI::statTile("fin_cash", LOC("FINANCE_CASH"), cash.c_str(), cashFull.c_str(),
+               finances.getBalance() < 0 ? palette.negative : palette.text,
+               width);
+  ImGui::SameLine();
+  const std::string budget = Format::money(finances.getTransferBudget());
+  UI::statTile("fin_budget", LOC("FINANCE_TRANSFER_BUDGET"), budget.c_str(),
+               LOC("FINANCE_BUDGET_FOOTNOTE"), palette.accent, width);
+  ImGui::SameLine();
+  const int64_t wageBudget = finances.getWageBudget();
+  const std::string payroll = Format::money(cached_payroll);
+  const std::string payrollNote =
+      wageBudget > 0
+          ? fmt::sprintf(LOC("FINANCE_WAGE_BUDGET_NOTE"),
+                         Format::money(wageBudget).c_str(),
+                         100.0 * static_cast<double>(cached_payroll) /
+                             static_cast<double>(wageBudget))
+          : std::string(LOC("FINANCE_ANNUAL_FOOTNOTE"));
+  UI::statTile("fin_payroll", LOC("FINANCE_PAYROLL"), payroll.c_str(),
+               payrollNote.c_str(),
+               wageBudget > 0 && cached_payroll > wageBudget ? palette.negative
+                                                             : palette.text,
+               width);
+  ImGui::SameLine();
+  // The opening balance is a carried-over figure, not this season's result.
+  const int64_t seasonNet =
+      cached_season_summary.net() -
+      cached_season_summary
+          .by_category[static_cast<size_t>(FinanceCategory::OpeningBalance)];
+  const std::string net = Format::money(seasonNet);
+  UI::statTile("fin_net", LOC("FINANCE_SEASON_NET"), net.c_str(),
+               LOC("FINANCE_SEASON_NET_NOTE"),
+               seasonNet < 0 ? palette.negative : palette.positive, width);
+
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  const float available = ImGui::GetContentRegionAvail().x;
+  const float gap = ImGui::GetStyle().ItemSpacing.x;
+  const bool twoColumns = available >= TWO_COLUMN_MIN_WIDTH * Theme::scale();
+  const float leftWidth =
+      twoColumns ? std::floor((available - gap) * 0.45f) : available;
+  const float rightWidth = twoColumns ? available - gap - leftWidth : available;
+  const float cardHeight =
+      twoColumns
+          ? std::max(ImGui::GetContentRegionAvail().y, 320.0f * Theme::scale())
+          : 320.0f * Theme::scale();
+
+  // Income and expenses by category, this season or the last 30 days.
+  UI::beginCard("fin_breakdown", nullptr, ImVec2(leftWidth, cardHeight), true);
+  UI::sectionLabel(LOC(finance_show_month ? "FINANCE_BREAKDOWN_MONTH"
+                                          : "FINANCE_BREAKDOWN"));
+  ImGui::SameLine();
+  const char* periodToggle =
+      LOC(finance_show_month ? "FINANCE_SHOW_SEASON" : "FINANCE_SHOW_MONTH");
+  ImGui::SetCursorPosX(std::max(ImGui::GetCursorPosX(),
+                                ImGui::GetWindowContentRegionMax().x -
+                                    ImGui::CalcTextSize(periodToggle).x -
+                                    2.0f * ImGui::GetStyle().FramePadding.x));
+  if (ImGui::SmallButton(periodToggle))
+    finance_show_month = !finance_show_month;
+  const std::vector<FinanceBar>& periodBars =
+      finance_show_month ? cached_month_bars : cached_finance_bars;
+  if (periodBars.empty())
+  {
+    ImGui::TextColored(palette.faint, "%s", LOC("FINANCE_NO_TRANSACTIONS"));
+  }
+  else
+  {
+    std::vector<UI::BarDatum> bars;
+    bars.reserve(periodBars.size());
+    for (const FinanceBar& bar : periodBars)
+      bars.push_back({LOC(bar.label_key),
+                      static_cast<float>(std::llabs(bar.amount)),
+                      bar.amount >= 0 ? palette.positive : palette.negative,
+                      bar.amount_text});
+    UI::barChart("fin_bars", bars, ImGui::GetContentRegionAvail().x,
+                 130.0f * Theme::scale());
+  }
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
+  UI::sectionLabel(LOC("FINANCE_BUDGET_ADJUST"));
+  ImGui::PushTextWrapPos(0.0f);
+  ImGui::TextColored(palette.faint, "%s", LOC("FINANCE_BUDGET_ADJUST_HELP"));
+  ImGui::PopTextWrapPos();
+  const float step = 100'000.0f;
+  ImGui::SetNextItemWidth(std::min(260.0f * Theme::scale(),
+                                   ImGui::GetContentRegionAvail().x * 0.6f));
+  const std::string adjustLabel =
+      Format::money(static_cast<int64_t>(budget_shift));
+  ImGui::SliderFloat("##budget_shift", &budget_shift,
+                     -static_cast<float>(std::min<int64_t>(
+                         wageBudget * WEEKS_PER_YEAR, 50'000'000)),
+                     static_cast<float>(finances.getTransferBudget()),
+                     adjustLabel.c_str());
+  budget_shift = std::round(budget_shift / step) * step;
+  ImGui::SameLine();
+  ImGui::BeginDisabled(budget_shift == 0.0f);
+  if (UI::primaryButton(LOC("FINANCE_BUDGET_APPLY")))
+  {
+    if (controller.moveTransferToWageBudget(static_cast<int64_t>(budget_shift)))
+    {
+      showToast(LOC("FINANCE_BUDGET_TOAST"));
+      budget_shift = 0.0f;
+      refreshData();
+    }
+    else
+    {
+      showToast(LOC("FINANCE_BUDGET_REFUSED"), true);
+    }
+  }
+  ImGui::EndDisabled();
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    ImGui::SetTooltip("%s", LOC("FINANCE_BUDGET_SLIDER_HELP"));
+  UI::endCard();
+  if (twoColumns) ImGui::SameLine();
+
+  // Balance trend and the ledger itself.
+  UI::beginCard("fin_ledger", LOC("FINANCE_LEDGER"),
+                ImVec2(rightWidth, cardHeight), true);
+  if (cached_balance_trend.size() >= 2)
+  {
+    UI::sparkline(
+        "fin_trend", cached_balance_trend,
+        ImVec2(ImGui::GetContentRegionAvail().x, 46.0f * Theme::scale()),
+        palette.accent);
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  }
+  if (cached_ledger.empty())
+  {
+    ImGui::TextColored(palette.faint, "%s", LOC("FINANCE_NO_TRANSACTIONS"));
+  }
+  else if (ImGui::BeginTable(
+               "ledger", 3,
+               ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
+                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit))
+  {
+    ImGui::TableSetupScrollFreeze(0, 1);
+    ImGui::TableSetupColumn(LOC("FIXTURES_COL_DATE"));
+    ImGui::TableSetupColumn(LOC("FINANCE_COL_CATEGORY"),
+                            ImGuiTableColumnFlags_WidthStretch);
+    ImGui::TableSetupColumn(LOC("FINANCE_COL_AMOUNT"));
+    ImGui::TableHeadersRow();
+    ImGuiListClipper clipper;
+    clipper.Begin(static_cast<int>(cached_ledger.size()));
+    while (clipper.Step())
+    {
+      for (int line = clipper.DisplayStart; line < clipper.DisplayEnd; ++line)
       {
-        continue;
+        const LedgerRow& entry = cached_ledger[static_cast<size_t>(line)];
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::TextColored(palette.muted, "%s", entry.date.c_str());
+        ImGui::TableNextColumn();
+        ImGui::TextUnformatted(LOC(entry.category_key));
+        ImGui::TableNextColumn();
+        UI::textRightColored(
+            entry.amount >= 0 ? palette.positive : palette.negative,
+            entry.amount_text.c_str());
       }
-
-      ImGui::TableNextRow();
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", rank);
-      ImGui::TableNextColumn();
-      ImGui::Text("%s", teamOpt->get().getName().c_str());
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", points);
-      rank++;
     }
     ImGui::EndTable();
   }
-
-  ImGui::NextColumn();
-
-  // Right: Top Players
-  ImGui::Text("%s", LOC("MAIN_GAME_TOP_PLAYERS"));
-  ImGui::Separator();
-
-  if (ImGui::BeginTable("TopPlayers", TOP_PLAYERS_COLUMNS,
-                        ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
-  {
-    ImGui::TableSetupColumn(LOC("MAIN_GAME_NAME"));
-    ImGui::TableSetupColumn(LOC("MAIN_GAME_ROLE"));
-    ImGui::TableSetupColumn(LOC("MAIN_GAME_OVR"),
-                            ImGuiTableColumnFlags_WidthFixed, OVR_COL_WIDTH);
-    ImGui::TableHeadersRow();
-
-    const auto& stats_config = guiView->getController().getStatsConfig();
-    for (size_t i = 0; i < MAX_TOP_PLAYERS && i < cached_top_players.size();
-         ++i)
-    {
-      ImGui::TableNextRow();
-      const auto& player = cached_top_players[i].get();
-      ImGui::TableNextColumn();
-      ImGui::Text("%s", player.getName().c_str());
-      ImGui::TableNextColumn();
-      ImGui::Text("%s", RoleUtils::toString(player.getRole()).c_str());
-      ImGui::TableNextColumn();
-      ImGui::Text("%.1f", player.getOverall(stats_config));
-    }
-    ImGui::EndTable();
-  }
-
-  ImGui::Columns(1);
-  ImGui::EndChild();
+  UI::endCard();
 }
 
 void MainGameScene::refreshData()
 {
-  cached_date = guiView->getController().getCurrentDate();
-  cached_season = guiView->getController().getCurrentSeason();
+  GameController& controller = guiView->getController();
+  cached_date = controller.getCurrentDate();
+  cached_season = controller.getCurrentSeason();
+  const auto managed = controller.getManagedTeam();
+  if (!managed) return;
+  const Team& club = managed->get();
 
-  auto managedTeamOpt = guiView->getController().getManagedTeam();
-  if (!managedTeamOpt.has_value()) return;
+  cached_table =
+      CompetitionView::buildStandings(controller, club.getLeagueId());
+  cached_zones = CompetitionView::zonesFor(controller, club.getLeagueId());
+  cached_next = CompetitionView::nextFixture(controller, club.getId());
 
-  // Refresh standings
-  auto leagueOpt = guiView->getController().getLeagueById(
-      managedTeamOpt->get().getLeagueId());
-  if (leagueOpt.has_value())
+  cached_recent.clear();
+  const auto fixtures =
+      CompetitionView::buildClubFixtures(controller, club.getId());
+  for (auto fixture = fixtures.rbegin();
+       fixture != fixtures.rend() && cached_recent.size() < MAX_RECENT_RESULTS;
+       ++fixture)
   {
-    const League& league = leagueOpt->get();
-    const auto& leaderboard = league.getLeaderboard();
-    cached_standings.assign(leaderboard.begin(), leaderboard.end());
-    std::ranges::sort(cached_standings, [](const auto& a, const auto& b)
-                      { return a.second > b.second; });
+    if (fixture->played) cached_recent.push_back(*fixture);
   }
 
-  // Refresh top players
-  cached_top_players =
-      guiView->getController().getPlayersForTeam(managedTeamOpt->get().getId());
-  const auto& stats_config = guiView->getController().getStatsConfig();
-  std::ranges::sort(
-      cached_top_players,
-      [&stats_config](const std::reference_wrapper<const Player>& a,
-                      const std::reference_wrapper<const Player>& b)
-      {
-        return a.get().getOverall(stats_config) >
-               b.get().getOverall(stats_config);
-      });
+  cached_squad.clear();
+  cached_payroll = 0;
+  cached_squad_value = 0;
+  double overallSum = 0.0;
+  for (const auto& playerRef : controller.getPlayersForTeam(club.getId()))
+  {
+    PlayerView::PlayerRow row =
+        PlayerView::makeRow(controller, playerRef.get());
+    cached_payroll += row.wage;
+    cached_squad_value += row.market_value;
+    overallSum += static_cast<double>(row.overall);
+    cached_squad.push_back(std::move(row));
+  }
+  cached_average_overall =
+      cached_squad.empty()
+          ? 0.0f
+          : static_cast<float>(overallSum /
+                               static_cast<double>(cached_squad.size()));
+  std::ranges::sort(cached_squad, [](const PlayerView::PlayerRow& left,
+                                     const PlayerView::PlayerRow& right)
+                    { return left.overall > right.overall; });
+
+  // Finance view models: season summary, ledger rows and balance trend.
+  const GameDateValue today = controller.getCurrentDate();
+  const GameDateValue seasonStart(
+      static_cast<uint16_t>(today.month >= SEASON_START_MONTH ? today.year
+                                                              : today.year - 1),
+      SEASON_START_MONTH, 1);
+  cached_season_summary =
+      controller.getFinanceSummary(club.getId(), seasonStart, today);
+  const auto buildBars = [](const FinanceSummary& summary)
+  {
+    std::vector<FinanceBar> bars;
+    for (size_t index = 0; index < FINANCE_CATEGORY_COUNT; ++index)
+    {
+      const auto category = static_cast<FinanceCategory>(index);
+      const int64_t amount = summary.by_category[index];
+      if (amount == 0 || category == FinanceCategory::OpeningBalance) continue;
+      bars.push_back(
+          {financeCategoryKey(category), amount, Format::money(amount)});
+    }
+    std::ranges::sort(bars, [](const auto& left, const auto& right)
+                      { return left.amount > right.amount; });
+    return bars;
+  };
+  cached_finance_bars = buildBars(cached_season_summary);
+  cached_month_bars = buildBars(controller.getFinanceSummary(
+      club.getId(), today - FINANCE_MONTH_DAYS, today));
+  const auto& ledger = controller.getFinanceLedger(club.getId());
+  cached_ledger.clear();
+  cached_ledger.reserve(ledger.size());
+  for (auto entry = ledger.rbegin(); entry != ledger.rend(); ++entry)
+    cached_ledger.push_back({Format::date(entry->date),
+                             financeCategoryKey(entry->category), entry->amount,
+                             Format::money(entry->amount)});
+  cached_balance_trend.clear();
+  int64_t running = 0;
+  const size_t trendStart =
+      ledger.size() > MAX_TREND_POINTS ? ledger.size() - MAX_TREND_POINTS : 0;
+  for (size_t index = 0; index < ledger.size(); ++index)
+  {
+    running += ledger[index].amount;
+    if (index >= trendStart)
+      cached_balance_trend.push_back(static_cast<float>(running));
+  }
 }

@@ -1,0 +1,389 @@
+// -----------------------------------------------------------------------------
+//  Football Management Project
+//  Copyright (c) 2025 - 2026 Flavio Milinanni. All Rights Reserved.
+//
+//  This file is part of the Football Management Project.
+//  See the LICENSE file in the project root.
+// -----------------------------------------------------------------------------
+
+#include "gui/widgets/theme.h"
+
+#include <algorithm>
+#include <array>
+
+namespace
+{
+constexpr float BASE_FONT_SIZE = 16.0f;
+constexpr float MIN_UI_SCALE = 0.75f;
+constexpr float MAX_UI_SCALE = 2.0f;
+
+struct PresetColors
+{
+  ImVec4 background;
+  ImVec4 sidebar;
+  ImVec4 surface;
+  ImVec4 raised;
+  ImVec4 border;
+  ImVec4 text;
+  ImVec4 muted;
+  ImVec4 faint;
+  float row_stripe_alpha;
+  bool light;
+};
+
+constexpr std::array<PresetColors, static_cast<size_t>(Theme::Preset::COUNT)>
+    PRESETS = {{
+        // Dark slate: the default neutral charcoal.
+        {ImVec4(0.045f, 0.055f, 0.066f, 1.0f),
+         ImVec4(0.058f, 0.069f, 0.082f, 1.0f),
+         ImVec4(0.075f, 0.088f, 0.103f, 1.0f),
+         ImVec4(0.112f, 0.128f, 0.147f, 1.0f),
+         ImVec4(0.160f, 0.182f, 0.205f, 1.0f),
+         ImVec4(0.905f, 0.925f, 0.940f, 1.0f),
+         ImVec4(0.575f, 0.625f, 0.665f, 1.0f),
+         ImVec4(0.380f, 0.420f, 0.460f, 1.0f), 0.022f, false},
+        // Midnight blue.
+        {ImVec4(0.035f, 0.047f, 0.090f, 1.0f),
+         ImVec4(0.047f, 0.063f, 0.118f, 1.0f),
+         ImVec4(0.063f, 0.082f, 0.145f, 1.0f),
+         ImVec4(0.098f, 0.122f, 0.200f, 1.0f),
+         ImVec4(0.150f, 0.180f, 0.275f, 1.0f),
+         ImVec4(0.900f, 0.920f, 0.965f, 1.0f),
+         ImVec4(0.560f, 0.610f, 0.720f, 1.0f),
+         ImVec4(0.360f, 0.400f, 0.500f, 1.0f), 0.025f, false},
+        // Pitch green.
+        {ImVec4(0.035f, 0.062f, 0.050f, 1.0f),
+         ImVec4(0.045f, 0.078f, 0.062f, 1.0f),
+         ImVec4(0.058f, 0.098f, 0.078f, 1.0f),
+         ImVec4(0.090f, 0.140f, 0.112f, 1.0f),
+         ImVec4(0.140f, 0.200f, 0.165f, 1.0f),
+         ImVec4(0.905f, 0.945f, 0.920f, 1.0f),
+         ImVec4(0.560f, 0.660f, 0.610f, 1.0f),
+         ImVec4(0.360f, 0.450f, 0.405f, 1.0f), 0.025f, false},
+        // Light.
+        {ImVec4(0.930f, 0.938f, 0.950f, 1.0f),
+         ImVec4(0.885f, 0.896f, 0.912f, 1.0f),
+         ImVec4(0.985f, 0.988f, 0.992f, 1.0f),
+         ImVec4(0.900f, 0.910f, 0.925f, 1.0f),
+         ImVec4(0.780f, 0.795f, 0.820f, 1.0f),
+         ImVec4(0.090f, 0.105f, 0.125f, 1.0f),
+         ImVec4(0.360f, 0.395f, 0.440f, 1.0f),
+         ImVec4(0.530f, 0.560f, 0.600f, 1.0f), 0.035f, true},
+        // High contrast.
+        {ImVec4(0.000f, 0.000f, 0.000f, 1.0f),
+         ImVec4(0.030f, 0.030f, 0.030f, 1.0f),
+         ImVec4(0.050f, 0.050f, 0.050f, 1.0f),
+         ImVec4(0.140f, 0.140f, 0.140f, 1.0f),
+         ImVec4(0.720f, 0.720f, 0.720f, 1.0f),
+         ImVec4(1.000f, 1.000f, 1.000f, 1.0f),
+         ImVec4(0.850f, 0.850f, 0.850f, 1.0f),
+         ImVec4(0.700f, 0.700f, 0.700f, 1.0f), 0.060f, false},
+    }};
+
+// Club accents are chosen for contrast on the dark surfaces, not to imitate
+// any real club identity.
+constexpr std::array<ImVec4, 10> CLUB_ACCENTS = {
+    ImVec4(0.130f, 0.650f, 0.390f, 1.0f), ImVec4(0.235f, 0.560f, 0.925f, 1.0f),
+    ImVec4(0.855f, 0.290f, 0.310f, 1.0f), ImVec4(0.925f, 0.620f, 0.180f, 1.0f),
+    ImVec4(0.560f, 0.420f, 0.910f, 1.0f), ImVec4(0.110f, 0.660f, 0.690f, 1.0f),
+    ImVec4(0.930f, 0.450f, 0.210f, 1.0f), ImVec4(0.330f, 0.420f, 0.900f, 1.0f),
+    ImVec4(0.830f, 0.330f, 0.620f, 1.0f), ImVec4(0.520f, 0.700f, 0.200f, 1.0f),
+};
+
+struct RatingStop
+{
+  float value;
+  ImVec4 color;
+};
+
+constexpr std::array<RatingStop, 5> RATING_STOPS = {{
+    {35.0f, ImVec4(0.898f, 0.337f, 0.318f, 1.0f)},
+    {50.0f, ImVec4(0.945f, 0.560f, 0.255f, 1.0f)},
+    {60.0f, ImVec4(0.905f, 0.740f, 0.250f, 1.0f)},
+    {70.0f, ImVec4(0.520f, 0.780f, 0.330f, 1.0f)},
+    {80.0f, ImVec4(0.180f, 0.760f, 0.500f, 1.0f)},
+}};
+
+Theme::Appearance activeAppearance;
+std::optional<TeamID> activeClub;
+float activeScale = 1.0f;
+Theme::Palette activePalette{};
+
+ImVec4 mix(const ImVec4& a, const ImVec4& b, float t)
+{
+  return ImVec4(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t,
+                a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t);
+}
+
+const PresetColors& presetColors()
+{
+  const auto index = std::min(static_cast<size_t>(activeAppearance.preset),
+                              PRESETS.size() - 1);
+  return PRESETS[index];
+}
+
+void buildPalette()
+{
+  const PresetColors& preset = presetColors();
+  Theme::Palette& p = activePalette;
+  p.background = preset.background;
+  p.sidebar = preset.sidebar;
+  p.surface = preset.surface;
+  p.raised = preset.raised;
+  p.border = preset.border;
+  p.text = preset.text;
+  p.muted = preset.muted;
+  p.faint = preset.faint;
+  const float shade = preset.light ? 0.78f : 1.0f;
+  p.positive = ImVec4(0.235f * shade, 0.770f * shade, 0.486f * shade, 1.0f);
+  p.warning = ImVec4(0.945f * shade, 0.706f * shade, 0.255f * shade, 1.0f);
+  p.negative = ImVec4(0.898f * shade, 0.337f * shade, 0.318f * shade, 1.0f);
+  p.info = ImVec4(0.345f * shade, 0.620f * shade, 0.945f * shade, 1.0f);
+  p.accent = activeAppearance.club_accent && activeClub
+                 ? Theme::clubAccent(*activeClub)
+                 : activeAppearance.custom_accent;
+  const float luminance =
+      0.2126f * p.accent.x + 0.7152f * p.accent.y + 0.0722f * p.accent.z;
+  p.on_accent = luminance > 0.45f ? ImVec4(0.03f, 0.04f, 0.05f, 1.0f)
+                                  : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+void applyColors()
+{
+  buildPalette();
+  const Theme::Palette& p = activePalette;
+  const PresetColors& preset = presetColors();
+  ImVec4* colors = ImGui::GetStyle().Colors;
+  const ImVec4 accentHover = mix(p.accent, p.text, 0.14f);
+  const ImVec4 accentActive = mix(p.accent, p.background, 0.18f);
+  const ImVec4 accentTint = mix(p.raised, p.accent, 0.35f);
+  const ImVec4 accentSoft = mix(p.surface, p.accent, 0.22f);
+  const ImVec4 stripe = preset.light ? ImVec4(0, 0, 0, preset.row_stripe_alpha)
+                                     : ImVec4(1, 1, 1, preset.row_stripe_alpha);
+
+  colors[ImGuiCol_Text] = p.text;
+  colors[ImGuiCol_TextDisabled] = p.muted;
+  colors[ImGuiCol_WindowBg] = p.background;
+  colors[ImGuiCol_ChildBg] = ImVec4(0, 0, 0, 0);
+  colors[ImGuiCol_PopupBg] = p.surface;
+  colors[ImGuiCol_Border] = p.border;
+  colors[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+  colors[ImGuiCol_FrameBg] = p.raised;
+  colors[ImGuiCol_FrameBgHovered] = mix(p.raised, p.border, 0.7f);
+  colors[ImGuiCol_FrameBgActive] = accentSoft;
+  colors[ImGuiCol_TitleBg] = p.surface;
+  colors[ImGuiCol_TitleBgActive] = p.raised;
+  colors[ImGuiCol_TitleBgCollapsed] = p.background;
+  colors[ImGuiCol_MenuBarBg] = p.surface;
+  colors[ImGuiCol_ScrollbarBg] = ImVec4(0, 0, 0, 0);
+  colors[ImGuiCol_ScrollbarGrab] = p.border;
+  colors[ImGuiCol_ScrollbarGrabHovered] = p.faint;
+  colors[ImGuiCol_ScrollbarGrabActive] = p.accent;
+  colors[ImGuiCol_CheckMark] = p.accent;
+  colors[ImGuiCol_SliderGrab] = p.accent;
+  colors[ImGuiCol_SliderGrabActive] = accentHover;
+  colors[ImGuiCol_Button] = p.raised;
+  colors[ImGuiCol_ButtonHovered] = accentTint;
+  colors[ImGuiCol_ButtonActive] = accentActive;
+  colors[ImGuiCol_Header] = accentSoft;
+  colors[ImGuiCol_HeaderHovered] = mix(p.raised, p.accent, 0.18f);
+  colors[ImGuiCol_HeaderActive] = accentTint;
+  colors[ImGuiCol_Separator] = p.border;
+  colors[ImGuiCol_SeparatorHovered] = p.accent;
+  colors[ImGuiCol_SeparatorActive] = accentHover;
+  colors[ImGuiCol_ResizeGrip] = ImVec4(0, 0, 0, 0);
+  colors[ImGuiCol_ResizeGripHovered] = p.accent;
+  colors[ImGuiCol_ResizeGripActive] = accentHover;
+  colors[ImGuiCol_InputTextCursor] = p.text;
+  colors[ImGuiCol_Tab] = p.surface;
+  colors[ImGuiCol_TabHovered] = p.raised;
+  colors[ImGuiCol_TabSelected] = p.raised;
+  colors[ImGuiCol_TabSelectedOverline] = p.accent;
+  colors[ImGuiCol_TabDimmed] = p.background;
+  colors[ImGuiCol_TabDimmedSelected] = p.surface;
+  colors[ImGuiCol_TabDimmedSelectedOverline] = p.border;
+  colors[ImGuiCol_PlotLines] = p.accent;
+  colors[ImGuiCol_PlotLinesHovered] = accentHover;
+  colors[ImGuiCol_PlotHistogram] = p.accent;
+  colors[ImGuiCol_PlotHistogramHovered] = accentHover;
+  colors[ImGuiCol_TableHeaderBg] = p.surface;
+  colors[ImGuiCol_TableBorderStrong] = p.border;
+  colors[ImGuiCol_TableBorderLight] = mix(p.surface, p.border, 0.6f);
+  colors[ImGuiCol_TableRowBg] = ImVec4(0, 0, 0, 0);
+  colors[ImGuiCol_TableRowBgAlt] = stripe;
+  colors[ImGuiCol_TextLink] =
+      mix(p.accent, p.text, preset.light ? 0.1f : 0.35f);
+  colors[ImGuiCol_TextSelectedBg] = mix(p.surface, p.accent, 0.45f);
+  colors[ImGuiCol_DragDropTarget] = accentHover;
+  colors[ImGuiCol_NavCursor] = accentHover;
+  colors[ImGuiCol_NavWindowingHighlight] = p.text;
+  colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0, 0, 0, 0.45f);
+  colors[ImGuiCol_ModalWindowDimBg] =
+      ImVec4(0.0f, 0.0f, 0.0f, preset.light ? 0.35f : 0.62f);
+}
+}  // namespace
+
+namespace Theme
+{
+
+const Palette& palette() { return activePalette; }
+
+const Appearance& appearance() { return activeAppearance; }
+
+void apply(const Appearance& options, float displayScale)
+{
+  activeAppearance = options;
+  activeScale = std::clamp(
+      options.ui_scale > 0.0f ? options.ui_scale : std::max(1.0f, displayScale),
+      MIN_UI_SCALE, MAX_UI_SCALE);
+
+  ImGuiStyle& style = ImGui::GetStyle();
+  style = ImGuiStyle();
+  applyColors();
+
+  const bool compact = options.compact;
+  style.FontSizeBase = BASE_FONT_SIZE;
+  style.WindowPadding = ImVec2(Space::L, Space::M);
+  style.FramePadding = compact ? ImVec2(8.0f, 4.0f) : ImVec2(10.0f, 6.0f);
+  style.CellPadding = compact ? ImVec2(6.0f, 2.0f) : ImVec2(Space::S, 5.0f);
+  style.ItemSpacing = compact ? ImVec2(6.0f, 5.0f) : ImVec2(Space::S, Space::S);
+  style.ItemInnerSpacing = ImVec2(6.0f, Space::XS);
+  style.IndentSpacing = Space::L;
+  style.ScrollbarSize = 12.0f;
+  style.GrabMinSize = 10.0f;
+  style.WindowRounding = 6.0f;
+  style.ChildRounding = 6.0f;
+  style.FrameRounding = 4.0f;
+  style.PopupRounding = 6.0f;
+  style.ScrollbarRounding = 6.0f;
+  style.GrabRounding = 4.0f;
+  style.TabRounding = 4.0f;
+  style.WindowBorderSize = 1.0f;
+  style.ChildBorderSize = 1.0f;
+  style.PopupBorderSize = 1.0f;
+  style.FrameBorderSize = options.preset == Preset::HIGH_CONTRAST ? 1.0f : 0.0f;
+  style.TabBarOverlineSize = 2.0f;
+  style.SelectableTextAlign = ImVec2(0.0f, 0.5f);
+  style.WindowTitleAlign = ImVec2(0.0f, 0.5f);
+  style.SeparatorTextBorderSize = 1.0f;
+  style.SeparatorTextPadding = ImVec2(0.0f, Space::XS);
+
+  // Thin lines are tessellated instead of sampled from the font atlas: the
+  // SDL_Renderer backend samples the baked line texels inconsistently, which
+  // left broken separators and table borders.
+  style.AntiAliasedLinesUseTex = false;
+
+  style.ScaleAllSizes(activeScale);
+  style.FontScaleDpi = activeScale;
+}
+
+void setClub(std::optional<TeamID> teamId)
+{
+  if (activeClub == teamId) return;
+  activeClub = teamId;
+  applyColors();
+}
+
+float scale() { return activeScale; }
+
+bool reducedMotion() { return activeAppearance.reduced_motion; }
+
+Swatch presetSwatch(Preset preset)
+{
+  const PresetColors& colors =
+      PRESETS[std::min(static_cast<size_t>(preset), PRESETS.size() - 1)];
+  return {colors.background, colors.surface, colors.text, colors.muted};
+}
+
+const char* presetKey(Preset preset)
+{
+  switch (preset)
+  {
+    case Preset::DARK_SLATE:
+      return "THEME_PRESET_DARK_SLATE";
+    case Preset::MIDNIGHT_BLUE:
+      return "THEME_PRESET_MIDNIGHT";
+    case Preset::PITCH_GREEN:
+      return "THEME_PRESET_PITCH";
+    case Preset::LIGHT:
+      return "THEME_PRESET_LIGHT";
+    case Preset::HIGH_CONTRAST:
+      return "THEME_PRESET_HIGH_CONTRAST";
+    case Preset::COUNT:
+      break;
+  }
+  return "THEME_PRESET_DARK_SLATE";
+}
+
+ImVec4 clubAccent(TeamID teamId)
+{
+  return CLUB_ACCENTS[static_cast<size_t>(teamId) % CLUB_ACCENTS.size()];
+}
+
+ImVec4 ratingColor(double value)
+{
+  const auto rating = static_cast<float>(value);
+  if (rating <= RATING_STOPS.front().value) return RATING_STOPS.front().color;
+  for (size_t index = 1; index < RATING_STOPS.size(); ++index)
+  {
+    const RatingStop& upper = RATING_STOPS[index];
+    if (rating <= upper.value)
+    {
+      const RatingStop& lower = RATING_STOPS[index - 1];
+      return mix(lower.color, upper.color,
+                 (rating - lower.value) / (upper.value - lower.value));
+    }
+  }
+  return RATING_STOPS.back().color;
+}
+
+float textSize(Text level)
+{
+  switch (level)
+  {
+    case Text::CAPTION:
+      return 12.5f;
+    case Text::SMALL:
+      return 14.0f;
+    case Text::BODY:
+      return BASE_FONT_SIZE;
+    case Text::TITLE:
+      return 18.0f;
+    case Text::HEADING:
+      return 25.0f;
+    case Text::DISPLAY:
+      return 28.0f;
+  }
+  return BASE_FONT_SIZE;
+}
+
+ImU32 toU32(const ImVec4& color, float alpha)
+{
+  return ImGui::GetColorU32(ImVec4(color.x, color.y, color.z, color.w * alpha));
+}
+
+uint32_t packRgb(const ImVec4& color)
+{
+  const auto channel = [](float value)
+  {
+    return static_cast<uint32_t>(std::clamp(value, 0.0f, 1.0f) * 255.0f + 0.5f);
+  };
+  return (channel(color.x) << 16U) | (channel(color.y) << 8U) |
+         channel(color.z);
+}
+
+ImVec4 unpackRgb(uint32_t rgb)
+{
+  return ImVec4(static_cast<float>((rgb >> 16U) & 0xFFU) / 255.0f,
+                static_cast<float>((rgb >> 8U) & 0xFFU) / 255.0f,
+                static_cast<float>(rgb & 0xFFU) / 255.0f, 1.0f);
+}
+
+ScopedText::ScopedText(Text level)
+{
+  ImGui::PushFont(nullptr, textSize(level));
+}
+
+ScopedText::~ScopedText() { ImGui::PopFont(); }
+
+}  // namespace Theme
