@@ -1,5 +1,9 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.29)
 project(FootballManagement LANGUAGES CXX C)
+
+# Keep newer CMake policy behavior in dependencies without raising the minimum
+# above the version required by this project's TEST_LAUNCHER usage.
+set(CMAKE_POLICY_DEFAULT_CMP0219 NEW)
 
 # -----------------------------
 # C++ Standard
@@ -11,6 +15,26 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BUILD_SHARED_LIBS OFF)
 
+option(BUILD_TESTING "Build tests" ON)
+option(BUILD_BENCHMARKS "Build benchmarks" OFF)
+option(BUILD_UI_AUTOMATION "Build UI automation support" OFF)
+option(FM_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+option(FM_ENABLE_CLANG_TIDY "Run clang-tidy while compiling project targets" OFF)
+option(FM_ENABLE_NATIVE_OPTIMIZATIONS "Tune local profiling builds for this CPU" OFF)
+option(FM_COPY_COMPILE_COMMANDS "Copy compile_commands.json into the source tree" OFF)
+option(FM_USE_SYSTEM_SDL "Use exact-version system SDL packages instead of pinned sources" OFF)
+
+if(FM_ENABLE_SANITIZERS AND NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  message(FATAL_ERROR "FM_ENABLE_SANITIZERS requires GCC or Clang")
+endif()
+if(FM_ENABLE_NATIVE_OPTIMIZATIONS AND NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  message(FATAL_ERROR "FM_ENABLE_NATIVE_OPTIMIZATIONS requires GCC or Clang")
+endif()
+
+if(FM_ENABLE_CLANG_TIDY)
+  find_program(CLANG_TIDY_EXECUTABLE NAMES clang-tidy REQUIRED)
+endif()
+
 # -----------------------------
 # Build types
 # -----------------------------
@@ -19,27 +43,24 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # -----------------------------
-# Debug Warning Flags
+# Compiler diagnostics
 # -----------------------------
-set(DEBUG_WARNINGS
-  -Wshadow
-  -Wnon-virtual-dtor
-  -Wold-style-cast
-  -Wcast-align
-  -Wunused
-  -Woverloaded-virtual
-  -Wconversion
-  -Wsign-conversion
-  -Wmisleading-indentation
-  -Wduplicated-cond
-  -Wduplicated-branches
-  -Wlogical-op
-  -Wnull-dereference
-  -Wuseless-cast
-  -Wdouble-promotion
-  -Wformat=2
-  -Wimplicit-fallthrough
-)
+set(FM_WARNING_FLAGS)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  list(APPEND FM_WARNING_FLAGS
+    -Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor
+    -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual
+    -Wconversion -Wsign-conversion -Wmisleading-indentation
+    -Wnull-dereference -Wdouble-promotion -Wformat=2
+    -Wimplicit-fallthrough
+  )
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    list(APPEND FM_WARNING_FLAGS
+      -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wuseless-cast)
+  endif()
+elseif(MSVC)
+  list(APPEND FM_WARNING_FLAGS /W4 /permissive-)
+endif()
 
 # -----------------------------
 # Dependencies (FetchContent & find_package)
@@ -93,30 +114,29 @@ else()
   endif()
 endif()
 
-# --- SDL3 ---
-find_package(SDL3 QUIET)
-if(NOT SDL3_FOUND)
-  message(STATUS "SDL3 not found, fetching from GitHub...")
+# --- SDL3 / SDL3_ttf ---
+# Pinned source builds are the reproducible default. Distro packages are an
+# explicit opt-in and must report the exact compatible versions.
+if(FM_USE_SYSTEM_SDL)
+  find_package(SDL3 3.4.16 EXACT REQUIRED)
+  find_package(SDL3_ttf 3.2.2 EXACT REQUIRED)
+else()
   set(SDL_TESTS OFF CACHE BOOL "" FORCE)
   set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
   FetchContent_Declare(
     SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG        main # Using main for SDL3 to get latest fixes as tags are moving fast
+    GIT_TAG        fa2c02bb6e21974a89ea9824bc53c9932abe5f9c # release-3.4.16
+    GIT_SHALLOW    TRUE
   )
   FetchContent_MakeAvailable(SDL3)
-endif()
 
-# --- SDL3_ttf ---
-find_package(SDL3_ttf QUIET)
-if(NOT SDL3_ttf_FOUND)
-  message(STATUS "SDL3_ttf not found, fetching from GitHub...")
   set(SDL3TTF_SAMPLES OFF CACHE BOOL "" FORCE)
-  # SDL3_ttf uses its own internal logic to find freetype/harfbuzz
   FetchContent_Declare(
     SDL3_ttf
     GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
-    GIT_TAG        main # Using main to ensure compatibility with SDL3 main
+    GIT_TAG        a1ce3670aec736ecbf0936c43f2f0cc53aa61e5b # release-3.2.2
+    GIT_SHALLOW    TRUE
   )
   FetchContent_MakeAvailable(SDL3_ttf)
 endif()
@@ -125,21 +145,22 @@ endif()
 FetchContent_Declare(
   imgui
   GIT_REPOSITORY https://github.com/ocornut/imgui.git
-  GIT_TAG        master
+  GIT_TAG        e8602501bb900fc7c965e65b88fef30b2c80aff1
 )
 FetchContent_MakeAvailable(imgui)
 
 # --- ImGui Test Engine ---
-FetchContent_Declare(
-  imgui_test_engine
-  GIT_REPOSITORY https://github.com/ocornut/imgui_test_engine.git
-  GIT_TAG        main
-)
-FetchContent_MakeAvailable(imgui_test_engine)
+if(BUILD_UI_AUTOMATION)
+  FetchContent_Declare(
+    imgui_test_engine
+    GIT_REPOSITORY https://github.com/ocornut/imgui_test_engine.git
+    GIT_TAG        cf4b9749fad4cfdf2096a27f9a688ea71c47fe49
+  )
+  FetchContent_MakeAvailable(imgui_test_engine)
+endif()
 
 
 # GoogleTest (for tests)
-option(BUILD_TESTING "Build tests" ON)
 if(BUILD_TESTING)
   FetchContent_Declare(
     googletest
@@ -151,7 +172,6 @@ if(BUILD_TESTING)
 endif()
 
 # Google Benchmark
-option(BUILD_BENCHMARKS "Build benchmarks" ON)
 if(BUILD_BENCHMARKS)
   FetchContent_Declare(
     benchmark
@@ -182,9 +202,9 @@ endif()
 # Tools & Formatting
 # -----------------------------
 
-# Copy compile_commands.json to source dir
-if(CMAKE_EXPORT_COMPILE_COMMANDS)
-  add_custom_target(copy_compile_commands ALL
+# Copying this generated file into the checkout is opt-in.
+if(CMAKE_EXPORT_COMPILE_COMMANDS AND FM_COPY_COMPILE_COMMANDS)
+  add_custom_target(copy_compile_commands
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       ${CMAKE_BINARY_DIR}/compile_commands.json
       ${CMAKE_SOURCE_DIR}/compile_commands.json
@@ -206,20 +226,12 @@ if(CLANG_FORMAT)
   )
 endif()
 
-find_program(CLANG_TIDY clang-tidy)
-if(CLANG_TIDY)
-  set(CMAKE_CXX_CLANG_TIDY
-      ${CLANG_TIDY};
-      -p=${CMAKE_BINARY_DIR}
-  )
-endif()
-
 find_program(CPPCHECK cppcheck)
 if(CPPCHECK)
   add_custom_target(cppcheck
     COMMAND ${CPPCHECK}
     --enable=warning,performance,portability
-    --std=c++20
+    --std=c++23
     --language=c++
     --inline-suppr
     --quiet

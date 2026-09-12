@@ -20,6 +20,7 @@
 #include <string_view>
 
 #include "global/logger.h"
+#include "global/runtime_paths.h"
 #include "gui/gui_view.h"
 #include "gui/player_ui.h"
 #include "gui/render/match_renderer_2d.h"
@@ -186,7 +187,7 @@ void MatchScene::exportDebugSnapshot()
   const char* configuredPath = std::getenv("FM_MATCH_SNAPSHOT_PATH");
   const std::string path = configuredPath && *configuredPath
                                ? configuredPath
-                               : "/tmp/football_management_match.json";
+                               : RuntimePaths::capturePath("match.json").string();
   debug_status = engine->writeDebugSnapshot(path)
                      ? "Snapshot: " + path
                      : "Could not write snapshot: " + path;

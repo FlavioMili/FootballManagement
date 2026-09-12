@@ -24,8 +24,7 @@ constexpr const char *PLAYERS_DIR = "@PROJECT_SOURCE_DIR@/assets/user_made_data/
 constexpr const char *FIRST_NAMES_PATH = "@PROJECT_SOURCE_DIR@/assets/user_made_data/names_files/first_names.json";
 constexpr const char *LAST_NAMES_PATH = "@PROJECT_SOURCE_DIR@/assets/user_made_data/names_files/last_names.json";
 
-// Database 
-constexpr const char *DATABASE_PATH = "@PROJECT_SOURCE_DIR@/FootballManagement.db";
+// Database assets
 constexpr const char *SCHEMA_PATH = "@PROJECT_SOURCE_DIR@/assets/db/schema.sql";
 constexpr const char *QUERIES_PATH = "@PROJECT_SOURCE_DIR@/assets/db/queries.sql";
 

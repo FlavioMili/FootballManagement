@@ -7,25 +7,12 @@ configure_file(
 )
 
 # -----------------------------
-# Sources & Library
+# Headless domain and persistence library
 # -----------------------------
-set(IMGUI_SOURCES
-    ${imgui_SOURCE_DIR}/imgui.cpp
-    ${imgui_SOURCE_DIR}/imgui_demo.cpp
-    ${imgui_SOURCE_DIR}/imgui_draw.cpp
-    ${imgui_SOURCE_DIR}/imgui_tables.cpp
-    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
-)
-set_source_files_properties(${IMGUI_SOURCES} PROPERTIES COMPILE_OPTIONS "-w")
-
-set(CORE_SOURCES
-    # Controller
+set(FM_CORE_SOURCES
     controller/game_controller.h
     controller/game_controller.cpp
 
-    # Database
     database/database_connection.h
     database/database_connection.cpp
     database/repositories/player_repository.h
@@ -45,24 +32,94 @@ set(CORE_SOURCES
     database/gamedata.h
     database/gamedata.cpp
 
-    # Global
     global/global.h
     global/languages.h
     global/language_manager.h
     global/language_manager.cpp
     global/logger.h
     global/logger.cpp
+    global/runtime_paths.h
+    global/runtime_paths.cpp
     global/queries.h
     global/roles.h
     global/stats_config.h
     global/types.h
 
-    # GUI
+    model/calendar.h
+    model/calendar.cpp
+    model/finances.h
+    model/finances.cpp
+    model/game.h
+    model/game.cpp
+    model/gamedate.h
+    model/gamedate.cpp
+    model/league.h
+    model/league.cpp
+    model/lineup.h
+    model/lineup.cpp
+    model/match.h
+    model/match.cpp
+    model/match_engine.h
+    model/match_engine.cpp
+    model/match_scenario.h
+    model/match_tuning.h
+    model/player.h
+    model/player.cpp
+    model/role_utils.h
+    model/role_utils.cpp
+    model/strategy.h
+    model/strategy.cpp
+    model/team.h
+    model/team.cpp
+    model/transfer_listing.h
+    model/transfer_listing.cpp
+    model/transfer_tuning.h
+)
+
+add_library(fm_core STATIC ${FM_CORE_SOURCES})
+
+target_include_directories(fm_core PUBLIC
+  ${PROJECT_BINARY_DIR}/src
+  ${PROJECT_SOURCE_DIR}/src
+  ${PROJECT_SOURCE_DIR}/src/model
+  ${PROJECT_SOURCE_DIR}/src/controller
+  ${PROJECT_SOURCE_DIR}/src/database
+)
+
+target_link_libraries(fm_core PUBLIC
+  fmt::fmt
+  spdlog::spdlog
+  nlohmann_json::nlohmann_json
+  SQLite3::SQLite3
+  SDL3::SDL3
+)
+if(DEFINED sdl3_SOURCE_DIR)
+  target_include_directories(fm_core SYSTEM PUBLIC ${sdl3_SOURCE_DIR}/include)
+endif()
+
+# -----------------------------
+# Presentation library
+# -----------------------------
+set(IMGUI_SOURCES
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
+)
+set_source_files_properties(${IMGUI_SOURCES} PROPERTIES COMPILE_OPTIONS "-w")
+
+set(FM_UI_SOURCES
     ${IMGUI_SOURCES}
+    model/settings_manager.h
+    model/settings_manager.cpp
     gui/button_manager.h
     gui/button_manager.cpp
     gui/dropdown.h
     gui/dropdown.cpp
+    gui/gui_constants.h
     gui/gui_scene.h
     gui/gui_scene.cpp
     gui/gui_view.h
@@ -92,104 +149,90 @@ set(CORE_SOURCES
     gui/scenes/transfer_market_scene.h
     gui/scenes/transfer_market_scene.cpp
     gui/scenes/transfer_market_scene_tuning.h
-
-    # Model
-    model/calendar.h
-    model/calendar.cpp
-    model/finances.h
-    model/finances.cpp
-    model/game.h
-    model/game.cpp
-    model/gamedate.h
-    model/gamedate.cpp
-    model/league.h
-    model/league.cpp
-    model/lineup.h
-    model/lineup.cpp
-    model/match.h
-    model/match.cpp
-    model/match_engine.h
-    model/match_engine.cpp
-    model/match_tuning.h
-    model/player.h
-    model/player.cpp
-    model/role_utils.h
-    model/role_utils.cpp
-    model/settings_manager.h
-    model/settings_manager.cpp
-    model/strategy.h
-    model/strategy.cpp
-    model/team.h
-    model/team.cpp
-    model/transfer_listing.h
-    model/transfer_listing.cpp
-    model/transfer_tuning.h
 )
 
-add_library(core_lib STATIC ${CORE_SOURCES})
+add_library(fm_ui STATIC ${FM_UI_SOURCES})
+add_library(core_lib ALIAS fm_ui)
 
-# -----------------------------
-# Include Directories
-# -----------------------------
-target_include_directories(core_lib PUBLIC
-  ${PROJECT_BINARY_DIR}/src
-  ${PROJECT_SOURCE_DIR}/src
-  ${PROJECT_SOURCE_DIR}/src/model
-  ${PROJECT_SOURCE_DIR}/src/controller
-  ${PROJECT_SOURCE_DIR}/src/database
+if(BUILD_UI_AUTOMATION)
+  set(IMGUI_TEST_ENGINE_SOURCES
+    ${imgui_test_engine_SOURCE_DIR}/imgui_test_engine/imgui_capture_tool.cpp
+    ${imgui_test_engine_SOURCE_DIR}/imgui_test_engine/imgui_te_context.cpp
+    ${imgui_test_engine_SOURCE_DIR}/imgui_test_engine/imgui_te_coroutine.cpp
+    ${imgui_test_engine_SOURCE_DIR}/imgui_test_engine/imgui_te_engine.cpp
+    ${imgui_test_engine_SOURCE_DIR}/imgui_test_engine/imgui_te_exporters.cpp
+    ${imgui_test_engine_SOURCE_DIR}/imgui_test_engine/imgui_te_perftool.cpp
+    ${imgui_test_engine_SOURCE_DIR}/imgui_test_engine/imgui_te_ui.cpp
+    ${imgui_test_engine_SOURCE_DIR}/imgui_test_engine/imgui_te_utils.cpp
+  )
+  add_library(imgui_test_engine_lib STATIC ${IMGUI_TEST_ENGINE_SOURCES})
+  target_include_directories(imgui_test_engine_lib SYSTEM PUBLIC
+    ${imgui_test_engine_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}
+  )
+  target_compile_definitions(imgui_test_engine_lib PUBLIC
+    IMGUI_ENABLE_TEST_ENGINE
+    IMGUI_TEST_ENGINE_ENABLE_CAPTURE=1
+  )
+  target_link_libraries(fm_ui PUBLIC imgui_test_engine_lib)
+  target_compile_definitions(fm_ui PUBLIC IMGUI_ENABLE_TEST_ENGINE)
+endif()
+
+target_include_directories(fm_ui PUBLIC
   ${PROJECT_SOURCE_DIR}/src/gui
   ${PROJECT_SOURCE_DIR}/src/gui/scenes
 )
-
-target_include_directories(core_lib SYSTEM PUBLIC
+target_include_directories(fm_ui SYSTEM PUBLIC
   ${imgui_SOURCE_DIR}
   ${imgui_SOURCE_DIR}/backends
 )
+target_link_libraries(fm_ui PUBLIC fm_core SDL3_ttf::SDL3_ttf)
+if(DEFINED sdl3_ttf_SOURCE_DIR)
+  target_include_directories(fm_ui SYSTEM PUBLIC ${sdl3_ttf_SOURCE_DIR}/include)
+endif()
 
-target_link_libraries(core_lib PUBLIC
-  fmt::fmt
-  spdlog::spdlog
-  nlohmann_json::nlohmann_json
-  SQLite3::SQLite3
-  SDL3::SDL3
-  SDL3_ttf::SDL3_ttf
-)
+# -----------------------------
+# Project diagnostics and build-mode flags
+# -----------------------------
+foreach(target fm_core fm_ui)
+  target_compile_options(${target} PRIVATE ${FM_WARNING_FLAGS})
+  if(FM_ENABLE_CLANG_TIDY)
+    set_property(TARGET ${target} PROPERTY CXX_CLANG_TIDY
+      "${CLANG_TIDY_EXECUTABLE};--header-filter=^${PROJECT_SOURCE_DIR}/src/;-p=${CMAKE_BINARY_DIR}")
+  endif()
+endforeach()
 
-# Basic warnings for all builds
-target_compile_options(core_lib PRIVATE -Wall -Wextra -pedantic)
+if(FM_ENABLE_SANITIZERS)
+  foreach(target fm_core fm_ui)
+    target_compile_options(${target} PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)
+    target_link_options(${target} PUBLIC -fsanitize=address,undefined)
+  endforeach()
+endif()
+
+if(FM_ENABLE_NATIVE_OPTIMIZATIONS)
+  foreach(target fm_core fm_ui)
+    target_compile_options(${target} PRIVATE -march=native)
+  endforeach()
+endif()
 
 # -----------------------------
 # Executable
 # -----------------------------
 add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE core_lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE fm_ui)
+target_compile_options(${PROJECT_NAME} PRIVATE ${FM_WARNING_FLAGS})
 
-# -----------------------------
-# Build type flags (Applying to targets)
-# -----------------------------
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(core_lib PRIVATE DEBUG)
-    target_compile_options(core_lib PRIVATE -Og -g3 -fsanitize=address,undefined ${DEBUG_WARNINGS})
-    target_compile_options(core_lib INTERFACE -fsanitize=address,undefined)
-    target_link_options(core_lib PUBLIC -fsanitize=address,undefined)
-
-    target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
-    target_compile_options(${PROJECT_NAME} PRIVATE -Og -g3 -fsanitize=address,undefined ${DEBUG_WARNINGS})
-    target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined)
-
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_definitions(core_lib PRIVATE NDEBUG)
-    target_compile_options(core_lib PRIVATE -O2 -march=native -flto=auto)
-    target_link_options(core_lib PRIVATE -flto=auto)
-
-    target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
-    target_compile_options(${PROJECT_NAME} PRIVATE -O2 -march=native -flto=auto)
-    target_link_options(${PROJECT_NAME} PRIVATE -flto=auto)
-
-elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-    target_compile_options(core_lib PRIVATE -O2 -g -march=native)
-    target_compile_options(${PROJECT_NAME} PRIVATE -O2 -g -march=native)
+if(FM_ENABLE_CLANG_TIDY)
+  set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_CLANG_TIDY
+    "${CLANG_TIDY_EXECUTABLE};--header-filter=^${PROJECT_SOURCE_DIR}/src/;-p=${CMAKE_BINARY_DIR}")
 endif()
 
-# Enforce strict unused variable checking for ALL builds
-target_compile_options(core_lib PRIVATE -Wall -Wextra -Wunused)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  target_compile_definitions(fm_core PRIVATE DEBUG)
+  target_compile_definitions(fm_ui PRIVATE DEBUG)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+  target_compile_definitions(fm_core PRIVATE NDEBUG)
+  target_compile_definitions(fm_ui PRIVATE NDEBUG)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
+endif()

@@ -1,0 +1,95 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 29, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "FM_COPY_COMPILE_COMMANDS": "OFF",
+        "FM_ENABLE_CLANG_TIDY": "OFF"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Portable production Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "OFF",
+        "BUILD_BENCHMARKS": "OFF",
+        "BUILD_UI_AUTOMATION": "OFF",
+        "FM_ENABLE_SANITIZERS": "OFF",
+        "FM_ENABLE_NATIVE_OPTIMIZATIONS": "OFF"
+      }
+    },
+    {
+      "name": "release-tests",
+      "displayName": "Portable Release with tests",
+      "inherits": "release",
+      "cacheVariables": { "BUILD_TESTING": "ON" }
+    },
+    {
+      "name": "debug-sanitized",
+      "displayName": "Debug with ASan and UBSan",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTING": "ON",
+        "BUILD_BENCHMARKS": "OFF",
+        "BUILD_UI_AUTOMATION": "OFF",
+        "FM_ENABLE_SANITIZERS": "ON",
+        "FM_ENABLE_NATIVE_OPTIMIZATIONS": "OFF"
+      }
+    },
+    {
+      "name": "profile",
+      "displayName": "Local native profiling and benchmarks",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "BUILD_TESTING": "OFF",
+        "BUILD_BENCHMARKS": "ON",
+        "BUILD_UI_AUTOMATION": "OFF",
+        "FM_ENABLE_SANITIZERS": "OFF",
+        "FM_ENABLE_NATIVE_OPTIMIZATIONS": "ON"
+      }
+    },
+    {
+      "name": "clang-tidy",
+      "displayName": "Debug project lint",
+      "inherits": "base",
+      "generator": "Unix Makefiles",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTING": "OFF",
+        "BUILD_BENCHMARKS": "OFF",
+        "FM_ENABLE_CLANG_TIDY": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "release", "configurePreset": "release" },
+    { "name": "release-tests", "configurePreset": "release-tests" },
+    { "name": "debug-sanitized", "configurePreset": "debug-sanitized" },
+    { "name": "profile", "configurePreset": "profile" },
+    { "name": "clang-tidy", "configurePreset": "clang-tidy" }
+  ],
+  "testPresets": [
+    {
+      "name": "release-tests",
+      "configurePreset": "release-tests",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 2 }
+    },
+    {
+      "name": "debug-sanitized",
+      "configurePreset": "debug-sanitized",
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 1 }
+    }
+  ]
+}

@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "gui/render/match_render_snapshot.h"
+#include "global/runtime_paths.h"
 #include "model/match_engine.h"
 #include "model/player.h"
 #include "model/team.h"
@@ -105,8 +106,7 @@ TEST(MatchEngineTest, CompletesARealisticMatch)
   EXPECT_NE(engine.getDebugSnapshotJson().find("\"full_time\""),
             std::string::npos);
 
-  const std::filesystem::path snapshotPath =
-      "/tmp/football_management_engine_test.json";
+  const auto snapshotPath = RuntimePaths::capturePath("engine.json");
   std::filesystem::remove(snapshotPath);
   ASSERT_TRUE(engine.writeDebugSnapshot(snapshotPath.string()));
   EXPECT_GT(std::filesystem::file_size(snapshotPath), 100u);

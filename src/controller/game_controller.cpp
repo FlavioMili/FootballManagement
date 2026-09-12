@@ -26,6 +26,7 @@
 #include "database/repositories/team_repository.h"
 #include "global/global.h"
 #include "global/logger.h"
+#include "global/runtime_paths.h"
 #include "model/transfer_tuning.h"
 
 GameController::GameController()
@@ -35,27 +36,14 @@ GameController::GameController()
 
 std::string GameController::getSavePath(int slot) const
 {
-  char* prefPath = SDL_GetPrefPath("FlavioMili", "FootballManagement");
-  if (!prefPath)
-  {
-    return "save_" + std::to_string(slot) + ".db";
-  }
-  std::filesystem::path p(prefPath);
-  SDL_free(prefPath);
-
-  std::filesystem::create_directories(p);
-  p /= ("save_" + std::to_string(slot) + ".db");
-  return p.string();
+  return RuntimePaths::savePath(slot).string();
 }
 
 void GameController::newGame(int slot)
 {
   const auto startedAt = std::chrono::steady_clock::now();
   std::string path = getSavePath(slot);
-  if (std::filesystem::exists(path))
-  {
-    std::filesystem::remove(path);
-  }
+  RuntimePaths::removeSave(slot);
   gamedata = std::make_shared<GameData>();
   db_conn = std::make_shared<DatabaseConnection>(path);
   game = std::make_unique<Game>(gamedata, db_conn);

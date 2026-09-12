@@ -16,7 +16,6 @@
 #include "database/database_connection.h"
 #include "database/gamedata.h"
 #include "global/logger.h"
-#include "global/paths.h"
 #include "model/transfer_listing.h"
 
 class TransferMarketTest : public ::testing::Test
@@ -25,12 +24,6 @@ class TransferMarketTest : public ::testing::Test
   void SetUp() override
   {
     Logger::init();
-    if (std::filesystem::exists(DATABASE_PATH))
-    {
-      std::filesystem::remove(DATABASE_PATH);
-    }
-
-    // Create controller (it will initialize the DB itself using DATABASE_PATH)
     controller = std::make_unique<GameController>();
     controller->newGame(0);
     controller->selectManagedTeam(1);  // Select a dummy team for testing
@@ -39,10 +32,6 @@ class TransferMarketTest : public ::testing::Test
   void TearDown() override
   {
     controller.reset();
-    if (std::filesystem::exists(DATABASE_PATH))
-    {
-      std::filesystem::remove(DATABASE_PATH);
-    }
   }
 
   std::unique_ptr<GameController> controller;

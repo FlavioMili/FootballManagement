@@ -14,3 +14,5 @@ docs/html/
 .DS_Store
 assets/imgui.ini
 build_before/
+out
+docs/implementation

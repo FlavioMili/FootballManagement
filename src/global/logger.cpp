@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "global/paths.h"
+#include "global/runtime_paths.h"
 
 namespace
 {
@@ -32,7 +33,8 @@ void Logger::init()
   if (!logger)
   {
     std::shared_ptr<spdlog::sinks::sink> file_sink =
-        std::make_shared<spdlog::sinks::basic_file_sink_mt>(LOGGER_PATH, true);
+        std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+            RuntimePaths::logPath().string(), true);
     std::shared_ptr<spdlog::sinks::sink> console_sink =
         std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 

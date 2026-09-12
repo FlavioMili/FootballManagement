@@ -29,6 +29,8 @@ extern "C" const char* __lsan_default_suppressions()
 #include "database/gamedata.h"
 #include "global/language_manager.h"
 #include "global/logger.h"
+#include "global/paths.h"
+#include "global/runtime_paths.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/lineup_scene.h"
 #include "gui/scenes/main_game_scene.h"
@@ -51,21 +53,7 @@ constexpr int LIVE_MATCH_WARMUP_FRAMES = 40;
 constexpr int AI_DEBUG_WARMUP_FRAMES = 160;
 #endif
 constexpr float LIVE_MATCH_TEST_FRAME_SECONDS = 0.05f;
-constexpr std::string_view MATCH_SCREENSHOT_PATH =
-    "/tmp/football_management_screenshot.bmp";
-constexpr std::string_view ROSTER_SCREENSHOT_PATH =
-    "/tmp/football_management_roster.bmp";
-constexpr std::string_view ITALIAN_ROSTER_SCREENSHOT_PATH =
-    "/tmp/football_management_roster_italian.bmp";
-constexpr std::string_view LINEUP_SCREENSHOT_PATH =
-    "/tmp/football_management_lineup.bmp";
-constexpr std::string_view SUBSTITUTION_SCREENSHOT_PATH =
-    "/tmp/football_management_substitution.bmp";
 #ifdef DEBUG
-constexpr std::string_view AI_DEBUG_SCREENSHOT_PATH =
-    "/tmp/football_management_ai_debug.bmp";
-constexpr std::string_view MATCH_DEBUG_SNAPSHOT_PATH =
-    "/tmp/football_management_match.json";
 #endif
 }  // namespace
 
@@ -77,8 +65,6 @@ class GameFlowTest : public ::testing::Test
     // Initialize Logger to prevent segfaults when Game or Database try to log
     Logger::init();
 
-    std::string test_db_path = "test_game_flow.db";
-    std::filesystem::remove(test_db_path);
     controller = std::make_unique<GameController>();
     // We cannot easily inject a path into newGame unless we modify it, so for
     // testing we can just call newGame(99) which maps to slot 99
@@ -202,7 +188,7 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   rosterScene->selected_player_id =
       rosterScene->roster_players.front().get().getId();
   view.render();
-  const std::filesystem::path rosterScreenshotPath = ROSTER_SCREENSHOT_PATH;
+  const auto rosterScreenshotPath = RuntimePaths::capturePath("roster.bmp");
   std::filesystem::remove(rosterScreenshotPath);
   EXPECT_TRUE(view.captureScreenshot(rosterScreenshotPath.string()));
   ASSERT_TRUE(std::filesystem::exists(rosterScreenshotPath));
@@ -211,7 +197,7 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::IT));
   view.render();
   const std::filesystem::path italianRosterScreenshotPath =
-      ITALIAN_ROSTER_SCREENSHOT_PATH;
+      RuntimePaths::capturePath("roster_italian.bmp");
   std::filesystem::remove(italianRosterScreenshotPath);
   EXPECT_TRUE(view.captureScreenshot(italianRosterScreenshotPath.string()));
   ASSERT_TRUE(std::filesystem::exists(italianRosterScreenshotPath));
@@ -237,7 +223,7 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   lineupScene->selected_bench_player_id =
       lineupScene->current_lineup->getReserves().front()->getId();
   view.render();
-  const std::filesystem::path lineupScreenshotPath = LINEUP_SCREENSHOT_PATH;
+  const auto lineupScreenshotPath = RuntimePaths::capturePath("lineup.bmp");
   std::filesystem::remove(lineupScreenshotPath);
   EXPECT_TRUE(view.captureScreenshot(lineupScreenshotPath.string()));
   ASSERT_TRUE(std::filesystem::exists(lineupScreenshotPath));
@@ -286,7 +272,7 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   view.render();
   view.render();
   const std::filesystem::path substitutionScreenshotPath =
-      SUBSTITUTION_SCREENSHOT_PATH;
+      RuntimePaths::capturePath("substitution.bmp");
   std::filesystem::remove(substitutionScreenshotPath);
   EXPECT_TRUE(view.captureScreenshot(substitutionScreenshotPath.string()));
   ASSERT_TRUE(std::filesystem::exists(substitutionScreenshotPath));
@@ -314,7 +300,7 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   {
     view.update(LIVE_MATCH_TEST_FRAME_SECONDS);
   }
-  const std::filesystem::path screenshotPath = MATCH_SCREENSHOT_PATH;
+  const auto screenshotPath = RuntimePaths::capturePath("screenshot.bmp");
   std::filesystem::remove(screenshotPath);
   view.screenshotPending = true;
   EXPECT_NO_THROW(step_frame());
@@ -336,7 +322,7 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   {
     view.update(LIVE_MATCH_TEST_FRAME_SECONDS);
   }
-  const std::filesystem::path debugSnapshotPath = MATCH_DEBUG_SNAPSHOT_PATH;
+  const auto debugSnapshotPath = RuntimePaths::capturePath("match.json");
   std::filesystem::remove(debugSnapshotPath);
   SDL_Event exportEvent{};
   exportEvent.type = SDL_EVENT_KEY_DOWN;
@@ -373,7 +359,7 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
     EXPECT_GE(chosenUtility + 1e-4f, analysis[key].get<float>());
   }
   view.render();
-  const std::filesystem::path debugScreenshotPath = AI_DEBUG_SCREENSHOT_PATH;
+  const auto debugScreenshotPath = RuntimePaths::capturePath("ai_debug.bmp");
   std::filesystem::remove(debugScreenshotPath);
   EXPECT_TRUE(view.captureScreenshot(debugScreenshotPath.string()));
   ASSERT_TRUE(std::filesystem::exists(debugScreenshotPath));
@@ -415,4 +401,27 @@ TEST_F(GameFlowTest, SaveSlotMetadata)
   EXPECT_EQ(metadata_saved.team_name, testTeamName);
   EXPECT_FALSE(metadata_saved.game_date.empty());
   EXPECT_FALSE(metadata_saved.real_date.empty());
+}
+
+TEST_F(GameFlowTest, RuntimeRootDoesNotTouchExternalSentinels)
+{
+  const auto runtimeRoot = RuntimePaths::root();
+  const auto sourceRoot = std::filesystem::path(PROJECT_ROOT);
+  EXPECT_NE(runtimeRoot, sourceRoot);
+
+  const auto sentinel = runtimeRoot.parent_path() /
+                        ("football-management-sentinel-" +
+                         std::to_string(static_cast<unsigned long>(SDL_GetTicks())));
+  {
+    std::ofstream output(sentinel);
+    ASSERT_TRUE(output.is_open());
+    output << "do not modify";
+  }
+
+  controller->newGame(1);
+  std::ifstream input(sentinel);
+  std::string contents;
+  std::getline(input, contents);
+  EXPECT_EQ(contents, "do not modify");
+  std::filesystem::remove(sentinel);
 }

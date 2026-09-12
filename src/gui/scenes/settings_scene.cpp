@@ -15,6 +15,7 @@
 
 #include "global/language_manager.h"
 #include "global/paths.h"
+#include "global/runtime_paths.h"
 #include "gui/gui_constants.h"
 #include "gui/scenes/main_menu_scene.h"
 #include "settings_manager.h"
@@ -186,10 +187,7 @@ void SettingsScene::render()
     {
       if (ImGui::Button("Confirm", ImVec2(120, 0)))
       {
-        if (std::filesystem::exists(DATABASE_PATH))
-        {
-          std::filesystem::remove(DATABASE_PATH);
-        }
+        RuntimePaths::removeAllSaves();
         showWipeDataOverlay = false;
         ImGui::CloseCurrentPopup();
       }

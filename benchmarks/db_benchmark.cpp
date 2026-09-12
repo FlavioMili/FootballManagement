@@ -18,11 +18,16 @@
 #include "database/gamedata.h"
 #include "database/repositories/game_state_repository.h"
 #include "database/repositories/player_repository.h"
+#include "global/runtime_paths.h"
 
 namespace
 {
-const std::filesystem::path BENCHMARK_DATABASE_PATH =
-    "/tmp/football_management_benchmark.db";
+std::filesystem::path benchmarkDatabasePath()
+{
+  const auto directory = RuntimePaths::root() / "benchmark";
+  std::filesystem::create_directories(directory);
+  return directory / "database.db";
+}
 constexpr std::uint8_t BENCHMARK_SEASON = 1;
 constexpr TeamID BENCHMARK_MANAGED_TEAM = 0;
 constexpr const char* BENCHMARK_DATE = "2025-07-01";
@@ -62,9 +67,12 @@ class DatabaseFixture : public benchmark::Fixture
   {
     (void)state;
     // Benchmarks must never touch a player's real save database.
-    std::filesystem::remove(BENCHMARK_DATABASE_PATH);
+    const auto databasePath = benchmarkDatabasePath();
+    std::filesystem::remove(databasePath);
+    std::filesystem::remove(databasePath.string() + "-wal");
+    std::filesystem::remove(databasePath.string() + "-shm");
     db_conn =
-        std::make_shared<DatabaseConnection>(BENCHMARK_DATABASE_PATH.string());
+        std::make_shared<DatabaseConnection>(databasePath.string());
     db_conn->initialize();
   }
 
@@ -72,7 +80,10 @@ class DatabaseFixture : public benchmark::Fixture
   {
     (void)state;
     db_conn.reset();
-    std::filesystem::remove(BENCHMARK_DATABASE_PATH);
+    const auto databasePath = benchmarkDatabasePath();
+    std::filesystem::remove(databasePath);
+    std::filesystem::remove(databasePath.string() + "-wal");
+    std::filesystem::remove(databasePath.string() + "-shm");
   }
 
   std::shared_ptr<DatabaseConnection> db_conn;

@@ -4,7 +4,7 @@ add_executable(db_benchmarks
 
 target_link_libraries(db_benchmarks
   PRIVATE
-    core_lib
+    fm_core
     benchmark::benchmark_main
 )
 
@@ -19,7 +19,7 @@ add_executable(match_benchmarks
 
 target_link_libraries(match_benchmarks
   PRIVATE
-    core_lib
+    fm_core
     benchmark::benchmark
 )
 

@@ -15,6 +15,7 @@
 
 #include "global/language_manager.h"
 #include "global/paths.h"
+#include "global/runtime_paths.h"
 
 using json = nlohmann::json;
 
@@ -28,7 +29,7 @@ SettingsManager* SettingsManager::instance()
 
 void SettingsManager::load()
 {
-  std::ifstream in(SETTINGS_PATH);
+  std::ifstream in(RuntimePaths::settingsPath());
   if (!in)
   {
     std::cerr << "Settings file not found, using defaults.\n";
@@ -70,7 +71,7 @@ void SettingsManager::save() const
   j["fullscreen"] = settings_.fullscreen;
   j["fps_limit"] = settings_.fps_limit;
 
-  std::ofstream out(SETTINGS_PATH);
+  std::ofstream out(RuntimePaths::settingsPath());
   out << j.dump(2);
 }
 

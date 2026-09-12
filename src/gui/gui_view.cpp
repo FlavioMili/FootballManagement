@@ -24,6 +24,7 @@
 #include "controller/game_controller.h"
 #include "global/logger.h"
 #include "global/paths.h"
+#include "global/runtime_paths.h"
 #include "gui/gui_scene.h"
 #include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/match_scene.h"
@@ -121,7 +122,7 @@ bool GUIView::initialize()
   ImGuiIO& io = ImGui::GetIO();
   (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-  static std::string iniPath = std::string(PROJECT_ROOT) + "assets/imgui.ini";
+  static std::string iniPath = RuntimePaths::imguiIniPath().string();
   io.IniFilename = iniPath.c_str();
   applyCatppuccinLatteTheme();
 
@@ -310,7 +311,7 @@ void GUIView::render()
     const char* configuredPath = std::getenv("FM_SCREENSHOT_PATH");
     const std::string path = configuredPath && *configuredPath
                                  ? configuredPath
-                                 : "/tmp/football_management_screenshot.bmp";
+                                 : RuntimePaths::capturePath("screenshot.bmp").string();
     if (!captureScreenshot(path))
       std::cerr << "Failed to capture screenshot: " << SDL_GetError() << '\n';
     screenshotPending = false;
@@ -442,6 +443,8 @@ GameController& GUIView::getController() const { return controller; }
 bool GUIView::captureScreenshot(std::string_view path) const
 {
   if (!renderer || path.empty()) return false;
+  std::filesystem::create_directories(
+      std::filesystem::path(path).parent_path());
   SDL_Surface* surface = SDL_RenderReadPixels(renderer, nullptr);
   if (!surface) return false;
   const bool saved = SDL_SaveBMP(surface, std::string(path).c_str());

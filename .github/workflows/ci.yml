@@ -6,24 +6,28 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    env:
+      CC: gcc-14
+      CXX: g++-14
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       with:
         fetch-depth: 0
 
     - name: Setup SDL3
-      uses: libsdl-org/setup-sdl@main
+      uses: libsdl-org/setup-sdl@afd98199e97f9c2aa739474be7e0886d149a5e47
       with:
-        version: 3-latest
+        version: 3.4.16
         install-linux-dependencies: true
 
     - name: Install Tools & Dependencies
       run: |
         sudo apt update
         sudo apt install -y \
-          clang \
+          gcc-14 \
+          g++-14 \
           clang-tidy \
           cppcheck \
           libsqlite3-dev \
@@ -31,12 +35,12 @@ jobs:
           libharfbuzz-dev
 
     - name: Configure
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+      run: cmake --preset debug-sanitized
 
     - name: Build
-      run: cmake --build build -j
+      run: cmake --build --preset debug-sanitized --parallel 2
 
     - name: Run tests
-      run: ctest --test-dir build --output-on-failure
+      run: ctest --preset debug-sanitized
 
 

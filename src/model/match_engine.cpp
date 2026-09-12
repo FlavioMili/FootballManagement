@@ -1635,10 +1635,9 @@ void MatchEngine::decideAction(MatchPlayer& carrier)
   {
     lastScenarioDecision.action = ScenarioAction::CARRY;
     lastScenarioDecision.reason =
-        option ? std::string("carry:\"space ahead (value " +
-                             std::to_string(opennessAhead) +
-                             ") beats the best pass") +
-                     std::string(" with intent ") +
+        option ? "carry:\"space ahead (value " +
+                     std::to_string(opennessAhead) +
+                     ") beats the best pass with intent " +
                      std::string(passIntentName(option->intent))
                : std::string(
                      "carry:space ahead and no acceptable pass "
