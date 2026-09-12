@@ -447,6 +447,8 @@ void PreseasonScene::renderProjects(float width)
   ImGui::PushTextWrapPos(0.0f);
   ImGui::TextColored(palette.muted, "%s", LOC("PLANNING_PROJECTS_EXPLAIN"));
   ImGui::PopTextWrapPos();
+  // refresh() rebuilds `projects`: it runs after the loop.
+  bool dirty = false;
   for (const ProjectLine& line : projects)
   {
     ImGui::PushID(static_cast<int>(line.type));
@@ -472,7 +474,7 @@ void PreseasonScene::renderProjects(float width)
                                seat_labels[2].c_str()};
         if (UI::segmented("##seats", seats_choice, seats,
                           std::min(full, 300.0f * Theme::scale())))
-          refresh();
+          dirty = true;
       }
       if (!line.quote.empty()) UI::textFitted(line.quote, full, palette.text);
       if (!line.status.empty()) UI::textFitted(line.status, full, palette.faint);
@@ -488,13 +490,14 @@ void PreseasonScene::renderProjects(float width)
         project_message_error = verdict != ProjectVerdict::Approved;
         ImGui::EndDisabled();
         ImGui::PopID();
-        refresh();
+        dirty = true;
         break;
       }
       ImGui::EndDisabled();
     }
     ImGui::PopID();
   }
+  if (dirty) refresh();
   if (!project_message.empty())
   {
     ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));

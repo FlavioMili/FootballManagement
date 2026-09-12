@@ -15,6 +15,7 @@
 #include "model/lineup.h"
 #include "model/match_engine.h"
 #include "model/player.h"
+#include "model/world_rng.h"
 
 using json = nlohmann::json;
 
@@ -64,6 +65,44 @@ TeamMatchStats statsFromObject(const json& object)
   stats.possession = object.value("possession", 50.0f);
   stats.expected_goals = object.value("xg", 0.0f);
   return stats;
+}
+
+/** Relative chance that @p player scores an extra-time goal. */
+double scorerWeight(const Player& player)
+{
+  double role = 1.0;
+  switch (player.getRole())
+  {
+    case PlayerRole::GK:
+    case PlayerRole::UNKNOWN:
+      return 0.0;
+    case PlayerRole::ST:
+      role = 6.0;
+      break;
+    case PlayerRole::LW:
+    case PlayerRole::RW:
+    case PlayerRole::CAM:
+      role = 4.0;
+      break;
+    case PlayerRole::LM:
+    case PlayerRole::RM:
+    case PlayerRole::CM:
+      role = 2.0;
+      break;
+    case PlayerRole::CDM:
+      role = 1.5;
+      break;
+    case PlayerRole::CB:
+    case PlayerRole::LB:
+    case PlayerRole::RB:
+      role = 1.0;
+      break;
+  }
+  const auto shooting = player.getStats().find("Shooting");
+  const double finishing = shooting == player.getStats().end()
+                               ? 50.0
+                               : static_cast<double>(shooting->second);
+  return role * (10.0 + finishing);
 }
 
 json parseOrEmpty(const std::string& text)
@@ -181,6 +220,60 @@ void MatchReport::addLineupAppearances(const Lineup& lineup, TeamID team_id)
   addStarter(lineup.getGoalkeeper());
   for (const auto& positioned : lineup.getOutfieldPlayers())
     addStarter(positioned.player);
+}
+
+void MatchReport::creditExtraTimeGoals(const Lineup& lineup, TeamID team_id,
+                                       bool home, uint8_t goals, uint32_t seed)
+{
+  if (goals == 0) return;
+  std::vector<const Player*> squad = lineup.starters();
+  squad.insert(squad.end(), lineup.getReserves().begin(),
+               lineup.getReserves().end());
+  std::vector<std::size_t> candidates;
+  std::vector<float> weights;
+  const auto collect = [&](bool finished_only)
+  {
+    for (std::size_t index = 0; index < players.size(); ++index)
+    {
+      const PlayerMatchLine& line = players[index];
+      if (line.team_id != team_id || line.red_cards > 0 || line.minutes == 0)
+        continue;
+      // On the pitch at the final whistle: starters who played it all and
+      // substitutes who came on.
+      if (finished_only && line.started && line.minutes < REGULATION_MINUTES)
+        continue;
+      const auto player = std::ranges::find_if(
+          squad, [&line](const Player* member)
+          { return member && member->getId() == line.player_id; });
+      if (player == squad.end()) continue;
+      const double weight = scorerWeight(**player);
+      if (weight <= 0.0) continue;
+      candidates.push_back(index);
+      weights.push_back(static_cast<float>(weight));
+    }
+  };
+  collect(true);
+  if (candidates.empty()) collect(false);
+
+  WorldRng rng(mixHash(seed, home ? 1U : 2U));
+  std::vector<uint8_t> minutes;
+  for (uint8_t goal = 0; goal < goals; ++goal)
+    minutes.push_back(static_cast<uint8_t>(rng.uniformInt(91, 120)));
+  std::ranges::sort(minutes);
+  for (const uint8_t minute : minutes)
+  {
+    MatchReportEvent event;
+    event.minute = minute;
+    event.kind = MatchEventKind::GOAL;
+    event.home = home;
+    if (!candidates.empty())
+    {
+      PlayerMatchLine& scorer = players[candidates[rng.weightedIndex(weights)]];
+      scorer.goals = toSmallCount(scorer.goals + 1L);
+      event.player = scorer.player_id;
+    }
+    events.push_back(event);
+  }
 }
 
 std::string MatchReport::eventsToJson() const

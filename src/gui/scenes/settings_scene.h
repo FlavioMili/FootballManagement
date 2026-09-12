@@ -70,6 +70,7 @@ class SettingsScene : public GUIScene
   void leave();
   void renderGeneral();
   void renderAppearance();
+  void renderAudio();
   void renderData();
   void renderSaving();
   void previewAppearance();

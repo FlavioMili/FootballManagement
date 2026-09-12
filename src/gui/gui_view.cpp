@@ -129,7 +129,7 @@ bool GUIView::initialize()
   }
 
   SettingsManager::instance()->load();
-  SettingsManager::instance()->apply(window);
+  applyWindowSettings();
   applySavePolicy();
 
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -537,8 +537,14 @@ GameController& GUIView::getController() const { return controller; }
 bool GUIView::captureScreenshot(std::string_view path) const
 {
   if (!renderer || path.empty()) return false;
-  std::filesystem::create_directories(
-      std::filesystem::path(path).parent_path());
+  // A bare file name has no folder to create; a failure to create one is
+  // reported by the save below instead of throwing out of the frame.
+  if (const std::filesystem::path folder = std::filesystem::path(path).parent_path();
+      !folder.empty())
+  {
+    std::error_code error;
+    std::filesystem::create_directories(folder, error);
+  }
   SDL_Surface* surface = SDL_RenderReadPixels(renderer, nullptr);
   if (!surface) return false;
   const bool saved = SDL_SaveBMP(surface, std::string(path).c_str());
@@ -589,6 +595,27 @@ void GUIView::applyManagementTheme()
 }
 
 void GUIView::refreshTheme() { applyManagementTheme(); }
+
+void GUIView::applyWindowSettings()
+{
+  SettingsManager* settings = SettingsManager::instance();
+  settings->apply(window);
+  const float scale = displayScale();
+  if (window == nullptr || settings->get().fullscreen || scale <= 1.0f) return;
+  // Wayland and macOS report the scale as pixel density (displayScale() is 1
+  // there); elsewhere the logical size is scaled up, within the display.
+  int width = static_cast<int>(
+      std::lround(static_cast<float>(settings->get().resolution_width) * scale));
+  int height = static_cast<int>(std::lround(
+      static_cast<float>(settings->get().resolution_height) * scale));
+  SDL_Rect usable{};
+  if (SDL_GetDisplayUsableBounds(SDL_GetDisplayForWindow(window), &usable))
+  {
+    width = std::min(width, usable.w);
+    height = std::min(height, usable.h);
+  }
+  SDL_SetWindowSize(window, width, height);
+}
 
 void GUIView::applySavePolicy()
 {

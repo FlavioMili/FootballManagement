@@ -29,8 +29,37 @@ struct StoppageLog
   int penalties = 0;
 };
 
-/** Whole added minutes for a half (period 1 or 2) from its stoppages. */
+/** Whole added minutes for a period (1-2, or 3-4 in extra time) from its
+ * stoppages. */
 int computeAddedMinutes(const StoppageLog& log, int period);
+
+/** Clock minute at which a period starts (0, 45, 90, 105). */
+float periodStartMinute(int period);
+/** Clock minute at which a period's regulation time ends (45, 90, 105, 120). */
+float periodEndMinute(int period);
+
+/**
+ * How a level match is settled. League matches (the default) may end drawn;
+ * a knockout match (or the second leg of a tie) that is level, counting the
+ * goals of earlier legs, goes to extra time and then to penalties.
+ */
+struct Knockout
+{
+  bool required = false;
+  /** Goals scored in earlier legs by this match's home and away sides. */
+  int homeAggregate = 0;
+  int awayAggregate = 0;
+  /** Two halves of extra time before the shootout. */
+  bool extraTime = true;
+};
+
+/**
+ * Whether a penalty shootout is decided: one side can no longer be caught
+ * within the first MatchTuning::Timing::SHOOTOUT_KICKS kicks each, or, in
+ * sudden death, the sides have taken as many kicks and one has scored more.
+ */
+bool shootoutDecided(int homeGoals, int homeKicks, int awayGoals,
+                     int awayKicks);
 
 /**
  * Event-driven match rating: 6.0 baseline, bounded to [3, 10].

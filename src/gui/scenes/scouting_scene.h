@@ -247,6 +247,8 @@ class ScoutingScene : public ManagementScene
   int filter_max_value_m = 0; /**< Millions, 0 = any. */
   int filter_min_knowledge = 0;
   std::array<char, 48> name_query{};
+  /** Time left before an edited name filter re-runs the search. */
+  float name_settle_seconds = 0.0f;
   bool search_dirty = true;
   SearchColumn sort_column = SearchColumn::ABILITY;
   bool sort_ascending = false;
@@ -257,8 +259,8 @@ class ScoutingScene : public ManagementScene
   int focus_min_age = 17;
   int focus_max_age = 30;
   int focus_min_ability = 0;
-  int focus_max_fee_k = 0;
-  int focus_max_wage = 0;
+  int64_t focus_max_fee = 0;
+  int64_t focus_max_wage = 0;
 
   PlayerID selected_player = 0;
   std::string selected_name;

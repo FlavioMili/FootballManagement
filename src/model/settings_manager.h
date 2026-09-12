@@ -40,6 +40,12 @@ struct Settings
   // Saving (applied to the controller's AutosavePolicy)
   int autosave_frequency = 2; /**< AutosaveFrequency: 0 Off .. 5 season end */
   int autosave_backups = 3;   /**< Previous saves kept per slot, 0-9 */
+
+  // Audio (linear gains 0-1, applied live by the match audio)
+  float master_volume = 0.8f;
+  float crowd_volume = 0.8f;
+  float effects_volume = 0.8f;
+  bool audio_muted = false;
 };
 
 /**

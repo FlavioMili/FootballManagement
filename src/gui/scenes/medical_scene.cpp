@@ -153,7 +153,7 @@ void MedicalScene::refresh()
     const auto player = data->getPlayer(id);
     if (!player) return {};
     return {player->get().getName(),
-            RoleUtils::toString(player->get().getRole())};
+            RoleUtils::shortName(player->get().getRole())};
   };
 
   for (const MedicalInjuryRow& row : report.injured)

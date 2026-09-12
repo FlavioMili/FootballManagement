@@ -36,6 +36,9 @@ enum class MatchState
   FREE_KICK,
   PENALTY,
   GOAL,
+  /** A level knockout match decided from the spot (clock stopped). */
+  PENALTY_SHOOTOUT,
+  /** Half-time, and the breaks before and during extra time. */
   HALF_TIME,
   FULL_TIME
 };
@@ -378,6 +381,21 @@ struct MatchInputRecord
   MatchPlayerInput input;
 };
 
+/** Simulation detail of a headless match (see MatchEngine::simulateToEnd). */
+enum class MatchFidelity : std::uint8_t
+{
+  /** The live engine's 10 Hz fixed step: watched matches and quick results. */
+  FULL,
+  /**
+   * Unwatched background fixtures: live play is identical to FULL, but the
+   * walk to each restart spot is simulated in coarser steps
+   * (MatchTuning::Timing::BACKGROUND_STOPPAGE_TICKS). Deterministic per seed
+   * and statistically equivalent to FULL; a given seed plays a different
+   * match than in FULL.
+   */
+  BACKGROUND
+};
+
 /** How advancePlayback() presents the match. */
 enum class MatchPlaybackMode
 {
@@ -436,9 +454,15 @@ class MatchEngine
    * the simulated seconds advanced.
    */
   float advance(float seconds);
-  /** Headless: plays the rest of the match; the fast path for background
-   * fixtures and "quick result". */
+  /** Headless: plays the rest of the match at full fidelity ("quick
+   * result" of a match the user may have been watching). */
   void simulateToEnd();
+  /**
+   * Headless: plays the rest of the match at the given fidelity; background
+   * fixtures nobody watches pass MatchFidelity::BACKGROUND. A controlled
+   * player (play mode) always forces FULL.
+   */
+  void simulateToEnd(MatchFidelity fidelity);
   /** Simulated seconds since kick-off, including stoppages and half-time. */
   double getSimulatedSeconds() const;
 
@@ -541,6 +565,11 @@ class MatchEngine
   const std::vector<MatchPlayer>& getPlayers() const { return players; }
   const MatchBall& getBall() const { return ball; }
   const std::vector<MatchEvent>& getEvents() const { return events; }
+  /**
+   * Team names used in the commentary lines (MatchEvent::description) from
+   * now on; without them the lines say "home/away side" (localised).
+   */
+  void setTeamNames(std::string homeTeam, std::string awayTeam);
   MatchState getState() const { return state; }
   const MatchStats& getStats() const { return stats; }
   TeamPhase getHomePhase() const { return homePhase; }
@@ -590,13 +619,42 @@ class MatchEngine
    */
   bool setPlayerCondition(PlayerID playerId, float condition);
 
-  /** Current half: 1 or 2. */
+  /** Current period: 1 or 2, then 3 and 4 in extra time. */
   int getPeriod() const { return period; }
-  /** Announced added minutes of a half (0 until announced). */
+  /** Announced added minutes of a period 1-4 (0 until announced). */
   int getAddedMinutes(int half) const
   {
-    return half == 1 ? addedMinutes[0] : half == 2 ? addedMinutes[1] : 0;
+    return half >= 1 && half <= static_cast<int>(addedMinutes.size())
+               ? addedMinutes[static_cast<std::size_t>(half - 1)]
+               : 0;
   }
+  /**
+   * Makes this a knockout match (before kick-off): level at full time,
+   * counting earlier legs, it goes to extra time and then to a penalty
+   * shootout. League matches keep the default and may end drawn.
+   */
+  void setKnockout(const MatchRules::Knockout& rules);
+  const MatchRules::Knockout& getKnockout() const { return knockout; }
+  /** True once the match has gone into extra time. */
+  bool wentToExtraTime() const { return extraTimeReached; }
+  /** True once a penalty shootout has started. */
+  bool hasShootout() const { return shootout.started; }
+  /** Shootout goals of a side (0 without a shootout). */
+  int getShootoutScore(bool homeTeam) const
+  {
+    return shootout.goals[homeTeam ? 0 : 1];
+  }
+  /** Shootout kicks taken by a side. */
+  int getShootoutKicks(bool homeTeam) const
+  {
+    return shootout.kicks[homeTeam ? 0 : 1];
+  }
+  /**
+   * Winner of a knockout tie at full time (true = this match's home side),
+   * from the aggregate score and then the shootout; empty for league matches
+   * and before full time.
+   */
+  std::optional<bool> getTieWinnerHome() const;
   bool isInAddedTime() const;
   /** True when a side fell below seven players and the match was stopped. */
   bool isAbandoned() const { return abandoned; }
@@ -671,13 +729,20 @@ class MatchEngine
   // does not reshuffle player decisions and ball physics.
   std::mt19937 incidentRng;
   std::uint32_t matchSeed = 0;
+  /** Simulated time in fixed-step ticks (FIXED_STEP_SECONDS each). */
   std::uint64_t stepCounter = 0;
+  /** Ticks advanced per simulated step (1, or more in background fidelity). */
+  std::uint32_t stepTicks = 1;
   float refereeStrictness = 1.0f;
 
   std::vector<PlayerMatchStats> playerStats;
   std::vector<MatchSubstitution> substitutions;
   std::vector<const Player*> homeBench;
   std::vector<const Player*> awayBench;
+  /** Everyone in both matchday squads (names for the commentary). */
+  std::vector<const Player*> squad;
+  /** Set-piece designations of each side (index 0 home), from the lineups. */
+  std::array<SetPieceDesignations, 2> designations{};
   bool homeAutoSubstitutions = true;
   bool awayAutoSubstitutions = true;
   int homeSubstitutionWindows = 0;
@@ -693,8 +758,25 @@ class MatchEngine
 
   int period = 1;
   bool abandoned = false;
-  std::array<int, 2> addedMinutes{0, 0};
-  std::array<MatchRules::StoppageLog, 2> stoppageLogs{};
+  std::array<int, 4> addedMinutes{0, 0, 0, 0};
+  std::array<MatchRules::StoppageLog, 4> stoppageLogs{};
+  MatchRules::Knockout knockout;
+  bool extraTimeReached = false;
+  /** Penalty shootout progress (index 0 home). */
+  struct Shootout
+  {
+    bool started = false;
+    bool homeFirst = true;
+    bool inFlight = false;
+    bool kickerHome = true;
+    PlayerID taker = 0;
+    float timer = 0.0f;
+    std::array<int, 2> kicks{0, 0};
+    std::array<int, 2> goals{0, 0};
+    /** Kicking order of each side (player ids), cycled when exhausted. */
+    std::array<std::vector<PlayerID>, 2> order;
+  };
+  Shootout shootout;
   float elapsedMatchMinutes = 0.0f;
   float injuryCheckTimer = 0.0f;
 
@@ -724,6 +806,9 @@ class MatchEngine
   float previousBallZ = 0.0f;
 
   std::vector<MatchEvent> events;
+  /** Trailing events still without their commentary line. */
+  std::size_t undescribedEvents = 0;
+  std::array<std::string, 2> teamNames;
   MatchStats stats;
   PassDecision lastPassDecision;
   ScenarioDecision lastScenarioDecision;
@@ -766,6 +851,8 @@ class MatchEngine
   std::array<ShoutState, 2> shouts{};
   /** Sliders in force (tactics plus shout), refreshed when they change. */
   std::array<StrategySliders, 2> effectiveSliders{};
+  /** Underdog caution by side (0 = not the weaker side), from the XIs. */
+  std::array<float, 2> underdogShares{};
   /** Team-talk modifiers by side and half. */
   std::array<std::array<float, 2>, 2> teamTalks{};
   /** Per-step target blends: home tactical/urgent, away tactical/urgent. */
@@ -836,6 +923,17 @@ class MatchEngine
   void updateMatchClock();
   void announceAddedTime();
   void endPeriod();
+  /** Stops the clock for a break (half-time, before and in extra time). */
+  void beginBreak(float seconds, float recovery);
+  /** Level on aggregate (knockout ties). */
+  bool tieLevel() const;
+  void finishMatch();
+  void startShootout();
+  void updateShootout(float dt);
+  void beginShootoutKick();
+  void finishShootoutKick(MatchEventDetail outcome);
+  /** Substitutions a side may make (one more in extra time). */
+  int maxSubstitutions() const;
   void checkInjuries();
   void injurePlayer(MatchPlayer& player, bool fromContact);
   void removeFromPitch(MatchPlayer& player);
@@ -889,6 +987,12 @@ class MatchEngine
   void takeDirectFreeKick(MatchPlayer& taker);
   void arrangeSetPiece(bool attackingHome, Vector2F ballPosition);
   MatchPlayer* bestSetPieceTaker(bool homeTeam, bool shooting);
+  /**
+   * Taker of a dead-ball duty right now: the side's designated player while
+   * he is on the pitch and fit (so substitutions are followed), otherwise
+   * bestSetPieceTaker(). Long throws have no automatic specialist (nullptr).
+   */
+  MatchPlayer* dutyTaker(bool homeTeam, SetPieceDuty duty);
   void placeTaker(MatchPlayer& taker, Vector2F spot);
   MatchPlayer* restartTaker();
   void setRestartTaker(MatchPlayer* taker);
@@ -897,6 +1001,8 @@ class MatchEngine
   /** Current team-talk modifier of a side (by the current half). */
   float talkOf(bool homeTeam) const;
   StrategySliders computeEffectiveSliders(bool homeTeam) const;
+  /** How clearly each side is the weaker one in [0, 1] (see Touchline). */
+  void computeUnderdogShares();
   void refreshEffectiveSliders();
   /** Team execution edge: home crowd, team talk and numerical advantage. */
   float teamEdge(bool homeTeam) const;
@@ -908,6 +1014,15 @@ class MatchEngine
   void runAiTouchline(bool homeTeam);
   void refreshTargetBlends();
   void assignMarks();
+  /** Changes the ticks per step (the fidelity) and the per-step blends. */
+  void setStepTicks(std::uint32_t ticks);
+  /** Ticks of the next background-fidelity step (see MatchFidelity). */
+  std::uint32_t backgroundStepTicks() const;
+  /** Seconds simulated by one step at the current fidelity. */
+  float stepSeconds() const;
+  /** Whether the last step crossed a multiple of `ticks` (a periodic job is
+   * due); every `ticks` steps at full fidelity. */
+  bool periodElapsed(std::uint64_t ticks) const;
   float hashNoise(std::uint32_t salt, std::uint32_t key) const;
   /** Like hashNoise, but constant over windows of `epochSteps` steps. */
   float epochNoise(std::uint32_t salt, std::uint32_t key,
@@ -950,6 +1065,20 @@ class MatchEngine
                 bool forceLofted = false);
   void takeShot(MatchPlayer& shooter, float forcedXG = -1.0f,
                 bool header = false);
+  /** Strikes a shot at goal (aim, execution error, launch) and returns its
+   * xG; takeShot() adds the statistics and the event. */
+  float strikeShot(MatchPlayer& shooter, float forcedXG, bool header,
+                   bool penalty);
+  struct SaveAttempt
+  {
+    bool saved = false;
+    float stretch = 0.0f;
+    float speedExcess = 0.0f;
+    float crossingHeight = 0.0f;
+  };
+  /** Whether the keeper stops the shot crossing his plane in the last ball
+   * sub-step (reach and save roll only, no consequences). */
+  SaveAttempt attemptSave(const MatchPlayer& keeper);
   void setPossession(MatchPlayer& player);
   void clearFlightState();
 
@@ -990,7 +1119,12 @@ class MatchEngine
   /** Uniform in [0, 1) from the referee/injury stream (portable). */
   float incidentRoll();
   bool isHomePlayer(const Player* player) const;
-  MatchEvent& logEvent(MatchEventType type, const std::string& message);
-  MatchEvent& logEvent(MatchEventType type, const std::string& message,
-                       const MatchPlayer& actor);
+  MatchEvent& logEvent(MatchEventType type);
+  MatchEvent& logEvent(MatchEventType type, const MatchPlayer& actor);
+  /** Writes the commentary line of the events logged since the last call. */
+  void describePendingEvents();
+  /** Display name of a squad player (empty when unknown). */
+  std::string squadPlayerName(PlayerID playerId) const;
+  /** One fixed step of the simulation (simulateStep adds the commentary). */
+  void simulateStepBody(float dt);
 };

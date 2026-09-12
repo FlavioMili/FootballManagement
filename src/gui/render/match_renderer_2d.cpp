@@ -8,12 +8,14 @@
 
 #include "gui/render/match_renderer_2d.h"
 
+#include <fmt/printf.h>
 #include <imgui.h>
 
 #include <algorithm>
 #include <cmath>
 #include <numbers>
 
+#include "global/language_manager.h"
 #include "gui/render/match_kit_colors.h"
 #include "model/player.h"
 #include "model/role_utils.h"
@@ -366,13 +368,15 @@ void drawPlayer(ImDrawList& drawList, const MatchRenderPlayer& player,
   {
     ImGui::BeginTooltip();
     ImGui::TextUnformatted(player.player->getName().c_str());
-    ImGui::Text(
-        "%s | %s | stamina %.0f%% | %.1f m/s",
-        RoleUtils::toString(player.player->getRole()).c_str(),
-        playerIntentLabel(player.intent),
-        static_cast<double>(player.stamina *
-                            MatchSceneTuning::Scoreboard::PERCENT_SCALE),
-        static_cast<double>(player.speedMetresPerSecond));
+    ImGui::TextUnformatted(
+        fmt::sprintf(LOC("MATCH_PLAYER_TOOLTIP"),
+                     RoleUtils::shortName(player.player->getRole()),
+                     playerIntentLabel(player.intent),
+                     static_cast<double>(
+                         player.stamina *
+                         MatchSceneTuning::Scoreboard::PERCENT_SCALE),
+                     static_cast<double>(player.speedMetresPerSecond))
+            .c_str());
     ImGui::EndTooltip();
   }
 }
@@ -383,35 +387,35 @@ const char* playerIntentLabel(PlayerIntent intent)
   switch (intent)
   {
     case PlayerIntent::HOLD_SHAPE:
-      return "Hold shape";
+      return LOC("MATCH_INTENT_HOLD_SHAPE");
     case PlayerIntent::CARRY_BALL:
-      return "Carry ball";
+      return LOC("MATCH_INTENT_CARRY_BALL");
     case PlayerIntent::OFFER_SUPPORT:
-      return "Offer support";
+      return LOC("MATCH_INTENT_OFFER_SUPPORT");
     case PlayerIntent::RECEIVE_PASS:
-      return "Receive pass";
+      return LOC("MATCH_INTENT_RECEIVE_PASS");
     case PlayerIntent::RUN_IN_BEHIND:
-      return "Run in behind";
+      return LOC("MATCH_INTENT_RUN_IN_BEHIND");
     case PlayerIntent::ATTACK_BOX:
-      return "Attack box";
+      return LOC("MATCH_INTENT_ATTACK_BOX");
     case PlayerIntent::OVERLAP:
-      return "Overlap";
+      return LOC("MATCH_INTENT_OVERLAP");
     case PlayerIntent::PRESS_BALL:
-      return "Press ball";
+      return LOC("MATCH_INTENT_PRESS_BALL");
     case PlayerIntent::COVER_PRESS:
-      return "Cover press";
+      return LOC("MATCH_INTENT_COVER_PRESS");
     case PlayerIntent::BLOCK_PASSING_LANE:
-      return "Block passing lane";
+      return LOC("MATCH_INTENT_BLOCK_PASSING_LANE");
     case PlayerIntent::MARK_OPPONENT:
-      return "Mark opponent";
+      return LOC("MATCH_INTENT_MARK_OPPONENT");
     case PlayerIntent::CLAIM_LOOSE_BALL:
-      return "Claim loose ball";
+      return LOC("MATCH_INTENT_CLAIM_LOOSE_BALL");
     case PlayerIntent::RECOVER_SHAPE:
-      return "Recover shape";
+      return LOC("MATCH_INTENT_RECOVER_SHAPE");
     case PlayerIntent::GOALKEEP:
-      return "Goalkeep";
+      return LOC("MATCH_INTENT_GOALKEEP");
   }
-  return "Unknown";
+  return "";
 }
 
 MatchViewport computeMatchViewport(float topLeftX, float topLeftY,
@@ -462,7 +466,7 @@ void drawGoalCelebration(ImDrawList& drawList, const MatchViewport& viewport,
   const float centerY =
       viewport.y + viewport.height * MatchSceneTuning::Pitch::CENTRE_RATIO;
   const float baseFontSize = ImGui::GetStyle().FontSizeBase;
-  const std::string banner = "GOAL!";
+  const std::string banner = LOC("MATCH_GOAL_BANNER");
   const std::string score =
       std::to_string(homeScore) + " - " + std::to_string(awayScore);
 

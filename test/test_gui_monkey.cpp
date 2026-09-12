@@ -1709,7 +1709,6 @@ struct KnownBug
 const std::vector<KnownBug>& knownBugs()
 {
   static const std::vector<KnownBug> bugs = {
-      {"F-DATAHUB", "imgui:", "hub_trend"},
       {"F-FINISH-FREEZE", "finish match", "frame: UI build took"},
   };
   return bugs;
@@ -1944,7 +1943,7 @@ TEST(GuiWidgetSweep, EveryEnabledWidgetHasAnEffect)
          ++attempt)
       driver.key(KEY_ESCAPE);
   };
-  constexpr std::array<std::pair<NavSection, const char*>, 14> SECTIONS = {{
+  constexpr std::array<std::pair<NavSection, const char*>, 26> SECTIONS = {{
       {NavSection::HOME, "home"},
       {NavSection::INBOX, "inbox"},
       {NavSection::CLUB, "club"},
@@ -1959,6 +1958,18 @@ TEST(GuiWidgetSweep, EveryEnabledWidgetHasAnEffect)
       {NavSection::STAFF, "staff"},
       {NavSection::YOUTH, "youth"},
       {NavSection::FINANCES, "finances"},
+      {NavSection::MANAGER, "manager"},
+      {NavSection::MEDICAL, "medical"},
+      {NavSection::CALENDAR, "calendar"},
+      {NavSection::SQUAD_PLANNER, "squad_planner"},
+      {NavSection::COMPARE, "compare"},
+      {NavSection::DELEGATION, "delegation"},
+      {NavSection::DATA_HUB, "data_hub"},
+      {NavSection::OPPOSITION, "opposition"},
+      {NavSection::INTERNATIONAL, "international"},
+      {NavSection::AWARDS, "awards"},
+      {NavSection::RECORDS, "records"},
+      {NavSection::PLANNING, "planning"},
   }};
 
   std::set<std::string> tested;
@@ -2091,43 +2102,14 @@ TEST(GuiWidgetSweep, EveryEnabledWidgetHasAnEffect)
       if (!changed) dead.push_back(std::format("{}: `{}`", name, label));
     }
   }
-  // Known, routed product bugs (see the findings report); anything else
-  // fails the test.
-  constexpr std::array<std::pair<const char*, const char*>, 1> KNOWN_DEAD = {{
-      {"F-DEAD-CHIP", "##ticket_price/0/"},
-  }};
   std::string list;
-  std::string unknown;
-  std::set<std::string> known;
-  for (const std::string& entry : dead)
-  {
-    list += "\n  " + entry;
-    const auto match = std::ranges::find_if(
-        KNOWN_DEAD, [&entry](const auto& bug)
-        { return entry.find(bug.second) != std::string::npos; });
-    if (match == KNOWN_DEAD.end())
-      unknown += "\n  " + entry;
-    else
-      known.insert(match->first);
-  }
+  for (const std::string& entry : dead) list += "\n  " + entry;
   std::cout << "[sweep] " << clicked << " widget kinds clicked, "
             << dead.size() << " without an observable effect" << list << '\n';
   EXPECT_GT(clicked, 50) << "the sweep found suspiciously few widgets";
-  EXPECT_TRUE(unknown.empty()) << "dead widgets:" << unknown;
-  const bool dataHubErrors =
-      driver.imgui_errors > 0 &&
-      driver.imgui_error_scene.starts_with(sceneName(SceneID::DATA_HUB));
-  if (dataHubErrors) known.insert("F-DATAHUB");
-  EXPECT_TRUE(driver.imgui_errors == 0 || dataHubErrors)
+  EXPECT_TRUE(dead.empty()) << "dead widgets:" << list;
+  EXPECT_EQ(driver.imgui_errors, 0)
       << driver.imgui_errors << " ImGui usage errors, first on "
       << driver.imgui_error_scene;
-  if (!known.empty() && unknown.empty())
-  {
-    std::string ids;
-    for (const std::string& id : known) ids += id + " ";
-    GTEST_SKIP() << "KNOWN BUG: " << ids << "- dead widgets:" << list
-                 << "\nImGui errors: " << driver.imgui_errors << " ("
-                 << driver.imgui_error_scene << ")";
-  }
 }
 }  // namespace

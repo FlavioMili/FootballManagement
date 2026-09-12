@@ -15,6 +15,7 @@
 #include <array>
 #include <cstdio>
 #include <format>
+#include <limits>
 #include <map>
 
 #include "database/gamedata.h"
@@ -514,7 +515,7 @@ void PlayerProfileScene::renderActions()
     if (ImGui::SmallButton(LOC("PROFILE_RENEW")))
     {
       const auto demand = controller.getContractDemand(player_id, false);
-      renew_wage = static_cast<float>(demand.weekly_wage);
+      renew_wage = demand.weekly_wage;
       renew_years = std::max<int>(demand.years, 1);
       renew_status.clear();
       renew_requested = true;
@@ -976,15 +977,11 @@ void PlayerProfileScene::renderDialogs()
       fmt::sprintf(Format::plural("PROFILE_RENEW_DEMAND", demand.years),
                    Format::moneyFull(demand.weekly_wage).c_str(), demand.years)
           .c_str());
-  ImGui::SetNextItemWidth(240.0f * Theme::scale());
-  ImGui::InputFloat(LOC("TRANSFER_OFFER_WAGE"), &renew_wage, 100.0f, 1000.0f,
-                    "%.0f");
-  renew_wage = std::max(0.0f, renew_wage);
-  ImGui::TextColored(
-      palette.muted, "%s",
-      fmt::sprintf(LOC("PROFILE_WAGE_VALUE"),
-                   Format::moneyFull(static_cast<int64_t>(renew_wage)).c_str())
-          .c_str());
+  ImGui::TextUnformatted(LOC("TRANSFER_OFFER_WAGE"));
+  UI::MoneyInputOptions wageOptions;
+  wageOptions.maximum = std::numeric_limits<uint32_t>::max();
+  wageOptions.width = 240.0f * Theme::scale();
+  UI::moneyInput("##renew_wage", renew_wage, wageOptions);
   ImGui::SetNextItemWidth(240.0f * Theme::scale());
   ImGui::SliderInt(LOC("TRANSFER_OFFER_YEARS"), &renew_years,
                    TransferTuning::Contract::MINIMUM_YEARS,

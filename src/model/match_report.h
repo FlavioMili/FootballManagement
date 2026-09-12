@@ -117,6 +117,18 @@ struct MatchReport
    */
   void addLineupAppearances(const Lineup& lineup, TeamID team_id);
 
+  /**
+   * Credits @p goals extra-time goals of one side. Extra time is resolved
+   * statistically (Competitions::resolveDrawnKnockout), not played by the
+   * engine, so each goal is given to a player of @p lineup who finished the
+   * match, drawn from @p seed with forwards and good finishers favoured: it
+   * counts on his line and becomes a GOAL event between minutes 91 and 120.
+   * When the side has nobody left to credit, the event has no player (a team
+   * goal).
+   */
+  void creditExtraTimeGoals(const Lineup& lineup, TeamID team_id, bool home,
+                            uint8_t goals, uint32_t seed);
+
   std::string eventsToJson() const;
   std::string playersToJson() const;
   std::string statsToJson() const;

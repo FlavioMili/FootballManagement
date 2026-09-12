@@ -166,14 +166,59 @@ TEST(ClubEconomyTest, PrizeMoneyRewardsHigherPlaces)
 
   const double revenue =
       static_cast<double>(economy.profile->average_revenue_eur);
+  // Only the league's merit pool: continental money is paid by the
+  // competitions as it is earned.
   const double expected_pool =
-      revenue * 20.0 *
-      (static_cast<double>(economy.profile->tv_share) *
-           (1.0 - static_cast<double>(WorldTuning::Finance::TV_EQUAL_SHARE)) +
-       static_cast<double>(economy.profile->continental_share));
+      revenue * 20.0 * static_cast<double>(economy.profile->tv_share) *
+      (1.0 - static_cast<double>(WorldTuning::Finance::TV_EQUAL_SHARE));
   const auto total = static_cast<double>(
       std::accumulate(prizes.begin(), prizes.end(), std::int64_t{0}));
   EXPECT_NEAR(total, expected_pool, expected_pool * 0.001);
+}
+
+TEST(ClubEconomyTest, ContinentalPrizeMoneyIsPaidOnlyByTheCompetitions)
+{
+  Logger::init();
+  const int slot = financeSlot() + 2;
+  auto controller = std::make_unique<GameController>();
+  controller->newGame(slot, WORLD_SEED);
+  auto gamedata = controller->getGameData();
+  WorldSimulation world(gamedata);
+
+  std::map<TeamID, std::size_t> ledger_sizes;
+  for (const auto& [team_id, team] : gamedata->getTeams())
+    ledger_sizes[team_id] = team.getFinances().getLedger().size();
+  const GameDateValue season_end(2026, 7, 1);
+  world.onSeasonEnd(season_end, FREE_AGENTS_TEAM_ID);
+
+  // The season-end award pays each league's merit pool as broadcasting
+  // money and never an estimate of continental prizes on top of what the
+  // continental competitions pay.
+  const auto economies = buildLeagueEconomies(*gamedata);
+  std::map<LeagueID, std::int64_t> merit_paid;
+  for (const auto& [team_id, team] : gamedata->getTeams())
+  {
+    const auto& ledger = team.getFinances().getLedger();
+    for (std::size_t i = ledger_sizes[team_id]; i < ledger.size(); ++i)
+    {
+      EXPECT_NE(ledger[i].category, FinanceCategory::PrizeMoney)
+          << team.getName();
+      if (ledger[i].category == FinanceCategory::Broadcasting)
+        merit_paid[team.getLeagueId()] += ledger[i].amount;
+    }
+  }
+  ASSERT_FALSE(merit_paid.empty());
+  for (const auto& [league_id, paid] : merit_paid)
+  {
+    const auto economy = economies.find(league_id);
+    ASSERT_NE(economy, economies.end());
+    const auto prizes = ClubEconomy::prizeMoney(
+        economy->second, gamedata->getLeagues().at(league_id).getTeamIDs().size());
+    EXPECT_EQ(paid, std::accumulate(prizes.begin(), prizes.end(),
+                                    std::int64_t{0}));
+  }
+  controller.reset();
+  RuntimePaths::removeSave(slot);
 }
 
 TEST(ClubEconomyTest, AttendanceFollowsSuccessPriceAndCapacity)

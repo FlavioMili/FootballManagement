@@ -37,15 +37,28 @@ bool WorldStateRepository::loadWorldState(std::uint64_t& seed,
 }
 
 void WorldStateRepository::saveWorldState(std::uint64_t seed,
-                                          PlayerID next_player_id) const
+                                          PlayerID next_player_id,
+                                          std::uint32_t next_staff_id) const
 {
   sqlite3_stmt* stmt = db_conn->prepareStatement(
-      "INSERT OR REPLACE INTO WorldState (id, seed, next_player_id) "
-      "VALUES (1, ?, ?);");
+      "INSERT OR REPLACE INTO WorldState (id, seed, next_player_id, "
+      "next_staff_id) VALUES (1, ?, ?, ?);");
   sqlite3_bind_int64(stmt, 1, static_cast<sqlite3_int64>(seed));
   sqlite3_bind_int64(stmt, 2, next_player_id);
+  sqlite3_bind_int64(stmt, 3, next_staff_id);
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
+}
+
+std::uint32_t WorldStateRepository::loadNextStaffId() const
+{
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      "SELECT next_staff_id FROM WorldState WHERE id = 1;");
+  std::uint32_t next_staff_id = 0;
+  if (sqlite3_step(stmt) == SQLITE_ROW)
+    next_staff_id = static_cast<std::uint32_t>(sqlite3_column_int64(stmt, 0));
+  sqlite3_finalize(stmt);
+  return next_staff_id;
 }
 
 bool WorldStateRepository::loadBoard(BoardState& board) const

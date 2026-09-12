@@ -136,6 +136,21 @@ std::unordered_map<TeamID, ClubIdentity> DataGenerator::loadClubIdentities()
   return identities;
 }
 
+std::unordered_map<std::string, std::string> DataGenerator::loadClubArticles()
+{
+  std::unordered_map<std::string, std::string> articles;
+  forEachPackItem(AssetPaths::teamsDir(),
+                  [&articles](const json& item)
+                  {
+                    std::string article =
+                        item.value("article_it", std::string());
+                    if (!article.empty())
+                      articles.emplace(item.at("name").get<std::string>(),
+                                       std::move(article));
+                  });
+  return articles;
+}
+
 std::vector<Player> DataGenerator::generatePlayers(const GameData& gamedata)
 {
   const StatsConfig& stats_config = gamedata.getStatsConfig();

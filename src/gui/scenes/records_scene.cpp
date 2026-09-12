@@ -21,6 +21,7 @@
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/competition.h"
 #include "model/records.h"
 
 namespace
@@ -227,7 +228,7 @@ void RecordsScene::renderClubSelector()
   {
     for (const auto& leagueRef : controller.getLeagues())
     {
-      ImGui::SeparatorText(leagueRef.get().getName().c_str());
+      ImGui::SeparatorText(Competitions::leagueName(leagueRef.get()).c_str());
       for (const auto& team :
            controller.getTeamsInLeague(leagueRef.get().getId()))
         if (ImGui::Selectable(team.get().getName().c_str(),
@@ -247,12 +248,13 @@ void RecordsScene::renderLeagueSelector()
   const auto league = controller.getLeagueById(league_id);
   ImGui::SetNextItemWidth(
       std::min(280.0f * Theme::scale(), ImGui::GetContentRegionAvail().x));
-  if (ImGui::BeginCombo("##records_league",
-                        league ? league->get().getName().c_str() : "",
-                        ImGuiComboFlags_HeightLarge))
+  if (ImGui::BeginCombo(
+          "##records_league",
+          league ? Competitions::leagueName(league->get()).c_str() : "",
+          ImGuiComboFlags_HeightLarge))
   {
     for (const auto& leagueRef : controller.getLeagues())
-      if (ImGui::Selectable(leagueRef.get().getName().c_str(),
+      if (ImGui::Selectable(Competitions::leagueName(leagueRef.get()).c_str(),
                             leagueRef.get().getId() == league_id))
       {
         league_id = leagueRef.get().getId();

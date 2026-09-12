@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cmath>
 #include <fstream>
 #include <map>
@@ -391,20 +392,123 @@ const NamePool& NamePool::instance()
       throw std::runtime_error("Name files must not be empty");
     byNationality(first, loaded.first_by_nationality);
     byNationality(last, loaded.last_by_nationality);
-    if (first.contains("excluded_full_names"))
+    if (first.contains("excluded_name_hashes"))
     {
-      for (const auto& name : first.at("excluded_full_names"))
-        loaded.excluded_full_names.insert(name.get<std::string>());
+      for (const auto& hash : first.at("excluded_name_hashes"))
+        loaded.excluded_name_hashes.insert(
+            std::stoull(hash.get<std::string>(), nullptr, 16));
     }
     return loaded;
   }();
   return pool;
 }
 
+std::string NamePool::normalizeName(std::string_view name)
+{
+  // Lower-case ASCII spelling of U+00C0..U+017F.
+  static constexpr std::array<const char*, 192> LATIN_FOLD = {
+    "a", "a", "a", "a", "a", "a", "ae", "c", "e", "e", "e", "e",
+    "i", "i", "i", "i", "d", "n", "o", "o", "o", "o", "o", "",
+    "o", "u", "u", "u", "u", "y", "th", "ss", "a", "a", "a", "a",
+    "a", "a", "ae", "c", "e", "e", "e", "e", "i", "i", "i", "i",
+    "d", "n", "o", "o", "o", "o", "o", "", "o", "u", "u", "u",
+    "u", "y", "th", "y", "a", "a", "a", "a", "a", "a", "c", "c",
+    "c", "c", "c", "c", "c", "c", "d", "d", "d", "d", "e", "e",
+    "e", "e", "e", "e", "e", "e", "e", "e", "g", "g", "g", "g",
+    "g", "g", "g", "g", "h", "h", "h", "h", "i", "i", "i", "i",
+    "i", "i", "i", "i", "i", "i", "ij", "ij", "j", "j", "k", "k",
+    "k", "l", "l", "l", "l", "l", "l", "l", "l", "l", "l", "n",
+    "n", "n", "n", "n", "n", "n", "ng", "ng", "o", "o", "o", "o",
+    "o", "o", "oe", "oe", "r", "r", "r", "r", "r", "r", "s", "s",
+    "s", "s", "s", "s", "s", "s", "t", "t", "t", "t", "t", "t",
+    "u", "u", "u", "u", "u", "u", "u", "u", "u", "u", "u", "u",
+    "w", "w", "y", "y", "y", "z", "z", "z", "z", "z", "z", "s",
+  };
+  std::string out;
+  out.reserve(name.size());
+  bool pending_space = false;
+  const auto append = [&](std::string_view text)
+  {
+    if (pending_space && !out.empty()) out += ' ';
+    pending_space = false;
+    out += text;
+  };
+  for (std::size_t i = 0; i < name.size();)
+  {
+    const auto byte = static_cast<unsigned char>(name[i]);
+    if (byte < 0x80)
+    {
+      if (byte == ' ' || byte == '\t' || byte == '\n' || byte == '\r')
+        pending_space = true;
+      else
+      {
+        const char lower = static_cast<char>(std::tolower(byte));
+        append(std::string_view(&lower, 1));
+      }
+      ++i;
+      continue;
+    }
+    // Two-byte sequences cover the Latin supplements; anything else is
+    // kept as it is.
+    const std::size_t length = byte >= 0xF0 ? 4 : byte >= 0xE0 ? 3 : 2;
+    if ((byte & 0xE0) == 0xC0 && i + 1 < name.size())
+    {
+      const char32_t code =
+          (static_cast<char32_t>(byte & 0x1F) << 6) |
+          static_cast<char32_t>(static_cast<unsigned char>(name[i + 1]) & 0x3F);
+      if (code == 0xA0)
+      {
+        pending_space = true;
+        i += 2;
+        continue;
+      }
+      const char* folded = nullptr;
+      if (code >= 0xC0 && code < 0xC0 + LATIN_FOLD.size())
+        folded = LATIN_FOLD[code - 0xC0];
+      else if (code == 0x218 || code == 0x219)
+        folded = "s";
+      else if (code == 0x21A || code == 0x21B)
+        folded = "t";
+      if (folded && *folded)
+      {
+        append(folded);
+        i += 2;
+        continue;
+      }
+    }
+    append(name.substr(i, std::min(length, name.size() - i)));
+    i += length;
+  }
+  return out;
+}
+
+std::uint64_t NamePool::nameHash(std::string_view name)
+{
+  constexpr std::string_view SALT = "football-management/names/v1:";
+  std::uint64_t hash = 0xCBF29CE484222325ULL;
+  const auto feed = [&hash](std::string_view text)
+  {
+    for (const char c : text)
+    {
+      hash ^= static_cast<unsigned char>(c);
+      hash *= 0x100000001B3ULL;
+    }
+  };
+  feed(SALT);
+  feed(normalizeName(name));
+  return hash;
+}
+
+bool NamePool::isExcluded(std::string_view full_name) const
+{
+  return !excluded_name_hashes.empty() &&
+         excluded_name_hashes.contains(nameHash(full_name));
+}
+
 bool NameRegistry::isAvailable(const std::string& full_name) const
 {
   return !names.contains(full_name) &&
-         !NamePool::instance().excluded_full_names.contains(full_name);
+         !NamePool::instance().isExcluded(full_name);
 }
 
 void NameRegistry::claim(const std::string& full_name)
@@ -458,6 +562,12 @@ std::pair<std::string, std::string> drawName(WorldRng& rng,
       if (second != last) last += joiner + second;
     }
     if (registry.isAvailable(first + " " + last) && squad.allows(last)) break;
+  }
+  // A reserved name is never handed out, even when every attempt failed.
+  while (pool.isExcluded(first + " " + last))
+  {
+    first = pick(firsts);
+    last = pick(lasts) + joiner + pick(lasts);
   }
   registry.claim(first + " " + last);
   squad.add(last);

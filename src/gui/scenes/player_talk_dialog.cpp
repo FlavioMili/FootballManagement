@@ -162,10 +162,11 @@ void PlayerTalkDialog::rebuild(GameController& controller)
     switch (promise.state)
     {
       case PromiseState::Active:
-        line.when =
-            fmt::sprintf(LOC("TALK_PROMISE_DUE"),
-                         dateOf(promise.deadline_day, today).c_str(),
-                         std::max(0, promise.deadline_day - today_ordinal));
+        line.when = fmt::sprintf(
+            Format::plural("TALK_PROMISE_DUE",
+                           std::max(0, promise.deadline_day - today_ordinal)),
+            dateOf(promise.deadline_day, today).c_str(),
+            std::max(0, promise.deadline_day - today_ordinal));
         line.color = palette.accent;
         break;
       case PromiseState::Kept:
@@ -212,7 +213,9 @@ void PlayerTalkDialog::rebuild(GameController& controller)
       {
         row.status =
             view->block == TalkBlock::Cooldown
-                ? fmt::sprintf(LOC("TALK_BLOCK_COOLDOWN"), view->cooldown_days)
+                ? fmt::sprintf(Format::plural("TALK_BLOCK_COOLDOWN",
+                                              view->cooldown_days),
+                               view->cooldown_days)
                 : std::string(LOC(Interactions::blockKey(view->block)));
         row.status_color = palette.faint;
       }

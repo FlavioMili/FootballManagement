@@ -96,6 +96,16 @@ ThreadPool::ThreadPool(unsigned worker_count)
                          { workerLoop(stop); });
 }
 
+ThreadPool::~ThreadPool()
+{
+  // Stop every worker before the first join (the stop request wakes a
+  // waiting worker), so shutdown waits for one wake-up, not one per worker.
+  // A worker inside a job finishes it first; batch callers only return once
+  // their batch completed, so no batch needs the pool any more.
+  for (std::jthread& worker : workers) worker.request_stop();
+  workers.clear();
+}
+
 void ThreadPool::workerLoop(const std::stop_token& stop)
 {
   lowerCurrentThreadPriority();

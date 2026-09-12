@@ -43,9 +43,12 @@ class MatchReportScene : public ManagementScene
   {
     std::string minute;
     std::string text;
+    std::string assist; /**< Second line under goals (may be empty). */
     MatchEventKind kind;
     bool home;
   };
+
+  static void eventText(const EventRow& event, bool alignRight);
 
   struct PlayerRow
   {

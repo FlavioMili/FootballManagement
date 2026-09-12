@@ -772,8 +772,15 @@ void YouthAcademy::onSeasonEnd(const GameDateValue& /*date*/,
   // others drop out of professional football when their contracts run out
   // (most scholars never play professionally, CT-W12).
   std::vector<std::pair<PlayerID, TeamID>> leaving;
-  for (auto& [player_id, youth] : records)
+  // In id order: a renewal changes the wage scale later renewals of the
+  // same club read, and the hash map's order differs after a reload.
+  std::vector<PlayerID> ids;
+  ids.reserve(records.size());
+  for (const auto& [player_id, youth] : records) ids.push_back(player_id);
+  std::ranges::sort(ids);
+  for (const PlayerID player_id : ids)
   {
+    YouthRecord& youth = records.at(player_id);
     if (youth.team_id == managed_team_id ||
         youth.status != YouthStatus::Squad)
       continue;
@@ -1371,9 +1378,9 @@ void YouthAcademy::postPreview(const GameDateValue& date,
 {
   if (managed_team_id == FREE_AGENTS_TEAM_ID) return;
   const IntakePreview outlook = preview(managed_team_id, date.year);
-  std::string positions = RoleUtils::toString(outlook.standout[0]);
+  std::string positions = RoleUtils::shortNameArg(outlook.standout[0]);
   if (outlook.standout[1] != PlayerRole::UNKNOWN)
-    positions += ", " + RoleUtils::toString(outlook.standout[1]);
+    positions += ", " + RoleUtils::shortNameArg(outlook.standout[1]);
   post(inbox, date, InboxCategory::Youth, "INBOX_YOUTH_PREVIEW_TITLE",
        "INBOX_YOUTH_PREVIEW_BODY",
        {headName(managed_team_id),
@@ -1549,13 +1556,14 @@ void YouthAcademy::runIntake(const GameDateValue& date, TeamID managed_team_id,
     if (managed && best != 0)
     {
       const Player& top = gamedata->getPlayers().at(best);
-      post(inbox, date, InboxCategory::Youth, "INBOX_YOUTH_INTAKE_TITLE",
-           special ? "INBOX_YOUTH_INTAKE_SPECIAL_BODY"
-                   : "INBOX_YOUTH_INTAKE_BODY",
-           {headName(team_id), std::to_string(take), top.getName(),
-            RoleUtils::toString(top.getRole()), std::to_string(top.getAge()),
-            std::to_string(YouthModel::DECISION_DAYS)},
-           best);
+      post(
+          inbox, date, InboxCategory::Youth, "INBOX_YOUTH_INTAKE_TITLE",
+          special ? "INBOX_YOUTH_INTAKE_SPECIAL_BODY"
+                  : "INBOX_YOUTH_INTAKE_BODY",
+          {headName(team_id), std::to_string(take), top.getName(),
+           RoleUtils::shortNameArg(top.getRole()), std::to_string(top.getAge()),
+           std::to_string(YouthModel::DECISION_DAYS)},
+          best);
     }
   }
 }

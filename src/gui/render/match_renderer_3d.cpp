@@ -8,6 +8,7 @@
 
 #include "gui/render/match_renderer_3d.h"
 
+#include <fmt/printf.h>
 #include <imgui.h>
 
 #include <algorithm>
@@ -20,6 +21,7 @@
 #include <span>
 #include <vector>
 
+#include "global/language_manager.h"
 #include "gui/render/match_camera_3d.h"
 #include "gui/render/match_kit_colors.h"
 #include "gui/render/match_render_3d_tuning.h"
@@ -1399,10 +1401,12 @@ void MatchRenderer3D::State::drawLabelsAndHover(
     const MatchRenderPlayer& player = *hovered->player;
     ImGui::BeginTooltip();
     ImGui::TextUnformatted(player.player->getName().c_str());
-    ImGui::Text("%s | %s | stamina %.0f%%",
-                RoleUtils::toString(player.player->getRole()).c_str(),
-                playerIntentLabel(player.intent),
-                static_cast<double>(player.stamina * 100.0f));
+    ImGui::TextUnformatted(
+        fmt::sprintf(LOC("MATCH_PLAYER_TOOLTIP_SHORT"),
+                     RoleUtils::shortName(player.player->getRole()),
+                     playerIntentLabel(player.intent),
+                     static_cast<double>(player.stamina * 100.0f))
+            .c_str());
     ImGui::EndTooltip();
   }
 }

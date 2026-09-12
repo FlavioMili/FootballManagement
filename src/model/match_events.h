@@ -44,14 +44,40 @@ enum class MatchEventType : std::uint8_t
   ADDED_TIME,
   HALF_TIME,
   SECOND_HALF,
-  FULL_TIME
+  FULL_TIME,
+  /** A kick of the penalty shootout (detail: scored, saved or missed; none
+   * when the shootout begins). Shootouts never count as goals or shots. */
+  PENALTY_SHOOTOUT
 };
 
 std::string_view matchEventTypeName(MatchEventType type);
 
+/** Variant of an event, for the commentary (MatchEvent::detail). */
+enum class MatchEventDetail : std::uint8_t
+{
+  NONE,
+  /** SHOT: a headed attempt. */
+  HEADER,
+  /** SAVE: parried back into play / tipped behind for a corner. */
+  PARRIED,
+  TIPPED_BEHIND,
+  /** SHOT_BLOCKED: a direct free kick stopped by the wall. */
+  WALL,
+  /** INJURY: hurt in a challenge rather than on his own. */
+  CONTACT,
+  /** INFO: the match was abandoned (a side fell below seven players). */
+  ABANDONED,
+  /** PENALTY_SHOOTOUT: the outcome of a kick. */
+  SCORED,
+  SAVED,
+  MISSED
+};
+
 /**
- * One entry of the match log. `description` stays human-readable for the live
- * view; the remaining fields make the log usable by the result pipeline.
+ * One entry of the match log. The structured fields say what happened;
+ * `description` is the localised commentary line (MatchCommentary) written
+ * when the event is logged, so views that know the team names or switch
+ * language should call MatchCommentary::describe() instead.
  *
  * `timeMinute` is the match clock: the first half runs from 0 to 45 plus its
  * added time, the second half restarts at 45. `addedMinute` is the part of
@@ -76,6 +102,15 @@ struct MatchEvent
   PlayerID secondaryPlayerId = 0;
   Vector2F position{MatchTuning::Pitch::CENTRE, MatchTuning::Pitch::CENTRE};
   float xg = 0.0f;
+  MatchEventDetail detail = MatchEventDetail::NONE;
+  /** Score once the event happened (after the goal for a goal). */
+  int homeScore = 0;
+  int awayScore = 0;
+  /** ADDED_TIME: the announced added minutes. */
+  int minutes = 0;
+  /** Penalty shootout score once the event happened (0-0 before one). */
+  int homeShootout = 0;
+  int awayShootout = 0;
 };
 
 /**

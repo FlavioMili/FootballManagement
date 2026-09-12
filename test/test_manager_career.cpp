@@ -611,7 +611,20 @@ TEST(ManagerCareerFlow, PoachingPaysTheFormerClub)
       staffLedger(controller->getTeamById(first)->get(), today);
   const std::int64_t before_new =
       staffLedger(controller->getTeamById(offer.team_id)->get(), today);
+  // A bid the new club's board placed before he arrived is withdrawn.
+  const TeamID seller = clubs.back();
+  const PlayerID target =
+      controller->getPlayersForTeam(seller).back().get().getId();
+  controller->getGameData()
+      ->getTeams()
+      .at(offer.team_id)
+      .getFinances()
+      .addBalance(1'000'000'000LL);
+  controller->listPlayerForTransfer(target, 500'000);
+  ASSERT_TRUE(controller->submitBid(target, offer.team_id, 600'000));
   ASSERT_TRUE(controller->acceptJobOffer(offer_id));
+  for (const auto& [player_id, listing] : controller->getAllListings())
+    EXPECT_NE(listing.highest_bidder_id, std::optional<TeamID>(offer.team_id));
   EXPECT_EQ(
       staffLedger(controller->getTeamById(first)->get(), today) - before_old,
       release);

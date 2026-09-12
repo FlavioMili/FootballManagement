@@ -120,15 +120,23 @@ constexpr std::array SCOUT_REPORT_DETAILS = {
     Migrations::ColumnSpec{"ScoutReports", "seen", "INTEGER NOT NULL DEFAULT 1"},
 };
 
+// Staff ids are never reused: older saves derive the counter from the
+// stored staff (0 = unknown).
+constexpr std::array STAFF_ID_COUNTER = {
+    Migrations::ColumnSpec{"WorldState", "next_staff_id",
+                           "INTEGER NOT NULL DEFAULT 0"},
+};
+
 // Append new migrations at the end with the next number; never renumber,
 // edit or remove a released one (see README.md).
-constexpr std::array<Migrations::Migration, 6> REGISTRY = {{
+constexpr std::array<Migrations::Migration, 7> REGISTRY = {{
     {1, "0001_version_metadata", {}, &versionMetadata},
     {2, "0002_league_tiebreak", LEAGUE_TIEBREAK, nullptr},
     {3, "0003_fixture_competitions", FIXTURE_COMPETITIONS, nullptr},
     {4, "0004_transfer_bids", TRANSFER_BIDS, nullptr},
     {5, "0005_world_simulation", WORLD_SIMULATION, nullptr},
     {6, "0006_scout_report_details", SCOUT_REPORT_DETAILS, nullptr},
+    {7, "0007_staff_id_counter", STAFF_ID_COUNTER, nullptr},
 }};
 
 static_assert(std::ranges::is_sorted(REGISTRY, {}, &Migrations::Migration::number),

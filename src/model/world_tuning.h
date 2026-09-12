@@ -62,8 +62,13 @@ struct LeagueProfile
  * ratios [S]; the remaining leagues are [P] estimates in the "leagues 6-22"
  * range reported by the same source, with broadcasting as the largest
  * stream as in most leagues. Lower divisions overshoot on wages [S].
+ *
+ * Every league needs a row: second divisions share their country's
+ * nationality and region and sit about 20-30 reputation points below the top
+ * division, with no continental income. Their revenue, crowd and wage rows
+ * are [P] estimates of each country's second tier.
  */
-inline constexpr std::array<LeagueProfile, 12> LEAGUE_PROFILES = {{
+inline constexpr std::array<LeagueProfile, 22> LEAGUE_PROFILES = {{
     {3, 92, 372e6f, 0.46f, 0.05f, 0.14f, 0.35f, 0.64f, 38000.0f, Language::EN,
      0.70f, WorldRegion::Europe},
     {2, 87, 194e6f, 0.35f, 0.12f, 0.15f, 0.38f, 0.62f, 28000.0f, Language::ES,
@@ -88,6 +93,26 @@ inline constexpr std::array<LeagueProfile, 12> LEAGUE_PROFILES = {{
      0.72f, WorldRegion::NorthAmerica},
     {6, 55, 15e6f, 0.45f, 0.00f, 0.15f, 0.40f, 0.95f, 9000.0f, Language::IT,
      0.85f, WorldRegion::Europe},
+    {14, 68, 40e6f, 0.30f, 0.00f, 0.25f, 0.45f, 0.98f, 18000.0f, Language::EN,
+     0.75f, WorldRegion::Europe},
+    {13, 64, 16e6f, 0.50f, 0.00f, 0.12f, 0.38f, 0.80f, 9000.0f, Language::ES,
+     0.85f, WorldRegion::Europe},
+    {15, 62, 30e6f, 0.30f, 0.00f, 0.25f, 0.45f, 0.60f, 22000.0f, Language::DE,
+     0.80f, WorldRegion::Europe},
+    {16, 58, 14e6f, 0.35f, 0.00f, 0.12f, 0.53f, 0.85f, 7000.0f, Language::FR,
+     0.85f, WorldRegion::Europe},
+    {22, 48, 3.5e6f, 0.40f, 0.00f, 0.15f, 0.45f, 0.90f, 2500.0f, Language::PT,
+     0.80f, WorldRegion::Europe},
+    {21, 50, 12e6f, 0.45f, 0.00f, 0.20f, 0.35f, 0.85f, 9000.0f, Language::BR,
+     0.85f, WorldRegion::SouthAmerica},
+    {20, 44, 3e6f, 0.35f, 0.00f, 0.30f, 0.35f, 0.85f, 8000.0f, Language::ES,
+     0.85f, WorldRegion::SouthAmerica},
+    {19, 42, 5e6f, 0.30f, 0.00f, 0.25f, 0.45f, 0.80f, 6000.0f, Language::MX,
+     0.85f, WorldRegion::NorthAmerica},
+    {18, 42, 6e6f, 0.15f, 0.00f, 0.10f, 0.75f, 0.85f, 4000.0f, Language::RU,
+     0.85f, WorldRegion::EasternEurope},
+    {17, 40, 8e6f, 0.10f, 0.00f, 0.40f, 0.50f, 0.60f, 5500.0f, Language::US,
+     0.80f, WorldRegion::NorthAmerica},
 }};
 
 /** Profile used for leagues that are not listed above. [P] */

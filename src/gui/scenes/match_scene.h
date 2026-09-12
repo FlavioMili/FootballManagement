@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 
+#include "audio/match_audio.h"
 #include "gui/gui_scene.h"
 #include "gui/render/imatch_renderer.h"
 #include "gui/scenes/match_scene_tuning.h"
@@ -93,6 +94,8 @@ class MatchScene : public GUIScene
   /** Quick result running on a worker thread (declared after the engine
    * so it is joined before the engine is destroyed). */
   std::future<void> quick_result;
+  /** Crowd, whistle and ball sounds of the live match. */
+  std::unique_ptr<MatchAudio> audio;
   /** Seconds the "skipping to the next highlight" note stays visible. */
   float skip_indicator_seconds = 0.0f;
   std::unique_ptr<IMatchRenderer> renderer_2d;
@@ -123,6 +126,8 @@ class MatchScene : public GUIScene
   MatchAnalysisPanel analysis_panel;
 
   bool show_substitutions = false;
+  /** The substitutions popup was opened (it is opened once per showing). */
+  bool substitutions_popup_opened = false;
 #ifdef DEBUG
   bool show_ai_debug = false;
 #endif

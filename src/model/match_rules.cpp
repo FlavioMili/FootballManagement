@@ -69,6 +69,8 @@ std::string_view matchEventTypeName(MatchEventType type)
       return "second_half";
     case MatchEventType::FULL_TIME:
       return "full_time";
+    case MatchEventType::PENALTY_SHOOTOUT:
+      return "penalty_shootout";
   }
   return "unknown";
 }
@@ -78,8 +80,11 @@ namespace MatchRules
 int computeAddedMinutes(const StoppageLog& log, int period)
 {
   using T = MatchTuning::Stoppage;
+  const float base = period == 1   ? T::FIRST_HALF_BASE_MINUTES
+                     : period == 2 ? T::SECOND_HALF_BASE_MINUTES
+                                   : T::EXTRA_TIME_BASE_MINUTES;
   const float minutes =
-      (period == 1 ? T::FIRST_HALF_BASE_MINUTES : T::SECOND_HALF_BASE_MINUTES) +
+      base +
       static_cast<float>(log.goals) * T::MINUTES_PER_GOAL +
       static_cast<float>(log.substitutions) * T::MINUTES_PER_SUBSTITUTION +
       static_cast<float>(log.cards) * T::MINUTES_PER_CARD +
@@ -87,6 +92,38 @@ int computeAddedMinutes(const StoppageLog& log, int period)
       static_cast<float>(log.penalties) * T::MINUTES_PER_PENALTY;
   return std::clamp(static_cast<int>(std::lround(minutes)),
                     T::MIN_ADDED_MINUTES, T::MAX_ADDED_MINUTES);
+}
+
+float periodStartMinute(int period)
+{
+  using T = MatchTuning::Timing;
+  if (period <= 1) return 0.0f;
+  if (period == 2) return T::HALF_TIME_MINUTE;
+  return T::FULL_TIME_MINUTE +
+         static_cast<float>(period - 3) * T::EXTRA_TIME_HALF_MINUTES;
+}
+
+float periodEndMinute(int period)
+{
+  using T = MatchTuning::Timing;
+  if (period <= 1) return T::HALF_TIME_MINUTE;
+  if (period == 2) return T::FULL_TIME_MINUTE;
+  return T::FULL_TIME_MINUTE +
+         static_cast<float>(period - 2) * T::EXTRA_TIME_HALF_MINUTES;
+}
+
+bool shootoutDecided(int homeGoals, int homeKicks, int awayGoals,
+                     int awayKicks)
+{
+  constexpr int KICKS = MatchTuning::Timing::SHOOTOUT_KICKS;
+  if (homeKicks <= KICKS && awayKicks <= KICKS)
+  {
+    if (homeGoals > awayGoals + (KICKS - awayKicks) ||
+        awayGoals > homeGoals + (KICKS - homeKicks))
+      return true;
+    if (homeKicks < KICKS || awayKicks < KICKS) return false;
+  }
+  return homeKicks == awayKicks && homeGoals != awayGoals;
 }
 
 float computeMatchRating(const PlayerMatchStats& stats, bool goalkeeper,

@@ -33,6 +33,8 @@ class ThreadPool
   static constexpr unsigned MAX_THREADS = 8;
 
   explicit ThreadPool(unsigned worker_count);
+  /** Stops every worker, then joins them; queued helper jobs are dropped. */
+  ~ThreadPool();
 
   ThreadPool(const ThreadPool&) = delete;
   ThreadPool& operator=(const ThreadPool&) = delete;

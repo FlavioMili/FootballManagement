@@ -43,7 +43,7 @@ void renderPlayerTooltip(const Player& player, const StatsConfig& statsConfig)
   ImGui::BeginTooltip();
   ImGui::TextUnformatted(player.getName().c_str());
   ImGui::TextColored(Theme::palette().muted, "%s  ·  %s %d  ·  %s %.0f",
-                     RoleUtils::toString(player.getRole()).c_str(),
+                     RoleUtils::shortName(player.getRole()),
                      LOC("PLAYER_AGE"), player.getAge(), LOC("MAIN_GAME_OVR"),
                      player.getOverall(statsConfig));
   ImGui::TextColored(Theme::palette().faint, "%s", LOC("LINEUP_TOKEN_HINT"));
@@ -120,8 +120,11 @@ void LineupScene::loadLineup()
   formation_index = Formation::detectPreset(*current_lineup);
   GameController& controller = guiView->getController();
   unavailable.clear();
+  // Bans count for the competition of the next match (league by default).
+  const auto nextFixture = controller.getNextManagedFixture();
+  const MatchType nextType = nextFixture ? nextFixture->type : MatchType::LEAGUE;
   for (const auto& record : controller.getSuspendedPlayers(team.getId()))
-    if (record.scope == MatchType::LEAGUE && record.ban_matches > 0)
+    if (record.scope == nextType && record.ban_matches > 0)
       unavailable[record.player_id] = Unavailability::SUSPENDED;
   for (const PlayerID injured : controller.getInjuredPlayers(team.getId()))
     unavailable[injured] = Unavailability::INJURED;
@@ -385,7 +388,7 @@ void LineupScene::renderPlayerToken(const Player& player, ImVec2 center,
         IM_COL32(16, 20, 26, 255), overall.c_str());
   }
   Theme::ScopedText caption(Theme::Text::CAPTION);
-  const std::string role = RoleUtils::toString(player.getRole());
+  const std::string role = RoleUtils::shortName(player.getRole());
   const ImVec2 roleSize = ImGui::CalcTextSize(role.c_str());
   drawList->AddText(ImVec2(center.x - roleSize.x * 0.5f,
                            center.y - radius - roleSize.y - 1.0f),
@@ -451,7 +454,7 @@ void LineupScene::renderBench(float height)
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
       ImGui::TextColored(palette.muted, "%s",
-                         RoleUtils::toString(player->getRole()).c_str());
+                         RoleUtils::shortName(player->getRole()));
       ImGui::TableNextColumn();
       ImGui::PushID(static_cast<int>(player->getId()));
       const bool selected = selected_bench_player_id == player->getId();

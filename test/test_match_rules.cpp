@@ -8,6 +8,12 @@
 
 #include <gtest/gtest.h>
 
+#include <fstream>
+#include <nlohmann/json.hpp>
+#include <string>
+
+#include "global/paths.h"
+#include "model/match_commentary.h"
 #include "model/match_rules.h"
 
 using MatchRules::FoulContext;
@@ -207,4 +213,121 @@ TEST(MatchRulesTest, ChallengeTimingAndAngleDecideTackles)
     EXPECT_LE(MatchRules::tackleWinChance(*context),
               MatchTuning::Defending::MAX_WIN_CHANCE);
   }
+}
+
+namespace
+{
+nlohmann::json languageFile(const char* file)
+{
+  std::ifstream stream(AssetPaths::root() + "assets/lang/" + file);
+  return nlohmann::json::parse(stream);
+}
+}  // namespace
+
+TEST(MatchCommentaryTest, EveryEventHasALineInBothLanguages)
+{
+  const nlohmann::json english = languageFile("English.json");
+  const nlohmann::json italian = languageFile("Italian.json");
+  for (int type = 0;
+       type <= static_cast<int>(MatchEventType::PENALTY_SHOOTOUT); ++type)
+  {
+    for (int detail = 0; detail <= static_cast<int>(MatchEventDetail::MISSED);
+         ++detail)
+    {
+      MatchEvent event;
+      event.type = static_cast<MatchEventType>(type);
+      event.detail = static_cast<MatchEventDetail>(detail);
+      for (const int variant : {0, 1, 2, 3})
+      {
+        event.primaryPlayerId = variant % 2 == 0 ? PlayerID{0} : PlayerID{7};
+        event.period = variant + 1;
+        event.homeShootout = variant >= 2 ? 3 : 0;
+        const char* key = MatchCommentary::key(event);
+        ASSERT_TRUE(english.contains(key)) << key;
+        ASSERT_TRUE(italian.contains(key)) << key;
+        // No line may leak an internal side name.
+        for (const nlohmann::json* language : {&english, &italian})
+        {
+          const std::string line = (*language)[key].get<std::string>();
+          EXPECT_EQ(line.find(" home"), std::string::npos) << line;
+          EXPECT_EQ(line.find(" away"), std::string::npos) << line;
+        }
+      }
+    }
+  }
+  EXPECT_TRUE(english.contains("MATCH_TEAM_HOME"));
+  EXPECT_TRUE(italian.contains("MATCH_TEAM_AWAY"));
+}
+
+TEST(MatchCommentaryTest, FillsTeamsPlayersAndScore)
+{
+  const nlohmann::json english = languageFile("English.json");
+  const nlohmann::json italian = languageFile("Italian.json");
+  MatchCommentaryNames names;
+  names.homeTeam = "Acaya";
+  names.awayTeam = "Foggia";
+  names.player = [](PlayerID id)
+  { return id == 9 ? std::string("Rossi") : std::string("Bianchi"); };
+
+  MatchEvent corner;
+  corner.type = MatchEventType::CORNER;
+  corner.hasTeam = true;
+  corner.isHomeTeam = false;
+  corner.primaryPlayerId = 9;
+  EXPECT_EQ(MatchCommentary::fill(
+                english[MatchCommentary::key(corner)].get<std::string>(),
+                corner, names),
+            "Corner for Foggia, taken by Rossi");
+  EXPECT_EQ(MatchCommentary::fill(
+                italian[MatchCommentary::key(corner)].get<std::string>(),
+                corner, names),
+            "Calcio d'angolo per Foggia, batte Rossi");
+
+  MatchEvent goal;
+  goal.type = MatchEventType::GOAL;
+  goal.hasTeam = true;
+  goal.isHomeTeam = true;
+  goal.primaryPlayerId = 9;
+  goal.homeScore = 2;
+  goal.awayScore = 1;
+  EXPECT_EQ(MatchCommentary::fill(
+                english[MatchCommentary::key(goal)].get<std::string>(), goal,
+                names),
+            "GOAL! Rossi scores for Acaya (2-1)");
+
+  MatchEvent added;
+  added.type = MatchEventType::ADDED_TIME;
+  added.minutes = 4;
+  EXPECT_EQ(MatchCommentary::fill("{minutes} + {unknown}", added, names),
+            "4 + {unknown}");
+}
+
+TEST(MatchRulesTest, ShootoutIsDecidedWhenOneSideCannotCatchUp)
+{
+  // Best of five: 3-0 after three kicks each cannot be caught.
+  EXPECT_TRUE(MatchRules::shootoutDecided(3, 3, 0, 3));
+  EXPECT_FALSE(MatchRules::shootoutDecided(3, 3, 1, 3));
+  // 4-1 with the trailing side having two kicks left: 1 + 2 < 4.
+  EXPECT_TRUE(MatchRules::shootoutDecided(4, 4, 1, 3));
+  // 4-2 with two kicks left can still be levelled.
+  EXPECT_FALSE(MatchRules::shootoutDecided(4, 4, 2, 3));
+  // Level after five each: sudden death, decided only on equal kicks.
+  EXPECT_FALSE(MatchRules::shootoutDecided(4, 5, 4, 5));
+  EXPECT_FALSE(MatchRules::shootoutDecided(5, 6, 4, 5));
+  EXPECT_TRUE(MatchRules::shootoutDecided(5, 6, 4, 6));
+  EXPECT_FALSE(MatchRules::shootoutDecided(6, 7, 6, 7));
+}
+
+TEST(MatchRulesTest, PeriodsRunThroughExtraTime)
+{
+  EXPECT_FLOAT_EQ(MatchRules::periodStartMinute(1), 0.0f);
+  EXPECT_FLOAT_EQ(MatchRules::periodEndMinute(2), 90.0f);
+  EXPECT_FLOAT_EQ(MatchRules::periodStartMinute(3), 90.0f);
+  EXPECT_FLOAT_EQ(MatchRules::periodEndMinute(3), 105.0f);
+  EXPECT_FLOAT_EQ(MatchRules::periodStartMinute(4), 105.0f);
+  EXPECT_FLOAT_EQ(MatchRules::periodEndMinute(4), 120.0f);
+  MatchRules::StoppageLog quiet;
+  EXPECT_GE(MatchRules::computeAddedMinutes(quiet, 3), 1);
+  EXPECT_LE(MatchRules::computeAddedMinutes(quiet, 4),
+            MatchRules::computeAddedMinutes(quiet, 2));
 }

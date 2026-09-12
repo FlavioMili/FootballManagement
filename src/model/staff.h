@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -137,6 +138,12 @@ class StaffRoster
 
   /** Returns a new, never reused id. */
   StaffID allocateId() { return next_id++; }
+
+  /** The id allocateId() hands out next (persisted with the world). */
+  StaffID peekNextId() const { return next_id; }
+
+  /** Restores a saved id counter; never goes below the live ids. */
+  void restoreNextId(StaffID id) { next_id = std::max(next_id, id); }
 
   /** Adds or replaces a member. */
   void add(StaffMember member);

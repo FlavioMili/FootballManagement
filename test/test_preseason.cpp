@@ -238,3 +238,31 @@ TEST(Preseason, CampSharpensTheFitSquad)
                                         game->getWorld().getInbox());
   EXPECT_FLOAT_EQ(player.getDynamics().sharpness, 50.0f + quote.sharpness);
 }
+
+TEST(Preseason, ANewClubStartsWithoutTheOldCamp)
+{
+  const SlotCleanup slot{uniqueSlot(7)};
+  auto controller = makeCareer(slot.slot);
+  const TeamID first = controller->getManagedTeam()->get().getId();
+  ASSERT_TRUE(controller->bookTrainingCamp(TrainingCamp::Domestic));
+  ASSERT_EQ(controller->getPreseasonState().camp, TrainingCamp::Domestic);
+
+  // He moves on before the camp: the new club has booked nothing.
+  TeamID second = 0;
+  for (const auto& team : controller->getTeams())
+    if (team.get().getId() != first && team.get().getId() != FREE_AGENTS_TEAM_ID)
+    {
+      second = team.get().getId();
+      break;
+    }
+  ASSERT_NE(second, 0);
+  ManagerContract contract;
+  contract.weekly_wage = 10'000;
+  contract.start = controller->getCurrentDate();
+  contract.expires = GameDateValue(2027, 6, 30);
+  controller->getGame()->takeJob(second, contract);
+  ASSERT_EQ(controller->getManagedTeam()->get().getId(), second);
+  EXPECT_EQ(controller->getPreseasonState().camp, TrainingCamp::None);
+  EXPECT_EQ(controller->getPreseasonState().camp_cost, 0);
+  EXPECT_TRUE(controller->getPreseasonState().tour_dates.empty());
+}

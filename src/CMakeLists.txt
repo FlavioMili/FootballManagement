@@ -102,6 +102,8 @@ set(FM_CORE_SOURCES
     model/gamedate.cpp
     model/inbox.h
     model/inbox.cpp
+    model/club_article.h
+    model/club_article.cpp
     model/data_hub.h
     model/data_hub.cpp
     model/delegation.h
@@ -132,6 +134,8 @@ set(FM_CORE_SOURCES
     model/match.cpp
     model/match_report.h
     model/match_report.cpp
+    model/match_commentary.h
+    model/match_commentary.cpp
     model/match_engine.h
     model/match_engine.cpp
     model/match_events.h
@@ -232,6 +236,14 @@ set_source_files_properties(${IMGUI_SOURCES} PROPERTIES COMPILE_OPTIONS "-w")
 
 set(FM_UI_SOURCES
     ${IMGUI_SOURCES}
+    audio/audio_device.h
+    audio/audio_device.cpp
+    audio/audio_mixer.h
+    audio/audio_mixer.cpp
+    audio/match_audio.h
+    audio/match_audio.cpp
+    audio/synth.h
+    audio/synth.cpp
     model/settings_manager.h
     model/settings_manager.cpp
     gui/button_manager.h

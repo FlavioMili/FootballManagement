@@ -9,6 +9,7 @@
 #include "model/game.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
 #include <optional>
 #include <unordered_map>
@@ -30,6 +31,17 @@
 #include "model/role_utils.h"
 #include "model/team.h"
 #include "model/world_rng.h"
+#include "model/youth_academy.h"
+
+namespace
+{
+/**
+ * Days of injury a player may play through when the squad has nobody fit
+ * for his place; longer injuries play only when nobody closer to fitness is
+ * left.
+ */
+constexpr std::uint16_t PLAY_THROUGH_INJURY_DAYS = 7;
+}  // namespace
 
 Game::Game(std::shared_ptr<GameData> gd,
            std::shared_ptr<DatabaseConnection> conn)
@@ -70,6 +82,9 @@ Game::Game(std::shared_ptr<GameData> gd,
       });
   world.setLoanCheck([this](PlayerID player_id)
                      { return transfers.findLoan(player_id) != nullptr; });
+  world.getScouting().setBudgetProvider(
+      [this](TeamID team_id)
+      { return transfers.spendableBudget(team_id, currentDate); });
   world.setFixtureOutlookProvider(
       [this](const GameDateValue& date, TrainingSystem::FixtureOutlook& outlook)
       {
@@ -210,20 +225,24 @@ void Game::advanceDay()
   // never overlap competitive club fixtures.
   international.onDay(currentDate, scheduler, world, managed_team_id);
 
-  if (currentDate.month == 7 && currentDate.day == 1)
+  // A managed fixture left unplayed on its day is simulated so that the
+  // competitions (tables, cup draws) never stall. On 1 July this happens
+  // before the new season replaces the calendar, so a fixture left on
+  // 30 June still counts for the season it belongs to.
+  const bool season_ends = currentDate.month == 7 && currentDate.day == 1;
+  const GameDateValue yesterday = SeasonCalendar::addDays(currentDate, -1);
+  if (calendar.getFullCalendar().contains(yesterday))
+  {
+    simulateMatches(calendar.getMatchesForDateMutable(yesterday), true);
+    if (season_ends) competitions.afterMatchday(calendar, yesterday);
+  }
+
+  if (season_ends)
   {
     handleSeasonTransition();
     // Pre-contracts complete once expired contracts have been released.
     transfers.onDayAdvanced(currentDate, managed_team_id);
     return;
-  }
-
-  // A managed fixture left unplayed on its day is simulated so that the
-  // competitions (tables, cup draws) never stall.
-  const GameDateValue yesterday = SeasonCalendar::addDays(currentDate, -1);
-  if (calendar.getFullCalendar().contains(yesterday))
-  {
-    simulateMatches(calendar.getMatchesForDateMutable(yesterday), true);
   }
 
   auto& matches_today = calendar.getMatchesForDateMutable(currentDate);
@@ -320,6 +339,17 @@ void Game::simulateMatches(std::vector<Match>& matches, bool include_managed)
       gamedata->getTeam(managed_team_id)->get().getLineup() =
           *managed_selection;
     if (!input) continue;
+    // A continental decider level on aggregate goes to extra time here, so
+    // form, the manager's record and the season statistics see the result.
+    if (const std::optional<int> lead =
+            competitions.getContinental().deciderLead(calendar, match))
+    {
+      input->knockout = Competitions::resolveDrawnKnockout(
+          gamedata->getTeam(match.getHomeTeamId())->get(),
+          gamedata->getTeam(match.getAwayTeamId())->get(),
+          gamedata->getStatsConfig(), input->seed);
+      input->knockout_lead = *lead;
+    }
     batch.push_back(&match);
     inputs.push_back(std::move(*input));
     batch_teams.push_back(match.getHomeTeamId());
@@ -357,17 +387,26 @@ bool Game::setMatchResult(
   std::optional<std::pair<uint8_t, uint8_t>> shootout;
   if (report.penalties)
     shootout.emplace(report.home_penalties, report.away_penalties);
-  if (match->isKnockout() && home_goals == away_goals && !shootout &&
-      home_team && away_team)
+  // Cup ties, and continental deciders level on aggregate, are settled by
+  // extra time and penalties before the result is recorded.
+  const std::optional<int> lead =
+      match->isKnockout()
+          ? std::optional<int>(0)
+          : competitions.getContinental().deciderLead(calendar, *match);
+  std::optional<Competitions::KnockoutResolution> resolution;
+  if (lead && home_goals + *lead == away_goals && !shootout && home_team &&
+      away_team)
   {
-    const auto resolution = Competitions::resolveDrawnKnockout(
+    resolution = Competitions::resolveDrawnKnockout(
         home_team->get(), away_team->get(), gamedata->getStatsConfig(),
         match->getSeed());
     extra_time = true;
-    home_goals = static_cast<uint8_t>(home_goals + resolution.home_extra_goals);
-    away_goals = static_cast<uint8_t>(away_goals + resolution.away_extra_goals);
-    if (resolution.penalties)
-      shootout.emplace(resolution.home_penalties, resolution.away_penalties);
+    home_goals =
+        static_cast<uint8_t>(home_goals + resolution->home_extra_goals);
+    away_goals =
+        static_cast<uint8_t>(away_goals + resolution->away_extra_goals);
+    if (resolution->penalties)
+      shootout.emplace(resolution->home_penalties, resolution->away_penalties);
   }
   if (extra_time || shootout)
     match->setKnockoutResult(home_goals, away_goals, extra_time, shootout);
@@ -381,6 +420,15 @@ bool Game::setMatchResult(
       report.addLineupAppearances(home_team->get().getLineup(), home_id);
     if (away_team)
       report.addLineupAppearances(away_team->get().getLineup(), away_id);
+  }
+  if (resolution)
+  {
+    report.creditExtraTimeGoals(home_team->get().getLineup(), home_id, true,
+                                resolution->home_extra_goals,
+                                match->getSeed());
+    report.creditExtraTimeGoals(away_team->get().getLineup(), away_id, false,
+                                resolution->away_extra_goals,
+                                match->getSeed());
   }
   for (const PlayerMatchConsequence& consequence : consequences)
     world.applyMatchConsequences(date, consequence, managed_team_id);
@@ -415,17 +463,8 @@ std::size_t Game::fixMatchdaySquad(TeamID team_id, MatchType type,
 {
   const auto team = gamedata->getTeam(team_id);
   if (!team) return 0;
-  std::vector<const Player*> squad;
-  for (const PlayerID player_id : team->get().getPlayerIDs())
-  {
-    if (const auto player = gamedata->getPlayer(player_id))
-      squad.push_back(&player->get());
-  }
-  return MatchdaySquad::replaceIneligible(
-      team->get().getLineup(), squad,
-      [this, type, date](const Player& player)
-      { return isEligible(player, type, date); },
-      gamedata->getStatsConfig());
+  return fillMatchdaySquad(team->get().getLineup(), team_id, type,
+                           date.value_or(currentDate));
 }
 
 std::vector<std::pair<PlayerID, PlayerID>> Game::previewMatchdaySquadFix(
@@ -433,19 +472,84 @@ std::vector<std::pair<PlayerID, PlayerID>> Game::previewMatchdaySquadFix(
 {
   const auto team = gamedata->getTeam(team_id);
   if (!team) return {};
-  std::vector<const Player*> squad;
-  for (const PlayerID player_id : team->get().getPlayerIDs())
-  {
-    if (const auto player = gamedata->getPlayer(player_id))
-      squad.push_back(&player->get());
-  }
   const Lineup& current = team->get().getLineup();
   Lineup fixed = current;
-  MatchdaySquad::replaceIneligible(
-      fixed, squad,
-      [this, type](const Player& player) { return isEligible(player, type); },
-      gamedata->getStatsConfig());
+  fillMatchdaySquad(fixed, team_id, type, currentDate);
   return MatchdaySquad::replacements(current, fixed);
+}
+
+bool Game::canKickOff(TeamID team_id, MatchType type) const
+{
+  const auto team = gamedata->getTeam(team_id);
+  if (!team) return false;
+  Lineup fixed = team->get().getLineup();
+  return fillMatchdaySquad(fixed, team_id, type, currentDate) == 0;
+}
+
+std::size_t Game::fillMatchdaySquad(Lineup& lineup, TeamID team_id,
+                                    MatchType type,
+                                    const GameDateValue& date) const
+{
+  const auto team = gamedata->getTeam(team_id);
+  if (!team) return 0;
+  // Trialists of the academy intake are the last fit players to be asked.
+  std::vector<const Player*> squad;
+  std::vector<const Player*> everyone;
+  for (const PlayerID player_id : team->get().getPlayerIDs())
+  {
+    const auto player = gamedata->getPlayer(player_id);
+    if (!player) continue;
+    everyone.push_back(&player->get());
+    const YouthRecord* youth = world.getYouth().record(player_id);
+    if (!youth || youth->status != YouthStatus::Candidate)
+      squad.push_back(&player->get());
+  }
+  const StatsConfig& config = gamedata->getStatsConfig();
+  const Lineup before = lineup;
+  // Suspensions and national-team duty are rules; an injury is a risk.
+  const auto allowed = [&](const Player& player)
+  {
+    return (type == MatchType::FRIENDLY ||
+            !competitions.getDiscipline().isSuspended(player.getId(), type)) &&
+           !international.isOnDuty(player.getId(), date);
+  };
+  const auto fit = [&](const Player& player)
+  { return player.isAvailable() && allowed(player); };
+  const auto startersFit = [&]
+  {
+    return std::ranges::all_of(lineup.starters(), [&](const Player* player)
+                               { return fit(*player); });
+  };
+
+  MatchdaySquad::replaceIneligible(lineup, squad, fit, config);
+  if (!startersFit())
+    MatchdaySquad::replaceIneligible(lineup, everyone, fit, config);
+  if (!startersFit())
+  {
+    // Nobody fit is left for every starting place: players close to fitness
+    // play through their injury first, then anyone who may play at all.
+    MatchdaySquad::replaceIneligible(
+        lineup, everyone,
+        [&](const Player& player)
+        {
+          return allowed(player) &&
+                 player.getDynamics().injury_days <= PLAY_THROUGH_INJURY_DAYS;
+        },
+        config);
+    MatchdaySquad::replaceIneligible(lineup, everyone, allowed, config);
+    // Injured players start but never wait on the bench.
+    MatchdaySquad::replaceIneligible(lineup, everyone, fit, config);
+    // Whoever may not play at all and has no replacement leaves the XI.
+    if (const Player* goalkeeper = lineup.getGoalkeeper();
+        goalkeeper && !allowed(*goalkeeper))
+      lineup.setGoalkeeper(nullptr);
+    std::vector<PlayerID> barred;
+    for (const Lineup::PositionedPlayer& slot : lineup.getOutfieldPlayers())
+      if (slot.player && !allowed(*slot.player))
+        barred.push_back(slot.player->getId());
+    for (const PlayerID player_id : barred) lineup.removeOutfieldPlayer(player_id);
+  }
+  return MatchdaySquad::replacements(before, lineup).size();
 }
 
 void Game::endSeason()

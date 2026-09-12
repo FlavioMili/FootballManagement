@@ -205,11 +205,13 @@ CREATE TABLE IF NOT EXISTS BoardState (
   recent_deltas TEXT NOT NULL DEFAULT '[]'
 );
 
--- World simulation state (single row): RNG seed and player id counter
+-- World simulation state (single row): RNG seed and player and staff id
+-- counters (ids are never reused, even after the member leaves)
 CREATE TABLE IF NOT EXISTS WorldState (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   seed INTEGER NOT NULL,
-  next_player_id INTEGER NOT NULL
+  next_player_id INTEGER NOT NULL,
+  next_staff_id INTEGER NOT NULL DEFAULT 0  -- 0: derive from the stored staff
 );
 
 -- Scouting department of the managed club (single row)

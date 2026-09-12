@@ -140,7 +140,7 @@ void SquadPlannerScene::build(View& view, int season_offset)
       Row row;
       row.id = entry.player.id;
       row.name = nameOf(entry.player.id);
-      row.role = RoleUtils::toString(entry.player.role);
+      row.role = RoleUtils::shortName(entry.player.role);
       row.age_value = entry.player.age;
       row.age = std::to_string(entry.player.age);
       row.overall_value = entry.player.overall;
@@ -397,7 +397,8 @@ void SquadPlannerScene::renderDetail(const Row& row)
     std::optional<std::optional<SquadStatus>> chosen;
     if (ImGui::BeginCombo("##status", preview))
     {
-      if (ImGui::Selectable(none.c_str(), !row.given)) chosen = std::nullopt;
+      if (ImGui::Selectable(none.c_str(), !row.given))
+        chosen.emplace(std::nullopt);
       for (std::size_t index = 0; index < SQUAD_STATUS_COUNT; ++index)
       {
         const auto status = static_cast<SquadStatus>(index);

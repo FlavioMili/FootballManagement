@@ -31,7 +31,7 @@ namespace PlayerUI
  * @param player Player to show, or nullptr for a prompt.
  * @param statsConfig Rating weights.
  * @param comparison Optional player to compare against (shows deltas).
- * @param height Card height (0 = fill).
+ * @param height Card height (0 = fill, negative = fit the content).
  */
 inline void detailPanel(const char* id, const Player* player,
                         const StatsConfig& statsConfig,
@@ -39,7 +39,12 @@ inline void detailPanel(const char* id, const Player* player,
 {
   const Theme::Palette& palette = Theme::palette();
   const float dpi = ImGui::GetStyle().FontScaleDpi;
-  UI::beginCard(id, nullptr, ImVec2(0.0f, height), true);
+  // A negative height sizes the card to its content (inside a scrolling
+  // parent), 0 fills the remaining space.
+  if (height < 0.0f)
+    UI::beginAutoHeightCard(id, nullptr);
+  else
+    UI::beginCard(id, nullptr, ImVec2(0.0f, height), true);
   if (!player)
   {
     ImGui::PushStyleColor(ImGuiCol_Text, palette.muted);
@@ -58,7 +63,7 @@ inline void detailPanel(const char* id, const Player* player,
   }
   ImGui::PushStyleColor(ImGuiCol_Text, palette.muted);
   ImGui::TextWrapped("%s  ·  %s %d  ·  %d cm  ·  %s",
-                     RoleUtils::toString(player->getRole()).c_str(),
+                     RoleUtils::longName(player->getRole()),
                      LOC("PLAYER_AGE"), player->getAge(), player->getHeight(),
                      player->getFoot() == Foot::Right
                          ? LOC("PLAYER_FOOT_RIGHT")
@@ -88,8 +93,8 @@ inline void detailPanel(const char* id, const Player* player,
     {
       ImGui::TextColored(palette.warning, "%s: %s -> %s",
                          LOC("PLAYER_ROLE_CHANGE"),
-                         RoleUtils::toString(comparison->getRole()).c_str(),
-                         RoleUtils::toString(player->getRole()).c_str());
+                         RoleUtils::shortName(comparison->getRole()),
+                         RoleUtils::shortName(player->getRole()));
     }
   }
 

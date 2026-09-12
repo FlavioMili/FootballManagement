@@ -188,6 +188,15 @@ OfferTerms aiOfferTerms(std::uint32_t fee)
   return terms;
 }
 
+OfferTerms aiBidFor(std::uint32_t asking_fee, int age)
+{
+  OfferTerms terms = aiOfferTerms(asking_fee);
+  if (terms.instalment_years > 0)
+    terms.fee = std::max(
+        terms.fee, feeForValue(terms, static_cast<double>(asking_fee), age));
+  return terms;
+}
+
 Valuation valueForSale(const SaleContext& context)
 {
   using V = TransferTuning::Valuation;
@@ -438,7 +447,10 @@ std::uint32_t agentAsk(const PlayerContext& context,
   const double remaining = 1.0 - static_cast<double>(round) / last_round;
   const double ask =
       static_cast<double>(demand.weekly_wage) * (1.0 + margin * remaining);
-  const double step = N::AGENT_ASK_ROUNDING;
+  // Small wages round to tens, so every softer ask is visibly lower.
+  const double step =
+      demand.weekly_wage < 100 * N::AGENT_ASK_ROUNDING ? N::AGENT_ASK_ROUNDING / 10.0
+                                                       : N::AGENT_ASK_ROUNDING;
   return std::max(demand.weekly_wage,
                   static_cast<std::uint32_t>(std::ceil(ask / step) * step));
 }
@@ -665,6 +677,17 @@ GameDateValue seasonEndDate(const GameDateValue& date)
   const auto year = static_cast<std::uint16_t>(
       date.month > MONTH_JUNE ? date.year + 1 : date.year);
   return GameDateValue(year, MONTH_JUNE, SEASON_END_DAY);
+}
+
+GameDateValue contractEndDate(const GameDateValue& date,
+                              std::uint8_t contract_years)
+{
+  const GameDateValue end = seasonEndDate(date);
+  return GameDateValue(
+      static_cast<std::uint16_t>(end.year +
+                                 std::max(1, static_cast<int>(contract_years)) -
+                                 1),
+      MONTH_JUNE, SEASON_END_DAY);
 }
 
 GameDateValue loanEndDate(const GameDateValue& start, LoanDuration duration)

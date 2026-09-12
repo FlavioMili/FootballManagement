@@ -433,8 +433,8 @@ void TeamSelectionScene::loadAvailableLeagues()
     {
       const auto league = controller.getLeagueById(id);
       if (!league) continue;
-      league_entries.push_back(
-          {id, league->get().getName(), controller.getLeagueTier(id)});
+      league_entries.push_back({id, Competitions::leagueName(league->get()),
+                                controller.getLeagueTier(id)});
     }
   }
 }

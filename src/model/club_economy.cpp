@@ -232,19 +232,6 @@ double playerWageShare(const LeagueEconomy& economy)
 std::vector<std::int64_t> prizeMoney(const LeagueEconomy& economy,
                                      std::size_t league_size)
 {
-  std::vector<std::int64_t> prizes(league_size, 0);
-  for (std::size_t position = 0; position < league_size; ++position)
-  {
-    prizes[position] = static_cast<std::int64_t>(
-        std::llround(meritPrize(economy, position, league_size) +
-                     continentalPrize(economy, position, league_size)));
-  }
-  return prizes;
-}
-
-std::vector<std::int64_t> meritMoney(const LeagueEconomy& economy,
-                                     std::size_t league_size)
-{
   std::vector<std::int64_t> merit(league_size, 0);
   for (std::size_t position = 0; position < league_size; ++position)
   {

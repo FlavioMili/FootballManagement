@@ -714,10 +714,14 @@ AiManager ManagerCareer::generateManager(TeamID team_id, float reputation,
   const auto& lasts = names.lastNames(manager.nationality);
   if (!firsts.empty() && !lasts.empty())
   {
-    manager.first_name = firsts[static_cast<std::size_t>(
-        rng.uniformInt(0, static_cast<int>(firsts.size()) - 1))];
-    manager.last_name = lasts[static_cast<std::size_t>(
-        rng.uniformInt(0, static_cast<int>(lasts.size()) - 1))];
+    // Reserved full names are never used.
+    do
+    {
+      manager.first_name = firsts[static_cast<std::size_t>(
+          rng.uniformInt(0, static_cast<int>(firsts.size()) - 1))];
+      manager.last_name = lasts[static_cast<std::size_t>(
+          rng.uniformInt(0, static_cast<int>(lasts.size()) - 1))];
+    } while (names.isExcluded(manager.first_name + " " + manager.last_name));
   }
   manager.age = static_cast<std::uint8_t>(rng.uniformInt(36, 66));
   manager.reputation =
@@ -1352,10 +1356,11 @@ void ManagerCareer::weeklyReviews(const GameDateValue& date,
                                 profile.reputation - UNEMPLOYED_DECAY);
   const int idle = daysBetween(profile.unemployed_since, date);
   if (idle < UNSOLICITED_AFTER_DAYS) return;
+  // Each board with a vacancy he fits decides on its own whether to call,
+  // more readily the longer he has been available; the most prestigious
+  // caller wins.
   const double chance =
       std::min(0.45, 0.08 + 0.02 * static_cast<double>(idle / 7));
-  if (uniform(*gamedata, today, 0x554E'454DULL) >= chance) return;
-  // The most prestigious vacancy that would have him.
   TeamID pick = FREE_AGENTS_TEAM_ID;
   for (const Vacancy& vacancy : vacancies)
   {
@@ -1364,12 +1369,15 @@ void ManagerCareer::weeklyReviews(const GameDateValue& date,
     if (static_cast<float>(reputation) >
             std::max(profile.reputation + 5.0f, 44.0f) ||
         std::ranges::any_of(offers, [&](const JobOffer& offer)
-                            { return offer.team_id == vacancy.team_id; }))
+                            { return offer.team_id == vacancy.team_id; }) ||
+        uniform(*gamedata, today, mixHash(0x554E'454DULL, vacancy.team_id)) >=
+            chance)
       continue;
     if (pick == FREE_AGENTS_TEAM_ID || reputation > clubReputation(pick))
       pick = vacancy.team_id;
   }
-  if (pick == FREE_AGENTS_TEAM_ID && idle >= DESPERATE_AFTER_DAYS)
+  if (pick == FREE_AGENTS_TEAM_ID && idle >= DESPERATE_AFTER_DAYS &&
+      uniform(*gamedata, today, 0x4445'5350ULL) < chance)
   {
     // Long out of work: a struggling club further down makes a change.
     AiManager* weakest = nullptr;

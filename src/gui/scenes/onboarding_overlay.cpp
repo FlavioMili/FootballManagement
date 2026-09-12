@@ -216,10 +216,19 @@ void renderScreenTip(NavSection section)
 {
   const char* key = tipKey(section);
   Settings& settings = SettingsManager::instance()->get();
-  if (key == nullptr || !settings.screen_tips) return;
+  if (key == nullptr || !settings.screen_tips)
+  {
+    // A visit elsewhere ends the tip's visit: it does not come back.
+    shown_tip = NavSection::NONE;
+    return;
+  }
   if (shown_tip != section)
   {
-    if ((settings.screen_tips_seen & tipBit(section)) != 0) return;
+    if ((settings.screen_tips_seen & tipBit(section)) != 0)
+    {
+      shown_tip = NavSection::NONE;
+      return;
+    }
     // Seen from now on; it stays visible for the rest of this visit.
     settings.screen_tips_seen |= tipBit(section);
     SettingsManager::instance()->save();

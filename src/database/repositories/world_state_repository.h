@@ -17,7 +17,8 @@
 
 /**
  * @class WorldStateRepository
- * @brief Persists the world seed, the player id counter (table WorldState)
+ * @brief Persists the world seed, the player and staff id counters (table
+ * WorldState)
  * and the managed club's board state (table BoardState).
  */
 class WorldStateRepository
@@ -28,8 +29,12 @@ class WorldStateRepository
   /** Loads the world state; false when the save predates it. */
   bool loadWorldState(std::uint64_t& seed, PlayerID& next_player_id) const;
 
-  /** Writes the world state. */
-  void saveWorldState(std::uint64_t seed, PlayerID next_player_id) const;
+  /** Writes the world state with the staff id counter (StaffID). */
+  void saveWorldState(std::uint64_t seed, PlayerID next_player_id,
+                      std::uint32_t next_staff_id) const;
+
+  /** Stored staff id counter; 0 when unknown (older saves). */
+  std::uint32_t loadNextStaffId() const;
 
   /** Loads the board state; false when none is stored. */
   bool loadBoard(BoardState& board) const;

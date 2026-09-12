@@ -18,6 +18,7 @@
 #include "database/gamedata.h"
 #include "database/repositories/transfer_repository.h"
 #include "global/global.h"
+#include "model/club_economy.h"
 #include "model/competition_manager.h"
 #include "model/finances.h"
 #include "model/player.h"
@@ -55,7 +56,8 @@ std::int64_t weeklyPayroll(const GameData& gamedata, const Team& team)
   return team.getFinances().getCurrentWageSpending(gamedata, team);
 }
 
-/** Players of a club by overall, best first. */
+/** First-team players of a club by overall, best first. Academy players
+ * belong to the U18 squad and are left to the academy. */
 std::vector<std::pair<double, PlayerID>> rankedSquad(const GameData& gamedata,
                                                      const Team& team)
 {
@@ -64,7 +66,8 @@ std::vector<std::pair<double, PlayerID>> rankedSquad(const GameData& gamedata,
   ranked.reserve(team.getPlayerIDs().size());
   for (const PlayerID player_id : team.getPlayerIDs())
   {
-    if (const auto player = gamedata.getPlayer(player_id))
+    if (const auto player = gamedata.getPlayer(player_id);
+        player && !player->get().isAcademyPlayer())
       ranked.emplace_back(player->get().getOverall(config), player_id);
   }
   std::ranges::sort(ranked, std::greater<>{});
@@ -82,14 +85,6 @@ float squadLevel(const std::vector<std::pair<double, PlayerID>>& ranked)
   return static_cast<float>(total / static_cast<double>(count));
 }
 
-/** Transfer money a club can commit today. */
-std::int64_t availableBudget(const Team& team, std::int64_t committed)
-{
-  const Finances& finances = team.getFinances();
-  return std::max<std::int64_t>(
-      0, std::min(finances.getTransferBudget(), finances.getBalance()) -
-             committed);
-}
 }  // namespace
 
 const char* transferKindKey(TransferKind kind)
@@ -125,7 +120,7 @@ std::string TransferMarket::teamName(TeamID team_id) const
 }
 
 void TransferMarket::movePlayer(PlayerID player_id, TeamID from_team,
-                                TeamID to_team)
+                                TeamID to_team, TeamID managed_team_id)
 {
   Player* player = mutablePlayer(player_id);
   if (!player) return;
@@ -138,15 +133,97 @@ void TransferMarket::movePlayer(PlayerID player_id, TeamID from_team,
     player->setTransferStatus(TransferStatus::NotListed);
     gamedata->deleteTransferListing(player_id);
   }
-  // Line-ups hold raw pointers: rebuild both clubs.
+  // Computer-managed clubs pick their best line-up again; the manager's
+  // selection is only repaired where the player leaves a gap, and a new
+  // signing waits for the manager to pick him.
   const StatsConfig& config = gamedata->getStatsConfig();
-  if (auto from = gamedata->getTeam(from_team))
-    from->get().generateStartingXI(*gamedata, config);
-  if (auto to = gamedata->getTeam(to_team))
+  if (auto from = gamedata->getTeam(from_team);
+      from && from_team != FREE_AGENTS_TEAM_ID)
+  {
+    if (from_team == managed_team_id)
+      removeFromLineup(from->get(), *player);
+    else
+      from->get().generateStartingXI(*gamedata, config);
+  }
+  if (auto to = gamedata->getTeam(to_team);
+      to && to_team != FREE_AGENTS_TEAM_ID && to_team != managed_team_id)
     to->get().generateStartingXI(*gamedata, config);
   PlayerDynamics& dynamics = player->mutableDynamics();
   dynamics.transfer_interest_weeks = 0;
   dynamics.playing_share = 0.0f;
+}
+
+void TransferMarket::removeFromLineup(Team& team, const Player& departed)
+{
+  Lineup& lineup = team.getLineup();
+  const PlayerID departed_id = departed.getId();
+  for (std::size_t duty = 0; duty < SET_PIECE_DUTY_COUNT; ++duty)
+  {
+    const auto key = static_cast<SetPieceDuty>(duty);
+    if (lineup.getDesignated(key) == departed_id) lineup.setDesignated(key, 0);
+  }
+  const bool in_goal = lineup.getGoalkeeper() &&
+                       lineup.getGoalkeeper()->getId() == departed_id;
+  const bool outfield = std::ranges::any_of(
+      lineup.getOutfieldPlayers(), [departed_id](const auto& positioned)
+      { return positioned.player && positioned.player->getId() == departed_id; });
+  const auto without_departed = [&lineup, departed_id]
+  {
+    std::vector<const Player*> reserves = lineup.getReserves();
+    std::erase_if(reserves, [departed_id](const Player* reserve)
+                  { return !reserve || reserve->getId() == departed_id; });
+    return reserves;
+  };
+  if (!in_goal && !outfield)
+  {
+    lineup.setReserves(without_departed());
+    return;
+  }
+
+  // A starter left: the best fit from the bench takes his place (the same
+  // role first), else the best player outside the match-day squad.
+  const StatsConfig& config = gamedata->getStatsConfig();
+  const auto better = [&](const Player* candidate, const Player* best)
+  {
+    if (!best) return true;
+    const bool same = candidate->getRole() == departed.getRole();
+    const bool best_same = best->getRole() == departed.getRole();
+    if (same != best_same) return same;
+    return candidate->getOverall(config) > best->getOverall(config);
+  };
+  const Player* replacement = nullptr;
+  for (const Player* reserve : lineup.getReserves())
+  {
+    if (reserve && reserve->getId() != departed_id && reserve->isAvailable() &&
+        better(reserve, replacement))
+      replacement = reserve;
+  }
+  if (!replacement)
+  {
+    for (const PlayerID id : team.getPlayerIDs())
+    {
+      const auto candidate = gamedata->getPlayer(id);
+      if (!candidate || lineup.isStarter(id) ||
+          !candidate->get().isAvailable() ||
+          candidate->get().isAcademyPlayer())
+        continue;
+      if (better(&candidate->get(), replacement))
+        replacement = &candidate->get();
+    }
+    if (replacement)
+    {
+      std::vector<const Player*> reserves = lineup.getReserves();
+      reserves.push_back(replacement);
+      lineup.setReserves(reserves);
+    }
+  }
+  if (replacement)
+    lineup.swapPlayers(replacement->getId(), departed_id);
+  else if (in_goal)
+    lineup.setGoalkeeper(nullptr);
+  else
+    lineup.removeOutfieldPlayer(departed_id);
+  lineup.setReserves(without_departed());
 }
 
 void TransferMarket::pay(TeamID payer, TeamID payee, std::int64_t amount,
@@ -249,6 +326,9 @@ void TransferMarket::clearOnMove(PlayerID player_id)
   negotiations.erase(player_id);
   std::erase_if(incoming, [player_id](const IncomingOffer& offer)
                 { return offer.player_id == player_id; });
+  // A move (e.g. a pre-contract completing) ends any loan he was on, so the
+  // loan's end never takes him back.
+  active_loans.erase(player_id);
 }
 
 // ---------------------------------------------------------------------------
@@ -470,7 +550,7 @@ bool TransferMarket::completeTransfer(const Deal& deal,
         -static_cast<std::int64_t>(deal.contract.signing_bonus));
 
   clearOnMove(deal.player_id);
-  movePlayer(deal.player_id, seller_id, deal.buyer_id);
+  movePlayer(deal.player_id, seller_id, deal.buyer_id, managed_team_id);
   player->setWage(deal.contract.weekly_wage);
   player->setContractYears(deal.contract.years);
   if (deal.contract.release_clause > 0 || deal.contract.promised_role)
@@ -531,11 +611,15 @@ bool TransferMarket::startLoan(PlayerID player_id, TeamID borrower_id,
   loan.option_fee = terms.option_fee;
   loan.obligation = terms.obligation && terms.option_fee > 0;
   loan.recall_clause = terms.recall_clause;
-  if (!(date < loan.end)) return false;
+  // A loan never outlives the player's contract: he would be released while
+  // still registered with the borrower.
+  if (!(date < loan.end) || player->getContractYears() == 0 ||
+      contractEndDate(date, player->getContractYears()) < loan.end)
+    return false;
 
   pay(borrower_id, parent, terms.loan_fee, date);
   clearOnMove(player_id);
-  movePlayer(player_id, parent, borrower_id);
+  movePlayer(player_id, parent, borrower_id, managed_team_id);
   player->setWage(static_cast<std::uint32_t>(
       static_cast<std::uint64_t>(loan.full_wage) * loan.wage_share / 100U));
   active_loans[player_id] = loan;
@@ -568,7 +652,7 @@ bool TransferMarket::endLoan(PlayerID player_id, const GameDateValue& date,
   Player* player = mutablePlayer(player_id);
   if (!player) return true;
   player->setWage(loan.full_wage);
-  movePlayer(player_id, player->getTeamId(), loan.parent);
+  movePlayer(player_id, player->getTeamId(), loan.parent, managed_team_id);
   addRecord({player_id, date, loan.borrower, loan.parent, 0,
              TransferKind::LoanReturn});
   if (loan.parent == managed_team_id || loan.borrower == managed_team_id)
@@ -593,7 +677,7 @@ bool TransferMarket::exerciseLoanOption(PlayerID player_id,
   if (!player) return false;
   active_loans.erase(found);
   player->setWage(loan.full_wage);
-  movePlayer(player_id, player->getTeamId(), loan.parent);
+  movePlayer(player_id, player->getTeamId(), loan.parent, managed_team_id);
 
   Deal deal;
   deal.player_id = player_id;
@@ -633,7 +717,7 @@ bool TransferMarket::releasePlayer(PlayerID player_id,
                          obligation.payer == club_id;
                 });
   clearOnMove(player_id);
-  movePlayer(player_id, club_id, FREE_AGENTS_TEAM_ID);
+  movePlayer(player_id, club_id, FREE_AGENTS_TEAM_ID, managed_team_id);
   player->setContractYears(0);
   addRecord({player_id, date, club_id, FREE_AGENTS_TEAM_ID,
              static_cast<std::uint32_t>(std::min<std::int64_t>(
@@ -750,6 +834,20 @@ std::int64_t TransferMarket::committedPayables(TeamID team_id,
   return found == payables_cache.end() ? 0 : found->second;
 }
 
+std::int64_t TransferMarket::spendableBudget(TeamID team_id,
+                                             const GameDateValue& date) const
+{
+  const auto team = gamedata->getTeam(team_id);
+  if (!team || team_id == FREE_AGENTS_TEAM_ID ||
+      world.isTransferEmbargoed(team_id))
+    return 0;
+  const Finances& finances = team->get().getFinances();
+  return ClubEconomy::availableTransferBudget(
+      finances.getTransferBudget(), finances.getBalance(),
+      finances.getCurrentWageSpending(*gamedata, team->get()),
+      committedPayables(team_id, date));
+}
+
 // ---------------------------------------------------------------------------
 // Daily processing
 // ---------------------------------------------------------------------------
@@ -775,6 +873,8 @@ void TransferMarket::payLoanWageShares(const GameDateValue& date)
   // the parent pays the rest on the same weekly cadence.
   for (const auto& [player_id, loan] : active_loans)
   {
+    const auto player = gamedata->getPlayer(player_id);
+    if (!player || player->get().getTeamId() != loan.borrower) continue;
     const auto parent = gamedata->getTeam(loan.parent);
     const std::int64_t share = static_cast<std::int64_t>(loan.full_wage) *
                                (100 - loan.wage_share) / 100;
@@ -786,6 +886,15 @@ void TransferMarket::payLoanWageShares(const GameDateValue& date)
 void TransferMarket::processLoanEnds(const GameDateValue& date,
                                      TeamID managed_team_id)
 {
+  // A loanee who retired or already moved on (a completed pre-contract)
+  // has nothing left to return from.
+  std::erase_if(active_loans,
+                [this](const auto& entry)
+                {
+                  const auto player = gamedata->getPlayer(entry.first);
+                  return !player ||
+                         player->get().getTeamId() != entry.second.borrower;
+                });
   std::vector<PlayerID> ending;
   for (const auto& [player_id, loan] : active_loans)
   {
@@ -805,8 +914,7 @@ void TransferMarket::processLoanEnds(const GameDateValue& date,
         const auto borrower = gamedata->getTeam(loan.borrower);
         buy = borrower &&
               level(world.squadRole(player_id)) <= level(SquadRole::Rotation) &&
-              availableBudget(borrower->get(),
-                              committedPayables(loan.borrower, date)) >=
+              spendableBudget(loan.borrower, date) >=
                   static_cast<std::int64_t>(loan.option_fee);
       }
       if (buy) bought = exerciseLoanOption(player_id, date, managed_team_id);
@@ -1145,7 +1253,7 @@ bool TransferMarket::aiShedSurplus(
                                  .get();
       const TeamID borrower_id = borrower.getId();
       if (borrower_id == club_id || borrower_id == managed_team_id ||
-          borrower.getPlayerIDs().size() >= M::AI_MAX_SQUAD)
+          rankedSquad(*gamedata, borrower).size() >= M::AI_MAX_SQUAD)
         continue;
       const auto parent = gamedata->getTeam(club_id);
       std::vector<Reason> reasons;
@@ -1298,9 +1406,7 @@ bool TransferMarket::aiBuy(
     const GameDateValue& date, TeamID managed_team_id, WorldRng& rng)
 {
   using M = TransferTuning::Market;
-  const auto club = gamedata->getTeam(club_id);
-  const std::int64_t budget =
-      availableBudget(club->get(), committedPayables(club_id, date));
+  const std::int64_t budget = spendableBudget(club_id, date);
   if (budget <= 0) return false;
   const StatsConfig& config = gamedata->getStatsConfig();
   const auto eligible = [&](const Player& player)
@@ -1355,7 +1461,11 @@ bool TransferMarket::aiBuy(
     deal.player_id = player_id;
     deal.buyer_id = club_id;
     deal.kind = TransferKind::Permanent;
-    deal.terms = aiOfferTerms(valuation.asking_fee);
+    // Big fees are spread over instalments, raised so the seller's
+    // valuation still meets his price; the club must fund the upfront part
+    // from its spendable budget, and the instalments then weigh on it.
+    deal.terms =
+        aiBidFor(valuation.asking_fee, gamedata->getPlayer(player_id)->get().getAge());
     const PlayerContext context =
         playerContext(player_id, club_id, ContractKind::Transfer);
     deal.contract = demandedOffer(contractDemand(context));
@@ -1496,8 +1606,7 @@ void TransferMarket::runAiApproach(TeamID club_id, const GameDateValue& date,
   if (!best) return;
   const Valuation valuation =
       valueForSale(saleContext(*best, club_id, date, 0));
-  const std::int64_t budget =
-      availableBudget(club->get(), committedPayables(club_id, date));
+  const std::int64_t budget = spendableBudget(club_id, date);
   const double ceiling =
       std::min(static_cast<double>(budget),
                static_cast<double>(valuation.asking_fee) *

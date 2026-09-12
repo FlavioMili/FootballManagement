@@ -772,6 +772,30 @@ const char* sectionName(NavSection section)
       return "staff";
     case NavSection::YOUTH:
       return "youth";
+    case NavSection::MANAGER:
+      return "manager";
+    case NavSection::MEDICAL:
+      return "medical";
+    case NavSection::CALENDAR:
+      return "calendar";
+    case NavSection::SQUAD_PLANNER:
+      return "squad_planner";
+    case NavSection::COMPARE:
+      return "compare";
+    case NavSection::DELEGATION:
+      return "delegation";
+    case NavSection::DATA_HUB:
+      return "data_hub";
+    case NavSection::OPPOSITION:
+      return "opposition";
+    case NavSection::INTERNATIONAL:
+      return "international";
+    case NavSection::AWARDS:
+      return "awards";
+    case NavSection::RECORDS:
+      return "records";
+    case NavSection::PLANNING:
+      return "planning";
     case NavSection::NONE:
       return "none";
   }
@@ -809,18 +833,50 @@ SceneID sectionScene(NavSection section)
       return SceneID::STAFF;
     case NavSection::YOUTH:
       return SceneID::YOUTH;
+    case NavSection::MANAGER:
+      return SceneID::MANAGER;
+    case NavSection::MEDICAL:
+      return SceneID::MEDICAL;
+    case NavSection::CALENDAR:
+      return SceneID::CALENDAR;
+    case NavSection::SQUAD_PLANNER:
+      return SceneID::SQUAD_PLANNER;
+    case NavSection::COMPARE:
+      return SceneID::PLAYER_COMPARE;
+    case NavSection::DELEGATION:
+      return SceneID::DELEGATION;
+    case NavSection::DATA_HUB:
+      return SceneID::DATA_HUB;
+    case NavSection::OPPOSITION:
+      return SceneID::OPPOSITION;
+    case NavSection::INTERNATIONAL:
+      return SceneID::INTERNATIONAL;
+    case NavSection::AWARDS:
+      return SceneID::AWARDS;
+    case NavSection::RECORDS:
+      return SceneID::RECORDS;
+    case NavSection::PLANNING:
+      return SceneID::PLANNING;
     case NavSection::NONE:
       break;
   }
   return SceneID::GAME_MENU;
 }
 
-constexpr std::array<NavSection, 14> ALL_SECTIONS = {
-    NavSection::HOME,      NavSection::INBOX,    NavSection::CLUB,
-    NavSection::SQUAD,     NavSection::LINEUP,   NavSection::TACTICS,
-    NavSection::TRAINING,  NavSection::YOUTH,    NavSection::FIXTURES,
-    NavSection::STANDINGS, NavSection::TRANSFERS, NavSection::SCOUTING,
-    NavSection::STAFF,     NavSection::FINANCES};
+constexpr std::array<NavSection, 26> ALL_SECTIONS = {
+    NavSection::HOME,          NavSection::INBOX,
+    NavSection::CLUB,          NavSection::SQUAD,
+    NavSection::LINEUP,        NavSection::TACTICS,
+    NavSection::TRAINING,      NavSection::YOUTH,
+    NavSection::FIXTURES,      NavSection::STANDINGS,
+    NavSection::TRANSFERS,     NavSection::SCOUTING,
+    NavSection::STAFF,         NavSection::FINANCES,
+    NavSection::MANAGER,       NavSection::MEDICAL,
+    NavSection::CALENDAR,      NavSection::SQUAD_PLANNER,
+    NavSection::COMPARE,       NavSection::DELEGATION,
+    NavSection::DATA_HUB,      NavSection::OPPOSITION,
+    NavSection::INTERNATIONAL, NavSection::AWARDS,
+    NavSection::RECORDS,       NavSection::PLANNING};
 
 void openSection(Tester& player, NavSection section)
 {
@@ -1136,9 +1192,14 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
   player.key(ImGuiKey_F3);
   player.frames(2);
   EXPECT_EQ(player.activeId(), SceneID::ROSTER) << "F3 should open Squad";
+  player.key(ImGuiKey_F5);
+  player.frames(2);
+  EXPECT_EQ(player.activeId(), SceneID::FIXTURES)
+      << "F5 should open Matches (fixtures first)";
   player.key(ImGuiKey_F7);
   player.frames(2);
-  EXPECT_EQ(player.activeId(), SceneID::STANDINGS) << "F7 should open Table";
+  EXPECT_EQ(player.activeId(), SceneID::CLUB)
+      << "F7 should open Club (club and board first)";
   player.key(ImGuiKey_F1);
   player.frames(2);
   EXPECT_EQ(player.activeId(), SceneID::GAME_MENU) << "F1 should go Home";

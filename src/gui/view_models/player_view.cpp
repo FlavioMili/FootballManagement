@@ -45,7 +45,7 @@ PlayerRow makeRow(const GameController& controller, const Player& player)
   row.name = player.getName();
   row.name_lower = toLower(row.name);
   row.role_id = player.getRole();
-  row.role = RoleUtils::toString(row.role_id);
+  row.role = RoleUtils::shortName(row.role_id);
   row.group = groupOf(row.role_id);
   row.age = player.getAge();
   row.overall =

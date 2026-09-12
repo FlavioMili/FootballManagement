@@ -104,6 +104,7 @@ class InboxScene : public ManagementScene
   int selected_thread = -1;
   int expanded_thread = -1;
   size_t selected_message = SIZE_MAX;
+  std::uint32_t selected_message_id = 0;
   std::string selected_title;
   std::string selected_body;
   PlayerTalkDialog talk_dialog;

@@ -136,10 +136,11 @@ void HolidayDialog::showSummary(GameController& controller,
          move.incoming ? palette.text : palette.muted});
   injuries.clear();
   for (const HolidayInjury& injury : summary.injuries)
-    injuries.push_back({fmt::sprintf(LOC("HOLIDAY_INJURY_LINE"),
-                                     injury.name.c_str(),
-                                     LOC(injury.injury_key.c_str()), injury.days),
-                        injury.key_player ? palette.warning : palette.text});
+    injuries.push_back(
+        {fmt::sprintf(Format::plural("HOLIDAY_INJURY_LINE", injury.days),
+                      injury.name.c_str(), LOC(injury.injury_key.c_str()),
+                      injury.days),
+         injury.key_player ? palette.warning : palette.text});
   filed_line = summary.messages_filed > 0
                    ? fmt::sprintf(Format::plural("HOLIDAY_FILED",
                                                  summary.messages_filed),

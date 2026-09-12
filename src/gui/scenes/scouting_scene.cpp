@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cctype>
 #include <format>
+#include <limits>
 #include <optional>
 #include <unordered_map>
 
@@ -27,6 +28,7 @@
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/competition.h"
 #include "model/role_utils.h"
 
 namespace
@@ -122,7 +124,7 @@ namespace
 std::string roleLabel(int index)
 {
   return index == 0 ? std::string(LOC("SCOUTING_ANY"))
-                    : RoleUtils::toString(static_cast<PlayerRole>(index - 1));
+                    : RoleUtils::shortName(static_cast<PlayerRole>(index - 1));
 }
 
 bool roleCombo(const char* id, int* index)
@@ -142,6 +144,8 @@ bool roleCombo(const char* id, int* index)
   }
   return changed;
 }
+
+constexpr float NAME_SEARCH_DELAY_SECONDS = 0.35f;
 
 void labelled(const char* label)
 {
@@ -164,7 +168,7 @@ void ScoutingScene::refresh()
   scouts = controller.getScouts();
   leagues.clear();
   for (const League& league : controller.getLeagues())
-    leagues.emplace_back(league.getId(), league.getName());
+    leagues.emplace_back(league.getId(), Competitions::leagueName(league));
   std::ranges::sort(leagues, {}, &std::pair<LeagueID, std::string>::second);
   rebuildWorld();
   rebuildReports();
@@ -221,7 +225,7 @@ ScoutingScene::PlayerLine ScoutingScene::makeLine(
   line.club = row.team_id == FREE_AGENTS_TEAM_ID || !team
                   ? std::string(LOC("TRANSFER_FREE_AGENT_LABEL"))
                   : team->get().getName();
-  line.role = RoleUtils::toString(row.role);
+  line.role = RoleUtils::shortName(row.role);
   if (const auto view = controller.getScoutedView(row.player_id))
     line.ability_range = rangeText(view->overall_low, view->overall_high);
   line.potential_text = rangeText(row.potential_low, row.potential_high);
@@ -316,7 +320,7 @@ void ScoutingScene::rebuildShortlist()
   comparison.clear();
   for (const SquadComparisonRow& row : controller.compareShortlistWithSquad())
   {
-    ComparisonLine line{row, RoleUtils::toString(row.role), {}, {}, {}};
+    ComparisonLine line{row, RoleUtils::shortName(row.role), {}, {}, {}};
     const auto name = [&](PlayerID id)
     {
       const auto player = controller.getGameData()->getPlayer(id);
@@ -543,9 +547,21 @@ void ScoutingScene::renderSearchFilters()
       std::max(120.0f * dpi(), (width - 5.0f * Theme::Space::M * dpi()) / 6.0f);
   bool changed = false;
   ImGui::SetNextItemWidth(field);
+  // The world search runs once the name has settled, not on every key.
   if (ImGui::InputTextWithHint("##name", LOC("SCOUTING_FILTER_NAME"),
                                name_query.data(), name_query.size()))
-    changed = true;
+  {
+    name_settle_seconds = NAME_SEARCH_DELAY_SECONDS;
+  }
+  else if (name_settle_seconds > 0.0f)
+  {
+    name_settle_seconds -= ImGui::GetIO().DeltaTime;
+    if (name_settle_seconds <= 0.0f || ImGui::IsItemDeactivated())
+    {
+      name_settle_seconds = 0.0f;
+      changed = true;
+    }
+  }
   ImGui::SameLine();
   ImGui::SetNextItemWidth(field * 0.6f);
   changed |= roleCombo("##role", &filter_role);
@@ -854,8 +870,8 @@ void ScoutingScene::renderFocus()
       focus_min_age = focus.min_age;
       focus_max_age = focus.max_age;
       focus_min_ability = focus.min_ability;
-      focus_max_fee_k = static_cast<int>(focus.max_fee / 1000);
-      focus_max_wage = static_cast<int>(focus.max_wage);
+      focus_max_fee = focus.max_fee;
+      focus_max_wage = focus.max_wage;
     }
     ImGui::SameLine();
     if (ImGui::SmallButton(LOC("SCOUTING_FOCUS_REMOVE"))) removed = focus.id;
@@ -888,14 +904,13 @@ void ScoutingScene::renderFocusEditor()
   labelled(LOC("SCOUTING_FOCUS_MIN_ABILITY"));
   ImGui::SetNextItemWidth(field);
   ImGui::SliderInt("##focus_ability", &focus_min_ability, 0, 90);
+  UI::MoneyInputOptions money;
+  money.width = field;
   labelled(LOC("SCOUTING_FOCUS_MAX_FEE"));
-  ImGui::SetNextItemWidth(field);
-  ImGui::InputInt("##focus_fee", &focus_max_fee_k, 100, 1000);
+  UI::moneyInput("##focus_fee", focus_max_fee, money);
   labelled(LOC("SCOUTING_FOCUS_MAX_WAGE"));
-  ImGui::SetNextItemWidth(field);
-  ImGui::InputInt("##focus_wage", &focus_max_wage, 500, 5000);
-  focus_max_fee_k = std::max(0, focus_max_fee_k);
-  focus_max_wage = std::max(0, focus_max_wage);
+  money.maximum = std::numeric_limits<uint32_t>::max();
+  UI::moneyInput("##focus_wage", focus_max_wage, money);
 
   if (UI::primaryButton(LOC("SCOUTING_FOCUS_SAVE")))
   {
@@ -905,7 +920,7 @@ void ScoutingScene::renderFocusEditor()
     focus.min_age = static_cast<uint8_t>(focus_min_age);
     focus.max_age = static_cast<uint8_t>(focus_max_age);
     focus.min_ability = static_cast<uint8_t>(focus_min_ability);
-    focus.max_fee = static_cast<int64_t>(focus_max_fee_k) * 1000;
+    focus.max_fee = focus_max_fee;
     focus.max_wage = static_cast<uint32_t>(focus_max_wage);
     if (controller.saveRecruitmentFocus(focus) != 0)
     {

@@ -158,15 +158,16 @@ TEST(YouthUiTest, AcademyScreenThroughTheIntakeCycle)
   }
   controller.selectManagedTeam(club);
 
-  // A U18 season up to intake day, run on the academy alone (the senior
-  // calendar is not needed for these screens).
+  // A U18 season up to intake day through the world's days (training and
+  // development included, so the Development tab has real improvers); the
+  // senior calendar is not needed for these screens.
   auto* game = const_cast<Game*>(controller.getGame());
-  YouthAcademy& academy = game->getWorld().getYouth();
-  Inbox& inbox = game->getWorld().getInbox();
+  WorldSimulation& world = game->getWorld();
+  YouthAcademy& academy = world.getYouth();
   for (GameDateValue date(2025, 7, 20); date < GameDateValue(2026, 3, 15);)
   {
     date = SeasonCalendar::addDays(date, 1);
-    academy.onDayAdvanced(date, club, inbox);
+    world.onDayAdvanced(date, club);
   }
   ASSERT_FALSE(academy.members(club, YouthStatus::Candidate).empty());
 

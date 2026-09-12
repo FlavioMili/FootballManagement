@@ -191,8 +191,6 @@ struct MatchSceneTuning final
     static constexpr float MODAL_WIDTH = 820.0f;
     static constexpr float MODAL_HEIGHT = 700.0f;
     static constexpr float MODAL_VIEWPORT_FRACTION = 0.94f;
-    static constexpr float LIST_HEIGHT = 185.0f;
-    static constexpr float DETAIL_HEIGHT = 250.0f;
     static constexpr float ACTION_BUTTON_WIDTH = 190.0f;
   };
 };

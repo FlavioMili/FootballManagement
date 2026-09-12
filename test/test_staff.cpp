@@ -11,15 +11,20 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
+#include "database/migrations/migrations.h"
+#include "database/save_manager.h"
 #include "global/global.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
 #include "model/staff.h"
+#include "model/world_rng.h"
 
 namespace
 {
@@ -338,4 +343,68 @@ TEST(StaffWorldTest, ContractsRunOutAndAiClubsRefill)
   EXPECT_EQ(migrated.getStaff(managed).front()->name(), first_name);
   EXPECT_EQ(migrated.getStaff(managed).front()->id, first_id);
   EXPECT_NE(migrated.getGameData()->getTraining().findPlan(managed), nullptr);
+}
+
+TEST(StaffPersistenceTest, DepartedStaffIdsAreNotReusedAfterReload)
+{
+  const SlotCleanup slot{uniqueSlot(5)};
+  auto controller = makeWorld(slot.slot);
+  StaffRoster& roster = controller->getGameData()->getStaff();
+  // The newest candidate finds work elsewhere, as in the monthly refresh.
+  StaffID newest = 0;
+  for (const auto& [id, staff] : roster.all()) newest = std::max(newest, id);
+  ASSERT_EQ(roster.find(newest)->team_id, FREE_AGENTS_TEAM_ID);
+  ASSERT_TRUE(roster.remove(newest));
+  const StaffID next = roster.peekNextId();
+  ASSERT_GT(next, newest);
+  ASSERT_TRUE(controller->saveGame());
+
+  GameController reloaded;
+  ASSERT_TRUE(reloaded.loadGame(slot.slot));
+  StaffRoster& restored = reloaded.getGameData()->getStaff();
+  EXPECT_EQ(restored.peekNextId(), next);
+
+  // The next market refresh brings the same new faces with fresh ids.
+  const std::int32_t ordinal = dayOrdinal(GameDateValue(2025, 8, 1));
+  StaffModel::refreshMarket(*controller->getGameData(), ordinal);
+  StaffModel::refreshMarket(*reloaded.getGameData(), ordinal);
+  const auto snapshot = [](const StaffRoster& staff)
+  {
+    std::map<StaffID, std::string> result;
+    for (const auto& [id, member] : staff.all())
+      result.emplace(id, member.name() + "/" +
+                             std::to_string(static_cast<int>(member.role)) +
+                             "/" + std::to_string(member.team_id));
+    return result;
+  };
+  const auto uninterrupted = snapshot(roster);
+  EXPECT_EQ(snapshot(restored), uninterrupted);
+  EXPECT_FALSE(restored.find(newest));
+  EXPECT_GT(restored.peekNextId(), next) << "the refresh hired new staff";
+
+  // Saves from before the counter was stored derive it from the live ids.
+  ASSERT_TRUE(reloaded.saveGame());
+  sqlite3* db = nullptr;
+  ASSERT_EQ(sqlite3_open(RuntimePaths::savePath(slot.slot).c_str(), &db),
+            SQLITE_OK);
+  ASSERT_EQ(sqlite3_exec(db,
+                         "ALTER TABLE WorldState DROP COLUMN next_staff_id; "
+                         "DELETE FROM schema_migrations WHERE number = 7; "
+                         "UPDATE save_meta SET schema_version = 6;",
+                         nullptr, nullptr, nullptr),
+            SQLITE_OK);
+  sqlite3_close(db);
+  GameController legacy;
+  ASSERT_TRUE(legacy.loadGame(slot.slot));
+  StaffID highest = 0;
+  for (const auto& [id, member] : legacy.getGameData()->getStaff().all())
+    highest = std::max(highest, id);
+  EXPECT_EQ(legacy.getGameData()->getStaff().peekNextId(), highest + 1);
+  EXPECT_EQ(SaveManager::inspect(RuntimePaths::savePath(slot.slot)).schema_version,
+            6);
+  ASSERT_TRUE(legacy.saveGame());
+  EXPECT_EQ(SaveManager::inspect(RuntimePaths::savePath(slot.slot)).schema_version,
+            Migrations::currentSchemaVersion());
+  // Also drops the pre-upgrade copy the load kept.
+  SaveManager::deleteSave(RuntimePaths::savePath(slot.slot));
 }

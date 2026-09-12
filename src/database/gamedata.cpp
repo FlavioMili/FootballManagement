@@ -162,6 +162,9 @@ void GameData::restoreStaffAndTraining()
   // New worlds and saves from before staff existed get a deterministic
   // staff generated from the world seed.
   if (staff.empty()) StaffModel::generateWorld(*this);
+  // Ids of departed staff are not handed out again (scouting data is keyed
+  // by staff id).
+  staff.restoreNextId(WorldStateRepository(db_conn).loadNextStaffId());
   const TrainingRepository training_repo(db_conn);
   training.restore(training_repo.loadPlans(), training_repo.loadPlayers());
   for (const auto& [id, team] : _teams)
@@ -272,7 +275,8 @@ void GameData::generateAndSaveInitialData()
       team.generateStartingXI(*this, stats_config);
     }
     teamRepo.updateTeamsState(_teamsVec);
-    WorldStateRepository(db_conn).saveWorldState(world_seed, next_player_id);
+    WorldStateRepository(db_conn).saveWorldState(world_seed, next_player_id,
+                                                 staff.peekNextId());
 
     db_conn->commitTransaction();
   }
@@ -607,6 +611,11 @@ bool GameData::removePlayer(PlayerID id)
   {
     return false;
   }
+
+  // Line-ups hold raw pointers; any club (including the free agents, whose
+  // line-up is not rebuilt when one of them signs elsewhere) may still
+  // reference the player.
+  for (auto& [team_key, team] : _teams) team.getLineup().removePlayer(id);
 
   const TeamID team_id = player_it->second.getTeamId();
   auto& team_players = _teamPlayers[team_id];

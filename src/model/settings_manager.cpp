@@ -74,6 +74,13 @@ void SettingsManager::load()
         j.value("autosave_frequency", settings_.autosave_frequency), 0, 5);
     settings_.autosave_backups = std::clamp(
         j.value("autosave_backups", settings_.autosave_backups), 0, 9);
+    settings_.master_volume = std::clamp(
+        j.value("master_volume", settings_.master_volume), 0.0f, 1.0f);
+    settings_.crowd_volume = std::clamp(
+        j.value("crowd_volume", settings_.crowd_volume), 0.0f, 1.0f);
+    settings_.effects_volume = std::clamp(
+        j.value("effects_volume", settings_.effects_volume), 0.0f, 1.0f);
+    settings_.audio_muted = j.value("audio_muted", settings_.audio_muted);
   }
   catch (const json::exception& exception)
   {
@@ -101,6 +108,10 @@ void SettingsManager::save() const
   j["screen_tips_seen"] = settings_.screen_tips_seen;
   j["autosave_frequency"] = settings_.autosave_frequency;
   j["autosave_backups"] = settings_.autosave_backups;
+  j["master_volume"] = settings_.master_volume;
+  j["crowd_volume"] = settings_.crowd_volume;
+  j["effects_volume"] = settings_.effects_volume;
+  j["audio_muted"] = settings_.audio_muted;
 
   std::ofstream out(RuntimePaths::settingsPath());
   out << j.dump(2);

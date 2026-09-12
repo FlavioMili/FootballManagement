@@ -183,7 +183,7 @@ void TrainingScene::refresh()
     PlayerRow row;
     row.id = player.getId();
     row.name = player.getName();
-    row.role = RoleUtils::toString(player.getRole());
+    row.role = RoleUtils::shortName(player.getRole());
     row.age = player.getAge();
     row.condition = player.getDynamics().condition;
     row.ratio = workload.ratio;

@@ -8,15 +8,21 @@
 
 #include <SDL3/SDL.h>
 #include <gtest/gtest.h>
+#include <imgui_internal.h>
+#include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <array>
+#include <format>
+#include <fstream>
 #include <memory>
+#include <string>
 #include <unordered_set>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
 #include "global/logger.h"
+#include "global/paths.h"
 #include "gui/gui_view.h"
 #include "gui/render_scale.h"
 #include "gui/view_models/competition_view.h"
@@ -318,6 +324,57 @@ TEST(WidgetsTest, ParseMoneyAcceptsSuffixesAndSeparators)
   EXPECT_FALSE(UI::parseMoney("abc", value));
   EXPECT_FALSE(UI::parseMoney("12x", value));
   EXPECT_EQ(value, 7);
+}
+
+TEST(WidgetsTest, MoneyStepsStayProportionalForSmallAmounts)
+{
+  // A ticket price of 40 once jumped to ~400 on either button.
+  EXPECT_EQ(UI::stepMoney(40, true, 0.05), 42);
+  EXPECT_EQ(UI::stepMoney(40, false, 0.05), 38);
+  // Tiny amounts still move by one per press.
+  EXPECT_EQ(UI::stepMoney(1, true, 0.05), 2);
+  EXPECT_EQ(UI::stepMoney(2, false, 0.05), 1);
+  EXPECT_EQ(UI::stepMoney(0, true, 0.05), 1);
+  // Large amounts round to three significant figures.
+  EXPECT_EQ(UI::stepMoney(14'400'000, true, 0.05), 15'100'000);
+  EXPECT_EQ(UI::stepMoney(14'400'000, false, 0.10), 13'000'000);
+  EXPECT_EQ(UI::stepMoney(900'000, true, 0.05), 945'000);
+}
+
+TEST(WidgetsTest, EveryLanguageStringHasGlyphsInTheFont)
+{
+  // A missing glyph renders as a box ("→" once did): every character of
+  // every translation must exist in the UI font.
+  ImGuiContext* previous = ImGui::GetCurrentContext();
+  ImGuiContext* context = ImGui::CreateContext();
+  ImFont* font = ImGui::GetIO().Fonts->AddFontFromFileTTF(
+      AssetPaths::font().c_str(), 16.0f);
+  ASSERT_NE(font, nullptr);
+  for (const char* language : {"English", "Italian"})
+  {
+    std::ifstream file(AssetPaths::language(language));
+    ASSERT_TRUE(file.is_open()) << language;
+    const nlohmann::json strings = nlohmann::json::parse(file);
+    std::string missing;
+    for (const auto& [key, value] : strings.items())
+    {
+      if (!value.is_string()) continue;
+      const std::string text = value.get<std::string>();
+      const char* cursor = text.c_str();
+      const char* end = cursor + text.size();
+      while (cursor < end)
+      {
+        unsigned int character = 0;
+        cursor += ImTextCharFromUtf8(&character, cursor, end);
+        if (character >= 0x80 &&
+            !font->IsGlyphInFont(static_cast<ImWchar>(character)))
+          missing += std::format("\n  {}: U+{:04X}", key, character);
+      }
+    }
+    EXPECT_TRUE(missing.empty()) << language << " glyphs missing:" << missing;
+  }
+  ImGui::DestroyContext(context);
+  ImGui::SetCurrentContext(previous);
 }
 
 TEST(WidgetsTest, FitColumnsDropsHighestPriorityFirst)

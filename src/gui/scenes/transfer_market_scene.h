@@ -51,6 +51,12 @@ class TransferMarketScene : public ManagementScene
 
   void update(float deltaTime) override;
   [[nodiscard]] SceneID getID() const override;
+  /** Back from a profile: the search results stay, their flags refresh. */
+  void onResume() override
+  {
+    refreshData();
+    openPendingDeal();
+  }
 
  protected:
   void renderContent() override;
@@ -66,6 +72,7 @@ class TransferMarketScene : public ManagementScene
     refreshData();
     openPendingDeal();
   }
+
 
  private:
   friend class GameFlowTest_GUIFlowLifecycle_Test;

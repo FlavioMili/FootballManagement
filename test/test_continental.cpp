@@ -7,23 +7,29 @@
 // -----------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
+#include <sqlite3.h>
 #include <unistd.h>
 
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <numeric>
 #include <set>
 #include <vector>
 
 #include "controller/game_controller.h"
+#include "database/database_connection.h"
 #include "database/gamedata.h"
+#include "database/migrations/migrations.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
 #include "model/calendar.h"
 #include "model/competition.h"
 #include "model/continental.h"
 #include "model/match.h"
+#include "model/match_report.h"
+#include "model/match_scheduler.h"
 #include "model/team.h"
 
 namespace
@@ -470,6 +476,247 @@ TEST(ContinentalTest, LevelAggregateGoesToExtraTime)
   const int seeded_total = stored->getHomeScore() + 1;
   const int unseeded_total = stored->getAwayScore() + 2;
   if (seeded_total == unseeded_total) EXPECT_TRUE(stored->wentToPenalties());
+}
+
+namespace
+{
+/** Goals of one side as the report tells them: its scorers' lines plus the
+ * opponents' own goals, and its goal events plus the opponents' own goals. */
+std::pair<int, int> reportedGoals(const MatchReport& report, TeamID team_id,
+                                  bool home)
+{
+  int own_goals_for = 0;
+  int events = 0;
+  for (const MatchReportEvent& event : report.events)
+  {
+    if (event.kind == MatchEventKind::GOAL && event.home == home) ++events;
+    if (event.kind == MatchEventKind::OWN_GOAL && event.home != home)
+    {
+      ++events;
+      ++own_goals_for;
+    }
+  }
+  int lines = own_goals_for;
+  for (const PlayerMatchLine& line : report.players)
+    if (line.team_id == team_id) lines += line.goals;
+  return {lines, events};
+}
+}  // namespace
+
+TEST(ContinentalTest, AggregateDecidesExtraTimeInTheSimulation)
+{
+  const SlotCleanup slot{uniqueSlot(5)};
+  const auto controller = makeWorld(slot.slot);
+  const auto gamedata = controller->getGameData();
+  const auto league = gamedata->getLeagues().begin()->second.getTeamIDs();
+  ASSERT_GE(league.size(), 2u);
+  const Match second(league[0], league[1], GameDateValue(2026, 3, 10),
+                     MatchType::CONTINENTAL, Continental::CHAMPIONS_CUP_ID,
+                     Continental::stageCode(Round::RoundOf16, 2));
+  std::optional<MatchSimulationInput> input =
+      second.prepareSimulation(*gamedata);
+  ASSERT_TRUE(input.has_value());
+  const StatsConfig& config = gamedata->getStatsConfig();
+  const MatchSimulationResult plain = MatchSimulation::run(*input, config);
+  ASSERT_FALSE(plain.extra_time);
+  EXPECT_EQ(reportedGoals(plain.report, league[0], true),
+            std::pair(int{plain.home_goals}, int{plain.home_goals}));
+
+  // Level on aggregate after 90 minutes (whatever the score on the day):
+  // extra time is played, and its goals have scorers.
+  Competitions::KnockoutResolution resolution;
+  resolution.home_extra_goals = 2;
+  resolution.away_extra_goals = 1;
+  input->knockout = resolution;
+  input->knockout_lead = int{plain.away_goals} - int{plain.home_goals};
+  const MatchSimulationResult decided = MatchSimulation::run(*input, config);
+  EXPECT_TRUE(decided.extra_time);
+  EXPECT_FALSE(decided.penalties.has_value());
+  EXPECT_EQ(decided.home_goals, plain.home_goals + 2);
+  EXPECT_EQ(decided.away_goals, plain.away_goals + 1);
+  const int home_goals = decided.home_goals;
+  const int away_goals = decided.away_goals;
+  EXPECT_EQ(reportedGoals(decided.report, league[0], true),
+            std::pair(home_goals, home_goals));
+  EXPECT_EQ(reportedGoals(decided.report, league[1], false),
+            std::pair(away_goals, away_goals));
+  int extra_time_goals = 0;
+  for (const MatchReportEvent& event : decided.report.events)
+  {
+    // Regulation stoppage time is minute 90+n with an added minute.
+    if (event.minute <= 90 || event.added_minute > 0) continue;
+    ++extra_time_goals;
+    EXPECT_EQ(event.kind, MatchEventKind::GOAL);
+    EXPECT_LE(event.minute, 120);
+    EXPECT_NE(event.player, 0u) << "a player finished the match to score it";
+  }
+  EXPECT_GE(extra_time_goals, 3);
+
+  // Not level on aggregate: no extra time.
+  input->knockout_lead += 1;
+  const MatchSimulationResult settled = MatchSimulation::run(*input, config);
+  EXPECT_FALSE(settled.extra_time);
+  EXPECT_EQ(settled.home_goals, plain.home_goals);
+  EXPECT_EQ(settled.away_goals, plain.away_goals);
+}
+
+TEST(ContinentalTest, ExtraTimeWinCountsAsAWinForTheManager)
+{
+  // Plays a second leg of the managed club once without a first leg to
+  // learn its 90-minute score, then again (same world, same days) after a
+  // first leg that levels the aggregate.
+  const SlotCleanup slot_a{uniqueSlot(6)};
+  const SlotCleanup slot_b{uniqueSlot(7)};
+  auto first_run = makeWorld(slot_a.slot);
+  const auto gamedata = first_run->getGameData();
+  const TeamID managed = first_run->getTeams().front().get().getId();
+  ASSERT_NE(managed, FREE_AGENTS_TEAM_ID);
+  first_run->selectManagedTeam(managed);
+  const Team& club = gamedata->getTeam(managed)->get();
+  const auto busy = [&](const GameController& controller, TeamID team_id,
+                        const GameDateValue& date)
+  {
+    for (const Match& match : controller.getTeamFixtures(team_id))
+      for (int offset = -1; offset <= 1; ++offset)
+        if (match.getDate() == SeasonCalendar::addDays(date, offset))
+          return true;
+    return false;
+  };
+  // An opponent from another league and a free day for both, where extra
+  // time has a winner.
+  const LeagueID competition = Continental::CHAMPIONS_CUP_ID;
+  const uint8_t stage = Continental::stageCode(Round::RoundOf16, 2);
+  TeamID opponent = 0;
+  GameDateValue day = SeasonCalendar::addDays(first_run->getCurrentDate(), 2);
+  for (int tries = 0; tries < 30 && opponent == 0; ++tries)
+  {
+    day = SeasonCalendar::addDays(day, 1);
+    if (busy(*first_run, managed, day)) continue;
+    for (const auto& team : first_run->getTeams())
+    {
+      const Team& other = team.get();
+      if (other.getId() == FREE_AGENTS_TEAM_ID ||
+          other.getLeagueId() == club.getLeagueId() ||
+          busy(*first_run, other.getId(), day))
+        continue;
+      const Match probe(managed, other.getId(), day, MatchType::CONTINENTAL,
+                        competition, stage);
+      const auto resolution = Competitions::resolveDrawnKnockout(
+          club, other, gamedata->getStatsConfig(), probe.getSeed());
+      if (resolution.penalties) continue;
+      opponent = other.getId();
+      break;
+    }
+  }
+  ASSERT_NE(opponent, 0);
+  const Match second_leg(managed, opponent, day, MatchType::CONTINENTAL,
+                         competition, stage);
+  first_run->getGame()->getCalendar().addMatch(second_leg);
+  // The assistant plays a managed fixture left unplayed the next day.
+  const GameDateValue after = SeasonCalendar::addDays(day, 1);
+  while (first_run->getCurrentDate() < after) first_run->advanceDay();
+  const Match* played =
+      first_run->getGame()->getCalendar().findMatch(day, managed, opponent);
+  ASSERT_NE(played, nullptr);
+  ASSERT_TRUE(played->isPlayed());
+  ASSERT_FALSE(played->wentToExtraTime());
+  const int home_90 = played->getHomeScore();
+  const int away_90 = played->getAwayScore();
+  first_run.reset();
+
+  auto controller = makeWorld(slot_b.slot);
+  controller->selectManagedTeam(managed);
+  // First leg at the opponent's ground: managed club scored y, conceded x.
+  const int x = std::max(0, home_90 - away_90);
+  const int y = std::max(0, away_90 - home_90);
+  Match first_leg(opponent, managed, GameDateValue(2025, 6, 25),
+                  MatchType::CONTINENTAL, competition,
+                  Continental::stageCode(Round::RoundOf16, 1));
+  first_leg.setPlayedResult(static_cast<uint8_t>(x), static_cast<uint8_t>(y));
+  controller->getGame()->getCalendar().addMatch(first_leg);
+  controller->getGame()->getCalendar().addMatch(second_leg);
+  while (controller->getCurrentDate() < after) controller->advanceDay();
+
+  const Match* decider =
+      controller->getGame()->getCalendar().findMatch(day, managed, opponent);
+  ASSERT_NE(decider, nullptr);
+  ASSERT_TRUE(decider->isPlayed());
+  EXPECT_TRUE(decider->wentToExtraTime());
+  EXPECT_FALSE(decider->wentToPenalties());
+  ASSERT_NE(decider->getHomeScore(), decider->getAwayScore());
+  const bool won = decider->getHomeScore() > decider->getAwayScore();
+
+  // Form and the manager's record count the result after extra time.
+  const std::string& form =
+      controller->getTeamById(managed)->get().getRecentForm();
+  ASSERT_FALSE(form.empty());
+  EXPECT_EQ(form.front(), won ? 'W' : 'L') << form;  // Newest first.
+  ASSERT_FALSE(controller->getManagerStints().empty());
+  const ManagerStint& stint = controller->getManagerStints().back();
+  EXPECT_EQ(stint.drawn, 0);
+  EXPECT_EQ(stint.won + stint.lost, 1);
+  EXPECT_EQ(stint.won, won ? 1 : 0);
+
+  // The stored report adds up to the final score.
+  const auto report = controller->getMatchReport(day, managed, opponent);
+  ASSERT_TRUE(report.has_value());
+  EXPECT_TRUE(report->extra_time);
+  const int home_goals = decider->getHomeScore();
+  const int away_goals = decider->getAwayScore();
+  EXPECT_EQ(reportedGoals(*report, managed, true),
+            std::pair(home_goals, home_goals));
+  EXPECT_EQ(reportedGoals(*report, opponent, false),
+            std::pair(away_goals, away_goals));
+}
+
+TEST(ContinentalTest, UnevenPotsFallBackToCoefficientPots)
+{
+  const SlotCleanup slot{uniqueSlot(8)};
+  const auto controller = makeWorld(slot.slot);
+  const auto gamedata = controller->getGameData();
+  ContinentalCompetitions original(gamedata);
+  original.startSeason(2025, GameDateValue(2025, 7, 2));
+  // Every club of the top competition in one pot: the draw cannot use them.
+  DatabaseConnection db(":memory:");
+  Migrations::migrate(db);
+  original.save(db);
+  sqlite3_stmt* select = db.prepareStatement(
+      "SELECT data FROM ContinentalState WHERE id = 1;");
+  ASSERT_EQ(sqlite3_step(select), SQLITE_ROW);
+  auto state = nlohmann::json::parse(
+      reinterpret_cast<const char*>(sqlite3_column_text(select, 0)));
+  sqlite3_finalize(select);
+  for (auto& season : state["seasons"])
+    if (season["competition"] == Continental::CHAMPIONS_CUP_ID)
+      for (auto& entrant : season["entrants"]) entrant["pot"] = 0;
+  sqlite3_stmt* update = db.prepareStatement(
+      "UPDATE ContinentalState SET data = ? WHERE id = 1;");
+  const std::string text = state.dump();
+  sqlite3_bind_text(update, 1, text.c_str(), -1, SQLITE_TRANSIENT);
+  db.executeStep(update);
+  sqlite3_finalize(update);
+
+  ContinentalCompetitions continental(gamedata);
+  continental.load(db);
+  const auto* season = continental.getSeason(Continental::CHAMPIONS_CUP_ID);
+  ASSERT_NE(season, nullptr);
+  Calendar calendar;
+  for (GameDateValue day(2025, 7, 2); !(season->draw_date < day);
+       day = SeasonCalendar::addDays(day, 1))
+    continental.afterMatchday(calendar, day);
+  season = continental.getSeason(Continental::CHAMPIONS_CUP_ID);
+  ASSERT_TRUE(season->drawn);
+  std::map<TeamID, int> matches;
+  for (const auto& [date, day] : calendar.getFullCalendar())
+    for (const Match& match : day)
+      if (match.getCompetitionId() == Continental::CHAMPIONS_CUP_ID)
+      {
+        ++matches[match.getHomeTeamId()];
+        ++matches[match.getAwayTeamId()];
+      }
+  EXPECT_EQ(matches.size(), season->entrants.size());
+  for (const auto& [team_id, count] : matches)
+    EXPECT_EQ(count, season->matches) << team_id;
 }
 
 TEST(ContinentalTest, StateRoundTripsThroughSave)

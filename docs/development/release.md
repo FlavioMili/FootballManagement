@@ -12,27 +12,30 @@ Three workflows in `.github/workflows/` build the game:
 
 ## Cutting a release
 
-1. Make sure CI is green on the commit you want to ship.
-2. Tag it and push the tag:
+1. Make sure CI is green on the commit you want to ship, and run the full
+   test suite locally (CI skips the slow labels, see below).
+2. In `CHANGELOG.md`, replace "(unreleased)" in the heading of the version
+   you are shipping with the release date and commit that change.
+3. Tag it and push the tag:
 
    ```sh
-   git tag -a v0.3.0 -m "Football Management 0.3.0"
-   git push origin v0.3.0
+   git tag -a v0.1.0 -m "Football Management 0.1.0"
+   git push origin v0.1.0
    ```
 
-3. `release.yml` builds every platform. When it finishes, the release
-   `v0.3.0` appears on GitHub with:
-   - `FootballManagement-0.3.0-linux-x86_64.tar.gz`
-   - `FootballManagement-0.3.0-linux-x86_64.AppImage`
-   - `FootballManagement-0.3.0-macos-arm64.zip`
-   - `FootballManagement-0.3.0-windows-x86_64.zip` (only if the Windows job
+4. `release.yml` builds every platform. When it finishes, the release
+   `v0.1.0` appears on GitHub with:
+   - `FootballManagement-0.1.0-linux-x86_64.tar.gz`
+   - `FootballManagement-0.1.0-linux-x86_64.AppImage`
+   - `FootballManagement-0.1.0-macos-arm64.zip`
+   - `FootballManagement-0.1.0-windows-x86_64.zip` (only if the Windows job
      passed, see limitations)
    - `SHA256SUMS.txt` (check with `sha256sum -c SHA256SUMS.txt`)
 
-   A tag with a hyphen (`v0.3.0-rc1`) becomes a pre-release. Release notes are
+   A tag with a hyphen (`v0.1.0-rc1`) becomes a pre-release. Release notes are
    generated from the commits and pull requests since the previous tag and can
-   be edited on GitHub afterwards. Re-running the workflow for an existing
-   release replaces its files.
+   be edited on GitHub afterwards; paste the version's `CHANGELOG.md` section
+   in. Re-running the workflow for an existing release replaces its files.
 
 To try the pipeline without tagging, run **Release** manually from the Actions
 tab: packages are uploaded as workflow artifacts (kept 30 days). Tick
@@ -171,7 +174,7 @@ cpack --config /tmp/fm-pkg/CPackConfig.cmake -B /tmp/fm-pkg/dist
   `%APPDATA%` for output.
 - On macOS, every build (including development builds) produces
   `build/src/FootballManagement.app` instead of a plain executable. Pre-release
-  versions such as `0.3.0-rc1` go into `CFBundleShortVersionString` as-is. That
+  versions such as `0.1.0-rc1` go into `CFBundleShortVersionString` as-is. That
   is not Apple's `x.y.z` format, which only matters for App Store submission.
 - `linuxdeploy` is pinned to the `1-alpha-20251107-1` release. Homebrew
   `llvm` is not pinned, so the macOS compiler follows Homebrew's current LLVM.

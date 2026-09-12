@@ -65,6 +65,13 @@ class DataGenerator
   static std::unordered_map<TeamID, ClubIdentity> loadClubIdentities();
 
   /**
+   * @brief Reads the optional Italian article ("article_it": "la", "il",
+   * "lo" or "l'") of the clubs that set one, for ClubArticle.
+   * @return Articles keyed by club name.
+   */
+  static std::unordered_map<std::string, std::string> loadClubArticles();
+
+  /**
    * @brief Loads the predefined players and completes every club's squad
    * with generated players (see WorldGeneration). Club profiles must be
    * assigned first; generation is deterministic for the world seed.

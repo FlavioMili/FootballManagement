@@ -147,9 +147,6 @@ TEST(ScoutingUiTest, ScoutPagesFollowWhatEachScoutIsDoing)
   const SlotCleanup slot{uniqueSlot(0)};
   GameController controller;
   controller.newGame(slot.slot, WORLD_SEED);
-  // Single-threaded matchdays: this executable exercises the GUI, not the
-  // parallel scheduler.
-  controller.setSimulationThreads(1);
   // The most reputable club of the league employs several scouts.
   TeamID club = 0;
   for (const TeamID id :
@@ -257,9 +254,6 @@ TEST(ScoutingUiTest, NewReportsAreBadgedUntilTheScoutPageIsOpened)
   const SlotCleanup slot{uniqueSlot(1)};
   GameController controller;
   controller.newGame(slot.slot, WORLD_SEED);
-  // Single-threaded matchdays: this executable exercises the GUI, not the
-  // parallel scheduler.
-  controller.setSimulationThreads(1);
   controller.selectManagedTeam(
       controller.getLeagueById(OWN_LEAGUE)->get().getTeamIDs().front());
   const auto scouts = controller.getScouts();

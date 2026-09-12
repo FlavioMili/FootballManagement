@@ -291,6 +291,10 @@ class GameController
    * the player just leaves the matchday squad). */
   std::vector<std::pair<PlayerID, PlayerID>> previewLineupFix(
       TeamID team_id, MatchType type) const;
+  /** The selection may kick off as it is: autoFixLineup() would change
+   * nothing, so any ineligible selections left are injured players nobody
+   * fit can replace (they play through it). */
+  bool canKickOff(TeamID team_id, MatchType type) const;
   /** Assistant keeps the managed lineup eligible (each day and at kick-off;
    * on by default, kept for the session). */
   void setAssistantFixesLineup(bool enabled);
@@ -1070,6 +1074,9 @@ class GameController
   std::atomic<int> continue_days_started{0};
   std::atomic<int> continue_days_total{0};
   HolidaySummary holiday_summary;
+  /** The manager's own delegation while a holiday hands extra duties to the
+   * assistant: saves made on holiday store this one. */
+  std::optional<DelegationPolicy> delegation_after_holiday;
 
   int current_slot = -1;
   AutosavePolicy autosave_policy;
@@ -1096,6 +1103,8 @@ class GameController
   void evaluateIncomingAIBids();
   /** Drops listings of players who moved, left or may not be traded. */
   void purgeStaleListings();
+  /** Withdraws the bids a club placed while it had no manager. */
+  void clearBidsBy(TeamID team_id);
   /** AI seller accepts the highest bid as a structured deal. */
   bool completeAiSale(PlayerID pid);
   /** Asking price of a live listing by the player's club (0 if none). */

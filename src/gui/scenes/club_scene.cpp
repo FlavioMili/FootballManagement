@@ -114,7 +114,13 @@ void ClubScene::refresh()
     HistoryRow line;
     line.season = std::format("{}/{:02}", entry->start_year,
                               (entry->start_year + 1) % 100);
+    // Named in the current language; the saved name is the fallback.
     line.competition = entry->competition_name;
+    if (entry->competition_type == MatchType::CUP)
+      line.competition = controller.getCupName(cup);
+    else if (const auto league =
+                 controller.getLeagueById(entry->competition_id))
+      line.competition = Competitions::leagueName(league->get());
     line.champion = teamName(controller, entry->champion_id);
     line.runner_up = teamName(controller, entry->runner_up_id);
     if (entry->top_scorer_id != 0 && data)

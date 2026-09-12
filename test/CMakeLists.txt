@@ -3,11 +3,12 @@ set(FM_TEST_MATCH_SEED 424242)
 # identical on every test run.
 set(FM_TEST_WORLD_SEED 20250702)
 set(FM_TEST_ENVIRONMENT
-  "SDL_VIDEODRIVER=dummy;FM_TEST_RUNTIME_ROOT=/tmp/football-management-tests;FM_MATCH_SEED=${FM_TEST_MATCH_SEED};FM_WORLD_SEED=${FM_TEST_WORLD_SEED};FM_SIM_THREADS=2")
+  "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FM_TEST_RUNTIME_ROOT=/tmp/football-management-tests;FM_MATCH_SEED=${FM_TEST_MATCH_SEED};FM_WORLD_SEED=${FM_TEST_WORLD_SEED};FM_SIM_THREADS=2")
 set(FM_TEST_LAUNCHER
   "${CMAKE_COMMAND};-E;env;${FM_TEST_ENVIRONMENT}")
 
 add_executable(unit_tests
+  test_localization.cpp
   test_next_action.cpp
   test_opposition_report.cpp
   test_match_analysis.cpp
@@ -54,6 +55,7 @@ set_property(TARGET unit_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
 # This target deliberately excludes all GUI sources. It is the fast headless
 # correctness and leak-check lane for model, controller, and persistence code.
 add_executable(core_unit_tests
+  test_localization.cpp
   test_next_action.cpp
   test_opposition_report.cpp
   test_match_analysis.cpp
@@ -115,6 +117,20 @@ gtest_discover_tests(
   PROPERTIES
     ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
     LABELS "unit;core;leak-check"
+)
+
+# Match audio: mixer, procedural sounds and event mapping (headless, rendered
+# by hand; the device test uses the dummy audio driver).
+add_executable(audio_tests test_audio.cpp)
+target_link_libraries(audio_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET audio_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  audio_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "audio::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "unit;audio"
 )
 
 # Long GUI playtest journey (a season of a career through the real screens).

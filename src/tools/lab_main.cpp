@@ -52,11 +52,12 @@ constexpr std::string_view USAGE = R"(fm_lab - headless balance lab
 
 Usage:
   fm_lab matches [--n N] [--seed S] [--home-rating X --away-rating Y | --spread
-                 [--rating-min A --rating-max B]] [--threads T] [--out-dir DIR]
+                 [--rating-min A --rating-max B]] [--fidelity full|background]
+                 [--threads T] [--out-dir DIR]
   fm_lab season  [--leagues all|top|ID,ID...] [--seasons N] [--seed S]
                  [--threads T] [--max-days D] [--out-dir DIR]
   fm_lab tactics [--n SEEDS_PER_PAIR] [--seed S] [--rating X] [--threads T]
-                 [--out-dir DIR]
+                 [--fidelity full|background] [--out-dir DIR]
 
 matches  isolated matches between synthetic 4-4-2 squads (default 2000 at
          rating 65 v 65; --spread draws both ratings uniformly per match)
@@ -64,6 +65,9 @@ season   whole AI-only world via GameController in a scratch directory
          ("seasons" is accepted too)
 tactics  round robin of the tactic presets between equal teams; each seed is
          played twice with home and away swapped
+
+Fidelity: full (default, the live engine's 10 Hz step) or background (the
+cheaper step unwatched fixtures use); compare both to check equivalence.
 
 Threads: --threads, else FM_SIM_THREADS, else 4 (max 8); the process lowers
 its own priority. Output: report.md and metrics.json in --out-dir (default a
@@ -102,10 +106,11 @@ Arguments parseArguments(int argc, char** argv)
 {
   static constexpr std::array<std::string_view, 3> FLAGS = {"--spread",
                                                            "--help", "-h"};
-  static constexpr std::array<std::string_view, 12> OPTIONS = {
+  static constexpr std::array<std::string_view, 13> OPTIONS = {
       "--n",          "--seed",       "--home-rating", "--away-rating",
       "--rating",     "--rating-min", "--rating-max",  "--threads",
-      "--out-dir",    "--leagues",    "--seasons",     "--max-days"};
+      "--out-dir",    "--leagues",    "--seasons",     "--max-days",
+      "--fidelity"};
   Arguments arguments;
   if (argc < 2) throw UsageError("missing mode");
   arguments.mode = argv[1];
@@ -219,6 +224,15 @@ void quietLogging()
     logger->set_level(spdlog::level::warn);
 }
 
+/** --fidelity: true for background (unwatched fixture) fidelity. */
+bool backgroundFidelity(const Arguments& arguments)
+{
+  const std::string fidelity = arguments.value("--fidelity").value_or("full");
+  if (fidelity != "full" && fidelity != "background")
+    throw UsageError("--fidelity must be full or background");
+  return fidelity == "background";
+}
+
 Lab::LabReport runMatchesMode(const Arguments& arguments, unsigned threads)
 {
   const int count =
@@ -238,11 +252,13 @@ Lab::LabReport runMatchesMode(const Arguments& arguments, unsigned threads)
                  arguments.value("--away-rating")))
     throw UsageError("--spread cannot be combined with fixed ratings");
   if (minRating > maxRating) throw UsageError("--rating-min > --rating-max");
+  const bool background = backgroundFidelity(arguments);
 
   std::vector<Lab::MatchJob> jobs(static_cast<std::size_t>(count));
   for (std::size_t i = 0; i < jobs.size(); ++i)
   {
     jobs[i].seed = Lab::matchSeed(seed, i);
+    jobs[i].background = background;
     if (spread)
     {
       const auto uniform = [&](std::uint64_t salt)
@@ -288,6 +304,7 @@ Lab::LabReport runMatchesMode(const Arguments& arguments, unsigned threads)
                            awayRating);
   report.parameters["cpu_ms_per_match_estimate"] =
       std::format("{:.1f}", report.ms_per_match * threads);
+  report.parameters["fidelity"] = background ? "background" : "full";
   static constexpr std::array SCOPES = {Lab::Scope::Match, Lab::Scope::Engine};
   report.rows = Lab::evaluateTargets(Lab::matchMetrics(samples), SCOPES);
   report.tables = Lab::matchTables(samples);
@@ -310,7 +327,9 @@ Lab::LabReport runTacticsMode(const Arguments& arguments, unsigned threads)
                                                UINT64_MAX / 2);
   const float rating =
       parseNumber<float>(arguments, "--rating", DEFAULT_RATING, 1.0f, 99.0f);
-  const std::vector<Lab::MatchJob> jobs = Lab::tacticJobs(seed, seeds, rating);
+  std::vector<Lab::MatchJob> jobs = Lab::tacticJobs(seed, seeds, rating);
+  const bool background = backgroundFidelity(arguments);
+  for (Lab::MatchJob& job : jobs) job.background = background;
   const StatsConfig config = Lab::loadStatsConfig();
   const auto started = std::chrono::steady_clock::now();
   const std::vector<Lab::MatchSample> samples = Lab::simulateMatches(
@@ -336,6 +355,7 @@ Lab::LabReport runTacticsMode(const Arguments& arguments, unsigned threads)
   report.ms_per_match = 1000.0 * wall / static_cast<double>(samples.size());
   report.parameters["rating"] = std::format("{:.0f}", rating);
   report.parameters["seeds_per_pair"] = std::to_string(seeds);
+  report.parameters["fidelity"] = background ? "background" : "full";
   static constexpr std::array SCOPES = {Lab::Scope::Tactics};
   report.rows = Lab::evaluateTargets(metrics, SCOPES);
   report.notes.push_back(

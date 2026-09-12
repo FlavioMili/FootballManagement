@@ -21,6 +21,7 @@
 
 class Calendar;
 class GameData;
+class League;
 class Team;
 struct StatsConfig;
 
@@ -71,7 +72,22 @@ struct CupStatus
 
 /** Every club of the country's pyramid. */
 std::vector<TeamID> cupEntrants(const GameData& gamedata, LeagueID root);
+/**
+ * Cup name in the current language: the CUP_NAME_<LEAGUE NAME> key of the
+ * root league (e.g. CUP_NAME_ITALIAN_LEAGUE) when the language has one,
+ * otherwise built from the data pack's league name ("X League" -> "X Cup").
+ */
 std::string cupName(const GameData& gamedata, LeagueID root);
+
+/**
+ * League name in the current language: the LEAGUE_NAME_<LEAGUE NAME> key
+ * (e.g. LEAGUE_NAME_ITALIAN_LEAGUE) when the language has one, otherwise the
+ * data pack's name, so custom packs keep their own names.
+ */
+std::string leagueName(const League& league);
+
+/** Inbox argument naming @p league ("@LEAGUE_NAME_..." when translated). */
+std::string leagueNameArg(const League& league);
 /** Knockout rounds needed so that exactly one team remains. */
 uint8_t cupRoundCount(size_t entrants);
 /** Language key naming a cup round (final, semi-final, ...). */

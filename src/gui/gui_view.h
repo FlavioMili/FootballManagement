@@ -146,6 +146,14 @@ class GUIView
   /** Hands the saved autosave frequency and backup count to the controller. */
   void applySavePolicy();
 
+  /**
+   * Applies the saved window mode and size. The size is in logical units:
+   * where window coordinates are physical pixels (Windows, scaled X11) it
+   * is multiplied by the display scale, so 1280x720 at 200% opens a
+   * 2560x1440-pixel window instead of a 640x360 layout.
+   */
+  void applyWindowSettings();
+
   /** Captures the current renderer contents as a BMP image. */
   bool captureScreenshot(std::string_view path) const;
 

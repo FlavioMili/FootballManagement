@@ -20,7 +20,9 @@
 #include "model/next_action.h"
 
 /**
- * @brief Top-level destinations of the management shell.
+ * @brief Screens of the management shell. The sidebar groups them into a
+ * few hubs (Home, Inbox, Squad, Training, Matches, Recruitment, Club) whose
+ * screens are shown as tabs above the page.
  */
 enum class NavSection : uint8_t
 {

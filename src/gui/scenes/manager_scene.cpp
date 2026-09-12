@@ -25,6 +25,7 @@
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
 #include "model/board.h"
+#include "model/competition.h"
 #include "model/inbox.h"
 #include "model/world_generation.h"
 #include "model/world_rng.h"
@@ -93,7 +94,7 @@ std::string clubName(const GameController& controller, TeamID team_id)
 std::string leagueName(const GameController& controller, LeagueID league_id)
 {
   const auto league = controller.getLeagueById(league_id);
-  return league ? league->get().getName() : std::string();
+  return league ? Competitions::leagueName(league->get()) : std::string();
 }
 
 std::string seasonLabel(std::uint16_t start_year)
@@ -942,6 +943,14 @@ void ManagerScene::renderInterviewDialog()
                                   ImGuiWindowFlags_NoTitleBar |
                                   ImGuiWindowFlags_NoSavedSettings))
     return;
+  // The vacancy went while answering (a toast says so): nothing to show.
+  if (interview_close_requested)
+  {
+    interview_close_requested = false;
+    ImGui::CloseCurrentPopup();
+    ImGui::EndPopup();
+    return;
+  }
   {
     Theme::ScopedText title(Theme::Text::TITLE);
     UI::textFitted(
@@ -1006,24 +1015,26 @@ void ManagerScene::renderInterviewDialog()
   }
   ImGui::PopTextWrapPos();
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale));
-  const float half =
-      (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) *
-      0.5f;
-  if (interview_step == 0)
-  {
-    if (UI::secondaryButton(LOC("SETTINGS_CANCEL"), ImVec2(half, 0.0f)))
-      ImGui::CloseCurrentPopup();
-  }
-  else if (UI::secondaryButton(LOC("JOB_INTERVIEW_BACK"), ImVec2(half, 0.0f)))
-  {
-    --interview_step;
-  }
+  // Cancel is offered on every question, Back from the second one.
+  const int buttons = interview_step == 0 ? 2 : 3;
+  const float buttonWidth =
+      (ImGui::GetContentRegionAvail().x -
+       ImGui::GetStyle().ItemSpacing.x * static_cast<float>(buttons - 1)) /
+      static_cast<float>(buttons);
+  if (UI::secondaryButton(LOC("SETTINGS_CANCEL"), ImVec2(buttonWidth, 0.0f)))
+    ImGui::CloseCurrentPopup();
   ImGui::SameLine();
+  if (interview_step > 0)
+  {
+    if (UI::secondaryButton(LOC("JOB_INTERVIEW_BACK"), ImVec2(buttonWidth, 0.0f)))
+      --interview_step;
+    ImGui::SameLine();
+  }
   const bool last = interview_step + 1 == INTERVIEW_TOPICS;
   ImGui::BeginDisabled(answer < 0);
   if (UI::primaryButton(
           LOC(last ? "JOB_INTERVIEW_SUBMIT" : "JOB_INTERVIEW_NEXT"),
-          ImVec2(half, 0.0f)))
+          ImVec2(buttonWidth, 0.0f)))
   {
     if (last)
       pending = {PendingAction::Kind::INTERVIEW, interview_club};
@@ -1124,7 +1135,11 @@ void ManagerScene::runPendingAction()
             static_cast<std::uint8_t>(std::max(interview_answers[topic], 0));
       interview_result =
           controller.attendInterview(static_cast<TeamID>(action.id), answers);
-      if (!interview_result) showToast(LOC("JOB_INTERVIEW_GONE_TOAST"), true);
+      if (!interview_result)
+      {
+        showToast(LOC("JOB_INTERVIEW_GONE_TOAST"), true);
+        interview_close_requested = true;
+      }
       break;
     }
     case PendingAction::Kind::NONE:

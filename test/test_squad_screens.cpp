@@ -18,11 +18,14 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <tuple>
+#include <vector>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
@@ -299,4 +302,129 @@ TEST(SquadScreensTest, ComparisonShowsScoutedEstimatesForOtherClubs)
   for (const ScoutedAttribute& attribute : mine)
     EXPECT_NEAR(attribute.estimate, ownPlayer.getStats().at(attribute.name),
                 0.01f);
+}
+
+namespace
+{
+/** Presses and releases a key through ImGui's input queue. */
+void pressKey(GUIView& view, ImGuiKey key)
+{
+  ImGui::GetIO().AddKeyEvent(key, true);
+  Bridge::frame(view);
+  ImGui::GetIO().AddKeyEvent(key, false);
+  frames(view, 2);
+}
+
+SceneID activeId(GUIView& view)
+{
+  const GUIScene* scene = Bridge::activeScene(view);
+  return scene != nullptr ? scene->getID() : SceneID::MAIN_MENU;
+}
+
+/** Centres of the hub tab buttons above the page (hover probe). */
+std::vector<ImVec2> hubTabPoints(GUIView& view)
+{
+  const ImGuiWindow* content = nullptr;
+  // The shell's page child itself, not the tables inside it.
+  constexpr std::string_view PREFIX = "##management_shell/##content";
+  for (const ImGuiWindow* window : GImGui->Windows)
+  {
+    const std::string_view name(window->Name);
+    if (window->Active && name.starts_with(PREFIX) &&
+        name.find('/', PREFIX.size()) == std::string_view::npos)
+      content = window;
+  }
+  if (content == nullptr) return {};
+  const float y = content->Pos.y + content->WindowPadding.y + 18.0f;
+  std::vector<ImVec2> points;
+  std::vector<ImGuiID> seen;
+  for (float x = content->Pos.x; x < content->Pos.x + content->Size.x;
+       x += 6.0f)
+  {
+    ImGui::GetIO().AddMousePosEvent(x, y);
+    Bridge::frame(view);
+    const ImGuiID hovered = GImGui->HoveredId;
+    if (hovered == 0 || std::ranges::contains(seen, hovered)) continue;
+    seen.push_back(hovered);
+    points.emplace_back(x + 12.0f, y);
+  }
+  ImGui::GetIO().AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+  return points;
+}
+}  // namespace
+
+TEST(SquadScreensTest, SidebarHubsOpenTheirScreensAsTabs)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  Logger::init();
+  const SlotCleanup slot{uniqueSlot(2)};
+  GameController controller;
+  controller.newGame(slot.slot, WORLD_SEED);
+  controller.setSimulationThreads(1);
+  controller.selectManagedTeam(controller.getTeams().front().get().getId());
+
+  GUIView view(controller);
+  ASSERT_TRUE(Bridge::initialize(view));
+  resize(view, 1280, 720);
+  view.changeScene(std::make_unique<MainGameScene>(&view));
+  frames(view, 3);
+  EXPECT_FALSE(Bridge::sidebarOverflows(view))
+      << "every hub fits the 720p sidebar";
+
+  // F1-F7 open the hubs' first screens.
+  const std::array<std::pair<ImGuiKey, SceneID>, 7> hubs = {{
+      {ImGuiKey_F3, SceneID::ROSTER},
+      {ImGuiKey_F4, SceneID::TRAINING},
+      {ImGuiKey_F5, SceneID::FIXTURES},
+      {ImGuiKey_F6, SceneID::TRANSFER_MARKET},
+      {ImGuiKey_F7, SceneID::CLUB},
+      {ImGuiKey_F2, SceneID::INBOX},
+      {ImGuiKey_F1, SceneID::GAME_MENU},
+  }};
+  for (const auto& [key, expected] : hubs)
+  {
+    pressKey(view, key);
+    EXPECT_EQ(activeId(view), expected) << ImGui::GetKeyName(key);
+    EXPECT_LE(view.getOverlayDepth(), 1u);
+  }
+
+  // The Squad hub shows its other five screens as tabs; each one opens.
+  Navigation::open(&view, NavSection::SQUAD);
+  frames(view, 3);
+  const std::vector<ImVec2> tabs = hubTabPoints(view);
+  ASSERT_EQ(tabs.size(), 5u) << "Lineup, Tactics, Planner, Medical, Compare";
+  std::vector<SceneID> reached;
+  for (const ImVec2 point : tabs)
+  {
+    Navigation::open(&view, NavSection::SQUAD);
+    frames(view, 2);
+    ImGui::GetIO().AddMousePosEvent(point.x, point.y);
+    Bridge::frame(view);
+    ImGui::GetIO().AddMouseButtonEvent(0, true);
+    Bridge::frame(view);
+    ImGui::GetIO().AddMouseButtonEvent(0, false);
+    frames(view, 3);
+    reached.push_back(activeId(view));
+    EXPECT_LE(view.getOverlayDepth(), 1u);
+  }
+  ImGui::GetIO().AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+  EXPECT_EQ(reached, (std::vector<SceneID>{
+                         SceneID::LINEUP, SceneID::STRATEGY,
+                         SceneID::SQUAD_PLANNER, SceneID::MEDICAL,
+                         SceneID::PLAYER_COMPARE}));
+  capture(view, "shell_hub_tabs_compare.bmp");
+
+  // Out of work only the manager's own screens and the world stay: the
+  // Squad hub is gone, Matches opens the table, Club the manager page.
+  Navigation::open(&view, NavSection::HOME);
+  frames(view, 2);
+  ASSERT_TRUE(controller.resignFromClub());
+  frames(view, 3);
+  pressKey(view, ImGuiKey_F5);
+  EXPECT_EQ(activeId(view), SceneID::STANDINGS);
+  pressKey(view, ImGuiKey_F7);
+  EXPECT_EQ(activeId(view), SceneID::MANAGER);
+  pressKey(view, ImGuiKey_F3);
+  EXPECT_EQ(activeId(view), SceneID::MANAGER) << "no Squad hub out of work";
+  capture(view, "shell_hubs_unemployed.bmp");
 }

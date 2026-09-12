@@ -16,6 +16,7 @@
 #include "database/gamedata.h"
 #include "database/sqlite_rows.h"
 #include "model/board.h"
+#include "model/competition.h"
 #include "model/inbox.h"
 #include "model/match_report.h"
 #include "model/player.h"
@@ -772,7 +773,7 @@ std::vector<AwardRecord> AwardSystem::onMonthStart(GameData& gamedata,
   const LeagueID managed_league = managed->get().getLeagueId();
   const auto league = gamedata.getLeague(managed_league);
   const std::string league_name =
-      league ? league->get().getName() : std::string();
+      league ? Competitions::leagueNameArg(league->get()) : std::string();
   const auto post = [&](std::size_t from, std::size_t to, bool season)
   {
     std::vector<const AwardRecord*> mine;

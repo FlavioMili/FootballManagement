@@ -115,6 +115,8 @@ struct MatchJob
   std::uint32_t seed = 0;
   TeamSetup home;
   TeamSetup away;
+  /** Played with MatchFidelity::BACKGROUND (as unwatched fixtures are). */
+  bool background = false;
 };
 
 /** A match that did not reach full time or produced invalid numbers. */

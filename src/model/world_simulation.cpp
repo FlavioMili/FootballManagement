@@ -678,8 +678,14 @@ void WorldSimulation::updateWeeklyMorale(Team& team)
     max_week_minutes =
         std::max(max_week_minutes, player.getDynamics().week_minutes);
   }
-  std::ranges::sort(ranked, [](const Ranked& a, const Ranked& b)
-                    { return a.overall > b.overall; });
+  // Ties by id: the squad list's order differs after a reload.
+  std::ranges::sort(ranked,
+                    [](const Ranked& a, const Ranked& b)
+                    {
+                      return a.overall != b.overall
+                                 ? a.overall > b.overall
+                                 : a.player->getId() < b.player->getId();
+                    });
   // Matches this week: the most used player played every minute of them.
   const int matches = (max_week_minutes + 89) / 90;
   const double wage_scale =
@@ -926,6 +932,8 @@ void WorldSimulation::onManagedTeamSelected(
 void WorldSimulation::onManagerLeft()
 {
   board = BoardState{};
+  // The camp and tour were booked for the club he leaves.
+  preseason.clear();
   cash_warning_sent = false;
   transfer_embargo = false;
   week_recoveries.clear();
@@ -1027,7 +1035,7 @@ void WorldSimulation::postSquadReport(const GameDateValue& date,
   {
     key_players.push_back(std::format(
         "{} ({}, {})", ranked[i].second->getName(),
-        RoleUtils::toString(ranked[i].second->getRole()),
+        RoleUtils::shortName(ranked[i].second->getRole()),
         std::lround(ranked[i].first)));
   }
   const SquadAreas areas = squadAreas(ranked);
@@ -1131,7 +1139,8 @@ void WorldSimulation::postScoutSuggestion(const GameDateValue& date,
   {
     post(date, InboxCategory::Transfer, "INBOX_SCOUT_SUGGESTION_TITLE",
          "INBOX_SCOUT_SUGGESTION_NONE_BODY",
-         {area, RoleUtils::toString(filter.role)}, std::nullopt, team.getId());
+         {area, RoleUtils::shortNameArg(filter.role)}, std::nullopt,
+         team.getId());
     return;
   }
   const auto player = gamedata->getPlayer(best->player_id);
@@ -1139,7 +1148,7 @@ void WorldSimulation::postScoutSuggestion(const GameDateValue& date,
   const auto club = gamedata->getTeam(best->team_id);
   post(date, InboxCategory::Transfer, "INBOX_SCOUT_SUGGESTION_TITLE",
        "INBOX_SCOUT_SUGGESTION_BODY",
-       {player->get().getName(), RoleUtils::toString(best->role),
+       {player->get().getName(), RoleUtils::shortNameArg(best->role),
         std::to_string(best->age),
         club && best->team_id != FREE_AGENTS_TEAM_ID
             ? club->get().getName()
@@ -1652,10 +1661,8 @@ void WorldSimulation::awardPrizeMoney(const GameDateValue& date,
     const auto economy = economies.find(league_id);
     if (economy == economies.end()) continue;
     const std::vector<TeamID> order = standings(league_id);
-    const std::vector<std::int64_t> prizes =
-        ClubEconomy::prizeMoney(economy->second, order.size());
     const std::vector<std::int64_t> merit =
-        ClubEconomy::meritMoney(economy->second, order.size());
+        ClubEconomy::prizeMoney(economy->second, order.size());
 
     // Clubs ordered by reputation give the expected finish. [P]
     std::vector<TeamID> by_reputation = order;
@@ -1673,14 +1680,11 @@ void WorldSimulation::awardPrizeMoney(const GameDateValue& date,
       const auto team_ref = gamedata->getTeam(order[position]);
       if (!team_ref) continue;
       Team& team = team_ref->get();
-      // Merit money is part of the league's broadcasting deal; the rest is
-      // continental prize money.
+      // Merit money is part of the league's broadcasting deal. Continental
+      // prize money is paid by the competitions as it is earned.
       if (merit[position] > 0)
         team.getFinances().record(date, FinanceCategory::Broadcasting,
                                   merit[position]);
-      if (prizes[position] > merit[position])
-        team.getFinances().record(date, FinanceCategory::PrizeMoney,
-                                  prizes[position] - merit[position]);
 
       // Reputation moves with performance against expectation. [P]
       const auto expected = static_cast<double>(
@@ -1701,7 +1705,7 @@ void WorldSimulation::awardPrizeMoney(const GameDateValue& date,
         post(date, InboxCategory::Board, "INBOX_SEASON_REVIEW_TITLE",
              "INBOX_SEASON_REVIEW_BODY",
              {ordinalText(final_position), ordinalText(board.target_position),
-              formatMoney(prizes[position]),
+              formatMoney(merit[position]),
               std::to_string(std::lround(board.confidence))},
              std::nullopt, managed_team_id);
       }
@@ -1922,7 +1926,8 @@ void WorldSimulation::save(
   WorldStateRepository world_repo(db_conn);
   world_repo.saveBoard(board);
   world_repo.saveWorldState(gamedata->getWorldSeed(),
-                            gamedata->peekNextPlayerId());
+                            gamedata->peekNextPlayerId(),
+                            gamedata->getStaff().peekNextId());
   PlayerRepository player_repo(db_conn);
   for (const PlayerID player_id : gamedata->getRemovedPlayerIds())
     player_repo.deletePlayer(player_id);

@@ -273,7 +273,8 @@ NextActionFacts gatherNextActionFacts(const GameController& controller)
         {needs.missing_wing, PlayerRole::LW},
         {needs.missing_st, PlayerRole::ST}};
     for (const auto& [missing, role] : holes)
-      if (missing > 0) facts.squad_holes.push_back(RoleUtils::toString(role));
+      if (missing > 0)
+        facts.squad_holes.emplace_back(RoleUtils::shortName(role));
   }
   return facts;
 }

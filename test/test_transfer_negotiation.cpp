@@ -540,3 +540,25 @@ TEST(TransferNegotiationTest, SquadFitRanksNeedsAboveMarginalUpgrades)
   EXPECT_LT(surplus.score, 0.0f);
   EXPECT_GT(squadFit(needs, ST, 80.0f).score, squadFit(needs, ST, 74.0f).score);
 }
+
+TEST(TransferNegotiationTest, AiBidsAboveTheInstalmentThresholdAreAccepted)
+{
+  // Big AI deals are paid in instalments; the headline fee rises so the
+  // seller still receives his price in value and accepts the opening bid.
+  for (const std::uint32_t value : {2'000'000u, 8'000'000u, 40'000'000u})
+  {
+    SaleContext context = rotationPlayer();
+    context.market_value = value;
+    const std::uint32_t asking = valueForSale(context).asking_fee;
+    const OfferTerms bid = aiBidFor(asking, context.age);
+    EXPECT_TRUE(isValid(bid));
+    EXPECT_GE(bid.fee, asking);
+    EXPECT_EQ(bid.instalment_years > 0,
+              asking >= TransferTuning::Offer::AI_INSTALMENT_THRESHOLD);
+    EXPECT_EQ(evaluateOffer(context, bid, 0).decision,
+              ClubResponse::Decision::Accept)
+        << value;
+    // ...but not by more than the discount on the deferred money.
+    EXPECT_LE(static_cast<double>(bid.fee), 1.2 * static_cast<double>(asking));
+  }
+}

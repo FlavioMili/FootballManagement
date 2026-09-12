@@ -243,6 +243,15 @@ class Player
    */
   void updateMarketValue(const StatsConfig& stats_config) const;
 
+  /**
+   * @brief Market value model shared by own players and scouting estimates:
+   * ability, an inverted-U age curve, a potential premium that fades out
+   * between 22 and 25, and the remaining contract length.
+   * @return Value in euros, within EUR 10K - 250M.
+   */
+  static double valueFor(double overall, double potential, int age,
+                         double contract_years);
+
   /** @brief Bitmask bit for transfer-listed status. */
   static constexpr uint32_t TRANSFER_LISTED_BIT = 0x01U;
 

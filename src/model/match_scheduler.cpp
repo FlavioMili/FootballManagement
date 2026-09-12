@@ -16,23 +16,6 @@
 
 namespace
 {
-/** Headless step of the update() loop for engines without simulateToEnd(). */
-constexpr float HEADLESS_STEP_SECONDS = 0.25f;
-
-template <typename Engine>
-void runToFullTime(Engine& engine)
-{
-  if constexpr (requires { engine.simulateToEnd(); })
-  {
-    engine.simulateToEnd();
-  }
-  else
-  {
-    while (engine.getState() != MatchState::FULL_TIME)
-      engine.update(HEADLESS_STEP_SECONDS);
-  }
-}
-
 uint8_t toGoals(int goals)
 {
   return static_cast<uint8_t>(std::clamp(
@@ -47,12 +30,14 @@ MatchSimulationResult MatchSimulation::run(const MatchSimulationInput& input,
                      input.away_strategy, config, input.seed);
   MatchdaySquad::carryCondition(engine, input.home_lineup);
   MatchdaySquad::carryCondition(engine, input.away_lineup);
-  runToFullTime(engine);
+  // Nobody watches these matches: the background fidelity is enough.
+  engine.simulateToEnd(MatchFidelity::BACKGROUND);
 
   MatchSimulationResult result;
   result.home_goals = toGoals(engine.getHomeScore());
   result.away_goals = toGoals(engine.getAwayScore());
-  if (input.knockout && result.home_goals == result.away_goals)
+  if (input.knockout &&
+      result.home_goals + input.knockout_lead == result.away_goals)
   {
     const Competitions::KnockoutResolution& resolution = *input.knockout;
     result.home_goals =
@@ -70,6 +55,16 @@ MatchSimulationResult MatchSimulation::run(const MatchSimulationInput& input,
   {
     result.report.addLineupAppearances(input.home_lineup, input.home_id);
     result.report.addLineupAppearances(input.away_lineup, input.away_id);
+  }
+  if (result.extra_time)
+  {
+    const Competitions::KnockoutResolution& resolution = *input.knockout;
+    result.report.creditExtraTimeGoals(input.home_lineup, input.home_id, true,
+                                       resolution.home_extra_goals,
+                                       input.seed);
+    result.report.creditExtraTimeGoals(input.away_lineup, input.away_id, false,
+                                       resolution.away_extra_goals,
+                                       input.seed);
   }
   result.consequences = MatchdaySquad::consequences(engine);
   return result;

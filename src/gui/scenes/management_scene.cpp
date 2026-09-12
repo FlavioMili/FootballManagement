@@ -53,6 +53,7 @@
 #include "gui/widgets/icons.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/competition.h"
 #include "model/inbox.h"
 #include "model/role_utils.h"
 
@@ -63,9 +64,10 @@ constexpr float SIDEBAR_COLLAPSED_WIDTH = 60.0f;
 constexpr float SIDEBAR_COLLAPSE_BELOW = 1150.0f;
 constexpr float ICON_SIZE = 16.0f;
 constexpr float TOP_BAR_HEIGHT = 60.0f;
-constexpr float NAV_ITEM_HEIGHT = 34.0f;
+constexpr float NAV_ITEM_HEIGHT = 40.0f;
 /** Items shrink down to this height before the navigation has to scroll. */
 constexpr float NAV_ITEM_MIN_HEIGHT = 22.0f;
+constexpr float HUB_TAB_HEIGHT = 36.0f;
 constexpr float CLUB_BADGE_SIZE = 38.0f;
 constexpr float CONTINUE_MIN_WIDTH = 200.0f;
 constexpr float PALETTE_WIDTH = 620.0f;
@@ -77,83 +79,277 @@ constexpr float SAVE_POLL_SECONDS = 1.0f;
 constexpr const char* PALETTE_POPUP_ID = "##command_palette";
 constexpr const char* MAIN_MENU_CONFIRM_ID = "##confirm_main_menu";
 
+/** One screen of the shell (a tab of its hub). */
 struct NavEntry
 {
   NavSection section;
   const char* label_key;
+};
+
+constexpr size_t MAX_HUB_SECTIONS = 7;
+
+/**
+ * A sidebar destination: a hub of related screens shown as tabs. Its
+ * shortcut and the sidebar open the first screen the manager can use.
+ */
+struct NavHub
+{
+  const char* label_key;
   const char* shortcut;
   ImGuiKey key;
   UI::Icon icon;
+  std::array<NavSection, MAX_HUB_SECTIONS> sections;
 };
 
-struct NavGroup
-{
-  const char* title_key;
-  std::array<const NavEntry*, 6> entries;
-};
+// Every screen, in palette order.
+constexpr std::array<NavEntry, 26> ALL_NAV = {{
+    {NavSection::HOME, "NAV_HOME"},
+    {NavSection::INBOX, "NAV_INBOX"},
+    {NavSection::SQUAD, "NAV_SQUAD"},
+    {NavSection::LINEUP, "NAV_LINEUP"},
+    {NavSection::TACTICS, "NAV_TACTICS"},
+    {NavSection::SQUAD_PLANNER, "NAV_SQUAD_PLANNER"},
+    {NavSection::MEDICAL, "NAV_MEDICAL"},
+    {NavSection::COMPARE, "NAV_COMPARE"},
+    {NavSection::TRAINING, "NAV_TRAINING"},
+    {NavSection::PLANNING, "NAV_PLANNING"},
+    {NavSection::FIXTURES, "NAV_FIXTURES"},
+    {NavSection::STANDINGS, "NAV_STANDINGS"},
+    {NavSection::CALENDAR, "NAV_CALENDAR"},
+    {NavSection::OPPOSITION, "NAV_OPPOSITION"},
+    {NavSection::INTERNATIONAL, "NAV_INTERNATIONAL"},
+    {NavSection::DATA_HUB, "NAV_DATA_HUB"},
+    {NavSection::TRANSFERS, "NAV_TRANSFERS"},
+    {NavSection::SCOUTING, "NAV_SCOUTING"},
+    {NavSection::YOUTH, "NAV_YOUTH"},
+    {NavSection::CLUB, "NAV_CLUB"},
+    {NavSection::FINANCES, "NAV_FINANCES"},
+    {NavSection::STAFF, "NAV_STAFF"},
+    {NavSection::DELEGATION, "NAV_DELEGATION"},
+    {NavSection::MANAGER, "NAV_MANAGER"},
+    {NavSection::AWARDS, "NAV_AWARDS"},
+    {NavSection::RECORDS, "NAV_RECORDS"},
+}};
 
+constexpr NavSection END = NavSection::NONE;
 // clang-format off
-constexpr NavEntry NAV_HOME{NavSection::HOME, "NAV_HOME", "F1", ImGuiKey_F1, UI::Icon::HOME};
-constexpr NavEntry NAV_INBOX{NavSection::INBOX, "NAV_INBOX", "F2", ImGuiKey_F2, UI::Icon::INBOX};
-constexpr NavEntry NAV_SQUAD{NavSection::SQUAD, "NAV_SQUAD", "F3", ImGuiKey_F3, UI::Icon::SQUAD};
-constexpr NavEntry NAV_LINEUP{NavSection::LINEUP, "NAV_LINEUP", "F4", ImGuiKey_F4, UI::Icon::LINEUP};
-constexpr NavEntry NAV_TACTICS{NavSection::TACTICS, "NAV_TACTICS", "F5", ImGuiKey_F5, UI::Icon::TACTICS};
-constexpr NavEntry NAV_FIXTURES{NavSection::FIXTURES, "NAV_FIXTURES", "F6", ImGuiKey_F6, UI::Icon::FIXTURES};
-constexpr NavEntry NAV_STANDINGS{NavSection::STANDINGS, "NAV_STANDINGS", "F7", ImGuiKey_F7, UI::Icon::STANDINGS};
-constexpr NavEntry NAV_TRANSFERS{NavSection::TRANSFERS, "NAV_TRANSFERS", "F8", ImGuiKey_F8, UI::Icon::TRANSFERS};
-constexpr NavEntry NAV_FINANCES{NavSection::FINANCES, "NAV_FINANCES", "F9", ImGuiKey_F9, UI::Icon::FINANCES};
-constexpr NavEntry NAV_CLUB{NavSection::CLUB, "NAV_CLUB", "F10", ImGuiKey_F10, UI::Icon::CLUB};
-constexpr NavEntry NAV_SCOUTING{NavSection::SCOUTING, "NAV_SCOUTING", "F11", ImGuiKey_F11, UI::Icon::SEARCH};
-constexpr NavEntry NAV_TRAINING{NavSection::TRAINING, "NAV_TRAINING", nullptr, ImGuiKey_None, UI::Icon::FIXTURES};
-constexpr NavEntry NAV_STAFF{NavSection::STAFF, "NAV_STAFF", nullptr, ImGuiKey_None, UI::Icon::SQUAD};
-constexpr NavEntry NAV_YOUTH{NavSection::YOUTH, "NAV_YOUTH", nullptr, ImGuiKey_None, UI::Icon::SQUAD};
-constexpr NavEntry NAV_MANAGER{NavSection::MANAGER, "NAV_MANAGER", nullptr, ImGuiKey_None, UI::Icon::CLUB};
-constexpr NavEntry NAV_MEDICAL{NavSection::MEDICAL, "NAV_MEDICAL", nullptr, ImGuiKey_None, UI::Icon::SQUAD};
-constexpr NavEntry NAV_CALENDAR{NavSection::CALENDAR, "NAV_CALENDAR", nullptr, ImGuiKey_None, UI::Icon::FIXTURES};
-constexpr NavEntry NAV_PLANNER{NavSection::SQUAD_PLANNER, "NAV_SQUAD_PLANNER", nullptr, ImGuiKey_None, UI::Icon::LINEUP};
-constexpr NavEntry NAV_COMPARE{NavSection::COMPARE, "NAV_COMPARE", nullptr, ImGuiKey_None, UI::Icon::SEARCH};
-constexpr NavEntry NAV_OPPOSITION{NavSection::OPPOSITION, "NAV_OPPOSITION", nullptr, ImGuiKey_None, UI::Icon::TACTICS};
-constexpr NavEntry NAV_DATA_HUB{NavSection::DATA_HUB, "NAV_DATA_HUB", nullptr, ImGuiKey_None, UI::Icon::STANDINGS};
-constexpr NavEntry NAV_DELEGATION{NavSection::DELEGATION, "NAV_DELEGATION", nullptr, ImGuiKey_None, UI::Icon::SETTINGS};
-constexpr NavEntry NAV_INTERNATIONAL{NavSection::INTERNATIONAL, "NAV_INTERNATIONAL", nullptr, ImGuiKey_None, UI::Icon::STANDINGS};
-constexpr NavEntry NAV_AWARDS{NavSection::AWARDS, "NAV_AWARDS", nullptr, ImGuiKey_None, UI::Icon::STANDINGS};
-constexpr NavEntry NAV_RECORDS{NavSection::RECORDS, "NAV_RECORDS", nullptr, ImGuiKey_None, UI::Icon::STANDINGS};
-constexpr NavEntry NAV_PLANNING{NavSection::PLANNING, "NAV_PLANNING", nullptr, ImGuiKey_None, UI::Icon::FIXTURES};
+constexpr std::array<NavHub, 7> NAV_HUBS = {{
+    {"NAV_HOME", "F1", ImGuiKey_F1, UI::Icon::HOME,
+     {NavSection::HOME, END, END, END, END, END, END}},
+    {"NAV_INBOX", "F2", ImGuiKey_F2, UI::Icon::INBOX,
+     {NavSection::INBOX, END, END, END, END, END, END}},
+    {"NAV_SQUAD", "F3", ImGuiKey_F3, UI::Icon::SQUAD,
+     {NavSection::SQUAD, NavSection::LINEUP, NavSection::TACTICS,
+      NavSection::SQUAD_PLANNER, NavSection::MEDICAL, NavSection::COMPARE,
+      END}},
+    {"NAV_TRAINING", "F4", ImGuiKey_F4, UI::Icon::TACTICS,
+     {NavSection::TRAINING, NavSection::PLANNING, END, END, END, END, END}},
+    {"NAV_HUB_MATCHES", "F5", ImGuiKey_F5, UI::Icon::FIXTURES,
+     {NavSection::FIXTURES, NavSection::STANDINGS, NavSection::CALENDAR,
+      NavSection::OPPOSITION, NavSection::INTERNATIONAL, NavSection::DATA_HUB,
+      END}},
+    {"NAV_HUB_RECRUITMENT", "F6", ImGuiKey_F6, UI::Icon::TRANSFERS,
+     {NavSection::TRANSFERS, NavSection::SCOUTING, NavSection::YOUTH, END,
+      END, END, END}},
+    {"NAV_CLUB", "F7", ImGuiKey_F7, UI::Icon::CLUB,
+     {NavSection::CLUB, NavSection::FINANCES, NavSection::STAFF,
+      NavSection::DELEGATION, NavSection::MANAGER, NavSection::AWARDS,
+      NavSection::RECORDS}},
+}};
 // clang-format on
 
-// The comparison screen is reached from player lists and the palette only.
-// Delegation is reached from Home and the palette.
-// Awards and records are reached from the palette and from each other.
-constexpr std::array<const NavEntry*, 26> ALL_NAV = {
-    &NAV_HOME,     &NAV_INBOX,      &NAV_SQUAD,         &NAV_LINEUP,
-    &NAV_TACTICS,  &NAV_FIXTURES,   &NAV_STANDINGS,     &NAV_TRANSFERS,
-    &NAV_FINANCES, &NAV_CLUB,       &NAV_SCOUTING,      &NAV_TRAINING,
-    &NAV_STAFF,    &NAV_YOUTH,      &NAV_MANAGER,       &NAV_MEDICAL,
-    &NAV_CALENDAR, &NAV_PLANNER,    &NAV_COMPARE,       &NAV_OPPOSITION,
-    &NAV_DATA_HUB, &NAV_DELEGATION, &NAV_INTERNATIONAL, &NAV_AWARDS,
-    &NAV_RECORDS,  &NAV_PLANNING};
-
-constexpr std::array<NavGroup, 4> NAV_GROUPS = {{
-    {"NAV_GROUP_CLUB",
-     {&NAV_HOME, &NAV_INBOX, &NAV_FINANCES, &NAV_CLUB, &NAV_PLANNING,
-      &NAV_MANAGER}},
-    {"NAV_GROUP_TEAM",
-     {&NAV_SQUAD, &NAV_LINEUP, &NAV_TACTICS, &NAV_TRAINING, &NAV_MEDICAL}},
-    {"NAV_GROUP_COMPETITION",
-     {&NAV_FIXTURES, &NAV_CALENDAR, &NAV_STANDINGS, &NAV_INTERNATIONAL,
-      &NAV_OPPOSITION, &NAV_DATA_HUB}},
-    {"NAV_GROUP_RECRUITMENT",
-     {&NAV_TRANSFERS, &NAV_SCOUTING, &NAV_PLANNER, &NAV_YOUTH, &NAV_STAFF}},
-}};
+constexpr bool everyScreenHasOneHub()
+{
+  for (const NavEntry& entry : ALL_NAV)
+  {
+    int hubs = 0;
+    for (const NavHub& hub : NAV_HUBS)
+      for (const NavSection section : hub.sections)
+        hubs += section == entry.section ? 1 : 0;
+    if (hubs != 1) return false;
+  }
+  return true;
+}
+static_assert(everyScreenHasOneHub(),
+              "every screen belongs to exactly one sidebar hub");
 
 /** Out of work only the manager's own screens and the world stay open. */
 bool sectionOpen(NavSection section, bool unemployed)
 {
-  if (!unemployed) return true;
+  if (!unemployed) return section != NavSection::NONE;
   return section == NavSection::HOME || section == NavSection::INBOX ||
          section == NavSection::STANDINGS || section == NavSection::MANAGER ||
          section == NavSection::INTERNATIONAL ||
          section == NavSection::AWARDS || section == NavSection::RECORDS;
+}
+
+const char* labelKeyOf(NavSection section)
+{
+  const auto found = std::ranges::find(ALL_NAV, section, &NavEntry::section);
+  return found != ALL_NAV.end() ? found->label_key : "NAV_HOME";
+}
+
+const NavHub* hubOf(NavSection section)
+{
+  if (section == NavSection::NONE) return nullptr;
+  const auto found = std::ranges::find_if(
+      NAV_HUBS, [section](const NavHub& hub)
+      { return std::ranges::find(hub.sections, section) != hub.sections.end(); });
+  return found != NAV_HUBS.end() ? &*found : nullptr;
+}
+
+/** First screen of a hub the manager can use (NONE: hub hidden). */
+NavSection firstOpenSection(const NavHub& hub, bool unemployed)
+{
+  for (const NavSection section : hub.sections)
+    if (sectionOpen(section, unemployed)) return section;
+  return NavSection::NONE;
+}
+
+/** Unread count shown next to a screen (inbox, new scout reports). */
+size_t sectionBadge(const GameController& controller, NavSection section)
+{
+  if (section == NavSection::INBOX) return controller.getUnreadInboxCount();
+  if (section == NavSection::SCOUTING)
+    return controller.getUnreadScoutReportCount();
+  return 0U;
+}
+
+/** Accent pill with a count; returns its width. */
+float drawCountPill(ImDrawList* drawList, ImVec2 min, float height,
+                    size_t count)
+{
+  const Theme::Palette& palette = Theme::palette();
+  ImGui::PushFont(nullptr, Theme::textSize(Theme::Text::CAPTION));
+  const std::string text = count > 99 ? "99+" : std::to_string(count);
+  const ImVec2 textSize = ImGui::CalcTextSize(text.c_str());
+  const float width =
+      std::max(textSize.x + 8.0f * Theme::scale(), 18.0f * Theme::scale());
+  const float pillHeight = std::min(height, textSize.y + 2.0f * Theme::scale());
+  const ImVec2 pillMin(min.x, min.y + (height - pillHeight) * 0.5f);
+  drawList->AddRectFilled(
+      pillMin, ImVec2(pillMin.x + width, pillMin.y + pillHeight),
+      Theme::toU32(palette.accent), pillHeight * 0.5f);
+  drawList->AddText(ImVec2(pillMin.x + (width - textSize.x) * 0.5f,
+                           pillMin.y + (pillHeight - textSize.y) * 0.5f),
+                    Theme::toU32(palette.on_accent), text.c_str());
+  ImGui::PopFont();
+  return width;
+}
+
+/** Width of the count pill drawn by drawCountPill(). */
+float countPillWidth(size_t count)
+{
+  ImGui::PushFont(nullptr, Theme::textSize(Theme::Text::CAPTION));
+  const std::string text = count > 99 ? "99+" : std::to_string(count);
+  const float width = std::max(
+      ImGui::CalcTextSize(text.c_str()).x + 8.0f * Theme::scale(),
+      18.0f * Theme::scale());
+  ImGui::PopFont();
+  return width;
+}
+
+/**
+ * Tabs of the current screen's hub above the page (hubs with one usable
+ * screen draw nothing). The current tab is not a button: it has nothing to
+ * do. Tabs share the width when their labels do not fit, with ellipsis.
+ */
+void renderHubTabs(GUIView* view, NavSection current)
+{
+  const NavHub* hub = hubOf(current);
+  if (hub == nullptr) return;
+  const GameController& controller = view->getController();
+  const bool unemployed = controller.isUnemployed();
+  std::array<NavSection, MAX_HUB_SECTIONS> shown{};
+  size_t count = 0;
+  for (const NavSection section : hub->sections)
+    if (sectionOpen(section, unemployed)) shown[count++] = section;
+  if (count < 2) return;
+
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  const float height = HUB_TAB_HEIGHT * scale;
+  const float padding = Theme::Space::M * scale;
+  const float gap = Theme::Space::XS * scale;
+  const float available = ImGui::GetContentRegionAvail().x;
+  std::array<const char*, MAX_HUB_SECTIONS> labels{};
+  std::array<size_t, MAX_HUB_SECTIONS> badges{};
+  std::array<float, MAX_HUB_SECTIONS> widths{};
+  float total = gap * static_cast<float>(count - 1);
+  for (size_t index = 0; index < count; ++index)
+  {
+    labels[index] = LOC(labelKeyOf(shown[index]));
+    badges[index] = sectionBadge(controller, shown[index]);
+    widths[index] =
+        ImGui::CalcTextSize(labels[index]).x +
+        2.0f * padding +
+        (badges[index] > 0 ? countPillWidth(badges[index]) + gap : 0.0f);
+    total += widths[index];
+  }
+  const float shared =
+      (available - gap * static_cast<float>(count - 1)) /
+      static_cast<float>(count);
+
+  const ImVec2 origin = ImGui::GetCursorScreenPos();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  drawList->AddLine(ImVec2(origin.x, origin.y + height - 1.0f),
+                    ImVec2(origin.x + available, origin.y + height - 1.0f),
+                    Theme::toU32(palette.border), 1.0f);
+  float x = origin.x;
+  ImGui::PushID("##hub_tabs");
+  for (size_t index = 0; index < count; ++index)
+  {
+    const NavSection section = shown[index];
+    const float width = total > available ? shared : widths[index];
+    const ImVec2 min(x, origin.y);
+    const ImVec2 max(x + width, origin.y + height);
+    ImGui::SetCursorScreenPos(min);
+    const bool selected = section == current;
+    bool hovered = false;
+    if (selected)
+    {
+      ImGui::Dummy(ImVec2(width, height));
+    }
+    else
+    {
+      ImGui::PushID(static_cast<int>(section));
+      if (ImGui::InvisibleButton("##tab", ImVec2(width, height)))
+        Navigation::open(view, section);
+      hovered = ImGui::IsItemHovered();
+      ImGui::PopID();
+    }
+    if (hovered)
+      drawList->AddRectFilled(min, ImVec2(max.x, max.y - 1.0f),
+                              Theme::toU32(palette.raised), 4.0f * scale,
+                              ImDrawFlags_RoundCornersTop);
+    if (selected)
+      drawList->AddRectFilled(ImVec2(min.x + 2.0f * scale, max.y - 3.0f * scale),
+                              ImVec2(max.x - 2.0f * scale, max.y),
+                              Theme::toU32(palette.accent), 1.5f * scale);
+    const char* label = labels[index];
+    const float pill =
+        badges[index] > 0 ? countPillWidth(badges[index]) + gap : 0.0f;
+    const float textRoom = std::max(0.0f, width - 2.0f * padding - pill);
+    const ImVec2 textPos(min.x + padding,
+                         min.y + (height - ImGui::GetTextLineHeight()) * 0.5f);
+    const bool cut = UI::drawTextFitted(
+        drawList, textPos,
+        Theme::toU32(selected || hovered ? palette.text : palette.muted), label,
+        textRoom);
+    if (badges[index] > 0)
+      drawCountPill(drawList,
+                    ImVec2(textPos.x +
+                               std::min(ImGui::CalcTextSize(label).x, textRoom) +
+                               gap,
+                           min.y),
+                    height, badges[index]);
+    if (cut && (hovered || (selected && ImGui::IsItemHovered())))
+      ImGui::SetTooltip("%s", label);
+    x += width + gap;
+  }
+  ImGui::PopID();
+  ImGui::SetCursorScreenPos(ImVec2(origin.x, origin.y + height));
+  ImGui::Dummy(ImVec2(available, Theme::Space::S * scale));
 }
 
 MainGameScene* careerHub(GUIView* view)
@@ -197,24 +393,20 @@ bool navItem(const char* label, const char* shortcut, bool selected,
   if (badge > 0)
   {
     // Unread count pill (top-right of the icon when collapsed).
-    ImGui::PushFont(nullptr, Theme::textSize(Theme::Text::CAPTION));
-    const std::string count = badge > 99 ? "99+" : std::to_string(badge);
-    const ImVec2 textSize = ImGui::CalcTextSize(count.c_str());
-    const float pillWidth =
-        std::max(textSize.x + 8.0f * Theme::scale(), 18.0f * Theme::scale());
-    const float pillHeight = textSize.y + 2.0f * Theme::scale();
-    const ImVec2 pillMin =
-        collapsed ? ImVec2(iconX + 2.0f * Theme::scale(),
-                           start.y + 3.0f * Theme::scale())
-                  : ImVec2(end.x - pillWidth - Theme::Space::S * Theme::scale(),
-                           start.y + (size.y - pillHeight) * 0.5f);
-    drawList->AddRectFilled(
-        pillMin, ImVec2(pillMin.x + pillWidth, pillMin.y + pillHeight),
-        Theme::toU32(palette.accent), pillHeight * 0.5f);
-    drawList->AddText(ImVec2(pillMin.x + (pillWidth - textSize.x) * 0.5f,
-                             pillMin.y + 1.0f * Theme::scale()),
-                      Theme::toU32(palette.on_accent), count.c_str());
-    ImGui::PopFont();
+    if (collapsed)
+      drawCountPill(drawList,
+                    ImVec2(iconX + 2.0f * Theme::scale(),
+                           start.y + 3.0f * Theme::scale()),
+                    Theme::textSize(Theme::Text::CAPTION) *
+                            ImGui::GetStyle().FontScaleDpi +
+                        2.0f * Theme::scale(),
+                    badge);
+    else
+      drawCountPill(drawList,
+                    ImVec2(end.x - countPillWidth(badge) -
+                               Theme::Space::S * Theme::scale(),
+                           start.y),
+                    size.y, badge);
     shortcut = nullptr;
   }
   if (collapsed)
@@ -501,8 +693,13 @@ void ManagementScene::render()
   ImGui::BeginChild("##content", ImVec2(0.0f, 0.0f),
                     ImGuiChildFlags_AlwaysUseWindowPadding);
   ImGui::PopStyleVar();
+  // Detail screens (profile, match report) keep their Back button only: no
+  // hub tabs and no tip of the section they were opened from.
+  const bool detailScreen =
+      getID() == SceneID::PLAYER_PROFILE || getID() == SceneID::MATCH_REPORT;
+  if (!detailScreen) renderHubTabs(guiView, navSection());
   GuidanceUI::renderReclaimNotice(guiView);
-  GuidanceUI::renderScreenTip(navSection());
+  if (!detailScreen) GuidanceUI::renderScreenTip(navSection());
   renderContent();
   ImGui::EndChild();
   ImGui::EndGroup();
@@ -540,51 +737,34 @@ void ManagementScene::renderSidebar(bool collapsed)
                     ImGuiChildFlags_AlwaysUseWindowPadding,
                     ImGuiWindowFlags_NoScrollbar);
 
-  // Every destination should be visible without scrolling: on short windows
-  // (720p, large UI scales) the items shrink towards a compact height. The
-  // navigation still scrolls (mouse wheel) as a last resort, so the footer
-  // actions stay pinned and reachable at any window height and UI scale.
+  // Every hub should be visible without scrolling: on short windows (large
+  // UI scales) the items shrink towards a compact height. The navigation
+  // still scrolls (mouse wheel) as a last resort, so the footer actions
+  // stay pinned and reachable at any window height and UI scale.
   const float spacing = ImGui::GetStyle().ItemSpacing.y;
   const bool unemployed = controller.isUnemployed();
-  const auto visible = [unemployed](const NavEntry* entry)
-  { return entry != nullptr && sectionOpen(entry->section, unemployed); };
-  size_t itemCount = 0;  // Navigation entries (footer rows added below).
-  size_t groupCount = 0;
-  for (const NavGroup& group : NAV_GROUPS)
-  {
-    const auto shown = std::ranges::count_if(group.entries, visible);
-    itemCount += static_cast<size_t>(shown);
-    if (shown > 0) ++groupCount;
-  }
+  const size_t itemCount = static_cast<size_t>(std::ranges::count_if(
+      NAV_HUBS, [unemployed](const NavHub& hub)
+      { return firstOpenSection(hub, unemployed) != NavSection::NONE; }));
   const float clubBlock =
       controller.getManagedTeam()
           ? (CLUB_BADGE_SIZE + Theme::Space::M) * Theme::scale() + spacing
           : 0.0f;
-  // On short windows the group titles give way to thin separators before
-  // the items would have to shrink below their compact height.
-  const float titledOverhead = (Theme::Space::S + 2.0f) * Theme::scale() +
-                               ImGui::GetTextLineHeight() + 3.0f * spacing;
-  const float separatorOverhead =
-      (Theme::Space::S + 3.0f) * Theme::scale() + 3.0f * spacing;
-  const auto fitHeight = [&](float groupOverhead, size_t footerRows)
+  const auto fitHeight = [&](size_t footerRows)
   {
-    const float fixedHeight = clubBlock +
-                              static_cast<float>(groupCount) * groupOverhead +
-                              Theme::Space::S * Theme::scale() + 2.0f * spacing;
+    const float fixedHeight =
+        clubBlock + 2.0f * Theme::Space::S * Theme::scale() + 3.0f * spacing;
     return (ImGui::GetContentRegionAvail().y - fixedHeight) /
                static_cast<float>(itemCount + footerRows) -
            spacing;
   };
-  const bool groupSeparators =
-      collapsed ||
-      fitHeight(titledOverhead, 3) < NAV_ITEM_MIN_HEIGHT * Theme::scale();
   // Short windows: Save / Settings / Main menu share one row of icons.
-  const bool compactFooter = groupSeparators && !collapsed;
+  const bool compactFooter =
+      !collapsed && fitHeight(3) < NAV_ITEM_MIN_HEIGHT * Theme::scale();
   const size_t footerRows = compactFooter ? 1 : 3;
-  const float itemHeight = std::clamp(
-      fitHeight(groupSeparators ? separatorOverhead : titledOverhead,
-                footerRows),
-      NAV_ITEM_MIN_HEIGHT * Theme::scale(), NAV_ITEM_HEIGHT * Theme::scale());
+  const float itemHeight =
+      std::clamp(fitHeight(footerRows), NAV_ITEM_MIN_HEIGHT * Theme::scale(),
+                 NAV_ITEM_HEIGHT * Theme::scale());
   const float footerHeight =
       static_cast<float>(footerRows) * (itemHeight + spacing) +
       Theme::Space::S * Theme::scale();
@@ -647,7 +827,8 @@ void ManagementScene::renderSidebar(bool collapsed)
         cut |= UI::drawTextFitted(
             drawList,
             ImVec2(textX, start.y + badgeSize - ImGui::GetTextLineHeight()),
-            Theme::toU32(palette.muted), league->get().getName(), textWidth);
+            Theme::toU32(palette.muted),
+            Competitions::leagueName(league->get()), textWidth);
         ImGui::PopFont();
       }
     }
@@ -658,35 +839,19 @@ void ManagementScene::renderSidebar(bool collapsed)
                                   ImGui::GetStyle().ItemSpacing.y));
   }
 
-  const NavSection current = navSection();
-  for (const NavGroup& group : NAV_GROUPS)
+  const NavHub* currentHub = hubOf(navSection());
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
+  for (const NavHub& hub : NAV_HUBS)
   {
-    if (std::ranges::none_of(group.entries, visible)) continue;
-    ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
-    if (groupSeparators)
-    {
-      ImGui::Separator();
-    }
-    else
-    {
-      ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
-                           Theme::Space::M * Theme::scale());
-      UI::sectionLabel(LOC(group.title_key));
-    }
-    ImGui::Dummy(ImVec2(0.0f, 2.0f * Theme::scale()));
-    for (const NavEntry* entry : group.entries)
-    {
-      if (!visible(entry)) continue;
-      size_t badge = 0U;
-      if (entry->section == NavSection::INBOX)
-        badge = controller.getUnreadInboxCount();
-      else if (entry->section == NavSection::SCOUTING)
-        badge = controller.getUnreadScoutReportCount();
-      if (navItem(LOC(entry->label_key), entry->shortcut,
-                  current == entry->section, entry->icon, collapsed, itemHeight,
-                  badge))
-        Navigation::open(guiView, entry->section);
-    }
+    const NavSection first = firstOpenSection(hub, unemployed);
+    if (first == NavSection::NONE) continue;
+    size_t badge = 0U;
+    for (const NavSection section : hub.sections)
+      if (sectionOpen(section, unemployed))
+        badge += sectionBadge(controller, section);
+    if (navItem(LOC(hub.label_key), hub.shortcut, currentHub == &hub, hub.icon,
+                collapsed, itemHeight, badge))
+      Navigation::open(guiView, first);
   }
   sidebar_nav_overflow = ImGui::GetScrollMaxY() > 0.0f;
 
@@ -958,13 +1123,14 @@ void ManagementScene::handleShortcuts()
           "", ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel))
     return;
 
+  // F1-F7 open the sidebar hubs (their first screen).
   const bool unemployed = guiView->getController().isUnemployed();
-  for (const NavEntry* entry : ALL_NAV)
+  for (const NavHub& hub : NAV_HUBS)
   {
-    if (entry->key != ImGuiKey_None && ImGui::IsKeyPressed(entry->key, false) &&
-        sectionOpen(entry->section, unemployed))
+    const NavSection first = firstOpenSection(hub, unemployed);
+    if (first != NavSection::NONE && ImGui::IsKeyPressed(hub.key, false))
     {
-      Navigation::open(guiView, entry->section);
+      Navigation::open(guiView, first);
       return;
     }
   }
@@ -1008,17 +1174,22 @@ void ManagementScene::buildPaletteIndex()
     item.label_lower = PlayerView::toLower(item.label);
     palette_entries.push_back(std::move(item));
   }
-  for (const NavEntry* entry : ALL_NAV)
+  const bool unemployed = controller.isUnemployed();
+  for (const NavEntry& entry : ALL_NAV)
   {
-    if (!sectionOpen(entry->section, controller.isUnemployed())) continue;
+    if (!sectionOpen(entry.section, unemployed)) continue;
+    // A hub's first screen shows its shortcut, the others their hub.
+    const NavHub* hub = hubOf(entry.section);
+    std::string detail = LOC("PALETTE_KIND_SCREEN");
+    if (hub != nullptr && firstOpenSection(*hub, unemployed) == entry.section)
+      detail += std::format("  ·  {}", hub->shortcut);
+    else if (hub != nullptr)
+      detail += std::format("  ·  {}", LOC(hub->label_key));
     PaletteEntry item{PaletteEntry::Kind::SECTION,
-                      static_cast<uint32_t>(entry->section),
-                      LOC(entry->label_key),
+                      static_cast<uint32_t>(entry.section),
+                      LOC(entry.label_key),
                       {},
-                      entry->shortcut
-                          ? std::format("{}  ·  {}", LOC("PALETTE_KIND_SCREEN"),
-                                        entry->shortcut)
-                          : std::string(LOC("PALETTE_KIND_SCREEN"))};
+                      std::move(detail)};
     item.label_lower = PlayerView::toLower(item.label);
     palette_entries.push_back(std::move(item));
   }
@@ -1032,8 +1203,9 @@ void ManagementScene::buildPaletteIndex()
         team.getId(),
         team.getName(),
         {},
-        std::format("{}  ·  {}", LOC("PALETTE_KIND_CLUB"),
-                    league ? league->get().getName() : std::string())};
+        std::format(
+            "{}  ·  {}", LOC("PALETTE_KIND_CLUB"),
+            league ? Competitions::leagueName(league->get()) : std::string())};
     item.label_lower = PlayerView::toLower(item.label);
     palette_entries.push_back(std::move(item));
   }
@@ -1049,7 +1221,7 @@ void ManagementScene::buildPaletteIndex()
         player.getId(),
         player.getName(),
         {},
-        std::format("{}  ·  {}", RoleUtils::toString(player.getRole()),
+        std::format("{}  ·  {}", RoleUtils::shortName(player.getRole()),
                     team && player.getTeamId() != FREE_AGENTS_TEAM_ID
                         ? team->get().getName()
                         : std::string(LOC("TRANSFER_FREE_AGENT_LABEL")))};

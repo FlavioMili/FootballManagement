@@ -76,6 +76,29 @@ void Lineup::removeOutfieldPlayer(PlayerID playerID)
   outfield_players.erase(first, last);
 }
 
+bool Lineup::removePlayer(PlayerID playerID)
+{
+  bool found = false;
+  if (goalkeeper && goalkeeper->getId() == playerID)
+  {
+    goalkeeper = nullptr;
+    found = true;
+  }
+  const auto matches = [playerID](const Player* player)
+  { return player && player->getId() == playerID; };
+  found |= std::erase_if(outfield_players,
+                         [&matches](const PositionedPlayer& positioned)
+                         { return matches(positioned.player); }) > 0;
+  found |= std::erase_if(reserves, matches) > 0;
+  for (PlayerID& designated : designations)
+  {
+    if (designated != playerID) continue;
+    designated = PlayerID{};
+    found = true;
+  }
+  return found;
+}
+
 const std::vector<Lineup::PositionedPlayer>& Lineup::getOutfieldPlayers() const
 {
   return outfield_players;

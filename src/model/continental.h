@@ -323,6 +323,15 @@ class ContinentalCompetitions
   bool needsExtraTime(const Calendar& calendar, const Match& match) const;
 
   /**
+   * For a deciding match (a final, or a second leg whose first leg is
+   * played): the home side's aggregate lead from the earlier leg (0 for a
+   * final). The tie goes to extra time when the home side's goals plus this
+   * lead equal the away side's goals. nullopt for any other match.
+   */
+  std::optional<int> deciderLead(const Calendar& calendar,
+                                 const Match& match) const;
+
+  /**
    * Settles a deciding match whose aggregate is level with extra time and
    * penalties; true if @p match changed.
    */

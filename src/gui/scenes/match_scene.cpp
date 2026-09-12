@@ -34,6 +34,7 @@
 #include "gui/render/match_renderer_2d.h"
 #include "gui/render/match_renderer_3d.h"
 #include "gui/scenes/lineup_scene.h"
+#include "gui/scenes/main_game_scene.h"
 #include "gui/scenes/match_report_scene.h"
 #include "gui/view_models/competition_view.h"
 #include "gui/view_models/match_clock.h"
@@ -43,6 +44,7 @@
 #include "model/injury.h"
 #include "model/match.h"
 #include "model/role_utils.h"
+#include "model/settings_manager.h"
 #include "model/team.h"
 #include "model/world_rng.h"
 
@@ -374,12 +376,11 @@ void MatchScene::onEnter()
                                  .count();
   Logger::info(std::format("Match scene initialized in {:.2f} ms",
                            scene_entry_milliseconds));
+  // A slow start is a developer diagnostic: logged, not shown to players.
   if (scene_entry_milliseconds >=
       MatchSceneTuning::Performance::SLOW_SCENE_ENTRY_MILLISECONDS)
-  {
-    debug_status = std::format("Slow match initialization: {:.1f} ms",
-                               scene_entry_milliseconds);
-  }
+    Logger::warn(std::format("Slow match initialization: {:.1f} ms",
+                             scene_entry_milliseconds));
 }
 
 void MatchScene::refreshLineupProblems()
@@ -432,29 +433,41 @@ void MatchScene::refreshLineupProblems()
 
 void MatchScene::applyLineupFix()
 {
+  GameController& controller = guiView->getController();
   const TeamID managedId = *managed_is_home ? home_team_id : away_team_id;
-  std::string note;
-  for (const LineupProblem& problem : lineup_problems)
-  {
-    if (!note.empty()) note += "  ·  ";
-    note += problem.replacement.empty()
-                ? fmt::sprintf(LOC("MATCH_LINEUP_LEFT_OUT"),
-                               problem.name.c_str())
-                : fmt::sprintf(LOC("MATCH_LINEUP_REPLACED"),
-                               problem.replacement.c_str(),
-                               problem.name.c_str());
-  }
-  guiView->getController().autoFixLineup(managedId, *fixture_type);
+  const std::vector<LineupProblem> before = lineup_problems;
+  controller.autoFixLineup(managedId, *fixture_type);
   refreshLineupProblems();
-  if (lineup_problems.empty())
-  {
-    lineup_status.clear();
-    pre_match_note = fmt::sprintf(LOC("MATCH_ASSISTANT_FIXED"), note.c_str());
-  }
-  else
+  // Problems left over are injured starters nobody fit can replace: they
+  // play through it once the assistant cannot improve the selection.
+  if (!lineup_problems.empty() &&
+      !controller.canKickOff(managedId, *fixture_type))
   {
     lineup_status = LOC("MATCH_LINEUP_FIX_FAILED");
+    return;
   }
+  std::string note;
+  const auto add = [&note](const std::string& entry)
+  {
+    if (!note.empty()) note += "  ·  ";
+    note += entry;
+  };
+  for (const LineupProblem& problem : before)
+  {
+    if (std::ranges::any_of(lineup_problems,
+                            [&problem](const LineupProblem& left)
+                            { return left.id == problem.id; }))
+      continue;
+    add(problem.replacement.empty()
+            ? fmt::sprintf(LOC("MATCH_LINEUP_LEFT_OUT"), problem.name.c_str())
+            : fmt::sprintf(LOC("MATCH_LINEUP_REPLACED"),
+                           problem.replacement.c_str(), problem.name.c_str()));
+  }
+  for (const LineupProblem& problem : lineup_problems)
+    add(std::format("{} ({})", problem.name, problem.reason));
+  lineup_problems.clear();
+  lineup_status.clear();
+  pre_match_note = fmt::sprintf(LOC("MATCH_ASSISTANT_FIXED"), note.c_str());
 }
 
 void MatchScene::startMatch()
@@ -495,6 +508,7 @@ void MatchScene::startMatch()
   applySubstitutionPolicy();
   setPlaybackSpeed(lastPlaybackSpeed);
   setHighlightsOnly(lastHighlightsOnly);
+  if (!audio) audio = std::make_unique<MatchAudio>();
   match_finished = false;
 }
 
@@ -594,8 +608,16 @@ bool MatchScene::finishMatch()
     debug_status = LOC("MATCH_RESULT_FAILED");
     return false;
   }
-  // The report replaces the match; the match day is over once it is in.
+  // The rest of the match day (every other match, the autosave) runs on the
+  // hub's Continue worker so the window stays responsive; the report opens
+  // once the day is over.
   const GameDateValue date = controller.getCurrentDate();
+  if (auto* hub = dynamic_cast<MainGameScene*>(guiView->getBaseScene()))
+  {
+    hub->requestPostMatchAdvance(date, home_team_id, away_team_id);
+    return true;
+  }
+  // Without the club hub below (a match opened on its own) the day ends here.
   guiView->navigateTo(std::make_unique<MatchReportScene>(
       guiView, date, home_team_id, away_team_id));
   controller.advanceDay();
@@ -653,11 +675,13 @@ void MatchScene::update(float deltaTime)
     }
     return;
   }
+  bool skipped = false;
   if (engine && !match_finished && !is_paused)
   {
     const auto startedAt = std::chrono::steady_clock::now();
     // Real time times the chosen speed; highlights skip the quiet spells.
-    if (engine->advancePlayback(deltaTime))
+    skipped = engine->advancePlayback(deltaTime);
+    if (skipped)
       skip_indicator_seconds =
           MatchSceneTuning::Controls::SKIP_INDICATOR_SECONDS;
     last_update_milliseconds = std::chrono::duration<float, std::milli>(
@@ -674,6 +698,15 @@ void MatchScene::update(float deltaTime)
     {
       match_finished = true;
     }
+  }
+  if (audio && engine)
+  {
+    audio->setLevels(
+        MatchAudio::levelsFrom(SettingsManager::instance()->get()));
+    audio->update(
+        deltaTime,
+        captureMatchAudioFrame(*engine, match_speed, is_paused, skipped),
+        engine->getEvents());
   }
 }
 
@@ -776,8 +809,18 @@ void MatchScene::handleEvent(const SDL_Event& event)
       case SDLK_RETURN:
         if ((event.key.mod & SDL_KMOD_ALT) != 0) toggleWindowFullscreen();
         return;
+      case SDLK_M:
+      {
+        // Mute toggle, remembered like the other audio settings.
+        Settings& settings = SettingsManager::instance()->get();
+        settings.audio_muted = !settings.audio_muted;
+        SettingsManager::instance()->save();
+        return;
+      }
       case SDLK_SPACE:
-        if (engine && !match_finished) is_paused = !is_paused;
+        // Play stays paused while substitutions are being picked.
+        if (engine && !match_finished && !show_substitutions)
+          is_paused = !is_paused;
         return;
       default:
         break;
@@ -851,7 +894,13 @@ void MatchScene::render()
 
   if (focusLayout)
   {
+    // The dialogs stay available (and their popups submitted) in focus mode.
     if (show_substitutions) renderSubstitutionsModal();
+    team_talk.renderForMatch(guiView->getController(), *engine, home_team_id,
+                             away_team_id);
+    analysis_panel.renderForMatch(guiView->getController(), *engine,
+                                  home_team_id, away_team_id,
+                                  team_talk.isOpen());
     renderPitchFocus();
     ImGui::End();
     return;
@@ -1890,7 +1939,15 @@ void MatchScene::renderSubstitutionsModal()
 {
   const std::string title =
       std::string(LOC("SUBSTITUTION_TITLE")) + "###match_substitutions_modal";
-  ImGui::OpenPopup(title.c_str());
+  // Opened once: re-opening every frame would close any other dialog (the
+  // half-time talk) that opens meanwhile.
+  if (!substitutions_popup_opened)
+  {
+    ImGui::OpenPopup(title.c_str());
+    substitutions_popup_opened = true;
+  }
+  // The dialog always fits the window: its body scrolls as one surface and
+  // the actions stay pinned at the bottom.
   const ImVec2 display = ImGui::GetMainViewport()->WorkSize;
   const float fraction = MatchSceneTuning::Substitutions::MODAL_VIEWPORT_FRACTION;
   ImGui::SetNextWindowSize(
@@ -1898,26 +1955,40 @@ void MatchScene::renderSubstitutionsModal()
                       display.x * fraction),
              std::min(scaled(MatchSceneTuning::Substitutions::MODAL_HEIGHT),
                       display.y * fraction)),
-      ImGuiCond_Appearing);
+      ImGuiCond_Always);
   ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
-                          ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-  if (!ImGui::BeginPopupModal(title.c_str(), &show_substitutions,
-                              ImGuiWindowFlags_NoResize))
+                          ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+  if (!ImGui::BeginPopupModal(title.c_str(), nullptr,
+                              ImGuiWindowFlags_NoResize |
+                                  ImGuiWindowFlags_NoScrollbar |
+                                  ImGuiWindowFlags_NoScrollWithMouse))
+  {
+    // Closed by another dialog taking its place.
+    show_substitutions = false;
+    substitutions_popup_opened = false;
     return;
+  }
 
-  const Theme::Palette& palette = Theme::palette();
   const auto managedTeam =
       managed_is_home ? guiView->getController().getTeamById(
                             *managed_is_home ? home_team_id : away_team_id)
                       : std::nullopt;
-  if (!managedTeam)
+  if (!managedTeam || ImGui::IsKeyPressed(ImGuiKey_Escape, false))
   {
+    show_substitutions = false;
+    substitutions_popup_opened = false;
+    ImGui::CloseCurrentPopup();
     ImGui::EndPopup();
     return;
   }
+  const Theme::Palette& palette = Theme::palette();
   const bool home = *managed_is_home;
   const Lineup& lineup = managedTeam->get().getLineup();
 
+  const ImGuiStyle& style = ImGui::GetStyle();
+  const float footerHeight =
+      UI::buttonHeight() + style.ItemSpacing.y * 2.0f + scaled(1.0f);
+  ImGui::BeginChild("##substitution_body", ImVec2(0.0f, -footerHeight));
   ImGui::TextWrapped("%s", LOC("SUBSTITUTION_HELP"));
   ImGui::TextColored(
       palette.muted, "%s",
@@ -1935,15 +2006,12 @@ void MatchScene::renderSubstitutionsModal()
   // earlier changes included); the bench is the matchday squad's reserves.
   const Player* outgoingPlayer = nullptr;
   const Player* incomingPlayer = nullptr;
-  const float listHeight = scaled(MatchSceneTuning::Substitutions::LIST_HEIGHT);
   if (ImGui::BeginTable("SubstitutionChoices", 2,
                         ImGuiTableFlags_BordersInnerV |
-                            ImGuiTableFlags_Resizable))
+                            ImGuiTableFlags_SizingStretchSame))
   {
     ImGui::TableNextColumn();
     UI::sectionLabel(LOC("SUBSTITUTION_ON_PITCH"));
-    ImGui::BeginChild("PitchChoices", ImVec2(0.0f, listHeight),
-                      ImGuiChildFlags_Borders);
     for (const MatchPlayer& onPitch : engine->getPlayers())
     {
       if (!onPitch.player || onPitch.isHomeTeam != home || !onPitch.onPitch)
@@ -1952,19 +2020,16 @@ void MatchScene::renderSubstitutionsModal()
       const bool selected = selected_pitch_player == player->getId();
       if (selected) outgoingPlayer = player;
       const std::string label = std::format(
-          "{} - {}  ({:.0f}%){}##{}", RoleUtils::toString(player->getRole()),
+          "{} - {}  ({:.0f}%){}##{}", RoleUtils::shortName(player->getRole()),
           player->getName(),
           onPitch.stamina * MatchSceneTuning::Scoreboard::PERCENT_SCALE,
           onPitch.isInjured ? "  +" : "", player->getId());
       if (ImGui::Selectable(label.c_str(), selected))
         selected_pitch_player = selected ? PlayerID{} : player->getId();
     }
-    ImGui::EndChild();
 
     ImGui::TableNextColumn();
     UI::sectionLabel(LOC("SUBSTITUTION_BENCH"));
-    ImGui::BeginChild("BenchChoices", ImVec2(0.0f, listHeight),
-                      ImGuiChildFlags_Borders);
     for (const Player* reserve : lineup.getReserves())
     {
       if (!reserve) continue;
@@ -1973,7 +2038,7 @@ void MatchScene::renderSubstitutionsModal()
       const bool selected = !used && selected_bench_player == reserve->getId();
       if (selected) incomingPlayer = reserve;
       const std::string label = std::format(
-          "{} - {}{}##{}", RoleUtils::toString(reserve->getRole()),
+          "{} - {}{}##{}", RoleUtils::shortName(reserve->getRole()),
           reserve->getName(),
           used ? std::string("  · ") + LOC("SUBSTITUTION_ALREADY_PLAYED")
                : std::string(),
@@ -1982,26 +2047,24 @@ void MatchScene::renderSubstitutionsModal()
                             used ? ImGuiSelectableFlags_Disabled : 0))
         selected_bench_player = selected ? PlayerID{} : reserve->getId();
     }
-    ImGui::EndChild();
     ImGui::EndTable();
   }
   ImGui::Separator();
 
-  const float detailHeight =
-      scaled(MatchSceneTuning::Substitutions::DETAIL_HEIGHT);
   if (ImGui::BeginTable("SubstitutionComparison", 2,
-                        ImGuiTableFlags_BordersInnerV))
+                        ImGuiTableFlags_BordersInnerV |
+                            ImGuiTableFlags_SizingStretchSame))
   {
     ImGui::TableNextColumn();
     UI::sectionLabel(LOC("SUBSTITUTION_ON_PITCH"));
     PlayerUI::detailPanel("OutgoingPlayer", outgoingPlayer,
                           guiView->getController().getStatsConfig(), nullptr,
-                          detailHeight);
+                          -1.0f);
     ImGui::TableNextColumn();
     UI::sectionLabel(LOC("SUBSTITUTION_BENCH"));
     PlayerUI::detailPanel("IncomingPlayer", incomingPlayer,
                           guiView->getController().getStatsConfig(),
-                          outgoingPlayer, detailHeight);
+                          outgoingPlayer, -1.0f);
     ImGui::EndTable();
   }
 
@@ -2009,7 +2072,9 @@ void MatchScene::renderSubstitutionsModal()
     ImGui::TextColored(
         substitution_refused ? palette.negative : palette.positive, "%s",
         substitution_status.c_str());
+  ImGui::EndChild();
 
+  ImGui::Separator();
   const ImVec2 actionSize(
       scaled(MatchSceneTuning::Substitutions::ACTION_BUTTON_WIDTH), 0.0f);
   ImGui::BeginDisabled(!outgoingPlayer || !incomingPlayer ||
@@ -2018,8 +2083,12 @@ void MatchScene::renderSubstitutionsModal()
     substitute(outgoingPlayer->getId(), incomingPlayer->getId());
   ImGui::EndDisabled();
   ImGui::SameLine();
-  if (ImGui::Button(LOC("SUBSTITUTION_CLOSE"), actionSize))
+  if (UI::secondaryButton(LOC("SUBSTITUTION_CLOSE"), actionSize))
+  {
     show_substitutions = false;
+    substitutions_popup_opened = false;
+    ImGui::CloseCurrentPopup();
+  }
 
   ImGui::EndPopup();
 }

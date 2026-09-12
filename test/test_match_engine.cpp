@@ -17,11 +17,13 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "global/runtime_paths.h"
 #include "gui/render/match_render_snapshot.h"
+#include "model/match_commentary.h"
 #include "model/match_engine.h"
 #include "model/player.h"
 #include "model/team.h"
@@ -823,7 +825,13 @@ TEST(MatchEngineTest, ScoredGoalCelebratesBeforeKickoff)
   }
 
   for (const MatchEvent& event : engine.getEvents())
-    if (event.description.rfind("GOAL!", 0) == 0) ++goalsByEvent;
+  {
+    if (event.type != MatchEventType::GOAL &&
+        event.type != MatchEventType::OWN_GOAL)
+      continue;
+    ++goalsByEvent;
+    EXPECT_FALSE(event.description.empty());
+  }
 
   EXPECT_EQ(engine.getState(), MatchState::FULL_TIME)
       << "The goal celebration must complete and the match must finish";
@@ -945,7 +953,11 @@ TEST(MatchEngineTest, StructuredEventsAndPlayerStatsAreConsistent)
       ++goalEvents;
       EXPECT_TRUE(event.hasTeam);
       EXPECT_NE(event.primaryPlayerId, 0u);
-      EXPECT_EQ(event.description.rfind("GOAL!", 0), 0u);
+      EXPECT_STREQ(MatchCommentary::key(event),
+                   event.type == MatchEventType::GOAL ? "MATCH_COMMENT_GOAL"
+                                                      : "MATCH_COMMENT_OWN_GOAL");
+      EXPECT_EQ(event.homeScore + event.awayScore, goalEvents)
+          << "goal events carry the score after the goal";
     }
     if (event.type == MatchEventType::SHOT)
     {
@@ -1187,6 +1199,87 @@ TEST(MatchEngineTest, PenaltiesAreTakenByTheBestOutfieldShooter)
   EXPECT_GT(penaltiesChecked, 0) << "no home penalty in the sampled seeds";
 }
 
+TEST(MatchEngineTest, DesignatedSetPieceTakersTakeTheirDuties)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 65, players);
+  Team away = createSquadWithBench(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+  // A sharp shooter on the left wing would be the automatic taker.
+  const Player* winger = players[7].get();
+  std::map<std::string, float> sharp = winger->getStats();
+  sharp["Shooting"] = 92.0f;
+  auto specialist = std::make_unique<Player>(
+      winger->getId(), 1, "Spot", "Kick", PlayerRole::LW, Language::EN,
+      100'000, 0, 25, 3, 180, Foot::Right, sharp);
+  home.getLineup().removeOutfieldPlayer(winger->getId());
+  home.getLineup().addOutfieldPlayer(specialist.get(), {0.68f, 0.16f});
+  constexpr PlayerID PENALTY_TAKER = 102;  // a centre-back
+  constexpr PlayerID CORNER_TAKER = 104;   // the right-back
+  home.getLineup().setDesignated(SetPieceDuty::Penalties, PENALTY_TAKER);
+  home.getLineup().setDesignated(SetPieceDuty::CornersLeft, CORNER_TAKER);
+  home.getLineup().setDesignated(SetPieceDuty::CornersRight, CORNER_TAKER);
+
+  int designatedPenalties = 0;
+  int corners = 0;
+  int fallbackPenalties = 0;
+  for (uint32_t seed = 1; seed <= 300 && (designatedPenalties < 2 ||
+                                          fallbackPenalties < 2);
+       ++seed)
+  {
+    // Odd seeds: the designated taker plays. Even seeds: he is replaced at
+    // kick-off, so the automatic choice (the best shooter) takes over.
+    const bool replaced = seed % 2 == 0;
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, seed);
+    engine.setAutoSubstitutions(false, false);
+    if (replaced)
+    {
+      ASSERT_TRUE(engine.substitutePlayer(PENALTY_TAKER,
+                                          home.getLineup().getReserves()[1]));
+    }
+    simulateToFullTime(engine, 0.1f);
+    const PlayerMatchStats* takerStats = engine.findPlayerStats(PENALTY_TAKER);
+    const PlayerMatchStats* specialistStats =
+        engine.findPlayerStats(specialist->getId());
+    ASSERT_NE(takerStats, nullptr);
+    ASSERT_NE(specialistStats, nullptr);
+    const bool takerAvailable =
+        !replaced && !takerStats->sentOff && !takerStats->injured;
+    const bool specialistAvailable =
+        !specialistStats->sentOff && !specialistStats->injured;
+    const bool cornerTakerAvailable = [&]
+    {
+      const PlayerMatchStats* entry = engine.findPlayerStats(CORNER_TAKER);
+      return entry && !entry->sentOff && !entry->injured;
+    }();
+    for (const MatchEvent& event : engine.getEvents())
+    {
+      if (!event.isHomeTeam) continue;
+      if (event.type == MatchEventType::CORNER && cornerTakerAvailable)
+      {
+        EXPECT_EQ(event.primaryPlayerId, CORNER_TAKER);
+        ++corners;
+      }
+      if (event.type != MatchEventType::PENALTY) continue;
+      if (takerAvailable)
+      {
+        EXPECT_EQ(event.primaryPlayerId, PENALTY_TAKER);
+        ++designatedPenalties;
+      }
+      else if (replaced && specialistAvailable)
+      {
+        EXPECT_EQ(event.primaryPlayerId, specialist->getId())
+            << "without the designated taker the best shooter steps up";
+        ++fallbackPenalties;
+      }
+    }
+  }
+  EXPECT_GT(designatedPenalties, 0);
+  EXPECT_GT(fallbackPenalties, 0);
+  EXPECT_GT(corners, 0);
+}
+
 TEST(MatchEngineTest, ConditionCanBeCarriedBetweenMatches)
 {
   std::vector<std::unique_ptr<Player>> players;
@@ -1263,6 +1356,220 @@ TEST(MatchEngineTest, FullHeadlessMatchIsFast)
   std::printf("[timing] headless match cpu %.2f ms (fastest %.2f ms)\n",
               total / MATCHES, fastest);
   EXPECT_LT(fastest, 150.0);
+}
+
+TEST(MatchEngineTest, BackgroundFidelityIsDeterministicAndCompletes)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 70, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  const auto play = [&](MatchFidelity fidelity)
+  {
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, 2024);
+    engine.simulateToEnd(fidelity);
+    return engine;
+  };
+  const MatchEngine first = play(MatchFidelity::BACKGROUND);
+  const MatchEngine second = play(MatchFidelity::BACKGROUND);
+  ASSERT_EQ(first.getState(), MatchState::FULL_TIME);
+  EXPECT_EQ(first.getHomeScore(), second.getHomeScore());
+  EXPECT_EQ(first.getAwayScore(), second.getAwayScore());
+  EXPECT_EQ(first.getSimulatedSteps(), second.getSimulatedSteps());
+  ASSERT_EQ(first.getEvents().size(), second.getEvents().size());
+  for (std::size_t index = 0; index < first.getEvents().size(); ++index)
+  {
+    EXPECT_EQ(first.getEvents()[index].type, second.getEvents()[index].type);
+    EXPECT_EQ(first.getEvents()[index].primaryPlayerId,
+              second.getEvents()[index].primaryPlayerId);
+  }
+  // A whole match of real time at either fidelity.
+  EXPECT_GE(first.getSimulatedSeconds(), 5'600.0);
+  EXPECT_LE(first.getSimulatedSeconds(), 6'600.0);
+  EXPECT_GE(first.getStats().ballInPlayMinutes, 45.0f);
+
+  // The default headless path stays at full fidelity: it replays the live
+  // update() path step for step.
+  MatchEngine headless(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, 2024);
+  headless.simulateToEnd();
+  const MatchEngine full = play(MatchFidelity::FULL);
+  EXPECT_EQ(headless.getSimulatedSteps(), full.getSimulatedSteps());
+  EXPECT_EQ(headless.getEvents().size(), full.getEvents().size());
+}
+
+namespace
+{
+/** Plays a knockout match between two squads to the end. */
+MatchEngine playKnockout(const Team& home, const Team& away,
+                         const StatsConfig& config, uint32_t seed,
+                         const MatchRules::Knockout& rules)
+{
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, seed);
+  engine.setKnockout(rules);
+  engine.simulateToEnd();
+  return engine;
+}
+}  // namespace
+
+TEST(MatchEngineTest, LevelKnockoutGoesToExtraTimeThenPenalties)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 68, players);
+  Team away = createSquadWithBench(2, "Away", 68, players);
+  const StatsConfig config = createStatsConfig();
+  MatchRules::Knockout rules;
+  rules.required = true;
+
+  int shootouts = 0;
+  for (uint32_t seed = 1; seed <= 200 && shootouts < 3; ++seed)
+  {
+    const MatchEngine engine = playKnockout(home, away, config, seed, rules);
+    ASSERT_EQ(engine.getState(), MatchState::FULL_TIME);
+    ASSERT_TRUE(engine.getTieWinnerHome().has_value())
+        << "a knockout match always has a winner";
+    if (!engine.hasShootout()) continue;
+    ++shootouts;
+    EXPECT_TRUE(engine.wentToExtraTime());
+    EXPECT_EQ(engine.getHomeScore(), engine.getAwayScore());
+    EXPECT_EQ(engine.getPeriod(), 4);
+    EXPECT_GE(engine.getElapsedMatchMinutes(), 120.0f);
+
+    bool sawExtraTime = false;
+    bool sawSecondExtraHalf = false;
+    int goalEvents = 0;
+    int kicks = 0;
+    std::optional<bool> lastKicker;
+    for (const MatchEvent& event : engine.getEvents())
+    {
+      if (event.type == MatchEventType::SECOND_HALF && event.period == 3)
+        sawExtraTime = true;
+      if (event.type == MatchEventType::SECOND_HALF && event.period == 4)
+        sawSecondExtraHalf = true;
+      if (event.type == MatchEventType::GOAL ||
+          event.type == MatchEventType::OWN_GOAL)
+        ++goalEvents;
+      if (event.type != MatchEventType::PENALTY_SHOOTOUT ||
+          event.detail == MatchEventDetail::NONE)
+        continue;
+      ++kicks;
+      // ABAB: the sides alternate from the first kick to the last.
+      if (lastKicker) EXPECT_NE(*lastKicker, event.isHomeTeam);
+      lastKicker = event.isHomeTeam;
+      EXPECT_NE(event.primaryPlayerId, 0u);
+    }
+    EXPECT_TRUE(sawExtraTime);
+    EXPECT_TRUE(sawSecondExtraHalf);
+    EXPECT_EQ(goalEvents, engine.getHomeScore() + engine.getAwayScore())
+        << "shootout kicks never count as goals";
+    EXPECT_EQ(kicks, engine.getShootoutKicks(true) +
+                         engine.getShootoutKicks(false));
+    EXPECT_NE(engine.getShootoutScore(true), engine.getShootoutScore(false));
+    EXPECT_TRUE(MatchRules::shootoutDecided(
+        engine.getShootoutScore(true), engine.getShootoutKicks(true),
+        engine.getShootoutScore(false), engine.getShootoutKicks(false)));
+    EXPECT_EQ(*engine.getTieWinnerHome(),
+              engine.getShootoutScore(true) > engine.getShootoutScore(false));
+    EXPECT_EQ(engine.getEvents().back().type, MatchEventType::FULL_TIME);
+    EXPECT_LE(std::max(engine.getSubstitutionsUsed(true),
+                       engine.getSubstitutionsUsed(false)),
+              MatchTuning::Rules::MAX_SUBSTITUTIONS_PER_TEAM +
+                  MatchTuning::Rules::EXTRA_TIME_SUBSTITUTIONS);
+
+    // The same seed plays the same extra time and shootout.
+    const MatchEngine replay = playKnockout(home, away, config, seed, rules);
+    EXPECT_EQ(replay.getShootoutScore(true), engine.getShootoutScore(true));
+    EXPECT_EQ(replay.getShootoutScore(false), engine.getShootoutScore(false));
+    ASSERT_EQ(replay.getEvents().size(), engine.getEvents().size());
+    for (std::size_t index = 0; index < engine.getEvents().size(); ++index)
+    {
+      EXPECT_EQ(replay.getEvents()[index].type, engine.getEvents()[index].type);
+      EXPECT_EQ(replay.getEvents()[index].primaryPlayerId,
+                engine.getEvents()[index].primaryPlayerId);
+    }
+  }
+  EXPECT_GT(shootouts, 0) << "no shootout in the sampled seeds";
+}
+
+TEST(MatchEngineTest, AggregateScoreDecidesWhetherExtraTimeIsPlayed)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 68, players);
+  Team away = createSquadWithBench(2, "Away", 68, players);
+  const StatsConfig config = createStatsConfig();
+  // Second leg: the home side won the first leg 1-0 away (so it leads 1-0).
+  MatchRules::Knockout rules;
+  rules.required = true;
+  rules.homeAggregate = 1;
+  rules.awayAggregate = 0;
+  int extraTimes = 0;
+  int decidedInNormalTime = 0;
+  for (uint32_t seed = 1; seed <= 60; ++seed)
+  {
+    const MatchEngine engine = playKnockout(home, away, config, seed, rules);
+    ASSERT_EQ(engine.getState(), MatchState::FULL_TIME);
+    ASSERT_TRUE(engine.getTieWinnerHome().has_value());
+    int normalTimeHome = 0;
+    int normalTimeAway = 0;
+    for (const MatchEvent& event : engine.getEvents())
+    {
+      if (event.period > 2) break;
+      normalTimeHome = event.homeScore;
+      normalTimeAway = event.awayScore;
+    }
+    const bool levelAfterNinety = normalTimeHome + 1 == normalTimeAway;
+    EXPECT_EQ(engine.wentToExtraTime(), levelAfterNinety) << "seed " << seed;
+    if (levelAfterNinety)
+    {
+      ++extraTimes;
+      continue;
+    }
+    ++decidedInNormalTime;
+    EXPECT_EQ(*engine.getTieWinnerHome(), normalTimeHome + 1 > normalTimeAway);
+    EXPECT_FALSE(engine.hasShootout());
+    EXPECT_EQ(engine.getPeriod(), 2);
+  }
+  EXPECT_GT(decidedInNormalTime, 0);
+  // Without extra time a level tie goes straight to penalties.
+  rules.extraTime = false;
+  rules.homeAggregate = 0;
+  for (uint32_t seed = 1; seed <= 60; ++seed)
+  {
+    const MatchEngine engine = playKnockout(home, away, config, seed, rules);
+    EXPECT_FALSE(engine.wentToExtraTime());
+    if (engine.getHomeScore() == engine.getAwayScore())
+    {
+      EXPECT_TRUE(engine.hasShootout());
+      EXPECT_EQ(engine.getPeriod(), 2);
+    }
+  }
+  RecordProperty("extra_times", extraTimes);
+}
+
+TEST(MatchEngineTest, LeagueMatchesCanEndLevel)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 68, players);
+  Team away = createSquadWithBench(2, "Away", 68, players);
+  const StatsConfig config = createStatsConfig();
+  int draws = 0;
+  for (uint32_t seed = 1; seed <= 40; ++seed)
+  {
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, seed);
+    engine.simulateToEnd();
+    ASSERT_EQ(engine.getState(), MatchState::FULL_TIME);
+    EXPECT_EQ(engine.getPeriod(), 2);
+    EXPECT_FALSE(engine.wentToExtraTime());
+    EXPECT_FALSE(engine.hasShootout());
+    EXPECT_FALSE(engine.getTieWinnerHome().has_value());
+    for (const MatchEvent& event : engine.getEvents())
+      EXPECT_NE(event.type, MatchEventType::PENALTY_SHOOTOUT);
+    if (engine.getHomeScore() == engine.getAwayScore()) ++draws;
+  }
+  EXPECT_GT(draws, 0);
 }
 
 TEST(MatchEngineTest, HeadlessSimulationMatchesLivePlayback)

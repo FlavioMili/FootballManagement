@@ -13,12 +13,17 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
+#include <cstdio>
 #include <cstdlib>
+#include <future>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "controller/game_controller.h"
@@ -56,6 +61,48 @@ std::unique_ptr<GameController> makeWorld(int slot)
   controller->newGame(slot, WORLD_SEED);
   return controller;
 }
+
+/**
+ * Aborts the process when its scope does not end within @p limit: a hang
+ * during shutdown fails fast with a message instead of stalling the run.
+ */
+class ShutdownWatchdog
+{
+ public:
+  ShutdownWatchdog(std::chrono::seconds limit, const char* what)
+      : watcher(
+            [this, limit, what]
+            {
+              std::unique_lock lock(mutex);
+              if (!finished.wait_for(lock, limit, [this] { return done; }))
+              {
+                std::fprintf(stderr, "%s did not finish within %lld s\n", what,
+                             static_cast<long long>(limit.count()));
+                std::abort();
+              }
+            })
+  {
+  }
+  ~ShutdownWatchdog()
+  {
+    {
+      const std::scoped_lock lock(mutex);
+      done = true;
+    }
+    finished.notify_one();
+    watcher.join();
+  }
+  ShutdownWatchdog(const ShutdownWatchdog&) = delete;
+  ShutdownWatchdog& operator=(const ShutdownWatchdog&) = delete;
+
+ private:
+  std::mutex mutex;
+  std::condition_variable finished;
+  bool done = false;
+  std::thread watcher;  // Last: starts once the state above exists.
+};
+
+constexpr std::chrono::seconds SHUTDOWN_LIMIT{20};
 
 /** Restores an environment variable when the test ends. */
 class ScopedEnv
@@ -254,6 +301,22 @@ TEST(ThreadPoolTest, NestedBatchesOnBusyWorkersComplete)
   EXPECT_EQ(inner.load(), 64);
 }
 
+TEST(ThreadPoolTest, DestroyingAPoolJoinsItsWorkersPromptly)
+{
+  // Idle pools, pools right after a batch and pools with helper jobs still
+  // queued (a batch the caller finished alone) all shut down at once.
+  const ShutdownWatchdog watchdog(SHUTDOWN_LIMIT, "destroying thread pools");
+  for (int round = 0; round < 50; ++round)
+  {
+    { ThreadPool idle(ThreadPool::MAX_THREADS); }
+    ThreadPool pool(3);
+    std::atomic<int> calls{0};
+    pool.parallelFor(64, [&](std::size_t) { ++calls; });
+    pool.parallelFor(2, [&](std::size_t) { ++calls; });
+    EXPECT_EQ(calls.load(), 66);
+  }
+}
+
 TEST(ThreadPoolTest, DefaultThreadCountHonoursTheEnvironment)
 {
   {
@@ -355,6 +418,43 @@ TEST(MatchSchedulerTest, ContinueReportsMatchdayProgress)
   EXPECT_FLOAT_EQ(progress.fraction(), 1.0f);
 }
 
+// Quitting after parallel matchdays: the scheduler's pool (created on the
+// first parallel batch) is torn down with the game, on the thread that
+// destroys the controller, also when the days ran on another thread (as
+// Continue does). Each destruction must finish promptly.
+TEST(MatchSchedulerTest, ControllerShutsDownCleanlyAfterParallelMatchdays)
+{
+  for (const bool on_worker : {false, true})
+  {
+    SCOPED_TRACE(on_worker ? "days simulated on a worker thread"
+                           : "days simulated on the test thread");
+    const SlotCleanup slot{uniqueSlot(on_worker ? 8 : 7)};
+    auto controller = makeWorld(slot.slot);
+    controller->setSimulationThreads(PARALLEL_THREADS);
+    const auto matchday = firstBusyDay(*controller, 50);
+    ASSERT_TRUE(matchday);
+    // Two full league matchdays and the days between them.
+    const GameDateValue end = SeasonCalendar::addDays(*matchday, 8);
+    if (on_worker)
+      std::async(std::launch::async,
+                 [&controller, end] { advanceUntil(*controller, end); })
+          .get();
+    else
+      advanceUntil(*controller, end);
+    std::size_t played = 0;
+    for (const auto& [date, matches] :
+         controller->getGame()->getCalendar().getFullCalendar())
+      played += static_cast<std::size_t>(std::ranges::count_if(
+          matches, [](const Match& match) { return match.isPlayed(); }));
+    ASSERT_GE(played, 100U) << "the parallel scheduler never ran";
+    ASSERT_EQ(controller->getGame()->getSimulationThreads(), PARALLEL_THREADS);
+
+    const ShutdownWatchdog watchdog(SHUTDOWN_LIMIT,
+                                    "destroying the game controller");
+    controller.reset();
+  }
+}
+
 // The scheduler must hand the engine the fixture's real home side: its
 // result for a fixture equals a direct engine run with the home line-up
 // first, and swapping the venue swaps the sides the engine sees. (Home
@@ -393,7 +493,7 @@ TEST(MatchSchedulerTest, SchedulerKeepsTheFixtureVenue)
                          venue.seed);
       MatchdaySquad::carryCondition(engine, venue.home_lineup);
       MatchdaySquad::carryCondition(engine, venue.away_lineup);
-      while (engine.getState() != MatchState::FULL_TIME) engine.update(0.25f);
+      engine.simulateToEnd(MatchFidelity::BACKGROUND);
       EXPECT_EQ(result.home_goals, engine.getHomeScore()) << "match " << i;
       EXPECT_EQ(result.away_goals, engine.getAwayScore()) << "match " << i;
     }

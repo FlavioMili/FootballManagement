@@ -21,6 +21,7 @@
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/competition.h"
 
 namespace
 {
@@ -170,7 +171,7 @@ void StandingsScene::renderCompetitionSelector()
     for (const auto& leagueRef : controller.getLeagues())
     {
       const League& league = leagueRef.get();
-      if (ImGui::Selectable(league.getName().c_str(),
+      if (ImGui::Selectable(Competitions::leagueName(league).c_str(),
                             !showing_cup && league.getId() == league_id))
       {
         league_id = league.getId();

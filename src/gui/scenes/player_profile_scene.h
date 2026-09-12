@@ -139,7 +139,7 @@ class PlayerProfileScene : public ManagementScene
 
   bool list_confirm_requested = false;
   bool renew_requested = false;
-  float renew_wage = 0.0f;
+  int64_t renew_wage = 0;
   int renew_years = 0;
   std::string renew_status;
   PlayerTalkDialog talk_dialog;

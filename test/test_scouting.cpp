@@ -25,6 +25,7 @@
 #include "global/runtime_paths.h"
 #include "model/scout_expertise.h"
 #include "model/scouting.h"
+#include "model/world_tuning.h"
 
 namespace
 {
@@ -895,4 +896,83 @@ TEST(ScoutingTest, ReportsOfOlderSavesAreMigratedAsRead)
   EXPECT_EQ(reloaded->getUnreadScoutReportCount(), 0u);
   EXPECT_FLOAT_EQ(report.overall_low, overall);
   EXPECT_FLOAT_EQ(report.overall_high, overall);
+}
+
+TEST(ScoutingTest, MarketValueChangesGraduallyWithAgeAndContract)
+{
+  // A 29-year-old entering the last year of his deal: one season older and
+  // one contract year shorter costs him at most ~30% of his value.
+  const double before = Player::valueFor(72.0, 72.0, 29, 2.0);
+  const double after = Player::valueFor(72.0, 72.0, 30, 1.0);
+  EXPECT_LT(after, before);
+  EXPECT_GE(after / before, 0.70);
+  // Running down the final year keeps a real price.
+  EXPECT_GE(Player::valueFor(72.0, 72.0, 30, 0.5) / after, 0.75);
+
+  // The potential premium fades between 22 and 25: no birthday cliff.
+  double previous = Player::valueFor(66.0, 78.0, 21, 4.0);
+  for (int age = 22; age <= 26; ++age)
+  {
+    const double value = Player::valueFor(66.0, 78.0, age, 4.0);
+    EXPECT_GE(value / previous, 0.75) << "age " << age;
+    previous = value;
+  }
+  EXPECT_GT(Player::valueFor(66.0, 78.0, 22, 4.0),
+            Player::valueFor(66.0, 66.0, 22, 4.0));
+  EXPECT_DOUBLE_EQ(Player::valueFor(66.0, 78.0, 25, 4.0),
+                   Player::valueFor(66.0, 66.0, 25, 4.0));
+
+  // Own players are valued with the same model.
+  const SlotCleanup slot{uniqueSlot(13)};
+  const auto controller = makeCareer(slot.slot);
+  const auto& config = controller->getStatsConfig();
+  const TeamID club = firstTeamOf(*controller, OWN_LEAGUE);
+  for (const PlayerID id : playersOf(*controller, club))
+  {
+    const Player& player = playerOf(*controller, id);
+    player.updateMarketValue(config);
+    EXPECT_EQ(player.getMarketValue(),
+              static_cast<std::uint32_t>(Player::valueFor(
+                  player.getOverall(config),
+                  static_cast<double>(player.getPotential()), player.getAge(),
+                  static_cast<double>(player.getContractYears()))));
+  }
+}
+
+TEST(ScoutingTest, AffordabilityUsesTheCashAwareBudget)
+{
+  const SlotCleanup slot{uniqueSlot(14)};
+  auto controller = makeCareer(slot.slot);
+  auto gamedata = controller->getGameData();
+  Team& team =
+      gamedata->getTeams().at(controller->getManagedTeam()->get().getId());
+  Finances& finances = team.getFinances();
+  // The board would sanction any fee, but the cash only covers the payroll
+  // reserve: nothing a scout finds is affordable.
+  finances.setTransferBudget(500'000'000);
+  finances.setWageBudget(finances.getCurrentWageSpending(*gamedata, team) +
+                         5'000'000);
+  const std::int64_t reserve = WorldTuning::Finance::CASH_RESERVE_WEEKS *
+                               finances.getCurrentWageSpending(*gamedata, team);
+  const PlayerID target = leaguePlayers(*controller, FOREIGN_LEAGUE)[3];
+  ASSERT_EQ(controller->startScoutAssignment(controller->getScouts().front().id,
+                                             ScoutTargetKind::Player, target,
+                                             10),
+            ScoutAssignError::None);
+  finances.record(controller->getCurrentDate(), FinanceCategory::Investment,
+                  reserve - finances.getBalance());
+  for (int day = 0; day < 10; ++day)
+  {
+    // Keep the cash at the reserve while the days' costs and income land.
+    controller->advanceDay();
+    finances.record(controller->getCurrentDate(), FinanceCategory::Investment,
+                    reserve - finances.getBalance());
+  }
+  ASSERT_FALSE(controller->getScoutReports().empty());
+  const ScoutReport& report = controller->getScoutReports().back();
+  ASSERT_EQ(report.player_id, target);
+  ASSERT_GT(report.estimated_fee, 0);
+  EXPECT_LE(report.estimated_fee, finances.getTransferBudget());
+  EXPECT_EQ(controller->transferBudgetForTeam(team.getId()), 0u);
+  EXPECT_FALSE(report.affordable);
 }

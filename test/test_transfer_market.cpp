@@ -22,6 +22,7 @@
 #include "model/transfer_listing.h"
 #include "model/transfer_market.h"
 #include "model/transfer_tuning.h"
+#include "model/world_tuning.h"
 #include "model/world_rng.h"
 #include "model/world_simulation.h"
 
@@ -757,7 +758,8 @@ TEST_F(TransferMarketTest, FreeAgentsNeedCashNotTransferBudget)
   const auto result = controller->proposeContract(player, offer);
   EXPECT_TRUE(result.response.accepted);
   ASSERT_TRUE(result.completed)
-      << "a free signing needs cash, not a fee budget";
+      << "a free signing needs cash, not a fee budget (over budget: "
+      << result.over_budget << ")";
   EXPECT_EQ(gamedata->getPlayer(player)->get().getTeamId(), managed);
   EXPECT_EQ(finances.getBalance(), finances.ledgerTotal());
 }
@@ -852,4 +854,196 @@ TEST_F(TransferMarketTest, TakingChargeLeavesListingsToTheManager)
   EXPECT_TRUE(std::ranges::none_of(fresh->getIncomingOffers(),
                                    [](const IncomingOffer& offer)
                                    { return offer.loan; }));
+}
+
+TEST_F(TransferMarketTest, EveryClubBudgetKeepsThePayrollReserve)
+{
+  const TeamID managed = manageFirstClub(*controller);
+  auto gamedata = controller->getGameData();
+  const TransferMarket& market = marketOf(*controller);
+  const GameDateValue today = controller->getCurrentDate();
+  for (const TeamID club :
+       {managed, controller->getTeams()[7].get().getId()})
+  {
+    Team& team = gamedata->getTeams().at(club);
+    Finances& finances = team.getFinances();
+    const std::int64_t payroll =
+        finances.getCurrentWageSpending(*gamedata, team);
+    ASSERT_GT(payroll, 0);
+    const std::int64_t reserve =
+        WorldTuning::Finance::CASH_RESERVE_WEEKS * payroll;
+    finances.setTransferBudget(500'000'000);
+
+    // A generous board allowance buys nothing while the cash only covers
+    // the payroll reserve.
+    finances.record(today, FinanceCategory::Investment,
+                    reserve - 1 - finances.getBalance());
+    EXPECT_EQ(market.spendableBudget(club, today), 0) << team.getName();
+    EXPECT_EQ(controller->transferBudgetForTeam(club), 0u) << team.getName();
+
+    // Above the reserve, the spare cash is the limit for AI clubs and the
+    // manager alike.
+    finances.record(today, FinanceCategory::Investment, 5'000'001);
+    const std::int64_t expected =
+        5'000'000 - market.committedPayables(club, today);
+    EXPECT_EQ(market.spendableBudget(club, today),
+              std::max<std::int64_t>(0, expected))
+        << team.getName();
+    EXPECT_EQ(static_cast<std::int64_t>(controller->transferBudgetForTeam(club)),
+              market.spendableBudget(club, today));
+  }
+}
+
+TEST_F(TransferMarketTest, ReleasingAStarterOnlyFillsHisPlace)
+{
+  const TeamID managed = manageFirstClub(*controller);
+  auto gamedata = controller->getGameData();
+  const Lineup& lineup = gamedata->getTeams().at(managed).getLineup();
+  ASSERT_GE(lineup.getOutfieldPlayers().size(), 2u);
+  ASSERT_FALSE(lineup.getReserves().empty());
+  const Lineup::PositionedPlayer leaving = lineup.getOutfieldPlayers()[1];
+  const PlayerID released = leaving.player->getId();
+  std::vector<PlayerID> others;
+  for (const auto& positioned : lineup.getOutfieldPlayers())
+    if (positioned.player->getId() != released)
+      others.push_back(positioned.player->getId());
+  const PlayerID keeper = lineup.getGoalkeeper()->getId();
+
+  ASSERT_TRUE(controller->releasePlayer(released));
+  EXPECT_FALSE(lineup.isStarter(released));
+  EXPECT_EQ(lineup.getGoalkeeper()->getId(), keeper);
+  ASSERT_EQ(lineup.getOutfieldPlayers().size(), others.size() + 1);
+  for (const PlayerID id : others) EXPECT_TRUE(lineup.isStarter(id));
+  // The replacement takes the departed player's spot on the pitch.
+  const auto replacement = std::ranges::find_if(
+      lineup.getOutfieldPlayers(), [&](const auto& positioned)
+      { return !std::ranges::contains(others, positioned.player->getId()); });
+  ASSERT_NE(replacement, lineup.getOutfieldPlayers().end());
+  EXPECT_EQ(replacement->position.x, leaving.position.x);
+  EXPECT_EQ(replacement->position.y, leaving.position.y);
+  EXPECT_EQ(replacement->player->getTeamId(), managed);
+  for (const Player* reserve : lineup.getReserves())
+  {
+    EXPECT_NE(reserve->getId(), released);
+    EXPECT_NE(reserve->getId(), replacement->player->getId());
+  }
+}
+
+TEST_F(TransferMarketTest, TakingChargeWithdrawsTheClubsUnmanagedBids)
+{
+  // While the market is seeded no club has a manager yet: a bid placed by
+  // the club the user then picks must not complete without him.
+  auto gamedata = controller->getGameData();
+  const auto& teams = controller->getTeams();
+  const TeamID chosen = teams[5].get().getId();
+  const TeamID seller = teams[6].get().getId();
+  gamedata->getTeams().at(chosen).getFinances().addBalance(1'000'000'000LL);
+  const PlayerID target =
+      controller->getPlayersForTeam(seller).back().get().getId();
+  controller->listPlayerForTransfer(target, 1'000'000);
+  ASSERT_TRUE(controller->submitBid(target, chosen, 1'200'000));
+
+  controller->selectManagedTeam(chosen);
+  const GameDateValue taken_over = controller->getCurrentDate();
+  for (const auto& [player_id, listing] : controller->getAllListings())
+    EXPECT_NE(listing.highest_bidder_id, std::optional<TeamID>(chosen))
+        << "player " << player_id;
+  controller->advanceDay();
+  EXPECT_NE(gamedata->getPlayer(target)->get().getTeamId(), chosen);
+  for (const TransferRecord& record : marketOf(*controller).history())
+    if (taken_over < record.date)
+      EXPECT_NE(record.to_team, chosen) << "player " << record.player_id;
+}
+
+TEST_F(TransferMarketTest, LoansNeverOutliveTheContract)
+{
+  EXPECT_EQ(TransferNegotiation::contractEndDate(GameDateValue(2026, 6, 10), 1),
+            GameDateValue(2026, 6, 30));
+  EXPECT_EQ(TransferNegotiation::contractEndDate(GameDateValue(2026, 6, 10), 2),
+            GameDateValue(2027, 6, 30));
+  EXPECT_EQ(TransferNegotiation::contractEndDate(GameDateValue(2026, 8, 1), 1),
+            GameDateValue(2027, 6, 30));
+
+  controller->saveGame();
+  MarketHarness harness(*controller);
+  auto gamedata = controller->getGameData();
+  const auto& teams = controller->getTeams();
+  const TeamID parent = teams[5].get().getId();
+  const TeamID borrower = teams[6].get().getId();
+  const auto& squad = controller->getPlayersForTeam(parent);
+  ASSERT_GE(squad.size(), 2u);
+  const PlayerID expiring = squad[0].get().getId();
+  const PlayerID contracted = squad[1].get().getId();
+  gamedata->getPlayers().at(expiring).setContractYears(1);
+  gamedata->getPlayers().at(contracted).setContractYears(2);
+
+  // A June loan covers next season: only a player still under contract then
+  // may go.
+  const TransferNegotiation::LoanTerms terms;
+  const GameDateValue june(2026, 6, 10);
+  EXPECT_FALSE(harness.market.startLoan(expiring, borrower, terms, june,
+                                        FREE_AGENTS_TEAM_ID));
+  EXPECT_EQ(gamedata->getPlayer(expiring)->get().getTeamId(), parent);
+  ASSERT_TRUE(harness.market.startLoan(contracted, borrower, terms, june,
+                                       FREE_AGENTS_TEAM_ID));
+  const LoanDeal* loan = harness.market.findLoan(contracted);
+  ASSERT_NE(loan, nullptr);
+  EXPECT_FALSE(TransferNegotiation::contractEndDate(june, 2) < loan->end);
+}
+
+TEST_F(TransferMarketTest, AMoveEndsTheLoanForGood)
+{
+  controller->saveGame();
+  MarketHarness harness(*controller);
+  auto gamedata = controller->getGameData();
+  const auto& teams = controller->getTeams();
+  const TeamID parent = teams[5].get().getId();
+  const TeamID borrower = teams[6].get().getId();
+  const TeamID next_club = teams[7].get().getId();
+  const auto& squad = controller->getPlayersForTeam(parent);
+  ASSERT_GE(squad.size(), 2u);
+  const PlayerID signed_elsewhere = squad[0].get().getId();
+  const PlayerID stranded = squad[1].get().getId();
+  TransferNegotiation::LoanTerms terms;
+  terms.wage_share = 50;
+  const GameDateValue start(2025, 8, 20);
+  for (const PlayerID id : {signed_elsewhere, stranded})
+  {
+    gamedata->getPlayers().at(id).setContractYears(2);
+    ASSERT_TRUE(harness.market.startLoan(id, borrower, terms, start,
+                                         FREE_AGENTS_TEAM_ID));
+  }
+
+  // A pre-contract completing on a loanee ends the loan: its end date must
+  // not take him back to the old club.
+  TransferMarket::Deal deal;
+  deal.player_id = signed_elsewhere;
+  deal.buyer_id = next_club;
+  deal.kind = TransferKind::PreContract;
+  deal.contract.weekly_wage = 10'000;
+  deal.contract.years = 2;
+  ASSERT_TRUE(
+      harness.market.completeTransfer(deal, start + 30, FREE_AGENTS_TEAM_ID));
+  EXPECT_EQ(harness.market.findLoan(signed_elsewhere), nullptr);
+
+  // A loanee who left the borrower another way (an old save released him
+  // while on loan) no longer costs the parent club a wage share.
+  gamedata->getTeams().at(borrower).removePlayerID(stranded);
+  gamedata->getTeams().at(FREE_AGENTS_TEAM_ID).addPlayerID(stranded);
+  gamedata->transferPlayer(stranded, FREE_AGENTS_TEAM_ID);
+  const Finances& parent_finances = gamedata->getTeams().at(parent).getFinances();
+  GameDateValue day = start + 31;
+  while (dayOrdinal(day) % 7 != 0) day = day + 1;
+  const std::size_t entries = parent_finances.getLedger().size();
+  harness.market.onDayAdvanced(day, FREE_AGENTS_TEAM_ID);
+  EXPECT_EQ(harness.market.findLoan(stranded), nullptr);
+  EXPECT_TRUE(harness.market.canBeTraded(stranded));
+  for (std::size_t i = entries; i < parent_finances.getLedger().size(); ++i)
+    EXPECT_NE(parent_finances.getLedger()[i].category, FinanceCategory::Wages);
+
+  // The season ends: nobody is pulled back.
+  harness.market.onDayAdvanced(GameDateValue(2026, 6, 30), FREE_AGENTS_TEAM_ID);
+  EXPECT_EQ(gamedata->getPlayer(signed_elsewhere)->get().getTeamId(), next_club);
+  EXPECT_EQ(gamedata->getPlayer(stranded)->get().getTeamId(),
+            FREE_AGENTS_TEAM_ID);
 }

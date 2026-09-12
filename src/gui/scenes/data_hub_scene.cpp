@@ -115,7 +115,7 @@ void DataHubScene::refresh()
       if (const auto player = std::as_const(*data).getPlayer(stats.player))
       {
         row.name = player->get().getName();
-        row.role = RoleUtils::toString(player->get().getRole());
+        row.role = RoleUtils::shortName(player->get().getRole());
       }
     }
     players.push_back(std::move(row));
@@ -516,7 +516,10 @@ void DataHubScene::renderPlayers()
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
       ImGui::PushID(static_cast<int>(row.id));
-      if (UI::link(row.name.c_str(), "player"))
+      // Players no longer in the world (released youth) have no profile.
+      if (row.name.empty())
+        ImGui::TextColored(palette.muted, "%s", "\u2013");
+      else if (UI::link(row.name.c_str(), "player"))
         Navigation::openPlayer(guiView, row.id);
       ImGui::SameLine();
       ImGui::TextColored(palette.faint, "%s", row.role.c_str());

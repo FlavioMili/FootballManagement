@@ -273,7 +273,8 @@ TEST(SaveMigrations, LegacyVersionZeroLayoutUpgradesIdempotently)
     for (const auto& [table, column] :
          {std::pair{"Leagues", "tiebreak"}, {"Fixtures", "stage"},
           {"Fixtures", "home_penalties"}, {"TransferList", "highest_bid"},
-          {"Players", "potential"}, {"Teams", "recent_form"}})
+          {"Players", "potential"}, {"Teams", "recent_form"},
+          {"WorldState", "next_staff_id"}})
       EXPECT_TRUE(Migrations::columnExists(db, table, column))
           << table << "." << column;
     for (const char* table : {"FinanceLedger", "WorldState", "Staff",
@@ -760,6 +761,88 @@ TEST(SaveSafety, BackupsRotateAndKeepN)
   controller->setAutosavePolicy({AutosaveFrequency::Off, 0});
   ASSERT_TRUE(controller->saveGame());
   EXPECT_EQ(SaveManager::countBackups(path), 0);
+}
+
+TEST(SaveSafety, FailedNewGameKeepsTheOldCareer)
+{
+  const SlotCleanup slot{27};
+  const fs::path path = RuntimePaths::savePath(slot.slot);
+  const AutosavePolicy policy{AutosaveFrequency::Off, 2};
+  auto controller = makeCareer(slot.slot);
+  controller->setAutosavePolicy(policy);
+  for (int save = 0; save < 3; ++save)
+  {
+    advance(*controller, 1);
+    ASSERT_TRUE(controller->saveGame());
+  }
+  SaveManager::preserveBeforeMigration(path, 1);
+  const fs::path upgrade_copy(path.string() + ".pre-v1.bak");
+  ASSERT_TRUE(fs::exists(upgrade_copy));
+  const SaveInspection before = SaveManager::inspect(path);
+  ASSERT_EQ(before.status, SaveStatus::Ok);
+  ASSERT_GT(before.managed_team_id, 0);
+  const std::string backup_date =
+      SaveManager::inspect(SaveManager::backupPath(path, 1)).game_date;
+  ASSERT_EQ(SaveManager::countBackups(path), 2);
+  controller.reset();
+
+  const auto oldCareerIntact = [&]
+  {
+    const SaveInspection after = SaveManager::inspect(path);
+    EXPECT_EQ(after.status, SaveStatus::Ok);
+    EXPECT_EQ(after.game_date, before.game_date);
+    EXPECT_EQ(after.managed_team_id, before.managed_team_id);
+    EXPECT_EQ(SaveManager::countBackups(path), 2);
+    EXPECT_EQ(SaveManager::inspect(SaveManager::backupPath(path, 1)).game_date,
+              backup_date);
+    EXPECT_TRUE(fs::exists(upgrade_copy));
+    GameController reloaded;
+    ASSERT_TRUE(reloaded.loadGame(slot.slot));
+    EXPECT_EQ(reloaded.getCurrentDate().toString(), before.game_date);
+  };
+
+  // A new career in the same slot fails while its world is being created
+  // (the first flush of the new world) and then, on a second attempt, at
+  // its first save: the old career, its backups and its upgrade copy are
+  // still there both times.
+  int flushes_to_survive = 0;
+  const FaultHookGuard guard(
+      [&flushes_to_survive](SaveManager::FaultPoint point, sqlite3*)
+      {
+        if (point == SaveManager::FaultPoint::MidFlush &&
+            flushes_to_survive-- == 0)
+          throw std::runtime_error("disk unplugged");
+      });
+  {
+    GameController fresh;
+    fresh.setAutosavePolicy(policy);
+    EXPECT_THROW(fresh.newGame(slot.slot, WORLD_SEED + 1), std::runtime_error);
+    EXPECT_EQ(fresh.getGame(), nullptr) << "no half-built career is kept";
+  }
+  oldCareerIntact();
+  flushes_to_survive = 1;
+  {
+    GameController fresh;
+    fresh.setAutosavePolicy(policy);
+    fresh.newGame(slot.slot, WORLD_SEED + 1);
+    EXPECT_FALSE(fresh.getSaveStatus().ok);
+  }
+  oldCareerIntact();
+  SaveManager::setFaultHook(nullptr);
+
+  // Once the new world is saved it replaces the slot, and the old career is
+  // the newest rotation backup.
+  GameController fresh;
+  fresh.setAutosavePolicy(policy);
+  fresh.newGame(slot.slot, WORLD_SEED + 1);
+  ASSERT_TRUE(fresh.getSaveStatus().ok);
+  const SaveInspection replaced = SaveManager::inspect(path);
+  EXPECT_EQ(replaced.status, SaveStatus::Ok);
+  EXPECT_EQ(replaced.game_date, fresh.getCurrentDate().toString());
+  EXPECT_NE(replaced.game_date, before.game_date);
+  EXPECT_EQ(SaveManager::countBackups(path), 2);
+  EXPECT_EQ(SaveManager::inspect(SaveManager::backupPath(path, 1)).game_date,
+            before.game_date);
 }
 
 TEST(SaveSafety, AutosaveFrequencies)

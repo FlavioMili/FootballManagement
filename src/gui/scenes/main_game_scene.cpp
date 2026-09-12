@@ -20,6 +20,7 @@
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/manager_scene.h"
+#include "gui/scenes/match_report_scene.h"
 #include "gui/scenes/match_scene.h"
 #include "gui/scenes/onboarding_overlay.h"
 #include "gui/scenes/team_selection_scene.h"
@@ -28,6 +29,7 @@
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/competition.h"
 #include "model/game.h"
 
 namespace
@@ -110,9 +112,11 @@ void MainGameScene::update(float /*deltaTime*/)
     try
     {
       const int advancedDays = continue_operation.get();
-      showToast(
-          fmt::sprintf(Format::plural("DASHBOARD_ADVANCED_DAYS", advancedDays),
-                       advancedDays));
+      // After a match its report is the news, not the day count.
+      if (!match_report)
+        showToast(fmt::sprintf(
+            Format::plural("DASHBOARD_ADVANCED_DAYS", advancedDays),
+            advancedDays));
       refreshData();
       if (holiday_running)
         holidayDialog().showSummary(guiView->getController(),
@@ -123,6 +127,15 @@ void MainGameScene::update(float /*deltaTime*/)
       showToast(LOC("DASHBOARD_ADVANCE_FAILED"), true);
     }
     holiday_running = false;
+    // The match was recorded before the day was simulated: its report opens
+    // either way.
+    if (match_report)
+    {
+      guiView->navigateTo(std::make_unique<MatchReportScene>(
+          guiView, match_report->date, match_report->home_id,
+          match_report->away_id));
+      match_report.reset();
+    }
   }
 
   // Team selection is an overlay, so the dashboard does not re-enter when the
@@ -196,6 +209,17 @@ void MainGameScene::requestHoliday(const HolidayPlan& plan)
   if (guiView->getOverlayDepth() > 0) guiView->navigateTo(nullptr);
 }
 
+void MainGameScene::requestPostMatchAdvance(const GameDateValue& date,
+                                            TeamID home_id, TeamID away_id)
+{
+  if (continuation_running) return;
+  match_report = PlayedMatch{date, home_id, away_id};
+  pending_holiday.reset();
+  continuation_requested = true;
+  guiView->requestBackdropCapture();
+  if (guiView->getOverlayDepth() > 0) guiView->navigateTo(nullptr);
+}
+
 void MainGameScene::startContinuation()
 {
   continuation_running = true;
@@ -208,6 +232,17 @@ void MainGameScene::startContinuation()
   continue_overlay_shown = false;
   GameController* controllerPtr = &guiView->getController();
   holiday_running = pending_holiday.has_value();
+  // The rest of a managed match day: exactly one day, whatever comes next.
+  if (match_report)
+  {
+    continue_operation = std::async(std::launch::async,
+                                    [controllerPtr]()
+                                    {
+                                      controllerPtr->advanceDay();
+                                      return 1;
+                                    });
+    return;
+  }
   if (pending_holiday)
   {
     continue_operation =
@@ -386,7 +421,8 @@ void MainGameScene::renderOverview()
 
   const auto league = controller.getLeagueById(club.getLeagueId());
   const std::string subtitle = fmt::sprintf(
-      LOC("DASHBOARD_SUBTITLE"), league ? league->get().getName().c_str() : "",
+      LOC("DASHBOARD_SUBTITLE"),
+      league ? Competitions::leagueName(league->get()).c_str() : "",
       cached_season, Format::date(controller.getCurrentDate()).c_str());
   UI::pageHeader(club.getName().c_str(), subtitle.c_str());
 
@@ -416,8 +452,10 @@ void MainGameScene::renderOverview()
   const std::string balanceText = Format::money(balance);
   const std::string payrollText = fmt::sprintf(
       LOC("DASHBOARD_PAYROLL_FOOTNOTE"), Format::money(cached_payroll).c_str());
+  // Under a transfer embargo the cash tile says so instead of the payroll.
   UI::statTile("tile_balance", LOC("FINANCE_CASH"), balanceText.c_str(),
-               payrollText.c_str(),
+               cached_embargo ? LOC("TRANSFER_TILE_EMBARGO_NOTE")
+                              : payrollText.c_str(),
                balance < 0 ? palette.negative : palette.text, width);
   tiles.next();
   const std::string squadText = std::to_string(cached_squad.size());
@@ -749,9 +787,13 @@ void MainGameScene::renderFinances()
                finances.getBalance() < 0 ? palette.negative : palette.text,
                width);
   tiles.next();
-  const std::string budget = Format::money(finances.getTransferBudget());
+  // What can be committed today (cash reserve, instalments and an embargo
+  // included), the same figure the transfer screens use.
+  const std::string budget = Format::money(cached_transfer_budget);
   UI::statTile("fin_budget", LOC("FINANCE_TRANSFER_BUDGET"), budget.c_str(),
-               LOC("FINANCE_BUDGET_FOOTNOTE"), palette.text, width);
+               LOC(cached_embargo ? "TRANSFER_TILE_EMBARGO_NOTE"
+                                  : "FINANCE_BUDGET_FOOTNOTE"),
+               cached_embargo ? palette.negative : palette.text, width);
   tiles.next();
   const int64_t wageBudget = finances.getWageBudget();
   const std::string payroll = Format::money(cached_payroll);
@@ -956,6 +998,8 @@ void MainGameScene::refreshData()
   cached_squad.clear();
   cached_payroll = 0;
   cached_squad_value = 0;
+  cached_embargo = controller.isTransferEmbargoed();
+  cached_transfer_budget = controller.transferBudgetForTeam(club.getId());
   double overallSum = 0.0;
   for (const auto& playerRef : controller.getPlayersForTeam(club.getId()))
   {

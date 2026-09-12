@@ -8,6 +8,47 @@
 
 #include "role_utils.h"
 
+#include <array>
+#include <cstddef>
+
+#include "global/language_manager.h"
+
+namespace
+{
+constexpr std::size_t ROLE_COUNT = static_cast<std::size_t>(PlayerRole::UNKNOWN);
+
+constexpr std::array<const char*, ROLE_COUNT> SHORT_KEYS = {
+    "ROLE_SHORT_GK",  "ROLE_SHORT_CB", "ROLE_SHORT_LB",  "ROLE_SHORT_RB",
+    "ROLE_SHORT_CDM", "ROLE_SHORT_CM", "ROLE_SHORT_CAM", "ROLE_SHORT_LM",
+    "ROLE_SHORT_RM",  "ROLE_SHORT_LW", "ROLE_SHORT_RW",  "ROLE_SHORT_ST"};
+
+constexpr std::array<const char*, ROLE_COUNT> LONG_KEYS = {
+    "ROLE_LONG_GK",  "ROLE_LONG_CB", "ROLE_LONG_LB",  "ROLE_LONG_RB",
+    "ROLE_LONG_CDM", "ROLE_LONG_CM", "ROLE_LONG_CAM", "ROLE_LONG_LM",
+    "ROLE_LONG_RM",  "ROLE_LONG_LW", "ROLE_LONG_RW",  "ROLE_LONG_ST"};
+
+constexpr const char* NO_ROLE = "-";
+}  // namespace
+
+const char* RoleUtils::shortName(PlayerRole role)
+{
+  const auto index = static_cast<std::size_t>(role);
+  return index < ROLE_COUNT ? LOC(SHORT_KEYS[index]) : NO_ROLE;
+}
+
+const char* RoleUtils::longName(PlayerRole role)
+{
+  const auto index = static_cast<std::size_t>(role);
+  return index < ROLE_COUNT ? LOC(LONG_KEYS[index]) : NO_ROLE;
+}
+
+std::string RoleUtils::shortNameArg(PlayerRole role)
+{
+  const auto index = static_cast<std::size_t>(role);
+  return index < ROLE_COUNT ? std::string("@") + SHORT_KEYS[index]
+                            : std::string(NO_ROLE);
+}
+
 std::string RoleUtils::toString(PlayerRole role)
 {
   switch (role)

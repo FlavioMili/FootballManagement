@@ -14,6 +14,7 @@
 #include <array>
 #include <chrono>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -21,11 +22,14 @@
 #include <string>
 #include <vector>
 
+#include <nlohmann/json.hpp>
+
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
 #include "global/global.h"
 #include "global/language_manager.h"
 #include "global/logger.h"
+#include "global/paths.h"
 #include "global/runtime_paths.h"
 #include "model/injury.h"
 #include "model/match.h"
@@ -306,7 +310,7 @@ TEST(WorldGenerationTest, NamesFollowNationalityAndAreUnique)
   for (const auto& [id, player] : gamedata->getPlayers())
   {
     ++full_names[player.getName()];
-    EXPECT_FALSE(pool.excluded_full_names.contains(player.getName()));
+    EXPECT_FALSE(pool.isExcluded(player.getName()));
     const auto& firsts = pool.firstNames(player.getNationality());
     if (std::ranges::contains(firsts, player.getFirstName()))
       ++matching_first_names;
@@ -1186,4 +1190,92 @@ TEST(WorldSimulationTest, FullSeasonTiming)
     const Finances& finances = team.get().getFinances();
     EXPECT_EQ(finances.getBalance(), finances.ledgerTotal());
   }
+}
+
+TEST(WorldGenerationTest, ExcludedNamesAreHashedAndNeverGenerated)
+{
+  // The pack stores only hashes of normalised full names ("Zzz Testname" is
+  // a fictional entry kept on the list for this test).
+  EXPECT_EQ(NamePool::normalizeName("  Zzz   TESTNAME "), "zzz testname");
+  EXPECT_EQ(NamePool::normalizeName("Zzz Téstnâme"), "zzz testname");
+  EXPECT_EQ(NamePool::normalizeName("Øyvind Łukasz Straße"),
+            "oyvind lukasz strasse");
+  EXPECT_EQ(NamePool::nameHash("Zzz Testname"),
+            NamePool::nameHash("zzz  téstname"));
+  EXPECT_NE(NamePool::nameHash("Zzz Testname"),
+            NamePool::nameHash("Zzz Testnam"));
+
+  const NamePool& pool = NamePool::instance();
+  EXPECT_TRUE(pool.isExcluded("Zzz Testname"));
+  EXPECT_TRUE(pool.isExcluded("ZZZ TÉSTNAME"));
+  EXPECT_FALSE(pool.isExcluded("Zzz Testnam"));
+  NameRegistry registry;
+  EXPECT_FALSE(registry.isAvailable("Zzz Testname"));
+  EXPECT_TRUE(registry.isAvailable("Zzz Testnam"));
+
+  // The asset holds no plain list of names to avoid.
+  std::ifstream file(AssetPaths::firstNames());
+  const auto json = nlohmann::json::parse(file);
+  EXPECT_FALSE(json.contains("excluded_full_names"));
+  ASSERT_TRUE(json.contains("excluded_name_hashes"));
+  EXPECT_EQ(json.at("excluded_name_hashes").size(),
+            pool.excluded_name_hashes.size());
+  for (const auto& hash : json.at("excluded_name_hashes"))
+    EXPECT_EQ(hash.get<std::string>().size(), 16u);
+
+  // Draws never hand out an excluded name, even with a tiny pool.
+  WorldRng rng(99);
+  NameRegistry names;
+  for (int i = 0; i < 3000; ++i)
+  {
+    SquadSurnames squad;
+    const auto [first, last] =
+        WorldGeneration::drawName(rng, Language::IT, names, squad);
+    EXPECT_FALSE(pool.isExcluded(first + " " + last));
+  }
+}
+
+TEST(WorldPersistenceTest, FixtureLeftOn30JuneCountsBeforeTheSeasonEnds)
+{
+  const SlotCleanup slot{uniqueSlot(7)};
+  {
+    auto controller = makeWorld(slot.slot);
+    controller->selectManagedTeam(controller->getTeams().front().get().getId());
+    ASSERT_TRUE(controller->saveGame());
+  }
+  // The last days of the season.
+  sqlite3* db = nullptr;
+  ASSERT_EQ(sqlite3_open(RuntimePaths::savePath(slot.slot).c_str(), &db),
+            SQLITE_OK);
+  ASSERT_EQ(sqlite3_exec(db, "UPDATE GameState SET game_date = '2026-06-29';",
+                         nullptr, nullptr, nullptr),
+            SQLITE_OK);
+  sqlite3_close(db);
+  GameController controller;
+  ASSERT_TRUE(controller.loadGame(slot.slot));
+  ASSERT_EQ(controller.getCurrentDate(), GameDateValue(2026, 6, 29));
+  const TeamID managed = controller.getManagedTeam()->get().getId();
+  TeamID opponent = 0;
+  for (const auto& team : controller.getTeams())
+    if (team.get().getId() != managed &&
+        team.get().getId() != FREE_AGENTS_TEAM_ID)
+    {
+      opponent = team.get().getId();
+      break;
+    }
+  ASSERT_NE(opponent, 0);
+  const GameDateValue last_day(2026, 6, 30);
+  controller.getGame()->getCalendar().addMatch(
+      Match(managed, opponent, last_day, MatchType::FRIENDLY));
+
+  // The manager leaves it unplayed on its day; the assistant plays it the
+  // next morning, before the new season replaces the calendar.
+  controller.advanceDay();
+  EXPECT_FALSE(controller.getMatchReport(last_day, managed, opponent));
+  controller.advanceDay();
+  ASSERT_EQ(controller.getCurrentDate(), GameDateValue(2026, 7, 1));
+  const auto report = controller.getMatchReport(last_day, managed, opponent);
+  ASSERT_TRUE(report.has_value());
+  EXPECT_EQ(report->home_team_id, managed);
+  EXPECT_FALSE(report->players.empty());
 }

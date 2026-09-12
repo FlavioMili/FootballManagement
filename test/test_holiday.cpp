@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
+#include <sqlite3.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -17,6 +18,7 @@
 #include "global/runtime_paths.h"
 #include "model/holiday.h"
 #include "model/transfer_negotiation.h"
+#include "model/world_tuning.h"
 
 namespace
 {
@@ -208,4 +210,72 @@ TEST(Holiday, DayLimitAndOpenEndedHolidays)
   EXPECT_GT(days, 0);
   // Open-ended: it ends on a decision, another stop or the day limit.
   EXPECT_NE(summary.reason, HolidayStop::Completed);
+}
+
+TEST(Holiday, SackingEndsTheHoliday)
+{
+  const SlotCleanup slot{uniqueSlot(3)};
+  auto controller = makeCareer(slot.slot);
+  HolidayPlan until = plan(HolidayMode::UntilDate);
+  until.preferences.stop_big_bid = false;
+  until.preferences.stop_injury_crisis = false;
+  until.preferences.stop_key_injury = false;
+  until.preferences.stop_sacking_warning = false;
+  until.until = GameDateValue(2025, 9, 30);
+  controller->goOnHoliday(until);
+  ASSERT_EQ(controller->getCurrentDate(), until.until);
+  ASSERT_FALSE(controller->isUnemployed());
+  ASSERT_TRUE(controller->saveGame());
+
+  // The board has run out of patience: the October review dismisses him.
+  using Tuning = WorldTuning::Board;
+  sqlite3* db = nullptr;
+  ASSERT_EQ(
+      sqlite3_open(RuntimePaths::savePath(slot.slot).string().c_str(), &db),
+      SQLITE_OK);
+  const std::string update =
+      "UPDATE BoardState SET confidence = 0, low_reviews = " +
+      std::to_string(Tuning::DISMISSAL_REVIEWS - 1) +
+      ", league_matches = " + std::to_string(Tuning::MIN_MATCHES_FOR_DISMISSAL) +
+      ";";
+  ASSERT_EQ(sqlite3_exec(db, update.c_str(), nullptr, nullptr, nullptr),
+            SQLITE_OK);
+  sqlite3_close(db);
+  controller = std::make_unique<GameController>();
+  ASSERT_TRUE(controller->loadGame(slot.slot));
+  ASSERT_FALSE(controller->isUnemployed());
+
+  until.until = GameDateValue(2025, 10, 20);
+  EXPECT_EQ(controller->goOnHoliday(until), 1);
+  const HolidaySummary& summary = controller->getHolidaySummary();
+  EXPECT_EQ(summary.reason, HolidayStop::Dismissed);
+  EXPECT_EQ(controller->getCurrentDate(), GameDateValue(2025, 10, 1));
+  EXPECT_TRUE(controller->isUnemployed());
+  ASSERT_FALSE(controller->getManagerStints().empty());
+  EXPECT_EQ(controller->getManagerStints().back().reason,
+            DepartureReason::Sacked);
+}
+
+TEST(Holiday, AutosavesKeepTheManagersOwnDuties)
+{
+  const SlotCleanup slot{uniqueSlot(4)};
+  auto controller = makeCareer(slot.slot);
+  controller->setAssistantFixesLineup(false);
+  controller->setAutosavePolicy({AutosaveFrequency::Daily, 0});
+  HolidayPlan until = plan(HolidayMode::UntilDate);
+  until.until = SeasonCalendar::addDays(controller->getCurrentDate(), 3);
+  until.preferences.assistant_lineup = true;
+  until.preferences.stop_big_bid = false;
+  until.preferences.stop_injury_crisis = false;
+  until.preferences.stop_key_injury = false;
+  until.preferences.stop_sacking_warning = false;
+  EXPECT_EQ(controller->goOnHoliday(until), 3);
+  EXPECT_FALSE(controller->getAssistantFixesLineup());
+  // The last holiday day was autosaved while the assistant stood in.
+  EXPECT_EQ(controller->getSaveStatus().game_date,
+            controller->getCurrentDate().toString());
+  GameController reloaded;
+  ASSERT_TRUE(reloaded.loadGame(slot.slot));
+  EXPECT_EQ(reloaded.getCurrentDate(), controller->getCurrentDate());
+  EXPECT_FALSE(reloaded.getAssistantFixesLineup());
 }

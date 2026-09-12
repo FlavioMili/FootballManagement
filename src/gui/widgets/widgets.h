@@ -283,6 +283,12 @@ struct MoneyInputOptions
 bool moneyInput(const char* id, int64_t& value,
                 const MoneyInputOptions& options = {});
 
+/**
+ * @brief Next value of a money input's -/+ button: `fraction` up or down,
+ * rounded to three significant figures, and always at least 1 away.
+ */
+int64_t stepMoney(int64_t value, bool up, double fraction);
+
 /** @brief Parses "14.4M", "850k", "€1,200,000" (false when invalid). */
 bool parseMoney(std::string_view text, int64_t& value);
 
@@ -309,7 +315,7 @@ void summaryRow(const char* label, const char* value,
                 const ImVec4* valueColor = nullptr, bool emphasis = false);
 
 /**
- * @brief Budget before/after bar: "€20.0M → €5.6M". The after part turns red
+ * @brief Budget before/after bar: "€20.0M -> €5.6M" (drawn arrow). The after part turns red
  * below zero and the reason is shown underneath.
  */
 void budgetImpact(const char* label, int64_t current, int64_t after,

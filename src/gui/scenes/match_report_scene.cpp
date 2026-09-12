@@ -166,8 +166,8 @@ void MatchReportScene::refresh()
     if (event.kind == MatchEventKind::OWN_GOAL)
       row.text += LOC("REPORT_OWN_GOAL_SUFFIX");
     if (event.assist != 0)
-      row.text += fmt::sprintf(LOC("REPORT_ASSIST_SUFFIX"),
-                               playerName(data, event.assist));
+      row.assist = fmt::sprintf(LOC("REPORT_ASSIST_SUFFIX"),
+                                playerName(data, event.assist));
     events.push_back(std::move(row));
   }
 
@@ -232,48 +232,94 @@ void MatchReportScene::renderScore()
 {
   const Theme::Palette& palette = Theme::palette();
   UI::beginAutoHeightCard("report_score", nullptr);
-  UI::badge(LOC(CompetitionView::matchTypeKey(report->match_type)),
-            palette.info);
+  const char* typeLabel = LOC(CompetitionView::matchTypeKey(report->match_type));
+  std::string stage;
   if (report->match_type == MatchType::CUP && report->stage > 0)
-  {
-    ImGui::SameLine();
     if (const auto cup =
             guiView->getController().getCupStatus(report->competition_id))
-    {
-      const char* stageKey =
-          Competitions::cupRoundLabelKey(report->stage, cup->total_rounds);
-      ImGui::TextColored(palette.muted, "%s",
-                         fmt::sprintf(LOC(stageKey), report->stage).c_str());
-    }
-  }
-  if (report->attendance > 0)
+      stage = fmt::sprintf(
+          LOC(Competitions::cupRoundLabelKey(report->stage, cup->total_rounds)),
+          report->stage);
+  const std::string attendance =
+      report->attendance > 0
+          ? fmt::sprintf(LOC("REPORT_ATTENDANCE"),
+                         Format::thousands(report->attendance))
+          : std::string();
+  const auto drawFacts = [&]()
   {
-    ImGui::SameLine();
-    ImGui::TextColored(palette.muted, "%s",
-                       fmt::sprintf(LOC("REPORT_ATTENDANCE"),
-                                    Format::thousands(report->attendance))
-                           .c_str());
-  }
+    UI::badge(typeLabel, palette.info);
+    if (!stage.empty())
+    {
+      ImGui::SameLine();
+      ImGui::TextColored(palette.muted, "%s", stage.c_str());
+    }
+  };
 
   const float width = ImGui::GetContentRegionAvail().x;
   const float startX = ImGui::GetCursorPosX();
+  const float gap = Theme::Space::L * Theme::scale();
+  const std::string score =
+      std::format("{}  –  {}", report->home_goals, report->away_goals);
+  float scoreWidth = 0.0f;
+  float homeWidth = 0.0f;
+  float awayWidth = 0.0f;
+  float headingHeight = 0.0f;
   {
-    const std::string score =
-        std::format("{}  –  {}", report->home_goals, report->away_goals);
     Theme::ScopedText heading(Theme::Text::HEADING);
-    const float scoreWidth = ImGui::CalcTextSize(score.c_str()).x;
-    const float side =
-        (width - scoreWidth) * 0.5f - Theme::Space::L * Theme::scale();
-    const float homeWidth = ImGui::CalcTextSize(home_name.c_str()).x;
+    scoreWidth = ImGui::CalcTextSize(score.c_str()).x;
+    homeWidth = ImGui::CalcTextSize(home_name.c_str()).x;
+    awayWidth = ImGui::CalcTextSize(away_name.c_str()).x;
+    headingHeight = ImGui::GetTextLineHeight();
+  }
+  // Competition and attendance share the score's row when both sides fit,
+  // so the card is one line instead of a mostly empty caption row.
+  float factsWidth = 0.0f;
+  {
+    Theme::ScopedText caption(Theme::Text::CAPTION);
+    factsWidth = ImGui::CalcTextSize(typeLabel).x + 12.0f * Theme::scale();
+  }
+  if (!stage.empty())
+    factsWidth += ImGui::GetStyle().ItemSpacing.x +
+                  ImGui::CalcTextSize(stage.c_str()).x;
+  const float attendanceWidth = ImGui::CalcTextSize(attendance.c_str()).x;
+  const float side = (width - scoreWidth) * 0.5f - gap;
+  const bool oneRow = homeWidth + factsWidth + gap <= side &&
+                      awayWidth + attendanceWidth + gap <= side;
+  const float rowY = ImGui::GetCursorPosY();
+  if (!oneRow)
+  {
+    drawFacts();
+    if (!attendance.empty())
+    {
+      ImGui::SameLine();
+      ImGui::TextColored(palette.muted, "%s", attendance.c_str());
+    }
+  }
+  {
+    Theme::ScopedText heading(Theme::Text::HEADING);
     ImGui::SetCursorPosX(startX + std::max(0.0f, side - homeWidth));
     if (UI::link(home_name.c_str(), "report_home"))
       Navigation::openClub(guiView, home_id);
     ImGui::SameLine(startX + (width - scoreWidth) * 0.5f);
     ImGui::TextUnformatted(score.c_str());
-    ImGui::SameLine(startX + (width + scoreWidth) * 0.5f +
-                    Theme::Space::L * Theme::scale());
+    ImGui::SameLine(startX + (width + scoreWidth) * 0.5f + gap);
     if (UI::link(away_name.c_str(), "report_away"))
       Navigation::openClub(guiView, away_id);
+  }
+  const float afterScoreY = ImGui::GetCursorPosY();
+  if (oneRow)
+  {
+    const float factsY =
+        rowY + (headingHeight - ImGui::GetTextLineHeight()) * 0.5f;
+    ImGui::SetCursorPos(ImVec2(startX, factsY));
+    drawFacts();
+    if (!attendance.empty())
+    {
+      ImGui::SetCursorPos(
+          ImVec2(startX + width - attendanceWidth, factsY));
+      ImGui::TextColored(palette.muted, "%s", attendance.c_str());
+    }
+    ImGui::SetCursorPos(ImVec2(startX, afterScoreY));
   }
   if (!result_note.empty())
   {
@@ -282,7 +328,30 @@ void MatchReportScene::renderScore()
     ImGui::SetCursorPosX(startX + (width - noteWidth) * 0.5f);
     ImGui::TextColored(palette.muted, "%s", result_note.c_str());
   }
+  else if (oneRow)
+  {
+    ImGui::Dummy(ImVec2(0.0f, 0.0f));  // An item after moving the cursor back.
+  }
   UI::endCard();
+}
+
+/** Scorer (or booked player) with the assist on a smaller second line; the
+ * home side is right-aligned towards the minute column. */
+void MatchReportScene::eventText(const EventRow& event, bool alignRight)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const auto line = [alignRight](const std::string& text, const ImVec4& color)
+  {
+    const float cell = ImGui::GetContentRegionAvail().x;
+    const float textWidth = ImGui::CalcTextSize(text.c_str()).x;
+    if (alignRight && textWidth < cell)
+      ImGui::SetCursorPosX(ImGui::GetCursorPosX() + cell - textWidth);
+    UI::textFitted(text, cell, color);
+  };
+  line(event.text, palette.text);
+  if (event.assist.empty()) return;
+  Theme::ScopedText small(Theme::Text::SMALL);
+  line(event.assist, palette.muted);
 }
 
 void MatchReportScene::renderEvents(float width, float height)
@@ -305,14 +374,7 @@ void MatchReportScene::renderEvents(float width, float height)
     {
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
-      if (event.home)
-      {
-        const float cell = ImGui::GetContentRegionAvail().x;
-        const float textWidth = ImGui::CalcTextSize(event.text.c_str()).x;
-        if (textWidth < cell)
-          ImGui::SetCursorPosX(ImGui::GetCursorPosX() + cell - textWidth);
-        UI::textFitted(event.text, cell, palette.text);
-      }
+      if (event.home) eventText(event, true);
       ImGui::TableNextColumn();
       const float cellWidth = ImGui::GetContentRegionAvail().x;
       const float minuteWidth = ImGui::CalcTextSize(event.minute.c_str()).x;
@@ -324,9 +386,7 @@ void MatchReportScene::renderEvents(float width, float height)
       ImGui::SameLine();
       eventMarker(event.kind);
       ImGui::TableNextColumn();
-      if (!event.home)
-        UI::textFitted(event.text, ImGui::GetContentRegionAvail().x,
-                       palette.text);
+      if (!event.home) eventText(event, false);
     }
     ImGui::EndTable();
   }

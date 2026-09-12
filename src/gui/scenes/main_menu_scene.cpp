@@ -255,7 +255,8 @@ void MainMenuScene::render()
     Theme::ScopedText small(Theme::Text::SMALL);
     ImGui::TextColored(palette.muted, "%s",
                        fmt::sprintf(LOC("MENU_CONTINUE_DETAIL"),
-                                    latest.team_name, latest.game_date)
+                                    latest.team_name,
+                                    localizedDate(latest.game_date))
                            .c_str());
     ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale));
   }
@@ -492,7 +493,8 @@ void MainMenuScene::renderSlotPicker()
       else
       {
         detail = metadata.team_name;
-        if (!metadata.game_date.empty()) detail += "  ·  " + metadata.game_date;
+        if (!metadata.game_date.empty())
+          detail += "  ·  " + localizedDate(metadata.game_date);
       }
 
       const bool disableButton = !is_new_game && !metadata.exists;
@@ -533,7 +535,12 @@ void MainMenuScene::renderSlotPicker()
       {
         // Status badge in the slot's top-right corner.
         Theme::ScopedText caption(Theme::Text::CAPTION);
-        const char* status = LOC(metadata.status_key);
+        // A short label; the full explanation belongs to the load dialog.
+        const char* status =
+            LOC(metadata.status == SaveStatus::FutureVersion ? "SAVE_STATUS_NEWER"
+                : metadata.status == SaveStatus::Incomplete
+                    ? "SAVE_STATUS_INCOMPLETE"
+                    : "SAVE_STATUS_DAMAGED");
         const ImVec2 textSize = ImGui::CalcTextSize(status);
         const ImVec2 pad(6.0f * scale, 2.0f * scale);
         const ImVec2 badgeMin(slotStart.x + slotSize.x - textSize.x -

@@ -217,15 +217,15 @@ void RosterScene::renderFilters()
   const std::string rolePreview =
       role_filter_index == 0
           ? LOC("ROSTER_ALL_ROLES")
-          : RoleUtils::toString(FILTER_ROLES[selectedRoleIndex]);
+          : RoleUtils::shortName(FILTER_ROLES[selectedRoleIndex]);
   if (ImGui::BeginCombo("##roster_role", rolePreview.c_str()))
   {
     if (ImGui::Selectable(LOC("ROSTER_ALL_ROLES"), role_filter_index == 0))
       role_filter_index = 0;
     for (std::size_t index = 0; index < FILTER_ROLES.size(); ++index)
     {
-      const std::string role = RoleUtils::toString(FILTER_ROLES[index]);
-      if (ImGui::Selectable(role.c_str(),
+      const char* const role = RoleUtils::longName(FILTER_ROLES[index]);
+      if (ImGui::Selectable(role,
                             role_filter_index == static_cast<int>(index + 1)))
         role_filter_index = static_cast<int>(index + 1);
     }

@@ -106,3 +106,52 @@ TEST_F(GameDataTest, ExpiredContractReleasesPlayerToFreeAgents)
   EXPECT_TRUE(std::ranges::contains(
       gamedata.getTeams().at(FREE_AGENTS_TEAM_ID).getPlayerIDs(), PLAYER_ID));
 }
+
+TEST_F(GameDataTest, RemovedPlayerLeavesNoLineupReference)
+{
+  static constexpr TeamID CLUB_ID = 444;
+  static constexpr TeamID OTHER_ID = 445;
+  gamedata.addTeam(CLUB_ID, Team(CLUB_ID, 1, "Club", 1'000'000));
+  gamedata.addTeam(OTHER_ID, Team(OTHER_ID, 1, "Other", 1'000'000));
+  const auto add = [this](PlayerID id, PlayerRole role)
+  {
+    gamedata.addPlayer(id, Player(id, CLUB_ID, "Squad", "Member", role,
+                                  Language::EN, 1'000, 0, 17, 2, 180,
+                                  Foot::Right, {}));
+    gamedata.getTeams().at(CLUB_ID).addPlayerID(id);
+    return &gamedata.getPlayer(id)->get();
+  };
+  const Player* keeper = add(66601, PlayerRole::GK);
+  const Player* starter = add(66602, PlayerRole::ST);
+  const Player* benched = add(66603, PlayerRole::CM);
+  const Player* spare = add(66604, PlayerRole::CB);
+
+  Lineup& lineup = gamedata.getTeams().at(CLUB_ID).getLineup();
+  lineup.setGoalkeeper(keeper);
+  lineup.addOutfieldPlayer(starter, {0.8f, 0.5f});
+  lineup.setReserves({benched, spare});
+  lineup.setDesignated(SetPieceDuty::Penalties, benched->getId());
+  lineup.setDesignated(SetPieceDuty::Captain, starter->getId());
+  // A stale reference in another club's line-up (as the free agents keep
+  // for players who signed elsewhere).
+  gamedata.getTeams().at(OTHER_ID).getLineup().setReserves({benched});
+
+  // A benched player: no pointer may survive anywhere.
+  ASSERT_TRUE(gamedata.removePlayer(benched->getId()));
+  EXPECT_FALSE(std::ranges::contains(lineup.getReserves(), benched));
+  EXPECT_TRUE(std::ranges::contains(lineup.getReserves(), spare));
+  EXPECT_FALSE(std::ranges::contains(
+      gamedata.getTeams().at(OTHER_ID).getLineup().getReserves(), benched));
+  EXPECT_EQ(lineup.getDesignated(SetPieceDuty::Penalties), PlayerID{});
+  EXPECT_EQ(lineup.getDesignated(SetPieceDuty::Captain), starter->getId());
+
+  // Starters and the goalkeeper are dropped too.
+  const PlayerID starter_id = starter->getId();
+  ASSERT_TRUE(gamedata.removePlayer(starter_id));
+  EXPECT_TRUE(lineup.getOutfieldPlayers().empty());
+  EXPECT_EQ(lineup.getDesignated(SetPieceDuty::Captain), PlayerID{});
+  ASSERT_TRUE(gamedata.removePlayer(keeper->getId()));
+  EXPECT_EQ(lineup.getGoalkeeper(), nullptr);
+  EXPECT_EQ(lineup.getReserves().size(), 1u);
+  EXPECT_FALSE(lineup.removePlayer(starter_id));
+}

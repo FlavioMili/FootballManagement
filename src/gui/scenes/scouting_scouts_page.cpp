@@ -29,6 +29,7 @@
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/competition.h"
 
 using namespace ScoutingUi;
 
@@ -40,6 +41,9 @@ constexpr float SEND_TWO_COLUMN_MIN_WIDTH = 600.0f;
 constexpr float SCOUT_LIST_MAX_WIDTH = 440.0f;
 constexpr float HEADER_BAR_MAX_WIDTH = 380.0f;
 constexpr float PICKER_STACKED_HEIGHT = 260.0f;
+/** Stacked layout: scouts always visible in the list, detail minimum. */
+constexpr float STACKED_LIST_ROWS = 3.0f;
+constexpr float STACKED_DETAIL_MIN_HEIGHT = 380.0f;
 constexpr float KEY_WIDTH = 150.0f;
 constexpr float REPORTS_MIN_HEIGHT = 220.0f;
 constexpr std::size_t PLAYER_MATCH_LIMIT = 8;
@@ -122,8 +126,9 @@ void ScoutingScene::rebuildWorld()
     const LeagueID root = rootOf(league.getId());
     CountryNode& node = countries[root];
     node.id = root;
-    if (league.getId() == root) node.name = league.getName();
-    node.divisions.emplace_back(league.getId(), league.getName());
+    if (league.getId() == root) node.name = Competitions::leagueName(league);
+    node.divisions.emplace_back(league.getId(),
+                                Competitions::leagueName(league));
   }
   for (auto& [id, country] : countries)
   {
@@ -247,12 +252,13 @@ void ScoutingScene::rebuildScoutDetail()
     const auto league = controller.getLeagueById(league_id);
     if (!league) continue;
     expertise_lines.push_back(
-        days >= 60 ? fmt::sprintf(LOC("SCOUTING_EXPERIENCE_YEARS"),
-                                  league->get().getName().c_str(),
-                                  static_cast<double>(days / DAYS_PER_YEAR))
-                   : fmt::sprintf(LOC("SCOUTING_EXPERIENCE_DAYS"),
-                                  league->get().getName().c_str(),
-                                  static_cast<int>(days)));
+        days >= 60
+            ? fmt::sprintf(LOC("SCOUTING_EXPERIENCE_YEARS"),
+                           Competitions::leagueName(league->get()).c_str(),
+                           static_cast<double>(days / DAYS_PER_YEAR))
+            : fmt::sprintf(LOC("SCOUTING_EXPERIENCE_DAYS"),
+                           Competitions::leagueName(league->get()).c_str(),
+                           static_cast<int>(days)));
   }
 
   // Reports he filed that were never opened are highlighted while the page
@@ -439,13 +445,13 @@ std::string ScoutingScene::targetLabel(ScoutTargetKind kind,
     case ScoutTargetKind::League:
       if (const auto league =
               controller.getLeagueById(static_cast<LeagueID>(targetId)))
-        return league->get().getName();
+        return Competitions::leagueName(league->get());
       break;
     case ScoutTargetKind::Country:
       if (const auto league =
               controller.getLeagueById(static_cast<LeagueID>(targetId)))
         return fmt::sprintf(LOC("SCOUTING_COUNTRY_NODE"),
-                            league->get().getName().c_str());
+                            Competitions::leagueName(league->get()).c_str());
       break;
     case ScoutTargetKind::Region:
       return LOC(continentKey(static_cast<Continent>(targetId)));
@@ -461,7 +467,7 @@ std::string ScoutingScene::effectText(const EffectFactor& factor) const
   const auto leagueName = [&controller](uint32_t id)
   {
     const auto league = controller.getLeagueById(static_cast<LeagueID>(id));
-    return league ? league->get().getName() : std::string();
+    return league ? Competitions::leagueName(league->get()) : std::string();
   };
   const auto languageName = [](uint32_t id)
   {
@@ -547,14 +553,21 @@ void ScoutingScene::renderOverview()
     renderScoutDetail(available.y);
     return;
   }
-  // Narrow windows: the list on top, the page below.
-  const float rowHeight =
-      ImGui::GetTextLineHeightWithSpacing() * 3.0f + Theme::Space::M * dpi();
-  const float listHeight = std::min(
-      available.y * 0.38f, rowHeight * static_cast<float>(scout_lines.size()) +
-                               ImGui::GetTextLineHeightWithSpacing() * 2.5f);
+  // Narrow windows: the list on top (at least three scouts in view, all of
+  // them when they fit in half the page), the scout's page below. The page
+  // scrolls when both do not fit.
+  const float rowHeight = ImGui::GetTextLineHeightWithSpacing() * 3.0f +
+                          2.0f * Theme::Space::S * dpi() +
+                          ImGui::GetStyle().ItemSpacing.y;
+  const float header = ImGui::GetTextLineHeightWithSpacing() * 2.5f;
+  const float natural =
+      rowHeight * static_cast<float>(scout_lines.size()) + header;
+  const float listHeight =
+      std::min(natural, std::max(available.y * 0.5f,
+                                 rowHeight * STACKED_LIST_ROWS + header));
   renderScoutList(0.0f, listHeight);
-  renderScoutDetail(ImGui::GetContentRegionAvail().y);
+  renderScoutDetail(std::max(ImGui::GetContentRegionAvail().y,
+                             STACKED_DETAIL_MIN_HEIGHT * dpi()));
 }
 
 void ScoutingScene::renderScoutList(float width, float height)
@@ -623,8 +636,9 @@ void ScoutingScene::renderScoutList(float width, float height)
     switch (summary.status)
     {
       case ScoutStatus::OnAssignment:
-        status = fmt::sprintf(LOC("SCOUTING_STATUS_ASSIGNED"),
-                              line.target.c_str(), line.days_left);
+        status = fmt::sprintf(
+            Format::plural("SCOUTING_STATUS_ASSIGNED", line.days_left),
+            line.target.c_str(), line.days_left);
         statusColor = palette.warning;
         break;
       case ScoutStatus::IdleWithHistory:
@@ -1004,16 +1018,32 @@ void ScoutingScene::renderWorldPicker(float width, float height)
     UI::textRightColored(multiplierColor(found->second),
                          multiplierText(found->second).c_str());
   };
+  // Tree node whose label (the node's ID too) ends with an ellipsis when
+  // the column is narrow; the full name is in the tooltip.
+  const auto node = [&palette](const char* label, ImGuiTreeNodeFlags flags)
+  {
+    const bool open = ImGui::TreeNodeEx(label, flags, "%s", "");
+    const ImVec2 min = ImGui::GetItemRectMin();
+    const ImVec2 max = ImGui::GetItemRectMax();
+    const float textX = min.x + ImGui::GetTreeNodeToLabelSpacing();
+    const float textY =
+        min.y + (max.y - min.y - ImGui::GetTextLineHeight()) * 0.5f;
+    const bool cut = UI::drawTextFitted(
+        ImGui::GetWindowDrawList(), ImVec2(textX, textY),
+        Theme::toU32(palette.text), label, max.x - textX);
+    if (cut && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+      ImGui::SetTooltip("%s", label);
+    return open;
+  };
   const auto leaf = [&](const char* label, ScoutTargetKind kind, uint32_t id)
   {
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
-    ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Leaf |
-                                 ImGuiTreeNodeFlags_NoTreePushOnOpen |
-                                 ImGuiTreeNodeFlags_SpanAvailWidth |
-                                 (send_kind == kind && send_target == id
-                                      ? ImGuiTreeNodeFlags_Selected
-                                      : 0));
+    node(label, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen |
+                    ImGuiTreeNodeFlags_SpanAvailWidth |
+                    (send_kind == kind && send_target == id
+                         ? ImGuiTreeNodeFlags_Selected
+                         : 0));
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) pick(kind, id);
     multiplierTag(kind, id);
   };
@@ -1022,14 +1052,14 @@ void ScoutingScene::renderWorldPicker(float width, float height)
   {
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
-    const bool open = ImGui::TreeNodeEx(
-        label, ImGuiTreeNodeFlags_OpenOnArrow |
-                   ImGuiTreeNodeFlags_OpenOnDoubleClick |
-                   ImGuiTreeNodeFlags_SpanAvailWidth |
-                   (defaultOpen ? ImGuiTreeNodeFlags_DefaultOpen : 0) |
-                   (send_kind == kind && send_target == id
-                        ? ImGuiTreeNodeFlags_Selected
-                        : 0));
+    const bool open =
+        node(label, ImGuiTreeNodeFlags_OpenOnArrow |
+                        ImGuiTreeNodeFlags_OpenOnDoubleClick |
+                        ImGuiTreeNodeFlags_SpanAvailWidth |
+                        (defaultOpen ? ImGuiTreeNodeFlags_DefaultOpen : 0) |
+                        (send_kind == kind && send_target == id
+                             ? ImGuiTreeNodeFlags_Selected
+                             : 0));
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) pick(kind, id);
     multiplierTag(kind, id);
     return open;
@@ -1047,12 +1077,11 @@ void ScoutingScene::renderWorldPicker(float width, float height)
   leaf(LOC("SCOUTING_TARGET_FREE_AGENTS"), ScoutTargetKind::FreeAgents, 0);
   ImGui::TableNextRow();
   ImGui::TableNextColumn();
-  ImGui::TreeNodeEx(
-      LOC("SCOUTING_PICK_PLAYER"),
-      ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen |
-          ImGuiTreeNodeFlags_SpanAvailWidth |
-          (send_kind == ScoutTargetKind::Player ? ImGuiTreeNodeFlags_Selected
-                                                : 0));
+  node(LOC("SCOUTING_PICK_PLAYER"),
+       ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen |
+           ImGuiTreeNodeFlags_SpanAvailWidth |
+           (send_kind == ScoutTargetKind::Player ? ImGuiTreeNodeFlags_Selected
+                                                 : 0));
   if (ImGui::IsItemClicked() && send_kind != ScoutTargetKind::Player)
     pick(ScoutTargetKind::Player, 0);
   const Continent home = homeContinent(selected_expertise.nationality);

@@ -55,12 +55,18 @@ GameController::GameController() : game(nullptr), gamedata(nullptr) {}
 void GameController::newGame(int slot, std::optional<std::uint64_t> world_seed)
 {
   const auto startedAt = std::chrono::steady_clock::now();
-  SaveManager::deleteSave(RuntimePaths::savePath(slot));
+  // The slot is not touched until the new world is complete: the first save
+  // replaces it atomically and keeps the previous file as a rotation backup,
+  // so a failure while creating the world never loses the old career.
+  // The new world is built aside, so a failure keeps the current career.
+  auto new_data = std::make_shared<GameData>();
+  if (world_seed) new_data->setWorldSeed(*world_seed);
+  auto connection = SaveManager::createWorkingCopy();
+  auto new_game = std::make_unique<Game>(new_data, connection);
   last_load_error.reset();
-  gamedata = std::make_shared<GameData>();
-  if (world_seed) gamedata->setWorldSeed(*world_seed);
-  db_conn = SaveManager::createWorkingCopy();
-  game = std::make_unique<Game>(gamedata, db_conn);
+  gamedata = std::move(new_data);
+  db_conn = std::move(connection);
+  game = std::move(new_game);
   transfer_listings.clear();
   transfer_rng.seed(transferSeed(*gamedata, game->getCurrentDate()));
 
@@ -250,6 +256,8 @@ void GameController::selectManagedTeam(uint16_t team_id)
       market.setLoanListed(player_id, false);
       removePlayerFromTransfer(player_id);
     }
+    // Nor does it buy anyone the manager did not bid for.
+    clearBidsBy(team_id);
   }
 }
 
@@ -398,6 +406,17 @@ void GameController::setSimulationThreads(unsigned threads)
   if (game) game->setSimulationThreads(threads);
 }
 
+void GameController::clearBidsBy(TeamID team_id)
+{
+  for (auto& [player_id, listing] : transfer_listings)
+  {
+    if (listing.highest_bidder_id != team_id) continue;
+    listing.highest_bid = 0;
+    listing.highest_bidder_id = std::nullopt;
+    gamedata->saveTransferListing(listing);
+  }
+}
+
 void GameController::purgeStaleListings()
 {
   const TransferMarket& market = game->getTransfers();
@@ -468,6 +487,11 @@ std::vector<std::pair<PlayerID, PlayerID>> GameController::previewLineupFix(
 {
   return game ? game->previewMatchdaySquadFix(team_id, type)
               : std::vector<std::pair<PlayerID, PlayerID>>{};
+}
+
+bool GameController::canKickOff(TeamID team_id, MatchType type) const
+{
+  return game && game->canKickOff(team_id, type);
 }
 
 std::vector<StandingRow> GameController::getStandings(LeagueID league_id) const
@@ -602,7 +626,27 @@ bool GameController::persist(bool autosave)
   status.game_date = game->getCurrentDate().toString();
   try
   {
-    game->saveGame();
+    if (delegation_after_holiday)
+    {
+      // Autosaves on holiday keep the manager's own delegation.
+      DelegationPolicy& delegation = game->getGuidance().delegation;
+      const DelegationPolicy on_holiday = delegation;
+      delegation = *delegation_after_holiday;
+      try
+      {
+        game->saveGame();
+      }
+      catch (...)
+      {
+        delegation = on_holiday;
+        throw;
+      }
+      delegation = on_holiday;
+    }
+    else
+    {
+      game->saveGame();
+    }
     status.timings.flush_ms =
         std::chrono::duration<double, std::milli>(Clock::now() - started)
             .count();
@@ -1085,8 +1129,14 @@ bool GameController::executeTransfer(PlayerID pid, TeamID buyer_id,
     return false;
   }
 
-  buyer.generateStartingXI(*gamedata, gamedata->getStatsConfig());
-  seller.generateStartingXI(*gamedata, gamedata->getStatsConfig());
+  // The manager's line-up is repaired, never rebuilt.
+  const TeamID managed = game->getManagedTeamId();
+  if (buyer_id != managed)
+    buyer.generateStartingXI(*gamedata, gamedata->getStatsConfig());
+  if (seller_id == managed)
+    game->getTransfers().removeFromLineup(seller, player);
+  else if (seller_id != FREE_AGENTS_TEAM_ID)
+    seller.generateStartingXI(*gamedata, gamedata->getStatsConfig());
   transfer_listings.erase(pid);
   game->getWorld().onTransferCompleted(today, pid, seller_id, buyer_id, price,
                                        game->getManagedTeamId());
@@ -1586,8 +1636,14 @@ std::vector<PlayerID> GameController::findTargetsForRole(
     }
   }
 
-  std::ranges::sort(candidates, [](const auto& a, const auto& b)
-                    { return a.second > b.second; });
+  // Ties by id: the listings are a hash map, whose order differs after a
+  // reload.
+  std::ranges::sort(candidates,
+                    [](const auto& a, const auto& b)
+                    {
+                      return a.second != b.second ? a.second > b.second
+                                                  : a.first < b.first;
+                    });
 
   std::vector<PlayerID> result;
   for (const auto& [pid, score] : candidates)
@@ -1767,19 +1823,16 @@ uint32_t GameController::transferBudgetForTeam(TeamID team_id) const
   auto team_opt = gamedata->getTeam(team_id);
   if (!team_opt.has_value()) return 0;
 
-  const Finances& finances = team_opt->get().getFinances();
-  if (finances.getBalance() <= 0 ||
-      (game && game->getWorld().isTransferEmbargoed(team_id)))
-    return 0;
-
   // The board's allowance, never more than the cash left after a payroll
-  // reserve and the instalments still due this season.
-  const int64_t committed = game ? game->getTransfers().committedPayables(
-                                       team_id, game->getCurrentDate())
-                                 : 0;
-  const int64_t budget = ClubEconomy::availableTransferBudget(
-      finances.getTransferBudget(), finances.getBalance(),
-      getWeeklyWageBill(team_id), committed);
+  // reserve and the instalments still due this season; nothing under an
+  // embargo. The market applies the same rule to computer-managed clubs.
+  const Finances& finances = team_opt->get().getFinances();
+  const int64_t budget =
+      game ? game->getTransfers().spendableBudget(team_id,
+                                                  game->getCurrentDate())
+           : ClubEconomy::availableTransferBudget(
+                 finances.getTransferBudget(), finances.getBalance(),
+                 getWeeklyWageBill(team_id), 0);
   return static_cast<uint32_t>(
       std::min<int64_t>(budget, std::numeric_limits<uint32_t>::max()));
 }
@@ -1790,8 +1843,15 @@ void GameController::evaluateIncomingAIBids()
   std::vector<PlayerID> to_accept;
   std::vector<PlayerID> to_reject;
 
-  for (const auto& [pid, listing] : transfer_listings)
+  // In id order: a random draw is taken per listing, and the hash map's
+  // order differs after a reload.
+  std::vector<PlayerID> listed;
+  listed.reserve(transfer_listings.size());
+  for (const auto& [pid, listing] : transfer_listings) listed.push_back(pid);
+  std::ranges::sort(listed);
+  for (const PlayerID pid : listed)
   {
+    const TransferListing& listing = transfer_listings.at(pid);
     if (listing.seller_team_id == FREE_AGENTS_TEAM_ID ||
         listing.seller_team_id == managed_team_opt)
     {
@@ -1918,16 +1978,19 @@ void GameController::processAITransferActivity()
   std::ranges::sort(clubs);
   rng.shuffle(std::span<TeamID>(clubs));
 
-  market.runAiPreContracts(today, managed, rng, Market::DAILY_PRE_CONTRACTS);
+  market.runAiPreContracts(
+      today, managed, rng,
+      Market::perDay(clubs.size(), Market::DAILY_PRE_CONTRACT_SHARE));
   if (!window.open)
   {
     // Out of the windows only free agents can be registered.
     int signings = 0;
-    const size_t visits =
-        std::min<size_t>(clubs.size(), Market::BASE_TEAM_EVALUATIONS);
-    for (size_t index = 0;
-         index < visits && signings < Market::CLOSED_WINDOW_FREE_SIGNINGS;
-         ++index)
+    const int max_signings =
+        Market::perDay(clubs.size(), Market::CLOSED_WINDOW_SIGNING_SHARE);
+    const auto visits = std::min<size_t>(
+        clubs.size(), static_cast<size_t>(Market::perDay(
+                          clubs.size(), Market::DAILY_EVALUATION_SHARE)));
+    for (size_t index = 0; index < visits && signings < max_signings; ++index)
     {
       if (market.runAiClub(clubs[index], transfer_listings, today, managed, rng,
                            true))
@@ -1939,11 +2002,10 @@ void GameController::processAITransferActivity()
   evaluateIncomingAIBids();
   const float weight = TransferNegotiation::activityWeight(window);
   const auto visits = std::min<size_t>(
-      clubs.size(),
-      static_cast<size_t>(std::lround(
-          static_cast<float>(Market::BASE_TEAM_EVALUATIONS) * weight)));
-  const auto max_moves = static_cast<int>(
-      std::lround(static_cast<float>(Market::BASE_DAILY_DEALS) * weight));
+      clubs.size(), static_cast<size_t>(Market::perDay(
+                        clubs.size(), Market::DAILY_EVALUATION_SHARE, weight)));
+  const int max_moves =
+      Market::perDay(clubs.size(), Market::DAILY_DEAL_SHARE, weight);
   int moves = 0;
   for (size_t index = 0; index < visits && moves < max_moves; ++index)
   {
@@ -3012,7 +3074,9 @@ bool GameController::acceptJobOffer(std::uint32_t offer_id)
     career.payCompensation(former, offer->team_id, offer->compensation,
                            today);
   game->takeJob(offer->team_id, career.contractFor(*offer, today));
-  return game->getManagedTeamId() == offer->team_id;
+  if (game->getManagedTeamId() != offer->team_id) return false;
+  clearBidsBy(offer->team_id);
+  return true;
 }
 
 bool GameController::declineJobOffer(std::uint32_t offer_id)
@@ -3925,12 +3989,12 @@ int GameController::goOnHoliday(const HolidayPlan& plan)
       pending.insert(player.get().getId());
   }
   const int injured_at_start = static_cast<int>(injured.size());
-  const bool dismissed_before = world.getBoardState().dismissed;
 
   // While the manager is away the assistant also takes the duties handed
   // to him for the holiday; the manager's own policy returns afterwards.
   DelegationPolicy& delegation = game->getGuidance().delegation;
   const DelegationPolicy delegation_before = delegation;
+  delegation_after_holiday = delegation_before;
   if (rules.assistant_lineup)
     delegation.set(Duty::LineupFixes, DutyOwner::Assistant);
   if (rules.assistant_training)
@@ -3955,7 +4019,9 @@ int GameController::goOnHoliday(const HolidayPlan& plan)
     ++advanced;
 
     HolidayDay day;
-    day.dismissed = world.getBoardState().dismissed && !dismissed_before;
+    // A sacking (or a contract running out) is applied within the same day
+    // and resets the board, so the lost job itself is the signal.
+    day.dismissed = game->getManagedTeamId() != managed;
     for (const InboxMessage& message : world.getInbox().getMessages())
     {
       if (message.id < next_message) continue;
@@ -4021,6 +4087,7 @@ int GameController::goOnHoliday(const HolidayPlan& plan)
     }
   }
   delegation = delegation_before;
+  delegation_after_holiday.reset();
 
   summary.end = game->getCurrentDate();
   summary.days = advanced;

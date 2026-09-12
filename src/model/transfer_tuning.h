@@ -193,17 +193,28 @@ struct TransferTuning final
   /** AI market activity. */
   struct Market final
   {
-    /** Clubs evaluated per window day and completed deals per day. The
-     * deadline-day spike carries ~10-15% of window spend. [S/P] */
-    static constexpr int BASE_TEAM_EVALUATIONS = 24;
-    static constexpr int BASE_DAILY_DEALS = 24;
+    /** Shares of the world's clubs evaluated per window day and the cap on
+     * completed deals per day (scaled by the window's activity weight), so
+     * activity per club does not depend on the size of the world. Tuned for
+     * ~10-15 moves per club and season with 15-25% of them paying a fee.
+     * The deadline-day spike carries ~10-15% of window spend. [S/P] */
+    static constexpr float DAILY_EVALUATION_SHARE = 0.16f;
+    static constexpr float DAILY_DEAL_SHARE = 0.16f;
     static constexpr float LATE_WINDOW_WEIGHT = 1.8f;
     static constexpr float DEADLINE_DAY_WEIGHT = 6.0f;
     static constexpr int LATE_WINDOW_DAYS = 7;
-    /** Free-agent signings per day while the window is shut. */
-    static constexpr int CLOSED_WINDOW_FREE_SIGNINGS = 4;
-    /** Pre-contract approaches per day from 1 January. */
-    static constexpr int DAILY_PRE_CONTRACTS = 3;
+    /** Share of clubs signing a free agent per day while the window is
+     * shut, and pre-contract approaches per club and day from 1 January. */
+    static constexpr float CLOSED_WINDOW_SIGNING_SHARE = 0.017f;
+    static constexpr float DAILY_PRE_CONTRACT_SHARE = 0.0125f;
+
+    /** Count for @p clubs clubs at @p share (at least one). */
+    static constexpr int perDay(std::size_t clubs, float share,
+                                float weight = 1.0f)
+    {
+      const float count = static_cast<float>(clubs) * share * weight;
+      return count < 1.0f ? 1 : static_cast<int>(count + 0.5f);
+    }
     /** Squad size AI clubs aim for; above it they loan-list prospects,
      * two above it they release veterans, and they stop buying at
      * AI_MAX_SQUAD + 2. [P] */
@@ -236,7 +247,7 @@ struct TransferTuning final
     static constexpr double AI_MAX_VALUE_MULTIPLE = 1.6;
     /** Chance per evaluated club that an AI club approaches one of the
      * managed club's players. [P] */
-    static constexpr float MANAGED_APPROACH_CHANCE = 0.015f;
+    static constexpr float MANAGED_APPROACH_CHANCE = 0.005f;
     /** Transfer news kept for the feed, posted every NEWS_DIGEST_DAYS
      * while a window is open (and when it closes). [P] */
     static constexpr std::size_t NEWS_DIGEST_LIMIT = 5;

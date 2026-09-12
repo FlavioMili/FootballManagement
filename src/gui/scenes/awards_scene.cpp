@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <array>
 #include <format>
+#include <optional>
 #include <set>
 
 #include "controller/game_controller.h"
@@ -25,6 +26,7 @@
 #include "gui/widgets/widgets.h"
 #include "model/awards.h"
 #include "model/calendar.h"
+#include "model/competition.h"
 
 namespace
 {
@@ -229,9 +231,10 @@ void AwardsScene::renderSelectors()
   const auto league = controller.getLeagueById(league_id);
   ImGui::SetNextItemWidth(
       std::min(280.0f * Theme::scale(), ImGui::GetContentRegionAvail().x));
-  if (ImGui::BeginCombo("##awards_league",
-                        league ? league->get().getName().c_str() : "",
-                        ImGuiComboFlags_HeightLarge))
+  if (ImGui::BeginCombo(
+          "##awards_league",
+          league ? Competitions::leagueName(league->get()).c_str() : "",
+          ImGuiComboFlags_HeightLarge))
   {
     for (const auto& leagueRef : controller.getLeagues())
     {
@@ -251,13 +254,17 @@ void AwardsScene::renderSelectors()
   ImGui::SetNextItemWidth(comboWidth);
   if (ImGui::BeginCombo("##awards_season", seasonLabel(season_year).c_str()))
   {
+    // refresh() rebuilds `seasons`: it runs after the loop.
+    std::optional<uint16_t> picked;
     for (const uint16_t year : seasons)
       if (ImGui::Selectable(seasonLabel(year).c_str(), year == season_year))
-      {
-        season_year = year;
-        refresh();
-      }
+        picked = year;
     ImGui::EndCombo();
+    if (picked)
+    {
+      season_year = *picked;
+      refresh();
+    }
   }
   const char* records = LOC("AWARDS_OPEN_RECORDS");
   UI::sameLineIfFits(UI::buttonWidth(records));
@@ -313,12 +320,17 @@ void AwardsScene::renderRace(float width)
     {
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
-      if (!row.qualified) ImGui::PushStyleColor(ImGuiCol_Text, palette.muted);
+      // Links draw in the link colour: both are muted for the unqualified.
+      if (!row.qualified)
+      {
+        ImGui::PushStyleColor(ImGuiCol_Text, palette.muted);
+        ImGui::PushStyleColor(ImGuiCol_TextLink, palette.muted);
+      }
       nameLink(guiView, row.player_id, row.name,
                ImGui::GetContentRegionAvail().x);
       if (!row.qualified)
       {
-        ImGui::PopStyleColor();
+        ImGui::PopStyleColor(2);
         if (ImGui::IsItemHovered())
           ImGui::SetTooltip("%s", LOC("AWARDS_RACE_UNQUALIFIED"));
       }
@@ -357,8 +369,13 @@ void AwardsScene::renderSeason(float width)
   }
   else
   {
-    for (const Winner& winner : season_winners)
-      renderWinner(winner, ImGui::GetContentRegionAvail().x);
+    // One player can win several awards: rows are scoped by position.
+    for (size_t index = 0; index < season_winners.size(); ++index)
+    {
+      ImGui::PushID(static_cast<int>(index));
+      renderWinner(season_winners[index], ImGui::GetContentRegionAvail().x);
+      ImGui::PopID();
+    }
   }
   UI::endCard();
 }
@@ -373,8 +390,12 @@ void AwardsScene::renderTeamOfSeason(float width)
   }
   else
   {
-    for (const Winner& winner : team_of_season)
-      renderWinner(winner, ImGui::GetContentRegionAvail().x);
+    for (size_t index = 0; index < team_of_season.size(); ++index)
+    {
+      ImGui::PushID(static_cast<int>(index));
+      renderWinner(team_of_season[index], ImGui::GetContentRegionAvail().x);
+      ImGui::PopID();
+    }
   }
   UI::endCard();
 }
@@ -401,7 +422,9 @@ void AwardsScene::renderMonths()
   for (UI::Column& column : columns) column.label = LOC(column.label);
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 180.0f);
-  const auto winnerCell = [&](const Winner& winner)
+  // The same player can win several awards of one month: cells are scoped
+  // by column.
+  const auto winnerCell = [&](const Winner& winner, int column)
   {
     const float width = ImGui::GetContentRegionAvail().x;
     if (winner.name.empty())
@@ -409,7 +432,9 @@ void AwardsScene::renderMonths()
       ImGui::TextColored(palette.faint, "%s", LOC("AWARDS_NOT_AWARDED"));
       return;
     }
+    ImGui::PushID(column);
     nameLink(guiView, winner.player_id, winner.name, width);
+    ImGui::PopID();
     const std::string detail =
         winner.club.empty() ? winner.figure : winner.club + "  ·  " + winner.figure;
     UI::textFitted(detail, width, palette.faint);
@@ -426,10 +451,10 @@ void AwardsScene::renderMonths()
       ImGui::TableNextColumn();
       ImGui::TextColored(palette.muted, "%s", row.month.c_str());
       ImGui::TableNextColumn();
-      winnerCell(row.player);
-      if (UI::cell(mask, 2)) winnerCell(row.manager);
-      if (UI::cell(mask, 3)) winnerCell(row.young);
-      if (UI::cell(mask, 4)) winnerCell(row.goal);
+      winnerCell(row.player, 1);
+      if (UI::cell(mask, 2)) winnerCell(row.manager, 2);
+      if (UI::cell(mask, 3)) winnerCell(row.young, 3);
+      if (UI::cell(mask, 4)) winnerCell(row.goal, 4);
       ImGui::PopID();
     }
     ImGui::EndTable();

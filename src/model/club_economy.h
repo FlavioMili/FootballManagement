@@ -104,13 +104,12 @@ double monthlyFacilityCosts(const LeagueEconomy& economy,
 /** Share of expected income a club spends on player wages. */
 double playerWageShare(const LeagueEconomy& economy);
 
-/** Season-end merit and continental money by final position (index 0 =
- * champion). */
+/**
+ * Season-end merit (broadcasting) money by final position (index 0 =
+ * champion). Continental prize money is paid by the continental
+ * competitions themselves, as the club earns it.
+ */
 std::vector<std::int64_t> prizeMoney(const LeagueEconomy& economy,
-                                     std::size_t league_size);
-
-/** The merit (broadcasting) part of prizeMoney() by final position. */
-std::vector<std::int64_t> meritMoney(const LeagueEconomy& economy,
                                      std::size_t league_size);
 
 /** Board's transfer allowance for a new season. */

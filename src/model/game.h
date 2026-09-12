@@ -75,13 +75,27 @@ class Game
   /** Selected players of a club who may not play a match of @p type. */
   std::vector<PlayerID> ineligibleSelections(TeamID team_id,
                                              MatchType type) const;
-  /** Replaces them with eligible squad players; returns how many left.
-   * Availability is judged on @p date (default: today). */
+  /**
+   * The assistant's matchday selection: ineligible players are replaced by
+   * eligible squad and academy players, then by trialists. When nobody fit
+   * is left for a starting place, injured players play through it (the
+   * least injured first), so a side always takes the field; players who may
+   * not play at all (suspended, on national duty) and cannot be replaced
+   * leave the XI and the side plays with the players it has. Availability
+   * is judged on @p date (default: today). Returns how many selections
+   * changed.
+   */
   std::size_t fixMatchdaySquad(TeamID team_id, MatchType type,
                                std::optional<GameDateValue> date = std::nullopt);
   /** What fixMatchdaySquad() would change: (replaced, replacement or 0). */
   std::vector<std::pair<PlayerID, PlayerID>> previewMatchdaySquadFix(
       TeamID team_id, MatchType type) const;
+  /**
+   * Whether the club's selection may kick off as it is: it is exactly what
+   * fixMatchdaySquad() would pick, so players still listed by
+   * ineligibleSelections() are injured players nobody fit can replace.
+   */
+  bool canKickOff(TeamID team_id, MatchType type) const;
   /**
    * Whether the assistant keeps the managed selection eligible: after each
    * day, and at kick-off, injured or suspended players are replaced.
@@ -206,6 +220,9 @@ class Game
 
   /** Replaces unavailable managed players for the next managed fixture. */
   void keepManagedSelectionEligible();
+  /** fixMatchdaySquad() applied to @p lineup, a selection of @p team_id. */
+  std::size_t fillMatchdaySquad(Lineup& lineup, TeamID team_id, MatchType type,
+                                const GameDateValue& date) const;
 
   /** Manager market day and the board's verdict on the manager. */
   void runCareerDay();

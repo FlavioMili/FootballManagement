@@ -129,6 +129,14 @@ class Lineup
   void removeOutfieldPlayer(PlayerID playerID);
 
   /**
+   * @brief Drops every reference to a player: goalkeeper, outfield slot,
+   * bench and set-piece designations. Call it before the Player object is
+   * destroyed, since the lineup holds raw pointers.
+   * @return true if the player was referenced anywhere.
+   */
+  bool removePlayer(PlayerID playerID);
+
+  /**
    * @brief Swaps a bench player with an outfield player.
    * @param benchPlayerID The ID of the substitute.
    * @param pitchPlayerID The ID of the current starting player.

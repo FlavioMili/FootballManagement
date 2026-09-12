@@ -12,6 +12,8 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <cstdint>
+#include <optional>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
@@ -74,6 +76,17 @@ void InboxScene::update(float /*deltaTime*/) {}
 
 void InboxScene::refresh()
 {
+  // New messages shift indices once the inbox is full: follow the id.
+  if (selected_message != SIZE_MAX)
+  {
+    const auto& messages = guiView->getController().getInbox();
+    const auto found = std::ranges::find(messages, selected_message_id,
+                                         &InboxMessage::id);
+    selected_message =
+        found != messages.end()
+            ? static_cast<size_t>(std::distance(messages.begin(), found))
+            : SIZE_MAX;
+  }
   rebuildDecisions();
   rebuildThreads();
 }
@@ -116,13 +129,15 @@ void InboxScene::rebuildDecisions()
               std::max(0, dayNumber(offer.expires) - dayNumber(today));
           decision.options.push_back(
               {offer.id,
-               fmt::sprintf(LOC(offer.loan ? "INBOX_DECISION_LOAN_OPTION"
-                                           : "INBOX_DECISION_OFFER_OPTION"),
-                            buyer ? buyer->get().getName().c_str() : "",
-                            Format::money(offer.loan ? offer.loan_terms.loan_fee
-                                                     : offer.terms.fee)
-                                .c_str(),
-                            days)});
+               fmt::sprintf(
+                   Format::plural(offer.loan ? "INBOX_DECISION_LOAN_OPTION"
+                                             : "INBOX_DECISION_OFFER_OPTION",
+                                  days),
+                   buyer ? buyer->get().getName().c_str() : "",
+                   Format::money(offer.loan ? offer.loan_terms.loan_fee
+                                            : offer.terms.fee)
+                       .c_str(),
+                   days)});
         }
       }
       else if (action == InboxAction::YouthTrialists)
@@ -133,7 +148,7 @@ void InboxScene::rebuildDecisions()
               {trialist.id,
                fmt::sprintf(
                    LOC("INBOX_DECISION_TRIALIST_OPTION"), trialist.name.c_str(),
-                   RoleUtils::toString(trialist.role).c_str(), trialist.age,
+                   RoleUtils::shortName(trialist.role), trialist.age,
                    static_cast<int>(trialist.estimate.potential_low),
                    static_cast<int>(trialist.estimate.potential_high))});
       }
@@ -221,6 +236,7 @@ void InboxScene::openMessage(size_t messageIndex)
   const auto& messages = guiView->getController().getInbox();
   if (messageIndex < messages.size())
   {
+    selected_message_id = messages[messageIndex].id;
     selected_title = messages[messageIndex].formatTitle();
     selected_body = messages[messageIndex].formatBody();
   }
@@ -343,6 +359,8 @@ void InboxScene::renderThreads(float width, float height)
   }
   const float rowHeight =
       ImGui::GetTextLineHeight() * 2.0f + ImGui::GetStyle().ItemSpacing.y;
+  // Opening an unread message rebuilds `threads`: it happens after the loop.
+  std::optional<size_t> toOpen;
   for (size_t index = 0; index < threads.size(); ++index)
   {
     const Thread& thread = threads[index];
@@ -357,7 +375,7 @@ void InboxScene::renderThreads(float width, float height)
         expanded_thread = expanded_thread == static_cast<int>(index)
                               ? -1
                               : static_cast<int>(index);
-      openMessage(thread.messages.front());
+      toOpen = thread.messages.front();
     }
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     const float left = start.x + Theme::Space::M * Theme::scale();
@@ -393,19 +411,22 @@ void InboxScene::renderThreads(float width, float height)
     if (digest && expanded_thread == static_cast<int>(index))
     {
       ImGui::Indent(Theme::Space::L * Theme::scale());
-      for (size_t child = 0; child < thread.messages.size(); ++child)
+      const size_t children =
+          std::min(thread.messages.size(), thread.message_titles.size());
+      for (size_t child = 0; child < children; ++child)
       {
         const size_t messageIndex = thread.messages[child];
         ImGui::PushID(static_cast<int>(messageIndex));
         if (ImGui::Selectable(thread.message_titles[child].c_str(),
                               selected_message == messageIndex))
-          openMessage(messageIndex);
+          toOpen = messageIndex;
         ImGui::PopID();
       }
       ImGui::Unindent(Theme::Space::L * Theme::scale());
     }
     ImGui::PopID();
   }
+  if (toOpen) openMessage(*toOpen);
   UI::endCard();
 }
 
@@ -504,10 +525,13 @@ void InboxScene::renderDecision(const Decision& decision)
   ImGui::TextColored(palette.muted, "%s", decision.body.c_str());
   ImGui::PopTextWrapPos();
 
+  // Actions post new messages (the inbox vector may reallocate or drop its
+  // oldest entry): only the id is used afterwards.
+  const uint32_t messageId = message.id;
   bool changed = false;
   const auto act = [&](bool ok, const char* done)
   {
-    controller.markInboxMessageRead(message.id);
+    controller.markInboxMessageRead(messageId);
     showToast(LOC(ok ? done : "INBOX_DECISION_FAILED"), !ok);
     changed = true;
   };
@@ -567,7 +591,7 @@ void InboxScene::renderDecision(const Decision& decision)
     case InboxAction::ReplyToPlayer:
       if (UI::primaryButton(LOC("TALK_INBOX_REPLY")))
       {
-        controller.markInboxMessageRead(message.id);
+        controller.markInboxMessageRead(messageId);
         talk_dialog.open(controller, decision.player);
       }
       break;

@@ -9,11 +9,14 @@
 #include "model/competition.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <map>
+#include <string_view>
 #include <unordered_set>
 
 #include "database/gamedata.h"
+#include "global/language_manager.h"
 #include "global/stats_config.h"
 #include "model/calendar.h"
 #include "model/league.h"
@@ -205,10 +208,46 @@ std::vector<TeamID> Competitions::cupEntrants(const GameData& gamedata,
   return entrants;
 }
 
+namespace
+{
+// "Italian Lower League" -> "<prefix>ITALIAN_LOWER_LEAGUE".
+std::string nameKey(std::string_view prefix, const std::string& name)
+{
+  std::string key(prefix);
+  for (const char c : name)
+  {
+    const auto byte = static_cast<unsigned char>(c);
+    key += std::isalnum(byte) != 0 ? static_cast<char>(std::toupper(byte))
+                                   : '_';
+  }
+  return key;
+}
+
+bool isTranslated(const std::string& key)
+{
+  return LOC(key.c_str()) != key.c_str();
+}
+}  // namespace
+
+std::string Competitions::leagueName(const League& league)
+{
+  const std::string key = nameKey("LEAGUE_NAME_", league.getName());
+  return isTranslated(key) ? std::string(LOC(key.c_str())) : league.getName();
+}
+
+std::string Competitions::leagueNameArg(const League& league)
+{
+  const std::string key = nameKey("LEAGUE_NAME_", league.getName());
+  return isTranslated(key) ? "@" + key : league.getName();
+}
+
 std::string Competitions::cupName(const GameData& gamedata, LeagueID root)
 {
   const auto league = gamedata.getLeague(root);
   if (!league) return "Cup";
+  if (const std::string key = nameKey("CUP_NAME_", league->get().getName());
+      isTranslated(key))
+    return LOC(key.c_str());
   std::string name = league->get().getName();
   static constexpr std::string_view LEAGUE_WORD = "League";
   if (const auto position = name.rfind(LEAGUE_WORD);

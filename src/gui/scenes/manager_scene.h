@@ -212,6 +212,7 @@ class ManagerScene : public ManagementScene
   std::array<int, INTERVIEW_TOPICS> interview_answers{};
   std::optional<InterviewResult> interview_result;
   bool interview_requested = false;
+  bool interview_close_requested = false;
 
   // Confirmations
   bool resign_requested = false;

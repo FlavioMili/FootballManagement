@@ -654,12 +654,25 @@ ImVec4 readableOn(const ImVec4& fill)
 int64_t roundToSignificant(double value)
 {
   if (value <= 0.0) return 0;
-  // Three significant figures keep steps readable (e.g. €14.4M, €950K).
+  // Three significant figures keep steps readable (e.g. €14.4M, €950K);
+  // amounts under 1000 keep every digit.
   const double magnitude = std::pow(10.0, std::floor(std::log10(value)) - 2.0);
-  return static_cast<int64_t>(std::llround(value / magnitude) *
-                              static_cast<long long>(std::max(1.0, magnitude)));
+  if (magnitude < 1.0) return static_cast<int64_t>(std::llround(value));
+  return static_cast<int64_t>(
+      static_cast<double>(std::llround(value / magnitude)) * magnitude);
 }
 }  // namespace
+
+int64_t stepMoney(int64_t value, bool up, double fraction)
+{
+  const double current = static_cast<double>(value);
+  // Every press moves by at least 1, so small amounts never get stuck.
+  if (up)
+    return std::max<int64_t>(value + 1,
+                             roundToSignificant(current * (1.0 + fraction)));
+  return std::min<int64_t>(value - 1,
+                           roundToSignificant(current * (1.0 - fraction)));
+}
 
 float buttonHeight(ButtonSize buttonSize)
 {
@@ -770,8 +783,7 @@ bool moneyInput(const char* id, int64_t& value,
 
   if (ImGui::Button("-", ImVec2(stepWidth, 0.0f)))
   {
-    value = clampValue(
-        roundToSignificant(static_cast<double>(value) * (1.0 - stepFraction)));
+    value = clampValue(stepMoney(value, false, stepFraction));
     changed = true;
   }
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
@@ -809,9 +821,7 @@ bool moneyInput(const char* id, int64_t& value,
   ImGui::SameLine(0.0f, gap);
   if (ImGui::Button("+", ImVec2(stepWidth, 0.0f)))
   {
-    value = clampValue(std::max<int64_t>(
-        value + 1,
-        roundToSignificant(static_cast<double>(value) * (1.0 + stepFraction))));
+    value = clampValue(stepMoney(value, true, stepFraction));
     changed = true;
   }
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
@@ -823,15 +833,17 @@ bool moneyInput(const char* id, int64_t& value,
     const MoneyChip& chip = options.chips[index];
     if (index > 0) sameLineIfFits(buttonWidth(chip.label, ButtonSize::COMPACT));
     ImGui::PushID(static_cast<int>(index));
-    const bool active = chip.value == value;
-    if (active) ImGui::PushStyleColor(ImGuiCol_Text, Theme::palette().accent);
+    // A chip already matching the value has nothing to do: shown disabled.
+    const bool active = clampValue(chip.value) == value;
+    ImGui::BeginDisabled(active);
     if (secondaryButton(chip.label, ImVec2(0.0f, 0.0f), ButtonSize::COMPACT))
     {
       value = clampValue(chip.value);
       changed = true;
     }
-    if (active) ImGui::PopStyleColor();
-    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+    ImGui::EndDisabled();
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort |
+                             ImGuiHoveredFlags_AllowWhenDisabled))
       ImGui::SetTooltip("%s", Format::moneyFull(chip.value).c_str());
     ImGui::PopID();
   }
@@ -919,10 +931,30 @@ void budgetImpact(const char* label, int64_t current, int64_t after,
 {
   const Theme::Palette& palette = Theme::palette();
   const bool negative = after < 0;
-  const std::string change =
-      Format::money(current) + "  →  " + Format::money(after);
+  // The font has no arrow glyph: the gap between the amounts gets a drawn
+  // arrow instead.
+  constexpr const char* ARROW_GAP = "      ";
+  const std::string afterText = Format::money(after);
+  const std::string change = Format::money(current) + ARROW_GAP + afterText;
   const ImVec4& tone = negative ? palette.negative : palette.text;
   summaryRow(label, change.c_str(), &tone);
+  {
+    Theme::ScopedText text(Theme::Text::BODY);
+    const ImVec2 valueMax = ImGui::GetItemRectMax();
+    const float afterWidth = ImGui::CalcTextSize(afterText.c_str()).x;
+    const float gapWidth = ImGui::CalcTextSize(ARROW_GAP).x;
+    const float inset = gapWidth * 0.25f;
+    const float right = valueMax.x - afterWidth - inset;
+    const float left = valueMax.x - afterWidth - gapWidth + inset;
+    const float y = ImGui::GetItemRectMin().y + ImGui::GetTextLineHeight() * 0.5f;
+    const float head = scaled(3.5f);
+    const ImU32 color = Theme::toU32(palette.muted);
+    ImDrawList* arrowList = ImGui::GetWindowDrawList();
+    arrowList->AddLine(ImVec2(left, y), ImVec2(right, y), color, scaled(1.5f));
+    arrowList->AddTriangleFilled(ImVec2(right + scaled(1.0f), y),
+                                 ImVec2(right - head, y - head),
+                                 ImVec2(right - head, y + head), color);
+  }
 
   // Track: the full bar is the current amount, the kept part is filled.
   const float width = ImGui::GetContentRegionAvail().x;

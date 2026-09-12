@@ -16,6 +16,7 @@
 #include <utility>
 
 #include "global/language_manager.h"
+#include "model/club_article.h"
 #include "model/world_rng.h"
 
 namespace
@@ -54,11 +55,65 @@ constexpr std::array<ActionEntry, 11> ACTION_TITLES = {{
     {"INBOX_SCOUT_SUGGESTION_TITLE", InboxAction::Shortlist},
 }};
 
+constexpr std::array<const char*, 12> MONTH_KEYS = {
+    "MONTH_JAN", "MONTH_FEB", "MONTH_MAR", "MONTH_APR",
+    "MONTH_MAY", "MONTH_JUN", "MONTH_JUL", "MONTH_AUG",
+    "MONTH_SEP", "MONTH_OCT", "MONTH_NOV", "MONTH_DEC"};
+
+bool isKeyArgument(const std::string& argument)
+{
+  return argument.size() > 1 && argument.front() == '@';
+}
+
+// Dates travel as ISO text ("2027-06-30", GameDateValue::toString()) so
+// saved messages stay language-neutral; they are shown in the reader's
+// language, e.g. "30 giu 2027".
+bool isIsoDate(const std::string& argument)
+{
+  if (argument.size() != 10 || argument[4] != '-' || argument[7] != '-')
+    return false;
+  for (std::size_t i = 0; i < argument.size(); ++i)
+  {
+    if (i != 4 && i != 7 && (argument[i] < '0' || argument[i] > '9'))
+      return false;
+  }
+  return true;
+}
+
 std::string resolveArgument(const std::string& argument)
 {
-  if (argument.size() > 1 && argument.front() == '@')
-    return LOC(argument.c_str() + 1);
-  return argument;
+  if (isKeyArgument(argument))
+  {
+    // "@KEY_A, @KEY_B" lists several keys (e.g. two position names).
+    static constexpr std::string_view SEPARATOR = ", @";
+    std::string resolved;
+    std::size_t start = 1;
+    for (std::size_t next = argument.find(SEPARATOR, start);
+         next != std::string::npos; next = argument.find(SEPARATOR, start))
+    {
+      resolved += LOC(argument.substr(start, next - start).c_str());
+      resolved += ", ";
+      start = next + SEPARATOR.size();
+    }
+    return resolved + LOC(argument.c_str() + start);
+  }
+  return localizedDate(argument);
+}
+
+// "{N:di}": club name N with the Italian preposition and its article
+// ("della Roma"); "{N|one|other}": "one" when argument N is 1.
+std::string resolveSpec(const std::string& argument, std::string_view spec)
+{
+  if (spec.front() == ':')
+  {
+    return isKeyArgument(argument)
+               ? resolveArgument(argument)
+               : ClubArticle::withPreposition(argument, spec.substr(1));
+  }
+  const std::size_t bar = spec.find('|', 1);
+  if (bar == std::string_view::npos) return resolveArgument(argument);
+  return std::string(argument == "1" ? spec.substr(1, bar - 1)
+                                     : spec.substr(bar + 1));
 }
 }  // namespace
 
@@ -85,9 +140,17 @@ std::string formatLocalized(const std::string& key,
         char* end = nullptr;
         const unsigned long index =
             std::strtoul(pattern.c_str() + i + 1, &end, 10);
-        if (end == pattern.c_str() + close)
+        const char* const stop = pattern.c_str() + close;
+        if (end != pattern.c_str() + i + 1 &&
+            (end == stop || *end == ':' || *end == '|'))
         {
-          if (index < args.size()) result += resolveArgument(args[index]);
+          if (index < args.size())
+          {
+            result += end == stop
+                          ? resolveArgument(args[index])
+                          : resolveSpec(args[index],
+                                        std::string_view(end, stop));
+          }
           i = close;
           continue;
         }
@@ -96,6 +159,16 @@ std::string formatLocalized(const std::string& key,
     result += pattern[i];
   }
   return result;
+}
+
+std::string localizedDate(const std::string& text)
+{
+  if (!isIsoDate(text)) return text;
+  const auto year = std::stoi(text.substr(0, 4));
+  const auto month = static_cast<std::size_t>(std::stoi(text.substr(5, 2)));
+  const auto day = std::stoi(text.substr(8, 2));
+  if (month < 1 || month > MONTH_KEYS.size() || day < 1) return text;
+  return std::format("{} {} {}", day, LOC(MONTH_KEYS[month - 1]), year);
 }
 
 std::string formatMoney(std::int64_t amount)

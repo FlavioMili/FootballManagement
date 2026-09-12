@@ -28,7 +28,9 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <condition_variable>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <filesystem>
 #include <format>
@@ -37,10 +39,12 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <numeric>
 #include <optional>
 #include <set>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -62,6 +66,7 @@
 #include "gui/scenes/management_scene.h"
 #include "gui/scenes/match_scene.h"
 #include "gui/scenes/player_profile_scene.h"
+#include "gui/scenes/settings_scene.h"
 #include "gui/scenes/transfer_market_scene.h"
 #include "gui/widgets/theme.h"
 #include "model/finances.h"
@@ -166,6 +171,7 @@ class GameFlowTest_GUIFlowLifecycle_Test
     return scene.quick_result.valid();
   }
   static bool quickResult(MatchScene& scene) { return scene.quickResult(); }
+  static bool finishMatch(MatchScene& scene) { return scene.finishMatch(); }
   static size_t lineupProblems(const MatchScene& scene)
   {
     return scene.lineup_problems.size();
@@ -385,16 +391,22 @@ class Driver
     if (id == 0) return std::nullopt;
     const ImVec2 display = ImGui::GetIO().DisplaySize;
     const float y = 30.0f * Theme::scale();
-    std::optional<ImVec2> found;
-    for (float x = display.x - 4.0f; x > display.x * 0.3f && !found; x -= 8.0f)
+    // The button's horizontal extent along the probe line; its centre is
+    // clicked, so a layout shift of a few pixels cannot move it away.
+    std::optional<float> right;
+    std::optional<float> left;
+    for (float x = display.x - 4.0f; x > display.x * 0.3f && !left; x -= 4.0f)
     {
       ImGui::GetIO().AddMousePosEvent(x, y);
       frame();
-      if (GImGui->HoveredId == id) found = ImVec2(x, y);
+      const bool hovered = GImGui->HoveredId == id;
+      if (hovered && !right) right = x;
+      if (!hovered && right) left = x + 4.0f;
     }
     ImGui::GetIO().AddMousePosEvent(-FLT_MAX, -FLT_MAX);
     frame();
-    return found;
+    if (!right) return std::nullopt;
+    return ImVec2((*right + left.value_or(*right)) * 0.5f, y);
   }
 
   bool advancing() const { return hub() != nullptr && hub()->isAdvancing(); }
@@ -402,6 +414,9 @@ class Driver
   /** Frames until no Continue or slot loading is pending. */
   bool settle(std::chrono::seconds deadline = std::chrono::seconds(120))
   {
+    // A Continue requested from a screen above the hub (e.g. Finish match)
+    // starts once that screen has closed and the backdrop is captured.
+    frames(2);
     const auto start = Clock::now();
     while (Clock::now() - start < deadline)
     {
@@ -541,7 +556,12 @@ TEST_F(Adversarial, TripleClickContinueIsOneContinue)
   ASSERT_FALSE(*next == controller->getCurrentDate());
   const auto button = driver->continuePoint();
   ASSERT_TRUE(button.has_value()) << "Continue button not found";
+  const std::string today = controller->getCurrentDate().toString();
   driver->click(*button, 3);
+  // Running, about to start, or (only once no worker runs) already done.
+  ASSERT_TRUE(driver->advancing() || Bridge::continueRequested(*hub) ||
+              controller->getCurrentDate().toString() != today)
+      << "the clicks on Continue did not start a Continue";
   ASSERT_TRUE(driver->settle());
   EXPECT_EQ(controller->getCurrentDate().toString(), next->toString())
       << "Continue should stop on the next managed fixture";
@@ -696,6 +716,121 @@ TEST_F(Adversarial, LoadThenImmediatelyContinue)
       << "Continue on the first frame after loading was lost";
   EXPECT_EQ(driver->imgui_errors, 0);
   expectWorldConsistent("load then continue");
+}
+
+// ---- Shutdown ------------------------------------------------------------------
+
+/**
+ * Aborts the process when its scope does not end within @p limit: a hang
+ * while quitting fails fast with a message instead of stalling the run.
+ */
+class ShutdownWatchdog
+{
+ public:
+  explicit ShutdownWatchdog(const char* what)
+      : watcher(
+            [this, what]
+            {
+              std::unique_lock lock(mutex);
+              if (!finished.wait_for(lock, LIMIT, [this] { return done; }))
+              {
+                std::fprintf(stderr, "%s did not finish within %lld s\n", what,
+                             static_cast<long long>(LIMIT.count()));
+                std::abort();
+              }
+            })
+  {
+  }
+  ~ShutdownWatchdog()
+  {
+    {
+      const std::scoped_lock lock(mutex);
+      done = true;
+    }
+    finished.notify_one();
+    watcher.join();
+  }
+  ShutdownWatchdog(const ShutdownWatchdog&) = delete;
+  ShutdownWatchdog& operator=(const ShutdownWatchdog&) = delete;
+
+ private:
+  static constexpr std::chrono::seconds LIMIT{60};
+  std::mutex mutex;
+  std::condition_variable finished;
+  bool done = false;
+  std::thread watcher;  // Last: starts once the state above exists.
+};
+
+/** Played fixtures of the whole world (every league and cup). */
+size_t playedFixtures(const GameController& controller)
+{
+  size_t played = 0;
+  for (const auto& [date, matches] :
+       controller.getGame()->getCalendar().getFullCalendar())
+    played += static_cast<size_t>(std::ranges::count_if(
+        matches, [](const Match& match) { return match.isPlayed(); }));
+  return played;
+}
+
+/**
+ * Quitting the app after parallel matchdays, in main()'s order: the window
+ * closes, the game is saved, then the controller (with the scheduler's
+ * worker pool) is destroyed.
+ */
+TEST_F(Adversarial, QuitAfterParallelMatchdaysShutsDownCleanly)
+{
+  controller->setSimulationThreads(4);
+  openGui();
+  // One Continue through the GUI (days on the Continue worker)...
+  driver->hub()->requestContinue();
+  ASSERT_TRUE(driver->settle());
+  // ...then whole matchdays of every league.
+  const GameDateValue end =
+      SeasonCalendar::addDays(controller->getCurrentDate(), 45);
+  while (controller->getCurrentDate() < end) controller->advanceDay();
+  driver->frames(3);
+  ASSERT_GE(playedFixtures(*controller), 100u)
+      << "the parallel scheduler never ran";
+  EXPECT_EQ(driver->imgui_errors, 0);
+
+  const ShutdownWatchdog watchdog("quitting after parallel matchdays");
+  driver.reset();
+  view.reset();
+  EXPECT_TRUE(controller->saveGame());
+  controller.reset();
+}
+
+/**
+ * The window closes while Continue is simulating: closing waits for the
+ * days in flight (the hub owns the worker), so the controller is never
+ * destroyed or saved under a running simulation.
+ */
+TEST_F(Adversarial, ClosingDuringContinueWaitsForTheDaysInFlight)
+{
+  controller->setSimulationThreads(4);
+  openGui();
+  const auto next = Bridge::nextFixtureDate(*driver->hub());
+  ASSERT_TRUE(next.has_value());
+  ASSERT_FALSE(*next == controller->getCurrentDate());
+  driver->hub()->requestContinue();
+  for (int frame = 0; frame < 10 && !driver->advancing(); ++frame)
+    driver->frame();
+  ASSERT_TRUE(driver->advancing());
+  const GameController::ContinueProgress progress =
+      controller->getContinueProgress();
+  EXPECT_LT(progress.days_done, progress.days_total)
+      << "Continue finished before the window closed";
+
+  {
+    const ShutdownWatchdog watchdog("closing the window during Continue");
+    driver.reset();
+    view.reset();
+  }
+  EXPECT_EQ(controller->getCurrentDate().toString(), next->toString())
+      << "the days in flight were not completed before the window closed";
+  EXPECT_TRUE(controller->saveGame());
+  const ShutdownWatchdog watchdog("destroying the controller after Continue");
+  controller.reset();
 }
 
 // ---- Transfers -----------------------------------------------------------------
@@ -912,16 +1047,28 @@ TEST_F(Adversarial, ReleasingAReserveKeepsTheChosenLineup)
   for (const PlayerID id : club().getPlayerIDs())
     if (!starting.contains(id)) fringe = id;
   ASSERT_TRUE(fringe.has_value());
+  std::vector<PlayerID> chosen;
+  if (lineup.getGoalkeeper()) chosen.push_back(lineup.getGoalkeeper()->getId());
+  for (const auto& positioned : lineup.getOutfieldPlayers())
+    chosen.push_back(positioned.player->getId());
   ASSERT_TRUE(controller->releasePlayer(*fringe));
   const auto& starters = club().getLineup().getOutfieldPlayers();
   const bool kept = std::ranges::any_of(
       starters, [pick](const auto& positioned)
       { return positioned.player && positioned.player->getId() == pick; });
-  if (!kept)
-    GTEST_SKIP() << "KNOWN BUG: F-XI-RESET - releasing a player outside the "
-                    "starting XI regenerated the managed XI "
-                    "(TransferMarket::movePlayer calls generateStartingXI on "
-                    "both clubs), undoing the manager's selection";
+  EXPECT_TRUE(kept) << "releasing a player outside the starting XI must not "
+                       "rebuild the manager's selection";
+  // The whole XI is unchanged and the released player is gone from the
+  // bench too.
+  std::vector<PlayerID> after;
+  if (club().getLineup().getGoalkeeper())
+    after.push_back(club().getLineup().getGoalkeeper()->getId());
+  for (const auto& positioned : starters)
+    after.push_back(positioned.player->getId());
+  EXPECT_EQ(after, chosen);
+  for (const Player* reserve : club().getLineup().getReserves())
+    EXPECT_NE(reserve->getId(), *fringe);
+  expectWorldConsistent("after releasing a reserve");
 }
 
 /** Sell/release the squad down to ten, then try to play. */
@@ -979,35 +1126,114 @@ TEST_F(Adversarial, AllPlayersInjuredOnMatchDay)
     dynamics.injury = InjuryType::HamstringStrain;
     dynamics.injury_days = 30;
   }
+  const auto fixture = managedFixtureToday();
+  ASSERT_TRUE(fixture.has_value());
   openGui();
   const std::string matchDay = controller->getCurrentDate().toString();
-  for (int attempt = 0; attempt < 4; ++attempt)
+  bool kickedOff = false;
+  for (int attempt = 0; attempt < 4 && !kickedOff; ++attempt)
   {
     driver->hub()->requestContinue();
     driver->frames(3);
     if (auto* match = dynamic_cast<MatchScene*>(driver->active()))
     {
-      if (Bridge::engine(*match) != nullptr)
+      if (MatchEngine* engine = Bridge::engine(*match))
       {
+        kickedOff = true;
+        // The assistant fielded a full XI of players who play through
+        // their injuries, and could not pick a better one.
+        const bool home = fixture->getHomeTeamId() == managed_id;
+        const auto starters = std::ranges::count_if(
+            engine->getPlayers(), [home](const MatchPlayer& player)
+            { return player.isHomeTeam == home && player.onPitch; });
+        EXPECT_EQ(starters, 11);
+        EXPECT_TRUE(
+            controller->canKickOff(managed_id, fixture->getMatchType()));
+        EXPECT_TRUE(
+            controller->previewLineupFix(managed_id, fixture->getMatchType())
+                .empty())
+            << "the assistant's selection is not stable";
         EXPECT_TRUE(Bridge::quickResult(*match));
         driver->settle();
-        break;
+        continue;
       }
     }
     Navigation::open(view.get(), NavSection::HOME);
     driver->frames(3);
   }
+  EXPECT_TRUE(kickedOff) << "the managed match never kicked off";
   EXPECT_EQ(driver->imgui_errors, 0);
   expectWorldConsistent("all injured");
-  if (controller->getCurrentDate().toString() == matchDay)
-    GTEST_SKIP() << "KNOWN BUG: F-ALLINJ - with every player injured the "
-                    "managed match can never kick off; Continue keeps "
-                    "sending the manager to the lineup and the career is "
-                    "stuck on "
-                 << matchDay;
+  EXPECT_NE(controller->getCurrentDate().toString(), matchDay)
+      << "with every player injured the career is stuck on " << matchDay;
+  EXPECT_TRUE(controller->getMatchReport(GameDateValue::fromString(matchDay),
+                                         fixture->getHomeTeamId(),
+                                         fixture->getAwayTeamId())
+                  .has_value())
+      << "the managed match was not played";
 }
 
 // ---- Match -------------------------------------------------------------------
+
+/**
+ * Finish match returns to the window at once: the rest of the match day
+ * (other matches, autosave) runs on the Continue worker behind the progress
+ * card, then the report opens and the date has moved on by one day.
+ */
+TEST_F(Adversarial, FinishMatchKeepsTheWindowResponsive)
+{
+  advanceToMatchDay();
+  fixLineupForToday();
+  const auto fixture = managedFixtureToday();
+  ASSERT_TRUE(fixture.has_value());
+  const GameDateValue matchDay = controller->getCurrentDate();
+  openGui();
+  driver->hub()->requestContinue();
+  driver->frames(3);
+  auto* match = dynamic_cast<MatchScene*>(driver->active());
+  ASSERT_NE(match, nullptr) << "PLAY MATCH did not open the match";
+  MatchEngine* engine = Bridge::engine(*match);
+  ASSERT_NE(engine, nullptr) << "lineup gate shown";
+  engine->simulateToEnd();
+  driver->frame();
+  ASSERT_TRUE(Bridge::finished(*match));
+
+  // The slowest frame from pressing Finish until the day is simulating.
+  using Seconds = std::chrono::duration<double>;
+  auto started = Clock::now();
+  ASSERT_TRUE(Bridge::finishMatch(*match));
+  double slowest = Seconds(Clock::now() - started).count();
+  for (int frame = 0; frame < 5 && !driver->advancing(); ++frame)
+  {
+    started = Clock::now();
+    driver->frame();
+    slowest = std::max(slowest, Seconds(Clock::now() - started).count());
+  }
+  ASSERT_TRUE(driver->advancing())
+      << "the rest of the match day is not simulated in the background";
+  EXPECT_EQ(driver->activeId(), SceneID::GAME_MENU)
+      << "a screen above the hub while the day is simulated";
+  // Frames keep coming while the worker simulates the day.
+  for (int frame = 0; frame < 3 && driver->advancing(); ++frame)
+  {
+    started = Clock::now();
+    driver->frame();
+    slowest = std::max(slowest, Seconds(Clock::now() - started).count());
+  }
+  EXPECT_LT(slowest, 1.0) << "Finish match blocked the window";
+
+  ASSERT_TRUE(driver->settle());
+  EXPECT_EQ(driver->activeId(), SceneID::MATCH_REPORT)
+      << "the match report did not open after the day";
+  EXPECT_EQ(controller->getCurrentDate().toString(),
+            SeasonCalendar::addDays(matchDay, 1).toString());
+  EXPECT_TRUE(controller
+                  ->getMatchReport(matchDay, fixture->getHomeTeamId(),
+                                   fixture->getAwayTeamId())
+                  .has_value());
+  EXPECT_EQ(driver->imgui_errors, 0);
+  expectWorldConsistent("after finishing the match");
+}
 
 /**
  * Tactics and a window resize mid-match, then the app is closed: the day is
@@ -1374,18 +1600,37 @@ TEST_F(Adversarial, EscapeClosesEveryDialog)
   if (auto* match = dynamic_cast<MatchScene*>(driver->active());
       match != nullptr && Bridge::engine(*match) != nullptr)
   {
+    // At 720p and UI scale 1.25 the whole dialog, Close included, fits.
+    SettingsManager::instance()->get().ui_scale = 1.25f;
+    view->refreshTheme();
     Bridge::showSubstitutions(*match);
+    driver->frames(3);
+    const ImGuiWindow* dialog =
+        ImGui::FindWindowByName("###match_substitutions_modal");
+    ASSERT_NE(dialog, nullptr);
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    EXPECT_LE(dialog->Rect().Max.y, viewport->WorkPos.y + viewport->WorkSize.y);
+    EXPECT_GE(dialog->Rect().Min.y, viewport->WorkPos.y);
     check("substitutions (live match)");
+    SettingsManager::instance()->get().ui_scale = 0.0f;
+    view->refreshTheme();
   }
+
+  // The in-career settings screen backs out with Escape like Cancel.
+  Navigation::open(view.get(), NavSection::HOME);
+  driver->frames(2);
+  view->navigateTo(std::make_unique<SettingsScene>(view.get(), true));
+  driver->frames(3);
+  ASSERT_EQ(driver->activeId(), SceneID::SETTINGS);
+  driver->escape();
+  driver->frames(3);
+  if (driver->activeId() == SceneID::SETTINGS)
+    stuck.emplace_back("settings screen");
+
   EXPECT_EQ(driver->imgui_errors, 0);
-  if (!stuck.empty())
-  {
-    std::string list;
-    for (const std::string& name : stuck) list += "\n  " + name;
-    GTEST_SKIP() << "KNOWN BUG: F-ESC - Escape does not close these dialogs "
-                    "(only UI::confirmDialog handles it):"
-                 << list;
-  }
+  std::string list;
+  for (const std::string& name : stuck) list += "\n  " + name;
+  EXPECT_TRUE(stuck.empty()) << "Escape does not close:" << list;
 }
 
 /** Switching language mid-session re-renders every screen cleanly. */

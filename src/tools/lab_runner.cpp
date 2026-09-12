@@ -45,9 +45,14 @@ constexpr double RATING_TIE = 0.05;
 constexpr double REFERENCE_GOALS = 2.83;
 
 template <typename Engine>
-void runToFullTime(Engine& engine, std::uint32_t seed)
+void runToFullTime(Engine& engine, std::uint32_t seed, bool background)
 {
-  if constexpr (requires { engine.simulateToEnd(); })
+  if constexpr (requires { engine.simulateToEnd(MatchFidelity::FULL); })
+  {
+    engine.simulateToEnd(background ? MatchFidelity::BACKGROUND
+                                    : MatchFidelity::FULL);
+  }
+  else if constexpr (requires { engine.simulateToEnd(); })
   {
     engine.simulateToEnd();
   }
@@ -285,7 +290,7 @@ MatchSample simulateMatch(const MatchJob& job, const StatsConfig& config)
   MatchEngine engine(home, away, homeStrategy, awayStrategy, config, job.seed);
   MatchdaySquad::carryCondition(engine, home);
   MatchdaySquad::carryCondition(engine, away);
-  runToFullTime(engine, job.seed);
+  runToFullTime(engine, job.seed, job.background);
 
   MatchSample sample;
   sample.seed = job.seed;

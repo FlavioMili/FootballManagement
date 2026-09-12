@@ -187,7 +187,7 @@ void InternationalScene::refreshContinental()
   const auto associationName = [&controller](LeagueID root)
   {
     const auto league = controller.getLeagueById(root);
-    return league ? league->get().getName() : std::string();
+    return league ? Competitions::leagueName(league->get()) : std::string();
   };
   const auto data = controller.getGameData();
   const auto associationOf = [&](TeamID team_id)
@@ -788,9 +788,11 @@ void InternationalScene::renderMatchday(float width)
     UI::endCard();
     return;
   }
-  // Matchday stepper: previous / label / next.
-  if (UI::secondaryButton("<", ImVec2(0, 0), UI::ButtonSize::COMPACT) && matchday > 1)
+  // Matchday stepper: previous / label / next (disabled at the ends).
+  ImGui::BeginDisabled(matchday <= 1);
+  if (UI::secondaryButton("<", ImVec2(0, 0), UI::ButtonSize::COMPACT))
     --matchday;
+  ImGui::EndDisabled();
   ImGui::SameLine();
   ImGui::AlignTextToFramePadding();
   ImGui::TextUnformatted(
@@ -798,9 +800,10 @@ void InternationalScene::renderMatchday(float width)
                                            std::to_string(matchdays)})
           .c_str());
   ImGui::SameLine();
-  if (UI::secondaryButton(">", ImVec2(0, 0), UI::ButtonSize::COMPACT) &&
-      matchday < matchdays)
+  ImGui::BeginDisabled(matchday >= matchdays);
+  if (UI::secondaryButton(">", ImVec2(0, 0), UI::ButtonSize::COMPACT))
     ++matchday;
+  ImGui::EndDisabled();
   const auto& lines =
       fixtures_by_matchday[static_cast<size_t>(std::clamp<int>(matchday, 1, matchdays) - 1)];
   const auto columns = localized(fixtureColumns());

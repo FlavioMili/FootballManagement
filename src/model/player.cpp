@@ -239,26 +239,37 @@ void Player::pushMatchRating(float rating)
 
 uint32_t Player::getMarketValue() const { return _cached_market_value; }
 
-void Player::updateMarketValue(const StatsConfig& stats_config) const
+double Player::valueFor(double overall, double potential, int age,
+                        double contract_years)
 {
   // ln(value) = ability term + h(age) + potential premium + c(contract).
   // Anchors [P]: overall 65 at 25 with a long contract ~ EUR 2M, each overall
   // point ~ +21%; h(age) = -0.012 (age - 25)^2 (inverted U, age^2 sign from
-  // Mueller et al. 2017); c(y) = ln(1 - exp(-y / 1.2)) because remaining
-  // contract length is the dominant fee driver (CIES).
-  const double overall = getOverall(stats_config);
-  const double age_offset = static_cast<double>(_age) - 25.0;
+  // Mueller et al. 2017). Remaining contract length is the dominant fee
+  // driver (CIES), but even an expiring deal keeps some value:
+  // c(y) = ln(1 - 0.55 exp(-y / 1.5)) (x0.72 at one year, x0.86 at two).
+  // The premium for unrealised potential fades out between 22 and 25 so a
+  // birthday never costs a young player a big step in value.
+  const double age_offset = static_cast<double>(age) - 25.0;
   double log_value = std::log(2'000'000.0) + 0.19 * (overall - 65.0) -
                      0.012 * age_offset * age_offset;
-  if (_age < 24 && static_cast<double>(_potential) > overall)
-    log_value += 0.05 * (static_cast<double>(_potential) - overall);
-  const double contract_years = std::max<double>(_contract_years, 0.5);
-  log_value += std::log(1.0 - std::exp(-contract_years / 1.2));
+  const double potential_weight =
+      std::clamp((25.0 - static_cast<double>(age)) / 3.0, 0.0, 1.0);
+  if (potential > overall)
+    log_value += 0.05 * potential_weight * (potential - overall);
+  const double years = std::max(contract_years, 0.5);
+  log_value += std::log(1.0 - 0.55 * std::exp(-years / 1.5));
 
   constexpr double MAX_VALUE = 250'000'000.0;
   constexpr double MIN_VALUE = 10'000.0;
+  return std::clamp(std::exp(log_value), MIN_VALUE, MAX_VALUE);
+}
+
+void Player::updateMarketValue(const StatsConfig& stats_config) const
+{
   _cached_market_value = static_cast<uint32_t>(
-      std::clamp(std::exp(log_value), MIN_VALUE, MAX_VALUE));
+      valueFor(getOverall(stats_config), static_cast<double>(_potential), _age,
+               static_cast<double>(_contract_years)));
 }
 
 void Player::setTransferStatus(TransferStatus status)

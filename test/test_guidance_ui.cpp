@@ -20,16 +20,21 @@
 
 #include <filesystem>
 #include <memory>
+#include <string_view>
 
 #include "controller/game_controller.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/data_hub_scene.h"
+#include "gui/scenes/inbox_scene.h"
 #include "gui/scenes/main_game_scene.h"
 #include "gui/scenes/management_scene.h"
 #include "gui/scenes/match_scene.h"
+#include "model/game.h"
+#include "model/inbox.h"
 #include "model/match_engine.h"
+#include "model/world_simulation.h"
 #include "model/settings_manager.h"
 
 /** GUI classes grant their internals to this name (see test_game_flow). */
@@ -51,6 +56,20 @@ class GameFlowTest_GUIFlowLifecycle_Test
     return view.getActiveScene();
   }
   static void showPlayers(DataHubScene& scene) { scene.tab = 1; }
+  static void showUnreadInformation(InboxScene& scene)
+  {
+    scene.tab = 1;
+    scene.unread_only = true;
+    scene.rebuildThreads();
+  }
+  static std::size_t threadCount(const InboxScene& scene)
+  {
+    return scene.threads.size();
+  }
+  static std::size_t firstThreadSize(const InboxScene& scene)
+  {
+    return scene.threads.empty() ? 0 : scene.threads.front().messages.size();
+  }
   static size_t trendPoints(const DataHubScene& scene)
   {
     return scene.hub.team.trend.size();
@@ -110,14 +129,38 @@ void frames(GUIView& view, int count)
   for (int index = 0; index < count; ++index) Bridge::frame(view);
 }
 
+/** Hovers the whole window on a grid (tooltips, hover states), one frame
+ * per position; every frame must be free of ImGui usage errors. */
+void hoverEverywhere(GUIView& view, float step = 40.0f)
+{
+  ImGuiIO& io = ImGui::GetIO();
+  const ImVec2 size = io.DisplaySize;
+  for (float y = step * 0.5f; y < size.y; y += step)
+    for (float x = step * 0.5f; x < size.x; x += step)
+    {
+      io.AddMousePosEvent(x, y);
+      Bridge::frame(view);
+    }
+  io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+  Bridge::frame(view);
+}
+
 void setUiScale(GUIView& view, float scale)
 {
   SettingsManager::instance()->get().ui_scale = scale;
   view.refreshTheme();
 }
 
+struct PlayedMatch
+{
+  GameDateValue date;
+  TeamID home = 0;
+  TeamID away = 0;
+};
+
 /** Plays the managed club's next matches headless, like a quick result. */
-int playManagedMatches(GameController& controller, int count)
+int playManagedMatches(GameController& controller, int count,
+                       PlayedMatch* last = nullptr)
 {
   int played = 0;
   const TeamID club = controller.getManagedTeam()->get().getId();
@@ -139,6 +182,7 @@ int playManagedMatches(GameController& controller, int count)
     if (!controller.setMatchResult(controller.getCurrentDate(), home, away,
                                    engine))
       break;
+    if (last != nullptr) *last = {controller.getCurrentDate(), home, away};
     controller.advanceDay();
     ++played;
   }
@@ -187,7 +231,15 @@ TEST(GuidanceUiTest, GuidanceScreensAtEverySize)
   // A few matches for the data hub and the opposition's form.
   Navigation::open(&view, NavSection::HOME);
   frames(view, 1);
-  EXPECT_GE(playManagedMatches(controller, 8), 4);
+  PlayedMatch lastMatch;
+  EXPECT_GE(playManagedMatches(controller, 8, &lastMatch), 4);
+  // A full match report (goals, assists, cards) at 720p.
+  Navigation::openMatchReport(&view, lastMatch.date, lastMatch.home,
+                              lastMatch.away);
+  frames(view, 3);
+  capture(view, "guidance_match_report.bmp");
+  Navigation::back(&view);
+  frames(view, 1);
   EXPECT_TRUE(
       controller.getOnboarding().isDone(OnboardingTask::PlayFirstMatch));
 
@@ -197,8 +249,11 @@ TEST(GuidanceUiTest, GuidanceScreensAtEverySize)
   ASSERT_NE(hub, nullptr);
   EXPECT_GE(Bridge::trendPoints(*hub), 4U);
   capture(view, "guidance_data_hub_team.bmp");
+  // Chart tooltips keep the font stack balanced.
+  hoverEverywhere(view);
   Bridge::showPlayers(*hub);
   frames(view, 2);
+  hoverEverywhere(view);
   capture(view, "guidance_data_hub_players.bmp");
 
   Navigation::open(&view, NavSection::INBOX);
@@ -275,4 +330,71 @@ TEST(GuidanceUiTest, HalfTimeAnalysisOpensAtTheBreak)
   frames(view, 3);
   capture(view, "guidance_half_time_analysis_hidpi.bmp");
   setUiScale(view, 0.0f);
+}
+
+/**
+ * Opening the newest message of an unread-only digest rebuilds the thread
+ * list mid-click: the list must not keep drawing the old rows (it read a
+ * freed thread and indexed an empty title list before).
+ */
+TEST(GuidanceUiTest, OpeningAnUnreadDigestRebuildsTheListSafely)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  Logger::init();
+  const SlotCleanup slot{uniqueSlot(2)};
+  GameController controller;
+  controller.newGame(slot.slot, WORLD_SEED);
+  controller.setSimulationThreads(1);
+  controller.selectManagedTeam(controller.getTeams().front().get().getId());
+  controller.markAllInboxMessagesRead();
+  Inbox& inbox = controller.getGame()->getWorld().getInbox();
+  const auto post = [&](const char* title)
+  {
+    InboxMessage message;
+    message.date = controller.getCurrentDate();
+    message.category = InboxCategory::Board;
+    message.title_key = title;
+    message.body_key = "INBOX_BOARD_EMBARGO_BODY";
+    message.args = {"-1"};
+    inbox.add(std::move(message));
+  };
+  post("INBOX_BOARD_CASH_WARNING_TITLE");
+  post("INBOX_BOARD_EMBARGO_TITLE");
+  post("INBOX_BOARD_EMBARGO_TITLE");
+
+  GUIView view(controller);
+  ASSERT_TRUE(Bridge::initialize(view));
+  resize(view, 1280, 720);
+  view.changeScene(std::make_unique<MainGameScene>(&view));
+  frames(view, 2);
+  Navigation::open(&view, NavSection::INBOX);
+  frames(view, 3);
+  auto* scene = dynamic_cast<InboxScene*>(Bridge::activeScene(view));
+  ASSERT_NE(scene, nullptr);
+  Bridge::showUnreadInformation(*scene);
+  frames(view, 2);
+  ASSERT_EQ(Bridge::threadCount(*scene), 2U);
+  ASSERT_EQ(Bridge::firstThreadSize(*scene), 2U) << "newest thread: digest";
+
+  // Click the digest row (the first row of the thread list).
+  const ImGuiWindow* list = nullptr;
+  for (const ImGuiWindow* window : GImGui->Windows)
+    if (window->Active && std::string_view(window->Name).find(
+                              "/inbox_threads") != std::string_view::npos)
+      list = window;
+  ASSERT_NE(list, nullptr);
+  const ImVec2 row(list->Pos.x + list->Size.x * 0.5f,
+                   list->Pos.y + list->WindowPadding.y +
+                       ImGui::GetTextLineHeight());
+  ImGui::GetIO().AddMousePosEvent(row.x, row.y);
+  Bridge::frame(view);
+  ImGui::GetIO().AddMouseButtonEvent(0, true);
+  Bridge::frame(view);
+  ImGui::GetIO().AddMouseButtonEvent(0, false);
+  frames(view, 3);
+  ImGui::GetIO().AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+  frames(view, 2);
+  // The opened message is read now; the list shows what is still unread.
+  EXPECT_EQ(controller.getUnreadInboxCount(), 2U);
+  EXPECT_EQ(Bridge::threadCount(*scene), 2U);
 }

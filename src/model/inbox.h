@@ -139,9 +139,23 @@ class Inbox
   std::uint32_t next_id = 1;
 };
 
-/** Formats a localised template, substituting {n} with @p args. */
+/**
+ * Formats a localised template, substituting {n} with @p args.
+ *
+ * Arguments starting with '@' are language keys; ISO dates ("2027-06-30")
+ * are shown with the localised month. Two placeholder forms serve grammar:
+ * "{n:di}" puts the Italian preposition and article before club name n
+ * ("della Roma", see ClubArticle), and "{n|one|other}" picks a word by
+ * whether argument n is 1 ("{0} {0|giorno|giorni}").
+ */
 std::string formatLocalized(const std::string& key,
                             const std::vector<std::string>& args);
+
+/**
+ * An ISO date ("2027-06-30", GameDateValue::toString()) in the current
+ * language, e.g. "30 giu 2027"; any other text is returned unchanged.
+ */
+std::string localizedDate(const std::string& text);
 
 /** Compact money text for messages, e.g. "€1.25M", "€350K", "-€2.0M". */
 std::string formatMoney(std::int64_t amount);

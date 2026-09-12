@@ -86,6 +86,14 @@ class MainGameScene : public ManagementScene
   void requestHoliday(const HolidayPlan& plan);
 
   /**
+   * @brief After a managed match has been recorded: returns to the hub and
+   * simulates the rest of the day on the Continue worker, then opens the
+   * match's report.
+   */
+  void requestPostMatchAdvance(const GameDateValue& date, TeamID home_id,
+                               TeamID away_id);
+
+  /**
    * @brief Draws the Continue progress card over a dimmed snapshot of the
    * screen. Reads only the controller's thread-safe progress, never game
    * state, because days are being simulated on a worker thread.
@@ -134,6 +142,14 @@ class MainGameScene : public ManagementScene
   bool continuation_requested = false;
   std::optional<HolidayPlan> pending_holiday;
   bool holiday_running = false;
+  /** Managed match whose report opens once the rest of its day is done. */
+  struct PlayedMatch
+  {
+    GameDateValue date;
+    TeamID home_id = 0;
+    TeamID away_id = 0;
+  };
+  std::optional<PlayedMatch> match_report;
 
   // Continue overlay state (progress snapshots only, see update()).
   void trackContinueProgress();
@@ -157,6 +173,9 @@ class MainGameScene : public ManagementScene
   std::vector<PlayerView::PlayerRow> cached_squad;
   int64_t cached_payroll = 0;
   int64_t cached_squad_value = 0;
+  /** Transfer money available today and the board's embargo. */
+  int64_t cached_transfer_budget = 0;
+  bool cached_embargo = false;
   float cached_average_overall = 0.0f;
 
   // Finance page view models.

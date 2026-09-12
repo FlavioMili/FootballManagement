@@ -33,7 +33,7 @@ enum class FinanceCategory : std::uint8_t
   Matchday,     /*!< Gate receipts of home matches. */
   Broadcasting, /*!< Monthly equal share of TV money. */
   Sponsorship,  /*!< Monthly commercial income. */
-  PrizeMoney,   /*!< Season-end merit and continental money. */
+  PrizeMoney,   /*!< Continental and international prize money. */
   Facilities,   /*!< Stadium, training ground and operations. */
   Staff,        /*!< Non-player wages. */
   Adjustment,   /*!< Reconciliation of legacy saves. */

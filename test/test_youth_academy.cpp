@@ -192,6 +192,43 @@ TEST(YouthIntakeTest, QualityFollowsFacilitiesRecruitmentStaffStatureAndRegion)
   EXPECT_GT(meanPotential(rich_region, 150), meanPotential(thin_region, 150));
 }
 
+TEST(YouthIntakeTest, IntakePotentialSitsWellBelowTheClubLevel)
+{
+  // An ordinary academy's group averages about 20 points under the club's
+  // first-team level (plus its country's talent pool).
+  const IntakeInputs base = baseInputs();
+  const double expected =
+      static_cast<double>(WorldGeneration::teamLevel(base.reputation)) - 20.0 +
+      static_cast<double>(YouthModel::regionTalent(base.country));
+  EXPECT_NEAR(meanPotential(base, 300), expected, 1.5);
+
+  // Even the best-equipped academy of a giant finds a world-class (85+)
+  // prospect less than once a year on average.
+  IntakeInputs giant = base;
+  giant.reputation = 95;
+  giant.facilities = 0.95f;
+  giant.recruitment = 0.95f;
+  giant.head_ability = 1.0f;
+  giant.staff_bonus = 4.0f;
+  int world_class = 0;
+  int candidates = 0;
+  constexpr int YEARS = 300;
+  for (int year = 0; year < YEARS; ++year)
+  {
+    const IntakeClass intake = YouthModel::planIntake(
+        giant, WORLD_SEED, static_cast<std::uint16_t>(2030 + year), 11);
+    for (const CandidateProfile& candidate : intake.candidates)
+    {
+      ++candidates;
+      if (candidate.potential >= 85.0f) ++world_class;
+    }
+  }
+  std::cout << "[youth] giant intake: " << world_class << " of " << candidates
+            << " candidates at 85+ over " << YEARS << " years\n";
+  EXPECT_LT(static_cast<double>(world_class) / YEARS, 1.0);
+  EXPECT_GT(world_class, 0) << "the very top still turns up now and then";
+}
+
 TEST(YouthIntakeTest, GoldenGenerationsAndWonderkidsAreRare)
 {
   IntakeInputs inputs = baseInputs();
@@ -392,15 +429,40 @@ TEST(YouthAcademyTest, IntakeCycleForManagedAndOtherClubs)
             YouthActionResult::NotAllowed);
   EXPECT_GT(gamedata->getPlayer(signed_id)->get().getWage(), 0u);
   EXPECT_NE(academy.record(signed_id)->contract, YouthContract::None);
+  // Trialists picked for the bench (auto-pick takes the whole squad) must
+  // not stay there once they leave: the line-up holds raw pointers.
+  Lineup& lineup = gamedata->getTeam(managed)->get().getLineup();
+  const Player* released_player = &gamedata->getPlayer(released_id)->get();
+  const Player* ignored_player = &gamedata->getPlayer(ignored_id)->get();
+  std::vector<const Player*> bench = lineup.getReserves();
+  bench.push_back(released_player);
+  bench.push_back(ignored_player);
+  lineup.setReserves(bench);
+  ASSERT_TRUE(std::ranges::contains(lineup.getReserves(), released_player));
+  ASSERT_TRUE(std::ranges::contains(lineup.getReserves(), ignored_player));
   EXPECT_EQ(academy.releaseCandidate(managed, released_id),
             YouthActionResult::Ok);
   EXPECT_FALSE(gamedata->getPlayer(released_id).has_value());
+  EXPECT_FALSE(std::ranges::contains(lineup.getReserves(), released_player));
 
   runDays(academy, GameDateValue(2026, 3, 15), GameDateValue(2026, 4, 14),
           managed, inbox);
   EXPECT_TRUE(hasMessage(inbox, "INBOX_YOUTH_REMINDER_TITLE"));
   EXPECT_TRUE(hasMessage(inbox, "INBOX_YOUTH_DEADLINE_TITLE"));
   EXPECT_FALSE(gamedata->getPlayer(ignored_id).has_value());
+  EXPECT_FALSE(std::ranges::contains(lineup.getReserves(), ignored_player));
+  // Every reference left in the line-up is a live player, so the club still
+  // saves and plays.
+  for (const Player* reserve : lineup.getReserves())
+    EXPECT_TRUE(gamedata->getPlayer(reserve->getId()).has_value());
+  ASSERT_TRUE(controller->saveGame());
+  const std::vector<Match> fixtures = controller->getTeamFixtures(managed);
+  ASSERT_FALSE(fixtures.empty());
+  Match rehearsal = fixtures.front();
+  MatchReport rehearsal_report;
+  rehearsal.simulate(*gamedata, &rehearsal_report);
+  EXPECT_TRUE(rehearsal.isPlayed());
+  EXPECT_FALSE(rehearsal_report.players.empty());
   EXPECT_TRUE(academy.members(managed, YouthStatus::Candidate).empty());
   ASSERT_NE(academy.record(signed_id), nullptr);
   EXPECT_EQ(academy.record(signed_id)->status, YouthStatus::Squad);
@@ -481,6 +543,41 @@ TEST(YouthAcademyTest, U18LeagueGivesMinutesAndSpeedsUpDevelopment)
   const auto squad = academy.members(managed, YouthStatus::Squad);
   ASSERT_FALSE(squad.empty());
   EXPECT_GE(squad.front()->progress.size(), 3u);
+}
+
+TEST(YouthAcademyTest, U18VenuesAlternateOverASeason)
+{
+  const SlotCleanup slot{uniqueSlot(8)};
+  const auto controller = makeWorld(slot.slot);
+  auto gamedata = controller->getGameData();
+  const TeamID managed = topClub(*controller, 1);
+  YouthAcademy academy(gamedata);
+  academy.ensureReady();
+  Inbox inbox;
+  runDays(academy, GameDateValue(2026, 6, 30), GameDateValue(2027, 6, 1),
+          managed, inbox);
+
+  // Every club hosts half its matches, and each meeting with an opponent is
+  // played at the other ground from the previous one.
+  int home = 0;
+  int played = 0;
+  std::map<TeamID, std::vector<bool>> venues;
+  for (const YouthResult& result : academy.results())
+  {
+    if (result.date < GameDateValue(2026, 7, 1)) continue;
+    ++played;
+    home += result.home ? 1 : 0;
+    venues[result.opponent_id].push_back(result.home);
+  }
+  ASSERT_GT(played, 20);
+  EXPECT_LE(std::abs(2 * home - played), 2)
+      << home << " home matches of " << played;
+  for (const auto& [opponent, sides] : venues)
+  {
+    ASSERT_GE(sides.size(), 2u) << "v " << opponent;
+    for (std::size_t i = 1; i < sides.size(); ++i)
+      EXPECT_NE(sides[i], sides[i - 1]) << "v " << opponent << " #" << i;
+  }
 }
 
 TEST(YouthAcademyTest, PromotionDemotionAndProfessionalContracts)

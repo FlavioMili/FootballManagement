@@ -26,6 +26,7 @@ class CompetitionManager;
 class DatabaseConnection;
 class GameData;
 class Player;
+class Team;
 class WorldRng;
 class WorldSimulation;
 
@@ -238,6 +239,16 @@ class TransferMarket
   /** Instalments a club owes from @p date until the season ends. */
   std::int64_t committedPayables(TeamID team_id,
                                  const GameDateValue& date) const;
+  /**
+   * Transfer money a club can commit on @p date: the board's allowance
+   * capped by the cash left after the payroll reserve and the instalments
+   * still owed this season (ClubEconomy::availableTransferBudget); zero
+   * under a transfer embargo.
+   */
+  std::int64_t spendableBudget(TeamID team_id, const GameDateValue& date) const;
+  /** Takes a departed player out of the managed club's line-up, filling
+   * his place without rebuilding the rest of the manager's selection. */
+  void removeFromLineup(Team& team, const Player& departed);
   /** Agent fee paid by the buyer: 10% of a fee, or weeks of wage. */
   static std::uint32_t agentFee(const Deal& deal);
 
@@ -309,7 +320,8 @@ class TransferMarket
  private:
   Player* mutablePlayer(PlayerID player_id);
   std::string teamName(TeamID team_id) const;
-  void movePlayer(PlayerID player_id, TeamID from_team, TeamID to_team);
+  void movePlayer(PlayerID player_id, TeamID from_team, TeamID to_team,
+                  TeamID managed_team_id);
   void pay(TeamID payer, TeamID payee, std::int64_t amount,
            const GameDateValue& date);
   std::int64_t paySellOns(PlayerID player_id, TeamID seller, std::uint32_t fee,

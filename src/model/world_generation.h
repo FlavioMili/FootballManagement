@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -30,8 +31,8 @@ class WorldRng;
  * @brief First and last names from assets/user_made_data/names_files.
  *
  * Besides a generic list, every nationality has its own fictional but
- * culture-appropriate names; a short list of real players' full names is
- * never generated.
+ * culture-appropriate names. Full names listed (as hashes) under
+ * "excluded_name_hashes" are never generated.
  */
 struct NamePool
 {
@@ -39,7 +40,21 @@ struct NamePool
   std::vector<std::string> last_names;
   std::unordered_map<Language, std::vector<std::string>> first_by_nationality;
   std::unordered_map<Language, std::vector<std::string>> last_by_nationality;
-  std::unordered_set<std::string> excluded_full_names;
+  /** nameHash() of every full name that must never be generated. */
+  std::unordered_set<std::uint64_t> excluded_name_hashes;
+
+  /**
+   * Comparable form of a name: lower case ASCII, Latin accents and
+   * ligatures folded (e.g. "Ø" -> "o", "ß" -> "ss"), whitespace collapsed
+   * to single spaces and trimmed.
+   */
+  static std::string normalizeName(std::string_view name);
+
+  /** Salted 64-bit FNV-1a hash of normalizeName(@p name). */
+  static std::uint64_t nameHash(std::string_view name);
+
+  /** True when @p full_name is on the excluded list. */
+  bool isExcluded(std::string_view full_name) const;
 
   /** First names of @p nationality (the generic list if it has none). */
   const std::vector<std::string>& firstNames(Language nationality) const;

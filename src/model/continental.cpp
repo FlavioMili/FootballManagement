@@ -1076,11 +1076,32 @@ void ContinentalCompetitions::drawLeaguePhase(Calendar& calendar,
   for (const Entrant& entrant : season.entrants)
     teams.push_back({entrant.team_id, entrant.association, entrant.pot});
   const auto pots = static_cast<uint8_t>(season.matches / 2);
-  const std::vector<Continental::LeagueFixture> fixtures =
-      Continental::drawLeaguePhase(
-          teams, pots,
-          Competitions::mixSeed(season.season_year, season.competition_id,
-                                LEAGUE_DRAW_SALT));
+  const auto draw = [&]
+  {
+    return Continental::drawLeaguePhase(
+        teams, pots,
+        Competitions::mixSeed(season.season_year, season.competition_id,
+                              LEAGUE_DRAW_SALT));
+  };
+  std::vector<Continental::LeagueFixture> fixtures = draw();
+  if (fixtures.empty() && pots > 0)
+  {
+    // Pots the association rule could not fill evenly: draw from pots by
+    // coefficient alone (the entrants are kept in coefficient order).
+    const size_t pot_size = std::max<size_t>(1, season.entrants.size() / pots);
+    teams.clear();
+    for (size_t index = 0; index < season.entrants.size(); ++index)
+    {
+      Entrant& entrant = season.entrants[index];
+      entrant.pot = static_cast<uint8_t>(std::min<size_t>(index / pot_size,
+                                                          pots - 1u));
+      teams.push_back({entrant.team_id, entrant.association, entrant.pot});
+    }
+    fixtures = draw();
+  }
+  // Without fixtures the season is not drawn (and no fee is paid), so the
+  // competition never waits for matches that do not exist.
+  if (fixtures.empty()) return;
   const std::vector<GameDateValue> weeks =
       SeasonCalendar::continentalWeeks(season.season_year);
   const size_t last_week = Continental::KNOCKOUT_STAGE_BASE / 2 - 1;
@@ -1105,15 +1126,20 @@ void ContinentalCompetitions::drawLeaguePhase(Calendar& calendar,
   for (const Continental::LeagueFixture& fixture : fixtures)
   {
     // Matchdays spread over the eight league-phase weeks.
+    // Matchday 0 (left over by the fallback schedule) joins the extra round.
+    const uint8_t matchday =
+        fixture.matchday == 0 ? static_cast<uint8_t>(season.matches + 1u)
+                              : fixture.matchday;
+    const bool extra_round = matchday > season.matches;
     const size_t week =
-        season.matches > 1 && fixture.matchday <= season.matches
-            ? (size_t{fixture.matchday - 1u} * last_week +
+        season.matches > 1 && !extra_round
+            ? (size_t{matchday - 1u} * last_week +
                (season.matches - 1u) / 2) /
                   (season.matches - 1u)
             : last_week;
-    const size_t half = per_matchday[fixture.matchday]++ % 2;
+    const size_t half = per_matchday[matchday]++ % 2;
     int offset = rules->weekday_offsets[half];
-    if (fixture.matchday > season.matches) offset = 3;  // Extra round.
+    if (extra_round) offset = 3;
     for (const int candidate : {offset, 0, 1, 2})
     {
       if (clear(fixture.home_id, fixture.away_id, plusDays(weeks[week], candidate)))
@@ -1125,7 +1151,7 @@ void ContinentalCompetitions::drawLeaguePhase(Calendar& calendar,
     calendar.addMatch(Match(fixture.home_id, fixture.away_id,
                             plusDays(weeks[week], offset),
                             MatchType::CONTINENTAL, season.competition_id,
-                            fixture.matchday));
+                            matchday));
   }
   season.drawn = true;
   season.draws.push_back({today, Round::LeaguePhase});
@@ -1213,20 +1239,27 @@ void ContinentalCompetitions::onResult(const Match& match)
 bool ContinentalCompetitions::needsExtraTime(const Calendar& calendar,
                                              const Match& match) const
 {
-  if (match.getMatchType() != MatchType::CONTINENTAL || !match.isPlayed() ||
-      match.wentToExtraTime())
-    return false;
+  if (!match.isPlayed() || match.wentToExtraTime()) return false;
+  const std::optional<int> lead = deciderLead(calendar, match);
+  return lead && match.getHomeScore() + *lead == match.getAwayScore();
+}
+
+std::optional<int> ContinentalCompetitions::deciderLead(
+    const Calendar& calendar, const Match& match) const
+{
+  if (match.getMatchType() != MatchType::CONTINENTAL) return std::nullopt;
   const Round round = Continental::roundOf(match.getStage());
-  if (round == Round::LeaguePhase) return false;
-  if (round == Round::Final) return match.getHomeScore() == match.getAwayScore();
-  if (Continental::legOf(match.getStage()) != 2) return false;
+  if (round == Round::LeaguePhase) return std::nullopt;
+  if (round == Round::Final) return 0;
+  if (Continental::legOf(match.getStage()) != 2) return std::nullopt;
+  // The home side of the second leg was the away side of the first.
   const Match* first =
       findLeg(calendar, match.getCompetitionId(),
               Continental::stageCode(round, 1), match.getAwayTeamId(),
               match.getHomeTeamId());
-  if (!first || !first->isPlayed()) return false;
-  return match.getHomeScore() + first->getAwayScore() ==
-         match.getAwayScore() + first->getHomeScore();
+  if (!first || !first->isPlayed()) return std::nullopt;
+  return static_cast<int>(first->getAwayScore()) -
+         static_cast<int>(first->getHomeScore());
 }
 
 bool ContinentalCompetitions::resolveDecider(const Calendar& calendar,

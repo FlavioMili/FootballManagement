@@ -18,6 +18,8 @@
 
 #include "database/gamedata.h"
 #include "global/global.h"
+#include "model/club_economy.h"
+#include "model/competition.h"
 #include "model/inbox.h"
 #include "model/role_utils.h"
 #include "model/world_generation.h"
@@ -38,8 +40,6 @@ constexpr int PEAK_GROWTH_AGE = 25;
 constexpr int NO_GROWTH_AGE = 30; /*!< [P] Estimated ceilings stop here. */
 constexpr float FOLLOW_UP_WEIGHT = 4.0f; /*!< [P] Scouts revisit prospects. */
 constexpr float PROSPECT_GROWTH_PER_YEAR = 1.4f; /*!< [P] Mean headroom. */
-constexpr double MIN_VALUE_ESTIMATE = 10'000.0;  /*!< Market value bounds. */
-constexpr double MAX_VALUE_ESTIMATE = 250'000'000.0;
 
 /** Stable (platform independent) hash of an attribute name. */
 std::uint64_t nameKey(std::string_view name)
@@ -187,6 +187,11 @@ void ScoutingSystem::setScoutProvider(ScoutProvider provider)
 {
   scout_provider = std::move(provider);
   refreshScouts();
+}
+
+void ScoutingSystem::setBudgetProvider(BudgetProvider provider)
+{
+  budget_provider = std::move(provider);
 }
 
 std::vector<ScoutProfile> ScoutingSystem::defaultScouts(
@@ -545,20 +550,11 @@ std::int64_t ScoutingSystem::estimatedValue(const Player& player,
                                             float estimated_overall,
                                             float estimated_potential)
 {
-  // Player::updateMarketValue's valuation model applied to the estimates, so
-  // neither the true ability nor the true potential leaks into the value.
-  const double overall = estimated_overall;
-  const double potential = estimated_potential;
-  const double age_offset = static_cast<double>(player.getAge()) - 25.0;
-  double log_value = std::log(2'000'000.0) + 0.19 * (overall - 65.0) -
-                     0.012 * age_offset * age_offset;
-  if (player.getAge() < 24 && potential > overall)
-    log_value += 0.05 * (potential - overall);
-  const double contract_years =
-      std::max<double>(player.getContractYears(), 0.5);
-  log_value += std::log(1.0 - std::exp(-contract_years / 1.2));
+  // The market value model applied to the estimates, so neither the true
+  // ability nor the true potential leaks into the value.
   return static_cast<std::int64_t>(std::llround(
-      std::clamp(std::exp(log_value), MIN_VALUE_ESTIMATE, MAX_VALUE_ESTIMATE)));
+      Player::valueFor(estimated_overall, estimated_potential, player.getAge(),
+                       static_cast<double>(player.getContractYears()))));
 }
 
 std::int64_t ScoutingSystem::estimatedFee(const Player& player,
@@ -1032,7 +1028,8 @@ void ScoutingSystem::coverageDay(ScoutAssignment& assignment,
     {
       post(inbox, date, InboxCategory::Transfer, "SCOUT_MSG_RECOMMEND_TITLE",
            "SCOUT_MSG_RECOMMEND_BODY",
-           {scout.name, player.getName(), RoleUtils::toString(player.getRole()),
+           {scout.name, player.getName(),
+            RoleUtils::shortNameArg(player.getRole()),
             std::to_string(player.getAge()),
             std::format("{:.0f}", static_cast<double>(report.overall)),
             rangeText(report.potential_low, report.potential_high),
@@ -1086,13 +1083,18 @@ const ScoutReport& ScoutingSystem::fileReport(const GameDateValue& date,
   if (const auto team = gamedata->getTeam(state.team_id))
   {
     const Finances& finances = team->get().getFinances();
-    const std::int64_t wage_room =
-        finances.getWageBudget() -
+    const std::int64_t payroll =
         finances.getCurrentWageSpending(*gamedata, team->get());
+    const std::int64_t wage_room = finances.getWageBudget() - payroll;
+    const std::int64_t budget =
+        budget_provider ? budget_provider(state.team_id)
+                        : ClubEconomy::availableTransferBudget(
+                              finances.getTransferBudget(),
+                              finances.getBalance(), payroll, 0);
     const auto expected_wage = static_cast<std::int64_t>(
         static_cast<float>(estimate.wage) * EXPECTED_WAGE_RAISE);
-    report.affordable = report.estimated_fee <= finances.getTransferBudget() &&
-                        expected_wage <= wage_room;
+    report.affordable =
+        report.estimated_fee <= budget && expected_wage <= wage_room;
   }
 
   bool available = estimate.team_id == FREE_AGENTS_TEAM_ID || estimate.listed ||
@@ -1181,7 +1183,8 @@ void ScoutingSystem::finishAssignment(ScoutAssignment& assignment,
         inbox, date, InboxCategory::Transfer, "SCOUT_MSG_REPORT_TITLE",
         "SCOUT_MSG_REPORT_BODY",
         {player.getName(), gradeLetter(report.grade), scout->name,
-         RoleUtils::toString(player.getRole()), std::to_string(player.getAge()),
+         RoleUtils::shortNameArg(player.getRole()),
+         std::to_string(player.getAge()),
          std::format("{:.0f}", static_cast<double>(report.overall)),
          rangeText(report.potential_low, report.potential_high),
          formatMoney(report.estimated_fee), std::to_string(report.confidence),
@@ -1223,7 +1226,7 @@ void ScoutingSystem::finishAssignment(ScoutAssignment& assignment,
   {
     if (const auto league =
             gamedata->getLeague(static_cast<LeagueID>(assignment.target_id)))
-      target_name = league->get().getName();
+      target_name = Competitions::leagueNameArg(league->get());
   }
   else if (assignment.kind == ScoutTargetKind::Region)
   {

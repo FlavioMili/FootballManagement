@@ -167,7 +167,7 @@ YouthScene::Row YouthScene::makeRow(
 {
   Row row;
   row.view = view;
-  row.role = RoleUtils::toString(view.role);
+  row.role = RoleUtils::shortName(view.role);
   row.ability = range(view.estimate.current_low, view.estimate.current_high);
   row.potential =
       range(view.estimate.potential_low, view.estimate.potential_high);
@@ -276,9 +276,10 @@ void YouthScene::refresh()
                                     : std::string(LOC("YOUTH_ACADEMY_STAFF"));
   if (overview.preview_ready)
   {
-    std::string positions = RoleUtils::toString(overview.preview.standout[0]);
+    std::string positions = RoleUtils::shortName(overview.preview.standout[0]);
     if (overview.preview.standout[1] != PlayerRole::UNKNOWN)
-      positions += ", " + RoleUtils::toString(overview.preview.standout[1]);
+      positions.append(", ").append(
+          RoleUtils::shortName(overview.preview.standout[1]));
     preview_line = formatLocalized(
         "YOUTH_PREVIEW_LINE",
         {head_name, positions, LOC(overview.preview.personality_key),

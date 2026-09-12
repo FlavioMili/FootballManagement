@@ -776,6 +776,33 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
   EXPECT_EQ(view.getActiveScene()->getID(), SceneID::PLAYER_PROFILE);
   capture("season_profile.bmp");
 
+  // The busiest text screens again in Italian, for reviewing the wording.
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::IT));
+  const std::array<std::pair<NavSection, const char*>, 4> italianScreens = {{
+      {NavSection::INBOX, "season_inbox_italian.bmp"},
+      {NavSection::SQUAD, "season_squad_italian.bmp"},
+      {NavSection::FIXTURES, "season_fixtures_italian.bmp"},
+      {NavSection::STANDINGS, "season_standings_italian.bmp"},
+  }};
+  for (const auto& [section, fileName] : italianScreens)
+  {
+    Navigation::open(&view, section);
+    step_frame();
+    step_frame();
+    capture(fileName);
+  }
+  Navigation::openPlayer(&view, star);
+  step_frame();
+  step_frame();
+  capture("season_profile_italian.bmp");
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::EN));
+  view.popScene();
+  step_frame();
+  Navigation::openPlayer(&view, star);
+  step_frame();
+  step_frame();
+  EXPECT_EQ(view.getActiveScene()->getID(), SceneID::PLAYER_PROFILE);
+
   // Every dialog renders cleanly: transfer-list confirm, contract renewal
   // and the leave-to-menu confirmation.
   auto* profile = dynamic_cast<PlayerProfileScene*>(view.getActiveScene());

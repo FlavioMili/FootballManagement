@@ -26,6 +26,7 @@
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/competition.h"
 #include "model/game.h"
 #include "model/role_utils.h"
 #include "model/scouting.h"
@@ -417,7 +418,7 @@ void TransferMarketScene::refreshData()
   for (const auto& league : controller.getLeagues())
   {
     league_ids.push_back(league.get().getId());
-    league_names.push_back(league.get().getName());
+    league_names.push_back(Competitions::leagueName(league.get()));
   }
 
   refreshSquad();
@@ -450,7 +451,7 @@ TransferMarketScene::TargetRow TransferMarketScene::makeTargetRow(
   row.name_lower = PlayerView::toLower(row.name);
   row.club = teamName(controller, row.team_id);
   row.role_id = scouted.role;
-  row.role = RoleUtils::toString(scouted.role);
+  row.role = RoleUtils::shortName(scouted.role);
   row.age = scouted.age;
   row.overall = scouted.overall;
   row.overall_low = scouted.overall_low;
@@ -580,7 +581,7 @@ void TransferMarketScene::refreshNeeds()
     needs_text += fmt::sprintf(
         LOC(need.count < need.starters ? "TRANSFER_NEED_STARTER"
                                        : "TRANSFER_NEED_DEPTH"),
-        RoleUtils::toString(need.group));
+        RoleUtils::shortName(need.group));
   }
 }
 
@@ -1045,7 +1046,9 @@ void TransferMarketScene::renderSummary()
       !window.open ? std::string(LOC("TRANSFER_WINDOW_CLOSED_SHORT"))
       : window.days_to_deadline == 0
           ? std::string(LOC("TRANSFER_DEADLINE_DAY"))
-          : fmt::sprintf(LOC("TRANSFER_DAYS_LEFT"), window.days_to_deadline);
+          : fmt::sprintf(
+                Format::plural("TRANSFER_DAYS_LEFT", window.days_to_deadline),
+                window.days_to_deadline);
   UI::statTile("window", LOC("TRANSFER_WINDOW"), windowText.c_str(),
                LOC(window.open ? (window.winter ? "TRANSFER_WINDOW_WINTER"
                                                 : "TRANSFER_WINDOW_SUMMER")
@@ -1121,7 +1124,7 @@ void TransferMarketScene::renderFilters()
   const std::string rolePreview =
       filters.role_index == 0
           ? std::string(LOC("TRANSFER_FILTER_ANY_POSITION"))
-          : RoleUtils::toString(
+          : RoleUtils::shortName(
                 FILTER_ROLES[static_cast<size_t>(filters.role_index - 1)]);
   if (ImGui::BeginCombo("##market_role", rolePreview.c_str()))
   {
@@ -1133,8 +1136,8 @@ void TransferMarketScene::renderFilters()
     }
     for (size_t index = 0; index < FILTER_ROLES.size(); ++index)
     {
-      const std::string role = RoleUtils::toString(FILTER_ROLES[index]);
-      if (ImGui::Selectable(role.c_str(),
+      const char* const role = RoleUtils::longName(FILTER_ROLES[index]);
+      if (ImGui::Selectable(role,
                             filters.role_index == static_cast<int>(index + 1)))
       {
         filters.role_index = static_cast<int>(index + 1);
@@ -1553,9 +1556,12 @@ void TransferMarketScene::renderOffersTab()
       }
       if (!row.loan)
       {
+        // A counter can only be accepted while the window is open.
         ImGui::SameLine();
+        ImGui::BeginDisabled(!window.open);
         if (ImGui::Button(LOC("TRANSFER_COUNTER")))
           counter_dialog = {true, row, row.fee, std::nullopt};
+        ImGui::EndDisabled();
       }
       ImGui::PopID();
       ImGui::PopID();

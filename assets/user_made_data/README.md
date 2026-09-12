@@ -1,8 +1,10 @@
 # Default world data pack
 
-This directory is the world that a new career starts from. Clubs are named
-after real cities (including the Apulian towns of the Italian second
-division, Acaya among them), but the pack contains **no real crests, kits,
+This directory is the world that a new career starts from: eleven
+countries, each with a top division and a second division linked for
+promotion and relegation (three clubs up, three down every season). Clubs
+are named after real cities and towns (including the Apulian towns of the
+Italian second division, Acaya among them), but the pack contains **no real crests, kits,
 stadiums or professional players**: kit colours, nicknames, founding years
 and every player are made up, and stadiums use a generic municipal naming
 pattern (which can coincide with a real municipal stadium's name). Keep it that way when you edit:
@@ -20,15 +22,18 @@ Array of leagues.
 
 | Field           | Required | Meaning                                                         |
 |-----------------|----------|-----------------------------------------------------------------|
-| `id`            | yes      | League id (1-255). Also keys the economy/nationality profile in `src/model/world_tuning.h` (`LEAGUE_PROFILES`); unknown ids use a default profile. |
+| `id`            | yes      | League id (1-249; 250 and up are continental competitions). Also keys the economy/nationality/region profile in `src/model/world_tuning.h` (`LEAGUE_PROFILES`): add a row for every new league, otherwise it silently gets a default English, European profile. |
 | `name`          | yes      | Display name. The domestic cup of a top division is named after it ("League" becomes "Cup"). |
-| `parent_league` | no       | Id of the division above; links the tiers of one country for promotion and relegation. |
+| `parent_league` | no       | Id of the division above; links the tiers of one country for promotion and relegation. A league without a parent is a country's top division: it names the domestic cup (entered by every division of the country) and is the country for continental places and scouting. |
 | `tiebreak`      | no       | `"head_to_head"` or omitted for goal difference.                |
 
 ## `teams/*.json`
 
 Array of clubs. The default pack uses 20 clubs per league; keep leagues at
 an even size and check `src/model/match_scheduler.*` before changing it.
+Team ids follow the league: league `L` holds ids `L*100+1` to `L*100+20`
+(for example 1401-1420 for the English second division). The second
+divisions of every country except Italy are in `second_divisions.json`.
 
 | Field                 | Required | Meaning                                                   |
 |-----------------------|----------|-----------------------------------------------------------|
@@ -43,8 +48,10 @@ an even size and check `src/model/match_scheduler.*` before changing it.
 | `stadium.capacity`    | no       | Nominal capacity (see below).                             |
 | `founded`             | no       | Founding year.                                            |
 | `nickname`            | no       | Club nickname.                                            |
+| `article_it`          | no       | Italian article (`"il"`, `"lo"`, `"l'"`, `"la"`) when the default (masculine, chosen from the first letters) is wrong, e.g. `"la"` for Roma. |
 
-The optional fields are read by `DataGenerator::loadClubIdentities()` and are
+The optional fields are read by `DataGenerator::loadClubIdentities()` (and
+`article_it` by `loadClubArticles()`) and are
 not stored in saves. Reputation, facilities, ticket prices and the stadium
 capacity used by the simulation are generated from the world seed, so
 `stadium.capacity` is descriptive only for now.
@@ -69,5 +76,19 @@ generated players, so this directory may be empty.
 
 ## `names_files/`
 
-`first_names.json` and `last_names.json` (`{"names": [...]}`) are the name
-pools for generated players, staff and scouts.
+`first_names.json` and `last_names.json` are the name pools for generated
+players, staff and scouts.
+
+| Field            | Required | Meaning                                                   |
+|------------------|----------|-----------------------------------------------------------|
+| `names`          | yes      | Array of names, used for nationalities without a pool of their own. Must not be empty. |
+| `by_nationality` | no       | Object mapping a nationality demonym (as for players, e.g. `"Italian"`) to an array of names. Generated players and staff of that nationality draw from it; unknown demonyms and empty arrays are ignored. |
+
+`first_names.json` may also carry a hashed exclusion list,
+`excluded_name_hashes`: full names the generator must never produce, stored
+only as hashes so the pack contains no real people's names. Each entry is the
+16-digit lowercase hex form of `NamePool::nameHash` (salted 64-bit FNV-1a of
+the name in lower case, Latin accents folded, single spaces; see
+`src/model/world_generation.cpp`). A generated first and last name pair whose
+hash is on the list is drawn again. Do not add plain names to the pack for
+this purpose.

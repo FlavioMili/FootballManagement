@@ -15,6 +15,7 @@
 #include <array>
 #include <filesystem>
 
+#include "controller/game_controller.h"
 #include "global/language_manager.h"
 #include "global/paths.h"
 #include "global/runtime_paths.h"
@@ -33,6 +34,23 @@ SettingsScene::SettingsScene(GUIView* guiView_ptr, bool inCareer)
 {
 }
 
+namespace
+{
+/** A language's own name ("Italiano"); other languages keep the file name. */
+std::string nativeLanguageName(Language language, const std::string& fileName)
+{
+  switch (language)
+  {
+    case Language::EN:
+      return "English";
+    case Language::IT:
+      return "Italiano";
+    default:
+      return fileName;
+  }
+}
+}  // namespace
+
 void SettingsScene::onEnter()
 {
   languageOptions.clear();
@@ -44,7 +62,7 @@ void SettingsScene::onEnter()
     std::string filePath = AssetPaths::language(str);
     if (std::filesystem::exists(filePath))
     {
-      languageOptions.push_back(str);
+      languageOptions.push_back(nativeLanguageName(lang, str));
       availableLanguageEnums.push_back(lang);
     }
   }
@@ -203,6 +221,11 @@ void SettingsScene::render()
                    ImGuiWindowFlags_NoSavedSettings |
                    ImGuiWindowFlags_NoBringToFrontOnFocus);
   ImGui::PopStyleVar(3);
+  // Escape backs out like Cancel unless a dialog or a combo takes it first.
+  const bool leaveWithEscape =
+      !ImGui::IsPopupOpen(
+          "", ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel) &&
+      !ImGui::IsAnyItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape, false);
 
   const float width = std::min(ImGui::GetContentRegionAvail().x,
                                CONTENT_MAX_WIDTH * Theme::scale());
@@ -217,17 +240,24 @@ void SettingsScene::render()
       ImVec2(width, ImGui::GetContentRegionAvail().y - footerHeight));
   renderGeneral();
   renderAppearance();
+  renderAudio();
   renderSaving();
-  if (!in_career) renderData();
+  // Wiping is offered only with no career in memory: a career left for the
+  // main menu is still loaded and would be saved back on exit.
+  if (!in_career && !guiView->getController().isGameLoaded()) renderData();
   ImGui::EndChild();
 
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
   const ImVec2 buttonSize(160.0f * Theme::scale(), 0.0f);
-  if (UI::secondaryButton(LOC("SETTINGS_CANCEL"), buttonSize)) cancel();
+  const bool cancelled =
+      UI::secondaryButton(LOC("SETTINGS_CANCEL"), buttonSize);
   ImGui::SameLine();
-  if (UI::primaryButton(LOC("SETTINGS_APPLY"), buttonSize))
-    applyAndSaveSettings();
+  const bool applied = UI::primaryButton(LOC("SETTINGS_APPLY"), buttonSize);
   ImGui::EndGroup();
+  if (cancelled || leaveWithEscape)
+    cancel();
+  else if (applied)
+    applyAndSaveSettings();
 
   ImGui::End();
 }
@@ -353,6 +383,30 @@ void SettingsScene::renderAppearance()
   UI::endCard();
 }
 
+void SettingsScene::renderAudio()
+{
+  Settings& settings = SettingsManager::instance()->get();
+  UI::beginAutoHeightCard("settings_audio", LOC("SETTINGS_SECTION_AUDIO"));
+  // Volumes apply at once (a running match picks them up next frame);
+  // Cancel restores the previous values.
+  const auto volumeSlider = [](const char* id, float& volume)
+  {
+    float percent = volume * 100.0f;
+    if (ImGui::SliderFloat(id, &percent, 0.0f, 100.0f, "%.0f%%"))
+      volume = std::clamp(std::round(percent) / 100.0f, 0.0f, 1.0f);
+  };
+  settingLabel(LOC("SETTINGS_AUDIO_MASTER"), nullptr);
+  volumeSlider("##master_volume", settings.master_volume);
+  settingLabel(LOC("SETTINGS_AUDIO_CROWD"), nullptr);
+  volumeSlider("##crowd_volume", settings.crowd_volume);
+  settingLabel(LOC("SETTINGS_AUDIO_EFFECTS"),
+               LOC("SETTINGS_AUDIO_EFFECTS_HELP"));
+  volumeSlider("##effects_volume", settings.effects_volume);
+  settingLabel(LOC("SETTINGS_AUDIO_MUTE"), LOC("SETTINGS_AUDIO_MUTE_HELP"));
+  ImGui::Checkbox("##audio_muted", &settings.audio_muted);
+  UI::endCard();
+}
+
 void SettingsScene::renderSaving()
 {
   Settings& settings = SettingsManager::instance()->get();
@@ -407,7 +461,8 @@ void SettingsScene::renderData()
     ImGui::PopTextWrapPos();
     ImGui::Separator();
     const ImVec2 buttonSize(150.0f * Theme::scale(), 0.0f);
-    if (UI::secondaryButton(LOC("SETTINGS_CANCEL"), buttonSize))
+    if (UI::secondaryButton(LOC("SETTINGS_CANCEL"), buttonSize) ||
+        ImGui::IsKeyPressed(ImGuiKey_Escape, false))
     {
       showWipeDataOverlay = false;
       ImGui::CloseCurrentPopup();
@@ -482,7 +537,7 @@ void SettingsScene::applyAndSaveSettings()
   }
   settings.fullscreen = fullscreen;
 
-  settingsManager->apply(guiView->getWindow());
+  guiView->applyWindowSettings();
   settingsManager->save();
   guiView->refreshTheme();
   guiView->applySavePolicy();

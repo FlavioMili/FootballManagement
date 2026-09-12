@@ -39,8 +39,13 @@ struct MatchSimulationInput
   Lineup away_lineup;
   Strategy home_strategy;
   Strategy away_strategy;
-  /** Extra time and shootout of a knockout tie, used if it ends level. */
+  /**
+   * Extra time and shootout of a knockout tie, used if it ends level (on
+   * aggregate, for the second leg of a two-legged tie).
+   */
   std::optional<Competitions::KnockoutResolution> knockout;
+  /** Aggregate lead of the home side from the first leg (0 otherwise). */
+  int knockout_lead = 0;
 };
 
 /** Final score, engine summary and physical outcome of one match. */

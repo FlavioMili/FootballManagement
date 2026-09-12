@@ -21,6 +21,8 @@
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
 #include "model/calendar.h"
+#include "model/competition.h"
+#include "model/continental.h"
 #include "model/inbox.h"
 
 namespace
@@ -135,7 +137,7 @@ void CalendarScene::refresh()
       case MatchType::LEAGUE:
       {
         const auto league = controller.getLeagueById(event.competition_id);
-        entry.detail = league ? league->get().getName()
+        entry.detail = league ? Competitions::leagueName(league->get())
                               : std::string(LOC("CALENDAR_LEAGUE"));
         break;
       }
@@ -148,6 +150,13 @@ void CalendarScene::refresh()
       case MatchType::FRIENDLY:
         entry.detail = LOC("CALENDAR_FRIENDLY");
         break;
+      case MatchType::CONTINENTAL:
+      {
+        const auto* rules = Continental::rules(event.competition_id);
+        entry.detail = LOC(rules != nullptr ? rules->name_key
+                                            : "MATCH_TYPE_CONTINENTAL");
+        break;
+      }
       default:
         entry.detail = LOC("CALENDAR_OTHER_COMPETITION");
         break;

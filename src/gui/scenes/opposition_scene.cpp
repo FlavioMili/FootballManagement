@@ -50,6 +50,19 @@ void note(const std::string& text)
 }
 
 std::string decimal(float value) { return std::format("{:.2f}", value); }
+
+/**
+ * Counter-tactics applied for the coming fixture. Kept for the session, not
+ * per screen instance: coming back to the report must not offer to apply
+ * the same shift a second time.
+ */
+struct AppliedCounters
+{
+  TeamID opponent = 0;
+  GameDateValue date;
+  std::vector<bool> applied;
+};
+AppliedCounters applied_counters;
 }  // namespace
 
 OppositionScene::OppositionScene(GUIView* parent) : ManagementScene(parent) {}
@@ -68,7 +81,12 @@ void OppositionScene::refresh()
   for (const OppositionPlayer& player : report.likely_xi)
     instructions.push_back(
         controller.getOppositionInstruction(fixture->opponent, player.player));
-  applied.assign(report.counters.size(), false);
+  if (applied_counters.opponent != fixture->opponent ||
+      !(applied_counters.date == fixture->date) ||
+      applied_counters.applied.size() != report.counters.size())
+    applied_counters = {fixture->opponent, fixture->date,
+                        std::vector<bool>(report.counters.size(), false)};
+  applied = applied_counters.applied;
 }
 
 void OppositionScene::renderContent()
@@ -187,6 +205,7 @@ void OppositionScene::renderCounters(float width)
           controller.applyCounterTactic(counter))
       {
         applied[index] = true;
+        applied_counters.applied = applied;
         for (std::size_t row = 0; row < report.likely_xi.size(); ++row)
           instructions[row] = controller.getOppositionInstruction(
               fixture->opponent, report.likely_xi[row].player);
@@ -239,7 +258,7 @@ void OppositionScene::renderKeyPlayers(float width)
       Navigation::openPlayer(guiView, key.player.player);
     ImGui::SameLine();
     ImGui::TextColored(palette.faint, "%s",
-                       RoleUtils::toString(key.player.role).c_str());
+                       RoleUtils::shortName(key.player.role));
     note(GuidanceUI::text(key.reason));
     ImGui::PopID();
   }
@@ -289,7 +308,7 @@ void OppositionScene::renderLikelyXi(float width)
         Navigation::openPlayer(guiView, player.player);
       ImGui::SameLine();
       ImGui::TextColored(palette.faint, "%s",
-                         RoleUtils::toString(player.role).c_str());
+                         RoleUtils::shortName(player.role));
       if (UI::cell(mask, 1))
       {
         ImGui::AlignTextToFramePadding();

@@ -381,6 +381,7 @@ class ScoutingSystem
   static constexpr std::size_t ROLE_COUNT =
       static_cast<std::size_t>(PlayerRole::UNKNOWN);
   using ScoutProvider = std::function<std::vector<ScoutProfile>(TeamID)>;
+  using BudgetProvider = std::function<std::int64_t(TeamID)>;
 
   explicit ScoutingSystem(std::shared_ptr<GameData> gamedata);
 
@@ -389,6 +390,13 @@ class ScoutingSystem
    * members in the Scout role are used (see defaultScouts()).
    */
   void setScoutProvider(ScoutProvider provider);
+
+  /**
+   * Replaces the source of the transfer money a club can commit, used to
+   * grade reports as affordable. Without it the board's allowance capped by
+   * the club's spare cash (ClubEconomy::availableTransferBudget) is used.
+   */
+  void setBudgetProvider(BudgetProvider provider);
 
   /**
    * The club's scouts: its Scout staff (judging ability and potential from
@@ -584,6 +592,7 @@ class ScoutingSystem
 
   std::shared_ptr<GameData> gamedata;
   ScoutProvider scout_provider;
+  BudgetProvider budget_provider;
   mutable std::vector<ScoutProfile> scouts; /*!< Cache of the provider. */
   mutable std::unordered_map<TeamID, TeamPrior> priors; /*!< Daily cache. */
   /** Backgrounds of scouts not stored yet (identical once stored). */

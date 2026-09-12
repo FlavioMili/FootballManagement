@@ -116,6 +116,14 @@ std::vector<std::uint32_t> instalmentAmounts(const OfferTerms& terms);
 /** Structure used by AI clubs: big fees are spread over instalments. */
 OfferTerms aiOfferTerms(std::uint32_t fee);
 
+/**
+ * An AI club's bid for a player the seller values at @p asking_fee: the AI
+ * structure (instalments above AI_INSTALMENT_THRESHOLD) with the headline
+ * fee raised until the seller's valuation of the deferred money reaches the
+ * asking fee, so large deals between computer-managed clubs can complete.
+ */
+OfferTerms aiBidFor(std::uint32_t asking_fee, int age);
+
 /** Everything the selling club weighs. */
 struct SaleContext
 {
@@ -323,6 +331,11 @@ GameDateValue loanEndDate(const GameDateValue& start, LoanDuration duration);
 
 /** 30 June closing the season that contains @p date. */
 GameDateValue seasonEndDate(const GameDateValue& date);
+
+/** Last day of a contract with @p contract_years seasons left on @p date
+ * (years are counted down on 1 July). */
+GameDateValue contractEndDate(const GameDateValue& date,
+                              std::uint8_t contract_years);
 
 /** Whole weeks from @p from to @p to (0 if not after). */
 int weeksBetween(const GameDateValue& from, const GameDateValue& to);

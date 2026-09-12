@@ -113,7 +113,7 @@ void PlayerCompareScene::setSlot(std::size_t index, PlayerID id)
   slot.name = p.getName();
   const auto team = controller.getTeamById(p.getTeamId());
   slot.subtitle = std::format(
-      "{}  \xC2\xB7  {}  \xC2\xB7  {}", RoleUtils::toString(p.getRole()),
+      "{}  \xC2\xB7  {}  \xC2\xB7  {}", RoleUtils::shortName(p.getRole()),
       p.getAge(),
       team && p.getTeamId() != FREE_AGENTS_TEAM_ID
           ? team->get().getName()
@@ -210,7 +210,7 @@ void PlayerCompareScene::buildCandidates()
     candidate.label = player->get().getName();
     candidate.lower = PlayerView::toLower(candidate.label);
     candidate.detail = std::format(
-        "{}  \xC2\xB7  {}", RoleUtils::toString(player->get().getRole()),
+        "{}  \xC2\xB7  {}", RoleUtils::shortName(player->get().getRole()),
         team ? team->get().getName() : std::string());
     candidates.push_back(std::move(candidate));
   }
