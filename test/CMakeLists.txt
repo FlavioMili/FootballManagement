@@ -91,6 +91,37 @@ gtest_discover_tests(
     TIMEOUT 400
 )
 
+# Seeded GUI monkey (random user through the real GUIView) and the widget
+# effect sweep. Replay: FM_MONKEY_SEED=<n> FM_MONKEY_STEPS=<n>; exclude with
+# `-LE monkey`.
+add_executable(monkey_tests test_gui_monkey.cpp)
+target_link_libraries(monkey_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET monkey_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  monkey_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "monkey::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "monkey;slow"
+    TIMEOUT 900
+)
+
+# Adversarial user scenarios (double Continue, saves during Continue, empty
+# squads, old saves, corrupt settings, HiDPI). Exclude with `-LE adversarial`.
+add_executable(adversarial_tests test_adversarial.cpp)
+target_link_libraries(adversarial_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET adversarial_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  adversarial_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "adversarial::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "adversarial;slow"
+    TIMEOUT 600
+)
+
 # A deliberately invalid executable verifies that the sanitizer preset really
 # instruments project code. CTest expects its non-zero sanitizer exit.
 if(FM_ENABLE_SANITIZERS)

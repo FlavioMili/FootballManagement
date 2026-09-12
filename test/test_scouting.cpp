@@ -560,3 +560,45 @@ TEST(ScoutingTest, StateSurvivesSaveAndLoad)
   EXPECT_FLOAT_EQ(reloaded->getScoutingKnowledge(foreign[7]),
                   controller->getScoutingKnowledge(foreign[7]));
 }
+
+TEST(ScoutingTest, UnscoutedEstimatesAreRealisticAndRangesAreHonest)
+{
+  const SlotCleanup slot{uniqueSlot(8)};
+  auto controller = makeCareer(slot.slot);
+  const ScoutingSystem& scouting = scoutingOf(*controller);
+  const auto foreign = leaguePlayers(*controller, FOREIGN_LEAGUE);
+  ASSERT_GT(foreign.size(), 100u);
+
+  std::vector<double> errors;
+  size_t inside = 0;
+  for (const PlayerID id : foreign)
+  {
+    const auto row = *scouting.row(id);
+    ASSERT_LT(row.knowledge, ScoutingTuning::RANGE_DISPLAY_KNOWLEDGE);
+    EXPECT_LE(row.overall_low, row.overall);
+    EXPECT_GE(row.overall_high, row.overall);
+    EXPECT_NEAR(0.5f * (row.overall_low + row.overall_high), row.overall,
+                0.5f)
+        << "the estimate is the centre of its range";
+    const double truth = trueOverall(*controller, id);
+    errors.push_back(std::abs(row.overall - truth));
+    if (truth >= row.overall_low - 0.5 && truth <= row.overall_high + 0.5)
+      ++inside;
+    if (row.age >= 30)
+      EXPECT_LE(row.potential_high, std::max(row.overall, row.overall_high) +
+                                        1e-3f)
+          << "veterans have no headroom beyond their current ability";
+    const auto view = *scouting.view(id);
+    EXPECT_FLOAT_EQ(view.overall_low, row.overall_low);
+    EXPECT_FLOAT_EQ(view.overall_high, row.overall_high);
+  }
+  std::ranges::sort(errors);
+  // Barely known players: a few points off is normal, ten is not.
+  const double p90 = errors[errors.size() * 9 / 10];
+  EXPECT_LT(p90, 8.0);
+  EXPECT_GT(p90, 1.0) << "without scouting the estimate is uncertain";
+  // The 80% ranges should contain the truth most of the time.
+  const double coverage =
+      static_cast<double>(inside) / static_cast<double>(foreign.size());
+  EXPECT_GT(coverage, 0.65);
+}

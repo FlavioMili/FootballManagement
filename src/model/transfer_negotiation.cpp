@@ -434,8 +434,8 @@ std::uint32_t agentAsk(const PlayerContext& context,
         static_cast<double>(N::AGENT_STATURE_MARGIN_PER_POINT) *
             (context.current_club_reputation - context.new_club_reputation));
   const int last_round = std::max(1, N::MAX_PLAYER_ROUNDS - 1);
-  const double remaining =
-      1.0 - static_cast<double>(std::min<int>(round, last_round)) / last_round;
+  if (round >= last_round) return demand.weekly_wage;
+  const double remaining = 1.0 - static_cast<double>(round) / last_round;
   const double ask =
       static_cast<double>(demand.weekly_wage) * (1.0 + margin * remaining);
   const double step = N::AGENT_ASK_ROUNDING;

@@ -794,3 +794,41 @@ TEST_F(TransferMarketTest, SellOnPayoutNeverLeavesANegativeBudget)
   EXPECT_GE(seller.getTransferBudget(), 0);
   EXPECT_EQ(seller.getBalance(), seller.ledgerTotal());
 }
+
+TEST_F(TransferMarketTest, OpeningBidAtValueIsCounteredThenAgreed)
+{
+  const TeamID managed = manageFirstClub(*controller);
+  auto gamedata = controller->getGameData();
+  Finances& finances = gamedata->getTeams().at(managed).getFinances();
+  finances.addBalance(500'000'000LL);
+  finances.setTransferBudget(500'000'000LL);
+  const PlayerID target = findWillingTarget(*controller, managed);
+  ASSERT_NE(target, 0u);
+  gamedata->getPlayers().at(target).setContractYears(3);
+
+  TransferNegotiation::OfferTerms terms;
+  terms.fee = controller->getPlayerMarketValue(target);
+  const ClubResponse opening = controller->makeTransferOffer(target, terms);
+  ASSERT_EQ(opening.decision, ClubResponse::Decision::Counter)
+      << "sellers haggle over a bid at market value";
+  EXPECT_GT(opening.counter_fee, terms.fee);
+  EXPECT_FALSE(opening.reasons.empty());
+  EXPECT_FALSE(controller->getContractTalkKind(target).has_value());
+
+  terms.fee = opening.counter_fee;
+  const ClubResponse agreed = controller->makeTransferOffer(target, terms);
+  EXPECT_EQ(agreed.decision, ClubResponse::Decision::Accept);
+  EXPECT_EQ(controller->getContractTalkKind(target), ContractKind::Transfer);
+
+  // The agent opens above the real demand and softens after a refusal.
+  const auto demand =
+      controller->getPlayerDemand(target, ContractKind::Transfer);
+  EXPECT_GT(demand.asking_wage, demand.weekly_wage);
+  TransferNegotiation::ContractOffer lowball =
+      TransferNegotiation::demandedOffer(demand);
+  lowball.weekly_wage = demand.weekly_wage / 2;
+  EXPECT_FALSE(controller->proposeContract(target, lowball).completed);
+  EXPECT_LT(controller->getPlayerDemand(target, ContractKind::Transfer)
+                .asking_wage,
+            demand.asking_wage);
+}

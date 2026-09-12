@@ -349,6 +349,7 @@ void ManagementScene::render()
   }
 
   // Game state is only read once no simulation runs in the background.
+  if (hub != nullptr) hub->refreshIfStale();
   syncClubAccent();
   toast_seconds = std::max(0.0f, toast_seconds - ImGui::GetIO().DeltaTime);
   handleShortcuts();

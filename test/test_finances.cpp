@@ -10,8 +10,12 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <map>
 #include <memory>
 #include <numeric>
+#include <vector>
 
 #include "controller/game_controller.h"
 #include "database/database_connection.h"
@@ -22,7 +26,11 @@
 #include "global/runtime_paths.h"
 #include "model/club_economy.h"
 #include "model/finances.h"
+#include "model/match.h"
+#include "model/match_report.h"
 #include "model/team.h"
+#include "model/world_rng.h"
+#include "model/world_simulation.h"
 
 namespace
 {
@@ -290,4 +298,171 @@ TEST_F(FinanceWorldTest, TransferFeesAreRecordedForBothClubs)
   EXPECT_EQ(buyer.getTransferBudget(), buyer_budget - 1'000'000);
   EXPECT_EQ(buyer.getBalance(), buyer.ledgerTotal());
   EXPECT_EQ(seller.getBalance(), seller.ledgerTotal());
+}
+
+// ---------------------------------------------------------------------------
+// Economy calibration: a season of every league without transfers
+// ---------------------------------------------------------------------------
+
+namespace
+{
+int poissonGoals(WorldRng& rng, double lambda)
+{
+  const double limit = std::exp(-lambda);
+  double product = rng.uniform01();
+  int goals = 0;
+  while (product > limit && goals < 9)
+  {
+    product *= rng.uniform01();
+    ++goals;
+  }
+  return goals;
+}
+
+/** Plays one synthetic double round robin per league (weekly from August)
+ * through the world simulation, with strength-driven scores. */
+void playWorldSeason(GameController& controller, WorldSimulation& world)
+{
+  auto gamedata = controller.getGameData();
+  std::map<LeagueID, std::vector<TeamID>> leagues;
+  for (const auto& [league_id, league] : gamedata->getLeagues())
+  {
+    std::vector<TeamID> teams = league.getTeamIDs();
+    std::ranges::sort(teams);
+    if (teams.size() % 2 == 1) teams.push_back(FREE_AGENTS_TEAM_ID);
+    leagues.emplace(league_id, std::move(teams));
+  }
+  WorldRng scores(7);
+  GameDateValue date = controller.getCurrentDate();
+  int round = -1;
+  for (int day = 0; day < 365; ++day)
+  {
+    date = date + 1;
+    world.onDayAdvanced(date, FREE_AGENTS_TEAM_ID);
+    if (date.month == 7 && date.day == 1)
+    {
+      world.onSeasonEnd(date, FREE_AGENTS_TEAM_ID);
+      world.onSeasonStart(date, FREE_AGENTS_TEAM_ID);
+    }
+    const bool in_season = date.month >= 8 || date.month <= 5;
+    if (!in_season || dayOrdinal(date) % 7 != 5 ||
+        (date.month == 8 && date.day < 8))
+      continue;
+    ++round;
+    for (auto& [league_id, teams] : leagues)
+    {
+      const std::size_t size = teams.size();
+      if (round >= static_cast<int>(2 * (size - 1))) continue;
+      // Circle method: the first club stays, the others rotate.
+      std::vector<TeamID> order(teams.begin(), teams.end());
+      std::rotate(order.begin() + 1,
+                  order.begin() + 1 +
+                      static_cast<std::ptrdiff_t>(
+                          static_cast<std::size_t>(round) % (size - 1)),
+                  order.end());
+      for (std::size_t i = 0; i < size / 2; ++i)
+      {
+        TeamID home = order[i];
+        TeamID away = order[size - 1 - i];
+        if (home == FREE_AGENTS_TEAM_ID || away == FREE_AGENTS_TEAM_ID)
+          continue;
+        if ((round + static_cast<int>(i)) % 2 == 1) std::swap(home, away);
+        const double diff =
+            (world.lineupStrength(home) - world.lineupStrength(away)) / 12.0;
+        const auto home_goals = static_cast<std::uint8_t>(
+            poissonGoals(scores, 1.5 * std::exp(0.5 * diff)));
+        const auto away_goals = static_cast<std::uint8_t>(
+            poissonGoals(scores, 1.15 * std::exp(-0.5 * diff)));
+        Match match(home, away, date, MatchType::LEAGUE, league_id);
+        match.setPlayedResult(home_goals, away_goals);
+        League& league = gamedata->getLeagues().at(league_id);
+        if (home_goals > away_goals)
+          league.addPoints(home, 3);
+        else if (home_goals < away_goals)
+          league.addPoints(away, 3);
+        else
+        {
+          league.addPoints(home, 1);
+          league.addPoints(away, 1);
+        }
+        MatchReport report;
+        world.onMatchPlayed(match, report, FREE_AGENTS_TEAM_ID);
+      }
+    }
+  }
+}
+
+double median(std::vector<double> values)
+{
+  std::ranges::sort(values);
+  return values.empty() ? 0.0 : values[values.size() / 2];
+}
+}  // namespace
+
+// UEFA ECFIL: player wages ~47-60% of revenue, about half of the clubs make
+// a profit, insolvency is rare. Without transfer activity a median club
+// should roughly break even, rich clubs can profit and few clubs run out of
+// cash within a season.
+TEST(EconomyCalibrationTest, MedianClubsBreakEvenInEveryLeague)
+{
+  Logger::init();
+  const int slot = financeSlot() + 1;
+  auto controller = std::make_unique<GameController>();
+  controller->newGame(slot, WORLD_SEED);
+  WorldSimulation world(controller->getGameData());
+  playWorldSeason(*controller, world);
+
+  struct LeagueResult
+  {
+    std::vector<double> revenue;
+    std::vector<double> net_ratio;
+    std::vector<double> wage_ratio;
+    int negative_cash = 0;
+  };
+  std::map<LeagueID, LeagueResult> leagues;
+  for (const auto& team : controller->getTeams())
+  {
+    const Finances& finances = team.get().getFinances();
+    const FinanceSummary season = finances.summarize(GameDateValue(2025, 7, 3),
+                                                     GameDateValue(2026, 7, 2));
+    const auto category = [&](FinanceCategory value)
+    {
+      return static_cast<double>(
+          season.by_category[static_cast<std::size_t>(value)]);
+    };
+    const double revenue = static_cast<double>(season.income) -
+                           category(FinanceCategory::TransferFeeIn) -
+                           category(FinanceCategory::Investment);
+    const double net = static_cast<double>(season.net()) -
+                       category(FinanceCategory::TransferFeeIn) -
+                       category(FinanceCategory::TransferFeeOut) -
+                       category(FinanceCategory::Investment);
+    ASSERT_GT(revenue, 0.0) << team.get().getName();
+    LeagueResult& result = leagues[team.get().getLeagueId()];
+    result.revenue.push_back(revenue);
+    result.net_ratio.push_back(net / revenue);
+    result.wage_ratio.push_back(-category(FinanceCategory::Wages) / revenue);
+    if (finances.getBalance() < 0) ++result.negative_cash;
+  }
+  for (const auto& [league_id, result] : leagues)
+  {
+    const double clubs = static_cast<double>(result.revenue.size());
+    const double median_net = median(result.net_ratio);
+    std::cout << "[economy] league " << static_cast<int>(league_id)
+              << " median revenue " << median(result.revenue) / 1e6
+              << "M median net " << 100.0 * median_net
+              << "% best net "
+              << 100.0 * std::ranges::max(result.net_ratio) << "% worst net "
+              << 100.0 * std::ranges::min(result.net_ratio)
+              << "% median player wages "
+              << 100.0 * median(result.wage_ratio) << "% negative cash "
+              << result.negative_cash << "/" << clubs << "\n";
+    EXPECT_LT(std::abs(median_net), 0.15) << "league " << league_id;
+    EXPECT_GE(median(result.wage_ratio), 0.45) << "league " << league_id;
+    EXPECT_LE(median(result.wage_ratio), 0.65) << "league " << league_id;
+    EXPECT_LT(static_cast<double>(result.negative_cash), 0.10 * clubs)
+        << "league " << league_id;
+  }
+  controller.reset();
+  RuntimePaths::removeSave(slot);
 }

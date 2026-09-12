@@ -67,10 +67,9 @@ class MatchScene : public GUIScene
   };
 
   // What the assistant may decide for the manager; kept for the session.
-  /** Substitutions for the managed side (off: only the manager's). */
+  /** Substitutions for the managed side (off: only the manager's). The
+   * lineup assistant lives in the game (GameController). */
   inline static bool assistant_substitutions = false;
-  /** Replace unavailable players at kick-off instead of blocking it. */
-  inline static bool assistant_fixes_lineup = true;
 
   uint16_t home_team_id;
   uint16_t away_team_id;

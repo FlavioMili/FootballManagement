@@ -100,6 +100,13 @@ void Game::loadGame()
   {
     managed_team_id = FREE_AGENTS_TEAM_ID;
   }
+  // Saves from before the board existed get it (and the day-one news) now.
+  else if (managed_team_id != FREE_AGENTS_TEAM_ID &&
+           world.getBoardState().team_id != managed_team_id)
+  {
+    world.onManagedTeamSelected(currentDate, managed_team_id,
+                                upcomingFixtures(managed_team_id));
+  }
 }
 
 void Game::saveGame()
@@ -171,6 +178,27 @@ void Game::advanceDay()
   }
   competitions.afterMatchday(calendar, currentDate);
   transfers.onDayAdvanced(currentDate, managed_team_id);
+  keepManagedSelectionEligible();
+}
+
+void Game::keepManagedSelectionEligible()
+{
+  if (!assistant_fixes_lineup || managed_team_id == FREE_AGENTS_TEAM_ID)
+    return;
+  // Suspensions depend on the competition of the next managed fixture.
+  const auto& schedule = calendar.getFullCalendar();
+  for (auto day = schedule.lower_bound(currentDate); day != schedule.end();
+       ++day)
+  {
+    for (const Match& match : day->second)
+    {
+      if (match.isPlayed() || (match.getHomeTeamId() != managed_team_id &&
+                               match.getAwayTeamId() != managed_team_id))
+        continue;
+      fixMatchdaySquad(managed_team_id, match.getMatchType());
+      return;
+    }
+  }
 }
 
 void Game::simulateMatches(std::vector<Match>& matches, bool include_managed)
@@ -400,4 +428,30 @@ int Game::getCurrentSeason() const { return current_season; }
 
 uint16_t Game::getManagedTeamId() const { return managed_team_id; }
 
-void Game::setManagedTeamId(uint16_t id) { managed_team_id = id; }
+void Game::setManagedTeamId(uint16_t id)
+{
+  managed_team_id = id;
+  world.onManagedTeamSelected(currentDate, id, upcomingFixtures(id));
+}
+
+std::vector<UpcomingFixture> Game::upcomingFixtures(TeamID team_id) const
+{
+  std::vector<UpcomingFixture> fixtures;
+  const auto& schedule = calendar.getFullCalendar();
+  for (auto day = schedule.lower_bound(currentDate); day != schedule.end();
+       ++day)
+  {
+    for (const Match& match : day->second)
+    {
+      const bool home = match.getHomeTeamId() == team_id;
+      if (match.isPlayed() || (!home && match.getAwayTeamId() != team_id))
+        continue;
+      fixtures.push_back(
+          {day->first,
+           home ? match.getAwayTeamId() : match.getHomeTeamId(), home,
+           match.getMatchType()});
+      if (match.getMatchType() != MatchType::FRIENDLY) return fixtures;
+    }
+  }
+  return fixtures;
+}

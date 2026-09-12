@@ -218,6 +218,10 @@ class GameController
    * the player just leaves the matchday squad). */
   std::vector<std::pair<PlayerID, PlayerID>> previewLineupFix(
       TeamID team_id, MatchType type) const;
+  /** Assistant keeps the managed lineup eligible (each day and at kick-off;
+   * on by default, kept for the session). */
+  void setAssistantFixesLineup(bool enabled);
+  bool getAssistantFixesLineup() const;
 
   // ========== Competitions ==========
   /** Fixture-derived table: points, GD, goals, head-to-head, name, ID. */
@@ -376,6 +380,11 @@ class GameController
   std::vector<PlayerID> findTargetsForRole(PlayerRole role, TeamID buyer_id,
                                            const SquadNeeds& needs) const;
   PlayerRole getRoleCategory(PlayerRole role) const;
+  /**
+   * Transfer money the club can commit today (the "available budget" to
+   * show): min(board allowance, cash - 12 weeks of payroll - instalments
+   * owed this season), never negative, 0 while embargoed.
+   */
   uint32_t transferBudgetForTeam(TeamID team_id) const;
 
   float randomFloat(float min, float max)
@@ -396,6 +405,14 @@ class GameController
   // ========== World: board ==========
   /** Objective, expected/target position, confidence (0-100), dismissal. */
   const BoardState& getBoardState() const;
+
+  /**
+   * True while the board freezes the managed club's transfers because its
+   * cash stayed negative (after a warning): no signings, loans or free
+   * agents until the balance is positive again; transferBudgetForTeam()
+   * is then 0.
+   */
+  bool isTransferEmbargoed() const;
 
   // ========== World: finances ==========
   /** Dated transactions of a club, oldest first (empty if unknown). */

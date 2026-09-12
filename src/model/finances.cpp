@@ -136,6 +136,17 @@ std::int64_t Finances::ledgerTotal() const
   return total;
 }
 
+std::int64_t Finances::balanceAt(const GameDateValue& date) const
+{
+  // Linear scan: the ledger is not strictly date-ordered (see summarize()).
+  std::int64_t total = 0;
+  for (const FinanceTransaction& transaction : ledger)
+  {
+    if (!(date < transaction.date)) total += transaction.amount;
+  }
+  return total;
+}
+
 FinanceSummary Finances::summarize(const GameDateValue& from,
                                    const GameDateValue& to) const
 {

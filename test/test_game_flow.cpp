@@ -960,7 +960,7 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
       .at(injuredStarter)
       .mutableDynamics()
       .injury_days = 5;
-  MatchScene::assistant_fixes_lineup = false;
+  controller->setAssistantFixesLineup(false);
   view.overlayScene(std::make_unique<MatchScene>(
       &view, managedFixture->getHomeTeamId(), managedFixture->getAwayTeamId()));
   step_frame();
@@ -973,7 +973,7 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
   view.popScene();
   step_frame();
   // With the assistant in charge the match starts with a fixed lineup.
-  MatchScene::assistant_fixes_lineup = true;
+  controller->setAssistantFixesLineup(true);
   view.overlayScene(std::make_unique<MatchScene>(
       &view, managedFixture->getHomeTeamId(), managedFixture->getAwayTeamId()));
   step_frame();
@@ -1136,7 +1136,7 @@ TEST_F(GameFlowTest, ManagedMatchIntegration)
 
   // When the manager decides, an injured starter blocks kick-off; the
   // check suggests the assistant's replacement.
-  MatchScene::assistant_fixes_lineup = false;
+  controller->setAssistantFixesLineup(false);
   {
     MatchScene blocked(&view, fixture->getHomeTeamId(),
                        fixture->getAwayTeamId());
@@ -1149,7 +1149,7 @@ TEST_F(GameFlowTest, ManagedMatchIntegration)
     EXPECT_FALSE(problem->replacement.empty());
   }
   // By default the assistant replaces him and the match starts.
-  MatchScene::assistant_fixes_lineup = true;
+  controller->setAssistantFixesLineup(true);
   auto sceneOwner = std::make_unique<MatchScene>(
       &view, fixture->getHomeTeamId(), fixture->getAwayTeamId());
   MatchScene* scene = sceneOwner.get();
@@ -1267,6 +1267,8 @@ TEST_F(GameFlowTest, MissedManagedFixtureFieldsOnlyEligiblePlayers)
 {
   const TeamID managedId = controller->getTeams().front().get().getId();
   controller->selectManagedTeam(managedId);
+  // The manager keeps his own selection between matches.
+  controller->setAssistantFixesLineup(false);
   const auto fixture = nextFixtureOf(*controller, managedId);
   ASSERT_TRUE(fixture.has_value());
   const Lineup& lineup = controller->getManagedTeam()->get().getLineup();
@@ -1318,4 +1320,20 @@ TEST_F(GameFlowTest, WatchedMatchSeedIsDeterministic)
             second.engine->getBall().position.y);
 
   if (savedSeed) setenv("FM_MATCH_SEED", savedSeed->c_str(), 1);
+}
+
+TEST_F(GameFlowTest, AssistantKeepsSelectionEligibleBetweenMatches)
+{
+  const TeamID managedId = controller->getTeams().front().get().getId();
+  controller->selectManagedTeam(managedId);
+  ASSERT_TRUE(controller->getAssistantFixesLineup());
+  const Lineup& lineup = controller->getManagedTeam()->get().getLineup();
+  const PlayerID injuredId =
+      lineup.getOutfieldPlayers().front().player->getId();
+  worldPlayer(*controller, injuredId).mutableDynamics().injury_days = 20;
+
+  // The next day the assistant has replaced him in the saved lineup.
+  controller->advanceDay();
+  EXPECT_TRUE(controller->getUnavailableLineupPlayers(managedId).empty());
+  EXPECT_NE(lineup.getOutfieldPlayers().front().player->getId(), injuredId);
 }

@@ -234,9 +234,11 @@ struct TransferTuning final
     static constexpr double AI_MAX_VALUE_MULTIPLE = 1.6;
     /** Chance per evaluated club that an AI club approaches one of the
      * managed club's players. [P] */
-    static constexpr float MANAGED_APPROACH_CHANCE = 0.04f;
-    /** Transfer news kept for the feed. */
+    static constexpr float MANAGED_APPROACH_CHANCE = 0.015f;
+    /** Transfer news kept for the feed, posted every NEWS_DIGEST_DAYS
+     * while a window is open (and when it closes). [P] */
     static constexpr std::size_t NEWS_DIGEST_LIMIT = 5;
+    static constexpr int NEWS_DIGEST_DAYS = 14;
   };
 
   /** How well a target fits the managed squad (recruitment screens). [P] */

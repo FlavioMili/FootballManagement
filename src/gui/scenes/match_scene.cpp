@@ -420,7 +420,8 @@ void MatchScene::onEnter()
     camera_mode = lastCameraMode;
 
     refreshLineupProblems();
-    if (!lineup_problems.empty() && assistant_fixes_lineup) applyLineupFix();
+    if (!lineup_problems.empty() && controller.getAssistantFixesLineup())
+      applyLineupFix();
     if (lineup_problems.empty()) startMatch();
   }
   scene_entry_milliseconds = std::chrono::duration<float, std::milli>(
@@ -913,7 +914,9 @@ void MatchScene::renderLineupGate()
   ImGui::SameLine();
   if (ImGui::Button(LOC("NAV_BACK"))) guiView->popScene();
   ImGui::Dummy(ImVec2(0.0f, scaled(Theme::Space::XS)));
-  ImGui::Checkbox(LOC("MATCH_ASSISTANT_LINEUP"), &assistant_fixes_lineup);
+  if (bool fixes = guiView->getController().getAssistantFixesLineup();
+      ImGui::Checkbox(LOC("MATCH_ASSISTANT_LINEUP"), &fixes))
+    guiView->getController().setAssistantFixesLineup(fixes);
   UI::endCard();
   ImGui::EndChild();
 }
@@ -1212,7 +1215,9 @@ void MatchScene::renderControls()
       applySubstitutionPolicy();
     if (ImGui::IsItemHovered())
       ImGui::SetTooltip("%s", LOC("MATCH_ASSISTANT_SUBS_HINT"));
-    ImGui::Checkbox(LOC("MATCH_ASSISTANT_LINEUP"), &assistant_fixes_lineup);
+    if (bool fixes = guiView->getController().getAssistantFixesLineup();
+        ImGui::Checkbox(LOC("MATCH_ASSISTANT_LINEUP"), &fixes))
+      guiView->getController().setAssistantFixesLineup(fixes);
     if (ImGui::IsItemHovered())
       ImGui::SetTooltip("%s", LOC("MATCH_ASSISTANT_LINEUP_HINT"));
     ImGui::EndPopup();

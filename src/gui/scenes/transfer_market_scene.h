@@ -22,12 +22,15 @@
 #include "model/transfer_negotiation.h"
 
 struct ScoutedPlayerRow;
+struct ScoutSearchFilter;
 
 /**
  * @class TransferMarketScene
  * @brief Transfer market inside the management shell.
  *
- * Tabs: Search (scouted estimates with filters), Shortlist, Offers & talks
+ * Tabs: Recommended (affordable players who fit a squad need), Search
+ * (scouted estimates with filters, affordable players by default), Shortlist,
+ * Offers & talks
  * (incoming offers, open negotiations, pre-contracts), Loans, My squad
  * (list, loan-list, release) and History. Dialogs: structured transfer
  * offer, personal terms, loan offer, counter-offer, asking price and
@@ -77,9 +80,16 @@ class TransferMarketScene : public ManagementScene
     std::string role;
     PlayerRole role_id = PlayerRole::UNKNOWN;
     int age = 0;
-    float overall = 0.0f;
+    float overall = 0.0f; /**< Centre of the estimated range. */
+    float overall_low = 0.0f;
+    float overall_high = 0.0f;
+    bool ranged = false; /**< Too little knowledge for a point value. */
+    std::string overall_text;
     std::string potential_text;
     int knowledge = 0;
+    TransferNegotiation::SquadFit fit;
+    std::string fit_text;
+    bool affordable = false; /**< Fee and expected wage within means. */
     int64_t value = 0;
     std::string value_text;
     uint32_t wage = 0;
@@ -153,6 +163,7 @@ class TransferMarketScene : public ManagementScene
     std::string to;
     const char* kind_key = "";
     std::string fee_text;
+    bool severance = false; /**< Release: wages paid off, not a fee. */
     bool managed = false;
   };
 
@@ -190,7 +201,8 @@ class TransferMarketScene : public ManagementScene
     int min_age = TransferMarketSceneTuning::Filters::MINIMUM_AGE;
     int max_age = TransferMarketSceneTuning::Filters::DEFAULT_MAXIMUM_AGE;
     int min_overall = 0;
-    int64_t max_value = 0; /**< 0 = no limit. */
+    int max_value_index = 0; /**< 0 = no limit, else MAX_VALUE_STEPS. */
+    bool affordable_only = true;
     Availability availability = Availability::ANY;
     ContractFilter contract = ContractFilter::ANY;
   };
@@ -202,6 +214,8 @@ class TransferMarketScene : public ManagementScene
     std::string player;
     std::string club;
     int64_t value = 0;
+    std::string estimate_text; /**< Estimated ability ("64-72"). */
+    int knowledge = 0;
     TransferNegotiation::OfferTerms terms;
     std::optional<TransferNegotiation::ClubResponse> response;
   };
@@ -257,8 +271,18 @@ class TransferMarketScene : public ManagementScene
 
   void refreshData();
   void openPendingDeal();
+  void refreshNeeds();
   void refreshTargets();
+  void refreshRecommended();
   void refreshTargetFlags();
+  /** Re-derives cached rows after an action (drops players who left). */
+  void rederiveRows(std::vector<TargetRow>& rows) const;
+  /** Highest estimated value the budget can reach (0 = nothing). */
+  int64_t affordableValueCap() const;
+  /** Scouted rows for @p search: capped to the budget when affordable,
+   * plus every free agent (no fee) the filters allow. */
+  std::vector<TargetRow> searchRows(ScoutSearchFilter search,
+                                    bool affordable) const;
   void refreshShortlist();
   void refreshSquad();
   void refreshOffers();
@@ -271,6 +295,7 @@ class TransferMarketScene : public ManagementScene
 
   void renderSummary();
   void renderSearchTab();
+  void renderRecommendedTab();
   void renderFilters();
   void renderTargetTable(const char* id, const std::vector<TargetRow>& rows,
                          std::vector<size_t>& visible, SortState& sort);
@@ -299,8 +324,12 @@ class TransferMarketScene : public ManagementScene
   std::vector<LeagueID> league_ids;
   std::vector<std::string> league_names;
 
+  TransferNegotiation::SquadNeeds needs;
+  std::string needs_text;
   std::vector<TargetRow> targets;
   std::vector<size_t> visible_targets;
+  std::vector<TargetRow> recommended;
+  std::vector<size_t> visible_recommended;
   std::vector<TargetRow> shortlist;
   std::vector<size_t> visible_shortlist;
   std::vector<SquadRow> squad;
@@ -313,8 +342,10 @@ class TransferMarketScene : public ManagementScene
 
   SortState search_sort;
   SortState shortlist_sort;
+  SortState recommended_sort;
 
   int64_t available_budget = 0;
+  bool embargo = false; /**< Board has frozen transfer spending. */
   int64_t wage_room = 0;
   TransferNegotiation::WindowInfo window;
   int loans_in = 0;

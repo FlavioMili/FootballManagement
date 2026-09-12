@@ -45,7 +45,10 @@ void SettingsManager::load()
     const auto resolution =
         j.value("resolution", std::vector<int>{settings_.resolution_width,
                                                settings_.resolution_height});
-    if (resolution.size() == 2 && resolution[0] >= 640 && resolution[1] >= 480)
+    constexpr int MAX_RESOLUTION = 16384;
+    if (resolution.size() == 2 && resolution[0] >= 640 &&
+        resolution[1] >= 480 && resolution[0] <= MAX_RESOLUTION &&
+        resolution[1] <= MAX_RESOLUTION)
     {
       settings_.resolution_width = resolution[0];
       settings_.resolution_height = resolution[1];

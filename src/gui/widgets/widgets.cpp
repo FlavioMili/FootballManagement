@@ -540,7 +540,11 @@ bool beginDataTable(const char* id, int columns, ImGuiTableFlags flags,
 
 void staticHeadersRow()
 {
-  ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+  // A regular row (not ImGuiTableRowFlags_Headers) so the labels count
+  // towards auto-fit column widths and never get cut.
+  ImGui::TableNextRow();
+  ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0,
+                         ImGui::GetColorU32(ImGuiCol_TableHeaderBg));
   const int columns = ImGui::TableGetColumnCount();
   for (int column = 0; column < columns; ++column)
   {

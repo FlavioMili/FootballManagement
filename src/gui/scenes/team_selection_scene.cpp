@@ -229,7 +229,11 @@ void TeamSelectionScene::renderClubTable(float height)
       ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
       ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
       ImGuiTableFlags_SizingFixedFit;
-  if (UI::beginDataTable("TeamsTable", 7, flags, 720.0f, ImVec2(0.0f, 0.0f), 1))
+  // Narrow tables drop stadium and balance (both are on the club card).
+  const bool compact =
+      ImGui::GetContentRegionAvail().x < 900.0f * Theme::scale();
+  if (UI::beginDataTable("TeamsTable", compact ? 5 : 7, flags,
+                         compact ? 600.0f : 900.0f, ImVec2(0.0f, 0.0f), 1))
   {
     ImGui::TableSetupColumn(LOC("MAIN_GAME_TEAM"),
                             ImGuiTableColumnFlags_WidthStretch, 0.0f,
@@ -249,11 +253,12 @@ void TeamSelectionScene::renderClubTable(float height)
                ImGuiTableColumnFlags_PreferSortDescending,
            ImGui::GetTextLineHeight() * 5.0f / Theme::scale() + 14.0f,
            ClubColumn::REPUTATION);
-    column(LOC("TEAM_SELECTION_STADIUM"),
-           ImGuiTableColumnFlags_PreferSortDescending, 70.0f,
-           ClubColumn::STADIUM);
-    column(LOC("ROSTER_SUMMARY_AVG_OVR"),
-           ImGuiTableColumnFlags_PreferSortDescending, 60.0f,
+    if (!compact)
+      column(LOC("TEAM_SELECTION_STADIUM"),
+             ImGuiTableColumnFlags_PreferSortDescending, 70.0f,
+             ClubColumn::STADIUM);
+    column(LOC("TEAM_SELECTION_AVERAGE_SHORT"),
+           ImGuiTableColumnFlags_PreferSortDescending, 50.0f,
            ClubColumn::AVERAGE);
     float objectiveWidth = 0.0f;
     for (const ClubSummary& club : club_summaries)
@@ -262,9 +267,10 @@ void TeamSelectionScene::renderClubTable(float height)
     column(LOC("TEAM_SELECTION_EXPECTATION"), 0,
            objectiveWidth / Theme::scale(), ClubColumn::EXPECTATION);
     column(LOC("TEAM_SELECTION_DIFFICULTY"), 0, 90.0f, ClubColumn::DIFFICULTY);
-    column(LOC("TEAM_SELECTION_BALANCE"),
-           ImGuiTableColumnFlags_PreferSortDescending, 70.0f,
-           ClubColumn::BALANCE);
+    if (!compact)
+      column(LOC("TEAM_SELECTION_BALANCE"),
+             ImGuiTableColumnFlags_PreferSortDescending, 70.0f,
+             ClubColumn::BALANCE);
     ImGui::TableHeadersRow();
     if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs();
         specs != nullptr && specs->SpecsCount > 0)
@@ -287,25 +293,28 @@ void TeamSelectionScene::renderClubTable(float height)
                           ImGui::GetTextLineHeight() + 8.0f * Theme::scale());
       ImGui::TableNextColumn();
       ImGui::PushID(static_cast<int>(club.id));
+      // Colour swatch drawn in front of a real, named selectable so the row
+      // is findable by label (automation, screen readers of the item tree).
       const float rowStart = ImGui::GetCursorPosX();
-      if (ImGui::Selectable("##club", selected_team_id == club.id,
+      clubColours(club.shirt, club.trim);
+      ImGui::SameLine();
+      ImGui::SetCursorPosX(std::max(ImGui::GetCursorPosX(), rowStart));
+      if (ImGui::Selectable(club.name.c_str(), selected_team_id == club.id,
                             ImGuiSelectableFlags_SpanAllColumns |
-                                ImGuiSelectableFlags_AllowDoubleClick |
-                                ImGuiSelectableFlags_AllowOverlap))
+                                ImGuiSelectableFlags_AllowDoubleClick))
       {
         selected_team_id = club.id;
         if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
           startCareer(club.id);
       }
-      ImGui::SameLine(rowStart);
-      clubColours(club.shirt, club.trim);
-      ImGui::SameLine();
-      UI::textFitted(club.name, ImGui::GetContentRegionAvail().x, palette.text);
       ImGui::PopID();
       ImGui::TableNextColumn();
       reputationStars(club.reputation);
-      ImGui::TableNextColumn();
-      UI::textRight(club.stadium_text.c_str());
+      if (!compact)
+      {
+        ImGui::TableNextColumn();
+        UI::textRight(club.stadium_text.c_str());
+      }
       ImGui::TableNextColumn();
       UI::ratingChip(club.average_overall);
       ImGui::TableNextColumn();
@@ -314,9 +323,12 @@ void TeamSelectionScene::renderClubTable(float height)
       ImGui::TextColored(
           difficultyColor(club.difficulty), "%s",
           LOC(DIFFICULTY_KEYS[static_cast<size_t>(club.difficulty)]));
-      ImGui::TableNextColumn();
-      UI::textRightColored(club.balance < 0 ? palette.negative : palette.text,
-                           club.balance_text.c_str());
+      if (!compact)
+      {
+        ImGui::TableNextColumn();
+        UI::textRightColored(club.balance < 0 ? palette.negative : palette.text,
+                             club.balance_text.c_str());
+      }
     }
     ImGui::EndTable();
   }

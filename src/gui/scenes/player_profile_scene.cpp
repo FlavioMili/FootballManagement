@@ -53,11 +53,23 @@ std::string nationalityName(Language nationality)
   return key == localized ? name->second : std::string(localized);
 }
 
-ImVec4 fitnessColor(float value)
+/// Condition: fresh is good, anything clearly below needs attention.
+ImVec4 conditionColor(float value)
 {
   const Theme::Palette& palette = Theme::palette();
   if (value >= 85.0f) return palette.positive;
   if (value >= 65.0f) return palette.warning;
+  return palette.negative;
+}
+
+/// Sharpness and morale start at an ordinary 60: values around it stay
+/// neutral and only a meaningful deviation is coloured.
+ImVec4 levelColor(float value)
+{
+  const Theme::Palette& palette = Theme::palette();
+  if (value >= 75.0f) return palette.positive;
+  if (value >= 45.0f) return palette.info;
+  if (value >= 30.0f) return palette.warning;
   return palette.negative;
 }
 
@@ -650,16 +662,19 @@ void PlayerProfileScene::renderStatus(float width, float height)
   if (!scouted)
   {
     const float labelWidth = keyWidthFor(ATTRIBUTE_LABEL_WIDTH);
-    const auto percentMeter = [labelWidth](const char* label, float value)
+    const auto percentMeter =
+        [labelWidth](const char* label, float value, const ImVec4& color)
     {
       const std::string text =
           std::format("{:.0f}%", static_cast<double>(value));
-      UI::meter(label, value / 100.0f, labelWidth, fitnessColor(value),
-                text.c_str());
+      UI::meter(label, value / 100.0f, labelWidth, color, text.c_str());
     };
-    percentMeter(LOC("PROFILE_CONDITION"), dynamics.condition);
-    percentMeter(LOC("PROFILE_SHARPNESS"), dynamics.sharpness);
-    percentMeter(LOC("PROFILE_MORALE"), dynamics.morale);
+    percentMeter(LOC("PROFILE_CONDITION"), dynamics.condition,
+                 conditionColor(dynamics.condition));
+    percentMeter(LOC("PROFILE_SHARPNESS"), dynamics.sharpness,
+                 levelColor(dynamics.sharpness));
+    percentMeter(LOC("PROFILE_MORALE"), dynamics.morale,
+                 levelColor(dynamics.morale));
     ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
   }
 
@@ -952,14 +967,20 @@ void PlayerProfileScene::renderDialogs()
                               ImGuiWindowFlags_AlwaysAutoResize))
     return;
   const auto demand = controller.getContractDemand(player_id, false);
-  ImGui::TextColored(palette.muted, "%s",
-                     fmt::sprintf(LOC("TRANSFER_PLAYER_DEMANDS"),
-                                  demand.weekly_wage, demand.years)
-                         .c_str());
+  ImGui::TextColored(
+      palette.muted, "%s",
+      fmt::sprintf(Format::plural("PROFILE_RENEW_DEMAND", demand.years),
+                   Format::moneyFull(demand.weekly_wage).c_str(), demand.years)
+          .c_str());
   ImGui::SetNextItemWidth(240.0f * Theme::scale());
   ImGui::InputFloat(LOC("TRANSFER_OFFER_WAGE"), &renew_wage, 100.0f, 1000.0f,
                     "%.0f");
   renew_wage = std::max(0.0f, renew_wage);
+  ImGui::TextColored(
+      palette.muted, "%s",
+      fmt::sprintf(LOC("PROFILE_WAGE_VALUE"),
+                   Format::moneyFull(static_cast<int64_t>(renew_wage)).c_str())
+          .c_str());
   ImGui::SetNextItemWidth(240.0f * Theme::scale());
   ImGui::SliderInt(LOC("TRANSFER_OFFER_YEARS"), &renew_years,
                    TransferTuning::Contract::MINIMUM_YEARS,

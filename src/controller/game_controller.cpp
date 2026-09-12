@@ -167,6 +167,17 @@ void GameController::selectManagedTeam(uint16_t team_id)
   {
     game->setManagedTeamId(team_id);
     game->getWorld().getScouting().setManagedTeam(team_id);
+    // The market was seeded before the club had a manager: whether its
+    // players are transfer- or loan-listed is now the manager's call.
+    TransferMarket& market = game->getTransfers();
+    std::vector<PlayerID> squad;
+    for (const auto& player : gamedata->getPlayersForTeam(team_id))
+      squad.push_back(player.get().getId());
+    for (const PlayerID player_id : squad)
+    {
+      market.setLoanListed(player_id, false);
+      removePlayerFromTransfer(player_id);
+    }
   }
 }
 
@@ -356,6 +367,16 @@ std::vector<PlayerID> GameController::getIneligibleSelections(
 size_t GameController::autoFixLineup(TeamID team_id, MatchType type)
 {
   return game ? game->fixMatchdaySquad(team_id, type) : 0;
+}
+
+void GameController::setAssistantFixesLineup(bool enabled)
+{
+  if (game) game->setAssistantFixesLineup(enabled);
+}
+
+bool GameController::getAssistantFixesLineup() const
+{
+  return !game || game->getAssistantFixesLineup();
 }
 
 std::vector<std::pair<PlayerID, PlayerID>> GameController::previewLineupFix(
@@ -1482,18 +1503,20 @@ uint32_t GameController::transferBudgetForTeam(TeamID team_id) const
   if (!team_opt.has_value()) return 0;
 
   const Finances& finances = team_opt->get().getFinances();
-  const int64_t balance = finances.getBalance();
-  if (balance <= 0) return 0;
+  if (finances.getBalance() <= 0 ||
+      (game && game->getWorld().isTransferEmbargoed(team_id)))
+    return 0;
 
-  // The board's allowance, never more than the cash in the bank, less the
-  // instalments still due this season.
+  // The board's allowance, never more than the cash left after a payroll
+  // reserve and the instalments still due this season.
   const int64_t committed = game ? game->getTransfers().committedPayables(
                                        team_id, game->getCurrentDate())
                                  : 0;
-  const int64_t budget =
-      std::min(finances.getTransferBudget(), balance) - committed;
-  return static_cast<uint32_t>(std::clamp<int64_t>(
-      budget, 0, std::numeric_limits<uint32_t>::max()));
+  const int64_t budget = ClubEconomy::availableTransferBudget(
+      finances.getTransferBudget(), finances.getBalance(),
+      getWeeklyWageBill(team_id), committed);
+  return static_cast<uint32_t>(
+      std::min<int64_t>(budget, std::numeric_limits<uint32_t>::max()));
 }
 
 void GameController::evaluateIncomingAIBids()
@@ -1588,7 +1611,9 @@ bool GameController::canPayDeal(const TransferMarket::Deal& deal) const
 {
   const auto buyer = gamedata->getTeam(deal.buyer_id);
   const auto player = gamedata->getPlayer(deal.player_id);
-  if (!buyer || !player) return false;
+  if (!buyer || !player ||
+      (game && game->getWorld().isTransferEmbargoed(deal.buyer_id)))
+    return false;
   const Finances& finances = buyer->get().getFinances();
   const auto upfront =
       static_cast<int64_t>(TransferNegotiation::upfrontAmount(deal.terms));
@@ -1687,6 +1712,11 @@ TransferNegotiation::ClubResponse GameController::makeTransferOffer(
   if (!isTransferWindowOpen())
   {
     refusal.reasons.push_back(Reason::WindowClosed);
+    return refusal;
+  }
+  if (game->getWorld().isTransferEmbargoed(managed))
+  {
+    refusal.reasons.push_back(Reason::Embargo);
     return refusal;
   }
   if (!player || player->get().getTeamId() == managed ||
@@ -1864,6 +1894,11 @@ TransferNegotiation::ClubResponse GameController::makeLoanOffer(
     return response;
   }
   const TeamID managed = game->getManagedTeamId();
+  if (game->getWorld().isTransferEmbargoed(managed))
+  {
+    response.reasons.push_back(Reason::Embargo);
+    return response;
+  }
   const auto player = gamedata->getPlayer(player_id);
   TransferMarket& market = game->getTransfers();
   if (!player || player->get().getTeamId() == managed ||
@@ -2103,6 +2138,11 @@ void GameController::markAllInboxMessagesRead()
 size_t GameController::getUnreadInboxCount() const
 {
   return game ? game->getWorld().getInbox().unreadCount() : 0;
+}
+
+bool GameController::isTransferEmbargoed() const
+{
+  return game && game->getWorld().isTransferEmbargoed(game->getManagedTeamId());
 }
 
 const BoardState& GameController::getBoardState() const

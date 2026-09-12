@@ -28,7 +28,6 @@
 namespace
 {
 constexpr float TWO_COLUMN_MIN_WIDTH = 860.0f;
-constexpr float SCORE_HEIGHT = 118.0f;
 constexpr float MARKER_SIZE = 10.0f;
 
 std::string playerName(const GameData* data, PlayerID id)
@@ -191,7 +190,17 @@ void MatchReportScene::renderContent()
       twoColumns ? std::floor((available - gap) * 0.5f) : available;
   const float height =
       std::max(ImGui::GetContentRegionAvail().y, 480.0f * Theme::scale());
-  const float topHeight = std::floor(height * 0.46f);
+  // Simulated matches carry no timeline or team stats: keep those cards
+  // short instead of leaving half the screen empty.
+  const bool sparse =
+      events.empty() && report->home_stats.shots + report->away_stats.shots +
+                                report->home_stats.passes_attempted ==
+                            0;
+  const float topHeight =
+      sparse ? ImGui::GetTextLineHeightWithSpacing() * 2.0f +
+                   2.0f * Theme::Space::M * Theme::scale() +
+                   Theme::textSize(Theme::Text::CAPTION) * Theme::scale()
+             : std::floor(height * 0.46f);
   const float bottomHeight =
       height - topHeight - ImGui::GetStyle().ItemSpacing.y;
   renderEvents(half, topHeight);
@@ -206,8 +215,7 @@ void MatchReportScene::renderContent()
 void MatchReportScene::renderScore()
 {
   const Theme::Palette& palette = Theme::palette();
-  UI::beginCard("report_score", nullptr,
-                ImVec2(0.0f, SCORE_HEIGHT * Theme::scale()));
+  UI::beginAutoHeightCard("report_score", nullptr);
   UI::badge(LOC(CompetitionView::matchTypeKey(report->match_type)),
             palette.info);
   if (report->match_type == MatchType::CUP && report->stage > 0)
@@ -282,7 +290,14 @@ void MatchReportScene::renderEvents(float width, float height)
     {
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
-      if (event.home) UI::textRight(event.text.c_str());
+      if (event.home)
+      {
+        const float cell = ImGui::GetContentRegionAvail().x;
+        const float textWidth = ImGui::CalcTextSize(event.text.c_str()).x;
+        if (textWidth < cell)
+          ImGui::SetCursorPosX(ImGui::GetCursorPosX() + cell - textWidth);
+        UI::textFitted(event.text, cell, palette.text);
+      }
       ImGui::TableNextColumn();
       const float cellWidth = ImGui::GetContentRegionAvail().x;
       const float minuteWidth = ImGui::CalcTextSize(event.minute.c_str()).x;
@@ -294,7 +309,9 @@ void MatchReportScene::renderEvents(float width, float height)
       ImGui::SameLine();
       eventMarker(event.kind);
       ImGui::TableNextColumn();
-      if (!event.home) ImGui::TextUnformatted(event.text.c_str());
+      if (!event.home)
+        UI::textFitted(event.text, ImGui::GetContentRegionAvail().x,
+                       palette.text);
     }
     ImGui::EndTable();
   }

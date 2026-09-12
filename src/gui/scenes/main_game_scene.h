@@ -88,6 +88,12 @@ class MainGameScene : public ManagementScene
   /** @brief Opacity of the dimming that fades out after Continue ends. */
   [[nodiscard]] float continueFadeOut() const;
 
+  /**
+   * @brief Rebuilds the cached career data when the date moved on or the
+   * cached next fixture has been played elsewhere (e.g. a quick result).
+   */
+  void refreshIfStale();
+
   /** @brief Switches the page shown by the hub. */
   void showPage(Page page) { active_page = page; }
 

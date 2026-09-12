@@ -435,6 +435,12 @@ void printLeagueFinances(const GameController& controller)
     double income = 0.0;
     double wages = 0.0;
     double net = 0.0;
+    double transfers = 0.0;
+    std::vector<double> net_ratios;
+    double first_month_wages = 0.0;
+    double last_month_wages = 0.0;
+    std::size_t squad_players = 0;
+    int negative_cash = 0;
     int clubs = 0;
   };
   std::map<LeagueID, LeagueTotals> leagues;
@@ -450,19 +456,43 @@ void printLeagueFinances(const GameController& controller)
     LeagueTotals& totals = leagues[team.get().getLeagueId()];
     const double transfers = category(FinanceCategory::TransferFeeIn) +
                              category(FinanceCategory::TransferFeeOut);
-    totals.income += static_cast<double>(season.income) -
-                     category(FinanceCategory::TransferFeeIn);
+    const double income = static_cast<double>(season.income) -
+                          category(FinanceCategory::TransferFeeIn);
+    const double net = static_cast<double>(season.net()) - transfers;
+    totals.income += income;
     totals.wages -= category(FinanceCategory::Wages);
-    totals.net += static_cast<double>(season.net()) - transfers;
+    totals.net += net;
+    totals.transfers += transfers;
+    totals.net_ratios.push_back(income > 0.0 ? net / income : 0.0);
+    const auto monthWages = [&](const GameDateValue& from,
+                                const GameDateValue& to)
+    {
+      return -static_cast<double>(
+          team.get().getFinances().summarize(from, to).by_category
+              [static_cast<std::size_t>(FinanceCategory::Wages)]);
+    };
+    totals.first_month_wages +=
+        monthWages(GameDateValue(2025, 7, 3), GameDateValue(2025, 8, 2));
+    totals.last_month_wages +=
+        monthWages(GameDateValue(2026, 6, 1), GameDateValue(2026, 6, 30));
+    totals.squad_players += team.get().getPlayerIDs().size();
+    if (team.get().getFinances().getBalance() < 0) ++totals.negative_cash;
     ++totals.clubs;
   }
-  for (const auto& [league_id, totals] : leagues)
+  for (auto& [league_id, totals] : leagues)
   {
+    std::ranges::sort(totals.net_ratios);
     std::cout << "[world-calibration] league " << static_cast<int>(league_id)
               << " revenue/club=" << totals.income / totals.clubs / 1e6
               << "M wages/revenue=" << totals.wages / totals.income
               << " operating net/club=" << totals.net / totals.clubs / 1e6
-              << "M\n";
+              << "M median net=" << totals.net_ratios[totals.net_ratios.size() / 2]
+              << " transfers/club=" << totals.transfers / totals.clubs / 1e6
+              << "M negative cash=" << totals.negative_cash << "/"
+              << totals.clubs << " payroll growth="
+              << totals.last_month_wages /
+                     std::max(1.0, totals.first_month_wages)
+              << " squad=" << totals.squad_players / totals.clubs << "\n";
   }
 }
 
@@ -641,6 +671,122 @@ TEST(WorldSimulationTest, AYearOfDevelopmentInjuriesYouthFinanceAndNews)
         InboxCategory::Youth, InboxCategory::Injury})
     EXPECT_TRUE(categories.contains(expected)) << inboxCategoryKey(expected);
   EXPECT_EQ(world.getBoardState().team_id, managed);
+}
+
+TEST(WorldSimulationTest, TakingChargeFillsTheDayOneInbox)
+{
+  const SlotCleanup slot{uniqueSlot(3)};
+  auto controller = makeWorld(slot.slot);
+  const TeamID managed = controller->getTeams().front().get().getId();
+  controller->selectManagedTeam(managed);
+
+  // Objective and budgets are known before the first day is played.
+  const BoardState board = controller->getBoardState();
+  EXPECT_EQ(board.team_id, managed);
+  EXPECT_GT(board.expected_position, 0);
+  EXPECT_GT(board.target_position, 0);
+
+  std::set<std::string> titles;
+  for (const InboxMessage& message : controller->getInbox())
+  {
+    titles.insert(message.title_key);
+    std::cout << "TMPDUMP " << message.formatTitle() << "\n" << message.formatBody() << "\n";
+    EXPECT_FALSE(message.read);
+    EXPECT_EQ(message.formatBody().find('{'), std::string::npos)
+        << message.body_key;
+    EXPECT_EQ(message.formatBody().find("#0"), std::string::npos);
+  }
+  for (const char* expected :
+       {"INBOX_BOARD_WELCOME_TITLE", "INBOX_SQUAD_REPORT_TITLE",
+        "INBOX_PRESEASON_TITLE", "INBOX_SCOUT_SUGGESTION_TITLE"})
+    EXPECT_TRUE(titles.contains(expected)) << expected;
+  EXPECT_EQ(controller->getUnreadInboxCount(), 4u);
+
+  // Re-selecting the same club does not repeat the news.
+  controller->selectManagedTeam(managed);
+  EXPECT_EQ(controller->getInbox().size(), 4u);
+
+  // The board survives a reload.
+  controller->saveGame();
+  controller = std::make_unique<GameController>();
+  ASSERT_TRUE(controller->loadGame(slot.slot));
+  EXPECT_EQ(controller->getBoardState().expected_position,
+            board.expected_position);
+  EXPECT_EQ(controller->getInbox().size(), 4u);
+}
+
+TEST(WorldSimulationTest, InboxStaysQuietThroughTheFirstMonths)
+{
+  const SlotCleanup slot{uniqueSlot(4)};
+  const auto controller = makeWorld(slot.slot);
+  const TeamID managed = controller->getTeams().front().get().getId();
+  controller->selectManagedTeam(managed);
+  while (controller->getCurrentDate() < GameDateValue(2025, 10, 1))
+    controller->advanceDay();
+
+  std::map<std::string, std::pair<int, int>> by_title;  // unread, read
+  std::map<int, int> unread_by_month;
+  for (const InboxMessage& message : controller->getInbox())
+  {
+    auto& counts = by_title[message.title_key];
+    (message.read ? counts.second : counts.first) += 1;
+    if (!message.read) ++unread_by_month[message.date.month];
+  }
+  for (const auto& [title, counts] : by_title)
+    std::cout << "[inbox] " << title << " unread=" << counts.first
+              << " read=" << counts.second << "\n";
+  for (const auto& [month, unread] : unread_by_month)
+  {
+    std::cout << "[inbox] month " << month << " unread " << unread << "\n";
+    // July also holds the four day-one messages.
+    EXPECT_LE(unread, month == 7 ? 19 : 15) << "month " << month;
+  }
+}
+
+TEST(WorldSimulationTest, NegativeCashWarnsThenFreezesTransfers)
+{
+  const SlotCleanup slot{uniqueSlot(5)};
+  auto controller = makeWorld(slot.slot);
+  const TeamID managed = controller->getTeams().front().get().getId();
+  controller->selectManagedTeam(managed);
+  Finances& finances =
+      controller->getGameData()->getTeams().at(managed).getFinances();
+  EXPECT_GT(controller->transferBudgetForTeam(managed), 0u);
+  // The spendable budget keeps twelve weeks of payroll in the bank.
+  const std::int64_t payroll = controller->getWeeklyWageBill(managed);
+  EXPECT_LE(static_cast<std::int64_t>(controller->transferBudgetForTeam(managed)),
+            finances.getBalance() - 12 * payroll);
+
+  const float confidence = controller->getBoardState().confidence;
+  finances.addBalance(-finances.getBalance() - 300'000'000);
+  EXPECT_EQ(controller->transferBudgetForTeam(managed), 0u);
+
+  // The first weekly review warns; the next monthly review freezes.
+  const auto count = [&](const char* title)
+  {
+    return std::ranges::count(controller->getInbox(), std::string(title),
+                              &InboxMessage::title_key);
+  };
+  while (count("INBOX_BOARD_CASH_WARNING_TITLE") == 0)
+    controller->advanceDay();
+  EXPECT_FALSE(controller->isTransferEmbargoed());
+  EXPECT_LT(controller->getBoardState().confidence, confidence);
+  while (!controller->isTransferEmbargoed()) controller->advanceDay();
+  EXPECT_EQ(controller->getCurrentDate().day, 1);
+  EXPECT_EQ(count("INBOX_BOARD_EMBARGO_TITLE"), 1);
+
+  // The embargo is rebuilt from the ledger after a reload.
+  controller->saveGame();
+  controller = std::make_unique<GameController>();
+  ASSERT_TRUE(controller->loadGame(slot.slot));
+  EXPECT_TRUE(controller->isTransferEmbargoed());
+
+  // New money lifts it at the next weekly review.
+  controller->getGameData()->getTeams().at(managed).getFinances().addBalance(
+      600'000'000);
+  EXPECT_FALSE(controller->isTransferEmbargoed());
+  for (int day = 0; day < 7; ++day) controller->advanceDay();
+  EXPECT_EQ(count("INBOX_BOARD_EMBARGO_LIFTED_TITLE"), 1);
 }
 
 TEST(WorldSimulationTest, SameSeedSameHistory)

@@ -12,7 +12,6 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <vector>
 
 #include "global/stats_config.h"
@@ -99,13 +98,6 @@ const char* groupKey(PositionGroup group);
  * role-focus weights used for the overall rating, best first.
  */
 std::vector<RoleFit> roleFits(const Player& player, const StatsConfig& config);
-
-/**
- * @brief Players of a club who cannot play a match of the given type:
- * injured, or suspended in that competition (friendlies ignore bans).
- */
-std::unordered_set<PlayerID> unavailablePlayers(
-    const GameController& controller, TeamID teamId, MatchType type);
 
 /** @brief Localised name of a player attribute (falls back to the raw name). */
 std::string statLabel(std::string_view statName);

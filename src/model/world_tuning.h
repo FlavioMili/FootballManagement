@@ -107,13 +107,9 @@ struct WorldTuning final
     static constexpr float TEAM_LEVEL_SLOPE = 0.42f;
     /** Wage elasticity to ability: W ~ overall^gamma. [P] */
     static constexpr float WAGE_ABILITY_EXPONENT = 7.0f;
-    /** Opening cash as a share of revenue (uniform range). [P] */
-    static constexpr float OPENING_BALANCE_MIN = 0.10f;
-    static constexpr float OPENING_BALANCE_MAX = 0.40f;
-    /** Player wages are ~72% of total wages (47% / 65% in ECFIL). [S] */
-    static constexpr float PLAYER_SHARE_OF_WAGES = 0.72f;
-    /** Opening wage budget headroom over the generated payroll. [P] */
-    static constexpr float WAGE_BUDGET_HEADROOM = 1.20f;
+    /** Opening cash as a share of expected income (uniform range). [P] */
+    static constexpr float OPENING_BALANCE_MIN = 0.15f;
+    static constexpr float OPENING_BALANCE_MAX = 0.45f;
   };
 
   struct Finance final
@@ -126,10 +122,25 @@ struct WorldTuning final
     /** Continental prize money weights for the top five places. [P] */
     static constexpr std::array<float, 5> CONTINENTAL_WEIGHTS = {
         0.35f, 0.25f, 0.18f, 0.12f, 0.10f};
+    /** Share of the continental money of its expected place a board
+     * budgets on; the rest is upside. [P] */
+    static constexpr float BUDGETED_CONTINENTAL_SHARE = 0.5f;
+    /** Player wages / expected income = base + slope * (league wage ratio
+     * - 0.65), within [min, max]. [S: ECFIL player wages 47% of revenue,
+     * total wages 57-73% by league] */
+    static constexpr float PLAYER_WAGE_SHARE_BASE = 0.50f;
+    static constexpr float PLAYER_WAGE_SHARE_SLOPE = 0.60f;
+    static constexpr float PLAYER_WAGE_SHARE_MIN = 0.46f;
+    static constexpr float PLAYER_WAGE_SHARE_MAX = 0.60f;
+    /** Non-player wages / expected income. [S: ~18% of revenue in ECFIL,
+     * including admin staff paid out of other income] */
+    static constexpr float STAFF_SHARE = 0.14f;
     /** Floor of other operating costs (stadium, travel, admin). [P] */
-    static constexpr float MIN_OPERATING_SHARE = 0.08f;
-    /** Clubs aim for this total cost/revenue ratio. [P] */
-    static constexpr float TARGET_COST_RATIO = 0.97f;
+    static constexpr float MIN_OPERATING_SHARE = 0.15f;
+    /** Clubs budget this total cost / expected income ratio, so a club that
+     * finishes where expected makes a small operating profit. [P: about
+     * half of top-division clubs are profitable, ECFIL] */
+    static constexpr float TARGET_COST_RATIO = 0.95f;
     /** Home league matches per season with 20 clubs. */
     static constexpr float HOME_MATCHES_PER_SEASON = 19.0f;
     /** Price elasticity of attendance (inelastic demand). [S: 0.3-0.7] */
@@ -138,6 +149,10 @@ struct WorldTuning final
     static constexpr float ATTENDANCE_SUCCESS_WEIGHT = 0.25f;
     /** Share of transfer income returned to the transfer budget. [P] */
     static constexpr float TRANSFER_INCOME_REINVESTMENT = 0.5f;
+    /** Season wage budget = expected player wage bill times this margin. [P] */
+    static constexpr double WAGE_BUDGET_MARGIN = 1.05;
+    /** Weeks of payroll kept in the bank before any transfer spending. [P] */
+    static constexpr std::int64_t CASH_RESERVE_WEEKS = 12;
     /** Transfer budget = share of cash + share of revenue each season. [P] */
     static constexpr float TRANSFER_BUDGET_CASH_SHARE = 0.35f;
     static constexpr float TRANSFER_BUDGET_REVENUE_SHARE = 0.08f;

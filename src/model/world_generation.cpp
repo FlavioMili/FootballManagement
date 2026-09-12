@@ -456,9 +456,9 @@ void generateClubProfiles(std::unordered_map<TeamID, Team>& teams,
       team.setProfile(profile);
       if (!assign_opening_balance) continue;
 
-      const double revenue =
-          ClubEconomy::expectedRevenue(economy, profile.reputation);
-      const double opening = revenue * static_cast<double>(rng.uniform(
+      const double income =
+          ClubEconomy::expectedIncome(economy, profile.reputation);
+      const double opening = income * static_cast<double>(rng.uniform(
                                            Generation::OPENING_BALANCE_MIN,
                                            Generation::OPENING_BALANCE_MAX));
       team.getFinances() = Finances(
@@ -500,11 +500,11 @@ std::vector<Player> generateSquad(const Team& team,
   }
 
   // Scale wages so the payroll matches the league's player wage share of the
-  // club's revenue (+-10%).
-  const double revenue =
-      ClubEconomy::expectedRevenue(economy, team.getReputation());
+  // club's expected income (+-10%).
+  const double income =
+      ClubEconomy::expectedIncome(economy, team.getReputation());
   const double target_payroll =
-      revenue * ClubEconomy::playerWageShare(economy) / 52.0 *
+      income * ClubEconomy::playerWageShare(economy) / 52.0 *
           static_cast<double>(rng.uniform(0.9f, 1.1f)) -
       static_cast<double>(existing_weekly_wages);
   double index_total = 0.0;
@@ -564,11 +564,11 @@ void applyOpeningBudgets(Team& team, const LeagueEconomy& economy,
                          std::int64_t weekly_payroll)
 {
   Finances& finances = team.getFinances();
-  finances.setWageBudget(static_cast<std::int64_t>(std::llround(
-      static_cast<double>(weekly_payroll) *
-      static_cast<double>(WorldTuning::Generation::WAGE_BUDGET_HEADROOM))));
-  finances.setTransferBudget(ClubEconomy::seasonTransferBudget(
-      finances.getBalance(),
-      ClubEconomy::expectedRevenue(economy, team.getReputation())));
+  const double income =
+      ClubEconomy::expectedIncome(economy, team.getReputation());
+  finances.setWageBudget(
+      ClubEconomy::seasonWageBudget(economy, income, weekly_payroll));
+  finances.setTransferBudget(
+      ClubEconomy::seasonTransferBudget(finances.getBalance(), income));
 }
 }  // namespace WorldGeneration

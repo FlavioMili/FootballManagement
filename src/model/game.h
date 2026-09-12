@@ -75,6 +75,12 @@ class Game
   /** What fixMatchdaySquad() would change: (replaced, replacement or 0). */
   std::vector<std::pair<PlayerID, PlayerID>> previewMatchdaySquadFix(
       TeamID team_id, MatchType type) const;
+  /**
+   * Whether the assistant keeps the managed selection eligible: after each
+   * day, and at kick-off, injured or suspended players are replaced.
+   */
+  void setAssistantFixesLineup(bool enabled) { assistant_fixes_lineup = enabled; }
+  bool getAssistantFixesLineup() const { return assistant_fixes_lineup; }
 
   /** Standings, cups, reports, player season stats and season history. */
   const CompetitionManager& getCompetitions() const { return competitions; }
@@ -130,6 +136,10 @@ class Game
 
   /**
    * @brief Sets the team managed by the user.
+   *
+   * Taking charge of a new club sets the board's objective and budgets
+   * immediately and posts the day-one inbox (welcome, squad report,
+   * pre-season schedule, scouting suggestion).
    * @param id The ID of the team to manage.
    */
   void setManagedTeamId(uint16_t id);
@@ -145,6 +155,11 @@ class Game
   void endSeason();
   void handleSeasonTransition();
   void startNewSeason();
+  /** The club's fixtures from today up to its first competitive match. */
+  std::vector<UpcomingFixture> upcomingFixtures(TeamID team_id) const;
+
+  /** Replaces unavailable managed players for the next managed fixture. */
+  void keepManagedSelectionEligible();
 
   // Matchday simulation helper
   void simulateMatches(std::vector<Match>& matches,
@@ -160,4 +175,5 @@ class Game
   GameDateValue currentDate;
   uint8_t current_season = 1;
   uint16_t managed_team_id;
+  bool assistant_fixes_lineup = true;
 };

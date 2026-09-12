@@ -140,6 +140,9 @@ class Finances
   /** @brief Sum of all ledger amounts (equals the balance). */
   std::int64_t ledgerTotal() const;
 
+  /** @brief Balance from the transactions dated on or before @p date. */
+  std::int64_t balanceAt(const GameDateValue& date) const;
+
   /** @brief Totals of the transactions dated in [from, to]. */
   FinanceSummary summarize(const GameDateValue& from,
                            const GameDateValue& to) const;

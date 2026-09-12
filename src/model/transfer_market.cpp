@@ -956,14 +956,15 @@ void TransferMarket::postNewsDigest(const GameDateValue& date,
   const bool window_closed = !open && (date - 1).isTransferWindowOpen();
   std::int32_t first = 0;
   std::int32_t last = 0;
-  if (open && today % 7 == 0)
+  constexpr std::int32_t PERIOD = TransferTuning::Market::NEWS_DIGEST_DAYS;
+  if (open && today % PERIOD == 0)
   {
-    first = today - 6;
+    first = today - PERIOD + 1;
     last = today;
   }
   else if (window_closed)
   {
-    const std::int32_t offset = today % 7 == 0 ? 7 : today % 7;
+    const std::int32_t offset = today % PERIOD == 0 ? PERIOD : today % PERIOD;
     first = today - offset + 1;
     last = today - 1;
   }

@@ -19,7 +19,6 @@
 #include "database/gamedata.h"
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
-#include "gui/scenes/lineup_scene.h"
 #include "gui/scenes/match_scene.h"
 #include "gui/scenes/team_selection_scene.h"
 #include "gui/view_models/competition_view.h"
@@ -107,11 +106,23 @@ void MainGameScene::update(float /*deltaTime*/)
 
   // Team selection is an overlay, so the dashboard does not re-enter when the
   // choice closes. Refresh once as soon as a club becomes available.
-  // Also refresh when the date moved on without this scene being told.
-  const GameController& controller = guiView->getController();
-  if (!continuation_running && controller.hasSelectedTeam() &&
-      (cached_squad.empty() || !(cached_date == controller.getCurrentDate())))
+  if (cached_squad.empty() && !continuation_running &&
+      guiView->getController().hasSelectedTeam())
     refreshData();
+  refreshIfStale();
+}
+
+void MainGameScene::refreshIfStale()
+{
+  const GameController& controller = guiView->getController();
+  if (continuation_running || !controller.hasSelectedTeam()) return;
+  bool stale = !(cached_date == controller.getCurrentDate());
+  if (!stale && cached_next)
+    if (const Game* game = controller.getGame())
+      if (const Match* match = game->getCalendar().findMatch(
+              cached_next->date, cached_next->home_id, cached_next->away_id))
+        stale = match->isPlayed();
+  if (stale) refreshData();
 }
 
 std::string MainGameScene::continueLabel() const
@@ -119,8 +130,7 @@ std::string MainGameScene::continueLabel() const
   const GameController& controller = guiView->getController();
   if (!controller.hasSelectedTeam()) return {};
   if (cached_next && cached_next->date == controller.getCurrentDate())
-    return LOC(cached_unavailable_starters > 0 ? "DASHBOARD_FIX_LINEUP"
-                                               : "DASHBOARD_PLAY_MATCH");
+    return LOC("DASHBOARD_PLAY_MATCH");
   if (cached_next)
     return fmt::sprintf(LOC("DASHBOARD_CONTINUE_TO"),
                         Format::dayMonth(cached_next->date));
@@ -131,12 +141,6 @@ void MainGameScene::requestContinue()
 {
   const GameController& controller = guiView->getController();
   if (continuation_running || !controller.hasSelectedTeam()) return;
-  if (cached_next && cached_next->date == controller.getCurrentDate() &&
-      cached_unavailable_starters > 0)
-  {
-    guiView->navigateTo(std::make_unique<LineupScene>(guiView));
-    return;
-  }
   if (cached_next && cached_next->date == controller.getCurrentDate())
   {
     guiView->navigateTo(std::make_unique<MatchScene>(
@@ -292,17 +296,12 @@ void MainGameScene::autoFixLineup()
   GameController& controller = guiView->getController();
   const auto managed = controller.getManagedTeam();
   if (!managed) return;
-  Lineup& lineup = managed->get().getLineup();
-  std::vector<const Player*> squad;
-  for (const auto& player :
-       controller.getPlayersForTeam(managed->get().getId()))
-    squad.push_back(&player.get());
-  const int preset = Formation::detectPreset(lineup);
-  Formation::autoPickAvailable(
-      lineup,
-      Formation::PRESETS[preset >= 0 ? static_cast<size_t>(preset) : 0U], squad,
-      cached_unavailable, controller.getStatsConfig());
-  showToast(LOC("LINEUP_AUTO_PICKED"));
+  const size_t replaced = controller.autoFixLineup(
+      managed->get().getId(),
+      cached_next ? cached_next->type : MatchType::LEAGUE);
+  showToast(fmt::sprintf(
+      Format::plural("DASHBOARD_AUTO_FIXED", static_cast<int64_t>(replaced)),
+      replaced));
   refreshData();
 }
 
@@ -490,16 +489,15 @@ void MainGameScene::renderNextMatchCard(float width, float height)
   // Match readiness on the same row, right-aligned: players who cannot play
   // this fixture (injured, suspended) do not count as ready starters.
   const size_t ready = cached_starters - cached_unavailable_starters;
+  const bool blocked = !cached_unavailable.empty();
   const std::string readiness =
-      cached_unavailable_starters > 0
-          ? fmt::sprintf(LOC("DASHBOARD_XI_UNAVAILABLE"), ready,
-                         cached_unavailable_starters)
-          : fmt::sprintf(LOC("DASHBOARD_STARTING_XI"), cached_starters);
+      blocked ? fmt::sprintf(LOC("DASHBOARD_XI_UNAVAILABLE"), ready,
+                             cached_unavailable.size())
+              : fmt::sprintf(LOC("DASHBOARD_STARTING_XI"), cached_starters);
   const char* fixLabel = LOC("DASHBOARD_AUTO_FIX");
   const float fixWidth =
-      cached_unavailable_starters > 0
-          ? UI::buttonWidth(fixLabel) + ImGui::GetStyle().ItemSpacing.x
-          : 0.0f;
+      blocked ? UI::buttonWidth(fixLabel) + ImGui::GetStyle().ItemSpacing.x
+              : 0.0f;
   const float readinessWidth =
       ImGui::CalcTextSize(readiness.c_str()).x + fixWidth;
   UI::sameLineIfFits(readinessWidth);
@@ -507,11 +505,11 @@ void MainGameScene::renderNextMatchCard(float width, float height)
       std::max(ImGui::GetCursorPosX(),
                ImGui::GetWindowContentRegionMax().x - readinessWidth));
   ImGui::AlignTextToFramePadding();
-  ImGui::TextColored(cached_unavailable_starters > 0 ? palette.negative
-                     : cached_starters == 11         ? palette.positive
-                                                     : palette.warning,
+  ImGui::TextColored(blocked                 ? palette.negative
+                     : cached_starters == 11 ? palette.positive
+                                             : palette.warning,
                      "%s", readiness.c_str());
-  if (cached_unavailable_starters > 0)
+  if (blocked)
   {
     ImGui::SameLine();
     if (UI::primaryButton(fixLabel)) autoFixLineup();
@@ -851,15 +849,19 @@ void MainGameScene::refreshData()
   cached_table =
       CompetitionView::buildStandings(controller, club.getLeagueId());
   cached_zones = CompetitionView::zonesFor(controller, club.getLeagueId());
-  cached_unavailable = PlayerView::unavailablePlayers(
-      controller, club.getId(),
-      cached_next ? cached_next->type : MatchType::LEAGUE);
+  cached_next = CompetitionView::nextFixture(controller, club.getId());
+  // Same rule as the pre-match gate: anyone in the matchday squad who is
+  // injured or suspended for the next fixture's competition.
+  const MatchType nextType =
+      cached_next ? cached_next->type : MatchType::LEAGUE;
+  const auto ineligible =
+      controller.getIneligibleSelections(club.getId(), nextType);
+  cached_unavailable = {ineligible.begin(), ineligible.end()};
   const Lineup& lineup = club.getLineup();
   cached_starters = lineup.getOutfieldPlayers().size() +
                     (lineup.getGoalkeeper() != nullptr ? 1U : 0U);
   cached_unavailable_starters =
       Formation::unavailableStarters(lineup, cached_unavailable);
-  cached_next = CompetitionView::nextFixture(controller, club.getId());
 
   cached_recent.clear();
   const auto fixtures =

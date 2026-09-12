@@ -355,51 +355,47 @@ TEST(MatchSchedulerTest, ContinueReportsMatchdayProgress)
   EXPECT_FLOAT_EQ(progress.fraction(), 1.0f);
 }
 
-TEST(MatchSchedulerTest, HomeAdvantageDiagnostic)
+// The scheduler must hand the engine the fixture's real home side: its
+// result for a fixture equals a direct engine run with the home line-up
+// first, and swapping the venue swaps the sides the engine sees. (Home
+// advantage itself is the engine's job and is calibrated there.)
+TEST(MatchSchedulerTest, SchedulerKeepsTheFixtureVenue)
 {
   const SlotCleanup slot{uniqueSlot(6)};
   const auto controller = makeWorld(slot.slot);
   const auto matchday = firstBusyDay(*controller, 50);
   ASSERT_TRUE(matchday);
-  std::vector<MatchSimulationInput> inputs = prepareDay(*controller, *matchday);
+  const std::vector<MatchSimulationInput> inputs =
+      prepareDay(*controller, *matchday);
+  ASSERT_GE(inputs.size(), 8U);
   const StatsConfig& config = controller->getStatsConfig();
-  int sched_home = 0, sched_away = 0, sched_n = 0;
-  int raw_home = 0, raw_away = 0;
-  int hg = 0, ag = 0;
-  for (int rep = 0; rep < 4; ++rep)
+  for (std::size_t i = 0; i < 8; ++i)
   {
-    for (const MatchSimulationInput& original : inputs)
+    const MatchSimulationInput& input = inputs[i];
+    const auto team = controller->getGameData()->getTeam(input.home_id);
+    ASSERT_TRUE(team);
+    EXPECT_EQ(input.home_lineup.getGoalkeeper(),
+              team->get().getLineup().getGoalkeeper());
+
+    for (const bool swapped : {false, true})
     {
-      for (int swap = 0; swap < 2; ++swap)
+      MatchSimulationInput venue = input;
+      venue.knockout.reset();
+      if (swapped)
       {
-        MatchSimulationInput input = original;
-        input.knockout.reset();
-        input.seed = original.seed + static_cast<uint32_t>(rep * 7919 + swap);
-        if (swap)
-        {
-          std::swap(input.home_id, input.away_id);
-          std::swap(input.home_lineup, input.away_lineup);
-          std::swap(input.home_strategy, input.away_strategy);
-        }
-        const MatchSimulationResult result = MatchSimulation::run(input, config);
-        sched_home += result.home_goals > result.away_goals;
-        sched_away += result.home_goals < result.away_goals;
-        hg += result.home_goals;
-        ag += result.away_goals;
-        ++sched_n;
-        MatchEngine engine(input.home_lineup, input.away_lineup,
-                           input.home_strategy, input.away_strategy, config,
-                           input.seed);
-        while (engine.getState() != MatchState::FULL_TIME) engine.update(0.25f);
-        raw_home += engine.getHomeScore() > engine.getAwayScore();
-        raw_away += engine.getHomeScore() < engine.getAwayScore();
+        std::swap(venue.home_id, venue.away_id);
+        std::swap(venue.home_lineup, venue.away_lineup);
+        std::swap(venue.home_strategy, venue.away_strategy);
       }
+      const MatchSimulationResult result = MatchSimulation::run(venue, config);
+      MatchEngine engine(venue.home_lineup, venue.away_lineup,
+                         venue.home_strategy, venue.away_strategy, config,
+                         venue.seed);
+      while (engine.getState() != MatchState::FULL_TIME) engine.update(0.25f);
+      EXPECT_EQ(result.home_goals, engine.getHomeScore()) << "match " << i;
+      EXPECT_EQ(result.away_goals, engine.getAwayScore()) << "match " << i;
     }
   }
-  std::cout << "[home-adv] n=" << sched_n << " scheduler home=" << sched_home
-            << " away=" << sched_away << " goals " << hg << "-" << ag
-            << " | raw engine home=" << raw_home << " away=" << raw_away
-            << "\n";
 }
 
 // ---------------------------------------------------------------------------

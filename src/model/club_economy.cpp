@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <map>
 
 #include "database/gamedata.h"
@@ -31,7 +32,31 @@ double operatingShare(const LeagueEconomy& economy)
 {
   return std::max(static_cast<double>(Finance::MIN_OPERATING_SHARE),
                   static_cast<double>(Finance::TARGET_COST_RATIO) -
-                      static_cast<double>(economy.profile->wage_ratio));
+                      ClubEconomy::playerWageShare(economy) -
+                      static_cast<double>(Finance::STAFF_SHARE));
+}
+
+double meritPrize(const LeagueEconomy& economy, std::size_t position,
+                  std::size_t league_size)
+{
+  const double clubs = static_cast<double>(league_size);
+  const double merit_pool =
+      static_cast<double>(economy.profile->average_revenue_eur) *
+      static_cast<double>(economy.profile->tv_share) *
+      (1.0 - static_cast<double>(Finance::TV_EQUAL_SHARE)) * clubs;
+  // [S] Linear merit payments by place (Premier League model).
+  return merit_pool * (clubs - static_cast<double>(position)) /
+         (clubs * (clubs + 1.0) / 2.0);
+}
+
+double continentalPrize(const LeagueEconomy& economy, std::size_t position,
+                        std::size_t league_size)
+{
+  if (position >= Finance::CONTINENTAL_WEIGHTS.size()) return 0.0;
+  return static_cast<double>(economy.profile->average_revenue_eur) *
+         static_cast<double>(economy.profile->continental_share) *
+         static_cast<double>(league_size) *
+         static_cast<double>(Finance::CONTINENTAL_WEIGHTS[position]);
 }
 }  // namespace
 
@@ -53,6 +78,8 @@ LeagueEconomy makeLeagueEconomy(LeagueID league_id,
     index_total += revenueIndex(economy, reputation);
   economy.revenue_normalizer =
       index_total / static_cast<double>(reputations.size());
+  economy.reputations_desc = reputations;
+  std::ranges::sort(economy.reputations_desc, std::greater<>{});
   return economy;
 }
 
@@ -78,6 +105,32 @@ double expectedRevenue(const LeagueEconomy& economy, std::uint8_t reputation)
 {
   return static_cast<double>(economy.profile->average_revenue_eur) *
          revenueIndex(economy, reputation) / economy.revenue_normalizer;
+}
+
+std::size_t expectedPosition(const LeagueEconomy& economy,
+                             std::uint8_t reputation)
+{
+  // Ties share the middle of their places.
+  const auto& reps = economy.reputations_desc;
+  const auto first = std::ranges::lower_bound(reps, reputation, std::greater<>{});
+  const auto last = std::ranges::upper_bound(reps, reputation, std::greater<>{});
+  const auto better = static_cast<std::size_t>(first - reps.begin());
+  const auto tied = static_cast<std::size_t>(last - first);
+  return better + (tied > 0 ? (tied - 1) / 2 : 0);
+}
+
+double expectedIncome(const LeagueEconomy& economy, std::uint8_t reputation)
+{
+  const double revenue = expectedRevenue(economy, reputation);
+  const std::size_t clubs = std::max<std::size_t>(economy.clubs, 1);
+  const std::size_t position =
+      std::min(expectedPosition(economy, reputation), clubs - 1);
+  return monthlyBroadcasting(economy) * 12.0 +
+         meritPrize(economy, position, clubs) +
+         static_cast<double>(Finance::BUDGETED_CONTINENTAL_SHARE) *
+             continentalPrize(economy, position, clubs) +
+         revenue * static_cast<double>(economy.profile->gate_share +
+                                       economy.profile->commercial_share);
 }
 
 double baseDemand(const LeagueEconomy& economy, std::uint8_t reputation)
@@ -144,11 +197,8 @@ double monthlySponsorship(const LeagueEconomy& economy, std::uint8_t reputation)
 
 double monthlyStaffCosts(const LeagueEconomy& economy, std::uint8_t reputation)
 {
-  const double staff_share =
-      static_cast<double>(economy.profile->wage_ratio) *
-      (1.0 -
-       static_cast<double>(WorldTuning::Generation::PLAYER_SHARE_OF_WAGES));
-  return expectedRevenue(economy, reputation) * staff_share / 12.0;
+  return expectedIncome(economy, reputation) *
+         static_cast<double>(Finance::STAFF_SHARE) / 12.0;
 }
 
 double monthlyFacilityCosts(const LeagueEconomy& economy,
@@ -163,41 +213,31 @@ double monthlyFacilityCosts(const LeagueEconomy& economy,
       static_cast<double>(profile.reputation);
   const double facility_factor =
       std::clamp(1.0 + 0.004 * facility_gap, 0.8, 1.2);
-  return expectedRevenue(economy, profile.reputation) *
+  return expectedIncome(economy, profile.reputation) *
          operatingShare(economy) * facility_factor / 12.0;
 }
 
 double playerWageShare(const LeagueEconomy& economy)
 {
-  return static_cast<double>(economy.profile->wage_ratio) *
-         static_cast<double>(WorldTuning::Generation::PLAYER_SHARE_OF_WAGES);
+  // [S] ECFIL: player wages ~47% of revenue on average; leagues with a high
+  // total wage ratio spend more on players. Kept within 46-60%.
+  return std::clamp(
+      static_cast<double>(Finance::PLAYER_WAGE_SHARE_BASE) +
+          static_cast<double>(Finance::PLAYER_WAGE_SHARE_SLOPE) *
+              (static_cast<double>(economy.profile->wage_ratio) - 0.65),
+      static_cast<double>(Finance::PLAYER_WAGE_SHARE_MIN),
+      static_cast<double>(Finance::PLAYER_WAGE_SHARE_MAX));
 }
 
 std::vector<std::int64_t> prizeMoney(const LeagueEconomy& economy,
                                      std::size_t league_size)
 {
   std::vector<std::int64_t> prizes(league_size, 0);
-  if (league_size == 0) return prizes;
-  const double clubs = static_cast<double>(league_size);
-  const double revenue =
-      static_cast<double>(economy.profile->average_revenue_eur);
-  const double merit_pool =
-      revenue * static_cast<double>(economy.profile->tv_share) *
-      (1.0 - static_cast<double>(Finance::TV_EQUAL_SHARE)) * clubs;
-  const double continental_pool =
-      revenue * static_cast<double>(economy.profile->continental_share) * clubs;
-  const double weight_total = clubs * (clubs + 1.0) / 2.0;
   for (std::size_t position = 0; position < league_size; ++position)
   {
-    // [S] Linear merit payments by place (Premier League model).
-    double prize =
-        merit_pool * (clubs - static_cast<double>(position)) / weight_total;
-    if (position < Finance::CONTINENTAL_WEIGHTS.size())
-    {
-      prize += continental_pool *
-               static_cast<double>(Finance::CONTINENTAL_WEIGHTS[position]);
-    }
-    prizes[position] = static_cast<std::int64_t>(std::llround(prize));
+    prizes[position] = static_cast<std::int64_t>(
+        std::llround(meritPrize(economy, position, league_size) +
+                     continentalPrize(economy, position, league_size)));
   }
   return prizes;
 }
@@ -212,14 +252,28 @@ std::int64_t seasonTransferBudget(std::int64_t balance, double revenue)
   return std::min(balance, static_cast<std::int64_t>(std::llround(budget)));
 }
 
+std::int64_t availableTransferBudget(std::int64_t board_budget,
+                                     std::int64_t balance,
+                                     std::int64_t weekly_payroll,
+                                     std::int64_t committed)
+{
+  const std::int64_t spare_cash =
+      balance - Finance::CASH_RESERVE_WEEKS * std::max<std::int64_t>(
+                                                  0, weekly_payroll) -
+      std::max<std::int64_t>(0, committed);
+  return std::max<std::int64_t>(0, std::min(board_budget, spare_cash));
+}
+
 std::int64_t seasonWageBudget(const LeagueEconomy& economy, double revenue,
                               std::int64_t weekly_payroll)
 {
-  // The board funds the league's typical player wage share with a 10%
-  // margin, but never below the payroll it has already committed to.
-  const double affordable = revenue * playerWageShare(economy) * 1.1 / 52.0;
+  // The board funds the league's typical player wage share of the expected
+  // income with a small margin, but never below the payroll it has already
+  // committed to.
+  const double affordable = revenue * playerWageShare(economy) *
+                            Finance::WAGE_BUDGET_MARGIN / 52.0;
   return std::max(static_cast<std::int64_t>(std::llround(affordable)),
-                  weekly_payroll + weekly_payroll / 20);
+                  weekly_payroll);
 }
 
 double wageIndex(double overall, int age)

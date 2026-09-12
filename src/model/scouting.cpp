@@ -34,6 +34,7 @@ constexpr int STARTER_RANK = 11;
 constexpr float FIT_MARGIN = 3.0f; /*!< [P] Within reach of the starter. */
 constexpr std::uint8_t PROSPECT_AGE = 21;
 constexpr int PEAK_GROWTH_AGE = 25;
+constexpr int NO_GROWTH_AGE = 30; /*!< [P] Estimated ceilings stop here. */
 constexpr float FOLLOW_UP_WEIGHT = 4.0f; /*!< [P] Scouts revisit prospects. */
 constexpr float PROSPECT_GROWTH_PER_YEAR = 1.4f; /*!< [P] Mean headroom. */
 constexpr double MIN_VALUE_ESTIMATE = 10'000.0;  /*!< Market value bounds. */
@@ -608,6 +609,16 @@ ScoutedPlayerRow ScoutingSystem::makeRow(const Player& player) const
   row.potential_low = std::max(row.overall, centre - half_width);
   row.potential_high = std::clamp(centre + half_width, row.potential_low,
                                   static_cast<float>(MAX_STAT_VAL) - 1.0f);
+  row.potential_low = std::min(row.potential_low, row.potential_high);
+  // Past the growth years a player has no headroom left: the ceiling
+  // shrinks to what his current ability might be. [P]
+  const float headroom = std::clamp(
+      static_cast<float>(NO_GROWTH_AGE - player.getAge()) /
+          static_cast<float>(NO_GROWTH_AGE - PEAK_GROWTH_AGE),
+      0.0f, 1.0f);
+  const float ceiling = std::max(row.overall, row.overall_high);
+  if (row.potential_high > ceiling)
+    row.potential_high = ceiling + headroom * (row.potential_high - ceiling);
   row.potential_low = std::min(row.potential_low, row.potential_high);
   row.estimated_value = estimatedValue(
       player, row.overall, 0.5f * (row.potential_low + row.potential_high));

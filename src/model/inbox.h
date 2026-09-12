@@ -70,14 +70,26 @@ struct InboxMessage
  * @brief Chronological list of messages with read tracking.
  *
  * The inbox keeps the newest MAX_MESSAGES messages; older ones are dropped.
+ * Only news that needs the manager's attention arrives unread: routine
+ * round-ups (transfer news, instalments) are filed as read, and repeated
+ * offers of the same kind (bids and loan offers for the club's players) are
+ * grouped into a weekly digest with a single unread message.
  */
 class Inbox
 {
  public:
   static constexpr std::size_t MAX_MESSAGES = 400;
+  /** Window of the weekly digest of repeated offers. */
+  static constexpr std::int32_t DIGEST_DAYS = 7;
 
   /** Appends a message, assigns its id and returns it. */
   std::uint32_t add(InboxMessage message);
+
+  /** Routine news that is filed as read on arrival. */
+  static bool isRoutine(const std::string& title_key);
+
+  /** Messages grouped into a weekly digest (one unread per week). */
+  static bool isDigested(const std::string& title_key);
 
   /** Marks a message as read; false if the id is unknown. */
   bool markRead(std::uint32_t id);

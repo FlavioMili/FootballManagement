@@ -28,6 +28,8 @@ struct LeagueEconomy
   float mean_reputation = 50.0f;
   double revenue_normalizer = 1.0; /*!< Mean revenue index of the league. */
   std::size_t clubs = 0;
+  /** Club reputations, highest first (gives a club's expected finish). */
+  std::vector<std::uint8_t> reputations_desc;
 };
 
 /** Builds the economy of one league from its clubs' reputations. */
@@ -48,8 +50,26 @@ std::unordered_map<LeagueID, LeagueEconomy> buildLeagueEconomies(
  */
 namespace ClubEconomy
 {
-/** Expected revenue per season of a club with @p reputation. */
+/**
+ * Revenue potential per season of a club with @p reputation: the league's
+ * average revenue scaled by reputation. Gate and commercial income are
+ * shares of it.
+ */
 double expectedRevenue(const LeagueEconomy& economy, std::uint8_t reputation);
+
+/** Expected league finish (0 = champion) of a club with @p reputation. */
+std::size_t expectedPosition(const LeagueEconomy& economy,
+                             std::uint8_t reputation);
+
+/**
+ * Income the club can budget on per season: equal TV share, merit money at
+ * its expected finish, gate and commercial income, plus half of the
+ * continental money of its expected place (boards do not spend prize money
+ * they may miss). Every cost line and budget is a share of it, so a club
+ * that finishes where expected roughly breaks even; beating expectations
+ * or reaching continental places makes a profit.
+ */
+double expectedIncome(const LeagueEconomy& economy, std::uint8_t reputation);
 
 /** Share of capacity filled at neutral form and the reference price. */
 double baseDemand(const LeagueEconomy& economy, std::uint8_t reputation);
@@ -81,7 +101,7 @@ double monthlyStaffCosts(const LeagueEconomy& economy, std::uint8_t reputation);
 double monthlyFacilityCosts(const LeagueEconomy& economy,
                             const ClubProfile& profile);
 
-/** Share of revenue a club spends on player wages. */
+/** Share of expected income a club spends on player wages. */
 double playerWageShare(const LeagueEconomy& economy);
 
 /** Season-end merit and continental money by final position (index 0 =
@@ -91,6 +111,16 @@ std::vector<std::int64_t> prizeMoney(const LeagueEconomy& economy,
 
 /** Board's transfer allowance for a new season. */
 std::int64_t seasonTransferBudget(std::int64_t balance, double revenue);
+
+/**
+ * Transfer money a club can commit today: the board's allowance, but never
+ * more than the cash left after a reserve of Finance::CASH_RESERVE_WEEKS of
+ * payroll and the instalments already owed; never negative.
+ */
+std::int64_t availableTransferBudget(std::int64_t board_budget,
+                                     std::int64_t balance,
+                                     std::int64_t weekly_payroll,
+                                     std::int64_t committed);
 
 /** Board's weekly wage allowance for a new season. */
 std::int64_t seasonWageBudget(const LeagueEconomy& economy, double revenue,

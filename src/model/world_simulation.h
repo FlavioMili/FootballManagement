@@ -63,6 +63,18 @@ enum class SquadRole : std::uint8_t
   Fringe     /*!< Beyond the matchday squad (young players: prospect). */
 };
 
+/**
+ * @struct UpcomingFixture
+ * @brief A fixture of the managed club, from the club's point of view.
+ */
+struct UpcomingFixture
+{
+  GameDateValue date;
+  TeamID opponent_id = 0;
+  bool home = true;
+  MatchType type = MatchType::FRIENDLY;
+};
+
 /** Language key naming @p role (e.g. "SQUAD_ROLE_KEY_PLAYER"). */
 const char* squadRoleKey(SquadRole role);
 
@@ -102,6 +114,26 @@ class WorldSimulation
 
   /** Budgets, ticket prices, season counters and the board objective. */
   void onSeasonStart(const GameDateValue& date, TeamID managed_team_id);
+
+  /**
+   * The manager took charge of @p team_id: the board sets the objective and
+   * budgets (so they are known on day one) and the inbox receives the
+   * board's welcome, the assistant's squad report, the pre-season schedule
+   * (from @p schedule, the club's next fixtures up to the first competitive
+   * match) and a scouting suggestion. Nothing happens when the club was
+   * already managed.
+   */
+  void onManagedTeamSelected(const GameDateValue& date, TeamID team_id,
+                             const std::vector<UpcomingFixture>& schedule);
+
+  /**
+   * True while the board freezes the managed club's transfer spending: its
+   * cash has been negative since at least the previous monthly review (a
+   * warning comes first). Lifts as soon as the balance is positive again.
+   * Other clubs are never embargoed (their budget is already zero without
+   * cash).
+   */
+  bool isTransferEmbargoed(TeamID team_id) const;
 
   /** Loads the inbox and board state (after GameData is loaded). */
   void load(const std::shared_ptr<DatabaseConnection>& db_conn);
@@ -187,7 +219,14 @@ class WorldSimulation
 
   void processDaily(const GameDateValue& date, std::int32_t ordinal,
                     TeamID managed_team_id);
-  void processWeekly(const GameDateValue& date);
+  void processWeekly(const GameDateValue& date, TeamID managed_team_id);
+  void reviewCash(const GameDateValue& date, TeamID managed_team_id,
+                  bool monthly);
+  void postMedicalDigest(const GameDateValue& date, TeamID managed_team_id);
+  void postSquadReport(const GameDateValue& date, const Team& team);
+  void postPreseasonSchedule(const GameDateValue& date, const Team& team,
+                             const std::vector<UpcomingFixture>& schedule);
+  void postScoutSuggestion(const GameDateValue& date, const Team& team);
   void processMonthly(const GameDateValue& date, TeamID managed_team_id);
   void runYouthIntake(const GameDateValue& date, TeamID managed_team_id);
   void sendContractNotices(const GameDateValue& date, TeamID managed_team_id);
@@ -195,7 +234,7 @@ class WorldSimulation
   void renewAiContracts(TeamID managed_team_id);
   void retirePlayers(const GameDateValue& date, TeamID managed_team_id);
   void ensureBoard(const GameDateValue& date, TeamID managed_team_id,
-                   bool new_season);
+                   bool new_season, bool post_objective = true);
   void developPlayer(Player& player, float training_quality,
                      std::int32_t ordinal);
   void updateWeeklyMorale(Team& team);
@@ -212,7 +251,7 @@ class WorldSimulation
             std::string title_key, std::string body_key,
             std::vector<std::string> args,
             std::optional<PlayerID> player_id = std::nullopt,
-            std::optional<TeamID> team_id = std::nullopt);
+            std::optional<TeamID> team_id = std::nullopt, bool read = false);
   const FocusStats& focusFor(const Player& player) const;
   static std::uint16_t seasonYear(const GameDateValue& date);
 
@@ -227,4 +266,10 @@ class WorldSimulation
       fixture_outlook_provider;
   TrainingSystem::FixtureOutlook fixture_outlook;
   std::unordered_set<TeamID> lineup_dirty;
+  /** Managed-club medical news of the current week, sent as one digest. */
+  std::vector<std::string> week_recoveries;
+  std::vector<std::string> week_minor_injuries;
+  /** Cash review of the managed club (rebuilt from the ledger on load). */
+  bool cash_warning_sent = false;
+  bool transfer_embargo = false;
 };

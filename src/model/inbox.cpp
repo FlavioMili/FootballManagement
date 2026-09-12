@@ -12,9 +12,11 @@
 #include <array>
 #include <cstdlib>
 #include <format>
+#include <string_view>
 #include <utility>
 
 #include "global/language_manager.h"
+#include "model/world_rng.h"
 
 namespace
 {
@@ -24,6 +26,13 @@ constexpr std::array<const char*,
                      "INBOX_CAT_INJURY",   "INBOX_CAT_TRANSFER",
                      "INBOX_CAT_CONTRACT", "INBOX_CAT_YOUTH",
                      "INBOX_CAT_BOARD",    "INBOX_CAT_FINANCE"};
+
+constexpr std::array<std::string_view, 4> ROUTINE_TITLES = {
+    "INBOX_TRANSFER_NEWS_TITLE", "INBOX_INSTALMENT_PAID_TITLE",
+    "INBOX_INSTALMENT_RECEIVED_TITLE", "SCOUT_ALERT_MOVED_TITLE"};
+
+constexpr std::array<std::string_view, 2> DIGEST_TITLES = {
+    "INBOX_BID_TITLE", "INBOX_LOAN_OFFER_TITLE"};
 
 std::string resolveArgument(const std::string& argument)
 {
@@ -90,8 +99,33 @@ std::string InboxMessage::formatBody() const
   return formatLocalized(body_key, args);
 }
 
+bool Inbox::isRoutine(const std::string& title_key)
+{
+  return std::ranges::contains(ROUTINE_TITLES, title_key);
+}
+
+bool Inbox::isDigested(const std::string& title_key)
+{
+  return std::ranges::contains(DIGEST_TITLES, title_key);
+}
+
 std::uint32_t Inbox::add(InboxMessage message)
 {
+  if (isRoutine(message.title_key)) message.read = true;
+  if (!message.read && isDigested(message.title_key))
+  {
+    // One unread message of the kind per week; the rest join its thread.
+    const std::int32_t day = dayOrdinal(message.date);
+    for (auto it = messages.rbegin(); it != messages.rend(); ++it)
+    {
+      if (day - dayOrdinal(it->date) >= DIGEST_DAYS) break;
+      if (!it->read && it->title_key == message.title_key)
+      {
+        message.read = true;
+        break;
+      }
+    }
+  }
   message.id = next_id++;
   const std::uint32_t id = message.id;
   messages.push_back(std::move(message));
