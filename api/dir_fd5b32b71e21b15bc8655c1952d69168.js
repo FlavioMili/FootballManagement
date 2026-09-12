@@ -8,6 +8,8 @@ var dir_fd5b32b71e21b15bc8655c1952d69168 =
     [ "logger.h", "logger_8h.html", "logger_8h" ],
     [ "queries.h", "queries_8h.html", "queries_8h" ],
     [ "roles.h", "roles_8h.html", "roles_8h" ],
+    [ "runtime_paths.cpp", "runtime__paths_8cpp.html", null ],
+    [ "runtime_paths.h", "runtime__paths_8h.html", "runtime__paths_8h" ],
     [ "stats_config.h", "stats__config_8h.html", "stats__config_8h" ],
     [ "types.h", "types_8h.html", "types_8h" ]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['✅_0',['Phase 1: Core Simulation Engine ✅',['../index.html#autotoc_md19',1,'']]]
+  ['🤝_20community_20contributing_0',['🤝 Community &amp; Contributing',['../index.html#autotoc_md2',1,'']]]
 ];

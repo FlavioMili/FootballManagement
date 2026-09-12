@@ -57,6 +57,7 @@ var annotated_dup =
     [ "RoleUtils", "classRoleUtils.html", "classRoleUtils" ],
     [ "RoleWeights", "structRoleWeights.html", "structRoleWeights" ],
     [ "RosterScene", "classRosterScene.html", "classRosterScene" ],
+    [ "RuntimePaths", "classRuntimePaths.html", "classRuntimePaths" ],
     [ "ScenarioDecision", "structScenarioDecision.html", "structScenarioDecision" ],
     [ "Settings", "structSettings.html", "structSettings" ],
     [ "SettingsManager", "classSettingsManager.html", "classSettingsManager" ],

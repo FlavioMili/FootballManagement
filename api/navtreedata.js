@@ -27,14 +27,14 @@ var NAVTREE =
   [ "Football Management", "index.html", [
     [ "Project Football Management", "index.html", "index" ],
     [ "Architectural Overview", "md_docs_2ARCHITECTURE.html", [
-      [ "High-Level Data Flow", "md_docs_2ARCHITECTURE.html#autotoc_md24", null ],
-      [ "Core Components", "md_docs_2ARCHITECTURE.html#autotoc_md25", [
-        [ "1. The Game Model (<tt>Game</tt>)", "md_docs_2ARCHITECTURE.html#autotoc_md26", null ],
-        [ "2. The Game Data Cache (<tt>GameData</tt>)", "md_docs_2ARCHITECTURE.html#autotoc_md27", null ],
-        [ "3. Repositories", "md_docs_2ARCHITECTURE.html#autotoc_md28", null ],
-        [ "4. Database Connection (<tt>DatabaseConnection</tt>)", "md_docs_2ARCHITECTURE.html#autotoc_md29", null ],
-        [ "5. GUI Views (<tt>GUIView</tt> and Scenes)", "md_docs_2ARCHITECTURE.html#autotoc_md30", null ],
-        [ "6. Save System", "md_docs_2ARCHITECTURE.html#autotoc_md31", null ]
+      [ "High-Level Data Flow", "md_docs_2ARCHITECTURE.html#autotoc_md20", null ],
+      [ "Core Components", "md_docs_2ARCHITECTURE.html#autotoc_md21", [
+        [ "1. The Game Model (<tt>Game</tt>)", "md_docs_2ARCHITECTURE.html#autotoc_md22", null ],
+        [ "2. The Game Data Cache (<tt>GameData</tt>)", "md_docs_2ARCHITECTURE.html#autotoc_md23", null ],
+        [ "3. Repositories", "md_docs_2ARCHITECTURE.html#autotoc_md24", null ],
+        [ "4. Database Connection (<tt>DatabaseConnection</tt>)", "md_docs_2ARCHITECTURE.html#autotoc_md25", null ],
+        [ "5. GUI Views (<tt>GUIView</tt> and Scenes)", "md_docs_2ARCHITECTURE.html#autotoc_md26", null ],
+        [ "6. Save System", "md_docs_2ARCHITECTURE.html#autotoc_md27", null ]
       ] ]
     ] ],
     [ "Namespaces", "namespaces.html", [
@@ -76,12 +76,12 @@ var NAVTREEINDEX =
 "SQLLoader_8cpp.html",
 "classGameController.html#abedfd4fe4de4d6c41547259c8d84905c",
 "classMatchEngine.html#a60d449e1560e5439bc7f717363524341",
-"classTeam.html#a5791d1f6408652605c5939e544690e1b",
-"index.html",
-"roles_8h.html#a25049a19fe6ffc37f4035732b370b42ca618441d41cce47dbcfd9bed6e5ff64e6",
-"structMatchSceneTuning_1_1GoalFrame.html#ada43460dd9e233f9a724a9a31403edb8",
-"structMatchTuning_1_1Passing.html#a23b0c0bf4434450db631ad3cea5928e0",
-"structMatchTuning_1_1Shooting.html#a7eb753b6e5c5a430aa0f1bc897475d5b"
+"classStrategyScene.html#acf32061583a40f86dbe73db76a1d170b",
+"gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fabb51e5cf1f3cdf49fcd5d029c4641838",
+"roles_8h.html",
+"structMatchSceneTuning_1_1Events.html",
+"structMatchTuning_1_1Passing.html",
+"structMatchTuning_1_1Shooting.html#a489fa0d1df1de447d6e60e3cf165c553"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

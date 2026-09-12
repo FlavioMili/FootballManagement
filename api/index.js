@@ -16,10 +16,5 @@ var index =
       [ "2. Separation of Concerns", "index.html#autotoc_md15", null ],
       [ "3. State Management", "index.html#autotoc_md16", null ]
     ] ],
-    [ "Development Roadmap", "index.html#autotoc_md18", [
-      [ "Phase 1: Core Simulation Engine ✅", "index.html#autotoc_md19", null ],
-      [ "Phase 2: Gameplay Mechanics 🚧", "index.html#autotoc_md20", null ],
-      [ "Phase 3: Advanced Simulation", "index.html#autotoc_md21", null ],
-      [ "Phase 4: User Interface 🚧", "index.html#autotoc_md22", null ]
-    ] ]
+    [ "Development roadmap", "index.html#autotoc_md18", null ]
 ];

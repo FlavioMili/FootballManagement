@@ -18,7 +18,8 @@ We welcome contributions from humans and AI alike! Before you start, please chec
 * **[AI Guidelines](AI_GUIDELINES.md)**: We are proudly **pro-AI**. However, all AI-assisted code must be explicitly declared and heavily human-reviewed. Read this file to understand our philosophy.
 * **[Code of Conduct](CODE_OF_CONDUCT.md)**: We are committed to fostering a welcoming and inclusive environment.
 * **[Agent Context](AGENT.md)**: If you are an autonomous AI Agent, read this file for specific architectural constraints and tooling requirements.
-* **[Development Handoff](DEVELOPMENT_HANDOFF.md)**: Verified implementation state, exact tests, performance workflow, debug artifacts, and bounded next tasks for continuing match AI, presentation, and transfers.
+* **[Implementation Plan](TODO.md)**: Ordered implementation work, acceptance criteria, and release scope.
+* **[Development Handoff](DEVELOPMENT_HANDOFF.md)**: Verified current state, safety constraints, and the next bounded task.
 
 ---
 
@@ -47,26 +48,19 @@ brew install gcc make sdl3 sdl3_ttf sqlite spdlog fmt
 ```
 
 ### Installing and Compiling
-```bash 
+```bash
 git clone https://github.com/FlavioMili/FootballManagement
 cd FootballManagement
-mkdir build && cd build
-
-# Debug build (includes DEBUG macro and sanitizers)
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-
-# Release build (optimized, no debug info)
-cmake -DCMAKE_BUILD_TYPE=Release ..
-
-# Release with debug info (optimized + debug symbols)
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
-
-make -j $(nproc)
+cmake --preset release
+cmake --build --preset release --parallel 2
 ```
+
+For sanitizer, test, profiling, and clang-tidy presets, see
+[Reproducible builds](docs/development/builds.md).
 
 ### Have fun (and report issues :D)
 ```bash
-./FootballManagement
+./out/build/release/src/FootballManagement
 ```
 
 ---
@@ -97,45 +91,14 @@ Adherence to these principles is crucial for long-term development success.
 
 ---
 
-## Development Roadmap
+## Development roadmap
 
-### Phase 1: Core Simulation Engine ✅
-- [x] Modular, data-driven player stat system
-- [x] SQLite database for all game data
-- [x] First-run data generation for leagues and teams
-- [x] Basic season simulation with league-specific calendar
-- [x] Leaderboard and point system
-- [x] Basic CLI for interaction - out of development but might be retaken into consideration
-- [x] Save/Load functionality
+The authoritative ordered roadmap and completion criteria are in
+[TODO.md](TODO.md). It supersedes the former phase checklist, which had become
+stale—for example, the source already has a daily `Game::advanceDay()` clock,
+and contracts/transfers have more functionality than the old labels implied.
 
-### Phase 2: Gameplay Mechanics 🚧
-- **Player Progression:**
-  - [x] Player aging at season end
-  - [x] Player development
-  - [x] Player retirement
-  - [ ] Regen logic to maintain player pool
-- **Transfers & Contracts:**
-  - [x] Persistent listings, bids, AI activity, transactional transfers, and free-agent signings
-  - [x] Persisted wages and contract duration
-  - [ ] Player/club contract negotiation and contract expiry
-  - [ ] Player selection before starting the game
-- **Team Finances:**
-  - [x] Track and persist team balance through transfers
-  - [ ] Bankruptcy consequences
-
-### Phase 3: Advanced Simulation
-- **Calendar Overhaul:**
-  - [ ] Replace "matchday" structure with 365-day time model
-- **Tactics & Strategy:**
-  - [x] Link core team tactics to match AI behavior
-  - [ ] Add role-specific tactical instructions and team phases
-- **Player Morale, Form and training:**
-  - [ ] Dynamic player morale based on playtime and results
-  - [ ] Add training sessions
-
-### Phase 4: User Interface 🚧
-- **Graphical User Interface (GUI):**
-  - [x] Port to Dear ImGui
-  - [x] Implement robust Language System (JSON)
-  - [ ] Improve the GUI layout (Docking, Data Visualizations)
-  - [ ] Expand database to support advanced GUI elements (avatars, crests)
+The verified current baseline and safe continuation point are in
+[DEVELOPMENT_HANDOFF.md](DEVELOPMENT_HANDOFF.md). The isolated suite is safe to
+run; use an explicit fixture/runtime root for profiling rather than a personal
+save.
