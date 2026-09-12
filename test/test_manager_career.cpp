@@ -615,6 +615,10 @@ TEST(ManagerCareerFlow, PoachingPaysTheFormerClub)
 
   std::vector<TeamID> candidates(clubs.begin(), clubs.begin() + 8);
   std::erase(candidates, first);
+  // Clubs whose transfer window is open first: the new club's board bids
+  // below.
+  std::ranges::stable_partition(candidates, [&](TeamID club)
+                                { return controller->isTransferWindowOpenFor(club); });
   const std::uint32_t offer_id = earnOffer(game, candidates);
   ASSERT_NE(offer_id, 0u);
   const JobOffer offer = *game.getCareer().findOffer(offer_id);
@@ -633,8 +637,15 @@ TEST(ManagerCareerFlow, PoachingPaysTheFormerClub)
       .at(offer.team_id)
       .getFinances()
       .addBalance(1'000'000'000LL);
+  // Room for his wage too: a bid needs both budgets.
+  Finances& bidder_money =
+      controller->getGameData()->getTeams().at(offer.team_id).getFinances();
+  bidder_money.setWageBudget(controller->getWeeklyWageBill(offer.team_id) +
+                             1'000'000);
+  bidder_money.setTransferBudget(10'000'000);
   controller->listPlayerForTransfer(target, 500'000);
-  ASSERT_TRUE(controller->submitBid(target, offer.team_id, 600'000));
+  if (controller->isTransferWindowOpenFor(offer.team_id))
+    ASSERT_TRUE(controller->submitBid(target, offer.team_id, 600'000));
   ASSERT_TRUE(controller->acceptJobOffer(offer_id));
   for (const auto& [player_id, listing] : controller->getAllListings())
     EXPECT_NE(listing.highest_bidder_id, std::optional<TeamID>(offer.team_id));

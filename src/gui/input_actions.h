@@ -173,6 +173,14 @@ class ActionRegistry
   [[nodiscard]] bool matches(ActionId id, const SDL_KeyboardEvent& event) const;
   [[nodiscard]] bool matches(std::string_view id,
                              const SDL_KeyboardEvent& event) const;
+  /**
+   * @brief Like matches() but ignoring the modifiers held (key down or up):
+   * for held game controls, so a pass key still works while Shift sprints.
+   */
+  [[nodiscard]] bool matchesKey(ActionId id,
+                                const SDL_KeyboardEvent& event) const;
+  [[nodiscard]] bool matchesKey(std::string_view id,
+                                const SDL_KeyboardEvent& event) const;
 
   /**
    * @brief Another action that would clash with @p chord in @p slot of
@@ -264,6 +272,18 @@ inline constexpr std::string_view CAMERA_DIRECTOR = "camera.director";
 inline constexpr std::string_view CAMERA_FOLLOW_BALL = "camera.follow_ball";
 inline constexpr std::string_view CAMERA_RESET = "camera.reset";
 inline constexpr std::string_view SCREENSHOT = "general.screenshot";
+/** Play mode, on the pitch (Context::PLAY). Sprint stays on Shift. */
+inline constexpr std::string_view PLAY_UP = "play.up";
+inline constexpr std::string_view PLAY_DOWN = "play.down";
+inline constexpr std::string_view PLAY_LEFT = "play.left";
+inline constexpr std::string_view PLAY_RIGHT = "play.right";
+inline constexpr std::string_view PLAY_PASS = "play.pass";
+inline constexpr std::string_view PLAY_SHOOT = "play.shoot";
+inline constexpr std::string_view PLAY_THROUGH = "play.through";
+inline constexpr std::string_view PLAY_LOB = "play.lob";
+inline constexpr std::string_view PLAY_SWITCH = "play.switch";
+inline constexpr std::string_view PLAY_JOCKEY = "play.jockey";
+inline constexpr std::string_view PLAY_PAUSE = "play.pause";
 /** Shouts are "match.shout.0" .. "match.shout.10" (MatchChanges::SHOUTS). */
 inline constexpr std::size_t SHOUT_COUNT = 11;
 std::string shout(std::size_t index);

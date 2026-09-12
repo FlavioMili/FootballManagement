@@ -985,7 +985,14 @@ void YouthAcademy::onSeasonStart(const GameDateValue& date,
   for (const auto& [team_id, academy] : clubs)
     if (team_id != managed_team_id) computer_clubs.push_back(team_id);
   std::ranges::sort(computer_clubs);
-  for (const TeamID team_id : computer_clubs) fillComputerReserves(team_id);
+  for (const TeamID team_id : computer_clubs)
+  {
+    // Short senior squads (expired contracts, retirements) take the best
+    // youngsters first; long ones send the young players outside their plans
+    // to the U21s. Both stop at the same size, so nobody moves back and forth.
+    fillComputerSeniors(team_id);
+    fillComputerReserves(team_id);
+  }
   std::ranges::sort(graduates);
   std::ranges::sort(to_reserves);
   std::ranges::sort(eligible);
@@ -1618,6 +1625,50 @@ void YouthAcademy::setUpReserves(TeamID managed_team_id)
   }
   std::ranges::sort(pending);
   for (const TeamID team_id : pending) fillComputerReserves(team_id);
+}
+
+void YouthAcademy::fillComputerSeniors(TeamID team_id)
+{
+  const auto team = gamedata->getTeam(team_id);
+  if (!team) return;
+  std::size_t seniors = firstTeamSize(team_id);
+  if (seniors >= RESERVE_SENIOR_FLOOR) return;
+  const int pro_age = std::max(
+      YouthModel::PRO_POLICY_AGE,
+      YouthModel::firstProfessionalAge(
+          leagueProfile(team->get().getLeagueId()).domestic_nationality));
+  const StatsConfig& config = gamedata->getStatsConfig();
+  std::vector<std::pair<double, PlayerID>> ranked;
+  for (const auto& [player_id, youth] : records)
+  {
+    if (youth.team_id != team_id ||
+        (youth.status != YouthStatus::Reserve &&
+         youth.status != YouthStatus::Squad))
+      continue;
+    const auto player = gamedata->getPlayer(player_id);
+    if (!player || player->get().getTeamId() != team_id ||
+        (youth.status == YouthStatus::Squad &&
+         player->get().getAge() < pro_age))
+      continue;
+    ranked.emplace_back(player->get().getOverall(config), player_id);
+  }
+  std::ranges::sort(ranked,
+                    [](const auto& a, const auto& b)
+                    {
+                      return a.first != b.first ? a.first > b.first
+                                                : a.second < b.second;
+                    });
+  for (const auto& [overall, player_id] : ranked)
+  {
+    if (seniors >= RESERVE_SENIOR_FLOOR) break;
+    Player& player = gamedata->getPlayers().at(player_id);
+    YouthRecord& youth = records.at(player_id);
+    if (youth.contract != YouthContract::Professional)
+      applyContract(player, youth, YouthContract::Professional);
+    youth.status = YouthStatus::Graduated;
+    gamedata->setAcademyMember(player_id, false);
+    ++seniors;
+  }
 }
 
 void YouthAcademy::fillComputerReserves(TeamID team_id)

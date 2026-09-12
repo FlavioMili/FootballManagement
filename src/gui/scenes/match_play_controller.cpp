@@ -10,8 +10,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <string_view>
+#include <utility>
 
 #include "global/logger.h"
+#include "gui/input_actions.h"
 
 namespace
 {
@@ -91,31 +94,27 @@ void MatchPlayController::end(MatchEngine& engine)
 }
 
 MatchPlayController::Control MatchPlayController::controlForKey(
-    SDL_Scancode scancode)
+    const SDL_KeyboardEvent& key)
 {
-  switch (scancode)
-  {
-    case SDL_SCANCODE_J:
-      return PASS;
-    case SDL_SCANCODE_K:
-      return SHOOT;
-    case SDL_SCANCODE_L:
-      return THROUGH;
-    case SDL_SCANCODE_I:
-      return LOB;
-    case SDL_SCANCODE_Q:
-      return SWITCH;
-    case SDL_SCANCODE_LSHIFT:
-    case SDL_SCANCODE_RSHIFT:
-      return SPRINT;
-    case SDL_SCANCODE_E:
-      return JOCKEY;
-    case SDL_SCANCODE_ESCAPE:
-    case SDL_SCANCODE_P:
-      return PAUSE;
-    default:
-      return CONTROL_COUNT;
-  }
+  // Sprint is held with the other keys, so it stays on the modifier.
+  if (key.scancode == SDL_SCANCODE_LSHIFT || key.scancode == SDL_SCANCODE_RSHIFT)
+    return SPRINT;
+  static constexpr std::array<std::pair<std::string_view, Control>, 11>
+      BINDINGS{{{Input::Ids::PLAY_UP, UP},
+                {Input::Ids::PLAY_DOWN, DOWN},
+                {Input::Ids::PLAY_LEFT, LEFT},
+                {Input::Ids::PLAY_RIGHT, RIGHT},
+                {Input::Ids::PLAY_PASS, PASS},
+                {Input::Ids::PLAY_SHOOT, SHOOT},
+                {Input::Ids::PLAY_THROUGH, THROUGH},
+                {Input::Ids::PLAY_LOB, LOB},
+                {Input::Ids::PLAY_SWITCH, SWITCH},
+                {Input::Ids::PLAY_JOCKEY, JOCKEY},
+                {Input::Ids::PLAY_PAUSE, PAUSE}}};
+  const Input::ActionRegistry& registry = Input::registry();
+  for (const auto& [id, control] : BINDINGS)
+    if (registry.matchesKey(id, key)) return control;
+  return CONTROL_COUNT;
 }
 
 MatchPlayController::Control MatchPlayController::controlForButton(int button)
@@ -152,28 +151,23 @@ bool MatchPlayController::handleEvent(const SDL_Event& event)
       const SDL_Scancode scancode = event.key.scancode;
       if (scancode < 0 || scancode >= SDL_SCANCODE_COUNT) return false;
       const bool down = event.type == SDL_EVENT_KEY_DOWN;
-      const bool movement =
-          scancode == SDL_SCANCODE_W || scancode == SDL_SCANCODE_A ||
-          scancode == SDL_SCANCODE_S || scancode == SDL_SCANCODE_D ||
-          scancode == SDL_SCANCODE_UP || scancode == SDL_SCANCODE_DOWN ||
-          scancode == SDL_SCANCODE_LEFT || scancode == SDL_SCANCODE_RIGHT;
-      const Control control = controlForKey(scancode);
-      if (!movement && control == CONTROL_COUNT) return false;
-      const bool wasDown = keys[static_cast<std::size_t>(scancode)];
-      keys[static_cast<std::size_t>(scancode)] = down;
-      if (control != CONTROL_COUNT && down != wasDown)
+      std::uint8_t& holding = keys[static_cast<std::size_t>(scancode)];
+      if (!down)
       {
-        if (down)
-        {
-          ++keyHolds[control];
-          press(control);
-        }
-        else
-        {
-          if (keyHolds[control] > 0) --keyHolds[control];
-          release(control);
-        }
+        // The release ends what this key's press started.
+        if (holding == 0) return controlForKey(event.key) != CONTROL_COUNT;
+        const auto control = static_cast<Control>(holding - 1);
+        holding = 0;
+        if (keyHolds[control] > 0) --keyHolds[control];
+        release(control);
+        return true;
       }
+      if (holding != 0) return true;  // auto-repeat of a held key
+      const Control control = controlForKey(event.key);
+      if (control == CONTROL_COUNT) return false;
+      holding = static_cast<std::uint8_t>(control + 1);
+      ++keyHolds[control];
+      press(control);
       return true;
     }
     case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
@@ -309,16 +303,11 @@ void MatchPlayController::readStick(float& x, float& y) const
       y *= scale;
     }
   }
-  // The keys add to the stick (whichever is used).
-  const auto down = [this](SDL_Scancode first, SDL_Scancode second)
-  {
-    return keys[static_cast<std::size_t>(first)] ||
-           keys[static_cast<std::size_t>(second)];
-  };
-  const float keyX = (down(SDL_SCANCODE_D, SDL_SCANCODE_RIGHT) ? 1.0f : 0.0f) -
-                     (down(SDL_SCANCODE_A, SDL_SCANCODE_LEFT) ? 1.0f : 0.0f);
-  const float keyY = (down(SDL_SCANCODE_S, SDL_SCANCODE_DOWN) ? 1.0f : 0.0f) -
-                     (down(SDL_SCANCODE_W, SDL_SCANCODE_UP) ? 1.0f : 0.0f);
+  // The movement keys replace the stick while held.
+  const float keyX = (keyHolds[RIGHT] > 0 ? 1.0f : 0.0f) -
+                     (keyHolds[LEFT] > 0 ? 1.0f : 0.0f);
+  const float keyY =
+      (keyHolds[DOWN] > 0 ? 1.0f : 0.0f) - (keyHolds[UP] > 0 ? 1.0f : 0.0f);
   if (keyX != 0.0f || keyY != 0.0f)
   {
     const float length = std::hypot(keyX, keyY);

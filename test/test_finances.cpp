@@ -250,6 +250,32 @@ TEST(ClubEconomyTest, AttendanceFollowsSuccessPriceAndCapacity)
       ClubEconomy::attendance(economy, profile, 0.0, 80, MatchType::FRIENDLY),
       neutral);
 
+  // Gate income peaks a little above the reference price; far above it the
+  // ground empties.
+  const auto gate = [&](double ratio)
+  {
+    ClubProfile priced = profile;
+    priced.ticket_price = static_cast<std::uint32_t>(
+        std::lround(ratio * static_cast<double>(profile.ticket_price)));
+    return static_cast<double>(ClubEconomy::attendance(
+               economy, priced, 0.0, 80, MatchType::LEAGUE)) *
+           static_cast<double>(priced.ticket_price);
+  };
+  double best_ratio = 0.0;
+  double best_gate = 0.0;
+  for (double ratio = 0.5; ratio <= 4.0; ratio += 0.05)
+  {
+    if (gate(ratio) > best_gate)
+    {
+      best_gate = gate(ratio);
+      best_ratio = ratio;
+    }
+  }
+  EXPECT_GT(best_ratio, 1.0);
+  EXPECT_LT(best_ratio, 1.8);
+  EXPECT_LT(gate(3.0), 0.5 * gate(1.0));
+  EXPECT_LT(gate(10.0), 0.01 * gate(1.0));
+
   // At the reference price a season of home games meets the gate target.
   const double season_gate = static_cast<double>(neutral) *
                              static_cast<double>(profile.ticket_price) *

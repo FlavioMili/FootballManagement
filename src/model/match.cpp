@@ -18,6 +18,7 @@
 #include "model/calendar.h"
 #include "model/competition.h"
 #include "model/match_engine.h"
+#include "model/medical_centre.h"
 #include "model/match_report.h"
 #include "model/match_scheduler.h"
 #include "model/world_simulation.h"
@@ -281,13 +282,12 @@ std::size_t MatchdaySquad::replaceIneligible(
       }
     }
     if (replacement == nullptr) continue;
+    // From outside the matchday squad he takes the starter's place outright
+    // (the bench is full); from the bench the two swap.
     if (fromPool)
-    {
-      std::vector<const Player*> reserves = lineup.getReserves();
-      reserves.push_back(replacement);
-      lineup.setReserves(reserves);
-    }
-    lineup.swapPlayers(replacement->getId(), starter->getId());
+      lineup.bringIn(replacement, starter->getId());
+    else
+      lineup.swapPlayers(replacement->getId(), starter->getId());
   }
 
   // Unavailable reserves (including the starters just benched) leave the
@@ -332,6 +332,22 @@ std::vector<std::pair<PlayerID, PlayerID>> MatchdaySquad::replacements(
       result.emplace_back(reserve->getId(), PlayerID{});
   }
   return result;
+}
+
+std::vector<std::pair<PlayerID, std::uint8_t>> MatchdaySquad::medicalFlags(
+    const MedicalDesk& medical, const Lineup& lineup)
+{
+  std::vector<std::pair<PlayerID, std::uint8_t>> flagged;
+  const auto add = [&](const Player* player)
+  {
+    if (!player) return;
+    if (const std::uint8_t flags = medical.flags(player->getId()); flags != 0)
+      flagged.emplace_back(player->getId(), flags);
+  };
+  add(lineup.getGoalkeeper());
+  for (const auto& outfield : lineup.getOutfieldPlayers()) add(outfield.player);
+  for (const Player* reserve : lineup.getReserves()) add(reserve);
+  return flagged;
 }
 
 void MatchdaySquad::carryCondition(MatchEngine& engine, const Lineup& lineup)

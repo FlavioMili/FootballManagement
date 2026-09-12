@@ -332,6 +332,10 @@ struct TransferTuning final
      * of the wage, so smaller clubs can afford its prospects. [P] */
     static constexpr int SMALL_BORROWER_REPUTATION_GAP = 10;
     static constexpr std::uint8_t SMALL_BORROWER_WAGE_SHARE = 25;
+    /** A recall clause can be used only this many days into the loan (the
+     * January window for a summer loan), so a loan fee is never pocketed by
+     * recalling the player at once. [P] */
+    static constexpr int RECALL_MIN_DAYS = 90;
   };
 
   /**
@@ -385,6 +389,10 @@ struct TransferTuning final
     /** Share of clubs signing a free agent per day while the window is
      * shut, and pre-contract approaches per club and day from 1 January. */
     static constexpr float CLOSED_WINDOW_SIGNING_SHARE = 0.017f;
+    /** Clubs between windows in countries that register free agents any
+     * day (the Americas) sign them at the open-window pace times this
+     * weight in July, when the 30 June expiries fill the pool. [P] */
+    static constexpr float JULY_FREE_AGENT_WEIGHT = 2.0f;
     static constexpr float DAILY_PRE_CONTRACT_SHARE = 0.0125f;
 
     /** Count for @p clubs clubs at @p share (at least one). */
@@ -399,6 +407,13 @@ struct TransferTuning final
      * AI_MAX_SQUAD + 2. [P] */
     static constexpr std::size_t AI_TARGET_SQUAD = 26;
     static constexpr std::size_t AI_MAX_SQUAD = 30;
+    /** The managed club registers at most this many senior players
+     * (loanees and agreed pre-contracts included, the academy not): a full
+     * starting squad of AI_MAX_SQUAD plus room for a few signings. [P] */
+    static constexpr std::size_t MANAGED_MAX_SQUAD = 36;
+    /** Computer-managed clubs never sell, loan or release a goalkeeper
+     * below this many senior goalkeepers. [P] */
+    static constexpr int MIN_AI_SENIOR_KEEPERS = 2;
     static constexpr int MAX_LOAN_LISTED_PER_CLUB = 8;
     /** Clubs sounded out when placing a loan-listed prospect. */
     static constexpr int LOAN_PLACEMENT_TRIES = 8;

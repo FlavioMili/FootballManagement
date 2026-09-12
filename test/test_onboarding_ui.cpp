@@ -424,12 +424,13 @@ TEST(InputActionsTest, LaterRegisteredActionsPickUpStoredBindings)
   // replace the manager's match keys while the team is controlled.
   const Input::ActionId pass = registry.registerAction(
       {"test.pass", "ACTION_HELP", Input::Category::PLAY, Input::Context::PLAY,
-       ImGuiKey_J});
-  const auto clash = registry.conflictFor(sprint, ImGuiKey_J, 0);
+       ImGuiKey_U});
+  const auto clash = registry.conflictFor(sprint, ImGuiKey_U, 0);
   ASSERT_TRUE(clash.has_value());
   EXPECT_EQ(clash->first, pass);
   EXPECT_TRUE(registry.conflictFor(sprint, ImGuiKey_F12, 0).has_value());
-  EXPECT_FALSE(registry.conflictFor(sprint, ImGuiKey_S, 0).has_value());
+  // T only means something to the manager (tactics), never on the pitch.
+  EXPECT_FALSE(registry.conflictFor(sprint, ImGuiKey_T, 0).has_value());
   EXPECT_FALSE(registry.conflictFor(sprint, ImGuiKey_F3, 0).has_value());
 }
 

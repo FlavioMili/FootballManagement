@@ -135,20 +135,66 @@ ImGuiKeyChord modsOfEvent(SDL_Keymod mod)
   return mods;
 }
 
-/** Character keys by what they type (letters, digits). */
+ImGuiKey keyOfScancode(SDL_Scancode scancode)
+{
+  const auto found = std::ranges::find(KEYS, scancode, &KeyInfo::scancode);
+  return found != KEYS.end() ? found->key : ImGuiKey_None;
+}
+
+/**
+ * Keys by what they type (letters, digits, punctuation) and the named keys
+ * (Esc, Enter, arrows, F-keys...) by their key code, so an event that only
+ * carries the key code still matches.
+ */
 ImGuiKey keyOfKeycode(SDL_Keycode keycode)
 {
   if (keycode >= SDLK_A && keycode <= SDLK_Z)
     return static_cast<ImGuiKey>(ImGuiKey_A + static_cast<int>(keycode - SDLK_A));
   if (keycode >= SDLK_0 && keycode <= SDLK_9)
     return static_cast<ImGuiKey>(ImGuiKey_0 + static_cast<int>(keycode - SDLK_0));
-  return ImGuiKey_None;
-}
-
-ImGuiKey keyOfScancode(SDL_Scancode scancode)
-{
-  const auto found = std::ranges::find(KEYS, scancode, &KeyInfo::scancode);
-  return found != KEYS.end() ? found->key : ImGuiKey_None;
+  // Keys without a character carry their scancode in the key code.
+  if ((keycode & SDLK_SCANCODE_MASK) != 0)
+    return keyOfScancode(
+        static_cast<SDL_Scancode>(keycode & ~SDLK_SCANCODE_MASK));
+  switch (keycode)
+  {
+    case SDLK_ESCAPE:
+      return ImGuiKey_Escape;
+    case SDLK_RETURN:
+      return ImGuiKey_Enter;
+    case SDLK_SPACE:
+      return ImGuiKey_Space;
+    case SDLK_TAB:
+      return ImGuiKey_Tab;
+    case SDLK_BACKSPACE:
+      return ImGuiKey_Backspace;
+    case SDLK_DELETE:
+      return ImGuiKey_Delete;
+    case SDLK_MINUS:
+      return ImGuiKey_Minus;
+    case SDLK_EQUALS:
+      return ImGuiKey_Equal;
+    case SDLK_COMMA:
+      return ImGuiKey_Comma;
+    case SDLK_PERIOD:
+      return ImGuiKey_Period;
+    case SDLK_SLASH:
+      return ImGuiKey_Slash;
+    case SDLK_SEMICOLON:
+      return ImGuiKey_Semicolon;
+    case SDLK_APOSTROPHE:
+      return ImGuiKey_Apostrophe;
+    case SDLK_LEFTBRACKET:
+      return ImGuiKey_LeftBracket;
+    case SDLK_RIGHTBRACKET:
+      return ImGuiKey_RightBracket;
+    case SDLK_BACKSLASH:
+      return ImGuiKey_Backslash;
+    case SDLK_GRAVE:
+      return ImGuiKey_GraveAccent;
+    default:
+      return ImGuiKey_None;
+  }
 }
 
 ImGuiKeyChord chordOf(ImGuiKey key, ImGuiKeyChord mods)
@@ -229,6 +275,25 @@ void registerBuiltins(ActionRegistry& registry)
       X::MATCH, ImGuiKey_B);
   add(Ids::CAMERA_RESET, "ACTION_CAMERA_RESET", C::CAMERA, X::MATCH,
       ImGuiKey_R);
+
+  // Play mode: the keys drive the active footballer instead of the
+  // manager's match keys (the contexts never overlap).
+  add(Ids::PLAY_UP, "ACTION_PLAY_UP", C::PLAY, X::PLAY, ImGuiKey_W,
+      ImGuiKey_UpArrow);
+  add(Ids::PLAY_DOWN, "ACTION_PLAY_DOWN", C::PLAY, X::PLAY, ImGuiKey_S,
+      ImGuiKey_DownArrow);
+  add(Ids::PLAY_LEFT, "ACTION_PLAY_LEFT", C::PLAY, X::PLAY, ImGuiKey_A,
+      ImGuiKey_LeftArrow);
+  add(Ids::PLAY_RIGHT, "ACTION_PLAY_RIGHT", C::PLAY, X::PLAY, ImGuiKey_D,
+      ImGuiKey_RightArrow);
+  add(Ids::PLAY_PASS, "ACTION_PLAY_PASS", C::PLAY, X::PLAY, ImGuiKey_J);
+  add(Ids::PLAY_SHOOT, "ACTION_PLAY_SHOOT", C::PLAY, X::PLAY, ImGuiKey_K);
+  add(Ids::PLAY_THROUGH, "ACTION_PLAY_THROUGH", C::PLAY, X::PLAY, ImGuiKey_L);
+  add(Ids::PLAY_LOB, "ACTION_PLAY_LOB", C::PLAY, X::PLAY, ImGuiKey_I);
+  add(Ids::PLAY_SWITCH, "ACTION_PLAY_SWITCH", C::PLAY, X::PLAY, ImGuiKey_Q);
+  add(Ids::PLAY_JOCKEY, "ACTION_PLAY_JOCKEY", C::PLAY, X::PLAY, ImGuiKey_E);
+  add(Ids::PLAY_PAUSE, "ACTION_PLAY_PAUSE", C::PLAY, X::PLAY, ImGuiKey_Escape,
+      ImGuiKey_P);
 
   // Shift with the number row, then the key right of 0 (MatchShoutsBar).
   static constexpr std::array<ImGuiKey, Ids::SHOUT_COUNT> SHOUT_KEYS = {
@@ -406,6 +471,28 @@ bool ActionRegistry::matches(std::string_view id,
 {
   const auto found = find(id);
   return found && matches(*found, event);
+}
+
+bool ActionRegistry::matchesKey(ActionId id,
+                                const SDL_KeyboardEvent& event) const
+{
+  if (id >= actions.size()) return false;
+  const ImGuiKey byCharacter = keyOfKeycode(event.key);
+  const ImGuiKey byPosition = keyOfScancode(event.scancode);
+  return std::ranges::any_of(
+      actions[id].chords,
+      [&](ImGuiKeyChord bound)
+      {
+        const ImGuiKey key = keyOf(bound);
+        return key != ImGuiKey_None && (key == byCharacter || key == byPosition);
+      });
+}
+
+bool ActionRegistry::matchesKey(std::string_view id,
+                                const SDL_KeyboardEvent& event) const
+{
+  const auto found = find(id);
+  return found && matchesKey(*found, event);
 }
 
 std::optional<std::pair<ActionId, std::size_t>> ActionRegistry::conflictFor(

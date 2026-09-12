@@ -79,8 +79,11 @@ double fairTicketPrice(const LeagueEconomy& economy,
                        const ClubProfile& profile);
 
 /**
- * Attendance of a home match:
- * min(capacity, capacity * demand * exp(a * success - e * ln(price / ref))).
+ * Attendance of a home match: capacity * interest * price factor, at most
+ * the capacity. interest = max(core, demand * exp(a * success)) for the
+ * opponent and competition; price factor = exp(-e * ln(r) - k * max(0,
+ * r - 1)^2) with r = price / ref, so gate income peaks a little above the
+ * reference price and an overpriced ticket empties the ground.
  * @param success League position and form signal in [-1, 1].
  */
 std::uint32_t attendance(const LeagueEconomy& economy,

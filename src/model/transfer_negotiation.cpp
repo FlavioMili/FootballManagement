@@ -66,6 +66,7 @@ constexpr std::array<const char*, static_cast<std::size_t>(Reason::COUNT)>
         "NEG_REASON_OVER_BUDGET",
         "NEG_REASON_EMBARGO",
         "NEG_REASON_AGENT_FEE_LOW",
+        "NEG_REASON_SQUAD_FULL",
 };
 
 constexpr std::uint32_t FEE_ROUNDING = 10'000;

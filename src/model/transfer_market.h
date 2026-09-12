@@ -227,6 +227,9 @@ class TransferMarket
     TransferKind kind = TransferKind::Permanent;
     TransferNegotiation::OfferTerms terms;
     TransferNegotiation::ContractOffer contract;
+    /** Agreed in an earlier contract (a loan's purchase clause): the
+     * seller's goalkeeper floor does not apply. */
+    bool binding = false;
   };
 
   TransferMarket(std::shared_ptr<GameData> gamedata, WorldSimulation& world,
@@ -335,6 +338,12 @@ class TransferMarket
   /** Fewest senior players a managed squad may keep after a release or
    * a sale. */
   static constexpr std::size_t MIN_SENIOR_SQUAD = 11;
+  /** False when @p leaving is a senior goalkeeper and @p club_id would keep
+   * fewer than Market::MIN_AI_SENIOR_KEEPERS of them (applied to the AI's
+   * sales, loans and releases). */
+  bool keepsAiKeepers(TeamID club_id, PlayerID leaving) const;
+  /** Senior players of a club plus the pre-contracts joining it. */
+  std::size_t seniorSquadSize(TeamID club_id) const;
   /**
    * Renews a player's contract at his club with @p offer: wage, seasons
    * (the current one included), extras, release clause and promise; the
@@ -472,7 +481,10 @@ class TransferMarket
                   TeamID managed_team_id);
   void pay(TeamID payer, TeamID payee, std::int64_t amount,
            const GameDateValue& date);
-  std::int64_t paySellOns(PlayerID player_id, TeamID seller, std::uint32_t fee,
+  /** Pays the sell-on clauses of @p seller's sale to @p buyer; a clause
+   * whose beneficiary is the buyer itself lapses unpaid. */
+  std::int64_t paySellOns(PlayerID player_id, TeamID seller, TeamID buyer,
+                          std::uint32_t fee,
                           const GameDateValue& date);
   void addRecord(const TransferRecord& record);
   void post(const GameDateValue& date, InboxCategory category,

@@ -262,7 +262,7 @@ void TransferMarket::pay(TeamID payer, TeamID payee, std::int64_t amount,
 }
 
 std::int64_t TransferMarket::paySellOns(PlayerID player_id, TeamID seller,
-                                        std::uint32_t fee,
+                                        TeamID buyer, std::uint32_t fee,
                                         const GameDateValue& date)
 {
   std::int64_t total = 0;
@@ -273,6 +273,8 @@ std::int64_t TransferMarket::paySellOns(PlayerID player_id, TeamID seller,
                       obligation.player_id != player_id ||
                       obligation.payer != seller)
                     return false;
+                  // Buying him back ends the club's own clause unpaid.
+                  if (obligation.payee == buyer) return true;
                   const std::int64_t share =
                       static_cast<std::int64_t>(fee) * obligation.amount / 100;
                   if (share > 0)
@@ -493,6 +495,11 @@ bool TransferMarket::completeTransfer(const Deal& deal,
     return false;
   if (deal.kind != TransferKind::PreContract && !canBeTraded(deal.player_id))
     return false;
+  // A computer-managed club never sells the goalkeepers it needs.
+  if (deal.kind != TransferKind::PreContract && !deal.binding &&
+      seller_id != managed_team_id &&
+      !keepsAiKeepers(seller_id, deal.player_id))
+    return false;
   Deal effective = deal;
   if (seller_id == FREE_AGENTS_TEAM_ID)
   {
@@ -507,7 +514,7 @@ bool TransferMarket::completeTransfer(const Deal& deal,
   {
     const std::uint32_t upfront = upfrontAmount(terms);
     const std::int64_t sell_on =
-        paySellOns(deal.player_id, seller_id, terms.fee, date);
+        paySellOns(deal.player_id, seller_id, deal.buyer_id, terms.fee, date);
     buyer_finances.record(date, FinanceCategory::TransferFeeOut,
                           -static_cast<std::int64_t>(upfront));
     if (auto seller = gamedata->getTeam(seller_id))
@@ -635,7 +642,8 @@ bool TransferMarket::startLoan(PlayerID player_id, TeamID borrower_id,
   if (parent == FREE_AGENTS_TEAM_ID || borrower_id == FREE_AGENTS_TEAM_ID ||
       parent == borrower_id || !canBeTraded(player_id) ||
       terms.wage_share > 100 ||
-      !loanWithinLimits(player_id, parent, borrower_id))
+      !loanWithinLimits(player_id, parent, borrower_id) ||
+      (parent != managed_team_id && !keepsAiKeepers(parent, player_id)))
     return false;
 
   LoanDeal loan;
@@ -740,6 +748,7 @@ bool TransferMarket::exerciseLoanOption(PlayerID player_id,
   deal.buyer_id = loan.borrower;
   deal.kind = TransferKind::Permanent;
   deal.terms = aiOfferTerms(loan.option_fee);
+  deal.binding = true;
   deal.contract.weekly_wage = loan.full_wage;
   deal.contract.years = std::clamp<std::uint8_t>(
       std::max<std::uint8_t>(player->getContractYears(), 2), 1,
@@ -765,7 +774,9 @@ bool TransferMarket::endContract(PlayerID player_id, const GameDateValue& date,
   if (!player) return false;
   const TeamID club_id = player->getTeamId();
   const auto club = gamedata->getTeam(club_id);
-  if (!club || club_id == FREE_AGENTS_TEAM_ID || !canBeTraded(player_id))
+  if (!club || club_id == FREE_AGENTS_TEAM_ID || !canBeTraded(player_id) ||
+      (severance_due && club_id != managed_team_id &&
+       !keepsAiKeepers(club_id, player_id)))
     return false;
   const std::int64_t severance =
       severance_due
@@ -844,7 +855,8 @@ void TransferMarket::recordLegacyTransfer(PlayerID player_id, TeamID from_team,
 {
   if (fee > 0 && from_team != FREE_AGENTS_TEAM_ID)
   {
-    const std::int64_t sell_on = paySellOns(player_id, from_team, fee, date);
+    const std::int64_t sell_on =
+        paySellOns(player_id, from_team, to_team, fee, date);
     if (auto seller = gamedata->getTeam(from_team); seller && sell_on > 0)
     {
       Finances& finances = seller->get().getFinances();
@@ -1489,7 +1501,8 @@ void TransferMarket::listLoanProspects(
     if (!player ||
         player->get().getAge() > TransferTuning::Loan::PROSPECT_MAX_AGE ||
         !canBeTraded(player_id) || isLoanListed(player_id) ||
-        player->get().getTransferStatus() == TransferStatus::Listed)
+        player->get().getTransferStatus() == TransferStatus::Listed ||
+        !keepsAiKeepers(player->get().getTeamId(), player_id))
       continue;
     setLoanListed(player_id, true);
     ++listed;
@@ -1650,7 +1663,8 @@ bool TransferMarket::aiTakeLoan(TeamID club_id, const AiNeed& need,
     const double overall = p.getOverall(config);
     if (overall < best_overall ||
         (best && overall == best_overall && player_id > *best) ||
-        !canBeTraded(player_id))
+        !canBeTraded(player_id) ||
+        (parent != managed_team_id && !keepsAiKeepers(parent, player_id)))
       continue;
     const auto parent_team = gamedata->getTeam(parent);
     const int gap = parent_team ? parent_team->get().getReputation() -
@@ -1747,6 +1761,7 @@ bool TransferMarket::aiBuy(
            owner != FREE_AGENTS_TEAM_ID &&
            positionGroup(player.getRole()) == need.group &&
            canBeTraded(player.getId()) &&
+           keepsAiKeepers(owner, player.getId()) &&
            player.getOverall(config) >= static_cast<double>(need.min_overall);
   };
 
@@ -1805,6 +1820,7 @@ bool TransferMarket::aiBuy(
     {
       deal.terms = OfferTerms{};
       deal.terms.fee = sale.release_clause;
+      deal.binding = true;
     }
     const PlayerContext context =
         playerContext(player_id, club_id, ContractKind::Transfer);
@@ -2070,6 +2086,38 @@ bool TransferMarket::keepsSquadFloor(TeamID club_id, PlayerID leaving,
   return seniors >= MIN_SENIOR_SQUAD && !no_keeper;
 }
 
+bool TransferMarket::keepsAiKeepers(TeamID club_id, PlayerID leaving) const
+{
+  const auto player = gamedata->getPlayer(leaving);
+  const auto club = gamedata->getTeam(club_id);
+  if (!player || !club || club_id == FREE_AGENTS_TEAM_ID ||
+      player->get().getRole() != PlayerRole::GK || player->get().isAcademyPlayer())
+    return true;
+  int keepers = 0;
+  for (const PlayerID player_id : club->get().getPlayerIDs())
+  {
+    const auto other = gamedata->getPlayer(player_id);
+    if (player_id != leaving && other && !other->get().isAcademyPlayer() &&
+        other->get().getRole() == PlayerRole::GK)
+      ++keepers;
+  }
+  return keepers >= TransferTuning::Market::MIN_AI_SENIOR_KEEPERS;
+}
+
+std::size_t TransferMarket::seniorSquadSize(TeamID club_id) const
+{
+  const auto club = gamedata->getTeam(club_id);
+  if (!club) return 0;
+  std::size_t count = 0;
+  for (const PlayerID player_id : club->get().getPlayerIDs())
+    if (const auto player = gamedata->getPlayer(player_id);
+        player && !player->get().isAcademyPlayer())
+      ++count;
+  for (const auto& [player_id, deal] : pre_contracts)
+    if (deal.to_team == club_id) ++count;
+  return count;
+}
+
 std::uint32_t TransferMarket::deservedWage(PlayerID player_id,
                                            TeamID club_id) const
 {
@@ -2151,6 +2199,7 @@ bool TransferMarket::payReleaseClause(TeamID club_id, PlayerID player_id,
   deal.buyer_id = club_id;
   deal.kind = TransferKind::Permanent;
   deal.terms.fee = clause;
+  deal.binding = true;  // A clause cannot be refused.
   deal.contract = demandedOffer(contractDemand(
       playerContext(player_id, club_id, ContractKind::Transfer)));
   const std::int64_t cash = static_cast<std::int64_t>(clause) +

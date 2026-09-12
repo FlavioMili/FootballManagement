@@ -843,7 +843,9 @@ void TransferMarketScene::refreshLoans()
             : fmt::sprintf(LOC(loan.obligation ? "TRANSFER_LOAN_OBLIGATION"
                                                : "TRANSFER_LOAN_OPTION"),
                            Format::money(loan.option_fee));
-    row.can_recall = !row.incoming && loan.recall_clause && window.open;
+    // The recall button shows once the clause can be used (open window,
+    // minimum spell served).
+    row.can_recall = !row.incoming && controller.canRecallLoan(player_id);
     row.can_buy = row.incoming && loan.option_fee > 0;
     (row.incoming ? loans_in : loans_out) += 1;
     loans.push_back(std::move(row));

@@ -8,6 +8,7 @@
 
 #pragma once
 #include <array>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -151,11 +152,32 @@ class Lineup
   const std::vector<PositionedPlayer>& getOutfieldPlayers() const;
 
   // Reserves
+  /** @brief Substitutes named for a match (the top-league norm). */
+  static constexpr size_t MAX_SUBSTITUTES = 9;
+
   /**
-   * @brief Sets the reserve players.
+   * @brief Sets the substitutes. Starters and duplicates are skipped; more
+   * than MAX_SUBSTITUTES are cut down with chooseBench() (pass the
+   * candidates best first).
    * @param subs A vector of pointers to the reserve Player objects.
    */
   void setReserves(const std::vector<const Player*>& subs);
+
+  /**
+   * @brief A matchday bench of at most MAX_SUBSTITUTES from @p candidates
+   * (best first): available players before injured ones, a reserve
+   * goalkeeper and one defender, midfielder and forward as cover, then the
+   * rest in order.
+   */
+  static std::vector<const Player*> chooseBench(
+      std::span<const Player* const> candidates);
+
+  /**
+   * @brief Puts @p player, who is not in the matchday squad, in place of the
+   * starter or substitute @p replaced, who leaves the squad.
+   * @return false when @p player is already selected or @p replaced is not.
+   */
+  bool bringIn(const Player* player, PlayerID replaced);
 
   /**
    * @brief Gets the reserve players.

@@ -59,6 +59,15 @@ std::unique_ptr<GameController> makeWorld(int slot)
   return controller;
 }
 
+/** A new world after its first day: the national teams form when the
+ * season's international calendar is planned. */
+std::unique_ptr<GameController> makeNationsWorld(int slot)
+{
+  auto controller = makeWorld(slot);
+  controller->advanceDay();
+  return controller;
+}
+
 /** The most reputable club of a league. */
 TeamID topClub(const GameController& controller, LeagueID league_id)
 {
@@ -378,6 +387,53 @@ TEST(ReserveSquadTest, ComputerClubsRunTheirU21sAndAgeRulesHoldAtSeasonStart)
   EXPECT_GT(clubs_with_u21, 0u) << "U18 graduates feed computer U21 squads";
 }
 
+TEST(ReserveSquadTest, TwoSeasonsKeepComputerSeniorSquadsFull)
+{
+  const SlotCleanup slot{uniqueSlot(8)};
+  auto controller = makeWorld(slot.slot);
+  auto gamedata = controller->getGameData();
+  const TeamID managed = topClub(*controller, 1);
+  WorldSimulation world(gamedata);
+  // The world between matches for two seasons with Game::endSeason's
+  // rollover (ageing, expiring contracts) and no transfer market: squads
+  // only lose players, so the academies alone must keep them full.
+  GameDateValue date = controller->getCurrentDate();
+  for (int day = 0; day < 732; ++day)
+  {
+    date = SeasonCalendar::addDays(date, 1);
+    world.onDayAdvanced(date, managed);
+    if (date.month == 7 && date.day == 1)
+    {
+      world.onSeasonEnd(date, managed);
+      gamedata->ageAllPlayers();
+      gamedata->advanceContractsAndReleasePlayers();
+      world.onSeasonStart(date, managed);
+    }
+  }
+  const YouthAcademy& academy = world.getYouth();
+  std::size_t clubs = 0;
+  std::size_t in_band = 0;
+  double seniors_total = 0.0;
+  double reserves_total = 0.0;
+  for (const auto& team_ref : controller->getTeams())
+  {
+    const TeamID team_id = team_ref.get().getId();
+    if (team_id == managed) continue;
+    ++clubs;
+    const std::size_t seniors = academy.firstTeamSize(team_id);
+    seniors_total += static_cast<double>(seniors);
+    reserves_total += static_cast<double>(academy.reserveQuota(team_id).squad);
+    in_band += seniors >= 24 && seniors <= 28 ? 1 : 0;
+  }
+  const double mean = seniors_total / static_cast<double>(clubs);
+  std::cout << "[u21] after two seasons: senior squads mean " << mean << " ("
+            << in_band << "/" << clubs << " within 24-28), U21 squads mean "
+            << reserves_total / static_cast<double>(clubs) << "\n";
+  EXPECT_GE(mean, 24.0);
+  EXPECT_LE(mean, 28.5);
+  EXPECT_GE(in_band * 10, clubs * 7);
+}
+
 TEST(ReservePersistenceTest, U21StateRoundTripsAndOlderSavesSetItUp)
 {
   const SlotCleanup slot{uniqueSlot(3)};
@@ -559,7 +615,7 @@ TEST(NationalJobModelTest, StatureChanceWageAndContract)
 TEST(NationalJobTest, OfferAcceptanceCallUpsAndResults)
 {
   const SlotCleanup slot{uniqueSlot(4)};
-  auto controller = makeWorld(slot.slot);
+  auto controller = makeNationsWorld(slot.slot);
   Game* game = controller->getGame();
   const std::vector<Language> ranking = game->getNationalTeams().ranking();
   ASSERT_GE(ranking.size(), 8u);
@@ -690,7 +746,7 @@ TEST(NationalJobTest, OfferAcceptanceCallUpsAndResults)
 TEST(NationalJobTest, ClubManagersNeedAContinentalNameForBothJobs)
 {
   const SlotCleanup slot{uniqueSlot(5)};
-  auto controller = makeWorld(slot.slot);
+  auto controller = makeNationsWorld(slot.slot);
   Game* game = controller->getGame();
   const std::vector<Language> small = smallNations(*controller);
   ASSERT_FALSE(small.empty());
@@ -731,7 +787,7 @@ TEST(NationalJobTest, ClubManagersNeedAContinentalNameForBothJobs)
 TEST(NationalJobPersistenceTest, JobMarketAndCallUpsSurviveSaveAndLoad)
 {
   const SlotCleanup slot{uniqueSlot(6)};
-  auto controller = makeWorld(slot.slot);
+  auto controller = makeNationsWorld(slot.slot);
   Game* game = controller->getGame();
   const std::vector<Language> ranking = game->getNationalTeams().ranking();
   const std::vector<Language> small = smallNations(*controller);

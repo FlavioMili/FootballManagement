@@ -246,6 +246,8 @@ TEST(NationalCallUpUiTest, CallUpScreenSquadEditingAndSizes)
   const SlotCleanup slot{uniqueSlot(1)};
   GameController controller;
   controller.newGame(slot.slot, WORLD_SEED);
+  // The national teams form on the first day (season calendar).
+  controller.advanceDay();
   Game* game = controller.getGame();
   // The lowest-rated nations with a pool deep enough for any squad.
   std::vector<Language> nations;

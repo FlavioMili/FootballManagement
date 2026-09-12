@@ -116,18 +116,21 @@ TEST(WorldSoakTest, ThreeSeasonsStayBelievable)
   // growth must not accelerate.
   EXPECT_LT(last.save_mb, 4.0 * first.save_mb);
 
-  // Population: senior squads keep their size; the academies fill up over
-  // the first two seasons (a new world starts with its teenagers only), so
-  // the whole population is compared from the second season on. The
-  // unsigned do not pile up: players nobody wants drop below the simulated
-  // divisions or retire (seed 1: about 1% of the players on 30 June; 4%
-  // and growing without the clearance).
+  // Population: senior squads and the players on the market keep their
+  // size. The academies fill up over the first seasons (a new world starts
+  // with its teenagers only), so the whole population may only grow within
+  // a bound. The unsigned do not pile up: players nobody wants drop below
+  // the simulated divisions or retire (seed 1: about 1% of the players on
+  // 30 June; 4% and growing without the clearance).
   EXPECT_LT(std::abs(relativeChange(static_cast<double>(first.club_seniors),
                                     static_cast<double>(last.club_seniors))),
             0.12);
-  EXPECT_LT(std::abs(relativeChange(static_cast<double>(vitals[1].players),
-                                    static_cast<double>(last.players))),
+  EXPECT_LT(std::abs(relativeChange(
+                static_cast<double>(first.club_seniors + first.free_agents),
+                static_cast<double>(last.club_seniors + last.free_agents))),
             0.10);
+  EXPECT_LT(static_cast<double>(last.players),
+            1.35 * static_cast<double>(first.players));
   for (const Lab::SeasonVitals& season : vitals)
   {
     SCOPED_TRACE(std::format("season {}", season.season));

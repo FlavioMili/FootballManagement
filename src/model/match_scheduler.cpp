@@ -77,6 +77,8 @@ MatchSimulationResult MatchSimulation::run(const MatchSimulationInput& input,
     if (input.away_talk[index] != 0.0f)
       engine.setTeamTalkModifier(false, half, input.away_talk[index]);
   }
+  for (const auto& [player, flags] : input.medical_flags)
+    engine.setMedicalFlags(player, flags);
   // Nobody watches these matches: the background fidelity is enough.
   engine.simulateToEnd(MatchFidelity::BACKGROUND);
 

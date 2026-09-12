@@ -439,7 +439,10 @@ void LineupScene::renderBench(float height)
 {
   const Theme::Palette& palette = Theme::palette();
   const auto& statsConfig = guiView->getController().getStatsConfig();
-  UI::sectionLabel(LOC("LINEUP_BENCH"));
+  UI::sectionLabel(std::format("{}  ({}/{})", LOC("LINEUP_BENCH"),
+                               current_lineup->getReserves().size(),
+                               Lineup::MAX_SUBSTITUTES)
+                       .c_str());
   const float benchHeight = std::max(160.0f * Theme::scale(), height * 0.42f);
   UI::beginCard("bench_card", nullptr, ImVec2(0.0f, benchHeight), true);
   if (ImGui::BeginTable("bench", 3,
@@ -490,18 +493,56 @@ void LineupScene::renderBench(float height)
   }
   UI::endCard();
 
+  renderOutsiders(height);
+
   const Player* pitchPlayer = selectedPitchPlayer();
   const Player* benchPlayer = selectedBenchPlayer();
-  const bool canSwap = pitchPlayer && benchPlayer;
+  const Player* outsider = selectedOutsider();
+  // A player from outside the matchday squad replaces a starter or a
+  // substitute, who drops out of the squad.
+  const bool canSwap =
+      outsider ? pitchPlayer || benchPlayer : pitchPlayer && benchPlayer;
   ImGui::BeginDisabled(!canSwap);
-  if (UI::primaryButton(LOC("LINEUP_SWAP_SELECTED"), ImVec2(-FLT_MIN, 0.0f)) &&
-      current_lineup->swapPlayers(selected_bench_player_id,
-                                  selected_pitch_player_id))
+  if (UI::primaryButton(LOC("LINEUP_SWAP_SELECTED"), ImVec2(-FLT_MIN, 0.0f)))
   {
-    selected_pitch_player_id = PlayerID{};
-    selected_bench_player_id = PlayerID{};
+    const bool swapped =
+        outsider ? current_lineup->bringIn(
+                       outsider, pitchPlayer ? selected_pitch_player_id
+                                             : selected_bench_player_id)
+                 : current_lineup->swapPlayers(selected_bench_player_id,
+                                               selected_pitch_player_id);
+    if (swapped)
+    {
+      selected_pitch_player_id = PlayerID{};
+      selected_bench_player_id = PlayerID{};
+      selected_outsider_id = PlayerID{};
+    }
   }
   ImGui::EndDisabled();
+  const bool benchRoom =
+      current_lineup->getReserves().size() < Lineup::MAX_SUBSTITUTES;
+  if (outsider && benchRoom)
+  {
+    if (UI::secondaryButton(LOC("LINEUP_ADD_TO_BENCH"),
+                            ImVec2(-FLT_MIN, 0.0f)))
+    {
+      std::vector<const Player*> bench = current_lineup->getReserves();
+      bench.push_back(outsider);
+      current_lineup->setReserves(bench);
+      selected_outsider_id = PlayerID{};
+    }
+  }
+  else if (benchPlayer && !pitchPlayer && !outsider)
+  {
+    if (UI::secondaryButton(LOC("LINEUP_REMOVE_FROM_BENCH"),
+                            ImVec2(-FLT_MIN, 0.0f)))
+    {
+      std::vector<const Player*> bench = current_lineup->getReserves();
+      std::erase(bench, benchPlayer);
+      current_lineup->setReserves(bench);
+      selected_bench_player_id = PlayerID{};
+    }
+  }
   UI::sectionLabel(LOC("LINEUP_COMPARISON"));
   PlayerUI::detailPanel("LineupComparison", benchPlayer, statsConfig,
                         pitchPlayer);
@@ -522,6 +563,76 @@ const Player* LineupScene::selectedPitchPlayer() const
                                           });
   return found == current_lineup->getOutfieldPlayers().end() ? nullptr
                                                              : found->player;
+}
+
+void LineupScene::renderOutsiders(float height)
+{
+  const Theme::Palette& palette = Theme::palette();
+  GameController& controller = guiView->getController();
+  const auto managed = controller.getManagedTeam();
+  outsiders.clear();
+  if (managed)
+  {
+    for (const auto& player : controller.getPlayersForTeam(managed->get().getId()))
+    {
+      const Player* candidate = &player.get();
+      if (!current_lineup->isStarter(candidate->getId()) &&
+          !std::ranges::contains(current_lineup->getReserves(), candidate))
+        outsiders.push_back(candidate);
+    }
+  }
+  if (outsiders.empty()) return;
+  UI::sectionLabel(std::format("{}  ({})", LOC("LINEUP_NOT_IN_SQUAD"),
+                               outsiders.size())
+                       .c_str());
+  const float listHeight = std::max(120.0f * Theme::scale(), height * 0.28f);
+  UI::beginCard("outsiders_card", nullptr, ImVec2(0.0f, listHeight), true);
+  if (ImGui::BeginTable("outsiders", 3,
+                        ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit))
+  {
+    ImGui::TableSetupColumn("role");
+    ImGui::TableSetupColumn("name", ImGuiTableColumnFlags_WidthStretch);
+    ImGui::TableSetupColumn("status");
+    for (const Player* player : outsiders)
+    {
+      ImGui::TableNextRow();
+      ImGui::TableNextColumn();
+      ImGui::TextColored(palette.muted, "%s",
+                         RoleUtils::shortName(player->getRole()));
+      ImGui::TableNextColumn();
+      ImGui::PushID(static_cast<int>(player->getId()));
+      const bool selected = selected_outsider_id == player->getId();
+      if (ImGui::Selectable(player->getName().c_str(), selected,
+                            ImGuiSelectableFlags_SpanAllColumns |
+                                ImGuiSelectableFlags_AllowDoubleClick))
+      {
+        selected_outsider_id = selected ? PlayerID{} : player->getId();
+        if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+          Navigation::openPlayer(guiView, player->getId());
+      }
+      ImGui::PopID();
+      ImGui::TableNextColumn();
+      if (const auto blocked = unavailable.find(player->getId());
+          blocked != unavailable.end())
+        UI::badge(LOC(blocked->second == Unavailability::INJURED
+                          ? "ROSTER_BADGE_INJURED"
+                          : "ROSTER_BADGE_SUSPENDED"),
+                  palette.negative);
+      else
+        UI::ratingChip(player->getOverall(controller.getStatsConfig()));
+    }
+    ImGui::EndTable();
+  }
+  UI::endCard();
+}
+
+const Player* LineupScene::selectedOutsider() const
+{
+  if (selected_outsider_id == PlayerID{}) return nullptr;
+  const auto found = std::ranges::find_if(
+      outsiders, [this](const Player* player)
+      { return player->getId() == selected_outsider_id; });
+  return found == outsiders.end() ? nullptr : *found;
 }
 
 const Player* LineupScene::selectedBenchPlayer() const

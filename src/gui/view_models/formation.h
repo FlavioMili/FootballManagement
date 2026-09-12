@@ -68,7 +68,7 @@ void autoPick(Lineup& lineup, const Preset& preset,
 
 /**
  * @brief autoPick() that leaves unavailable players (injured, suspended) out
- * of the XI; they are kept on the bench so the squad list stays complete.
+ * of the matchday squad (the lineup screen lists them with the rest).
  */
 void autoPickAvailable(Lineup& lineup, const Preset& preset,
                        std::span<const Player* const> squad,

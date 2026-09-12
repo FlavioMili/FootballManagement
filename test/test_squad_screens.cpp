@@ -434,7 +434,7 @@ TEST(SquadScreensTest, SidebarHubsListTheirScreens)
     EXPECT_LE(view.getOverlayDepth(), 1u);
   }
 
-  // Every hub expanded (Club is the largest, seven screens) fits the
+  // Every hub expanded (Club is the largest, eight screens) fits the
   // sidebar without scrolling at 1280x720 and at 2560x1440 with scale 2.
   const auto everyHubFits = [&](const char* size)
   {
@@ -459,21 +459,22 @@ TEST(SquadScreensTest, SidebarHubsListTheirScreens)
   resize(view, 1280, 720);
   frames(view, 3);
 
-  // The Squad hub lists its six screens under its label, between the
+  // The Squad hub lists its seven screens under its label, between the
   // Inbox and Training entries; each one opens, the tabs are gone.
   Navigation::open(&view, NavSection::SQUAD);
   frames(view, 3);
   const std::vector<ImVec2> entries = sidebarEntryPoints(view);
-  ASSERT_EQ(entries.size(), 13u) << "seven hubs and the six Squad screens";
+  ASSERT_EQ(entries.size(), 14u) << "seven hubs and the seven Squad screens";
   EXPECT_TRUE(hubTabPoints(view).empty()) << "no tabs beside the full sidebar";
-  const std::array<std::pair<size_t, SceneID>, 7> screens = {{
+  const std::array<std::pair<size_t, SceneID>, 8> screens = {{
       {4, SceneID::LINEUP},
       {5, SceneID::STRATEGY},
       {6, SceneID::SQUAD_PLANNER},
       {7, SceneID::MEDICAL},
       {8, SceneID::PLAYER_COMPARE},
+      {9, SceneID::RESERVES},
       {3, SceneID::ROSTER},
-      {9, SceneID::TRAINING},
+      {10, SceneID::TRAINING},
   }};
   for (const auto& [index, expected] : screens)
   {
@@ -520,7 +521,7 @@ TEST(SquadScreensTest, SidebarHubsListTheirScreens)
   resize(view, 1000, 700);
   Navigation::open(&view, NavSection::SQUAD);
   frames(view, 3);
-  EXPECT_EQ(hubTabPoints(view).size(), 5u) << "Squad's other five screens";
+  EXPECT_EQ(hubTabPoints(view).size(), 6u) << "Squad's other six screens";
   const std::vector<ImVec2> icons = sidebarEntryPoints(view);
   ASSERT_EQ(icons.size(), 7u) << "seven hub icons";
   ImGui::GetIO().AddMousePosEvent(icons[6].x, icons[6].y);
@@ -529,7 +530,7 @@ TEST(SquadScreensTest, SidebarHubsListTheirScreens)
   ASSERT_NE(flyout, nullptr);
   EXPECT_TRUE(flyout->Active);
   capture(view, "shell_submenu_flyout.bmp");
-  // Travel into the flyout: seven entries; pick the third (Staff).
+  // Travel into the flyout: eight entries; pick the third (Staff).
   std::vector<ImVec2> choices;
   {
     ImGuiID last = 0;
@@ -545,7 +546,7 @@ TEST(SquadScreensTest, SidebarHubsListTheirScreens)
       last = hovered;
     }
   }
-  ASSERT_EQ(choices.size(), 7u) << "the Club hub's seven screens";
+  ASSERT_EQ(choices.size(), 8u) << "the Club hub's eight screens";
   click(view, choices[2]);
   EXPECT_EQ(activeId(view), SceneID::STAFF);
   frames(view, 30);

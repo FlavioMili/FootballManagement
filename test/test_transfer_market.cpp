@@ -123,7 +123,12 @@ TEST_F(TransferMarketTest, AIEvaluatesAndAcceptsBid)
 
   auto seller_players = controller->getPlayersForTeam(seller_team_id);
   ASSERT_FALSE(seller_players.empty());
-  PlayerID test_player_id = seller_players.front().get().getId();
+  // An outfield player: computer-managed clubs keep their goalkeepers.
+  const auto outfield = std::ranges::find_if(
+      seller_players, [](const auto& player)
+      { return player.get().getRole() != PlayerRole::GK; });
+  ASSERT_NE(outfield, seller_players.end());
+  PlayerID test_player_id = outfield->get().getId();
 
   controller->listPlayerForTransfer(test_player_id, 10000);
 
@@ -557,8 +562,10 @@ TEST_F(TransferMarketTest, LoanCapsLimitLoansBetweenClubs)
   const TeamID parent = teams[5].get().getId();
   const TeamID borrower = teams[6].get().getId();
   std::vector<PlayerID> seniors;
+  // Outfield players: the parent keeps its goalkeepers.
   for (const auto& player : controller->getPlayersForTeam(parent))
-    if (player.get().getAge() > TransferTuning::Loan::EXEMPT_MAX_AGE)
+    if (player.get().getAge() > TransferTuning::Loan::EXEMPT_MAX_AGE &&
+        player.get().getRole() != PlayerRole::GK)
       seniors.push_back(player.get().getId());
   ASSERT_GE(seniors.size(), 4u);
   TransferNegotiation::LoanTerms terms;
@@ -684,7 +691,9 @@ TeamID manageSmallClub(GameController& controller)
   for (const auto& team : controller.getTeams())
   {
     const TeamID id = team.get().getId();
+    // Its country's transfer window must be open today.
     if (id != FREE_AGENTS_TEAM_ID && team.get().getReputation() < lowest &&
+        controller.isTransferWindowOpenFor(id) &&
         !controller.getPlayersForTeam(id).empty() &&
         controller.isTransferWindowOpenFor(id))
     {
@@ -717,7 +726,8 @@ KeenOffer openKeenOffer(GameController& controller, TeamID managed,
   std::vector<TeamID> buyers;
   for (const auto& team : controller.getTeams())
     if (team.get().getId() != managed &&
-        team.get().getId() != FREE_AGENTS_TEAM_ID)
+        team.get().getId() != FREE_AGENTS_TEAM_ID &&
+        controller.isTransferWindowOpenFor(team.get().getId()))
       buyers.push_back(team.get().getId());
   std::ranges::sort(buyers,
                     [&](TeamID a, TeamID b)
@@ -1484,10 +1494,14 @@ TEST_F(TransferMarketTest, AMoveEndsTheLoanForGood)
   const TeamID parent = teams[5].get().getId();
   const TeamID borrower = teams[6].get().getId();
   const TeamID next_club = teams[7].get().getId();
-  const auto& squad = controller->getPlayersForTeam(parent);
+  // Two outfield players: the parent keeps its goalkeepers.
+  std::vector<PlayerID> squad;
+  for (const auto& player : controller->getPlayersForTeam(parent))
+    if (player.get().getRole() != PlayerRole::GK)
+      squad.push_back(player.get().getId());
   ASSERT_GE(squad.size(), 2u);
-  const PlayerID signed_elsewhere = squad[0].get().getId();
-  const PlayerID stranded = squad[1].get().getId();
+  const PlayerID signed_elsewhere = squad[0];
+  const PlayerID stranded = squad[1];
   TransferNegotiation::LoanTerms terms;
   terms.wage_share = 50;
   const GameDateValue start(2025, 8, 20);
@@ -1619,7 +1633,9 @@ TEST_F(TransferMarketTest, FreeAgentsLowerTheirDemandsAndSignWithinMeans)
   std::vector<PlayerID> released;
   for (const auto& player : controller->getPlayersForTeam(big_club))
   {
-    if (player.get().getAge() >= 24 && released.size() < 12)
+    // Outfield players: the club keeps its goalkeepers.
+    if (player.get().getAge() >= 24 && released.size() < 12 &&
+        player.get().getRole() != PlayerRole::GK)
       released.push_back(player.get().getId());
   }
   const GameDateValue august(2025, 8, 20);
@@ -1923,11 +1939,13 @@ TEST_F(TransferMarketTest, LoanOfferIsNegotiatedAndItsTermsSurviveReload)
   // Within its ceiling and wage room: it agreed and he left on loan.
   auto data = controller->getGameData();
   EXPECT_EQ(data->getPlayer(loan.player)->get().getTeamId(), loan.borrower);
-  const LoanDeal* deal = marketOf(*controller).findLoan(loan.player);
-  ASSERT_NE(deal, nullptr);
-  EXPECT_EQ(deal->wage_share, 70);
-  EXPECT_TRUE(deal->recall_clause);
-  EXPECT_EQ(deal->option_fee, 9'000'000u);
+  const LoanDeal* found = marketOf(*controller).findLoan(loan.player);
+  ASSERT_NE(found, nullptr);
+  // A copy: the controller (and its market) is replaced on reload below.
+  const LoanDeal deal = *found;
+  EXPECT_EQ(deal.wage_share, 70);
+  EXPECT_TRUE(deal.recall_clause);
+  EXPECT_EQ(deal.option_fee, 9'000'000u);
   const auto clause = std::ranges::find(marketOf(*controller).obligations(),
                                         ObligationKind::LoanUnplayedFee,
                                         &TransferObligation::kind);
@@ -1943,7 +1961,7 @@ TEST_F(TransferMarketTest, LoanOfferIsNegotiatedAndItsTermsSurviveReload)
   data = controller->getGameData();
   const int64_t received = categoryTotal(
       data->getTeams().at(managed).getFinances(), FinanceCategory::TransferFeeIn);
-  harness.market.onDayAdvanced(deal->end, managed);
+  harness.market.onDayAdvanced(deal.end, managed);
   EXPECT_EQ(data->getPlayer(loan.player)->get().getTeamId(), managed);
   EXPECT_EQ(categoryTotal(data->getTeams().at(managed).getFinances(),
                           FinanceCategory::TransferFeeIn) -

@@ -119,6 +119,10 @@ class MatchPlayController
   /** A play control, from either device. */
   enum Control : std::uint8_t
   {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
     PASS,
     SHOOT,
     THROUGH,
@@ -130,8 +134,9 @@ class MatchPlayController
     CONTROL_COUNT
   };
 
-  /** Control a key or gamepad button stands for (CONTROL_COUNT: none). */
-  static Control controlForKey(SDL_Scancode scancode);
+  /** Control a key or gamepad button stands for (CONTROL_COUNT: none);
+   * keys follow the bindings of Settings > Controls (sprint is Shift). */
+  static Control controlForKey(const SDL_KeyboardEvent& key);
   static Control controlForButton(int button);
   void press(Control control);
   void release(Control control);
@@ -149,7 +154,9 @@ class MatchPlayController
   bool home = true;
   Options settings;
 
-  std::array<bool, SDL_SCANCODE_COUNT> keys{};
+  /** Control each physical key is holding down (CONTROL_COUNT: none), so
+   * its release ends exactly what its press started. */
+  std::array<std::uint8_t, SDL_SCANCODE_COUNT> keys{};
   /** Held state of each control from buttons (keys or pad) and presses
    * and releases since the last update. */
   std::array<std::uint8_t, CONTROL_COUNT> keyHolds{};

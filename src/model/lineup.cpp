@@ -156,6 +156,104 @@ void Lineup::setReserves(const std::vector<const Player*>& subs)
     }
     reserves.push_back(player);
   }
+  if (reserves.size() > MAX_SUBSTITUTES) reserves = chooseBench(reserves);
+}
+
+std::vector<const Player*> Lineup::chooseBench(
+    std::span<const Player* const> candidates)
+{
+  // Available players first, each group keeping the callers' order.
+  std::vector<const Player*> ordered;
+  ordered.reserve(candidates.size());
+  for (const bool available : {true, false})
+    for (const Player* player : candidates)
+      if (player && player->isAvailable() == available &&
+          !std::ranges::contains(ordered, player))
+        ordered.push_back(player);
+
+  enum Group : uint8_t
+  {
+    KEEPER,
+    DEFENDER,
+    MIDFIELDER,
+    FORWARD
+  };
+  const auto groupOf = [](const Player* player)
+  {
+    switch (player->getRole())
+    {
+      case PlayerRole::GK:
+        return KEEPER;
+      case PlayerRole::CB:
+      case PlayerRole::LB:
+      case PlayerRole::RB:
+        return DEFENDER;
+      case PlayerRole::LW:
+      case PlayerRole::RW:
+      case PlayerRole::ST:
+        return FORWARD;
+      default:
+        return MIDFIELDER;
+    }
+  };
+  std::vector<const Player*> bench;
+  bench.reserve(MAX_SUBSTITUTES);
+  // Cover first: a keeper, then one player of each outfield line.
+  for (const Group group : {KEEPER, DEFENDER, MIDFIELDER, FORWARD})
+  {
+    const auto found = std::ranges::find_if(
+        ordered, [&](const Player* player)
+        { return groupOf(player) == group && player->isAvailable(); });
+    if (found != ordered.end() && bench.size() < MAX_SUBSTITUTES)
+      bench.push_back(*found);
+  }
+  // Then the best of the rest, at most one more keeper.
+  for (const Player* player : ordered)
+  {
+    if (bench.size() >= MAX_SUBSTITUTES) break;
+    if (std::ranges::contains(bench, player)) continue;
+    if (groupOf(player) == KEEPER &&
+        std::ranges::count_if(bench, [&](const Player* chosen)
+                              { return groupOf(chosen) == KEEPER; }) >= 2)
+      continue;
+    bench.push_back(player);
+  }
+  return bench;
+}
+
+bool Lineup::bringIn(const Player* player, PlayerID replaced)
+{
+  if (!player || player->getId() == replaced) return false;
+  const PlayerID incoming = player->getId();
+  const auto selected = [incoming](const Player* candidate)
+  { return candidate && candidate->getId() == incoming; };
+  if (selected(goalkeeper) ||
+      std::ranges::any_of(outfield_players, [&](const PositionedPlayer& slot)
+                          { return selected(slot.player); }) ||
+      std::ranges::any_of(reserves, selected))
+    return false;
+  if (goalkeeper && goalkeeper->getId() == replaced)
+  {
+    goalkeeper = player;
+    return true;
+  }
+  for (PositionedPlayer& slot : outfield_players)
+  {
+    if (slot.player && slot.player->getId() == replaced)
+    {
+      slot.player = player;
+      return true;
+    }
+  }
+  for (const Player*& reserve : reserves)
+  {
+    if (reserve && reserve->getId() == replaced)
+    {
+      reserve = player;
+      return true;
+    }
+  }
+  return false;
 }
 
 const std::vector<const Player*>& Lineup::getReserves() const
@@ -477,6 +575,16 @@ void Lineup::generateStartingXI(const class GameData& gamedata,
     potentialOutfieldPlayers.erase(best);
   }
 
-  reserves.insert(reserves.end(), potentialOutfieldPlayers.begin(),
-                  potentialOutfieldPlayers.end());
+  // The matchday bench from everyone left out, best first.
+  std::vector<const Player*> candidates = reserves;
+  candidates.insert(candidates.end(), potentialOutfieldPlayers.begin(),
+                    potentialOutfieldPlayers.end());
+  std::ranges::stable_sort(candidates,
+                           [&stats_config](const Player* a, const Player* b)
+                           {
+                             return a->getOverall(stats_config) >
+                                    b->getOverall(stats_config);
+                           });
+  reserves.clear();
+  setReserves(candidates);
 }

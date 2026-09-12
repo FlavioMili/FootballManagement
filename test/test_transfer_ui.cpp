@@ -199,7 +199,9 @@ TeamID manageSmallClub(GameController& controller)
   for (const auto& team : controller.getTeams())
   {
     const TeamID id = team.get().getId();
+    // Its country's transfer window must be open today.
     if (id != FREE_AGENTS_TEAM_ID && team.get().getReputation() < lowest &&
+        controller.isTransferWindowOpenFor(id) &&
         !controller.getPlayersForTeam(id).empty())
     {
       lowest = team.get().getReputation();
@@ -230,7 +232,8 @@ Bid receiveBid(GameController& controller, TeamID managed, std::uint32_t fee,
   std::vector<TeamID> buyers;
   for (const auto& team : controller.getTeams())
     if (team.get().getId() != managed &&
-        team.get().getId() != FREE_AGENTS_TEAM_ID)
+        team.get().getId() != FREE_AGENTS_TEAM_ID &&
+        controller.isTransferWindowOpenFor(team.get().getId()))
       buyers.push_back(team.get().getId());
   std::ranges::sort(buyers,
                     [&](TeamID a, TeamID b)

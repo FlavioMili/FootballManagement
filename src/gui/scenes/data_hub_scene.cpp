@@ -287,7 +287,9 @@ void DataHubScene::renderPerformance(float width)
   const float plotWidth = ImGui::GetContentRegionAvail().x;
   const float plotHeight = PERFORMANCE_HEIGHT * scale;
   const ImVec2 origin = ImGui::GetCursorScreenPos();
-  ImGui::InvisibleButton("##performance_plot", ImVec2(plotWidth, plotHeight));
+  // Hover shows the match under the cursor; a click opens its report.
+  const bool clicked = ImGui::InvisibleButton("##performance_plot",
+                                              ImVec2(plotWidth, plotHeight));
   const bool hovered = ImGui::IsItemHovered();
   ImDrawList* drawList = ImGui::GetWindowDrawList();
   const float left = origin.x + CHART_LEFT_AXIS * scale;
@@ -345,7 +347,18 @@ void DataHubScene::renderPerformance(float width)
         nearest = index;
     drawList->AddLine(ImVec2(xOf(nearest), top), ImVec2(xOf(nearest), bottom),
                       Theme::toU32(palette.faint), 1.0f);
-    ImGui::SetTooltip("%s", performance_tooltips[nearest].c_str());
+    ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+    ImGui::SetTooltip("%s\n%s", performance_tooltips[nearest].c_str(),
+                      LOC("FIXTURES_OPEN_REPORT_HINT"));
+    const auto managed = guiView->getController().getManagedTeam();
+    if (clicked && managed)
+    {
+      const TeamTrendPoint& point = team.trend[nearest];
+      const TeamID club = managed->get().getId();
+      Navigation::openMatchReport(guiView, point.date,
+                                  point.home ? club : point.opponent,
+                                  point.home ? point.opponent : club);
+    }
   }
   footnote(LOC("HUB_PERF_NOTE"));
   UI::endCard();

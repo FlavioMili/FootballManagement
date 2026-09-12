@@ -174,16 +174,23 @@ std::uint32_t attendance(const LeagueEconomy& economy,
                              -1.0, 1.0);
   double type_factor = 1.0;
   if (type == MatchType::FRIENDLY) type_factor = 0.3;  // [P]
-  const double demand =
+  const double interest = std::max(
+      static_cast<double>(Finance::CORE_SUPPORT_SHARE),
       baseDemand(economy, profile.reputation) *
-      std::exp(static_cast<double>(Finance::ATTENDANCE_SUCCESS_WEIGHT) *
-                   std::clamp(success, -1.0, 1.0) -
-               static_cast<double>(Finance::TICKET_PRICE_ELASTICITY) *
-                   std::log(price / reference)) *
-      opponent * type_factor;
+          std::exp(static_cast<double>(Finance::ATTENDANCE_SUCCESS_WEIGHT) *
+                   std::clamp(success, -1.0, 1.0)) *
+          opponent * type_factor);
+  // Near the usual price demand is inelastic; far above it the crowd goes.
+  const double ratio = price / reference;
+  const double overpriced = std::max(0.0, ratio - 1.0);
+  const double price_factor = std::exp(
+      -static_cast<double>(Finance::TICKET_PRICE_ELASTICITY) *
+          std::log(ratio) -
+      static_cast<double>(Finance::TICKET_OVERPRICING_DECAY) * overpriced *
+          overpriced);
   const double capacity = static_cast<double>(profile.stadium_capacity);
-  return static_cast<std::uint32_t>(
-      std::lround(std::clamp(capacity * demand, 0.05 * capacity, capacity)));
+  return static_cast<std::uint32_t>(std::lround(
+      std::clamp(capacity * interest * price_factor, 0.0, capacity)));
 }
 
 double monthlyBroadcasting(const LeagueEconomy& economy)
@@ -225,8 +232,8 @@ double playerWageShare(const LeagueEconomy& economy)
 {
   // [S] ECFIL: wages are 57-73% of revenue by league; leagues with a high
   // total wage ratio spend more on players, from ~48% in the 2. Bundesliga
-  // to 74% in second tiers that overspend (Championship, Ligue 2); with
-  // staff that puts their total wages near 90% of revenue.
+  // to 68% in second tiers that overspend (Championship, Ligue 2); with
+  // staff that puts their total wages above 80% of revenue.
   return std::clamp(
       static_cast<double>(Finance::PLAYER_WAGE_SHARE_BASE) +
           static_cast<double>(Finance::PLAYER_WAGE_SHARE_SLOPE) *

@@ -19,6 +19,7 @@
 
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
+#include "gui/input_actions.h"
 #include "gui/render/match_kit_colors.h"
 #include "gui/render/match_renderer_2d.h"
 #include "gui/scenes/match_scene.h"
@@ -288,7 +289,25 @@ void MatchScene::renderPlayControlsHelp()
 {
   const ImVec4 muted = Theme::palette().muted;
   ImGui::TextColored(muted, "%s", LOC("PLAY_CONTROLS_KEYBOARD"));
-  ImGui::TextWrapped("%s", LOC("PLAY_KEYS_TEXT"));
+  // The keys as bound in Settings > Controls (the help is only built while
+  // a dialog shows it).
+  namespace Ids = Input::Ids;
+  const auto key = [](std::string_view id)
+  {
+    const auto action = Input::registry().find(id);
+    return action ? Input::registry().label(*action) : std::string("-");
+  };
+  const std::string pass = key(Ids::PLAY_PASS);
+  const std::string shoot = key(Ids::PLAY_SHOOT);
+  ImGui::TextWrapped(
+      "%s",
+      fmt::sprintf(LOC("PLAY_KEYS_TEXT"), key(Ids::PLAY_UP).c_str(),
+                   key(Ids::PLAY_LEFT).c_str(), key(Ids::PLAY_DOWN).c_str(),
+                   key(Ids::PLAY_RIGHT).c_str(), pass.c_str(), shoot.c_str(),
+                   key(Ids::PLAY_THROUGH).c_str(), key(Ids::PLAY_LOB).c_str(),
+                   key(Ids::PLAY_SWITCH).c_str(), key(Ids::PLAY_JOCKEY).c_str(),
+                   pass.c_str(), shoot.c_str(), key(Ids::PLAY_PAUSE).c_str())
+          .c_str());
   ImGui::Spacing();
   ImGui::TextColored(muted, "%s", LOC("PLAY_CONTROLS_GAMEPAD"));
   ImGui::TextWrapped("%s", LOC("PLAY_PAD_TEXT"));

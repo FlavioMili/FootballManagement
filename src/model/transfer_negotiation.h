@@ -80,6 +80,8 @@ enum class Reason : std::uint8_t
   Embargo,
   // Player's agent
   AgentFeeTooLow,
+  // Buying club
+  SquadFull,
   COUNT
 };
 

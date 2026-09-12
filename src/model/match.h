@@ -23,6 +23,7 @@
 class GameData;
 class Lineup;
 class MatchEngine;
+class MedicalDesk;
 class Player;
 struct MatchReport;
 struct MatchSimulationInput;
@@ -210,4 +211,9 @@ void carryCondition(MatchEngine& engine, const Lineup& lineup);
 
 /** Minutes, end condition (0-100) and injuries of every participant. */
 std::vector<PlayerMatchConsequence> consequences(const MatchEngine& engine);
+
+/** Medical staff instructions set for the matchday squad (starters and
+ * substitutes), for MatchEngine::setMedicalFlags. */
+std::vector<std::pair<PlayerID, std::uint8_t>> medicalFlags(
+    const MedicalDesk& medical, const Lineup& lineup);
 }  // namespace MatchdaySquad

@@ -29,6 +29,7 @@
 #include "global/logger.h"
 #include "global/runtime_paths.h"
 #include "gui/gui_view.h"
+#include "gui/input_actions.h"
 #include "gui/player_ui.h"
 #include "gui/render/match_kit_colors.h"
 #include "gui/render/match_renderer_2d.h"
@@ -88,6 +89,27 @@ std::optional<MatchViewMode> configuredMatchView()
 }
 
 float scaled(float value) { return value * Theme::scale(); }
+
+/** Label of an action's current key ("B", "Esc"). */
+std::string keyLabel(std::string_view id)
+{
+  const auto action = Input::registry().find(id);
+  return action ? Input::registry().label(*action) : std::string("-");
+}
+
+/** Mouse and keyboard help of the 3D cameras with the bound keys (built
+ * only while its tooltip shows). */
+std::string cameraHelpText()
+{
+  namespace Ids = Input::Ids;
+  return fmt::sprintf(
+      LOC("MATCH_CAMERA_HELP"), keyLabel(Ids::CAMERA_FOLLOW_BALL).c_str(),
+      keyLabel(Ids::CAMERA_RESET).c_str(),
+      keyLabel(Ids::CAMERA_BROADCAST).c_str(),
+      keyLabel(Ids::CAMERA_TACTICAL).c_str(), keyLabel(Ids::CAMERA_END).c_str(),
+      keyLabel(Ids::CAMERA_PLAYER).c_str(), keyLabel(Ids::CAMERA_FREE).c_str(),
+      keyLabel(Ids::CAMERA_DIRECTOR).c_str());
+}
 
 /** Kick-offs from 10:00 to 17:29 are played in daylight. */
 constexpr int DAY_LOOK_FROM_MINUTES = 10 * 60;
@@ -549,6 +571,13 @@ void MatchScene::startMatch()
   // Fatigue carried over from recent matches and training.
   MatchdaySquad::carryCondition(*engine, home_team.getLineup());
   MatchdaySquad::carryCondition(*engine, away_team.getLineup());
+  // The medical staff's minute limits: the assistant follows them when he
+  // makes the managed side's changes.
+  if (const Game* game = controller.getGame(); game && managed_is_home)
+    for (const auto& [player, flags] : MatchdaySquad::medicalFlags(
+             game->getMedical(), *managed_is_home ? home_team.getLineup()
+                                                  : away_team.getLineup()))
+      engine->setMedicalFlags(player, flags);
   engine->setTacticalFamiliarity(
       true, controller.getTacticalFamiliarity(home_team_id));
   engine->setTacticalFamiliarity(
@@ -883,103 +912,124 @@ void MatchScene::toggleWindowFullscreen()
 
 void MatchScene::handleEvent(const SDL_Event& event)
 {
-  // While playing, the play controls belong to the pitch unless a dialog
-  // has the keyboard (key releases are still tracked so nothing sticks).
-  if (play.handleEvent(event) && play.isActive() && !play_menu &&
-      !play_confirm && !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
-    return;
+  // Key releases always reach the play controls so nothing sticks. While the
+  // user is in control the PLAY actions drive the pitch and the manager's
+  // MATCH keys are not listened to (the pause menu has those functions); a
+  // dialog keeps the keyboard for itself.
+  play.handleEvent(event);
+  if (play.isActive()) return;
   if (event.type != SDL_EVENT_KEY_DOWN) return;
   if (!event.key.repeat && !ImGui::GetIO().WantTextInput)
   {
-    // Shift with the number row (then the key after 0) gives the shouts;
-    // the plain digits pick camera presets.
-    if ((event.key.mod & SDL_KMOD_SHIFT) != 0)
+    namespace Ids = Input::Ids;
+    const Input::ActionRegistry& keys = Input::registry();
+    const SDL_KeyboardEvent& key = event.key;
+    for (std::size_t index = 0; index < Ids::SHOUT_COUNT; ++index)
     {
-      if (const int shout = MatchShoutsBar::indexForScancode(
-              static_cast<int>(event.key.scancode));
-          shout >= 0)
-      {
-        if (const auto context = touchline(); context && !match_finished)
-          MatchShoutsBar::shout(*context, static_cast<std::size_t>(shout));
-        return;
-      }
+      if (!keys.matches(Ids::shout(index), key)) continue;
+      if (const auto context = touchline(); context && !match_finished)
+        MatchShoutsBar::shout(*context, index);
+      return;
     }
-    switch (event.key.key)
+    // Substitutions and tactics open (and close) from the keyboard.
+    if (keys.matches(Ids::MATCH_SUBSTITUTIONS, key))
     {
-      case SDLK_S:
-        // Substitutions and tactics open (and close) from the keyboard.
-        showSubstitutions(!show_substitutions);
-        return;
-      case SDLK_T:
-        showTactics(!show_tactics);
-        return;
-      case SDLK_V:
-        setViewMode(view_mode == MatchViewMode::PITCH_2D
-                        ? MatchViewMode::BROADCAST_3D
-                        : MatchViewMode::PITCH_2D);
-        return;
-      case SDLK_1:
-        setCameraMode(MatchCameraMode::BROADCAST);
-        return;
-      case SDLK_2:
-        setCameraMode(MatchCameraMode::TACTICAL);
-        return;
-      case SDLK_3:
-        setCameraMode(MatchCameraMode::END);
-        return;
-      case SDLK_4:
-        setCameraMode(MatchCameraMode::PLAYER_FOLLOW);
-        return;
-      case SDLK_5:
-        setCameraMode(MatchCameraMode::FREE);
-        return;
-      case SDLK_6:
-        setCameraMode(MatchCameraMode::DIRECTOR);
-        return;
-      case SDLK_B:
-        setFreeFollowBall(!free_follow_ball ||
-                          camera_mode != MatchCameraMode::FREE);
-        return;
-      case SDLK_R:
-        if (view_mode == MatchViewMode::BROADCAST_3D)
-        {
-          takeFreeCamera();
-          pending_camera_input.reset = true;
-        }
-        return;
-      case SDLK_F:
-        setPitchFocus(!pitch_focus);
-        return;
-      case SDLK_ESCAPE:
-        // Open popups (substitutions) take Esc themselves; then the
-        // analysis panel closes, then pitch focus ends.
-        if (ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId)) return;
-        if (analysis_panel.isOpen())
-          analysis_panel.close();
-        else if (pitch_focus)
-          setPitchFocus(false);
-        return;
-      case SDLK_RETURN:
-        if ((event.key.mod & SDL_KMOD_ALT) != 0) toggleWindowFullscreen();
-        return;
-      case SDLK_M:
+      showSubstitutions(!show_substitutions);
+      return;
+    }
+    if (keys.matches(Ids::MATCH_TACTICS, key))
+    {
+      showTactics(!show_tactics);
+      return;
+    }
+    if (keys.matches(Ids::CAMERA_VIEW_TOGGLE, key))
+    {
+      setViewMode(view_mode == MatchViewMode::PITCH_2D
+                      ? MatchViewMode::BROADCAST_3D
+                      : MatchViewMode::PITCH_2D);
+      return;
+    }
+    static constexpr std::array<std::pair<std::string_view, MatchCameraMode>, 6>
+        CAMERAS{{{Ids::CAMERA_BROADCAST, MatchCameraMode::BROADCAST},
+                 {Ids::CAMERA_TACTICAL, MatchCameraMode::TACTICAL},
+                 {Ids::CAMERA_END, MatchCameraMode::END},
+                 {Ids::CAMERA_PLAYER, MatchCameraMode::PLAYER_FOLLOW},
+                 {Ids::CAMERA_FREE, MatchCameraMode::FREE},
+                 {Ids::CAMERA_DIRECTOR, MatchCameraMode::DIRECTOR}}};
+    for (const auto& [id, mode] : CAMERAS)
+    {
+      if (!keys.matches(id, key)) continue;
+      setCameraMode(mode);
+      return;
+    }
+    if (keys.matches(Ids::CAMERA_FOLLOW_BALL, key))
+    {
+      setFreeFollowBall(!free_follow_ball ||
+                        camera_mode != MatchCameraMode::FREE);
+      return;
+    }
+    if (keys.matches(Ids::CAMERA_RESET, key))
+    {
+      if (view_mode == MatchViewMode::BROADCAST_3D)
       {
-        // Mute toggle, remembered like the other audio settings.
-        Settings& settings = SettingsManager::instance()->get();
-        settings.audio_muted = !settings.audio_muted;
-        SettingsManager::instance()->save();
-        return;
+        takeFreeCamera();
+        pending_camera_input.reset = true;
       }
-      case SDLK_SPACE:
-        // Space belongs to the matchday dialogs while one is open.
-        if (engine && !match_finished && !show_substitutions && !show_tactics)
-        {
-          is_paused = !is_paused;
-          paused_for_dialog = false;
-        }
-        return;
-      default:
-        break;
+      return;
+    }
+    if (keys.matches(Ids::MATCH_PITCH_FOCUS, key))
+    {
+      setPitchFocus(!pitch_focus);
+      return;
+    }
+    if (keys.matches(Ids::MATCH_BACK, key))
+    {
+      // Open popups (substitutions) take Esc themselves; then the
+      // analysis panel closes, then pitch focus ends.
+      if (ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId)) return;
+      if (analysis_panel.isOpen())
+        analysis_panel.close();
+      else if (pitch_focus)
+        setPitchFocus(false);
+      return;
+    }
+    if (keys.matches(Ids::MATCH_FULLSCREEN, key))
+    {
+      toggleWindowFullscreen();
+      return;
+    }
+    if (keys.matches(Ids::MATCH_MUTE, key))
+    {
+      // Mute toggle, remembered like the other audio settings.
+      Settings& settings = SettingsManager::instance()->get();
+      settings.audio_muted = !settings.audio_muted;
+      SettingsManager::instance()->save();
+      return;
+    }
+    const bool faster = keys.matches(Ids::MATCH_FASTER, key);
+    if (faster || keys.matches(Ids::MATCH_SLOWER, key))
+    {
+      // One step of the speed control (highlights keep their mode).
+      const auto& speeds = MatchSceneTuning::Controls::SPEED_STEPS;
+      const auto current = std::ranges::find(speeds, match_speed);
+      std::size_t index =
+          current == speeds.end()
+              ? 0
+              : static_cast<std::size_t>(current - speeds.begin());
+      if (faster && index + 1 < speeds.size()) ++index;
+      if (!faster && index > 0) --index;
+      setPlaybackSpeed(speeds[index]);
+      return;
+    }
+    if (keys.matches(Ids::MATCH_PAUSE, key))
+    {
+      // Space belongs to the matchday dialogs while one is open.
+      if (engine && !match_finished && !show_substitutions && !show_tactics)
+      {
+        is_paused = !is_paused;
+        paused_for_dialog = false;
+      }
+      return;
     }
   }
 #ifdef DEBUG
@@ -1663,7 +1713,7 @@ void MatchScene::renderViewControls()
   ImGui::TextDisabled("(?)");
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("%s\n\n%s", LOC("MATCH_ZOOM_HINT"),
-                      LOC("MATCH_CAMERA_HELP"));
+                      cameraHelpText().c_str());
 }
 
 #ifdef DEBUG
@@ -2044,7 +2094,7 @@ void MatchScene::renderFocusHud(ImVec2 origin, ImVec2 size)
         ImGui::EndCombo();
       }
       if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("%s", LOC("MATCH_CAMERA_HELP"));
+        ImGui::SetTooltip("%s", cameraHelpText().c_str());
       if (camera_mode == MatchCameraMode::FREE)
       {
         ImGui::SameLine();

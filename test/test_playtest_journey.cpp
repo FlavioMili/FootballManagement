@@ -201,7 +201,12 @@ const fs::path& shotDir()
 constexpr float FRAME_SECONDS = 1.0f / 60.0f;
 constexpr int TIMED_FRAMES = 24;
 constexpr int GUI_MONTHS_DAYS = 61;
-constexpr auto SEASON_DEADLINE = std::chrono::seconds(150);
+/** Headless days after the GUI months; FM_PLAYTEST_FULL_SEASON=1 plays the
+ * rest of the season and the rollover instead (several minutes, so not in
+ * the timed ctest run). */
+constexpr int HEADLESS_DAYS = 28;
+constexpr auto HEADLESS_DEADLINE = std::chrono::seconds(120);
+constexpr auto SEASON_DEADLINE = std::chrono::seconds(600);
 constexpr auto LOAD_DEADLINE = std::chrono::seconds(90);
 
 double millisecondsSince(Clock::time_point start)
@@ -1804,7 +1809,8 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
       "(median {:.0f} ms, worst {:.0f} ms)\n",
       liveMatches, liveStats.median, liveStats.worst, quickMatches,
       quickStats.median, quickStats.worst);
-  tour(player, "j6_month2_", true);
+  // Frame times were measured on day 1; perf_tests own the screen budgets.
+  tour(player, "j6_month2_", false);
   if (auto* standings = dynamic_cast<StandingsScene*>(
           (openSection(player, NavSection::STANDINGS), player.active())))
   {
@@ -1829,8 +1835,11 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
   EXPECT_FALSE(controller.getScoutReports().empty())
       << "a 28-day league assignment produced no scout reports";
 
-  // ---- 11. The rest of the season headless (auto-simulated matches) -------
+  // ---- 11. Headless days (auto-simulated matches) --------------------------
   player.step = "season";
+  const char* fullSeasonFlag = std::getenv("FM_PLAYTEST_FULL_SEASON");
+  const bool wholeSeason = fullSeasonFlag != nullptr && *fullSeasonFlag != '\0' &&
+                           std::string_view(fullSeasonFlag) != "0";
   const int season = controller.getCurrentSeason();
   const auto seasonStart = Clock::now();
   std::vector<double> dayMs;
@@ -1841,7 +1850,9 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
     return controller.getCurrentSeason() != season ||
            (today.month == 6 && today.day == 30);
   };
-  while (!seasonOver() && Clock::now() - seasonStart < SEASON_DEADLINE)
+  const auto deadline = wholeSeason ? SEASON_DEADLINE : HEADLESS_DEADLINE;
+  while (!seasonOver() && (wholeSeason || simulatedDays < HEADLESS_DAYS) &&
+         Clock::now() - seasonStart < deadline)
   {
     const auto dayStart = Clock::now();
     controller.advanceDay();
@@ -1871,7 +1882,7 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
   const double seasonWall = millisecondsSince(seasonStart);
   const Stats dayStats = summarize(dayMs);
   const bool fullSeason = seasonOver();
-  log.line("\n## Season end ({}; full season reached: {})\n",
+  log.line("\n## Headless end ({}; full season reached: {})\n",
            dateText(controller.getCurrentDate()), fullSeason);
   metrics.line("\n## Headless day simulation (advanceDay)\n");
   metrics.line(

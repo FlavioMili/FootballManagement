@@ -216,6 +216,13 @@ void autoPick(Lineup& lineup, const Preset& preset,
                             { return assignment.player == player; });
     if (!starting) reserves.push_back(player);
   }
+  // The matchday bench is picked from the rest, best first.
+  std::ranges::stable_sort(reserves,
+                           [&config](const Player* left, const Player* right)
+                           {
+                             return left->getOverall(config) >
+                                    right->getOverall(config);
+                           });
   lineup.setReserves(reserves);
 }
 
@@ -225,14 +232,10 @@ void autoPickAvailable(Lineup& lineup, const Preset& preset,
                        const StatsConfig& config)
 {
   std::vector<const Player*> available;
-  std::vector<const Player*> sidelined;
   for (const Player* player : squad)
-    (unavailable.contains(player->getId()) ? sidelined : available)
-        .push_back(player);
+    if (!unavailable.contains(player->getId())) available.push_back(player);
+  // Injured and suspended players stay out of the matchday squad.
   autoPick(lineup, preset, available, config);
-  std::vector<const Player*> reserves = lineup.getReserves();
-  reserves.insert(reserves.end(), sidelined.begin(), sidelined.end());
-  lineup.setReserves(reserves);
 }
 
 size_t unavailableStarters(const Lineup& lineup,

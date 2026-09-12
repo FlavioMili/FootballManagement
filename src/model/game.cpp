@@ -400,6 +400,11 @@ void Game::simulateMatches(std::vector<Match>& matches, bool include_managed)
         talk[static_cast<std::size_t>(half - 1)] =
             world.getInteractions().teamTalkModifier(managed_team_id,
                                                      match.getDate(), half);
+      // The medical staff's minute limits hold in unwatched matches too.
+      input->medical_flags = MatchdaySquad::medicalFlags(
+          medical, match.getHomeTeamId() == managed_team_id
+                       ? input->home_lineup
+                       : input->away_lineup);
     }
     batch.push_back(&match);
     inputs.push_back(std::move(*input));

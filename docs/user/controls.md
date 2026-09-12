@@ -230,9 +230,11 @@ while you hold a button; a tap plays a soft, deliberate ball.
 
 **Pause menu**: *Resume*, *Tactics*, *Substitutions*, *Hand back to AI* and
 the assistance options below. *Hand back to AI* is also a toolbar button,
-available at any stoppage. Space still pauses and resumes, V switches between
-2D and 3D, and the camera keys work as when watching. Speed, highlights and
-*Quick result* are hidden while you play.
+available at any stoppage. While you play only the play keys are listened
+to; the view, the cameras, tactics and substitutions are in the toolbar and
+the pause menu. Speed, highlights and *Quick result* are hidden while you
+play. Every play key except Shift (sprint) can be rebound in *Settings >
+Controls*; the keys above are the defaults.
 
 **Assistance** (pause menu, or *Settings*):
 

@@ -22,6 +22,7 @@
 #include <sstream>
 
 #include "model/match_commentary.h"
+#include "model/medical_centre.h"
 #include "model/player.h"
 #include "model/role_utils.h"
 
@@ -3866,7 +3867,8 @@ TacticalRole MatchEngine::getSlotRole(bool homeTeam, std::size_t slot) const
   return slot < tactics.size() ? tactics[slot].role : TacticalRole::Standard;
 }
 
-const RoleProfile& MatchEngine::roleProfileOf(const MatchPlayer& player) const
+[[gnu::always_inline]] inline const RoleProfile& MatchEngine::roleProfileOf(
+    const MatchPlayer& player) const
 {
   const std::size_t side = player.isHomeTeam ? 0 : 1;
   if (player.isGoalkeeper) return keeperProfiles[side];
@@ -3876,7 +3878,8 @@ const RoleProfile& MatchEngine::roleProfileOf(const MatchPlayer& player) const
   return slotTactics[side][slot].profile;
 }
 
-Vector2F MatchEngine::possessionAnchor(const MatchPlayer& player) const
+[[gnu::always_inline]] inline Vector2F MatchEngine::possessionAnchor(
+    const MatchPlayer& player) const
 {
   const std::size_t side = player.isHomeTeam ? 0 : 1;
   const auto slot = static_cast<std::size_t>(player.formationSlot);
@@ -3905,7 +3908,8 @@ Vector2F MatchEngine::possessionAnchor(const MatchPlayer& player) const
           std::clamp(anchor.y, Pitch::PLAYER_MIN_Y, Pitch::PLAYER_MAX_Y)};
 }
 
-float MatchEngine::defensiveRoleShift(const MatchPlayer& player) const
+[[gnu::always_inline]] inline float MatchEngine::defensiveRoleShift(
+    const MatchPlayer& player) const
 {
   return (player.isHomeTeam ? 1.0f : -1.0f) *
          roleProfileOf(player).defensiveAdvanceMetres /
@@ -3923,7 +3927,8 @@ OppositionInstruction MatchEngine::instructionAgainst(
   return OppositionInstruction::None;
 }
 
-const MatchPlayer* MatchEngine::tightMarkTarget(const MatchPlayer& marker) const
+[[gnu::always_inline]] inline const MatchPlayer* MatchEngine::tightMarkTarget(
+    const MatchPlayer& marker) const
 {
   if (oppositionOrders[marker.isHomeTeam ? 0 : 1].empty()) return nullptr;
   const std::int8_t assigned = markAssignments[slotOf(marker)];
@@ -3981,8 +3986,8 @@ float MatchEngine::passingRoleBias(const MatchPlayer& passer,
          tightMarkPenalty(receiver);
 }
 
-float MatchEngine::pressEagerness(const MatchPlayer& candidate,
-                                  const MatchPlayer* carrier) const
+[[gnu::always_inline]] inline float MatchEngine::pressEagerness(
+    const MatchPlayer& candidate, const MatchPlayer* carrier) const
 {
   if (!carrier || carrier->isHomeTeam == candidate.isHomeTeam) return 0.0f;
   return roleProfileOf(candidate).pressBias * TacticsTuning::PRESS_BIAS_SECONDS;
@@ -8798,6 +8803,42 @@ void MatchEngine::runAiSubstitutions()
   }
 }
 
+void MatchEngine::setMedicalFlags(PlayerID playerId, std::uint8_t flags)
+{
+  const auto found = std::ranges::find_if(
+      medicalFlags, [playerId](const auto& entry)
+      { return entry.first == playerId; });
+  if (found != medicalFlags.end())
+    found->second = flags;
+  else if (flags != 0)
+    medicalFlags.emplace_back(playerId, flags);
+}
+
+void MatchEngine::runMedicalSubstitutions(bool homeTeam)
+{
+  if (!(homeTeam ? homeAutoSubstitutions : awayAutoSubstitutions) ||
+      state == MatchState::PENALTY)
+    return;
+  const int minute = static_cast<int>(matchTimeMinutes);
+  for (auto& player : players)
+  {
+    if (!active(player) || player.isHomeTeam != homeTeam ||
+        player.isGoalkeeper)
+      continue;
+    const PlayerID id = player.player->getId();
+    const auto entry = std::ranges::find_if(
+        medicalFlags, [id](const auto& flagged) { return flagged.first == id; });
+    if (entry == medicalFlags.end() ||
+        !MedicalCentre::substitutionDue(entry->second, minute))
+      continue;
+    if (!canSubstitute(homeTeam)) return;
+    // Like for like, as for a tired player.
+    if (const Player* replacement =
+            chooseReplacement(homeTeam, player.player->getRole(), false))
+      performSubstitution(player, replacement, SubstitutionReason::FATIGUE);
+  }
+}
+
 void MatchEngine::runAiSubstitutionsFor(bool homeTeam)
 {
   // Injured players leave at the first stoppage: replaced when possible, or
@@ -8826,6 +8867,7 @@ void MatchEngine::runAiSubstitutionsFor(bool homeTeam)
     }
   }
 
+  if (!medicalFlags.empty()) runMedicalSubstitutions(homeTeam);
   if (!(homeTeam ? homeAutoSubstitutions : awayAutoSubstitutions) ||
       state == MatchState::PENALTY || period < 2 ||
       matchTimeMinutes < MatchTuning::Substitution::EARLIEST_TACTICAL_MINUTE)
@@ -9189,9 +9231,11 @@ bool MatchEngine::applyScenario(const MatchScenario& scenario,
   }
 
   // Make the interpolation baseline equal to the scenario so the snapshot is
-  // stable, then evaluate the decision through the normal live path.
+  // stable, then evaluate the decision through the normal live path. A
+  // carrier under external control (play mode) makes no AI decision: he
+  // acts on his controller's input like in a live match.
   captureInterpolationFrame();
-  decideAction(*carrier);
+  if (!isControlled(*carrier)) decideAction(*carrier);
   return true;
 }
 

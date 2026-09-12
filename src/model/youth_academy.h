@@ -533,6 +533,9 @@ class YouthAcademy
   /** Young senior players outside a computer-managed club's plans join its
    * U21 squad while the senior squad stays at its target size. */
   void fillComputerReserves(TeamID team_id);
+  /** A computer-managed senior squad below its target size takes its best
+   * U21 players and professional-age U18 players up to that size. */
+  void fillComputerSeniors(TeamID team_id);
   /** Season start: U21 players beyond the age rules move on. */
   void advanceReserves(TeamID managed_team_id,
                        std::vector<std::string>& to_first_team);

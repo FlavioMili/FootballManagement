@@ -778,6 +778,14 @@ class MatchEngine
    * managed by the human should disable its own.
    */
   void setAutoSubstitutions(bool home, bool away);
+  /**
+   * Medical staff instructions (MedicalFlag bits, see model/medical_centre.h)
+   * for a squad player: while his side's substitutions are automatic, a
+   * player limited to about an hour comes off at the first stoppage from
+   * MedicalCentre::MINUTE_LIMIT. Set before kick-off; no flags plays as
+   * before.
+   */
+  void setMedicalFlags(PlayerID playerId, std::uint8_t flags);
   const std::vector<MatchSubstitution>& getSubstitutions() const
   {
     return substitutions;
@@ -902,7 +910,9 @@ class MatchEngine
    * decision exactly as the live engine would (no physics step is advanced).
    * The renderer never calls this; it is only an explicit headless evaluation
    * hook for the scenario suite. The optional parameters let scenario tests
-   * reproduce late-game and score-state behaviour deterministically.
+   * reproduce late-game and score-state behaviour deterministically. A
+   * controlled carrier (setControlledPlayer, already applied by a step)
+   * makes no AI decision and waits for his input.
    */
   bool applyScenario(const MatchScenario& scenario,
                      MatchState scenarioState = MatchState::PLAYING,
@@ -1099,6 +1109,8 @@ class MatchEngine
   std::vector<Vector2F> loadAnchors;
   /** Opponent slot each outfield player marks (-1 when unassigned). */
   std::array<std::int8_t, 32> markAssignments{};
+  /** Medical staff instructions by squad player (see setMedicalFlags). */
+  std::vector<std::pair<PlayerID, std::uint8_t>> medicalFlags;
   /** Pre-match condition of bench players, applied when they come on. */
   std::vector<std::pair<PlayerID, float>> benchConditions;
 
@@ -1198,6 +1210,8 @@ class MatchEngine
   void extendRestart(float seconds);
   void runAiSubstitutions();
   void runAiSubstitutionsFor(bool homeTeam);
+  /** Takes off the side's players the medical staff limited to an hour. */
+  void runMedicalSubstitutions(bool homeTeam);
   bool performSubstitution(MatchPlayer& outgoing, const Player* inPlayer,
                            SubstitutionReason reason);
   const Player* chooseReplacement(bool homeTeam, PlayerRole role,

@@ -235,7 +235,8 @@ const char* purchaseLine(const ClubResponse& response, bool would_join,
   if (has(response.reasons, Reason::WindowClosed) ||
       has(response.reasons, Reason::Embargo) ||
       has(response.reasons, Reason::Unavailable) ||
-      has(response.reasons, Reason::OverBudget))
+      has(response.reasons, Reason::OverBudget) ||
+      has(response.reasons, Reason::SquadFull))
     return "";
   if (has(response.reasons, Reason::ReleaseClauseMet))
     return "AGENT_CLUB_CLAUSE";

@@ -507,7 +507,8 @@ class GameController
     MaxLength,    /*!< His contract already runs as long as allowed. */
     NotLonger,    /*!< The proposal does not extend his contract. */
     TooLong,      /*!< Longer than the rules allow at his age. */
-    TalksEnded    /*!< He will not talk again for a few days. */
+    TalksEnded,   /*!< He will not talk again for a few days. */
+    SquadFull     /*!< The squad already has the most senior players. */
   };
   /** Language key explaining @p block (empty for None). */
   static const char* playerActionBlockKey(PlayerActionBlock block);
@@ -568,8 +569,13 @@ class GameController
       PlayerID player_id, const TransferNegotiation::LoanTerms& terms);
   /** Offers (or withdraws) a managed player for loan. */
   bool setLoanListed(PlayerID player_id, bool listed);
-  /** Recalls a loaned-out player (recall clause, open window). */
+  /** Recalls a loaned-out player (recall clause, open window, at least
+   * Loan::RECALL_MIN_DAYS into the loan). */
   bool recallLoan(PlayerID player_id);
+  /** True when recallLoan() would succeed today. */
+  bool canRecallLoan(PlayerID player_id) const;
+  /** True when the managed squad has room for one more senior player. */
+  bool hasSquadRoom() const;
   /** Buys a player on loan at the managed club for the option fee. */
   bool exerciseLoanOption(PlayerID player_id);
 

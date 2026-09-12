@@ -63,6 +63,9 @@ class LineupScene : public ManagementScene
   void autoPickBestEleven();
   [[nodiscard]] const Player* selectedPitchPlayer() const;
   [[nodiscard]] const Player* selectedBenchPlayer() const;
+  /** Squad players outside the matchday squad, with one selectable. */
+  void renderOutsiders(float height);
+  [[nodiscard]] const Player* selectedOutsider() const;
 
   /** @brief Why a player cannot be picked right now. */
   enum class Unavailability : uint8_t
@@ -80,6 +83,9 @@ class LineupScene : public ManagementScene
   Lineup* current_lineup = nullptr;
   PlayerID selected_pitch_player_id = 0;
   PlayerID selected_bench_player_id = 0;
+  PlayerID selected_outsider_id = 0;
+  /** Rebuilt each frame from the club's squad (capacity kept). */
+  std::vector<const Player*> outsiders;
 
   // Captain and set-piece takers.
   void renderLeadership();

@@ -55,6 +55,9 @@ struct MatchSimulationInput
   /** Team-talk modifiers by half (see MatchEngine::setTeamTalkModifier). */
   std::array<float, 2> home_talk{};
   std::array<float, 2> away_talk{};
+  /** Medical staff instructions of the managed club's squad
+   * (MatchEngine::setMedicalFlags). */
+  std::vector<std::pair<PlayerID, std::uint8_t>> medical_flags;
 };
 
 /** Final score, engine summary and physical outcome of one match. */

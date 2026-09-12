@@ -204,6 +204,10 @@ namespace fs = std::filesystem;
 constexpr float FRAME_SECONDS = 1.0f / 60.0f;
 /** Rasterize (and upload font atlas changes) every this many frames. */
 constexpr int RASTER_EVERY = 12;
+/** The same while the mouse sweeps a region looking for a widget: hover
+ * needs no pixels, and rasterizing a big window (the 3D match view in
+ * software) every 12th of thousands of sweep frames cost minutes. */
+constexpr int SWEEP_RASTER_EVERY = 240;
 constexpr auto CONTINUE_DEADLINE = std::chrono::seconds(120);
 constexpr int DEFAULT_STEPS = 300;
 constexpr std::array<uint64_t, 3> DEFAULT_SEEDS = {11, 22, 33};
@@ -757,7 +761,10 @@ class Driver
     Bridge::handleEvents(view);
     Bridge::update(view, FRAME_SECONDS);
     const double elapsed = Bridge::render(
-        view, FRAME_SECONDS, raster || ++frame_counter % RASTER_EVERY == 0);
+        view, FRAME_SECONDS,
+        raster || ++frame_counter %
+                          (sweeping ? SWEEP_RASTER_EVERY : RASTER_EVERY) ==
+                      0);
     const int errors = GImGui->ErrorCountCurrentFrame;
     if (errors > 0 && imgui_errors == 0)
     {
@@ -969,6 +976,7 @@ class Driver
   /** ID path of the widget at @p point (ImGui's ID stack query). */
   std::string labelOf(ImGuiID id, ImVec2 point)
   {
+    const Sweep sweep(*this);
     mouseTo(point);
     ImGuiContext& context = *GImGui;
     for (int attempt = 0; attempt < 40; ++attempt)
@@ -1019,7 +1027,8 @@ class Driver
     return findLabel(std::vector<std::string>{needle}, min, max);
   }
   std::optional<ImVec2> findLabel(const std::vector<std::string>& needles,
-                                  ImVec2 min, ImVec2 max)
+                                  ImVec2 min, ImVec2 max,
+                                  bool bottom_up = false)
   {
     std::string needle;
     for (const std::string& part : needles) needle += part + "|";
@@ -1032,10 +1041,16 @@ class Driver
           !GImGui->HoveredIdIsDisabled)
         return cached->second.second;
     }
+    const Sweep sweep(*this);
     std::unordered_set<ImGuiID> seen;
-    for (float y = min.y + 6.0f; y < max.y; y += 10.0f)
+    // Bottom-up when asked: dialogs keep their way out at the bottom.
+    const int rows = static_cast<int>(std::ceil((max.y - min.y - 6.0f) / 10.0f));
+    for (int row = 0; row < rows; ++row)
       for (float x = min.x + 8.0f; x < max.x; x += 16.0f)
       {
+        const float y =
+            min.y + 6.0f + 10.0f * static_cast<float>(bottom_up ? rows - 1 - row
+                                                                : row);
         mouseTo({x, y});
         frame();
         const ImGuiID id = GImGui->HoveredId;
@@ -1116,6 +1131,21 @@ class Driver
 
  private:
   int frame_counter = 0;
+  /** Set while a hover sweep runs (see SWEEP_RASTER_EVERY). */
+  bool sweeping = false;
+  struct Sweep
+  {
+    explicit Sweep(Driver& driver_ref)
+        : driver(driver_ref), outer(driver_ref.sweeping)
+    {
+      driver.sweeping = true;
+    }
+    ~Sweep() { driver.sweeping = outer; }
+    Sweep(const Sweep&) = delete;
+    Sweep& operator=(const Sweep&) = delete;
+    Driver& driver;
+    bool outer;
+  };
   ImGuiID continue_id = 0;
   std::unordered_map<std::string, std::pair<ImGuiID, ImVec2>> found_labels;
 };
@@ -1611,7 +1641,7 @@ class Monkey
                                      LOC("SETTINGS_APPLY"),
                                      LOC("TEAM_SELECTION_CONFIRM"),
                                      LOC("NAV_BACK")},
-            min, max);
+            min, max, true);
         if (!point) return "way out: none found";
         const std::string label =
             driver.labelOf(GImGui->HoveredId, *point);

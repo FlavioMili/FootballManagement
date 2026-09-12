@@ -246,12 +246,15 @@ struct WorldTuning final
     /** Player wages / expected income = base + slope * (league wage ratio
      * - 0.65), within [min, max]. Cups and continental money lift the
      * realised revenue about 10% above the budgeted income, so wages end
-     * near 57-65% of revenue in top divisions. [S: ECFIL wages 57-73% of
-     * revenue by league; lower tiers overshoot] */
+     * near 57-65% of revenue in top divisions. The maximum keeps player
+     * wages + STAFF_SHARE + MIN_OPERATING_SHARE within TARGET_COST_RATIO:
+     * at 0.74 the boards of high-wage second tiers budgeted 1.05x their
+     * income and drifted into debt season after season (soak, seed 1).
+     * [S: ECFIL wages 57-73% of revenue by league; lower tiers overshoot] */
     static constexpr float PLAYER_WAGE_SHARE_BASE = 0.63f;
     static constexpr float PLAYER_WAGE_SHARE_SLOPE = 0.60f;
     static constexpr float PLAYER_WAGE_SHARE_MIN = 0.42f;
-    static constexpr float PLAYER_WAGE_SHARE_MAX = 0.74f;
+    static constexpr float PLAYER_WAGE_SHARE_MAX = 0.68f;
     /** Non-player wages / expected income. [S: ~18% of revenue in ECFIL,
      * including admin staff paid out of other income] */
     static constexpr float STAFF_SHARE = 0.12f;
@@ -265,6 +268,13 @@ struct WorldTuning final
     static constexpr float HOME_MATCHES_PER_SEASON = 19.0f;
     /** Price elasticity of attendance (inelastic demand). [S: 0.3-0.7] */
     static constexpr float TICKET_PRICE_ELASTICITY = 0.5f;
+    /** Demand is inelastic only near the usual price: above it supporters
+     * drop away as exp(-k (price / reference - 1)^2), so gate income peaks
+     * at about 1.3x the reference price and a ticket at three times the
+     * reference leaves the ground nearly empty. [P] */
+    static constexpr float TICKET_OVERPRICING_DECAY = 0.6f;
+    /** Core support that comes whatever the form, before the price. [P] */
+    static constexpr float CORE_SUPPORT_SHARE = 0.05f;
     /** Attendance sensitivity to sporting success. [P] */
     static constexpr float ATTENDANCE_SUCCESS_WEIGHT = 0.25f;
     /** Share of transfer income returned to the transfer budget. [P] */

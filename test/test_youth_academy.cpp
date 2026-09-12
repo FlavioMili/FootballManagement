@@ -484,14 +484,15 @@ TEST(YouthAcademyTest, IntakeCycleForManagedAndOtherClubs)
             YouthActionResult::NotAllowed);
   EXPECT_GT(gamedata->getPlayer(signed_id)->get().getWage(), 0u);
   EXPECT_NE(academy.record(signed_id)->contract, YouthContract::None);
-  // Trialists picked for the bench (auto-pick takes the whole squad) must
-  // not stay there once they leave: the line-up holds raw pointers.
+  // Trialists picked for the bench must not stay there once they leave:
+  // the line-up holds raw pointers. The matchday bench is limited, so they
+  // take the first two places and the current bench fills the rest.
   Lineup& lineup = gamedata->getTeam(managed)->get().getLineup();
   const Player* released_player = &gamedata->getPlayer(released_id)->get();
   const Player* ignored_player = &gamedata->getPlayer(ignored_id)->get();
-  std::vector<const Player*> bench = lineup.getReserves();
-  bench.push_back(released_player);
-  bench.push_back(ignored_player);
+  std::vector<const Player*> bench = {released_player, ignored_player};
+  for (const Player* reserve : lineup.getReserves())
+    if (bench.size() < Lineup::MAX_SUBSTITUTES) bench.push_back(reserve);
   lineup.setReserves(bench);
   ASSERT_TRUE(std::ranges::contains(lineup.getReserves(), released_player));
   ASSERT_TRUE(std::ranges::contains(lineup.getReserves(), ignored_player));

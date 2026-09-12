@@ -2087,6 +2087,31 @@ void GameController::processAITransferActivity()
     budget.moves =
         Market::perDay(budget.clubs, Market::DAILY_DEAL_SHARE, budget.weight);
   }
+  // While some country trades, clubs whose window is shut but whose country
+  // lets them register free agents any day (the Americas in July, right
+  // after the 30 June expiries) sign them at the open-window rate; the
+  // rest share the slow closed-window budget.
+  const auto free_any_day = [&](std::size_t index)
+  {
+    return !budgets.empty() &&
+           TransferWindows::rulesFor(leagues[index]).free_agent_days ==
+               TransferWindows::FREE_AGENTS_ANY_TIME;
+  };
+  std::size_t free_clubs = 0;
+  for (std::size_t index = 0; index < clubs.size(); ++index)
+    if (budget_of[index] == SHUT && free_any_day(index)) ++free_clubs;
+  shut -= free_clubs;
+  constexpr int JULY = 7;
+  const float free_weight =
+      today.month == JULY ? Market::JULY_FREE_AGENT_WEIGHT : 1.0f;
+  int free_visits =
+      free_clubs > 0 ? Market::perDay(free_clubs, Market::DAILY_EVALUATION_SHARE,
+                                      free_weight)
+                     : 0;
+  int free_signings =
+      free_clubs > 0 ? Market::perDay(free_clubs, Market::DAILY_DEAL_SHARE,
+                                      free_weight)
+                     : 0;
   int shut_visits =
       shut > 0 ? Market::perDay(shut, Market::DAILY_EVALUATION_SHARE) : 0;
   int shut_signings =
@@ -2096,6 +2121,14 @@ void GameController::processAITransferActivity()
   for (std::size_t index = 0; index < clubs.size(); ++index)
   {
     const TeamID club = clubs[index];
+    if (budget_of[index] == SHUT && free_any_day(index))
+    {
+      if (free_visits <= 0 || free_signings <= 0) continue;
+      --free_visits;
+      if (market.runAiClub(club, transfer_listings, today, managed, rng, true))
+        --free_signings;
+      continue;
+    }
     if (budget_of[index] == SHUT)
     {
       // Out of its window a club can only register players without a club,
@@ -2162,6 +2195,11 @@ TransferNegotiation::ClubResponse GameController::makeTransferOffer(
     refusal.reasons.push_back(Reason::Embargo);
     return refusal;
   }
+  if (!hasSquadRoom())
+  {
+    refusal.reasons.push_back(Reason::SquadFull);
+    return refusal;
+  }
   if (!player || player->get().getTeamId() == managed ||
       player->get().getTeamId() == FREE_AGENTS_TEAM_ID ||
       !market.canBeTraded(player_id))
@@ -2193,6 +2231,16 @@ TransferNegotiation::ClubResponse GameController::makeTransferOffer(
   }
 
   const GameDateValue today = game->getCurrentDate();
+  // A club does not sell a goalkeeper it needs, unless his release clause
+  // is paid in full.
+  const uint32_t clause = market.releaseClause(player_id);
+  const bool meets_clause =
+      clause > 0 && terms.fee >= clause && terms.instalment_years == 0;
+  if (!meets_clause && !market.keepsAiKeepers(seller, player_id))
+  {
+    refusal.reasons.push_back(Reason::NotForSale);
+    return refusal;
+  }
   ClubResponse response = TransferNegotiation::evaluateOffer(
       market.saleContext(player_id, managed, today, listingPrice(player_id)),
       terms, talk.club_rounds);
@@ -2298,6 +2346,14 @@ GameController::ContractTalkResult GameController::proposeContract(
     result.response.reasons.push_back(TransferNegotiation::Reason::TalksEnded);
     return result;
   }
+  // A new signing needs room in the squad.
+  if (!renewal && !hasSquadRoom())
+  {
+    result.block = PlayerActionBlock::SquadFull;
+    result.response.reasons.push_back(TransferNegotiation::Reason::SquadFull);
+    result.rounds_left = getContractRoundsLeft(player_id);
+    return result;
+  }
   // A renewal must run longer than the contract he has, within the rules.
   if (renewal && offer.years <= player->get().getContractYears())
   {
@@ -2362,7 +2418,14 @@ GameController::ContractTalkResult GameController::proposeContract(
   deal.contract = offer;
   deal.kind = *kind == ContractKind::Transfer ? TransferKind::Permanent
                                               : TransferKind::Free;
-  if (*kind == ContractKind::Transfer) deal.terms = talk.agreed;
+  if (*kind == ContractKind::Transfer)
+  {
+    deal.terms = talk.agreed;
+    // A release clause paid in full cannot be refused by his club.
+    const uint32_t clause = market.releaseClause(player_id);
+    deal.binding = clause > 0 && talk.agreed.fee >= clause &&
+                   talk.agreed.instalment_years == 0;
+  }
   const bool affordable = *kind == ContractKind::PreContract
                               ? canPayPreContract(deal)
                               : canPayDeal(deal);
@@ -2414,6 +2477,11 @@ TransferNegotiation::ClubResponse GameController::makeLoanOffer(
   if (game->getWorld().isTransferEmbargoed(managed))
   {
     response.reasons.push_back(Reason::Embargo);
+    return response;
+  }
+  if (!hasSquadRoom())
+  {
+    response.reasons.push_back(Reason::SquadFull);
     return response;
   }
   const auto player = gamedata->getPlayer(player_id);
@@ -2484,15 +2552,28 @@ bool GameController::setLoanListed(PlayerID player_id, bool listed)
   return true;
 }
 
-bool GameController::recallLoan(PlayerID player_id)
+bool GameController::canRecallLoan(PlayerID player_id) const
 {
   if (!game || !isTransferWindowOpen()) return false;
-  TransferMarket& market = game->getTransfers();
-  const LoanDeal* loan = market.findLoan(player_id);
-  if (!loan || loan->parent != game->getManagedTeamId() || !loan->recall_clause)
-    return false;
-  return market.endLoan(player_id, game->getCurrentDate(),
-                        game->getManagedTeamId(), true);
+  const LoanDeal* loan = game->getTransfers().findLoan(player_id);
+  // Not at once: the borrower paid for a spell with him.
+  return loan && loan->parent == game->getManagedTeamId() &&
+         loan->recall_clause &&
+         dayOrdinal(game->getCurrentDate()) - dayOrdinal(loan->start) >=
+             TransferTuning::Loan::RECALL_MIN_DAYS;
+}
+
+bool GameController::recallLoan(PlayerID player_id)
+{
+  if (!canRecallLoan(player_id)) return false;
+  return game->getTransfers().endLoan(player_id, game->getCurrentDate(),
+                                      game->getManagedTeamId(), true);
+}
+
+bool GameController::hasSquadRoom() const
+{
+  return game && game->getTransfers().seniorSquadSize(game->getManagedTeamId()) <
+                     TransferTuning::Market::MANAGED_MAX_SQUAD;
 }
 
 bool GameController::exerciseLoanOption(PlayerID player_id)
@@ -2510,6 +2591,14 @@ bool GameController::exerciseLoanOption(PlayerID player_id)
       static_cast<int64_t>(TransferNegotiation::upfrontAmount(probe.terms)) +
       static_cast<int64_t>(TransferMarket::agentFee(probe));
   if (signing_cash > transferBudgetForTeam(managed)) return false;
+  // His full wage replaces the share the club pays now.
+  const auto player = gamedata->getPlayer(player_id);
+  const auto club = gamedata->getTeam(managed);
+  if (!player || !club ||
+      getWeeklyWageBill(managed) - static_cast<int64_t>(player->get().getWage()) +
+              static_cast<int64_t>(loan->full_wage) >
+          club->get().getFinances().getWageBudget())
+    return false;
   return market.exerciseLoanOption(player_id, game->getCurrentDate(), managed);
 }
 
@@ -2740,6 +2829,8 @@ const char* GameController::playerActionBlockKey(PlayerActionBlock block)
       return "BLOCK_TOO_LONG";
     case PlayerActionBlock::TalksEnded:
       return "BLOCK_TALKS_ENDED";
+    case PlayerActionBlock::SquadFull:
+      return "BLOCK_SQUAD_FULL";
   }
   return "";
 }
