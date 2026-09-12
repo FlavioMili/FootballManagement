@@ -90,27 +90,36 @@ std::vector<float> penaltyTakers(const Team& shooters, const Team& keepers)
   return chances;
 }
 
-/**
- * Day of a tie of a midweek round (@p date is its Wednesday): Tuesday,
- * Wednesday or Thursday, whichever rests both clubs best and is quietest, so
- * a round is spread over the three days. Weekend dates (the final) stay.
- */
-GameDateValue tieDay(const Calendar& calendar, TeamID home_id, TeamID away_id,
-                     const GameDateValue& date, const GameDateValue& after)
+/** A day a tie can be played on and how badly it clashes with the clubs'
+ * other matches (league fixtures can still move, see Calendar::protectRest). */
+struct TieOption
 {
-  if (SeasonCalendar::dayOfWeek(date) != SeasonCalendar::WEDNESDAY) return date;
-  std::optional<GameDateValue> best;
-  std::tuple<int, size_t, int> best_key{};
+  GameDateValue day;
+  int clashes = 0;
+  int offset = 0;
+};
+
+/**
+ * Days of a tie of a midweek round (@p date is its Wednesday): Tuesday,
+ * Wednesday or Thursday, so a round is spread over the three days. Weekend
+ * dates (the final) stay.
+ */
+std::vector<TieOption> tieOptions(const Calendar& calendar, TeamID home_id,
+                                  TeamID away_id, const GameDateValue& date,
+                                  const GameDateValue& after)
+{
+  std::vector<TieOption> options;
+  const bool midweek =
+      SeasonCalendar::dayOfWeek(date) == SeasonCalendar::WEDNESDAY;
   for (const int offset : {0, -1, 1})
   {
+    if (!midweek && offset != 0) continue;
     const GameDateValue day = SeasonCalendar::addDays(date, offset);
-    if (!(after < day) ||
-        (offset != 0 && (SeasonCalendar::isBlackout(day) ||
-                         SeasonCalendar::isContinentalWeek(day))))
+    if (offset != 0 &&
+        (!(after < day) || SeasonCalendar::isBlackout(day) ||
+         SeasonCalendar::isContinentalWeek(day)))
       continue;
-    // Clashes with the clubs' other matches (league fixtures can still move
-    // within their round, see Calendar::protectRest).
-    int clashes = 0;
+    TieOption option{day, 0, offset};
     for (int near = -SeasonCalendar::MIN_REST_BEFORE_TIE;
          near <= SeasonCalendar::MIN_REST_BEFORE_TIE; ++near)
     {
@@ -122,34 +131,42 @@ GameDateValue tieDay(const Calendar& calendar, TeamID home_id, TeamID away_id,
             match.getHomeTeamId() == away_id || match.getAwayTeamId() == away_id;
         if (!involved) continue;
         if (near == 0)
-          clashes += 10;
+          option.clashes += 10;
         else if (near < 0 &&
                  -near < SeasonCalendar::restDays(match.getMatchType(),
                                                   MatchType::CUP))
-          ++clashes;
+          ++option.clashes;
         else if (near > 0 &&
                  near < SeasonCalendar::restDays(MatchType::CUP,
                                                  match.getMatchType()))
-          ++clashes;
+          ++option.clashes;
       }
     }
-    const std::tuple key{clashes, calendar.getMatchesForDate(day).size(),
-                         std::abs(offset)};
-    if (!best || key < best_key)
-    {
-      best = day;
-      best_key = key;
-    }
+    options.push_back(option);
   }
-  return best.value_or(date);
+  if (options.empty()) options.push_back({date, 0, 0});
+  return options;
 }
 
+/**
+ * Draws the ties of a round. Each tie takes the day that best rests both
+ * clubs, then the quietest; the ties with the fewest clean days pick first
+ * so the others even out the three days.
+ */
 void addTies(Calendar& calendar, const GameData& gamedata,
              std::vector<TeamID> participants, std::mt19937& rng,
              const GameDateValue& date, LeagueID cup_id, uint8_t stage,
              const GameDateValue& after)
 {
   std::ranges::shuffle(participants, rng);
+  struct Tie
+  {
+    TeamID home_id;
+    TeamID away_id;
+    std::vector<TieOption> options;
+    size_t clean = 0;
+  };
+  std::vector<Tie> ties;
   for (size_t i = 0; i + 1 < participants.size(); i += 2)
   {
     TeamID home_id = participants[i];
@@ -161,9 +178,25 @@ void addTies(Calendar& calendar, const GameData& gamedata,
         Competitions::leagueTier(gamedata, home_team->get().getLeagueId()) <
             Competitions::leagueTier(gamedata, away_team->get().getLeagueId()))
       std::swap(home_id, away_id);
-    calendar.addMatch(Match(home_id, away_id,
-                            tieDay(calendar, home_id, away_id, date, after),
-                            MatchType::CUP, cup_id, stage));
+    Tie tie{home_id, away_id,
+            tieOptions(calendar, home_id, away_id, date, after), 0};
+    const int fewest = std::ranges::min(tie.options, {}, &TieOption::clashes).clashes;
+    tie.clean = static_cast<size_t>(std::ranges::count(
+        tie.options, fewest, &TieOption::clashes));
+    ties.push_back(std::move(tie));
+  }
+  std::ranges::stable_sort(ties, {}, &Tie::clean);
+  for (const Tie& tie : ties)
+  {
+    const auto key = [&calendar](const TieOption& option)
+    {
+      return std::tuple{option.clashes,
+                        calendar.getMatchesForDate(option.day).size(),
+                        std::abs(option.offset)};
+    };
+    const TieOption& best = std::ranges::min(tie.options, {}, key);
+    calendar.addMatch(
+        Match(tie.home_id, tie.away_id, best.day, MatchType::CUP, cup_id, stage));
   }
 }
 

@@ -251,7 +251,7 @@ struct WorldTuning final
     static constexpr float PLAYER_WAGE_SHARE_BASE = 0.63f;
     static constexpr float PLAYER_WAGE_SHARE_SLOPE = 0.60f;
     static constexpr float PLAYER_WAGE_SHARE_MIN = 0.42f;
-    static constexpr float PLAYER_WAGE_SHARE_MAX = 0.76f;
+    static constexpr float PLAYER_WAGE_SHARE_MAX = 0.74f;
     /** Non-player wages / expected income. [S: ~18% of revenue in ECFIL,
      * including admin staff paid out of other income] */
     static constexpr float STAFF_SHARE = 0.12f;
@@ -375,13 +375,17 @@ struct WorldTuning final
 
   struct MatchContext final
   {
-    /** League averages the engine produces at a neutral context inside the
-     * simulated world (top divisions, where clubs of very different
-     * strength meet); a league's match style is passed as a ratio to them.
-     * [Measured with fm_lab season against the football-data averages;
-     * mean yellows and home win edge of the 22 leagues] */
-    static constexpr float REFERENCE_GOALS = 3.0f;
-    static constexpr float REFERENCE_YELLOWS = 4.30f;
+    /** Goals and yellow cards per match the engine produces at a neutral
+     * context inside the simulated world, where clubs of very different
+     * strength meet. The engine already scores less in second divisions
+     * (their lower finishing), so those have their own goal reference.
+     * [Measured with fm_lab season, 2 seasons x 22 leagues] */
+    static constexpr float REFERENCE_GOALS_TOP = 2.82f;
+    static constexpr float REFERENCE_GOALS_SECOND = 2.52f;
+    /** Goals grow about as goalRateScale^1.5 (the scale acts on shot
+     * precision), so the scale is the goal ratio to the power 1/1.5. */
+    static constexpr float GOAL_RESPONSE_EXPONENT = 1.5f;
+    static constexpr float REFERENCE_YELLOWS = 4.0f;
     static constexpr float REFERENCE_HOME_EDGE = 14.0f;
     /** SD of referees' mean yellows the engine's per-match spread stands
      * for; top divisions sit below it, second tiers above. [S: England

@@ -902,6 +902,10 @@ class MatchEngine
   std::array<float, 4> targetBlends{};
   std::array<std::uint8_t, 32> separationOrder{};
   std::size_t separationCount = 0;
+  /** Positions after the last separation pass and whether it found no
+   * contact (an unchanged, contact-free field needs no new pass). */
+  std::array<Vector2F, 32> separationPositions{};
+  bool separationClear = false;
   /** Ball situation at the last tactical refresh (event-driven refresh). */
   const Player* tacticalOwner = nullptr;
   std::uint8_t tacticalFlags = 0;

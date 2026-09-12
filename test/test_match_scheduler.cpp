@@ -705,8 +705,10 @@ TEST(MatchContextTest, LeaguesCarryTheirOwnMatchStyle)
   EXPECT_GT(context(PORTUGAL).refereeStrictnessMean,
             1.3f * context(FRANCE).refereeStrictnessMean);
   EXPECT_LT(context(ENGLAND).refereeStrictnessMean, 1.0f);
+  // Goals grow faster than the scale (it sharpens shooting): 3.19 against
+  // 2.05 goals a match is about a 1.35x scale.
   EXPECT_GT(context(GERMANY).goalRateScale,
-            1.4f * context(ARGENTINA).goalRateScale);
+            1.25f * context(ARGENTINA).goalRateScale);
   EXPECT_GT(context(BRAZIL_2).homeAdvantageScale,
             1.5f * context(PORTUGAL_2).homeAdvantageScale);
   EXPECT_GT(context(ENGLAND_2).refereeStrictnessSd,

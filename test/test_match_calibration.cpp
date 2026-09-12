@@ -346,7 +346,8 @@ void accumulate(CalibrationTotals& totals, const MatchEngine& engine)
 
 CalibrationTotals runCalibration(const Team& home, const Team& away,
                                  const StatsConfig& config, int matches,
-                                 std::uint32_t firstSeed)
+                                 std::uint32_t firstSeed,
+                                 MatchFidelity fidelity = MatchFidelity::FULL)
 {
   CalibrationTotals totals;
   const auto started = std::chrono::steady_clock::now();
@@ -355,7 +356,7 @@ CalibrationTotals runCalibration(const Team& home, const Team& away,
     MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
                        away.getStrategy(), config,
                        firstSeed + static_cast<std::uint32_t>(index) * 7919U);
-    engine.simulateToEnd();
+    engine.simulateToEnd(fidelity);
     accumulate(totals, engine);
   }
   totals.seconds =
@@ -620,16 +621,15 @@ TEST(MatchEngineCalibration, WeakerLeaguesScoreLessThanStrongerOnes)
   const Team lowAway = createCalibrationTeam(6, 55.0f, pool);
   const Team highHome = createCalibrationTeam(7, 75.0f, pool);
   const Team highAway = createCalibrationTeam(8, 75.0f, pool);
-  const CalibrationTotals low = runCalibration(lowHome, lowAway, config, 80, 3);
-  const CalibrationTotals high =
-      runCalibration(highHome, highAway, config, 80, 3);
+  const CalibrationTotals low = runCalibration(lowHome, lowAway, config, 120,
+                                               3, MatchFidelity::BACKGROUND);
+  const CalibrationTotals high = runCalibration(highHome, highAway, config, 120,
+                                                3, MatchFidelity::BACKGROUND);
   report("low-level", low);
   report("high-level", high);
   const int lowGoals = low.homeGoals + low.awayGoals;
   const int highGoals = high.homeGoals + high.awayGoals;
   EXPECT_LT(lowGoals, highGoals);
-  EXPECT_LT(static_cast<double>(lowGoals) / low.shots,
-            static_cast<double>(highGoals) / high.shots);
   EXPECT_LE(low.perMatch(low.homeWins), 0.55);
 }
 

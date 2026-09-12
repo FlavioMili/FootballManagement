@@ -69,12 +69,29 @@ struct MatchRender3DTuning final
   struct Grass final
   {
     static constexpr int STRIPES = 18;
-    static constexpr int WIDTH_BANDS = 6;
     static constexpr float SURROUND_X = 9.0f;
     static constexpr float SURROUND_Y = 7.0f;
     static constexpr float OUTSIDE_EXTENT = 140.0f;
-    static constexpr float LIGHT_STRIPE_BOOST = 1.10f;
-    static constexpr float CROSS_BAND_BOOST = 1.035f;
+    /** Grid resolution of the playing surface (columns per stripe, rows). */
+    static constexpr int STRIPE_COLUMNS = 2;
+    static constexpr int ROWS = 16;
+    /**
+     * Stripe brightness swing: blades leaning away from the camera look
+     * lighter, so the pattern is strongest looking along the mowing
+     * direction (across the pitch) and flips when looking the other way.
+     */
+    static constexpr float STRIPE_CONTRAST = 0.055f;
+    static constexpr float STRIPE_SIDE_SHARE = 0.4f;
+    static constexpr float NOISE_METRES = 7.0f;
+    static constexpr float NOISE_STRENGTH = 0.09f;
+    static constexpr float FINE_NOISE_METRES = 2.2f;
+    static constexpr float FINE_NOISE_STRENGTH = 0.05f;
+    /** Worn patches: dry, yellowed grass over bare soil. */
+    static constexpr ImU32 WEAR_COLOR = IM_COL32(112, 104, 62, 255);
+    static constexpr std::uint8_t WEAR_ALPHA = 85;
+    static constexpr float SPOT_WEAR_RADIUS = 1.3f;
+    static constexpr float GOALMOUTH_DEPTH = 2.4f;
+    static constexpr float GOALMOUTH_WIDTH = 3.4f;
     static constexpr float VIGNETTE_LENGTH = 0.16f;
     static constexpr float VIGNETTE_WIDTH = 0.20f;
     static constexpr ImU32 PITCH_COLOR = IM_COL32(52, 128, 50, 255);
@@ -182,6 +199,36 @@ struct MatchRender3DTuning final
     static constexpr float JITTER = 0.12f;
     static constexpr float EMPTY_SEAT_RATIO = 0.08f;
     static constexpr float HOME_SHARE = 0.34f;
+    /** The home end (west) is packed with the club's own supporters. */
+    static constexpr float HOME_END_SHARE = 0.62f;
+    static constexpr float SCARF_SHARE = 0.25f;
+    static constexpr float HOME_END_SCARF_SHARE = 0.5f;
+    static constexpr float NEUTRAL_CHEER_SHARE = 0.6f;
+    static constexpr float FLAG_SHARE = 0.004f;
+    static constexpr float HOME_END_FLAG_SHARE = 0.013f;
+    static constexpr float AWAY_END_FLAG_SHARE = 0.007f;
+    /** Flag pole, cloth size (metres) and waving. */
+    static constexpr float POLE_HEIGHT = 1.5f;
+    static constexpr float FLAG_LENGTH = 1.25f;
+    static constexpr float FLAG_HEIGHT = 0.8f;
+    static constexpr float FLAG_WAVE = 0.18f;
+    static constexpr float FLAG_WAVE_SPEED = 3.2f;
+    /** Flags smaller than this on screen (px) are left to the crowd tint. */
+    static constexpr float FLAG_MIN_PIXELS = 2.5f;
+    /** Idle sway and goal hop as shares of a spectator's height. */
+    static constexpr float SWAY = 0.035f;
+    static constexpr float SWAY_SPEED = 1.3f;
+    static constexpr float HOP = 0.3f;
+    static constexpr float HOP_SPEED = 8.5f;
+    /** Raised arms reach this share of the height above the head. */
+    static constexpr float ARM_REACH = 0.42f;
+    static constexpr float ARM_WIDTH_SHARE = 0.16f;
+    static constexpr float SCARF_WIDTH_SHARE = 1.9f;
+    static constexpr float SCARF_HEIGHT_SHARE = 0.11f;
+    /** Shoulders taper to this share of the body width. */
+    static constexpr float SHOULDER_SHARE = 0.78f;
+    static constexpr float SHOULDER_DROP = 0.14f;
+    static constexpr ImU32 POLE_COLOR = IM_COL32(58, 52, 44, 255);
     static constexpr float AWAY_END_SHARE = 0.55f;
     /** Low-frequency swing of the team share (fan blocks, quieter areas). */
     static constexpr float SHARE_SWING = 0.3f;
@@ -293,6 +340,116 @@ struct MatchRender3DTuning final
     static constexpr float MARKER_RADIUS = 0.42f;
     static constexpr std::uint8_t MARKER_ALPHA = 150;
     static constexpr ImU32 BOOT_COLOR = IM_COL32(26, 26, 30, 255);
+    /** Hands (keeper gloves) are only modelled above this projected height. */
+    static constexpr float HAND_MIN_PIXELS = 44.0f;
+    static constexpr float HAND_HALF_SIZE = 0.045f;
+    static constexpr float GLOVE_HALF_SIZE = 0.06f;
+  };
+
+  /**
+   * Whole-body poses layered over the run cycle. Leans are radians, rates
+   * per real second; accelerations come from the simulated ground speed.
+   */
+  struct Pose final
+  {
+    /** Forward lean per m/s^2 of acceleration (negative when braking). */
+    static constexpr float ACCEL_LEAN = 0.05f;
+    static constexpr float MAX_ACCEL_LEAN = 0.22f;
+    static constexpr float MAX_BRAKE_LEAN = 0.18f;
+    /** Braking harder than this plants the legs in a stop stance. */
+    static constexpr float STOP_DECELERATION = 3.0f;
+    static constexpr float STOP_KNEE_BEND = 0.45f;
+    static constexpr float STOP_HIP_DROP = 0.05f;
+    /** Time constant of the acceleration estimate (1/s). */
+    static constexpr float ACCEL_RATE = 6.0f;
+    static constexpr float ACCEL_SMOOTHING = 8.0f;
+    /** Sideways lean into turns per rad/s of turn rate and m/s of speed. */
+    static constexpr float TURN_LEAN = 0.035f;
+    static constexpr float MAX_TURN_LEAN = 0.3f;
+    static constexpr float TURN_SMOOTHING = 8.0f;
+    /** Turn rates above this (rad/s) are snaps, not running turns. */
+    static constexpr float MAX_TURN_RATE = 9.0f;
+    static constexpr float BLEND_RATE = 9.0f;
+    /** Longest simulated step one frame may account for (s). */
+    static constexpr float MAX_SIM_SECONDS = 0.25f;
+  };
+
+  /** Kicks and headers, detected when the ball leaves a player. */
+  struct Kick final
+  {
+    static constexpr float SECONDS = 0.42f;
+    static constexpr float HEADER_SECONDS = 0.5f;
+    /** Ball speed (m/s) a touch must reach to count as a kick. */
+    static constexpr float MIN_BALL_SPEED = 6.5f;
+    /** Rise in ball speed between two steps that marks a first-time hit. */
+    static constexpr float SPEED_JUMP = 5.0f;
+    /** A player this close to the ball (m) can have struck it. */
+    static constexpr float REACH_METRES = 2.2f;
+    /** Balls above this height (m) at the touch are headed. */
+    static constexpr float HEADER_HEIGHT = 1.35f;
+    /** Ball jumps longer than this (m) in one step are restarts. */
+    static constexpr float TELEPORT_METRES = 6.0f;
+    static constexpr float BACKSWING = -0.75f;
+    static constexpr float FOLLOW_THROUGH = 1.25f;
+    static constexpr float BACKSWING_KNEE = -1.35f;
+    static constexpr float TORSO_LEAN = -0.16f;
+    static constexpr float ARM_ABDUCTION = 0.8f;
+    static constexpr float HEADER_JUMP = 0.32f;
+    static constexpr float HEADER_NOD = 0.45f;
+  };
+
+  /** Goalkeeper set stance and dives. */
+  struct Keeper final
+  {
+    /** The set stance is taken while the ball is this close (m). */
+    static constexpr float SET_DISTANCE = 26.0f;
+    static constexpr float SET_HIP_DROP = 0.12f;
+    static constexpr float SET_THIGH = 0.55f;
+    static constexpr float SET_KNEE = -1.05f;
+    static constexpr float SET_LEG_SPREAD = 0.16f;
+    static constexpr float SET_ARM_FORWARD = 0.55f;
+    static constexpr float SET_ARM_SPREAD = 0.4f;
+    static constexpr float SET_LEAN = 0.22f;
+    /** Body roll of a full-stretch dive and the height of the flight. */
+    static constexpr float DIVE_ROLL = 1.3f;
+    static constexpr float DIVE_LIFT = 0.42f;
+    static constexpr float DIVE_RATE = 12.0f;
+    static constexpr float HOLD_ARM = 1.25f;
+    static constexpr float HOLD_ELBOW = 1.3f;
+  };
+
+  /** Players after a goal (simulated seconds since the goal). */
+  struct Celebration final
+  {
+    static constexpr float PLAYER_SECONDS = 14.0f;
+    static constexpr float CROWD_SECONDS = 16.0f;
+    static constexpr float FADE_SECONDS = 5.0f;
+    static constexpr float ARMS_UP = 2.75f;
+    static constexpr float ARMS_SPREAD = 0.35f;
+    static constexpr float WINGS_SPREAD = 1.45f;
+    static constexpr float HOP = 0.12f;
+    static constexpr float HOP_SPEED = 7.0f;
+    static constexpr float DEJECTED_LEAN = 0.32f;
+  };
+
+  /** Shirt numbers (and names) on the players' backs. */
+  struct Number final
+  {
+    /** Printed digit height and where it sits up the back (metres). */
+    static constexpr float HEIGHT = 0.27f;
+    static constexpr float CENTRE_UP = 0.3f;
+    static constexpr float NAME_HEIGHT = 0.065f;
+    static constexpr float NAME_GAP = 0.02f;
+    /** Smallest projected digit (px) worth drawing; names need more. */
+    static constexpr float MIN_PIXELS = 5.0f;
+    static constexpr float NAME_MIN_PIXELS = 7.5f;
+    static constexpr float MIN_FONT_SIZE = 6.0f;
+    static constexpr float MAX_FONT_SIZE = 96.0f;
+    static constexpr float FONT_STEP = 1.25f;
+    /** The back must face the camera at least this much (cosine). */
+    static constexpr float MIN_FACING = 0.2f;
+    /** Stroke thickness of the heavy digits as a share of their height. */
+    static constexpr float WEIGHT = 0.045f;
   };
 
   struct Ball final
@@ -313,12 +470,18 @@ struct MatchRender3DTuning final
 
   struct Shadow final
   {
-    static constexpr float CONTACT_RADIUS = 0.34f;
-    static constexpr float BLADE_LENGTH = 1.8f;
+    static constexpr float CONTACT_RADIUS = 0.42f;
     static constexpr float BLADE_HALF_WIDTH = 0.2f;
     static constexpr int SEGMENTS = 10;
-    static constexpr ImU32 CONTACT_COLOR = IM_COL32(0, 0, 0, 78);
-    static constexpr ImU32 BLADE_COLOR = IM_COL32(0, 0, 0, 34);
+    static constexpr ImU32 CONTACT_COLOR = IM_COL32(0, 0, 0, 120);
+    /** Darkness of one floodlight blade at an equal share of the light. */
+    static constexpr std::uint8_t BLADE_ALPHA = 50;
+    static constexpr float MIN_LAMP_SHARE = 0.45f;
+    static constexpr float MAX_LAMP_SHARE = 1.8f;
+    static constexpr float MIN_BLADE = 0.8f;
+    static constexpr float MAX_BLADE = 2.6f;
+    /** Soft edge added around each blade (metres). */
+    static constexpr float PENUMBRA = 0.12f;
     static constexpr float RING_RADIUS = 0.62f;
     static constexpr int RING_SEGMENTS = 20;
     static constexpr float RING_THICKNESS = 2.2f;
@@ -346,6 +509,38 @@ struct MatchRender3DTuning final
     static constexpr ImU32 GROUND_COLOR = IM_COL32(14, 16, 20, 255);
     static constexpr float VIGNETTE_EDGE = 0.16f;
     static constexpr ImU32 VIGNETTE_COLOR = IM_COL32(0, 0, 0, 96);
+  };
+
+  /** Lower-third goal sting; sizes in font heights (HiDPI safe). */
+  struct Sting final
+  {
+    static constexpr float SECONDS = 6.0f;
+    static constexpr float FADE_IN_SECONDS = 0.35f;
+    static constexpr float FADE_OUT_SECONDS = 0.6f;
+    static constexpr float SLIDE_EM = 2.5f;
+    static constexpr float TITLE_SCALE = 1.9f;
+    static constexpr float PADDING_EM = 0.6f;
+    static constexpr float BAR_EM = 0.55f;
+    static constexpr float ROUNDING_EM = 0.3f;
+    /** Gap below the sting as a share of the view height. */
+    static constexpr float BOTTOM_SHARE = 0.08f;
+    static constexpr ImU32 PANEL_COLOR = IM_COL32(8, 13, 23, 214);
+    static constexpr ImU32 CALL_COLOR = IM_COL32(255, 214, 77, 255);
+    static constexpr ImU32 TEXT_COLOR = IM_COL32(245, 247, 250, 255);
+    static constexpr ImU32 DETAIL_COLOR = IM_COL32(184, 191, 204, 255);
+  };
+
+  /** Net ripple after a goal. */
+  struct Ripple final
+  {
+    static constexpr float SECONDS = 2.2f;
+    static constexpr float AMPLITUDE = 0.32f;
+    static constexpr float DECAY = 2.2f;
+    static constexpr float WAVE_NUMBER = 3.2f;
+    static constexpr float WAVE_SPEED = 9.0f;
+    /** Metres over which the push fades from the impact point. */
+    static constexpr float REACH = 2.4f;
+    static constexpr int SEGMENTS = 6;
   };
 
   struct Hud final

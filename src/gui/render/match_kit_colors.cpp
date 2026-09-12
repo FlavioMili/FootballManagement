@@ -127,6 +127,36 @@ float kitColorDistance(ImU32 first, ImU32 second)
                    (2.0f + (255.0f - meanRed) / 256.0f) * db * db);
 }
 
+ImU32 kitNumberColor(const KitColors& kit)
+{
+  if (kitColorDistance(kit.trim, kit.shirt) >= KIT_CLASH_DISTANCE)
+    return kit.trim;
+  constexpr ImU32 LIGHT = IM_COL32(246, 247, 250, 255);
+  constexpr ImU32 DARK = IM_COL32(18, 20, 26, 255);
+  return kitColorDistance(LIGHT, kit.shirt) >= kitColorDistance(DARK, kit.shirt)
+             ? LIGHT
+             : DARK;
+}
+
+ImU32 goalkeeperGloveColor(const KitColors& kit)
+{
+  constexpr std::array<ImU32, 4> GLOVES{
+      IM_COL32(236, 240, 232, 255), IM_COL32(170, 230, 40, 255),
+      IM_COL32(250, 120, 30, 255), IM_COL32(30, 32, 36, 255)};
+  ImU32 best = GLOVES[0];
+  float bestDistance = -1.0f;
+  for (const ImU32 glove : GLOVES)
+  {
+    const float distance = kitColorDistance(glove, kit.shirt);
+    if (distance > bestDistance)
+    {
+      bestDistance = distance;
+      best = glove;
+    }
+  }
+  return best;
+}
+
 MatchKits chooseMatchKits(TeamID homeTeam, TeamID awayTeam)
 {
   const std::optional<ClubColours> home = packColours(homeTeam);

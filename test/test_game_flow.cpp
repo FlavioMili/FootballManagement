@@ -261,6 +261,9 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   // 4. Change to Main Game Scene
   view.changeScene(std::make_unique<MainGameScene>(&view));
   EXPECT_NO_THROW(step_frame());
+  // The club choice draws its first frame transparent while its auto-sized
+  // cards measure themselves.
+  EXPECT_NO_THROW(step_frame());
 
   const auto teamSelectionScreenshotPath =
       RuntimePaths::capturePath("team_selection.bmp");

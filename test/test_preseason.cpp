@@ -10,13 +10,16 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <array>
 #include <map>
 #include <memory>
+#include <optional>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
+#include "model/calendar.h"
 #include "model/inbox.h"
 #include "model/preseason.h"
 
@@ -148,6 +151,63 @@ TEST(Preseason, ChoosingAnOpponentSwapsFixturesSafely)
               plan[index].opponent_id);
     EXPECT_TRUE(oncePerClub(*controller, plan[index].date));
   }
+}
+
+TEST(Preseason, OpponentsFromAnotherDayOfTheWeekSwapCleanly)
+{
+  const SlotCleanup slot{uniqueSlot(3)};
+  auto controller = makeCareer(slot.slot);
+  const Calendar& calendar = controller->getGame()->getCalendar();
+  const auto slots = controller->getPreseasonFriendlies();
+  ASSERT_FALSE(slots.empty());
+  const GameDateValue date = slots.front().date;
+  // Friendlies are spread over the week: find a club playing another day.
+  std::array<GameDateValue, 7> week;
+  const GameDateValue monday =
+      SeasonCalendar::addDays(date, -SeasonCalendar::dayOfWeek(date));
+  for (int offset = 0; offset < 7; ++offset)
+    week[static_cast<size_t>(offset)] = SeasonCalendar::addDays(monday, offset);
+  const auto dayOf = [&](TeamID team) -> std::optional<GameDateValue>
+  {
+    for (const GameDateValue& day : week)
+      for (const Match& match : calendar.getMatchesForDate(day))
+        if (match.getHomeTeamId() == team || match.getAwayTeamId() == team)
+          return day;
+    return std::nullopt;
+  };
+  const auto options = anyOpponents(*controller, date, false);
+  const auto choice =
+      std::ranges::find_if(options, [&](const OpponentOption& option)
+                           {
+                             const auto day = dayOf(option.team_id);
+                             return day && !(*day == date);
+                           });
+  ASSERT_NE(choice, options.end());
+  const GameDateValue other_day = *dayOf(choice->team_id);
+  std::map<int, size_t> before;
+  for (size_t index = 0; index < week.size(); ++index)
+    before[static_cast<int>(index)] = calendar.getMatchesForDate(week[index]).size();
+
+  ASSERT_TRUE(
+      controller->setPreseasonFriendly(date, choice->team_id, true, false));
+  EXPECT_EQ(controller->getPreseasonFriendlies().front().opponent_id,
+            choice->team_id);
+  EXPECT_EQ(dayOf(choice->team_id), std::optional<GameDateValue>(date));
+  // Every club still plays exactly once that week; days keep their size.
+  std::map<TeamID, int> played;
+  for (size_t index = 0; index < week.size(); ++index)
+  {
+    EXPECT_EQ(calendar.getMatchesForDate(week[index]).size(),
+              before[static_cast<int>(index)]);
+    for (const Match& match : calendar.getMatchesForDate(week[index]))
+    {
+      ++played[match.getHomeTeamId()];
+      ++played[match.getAwayTeamId()];
+    }
+  }
+  for (const auto& [team, count] : played) EXPECT_EQ(count, 1) << team;
+  EXPECT_TRUE(oncePerClub(*controller, date));
+  EXPECT_TRUE(oncePerClub(*controller, other_day));
 }
 
 TEST(Preseason, TourFeeCampAndRoundTrip)

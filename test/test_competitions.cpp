@@ -1051,16 +1051,6 @@ TEST(SeasonRolloverTest, SeasonEndRecordsHistoryPromotesAndRegenerates)
         {
           if (matches.empty()) continue;
           ++histogram[(matches.size() + 9) / 10 * 10];
-          if (matches.size() > 60)
-          {
-            std::map<int, int> types;
-            for (const Match& match : matches)
-              ++types[static_cast<int>(match.getMatchType())];
-            std::cout << "[season]   crowded " << date.toString() << ":";
-            for (const auto& [type, count] : types)
-              std::cout << " type" << type << "=" << count;
-            std::cout << "\n";
-          }
           if (matches.size() > busiest)
           {
             busiest = matches.size();
@@ -1072,6 +1062,9 @@ TEST(SeasonRolloverTest, SeasonEndRecordsHistoryPromotesAndRegenerates)
         for (const auto& [bucket, days] : histogram)
           std::cout << "[season]   " << bucket - 9 << "-" << bucket
                     << " matches: " << days << " days\n";
+        // League rounds, friendlies and cup rounds are spread over several
+        // days: no Continue simulates much more than a quarter of a round.
+        EXPECT_LE(busiest, 66u) << busiest_date.toString();
         final_top = game.getCompetitions().getStandings(game.getCalendar(),
                                                         TOP_LEAGUE);
         final_second = game.getCompetitions().getStandings(game.getCalendar(),

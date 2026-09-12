@@ -11,6 +11,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <numbers>
 #include <span>
 
@@ -299,6 +300,64 @@ inline float dampingFactor(float ratePerSecond, float deltaSeconds)
 {
   return 1.0f - std::exp(-ratePerSecond * deltaSeconds);
 }
+
+/**
+ * Hands out shirt numbers for one team in a match. Starters get the classic
+ * number of their role when it is free (keeper 1, full backs 2 and 3,
+ * centre backs 4 and 5, holding midfielder 6, wide right 7, central 8,
+ * striker 9, playmaker 10, wide left 11), else the lowest free number up to
+ * 11; substitutes take 12 upwards. A number is never given out twice.
+ */
+class ShirtNumbers
+{
+ public:
+  int take(PlayerRole role, bool starter)
+  {
+    if (starter)
+    {
+      for (const int number : preferred(role))
+        if (number > 0 && claim(number)) return number;
+      for (int number = 1; number <= 11; ++number)
+        if (claim(number)) return number;
+    }
+    for (int number = 12; number < MAX_NUMBER; ++number)
+      if (claim(number)) return number;
+    return 0;
+  }
+
+ private:
+  static constexpr int MAX_NUMBER = 64;
+  std::uint64_t used = 0;
+
+  bool claim(int number)
+  {
+    const std::uint64_t bit = std::uint64_t{1} << number;
+    if ((used & bit) != 0U) return false;
+    used |= bit;
+    return true;
+  }
+
+  static std::array<int, 3> preferred(PlayerRole role)
+  {
+    switch (role)
+    {
+      case PlayerRole::GK: return {1, 0, 0};
+      case PlayerRole::RB: return {2, 3, 0};
+      case PlayerRole::LB: return {3, 2, 0};
+      case PlayerRole::CB: return {4, 5, 6};
+      case PlayerRole::CDM: return {6, 4, 8};
+      case PlayerRole::CM: return {8, 6, 10};
+      case PlayerRole::CAM: return {10, 8, 7};
+      case PlayerRole::RM:
+      case PlayerRole::RW: return {7, 11, 0};
+      case PlayerRole::LM:
+      case PlayerRole::LW: return {11, 7, 0};
+      case PlayerRole::ST: return {9, 10, 11};
+      case PlayerRole::UNKNOWN: break;
+    }
+    return {0, 0, 0};
+  }
+};
 
 /** Maps normalised engine coordinates to metric world space (z = 0). */
 constexpr Vec3 worldFromPitch(Vector2F normalized, float heightMetres = 0.0f)

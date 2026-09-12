@@ -11,6 +11,7 @@
 #include <imgui.h>
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -30,12 +31,39 @@ namespace Stadium3D
 {
 using RenderMath::Vec3;
 
-/** Convex ground polygon (drawn in fixed order, no depth sorting). */
+/**
+ * Convex ground polygon (drawn in fixed order, no depth sorting). Drawn
+ * without anti-aliasing it is a fan from the first point, so a centre
+ * followed by a closed rim gives a radial gradient.
+ */
 struct GroundPolygon
 {
-  std::array<Vec3, 8> points{};
-  std::array<ImU32, 8> colors{};
+  std::array<Vec3, 10> points{};
+  std::array<ImU32, 10> colors{};
   std::uint8_t count = 0;
+};
+
+/**
+ * The playing surface as a vertex grid: each mowing stripe owns its columns
+ * of vertices (so stripes keep sharp edges) and every vertex carries its
+ * floodlit, gently mottled grass colour. The renderer only tints the two
+ * stripe directions per frame, since mown grass looks lighter when its
+ * blades lean away from the viewer.
+ */
+struct PitchGrid
+{
+  int stripes = 0;
+  int columnsPerStripe = 0;
+  int rows = 0;
+  std::vector<Vec3> points;
+  std::vector<ImU32> colors;
+
+  int columnVertices() const { return columnsPerStripe + 1; }
+  std::size_t index(int stripe, int column, int row) const
+  {
+    return static_cast<std::size_t>(
+        (stripe * columnVertices() + column) * (rows + 1) + row);
+  }
 };
 
 /** Planar convex face of a stand or floodlight with per-corner colours. */
@@ -47,9 +75,27 @@ struct Face
   /** Crowd clumps drawn right after this face when it is visible. */
   std::uint32_t clumpBegin = 0;
   std::uint32_t clumpEnd = 0;
+  /** Supporters' flags waved over this face's crowd. */
+  std::uint32_t flagBegin = 0;
+  std::uint32_t flagEnd = 0;
   /** Non-zero for floodlight heads: colour of the halo drawn on top. */
   ImU32 glow = 0;
 };
+
+/** Idle-motion phases a spectator can be in (a small per-frame table). */
+inline constexpr std::size_t CROWD_PHASES = 16;
+
+/** Allegiance and props of a spectator (bit flags). */
+namespace CrowdFlags
+{
+inline constexpr std::uint8_t HOME_FAN = 1U << 0U;
+inline constexpr std::uint8_t AWAY_FAN = 1U << 1U;
+/** Jumps up when the home or the away side scores. */
+inline constexpr std::uint8_t CHEERS_HOME = 1U << 2U;
+inline constexpr std::uint8_t CHEERS_AWAY = 1U << 3U;
+/** Holds a scarf in the team colours over the head when celebrating. */
+inline constexpr std::uint8_t SCARF = 1U << 4U;
+}  // namespace CrowdFlags
 
 /** One spectator: a small upright billboard on a tier. */
 struct CrowdDot
@@ -57,6 +103,20 @@ struct CrowdDot
   Vec3 base;
   ImU32 body = 0;
   ImU32 head = 0;
+  std::uint8_t flags = 0;
+  /** Index into the per-frame motion tables (< CROWD_PHASES). */
+  std::uint8_t phase = 0;
+};
+
+/** A supporter's flag on a pole, waved above the heads. */
+struct CrowdFlag
+{
+  Vec3 base;  /**< Where the pole leaves the fan's hands. */
+  Vec3 along; /**< Unit vector along the row (the cloth streams this way). */
+  ImU32 primary = 0;
+  ImU32 secondary = 0;
+  std::uint8_t flags = 0;
+  std::uint8_t phase = 0;
 };
 
 /**
@@ -75,6 +135,9 @@ struct CrowdClump
   ImU32 color = 0;
   std::uint32_t dotBegin = 0;
   std::uint32_t dotEnd = 0;
+  /** CHEERS_* bits held by most members (the far clump hops with them). */
+  std::uint8_t flags = 0;
+  std::uint8_t phase = 0;
 };
 
 /** Which stand a section belongs to; used to hide the stand behind the eye. */
@@ -163,11 +226,15 @@ Box makeAxisBox(Vec3 minimum, Vec3 maximum, ImU32 color);
 struct Geometry
 {
   std::vector<GroundPolygon> ground;
+  PitchGrid pitch;
+  /** Soft worn patches (goalmouths, spots, centre) over the grass. */
+  std::vector<GroundPolygon> wear;
   std::vector<GroundPolygon> markings;
   std::vector<Face> faces;
   std::vector<Section> sections;
   std::vector<CrowdDot> crowd;
   std::vector<CrowdClump> clumps;
+  std::vector<CrowdFlag> flags;
   std::vector<AdBoard> boards;
   std::array<Goal, 2> goals{};
   std::array<Vec3, 4> cornerFlags{};

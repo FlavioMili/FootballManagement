@@ -479,6 +479,107 @@ TEST(MatchKitColorsTest, ClubsWearTheirOwnColoursWithoutClashes)
   EXPECT_EQ(clash.away.shirt, crimson.secondary);
 }
 
+TEST(MatchRender3DMath, ShirtNumbersAreClassicAndUnique)
+{
+  // A 4-4-2 with two centre backs and two central midfielders.
+  RenderMath::ShirtNumbers numbers;
+  const std::array<PlayerRole, 11> starters{
+      PlayerRole::GK, PlayerRole::RB, PlayerRole::CB, PlayerRole::CB,
+      PlayerRole::LB, PlayerRole::RM, PlayerRole::CM, PlayerRole::CM,
+      PlayerRole::LM, PlayerRole::ST, PlayerRole::ST};
+  std::vector<int> taken;
+  for (const PlayerRole role : starters) taken.push_back(numbers.take(role, true));
+  EXPECT_EQ(taken[0], 1);
+  EXPECT_EQ(taken[1], 2);
+  EXPECT_EQ(taken[2], 4);
+  EXPECT_EQ(taken[3], 5);
+  EXPECT_EQ(taken[4], 3);
+  EXPECT_EQ(taken[5], 7);
+  EXPECT_EQ(taken[6], 8);
+  EXPECT_EQ(taken[9], 9);
+  // Substitutes get squad numbers above the starting eleven.
+  taken.push_back(numbers.take(PlayerRole::ST, false));
+  taken.push_back(numbers.take(PlayerRole::GK, false));
+  EXPECT_EQ(taken[11], 12);
+  EXPECT_EQ(taken[12], 13);
+  std::vector<int> sorted = taken;
+  std::sort(sorted.begin(), sorted.end());
+  EXPECT_EQ(std::adjacent_find(sorted.begin(), sorted.end()), sorted.end());
+  for (std::size_t index = 0; index < 11; ++index)
+  {
+    EXPECT_GE(taken[index], 1);
+    EXPECT_LE(taken[index], 11);
+  }
+
+  // Eleven players of one role still share out 1-11 without repeats.
+  RenderMath::ShirtNumbers crowded;
+  std::vector<int> same;
+  for (int index = 0; index < 11; ++index)
+    same.push_back(crowded.take(PlayerRole::CB, true));
+  std::sort(same.begin(), same.end());
+  for (int index = 0; index < 11; ++index) EXPECT_EQ(same[index], index + 1);
+}
+
+TEST(MatchKitColorsTest, IntegerBlendsMatchTheFloatOnes)
+{
+  const std::array<ImU32, 4> colors{
+      IM_COL32(200, 28, 40, 255), IM_COL32(12, 240, 99, 128),
+      IM_COL32(255, 255, 255, 255), IM_COL32(0, 0, 0, 0)};
+  const auto near = [](ImU32 a, ImU32 b)
+  {
+    for (const int shift : {0, 8, 16, 24})
+    {
+      const int difference = static_cast<int>((a >> shift) & 0xFFU) -
+                             static_cast<int>((b >> shift) & 0xFFU);
+      if (std::abs(difference) > 1) return false;
+    }
+    return true;
+  };
+  for (const ImU32 first : colors)
+  {
+    for (const ImU32 second : colors)
+    {
+      for (const std::uint32_t t : {0U, 64U, 128U, 200U, 256U})
+      {
+        EXPECT_TRUE(near(mixColor256(first, second, t),
+                         mixColor(first, second, static_cast<float>(t) / 256.0f)))
+            << std::hex << first << ' ' << second << ' ' << t;
+      }
+    }
+    for (const std::uint32_t factor : {0U, 128U, 184U, 256U, 400U})
+    {
+      EXPECT_TRUE(near(shadeColor256(first, factor),
+                       shadeColor(first, static_cast<float>(factor) / 256.0f)))
+          << std::hex << first << ' ' << factor;
+    }
+  }
+}
+
+TEST(MatchKitColorsTest, NumbersAndGlovesStandOut)
+{
+  for (TeamID home = 1; home <= 80; ++home)
+  {
+    for (TeamID away = 1; away <= 80; away += 7)
+    {
+      const MatchKits kits = chooseMatchKits(home, away);
+      for (const KitColors& kit : {kits.home, kits.away, kits.homeGoalkeeper,
+                                   kits.awayGoalkeeper})
+      {
+        EXPECT_GE(kitColorDistance(kitNumberColor(kit), kit.shirt),
+                  KIT_CLASH_DISTANCE)
+            << home << " vs " << away;
+      }
+      for (const KitColors& keeper :
+           {kits.homeGoalkeeper, kits.awayGoalkeeper})
+      {
+        EXPECT_GE(kitColorDistance(goalkeeperGloveColor(keeper), keeper.shirt),
+                  KIT_CLASH_DISTANCE)
+            << home << " vs " << away;
+      }
+    }
+  }
+}
+
 class MatchRenderer3DSceneTest : public ::testing::Test
 {
  protected:
@@ -725,6 +826,53 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
     for (int index = 0; index < 30; ++index) frame(FRAME_SECONDS);
     capture("match_3d_1440p_panels_hidden.bmp");
     scene.setSidePanelsHidden(false);
+
+    // A 720p window in pitch focus (the smallest common full-screen size).
+    SDL_SetWindowSize(window, 1280, 720);
+    SDL_PumpEvents();
+    press(SDLK_F);
+    press(SDLK_1);
+    for (int index = 0; index < 90; ++index) frame(FRAME_SECONDS);
+    std::cout << "[match-3d] focus 1280x720 broadcast render CPU median "
+              << medianRenderMilliseconds(90) << " ms, draw list "
+              << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
+    capture("match_3d_focus_720p_broadcast.bmp");
+    press(SDLK_4);
+    for (int index = 0; index < 90; ++index) frame(FRAME_SECONDS);
+    std::cout << "[match-3d] focus 1280x720 follow render CPU median "
+              << medianRenderMilliseconds(60) << " ms, draw list "
+              << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
+    capture("match_3d_focus_720p_follow.bmp");
+
+    // Play on headless until the first goal, then watch the celebration
+    // (full-match playback: highlights would skip it).
+    press(SDLK_1);
+    scene.setHighlightsOnly(false);
+    bool scored = false;
+    for (int step = 0; step < 60 * 100 && !scored; ++step)
+    {
+      scene.engine->advance(1.0f);
+      scored = scene.engine->getState() == MatchState::GOAL;
+    }
+    if (scored)
+    {
+      for (int index = 0; index < 20; ++index) frame(FRAME_SECONDS);
+      EXPECT_EQ(scene.engine->getState(), MatchState::GOAL);
+      capture("match_3d_goal_sting.bmp");
+      std::cout << "[match-3d] focus 1280x720 goal celebration render CPU "
+                   "median "
+                << medianRenderMilliseconds(60) << " ms, draw list "
+                << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
+      capture("match_3d_goal_celebration.bmp");
+      press(SDLK_3);
+      for (int index = 0; index < 60; ++index) frame(FRAME_SECONDS);
+      capture("match_3d_goal_end.bmp");
+    }
+    else
+    {
+      std::cout << "[match-3d] no goal in this match; celebration not shown\n";
+    }
+    press(SDLK_ESCAPE);
     SDL_SetWindowSize(window, 1280, 800);
     SDL_PumpEvents();
 

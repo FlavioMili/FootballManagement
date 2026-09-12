@@ -32,7 +32,12 @@ MatchContext MatchSimulation::leagueContext(LeagueID league_id)
   MatchContext context;
   if (league_id == 0 || profile.league_id != league_id) return context;
   const LeagueMatchStyle& style = profile.match_style;
-  context.goalRateScale = style.goals / Reference::REFERENCE_GOALS;
+  // Second divisions are the rows without continental income.
+  const float reference = profile.continental_share > 0.0f
+                              ? Reference::REFERENCE_GOALS_TOP
+                              : Reference::REFERENCE_GOALS_SECOND;
+  context.goalRateScale = std::pow(style.goals / reference,
+                                   1.0f / Reference::GOAL_RESPONSE_EXPONENT);
   context.refereeStrictnessMean =
       style.yellow_cards / Reference::REFERENCE_YELLOWS;
   // Referees differ more in lower tiers: the per-match spread follows the

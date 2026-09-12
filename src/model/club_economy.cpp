@@ -225,7 +225,8 @@ double playerWageShare(const LeagueEconomy& economy)
 {
   // [S] ECFIL: wages are 57-73% of revenue by league; leagues with a high
   // total wage ratio spend more on players, from ~48% in the 2. Bundesliga
-  // to 76% in second tiers that overspend (Championship, Ligue 2).
+  // to 74% in second tiers that overspend (Championship, Ligue 2); with
+  // staff that puts their total wages near 90% of revenue.
   return std::clamp(
       static_cast<double>(Finance::PLAYER_WAGE_SHARE_BASE) +
           static_cast<double>(Finance::PLAYER_WAGE_SHARE_SLOPE) *

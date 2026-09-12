@@ -1975,7 +1975,12 @@ void MatchEngine::refreshTacticalTargets(float dt)
                                              : 1.0f - candidate.position.x;
     const float separation =
         carrier ? std::abs(candidate.position.y - carrier->position.y) : 0.0f;
-    return rolePriority +
+    // Who makes the run also varies from attack to attack, so strike
+    // partners share the runs in behind.
+    const float variety =
+        epochNoise(candidate.player->getId(), 0x7a11edU, RUN_TIMING_EPOCH_STEPS) *
+        MatchTuning::Shape::RUN_VARIETY_PRIORITY;
+    return rolePriority + variety +
            candidate.pace * MatchTuning::Shape::RUN_PACE_PRIORITY +
            depth * MatchTuning::Shape::RUN_DEPTH_PRIORITY +
            separation * MatchTuning::Shape::RUN_SEPARATION_PRIORITY +
@@ -2455,7 +2460,6 @@ void MatchEngine::refreshTacticalTargets(float dt)
           // stay onside.
           using S = MatchTuning::Shape;
           player.intent = PlayerIntent::ATTACK_BOX;
-          player.isMakingRun = true;
           const bool farPost = &player == farPostRunner;
           const float goalX = player.isHomeTeam ? 1.0f : 0.0f;
           const float ballSide =
@@ -3158,7 +3162,15 @@ void MatchEngine::assignMarks()
   }
 }
 
-void MatchEngine::integrateMovements(const std::uint8_t* slots,
+// The kinematics kernel runs 8 players at a time where the processor
+// supports it; every variant does the same IEEE arithmetic.
+#if defined(__x86_64__) && defined(__linux__) && defined(__GNUC__)
+#define FM_KERNEL_CLONES __attribute__((target_clones("avx2", "default")))
+#else
+#define FM_KERNEL_CLONES
+#endif
+
+FM_KERNEL_CLONES void MatchEngine::integrateMovements(const std::uint8_t* slots,
                                      std::size_t count, float dt, bool walking)
 {
   using P = MatchTuning::Player;
@@ -3500,6 +3512,12 @@ void MatchEngine::separatePlayers()
   // result does not depend on the previous order.
   auto& order = separationOrder;
   const std::size_t count = std::min(players.size(), order.size());
+  // Nobody moved since a pass that found no contact: nothing to resolve.
+  bool unchanged = separationClear && separationCount == count;
+  for (std::size_t index = 0; index < count && unchanged; ++index)
+    unchanged = separationPositions[index].x == players[index].position.x &&
+                separationPositions[index].y == players[index].position.y;
+  if (unchanged) return;
   if (separationCount != count)
   {
     separationCount = count;
@@ -3509,6 +3527,7 @@ void MatchEngine::separatePlayers()
   std::array<float, 32> xs;
   for (std::size_t index = 0; index < count; ++index)
     xs[index] = players[index].position.x;
+  separationClear = true;
   insertionSort(order, count,
                 [&xs](std::uint8_t first, std::uint8_t second)
                 {
@@ -3559,8 +3578,11 @@ void MatchEngine::separatePlayers()
                    separationMetres.y / separationLengthMetres * correctionMetres});
       if (firstMoves) push(first, {-correction.x, -correction.y});
       if (secondMoves) push(second, correction);
+      separationClear = false;
     }
   }
+  for (std::size_t index = 0; index < count; ++index)
+    separationPositions[index] = players[index].position;
 }
 
 void MatchEngine::accumulatePlayerLoad(float dt)
@@ -6216,8 +6238,10 @@ void MatchEngine::headBall(MatchPlayer& header)
     const Vector2F direction =
         normalized({attackDirection * randomFloat(0.5f, 1.0f),
                     wide * randomFloat(0.1f, 0.8f)});
-    const float speed =
-        MatchTuning::Aerial::HEADER_CLEARANCE_SPEED * randomFloat(0.7f, 1.0f);
+    // Many defensive headers are half-clearances that drop around the edge
+    // of the box, where the second ball is fought for.
+    const float speed = MatchTuning::Aerial::HEADER_CLEARANCE_SPEED *
+                        randomFloat(MatchTuning::Aerial::MIN_CLEARANCE_SHARE, 1.0f);
     const float height = ball.z;
     const Vector2F reach = toPitch({direction.x, direction.y});
     launchBall(header, header.position,

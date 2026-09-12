@@ -76,6 +76,16 @@ float kitColorDistance(ImU32 first, ImU32 second);
 /** Minimum `kitColorDistance` treated as a readable contrast. */
 inline constexpr float KIT_CLASH_DISTANCE = 190.0f;
 
+/**
+ * Colour of the numbers and names printed on a shirt: the trim when it
+ * contrasts with the shirt, otherwise white or near-black, whichever
+ * stands out more.
+ */
+ImU32 kitNumberColor(const KitColors& kit);
+
+/** Goalkeeper gloves: the stock colour that stands out most on the shirt. */
+ImU32 goalkeeperGloveColor(const KitColors& kit);
+
 /** Scales the RGB channels of a packed colour, keeping its alpha. */
 inline ImU32 shadeColor(ImU32 color, float factor)
 {
@@ -105,6 +115,36 @@ inline ImU32 mixColor(ImU32 first, ImU32 second, float t)
          blend(first, second, IM_COL32_G_SHIFT) |
          blend(first, second, IM_COL32_B_SHIFT) |
          blend(first, second, IM_COL32_A_SHIFT);
+}
+
+/**
+ * Integer versions for hot loops: blend with `t256` in 0..256 and scale
+ * the RGB channels by `factor256` / 256 (at most 2x, clamped at 255).
+ */
+constexpr ImU32 mixColor256(ImU32 first, ImU32 second, std::uint32_t t256)
+{
+  const std::uint32_t keep = 256U - t256;
+  const std::uint32_t evenChannels =
+      (((first & 0x00FF00FFU) * keep + (second & 0x00FF00FFU) * t256) >> 8U) &
+      0x00FF00FFU;
+  const std::uint32_t oddChannels =
+      ((((first >> 8U) & 0x00FF00FFU) * keep +
+        ((second >> 8U) & 0x00FF00FFU) * t256) >>
+       8U) &
+      0x00FF00FFU;
+  return evenChannels | (oddChannels << 8U);
+}
+
+constexpr ImU32 shadeColor256(ImU32 color, std::uint32_t factor256)
+{
+  const auto channel = [&](int shift)
+  {
+    const std::uint32_t value =
+        (((color >> shift) & 0xFFU) * factor256) >> 8U;
+    return (value > 255U ? 255U : value) << shift;
+  };
+  return channel(IM_COL32_R_SHIFT) | channel(IM_COL32_G_SHIFT) |
+         channel(IM_COL32_B_SHIFT) | (color & IM_COL32_A_MASK);
 }
 
 /** Replaces the alpha channel of a packed colour. */

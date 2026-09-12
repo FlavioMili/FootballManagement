@@ -172,10 +172,9 @@ void TeamSelectionScene::render()
   ImGui::SameLine();
   const float tableWidth =
       width - listWidth - gap - (showCard ? cardWidth + gap : 0.0f);
-  ImGui::BeginChild("##club_area", ImVec2(tableWidth, height),
-                    ImGuiChildFlags_None,
-                    ImGuiWindowFlags_NoScrollbar |
-                        ImGuiWindowFlags_NoScrollWithMouse);
+  ImGui::BeginChild(
+      "##club_area", ImVec2(tableWidth, height), ImGuiChildFlags_None,
+      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
   // Narrow windows: the club card becomes a strip above the table, so the
   // start button stays in view.
   if (!showCard) renderSelectedClubStrip();
@@ -214,8 +213,7 @@ void TeamSelectionScene::renderLeagueList(float width, float height)
   const float rowHeight = ImGui::GetTextLineHeight() + 10.0f * scale;
   const float arrowSize = ImGui::GetTextLineHeight() * 0.4f;
   const float nameStart = rowHeight + Theme::Space::XS * scale;
-  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,
-                      ImVec2(0.0f, 2.0f * scale));
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 2.0f * scale));
   ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.0f, 0.5f));
   for (const LeagueEntry& entry : league_entries)
   {
@@ -252,14 +250,13 @@ void TeamSelectionScene::renderLeagueList(float width, float height)
             ImVec2(center.x + arrowSize * 0.7f, center.y), arrow);
       ImGui::SameLine(0.0f, 0.0f);
     }
-    const float indent =
-        nameStart +
-        static_cast<float>(entry.tier - 1) * Theme::Space::L * scale;
+    const float indent = nameStart + static_cast<float>(entry.tier - 1) *
+                                         Theme::Space::L * scale;
     ImGui::SetCursorPosX(rowStart + indent);
     ImGui::PushStyleColor(ImGuiCol_Text,
                           entry.tier == 1 ? palette.text : palette.muted);
-    if (ImGui::Selectable(entry.name.c_str(), selected_league_id == entry.id,
-                          0, ImVec2(0.0f, rowHeight)))
+    if (ImGui::Selectable(entry.name.c_str(), selected_league_id == entry.id, 0,
+                          ImVec2(0.0f, rowHeight)))
       selectLeague(entry);
     ImGui::PopStyleColor();
     ImGui::PopID();
@@ -390,8 +387,7 @@ void TeamSelectionScene::renderClubTable(float height)
   UI::endCard();
 }
 
-const TeamSelectionScene::ClubSummary* TeamSelectionScene::selectedClub()
-    const
+const TeamSelectionScene::ClubSummary* TeamSelectionScene::selectedClub() const
 {
   const auto selected =
       std::ranges::find_if(club_summaries, [this](const ClubSummary& club)
@@ -485,15 +481,17 @@ void TeamSelectionScene::renderSelectedClubStrip()
   UI::beginAutoHeightCard("##selected_club_strip", nullptr, 0.0f);
   const char* confirm = LOC("TEAM_SELECTION_CONFIRM");
   const float button = UI::buttonWidth(confirm);
-  const float identityWidth = std::max(
-      ImGui::GetContentRegionAvail().x - button - ImGui::GetStyle().ItemSpacing.x,
-      ImGui::GetContentRegionAvail().x * 0.5f);
+  const float identityWidth =
+      std::max(ImGui::GetContentRegionAvail().x - button -
+                   ImGui::GetStyle().ItemSpacing.x,
+               ImGui::GetContentRegionAvail().x * 0.5f);
   ImGui::BeginGroup();
   renderClubIdentity(club, 40.0f, identityWidth);
   ImGui::EndGroup();
   if (UI::sameLineIfFits(button))
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
-                         std::max(0.0f, ImGui::GetContentRegionAvail().x - button));
+    ImGui::SetCursorPosX(
+        ImGui::GetCursorPosX() +
+        std::max(0.0f, ImGui::GetContentRegionAvail().x - button));
   if (UI::primaryButton(confirm)) startCareer(club.id);
   // The facts the compact table leaves out.
   const std::string facts = std::format(

@@ -185,23 +185,91 @@ void buildGround(Geometry& geometry)
     }
   }
 
-  // Mowing stripes along the length with a faint cross-cut checker.
-  const float stripeLength =
-      LENGTH / static_cast<float>(Tuning::Grass::STRIPES);
-  const float bandWidth =
-      WIDTH / static_cast<float>(Tuning::Grass::WIDTH_BANDS);
-  for (int stripe = 0; stripe < Tuning::Grass::STRIPES; ++stripe)
+  // Mowing stripes across the length; vertex colours carry the floodlight
+  // falloff and two octaves of low-frequency mottling.
+  using G = Tuning::Grass;
+  PitchGrid& grid = geometry.pitch;
+  grid.stripes = G::STRIPES;
+  grid.columnsPerStripe = G::STRIPE_COLUMNS;
+  grid.rows = G::ROWS;
+  grid.points.clear();
+  grid.colors.clear();
+  const std::size_t vertices = static_cast<std::size_t>(
+      grid.stripes * grid.columnVertices() * (grid.rows + 1));
+  grid.points.reserve(vertices);
+  grid.colors.reserve(vertices);
+  const float stripeLength = LENGTH / static_cast<float>(grid.stripes);
+  for (int stripe = 0; stripe < grid.stripes; ++stripe)
   {
-    for (int band = 0; band < Tuning::Grass::WIDTH_BANDS; ++band)
+    for (int column = 0; column <= grid.columnsPerStripe; ++column)
     {
-      float boost = stripe % 2 == 0 ? Tuning::Grass::LIGHT_STRIPE_BOOST : 1.0f;
-      if (band % 2 == 0) boost *= Tuning::Grass::CROSS_BAND_BOOST;
-      addRectangle(geometry.ground, static_cast<float>(stripe) * stripeLength,
-                   static_cast<float>(band) * bandWidth,
-                   static_cast<float>(stripe + 1) * stripeLength,
-                   static_cast<float>(band + 1) * bandWidth,
-                   shadeColor(Tuning::Grass::PITCH_COLOR, boost), true);
+      const float x =
+          stripeLength * (static_cast<float>(stripe) +
+                          static_cast<float>(column) /
+                              static_cast<float>(grid.columnsPerStripe));
+      for (int row = 0; row <= grid.rows; ++row)
+      {
+        const float y =
+            WIDTH * static_cast<float>(row) / static_cast<float>(grid.rows);
+        const float mottle =
+            (valueNoise(x / G::NOISE_METRES, y / G::NOISE_METRES, 31U) - 0.5f) *
+                G::NOISE_STRENGTH +
+            (valueNoise(x / G::FINE_NOISE_METRES, y / G::FINE_NOISE_METRES,
+                        37U) -
+             0.5f) *
+                G::FINE_NOISE_STRENGTH;
+        grid.points.push_back({x, y, 0.0f});
+        grid.colors.push_back(shadeColor(
+            G::PITCH_COLOR, groundLight(x, y) * (1.0f + mottle)));
+      }
     }
+  }
+}
+
+/// Irregular blob of worn grass fading out to its rim.
+void addWear(std::vector<GroundPolygon>& target, float cx, float cy,
+             float radiusX, float radiusY, std::uint8_t alpha,
+             std::uint32_t salt)
+{
+  GroundPolygon polygon;
+  constexpr std::size_t RIM = 8;
+  polygon.count = static_cast<std::uint8_t>(RIM + 2);
+  polygon.points[0] = {cx, cy, 0.0f};
+  polygon.colors[0] = withAlpha(Tuning::Grass::WEAR_COLOR, alpha);
+  for (std::size_t index = 0; index <= RIM; ++index)
+  {
+    const std::size_t corner = index % RIM;
+    const float angle =
+        TWO_PI * static_cast<float>(corner) / static_cast<float>(RIM);
+    const float wobble =
+        1.0f + (unitHash(salt, static_cast<std::uint32_t>(corner), 41U) - 0.5f) *
+                   0.4f;
+    polygon.points[index + 1] = {cx + std::cos(angle) * radiusX * wobble,
+                                 cy + std::sin(angle) * radiusY * wobble, 0.0f};
+    polygon.colors[index + 1] = withAlpha(Tuning::Grass::WEAR_COLOR, 0);
+  }
+  target.push_back(polygon);
+}
+
+void buildWear(Geometry& geometry)
+{
+  using W = Tuning::Grass;
+  auto& wear = geometry.wear;
+  std::uint32_t salt = 0;
+  // Centre spot: kick-offs scuff a small patch.
+  addWear(wear, HALF_LENGTH, HALF_WIDTH, W::SPOT_WEAR_RADIUS * 1.3f,
+          W::SPOT_WEAR_RADIUS, W::WEAR_ALPHA, ++salt);
+  for (const float goalLine : {0.0f, LENGTH})
+  {
+    const float inward = goalLine == 0.0f ? 1.0f : -1.0f;
+    // The keeper's patch in the goalmouth is the most worn ground there is.
+    addWear(wear, goalLine + inward * W::GOALMOUTH_DEPTH, HALF_WIDTH,
+            W::GOALMOUTH_DEPTH * 0.8f, W::GOALMOUTH_WIDTH, W::WEAR_ALPHA,
+            ++salt);
+    addWear(wear,
+            goalLine + inward * Tuning::Markings::PENALTY_SPOT_DISTANCE,
+            HALF_WIDTH, W::SPOT_WEAR_RADIUS, W::SPOT_WEAR_RADIUS * 0.8f,
+            W::WEAR_ALPHA, ++salt);
   }
 }
 
@@ -367,13 +435,16 @@ class StandBuilder
   /// Fans in team colours gather in low-frequency blocks; everyone else
   /// wears muted everyday clothes.
   ImU32 crowdClothes(const SectionShape& shape, std::uint32_t key,
-                     float teamNoise) const
+                     float teamNoise, bool& teamFan) const
   {
     using C = Tuning::Crowd;
     const float teamShare =
-        (shape.awayEnd ? C::AWAY_END_SHARE : C::HOME_SHARE) +
+        (shape.awayEnd ? C::AWAY_END_SHARE
+                       : (shape.side == Side::WEST ? C::HOME_END_SHARE
+                                                   : C::HOME_SHARE)) +
         C::SHARE_SWING * (teamNoise - 0.5f) * 2.0f;
-    if (unitHash(key, 3U, 0U) < teamShare)
+    teamFan = unitHash(key, 3U, 0U) < teamShare;
+    if (teamFan)
     {
       const KitColors& kit = shape.awayEnd ? kits.away : kits.home;
       return unitHash(key, 4U, 0U) < 0.75f ? kit.shirt : kit.trim;
@@ -388,6 +459,49 @@ class StandBuilder
                    NEUTRAL.size()];
   }
 
+  /// Who a spectator cheers for and whether a scarf comes out.
+  static std::uint8_t supporterFlags(const SectionShape& shape,
+                                     std::uint32_t key, bool teamFan)
+  {
+    using C = Tuning::Crowd;
+    std::uint8_t flags = 0;
+    if (teamFan)
+    {
+      flags |= shape.awayEnd ? CrowdFlags::AWAY_FAN | CrowdFlags::CHEERS_AWAY
+                             : CrowdFlags::HOME_FAN | CrowdFlags::CHEERS_HOME;
+      const float scarfShare =
+          shape.side == Side::WEST ? C::HOME_END_SCARF_SHARE : C::SCARF_SHARE;
+      if (unitHash(key, 9U, 0U) < scarfShare) flags |= CrowdFlags::SCARF;
+    }
+    else if (!shape.awayEnd && unitHash(key, 10U, 0U) < C::NEUTRAL_CHEER_SHARE)
+    {
+      // Most of the neutral-looking crowd is local too.
+      flags |= CrowdFlags::CHEERS_HOME;
+    }
+    return flags;
+  }
+
+  /// A few supporters wave a flag in their colours (most in the home end).
+  void addFlag(const SectionShape& shape, std::uint32_t key,
+               const CrowdDot& dot, Vec3 row, bool teamFan)
+  {
+    using C = Tuning::Crowd;
+    if (!teamFan) return;
+    const float share = shape.side == Side::WEST ? C::HOME_END_FLAG_SHARE
+                        : shape.awayEnd          ? C::AWAY_END_FLAG_SHARE
+                                                 : C::FLAG_SHARE;
+    if (unitHash(key, 11U, 0U) >= share) return;
+    const KitColors& kit = shape.awayEnd ? kits.away : kits.home;
+    CrowdFlag& flag = geometry.flags.emplace_back();
+    flag.base = dot.base + UP * C::DOT_HEIGHT;
+    flag.along = RenderMath::normalize(row) *
+                 (unitHash(key, 12U, 0U) < 0.5f ? 1.0f : -1.0f);
+    flag.primary = kit.shirt;
+    flag.secondary = kit.trim;
+    flag.flags = dot.flags;
+    flag.phase = dot.phase;
+  }
+
   /// Fills a tier with spectators grouped in clumps (back rows first) and
   /// tints the tier face with the crowd's average colour, so the stand looks
   /// full even where no spectator is drawn.
@@ -400,6 +514,7 @@ class StandBuilder
         IM_COL32(236, 196, 164, 255), IM_COL32(204, 150, 112, 255),
         IM_COL32(150, 100, 70, 255), IM_COL32(96, 64, 44, 255)};
     face.clumpBegin = static_cast<std::uint32_t>(geometry.clumps.size());
+    face.flagBegin = static_cast<std::uint32_t>(geometry.flags.size());
     const int rows = static_cast<int>((to.d - from.d) / C::ROW_DEPTH);
     const auto rowPoint = [&](int row)
     {
@@ -438,6 +553,8 @@ class StandBuilder
         const int endSeat = std::min(firstSeat + C::CLUMP_SEATS, seats);
         CrowdClump clump;
         clump.dotBegin = static_cast<std::uint32_t>(geometry.crowd.size());
+        int cheersHome = 0;
+        int cheersAway = 0;
         std::array<float, 3> clumpSum{};
         for (int row = endRow - 1; row >= firstRow; --row)
         {
@@ -465,8 +582,9 @@ class StandBuilder
                 (base.x + base.y) / (C::NOISE_SEATS * C::SEAT_SPACING);
             const float noiseY = (point.d + static_cast<float>(tier) * 50.0f) /
                                  (C::NOISE_ROWS * C::ROW_DEPTH);
-            const ImU32 clothes =
-                crowdClothes(shape, key, valueNoise(noiseX, noiseY, 11U));
+            bool teamFan = false;
+            const ImU32 clothes = crowdClothes(
+                shape, key, valueNoise(noiseX, noiseY, 11U), teamFan);
             const ImU32 skin =
                 SKIN[static_cast<std::size_t>(unitHash(key, 6U, 0U) * 4.0f) %
                      SKIN.size()];
@@ -480,6 +598,14 @@ class StandBuilder
             dot.base = base;
             dot.body = shadeColor(clothes, light);
             dot.head = shadeColor(skin, light);
+            dot.phase = static_cast<std::uint8_t>(
+                static_cast<std::size_t>(unitHash(key, 8U, 0U) *
+                                         static_cast<float>(CROWD_PHASES)) %
+                CROWD_PHASES);
+            dot.flags = supporterFlags(shape, key, teamFan);
+            if ((dot.flags & CrowdFlags::CHEERS_HOME) != 0U) ++cheersHome;
+            if ((dot.flags & CrowdFlags::CHEERS_AWAY) != 0U) ++cheersAway;
+            addFlag(shape, key, dot, right - left, teamFan);
             const ImU32 look = mixColor(dot.body, dot.head, 0.25f);
             accumulate(clumpSum, look);
             accumulate(rowT < 0.5f ? nearSum : farSum, look);
@@ -488,10 +614,9 @@ class StandBuilder
         }
         clump.dotEnd = static_cast<std::uint32_t>(geometry.crowd.size());
         if (clump.dotEnd == clump.dotBegin) continue;
-        const float members =
-            static_cast<float>(endSeat - firstSeat);
+        const float seatCount = static_cast<float>(endSeat - firstSeat);
         const float centre =
-            (static_cast<float>(firstSeat) + members * 0.5f) /
+            (static_cast<float>(firstSeat) + seatCount * 0.5f) /
             static_cast<float>(seats);
         clump.base =
             RenderMath::lerp(shape.left(front), shape.right(front), centre);
@@ -499,13 +624,18 @@ class StandBuilder
         clump.top = RenderMath::lerp(shape.left(beyond), shape.right(beyond),
                                      centre) +
                     UP * (C::DOT_HEIGHT * C::CLUMP_TOP_SHARE);
-        clump.halfWidth = members * C::SEAT_SPACING * 0.5f;
+        clump.halfWidth = seatCount * C::SEAT_SPACING * 0.5f;
         clump.color = average(
             clumpSum, static_cast<float>(clump.dotEnd - clump.dotBegin));
+        const int members = static_cast<int>(clump.dotEnd - clump.dotBegin);
+        if (cheersHome * 2 > members) clump.flags |= CrowdFlags::CHEERS_HOME;
+        if (cheersAway * 2 > members) clump.flags |= CrowdFlags::CHEERS_AWAY;
+        clump.phase = geometry.crowd[clump.dotBegin].phase;
         geometry.clumps.push_back(clump);
       }
     }
     face.clumpEnd = static_cast<std::uint32_t>(geometry.clumps.size());
+    face.flagEnd = static_cast<std::uint32_t>(geometry.flags.size());
     const float crowdShare = 1.0f - C::SEAT_SHOW_THROUGH;
     if (nearCount > 0.0f)
     {
@@ -559,8 +689,19 @@ class StandBuilder
         addProfileFace(shape, frontTop, lowerTop, shadeColor(seats, 1.1f),
                        shadeColor(seats, 0.8f));
     addCrowd(lower, shape, 0U, frontTop, lowerTop, 1.05f, 0.78f);
-    addProfileFace(shape, frontBottom, frontTop, S::CONCRETE_COLOR,
-                   shadeColor(S::CONCRETE_COLOR, 1.2f));
+    if (shape.side == Side::WEST)
+    {
+      // The home end's front wall carries a banner in the club colours.
+      const ImU32 banner =
+          sectionCounter % 2U == 0U ? kits.home.shirt : kits.home.trim;
+      addProfileFace(shape, frontBottom, frontTop, shadeColor(banner, 0.8f),
+                     banner);
+    }
+    else
+    {
+      addProfileFace(shape, frontBottom, frontTop, S::CONCRETE_COLOR,
+                     shadeColor(S::CONCRETE_COLOR, 1.2f));
+    }
     addProfileFace(shape, fasciaBottom, roofFront, S::FASCIA_COLOR,
                    shadeColor(S::FASCIA_COLOR, 1.3f));
     addProfileFace(shape, roofFront, roofBack, S::ROOF_TOP_COLOR,
@@ -747,14 +888,17 @@ Box makeAxisBox(Vec3 minimum, Vec3 maximum, ImU32 color)
 void Geometry::build(const MatchKits& kits)
 {
   ground.clear();
+  wear.clear();
   markings.clear();
   faces.clear();
   sections.clear();
   crowd.clear();
   clumps.clear();
+  flags.clear();
   boards.clear();
 
   buildGround(*this);
+  buildWear(*this);
   buildMarkings(*this);
 
   using S = Tuning::Stands;

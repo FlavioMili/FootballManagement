@@ -729,6 +729,10 @@ constexpr size_t TOP_FLIGHT_MOVES = 5;
 /** League matches in one day below which nobody plays on a reserve day. */
 constexpr size_t CROWDED_DAY = 40;
 
+/** Continental matches expected on each continental matchday (league phase:
+ * 288 matches over eight Tuesday-Thursday weeks). */
+constexpr size_t CONTINENTAL_DAY_MATCHES = 12;
+
 /**
  * Evens out the busiest days of the world. The rounds of every window move
  * single matches from a day that is at least two matches busier (all
@@ -1018,6 +1022,8 @@ void Calendar::generateSeasonFixtures(const class GameData& gamedata,
           .push_back(&round);
     }
   }
+  // Continental matchdays carry their own matches (drawn later).
+  for (const int day : continental_days) load[day] += CONTINENTAL_DAY_MATCHES;
   // Reserve days only relieve days that are crowded for the whole world.
   const size_t comfortable =
       std::max(round_matches / WEEKEND_DAYS.size(), CROWDED_DAY);
@@ -1201,6 +1207,18 @@ size_t Calendar::protectRest(const GameDateValue& after)
           return true;
     return false;
   };
+  // Leagues that bring weekend matches forward to Thursday (lower
+  // divisions) may also move a fixture there.
+  std::set<LeagueID> thursday_leagues;
+  for (const auto& [date, matches] : schedule)
+  {
+    if (weekdayOf(toDayNumber(date)) != SeasonCalendar::THURSDAY) continue;
+    for (const Match& match : matches)
+      if (match.getMatchType() == MatchType::LEAGUE &&
+          !thursday_leagues.contains(match.getCompetitionId()) &&
+          weekendRoundAfter(date, match.getCompetitionId(), match.getStage()))
+        thursday_leagues.insert(match.getCompetitionId());
+  }
   for (const auto& [date, home_id, away_id, competition, stage] :
        league_fixtures)
   {
@@ -1214,6 +1232,11 @@ size_t Calendar::protectRest(const GameDateValue& after)
     int window_start = midweek ? day - (weekday - SeasonCalendar::TUESDAY)
                                : day - anchorOffset(weekday, true) - 1;
     int window_days = midweek ? 3 : 4;
+    if (!midweek && thursday_leagues.contains(competition))
+    {
+      --window_start;
+      ++window_days;
+    }
     if (weekday == SeasonCalendar::THURSDAY &&
         weekendRoundAfter(date, competition, stage))
     {
