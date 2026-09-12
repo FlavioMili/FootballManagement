@@ -1,0 +1,18 @@
+// -----------------------------------------------------------------------------
+//  Football Management Project
+//  Copyright (c) 2025 - 2026 Flavio Milinanni. All Rights Reserved.
+//
+//  This file is part of the Football Management Project.
+//  See the LICENSE file in the project root.
+// -----------------------------------------------------------------------------
+
+#pragma once
+
+#include <string_view>
+
+// Configured by CMake: project(VERSION), or -DFM_VERSION=... for a release tag.
+namespace GameVersion
+{
+/** Version of this build without a leading "v", e.g. "1.0.0". */
+inline constexpr std::string_view STRING = "@FM_GAME_VERSION@";
+}  // namespace GameVersion

@@ -152,15 +152,17 @@ TEST(MedicalCentreTest, ReportListsInjuredAndRanksTheRest)
 TEST(SeasonAgendaTest, SeasonListsEveryKindOfEventInOrder)
 {
   const std::vector<Match> none;
-  const std::vector<AgendaEvent> agenda = SeasonAgenda::build(2025, none, true);
+  // An Italian club (league 1).
+  const std::vector<AgendaEvent> agenda =
+      SeasonAgenda::build(2025, none, true, 1);
   ASSERT_FALSE(agenda.empty());
   EXPECT_EQ(agenda.front().kind, AgendaKind::SeasonStart);
   EXPECT_TRUE(agenda.front().date == GameDateValue(2025, 7, 1));
   EXPECT_TRUE(std::ranges::is_sorted(
       agenda, [](const AgendaEvent& a, const AgendaEvent& b)
       { return a.date < b.date; }));
-  // Summer window closes on 31 August, the winter one opens and closes in
-  // January, and the next summer window opens in June.
+  // The summer window closes on 1 September, the winter one runs from
+  // 2 January to 2 February, and the next summer window opens in June.
   EXPECT_EQ(count(agenda, AgendaKind::TransferDeadline), 2u);
   EXPECT_EQ(count(agenda, AgendaKind::TransferWindowOpens), 2u);
   EXPECT_EQ(count(agenda, AgendaKind::InternationalBreak),
@@ -180,7 +182,7 @@ TEST(SeasonAgendaTest, SeasonListsEveryKindOfEventInOrder)
     EXPECT_FALSE(event.date < GameDateValue(2025, 7, 1));
     EXPECT_TRUE(event.date < GameDateValue(2026, 7, 1));
   }
-  EXPECT_EQ(count(SeasonAgenda::build(2025, none, false),
+  EXPECT_EQ(count(SeasonAgenda::build(2025, none, false, 1),
                   AgendaKind::BoardReview),
             0u);
 }

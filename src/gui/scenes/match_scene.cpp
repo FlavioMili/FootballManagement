@@ -767,6 +767,8 @@ void MatchScene::update(float deltaTime)
   // A break reached outside this update (e.g. the engine moved on by
   // itself) is caught before any playback can skip across it.
   pauseAtBreak();
+  // Play mode: the pad and keys become this step's input first.
+  updatePlay(deltaTime);
   if (engine && !match_finished && !is_paused)
   {
     const auto startedAt = std::chrono::steady_clock::now();
@@ -881,6 +883,11 @@ void MatchScene::toggleWindowFullscreen()
 
 void MatchScene::handleEvent(const SDL_Event& event)
 {
+  // While playing, the play controls belong to the pitch unless a dialog
+  // has the keyboard (key releases are still tracked so nothing sticks).
+  if (play.handleEvent(event) && play.isActive() && !play_menu &&
+      !play_confirm && !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId))
+    return;
   if (event.type != SDL_EVENT_KEY_DOWN) return;
   if (!event.key.repeat && !ImGui::GetIO().WantTextInput)
   {
@@ -1048,6 +1055,8 @@ void MatchScene::render()
     // The dialogs stay available (and their popups submitted) in focus mode.
     if (show_substitutions) renderSubstitutionsModal();
     if (show_tactics) renderTacticsModal();
+    renderPlayConfirm();
+    renderPlayMenu();
     team_talk.renderForMatch(guiView->getController(), *engine, home_team_id,
                              away_team_id);
     analysis_panel.renderForMatch(
@@ -1067,6 +1076,8 @@ void MatchScene::render()
 
   if (show_substitutions) renderSubstitutionsModal();
   if (show_tactics) renderTacticsModal();
+  renderPlayConfirm();
+  renderPlayMenu();
   team_talk.renderForMatch(guiView->getController(), *engine, home_team_id,
                            away_team_id);
   analysis_panel.renderForMatch(
@@ -1453,10 +1464,15 @@ void MatchScene::renderControls()
     if (is_paused ? UI::primaryButton(LOC("MATCH_RESUME"), pauseSize)
                   : ImGui::Button(LOC("MATCH_PAUSE"), pauseSize))
       is_paused = !is_paused;
-    UI::sameLineIfFits(UI::buttonWidth(LOC("MATCH_QUICK_RESULT")));
-    if (ImGui::Button(LOC("MATCH_QUICK_RESULT"))) quickResult();
-    if (ImGui::IsItemHovered())
-      ImGui::SetTooltip("%s", LOC("MATCH_QUICK_RESULT_HINT"));
+    if (!play.isActive())
+    {
+      UI::sameLineIfFits(UI::buttonWidth(LOC("MATCH_QUICK_RESULT")));
+      if (ImGui::Button(LOC("MATCH_QUICK_RESULT"))) quickResult();
+      if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("%s", LOC("MATCH_QUICK_RESULT_HINT"));
+    }
+    // Watch, Simulate (quick result) or Play.
+    renderPlayButtons();
   }
   if (managed_is_home)
   {
@@ -1472,45 +1488,49 @@ void MatchScene::renderControls()
     }
   }
 
-  // Segmented speed control: real time up to 16x, or highlights only.
+  // Segmented speed control: real time up to 16x, or highlights only. A
+  // played match runs in real time.
   const auto& speeds = MatchSceneTuning::Controls::SPEED_STEPS;
-  std::array<std::array<char, 16>, speeds.size()> speedLabels{};
-  const ImGuiStyle& style = ImGui::GetStyle();
-  const float gap = scaled(MatchSceneTuning::Controls::SPEED_BUTTON_GAP);
-  float segmentWidth =
-      ImGui::CalcTextSize(LOC("MATCH_SPEED")).x + style.ItemSpacing.x +
-      ImGui::CalcTextSize(LOC("MATCH_HIGHLIGHTS")).x +
-      2.0f * style.FramePadding.x + gap;
-  for (std::size_t index = 0; index < speeds.size(); ++index)
+  if (!play.isActive())
   {
-    std::snprintf(speedLabels[index].data(), speedLabels[index].size(), "%gx",
-                  static_cast<double>(speeds[index]));
-    segmentWidth += ImGui::CalcTextSize(speedLabels[index].data()).x +
-                    2.0f * style.FramePadding.x + gap;
+    std::array<std::array<char, 16>, speeds.size()> speedLabels{};
+    const ImGuiStyle& style = ImGui::GetStyle();
+    const float gap = scaled(MatchSceneTuning::Controls::SPEED_BUTTON_GAP);
+    float segmentWidth = ImGui::CalcTextSize(LOC("MATCH_SPEED")).x +
+                         style.ItemSpacing.x +
+                         ImGui::CalcTextSize(LOC("MATCH_HIGHLIGHTS")).x +
+                         2.0f * style.FramePadding.x + gap;
+    for (std::size_t index = 0; index < speeds.size(); ++index)
+    {
+      std::snprintf(speedLabels[index].data(), speedLabels[index].size(), "%gx",
+                    static_cast<double>(speeds[index]));
+      segmentWidth += ImGui::CalcTextSize(speedLabels[index].data()).x +
+                      2.0f * style.FramePadding.x + gap;
+    }
+    UI::sameLineIfFits(segmentWidth);
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored(palette.muted, "%s", LOC("MATCH_SPEED"));
+    ImGui::SameLine();
+    ImGui::PushID("match_speed");
+    for (std::size_t index = 0; index < speeds.size(); ++index)
+    {
+      if (index > 0) ImGui::SameLine(0.0f, gap);
+      const bool active = match_speed == speeds[index];
+      const ImVec2 speedSize(UI::buttonWidth(speedLabels[index].data()), 0.0f);
+      if (active ? UI::primaryButton(speedLabels[index].data(), speedSize)
+                 : ImGui::Button(speedLabels[index].data(), speedSize))
+        setPlaybackSpeed(speeds[index]);
+    }
+    ImGui::SameLine(0.0f, gap);
+    const ImVec2 highlightsSize(UI::buttonWidth(LOC("MATCH_HIGHLIGHTS")), 0.0f);
+    if (highlights_only
+            ? UI::primaryButton(LOC("MATCH_HIGHLIGHTS"), highlightsSize)
+            : ImGui::Button(LOC("MATCH_HIGHLIGHTS"), highlightsSize))
+      setHighlightsOnly(!highlights_only);
+    if (ImGui::IsItemHovered())
+      ImGui::SetTooltip("%s", LOC("MATCH_HIGHLIGHTS_HINT"));
+    ImGui::PopID();
   }
-  UI::sameLineIfFits(segmentWidth);
-  ImGui::AlignTextToFramePadding();
-  ImGui::TextColored(palette.muted, "%s", LOC("MATCH_SPEED"));
-  ImGui::SameLine();
-  ImGui::PushID("match_speed");
-  for (std::size_t index = 0; index < speeds.size(); ++index)
-  {
-    if (index > 0) ImGui::SameLine(0.0f, gap);
-    const bool active = match_speed == speeds[index];
-    const ImVec2 speedSize(UI::buttonWidth(speedLabels[index].data()), 0.0f);
-    if (active ? UI::primaryButton(speedLabels[index].data(), speedSize)
-               : ImGui::Button(speedLabels[index].data(), speedSize))
-      setPlaybackSpeed(speeds[index]);
-  }
-  ImGui::SameLine(0.0f, gap);
-  const ImVec2 highlightsSize(UI::buttonWidth(LOC("MATCH_HIGHLIGHTS")), 0.0f);
-  if (highlights_only
-          ? UI::primaryButton(LOC("MATCH_HIGHLIGHTS"), highlightsSize)
-          : ImGui::Button(LOC("MATCH_HIGHLIGHTS"), highlightsSize))
-    setHighlightsOnly(!highlights_only);
-  if (ImGui::IsItemHovered())
-    ImGui::SetTooltip("%s", LOC("MATCH_HIGHLIGHTS_HINT"));
-  ImGui::PopID();
 
   const int used =
       managed_is_home ? engine->getSubstitutionsUsed(*managed_is_home) : 0;
@@ -1618,6 +1638,8 @@ void MatchScene::renderViewControls()
   cameraButton(LOC("MATCH_CAMERA_FOLLOW"), MatchCameraMode::PLAYER_FOLLOW);
   cameraButton(LOC("MATCH_CAMERA_FREE"), MatchCameraMode::FREE);
   cameraButton(LOC("MATCH_CAMERA_DIRECTOR"), MatchCameraMode::DIRECTOR);
+  if (play.isActive())
+    cameraButton(LOC("MATCH_CAMERA_PLAY"), MatchCameraMode::PLAY);
   if (camera_mode == MatchCameraMode::FREE)
   {
     UI::sameLineIfFits(ImGui::CalcTextSize(LOC("MATCH_FOLLOW_BALL")).x +
@@ -1731,6 +1753,8 @@ void MatchScene::renderPitch(ImVec2 size)
   renderOptions.kickoffMinutes = kickoff_minutes;
   renderOptions.dayLook = day_look;
   renderOptions.pressureOverlay = pressure_overlay;
+  if (play.isActive())
+    renderOptions.activePlayer = engine->getControlledPlayer();
   // Every mouse button can grab the view; widgets drawn over it (the focus
   // HUD) live in child windows and so keep their own input.
   ImGui::InvisibleButton("MatchView", size,
@@ -1764,6 +1788,11 @@ void MatchScene::renderPitch(ImVec2 size)
     viewport.x = viewOrigin.x + std::max(apron, (size.x - viewport.width) * 0.5f);
     viewport.y =
         viewOrigin.y + std::max(apron, (size.y - viewport.height) * 0.5f);
+    // Playing: a zoomed view that follows the active footballer.
+    if (play.isActive())
+      viewport =
+          playViewport2D(viewport, viewOrigin,
+                         ImVec2(viewOrigin.x + size.x, viewOrigin.y + size.y));
     renderer = renderer_2d.get();
   }
 
@@ -1773,8 +1802,12 @@ void MatchScene::renderPitch(ImVec2 size)
     renderOptions.showAiDebug = show_ai_debug;
 #endif
     const auto renderStartedAt = std::chrono::steady_clock::now();
-    renderer->render(buildMatchRenderSnapshot(*engine), renderOptions,
-                     viewport);
+    const ImVec2 viewEnd(viewOrigin.x + size.x, viewOrigin.y + size.y);
+    fillMatchRenderSnapshot(*engine, snapshot);
+    ImGui::GetWindowDrawList()->PushClipRect(viewOrigin, viewEnd, true);
+    renderer->render(snapshot, renderOptions, viewport);
+    renderPlayOverlay(*renderer, viewOrigin, viewEnd);
+    ImGui::GetWindowDrawList()->PopClipRect();
     last_render_milliseconds =
         std::chrono::duration<float, std::milli>(
             std::chrono::steady_clock::now() - renderStartedAt)
@@ -1940,10 +1973,10 @@ void MatchScene::renderFocusHud(ImVec2 origin, ImVec2 size)
     {
       is_paused = !is_paused;
     }
-    ImGui::SameLine();
     ImGui::PushID("focus_speed");
     const auto& speeds = MatchSceneTuning::Controls::SPEED_STEPS;
-    for (std::size_t index = 0; index < speeds.size(); ++index)
+    for (std::size_t index = 0; index < speeds.size() && !play.isActive();
+         ++index)
     {
       std::array<char, 16> label{};
       std::snprintf(label.data(), label.size(), "%gx",
@@ -1957,11 +1990,15 @@ void MatchScene::renderFocusHud(ImVec2 origin, ImVec2 size)
         setPlaybackSpeed(speeds[index]);
       }
     }
-    ImGui::SameLine(0.0f, gap);
-    if (highlights_only ? UI::primaryButton(LOC("MATCH_HIGHLIGHTS"))
-                        : ImGui::Button(LOC("MATCH_HIGHLIGHTS")))
-      setHighlightsOnly(!highlights_only);
+    if (!play.isActive())
+    {
+      ImGui::SameLine(0.0f, gap);
+      if (highlights_only ? UI::primaryButton(LOC("MATCH_HIGHLIGHTS"))
+                          : ImGui::Button(LOC("MATCH_HIGHLIGHTS")))
+        setHighlightsOnly(!highlights_only);
+    }
     ImGui::PopID();
+    renderPlayButtons();
 
     // The matchday dialogs work over the focus view too.
     if (managed_is_home && !match_finished)
@@ -1978,18 +2015,20 @@ void MatchScene::renderFocusHud(ImVec2 origin, ImVec2 size)
 
     if (view_mode == MatchViewMode::BROADCAST_3D)
     {
-      const std::array<std::pair<MatchCameraMode, const char*>, 6> cameras{{
+      const std::array<std::pair<MatchCameraMode, const char*>, 7> cameras{{
           {MatchCameraMode::BROADCAST, LOC("MATCH_CAMERA_BROADCAST")},
           {MatchCameraMode::TACTICAL, LOC("MATCH_CAMERA_TACTICAL")},
           {MatchCameraMode::END, LOC("MATCH_CAMERA_END")},
           {MatchCameraMode::PLAYER_FOLLOW, LOC("MATCH_CAMERA_FOLLOW")},
           {MatchCameraMode::FREE, LOC("MATCH_CAMERA_FREE")},
           {MatchCameraMode::DIRECTOR, LOC("MATCH_CAMERA_DIRECTOR")},
+          {MatchCameraMode::PLAY, LOC("MATCH_CAMERA_PLAY")},
       }};
       const char* current = cameras[0].second;
       float comboWidth = 0.0f;
       for (const auto& [mode, label] : cameras)
       {
+        if (mode == MatchCameraMode::PLAY && !play.isActive()) continue;
         if (mode == camera_mode) current = label;
         comboWidth = std::max(comboWidth, ImGui::CalcTextSize(label).x);
       }
@@ -1999,7 +2038,8 @@ void MatchScene::renderFocusHud(ImVec2 origin, ImVec2 size)
       if (ImGui::BeginCombo("##focus_camera", current))
       {
         for (const auto& [mode, label] : cameras)
-          if (ImGui::Selectable(label, mode == camera_mode))
+          if ((mode != MatchCameraMode::PLAY || play.isActive()) &&
+              ImGui::Selectable(label, mode == camera_mode))
             setCameraMode(mode);
         ImGui::EndCombo();
       }
@@ -2033,7 +2073,8 @@ void MatchScene::renderFocusHud(ImVec2 origin, ImVec2 size)
   ImGui::EndChild();
   focus_controls_width = ImGui::GetItemRectSize().x;
 
-  renderFocusShouts(origin, size);
+  // The radar takes the bottom of the view while playing.
+  if (!play.isActive()) renderFocusShouts(origin, size);
 
   // Latest key moments, bottom left, newest last.
   constexpr std::size_t TICKER_ROWS = 3;

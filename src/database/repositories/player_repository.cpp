@@ -25,6 +25,7 @@
 #include "database/SQLLoader.h"
 #include "database/repositories/text_encoding.h"
 #include "model/role_utils.h"
+#include "model/squad_numbers.h"
 
 namespace
 {
@@ -206,7 +207,7 @@ void appendStats(std::string& out, const std::map<std::string, float>& stats)
 }
 
 /**
- * Encodes and binds the columns of a player row (team_id ... dynamics).
+ * Encodes and binds the columns of a player row (team_id ... squad_number).
  * Buffers are reused across rows and must outlive the statement step.
  */
 class PlayerRowBinder
@@ -245,6 +246,7 @@ class PlayerRowBinder
                         static_cast<double>(player.getPotential()));
     bindText(stmt, index++, traits);
     bindText(stmt, index++, dynamics);
+    sqlite3_bind_int(stmt, index, player.getSquadNumber());
   }
 
  private:
@@ -300,7 +302,7 @@ const char* columnText(sqlite3_stmt* stmt, int column)
   return text ? reinterpret_cast<const char*>(text) : "";
 }
 
-constexpr int PLAYER_PARAM_COUNT = 15;
+constexpr int PLAYER_PARAM_COUNT = 16;
 
 std::map<std::string, float> parsePlayerStats(std::string_view encodedStats)
 {
@@ -370,6 +372,9 @@ std::vector<Player> PlayerRepository::loadAllPlayers() const
     if (potential > 0.0) player.setPotential(static_cast<float>(potential));
     player.setTraits(decodeTraits(columnText(stmt, 14)));
     player.mutableDynamics() = decodeDynamics(columnText(stmt, 15));
+    const int squad_number = sqlite3_column_int(stmt, 16);
+    if (SquadNumbers::isValid(squad_number))
+      player.setSquadNumber(static_cast<std::uint8_t>(squad_number));
   }
 
   sqlite3_finalize(stmt);

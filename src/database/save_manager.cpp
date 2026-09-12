@@ -603,6 +603,15 @@ std::vector<SaveBackup> SaveManager::listBackups(const fs::path& file)
   return backups;
 }
 
+const SaveBackup* SaveManager::newestUsable(
+    const std::vector<SaveBackup>& backups)
+{
+  const auto usable = std::ranges::find_if(
+      backups, [](const SaveBackup& backup)
+      { return backup.inspection.status == SaveStatus::Ok; });
+  return usable == backups.end() ? nullptr : &*usable;
+}
+
 void SaveManager::restoreBackup(const fs::path& file, const fs::path& backup)
 {
   const SaveInspection source = inspect(backup, SaveCheck::Full);

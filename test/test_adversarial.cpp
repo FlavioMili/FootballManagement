@@ -831,8 +831,17 @@ TEST_F(Adversarial, ClosingDuringContinueWaitsForTheDaysInFlight)
   for (int frame = 0; frame < 10 && !driver->advancing(); ++frame)
     driver->frame();
   ASSERT_TRUE(driver->advancing());
-  const GameController::ContinueProgress progress =
-      controller->getContinueProgress();
+  // The worker counts the days to simulate only once it has started: wait
+  // for that count (without frames, so the hub cannot finish meanwhile).
+  GameController::ContinueProgress progress = controller->getContinueProgress();
+  const auto counting = std::chrono::steady_clock::now();
+  while (progress.days_total == 0 &&
+         std::chrono::steady_clock::now() - counting < std::chrono::seconds(10))
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    progress = controller->getContinueProgress();
+  }
+  ASSERT_GT(progress.days_total, 0) << "the Continue worker never started";
   EXPECT_LT(progress.days_done, progress.days_total)
       << "Continue finished before the window closed";
 
@@ -1086,7 +1095,7 @@ TEST_F(Adversarial, ReleasingAReserveKeepsTheChosenLineup)
   expectWorldConsistent("after releasing a reserve");
 }
 
-/** Sell/release the squad down to ten, then try to play. */
+/** Try to release the squad down to ten, then play. */
 TEST_F(Adversarial, SquadBelowElevenThenPlay)
 {
   std::vector<PlayerID> squad = club().getPlayerIDs();
@@ -1121,12 +1130,10 @@ TEST_F(Adversarial, SquadBelowElevenThenPlay)
   }
   EXPECT_EQ(driver->imgui_errors, 0);
   expectWorldConsistent("after playing with ten");
-  if (left < 11 && controller->getCurrentDate().toString() == matchDay)
-    GTEST_SKIP() << "KNOWN BUG: F-SQUAD10 - with " << left
-                 << " players (release refused " << refused
-                 << " times) the managed match can never be played and the "
-                    "career is stuck on "
-                 << matchDay;
+  // Releases stop at eleven seniors with a goalkeeper, so the match can
+  // always be played.
+  EXPECT_GE(left, 11u) << "release refused " << refused << " times";
+  EXPECT_GT(refused, 0u);
   EXPECT_NE(controller->getCurrentDate().toString(), matchDay)
       << "the career is stuck on match day with " << left << " players";
 }

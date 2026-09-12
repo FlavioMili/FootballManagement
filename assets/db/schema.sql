@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS Players (
   potential REAL NOT NULL DEFAULT 0,  -- hidden, overall scale (0: legacy)
   traits TEXT NOT NULL DEFAULT '',    -- professionalism,ambition,temperament,loyalty,injury_proneness
   dynamics TEXT NOT NULL DEFAULT '',  -- condition, sharpness, morale, injury, form (CSV)
+  squad_number INTEGER NOT NULL DEFAULT 0, -- 1-99, unique per club; 0: none
   FOREIGN KEY(team_id) REFERENCES Teams(id)
 );
 
@@ -154,6 +155,69 @@ CREATE TABLE IF NOT EXISTS SeasonHistory (
   PRIMARY KEY(season, competition_type, competition_id)
 );
 
+-- Final league tables of past seasons, before promotion and relegation
+CREATE TABLE IF NOT EXISTS SeasonTables (
+  season INTEGER NOT NULL,
+  start_year INTEGER NOT NULL,
+  league_id INTEGER NOT NULL,
+  position INTEGER NOT NULL,
+  team_id INTEGER NOT NULL,
+  played INTEGER NOT NULL DEFAULT 0,
+  won INTEGER NOT NULL DEFAULT 0,
+  drawn INTEGER NOT NULL DEFAULT 0,
+  lost INTEGER NOT NULL DEFAULT 0,
+  goals_for INTEGER NOT NULL DEFAULT 0,
+  goals_against INTEGER NOT NULL DEFAULT 0,
+  points INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY(season, league_id, team_id)
+);
+
+-- The managed club's season-end summary and the board's verdict
+CREATE TABLE IF NOT EXISTS SeasonReviews (
+  season INTEGER PRIMARY KEY,
+  start_year INTEGER NOT NULL,
+  team_id INTEGER NOT NULL,
+  league_id INTEGER NOT NULL,
+  next_league_id INTEGER NOT NULL DEFAULT 0,
+  position INTEGER NOT NULL DEFAULT 0,
+  league_size INTEGER NOT NULL DEFAULT 0,
+  target_position INTEGER NOT NULL DEFAULT 0,
+  objective INTEGER NOT NULL DEFAULT 0, -- BoardObjective
+  cup_objective INTEGER NOT NULL DEFAULT 0, -- CupObjective
+  finance_objective INTEGER NOT NULL DEFAULT 0, -- FinanceObjective
+  youth_target INTEGER NOT NULL DEFAULT 0,
+  young_regulars INTEGER NOT NULL DEFAULT 0,
+  played INTEGER NOT NULL DEFAULT 0,
+  won INTEGER NOT NULL DEFAULT 0,
+  drawn INTEGER NOT NULL DEFAULT 0,
+  lost INTEGER NOT NULL DEFAULT 0,
+  goals_for INTEGER NOT NULL DEFAULT 0,
+  goals_against INTEGER NOT NULL DEFAULT 0,
+  points INTEGER NOT NULL DEFAULT 0,
+  champion INTEGER NOT NULL DEFAULT 0,
+  promoted INTEGER NOT NULL DEFAULT 0,
+  relegated INTEGER NOT NULL DEFAULT 0,
+  cup_won INTEGER NOT NULL DEFAULT 0,
+  continental_id INTEGER NOT NULL DEFAULT 0,
+  top_scorer TEXT NOT NULL DEFAULT '',
+  top_scorer_goals INTEGER NOT NULL DEFAULT 0,
+  prize_money INTEGER NOT NULL DEFAULT 0,
+  balance INTEGER NOT NULL DEFAULT 0,
+  confidence_before REAL NOT NULL DEFAULT 0,
+  verdict INTEGER NOT NULL DEFAULT 2, -- SeasonVerdict
+  grade_league INTEGER NOT NULL DEFAULT 1, -- ObjectiveGrade
+  grade_cup INTEGER NOT NULL DEFAULT 1,
+  grade_finances INTEGER NOT NULL DEFAULT 1,
+  grade_youth INTEGER NOT NULL DEFAULT 1,
+  confidence_after REAL NOT NULL DEFAULT 0,
+  next_objective INTEGER, -- NULL after a sacking
+  next_target INTEGER NOT NULL DEFAULT 0,
+  next_cup INTEGER NOT NULL DEFAULT 0,
+  next_finances INTEGER NOT NULL DEFAULT 0,
+  next_youth INTEGER NOT NULL DEFAULT 0,
+  seen INTEGER NOT NULL DEFAULT 0
+);
+
 -- Free agent team
 INSERT OR IGNORE INTO Teams (id, league_id, name, balance)
 VALUES (0, -1, 'Free agents', -1);
@@ -203,7 +267,11 @@ CREATE TABLE IF NOT EXISTS BoardState (
   low_reviews INTEGER NOT NULL DEFAULT 0,
   league_matches INTEGER NOT NULL DEFAULT 0,
   dismissed INTEGER NOT NULL DEFAULT 0,
-  recent_deltas TEXT NOT NULL DEFAULT '[]'
+  recent_deltas TEXT NOT NULL DEFAULT '[]',
+  cup_objective INTEGER NOT NULL DEFAULT 0,     -- CupObjective
+  finance_objective INTEGER NOT NULL DEFAULT 0, -- FinanceObjective
+  youth_target INTEGER NOT NULL DEFAULT 0,      -- young regulars expected
+  start_balance INTEGER NOT NULL DEFAULT 0      -- cash when the season began
 );
 
 -- World simulation state (single row): RNG seed and player and staff id
@@ -530,6 +598,41 @@ CREATE TABLE IF NOT EXISTS StoryBids (
   day INTEGER NOT NULL
 );
 
+-- Decision moments: open (chosen -1), answered (0 or 1) or lapsed (2)
+CREATE TABLE IF NOT EXISTS StoryDilemmas (
+  day INTEGER PRIMARY KEY,              -- day ordinal it was raised
+  kind INTEGER NOT NULL,                -- StoryKind
+  subject INTEGER NOT NULL,             -- player, 0 for club-wide moments
+  other INTEGER NOT NULL,               -- second player or rival club
+  expires_day INTEGER NOT NULL,
+  chosen INTEGER NOT NULL,
+  resolved_day INTEGER NOT NULL,
+  money INTEGER NOT NULL                -- club balance change applied
+);
+
+-- Players the manager follows, with the state last reported
+CREATE TABLE IF NOT EXISTS StoryFollows (
+  player_id INTEGER PRIMARY KEY,
+  since_day INTEGER NOT NULL,
+  team_id INTEGER NOT NULL,
+  injured INTEGER NOT NULL,
+  contract_years INTEGER NOT NULL,
+  wage INTEGER NOT NULL,
+  honours INTEGER NOT NULL,
+  last_match_day INTEGER NOT NULL
+);
+
+-- Inbox screen filters of the career (single row)
+CREATE TABLE IF NOT EXISTS InboxView (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  tab INTEGER NOT NULL,                 -- -1 pick, 0 decisions, 1 information
+  category INTEGER NOT NULL,            -- InboxCategory, -1 all
+  unread_only INTEGER NOT NULL,
+  followed_only INTEGER NOT NULL,
+  player_id INTEGER,
+  team_id INTEGER
+);
+
 -- Manager career: the human manager (single row, only once created)
 CREATE TABLE IF NOT EXISTS ManagerProfile (
   id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -645,7 +748,7 @@ CREATE TABLE IF NOT EXISTS ManagerJobOffers (
 );
 
 -- Youth academies: recruitment network, the board-approved project being
--- built and the club's row in its U18 league this season
+-- built and the club's rows in its U18 and U21 leagues this season
 CREATE TABLE IF NOT EXISTS YouthAcademies (
   team_id INTEGER PRIMARY KEY,
   recruitment INTEGER NOT NULL,         -- 1-100
@@ -659,10 +762,17 @@ CREATE TABLE IF NOT EXISTS YouthAcademies (
   drawn INTEGER NOT NULL,
   lost INTEGER NOT NULL,
   goals_for INTEGER NOT NULL,
-  goals_against INTEGER NOT NULL
+  goals_against INTEGER NOT NULL,
+  reserve_played INTEGER NOT NULL DEFAULT 0,       -- U21 league row
+  reserve_won INTEGER NOT NULL DEFAULT 0,
+  reserve_drawn INTEGER NOT NULL DEFAULT 0,
+  reserve_lost INTEGER NOT NULL DEFAULT 0,
+  reserve_goals_for INTEGER NOT NULL DEFAULT 0,
+  reserve_goals_against INTEGER NOT NULL DEFAULT 0,
+  reserves_ready INTEGER NOT NULL DEFAULT 0        -- U21 squad set up
 );
 
--- Academy players: intake trialists, U18 squads and recent graduates
+-- Academy players: intake trialists, U18 and U21 squads, recent graduates
 CREATE TABLE IF NOT EXISTS YouthPlayers (
   player_id INTEGER PRIMARY KEY,
   team_id INTEGER NOT NULL,
@@ -676,14 +786,73 @@ CREATE TABLE IF NOT EXISTS YouthPlayers (
   progress TEXT NOT NULL                -- "day:overall*10;" monthly points
 );
 
--- U18 results of the managed club this season
+-- U18 and U21 results of the managed club this season
 CREATE TABLE IF NOT EXISTS YouthResults (
   seq INTEGER PRIMARY KEY,
   date INTEGER NOT NULL,                -- YYYYMMDD
   opponent_id INTEGER NOT NULL,
   home INTEGER NOT NULL,
   goals_for INTEGER NOT NULL,
-  goals_against INTEGER NOT NULL
+  goals_against INTEGER NOT NULL,
+  squad INTEGER NOT NULL DEFAULT 0      -- 0: U18, 1: U21
+);
+
+-- The human manager's national-team job (single row) and the id counter of
+-- national-team offers
+CREATE TABLE IF NOT EXISTS NationalJobState (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  active INTEGER NOT NULL,
+  nation INTEGER NOT NULL,              -- Language of the national team
+  start_date INTEGER NOT NULL,          -- YYYYMMDD
+  expires INTEGER NOT NULL,             -- YYYYMMDD
+  weekly_wage INTEGER NOT NULL,
+  played INTEGER NOT NULL,
+  won INTEGER NOT NULL,
+  drawn INTEGER NOT NULL,
+  lost INTEGER NOT NULL,
+  trophies INTEGER NOT NULL,
+  qualified INTEGER NOT NULL,           -- reached the finals this cycle
+  next_offer_id INTEGER NOT NULL
+);
+
+-- Earlier national-team jobs of the human manager
+CREATE TABLE IF NOT EXISTS NationalJobHistory (
+  seq INTEGER PRIMARY KEY,
+  nation INTEGER NOT NULL,
+  start_date INTEGER NOT NULL,
+  end_date INTEGER NOT NULL,
+  reason INTEGER NOT NULL,              -- DepartureReason
+  played INTEGER NOT NULL,
+  won INTEGER NOT NULL,
+  drawn INTEGER NOT NULL,
+  lost INTEGER NOT NULL,
+  trophies INTEGER NOT NULL
+);
+
+-- National teams looking for a head coach
+CREATE TABLE IF NOT EXISTS NationalVacancies (
+  nation INTEGER PRIMARY KEY,
+  opened INTEGER NOT NULL,              -- YYYYMMDD
+  fill_date INTEGER NOT NULL
+);
+
+-- The human manager's applications for national-team jobs
+CREATE TABLE IF NOT EXISTS NationalApplications (
+  nation INTEGER PRIMARY KEY,
+  applied INTEGER NOT NULL,
+  respond_date INTEGER NOT NULL,
+  stage INTEGER NOT NULL                -- 0 pending, 1 rejected, 2 offered
+);
+
+-- National federations' offers to the human manager
+CREATE TABLE IF NOT EXISTS NationalJobOffers (
+  id INTEGER PRIMARY KEY,
+  nation INTEGER NOT NULL,
+  made INTEGER NOT NULL,
+  expires INTEGER NOT NULL,
+  weekly_wage INTEGER NOT NULL,
+  years INTEGER NOT NULL,
+  unsolicited INTEGER NOT NULL
 );
 
 -- Squad status the manager gave a player; only valid while the player is
@@ -719,6 +888,7 @@ CREATE TABLE IF NOT EXISTS ManagedMatchAnalytics (
   home_id INTEGER NOT NULL,
   away_id INTEGER NOT NULL,
   data TEXT NOT NULL,                   -- ManagedMatchSnapshot JSON
+  detail BLOB,                          -- MatchDetail (NULL: not tracked)
   PRIMARY KEY (game_date, home_id, away_id)
 );
 
@@ -910,6 +1080,31 @@ CREATE TABLE IF NOT EXISTS HolidayPreferences (
   assistant_lineup INTEGER NOT NULL,
   assistant_training INTEGER NOT NULL,
   assistant_inbox INTEGER NOT NULL
+);
+
+-- Medical staff instructions for the managed squad (src/model/medical_centre.*)
+CREATE TABLE IF NOT EXISTS MedicalFlags (
+  player_id INTEGER PRIMARY KEY,
+  flags INTEGER NOT NULL,                -- MedicalFlag bits
+  warned_day INTEGER NOT NULL DEFAULT 0  -- day ordinal of the last warning
+);
+
+-- Daily training and match load of the managed squad (last 28 days)
+CREATE TABLE IF NOT EXISTS MedicalLoad (
+  player_id INTEGER NOT NULL,
+  day INTEGER NOT NULL,  -- day ordinal
+  load REAL NOT NULL,    -- session units
+  ratio REAL NOT NULL,   -- acute:chronic workload ratio
+  PRIMARY KEY (player_id, day)
+);
+
+-- Supporters' mood of the managed club (single row, src/model/supporters.*)
+CREATE TABLE IF NOT EXISTS SupporterMood (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  team_id INTEGER NOT NULL,
+  mood REAL NOT NULL,              -- 0-100
+  updated_day INTEGER NOT NULL,    -- day ordinal of the weekly update
+  reasons TEXT NOT NULL DEFAULT '' -- "factor:points" pairs, strongest first
 );
 
 -- Enable WAL mode

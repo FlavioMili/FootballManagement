@@ -272,7 +272,7 @@ void TeamTalkDialog::renderResult()
 }
 
 void TeamTalkDialog::renderForMatch(GameController& controller,
-                                    const MatchEngine& engine, TeamID home_id,
+                                    MatchEngine& engine, TeamID home_id,
                                     TeamID away_id)
 {
   const auto team = controller.getManagedTeam();
@@ -312,4 +312,17 @@ void TeamTalkDialog::renderForMatch(GameController& controller,
     dismiss_requested = visible;
   }
   render(controller);
+  // The talks' outcome plays its part in the match: only changes reach the
+  // engine (each one resets its look-ahead).
+  if (team && (managed == home_id || managed == away_id))
+  {
+    for (int half = 1; half <= 2; ++half)
+    {
+      const float modifier = controller.getTeamTalkModifier(managed, half);
+      float& applied = applied_talk[static_cast<std::size_t>(half - 1)];
+      if (modifier == applied) continue;
+      applied = modifier;
+      engine.setTeamTalkModifier(managed == home_id, half, modifier);
+    }
+  }
 }

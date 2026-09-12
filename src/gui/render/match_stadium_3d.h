@@ -238,8 +238,21 @@ struct Geometry
   std::vector<AdBoard> boards;
   std::array<Goal, 2> goals{};
   std::array<Vec3, 4> cornerFlags{};
+  /** Daylight build: sunlit and shaded stands, lamps off. */
+  bool day = false;
+  /** By day: the roofs' shadows on the ground (drawn over the grass) and
+   * the same areas as plain quads for testing who stands in them. */
+  std::vector<GroundPolygon> standShadows;
+  std::vector<std::array<Vec3, 4>> shadowAreas;
 
-  /** Rebuilds every static element; the crowd wears the given kits. */
-  void build(const MatchKits& kits);
+  /**
+   * Rebuilds every static element; the crowd wears the given kits. The
+   * lighting is baked into the colours: floodlights at night, the sun (with
+   * the roofs' shadows) by day.
+   */
+  void build(const MatchKits& kits, bool daylight = false);
+  /** Whether a ground point lies in a stand's shadow (always false at
+   * night). */
+  bool inStandShadow(Vec3 point) const;
 };
 }  // namespace Stadium3D

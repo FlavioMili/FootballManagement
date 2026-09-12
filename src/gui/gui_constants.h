@@ -42,11 +42,11 @@ struct Resolution
 };
 
 /** @brief Supported FPS options. */
-constexpr std::array<int, 4> FPS_OPTIONS = {60, 90, 120, 144};
+constexpr std::array<int, 8> FPS_OPTIONS = {30, 60, 75, 90, 120, 144, 165, 240};
 
 /** @brief Supported resolution options. */
-constexpr std::array<Resolution, 4> RESOLUTIONS = {
-    Resolution{1280, 720}, Resolution{1920, 1080}, Resolution{2560, 1440},
-    Resolution{3840, 2160}};
+constexpr std::array<Resolution, 6> RESOLUTIONS = {
+    Resolution{1280, 720},  Resolution{1366, 768},  Resolution{1600, 900},
+    Resolution{1920, 1080}, Resolution{2560, 1440}, Resolution{3840, 2160}};
 
 }  // namespace GUIConstants

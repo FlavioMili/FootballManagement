@@ -12,32 +12,21 @@
 
 #include "database/sqlite_rows.h"
 #include "model/calendar.h"
-#include "model/transfer_negotiation.h"
-
-namespace
-{
-/** A window opens at most this far ahead (winter window from summer). */
-constexpr int WINDOW_SEARCH_DAYS = 370;
-}  // namespace
+#include "model/transfer_windows.h"
 
 namespace Holiday
 {
-GameDateValue windowEndDate(const GameDateValue& today)
+GameDateValue windowEndDate(LeagueID league, const GameDateValue& today)
 {
-  for (int offset = 0; offset < WINDOW_SEARCH_DAYS; ++offset)
-  {
-    const GameDateValue day = SeasonCalendar::addDays(today, offset);
-    const TransferNegotiation::WindowInfo window =
-        TransferNegotiation::windowInfo(day);
-    if (window.open && window.days_to_deadline >= 0)
-      return SeasonCalendar::addDays(day, window.days_to_deadline + 1);
-  }
-  return SeasonCalendar::addDays(today, WINDOW_SEARCH_DAYS);
+  const GameDateValue opening = TransferWindows::nextOpening(league, today);
+  const std::optional<GameDateValue> deadline =
+      TransferWindows::windowEnd(league, opening);
+  return SeasonCalendar::addDays(deadline.value_or(opening), 1);
 }
 
 std::optional<GameDateValue> targetDate(
     const HolidayPlan& plan, const GameDateValue& today,
-    const std::optional<GameDateValue>& next_match)
+    const std::optional<GameDateValue>& next_match, LeagueID league)
 {
   switch (plan.mode)
   {
@@ -48,7 +37,7 @@ std::optional<GameDateValue> targetDate(
       if (!next_match || !(today < *next_match)) return std::nullopt;
       return next_match;
     case HolidayMode::WindowEnd:
-      return windowEndDate(today);
+      return windowEndDate(league, today);
     case HolidayMode::NextDecision:
     case HolidayMode::COUNT:
       break;
@@ -103,6 +92,8 @@ const char* stopKey(HolidayStop stop)
       return "HOLIDAY_STOP_INJURY_CRISIS";
     case HolidayStop::Decision:
       return "HOLIDAY_STOP_DECISION";
+    case HolidayStop::Interrupted:
+      return "HOLIDAY_STOP_INTERRUPTED";
     case HolidayStop::DayLimit:
       break;
   }

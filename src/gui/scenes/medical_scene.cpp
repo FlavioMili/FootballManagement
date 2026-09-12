@@ -23,8 +23,11 @@
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/game.h"
 #include "model/inbox.h"
 #include "model/role_utils.h"
+#include "model/training.h"
+#include "model/world_rng.h"
 
 namespace
 {
@@ -32,6 +35,24 @@ constexpr float TWO_COLUMN_MIN_WIDTH = 1000.0f;
 /** Acute:chronic ratios read as a rising or falling load. */
 constexpr float RISING_LOAD = 1.15f;
 constexpr float FALLING_LOAD = 0.85f;
+/** Load chart: plot height and the top of both scales. */
+constexpr float CHART_HEIGHT = 132.0f;
+constexpr float CHART_RATIO_TOP = 2.0f;
+constexpr float CHART_LOAD_TOP = TrainingModel::MATCH_LOAD * 1.25f;
+constexpr float BAND_ALPHA = 0.14f;
+
+/** Short tags of the medical instructions, e.g. "Rest · 60'". */
+std::string flagTags(std::uint8_t flags)
+{
+  std::string tags;
+  if ((flags & MEDICAL_FLAG_REST) != 0) tags = LOC("MEDICAL_TAG_REST");
+  if ((flags & MEDICAL_FLAG_LIMIT_MINUTES) != 0)
+  {
+    if (!tags.empty()) tags += " · ";
+    tags += LOC("MEDICAL_TAG_LIMIT");
+  }
+  return tags;
+}
 
 ImVec4 bandColor(RiskBand band)
 {
@@ -195,6 +216,8 @@ void MedicalScene::refresh()
                                   : "MEDICAL_LOAD_STABLE"));
     line.reasons = reasonsText(row.risk.reasons);
     line.returning = row.returning;
+    if (const Game* game = controller.getGame())
+      line.flags = game->getMedical().flags(row.player_id);
     if (row.risk.band == RiskBand::High) ++high_risk;
     risks.push_back(std::move(line));
   }
@@ -208,6 +231,61 @@ void MedicalScene::refresh()
   prevention_good = report.effects.injury_prevention <= 1.0f;
   average_condition = report.average_condition;
   average_sharpness = report.average_sharpness;
+
+  // Keep the selected player while he is still in the squad; otherwise
+  // start with the player most at risk.
+  const auto listed = [this](PlayerID id)
+  {
+    return std::ranges::contains(risks, id, &RiskLine::id) ||
+           std::ranges::contains(injured, id, &InjuryLine::id);
+  };
+  PlayerID next = listed(selected) ? selected : 0;
+  if (next == 0 && !risks.empty()) next = risks.front().id;
+  if (next == 0 && !injured.empty()) next = injured.front().id;
+  select(next);
+}
+
+void MedicalScene::select(PlayerID id)
+{
+  selected = id;
+  selected_name.clear();
+  selected_flags = 0;
+  chart = {};
+  chart_empty = true;
+  GameController& controller = guiView->getController();
+  const Game* game = controller.getGame();
+  const auto data = controller.getGameData();
+  if (id == 0 || !game || !data) return;
+  if (const auto player = data->getPlayer(id))
+    selected_name = player->get().getName();
+  selected_flags = game->getMedical().flags(id);
+  // Today's load is complete only once the day is over.
+  chart_today = dayOrdinal(controller.getCurrentDate());
+  chart = game->getMedical().loadChart(id, chart_today - 1);
+  chart_empty = std::ranges::none_of(chart, &LoadChartDay::recorded);
+}
+
+void MedicalScene::setFlag(std::uint8_t flag, bool enabled)
+{
+  Game* game = guiView->getController().getGame();
+  if (!game || selected == 0) return;
+  game->getMedical().setFlag(selected, static_cast<MedicalFlag>(flag),
+                             enabled);
+  selected_flags = game->getMedical().flags(selected);
+  for (RiskLine& line : risks)
+    if (line.id == selected) line.flags = selected_flags;
+}
+
+void MedicalScene::nameCell(PlayerID id, const std::string& name,
+                            const std::string& role, bool returning)
+{
+  if (ImGui::Selectable(name.c_str(), id == selected,
+                        ImGuiSelectableFlags_SpanAllColumns))
+    select(id);
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    ImGui::SetTooltip("%s  ·  %s", role.c_str(),
+                      LOC(returning ? "MEDICAL_RETURNING_HINT"
+                                    : "MEDICAL_ROW_HINT"));
 }
 
 void MedicalScene::renderContent()
@@ -255,7 +333,11 @@ void MedicalScene::renderContent()
   renderRisk(left);
   ImGui::EndGroup();
   if (twoColumns) ImGui::SameLine();
-  renderStaff(twoColumns ? available - gap - left : available);
+  const float right = twoColumns ? available - gap - left : available;
+  ImGui::BeginGroup();
+  renderPlayerLoad(right);
+  renderStaff(right);
+  ImGui::EndGroup();
 }
 
 void MedicalScene::renderInjured(float width)
@@ -280,12 +362,7 @@ void MedicalScene::renderInjured(float width)
       ImGui::PushID(static_cast<int>(line.id));
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
-      if (ImGui::Selectable(line.name.c_str(), false,
-                            ImGuiSelectableFlags_SpanAllColumns))
-        Navigation::openPlayer(guiView, line.id);
-      if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-        ImGui::SetTooltip("%s  ·  %s", line.role.c_str(),
-                          LOC("MEDICAL_ROW_HINT"));
+      nameCell(line.id, line.name, line.role, false);
       if (UI::cell(mask, 1))
         UI::textFitted(line.injury, ImGui::GetContentRegionAvail().x,
                        palette.muted);
@@ -341,13 +418,7 @@ void MedicalScene::renderRisk(float width)
       ImGui::PushID(static_cast<int>(line.id));
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
-      if (ImGui::Selectable(line.name.c_str(), false,
-                            ImGuiSelectableFlags_SpanAllColumns))
-        Navigation::openPlayer(guiView, line.id);
-      if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-        ImGui::SetTooltip("%s  ·  %s", line.role.c_str(),
-                          LOC(line.returning ? "MEDICAL_RETURNING_HINT"
-                                             : "MEDICAL_ROW_HINT"));
+      nameCell(line.id, line.name, line.role, line.returning);
       if (UI::cell(mask, 1))
         ImGui::TextColored(bandColor(line.band), "%s",
                            LOC(MedicalCentre::bandKey(line.band)));
@@ -357,8 +428,16 @@ void MedicalScene::renderRisk(float width)
         ImGui::TextColored(line.load_trend > 0 ? palette.warning : palette.text,
                            "%s", line.load.c_str());
       if (UI::cell(mask, 5))
+      {
+        if (line.flags != MEDICAL_FLAG_NONE)
+        {
+          ImGui::TextColored(palette.warning, "%s",
+                             flagTags(line.flags).c_str());
+          ImGui::SameLine();
+        }
         UI::textFitted(line.reasons, ImGui::GetContentRegionAvail().x,
                        palette.muted);
+      }
       ImGui::PopID();
     }
     ImGui::EndTable();
@@ -424,4 +503,157 @@ void MedicalScene::renderStaff(float width)
   if (UI::secondaryButton(LOC("MEDICAL_OPEN_TRAINING"), ImVec2(-FLT_MIN, 0.0f)))
     Navigation::open(guiView, NavSection::TRAINING);
   UI::endCard();
+}
+
+void MedicalScene::renderPlayerLoad(float width)
+{
+  const Theme::Palette& palette = Theme::palette();
+  UI::beginAutoHeightCard("medical_load", LOC("MEDICAL_LOAD"), width);
+  if (selected == 0)
+  {
+    UI::emptyState(LOC("MEDICAL_LOAD_NONE"), nullptr);
+    UI::endCard();
+    return;
+  }
+  UI::textFitted(selected_name, ImGui::GetContentRegionAvail().x,
+                 palette.text);
+  if (chart_empty)
+  {
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(palette.faint, "%s", LOC("MEDICAL_LOAD_EMPTY"));
+    ImGui::PopTextWrapPos();
+  }
+  else
+  {
+    renderLoadChart(CHART_HEIGHT * Theme::scale());
+    const auto latest = std::ranges::find_if(
+        chart.rbegin(), chart.rend(), &LoadChartDay::recorded);
+    const RiskBand band = MedicalCentre::loadBand(latest->ratio);
+    const std::string ratio = formatLocalized(
+        "MEDICAL_LOAD_LATEST", {std::format("{:.2f}", latest->ratio)});
+    ImGui::TextUnformatted(ratio.c_str());
+    ImGui::SameLine();
+    ImGui::TextColored(bandColor(band), "%s",
+                       LOC(MedicalCentre::bandKey(band)));
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(palette.faint, "%s", LOC("MEDICAL_LOAD_NOTE"));
+    ImGui::PopTextWrapPos();
+  }
+
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  UI::sectionLabel(LOC("MEDICAL_INSTRUCTIONS"));
+  bool rest = (selected_flags & MEDICAL_FLAG_REST) != 0;
+  if (ImGui::Checkbox(LOC("MEDICAL_FLAG_REST"), &rest))
+    setFlag(MEDICAL_FLAG_REST, rest);
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+    ImGui::SetTooltip("%s", LOC("MEDICAL_FLAG_REST_HINT"));
+  bool limit = (selected_flags & MEDICAL_FLAG_LIMIT_MINUTES) != 0;
+  if (ImGui::Checkbox(LOC("MEDICAL_FLAG_LIMIT"), &limit))
+    setFlag(MEDICAL_FLAG_LIMIT_MINUTES, limit);
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+    ImGui::SetTooltip("%s", LOC("MEDICAL_FLAG_LIMIT_HINT"));
+  if (selected_flags != MEDICAL_FLAG_NONE)
+  {
+    ImGui::PushTextWrapPos(0.0f);
+    if ((selected_flags & MEDICAL_FLAG_REST) != 0)
+      ImGui::TextColored(palette.muted, "%s", LOC("MEDICAL_FLAG_REST_HINT"));
+    if ((selected_flags & MEDICAL_FLAG_LIMIT_MINUTES) != 0)
+      ImGui::TextColored(palette.muted, "%s", LOC("MEDICAL_FLAG_LIMIT_HINT"));
+    ImGui::PopTextWrapPos();
+  }
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  if (UI::secondaryButton(LOC("MEDICAL_OPEN_PROFILE"), ImVec2(-FLT_MIN, 0.0f)))
+    Navigation::openPlayer(guiView, selected);
+  UI::endCard();
+}
+
+void MedicalScene::renderLoadChart(float height)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  const float width = std::max(1.0f, ImGui::GetContentRegionAvail().x);
+  const ImVec2 origin = ImGui::GetCursorScreenPos();
+  ImGui::InvisibleButton("##load_chart", ImVec2(width, height));
+  const bool hovered = ImGui::IsItemHovered();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  const float bottom = origin.y + height;
+  const auto ratioY = [&](float ratio)
+  {
+    return bottom - height * std::clamp(ratio / CHART_RATIO_TOP, 0.0f, 1.0f);
+  };
+
+  // Risk zones of the acute:chronic ratio behind the bars.
+  const auto band = [&](float from, float to, const ImVec4& color)
+  {
+    drawList->AddRectFilled(ImVec2(origin.x, ratioY(to)),
+                            ImVec2(origin.x + width, ratioY(from)),
+                            Theme::toU32(color, BAND_ALPHA));
+  };
+  band(0.0f, MedicalCentre::LOAD_ZONE_LOW, palette.warning);
+  band(MedicalCentre::LOAD_ZONE_LOW, MedicalCentre::LOAD_ZONE_HIGH,
+       palette.positive);
+  band(MedicalCentre::LOAD_ZONE_HIGH, MedicalCentre::LOAD_SPIKE,
+       palette.warning);
+  band(MedicalCentre::LOAD_SPIKE, CHART_RATIO_TOP, palette.negative);
+
+  const float slot = width / static_cast<float>(chart.size());
+  const float barWidth = std::max(1.0f, slot * 0.62f);
+  int hoveredIndex = -1;
+  if (hovered)
+    hoveredIndex = std::clamp(
+        static_cast<int>((ImGui::GetIO().MousePos.x - origin.x) / slot), 0,
+        static_cast<int>(chart.size()) - 1);
+  std::array<ImVec2, MedicalCentre::LOAD_CHART_DAYS> line{};
+  std::size_t points = 0;
+  const auto flushLine = [&]
+  {
+    if (points > 1)
+      drawList->AddPolyline(line.data(), static_cast<int>(points),
+                            Theme::toU32(palette.text), ImDrawFlags_None,
+                            2.0f * scale);
+    points = 0;
+  };
+  for (std::size_t index = 0; index < chart.size(); ++index)
+  {
+    const LoadChartDay& day = chart[index];
+    const float x = origin.x + slot * static_cast<float>(index);
+    if (!day.recorded)
+    {
+      flushLine();
+      continue;
+    }
+    const float barHeight =
+        height * std::clamp(day.load / CHART_LOAD_TOP, 0.0f, 1.0f);
+    const bool highlight = static_cast<int>(index) == hoveredIndex;
+    drawList->AddRectFilled(
+        ImVec2(x + (slot - barWidth) * 0.5f, bottom - barHeight),
+        ImVec2(x + (slot + barWidth) * 0.5f, bottom),
+        Theme::toU32(highlight ? palette.text : palette.muted,
+                     highlight ? 0.9f : 0.55f),
+        2.0f * scale);
+    line[points++] = ImVec2(x + slot * 0.5f, ratioY(day.ratio));
+  }
+  flushLine();
+  drawList->AddLine(ImVec2(origin.x, bottom), ImVec2(origin.x + width, bottom),
+                    Theme::toU32(palette.border));
+
+  if (hoveredIndex >= 0 && chart[static_cast<std::size_t>(hoveredIndex)].recorded)
+  {
+    const LoadChartDay& day = chart[static_cast<std::size_t>(hoveredIndex)];
+    const GameDateValue date = guiView->getController().getCurrentDate() -
+                               static_cast<size_t>(chart_today - day.day);
+    ImGui::SetTooltip(
+        "%s", formatLocalized("MEDICAL_LOAD_TOOLTIP",
+                              {Format::dayMonth(date),
+                               std::format("{:.1f}", day.load),
+                               std::format("{:.2f}", day.ratio)})
+                  .c_str());
+  }
+  Theme::ScopedText small(Theme::Text::SMALL);
+  ImGui::TextColored(palette.faint, "%s", LOC("MEDICAL_LOAD_FOUR_WEEKS"));
+  const char* today = LOC("MEDICAL_LOAD_YESTERDAY");
+  ImGui::SameLine(std::max(0.0f, ImGui::GetCursorPosX() +
+                                      ImGui::GetContentRegionAvail().x -
+                                      ImGui::CalcTextSize(today).x));
+  ImGui::TextColored(palette.faint, "%s", today);
 }

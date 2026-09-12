@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "gui/scenes/management_scene.h"
+#include "gui/widgets/widgets.h"
 #include "model/scouting.h"
 
 /**
@@ -252,6 +253,8 @@ class ScoutingScene : public ManagementScene
   bool search_dirty = true;
   SearchColumn sort_column = SearchColumn::ABILITY;
   bool sort_ascending = false;
+  /** Columns the player table showed last frame (for the column picker). */
+  UI::ColumnMask player_table_mask = ~UI::ColumnMask{0};
 
   // Focus editor.
   RecruitmentFocus focus_draft;

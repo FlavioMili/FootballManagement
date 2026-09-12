@@ -13,13 +13,16 @@
 #include <algorithm>
 #include <array>
 #include <cstdlib>
+#include <format>
 #include <span>
 #include <string>
 #include <utility>
 
 #include "database/database_connection.h"
 #include "database/gamedata.h"
+#include "model/awards.h"
 #include "model/inbox.h"
+#include "model/injury.h"
 #include "model/interactions.h"
 #include "model/match_report.h"
 #include "model/player.h"
@@ -42,6 +45,82 @@ constexpr float DISPUTE_MORALE = 35.0f;
 constexpr float DISPUTE_SHARE = 0.35f;
 /** Rivals are clubs of the same league within this reputation gap. */
 constexpr int RIVAL_REPUTATION_GAP = 6;
+/** Salts of the decision-moment draws (RngDomain::Stories). */
+constexpr std::uint64_t DILEMMA_ROLL_SALT = 0xD1;
+constexpr std::uint64_t DILEMMA_PICK_SALT = 0xD2;
+/** Age limits of the players a moment can be about. [P] */
+constexpr int HOMESICK_MAX_AGE = 19;
+constexpr int VETERAN_MIN_AGE = 31;
+constexpr int SENIOR_MIN_AGE = 22;
+/** Honours not counted yet (a player followed since the last check). */
+constexpr std::uint16_t HONOURS_UNKNOWN = 0xFFFF;
+
+struct DilemmaKeys
+{
+  StoryKind kind;
+  const char* title;
+  const char* body;
+  std::array<const char*, 2> options;
+  std::array<const char*, 2> done;
+};
+
+constexpr std::array<DilemmaKeys, 8> DILEMMA_KEYS = {{
+    {StoryKind::CompassionateLeave,
+     "DILEMMA_LEAVE_TITLE",
+     "DILEMMA_LEAVE_BODY",
+     {"DILEMMA_LEAVE_A", "DILEMMA_LEAVE_B"},
+     {"DILEMMA_LEAVE_A_DONE", "DILEMMA_LEAVE_B_DONE"}},
+    {StoryKind::HomesickYouth,
+     "DILEMMA_HOMESICK_TITLE",
+     "DILEMMA_HOMESICK_BODY",
+     {"DILEMMA_HOMESICK_A", "DILEMMA_HOMESICK_B"},
+     {"DILEMMA_HOMESICK_A_DONE", "DILEMMA_HOMESICK_B_DONE"}},
+    {StoryKind::FineDispute,
+     "DILEMMA_FINE_TITLE",
+     "DILEMMA_FINE_BODY",
+     {"DILEMMA_FINE_A", "DILEMMA_FINE_B"},
+     {"DILEMMA_FINE_A_DONE", "DILEMMA_FINE_B_DONE"}},
+    {StoryKind::RivalComments,
+     "DILEMMA_RIVAL_TITLE",
+     "DILEMMA_RIVAL_BODY",
+     {"DILEMMA_RIVAL_A", "DILEMMA_RIVAL_B"},
+     {"DILEMMA_RIVAL_A_DONE", "DILEMMA_RIVAL_B_DONE"}},
+    {StoryKind::SponsorAppearance,
+     "DILEMMA_SPONSOR_TITLE",
+     "DILEMMA_SPONSOR_BODY",
+     {"DILEMMA_SPONSOR_A", "DILEMMA_SPONSOR_B"},
+     {"DILEMMA_SPONSOR_A_DONE", "DILEMMA_SPONSOR_B_DONE"}},
+    {StoryKind::TrainingClash,
+     "DILEMMA_CLASH_TITLE",
+     "DILEMMA_CLASH_BODY",
+     {"DILEMMA_CLASH_A", "DILEMMA_CLASH_B"},
+     {"DILEMMA_CLASH_A_DONE", "DILEMMA_CLASH_B_DONE"}},
+    {StoryKind::CoachingCourse,
+     "DILEMMA_COURSE_TITLE",
+     "DILEMMA_COURSE_BODY",
+     {"DILEMMA_COURSE_A", "DILEMMA_COURSE_B"},
+     {"DILEMMA_COURSE_A_DONE", "DILEMMA_COURSE_B_DONE"}},
+    {StoryKind::TicketProtest,
+     "DILEMMA_TICKETS_TITLE",
+     "DILEMMA_TICKETS_BODY",
+     {"DILEMMA_TICKETS_A", "DILEMMA_TICKETS_B"},
+     {"DILEMMA_TICKETS_A_DONE", "DILEMMA_TICKETS_B_DONE"}},
+}};
+
+const DilemmaKeys* keysOf(StoryKind kind)
+{
+  const auto found = std::ranges::find(DILEMMA_KEYS, kind, &DilemmaKeys::kind);
+  return found != DILEMMA_KEYS.end() ? &*found : nullptr;
+}
+
+/** A cost or fee that grows with the club's stature, capped. */
+std::int64_t scaledMoney(std::int64_t base, std::int64_t per_point,
+                         const ClubProfile& profile)
+{
+  return std::min(Stories::DILEMMA_MAX_MONEY,
+                  base + per_point * static_cast<std::int64_t>(
+                                         profile.reputation));
+}
 
 std::optional<std::uint32_t> crossed(std::span<const std::uint32_t> marks,
                                      std::uint32_t before, std::uint32_t after)
@@ -88,7 +167,7 @@ void insertAll(const DatabaseConnection& db, const char* sql,
 
 bool validKind(std::uint8_t kind)
 {
-  return kind <= static_cast<std::uint8_t>(StoryKind::Rivalry);
+  return kind <= static_cast<std::uint8_t>(Stories::LAST_DILEMMA);
 }
 }  // namespace
 
@@ -133,9 +212,190 @@ const char* kindKey(StoryKind kind)
     case StoryKind::Milestone:
       return "STORY_KIND_MILESTONE";
     case StoryKind::Rivalry:
+      return "STORY_KIND_RIVALRY";
+    case StoryKind::CompassionateLeave:
+    case StoryKind::HomesickYouth:
+    case StoryKind::FineDispute:
+    case StoryKind::RivalComments:
+    case StoryKind::SponsorAppearance:
+    case StoryKind::TrainingClash:
+    case StoryKind::CoachingCourse:
+    case StoryKind::TicketProtest:
       break;
   }
-  return "STORY_KIND_RIVALRY";
+  return "STORY_KIND_DILEMMA";
+}
+
+bool isDilemma(StoryKind kind)
+{
+  return kind >= FIRST_DILEMMA && kind <= LAST_DILEMMA;
+}
+
+const char* dilemmaTitleKey(StoryKind kind)
+{
+  const DilemmaKeys* keys = keysOf(kind);
+  return keys ? keys->title : "";
+}
+
+const char* dilemmaBodyKey(StoryKind kind)
+{
+  const DilemmaKeys* keys = keysOf(kind);
+  return keys ? keys->body : "";
+}
+
+const char* dilemmaOptionKey(StoryKind kind, int option)
+{
+  const DilemmaKeys* keys = keysOf(kind);
+  return keys && (option == 0 || option == 1)
+             ? keys->options[static_cast<std::size_t>(option)]
+             : "";
+}
+
+const char* dilemmaDoneKey(StoryKind kind, int option)
+{
+  const DilemmaKeys* keys = keysOf(kind);
+  return keys && (option == 0 || option == 1)
+             ? keys->done[static_cast<std::size_t>(option)]
+             : "";
+}
+
+std::optional<StoryKind> dilemmaForTitle(std::string_view title_key)
+{
+  const auto found =
+      std::ranges::find(DILEMMA_KEYS, title_key, [](const DilemmaKeys& keys)
+                        { return std::string_view(keys.title); });
+  if (found == DILEMMA_KEYS.end()) return std::nullopt;
+  return found->kind;
+}
+
+DilemmaEffects dilemmaEffects(StoryKind kind, int option,
+                              const ClubProfile& profile)
+{
+  // Small, bounded nudges: a dilemma colours the week, it does not decide
+  // the season. The first answer is the generous one, the second the firm
+  // one; each costs something. [P]
+  DilemmaEffects effects;
+  if (option != 0 && option != 1) return effects;
+  const bool first = option == 0;
+  switch (kind)
+  {
+    case StoryKind::CompassionateLeave:
+      if (first)
+      {
+        effects.morale = 5.0f;
+        effects.trust = 6.0f;
+        effects.sharpness = -10.0f;  // A week away from training.
+      }
+      else
+      {
+        effects.morale = -4.0f;
+        effects.trust = -6.0f;
+      }
+      break;
+    case StoryKind::HomesickYouth:
+      if (first)
+      {
+        effects.morale = 5.0f;
+        effects.trust = 4.0f;
+        effects.money = -scaledMoney(5'000, 100, profile);
+        effects.category = FinanceCategory::Facilities;
+      }
+      else
+      {
+        effects.morale = -3.0f;
+        effects.trust = -3.0f;
+      }
+      break;
+    case StoryKind::FineDispute:
+      if (first)
+      {
+        effects.morale = -4.0f;
+        effects.trust = -5.0f;
+        effects.squad_morale = 1.0f;  // The rules hold for everyone.
+      }
+      else
+      {
+        effects.morale = 3.0f;
+        effects.trust = 4.0f;
+        effects.squad_morale = -1.0f;
+      }
+      break;
+    case StoryKind::RivalComments:
+      if (first)
+      {
+        effects.squad_morale = 2.0f;
+        effects.money = -scaledMoney(10'000, 300, profile);  // League fine.
+        effects.category = FinanceCategory::Adjustment;
+      }
+      else
+      {
+        effects.squad_morale = -1.0f;
+      }
+      break;
+    case StoryKind::SponsorAppearance:
+      if (first)
+      {
+        effects.squad_morale = -2.0f;
+        effects.money = scaledMoney(15'000, 1'000, profile);
+        effects.category = FinanceCategory::Sponsorship;
+      }
+      else
+      {
+        effects.squad_morale = 1.0f;
+      }
+      break;
+    case StoryKind::TrainingClash:
+      if (first)
+      {
+        effects.morale = 3.0f;
+        effects.trust = 4.0f;
+        effects.other_morale = -5.0f;
+        effects.other_trust = -6.0f;
+      }
+      else
+      {
+        effects.morale = -2.0f;
+        effects.trust = -2.0f;
+        effects.other_morale = -2.0f;
+        effects.other_trust = -2.0f;
+        effects.squad_morale = 1.0f;
+      }
+      break;
+    case StoryKind::CoachingCourse:
+      if (first)
+      {
+        effects.morale = 5.0f;
+        effects.trust = 5.0f;
+        effects.sharpness = -6.0f;
+        effects.money = -scaledMoney(8'000, 120, profile);
+        effects.category = FinanceCategory::Staff;
+      }
+      else
+      {
+        effects.morale = -3.0f;
+        effects.trust = -4.0f;
+      }
+      break;
+    case StoryKind::TicketProtest:
+      if (first)
+      {
+        // A discount on the next home gate.
+        effects.squad_morale = 2.0f;
+        effects.money = -std::min(
+            DILEMMA_MAX_MONEY, static_cast<std::int64_t>(
+                                   profile.stadium_capacity) *
+                                   profile.ticket_price * 8 / 100);
+        effects.category = FinanceCategory::Matchday;
+      }
+      else
+      {
+        effects.squad_morale = -2.0f;
+      }
+      break;
+    default:
+      break;
+  }
+  return effects;
 }
 }  // namespace Stories
 
@@ -225,11 +485,22 @@ bool StoryEngine::post(const GameDateValue& date, StoryKind kind,
 void StoryEngine::onDayAdvanced(const GameDateValue& date,
                                 TeamID managed_team_id,
                                 const InteractionSystem& interactions,
-                                Inbox& inbox)
+                                Inbox& inbox, const StoryDayContext& context)
 {
   const std::int32_t today = dayOrdinal(date);
   std::erase_if(state.choices, [&](const StoryChoice& choice)
                 { return choice.expires_day < today; });
+  for (Dilemma& dilemma : state.dilemmas)
+  {
+    // Unanswered moments lapse without effects (and with the job).
+    if (dilemma.open() && (dilemma.expires_day < today ||
+                           managed_team_id == FREE_AGENTS_TEAM_ID))
+    {
+      dilemma.chosen = 2;
+      dilemma.resolved_day = today;
+    }
+  }
+  trackFollows(date, managed_team_id, context.awards, inbox);
   if (managed_team_id == FREE_AGENTS_TEAM_ID) return;
 
   // Long injuries of the managed squad: a comeback is due at the player's
@@ -257,11 +528,18 @@ void StoryEngine::onDayAdvanced(const GameDateValue& date,
   std::erase_if(state.injury_start, left_club);
   std::erase_if(state.comeback_due, left_club);
 
+  raiseDilemma(date, managed_team_id, interactions, context, inbox);
+
   if (today % 7 != 0) return;
   std::erase_if(state.bids, [&](const auto& bid)
                 { return today - bid.second > Stories::SAGA_WINDOW_DAYS; });
   std::erase_if(state.records, [&](const StoryRecord& record)
                 { return today - record.day > RECORD_RETENTION_DAYS; });
+  std::erase_if(state.dilemmas, [&](const Dilemma& dilemma)
+                {
+                  return !dilemma.open() &&
+                         today - dilemma.day > RECORD_RETENTION_DAYS;
+                });
 
   // Captain dispute: the dressing room's top figure is unhappy or dropped.
   const DressingRoom room = interactions.dressingRoom(managed_team_id, date);
@@ -287,6 +565,7 @@ void StoryEngine::onMatchPlayed(const MatchReport& report,
                                 TeamID managed_team_id,
                                 const std::string& recent_form, Inbox& inbox)
 {
+  if (!state.follows.empty()) followMatch(report, managed_team_id, inbox);
   const bool home = report.home_team_id == managed_team_id;
   if (managed_team_id == FREE_AGENTS_TEAM_ID ||
       (!home && report.away_team_id != managed_team_id))
@@ -431,6 +710,13 @@ void StoryEngine::onPlayerLeft(PlayerID player_id)
 {
   std::erase_if(state.choices, [&](const StoryChoice& choice)
                 { return choice.player_id == player_id; });
+  for (Dilemma& dilemma : state.dilemmas)
+  {
+    const bool involved =
+        dilemma.subject == player_id ||
+        (dilemma.kind == StoryKind::TrainingClash && dilemma.other == player_id);
+    if (dilemma.open() && involved) dilemma.chosen = 2;
+  }
   state.injury_start.erase(player_id);
   state.comeback_due.erase(player_id);
   std::erase_if(state.bids,
@@ -482,7 +768,444 @@ void StoryEngine::resolveChoice(PlayerID player_id)
 }
 
 // ---------------------------------------------------------------------------
-// Persistence (tables StoryRecords, StoryChoices, StoryInjuries, StoryBids)
+// Decision moments
+// ---------------------------------------------------------------------------
+
+const Dilemma* StoryEngine::openDilemma() const
+{
+  const auto found = std::ranges::find_if(state.dilemmas, &Dilemma::open);
+  return found != state.dilemmas.end() ? &*found : nullptr;
+}
+
+const Dilemma* StoryEngine::dilemmaOn(std::int32_t day) const
+{
+  const auto found = std::ranges::find(state.dilemmas, day, &Dilemma::day);
+  return found != state.dilemmas.end() ? &*found : nullptr;
+}
+
+std::optional<DilemmaEffects> StoryEngine::previewDilemma(
+    int option, TeamID managed_team_id) const
+{
+  const Dilemma* dilemma = openDilemma();
+  const auto team = gamedata->getTeam(managed_team_id);
+  if (dilemma == nullptr || !team || (option != 0 && option != 1))
+    return std::nullopt;
+  return Stories::dilemmaEffects(dilemma->kind, option,
+                                 team->get().getProfile());
+}
+
+void StoryEngine::raiseDilemma(const GameDateValue& date,
+                               TeamID managed_team_id,
+                               const InteractionSystem& interactions,
+                               const StoryDayContext& context, Inbox& inbox)
+{
+  const std::int32_t today = dayOrdinal(date);
+  // Never on match day, one at a time, at most one a fortnight.
+  if (context.days_to_match == 0 || openDilemma() != nullptr) return;
+  if (!state.dilemmas.empty() &&
+      today - state.dilemmas.back().day < Stories::DILEMMA_GAP_DAYS)
+    return;
+  const std::uint64_t seed = gamedata->getWorldSeed();
+  if (WorldRng::hashUniform(seed, RngDomain::Stories, static_cast<std::uint64_t>(today),
+                            DILEMMA_ROLL_SALT) >= Stories::DILEMMA_DAILY_CHANCE)
+    return;
+  const auto team = gamedata->getTeam(managed_team_id);
+  if (!team) return;
+
+  // Senior squad by id, so the draw does not depend on container order.
+  std::vector<const Player*> squad;
+  for (const auto& player : gamedata->getPlayersForTeam(managed_team_id))
+    squad.push_back(&player.get());
+  std::ranges::sort(squad, {}, &Player::getId);
+  const auto pending = [&](const Player* player)
+  {
+    return std::ranges::any_of(state.choices,
+                               [&](const StoryChoice& choice)
+                               { return choice.player_id == player->getId(); });
+  };
+  const auto pool = [&](auto&& keep)
+  {
+    std::vector<const Player*> chosen;
+    for (const Player* player : squad)
+      if (!pending(player) && keep(*player)) chosen.push_back(player);
+    return chosen;
+  };
+  const auto fit = [](const Player& player)
+  { return player.getDynamics().injury_days == 0; };
+
+  struct Candidate
+  {
+    StoryKind kind;
+    std::vector<const Player*> players;
+    std::uint32_t other = 0;
+  };
+  std::vector<Candidate> candidates;
+  const auto cooling = [&](StoryKind kind)
+  {
+    return std::ranges::any_of(
+        state.dilemmas,
+        [&](const Dilemma& dilemma)
+        {
+          return dilemma.kind == kind &&
+                 today - dilemma.day < Stories::DILEMMA_KIND_COOLDOWN_DAYS;
+        });
+  };
+  const auto offer = [&](StoryKind kind, std::vector<const Player*> players,
+                         std::size_t needed, std::uint32_t other = 0)
+  {
+    if (!cooling(kind) && players.size() >= needed)
+      candidates.push_back({kind, std::move(players), other});
+  };
+  offer(StoryKind::CompassionateLeave,
+        pool([&](const Player& player)
+             { return fit(player) && player.getAge() >= SENIOR_MIN_AGE; }),
+        1);
+  offer(StoryKind::HomesickYouth,
+        pool([](const Player& player)
+             { return player.getAge() <= HOMESICK_MAX_AGE; }),
+        1);
+  if (!cooling(StoryKind::FineDispute))
+  {
+    const DressingRoom room =
+        interactions.dressingRoom(managed_team_id, date);
+    if (!room.leaders.empty())
+    {
+      const PlayerID captain_id = room.leaders.front().player_id;
+      offer(StoryKind::FineDispute,
+            pool([&](const Player& player)
+                 { return player.getId() == captain_id; }),
+            1);
+    }
+  }
+  if (const auto rival = rivalOf(managed_team_id))
+    offer(StoryKind::RivalComments, {}, 0, *rival);
+  if (context.days_to_match >= 1 && context.days_to_match <= 3)
+    offer(StoryKind::SponsorAppearance, {}, 0);
+  offer(StoryKind::TrainingClash,
+        pool([&](const Player& player)
+             { return fit(player) && player.getAge() >= 18; }),
+        2);
+  offer(StoryKind::CoachingCourse,
+        pool([](const Player& player)
+             { return player.getAge() >= VETERAN_MIN_AGE; }),
+        1);
+  if (std::ranges::count(team->get().getRecentForm(), 'L') >= 2)
+    offer(StoryKind::TicketProtest, {}, 0);
+  if (candidates.empty()) return;
+
+  WorldRng rng = WorldRng::stream(seed, RngDomain::Stories,
+                                  static_cast<std::uint64_t>(today),
+                                  DILEMMA_PICK_SALT);
+  Candidate& pick = candidates[static_cast<std::size_t>(
+      rng.uniformInt(0, static_cast<int>(candidates.size()) - 1))];
+  Dilemma dilemma;
+  dilemma.kind = pick.kind;
+  dilemma.day = today;
+  dilemma.expires_day = today + Stories::DILEMMA_ANSWER_DAYS;
+  dilemma.other = pick.other;
+  std::string subject_name;
+  std::string other_name;
+  if (!pick.players.empty())
+  {
+    const int last = static_cast<int>(pick.players.size()) - 1;
+    const int first = rng.uniformInt(0, last);
+    dilemma.subject = pick.players[static_cast<std::size_t>(first)]->getId();
+    subject_name = pick.players[static_cast<std::size_t>(first)]->getName();
+    if (pick.kind == StoryKind::TrainingClash)
+    {
+      // A different player: draw among the others.
+      int second = rng.uniformInt(0, last - 1);
+      if (second >= first) ++second;
+      const Player* other = pick.players[static_cast<std::size_t>(second)];
+      dilemma.other = other->getId();
+      other_name = other->getName();
+    }
+  }
+  if (pick.kind == StoryKind::RivalComments)
+  {
+    if (const auto rival = gamedata->getTeam(static_cast<TeamID>(pick.other)))
+      other_name = rival->get().getName();
+  }
+  // The money at stake, whichever answer carries it.
+  const ClubProfile& profile = team->get().getProfile();
+  std::int64_t stake = 0;
+  for (const int option : {0, 1})
+    stake = std::max(stake, std::abs(Stories::dilemmaEffects(
+                                         pick.kind, option, profile)
+                                         .money));
+  state.dilemmas.push_back(dilemma);
+
+  InboxMessage message;
+  message.date = date;
+  message.category = pick.kind == StoryKind::SponsorAppearance ||
+                             pick.kind == StoryKind::TicketProtest
+                         ? InboxCategory::Finance
+                         : InboxCategory::General;
+  message.title_key = Stories::dilemmaTitleKey(pick.kind);
+  message.body_key = Stories::dilemmaBodyKey(pick.kind);
+  message.args = {subject_name, other_name, formatMoney(stake)};
+  if (dilemma.subject != 0) message.player_id = dilemma.subject;
+  message.team_id = pick.kind == StoryKind::RivalComments
+                        ? static_cast<TeamID>(pick.other)
+                        : managed_team_id;
+  inbox.add(std::move(message));
+}
+
+bool StoryEngine::resolveDilemma(int option, const GameDateValue& date,
+                                 TeamID managed_team_id,
+                                 InteractionSystem& interactions, Inbox& inbox)
+{
+  const auto open =
+      std::ranges::find_if(state.dilemmas, &Dilemma::open);
+  const auto team = gamedata->getTeam(managed_team_id);
+  if (open == state.dilemmas.end() || !team || (option != 0 && option != 1))
+    return false;
+  Dilemma& dilemma = *open;
+  const DilemmaEffects effects = Stories::dilemmaEffects(
+      dilemma.kind, option, team->get().getProfile());
+  const PlayerID other_player =
+      dilemma.kind == StoryKind::TrainingClash ? dilemma.other : 0;
+  auto& players = gamedata->getPlayers();
+  std::string subject_name;
+  std::string other_name;
+  const auto apply = [&](PlayerID player_id, float morale, float trust,
+                         float sharpness, std::string& name)
+  {
+    const auto found = players.find(player_id);
+    if (player_id == 0 || found == players.end() ||
+        found->second.getTeamId() != managed_team_id)
+      return;
+    name = found->second.getName();
+    PlayerDynamics& dynamics = found->second.mutableDynamics();
+    dynamics.morale = std::clamp(dynamics.morale + morale, 0.0f, 100.0f);
+    dynamics.sharpness =
+        std::clamp(dynamics.sharpness + sharpness, 0.0f, 100.0f);
+    if (trust != 0.0f) interactions.adjustTrust(player_id, trust);
+  };
+  apply(dilemma.subject, effects.morale, effects.trust, effects.sharpness,
+        subject_name);
+  apply(other_player, effects.other_morale, effects.other_trust, 0.0f,
+        other_name);
+  if (effects.squad_morale != 0.0f)
+  {
+    for (const auto& member : gamedata->getPlayersForTeam(managed_team_id))
+    {
+      const PlayerID player_id = member.get().getId();
+      if (player_id == dilemma.subject || player_id == other_player) continue;
+      PlayerDynamics& dynamics = players.at(player_id).mutableDynamics();
+      dynamics.morale =
+          std::clamp(dynamics.morale + effects.squad_morale, 0.0f, 100.0f);
+    }
+  }
+  if (effects.money != 0)
+    team->get().getFinances().record(date, effects.category, effects.money);
+  if (dilemma.kind == StoryKind::RivalComments)
+  {
+    if (const auto rival =
+            gamedata->getTeam(static_cast<TeamID>(dilemma.other)))
+      other_name = rival->get().getName();
+  }
+  dilemma.chosen = static_cast<std::int8_t>(option);
+  dilemma.resolved_day = dayOrdinal(date);
+  dilemma.money = effects.money;
+
+  // The answer is on file: filed as read, the manager just took it.
+  InboxMessage message;
+  message.date = date;
+  message.category = InboxCategory::General;
+  message.title_key = "INBOX_DILEMMA_DONE_TITLE";
+  message.body_key = Stories::dilemmaDoneKey(dilemma.kind, option);
+  message.args = {subject_name, other_name,
+                  formatMoney(std::abs(effects.money)),
+                  std::string("@") +
+                      Stories::dilemmaOptionKey(dilemma.kind, option)};
+  if (dilemma.subject != 0) message.player_id = dilemma.subject;
+  message.team_id = managed_team_id;
+  message.read = true;
+  inbox.add(std::move(message));
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Followed players
+// ---------------------------------------------------------------------------
+
+bool StoryEngine::follow(PlayerID player_id, const GameDateValue& date)
+{
+  const auto player = gamedata->getPlayer(player_id);
+  if (!player || isFollowed(player_id) ||
+      state.follows.size() >= Stories::MAX_FOLLOWS)
+    return false;
+  const Player& who = player->get();
+  state.follows.push_back(FollowedPlayer{
+      player_id, dayOrdinal(date), who.getTeamId(),
+      who.getDynamics().injury_days > 0, who.getContractYears(),
+      who.getWage(), HONOURS_UNKNOWN, 0});
+  return true;
+}
+
+bool StoryEngine::unfollow(PlayerID player_id)
+{
+  return std::erase_if(state.follows, [&](const FollowedPlayer& followed)
+                       { return followed.player_id == player_id; }) > 0;
+}
+
+bool StoryEngine::isFollowed(PlayerID player_id) const
+{
+  return std::ranges::contains(state.follows, player_id,
+                               &FollowedPlayer::player_id);
+}
+
+void StoryEngine::trackFollows(const GameDateValue& date,
+                               TeamID managed_team_id,
+                               const AwardSystem* awards, Inbox& inbox)
+{
+  if (state.follows.empty()) return;
+  const auto team_name = [&](TeamID team_id)
+  {
+    const auto team = gamedata->getTeam(team_id);
+    return team ? team->get().getName() : std::string();
+  };
+  const auto note = [&](InboxCategory category, const char* title,
+                        const char* body, std::vector<std::string> args,
+                        PlayerID player_id, TeamID team_id)
+  {
+    InboxMessage message;
+    message.date = date;
+    message.category = category;
+    message.title_key = title;
+    message.body_key = body;
+    message.args = std::move(args);
+    message.player_id = player_id;
+    if (team_id != FREE_AGENTS_TEAM_ID) message.team_id = team_id;
+    inbox.add(std::move(message));
+  };
+  // Retired players leave the database: nothing more to follow.
+  std::erase_if(state.follows, [&](const FollowedPlayer& followed)
+                { return !gamedata->getPlayer(followed.player_id); });
+  for (FollowedPlayer& followed : state.follows)
+  {
+    const Player& player = gamedata->getPlayer(followed.player_id)->get();
+    const std::string name = player.getName();
+    const TeamID team_id = player.getTeamId();
+    // The club's own news already covers its players.
+    const bool own = managed_team_id != FREE_AGENTS_TEAM_ID &&
+                     team_id == managed_team_id;
+    const bool moved = team_id != followed.team_id;
+    if (moved && !own && followed.team_id != managed_team_id)
+    {
+      if (team_id == FREE_AGENTS_TEAM_ID)
+        note(InboxCategory::Transfer, "INBOX_FOLLOW_RELEASED_TITLE",
+             "INBOX_FOLLOW_RELEASED_BODY", {name, team_name(followed.team_id)},
+             followed.player_id, followed.team_id);
+      else
+        note(InboxCategory::Transfer, "INBOX_FOLLOW_TRANSFER_TITLE",
+             "INBOX_FOLLOW_TRANSFER_BODY",
+             {name,
+              followed.team_id == FREE_AGENTS_TEAM_ID
+                  ? std::string("@INBOX_FOLLOW_NO_CLUB")
+                  : team_name(followed.team_id),
+              team_name(team_id)},
+             followed.player_id, team_id);
+    }
+    const PlayerDynamics& dynamics = player.getDynamics();
+    const bool injured = dynamics.injury_days > 0;
+    if (injured && !followed.injured && !own)
+    {
+      note(InboxCategory::Injury, "INBOX_FOLLOW_INJURY_TITLE",
+           "INBOX_FOLLOW_INJURY_BODY",
+           {name, team_name(team_id),
+            std::string("@") + InjuryModel::nameKey(dynamics.injury),
+            std::to_string(dynamics.injury_days)},
+           followed.player_id, team_id);
+    }
+    // A longer deal or new terms at the same club; a move brings new terms
+    // anyway and is told as a transfer.
+    if (!moved && !own && team_id != FREE_AGENTS_TEAM_ID &&
+        (player.getContractYears() > followed.contract_years ||
+         player.getWage() != followed.wage))
+    {
+      note(InboxCategory::Contract, "INBOX_FOLLOW_CONTRACT_TITLE",
+           "INBOX_FOLLOW_CONTRACT_BODY",
+           {name, team_name(team_id),
+            std::to_string(player.getContractYears()),
+            formatMoney(player.getWage())},
+           followed.player_id, team_id);
+    }
+    if (awards != nullptr)
+    {
+      const std::vector<AwardRecord> honours =
+          awards->honoursFor(followed.player_id);
+      const auto count = static_cast<std::uint16_t>(
+          std::min<std::size_t>(honours.size(), HONOURS_UNKNOWN - 1));
+      if (followed.honours != HONOURS_UNKNOWN && count > followed.honours &&
+          !own)
+      {
+        // Newest first: the honours won since the last look.
+        const std::size_t fresh =
+            static_cast<std::size_t>(count - followed.honours);
+        for (std::size_t index = 0; index < fresh; ++index)
+        {
+          note(InboxCategory::General, "INBOX_FOLLOW_AWARD_TITLE",
+               "INBOX_FOLLOW_AWARD_BODY",
+               {name, team_name(honours[index].team_id),
+                std::string("@") + awardTypeKey(honours[index].type)},
+               followed.player_id, honours[index].team_id);
+        }
+      }
+      followed.honours = count;
+    }
+    followed.team_id = team_id;
+    followed.injured = injured;
+    followed.contract_years = player.getContractYears();
+    followed.wage = player.getWage();
+  }
+}
+
+void StoryEngine::followMatch(const MatchReport& report,
+                              TeamID managed_team_id, Inbox& inbox)
+{
+  const std::int32_t today = dayOrdinal(report.date);
+  for (const PlayerMatchLine& line : report.players)
+  {
+    if (line.minutes == 0 || line.team_id == managed_team_id ||
+        (line.rating < Stories::BIG_MATCH_RATING &&
+         line.goals < Stories::BIG_MATCH_GOALS))
+      continue;
+    const auto followed = std::ranges::find(
+        state.follows, line.player_id, &FollowedPlayer::player_id);
+    if (followed == state.follows.end() ||
+        (followed->last_match_day != 0 &&
+         today - followed->last_match_day < Stories::BIG_MATCH_GAP_DAYS))
+      continue;
+    const auto player = gamedata->getPlayer(line.player_id);
+    const auto team = gamedata->getTeam(line.team_id);
+    const TeamID opponent_id = line.team_id == report.home_team_id
+                                   ? report.away_team_id
+                                   : report.home_team_id;
+    const auto opponent = gamedata->getTeam(opponent_id);
+    if (!player || !team || !opponent) continue;
+    followed->last_match_day = today;
+    InboxMessage message;
+    message.date = report.date;
+    message.category = InboxCategory::Match;
+    message.title_key = "INBOX_FOLLOW_MATCH_TITLE";
+    message.body_key = line.goals >= Stories::BIG_MATCH_GOALS
+                           ? "INBOX_FOLLOW_MATCH_BODY_GOALS"
+                           : "INBOX_FOLLOW_MATCH_BODY";
+    message.args = {player->get().getName(), team->get().getName(),
+                    opponent->get().getName(), std::to_string(line.goals),
+                    line.rating > 0.0f ? std::format("{:.1f}", line.rating)
+                                       : std::string("-")};
+    message.player_id = line.player_id;
+    message.team_id = line.team_id;
+    inbox.add(std::move(message));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Persistence (tables StoryRecords, StoryChoices, StoryInjuries, StoryBids,
+// StoryDilemmas and StoryFollows)
 // ---------------------------------------------------------------------------
 
 void StoryEngine::restore(StoryState restored)
@@ -537,13 +1260,46 @@ void StoryEngine::load(const std::shared_ptr<DatabaseConnection>& db_conn)
                loaded.bids.emplace_back(columnAs<PlayerID>(stmt, 0),
                                         columnAs<std::int32_t>(stmt, 1));
              });
+  forEachRow(
+      *db_conn,
+      "SELECT day, kind, subject, other, expires_day, chosen, resolved_day, "
+      "money FROM StoryDilemmas ORDER BY day;",
+      [&](sqlite3_stmt* stmt)
+      {
+        const auto kind = columnAs<std::uint8_t>(stmt, 1);
+        if (!validKind(kind) || !Stories::isDilemma(static_cast<StoryKind>(kind)))
+          return;
+        Dilemma dilemma;
+        dilemma.day = columnAs<std::int32_t>(stmt, 0);
+        dilemma.kind = static_cast<StoryKind>(kind);
+        dilemma.subject = columnAs<PlayerID>(stmt, 2);
+        dilemma.other = columnAs<std::uint32_t>(stmt, 3);
+        dilemma.expires_day = columnAs<std::int32_t>(stmt, 4);
+        dilemma.chosen = columnAs<std::int8_t>(stmt, 5);
+        dilemma.resolved_day = columnAs<std::int32_t>(stmt, 6);
+        dilemma.money = columnAs<std::int64_t>(stmt, 7);
+        loaded.dilemmas.push_back(dilemma);
+      });
+  forEachRow(*db_conn,
+             "SELECT player_id, since_day, team_id, injured, contract_years, "
+             "wage, honours, last_match_day FROM StoryFollows ORDER BY rowid;",
+             [&](sqlite3_stmt* stmt)
+             {
+               loaded.follows.push_back(FollowedPlayer{
+                   columnAs<PlayerID>(stmt, 0), columnAs<std::int32_t>(stmt, 1),
+                   columnAs<TeamID>(stmt, 2), sqlite3_column_int(stmt, 3) != 0,
+                   columnAs<std::uint8_t>(stmt, 4),
+                   columnAs<std::uint32_t>(stmt, 5),
+                   columnAs<std::uint16_t>(stmt, 6),
+                   columnAs<std::int32_t>(stmt, 7)});
+             });
   restore(std::move(loaded));
 }
 
 void StoryEngine::save(const std::shared_ptr<DatabaseConnection>& db_conn) const
 {
-  for (const char* table :
-       {"StoryRecords", "StoryChoices", "StoryInjuries", "StoryBids"})
+  for (const char* table : {"StoryRecords", "StoryChoices", "StoryInjuries",
+                            "StoryBids", "StoryDilemmas", "StoryFollows"})
   {
     sqlite3_exec(db_conn->getRaw(),
                  (std::string("DELETE FROM ") + table + ";").c_str(), nullptr,
@@ -594,5 +1350,37 @@ void StoryEngine::save(const std::shared_ptr<DatabaseConnection>& db_conn) const
             {
               sqlite3_bind_int(row, 1, static_cast<int>(bid.first));
               sqlite3_bind_int(row, 2, bid.second);
+            });
+  insertAll(*db_conn,
+            "INSERT INTO StoryDilemmas (day, kind, subject, other, "
+            "expires_day, chosen, resolved_day, money) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+            state.dilemmas,
+            [](sqlite3_stmt* row, const Dilemma& dilemma)
+            {
+              sqlite3_bind_int(row, 1, dilemma.day);
+              sqlite3_bind_int(row, 2, static_cast<int>(dilemma.kind));
+              sqlite3_bind_int64(row, 3, dilemma.subject);
+              sqlite3_bind_int64(row, 4, dilemma.other);
+              sqlite3_bind_int(row, 5, dilemma.expires_day);
+              sqlite3_bind_int(row, 6, dilemma.chosen);
+              sqlite3_bind_int(row, 7, dilemma.resolved_day);
+              sqlite3_bind_int64(row, 8, dilemma.money);
+            });
+  insertAll(*db_conn,
+            "INSERT INTO StoryFollows (player_id, since_day, team_id, injured, "
+            "contract_years, wage, honours, last_match_day) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+            state.follows,
+            [](sqlite3_stmt* row, const FollowedPlayer& followed)
+            {
+              sqlite3_bind_int64(row, 1, followed.player_id);
+              sqlite3_bind_int(row, 2, followed.since_day);
+              sqlite3_bind_int64(row, 3, followed.team_id);
+              sqlite3_bind_int(row, 4, followed.injured ? 1 : 0);
+              sqlite3_bind_int(row, 5, followed.contract_years);
+              sqlite3_bind_int64(row, 6, followed.wage);
+              sqlite3_bind_int(row, 7, followed.honours);
+              sqlite3_bind_int(row, 8, followed.last_match_day);
             });
 }

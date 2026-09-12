@@ -10,6 +10,7 @@
 // planner, the medical centre and the season agenda of the managed club.
 
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 #include "controller/game_controller.h"
@@ -277,5 +278,15 @@ std::vector<AgendaEvent> GameController::getSeasonAgenda() const
   const GameDateValue start = SeasonAgenda::seasonStart(game->getCurrentDate());
   return SeasonAgenda::build(
       start.year, game->getCalendar().getTeamFixtures(team->get().getId()),
-      true);
+      true, team->get().getLeagueId());
+}
+
+SquadNumbers::Change GameController::setSquadNumber(PlayerID player_id,
+                                                           int number)
+{
+  const auto player = std::as_const(*gamedata).getPlayer(player_id);
+  if (!game || !hasSelectedTeam() || !player ||
+      player->get().getTeamId() != game->getManagedTeamId())
+    return SquadNumbers::Change::Invalid;
+  return gamedata->setSquadNumber(player_id, number);
 }

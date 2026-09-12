@@ -1,0 +1,12 @@
+SQLite (https://sqlite.org)
+
+The SQLite library linked into this game (the amalgamation fetched through
+sjinks/sqlite3-cmake, or the operating system's copy on macOS) is in the
+public domain. The SQLite authors disclaim copyright to the source code and
+provide this blessing in its place:
+
+  May you do good and not evil.
+  May you find forgiveness for yourself and forgive others.
+  May you share freely, never taking more than you give.
+
+See https://sqlite.org/copyright.html for details.

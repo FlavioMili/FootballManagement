@@ -17,7 +17,6 @@
 #include "database/repositories/competition_repository.h"
 #include "database/repositories/fixture_repository.h"
 #include "database/repositories/league_repository.h"
-#include "global/language_manager.h"
 #include "model/calendar.h"
 #include "model/league.h"
 #include "model/player.h"
@@ -217,7 +216,8 @@ void CompetitionManager::closeSeason(const Calendar& calendar, uint16_t season,
     entry.start_year = start_year;
     entry.competition_type = MatchType::CONTINENTAL;
     entry.competition_id = competition.competition_id;
-    entry.competition_name = LOC(rules->name_key);
+    // The key, not its text: a saved history follows a change of language.
+    entry.competition_name = std::string("@") + rules->name_key;
     entry.champion_id = competition.winner_id;
     entry.runner_up_id = competition.runner_up_id;
     setTopScorer(entry, SeasonStats::topScorers(

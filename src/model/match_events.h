@@ -150,6 +150,10 @@ struct PlayerMatchStats
   int foulsSuffered = 0;
   int yellowCards = 0;
   int redCards = 0;
+  /** Times he took control of the ball (receptions, wins, restarts). */
+  int touches = 0;
+  /** Times he started closing down the ball carrier. */
+  int pressures = 0;
   /** Distance covered in metres (the simulation runs in real time). */
   float distanceMetres = 0.0f;
   float secondHalfDistanceMetres = 0.0f;

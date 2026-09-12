@@ -522,6 +522,7 @@ void ManagerScene::refresh()
   if (negotiating != 0 && std::ranges::none_of(offers, [this](const OfferRow& o)
                                                { return o.id == negotiating; }))
     negotiating = 0;
+  refreshNational();
 }
 
 void ManagerScene::renderContent()
@@ -574,6 +575,7 @@ void ManagerScene::renderProfile()
   renderProfileCard(left);
   if (two_columns) ImGui::SameLine();
   renderHonours(two_columns ? available - gap - left : available);
+  renderNationalCard(available);
   renderHistory();
   renderSeasons();
 }
@@ -723,8 +725,10 @@ void ManagerScene::renderJobCentre()
                offers.empty() ? palette.text : palette.positive, tile);
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
   renderOffers();
+  renderNationalOffers();
   renderInterviews();
   renderVacancies();
+  renderNationalVacancies();
 }
 
 void ManagerScene::renderOffers()
@@ -771,15 +775,25 @@ void ManagerScene::renderOffers()
     {
       if (UI::primaryButton(LOC("JOB_ACCEPT")))
       {
-        if (unemployed)
+        // Without a world-class name a club job ends the national one.
+        const bool ends_national =
+            national_job && !guiView->getController().canCombineClubAndNation();
+        if (unemployed && !ends_national)
           pending = {PendingAction::Kind::ACCEPT, offer.id};
         else
         {
           accept_candidate = offer.id;
           const auto club = guiView->getController().getManagedTeam();
-          accept_text = formatLocalized(
-              "JOB_ACCEPT_BODY",
-              {club ? club->get().getName() : std::string(), offer.club});
+          accept_text =
+              unemployed
+                  ? formatLocalized("JOB_ACCEPT_NATIONAL_BODY", {offer.club})
+                  : formatLocalized(
+                        "JOB_ACCEPT_BODY",
+                        {club ? club->get().getName() : std::string(),
+                         offer.club});
+          if (ends_national)
+            accept_text += "\n\n" + formatLocalized("JOB_ACCEPT_ENDS_NATIONAL",
+                                                     {national_value});
           accept_requested = true;
         }
       }
@@ -1075,6 +1089,7 @@ void ManagerScene::renderConfirmations()
     pending = {PendingAction::Kind::ACCEPT, accept_candidate};
     accept_candidate = 0;
   }
+  renderNationalConfirmation();
 }
 
 void ManagerScene::runPendingAction()
@@ -1083,6 +1098,11 @@ void ManagerScene::runPendingAction()
   GameController& controller = guiView->getController();
   const PendingAction action = pending;
   pending = {};
+  if (runNationalAction(action))
+  {
+    refresh();
+    return;
+  }
   switch (action.kind)
   {
     case PendingAction::Kind::APPLY:
@@ -1145,6 +1165,10 @@ void ManagerScene::runPendingAction()
       }
       break;
     }
+    case PendingAction::Kind::NATIONAL_APPLY:
+    case PendingAction::Kind::NATIONAL_ACCEPT:
+    case PendingAction::Kind::NATIONAL_DECLINE:
+    case PendingAction::Kind::NATIONAL_RESIGN:
     case PendingAction::Kind::NONE:
       break;
   }
@@ -1208,4 +1232,319 @@ void ManagerScene::renderUnemployedHome(GUIView* view)
   if (UI::secondaryButton(LOC("UNEMPLOYED_OPEN_PROFILE")))
     view->navigateTo(std::make_unique<ManagerScene>(view, Tab::PROFILE));
   UI::endCard();
+  if (const NationalJob* job = controller.getNationalJob())
+  {
+    UI::beginAutoHeightCard("unemployed_national", LOC("NT_CARD_TITLE"));
+    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() +
+                           ImGui::GetContentRegionAvail().x);
+    ImGui::TextColored(
+        palette.muted, "%s",
+        formatLocalized("NT_HOME_BODY",
+                        {LOC(International::teamNameKey(job->nation).c_str())})
+            .c_str());
+    ImGui::PopTextWrapPos();
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale));
+    if (UI::primaryButton(LOC("NT_OPEN_CALLUPS")))
+      Navigation::open(view, NavSection::CALL_UPS);
+    UI::endCard();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// National-team jobs
+// ---------------------------------------------------------------------------
+
+void ManagerScene::refreshNational()
+{
+  GameController& controller = guiView->getController();
+  national_facts.clear();
+  national_history.clear();
+  national_vacancies.clear();
+  national_offers.clear();
+  const ManagerProfile* profile = controller.getManagerProfile();
+  if (!profile) return;
+  const auto nation = [](Language value)
+  { return std::string(LOC(International::teamNameKey(value).c_str())); };
+  const NationalJob* job = controller.getNationalJob();
+  national_job = job != nullptr;
+  national_blocked = !unemployed && !controller.canCombineClubAndNation();
+  if (job)
+  {
+    national_value = nation(job->nation);
+    national_note = formatLocalized(
+        "NT_CONTRACT_NOTE",
+        {Format::money(job->weekly_wage), Format::date(job->expires)});
+    national_facts = {
+        {"NT_FACT_SINCE", Format::date(job->start)},
+        {"NT_FACT_EXPIRES", Format::date(job->expires)},
+        {"NT_FACT_WAGE", formatLocalized("MANAGER_PER_WEEK",
+                                         {Format::money(job->weekly_wage)})},
+        {"NT_FACT_RECORD",
+         std::format("{}-{}-{}", job->won, job->drawn, job->lost)},
+        {"NT_FACT_TROPHIES", std::to_string(job->trophies)},
+        {"NT_FACT_QUALIFIED", LOC(job->qualified ? "NT_YES" : "NT_NO")},
+    };
+  }
+  else
+  {
+    national_value.clear();
+    national_note.clear();
+  }
+  for (auto it = controller.getNationalJobHistory().rbegin();
+       it != controller.getNationalJobHistory().rend(); ++it)
+    national_history.push_back(std::format(
+        "{}  ·  {} – {}  ·  {}-{}-{}  ·  {}", nation(it->nation),
+        Format::date(it->start), Format::date(it->end), it->won, it->drawn,
+        it->lost, LOC(ManagerMarketModel::departureKey(it->reason))));
+  for (const GameController::NationalVacancyView& view :
+       controller.getNationalVacancies())
+  {
+    NationalVacancyRow row;
+    row.nation = view.nation;
+    row.name = nation(view.nation);
+    row.rank = formatLocalized("NT_RANK", {std::to_string(view.rank)});
+    row.wage =
+        formatLocalized("MANAGER_PER_WEEK", {Format::money(view.weekly_wage)});
+    row.licence_key = ManagerMarketModel::licenceKey(view.required_licence);
+    row.licence_missing = profile->licence < view.required_licence;
+    row.chance = view.chance;
+    row.chance_text = std::format("{:.0f}%  {}", view.chance * 100.0f,
+                                  LOC(chanceKey(view.chance)));
+    row.stage = view.stage;
+    national_vacancies.push_back(std::move(row));
+  }
+  for (const NationalJobOffer& offer : controller.getNationalJobOffers())
+  {
+    NationalOfferRow row;
+    row.id = offer.id;
+    row.name = nation(offer.nation);
+    row.wage =
+        formatLocalized("MANAGER_PER_WEEK", {Format::money(offer.weekly_wage)});
+    row.terms = formatLocalized(
+        "NT_OFFER_TERMS",
+        {Format::date(NationalJobModel::contractEnd(controller.getCurrentDate())),
+         Format::date(offer.expires)});
+    row.unsolicited = offer.unsolicited;
+    national_offers.push_back(std::move(row));
+  }
+}
+
+void ManagerScene::renderNationalCard(float width)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  UI::beginAutoHeightCard("manager_national", LOC("NT_CARD_TITLE"), width);
+  const float key_width = KEY_WIDTH * scale;
+  if (national_job)
+  {
+    {
+      Theme::ScopedText title(Theme::Text::TITLE);
+      ImGui::TextUnformatted(national_value.c_str());
+    }
+    for (const auto& [key, value] : national_facts)
+      UI::keyValue(LOC(key), value.c_str(), key_width);
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale));
+    if (UI::secondaryButton(LOC("NT_OPEN_CALLUPS")))
+      Navigation::open(guiView, NavSection::CALL_UPS);
+    UI::sameLineIfFits(UI::buttonWidth(LOC("NT_RESIGN")));
+    if (UI::dangerButton(LOC("NT_RESIGN"))) resign_national_requested = true;
+  }
+  else
+  {
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(palette.muted, "%s", LOC("NT_NONE_BODY"));
+    ImGui::PopTextWrapPos();
+  }
+  if (!national_history.empty())
+  {
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale));
+    ImGui::TextColored(palette.faint, "%s", LOC("NT_HISTORY"));
+    for (const std::string& line : national_history)
+      UI::textFitted(line, ImGui::GetContentRegionAvail().x, palette.muted);
+  }
+  UI::endCard();
+}
+
+void ManagerScene::renderNationalOffers()
+{
+  if (national_offers.empty()) return;
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  UI::beginAutoHeightCard("national_offers", LOC("NT_OFFERS"));
+  for (const NationalOfferRow& offer : national_offers)
+  {
+    ImGui::PushID(static_cast<int>(offer.id));
+    Strip strip;
+    {
+      Theme::ScopedText title(Theme::Text::TITLE);
+      UI::textFitted(offer.name, strip.innerWidth(), palette.text);
+    }
+    ImGui::TextColored(palette.muted, "%s",
+                       LOC(offer.unsolicited ? "NT_OFFER_APPROACH"
+                                             : "NT_OFFER_AFTER_APPLICATION"));
+    ImGui::TextUnformatted(offer.wage.c_str());
+    ImGui::TextColored(palette.muted, "%s", offer.terms.c_str());
+    if (national_blocked)
+      ImGui::TextColored(palette.warning, "%s", LOC("NT_CLUB_CONFLICT_HINT"));
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale));
+    ImGui::BeginDisabled(national_blocked || national_job);
+    if (UI::primaryButton(LOC("JOB_ACCEPT")))
+      pending = {PendingAction::Kind::NATIONAL_ACCEPT, offer.id};
+    ImGui::EndDisabled();
+    UI::sameLineIfFits(UI::buttonWidth(LOC("JOB_DECLINE")));
+    if (UI::secondaryButton(LOC("JOB_DECLINE")))
+      pending = {PendingAction::Kind::NATIONAL_DECLINE, offer.id};
+    ImGui::PopID();
+  }
+  UI::endCard();
+}
+
+void ManagerScene::renderNationalVacancies()
+{
+  const Theme::Palette& palette = Theme::palette();
+  UI::beginAutoHeightCard("national_vacancies", LOC("NT_VACANCIES"));
+  ImGui::PushTextWrapPos(0.0f);
+  ImGui::TextColored(palette.faint, "%s",
+                     LOC(national_blocked ? "NT_CLUB_CONFLICT_HINT"
+                                          : "NT_VACANCIES_HINT"));
+  ImGui::PopTextWrapPos();
+  if (national_vacancies.empty())
+  {
+    UI::emptyState(LOC("NT_VACANCIES_EMPTY"), LOC("NT_VACANCIES_EMPTY_BODY"));
+    UI::endCard();
+    return;
+  }
+  static const std::array<UI::Column, 5> COLUMNS = {{
+      {"NT_COL_NATION", 0.0f, 0},
+      {"NT_COL_RANK", 90.0f, 2},
+      {"NT_COL_WAGE", 130.0f, 3},
+      {"JOB_COL_LICENCE", 90.0f, 1},
+      {"JOB_COL_CHANCE", 110.0f, 0},
+  }};
+  const auto columns = localize(COLUMNS);
+  const UI::ColumnMask mask =
+      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
+  const ImGuiTableFlags flags =
+      ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH;
+  UI::TableHeader header = UI::TableHeader::STATIC;
+  std::size_t first = 0;
+  while (first < national_vacancies.size())
+  {
+    if (!UI::beginResponsiveTable("national", columns, mask, flags, header))
+      break;
+    header = UI::TableHeader::NONE;
+    std::size_t index = first;
+    const NationalVacancyRow* opened = nullptr;
+    while (index < national_vacancies.size() && opened == nullptr)
+    {
+      const NationalVacancyRow& row = national_vacancies[index++];
+      const int id = static_cast<int>(row.nation);
+      ImGui::PushID(id);
+      ImGui::TableNextRow(ImGuiTableRowFlags_None,
+                          UI::buttonHeight(UI::ButtonSize::COMPACT));
+      ImGui::TableNextColumn();
+      const bool is_selected = selected_nation == id;
+      if (ImGui::Selectable(row.name.c_str(), is_selected,
+                            ImGuiSelectableFlags_SpanAllColumns))
+        selected_nation = is_selected ? -1 : id;
+      if (UI::cell(mask, 1))
+        ImGui::TextColored(palette.muted, "%s", row.rank.c_str());
+      if (UI::cell(mask, 2)) ImGui::TextUnformatted(row.wage.c_str());
+      if (UI::cell(mask, 3))
+        ImGui::TextColored(
+            row.licence_missing ? palette.warning : palette.muted, "%s",
+            LOC(row.licence_key));
+      if (UI::cell(mask, 4))
+        ImGui::TextColored(chanceColor(row.chance), "%s",
+                           row.chance_text.c_str());
+      ImGui::PopID();
+      if (selected_nation == id) opened = &row;
+    }
+    ImGui::EndTable();
+    if (opened != nullptr)
+    {
+      ImGui::PushID(static_cast<int>(opened->nation));
+      Strip strip;
+      if (opened->licence_missing)
+        ImGui::TextColored(palette.warning, "%s",
+                           formatLocalized("JOB_DETAIL_LICENCE",
+                                           {LOC(opened->licence_key)})
+                               .c_str());
+      if (opened->stage)
+      {
+        ImGui::TextUnformatted(LOC(
+            *opened->stage == NationalApplicationStage::Pending
+                ? "JOB_STAGE_PENDING"
+                : (*opened->stage == NationalApplicationStage::Offered
+                       ? "JOB_STAGE_OFFERED"
+                       : "JOB_STAGE_REJECTED")));
+      }
+      else
+      {
+        ImGui::BeginDisabled(national_blocked || national_job);
+        if (UI::primaryButton(LOC("JOB_APPLY")))
+          pending = {PendingAction::Kind::NATIONAL_APPLY,
+                     static_cast<std::uint32_t>(opened->nation)};
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextColored(palette.faint, "%s", LOC("NT_APPLY_HINT"));
+      }
+      ImGui::PopID();
+    }
+    first = index;
+  }
+  UI::endCard();
+}
+
+void ManagerScene::renderNationalConfirmation()
+{
+  constexpr const char* POPUP_ID = "##resign_national";
+  if (resign_national_requested)
+  {
+    resign_national_requested = false;
+    ImGui::OpenPopup(POPUP_ID);
+  }
+  const std::string body = formatLocalized("NT_RESIGN_BODY", {national_value});
+  if (UI::confirmDialog(POPUP_ID, LOC("NT_RESIGN"), body.c_str(),
+                        LOC("NT_RESIGN"),
+                        LOC("SETTINGS_CANCEL")) == UI::DialogResult::CONFIRM)
+    pending = {PendingAction::Kind::NATIONAL_RESIGN, 0};
+}
+
+bool ManagerScene::runNationalAction(const PendingAction& action)
+{
+  GameController& controller = guiView->getController();
+  switch (action.kind)
+  {
+    case PendingAction::Kind::NATIONAL_APPLY:
+    {
+      const NationalApplyResult result =
+          controller.applyForNationalJob(static_cast<Language>(action.id));
+      showToast(LOC(NationalJobModel::applyResultKey(result)),
+                result != NationalApplyResult::Ok);
+      return true;
+    }
+    case PendingAction::Kind::NATIONAL_ACCEPT:
+    {
+      const NationalApplyResult result =
+          controller.acceptNationalJobOffer(action.id);
+      showToast(LOC(result == NationalApplyResult::Ok
+                        ? "NT_ACCEPTED_TOAST"
+                        : NationalJobModel::applyResultKey(result)),
+                result != NationalApplyResult::Ok);
+      if (result == NationalApplyResult::Ok) tab = Tab::PROFILE;
+      return true;
+    }
+    case PendingAction::Kind::NATIONAL_DECLINE:
+      controller.declineNationalJobOffer(action.id);
+      showToast(LOC("JOB_DECLINED_TOAST"));
+      return true;
+    case PendingAction::Kind::NATIONAL_RESIGN:
+      if (controller.resignNationalJob()) showToast(LOC("NT_RESIGNED_TOAST"));
+      return true;
+    default:
+      break;
+  }
+  return false;
 }

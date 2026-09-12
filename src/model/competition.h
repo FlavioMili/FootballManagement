@@ -114,6 +114,28 @@ void scheduleCupFirstRounds(Calendar& calendar, const GameData& gamedata,
 size_t drawPendingCupRounds(Calendar& calendar, const GameData& gamedata,
                             uint16_t season_year, const GameDateValue& today);
 
+/** @brief A cup round that has been drawn, as the calendar holds it. */
+struct CupDraw
+{
+  LeagueID cup_id = 0;
+  uint8_t stage = 0; /*!< 1-based round number. */
+  uint8_t total_rounds = 0;
+  /**
+   * Day of the draw: the day the previous round was complete (the date of
+   * its last tie); round 1 is drawn with the season's fixtures on 1 July.
+   */
+  GameDateValue drawn_on;
+  std::vector<Match> ties; /*!< By date, then home and away IDs. */
+};
+
+/**
+ * @brief Read-only view of a drawn round of the cup of @p root (nullopt
+ * when that round has not been drawn). Never changes the calendar.
+ */
+std::optional<CupDraw> cupDraw(const Calendar& calendar,
+                               const GameData& gamedata, LeagueID root,
+                               uint8_t stage);
+
 // ---------------- Knockout resolution ----------------
 struct KnockoutResolution
 {

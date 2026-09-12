@@ -7,18 +7,24 @@
 // -----------------------------------------------------------------------------
 
 // Language files and the grammar helpers of the message formatter: club
-// articles, plurals, dates, position and competition names.
+// articles, plurals, dates, position and competition names; numbers and
+// money in each language's conventions, typed amounts read back, and the
+// English fallback for a broken or incomplete language file.
 
 #include <gtest/gtest.h>
 
+#include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <regex>
 #include <set>
 #include <string>
 #include <vector>
 
+#include "global/global.h"
 #include "global/language_manager.h"
+#include "global/number_format.h"
 #include "global/paths.h"
 #include "model/club_article.h"
 #include "model/competition.h"
@@ -172,7 +178,7 @@ TEST_F(LanguageFormatTest, ClubPlaceholdersRenderArticlesOnlyInItalian)
   // Key arguments are never given an article.
   EXPECT_EQ(formatLocalized("INBOX_SIGNING_BODY",
                             {"Mario Rossi", "@INBOX_FREE_AGENT", "€0"}),
-            "Mario Rossi arriva svincolato per €0.");
+            "Mario Rossi arriva svincolato per €\u00a00.");
 }
 
 TEST_F(LanguageFormatTest, PluralPlaceholdersPickTheWordForTheCount)
@@ -232,3 +238,258 @@ TEST_F(LanguageFormatTest, LeagueNamesAreTranslatedAndCustomNamesKept)
   EXPECT_EQ(Competitions::leagueName(custom), "Apulian Amateur League");
   EXPECT_EQ(Competitions::leagueNameArg(custom), "Apulian Amateur League");
 }
+
+// ---------------------------------------------------------------------------
+// Numbers and money
+// ---------------------------------------------------------------------------
+
+TEST_F(LanguageFormatTest, NumbersAndMoneyFollowTheLanguage)
+{
+  using namespace NumberFormat;
+  EXPECT_EQ(money(0), "€0");
+  EXPECT_EQ(money(13'400), "€13K");
+  EXPECT_EQ(money(2'450'000), "€2.45M");
+  EXPECT_EQ(money(-31'000'000), "-€31.0M");
+  EXPECT_EQ(money(1'250'000'000), "€1.25B");
+  EXPECT_EQ(moneyFull(1'250'000), "€1,250,000");
+  EXPECT_EQ(grouped(38'500), "38,500");
+  EXPECT_EQ(grouped(-1'234'567), "-1,234,567");
+  EXPECT_EQ(decimal(7.25, 1), "7.2");
+  useItalian();
+  EXPECT_EQ(current().decimal_mark, ",");
+  EXPECT_EQ(money(0), "€ 0");
+  EXPECT_EQ(money(1'500), "€ 1,5 mila");
+  EXPECT_EQ(money(13'400), "€ 13 mila");
+  EXPECT_EQ(money(2'450'000), "€ 2,45 mln");
+  EXPECT_EQ(money(-31'000'000), "-€ 31,0 mln");
+  EXPECT_EQ(money(1'250'000'000), "€ 1,25 mld");
+  EXPECT_EQ(moneyFull(1'250'000), "€ 1.250.000");
+  EXPECT_EQ(moneyFull(-999), "-€ 999");
+  EXPECT_EQ(grouped(38'500), "38.500");
+  EXPECT_EQ(decimal(7.5, 1), "7,5");
+}
+
+namespace
+{
+struct MoneyCase
+{
+  const char* text;
+  std::optional<int64_t> english;  // nullopt: refused in English
+  std::optional<int64_t> italian;
+  NumberFormat::MoneyError error = NumberFormat::MoneyError::NONE;
+};
+
+constexpr std::optional<int64_t> REFUSED = std::nullopt;
+using enum NumberFormat::MoneyError;
+
+// Every way a player is likely to type an amount, in both languages.
+const MoneyCase MONEY_CASES[] = {
+    {"1,5M", 1'500'000, 1'500'000},
+    {"1.5M", 1'500'000, 1'500'000},
+    {"1.500.000", 1'500'000, 1'500'000},
+    {"1,500,000", 1'500'000, 1'500'000},
+    {"1500k", 1'500'000, 1'500'000},
+    {"€ 2,25 mln", 2'250'000, 2'250'000},
+    {"€2.25 mln", 2'250'000, 2'250'000},
+    {"1,5 mln €", 1'500'000, 1'500'000},
+    {"€ 1,5 mln", 1'500'000, 1'500'000},
+    {"0,5m", 500'000, 500'000},
+    {",5m", 500'000, 500'000},
+    {"15m", 15'000'000, 15'000'000},
+    {"€14.4M", 14'400'000, 14'400'000},
+    {"850k", 850'000, 850'000},
+    {"850 mila", 850'000, 850'000},
+    {"3 mld", 3'000'000'000, 3'000'000'000},
+    {"2 bn", 2'000'000'000, 2'000'000'000},
+    {"5 million", 5'000'000, 5'000'000},
+    {"3 milioni", 3'000'000, 3'000'000},
+    {"1 500 000", 1'500'000, 1'500'000},
+    {"1'500'000", 1'500'000, 1'500'000},
+    {"€1,250,000", 1'250'000, 1'250'000},
+    {"€ 1.250.000", 1'250'000, 1'250'000},
+    {"1.234.567,89", 1'234'568, 1'234'568},
+    {"1,234,567.89", 1'234'568, 1'234'568},
+    {"14.500", 14'500, 14'500},
+    {"14,500", 14'500, 14'500},
+    {"950", 950, 950},
+    {"12,50", 13, 13},
+    {"EUR 300k", 300'000, 300'000},
+    {"300k euro", 300'000, 300'000},
+    // A single mark before three digits and a unit: only the language's
+    // own decimal mark reads as one.
+    {"1.250M", 1'250'000, REFUSED, AMBIGUOUS},
+    {"1,250M", REFUSED, 1'250'000, AMBIGUOUS},
+    {"1.500k", 1'500, REFUSED, AMBIGUOUS},
+    {"1,500k", REFUSED, 1'500, AMBIGUOUS},
+    // Separators that could mean two different amounts.
+    {"1.50.000", REFUSED, REFUSED, AMBIGUOUS},
+    {"1.500,000", REFUSED, REFUSED, AMBIGUOUS},
+    {"1,500.000", REFUSED, REFUSED, AMBIGUOUS},
+    {"1.500.000k", REFUSED, REFUSED, AMBIGUOUS},
+    {"1.234,5M", REFUSED, REFUSED, AMBIGUOUS},
+    {"1..5M", REFUSED, REFUSED, AMBIGUOUS},
+    {"1,5,0", REFUSED, REFUSED, AMBIGUOUS},
+    {"1,2345", REFUSED, REFUSED, AMBIGUOUS},
+    {"1.", REFUSED, REFUSED, AMBIGUOUS},
+    // Not an amount at all.
+    {"", REFUSED, REFUSED, EMPTY},
+    {"  ", REFUSED, REFUSED, EMPTY},
+    {"€", REFUSED, REFUSED, EMPTY},
+    {"abc", REFUSED, REFUSED, INVALID},
+    {"12x", REFUSED, REFUSED, INVALID},
+    {"1kM", REFUSED, REFUSED, INVALID},
+    {"1k5", REFUSED, REFUSED, INVALID},
+    {"k", REFUSED, REFUSED, INVALID},
+    {"-5", REFUSED, REFUSED, INVALID},
+    {"1 5 m", REFUSED, REFUSED, AMBIGUOUS},
+    {"99999999999999999999", REFUSED, REFUSED, TOO_LARGE},
+    {"10000000b", REFUSED, REFUSED, TOO_LARGE},
+};
+}  // namespace
+
+TEST_F(LanguageFormatTest, TypedMoneyIsReadTheSameWayInBothLanguages)
+{
+  for (const Language language : {Language::EN, Language::IT})
+  {
+    ASSERT_TRUE(LanguageManager::instance().loadLanguage(language));
+    const bool italian = language == Language::IT;
+    for (const MoneyCase& item : MONEY_CASES)
+    {
+      const auto expected = italian ? item.italian : item.english;
+      const NumberFormat::MoneyParse parsed =
+          NumberFormat::parseMoney(item.text);
+      EXPECT_EQ(parsed.value, expected)
+          << (italian ? "IT " : "EN ") << '"' << item.text << '"';
+      if (!expected)
+      {
+        EXPECT_EQ(parsed.error, item.error) << '"' << item.text << '"';
+        EXPECT_NE(NumberFormat::errorKey(parsed.error), nullptr);
+      }
+    }
+    // What the field shows is read back unchanged.
+    for (const int64_t amount :
+         {int64_t{0}, int64_t{950}, int64_t{14'500}, int64_t{1'250'000},
+          int64_t{987'654'321}})
+    {
+      EXPECT_EQ(NumberFormat::parseMoney(NumberFormat::moneyFull(amount)).value,
+                amount);
+      const auto compact =
+          NumberFormat::parseMoney(NumberFormat::money(amount)).value;
+      ASSERT_TRUE(compact.has_value()) << NumberFormat::money(amount);
+      EXPECT_NEAR(static_cast<double>(*compact), static_cast<double>(amount),
+                  static_cast<double>(amount) * 0.05 + 1.0);
+    }
+  }
+}
+
+TEST_F(LanguageFormatTest, MessageMoneyAndKeysAreShownInTheReadersLanguage)
+{
+  // Saved messages carry the amount and keys, never finished text.
+  EXPECT_EQ(formatMoney(1'500'000), "€1500000");
+  const std::vector<std::string> signing = {"Mario Rossi", FREE_AGENTS_NAME_ARG,
+                                            formatMoney(1'500'000)};
+  EXPECT_EQ(formatLocalized("INBOX_SIGNING_BODY", signing),
+            "Mario Rossi has signed from free agency for €1.50M.");
+  // An unknown key is its own pattern: "{0}" shows the argument alone.
+  const auto alone = [](const std::string& argument)
+  { return formatLocalized("{0}", {argument}); };
+  const std::string digest = "Mario Rossi: @INBOX_FREE_AGENCY -> Roma (" +
+                             formatMoney(2'000'000) + ")";
+  EXPECT_EQ(alone(digest), "Mario Rossi: free agency -> Roma (€2.00M)");
+  EXPECT_EQ(alone("Mario Rossi (@NT_Italian)"), "Mario Rossi (Italy)");
+  EXPECT_EQ(alone(formatMoney(-2'000'000)), "-€2.00M");
+  // Messages saved before keep their text; a lone "@" is not a key.
+  EXPECT_EQ(alone("€1.25M"), "€1.25M");
+  EXPECT_EQ(alone("-€2.0M and €350K"), "-€2.0M and €350K");
+  EXPECT_EQ(alone("@"), "@");
+  EXPECT_EQ(alone("Rossi @ Roma, @UNKNOWN_KEY_X"), "Rossi @ Roma, @UNKNOWN_KEY_X");
+
+  useItalian();
+  EXPECT_EQ(formatLocalized("INBOX_SIGNING_BODY", signing),
+            "Mario Rossi arriva svincolato per € 1,50 mln.");
+  EXPECT_EQ(alone(digest),
+            "Mario Rossi: svincolato -> Roma (€ 2,00 mln)");
+  EXPECT_EQ(alone("Mario Rossi (@NT_Italian)"), "Mario Rossi (Italia)");
+  EXPECT_EQ(alone("@NT_Italian, @NT_French"), "Italia, Francia");
+  EXPECT_EQ(alone("€1.25M"), "€1.25M");
+}
+
+// ---------------------------------------------------------------------------
+// English fallback
+// ---------------------------------------------------------------------------
+
+namespace
+{
+std::filesystem::path writeFile(const std::string& name,
+                                const std::string& contents)
+{
+  const std::filesystem::path path =
+      std::filesystem::temp_directory_path() / name;
+  std::ofstream(path, std::ios::binary) << contents;
+  return path;
+}
+
+std::string readText(const std::string& path)
+{
+  std::ifstream stream(path, std::ios::binary);
+  return {std::istreambuf_iterator<char>(stream),
+          std::istreambuf_iterator<char>()};
+}
+}  // namespace
+
+TEST_F(LanguageFormatTest, ABrokenLanguageFileFallsBackToEnglish)
+{
+  LanguageManager& languages = LanguageManager::instance();
+  const nlohmann::json english = languageFile("English.json");
+  const std::string settings = english.at("MENU_SETTINGS").get<std::string>();
+  const std::string italianText =
+      readText(AssetPaths::root() + "assets/lang/Italian.json");
+  ASSERT_GT(italianText.size(), 1000U);
+
+  const std::filesystem::path truncated = writeFile(
+      "fm_lang_truncated.json", italianText.substr(0, italianText.size() / 2));
+  const std::filesystem::path garbage =
+      writeFile("fm_lang_garbage.json", "\x01\x02 not json {");
+  const std::filesystem::path list = writeFile("fm_lang_list.json", "[1, 2]");
+  const std::filesystem::path missing =
+      std::filesystem::temp_directory_path() / "fm_lang_missing.json";
+  std::filesystem::remove(missing);
+
+  for (const auto& path : {truncated, garbage, list, missing})
+  {
+    EXPECT_FALSE(languages.loadFromFile(path.string(), Language::IT)) << path;
+    EXPECT_TRUE(languages.status().file_failed) << path;
+    EXPECT_TRUE(languages.status().fallback());
+    EXPECT_EQ(languages.current(), Language::IT);
+    // English everywhere instead of raw keys, English number formats too.
+    EXPECT_EQ(std::string(LOC("MENU_SETTINGS")), settings) << path;
+    EXPECT_EQ(NumberFormat::money(1'500'000), "€1.50M");
+  }
+  // A text missing everywhere is still its own key (same pointer).
+  const char* unknown = "NO_SUCH_TEXT_ANYWHERE";
+  EXPECT_EQ(LOC(unknown), unknown);
+
+  // An incomplete file: what it has is used, the rest is English.
+  const std::filesystem::path partial = writeFile(
+      "fm_lang_partial.json",
+      R"({"MENU_SETTINGS": "Impostazioni", "NUMBER_DECIMAL_MARK": ",",
+          "NUMBER_GROUP_MARK": ".", "BROKEN_ENTRY": 5})");
+  EXPECT_TRUE(languages.loadFromFile(partial.string(), Language::IT));
+  EXPECT_FALSE(languages.status().file_failed);
+  EXPECT_EQ(languages.status().missing_keys, english.size() - 3);
+  EXPECT_STREQ(LOC("MENU_SETTINGS"), "Impostazioni");
+  EXPECT_EQ(std::string(LOC("MENU_QUIT")),
+            english.at("MENU_QUIT").get<std::string>());
+  EXPECT_EQ(NumberFormat::grouped(38'500), "38.500");
+
+  // The real files load cleanly and clear the fallback.
+  useItalian();
+  EXPECT_FALSE(languages.status().fallback());
+  EXPECT_STREQ(LOC("MENU_SETTINGS"), "Impostazioni");
+  ASSERT_TRUE(languages.loadLanguage(Language::EN));
+  EXPECT_FALSE(languages.status().fallback());
+  EXPECT_EQ(std::string(LOC("MENU_SETTINGS")), settings);
+  for (const auto& path : {truncated, garbage, list, partial})
+    std::filesystem::remove(path);
+}
+

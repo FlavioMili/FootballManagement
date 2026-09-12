@@ -18,6 +18,8 @@
 #include "gui/gui_view.h"
 #include "gui/scenes/management_scene.h"
 #include "gui/scenes/onboarding_overlay.h"
+#include "gui/scenes/season_review_dialog.h"
+#include "gui/scenes/welcome_tour.h"
 #include "gui/view_models/competition_view.h"
 #include "gui/view_models/player_view.h"
 #include "model/finances.h"
@@ -46,9 +48,11 @@ class MainGameScene : public ManagementScene
   explicit MainGameScene(GUIView* guiView_ptr);
 
   /**
-   * @brief Destroys the MainGameScene.
+   * @brief Destroys the MainGameScene. A holiday or off-season run still
+   * simulating stops at the end of its current day; a Continue to the next
+   * fixture finishes its days first.
    */
-  ~MainGameScene() override = default;
+  ~MainGameScene() override;
 
   /**
    * @brief Called when entering the scene.
@@ -121,6 +125,27 @@ class MainGameScene : public ManagementScene
   /** @brief Switches the page shown by the hub. */
   void showPage(Page page) { active_page = page; }
 
+  /**
+   * @brief Shows the welcome tour over Home next frame (a career just
+   * started from the club choice, or a replay asked for on Help).
+   */
+  void offerWelcome() { welcome_requested = true; }
+
+  /**
+   * @brief Asks the running Continue or holiday to stop at the end of the
+   * day being simulated (the Stop button of the progress card).
+   */
+  void requestStop();
+
+  /** @brief True while the end-of-season summary is open. */
+  [[nodiscard]] bool isShowingSeasonReview() const
+  {
+    return season_review_dialog.isOpen();
+  }
+
+  /** @brief The welcome tour (open while it is shown). */
+  [[nodiscard]] const WelcomeTour& welcomeTour() const { return welcome_tour; }
+
  protected:
   void renderContent() override;
   [[nodiscard]] NavSection navSection() const override;
@@ -147,6 +172,12 @@ class MainGameScene : public ManagementScene
   void refreshData();
 
   Page active_page = Page::OVERVIEW;
+  WelcomeTour welcome_tour;
+  bool welcome_requested = false;
+  /** Opens the season summary once nothing else is in the way. */
+  void showPendingSeasonReview();
+  void renderSeasonReview();
+  SeasonReviewDialog season_review_dialog;
   std::vector<std::pair<int, int>> cached_standings;
   std::vector<std::reference_wrapper<const Player>> cached_top_players;
   int cached_season = -1;
@@ -157,6 +188,12 @@ class MainGameScene : public ManagementScene
   bool continuation_requested = false;
   std::optional<HolidayPlan> pending_holiday;
   bool holiday_running = false;
+  /** Runs that closing the game interrupts (holiday, off-season, out of
+   * work); a Continue to the next fixture completes its days. */
+  bool stop_on_close = false;
+  bool stop_requested = false;
+  /** Controller of the running worker (stopped from the destructor). */
+  GameController* continue_controller = nullptr;
   /** Managed match whose report opens once the rest of its day is done. */
   struct PlayedMatch
   {

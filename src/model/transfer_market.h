@@ -20,6 +20,7 @@
 #include "model/buyer_negotiation.h"
 #include "model/gamedate.h"
 #include "model/inbox.h"
+#include "model/loan_negotiation.h"
 #include "model/transfer_listing.h"
 #include "model/transfer_negotiation.h"
 
@@ -68,7 +69,17 @@ enum class ObligationKind : std::uint8_t
   Instalment = 0,  /*!< amount due on @c due. */
   AppearanceBonus, /*!< amount due at @c target appearances for the payer. */
   GoalBonus,       /*!< amount due at @c target goals for the payer. */
-  SellOn           /*!< payee gets @c amount % of the player's next fee. */
+  SellOn,          /*!< payee gets @c amount % of the player's next fee. */
+  /** Loan clause: the borrower (payer) pays @c amount to the parent when
+   * the player made fewer than @c target appearances for it by @c due. */
+  LoanUnplayedFee,
+  /** Contract: his wage rises by @c amount % on @c due, then yearly. */
+  WageRise,
+  /** Contract: @c amount for each appearance for the payer beyond
+   * @c baseline (raised as they are paid). */
+  AppearanceFee,
+  /** Agent fee of a pre-contract, paid when it is executed. */
+  AgentFee
 };
 
 /** A scheduled or conditional payment between two clubs. */
@@ -141,6 +152,7 @@ struct OfferRound
   GameDateValue date;
   BuyerNegotiation::Move move = BuyerNegotiation::Move::Bid;
   TransferNegotiation::OfferTerms terms;
+  TransferNegotiation::LoanTerms loan_terms; /*!< Loan offers. */
 };
 
 /** An AI club's offer for one of the managed club's players. */
@@ -153,7 +165,8 @@ struct IncomingOffer
   TransferNegotiation::OfferTerms terms; /*!< The buyer's offer on the table. */
   TransferNegotiation::LoanTerms loan_terms;
   /** Hidden ceiling of the buyer: the most the deal may cost it, in
-   * BuyerNegotiation::buyerCost() terms (present value). */
+   * BuyerNegotiation::buyerCost() terms (present value); for a loan in
+   * LoanNegotiation::borrowerCost() terms. */
   std::uint32_t max_fee = 0;
   GameDateValue created;
   GameDateValue expires; /*!< Last day to answer (AwaitingClub). */
@@ -164,6 +177,7 @@ struct IncomingOffer
   OfferStatus status = OfferStatus::AwaitingClub;
   GameDateValue respond_on; /*!< AwaitingBuyer: the day of its answer. */
   TransferNegotiation::OfferTerms asked; /*!< AwaitingBuyer: the counter. */
+  TransferNegotiation::LoanTerms asked_loan; /*!< Loan counter. */
   bool firm = false; /*!< The counter is a named price. */
   std::vector<OfferRound> history; /*!< Oldest first. */
 };
@@ -292,8 +306,75 @@ class TransferMarket
   /** Takes a departed player out of the managed club's line-up, filling
    * his place without rebuilding the rest of the manager's selection. */
   void removeFromLineup(Team& team, const Player& departed);
-  /** Agent fee paid by the buyer: 10% of a fee, or weeks of wage. */
+  /** Agent fee paid by the buyer: the one agreed in the contract, else
+   * 10% of a fee, or weeks of wage. */
   static std::uint32_t agentFee(const Deal& deal);
+  /** Weekly wages a club can still commit (budget less payroll and the
+   * wages of its agreed pre-contracts). */
+  std::int64_t wageRoom(TeamID club_id) const
+  {
+    return aiWageRoom(club_id, false);
+  }
+  /** Wage room next season: contracts running past 30 June and agreed
+   * pre-contracts count, players in their final year do not. */
+  std::int64_t nextSeasonWageRoom(TeamID club_id) const
+  {
+    return aiWageRoom(club_id, true);
+  }
+  /** Signing bonuses and agent fees due on the club's agreed
+   * pre-contracts. */
+  std::int64_t committedPreContractCosts(TeamID club_id) const
+  {
+    return preContractCosts(club_id);
+  }
+  /** False when @p leaving going would leave @p club_id fewer than
+   * MIN_SENIOR_SQUAD senior players or no senior goalkeeper; @p goalkeeper
+   * tells which (null to ignore). */
+  bool keepsSquadFloor(TeamID club_id, PlayerID leaving,
+                       bool* goalkeeper = nullptr) const;
+  /** Fewest senior players a managed squad may keep after a release or
+   * a sale. */
+  static constexpr std::size_t MIN_SENIOR_SQUAD = 11;
+  /**
+   * Renews a player's contract at his club with @p offer: wage, seasons
+   * (the current one included), extras, release clause and promise; the
+   * signing bonus and agent fee are paid today. False if invalid.
+   */
+  bool renewContract(PlayerID player_id,
+                     const TransferNegotiation::ContractOffer& offer,
+                     const GameDateValue& date);
+  /** What players of his ability and age earn at @p club_id (the club's
+   * pay scale applied to his wage index); 0 when unknown. */
+  std::uint32_t deservedWage(PlayerID player_id, TeamID club_id) const;
+  /** @p weekly_wage fits @p room and the single-player share of the
+   * club's wage budget. */
+  static bool affordsWage(const Team& club, std::uint32_t weekly_wage,
+                          std::int64_t room)
+  {
+    return aiAffordsWage(club, weekly_wage, room);
+  }
+  /** Context of @p club_id borrowing @p player_id from today (budget, wage
+   * room, how often he would play); ceiling and talks state left at 0. */
+  LoanNegotiation::BorrowerContext borrowerContext(
+      PlayerID player_id, TeamID club_id, const GameDateValue& date) const;
+  /** Appearances for @p team_id in his career (competitive matches). */
+  std::uint16_t appearancesFor(PlayerID player_id, TeamID team_id) const
+  {
+    return careerCount(player_id, team_id, ObligationKind::AppearanceBonus);
+  }
+  /** Gives some ambitious players at modest clubs a release clause in a
+   * new world (deterministic from the world seed). */
+  void seedReleaseClauses();
+  /** Release clause of a player (0 = none). */
+  std::uint32_t releaseClause(PlayerID player_id) const;
+  void setReleaseClause(PlayerID player_id, std::uint32_t clause);
+  /**
+   * An AI club pays a player's release clause in cash (within its budget
+   * and wage room; never leaving the managed squad short): his club cannot
+   * refuse and he joins on the terms he demands. True if he moved.
+   */
+  bool payReleaseClause(TeamID club_id, PlayerID player_id,
+                        const GameDateValue& date, TeamID managed_team_id);
 
   // ---- AI ----
 
@@ -329,9 +410,14 @@ class TransferMarket
   std::vector<std::uint32_t> dueOfferReplies(const GameDateValue& date) const;
   /** Other clubs with a transfer offer for the same player. */
   std::uint8_t rivalBids(const IncomingOffer& offer) const;
-  /** Last day to answer an offer made on @p date: @p days later, but
-   * never after the transfer window closes. */
-  static GameDateValue answerDeadline(const GameDateValue& date, int days);
+  /** Last day to answer an offer of @p buyer made on @p date: @p days
+   * later, but never after the buyer's transfer window closes. */
+  GameDateValue answerDeadline(TeamID buyer, const GameDateValue& date,
+                               int days) const;
+  /** Transfer window of @p club's country on @p date: the buying club's
+   * window decides whether it can sign a player (TransferWindows). */
+  TransferNegotiation::WindowInfo clubWindow(TeamID club,
+                                             const GameDateValue& date) const;
   /** Talks of @p buyer for @p player_id ended on @p date: the club does
    * not come back for him for a while (at most until the window closes). */
   void closeTalks(PlayerID player_id, TeamID buyer, const GameDateValue& date);
@@ -456,6 +542,21 @@ class TransferMarket
   void checkPromises(const GameDateValue& date, TeamID managed_team_id);
   void expireOffers(const GameDateValue& date);
   void postNewsDigest(const GameDateValue& date, TeamID managed_team_id);
+  /** On the day a window shuts: the deals of its last days. */
+  void postDeadlineSummary(const GameDateValue& date, TeamID managed_team_id);
+  /** Yearly rises due on @p date and weekly appearance money. */
+  void applyWageRises(const GameDateValue& date);
+  void payAppearanceFees(const GameDateValue& date);
+  /** Contract extras (rise, appearance money) of @p contract for the
+   * player at @p club_id from @p start; old clubs' extras lapse. */
+  void addContractExtras(PlayerID player_id, TeamID club_id,
+                         const TransferNegotiation::ContractOffer& contract,
+                         const GameDateValue& start);
+  /** Settles the appearance clause of a loan ending on @p date (paid only
+   * when @p charge and he played too little). */
+  void settleLoanClause(const LoanDeal& loan, const GameDateValue& date,
+                        TeamID managed_team_id, bool charge);
+
 
   std::shared_ptr<GameData> gamedata;
   WorldSimulation& world;

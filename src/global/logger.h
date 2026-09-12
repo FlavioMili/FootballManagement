@@ -18,7 +18,8 @@ class Logger
 {
  public:
   /**
-   * @brief Initializes the logging system.
+   * @brief Initializes the logging system. The previous session's log is
+   * kept as RuntimePaths::previousLogPath().
    */
   static void init();
 
@@ -45,4 +46,7 @@ class Logger
    * @param msg The message to log.
    */
   static void warn(const std::string& msg);
+
+  /** Writes buffered messages to the log file now. */
+  static void flush();
 };

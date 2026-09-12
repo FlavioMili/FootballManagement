@@ -55,7 +55,7 @@ constexpr std::array<const char*, static_cast<std::size_t>(Why::COUNT)>
                 "OFFER_WHY_CASH_LIMITED",   "OFFER_WHY_FINAL_OFFER",
                 "OFFER_WHY_UNREALISTIC",    "OFFER_WHY_INSULTED",
                 "OFFER_WHY_OUT_OF_PATIENCE", "OFFER_WHY_RIVAL_BIDS",
-                "OFFER_WHY_DEADLINE"};
+                "OFFER_WHY_DEADLINE",       "OFFER_WHY_WAGE_BUDGET"};
 
 std::uint32_t roundDown(double amount)
 {
@@ -291,6 +291,11 @@ BuyerReply respond(const BuyerContext& context, const OfferTerms& current,
     if (deadline) reply.reasons.push_back(Why::DeadlineDay);
   };
 
+  if (!context.wage_fits)
+  {
+    reply.reasons.push_back(Why::WageBudget);
+    return reply;
+  }
   if (valid && cost <= ceiling && signingCash(asked) <= context.cash)
   {
     reply.decision = Decision::Accept;

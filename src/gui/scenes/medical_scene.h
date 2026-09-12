@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <array>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -64,6 +66,7 @@ class MedicalScene : public ManagementScene
     int load_trend = 0;  /*!< -1 falling, 0 stable, 1 rising. */
     std::string reasons; /*!< Why the risk is raised. */
     bool returning = false;
+    std::uint8_t flags = 0; /*!< MedicalFlag bits. */
   };
 
   /** @brief A physio or doctor. */
@@ -77,6 +80,15 @@ class MedicalScene : public ManagementScene
   void renderInjured(float width);
   void renderRisk(float width);
   void renderStaff(float width);
+  /** Load chart and medical instructions of the selected player. */
+  void renderPlayerLoad(float width);
+  void renderLoadChart(float height);
+  /** Selects @p id for the load card and reads his chart and flags. */
+  void select(PlayerID id);
+  /** Name cell of both tables: selects the player for the load card. */
+  void nameCell(PlayerID id, const std::string& name, const std::string& role,
+                bool returning);
+  void setFlag(std::uint8_t flag, bool enabled);
 
   std::vector<InjuryLine> injured;
   std::vector<RiskLine> risks;
@@ -90,4 +102,12 @@ class MedicalScene : public ManagementScene
   int high_risk = 0;
   int days_lost = 0;
   bool show_all = false; /*!< Risk table: everyone or only raised risk. */
+
+  /** Player shown in the load card (0: none) and his cached data. */
+  PlayerID selected = 0;
+  std::string selected_name;
+  std::uint8_t selected_flags = 0;
+  std::int32_t chart_today = 0;
+  std::array<LoadChartDay, MedicalCentre::LOAD_CHART_DAYS> chart{};
+  bool chart_empty = true;
 };

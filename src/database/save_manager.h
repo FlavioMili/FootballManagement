@@ -217,6 +217,12 @@ class SaveManager
   static std::vector<SaveBackup> listBackups(const std::filesystem::path& file);
 
   /**
+   * The newest backup of @p backups (as listed by listBackups) that loads,
+   * or nullptr: what a recovery dialog offers first.
+   */
+  static const SaveBackup* newestUsable(const std::vector<SaveBackup>& backups);
+
+  /**
    * Replaces @p file with @p backup (verified first). The replaced file is
    * kept as <file>.corrupt-<utc> or <file>.replaced-<utc>, never deleted.
    * @throws SaveFailure.

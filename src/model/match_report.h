@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -60,6 +61,11 @@ struct TeamMatchStats
   uint16_t passes_completed = 0;
   float possession = 50.0f;
   float expected_goals = 0.0f;
+  /** Shots and goals from set pieces (penalties included); reports saved
+   * before they were recorded leave set_pieces_known false. */
+  bool set_pieces_known = false;
+  uint16_t set_piece_shots = 0;
+  uint16_t set_piece_goals = 0;
 };
 
 /** @brief Per-player line of a finished match. */
@@ -103,6 +109,13 @@ struct MatchReport
   TeamMatchStats away_stats;
   std::vector<MatchReportEvent> events;
   std::vector<PlayerMatchLine> players;
+  /**
+   * Play mode: the side the manager played himself on the pitch (empty when
+   * the match was watched or simulated) and his share of that side's
+   * passes, shots and tackles in [0, 1]. Stored with the team statistics.
+   */
+  std::optional<bool> played_home;
+  float played_share = 0.0f;
 
   /**
    * Copies the engine's final score, team totals, per-player lines and the

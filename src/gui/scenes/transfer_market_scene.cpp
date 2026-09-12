@@ -121,9 +121,6 @@ constexpr std::array<const char*, 3> CONTRACT_KEYS = {
     "TRANSFER_CONTRACT_ANY", "TRANSFER_CONTRACT_EXPIRING",
     "TRANSFER_CONTRACT_TWO_YEARS"};
 
-constexpr std::array<SquadRole, 5> PROMISE_ROLES = {
-    SquadRole::KeyPlayer, SquadRole::FirstTeam, SquadRole::Rotation,
-    SquadRole::Backup, SquadRole::Fringe};
 
 float scale() { return Theme::scale(); }
 
@@ -199,9 +196,6 @@ ImVec4 fitColor(TransferNegotiation::FitKind kind)
 }
 
 constexpr int64_t BID_ROUNDING = 10'000;
-constexpr int64_t WAGE_ROUNDING = 100;
-constexpr int64_t WEEKS_PER_YEAR =
-    static_cast<int64_t>(TransferTuning::Contract::WEEKS_PER_YEAR);
 
 constexpr std::array<uint8_t, 5> WAGE_SHARE_OPTIONS = {0, 25, 50, 75, 100};
 constexpr std::array<const char*, 5> WAGE_SHARE_LABELS = {"0%", "25%", "50%",
@@ -219,13 +213,6 @@ int64_t scaledAmount(int64_t amount, double factor)
   return std::llround(static_cast<double>(amount) * factor /
                       static_cast<double>(BID_ROUNDING)) *
          BID_ROUNDING;
-}
-
-int64_t scaledWage(int64_t wage, double factor)
-{
-  return std::llround(static_cast<double>(wage) * factor /
-                      static_cast<double>(WAGE_ROUNDING)) *
-         WAGE_ROUNDING;
 }
 
 /** An offer structure that fits the budget, if any. */
@@ -318,19 +305,6 @@ std::string playerName(const GameData& data, PlayerID player_id)
                 : std::string(LOC("TRANSFER_RETIRED"));
 }
 
-std::string loanTermsText(const TransferNegotiation::LoanTerms& terms)
-{
-  std::string text = fmt::sprintf(
-      LOC("TRANSFER_LOAN_TERMS"), static_cast<int>(terms.wage_share),
-      LOC(terms.duration == TransferNegotiation::LoanDuration::SeasonEnd
-              ? "TRANSFER_LOAN_SEASON"
-              : "TRANSFER_LOAN_SIX_MONTHS"));
-  if (terms.loan_fee > 0)
-    text += fmt::sprintf(LOC("TRANSFER_LOAN_FEE_SUFFIX"),
-                         Format::money(terms.loan_fee));
-  return text;
-}
-
 }  // namespace
 
 TransferMarketScene::TransferMarketScene(GUIView* parent)
@@ -351,7 +325,7 @@ void TransferMarketScene::openPendingDeal()
   if (!scouted) return;
   const TargetRow row = makeTargetRow(*scouted);
   if (row.free_agent)
-    openContractDialog(row.id, row.name);
+    openContractDialog(row.id);
   else
     openOfferDialog(row);
 }
@@ -448,6 +422,10 @@ TransferMarketScene::TargetRow TransferMarketScene::makeTargetRow(
       listing != controller.getAllListings().end() &&
       listing->second.seller_team_id == row.team_id)
     row.asking_price = listing->second.asking_price;
+  row.release_clause = market.releaseClause(row.id);
+  if (row.release_clause > 0)
+    row.clause_text = fmt::sprintf(LOC("TRANSFER_CLAUSE_LINE"),
+                                   Format::money(row.release_clause));
   row.loan_listed = market.isLoanListed(row.id);
   row.pre_contract = !row.free_agent && market.canBeTraded(row.id) &&
                      TransferNegotiation::canSignPreContract(
@@ -753,6 +731,11 @@ void TransferMarketScene::refreshSquad()
       row.asking_price = listing->second.asking_price;
       row.asking_text = Format::money(row.asking_price);
     }
+    if (const uint32_t clause = market.releaseClause(row.player.id); clause > 0)
+      row.clause_text =
+          fmt::sprintf(LOC("TRANSFER_CLAUSE_LINE"), Format::money(clause));
+    row.release_block = GameController::playerActionBlockKey(
+        controller.getReleaseBlock(row.player.id));
     squad.push_back(std::move(row));
   }
   std::ranges::sort(squad, [](const SquadRow& a, const SquadRow& b)
@@ -775,10 +758,13 @@ void TransferMarketScene::refreshOffers()
     row.club = teamName(controller, incoming.buyer);
     row.loan = incoming.loan;
     row.fee = incoming.terms.fee;
-    row.amount_text = incoming.loan ? LOC("TRANSFER_KIND_LOAN")
-                                    : Format::money(incoming.terms.fee);
-    row.terms_text = incoming.loan ? loanTermsText(incoming.loan_terms)
-                                   : TransferTermsEditor::structureText(incoming.terms);
+    row.amount_text =
+        incoming.loan ? fmt::sprintf(LOC("LOAN_SHARE_SHORT"),
+                                     static_cast<int>(incoming.loan_terms.wage_share))
+                      : Format::money(incoming.terms.fee);
+    row.terms_text = incoming.loan
+                         ? TransferTermsEditor::loanTermsLine(incoming.loan_terms)
+                         : TransferTermsEditor::structureText(incoming.terms);
     const uint32_t value = controller.getPlayerMarketValue(incoming.player_id);
     row.value = value;
     row.value_ratio = !incoming.loan && value > 0
@@ -800,6 +786,8 @@ void TransferMarketScene::refreshOffers()
   talks.clear();
   for (const auto& [player_id, talk] : market.talks())
   {
+    // Renewals of the club's own players are held from their profiles.
+    if (talk.seller == managed) continue;
     TalkRow row;
     row.player_id = player_id;
     row.player = playerName(*data, player_id);
@@ -959,7 +947,18 @@ void TransferMarketScene::renderContent()
   }
 
   renderOfferDialog();
-  renderContractDialog();
+  switch (contract_talks.render(guiView->getController()))
+  {
+    case ContractTalksDialog::Event::Signed:
+      showToast(contract_talks.signedMessage());
+      refreshData();
+      break;
+    case ContractTalksDialog::Event::Proposed:
+      refreshOffers();
+      break;
+    case ContractTalksDialog::Event::None:
+      break;
+  }
   renderLoanDialog();
   if (negotiation_dialog.render(guiView->getController())) refreshData();
   renderListingDialog();
@@ -1409,11 +1408,16 @@ void TransferMarketScene::renderTargetActions(const TargetRow& row)
   if (ImGui::SmallButton(LOC("TRANSFER_ACTIONS"))) ImGui::OpenPopup("actions");
   if (!ImGui::BeginPopup("actions")) return;
   renderHiddenTargetValues(row);
+  if (!row.clause_text.empty())
+  {
+    ImGui::TextColored(Theme::palette().info, "%s", row.clause_text.c_str());
+    ImGui::Separator();
+  }
   const auto talk = controller.getContractTalkKind(row.id);
   if (row.free_agent)
   {
     if (ImGui::Selectable(LOC("TRANSFER_ACTION_SIGN")))
-      openContractDialog(row.id, row.name);
+      openContractDialog(row.id);
   }
   else
   {
@@ -1423,12 +1427,37 @@ void TransferMarketScene::renderTargetActions(const TargetRow& row)
       openOfferDialog(row);
     if (ImGui::Selectable(LOC("TRANSFER_ACTION_LOAN"), false, dealFlags))
       openLoanDialog(row);
+    if (row.release_clause > 0)
+    {
+      // Paying the clause in full: his club cannot say no.
+      const std::string pay = fmt::sprintf(LOC("TRANSFER_ACTION_PAY_CLAUSE"),
+                                           Format::money(row.release_clause));
+      if (ImGui::Selectable(pay.c_str(), false, dealFlags))
+      {
+        auto& mutable_controller = guiView->getController();
+        const ClubResponse response =
+            mutable_controller.payReleaseClause(row.id);
+        if (response.decision == ClubResponse::Decision::Accept)
+        {
+          refreshOffers();
+          openContractDialog(row.id);
+        }
+        else
+        {
+          showToast(response.reasons.empty()
+                        ? std::string(LOC("TRANSFER_DEAL_FAILED"))
+                        : std::string(LOC(TransferNegotiation::reasonKey(
+                              response.reasons.front()))),
+                    true);
+        }
+      }
+    }
     const bool agreed = talk == ContractKind::Transfer;
     if (agreed && ImGui::Selectable(LOC("TRANSFER_ACTION_TERMS")))
-      openContractDialog(row.id, row.name);
+      openContractDialog(row.id);
     if (talk == ContractKind::PreContract &&
         ImGui::Selectable(LOC("TRANSFER_ACTION_PRE_CONTRACT")))
-      openContractDialog(row.id, row.name);
+      openContractDialog(row.id);
     if (!window.open)
       ImGui::TextColored(Theme::palette().faint, "%s",
                          LOC("TRANSFER_WINDOW_CLOSED_HINT"));
@@ -1498,16 +1527,10 @@ void TransferMarketScene::renderOffersTab()
     // windows and moves to a line under the player's name.
     const char* negotiate = LOC("TRANSFER_NEGOTIATE");
     const char* viewTalks = LOC("TRANSFER_VIEW_TALKS");
-    const char* accept = LOC("TRANSFER_ACCEPT");
-    const char* reject = LOC("TRANSFER_REJECT");
     constexpr UI::ButtonSize COMPACT = UI::ButtonSize::COMPACT;
-    const float actionWidth =
-        std::max({UI::buttonWidth(negotiate, COMPACT),
-                  UI::buttonWidth(viewTalks, COMPACT),
-                  UI::buttonWidth(accept, COMPACT) +
-                      ImGui::GetStyle().ItemSpacing.x +
-                      UI::buttonWidth(reject, COMPACT)}) /
-        scale();
+    const float actionWidth = std::max(UI::buttonWidth(negotiate, COMPACT),
+                                       UI::buttonWidth(viewTalks, COMPACT)) /
+                              scale();
     std::array<UI::Column, 7> columns = {{
         {LOC("TRANSFER_COL_NAME"), 0.0f, 0},
         {LOC("TRANSFER_COL_BIDDER"), 120.0f, 0},
@@ -1557,33 +1580,10 @@ void TransferMarketScene::renderOffersTab()
                              "%s", row.ratio_text.c_str());
         if (UI::cell(mask, 5)) ImGui::TextUnformatted(row.expires_text.c_str());
         UI::cell(mask, 6);
-        if (!row.loan)
-        {
-          // Transfer bids are negotiated in the talks dialog.
-          if (UI::primaryButton(row.awaiting ? viewTalks : negotiate,
-                                ImVec2(0.0f, 0.0f), COMPACT))
-            negotiation_dialog.open(controller, row.offer_id);
-        }
-        else
-        {
-          ImGui::BeginDisabled(!window.open);
-          if (UI::primaryButton(accept, ImVec2(0.0f, 0.0f), COMPACT))
-          {
-            const bool done = controller.acceptIncomingOffer(row.offer_id);
-            showToast(done ? fmt::sprintf(LOC("TRANSFER_LOANED_TOAST"),
-                                          row.player)
-                           : std::string(LOC("TRANSFER_DEAL_FAILED")),
-                      !done);
-            changed = true;
-          }
-          ImGui::EndDisabled();
-          ImGui::SameLine();
-          if (UI::secondaryButton(reject, ImVec2(0.0f, 0.0f), COMPACT))
-          {
-            controller.rejectIncomingOffer(row.offer_id);
-            changed = true;
-          }
-        }
+        // Bids and loan offers are negotiated in the talks dialog.
+        if (UI::primaryButton(row.awaiting ? viewTalks : negotiate,
+                              ImVec2(0.0f, 0.0f), COMPACT))
+          negotiation_dialog.open(controller, row.offer_id);
         ImGui::PopID();
         if (changed) break;
       }
@@ -1636,7 +1636,7 @@ void TransferMarketScene::renderOffersTab()
     ImGui::TextUnformatted(row.date_text.c_str());
     ImGui::TableNextColumn();
     if (row.can_continue && UI::primaryButton(LOC("TRANSFER_ACTION_TERMS")))
-      openContractDialog(row.player_id, row.player);
+      openContractDialog(row.player_id);
     ImGui::PopID();
   }
   ImGui::EndTable();
@@ -1772,6 +1772,11 @@ void TransferMarketScene::renderSquadTab()
       }
       if (row.loan_listed)
         UI::badge(LOC("TRANSFER_BADGE_LOAN"), palette.accent);
+      if (!row.clause_text.empty())
+      {
+        Theme::ScopedText small(Theme::Text::SMALL);
+        ImGui::TextColored(palette.muted, "%s", row.clause_text.c_str());
+      }
       ImGui::TableNextColumn();
       const bool tradable = !row.borrowed && !row.committed;
       ImGui::BeginDisabled(!tradable);
@@ -1800,7 +1805,15 @@ void TransferMarketScene::renderSquadTab()
         changed = true;
       }
       ImGui::SameLine();
-      if (ImGui::SmallButton(LOC("TRANSFER_RELEASE")))
+      // Nobody may leave the squad short of eleven or of a goalkeeper.
+      const bool releasable = *row.release_block == '\0';
+      ImGui::BeginDisabled(!releasable);
+      const bool release = ImGui::SmallButton(LOC("TRANSFER_RELEASE"));
+      ImGui::EndDisabled();
+      if (!releasable &&
+          ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        ImGui::SetTooltip("%s", LOC(row.release_block));
+      if (release)
       {
         release_dialog.requested = true;
         release_dialog.player_id = player.id;
@@ -1972,6 +1985,7 @@ void TransferMarketScene::openOfferDialog(const TargetRow& row)
   offer_dialog.club = row.club;
   offer_dialog.value = row.value;
   offer_dialog.asking_price = row.asking_price;
+  offer_dialog.release_clause = row.release_clause;
   offer_dialog.wage = row.wage;
   offer_dialog.estimate_text = row.overall_text;
   offer_dialog.knowledge = row.knowledge;
@@ -1984,26 +1998,9 @@ void TransferMarketScene::openOfferDialog(const TargetRow& row)
                      BID_ROUNDING);
 }
 
-void TransferMarketScene::openContractDialog(PlayerID player_id,
-                                             const std::string& name)
+void TransferMarketScene::openContractDialog(PlayerID player_id)
 {
-  const auto& controller = guiView->getController();
-  const auto kind = controller.getContractTalkKind(player_id);
-  if (!kind) return;
-  contract_dialog = {};
-  contract_dialog.requested = true;
-  contract_dialog.player_id = player_id;
-  contract_dialog.player = name;
-  contract_dialog.kind = *kind;
-  contract_dialog.demand = controller.getPlayerDemand(player_id, *kind);
-  contract_dialog.projected =
-      controller.getGame()->getTransfers().projectedRole(
-          player_id, controller.getGame()->getManagedTeamId());
-  contract_dialog.offer =
-      TransferNegotiation::demandedOffer(contract_dialog.demand);
-  contract_dialog.offer.weekly_wage = contract_dialog.demand.asking_wage;
-  contract_dialog.offer.release_clause = 0;
-  contract_dialog.rounds_left = controller.getContractRoundsLeft(player_id);
+  contract_talks.open(guiView->getController(), player_id);
 }
 
 void TransferMarketScene::openLoanDialog(const TargetRow& row)
@@ -2070,7 +2067,18 @@ void TransferMarketScene::renderOfferDialog()
     ImGui::PopTextWrapPos();
 
     const int64_t fee = terms.fee;
+    if (offer_dialog.release_clause > 0)
+    {
+      ImGui::PushTextWrapPos(0.0f);
+      ImGui::TextColored(palette.info, "%s",
+                         fmt::sprintf(LOC("TRANSFER_CLAUSE_HINT"),
+                                      Format::money(offer_dialog.release_clause))
+                             .c_str());
+      ImGui::PopTextWrapPos();
+    }
     std::vector<UI::MoneyChip> chips;
+    if (offer_dialog.release_clause > 0)
+      chips.push_back({LOC("TRANSFER_CHIP_CLAUSE"), offer_dialog.release_clause});
     if (offer_dialog.asking_price > 0)
       chips.push_back({LOC("TRANSFER_CHIP_ASKING"), offer_dialog.asking_price});
     chips.push_back({LOC("TRANSFER_CHIP_VALUE"), offer_dialog.value});
@@ -2155,6 +2163,17 @@ void TransferMarketScene::renderOfferDialog()
               ? fmt::sprintf(LOC("TRANSFER_COUNTER_FEE"),
                              Format::moneyFull(response->counter_fee))
               : std::string());
+    if (!offer_dialog.agent_line.empty())
+    {
+      ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale()));
+      if (beginPanel("##offer_agent", LOC("AGENT_SAYS_TITLE")))
+      {
+        ImGui::PushTextWrapPos(0.0f);
+        ImGui::TextUnformatted(offer_dialog.agent_line.c_str());
+        ImGui::PopTextWrapPos();
+        endPanel();
+      }
+    }
   };
   renderDialogColumns(termsColumn, summaryColumn);
 
@@ -2180,7 +2199,7 @@ void TransferMarketScene::renderOfferDialog()
     if (UI::primaryButton(submit))
     {
       ImGui::CloseCurrentPopup();
-      openContractDialog(offer_dialog.player_id, offer_dialog.player);
+      openContractDialog(offer_dialog.player_id);
     }
   }
   else
@@ -2190,217 +2209,15 @@ void TransferMarketScene::renderOfferDialog()
     {
       offer_dialog.response =
           controller.makeTransferOffer(offer_dialog.player_id, terms);
+      const char* line = controller.getAgentPurchaseLine(
+          offer_dialog.player_id, *offer_dialog.response);
+      offer_dialog.agent_line =
+          *line == '\0' ? std::string()
+                         : fmt::sprintf(LOC(line), offer_dialog.player);
       refreshOffers();
     }
     ImGui::EndDisabled();
   }
-  ImGui::EndPopup();
-}
-
-void TransferMarketScene::renderContractDialog()
-{
-  if (contract_dialog.requested)
-  {
-    ImGui::OpenPopup("###transfer_contract");
-    contract_dialog.requested = false;
-  }
-  placeDialog(dialogWidth());
-  const std::string title =
-      fmt::sprintf(LOC("TRANSFER_CONTRACT_TITLE"), contract_dialog.player) +
-      "###transfer_contract";
-  if (!ImGui::BeginPopupModal(
-          title.c_str(), nullptr,
-          ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize))
-    return;
-  auto& controller = guiView->getController();
-  const Theme::Palette& palette = Theme::palette();
-  const TransferNegotiation::ContractDemand& demand = contract_dialog.demand;
-  TransferNegotiation::ContractOffer& offer = contract_dialog.offer;
-
-  const auto termsColumn = [&]
-  {
-    const char* kindKey = contract_dialog.kind == ContractKind::PreContract
-                              ? "TRANSFER_TALK_PRE_CONTRACT"
-                          : contract_dialog.kind == ContractKind::FreeAgent
-                              ? "TRANSFER_TALK_FREE"
-                              : "TRANSFER_TALK_TRANSFER";
-    ImGui::PushTextWrapPos(0.0f);
-    ImGui::TextColored(palette.muted, "%s", LOC(kindKey));
-    ImGui::PopTextWrapPos();
-
-    formLabel(LOC("TRANSFER_FIELD_WAGE"));
-    int64_t wage = offer.weekly_wage;
-    const std::array<UI::MoneyChip, 3> wageChips = {
-        {{LOC("TRANSFER_CHIP_AGENT_ASK"), demand.asking_wage},
-         {LOC("TRANSFER_CHIP_MINUS_5"), scaledWage(demand.asking_wage, 0.95)},
-         {LOC("TRANSFER_CHIP_MINUS_10"),
-          scaledWage(demand.asking_wage, 0.90)}}};
-    if (UI::moneyInput("##wage", wage,
-                       {.maximum = std::numeric_limits<uint32_t>::max(),
-                        .chips = wageChips}))
-      offer.weekly_wage = static_cast<uint32_t>(wage);
-
-    formLabel(LOC("TRANSFER_FIELD_YEARS"));
-    int yearIndex = std::max(0, offer.years - 1);
-    if (UI::segmented("##contract_years", yearIndex,
-                      std::span(YEAR_LABELS).first(demand.max_years)))
-      offer.years = static_cast<uint8_t>(yearIndex + 1);
-
-    formLabel(LOC("TRANSFER_FIELD_SIGNING_BONUS"));
-    int64_t bonus = offer.signing_bonus;
-    std::vector<UI::MoneyChip> bonusChips = {{LOC("TRANSFER_CHIP_NONE"), 0}};
-    if (demand.signing_bonus > 0)
-      bonusChips.push_back(
-          {LOC("TRANSFER_CHIP_ASKED_BONUS"), demand.signing_bonus});
-    if (UI::moneyInput("##bonus", bonus,
-                       {.maximum = std::numeric_limits<uint32_t>::max(),
-                        .chips = bonusChips}))
-      offer.signing_bonus = static_cast<uint32_t>(bonus);
-
-    formLabel(LOC("TRANSFER_FIELD_RELEASE_CLAUSE"));
-    int64_t clause = offer.release_clause;
-    std::vector<UI::MoneyChip> clauseChips = {{LOC("TRANSFER_CHIP_NONE"), 0}};
-    if (demand.wants_release_clause)
-      clauseChips.push_back(
-          {LOC("TRANSFER_CHIP_MAX_CLAUSE"), demand.max_release_clause});
-    if (UI::moneyInput("##clause", clause,
-                       {.maximum = std::numeric_limits<uint32_t>::max(),
-                        .chips = clauseChips}))
-      offer.release_clause = static_cast<uint32_t>(clause);
-    if (ImGui::IsItemHovered())
-      ImGui::SetTooltip("%s", LOC("TRANSFER_CLAUSE_TIP"));
-
-    formLabel(LOC("TRANSFER_FIELD_PROMISE"));
-    ImGui::SetNextItemWidth(-FLT_MIN);
-    const char* promisePreview =
-        contract_dialog.promise_index == 0
-            ? LOC("TRANSFER_PROMISE_NONE")
-            : LOC(squadRoleKey(PROMISE_ROLES[static_cast<size_t>(
-                  contract_dialog.promise_index - 1)]));
-    if (ImGui::BeginCombo("##promise", promisePreview))
-    {
-      if (ImGui::Selectable(LOC("TRANSFER_PROMISE_NONE"),
-                            contract_dialog.promise_index == 0))
-        contract_dialog.promise_index = 0;
-      for (size_t index = 0; index < PROMISE_ROLES.size(); ++index)
-      {
-        if (ImGui::Selectable(
-                LOC(squadRoleKey(PROMISE_ROLES[index])),
-                contract_dialog.promise_index == static_cast<int>(index + 1)))
-          contract_dialog.promise_index = static_cast<int>(index + 1);
-      }
-      ImGui::EndCombo();
-    }
-    offer.promised_role =
-        contract_dialog.promise_index == 0
-            ? std::nullopt
-            : std::optional<SquadRole>(PROMISE_ROLES[static_cast<size_t>(
-                  contract_dialog.promise_index - 1)]);
-  };
-
-  const auto summaryColumn = [&]
-  {
-    const bool demands = beginPanel("##agent_demands", LOC("TRANSFER_AGENT_DEMANDS"));
-    UI::summaryRow(LOC("TRANSFER_FIELD_AGENT_ASK"),
-                   fmt::sprintf(LOC("TRANSFER_PER_WEEK"),
-                                Format::moneyFull(demand.asking_wage))
-                       .c_str());
-    if (ImGui::IsItemHovered())
-      ImGui::SetTooltip("%s", LOC("TRANSFER_AGENT_ASK_TIP"));
-    UI::summaryRow(LOC("TRANSFER_FIELD_YEARS"),
-                   fmt::format("{}-{}", static_cast<int>(demand.min_years),
-                               static_cast<int>(demand.max_years))
-                       .c_str());
-    if (demand.signing_bonus > 0)
-      UI::summaryRow(LOC("TRANSFER_FIELD_SIGNING_BONUS"),
-                     Format::moneyFull(demand.signing_bonus).c_str());
-    if (demand.wants_release_clause)
-      UI::summaryRow(LOC("TRANSFER_FIELD_RELEASE_CLAUSE"),
-                     fmt::sprintf(LOC("TRANSFER_CLAUSE_AT_MOST"),
-                                  Format::money(demand.max_release_clause))
-                         .c_str());
-    UI::summaryRow(LOC("TRANSFER_FIELD_DESIRED_ROLE"),
-                   LOC(squadRoleKey(demand.desired_role)));
-    UI::summaryRow(LOC("TRANSFER_FIELD_PROJECTED_ROLE"),
-                   LOC(squadRoleKey(contract_dialog.projected)));
-    if (demands) endPanel();
-
-    ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
-    const bool panel = beginPanel("##contract_summary", LOC("TRANSFER_SUMMARY_TITLE"));
-    const int64_t yearly = static_cast<int64_t>(offer.weekly_wage) *
-                           static_cast<int64_t>(WEEKS_PER_YEAR);
-    UI::summaryRow(LOC("TRANSFER_SUMMARY_YEARLY"),
-                   Format::moneyFull(yearly).c_str());
-    UI::summaryRow(LOC("TRANSFER_SUMMARY_CONTRACT_TOTAL"),
-                   Format::moneyFull(yearly * offer.years +
-                                     static_cast<int64_t>(offer.signing_bonus))
-                       .c_str(),
-                   nullptr, true);
-    ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale()));
-    UI::budgetImpact(LOC("TRANSFER_WAGE_IMPACT"), wage_room,
-                     wage_room - static_cast<int64_t>(offer.weekly_wage),
-                     LOC("TRANSFER_WAGE_OVER_ROOM"));
-    ImGui::TextColored(
-        palette.faint, "%s",
-        fmt::sprintf(LOC("TRANSFER_ROUNDS_LEFT"), contract_dialog.rounds_left)
-            .c_str());
-    if (panel) endPanel();
-
-    if (contract_dialog.response)
-    {
-      const bool agreed = contract_dialog.response->accepted;
-      ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
-      {
-        Theme::ScopedText heading(Theme::Text::TITLE);
-        ImGui::TextColored(agreed ? palette.positive : palette.negative, "%s",
-                           LOC(agreed ? "TRANSFER_PLAYER_AGREES"
-                                      : "TRANSFER_PLAYER_REFUSES"));
-      }
-      renderReasons(contract_dialog.response->reasons, palette.muted);
-      if (!agreed && contract_dialog.rounds_left > 0)
-        ImGui::TextUnformatted(
-            fmt::sprintf(LOC("TRANSFER_AGENT_NOW_ASKS"),
-                         Format::moneyFull(demand.asking_wage))
-                .c_str());
-      if (contract_dialog.over_budget)
-        ImGui::TextColored(palette.negative, "%s",
-                           LOC("TRANSFER_NOT_ENOUGH_BUDGET"));
-    }
-  };
-  renderDialogColumns(termsColumn, summaryColumn);
-
-  ImGui::Separator();
-  alignActions({LOC("TRANSFER_CANCEL"), LOC("TRANSFER_PROPOSE")});
-  if (UI::secondaryButton(LOC("TRANSFER_CANCEL")) ||
-      ImGui::IsKeyPressed(ImGuiKey_Escape, false))
-    ImGui::CloseCurrentPopup();
-  ImGui::SameLine();
-  ImGui::BeginDisabled(contract_dialog.rounds_left == 0 || offer.years == 0);
-  if (UI::primaryButton(LOC("TRANSFER_PROPOSE")))
-  {
-    const auto result =
-        controller.proposeContract(contract_dialog.player_id, offer);
-    contract_dialog.response = result.response;
-    contract_dialog.over_budget = result.over_budget;
-    contract_dialog.rounds_left = result.rounds_left;
-    if (!result.response.accepted)
-      contract_dialog.demand.asking_wage = result.response.demand.asking_wage;
-    if (result.completed)
-    {
-      showToast(
-          fmt::sprintf(LOC(contract_dialog.kind == ContractKind::PreContract
-                               ? "TRANSFER_PRE_CONTRACT_TOAST"
-                               : "TRANSFER_COMPLETED_TOAST"),
-                       contract_dialog.player));
-      refreshData();
-      ImGui::CloseCurrentPopup();
-    }
-    else
-    {
-      refreshOffers();
-    }
-  }
-  ImGui::EndDisabled();
   ImGui::EndPopup();
 }
 
@@ -2599,9 +2416,14 @@ void TransferMarketScene::renderReleaseDialog()
                         release_dialog.body.c_str(), LOC("TRANSFER_RELEASE"),
                         LOC("TRANSFER_CANCEL"));
   if (result != UI::DialogResult::CONFIRM) return;
-  const bool released =
-      guiView->getController().releasePlayer(release_dialog.player_id);
-  showToast(LOC(released ? "TRANSFER_RELEASED_TOAST" : "TRANSFER_DEAL_FAILED"),
+  GameController& controller = guiView->getController();
+  const GameController::PlayerActionBlock block =
+      controller.getReleaseBlock(release_dialog.player_id);
+  const bool released = controller.releasePlayer(release_dialog.player_id);
+  showToast(LOC(released ? "TRANSFER_RELEASED_TOAST"
+                : block != GameController::PlayerActionBlock::None
+                    ? GameController::playerActionBlockKey(block)
+                    : "TRANSFER_DEAL_FAILED"),
             !released);
   refreshData();
 }

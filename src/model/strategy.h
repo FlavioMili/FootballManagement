@@ -9,6 +9,9 @@
 #pragma once
 
 #include <algorithm>
+#include <vector>
+
+#include "model/tactics.h"
 
 /* TODO: These might later become a JSON file so that they can be modded
  *
@@ -174,6 +177,34 @@ class Strategy
    */
   void setAllOutfieldWeights(float attack, float defense, int radius);
 
+  // --- Roles, duties and the in-possession shape ---
+  /** Every stored slot instruction (all formations used so far). */
+  const std::vector<SlotInstruction>& getSlotInstructions() const
+  {
+    return slots;
+  }
+  /** Replaces the slot instructions (persistence). */
+  void setSlotInstructions(std::vector<SlotInstruction> instructions);
+  /**
+   * Instruction of the slot at @p anchor (lineup coordinates): the nearest
+   * stored one within TacticsTuning::SLOT_MATCH_DISTANCE, else nullptr.
+   */
+  const SlotInstruction* findSlot(Vector2F anchor) const;
+  /** Stores the instruction of the slot at its anchor (replacing it). */
+  void setSlot(const SlotInstruction& instruction);
+  TacticalRole getKeeperRole() const { return keeper_role; }
+  void setKeeperRole(TacticalRole role);
+
+  /**
+   * Instructions against players of the next opponent. Not saved with the
+   * tactic: the club's opposition plan is the saved copy and refreshes them.
+   */
+  const std::vector<PlayerInstruction>& getOppositionOrders() const
+  {
+    return opposition_orders;
+  }
+  void setOppositionOrders(std::vector<PlayerInstruction> orders);
+
  private:
   // Global sliders affecting all players
   StrategySliders sliders;
@@ -181,4 +212,8 @@ class Strategy
   // Per-role weight definitions
   RoleWeights goalkeeper = {0.0f, 1.0f, 1};  // single goalkeeper
   RoleWeights outfield[10];                  // 10 outfield players
+
+  std::vector<SlotInstruction> slots;
+  TacticalRole keeper_role = TacticalRole::Standard;
+  std::vector<PlayerInstruction> opposition_orders;
 };

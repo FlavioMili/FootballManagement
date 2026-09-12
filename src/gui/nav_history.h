@@ -50,6 +50,10 @@ enum class NavSection : uint8_t
   AWARDS,
   RECORDS,
   PLANNING,
+  RESERVES,
+  CALL_UPS,
+  NEWS,
+  TIMELINE,
   NONE
 };
 

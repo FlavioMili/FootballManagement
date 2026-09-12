@@ -43,6 +43,7 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "backends/imgui_impl_sdl3.h"
@@ -94,11 +95,17 @@ class GameFlowTest_GUIFlowLifecycle_Test
   }
 
   static MatchEngine* engine(MatchScene& scene) { return scene.engine.get(); }
+  static std::pair<TeamID, TeamID> teams(const MatchScene& scene)
+  {
+    return {scene.home_team_id, scene.away_team_id};
+  }
   static bool finished(const MatchScene& scene) { return scene.match_finished; }
   static bool paused(const MatchScene& scene) { return scene.is_paused; }
-  static void setSpeed(MatchScene& scene, float speed)
+  /** What the speed and highlights buttons choose. */
+  static void setPlayback(MatchScene& scene, float speed, bool highlights)
   {
-    scene.match_speed = speed;
+    scene.setPlaybackSpeed(speed);
+    scene.setHighlightsOnly(highlights);
   }
   static void setPaused(MatchScene& scene, bool paused)
   {
@@ -131,10 +138,9 @@ class GameFlowTest_GUIFlowLifecycle_Test
     }
     return false;
   }
-  static void openContractDialog(TransferMarketScene& scene, PlayerID player,
-                                 const std::string& name)
+  static void openContractDialog(TransferMarketScene& scene, PlayerID player)
   {
-    scene.openContractDialog(player, name);
+    scene.openContractDialog(player);
   }
   static size_t targetCount(const TransferMarketScene& scene)
   {
@@ -801,6 +807,10 @@ const char* sectionName(NavSection section)
       return "records";
     case NavSection::PLANNING:
       return "planning";
+    case NavSection::RESERVES:
+      return "reserves";
+    case NavSection::CALL_UPS:
+      return "call_ups";
     case NavSection::NONE:
       return "none";
   }
@@ -862,13 +872,17 @@ SceneID sectionScene(NavSection section)
       return SceneID::RECORDS;
     case NavSection::PLANNING:
       return SceneID::PLANNING;
+    case NavSection::RESERVES:
+      return SceneID::RESERVES;
+    case NavSection::CALL_UPS:
+      return SceneID::CALL_UPS;
     case NavSection::NONE:
       break;
   }
   return SceneID::GAME_MENU;
 }
 
-constexpr std::array<NavSection, 26> ALL_SECTIONS = {
+constexpr std::array<NavSection, 27> ALL_SECTIONS = {
     NavSection::HOME,          NavSection::INBOX,
     NavSection::CLUB,          NavSection::SQUAD,
     NavSection::LINEUP,        NavSection::TACTICS,
@@ -881,7 +895,8 @@ constexpr std::array<NavSection, 26> ALL_SECTIONS = {
     NavSection::COMPARE,       NavSection::DELEGATION,
     NavSection::DATA_HUB,      NavSection::OPPOSITION,
     NavSection::INTERNATIONAL, NavSection::AWARDS,
-    NavSection::RECORDS,       NavSection::PLANNING};
+    NavSection::RECORDS,       NavSection::PLANNING,
+    NavSection::RESERVES};
 
 void openSection(Tester& player, NavSection section)
 {
@@ -904,6 +919,22 @@ void tour(Tester& player, const std::string& prefix, bool timed)
 }
 
 /** Everything a live managed match needs, from kick-off to Finish Match. */
+/** How a managed match is played through MatchScene. */
+enum class MatchPlay
+{
+  SHOWCASE, /**< Live, with presentation shots at set minutes. */
+  LIVE,     /**< Live highlights to full time, resumed at every break. */
+  QUICK,    /**< The Quick result button right after kick-off. */
+};
+
+/** Match controls found once and clicked where they are afterwards. */
+struct MatchControls
+{
+  /** Pause, Resume and Finish share the first slot. */
+  std::optional<ImVec2> first_slot;
+  std::optional<ImVec2> quick_result;
+};
+
 struct LiveMatchResult
 {
   bool played = false;
@@ -928,14 +959,53 @@ class PlaytestJourney : public ::testing::Test
   }
 };
 
-/**
- * Plays one managed match through MatchScene. Presentation shots only when
- * @p showcase (the first match); otherwise fast-forwards headlessly. Uses
- * the real Finish Match button.
- */
-LiveMatchResult playLiveMatch(Tester& player, bool showcase,
-                              std::optional<ImVec2>& finishPoint)
+/** True while any popup (a matchday dialog) is open. */
+bool anyPopupOpen()
 {
+  return ImGui::IsPopupOpen(
+      "", ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
+}
+
+/**
+ * Closes the matchday dialogs with Escape (saying nothing), like a manager
+ * who wants to get on with the match. Two frames per round: a talk that
+ * lapses closes on the first and the next talk opens on the second.
+ */
+void dismissMatchDialogs(Tester& player)
+{
+  for (int attempt = 0; attempt < 4; ++attempt)
+  {
+    player.frames(2);
+    if (!anyPopupOpen()) return;
+    player.key(ImGuiKey_Escape);
+  }
+  EXPECT_FALSE(anyPopupOpen()) << "a matchday dialog would not close";
+}
+
+/** Finds a match control by its label in the top of the screen. */
+std::optional<ImVec2> findMatchControl(Tester& player, const char* label)
+{
+  const ImVec2 display = ImGui::GetIO().DisplaySize;
+  auto items = player.discover({0.0f, 0.0f}, {display.x, display.y * 0.3f});
+  const Item* found = Tester::find(items, label);
+  if (found == nullptr)
+  {
+    items = player.discover();
+    found = Tester::find(items, label);
+  }
+  return found != nullptr ? std::optional<ImVec2>(found->point) : std::nullopt;
+}
+
+/**
+ * Plays one managed match through MatchScene with the real match controls:
+ * Resume at every break and Finish at full time, or Quick result right
+ * after kick-off. Presentation shots only for MatchPlay::SHOWCASE. Live
+ * matches play highlights at the fastest speed, as a hurried player would.
+ */
+LiveMatchResult playLiveMatch(Tester& player, MatchPlay mode,
+                              MatchControls& controls)
+{
+  const bool showcase = mode == MatchPlay::SHOWCASE;
   LiveMatchResult result;
   GameController& controller = player.controller;
   auto* hub = dynamic_cast<MainGameScene*>(player.view.getBaseScene());
@@ -976,6 +1046,7 @@ LiveMatchResult playLiveMatch(Tester& player, bool showcase,
   EXPECT_NE(engine, nullptr) << "match did not start";
   if (engine == nullptr) return result;
   const GameDateValue matchDate = controller.getCurrentDate();
+  const auto [homeId, awayId] = Bridge::teams(*match);
 
   if (showcase)
   {
@@ -989,137 +1060,154 @@ LiveMatchResult playLiveMatch(Tester& player, bool showcase,
     Bridge::setView(*match, MatchViewMode::PITCH_2D);
   }
 
-  Bridge::setSpeed(*match, 5.0f);
   const auto simulateStart = Clock::now();
-  // The match stops at half-time (and the other breaks) until the manager
-  // presses Resume, like a real user does here.
-  const auto resumeAfterBreak = [&]
+  if (mode == MatchPlay::QUICK)
   {
-    player.frames(1);
-    // The half-time talk opens first: the manager closes it with Escape
-    // (saying nothing), then resumes.
-    for (int attempt = 0;
-         attempt < 3 && ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId |
-                                                   ImGuiPopupFlags_AnyPopupLevel);
-         ++attempt)
-      player.key(ImGuiKey_Escape);
-    // Pause, Resume and Finish share the first slot of the match controls:
-    // found once, then clicked where it is.
-    if (!finishPoint)
-    {
-      const ImVec2 display = ImGui::GetIO().DisplaySize;
-      const auto items =
-          player.discover({0.0f, 0.0f}, {display.x, display.y * 0.3f});
-      if (const Item* resume = Tester::find(items, LOC("MATCH_RESUME")))
-        finishPoint = resume->point;
-    }
-    EXPECT_TRUE(finishPoint.has_value()) << "Resume button not found at a break";
-    if (!finishPoint) return false;
-    player.click(*finishPoint);
-    player.frames(1);
-    EXPECT_FALSE(Bridge::paused(*match)) << "Resume did not restart play";
-    return !Bridge::paused(*match);
-  };
-  const auto runUntil = [&](float minute)
-  {
-    const auto begun = Clock::now();
-    while (!Bridge::finished(*match) &&
-           engine->getMatchTimeMinutes() < minute &&
-           Clock::now() - begun < std::chrono::seconds(60))
-    {
-      if (Bridge::paused(*match) && !resumeAfterBreak()) break;
-      Bridge::update(player.view, 0.1f);
-    }
-  };
-
-  if (showcase)
-  {
-    runUntil(28.0f);
-    player.frame();
-    player.shot("j31_match_2d_28min");
-    Bridge::showSubstitutions(*match, true);
+    // The pre-match talk opens at kick-off: skipped, then Quick result.
+    player.step = "quick result";
     Bridge::setPaused(*match, true);
-    player.frames(3);
-    player.shot("j32_match_substitutions");
-    Bridge::showSubstitutions(*match, false);
-    Bridge::setPaused(*match, false);
-    player.frames(2);
-    Bridge::setView(*match, MatchViewMode::BROADCAST_3D);
-    player.frames(3);
-    player.shot("j33_match_3d_broadcast");
-    player.measure("match 3D broadcast");
-    runUntil(40.0f);
-    Bridge::setCamera(*match, MatchCameraMode::TACTICAL);
-    player.frames(3);
-    player.shot("j34_match_3d_tactical");
-    Bridge::setCamera(*match, MatchCameraMode::END);
-    player.frames(3);
-    player.shot("j35_match_3d_end");
-    Bridge::setCamera(*match, MatchCameraMode::PLAYER_FOLLOW);
-    Bridge::showNames(*match, true);
-    player.frames(3);
-    player.shot("j36_match_3d_follow_names");
-    Bridge::showNames(*match, false);
-    Bridge::setCamera(*match, MatchCameraMode::BROADCAST);
-    int guard = 0;
-    while (!Bridge::finished(*match) &&
-           engine->getState() != MatchState::HALF_TIME && guard++ < 20000)
-      Bridge::update(player.view, 0.1f);
-    player.frames(2);
-    player.shot("j37_match_half_time");
-    runUntil(70.0f);
-    Bridge::setView(*match, MatchViewMode::PITCH_2D);
-    player.frames(2);
-    player.shot("j38_match_2d_70min");
+    dismissMatchDialogs(player);
+    if (!controls.quick_result)
+      controls.quick_result =
+          findMatchControl(player, LOC("MATCH_QUICK_RESULT"));
+    EXPECT_TRUE(controls.quick_result.has_value())
+        << "Quick result button not found";
+    if (!controls.quick_result) return result;
+    // The scene closes by itself once the result is in: nothing of it is
+    // touched after this click.
+    player.click(*controls.quick_result);
+    match = nullptr;
+    engine = nullptr;
   }
-  runUntil(1000.0f);
-  result.simulate_ms = millisecondsSince(simulateStart);
-  EXPECT_TRUE(Bridge::finished(*match)) << "match never reached full time";
-  player.frames(2);
-  if (showcase) player.shot("j39_match_full_time");
-
-  result.home_goals = engine->getHomeScore();
-  result.away_goals = engine->getAwayScore();
-  const MatchStats& stats = engine->getStats();
-  result.summary = std::format(
-      "shots {}-{} (on target {}-{}), xG {:.2f}-{:.2f}, possession "
-      "{:.0f}-{:.0f}%, passes {}/{} - {}/{}, events {}",
-      stats.homeShots, stats.awayShots, stats.homeOnTarget, stats.awayOnTarget,
-      stats.homeShotXG, stats.awayShotXG, stats.homePossession,
-      stats.awayPossession, stats.homePassesCompleted,
-      stats.homePassesAttempted, stats.awayPassesCompleted,
-      stats.awayPassesAttempted, engine->getEvents().size());
-
-  // The real Finish button of the match controls.
-  player.step = "finish match";
-  if (!finishPoint)
+  else
   {
-    const ImVec2 display = ImGui::GetIO().DisplaySize;
-    auto items = player.discover({0.0f, 0.0f}, {display.x, display.y * 0.3f});
-    const Item* finish = Tester::find(items, LOC("MATCH_FINISH"));
-    if (finish == nullptr)
+    Bridge::setPlayback(*match, MatchSceneTuning::Controls::SPEED_STEPS.back(),
+                        true);
+    // The match stops at half-time (and the other breaks) until the manager
+    // presses Resume, like a real user does here.
+    const auto resumeAfterBreak = [&]
     {
-      items = player.discover();
-      finish = Tester::find(items, LOC("MATCH_FINISH"));
+      // The half-time talk opens first (and an unanswered pre-match talk
+      // lapses): the manager closes it, then resumes.
+      dismissMatchDialogs(player);
+      if (!controls.first_slot)
+        controls.first_slot = findMatchControl(player, LOC("MATCH_RESUME"));
+      EXPECT_TRUE(controls.first_slot.has_value())
+          << "Resume button not found at a break";
+      if (!controls.first_slot) return false;
+      player.click(*controls.first_slot);
+      player.frames(1);
+      EXPECT_FALSE(Bridge::paused(*match))
+          << "Resume did not restart play (state "
+          << static_cast<int>(engine->getState()) << ", minute "
+          << engine->getMatchTimeMinutes() << ", popup open "
+          << anyPopupOpen() << ")";
+      return !Bridge::paused(*match);
+    };
+    const auto runUntil = [&](float minute)
+    {
+      const auto begun = Clock::now();
+      while (!Bridge::finished(*match) &&
+             engine->getMatchTimeMinutes() < minute &&
+             Clock::now() - begun < std::chrono::seconds(60))
+      {
+        if (Bridge::paused(*match) && !resumeAfterBreak()) break;
+        Bridge::update(player.view, 0.1f);
+      }
+    };
+
+    if (showcase)
+    {
+      runUntil(28.0f);
+      player.frame();
+      player.shot("j31_match_2d_28min");
+      Bridge::showSubstitutions(*match, true);
+      Bridge::setPaused(*match, true);
+      player.frames(3);
+      player.shot("j32_match_substitutions");
+      Bridge::showSubstitutions(*match, false);
+      Bridge::setPaused(*match, false);
+      player.frames(2);
+      Bridge::setView(*match, MatchViewMode::BROADCAST_3D);
+      player.frames(3);
+      player.shot("j33_match_3d_broadcast");
+      player.measure("match 3D broadcast");
+      runUntil(40.0f);
+      Bridge::setCamera(*match, MatchCameraMode::TACTICAL);
+      player.frames(3);
+      player.shot("j34_match_3d_tactical");
+      Bridge::setCamera(*match, MatchCameraMode::END);
+      player.frames(3);
+      player.shot("j35_match_3d_end");
+      Bridge::setCamera(*match, MatchCameraMode::PLAYER_FOLLOW);
+      Bridge::showNames(*match, true);
+      player.frames(3);
+      player.shot("j36_match_3d_follow_names");
+      Bridge::showNames(*match, false);
+      Bridge::setCamera(*match, MatchCameraMode::BROADCAST);
+      int guard = 0;
+      while (!Bridge::finished(*match) &&
+             engine->getState() != MatchState::HALF_TIME && guard++ < 20000)
+        Bridge::update(player.view, 0.1f);
+      player.frames(2);
+      player.shot("j37_match_half_time");
+      runUntil(70.0f);
+      Bridge::setView(*match, MatchViewMode::PITCH_2D);
+      player.frames(2);
+      player.shot("j38_match_2d_70min");
     }
-    if (finish != nullptr) finishPoint = finish->point;
+    runUntil(1000.0f);
+    EXPECT_TRUE(Bridge::finished(*match)) << "match never reached full time";
+    player.frames(2);
+    if (showcase) player.shot("j39_match_full_time");
+
+    result.home_goals = engine->getHomeScore();
+    result.away_goals = engine->getAwayScore();
+    const MatchStats& stats = engine->getStats();
+    result.summary = std::format(
+        "shots {}-{} (on target {}-{}), xG {:.2f}-{:.2f}, possession "
+        "{:.0f}-{:.0f}%, passes {}/{} - {}/{}, events {}",
+        stats.homeShots, stats.awayShots, stats.homeOnTarget,
+        stats.awayOnTarget, stats.homeShotXG, stats.awayShotXG,
+        stats.homePossession, stats.awayPossession, stats.homePassesCompleted,
+        stats.homePassesAttempted, stats.awayPassesCompleted,
+        stats.awayPassesAttempted, engine->getEvents().size());
+
+    // The real Finish button of the match controls.
+    player.step = "finish match";
+    if (!controls.first_slot)
+      controls.first_slot = findMatchControl(player, LOC("MATCH_FINISH"));
+    EXPECT_TRUE(controls.first_slot.has_value()) << "Finish button not found";
+    if (!controls.first_slot) return result;
+    player.click(*controls.first_slot);
+    player.frames(2);
   }
-  EXPECT_TRUE(finishPoint.has_value()) << "Finish button not found";
-  if (!finishPoint) return result;
-  player.click(*finishPoint);
-  player.frames(2);
-  // Finish returns to the hub, which simulates the rest of the day on its
-  // Continue worker and then shows the match report.
+  // Finish (or the quick result) returns to the hub, which simulates the
+  // rest of the day on its Continue worker and then shows the match report.
   const auto finishStart = Clock::now();
   while ((player.activeId() != SceneID::MATCH_REPORT || hub->isContinuing()) &&
          Clock::now() - finishStart < LOAD_DEADLINE)
     player.frame();
+  result.simulate_ms = millisecondsSince(simulateStart);
   player.frames(2);
   EXPECT_FALSE(hub->isContinuing()) << "the rest of the match day never ended";
   // Back (Escape) from the report returns to the club hub.
   EXPECT_EQ(player.activeId(), SceneID::MATCH_REPORT)
       << "Finish Match did not show the match report";
   if (showcase) player.shot("j39_match_report_after_finish");
+  if (mode == MatchPlay::QUICK)
+  {
+    const Match* played =
+        controller.getGame()->getCalendar().findMatch(matchDate, homeId, awayId);
+    EXPECT_TRUE(played != nullptr && played->isPlayed())
+        << "Quick result did not record the match";
+    if (played != nullptr)
+    {
+      result.home_goals = played->getHomeScore();
+      result.away_goals = played->getAwayScore();
+    }
+    result.summary = "quick result";
+  }
   player.step = "close match report";
   player.key(ImGuiKey_Escape);
   player.frames(2);
@@ -1481,8 +1569,7 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
         openSection(player, NavSection::TRANSFERS);
         if (auto* market = dynamic_cast<TransferMarketScene*>(player.active()))
         {
-          Bridge::openContractDialog(*market, target->player_id,
-                                     targetPlayer.getName());
+          Bridge::openContractDialog(*market, target->player_id);
           player.frames(3);
           player.shot("j42_transfer_contract_dialog");
           player.key(ImGuiKey_Escape);
@@ -1603,7 +1690,7 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
   ASSERT_TRUE(isMatchDay()) << "Continue never reached a managed match";
   player.shot("j29_home_matchday");
 
-  std::optional<ImVec2> finishPoint;
+  MatchControls matchControls;
   log.line("\n## Managed matches\n");
   const auto recordMatch =
       [&](const LiveMatchResult& result, const GameDateValue& date)
@@ -1632,7 +1719,7 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
   };
 
   GameDateValue firstMatchDate = controller.getCurrentDate();
-  auto firstResult = playLiveMatch(player, true, finishPoint);
+  auto firstResult = playLiveMatch(player, MatchPlay::SHOWCASE, matchControls);
   ASSERT_TRUE(firstResult.played);
   recordMatch(firstResult, firstMatchDate);
   // A live match should feed the report and top scorers like simulated ones.
@@ -1667,28 +1754,35 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
   }
   player.shot("j46_home_after_first_match");
   metrics.line(
-      "\nLive match fast-forward (5x, headless, first match incl. "
-      "shots): {:.0f} ms\n",
+      "\nLive match (30x highlights, first match incl. shots, to the "
+      "report): {:.0f} ms\n",
       firstResult.simulate_ms);
 
   // ---- 10. Two months through the GUI --------------------------------------
   const int startDay = dayNumber(controller.getCurrentDate());
+  // One more match live (breaks, Resume and Finish without the showcase's
+  // extra frames); the others through Quick result, which is cheaper and
+  // ends in the same match day and report.
   int liveMatches = 1;
+  int quickMatches = 0;
   std::vector<double> liveSimulationMs;
+  std::vector<double> quickMs;
   bool monthShot = false;
   while (dayNumber(controller.getCurrentDate()) - startDay < GUI_MONTHS_DAYS)
   {
     if (isMatchDay())
     {
       const GameDateValue date = controller.getCurrentDate();
-      const auto result = playLiveMatch(player, false, finishPoint);
+      const bool live = liveMatches < 2;
+      const auto result = playLiveMatch(
+          player, live ? MatchPlay::LIVE : MatchPlay::QUICK, matchControls);
       if (!result.played) break;
-      liveSimulationMs.push_back(result.simulate_ms);
+      (live ? liveSimulationMs : quickMs).push_back(result.simulate_ms);
+      ++(live ? liveMatches : quickMatches);
       if (result.gates > 0)
         log.line("- {}: lineup gate blocked kick-off (auto-fix used)",
                  dateText(date));
       recordMatch(result, date);
-      ++liveMatches;
     }
     else if (guiContinue() <= 0)
     {
@@ -1703,10 +1797,13 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
     }
   }
   const Stats liveStats = summarize(liveSimulationMs);
+  const Stats quickStats = summarize(quickMs);
   metrics.line(
-      "\nLive matches played through the GUI: {} ; headless 5x "
-      "fast-forward per match median {:.0f} ms, worst {:.0f} ms\n",
-      liveMatches, liveStats.median, liveStats.worst);
+      "\nMatches played through the GUI: {} live (30x highlights, kick-off "
+      "to report: median {:.0f} ms, worst {:.0f} ms), {} by Quick result "
+      "(median {:.0f} ms, worst {:.0f} ms)\n",
+      liveMatches, liveStats.median, liveStats.worst, quickMatches,
+      quickStats.median, quickStats.worst);
   tour(player, "j6_month2_", true);
   if (auto* standings = dynamic_cast<StandingsScene*>(
           (openSection(player, NavSection::STANDINGS), player.active())))

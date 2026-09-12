@@ -124,6 +124,7 @@ std::vector<ShotRecord> extractShots(std::span<const MatchEvent> events)
       shot.x = event.isHomeTeam ? event.position.x : 1.0f - event.position.x;
       shot.y = event.isHomeTeam ? event.position.y : 1.0f - event.position.y;
       shot.xg = event.xg;
+      shot.header = event.detail == MatchEventDetail::HEADER;
       shots.push_back(shot);
       open = shots.size() - 1;
       continue;

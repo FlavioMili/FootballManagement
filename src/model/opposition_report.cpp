@@ -23,7 +23,8 @@ constexpr std::array<const char*,
                      static_cast<std::size_t>(OppositionInstruction::COUNT)>
     INSTRUCTION_KEYS = {
         "OPPOSITION_INSTRUCTION_NONE", "OPPOSITION_INSTRUCTION_TIGHT",
-        "OPPOSITION_INSTRUCTION_PRESS", "OPPOSITION_INSTRUCTION_WEAK_FOOT"};
+        "OPPOSITION_INSTRUCTION_PRESS", "OPPOSITION_INSTRUCTION_WEAK_FOOT",
+        "OPPOSITION_INSTRUCTION_DOUBLE"};
 
 std::string oneDecimal(float value) { return std::format("{:.1f}", value); }
 std::string twoDecimals(float value) { return std::format("{:.2f}", value); }

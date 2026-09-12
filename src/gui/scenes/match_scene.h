@@ -20,8 +20,10 @@
 #include "audio/match_audio.h"
 #include "gui/gui_scene.h"
 #include "gui/render/imatch_renderer.h"
-#include "gui/scenes/match_scene_tuning.h"
+#include "gui/render/match_play_overlay.h"
 #include "gui/scenes/match_analysis_panel.h"
+#include "gui/scenes/match_play_controller.h"
+#include "gui/scenes/match_scene_tuning.h"
 #include "gui/scenes/match_subs_panel.h"
 #include "gui/scenes/match_tactics_panel.h"
 #include "gui/scenes/match_touchline.h"
@@ -44,6 +46,11 @@ enum class MatchViewMode : std::uint8_t
  * player's persistent condition, the AI substitutes only for the opponent
  * unless the manager lets the assistant handle changes, and the finished
  * match is recorded with its full engine report and consequences.
+ *
+ * Play mode: the manager can play his club's match himself (Play, or Take
+ * control while watching), driving one footballer at a time on the same
+ * simulation (see MatchPlayController), and hand it back to the AI at a
+ * stoppage or from the pause menu.
  */
 class MatchScene : public GUIScene
 {
@@ -54,6 +61,7 @@ class MatchScene : public GUIScene
   void handleEvent(const SDL_Event& event) override;
   void update(float deltaTime) override;
   void render() override;
+  void onExit() override;
   SceneID getID() const override;
 
  private:
@@ -157,6 +165,37 @@ class MatchScene : public GUIScene
 #ifdef DEBUG
   bool show_ai_debug = false;
 #endif
+
+  // --- Play mode -------------------------------------------------------------
+  /** Devices, buttons and the active footballer of the human's side. */
+  MatchPlayController play;
+  /** "Take control" asked: the paused match waits on the confirmation. */
+  bool play_confirm = false;
+  /** The play-mode pause menu is open. */
+  bool play_menu = false;
+  /** Matchday dialog to open once the pause menu has closed. */
+  enum class PlayMenuNext : std::uint8_t
+  {
+    NONE,
+    TACTICS,
+    SUBSTITUTIONS
+  };
+  PlayMenuNext play_menu_next = PlayMenuNext::NONE;
+  /** How the match was being watched, restored on hand-back. */
+  float watch_speed = 1.0f;
+  bool watch_highlights = false;
+  MatchCameraMode watch_camera = MatchCameraMode::BROADCAST;
+  bool watch_focus = false;
+  /** ImGui keyboard navigation is off while the keys drive the pitch. */
+  bool nav_keyboard_suspended = false;
+  /** Damped centre of the zoomed 2D play view (normalised pitch). */
+  Vector2F play_follow{MatchTuning::Pitch::CENTRE, MatchTuning::Pitch::CENTRE};
+  bool play_follow_ready = false;
+  /** Stick-to-pitch mapping of the view on screen (last frame). */
+  PlayScreenBasis play_basis;
+  /** Render snapshot refilled every frame (no per-frame allocation). */
+  MatchRenderSnapshot snapshot;
+
   std::string substitution_status;
   /** Feed rows: indices into the engine's events (key moments by default). */
   std::vector<std::size_t> visible_events;
@@ -202,6 +241,36 @@ class MatchScene : public GUIScene
 
   /** Pauses the managed club's match when it has just reached a break. */
   void pauseAtBreak();
+
+  // Play mode (match_scene_play.cpp).
+  [[nodiscard]] MatchPlayController::Options playOptions() const;
+  /** The managed club's live match can be taken over now. */
+  [[nodiscard]] bool canTakeControl() const;
+  /** Pauses and asks for confirmation before control is taken. */
+  void requestTakeControl();
+  /** Hands the managed side's active footballer to the human. */
+  void startPlaying();
+  /** At a stoppage or while paused the AI can take the team back. */
+  [[nodiscard]] bool canHandBack() const;
+  void handBack();
+  void openPlayMenu();
+  void closePlayMenu();
+  /** Device input and switching before the engine advances. */
+  void updatePlay(float deltaTime);
+  /** ImGui keyboard navigation off while the keys drive the pitch. */
+  void suspendKeyboardNavigation(bool suspend);
+  /** Marker, labels, power bar and radar over the view; stick mapping. */
+  void renderPlayOverlay(const IMatchRenderer& renderer, ImVec2 viewMin,
+                         ImVec2 viewMax);
+  /** Zoomed 2D viewport following the ball and the active footballer. */
+  [[nodiscard]] MatchViewport playViewport2D(const MatchViewport& fitted,
+                                             ImVec2 viewMin, ImVec2 viewMax);
+  /** Play / Take control / Hand back / Menu buttons (one row). */
+  void renderPlayButtons();
+  void renderPlayConfirm();
+  void renderPlayMenu();
+  /** Keyboard and gamepad layout, as text rows. */
+  void renderPlayControlsHelp();
   void setPlaybackSpeed(float speed);
   void setHighlightsOnly(bool enabled);
   void setViewMode(MatchViewMode mode);

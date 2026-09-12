@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -158,6 +159,31 @@ size_t finalsSize(size_t pool);
 /** Squad sizes: 24 for a window, 26 for a finals tournament. */
 inline constexpr size_t WINDOW_SQUAD = 24;
 inline constexpr size_t FINALS_SQUAD = 26;
+/** A head coach calls up at least this many players, two goalkeepers. */
+inline constexpr size_t MIN_CALL_UPS = 18;
+inline constexpr size_t MIN_CALL_UP_GOALKEEPERS = 2;
+/** Youngest age for a senior call-up. */
+inline constexpr int MIN_SQUAD_AGE = 17;
+
+/** @brief Why a squad chosen by a head coach was refused. */
+enum class CallUpResult : uint8_t
+{
+  Ok = 0,
+  NoSquad,         /*!< No call-up is due for this nation. */
+  Locked,          /*!< The players have already reported. */
+  TooMany,
+  TooFew,
+  NeedGoalkeepers,
+  Ineligible,      /*!< Wrong nation, too young, injured or tied elsewhere. */
+  Duplicate
+};
+
+/** Language key of a call-up verdict. */
+const char* callUpResultKey(CallUpResult result);
+
+/** Selection score of a player: ability, form, condition and caps. */
+double selectionScore(const Player& player, uint16_t caps,
+                      const StatsConfig& config);
 
 /**
  * @brief Picks a squad of @p size: three goalkeepers and a balanced mix of
@@ -241,7 +267,16 @@ class NationalTeams
     uint8_t time_zones = 0;
   };
 
+  /** A played match and the home side's expected score before it. */
+  using ResultSink =
+      std::function<void(const International::Fixture&, double home_expected)>;
+  /** A finals tournament was drawn (qualifiers known) or decided. */
+  using FinalsSink = std::function<void(const Finals&, bool decided)>;
+
   explicit NationalTeams(std::shared_ptr<GameData> gamedata);
+
+  void setResultSink(ResultSink sink) { result_sink = std::move(sink); }
+  void setFinalsSink(FinalsSink sink) { finals_sink = std::move(sink); }
 
   /**
    * @brief Daily processing: plans the season's international calendar,
@@ -266,6 +301,33 @@ class NationalTeams
   /** Whether @p player may be picked by @p nation on @p date. */
   bool isEligibleFor(const Player& player, Language nation,
                      const GameDateValue& date) const;
+
+  // ---------------- Head coach ----------------
+  /** The nation's announced or current squad on @p date (nullptr if none). */
+  const Squad* squadOf(Language nation, const GameDateValue& date) const;
+  /** Players the nation may call up on @p date (injured ones included),
+   * sorted by ID. */
+  std::vector<PlayerID> eligiblePool(Language nation,
+                                     const GameDateValue& date) const;
+  /** Checks a squad a head coach wants to call up for the announced window. */
+  International::CallUpResult validateSquad(
+      Language nation, const std::vector<PlayerID>& players,
+      const GameDateValue& today) const;
+  /** Replaces the announced squad once validateSquad() accepts it. */
+  International::CallUpResult setSquad(Language nation,
+                                       std::vector<PlayerID> players,
+                                       const GameDateValue& today);
+  /** Names the nation's head coach. */
+  void setCoach(Language nation, std::string name);
+  /** Squad limit of a call-up (window or finals). */
+  static size_t squadLimit(const Squad& squad)
+  {
+    return squad.finals ? International::FINALS_SQUAD
+                        : International::WINDOW_SQUAD;
+  }
+  /** Expected score of @p home against @p away (Elo, home advantage unless
+   * @p neutral). */
+  double expectedScore(Language home, Language away, bool neutral) const;
 
   // ---------------- Queries ----------------
   const std::vector<Team>& getTeams() const { return teams; }
@@ -345,4 +407,6 @@ class NationalTeams
   std::unordered_map<PlayerID, std::pair<GameDateValue, GameDateValue>> duty;
   uint16_t planned_season = 0;
   uint32_t next_fixture_id = 1;
+  ResultSink result_sink;
+  FinalsSink finals_sink;
 };

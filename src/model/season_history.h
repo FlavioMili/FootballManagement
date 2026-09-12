@@ -33,6 +33,9 @@ struct SeasonHistoryEntry
   uint16_t start_year = 0; /*!< Calendar year the season started. */
   MatchType competition_type = MatchType::LEAGUE;
   LeagueID competition_id = 0;
+  /** Fallback name; "@KEY" (a language key) for continental competitions.
+   * Screens name leagues and cups from competition_id in the current
+   * language. */
   std::string competition_name;
   TeamID champion_id = 0;  /*!< 0 when undecided. */
   TeamID runner_up_id = 0; /*!< 0 when undecided. */

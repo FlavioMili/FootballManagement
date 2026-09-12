@@ -23,12 +23,16 @@
 #include "global/global.h"
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
+#include "gui/input_actions.h"
 #include "gui/scenes/awards_scene.h"
 #include "gui/scenes/calendar_scene.h"
+#include "gui/scenes/callup_scene.h"
 #include "gui/scenes/club_scene.h"
 #include "gui/scenes/data_hub_scene.h"
 #include "gui/scenes/delegation_scene.h"
 #include "gui/scenes/fixtures_scene.h"
+#include "gui/scenes/about_scene.h"
+#include "gui/scenes/help_scene.h"
 #include "gui/scenes/inbox_scene.h"
 #include "gui/scenes/international_scene.h"
 #include "gui/scenes/lineup_scene.h"
@@ -37,12 +41,14 @@
 #include "gui/scenes/manager_scene.h"
 #include "gui/scenes/match_report_scene.h"
 #include "gui/scenes/medical_scene.h"
+#include "gui/scenes/news_scene.h"
 #include "gui/scenes/onboarding_overlay.h"
 #include "gui/scenes/opposition_scene.h"
 #include "gui/scenes/player_compare_scene.h"
 #include "gui/scenes/player_profile_scene.h"
 #include "gui/scenes/preseason_scene.h"
 #include "gui/scenes/records_scene.h"
+#include "gui/scenes/reserves_scene.h"
 #include "gui/scenes/roster_scene.h"
 #include "gui/scenes/scouting_scene.h"
 #include "gui/scenes/settings_scene.h"
@@ -50,6 +56,7 @@
 #include "gui/scenes/staff_scene.h"
 #include "gui/scenes/standings_scene.h"
 #include "gui/scenes/strategy_scene.h"
+#include "gui/scenes/timeline_scene.h"
 #include "gui/scenes/training_scene.h"
 #include "gui/scenes/transfer_market_scene.h"
 #include "gui/scenes/youth_scene.h"
@@ -108,7 +115,7 @@ struct NavScreen
   const char* label_key;
 };
 
-constexpr size_t MAX_HUB_SECTIONS = 7;
+constexpr size_t MAX_HUB_SECTIONS = 8;
 
 /**
  * A sidebar destination: a hub of related screens shown as tabs. Its
@@ -117,22 +124,23 @@ constexpr size_t MAX_HUB_SECTIONS = 7;
 struct NavHub
 {
   const char* label_key;
-  const char* shortcut;
-  ImGuiKey key;
+  std::string_view action; /*!< Input action that opens the hub. */
   UI::Icon icon;
   std::array<NavSection, MAX_HUB_SECTIONS> sections;
 };
 
 // Every screen, in palette order.
-constexpr std::array<NavScreen, 26> ALL_NAV = {{
+constexpr std::array<NavScreen, 30> ALL_NAV = {{
     {NavSection::HOME, "NAV_HOME"},
     {NavSection::INBOX, "NAV_INBOX"},
+    {NavSection::NEWS, "NAV_NEWS"},
     {NavSection::SQUAD, "NAV_SQUAD"},
     {NavSection::LINEUP, "NAV_LINEUP"},
     {NavSection::TACTICS, "NAV_TACTICS"},
     {NavSection::SQUAD_PLANNER, "NAV_SQUAD_PLANNER"},
     {NavSection::MEDICAL, "NAV_MEDICAL"},
     {NavSection::COMPARE, "NAV_COMPARE"},
+    {NavSection::RESERVES, "NAV_RESERVES"},
     {NavSection::TRAINING, "NAV_TRAINING"},
     {NavSection::PLANNING, "NAV_PLANNING"},
     {NavSection::FIXTURES, "NAV_FIXTURES"},
@@ -140,6 +148,7 @@ constexpr std::array<NavScreen, 26> ALL_NAV = {{
     {NavSection::CALENDAR, "NAV_CALENDAR"},
     {NavSection::OPPOSITION, "NAV_OPPOSITION"},
     {NavSection::INTERNATIONAL, "NAV_INTERNATIONAL"},
+    {NavSection::CALL_UPS, "NAV_CALL_UPS"},
     {NavSection::DATA_HUB, "NAV_DATA_HUB"},
     {NavSection::TRANSFERS, "NAV_TRANSFERS"},
     {NavSection::SCOUTING, "NAV_SCOUTING"},
@@ -149,6 +158,7 @@ constexpr std::array<NavScreen, 26> ALL_NAV = {{
     {NavSection::STAFF, "NAV_STAFF"},
     {NavSection::DELEGATION, "NAV_DELEGATION"},
     {NavSection::MANAGER, "NAV_MANAGER"},
+    {NavSection::TIMELINE, "NAV_TIMELINE"},
     {NavSection::AWARDS, "NAV_AWARDS"},
     {NavSection::RECORDS, "NAV_RECORDS"},
 }};
@@ -156,27 +166,28 @@ constexpr std::array<NavScreen, 26> ALL_NAV = {{
 constexpr NavSection END = NavSection::NONE;
 // clang-format off
 constexpr std::array<NavHub, 7> NAV_HUBS = {{
-    {"NAV_HOME", "F1", ImGuiKey_F1, UI::Icon::HOME,
-     {NavSection::HOME, END, END, END, END, END, END}},
-    {"NAV_INBOX", "F2", ImGuiKey_F2, UI::Icon::INBOX,
-     {NavSection::INBOX, END, END, END, END, END, END}},
-    {"NAV_SQUAD", "F3", ImGuiKey_F3, UI::Icon::SQUAD,
+    {"NAV_HOME", Input::Ids::NAV_HOME, UI::Icon::HOME,
+     {NavSection::HOME, END, END, END, END, END, END, END}},
+    {"NAV_INBOX", Input::Ids::NAV_INBOX, UI::Icon::INBOX,
+     {NavSection::INBOX, NavSection::NEWS, END, END, END, END, END, END}},
+    {"NAV_SQUAD", Input::Ids::NAV_SQUAD, UI::Icon::SQUAD,
      {NavSection::SQUAD, NavSection::LINEUP, NavSection::TACTICS,
       NavSection::SQUAD_PLANNER, NavSection::MEDICAL, NavSection::COMPARE,
+      NavSection::RESERVES, END}},
+    {"NAV_TRAINING", Input::Ids::NAV_TRAINING, UI::Icon::TACTICS,
+     {NavSection::TRAINING, NavSection::PLANNING, END, END, END, END, END,
       END}},
-    {"NAV_TRAINING", "F4", ImGuiKey_F4, UI::Icon::TACTICS,
-     {NavSection::TRAINING, NavSection::PLANNING, END, END, END, END, END}},
-    {"NAV_HUB_MATCHES", "F5", ImGuiKey_F5, UI::Icon::FIXTURES,
+    {"NAV_HUB_MATCHES", Input::Ids::NAV_MATCHES, UI::Icon::FIXTURES,
      {NavSection::FIXTURES, NavSection::STANDINGS, NavSection::CALENDAR,
-      NavSection::OPPOSITION, NavSection::INTERNATIONAL, NavSection::DATA_HUB,
-      END}},
-    {"NAV_HUB_RECRUITMENT", "F6", ImGuiKey_F6, UI::Icon::TRANSFERS,
+      NavSection::OPPOSITION, NavSection::INTERNATIONAL, NavSection::CALL_UPS,
+      NavSection::DATA_HUB, END}},
+    {"NAV_HUB_RECRUITMENT", Input::Ids::NAV_RECRUITMENT, UI::Icon::TRANSFERS,
      {NavSection::TRANSFERS, NavSection::SCOUTING, NavSection::YOUTH, END,
-      END, END, END}},
-    {"NAV_CLUB", "F7", ImGuiKey_F7, UI::Icon::CLUB,
+      END, END, END, END}},
+    {"NAV_CLUB", Input::Ids::NAV_CLUB, UI::Icon::CLUB,
      {NavSection::CLUB, NavSection::FINANCES, NavSection::STAFF,
-      NavSection::DELEGATION, NavSection::MANAGER, NavSection::AWARDS,
-      NavSection::RECORDS}},
+      NavSection::DELEGATION, NavSection::MANAGER, NavSection::TIMELINE,
+      NavSection::AWARDS, NavSection::RECORDS}},
 }};
 // clang-format on
 
@@ -202,14 +213,22 @@ static_assert(everyScreenHasOneHub(),
  */
 bool sidebarHasKeyboard = false;
 
+/**
+ * The manager coaches a national team: the call-up screen is open (with or
+ * without a club). Refreshed by every frame of the shell.
+ */
+bool nationalCoach = false;
+
 /** Out of work only the manager's own screens and the world stay open. */
 bool sectionOpen(NavSection section, bool unemployed)
 {
+  if (section == NavSection::CALL_UPS) return nationalCoach;
   if (!unemployed) return section != NavSection::NONE;
   return section == NavSection::HOME || section == NavSection::INBOX ||
          section == NavSection::STANDINGS || section == NavSection::MANAGER ||
          section == NavSection::INTERNATIONAL ||
-         section == NavSection::AWARDS || section == NavSection::RECORDS;
+         section == NavSection::AWARDS || section == NavSection::RECORDS ||
+         section == NavSection::NEWS || section == NavSection::TIMELINE;
 }
 
 const char* labelKeyOf(NavSection section)
@@ -225,6 +244,33 @@ const NavHub* hubOf(NavSection section)
       NAV_HUBS, [section](const NavHub& hub)
       { return std::ranges::find(hub.sections, section) != hub.sections.end(); });
   return found != NAV_HUBS.end() ? &*found : nullptr;
+}
+
+/**
+ * Label of an action's key ("F3"), cached until a binding changes so the
+ * sidebar does not format strings every frame.
+ */
+const char* shortcutLabel(std::string_view actionId)
+{
+  struct Cached
+  {
+    std::string_view id;
+    std::string label;
+  };
+  static std::vector<Cached> cache;
+  static std::uint32_t revision = 0;
+  const Input::ActionRegistry& registry = Input::registry();
+  if (revision != registry.revision())
+  {
+    cache.clear();
+    revision = registry.revision();
+  }
+  const auto found = std::ranges::find(cache, actionId, &Cached::id);
+  if (found != cache.end()) return found->label.c_str();
+  const auto action = registry.find(actionId);
+  cache.push_back(
+      {actionId, action ? registry.label(*action) : std::string("-")});
+  return cache.back().label.c_str();
 }
 
 /** First screen of a hub the manager can use (NONE: hub hidden). */
@@ -682,6 +728,18 @@ void open(GUIView* view, NavSection section)
     case NavSection::PLANNING:
       view->navigateTo(std::make_unique<PreseasonScene>(view));
       return;
+    case NavSection::RESERVES:
+      view->navigateTo(std::make_unique<ReservesScene>(view));
+      return;
+    case NavSection::CALL_UPS:
+      view->navigateTo(std::make_unique<CallUpScene>(view));
+      return;
+    case NavSection::NEWS:
+      view->navigateTo(std::make_unique<NewsScene>(view));
+      return;
+    case NavSection::TIMELINE:
+      view->navigateTo(std::make_unique<TimelineScene>(view));
+      return;
     case NavSection::NONE:
       return;
   }
@@ -994,6 +1052,7 @@ void ManagementScene::render()
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
   MainGameScene* hub = careerHub(guiView);
   const bool advancing = hub != nullptr && hub->isAdvancing();
+  if (!advancing) nationalCoach = guiView->getController().hasNationalJob();
   // While advancing, the frozen frame drawn by GUIView shows through.
   ImGui::Begin("##management_shell", nullptr,
                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
@@ -1210,7 +1269,8 @@ void ManagementScene::renderSidebar(bool collapsed)
     const bool expanded = current && subCount > 0;
     // Collapsed: hubs with several screens open a flyout on hover.
     const bool flyout = collapsed && count > 1;
-    if (navItem(LOC(hub.label_key), hub.shortcut, current && !expanded,
+    if (navItem(LOC(hub.label_key), shortcutLabel(hub.action),
+                current && !expanded,
                 hub.icon, collapsed, itemHeight, badge, expanded, !flyout))
     {
       sidebarHasKeyboard = true;
@@ -1257,14 +1317,16 @@ void ManagementScene::renderSidebar(bool collapsed)
       return navItem(label, shortcut, false, icon, collapsed, itemHeight);
     return footerIcon(label, shortcut, icon, footerWidth, itemHeight);
   };
-  if (footerAction(LOC("MAIN_GAME_SAVE_GAME"), "Ctrl+S", UI::Icon::SAVE))
+  if (footerAction(LOC("MAIN_GAME_SAVE_GAME"),
+                   shortcutLabel(Input::Ids::CAREER_SAVE), UI::Icon::SAVE))
   {
     controller.saveGame();
     showToast(LOC("DASHBOARD_SAVED"));
   }
   if (compactFooter) ImGui::SameLine(0.0f, spacing);
   if (footerAction(LOC("MENU_SETTINGS"), nullptr, UI::Icon::SETTINGS))
-    guiView->navigateTo(std::make_unique<SettingsScene>(guiView, true));
+    // Stacked above the current screen, so closing Settings returns to it.
+    guiView->overlayScene(std::make_unique<SettingsScene>(guiView, true));
   if (compactFooter) ImGui::SameLine(0.0f, spacing);
   if (footerAction(LOC("MAIN_GAME_MAIN_MENU"), nullptr, UI::Icon::EXIT))
     main_menu_confirm_requested = true;
@@ -1306,7 +1368,7 @@ void ManagementScene::renderSidebarFlyout()
   {
     Theme::ScopedText caption(Theme::Text::CAPTION);
     ImGui::TextColored(palette.muted, "%s   %s", LOC(hub.label_key),
-                       hub.shortcut);
+                       shortcutLabel(hub.action));
   }
   float width = 0.0f;
   for (size_t index = 0; index < count; ++index)
@@ -1583,9 +1645,9 @@ void ManagementScene::handleShortcuts()
   // dialog or text field has the input.
   const SwipeGesture::Step historyStep =
       std::exchange(pending_history_step, SwipeGesture::Step::NONE);
-  if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_K, ImGuiInputFlags_RouteGlobal))
-    openPalette();
-  if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S, ImGuiInputFlags_RouteGlobal))
+  const Input::ActionRegistry& keys = Input::registry();
+  if (keys.pressed(Input::Ids::NAV_PALETTE)) openPalette();
+  if (keys.pressed(Input::Ids::CAREER_SAVE))
   {
     guiView->getController().saveGame();
     showToast(LOC("DASHBOARD_SAVED"));
@@ -1602,7 +1664,7 @@ void ManagementScene::handleShortcuts()
   for (const NavHub& hub : NAV_HUBS)
   {
     const NavSection first = firstOpenSection(hub, unemployed);
-    if (first != NavSection::NONE && ImGui::IsKeyPressed(hub.key, false))
+    if (first != NavSection::NONE && keys.pressed(hub.action))
     {
       sidebarHasKeyboard = true;
       Navigation::open(guiView, first);
@@ -1635,25 +1697,27 @@ void ManagementScene::handleShortcuts()
     }
   // Space / Enter continue only while keyboard navigation is not driving a
   // focused widget, so they never double as widget activation.
-  if (!io.NavVisible && (ImGui::IsKeyPressed(ImGuiKey_Space, false) ||
-                         ImGui::IsKeyPressed(ImGuiKey_Enter, false)))
+  if (keys.pressed(Input::Ids::CAREER_HELP))
+  {
+    guiView->navigateTo(std::make_unique<HelpScene>(guiView, true));
+    return;
+  }
+  if (!io.NavVisible && keys.pressed(Input::Ids::CAREER_CONTINUE))
   {
     if (MainGameScene* hub = careerHub(guiView)) hub->requestContinue();
     return;
   }
   // Escape is claimed through the shortcut router so keyboard navigation
   // does not also treat it as "cancel" and light up a focus frame.
-  if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
+  if (keys.pressed(Input::Ids::NAV_CLOSE))
   {
     Navigation::close(guiView);
     return;
   }
-  if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_LeftArrow,
-                      ImGuiInputFlags_RouteGlobal) ||
+  if (keys.pressed(Input::Ids::NAV_BACK) ||
       historyStep == SwipeGesture::Step::BACK)
     Navigation::back(guiView);
-  else if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_RightArrow,
-                           ImGuiInputFlags_RouteGlobal) ||
+  else if (keys.pressed(Input::Ids::NAV_FORWARD) ||
            historyStep == SwipeGesture::Step::FORWARD)
     Navigation::forward(guiView);
 }
@@ -1731,7 +1795,7 @@ void ManagementScene::buildPaletteIndex()
     const NavHub* hub = hubOf(entry.section);
     std::string detail = LOC("PALETTE_KIND_SCREEN");
     if (hub != nullptr && firstOpenSection(*hub, unemployed) == entry.section)
-      detail += std::format("  ·  {}", hub->shortcut);
+      detail += std::format("  ·  {}", shortcutLabel(hub->action));
     else if (hub != nullptr)
       detail += std::format("  ·  {}", LOC(hub->label_key));
     PaletteEntry item{PaletteEntry::Kind::SECTION,
@@ -1741,6 +1805,28 @@ void ManagementScene::buildPaletteIndex()
                       std::move(detail)};
     item.label_lower = PlayerView::toLower(item.label);
     palette_entries.push_back(std::move(item));
+  }
+  {
+    PaletteEntry about{PaletteEntry::Kind::ABOUT, 0, LOC("PALETTE_ABOUT"), {},
+                       std::string(LOC("PALETTE_KIND_INFO"))};
+    about.label_lower = PlayerView::toLower(about.label);
+    palette_entries.push_back(std::move(about));
+    PaletteEntry help{PaletteEntry::Kind::HELP, 0, LOC("PALETTE_HELP"), {},
+                      std::format("{}  ·  {}", LOC("PALETTE_KIND_HELP"),
+                                  shortcutLabel(Input::Ids::CAREER_HELP))};
+    help.label_lower = PlayerView::toLower(help.label);
+    palette_entries.push_back(std::move(help));
+    const auto terms = Glossary::terms();
+    for (size_t index = 0; index < terms.size(); ++index)
+    {
+      PaletteEntry term{PaletteEntry::Kind::HELP,
+                        static_cast<uint32_t>(index + 1),
+                        LOC(terms[index].term_key),
+                        {},
+                        std::string(LOC("PALETTE_KIND_GLOSSARY"))};
+      term.label_lower = PlayerView::toLower(term.label);
+      palette_entries.push_back(std::move(term));
+    }
   }
   for (const auto& teamRef : controller.getTeams())
   {
@@ -1789,7 +1875,9 @@ void ManagementScene::filterPalette()
   {
     for (size_t index = 0; index < palette_entries.size(); ++index)
       if (palette_entries[index].kind == PaletteEntry::Kind::ACTION ||
-          palette_entries[index].kind == PaletteEntry::Kind::SECTION)
+          palette_entries[index].kind == PaletteEntry::Kind::SECTION ||
+          (palette_entries[index].kind == PaletteEntry::Kind::HELP &&
+           palette_entries[index].id == 0))
         palette_matches.push_back(index);
     return;
   }
@@ -1832,6 +1920,15 @@ void ManagementScene::activatePaletteEntry(const PaletteEntry& entry)
     case PaletteEntry::Kind::ACTION:
       if (entry.id < palette_actions.size())
         GuidanceUI::openAction(guiView, palette_actions[entry.id]);
+      break;
+    case PaletteEntry::Kind::ABOUT:
+      guiView->navigateTo(std::make_unique<AboutScene>(guiView, true));
+      break;
+    case PaletteEntry::Kind::HELP:
+      guiView->navigateTo(std::make_unique<HelpScene>(
+          guiView, true,
+          entry.id == 0 ? std::nullopt
+                        : std::optional<std::size_t>(entry.id - 1)));
       break;
   }
 }

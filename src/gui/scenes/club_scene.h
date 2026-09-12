@@ -9,9 +9,11 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
+#include "controller/game_controller.h"
 #include "gui/scenes/management_scene.h"
 
 /**
@@ -49,13 +51,27 @@ class ClubScene : public ManagementScene
   };
 
   void renderBoard(float width);
+  void renderTargets(const GameController::BoardTargets& targets,
+                     float keyWidth);
   void renderStadium(float width);
+  void renderSupporters(float width);
   void renderHistory();
 
+  /** @brief One reason behind the supporters' mood, localised. */
+  struct SupporterLine
+  {
+    std::string text;
+    float points = 0.0f;
+  };
+
   std::vector<HistoryRow> history;
+  std::optional<GameController::BoardTargets> board_targets;
   std::vector<float> confidence_trend;
   int league_position = 0;
   int ticket_price_input = 0;
   uint32_t fair_ticket_price = 0;
   uint32_t last_attendance = 0;
+  /** Weekly supporters' mood; unset until the first verdict. */
+  std::optional<float> supporters_index;
+  std::vector<SupporterLine> supporter_reasons;
 };

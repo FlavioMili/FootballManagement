@@ -145,9 +145,57 @@ constexpr std::array OFFER_NEGOTIATIONS = {
                            "INTEGER NOT NULL DEFAULT 0"},
 };
 
+// U21 squads: every academy gets a row in its country's U21 league and a
+// flag telling whether its U21 squad was set up (older saves set it up on
+// the next day), and managed results tell U18 from U21 matches.
+constexpr std::array RESERVE_SQUADS = {
+    Migrations::ColumnSpec{"YouthAcademies", "reserve_played",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"YouthAcademies", "reserve_won",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"YouthAcademies", "reserve_drawn",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"YouthAcademies", "reserve_lost",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"YouthAcademies", "reserve_goals_for",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"YouthAcademies", "reserve_goals_against",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"YouthAcademies", "reserves_ready",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"YouthResults", "squad",
+                           "INTEGER NOT NULL DEFAULT 0"},
+};
+
+// Managed matches keep their touch maps, pass network and pressing numbers
+// as a compact blob; matches of older saves have none (NULL).
+constexpr std::array MATCH_DETAIL = {
+    Migrations::ColumnSpec{"ManagedMatchAnalytics", "detail", "BLOB"},
+};
+
+// The board sets cup, finance and youth targets next to the league one;
+// boards of older saves get them at the next season start.
+constexpr std::array BOARD_OBJECTIVES = {
+    Migrations::ColumnSpec{"BoardState", "cup_objective",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"BoardState", "finance_objective",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"BoardState", "youth_target",
+                           "INTEGER NOT NULL DEFAULT 0"},
+    Migrations::ColumnSpec{"BoardState", "start_balance",
+                           "INTEGER NOT NULL DEFAULT 0"},
+};
+
+// Players keep a squad number; rows of older saves have none (0) and are
+// numbered when the save is loaded (GameData::assignSquadNumbers).
+constexpr std::array SQUAD_NUMBERS = {
+    Migrations::ColumnSpec{"Players", "squad_number",
+                           "INTEGER NOT NULL DEFAULT 0"},
+};
+
 // Append new migrations at the end with the next number; never renumber,
 // edit or remove a released one (see README.md).
-constexpr std::array<Migrations::Migration, 9> REGISTRY = {{
+constexpr std::array<Migrations::Migration, 13> REGISTRY = {{
     {1, "0001_version_metadata", {}, &versionMetadata},
     {2, "0002_league_tiebreak", LEAGUE_TIEBREAK, nullptr},
     {3, "0003_fixture_competitions", FIXTURE_COMPETITIONS, nullptr},
@@ -157,6 +205,10 @@ constexpr std::array<Migrations::Migration, 9> REGISTRY = {{
     {7, "0007_staff_id_counter", STAFF_ID_COUNTER, nullptr},
     {8, "0008_fixture_kickoff", FIXTURE_KICKOFF, nullptr},
     {9, "0009_offer_negotiations", OFFER_NEGOTIATIONS, nullptr},
+    {10, "0010_reserve_squads", RESERVE_SQUADS, nullptr},
+    {11, "0011_match_detail", MATCH_DETAIL, nullptr},
+    {12, "0012_board_objectives", BOARD_OBJECTIVES, nullptr},
+    {13, "0013_squad_numbers", SQUAD_NUMBERS, nullptr},
 }};
 
 static_assert(std::ranges::is_sorted(REGISTRY, {}, &Migrations::Migration::number),

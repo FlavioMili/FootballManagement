@@ -10,8 +10,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <map>
 #include <memory>
+#include <optional>
 #include <span>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "database/database_connection.h"
@@ -23,7 +27,11 @@
 #include "model/match.h"
 #include "model/match_report.h"
 #include "model/match_scheduler.h"
+#include "model/medical_centre.h"
+#include "model/national_job.h"
 #include "model/national_teams.h"
+#include "model/season_review.h"
+#include "model/supporters.h"
 #include "model/transfer_market.h"
 #include "model/world_simulation.h"
 
@@ -114,11 +122,44 @@ class Game
   CareerGuidance& getGuidance() { return guidance; }
   const CareerGuidance& getGuidance() const { return guidance; }
 
+  /** Rest and minute-limit flags, load log and warnings of the physios. */
+  MedicalDesk& getMedical() { return medical; }
+  const MedicalDesk& getMedical() const { return medical; }
+  /** The managed club's supporters and their weekly mood. */
+  const Supporters& getSupporters() const { return supporters; }
+
   /** Standings, cups, reports, player season stats and season history. */
   const CompetitionManager& getCompetitions() const { return competitions; }
 
+  /** Final tables of past seasons and the managed club's season reviews. */
+  const SeasonArchive& getSeasonArchive() const { return season_archive; }
+  SeasonArchive& getSeasonArchive() { return season_archive; }
+
+  /** Squad players aged 21 or under with ten or more appearances. */
+  int youngRegulars(TeamID team_id) const;
+  /** A club's run in its domestic cup this season. */
+  struct CupRun
+  {
+    /** Rounds after the furthest one played (0 = the final); nullopt
+     * before the club's first tie. */
+    std::optional<int> rounds_left;
+    bool won = false;
+    bool still_in = false;
+  };
+  CupRun cupRun(TeamID team_id) const;
+
   /** National teams: calendar, call-ups, finals, caps. */
   const NationalTeams& getNationalTeams() const { return international; }
+  NationalTeams& getNationalTeams() { return international; }
+
+  /** The manager's national-team job and the market for national jobs. */
+  NationalManagement& getNationalJob() { return national_job; }
+  const NationalManagement& getNationalJob() const { return national_job; }
+  /** What the national-job market did on the latest simulated day. */
+  const NationalDayEvents& getLastNationalEvents() const
+  {
+    return last_national_events;
+  }
 
   /** Inbox, board, injuries, finances and development between matches. */
   WorldSimulation& getWorld() { return world; }
@@ -215,6 +256,20 @@ class Game
   void endSeason();
   void handleSeasonTransition();
   void startNewSeason();
+  /** The managed club's season numbers, read from the final tables before
+   * promotion and relegation move the clubs. */
+  void beginSeasonReview(
+      const std::map<LeagueID, std::vector<StandingRow>>& final_tables,
+      std::uint16_t start_year);
+  /** Outcome, board verdict and season news once the clubs have moved. */
+  void judgeSeason(std::span<const SeasonHistoryEntry> finished);
+  /** Archives the review with next season's objectives. */
+  void finishSeasonReview();
+  /** Takes a departing managed player out of the line-up, filling only his
+   * place, and notes the change for postLineupRepairs(). */
+  void fillLineupGap(Team& team, const Player& departed);
+  /** Tells the manager which starting places were filled. */
+  void postLineupRepairs();
   /** The club's fixtures from today up to its first competitive match. */
   std::vector<UpcomingFixture> upcomingFixtures(TeamID team_id) const;
 
@@ -249,9 +304,17 @@ class Game
   ManagerCareer career;
   CareerDayEvents last_career_events;
   NationalTeams international;
+  NationalManagement national_job;
+  NationalDayEvents last_national_events;
   MatchScheduler scheduler;
   GameDateValue currentDate;
   uint8_t current_season = 1;
   uint16_t managed_team_id;
   CareerGuidance guidance;
+  MedicalDesk medical;
+  Supporters supporters;
+  SeasonArchive season_archive;
+  std::optional<SeasonReview> closing_review;
+  /** Starting places filled at the season end: (departed, replacement). */
+  std::vector<std::pair<std::string, std::string>> lineup_repairs;
 };

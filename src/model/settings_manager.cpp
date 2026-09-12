@@ -9,6 +9,7 @@
 #include "settings_manager.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -54,6 +55,7 @@ void SettingsManager::load()
       settings_.resolution_height = resolution[1];
     }
     settings_.fullscreen = j.value("fullscreen", settings_.fullscreen);
+    settings_.vsync = j.value("vsync", settings_.vsync);
     settings_.fps_limit =
         std::clamp(j.value("fps_limit", settings_.fps_limit), 15, 360);
     settings_.theme_preset =
@@ -67,6 +69,10 @@ void SettingsManager::load()
         j.value("compact_density", settings_.compact_density);
     settings_.reduced_motion =
         j.value("reduced_motion", settings_.reduced_motion);
+    settings_.color_vision =
+        std::clamp(j.value("color_vision", settings_.color_vision), 0, 2);
+    settings_.text_scale =
+        std::clamp(j.value("text_scale", settings_.text_scale), 0.85f, 1.5f);
     settings_.screen_tips = j.value("screen_tips", settings_.screen_tips);
     settings_.screen_tips_seen =
         j.value("screen_tips_seen", settings_.screen_tips_seen);
@@ -85,6 +91,39 @@ void SettingsManager::load()
         j.value("pause_for_match_changes", settings_.pause_for_match_changes);
     settings_.pause_at_breaks =
         j.value("pause_at_breaks", settings_.pause_at_breaks);
+    settings_.play_mode = j.value("play_mode", settings_.play_mode);
+    settings_.play_auto_switch = std::clamp(
+        j.value("play_auto_switch", settings_.play_auto_switch), 0, 2);
+    settings_.play_pass_assist = std::clamp(
+        j.value("play_pass_assist", settings_.play_pass_assist), 0, 2);
+    settings_.play_dead_zone = std::clamp(
+        j.value("play_dead_zone", settings_.play_dead_zone), 0.05f, 0.5f);
+    settings_.key_bindings.clear();
+    if (const auto bindings = j.find("key_bindings");
+        bindings != j.end() && bindings->is_object())
+    {
+      for (const auto& [action, chords] : bindings->items())
+      {
+        if (!chords.is_array()) continue;
+        std::vector<std::string> names;
+        for (const auto& chord : chords)
+          names.push_back(chord.is_string() ? chord.get<std::string>() : "");
+        settings_.key_bindings[action] = std::move(names);
+      }
+    }
+    settings_.hidden_columns.clear();
+    if (const auto views = j.find("hidden_columns");
+        views != j.end() && views->is_object())
+    {
+      for (const auto& [table, columns] : views->items())
+      {
+        if (!columns.is_array()) continue;
+        std::vector<std::string> keys;
+        for (const auto& column : columns)
+          if (column.is_string()) keys.push_back(column.get<std::string>());
+        if (!keys.empty()) settings_.hidden_columns[table] = std::move(keys);
+      }
+    }
   }
   catch (const json::exception& exception)
   {
@@ -102,12 +141,15 @@ void SettingsManager::save() const
   j["resolution"] = {settings_.resolution_width, settings_.resolution_height};
   j["fullscreen"] = settings_.fullscreen;
   j["fps_limit"] = settings_.fps_limit;
+  j["vsync"] = settings_.vsync;
   j["theme_preset"] = settings_.theme_preset;
   j["club_accent"] = settings_.club_accent;
   j["accent_rgb"] = settings_.accent_rgb;
   j["ui_scale"] = settings_.ui_scale;
   j["compact_density"] = settings_.compact_density;
   j["reduced_motion"] = settings_.reduced_motion;
+  j["color_vision"] = settings_.color_vision;
+  j["text_scale"] = settings_.text_scale;
   j["screen_tips"] = settings_.screen_tips;
   j["screen_tips_seen"] = settings_.screen_tips_seen;
   j["autosave_frequency"] = settings_.autosave_frequency;
@@ -118,22 +160,43 @@ void SettingsManager::save() const
   j["audio_muted"] = settings_.audio_muted;
   j["pause_for_match_changes"] = settings_.pause_for_match_changes;
   j["pause_at_breaks"] = settings_.pause_at_breaks;
+  j["play_mode"] = settings_.play_mode;
+  j["play_auto_switch"] = settings_.play_auto_switch;
+  j["play_pass_assist"] = settings_.play_pass_assist;
+  j["play_dead_zone"] = settings_.play_dead_zone;
+  j["key_bindings"] = settings_.key_bindings;
+  j["hidden_columns"] = json::object();
+  for (const auto& [table, columns] : settings_.hidden_columns)
+    j["hidden_columns"][table] = columns;
 
-  std::ofstream out(RuntimePaths::settingsPath());
-  out << j.dump(2);
+  // Written next to the file and renamed over it, so a crash mid-write
+  // never leaves a truncated settings file.
+  const std::filesystem::path path = RuntimePaths::settingsPath();
+  std::filesystem::path temporary = path;
+  temporary += ".tmp";
+  {
+    std::ofstream out(temporary, std::ios::trunc);
+    if (!out) return;
+    out << j.dump(2);
+    out.flush();
+    if (!out) return;
+  }
+  std::error_code error;
+  std::filesystem::rename(temporary, path, error);
+  if (error)
+  {
+    std::cerr << "Could not save settings: " << error.message() << '\n';
+    std::filesystem::remove(temporary, error);
+  }
 }
 
 void SettingsManager::apply(SDL_Window* window)
 {
   if (!window) return;
 
-  SDL_SetWindowFullscreen(window, settings_.fullscreen ? true : false);
-  if (!settings_.fullscreen)
-  {
-    SDL_SetWindowSize(window, settings_.resolution_width,
-                      settings_.resolution_height);
-  }
-  // fps limit: handled by main loop
+  SDL_SetWindowFullscreen(window, settings_.fullscreen);
+  // Window size (GUIView::applyWindowSettings), fps limit (main loop) and
+  // VSync (renderer) are applied by the GUI.
 
   LanguageManager::instance().loadLanguage(settings_.language);
 }

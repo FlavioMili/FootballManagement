@@ -9,6 +9,7 @@
 #include "database/gamedata.h"
 
 #include <algorithm>
+#include <bitset>
 #include <chrono>
 #include <cstdlib>
 #include <fstream>
@@ -33,6 +34,7 @@
 #include "global/paths.h"
 #include "global/queries.h"
 #include "model/club_economy.h"
+#include "model/squad_numbers.h"
 #include "model/transfer_listing.h"
 #include "model/world_generation.h"
 #include "model/world_rng.h"
@@ -256,6 +258,7 @@ void GameData::generateAndSaveInitialData()
     _playersVec.clear();
     _playersVec.reserve(_players.size());
     for (auto& [id, player] : _players) _playersVec.push_back(player);
+    for (const auto& [id, team] : _teams) assignSquadNumbers(id);
 
     playerRepo.insertPlayers(_playersVec);
 
@@ -414,6 +417,8 @@ void GameData::loadExistingData()
   }
 
   restoreWorldState();
+  // Saves from before squad numbers (and any club whose numbers clash).
+  for (const auto& [id, team] : _teams) assignSquadNumbers(id);
 
   _teamsVec.clear();
   _teamsVec.reserve(_teams.size());
@@ -532,6 +537,8 @@ void GameData::addPlayer(PlayerID id, const Player& player)
   (player.isAcademyPlayer() ? _teamAcademies
                             : _teamPlayers)[player.getTeamId()]
       .push_back(it->second);
+  if (!player.isAcademyPlayer() && player.getSquadNumber() == 0)
+    assignSquadNumbers(player.getTeamId());
 }
 
 std::optional<std::reference_wrapper<const Player>> GameData::getPlayer(
@@ -564,7 +571,8 @@ void GameData::ageAllPlayers()
   }
 }
 
-std::vector<PlayerID> GameData::advanceContractsAndReleasePlayers()
+std::vector<PlayerID> GameData::advanceContractsAndReleasePlayers(
+    TeamID keep_selection)
 {
   std::vector<std::pair<PlayerID, TeamID>> expiringPlayers;
   expiringPlayers.reserve(_players.size());
@@ -595,6 +603,7 @@ std::vector<PlayerID> GameData::advanceContractsAndReleasePlayers()
 
   for (TeamID teamId : affectedTeams)
   {
+    if (teamId == keep_selection && teamId != FREE_AGENTS_TEAM_ID) continue;
     if (auto team = getTeam(teamId))
       team->get().generateStartingXI(*this, stats_config);
   }
@@ -634,6 +643,11 @@ void GameData::setAcademyMember(PlayerID id, bool academy)
     (academy ? _teamAcademies : _teamPlayers)[team_id].push_back(player);
   if (const auto team = _teams.find(team_id); team != _teams.end())
     team->second.setAcademyMember(id, academy);
+  // Academy players wear no senior number; a promoted one gets his own.
+  if (academy)
+    player.setSquadNumber(0);
+  else if (player.getSquadNumber() == 0)
+    assignSquadNumbers(team_id);
 }
 
 bool GameData::removePlayer(PlayerID id)
@@ -676,6 +690,86 @@ void GameData::transferPlayer(PlayerID id, TeamID new_team_id)
   std::erase_if(_teamAcademies[old_team_id], same);
 
   _teamPlayers[new_team_id].push_back(it->second);
+  if (new_team_id == FREE_AGENTS_TEAM_ID) return;
+  // The number he wore stays his wish; a teammate may already wear it.
+  const auto& squad = _teamPlayers[new_team_id];
+  const std::uint8_t number = it->second.getSquadNumber();
+  if (number == 0 || std::ranges::any_of(squad, [&](const auto& ref)
+                                         {
+                                           const Player& other = ref.get();
+                                           return other.getId() != id &&
+                                                  other.getSquadNumber() ==
+                                                      number;
+                                         }))
+    assignSquadNumbers(new_team_id, id);
+}
+
+void GameData::assignSquadNumbers(TeamID team_id, PlayerID newcomer)
+{
+  if (team_id == FREE_AGENTS_TEAM_ID) return;
+  const auto found = _teamPlayers.find(team_id);
+  if (found == _teamPlayers.end()) return;
+  const auto& squad = found->second;
+  std::bitset<SquadNumbers::MAX_NUMBER + 1> worn;
+  bool complete = newcomer == 0;
+  for (auto ref = squad.begin(); complete && ref != squad.end(); ++ref)
+  {
+    const std::uint8_t number = ref->get().getSquadNumber();
+    complete = SquadNumbers::isValid(number) && !worn.test(number);
+    if (complete) worn.set(number);
+  }
+  if (complete) return;
+
+  std::vector<SquadNumbers::Entry> entries;
+  entries.reserve(squad.size());
+  for (const auto& ref : squad)
+  {
+    const Player& player = ref.get();
+    SquadNumbers::Entry entry;
+    entry.id = player.getId();
+    entry.role = player.getRole();
+    entry.overall = player.getOverall(stats_config);
+    entry.age = player.getAge();
+    entry.number = player.getSquadNumber();
+    if (entry.id == newcomer)
+    {
+      // He arrives with the number of his old club as a wish only.
+      entry.preferred = entry.number;
+      entry.number = 0;
+    }
+    entries.push_back(entry);
+  }
+  SquadNumbers::assign(entries);
+  for (const SquadNumbers::Entry& entry : entries)
+    _players.at(entry.id).setSquadNumber(entry.number);
+}
+
+SquadNumbers::Change GameData::setSquadNumber(PlayerID id, int number)
+{
+  const auto it = _players.find(id);
+  if (it == _players.end() || !SquadNumbers::isValid(number))
+    return SquadNumbers::Change::Invalid;
+  Player& player = it->second;
+  const TeamID team_id = player.getTeamId();
+  if (team_id == FREE_AGENTS_TEAM_ID || player.isAcademyPlayer())
+    return SquadNumbers::Change::Invalid;
+  const auto wanted = static_cast<std::uint8_t>(number);
+  const std::uint8_t previous = player.getSquadNumber();
+  if (previous == wanted) return SquadNumbers::Change::Changed;
+  SquadNumbers::Change change = SquadNumbers::Change::Changed;
+  for (const auto& ref : _teamPlayers[team_id])
+  {
+    const Player& other = ref.get();
+    if (other.getId() == id || other.getSquadNumber() != wanted) continue;
+    _players.at(other.getId()).setSquadNumber(previous);
+    change = SquadNumbers::Change::Swapped;
+    break;
+  }
+  player.setSquadNumber(wanted);
+  // A swap with a player who had no number leaves the teammate without one.
+  if (change == SquadNumbers::Change::Swapped && previous == 0)
+    assignSquadNumbers(team_id);
+  return change;
 }
 
 // ---------------- World state ----------------

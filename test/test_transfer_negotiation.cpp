@@ -346,17 +346,20 @@ TEST(TransferNegotiationTest, LoanTermsAndPlayerAgreement)
 
 TEST(TransferNegotiationTest, WindowsDeadlinesAndContractCalendar)
 {
-  const WindowInfo summer = windowInfo(GameDateValue(2025, 8, 25));
+  // An Italian club: the summer window shuts on 1 September.
+  constexpr LeagueID ITALY = 1;
+  const WindowInfo summer = windowInfo(ITALY, GameDateValue(2025, 8, 25));
   EXPECT_TRUE(summer.open);
   EXPECT_FALSE(summer.winter);
-  EXPECT_EQ(summer.days_to_deadline, 6);
-  const WindowInfo deadline = windowInfo(GameDateValue(2025, 8, 31));
+  EXPECT_EQ(summer.days_to_deadline, 7);
+  const WindowInfo deadline = windowInfo(ITALY, GameDateValue(2025, 9, 1));
+  EXPECT_TRUE(deadline.open);
   EXPECT_EQ(deadline.days_to_deadline, 0);
   EXPECT_GT(activityWeight(deadline), activityWeight(summer));
   EXPECT_GT(activityWeight(summer),
-            activityWeight(windowInfo(GameDateValue(2025, 7, 10))));
-  EXPECT_TRUE(windowInfo(GameDateValue(2026, 1, 15)).winter);
-  const WindowInfo closed = windowInfo(GameDateValue(2025, 10, 1));
+            activityWeight(windowInfo(ITALY, GameDateValue(2025, 7, 10))));
+  EXPECT_TRUE(windowInfo(ITALY, GameDateValue(2026, 1, 15)).winter);
+  const WindowInfo closed = windowInfo(ITALY, GameDateValue(2025, 10, 1));
   EXPECT_FALSE(closed.open);
   EXPECT_EQ(activityWeight(closed), 0.0f);
 

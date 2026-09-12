@@ -104,11 +104,6 @@ struct GameDateValue
    * @return The current SeasonPhase.
    */
   SeasonPhase checkPhase() const;
-  /**
-   * @brief Checks if the transfer window is currently open.
-   * @return True if the transfer window is open, false otherwise.
-   */
-  bool isTransferWindowOpen() const;
 
  private:
   static bool isLeapYear(uint16_t y);

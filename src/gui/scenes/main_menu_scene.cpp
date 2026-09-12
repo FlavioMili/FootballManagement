@@ -8,6 +8,7 @@
 
 #include "gui/scenes/main_menu_scene.h"
 
+#include <SDL3/SDL_misc.h>
 #include <fmt/printf.h>
 #include <imgui.h>
 
@@ -17,10 +18,13 @@
 #include <cmath>
 #include <format>
 #include <string>
+#include <utility>
 
+#include "global/build_info.h"
 #include "global/language_manager.h"
 #include "global/logger.h"
 #include "gui/gui_view.h"
+#include "gui/scenes/about_scene.h"
 #include "gui/scenes/main_game_scene.h"
 #include "gui/scenes/settings_scene.h"
 #include "gui/scenes/team_selection_scene.h"
@@ -32,7 +36,66 @@ SceneID MainMenuScene::getID() const { return SceneID::MAIN_MENU; }
 
 MainMenuScene::MainMenuScene(GUIView* guiView_ptr) : GUIScene(guiView_ptr) {}
 
-void MainMenuScene::onEnter() { loadCachedMetadata(); }
+namespace
+{
+std::string backupLabel(const SaveBackup& backup)
+{
+  const SaveInspection& info = backup.inspection;
+  const std::string club =
+      info.club_name.empty() ? std::string(LOC("MENU_SAVE_SLOT_NOT_STARTED"))
+                             : info.club_name;
+  return backup.kind == SaveBackup::Kind::PreMigration
+             ? formatLocalized("SAVE_BACKUP_PRE_UPGRADE",
+                               {std::to_string(backup.index)})
+             : formatLocalized("SAVE_BACKUP_ENTRY",
+                               {std::to_string(backup.index), club,
+                                info.game_date});
+}
+
+/** file:// URL of a local folder, for the system file manager. */
+std::string folderUrl(const std::filesystem::path& folder)
+{
+  std::string url = "file://";
+  const std::string path = folder.generic_string();
+  if (!path.starts_with('/')) url += '/';
+  for (const char character : path)
+  {
+    if (character == ' ')
+      url += "%20";
+    else
+      url += character;
+  }
+  return url;
+}
+}  // namespace
+
+void MainMenuScene::onEnter()
+{
+  loadCachedMetadata();
+  crash_notice = CrashReport::pending();
+  if (crash_notice)
+  {
+    crash_notice_text = formatLocalized("CRASH_NOTICE_BODY",
+                                        {crash_notice->report.string()});
+    crash_notice_requested = true;
+  }
+  // A language file that could not be read (or lacks texts) falls back to
+  // English; say so instead of leaving the player to guess.
+  const LanguageManager::Status& language = LanguageManager::instance().status();
+  language_notice.clear();
+  if (language.file_failed)
+  {
+    const auto name = languageToString.find(language.requested);
+    language_notice = fmt::sprintf(
+        LOC("LANGUAGE_FALLBACK_NOTICE"),
+        name == languageToString.end() ? std::string("?") : name->second);
+  }
+  else if (language.missing_keys > 0)
+  {
+    language_notice = fmt::sprintf(LOC("LANGUAGE_PARTIAL_NOTICE"),
+                                   static_cast<int>(language.missing_keys));
+  }
+}
 
 void MainMenuScene::loadCachedMetadata()
 {
@@ -124,15 +187,31 @@ void MainMenuScene::update(float deltaTime)
           std::format("Failed to load game from slot {}", loading_slot));
       // Explain why and offer the slot's backups.
       const auto& error = guiView->getController().getLastLoadError();
-      load_error_text = formatLocalized(
-          error ? error->langKey() : "SAVE_ERROR_IO",
-          {std::to_string(error ? error->found_version : 0),
-           std::to_string(error ? error->supported_version : 0)});
-      load_error_slot = loading_slot;
-      load_error_requested = true;
+      showLoadError(loading_slot,
+                    formatLocalized(
+                        error ? error->langKey() : "SAVE_ERROR_IO",
+                        {std::to_string(error ? error->found_version : 0),
+                         std::to_string(error ? error->supported_version : 0)}));
       loading_slot = 0;
       loadCachedMetadata();
     }
+  }
+}
+
+void MainMenuScene::showLoadError(int slot, std::string text)
+{
+  load_error_text = std::move(text);
+  load_error_slot = slot;
+  load_error_requested = true;
+  // Offer the newest backup that loads straight away.
+  recovery_backup.clear();
+  const std::vector<SaveBackup> slotBackups =
+      guiView->getController().getSaveBackups(slot);
+  if (const SaveBackup* usable = SaveManager::newestUsable(slotBackups))
+  {
+    recovery_backup = usable->path;
+    recovery_text =
+        formatLocalized("SAVE_RECOVERY_OFFER", {backupLabel(*usable)});
   }
 }
 
@@ -264,7 +343,7 @@ void MainMenuScene::render()
   if (firstRun ? UI::primaryButton(LOC("MENU_NEW_GAME"), buttonSize)
                : UI::secondaryButton(LOC("MENU_NEW_GAME"), buttonSize))
   {
-    ImGui::OpenPopup("###select_save_slot");
+    slot_picker_requested = true;
     is_new_game = true;
   }
   const bool anySave = std::ranges::any_of(
@@ -272,20 +351,94 @@ void MainMenuScene::render()
   ImGui::BeginDisabled(!anySave);
   if (UI::secondaryButton(LOC("MENU_LOAD_GAME"), buttonSize))
   {
-    ImGui::OpenPopup("###select_save_slot");
+    slot_picker_requested = true;
     is_new_game = false;
   }
   ImGui::EndDisabled();
   if (UI::secondaryButton(LOC("MENU_SETTINGS"), buttonSize))
     changeScene(std::make_unique<SettingsScene>(guiView));
+  if (UI::secondaryButton(LOC("MENU_ABOUT"), buttonSize))
+    changeScene(std::make_unique<AboutScene>(guiView, false));
   if (UI::secondaryButton(LOC("MENU_QUIT"), buttonSize)) quit();
   ImGui::PopFont();
   renderSlotPicker();
   renderLoadError();
   renderBackups();
+  renderCrashNotice();
   ImGui::EndGroup();
+  renderVersion();
+  renderLanguageNotice();
 
   ImGui::End();
+}
+
+void MainMenuScene::renderLanguageNotice()
+{
+  if (language_notice.empty()) return;
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  const float margin = Theme::Space::L * Theme::scale();
+  Theme::ScopedText small(Theme::Text::SMALL);
+  // Bottom left, clear of the version label in the other corner.
+  const float width = std::max(viewport->WorkSize.x * 0.5f - margin, 1.0f);
+  const float height =
+      ImGui::CalcTextSize(language_notice.c_str(), nullptr, false, width).y;
+  ImGui::SetCursorScreenPos(
+      ImVec2(viewport->WorkPos.x + margin,
+             viewport->WorkPos.y + viewport->WorkSize.y - height - margin));
+  ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + width);
+  ImGui::TextColored(Theme::palette().warning, "%s", language_notice.c_str());
+  ImGui::PopTextWrapPos();
+}
+
+void MainMenuScene::renderVersion()
+{
+  static const std::string label = "v" + std::string(BuildInfo::version());
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  const float margin = Theme::Space::L * Theme::scale();
+  Theme::ScopedText small(Theme::Text::SMALL);
+  const ImVec2 size = ImGui::CalcTextSize(label.c_str());
+  ImGui::SetCursorScreenPos(
+      ImVec2(viewport->WorkPos.x + viewport->WorkSize.x - size.x - margin,
+             viewport->WorkPos.y + viewport->WorkSize.y - size.y - margin));
+  ImGui::TextColored(Theme::palette().faint, "%s", label.c_str());
+}
+
+void MainMenuScene::renderCrashNotice()
+{
+  if (!crash_notice) return;
+  if (crash_notice_requested)
+  {
+    ImGui::OpenPopup("##crash_notice");
+    crash_notice_requested = false;
+  }
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Appearing,
+                          ImVec2(0.5f, 0.5f));
+  if (!ImGui::BeginPopupModal(
+          "##crash_notice", nullptr,
+          ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar))
+    return;
+  {
+    Theme::ScopedText heading(Theme::Text::TITLE);
+    ImGui::TextUnformatted(LOC("CRASH_NOTICE_TITLE"));
+  }
+  ImGui::PushTextWrapPos(460.0f * Theme::scale());
+  ImGui::TextColored(Theme::palette().muted, "%s", crash_notice_text.c_str());
+  ImGui::PopTextWrapPos();
+  ImGui::Spacing();
+  const bool dismissed = UI::primaryButton(LOC("CRASH_NOTICE_OK"));
+  ImGui::SameLine();
+  if (UI::secondaryButton(LOC("CRASH_NOTICE_OPEN_FOLDER")) &&
+      !SDL_OpenURL(folderUrl(crash_notice->report.parent_path()).c_str()))
+    Logger::warn(std::string("Could not open the reports folder: ") +
+                 SDL_GetError());
+  if (dismissed || ImGui::IsKeyPressed(ImGuiKey_Escape))
+  {
+    CrashReport::acknowledge();
+    crash_notice.reset();
+    ImGui::CloseCurrentPopup();
+  }
+  ImGui::EndPopup();
 }
 
 void MainMenuScene::openBackups(int slot)
@@ -295,19 +448,7 @@ void MainMenuScene::openBackups(int slot)
   backup_labels.clear();
   backup_labels.reserve(backups.size());
   for (const SaveBackup& backup : backups)
-  {
-    const SaveInspection& info = backup.inspection;
-    const std::string club =
-        info.club_name.empty() ? std::string(LOC("MENU_SAVE_SLOT_NOT_STARTED"))
-                               : info.club_name;
-    backup_labels.push_back(
-        backup.kind == SaveBackup::Kind::PreMigration
-            ? formatLocalized("SAVE_BACKUP_PRE_UPGRADE",
-                              {std::to_string(backup.index)})
-            : formatLocalized(
-                  "SAVE_BACKUP_ENTRY",
-                  {std::to_string(backup.index), club, info.game_date}));
-  }
+    backup_labels.push_back(backupLabel(backup));
   backups_requested = true;
 }
 
@@ -363,13 +504,30 @@ void MainMenuScene::renderLoadError()
   }
   ImGui::PushTextWrapPos(420.0f * Theme::scale());
   ImGui::TextColored(Theme::palette().muted, "%s", load_error_text.c_str());
+  const bool canRecover = !recovery_backup.empty();
+  if (canRecover)
+  {
+    ImGui::Spacing();
+    ImGui::TextWrapped("%s", recovery_text.c_str());
+  }
   ImGui::PopTextWrapPos();
   ImGui::Spacing();
+  if (canRecover && UI::primaryButton(LOC("SAVE_RECOVERY_RESTORE")))
+  {
+    // The damaged file is kept aside by the restore, never deleted.
+    pending_restore = recovery_backup;
+    recovery_backup.clear();
+    startSlot(load_error_slot, false);
+    ImGui::CloseCurrentPopup();
+  }
+  if (canRecover) ImGui::SameLine();
   const bool hasBackups =
       load_error_slot > 0 &&
       static_cast<size_t>(load_error_slot) <= cached_metadata.size() &&
       cached_metadata[static_cast<size_t>(load_error_slot - 1)].backups > 0;
-  if (hasBackups && UI::primaryButton(LOC("SAVE_BACKUPS_TITLE")))
+  if (hasBackups &&
+      (canRecover ? UI::secondaryButton(LOC("SAVE_BACKUPS_TITLE"))
+                  : UI::primaryButton(LOC("SAVE_BACKUPS_TITLE"))))
   {
     openBackups(load_error_slot);
     ImGui::CloseCurrentPopup();
@@ -433,7 +591,10 @@ void MainMenuScene::renderBackups()
     ImGui::PopID();
   }
   ImGui::Spacing();
-  if (UI::secondaryButton(LOC("TALK_CLOSE")))
+  // Escape closes the list unless the restore confirmation is on top.
+  if (UI::secondaryButton(LOC("TALK_CLOSE")) ||
+      (ImGui::IsKeyPressed(ImGuiKey_Escape, false) &&
+       restore_candidate.empty()))
   {
     backups_slot = 0;
     ImGui::CloseCurrentPopup();
@@ -471,6 +632,11 @@ void MainMenuScene::renderSlotPicker()
   const std::string popupTitle =
       std::string(LOC(is_new_game ? "MENU_NEW_GAME" : "MENU_LOAD_GAME")) +
       "###select_save_slot";
+  if (slot_picker_requested)
+  {
+    ImGui::OpenPopup("###select_save_slot");
+    slot_picker_requested = false;
+  }
   if (ImGui::BeginPopupModal(popupTitle.c_str(), nullptr,
                              ImGuiWindowFlags_AlwaysAutoResize))
   {
@@ -509,8 +675,15 @@ void MainMenuScene::renderSlotPicker()
         }
         else if (!is_new_game && metadata.status != SaveStatus::Ok)
         {
-          // A damaged or newer save cannot load: offer its backups.
-          openBackups(i);
+          // A damaged or newer save cannot load: explain why and offer the
+          // newest backup that does.
+          showLoadError(
+              i, formatLocalized(
+                     metadata.status_key[0] != '\0' ? metadata.status_key
+                                                     : "SAVE_ERROR_CORRUPT",
+                     {std::to_string(metadata.schema_version),
+                      std::to_string(metadata.supported_schema_version)}));
+          ImGui::CloseCurrentPopup();
         }
         else
         {
@@ -568,7 +741,14 @@ void MainMenuScene::renderSlotPicker()
     }
 
     ImGui::Spacing();
-    if (UI::secondaryButton(LOC("SETTINGS_CANCEL"), ImVec2(slotSize.x, 0.0f)))
+    // Escape belongs to whichever dialog is on top: a confirmation or the
+    // backups list opened from here closes first.
+    const bool escape = ImGui::IsKeyPressed(ImGuiKey_Escape, false) &&
+                        overwrite_slot == 0 && delete_slot == 0 &&
+                        !ImGui::IsPopupOpen("##save_backups");
+    if (UI::secondaryButton(LOC("SETTINGS_CANCEL"),
+                            ImVec2(slotSize.x, 0.0f)) ||
+        escape)
       ImGui::CloseCurrentPopup();
 
     // Overwriting a save is irreversible: ask first.

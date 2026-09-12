@@ -30,6 +30,7 @@ enum class MatchCameraMode : std::uint8_t
   PLAYER_FOLLOW, /**< Low chase camera behind the ball carrier. */
   FREE,          /**< User-driven orbit camera (drag, pan, zoom). */
   DIRECTOR,      /**< TV director cutting between broadcast shots. */
+  PLAY,          /**< Play mode: follows the ball and the active player. */
 };
 
 /**
@@ -80,6 +81,9 @@ struct MatchRenderOptions
   bool dayLook = false;
   /** Pitch-control overlay in the team colours (2D view). */
   bool pressureOverlay = false;
+  /** Play mode: the human's active footballer (0 = none), kept in view by
+   * the play camera. */
+  PlayerID activePlayer = 0;
 };
 
 /**
@@ -97,4 +101,13 @@ class IMatchRenderer
   virtual void render(const MatchRenderSnapshot& snapshot,
                       const MatchRenderOptions& options,
                       const MatchViewport& viewport) = 0;
+
+  /**
+   * Screen position (logical pixels) of a normalised pitch point at a height
+   * in metres, as drawn by the last render(), so overlays can be drawn in
+   * the view's projection. False before the first frame or when the point
+   * is behind the camera.
+   */
+  virtual bool projectPitch(Vector2F pitch, float heightMetres, float& screenX,
+                            float& screenY) const = 0;
 };

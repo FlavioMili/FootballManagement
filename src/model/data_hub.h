@@ -18,6 +18,7 @@
 #include "global/types.h"
 #include "model/gamedate.h"
 #include "model/match_analysis.h"
+#include "model/match_insights.h"
 #include "model/match_report.h"
 
 class MatchEngine;
@@ -56,7 +57,11 @@ struct ManagedMatchSnapshot
   std::array<std::uint16_t, 2> passes_completed{};
   std::vector<ShotRecord> shots;
   std::vector<PlayerMatchSnapshot> players; /*!< Managed side only. */
+  /** Touch maps, pass network and the like of both sides (empty for
+   * matches recorded before they were tracked). Stored as its own blob. */
+  MatchDetail detail;
 
+  /** Everything but the detail (which has its own compact encoding). */
   std::string toJson() const;
   /** nullopt for malformed data. */
   static std::optional<ManagedMatchSnapshot> fromJson(const std::string& json);
@@ -91,6 +96,13 @@ enum class HubMetric : std::uint8_t
   ShotsFor,
   ShotsAgainst,
   PassCompletion,
+  /** Goals minus xG per match (finishing above or below the chances). */
+  Finishing,
+  /** Goals a league-average keeper would have conceded from the shots on
+   * target faced, minus those conceded, per match. */
+  GoalsPrevented,
+  /** Share of the shots that came from set pieces. */
+  SetPieceShare,
   COUNT
 };
 
@@ -136,6 +148,12 @@ struct TeamAnalytics
   std::vector<ShotRecord> shots_for;
   std::vector<ShotRecord> shots_against;
   int tracked_matches = 0;
+  /** Per trend point, running totals: goals minus xG (finishing) and xG
+   * against minus goals conceded (defence and goalkeeping). */
+  std::vector<float> cumulative_finishing;
+  std::vector<float> cumulative_prevention;
+  /** League goals per shot on target behind GoalsPrevented. */
+  float league_conversion = 0.0f;
 
   bool hasEnoughMatches() const;
 };
@@ -163,6 +181,12 @@ struct PlayerAnalyticsRow
   int key_passes = 0;
   /** Share of the team's completed passes while tracked (network proxy). */
   float pass_share = 0.0f;
+  // Tracked matches with detail only (touch maps and passing network).
+  int detail_minutes = 0;
+  float xa = 0.0f;
+  int progressive_passes = 0;
+  int pressures = 0;
+  int touches = 0;
 
   /** Per 90 minutes; 0 when there are no minutes. */
   static float per90(float value, int minutes);
@@ -194,6 +218,35 @@ std::vector<PlayerAnalyticsRow> buildPlayerAnalytics(const DataHubInput& input);
 /** True when a report carries engine statistics (not a bare score). */
 bool hasStatistics(const MatchReport& report);
 }  // namespace DataHub
+
+/** @brief Player leaderboards of the data hub. */
+enum class LeaderMetric : std::uint8_t
+{
+  ExpectedGoals = 0,
+  ExpectedAssists,
+  ProgressivePasses,
+  Pressures,
+  COUNT
+};
+
+inline constexpr std::size_t LEADER_METRIC_COUNT =
+    static_cast<std::size_t>(LeaderMetric::COUNT);
+
+namespace DataHub
+{
+inline constexpr std::size_t LEADERS = 5;
+/** Minutes before a player enters a leaderboard. */
+inline constexpr int LEADER_MIN_MINUTES = 90;
+/** Season total of a leaderboard metric. */
+float leaderValue(const PlayerAnalyticsRow& row, LeaderMetric metric);
+/** Minutes behind a leaderboard metric (its per-90 base). */
+int leaderMinutes(const PlayerAnalyticsRow& row, LeaderMetric metric);
+/** Indices into @p rows of the top players by season total, best first. */
+std::vector<std::size_t> leaders(std::span<const PlayerAnalyticsRow> rows,
+                                 LeaderMetric metric);
+}  // namespace DataHub
+
+const char* leaderMetricKey(LeaderMetric metric);
 
 /** Language key of a metric's name / definition. */
 const char* hubMetricKey(HubMetric metric);

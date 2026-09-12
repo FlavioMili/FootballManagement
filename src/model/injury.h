@@ -81,4 +81,26 @@ InjurySeverity severity(std::uint16_t days);
  */
 Injury draw(WorldRng& rng, InjuryContext context, InjuryType previous,
             bool recent_previous);
+
+/**
+ * How much more likely a player who plays carrying an injury is to break
+ * down than a fit player: x2 with a minor knock, x3 with a moderate injury
+ * and x4 with a major one (tissue that has not healed fails under match
+ * load).
+ */
+float aggravationMultiplier(InjurySeverity severity);
+
+/**
+ * Chance that playing @p minutes with @p days_left of an unhealed injury
+ * aggravates it: the match injury rate (ECIS) times
+ * aggravationMultiplier(). Zero for a fit player.
+ */
+double aggravationChance(std::uint16_t days_left, int minutes);
+
+/**
+ * The layoff after an aggravation: the same diagnosis is drawn again as a
+ * recurrence (33% longer than a first injury), and never ends before the
+ * injury that was carried would have healed.
+ */
+Injury aggravate(WorldRng& rng, InjuryType type, std::uint16_t days_left);
 }  // namespace InjuryModel

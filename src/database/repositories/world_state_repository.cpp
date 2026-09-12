@@ -10,6 +10,7 @@
 
 #include <sqlite3.h>
 
+#include <algorithm>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <utility>
@@ -66,7 +67,8 @@ bool WorldStateRepository::loadBoard(BoardState& board) const
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       "SELECT team_id, season_year, objective, expected_position, "
       "target_position, confidence, low_reviews, league_matches, dismissed, "
-      "recent_deltas FROM BoardState WHERE id = 1;");
+      "recent_deltas, cup_objective, finance_objective, youth_target, "
+      "start_balance FROM BoardState WHERE id = 1;");
   bool found = false;
   if (sqlite3_step(stmt) == SQLITE_ROW)
   {
@@ -97,6 +99,13 @@ bool WorldStateRepository::loadBoard(BoardState& board) const
         loaded.recent_deltas[loaded.result_count++] = delta.get<float>();
       }
     }
+    loaded.cup_objective = static_cast<CupObjective>(
+        std::clamp(sqlite3_column_int(stmt, 10), 0, 4));
+    loaded.finance_objective = static_cast<FinanceObjective>(
+        std::clamp(sqlite3_column_int(stmt, 11), 0, 1));
+    loaded.youth_target =
+        static_cast<std::uint8_t>(sqlite3_column_int(stmt, 12));
+    loaded.start_balance = sqlite3_column_int64(stmt, 13);
     board = loaded;
     found = true;
   }
@@ -114,8 +123,9 @@ void WorldStateRepository::saveBoard(const BoardState& board) const
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       "INSERT OR REPLACE INTO BoardState (id, team_id, season_year, "
       "objective, expected_position, target_position, confidence, "
-      "low_reviews, league_matches, dismissed, recent_deltas) VALUES "
-      "(1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+      "low_reviews, league_matches, dismissed, recent_deltas, "
+      "cup_objective, finance_objective, youth_target, start_balance) VALUES "
+      "(1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
   sqlite3_bind_int(stmt, 1, board.team_id);
   sqlite3_bind_int(stmt, 2, board.season_year);
   sqlite3_bind_int(stmt, 3, static_cast<int>(board.objective));
@@ -126,6 +136,10 @@ void WorldStateRepository::saveBoard(const BoardState& board) const
   sqlite3_bind_int(stmt, 8, board.league_matches);
   sqlite3_bind_int(stmt, 9, board.dismissed ? 1 : 0);
   sqlite3_bind_text(stmt, 10, deltas_text.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_int(stmt, 11, static_cast<int>(board.cup_objective));
+  sqlite3_bind_int(stmt, 12, static_cast<int>(board.finance_objective));
+  sqlite3_bind_int(stmt, 13, board.youth_target);
+  sqlite3_bind_int64(stmt, 14, board.start_balance);
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }

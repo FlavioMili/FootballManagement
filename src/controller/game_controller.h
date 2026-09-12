@@ -30,16 +30,33 @@
 #include "model/next_action.h"
 #include "model/medical_centre.h"
 #include "model/player.h"
+#include "model/player_agent.h"
 #include "model/season_agenda.h"
+#include "model/squad_numbers.h"
 #include "model/squad_planner.h"
 #include "model/squad_status.h"
 #include "model/staff.h"
 #include "model/team.h"
 #include "model/training.h"
 #include "model/transfer_listing.h"
+#include "model/world_rng.h"
 #include "model/youth_academy.h"
 
 class MatchEngine;
+
+/** @brief Why the latest Continue, holiday or off-season jump stopped. */
+enum class ContinueStop : uint8_t
+{
+  None = 0,     /*!< Nothing ran. */
+  Fixture,      /*!< A managed fixture is due (or now on the calendar). */
+  Message,      /*!< News that needs the manager arrived. */
+  Decision,     /*!< A bid, request or job offer waits for an answer. */
+  WindowOpened, /*!< A transfer window opened. */
+  NewSeason,    /*!< The new season (and pre-season) began. */
+  LostJob,      /*!< The manager was sacked or his contract ran out. */
+  Requested,    /*!< The manager pressed Stop (or closed the game). */
+  DayLimit      /*!< The longest stretch simulated in one go. */
+};
 
 /**
  * @class GameController
@@ -204,6 +221,13 @@ class GameController
       uint16_t team_id) const;
 
   /**
+   * Gives a senior player of the managed club squad number @p number
+   * (1-99); a teammate wearing it takes the player's old number. Other
+   * clubs' players and academy players are refused (Invalid).
+   */
+  SquadNumbers::Change setSquadNumber(PlayerID player_id, int number);
+
+  /**
    * @brief Gets the teams belonging to a specific league.
    * @param league_id The ID of the league.
    * @return A vector of constant reference wrappers to the teams in the league.
@@ -246,8 +270,36 @@ class GameController
    */
   void advanceDay();
 
-  /** Advances quiet days and stops on the next managed fixture. */
+  /** Advances quiet days and stops on the next managed fixture (early
+   * when the job is lost or a stop is requested). */
   int advanceToNextManagedFixture(int max_days = 60);
+
+  /** Longest off-season stretch one Continue simulates. */
+  static constexpr int OFF_SEASON_MAX_DAYS = 45;
+  /**
+   * Continue with no managed fixture on the calendar (the off-season):
+   * days pass until something needs the manager, the first of: news that
+   * arrives unread, a bid or job offer, a transfer window opening, the new
+   * season, a managed fixture on the calendar, the loss of the job, a stop
+   * request or @p max_days. The reason is in getLastContinueStop().
+   * @return Days advanced.
+   */
+  int advanceToNextEvent(int max_days = OFF_SEASON_MAX_DAYS);
+
+  /**
+   * Asks the running Continue, holiday or off-season jump to stop at the end
+   * of the day being simulated. Thread-safe; each run clears the request
+   * when it starts.
+   */
+  void requestContinueStop() { continue_stop_requested = true; }
+  [[nodiscard]] bool isContinueStopRequested() const
+  {
+    return continue_stop_requested;
+  }
+  /** Why the latest run stopped (read once it has finished). */
+  ContinueStop getLastContinueStop() const { return last_continue_stop; }
+  /** Language key explaining @p stop (e.g. "CONTINUE_STOP_MESSAGE"). */
+  static const char* continueStopKey(ContinueStop stop);
 
   /** Progress of the running advanceDay() / advanceToNextManagedFixture(). */
   struct ContinueProgress
@@ -321,6 +373,19 @@ class GameController
   std::optional<MatchReport> getMatchReport(GameDateValue date, TeamID home_id,
                                             TeamID away_id) const;
   const std::vector<SeasonHistoryEntry>& getSeasonHistory() const;
+  /** Seasons with an archived final table of @p league_id, newest first. */
+  std::vector<uint16_t> getArchivedSeasons(LeagueID league_id) const;
+  /** Final table of a past season (nullptr if it was not archived). */
+  const std::vector<StandingRow>* getArchivedTable(uint16_t season,
+                                                   LeagueID league_id) const;
+  /** Calendar year @p season started in (0 if not archived). */
+  uint16_t getSeasonStartYear(uint16_t season) const;
+  /** League and final position of a club in a past season. */
+  std::optional<std::pair<LeagueID, uint16_t>> getArchivedPlacing(
+      uint16_t season, TeamID team_id) const;
+  /** The latest season summary not shown yet (nullptr when none). */
+  const SeasonReview* getUnseenSeasonReview() const;
+  void markSeasonReviewSeen(uint16_t season);
   std::vector<PlayerSeasonStats> getTopScorers(MatchType competition_type,
                                                LeagueID competition_id,
                                                size_t limit = 10) const;
@@ -396,11 +461,24 @@ class GameController
   bool acceptBid(PlayerID player_id);
   bool rejectBid(PlayerID player_id);
   bool counterOffer(PlayerID player_id, uint32_t new_price);
+  /** True while the managed club's country has its transfer window open
+   * (the managed club can sign players from other clubs). */
   bool isTransferWindowOpen() const;
+  /** True while @p club can sign players from other clubs: the buying
+   * club's window decides (TransferWindows). */
+  bool isTransferWindowOpenFor(TeamID club) const;
+  /** True while some country's window is open, so the managed club may
+   * still sell to a club whose window is open. */
+  bool isTransferWindowOpenAnywhere() const;
+  /** True when @p club may sign a player without a club today: any day in
+   * most countries, only in and shortly after the windows in some. */
+  bool canSignFreeAgentFor(TeamID club) const;
 
   // ========== Transfer Market: structured deals ==========
-  /** Transfer window on the current date (deadline countdown). */
+  /** The managed club's transfer window today (deadline countdown). */
   TransferNegotiation::WindowInfo getTransferWindow() const;
+  /** Transfer window of @p club's country today. */
+  TransferNegotiation::WindowInfo getTransferWindowFor(TeamID club) const;
   /**
    * Offer of the managed club for another club's player. An accepted fee
    * opens contract talks with the player for a week.
@@ -416,18 +494,74 @@ class GameController
   TransferNegotiation::ContractDemand getPlayerDemand(
       PlayerID player_id, TransferNegotiation::ContractKind kind) const;
 
+  /** Why an action on a managed player is not possible now. */
+  enum class PlayerActionBlock : std::uint8_t
+  {
+    None,
+    NotYours,     /*!< Not the managed club's (or an academy player). */
+    WindowClosed, /*!< The transfer window is shut. */
+    OnLoan,       /*!< Borrowed from another club. */
+    Leaving,      /*!< Committed to another club (pre-contract). */
+    SquadFloor,   /*!< He would leave fewer than 11 senior players. */
+    LastGoalkeeper, /*!< He is the club's only senior goalkeeper. */
+    MaxLength,    /*!< His contract already runs as long as allowed. */
+    NotLonger,    /*!< The proposal does not extend his contract. */
+    TooLong,      /*!< Longer than the rules allow at his age. */
+    TalksEnded    /*!< He will not talk again for a few days. */
+  };
+  /** Language key explaining @p block (empty for None). */
+  static const char* playerActionBlockKey(PlayerActionBlock block);
+  /** Why the player cannot be released now (None if he can). */
+  PlayerActionBlock getReleaseBlock(PlayerID player_id) const;
+  /** Why the player cannot be sold or loaned out now. */
+  PlayerActionBlock getSaleBlock(PlayerID player_id) const;
+  /** Why the player cannot be transfer-listed now. */
+  PlayerActionBlock getListingBlock(PlayerID player_id) const;
+  /** Why the player's contract cannot be renewed now. */
+  PlayerActionBlock getRenewalBlock(PlayerID player_id) const;
+
   struct ContractTalkResult
   {
     TransferNegotiation::ContractResponse response;
-    bool completed = false;      /*!< Moved, or pre-contract signed. */
+    /** Not proposed: why (the proposal used no round). */
+    PlayerActionBlock block = PlayerActionBlock::None;
+    /** What the player's agent says about it (language key, takes the
+     * player's name). */
+    const char* agent_line = "";
+    bool completed = false; /*!< Moved, renewed or pre-contract signed. */
     bool over_budget = false;    /*!< Agreed but the club cannot pay. */
     std::uint8_t rounds_left = 0;
   };
-  /** Proposes personal terms; completes the move when the player agrees. */
+  /**
+   * Proposes personal terms; completes the move (or the renewal of a
+   * managed player's contract) when the player and his agent agree. A
+   * renewal's years count the current season: it must extend the contract.
+   */
   ContractTalkResult proposeContract(
       PlayerID player_id, const TransferNegotiation::ContractOffer& offer);
   /** Proposals the player will still consider. */
   std::uint8_t getContractRoundsLeft(PlayerID player_id) const;
+
+  /** What the player's agent asks for in the open contract talks, the
+   * package priced for @p years. */
+  PlayerAgent::Demands getAgentDemands(PlayerID player_id,
+                                       TransferNegotiation::ContractKind kind,
+                                       std::uint8_t years) const;
+  /** The agent's line as contract talks of @p kind open. */
+  const char* getAgentOpeningLine(PlayerID player_id,
+                                  TransferNegotiation::ContractKind kind) const;
+  /** The agent's line after the selling club answered the club's offer. */
+  const char* getAgentPurchaseLine(
+      PlayerID player_id,
+      const TransferNegotiation::ClubResponse& response) const;
+  /** Release clause in a player's contract (0 = none). */
+  uint32_t getReleaseClause(PlayerID player_id) const;
+  /**
+   * Pays another club's player's release clause in cash: the selling club
+   * cannot refuse, and contract talks with the player open. Fails over
+   * budget, out of the window or without a clause.
+   */
+  TransferNegotiation::ClubResponse payReleaseClause(PlayerID player_id);
 
   /** Loan offer for another club's player; starts the loan on agreement. */
   TransferNegotiation::ClubResponse makeLoanOffer(
@@ -443,7 +577,7 @@ class GameController
    * AI clubs on the club's listed players arrive here too. */
   const std::vector<IncomingOffer>& getIncomingOffers() const;
 
-  /** Everything the talks over an incoming transfer offer show. */
+  /** Everything the talks over an incoming transfer or loan offer show. */
   struct IncomingOfferView
   {
     std::uint32_t offer_id = 0;
@@ -463,6 +597,14 @@ class GameController
     GameDateValue respond_on;
     TransferNegotiation::OfferTerms terms; /*!< The bid on the table. */
     TransferNegotiation::OfferTerms asked; /*!< The club's pending counter. */
+    bool loan = false;
+    TransferNegotiation::LoanTerms loan_terms; /*!< Loan: on the table. */
+    TransferNegotiation::LoanTerms asked_loan; /*!< Loan: pending counter. */
+    std::uint32_t weekly_wage = 0;    /*!< His full wage. */
+    std::uint32_t release_clause = 0; /*!< 0 = none. */
+    int season_weeks = 0;             /*!< Weeks to the season's end. */
+    /** Why the club could not let him go now (squad floor). */
+    PlayerActionBlock sale_block = PlayerActionBlock::None;
     std::vector<OfferRound> history;
     bool final_offer = false; /*!< The bid is the buyer's last word. */
     bool window_open = false;
@@ -480,6 +622,7 @@ class GameController
     WalkedAway,    /*!< The buyer ended the talks. */
     Rejected,      /*!< The club turned the offer down. */
     TermsRefused,  /*!< The clubs agreed but the player would not sign. */
+    SquadTooSmall, /*!< Selling him would break the squad floor. */
     Failed         /*!< Not possible now (window, budget, player gone). */
   };
   /** Accepts the bid on the table: the player agrees personal terms with
@@ -493,6 +636,12 @@ class GameController
    * (the same day near the deadline): accepts, counters or walks away. */
   OfferOutcome counterIncomingOffer(
       std::uint32_t offer_id, const TransferNegotiation::OfferTerms& terms);
+  /** Proposes loan terms (wage share, length, option or obligation to buy,
+   * recall clause, guaranteed appearances) to the club that wants to
+   * borrow the player. It answers like a buyer: later, the same day near
+   * the deadline, with its own terms, or by walking away. */
+  OfferOutcome counterLoanOffer(std::uint32_t offer_id,
+                                const TransferNegotiation::LoanTerms& terms);
   /** Lists the player at @p price and gives the bidder that figure as
    * a take-it-or-leave-it price (it meets it, makes its final offer or
    * leaves). */
@@ -547,8 +696,7 @@ class GameController
 
   float randomFloat(float min, float max)
   {
-    std::uniform_real_distribution<float> dis(min, max);
-    return dis(transfer_rng);
+    return PortableRandom::uniformReal(transfer_rng, min, max);
   }
 
   // ========== World: inbox ==========
@@ -559,10 +707,46 @@ class GameController
   bool markInboxMessageRead(uint32_t message_id);
   void markAllInboxMessagesRead();
   size_t getUnreadInboxCount() const;
+  /** Saved filters of the inbox screen (kept with the career). */
+  InboxView getInboxView() const;
+  void setInboxView(const InboxView& view);
+  /** Followed players: inbox news about their moves, injuries, big
+   * matches, honours and new contracts. Following fails for unknown or
+   * already followed players and beyond Stories::MAX_FOLLOWS. */
+  bool followPlayer(PlayerID player_id);
+  bool unfollowPlayer(PlayerID player_id);
+  bool isFollowingPlayer(PlayerID player_id) const;
+  std::vector<PlayerID> getFollowedPlayers() const;
+  /** The open decision moment of the managed club, if any. */
+  std::optional<Dilemma> getOpenDilemma() const;
+  /** What answer @p option (0 or 1) of the open moment would do. */
+  std::optional<DilemmaEffects> getDilemmaEffects(int option) const;
+  /** Answers the open decision moment; false if none is open. */
+  bool resolveDilemma(int option);
 
   // ========== World: board ==========
   /** Objective, expected/target position, confidence (0-100), dismissal. */
   const BoardState& getBoardState() const;
+
+  /** @brief The board's targets this season and how they are going. */
+  struct BoardTargets
+  {
+    BoardObjective league = BoardObjective::MidTable;
+    int target_position = 0;
+    int position = 0; /*!< 0 before the first league match. */
+    ObjectiveGrade league_grade = ObjectiveGrade::Met;
+    CupObjective cup = CupObjective::None;
+    ObjectiveGrade cup_grade = ObjectiveGrade::Met;
+    bool cup_still_in = false;
+    FinanceObjective finances = FinanceObjective::WithinWageBudget;
+    ObjectiveGrade finance_grade = ObjectiveGrade::Met;
+    std::int64_t start_balance = 0;
+    std::uint8_t youth_target = 0;
+    int young_regulars = 0;
+    ObjectiveGrade youth_grade = ObjectiveGrade::Met;
+  };
+  /** Targets of the managed club's board (nullopt without a club). */
+  std::optional<BoardTargets> getBoardTargets() const;
 
   /**
    * True while the board freezes the managed club's transfers because its
@@ -620,7 +804,9 @@ class GameController
   bool applyMatchConsequences(PlayerID player_id, uint8_t minutes_played,
                               float end_condition, bool injured);
 
-  /** Extends a managed player's contract if he accepts the terms. */
+  /** Extends a managed player's contract to @p terms.years seasons (the
+   * current one included) if he and his agent accept the terms, as one
+   * round of the renewal talks. */
   bool renewContract(PlayerID player_id, ContractTerms terms);
 
   // ========== Human side: conversations, team talks, dressing room ==========
@@ -906,6 +1092,32 @@ class GameController
   /** Moves a first-team player aged 18 or younger to the U18 squad. */
   YouthActionResult moveToYouthSquad(PlayerID player_id);
 
+  // ========== U21 squad ==========
+  // Implemented in game_controller_career.cpp.
+  /** U21 candidates of the managed club: first-team players up to 21 and
+   * the over-age ones up to 24 (status Graduated), U18 players from 17
+   * (status Squad). */
+  std::vector<YouthPlayerView> getReserveCandidates() const;
+  struct ReserveOverview
+  {
+    ReserveQuota quota;
+    int league_position = 0; /*!< In the country's U21 league. */
+    int league_size = 0;
+    YouthTableRow table;
+    Language country = Language::EN;
+  };
+  ReserveOverview getReserveOverview() const;
+  /** The country's U21 league, leader first. */
+  std::vector<YouthTableRow> getReserveTable() const;
+  /** Managed club's U21 results this season, oldest first. */
+  const std::vector<YouthResult>& getReserveResults() const;
+  /** A first-team or U18 player joins the U21 squad. */
+  YouthActionResult moveToReserves(PlayerID player_id);
+  /** A U21 player joins the first-team squad. */
+  YouthActionResult promoteReservePlayer(PlayerID player_id);
+  /** A U21 player aged 18 or younger goes back to the U18s. */
+  YouthActionResult moveReserveToU18(PlayerID player_id);
+
   // ========== Manager career ==========
   /** A manager exists (created in the new-game step, or for older saves). */
   bool hasCareer() const;
@@ -964,14 +1176,83 @@ class GameController
    */
   int advanceWhileUnemployed(int max_days = 7);
 
+  // ========== National-team job ==========
+  // Implemented in game_controller_career.cpp.
+  /** The manager's national-team job (nullptr when he has none). */
+  const NationalJob* getNationalJob() const;
+  bool hasNationalJob() const;
+  const std::vector<NationalStint>& getNationalJobHistory() const;
+  /** A national team looking for a head coach, as the Job Centre shows it. */
+  struct NationalVacancyView
+  {
+    Language nation = Language::EN;
+    int rank = 0;          /*!< 1 = best-rated nation. */
+    float stature = 0.0f;  /*!< Club reputation scale. */
+    float chance = 0.0f;   /*!< Chance of an offer after applying. */
+    CoachingLicence required_licence = CoachingLicence::A;
+    std::int64_t weekly_wage = 0;
+    GameDateValue opened = GameDateValue();
+    bool compatriot = false;
+    std::optional<NationalApplicationStage> stage; /*!< When applied. */
+  };
+  /** Open national jobs, best chance first. */
+  std::vector<NationalVacancyView> getNationalVacancies() const;
+  NationalApplyResult applyForNationalJob(Language nation);
+  const std::vector<NationalJobOffer>& getNationalJobOffers() const;
+  /** Takes the job; refused while a club job cannot be combined with it. */
+  NationalApplyResult acceptNationalJobOffer(std::uint32_t offer_id);
+  bool declineNationalJobOffer(std::uint32_t offer_id);
+  bool resignNationalJob();
+  /** A club job and a national team together (reputation rule). */
+  bool canCombineClubAndNation() const;
+
+  /** One player the national team may call up. */
+  struct CallUpCandidate
+  {
+    PlayerID id = 0;
+    std::string name;
+    PlayerRole role = PlayerRole::UNKNOWN;
+    int age = 0;
+    TeamID club = 0;
+    int overall = 0;
+    float form = 0.0f;      /*!< Average match rating (0: no matches). */
+    int condition = 0;      /*!< 0-100. */
+    uint16_t caps = 0;
+    uint16_t goals = 0;
+    bool available = true;  /*!< Not injured. */
+    bool selected = false;  /*!< In the announced squad. */
+  };
+  /** The managed nation's call-up: squad, candidates and fixtures. */
+  struct CallUpView
+  {
+    Language nation = Language::EN;
+    bool announced = false; /*!< A squad is announced (editable or away). */
+    bool locked = false;    /*!< The players have reported. */
+    bool finals = false;
+    GameDateValue start = GameDateValue();
+    GameDateValue until = GameDateValue();
+    GameDateValue next_announcement = GameDateValue(); /*!< When none yet. */
+    size_t limit = International::WINDOW_SQUAD;
+    /** Eligible players, the assistant's order (best first). */
+    std::vector<CallUpCandidate> candidates;
+    /** The nation's next matches (at most five). */
+    std::vector<International::Fixture> fixtures;
+  };
+  CallUpView getCallUpView() const;
+  /** Replaces the announced squad of the managed nation. */
+  International::CallUpResult setNationalSquad(
+      const std::vector<PlayerID>& players);
+
   // ========== Guidance: checklist, next steps, delegation, analysis ==========
   // Implemented in game_controller_guidance.cpp.
   /** First-week checklist of the career. */
   const OnboardingState& getOnboarding() const;
   /** Ticks a checklist step; false when it was already done. */
   bool completeOnboardingTask(OnboardingTask task);
-  /** Hides the checklist for good. */
+  /** Hides the checklist (Help and Settings can bring it back). */
   void dismissOnboarding();
+  /** Shows a hidden checklist again. */
+  void showOnboarding();
 
   /** Pending work of the managed club, most important first. */
   std::vector<NextAction> getNextActions(size_t limit = 5) const;
@@ -1026,9 +1307,14 @@ class GameController
     std::vector<PlayerAnalyticsRow> players;
   };
   DataHubView getDataHub() const;
+  /** Tracked data (shots, touch maps, pass network) of a managed club's
+   * match, if it was recorded. */
+  std::optional<ManagedMatchSnapshot> getMatchSnapshot(GameDateValue date,
+                                                       TeamID home_id,
+                                                       TeamID away_id) const;
 
   /** A decision message still waits for the manager (offer, player
-   * request, youth trialists). */
+   * request, youth trialists, decision moment). */
   bool isInboxDecisionPending(const InboxMessage& message) const;
 
   // ========== Honours: awards, records, hall of fame ==========
@@ -1132,6 +1418,8 @@ class GameController
   float last_initialization_milliseconds = 0.0f;
   std::atomic<int> continue_days_started{0};
   std::atomic<int> continue_days_total{0};
+  std::atomic<bool> continue_stop_requested{false};
+  std::atomic<ContinueStop> last_continue_stop{ContinueStop::None};
   HolidaySummary holiday_summary;
   /** The manager's own delegation while a holiday hands extra duties to the
    * assistant: saves made on holiday store this one. */
@@ -1164,6 +1452,8 @@ class GameController
   void processOfferReplies();
   /** Applies the buyer's answer to the counter of offer @p offer_id. */
   OfferOutcome answerCounter(std::uint32_t offer_id);
+  /** Applies the borrower's answer to the loan counter of @p offer_id. */
+  OfferOutcome answerLoanCounter(std::uint32_t offer_id);
   OfferOutcome sendCounter(std::uint32_t offer_id,
                            const TransferNegotiation::OfferTerms& terms,
                            bool firm);
@@ -1187,6 +1477,9 @@ class GameController
   /** Signing-day cash of a deal fits the buyer's transfer budget and the
    * new wage its wage budget. */
   bool canPayDeal(const TransferMarket::Deal& deal) const;
+  /** A pre-contract's wage fits next season's wage room and its bonus and
+   * agent fee the transfer money not yet committed. */
+  bool canPayPreContract(const TransferMarket::Deal& deal) const;
 
   /** Opponents whose report was opened this session. */
   std::vector<TeamID> viewed_opposition;
@@ -1204,4 +1497,7 @@ class GameController
   /** The managed club, only once one has been selected. */
   std::optional<std::reference_wrapper<Team>> managedClub();
   std::optional<std::reference_wrapper<const Team>> managedClub() const;
+  /** Copies the opposition plan into the managed club's tactics, which
+   * carry it into every match engine (live or simulated). */
+  void syncOppositionOrders();
 };

@@ -60,6 +60,18 @@ enum class Preset : uint8_t
   COUNT
 };
 
+/**
+ * @brief Hues of the status colours. Good and bad are never told apart by
+ * red against green alone in the safe modes.
+ */
+enum class ColorVision : uint8_t
+{
+  STANDARD,    /**< Green good, red bad. */
+  RED_GREEN,   /**< Blue good, orange bad (protanopia, deuteranopia). */
+  BLUE_YELLOW, /**< Teal good, magenta bad (tritanopia). */
+  COUNT
+};
+
 /** @brief User-selected appearance options. */
 struct Appearance
 {
@@ -69,6 +81,8 @@ struct Appearance
   float ui_scale = 0.0f; /**< 0 = follow the display content scale. */
   bool compact = false;  /**< Tighter paddings for denser tables. */
   bool reduced_motion = false;
+  ColorVision color_vision = ColorVision::STANDARD;
+  float text_scale = 1.0f; /**< Text size on top of the UI scale. */
 };
 
 /** @brief Semantic colours used by widgets. */
@@ -89,6 +103,18 @@ struct Palette
   ImVec4 accent;
   ImVec4 on_accent; /**< Text drawn on accent-filled areas. */
 };
+
+/**
+ * @brief Palette of a preset without applying it (no ImGui state touched),
+ * e.g. for previews and contrast checks.
+ */
+Palette presetPalette(Preset preset, ColorVision vision, const ImVec4& accent);
+
+/** @brief Localisation key of a colour-vision mode's name. */
+const char* colorVisionKey(ColorVision vision);
+
+/** @brief WCAG contrast ratio of two opaque colours (1 to 21). */
+float contrastRatio(const ImVec4& first, const ImVec4& second);
 
 /** @brief Returns the active palette (accent included). */
 const Palette& palette();

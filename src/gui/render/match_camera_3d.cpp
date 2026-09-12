@@ -162,6 +162,31 @@ MatchCamera3D::Rig MatchCamera3D::desiredRig(const MatchCameraFocus& focus,
       break;
     case MatchCameraMode::DIRECTOR:
       return directorRig(focus);
+    case MatchCameraMode::PLAY:
+    {
+      // Side-on like the main camera but closer and lower, centred between
+      // the ball and the active footballer and pulled back as they drift
+      // apart, so both stay in the picture.
+      const Vec3 subject = focus.hasActive ? focus.active : focus.ball;
+      const Vec3 between = subject + (focus.ball - subject) * 0.5f;
+      const float spread =
+          std::hypot(focus.ball.x - subject.x, focus.ball.y - subject.y);
+      rig.target = {
+          std::clamp(between.x + ahead.x * Tuning::Play::LOOK_AHEAD_SHARE,
+                     Tuning::Play::TARGET_MIN_X, Tuning::Play::TARGET_MAX_X),
+          std::clamp(between.y, Tuning::Play::TARGET_MIN_Y,
+                     Tuning::Play::TARGET_MAX_Y),
+          0.0f};
+      rig.yaw = std::numbers::pi_v<float> * 0.5f;
+      rig.pitch = Tuning::Play::PITCH;
+      rig.distance =
+          std::clamp(Tuning::Play::DISTANCE +
+                         spread * Tuning::Play::SPREAD_DISTANCE_GAIN,
+                     Tuning::Play::MIN_DISTANCE, Tuning::Play::MAX_DISTANCE) *
+          zoomFactor;
+      rig.fov = Tuning::Play::FOV;
+      break;
+    }
   }
   // The free camera may also use the gantry positions of the presets (the
   // stand behind the eye is not drawn), so taking over never jumps.

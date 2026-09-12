@@ -1163,6 +1163,17 @@ void ManagerCareer::recordAward(ManagerAwardKind kind, std::uint16_t start_year,
     ++stint->trophies;
 }
 
+void ManagerCareer::adjustReputation(float delta)
+{
+  if (!profile.exists) return;
+  profile.reputation = std::clamp(profile.reputation + delta, 1.0f, 100.0f);
+}
+
+void ManagerCareer::addEarnings(std::int64_t amount)
+{
+  if (profile.exists) profile.career_earnings += amount;
+}
+
 bool ManagerCareer::dismissClubManager(TeamID team_id,
                                        const GameDateValue& date, Inbox& inbox)
 {
@@ -1365,10 +1376,12 @@ void ManagerCareer::weeklyReviews(const GameDateValue& date,
     return;
   }
 
-  // Out of work: the name fades, down to a floor set by the background.
+  // Out of work: the name fades, down to a floor set by the background,
+  // unless he is in charge of a national team.
   const float floor = 0.7f * startingReputation(profile.background);
-  profile.reputation = std::max(std::min(profile.reputation, floor),
-                                profile.reputation - UNEMPLOYED_DECAY);
+  if (!national_duty)
+    profile.reputation = std::max(std::min(profile.reputation, floor),
+                                  profile.reputation - UNEMPLOYED_DECAY);
   const int idle = daysBetween(profile.unemployed_since, date);
   if (idle < UNSOLICITED_AFTER_DAYS) return;
   // Each board with a vacancy he fits decides on its own whether to call,

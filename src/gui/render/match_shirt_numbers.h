@@ -8,18 +8,19 @@
 
 #pragma once
 
+#include <bitset>
+#include <cstddef>
 #include <utility>
 #include <vector>
 
-#include "gui/render/match_render_math.h"
 #include "gui/render/match_render_snapshot.h"
 #include "model/player.h"
 
 /**
- * Cosmetic shirt numbers of one match, handed out the same way by the 2D
- * and 3D views (players have no squad number of their own). Starters and
- * their roles come from the engine's statistics, so a view opened after
- * substitutions still numbers the starting eleven 1-11.
+ * Shirt numbers of one match, handed out the same way by the 2D and 3D
+ * views: players wear their squad number. A player without one (an academy
+ * player called up) gets a spare number from 50 up, which squad numbers
+ * rarely reach, so it does not take the number of a teammate.
  */
 class MatchShirtNumbers
 {
@@ -29,39 +30,44 @@ class MatchShirtNumbers
   /** Forgets every number (a new fixture). */
   void reset()
   {
-    home = {};
-    away = {};
+    home.reset();
+    away.reset();
     owners.clear();
   }
 
-  /** The player's number, assigned on first request; 0 without a player. */
+  /** The player's number, assigned on first request; 0 without a player.
+   * @p stats is unused since players have squad numbers; it stays for the
+   * views that pass the engine's statistics. */
   int numberFor(const MatchRenderPlayer& player,
-                const std::vector<PlayerMatchStats>* stats)
+                const std::vector<PlayerMatchStats>* /*stats*/)
   {
     if (!player.player) return 0;
     for (const auto& [owner, number] : owners)
       if (owner == player.player) return number;
-    PlayerRole role = player.player->getRole();
-    bool starter = true;
-    if (stats)
-    {
-      for (const PlayerMatchStats& entry : *stats)
-      {
-        if (entry.playerId != player.player->getId()) continue;
-        starter = entry.started;
-        if (entry.role != PlayerRole::UNKNOWN) role = entry.role;
-        break;
-      }
-    }
-    if (player.isGoalkeeper && starter) role = PlayerRole::GK;
-    const int number =
-        (player.isHomeTeam ? home : away).take(role, starter);
+    std::bitset<NUMBERS>& worn = player.isHomeTeam ? home : away;
+    int number = player.player->getSquadNumber();
+    if (number <= 0 || number >= NUMBERS ||
+        worn.test(static_cast<std::size_t>(number)))
+      number = spareNumber(worn);
+    if (number > 0) worn.set(static_cast<std::size_t>(number));
     owners.emplace_back(player.player, number);
     return number;
   }
 
  private:
-  RenderMath::ShirtNumbers home;
-  RenderMath::ShirtNumbers away;
+  static constexpr int NUMBERS = 100;
+  static constexpr int FIRST_SPARE = 50;
+
+  static int spareNumber(const std::bitset<NUMBERS>& worn)
+  {
+    for (int number = FIRST_SPARE; number < NUMBERS; ++number)
+      if (!worn.test(static_cast<std::size_t>(number))) return number;
+    for (int number = 1; number < FIRST_SPARE; ++number)
+      if (!worn.test(static_cast<std::size_t>(number))) return number;
+    return 0;
+  }
+
+  std::bitset<NUMBERS> home;
+  std::bitset<NUMBERS> away;
   std::vector<std::pair<const Player*, int>> owners;
 };

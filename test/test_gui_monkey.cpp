@@ -308,6 +308,12 @@ const char* sceneName(SceneID id)
       return "records";
     case SceneID::PLANNING:
       return "planning";
+    case SceneID::HELP:
+      return "help";
+    case SceneID::RESERVES:
+      return "reserves";
+    case SceneID::CALL_UPS:
+      return "call_ups";
   }
   return "?";
 }

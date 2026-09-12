@@ -802,6 +802,8 @@ void YouthScene::renderDetail(const Row& row, ListKind kind)
         pending = {PendingAction::Kind::PROFESSIONAL, view.id};
       if (button(LOC("YOUTH_PROMOTE"), false))
         pending = {PendingAction::Kind::PROMOTE, view.id};
+      if (button(LOC("YOUTH_TO_U21"), false))
+        pending = {PendingAction::Kind::TO_U21, view.id};
       if (button(LOC(view.loan_listed ? "YOUTH_LOAN_WITHDRAW" : "YOUTH_LOAN_OFFER"),
                  false))
         pending = {PendingAction::Kind::LOAN, view.id};
@@ -1027,6 +1029,10 @@ void YouthScene::runPending()
       break;
     case PendingAction::Kind::DEMOTE:
       report(controller.moveToYouthSquad(action.id), "YOUTH_TOAST_DEMOTED");
+      selected = 0;
+      break;
+    case PendingAction::Kind::TO_U21:
+      report(controller.moveToReserves(action.id), "U21_TOAST_SENT_DOWN");
       selected = 0;
       break;
     case PendingAction::Kind::LOAN:

@@ -14,17 +14,17 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - name: Checkout main branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           path: main
 
       - name: Checkout website branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: website
           path: website
@@ -37,9 +37,13 @@ jobs:
           cd main
           doxygen Doxyfile
 
+      # Only the public pages: contributor notes in the root stay out.
       - name: Copy Markdown files (Cherry pick)
         run: |
-          cp main/*.md website/
+          for page in README.md CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md; do
+            if [[ -f main/$page ]]; then cp "main/$page" website/; fi
+          done
+          mkdir -p website/docs
           cp main/docs/ARCHITECTURE.md website/docs/ || true
 
       - name: Copy Doxygen Output to Website

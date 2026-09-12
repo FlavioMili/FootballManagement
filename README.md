@@ -1,286 +1,345 @@
 # Football Management
 
-![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 ![C++](https://img.shields.io/badge/C++-23-blue.svg)
 [![CI](https://github.com/FlavioMili/FootballManagement/actions/workflows/ci.yml/badge.svg)](https://github.com/FlavioMili/FootballManagement/actions/workflows/ci.yml)
 
-Football Management is an open-source football management game written in
-C++23 with SDL3, Dear ImGui and SQLite. You run a club in a living world of
-22 leagues: pick the squad and the tactics, deal with the board, the
-dressing room and the transfer market, bring players through the academy and
-build a manager career across clubs.
+Football Management is an open-source football management game for Linux,
+macOS and Windows, written in C++23 with SDL3, Dear ImGui and SQLite. You
+take over a club in a world of 22 leagues and 440 clubs: pick the squad and
+the tactics, keep the board and the dressing room on your side, trade in the
+transfer market, bring players through the academy and build a career that
+can take you from club to club. Every match is played by a real-time
+simulation that you can watch in a 2D tactical view or a 3D broadcast view,
+and the rest of the world plays on the same engine.
 
-Matches are played by a real-time simulation. One second of match time is one
-second of simulation at normal speed, and you can watch the same match in a
-2D tactical view or a 3D broadcast view, switching between them whenever you
-like. Every other match in the world runs on the same engine.
+> **Status:** version 1.0 is being prepared for release. The
+> [changelog](CHANGELOG.md) lists what it contains and its known
+> limitations.
+>
+> *Football Management* is a working title and may change before or after
+> the release.
 
-> **Status:** v0.1, the first public release, is being prepared. See the
-> [changelog](CHANGELOG.md) for what is in it and its known limitations.
+![Home dashboard](docs/images/home.png)
+
+## Contents
+
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Building](#building)
+- [Running](#running)
+- [Controls](#controls)
+- [Where your files are](#where-your-files-are)
+- [Tests and tools](#tests-and-tools)
+- [Game data and modding](#game-data-and-modding)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Features
 
 **Management**
-- One management shell with seven sidebar hubs, tabs for their screens,
-  F-key shortcuts and a command palette (Ctrl+K) that finds players, clubs,
-  screens and pending tasks.
-- Home dashboard with the next fixture and a *Next steps* card; an inbox that
-  separates decisions from information and lets you act inline.
-- Continue runs the calendar on a background worker with a progress overlay;
-  holiday mode hands the club to your assistant manager until a date, a
-  match or a decision.
+- One management shell with seven sidebar hubs, F1-F7 shortcuts and a
+  command palette (Ctrl+K) that finds players, clubs, screens and pending
+  tasks; browser-style Back and Forward (touchpad swipe, mouse side
+  buttons, Alt+Left/Right).
+- A Home dashboard with the next fixture and a *Next steps* card, and an
+  inbox that separates decisions from information and lets you act inline.
+- Continue advances the calendar on a background worker; holiday mode hands
+  the club to your assistant until a date, a match or a decision.
 - Delegation of lineup fixes, substitutions, training, renewals, scouting,
-  friendlies and youth contracts to your assistant manager.
+  friendlies and youth contracts to the assistant manager.
 - English and Italian, six themes, interface scaling for HiDPI displays and
   layouts that adapt from 1280x720 to 4K.
 
-**Match engine and the laws of the game**
-- Real-time engine with player kinematics and fatigue, ball physics (drag,
-  bounce, roll), goalkeeping, dribbling, tackles, marking and pressing.
-- Offside, fouls and advantage, yellow and red cards with referee strictness,
-  free kicks, penalties, corners, throw-ins, goal kicks and added time from
-  the stoppages of each half.
-- Five substitutions in three windows, pre-match and half-time team talks,
-  and a lineup check that replaces injured or suspended players.
-- 2D and 3D views of the same match, speeds from 1x to 30x, a highlights
-  mode, a quick result, five 3D cameras with mouse orbit, pan and zoom, and
-  a pitch focus mode.
-- Match reports, half-time and full-time analysis, and opposition reports.
-- Procedural match sound (crowd, whistles, ball) with master, crowd and
-  effects volumes.
+**Match day**
+- A real-time engine with player movement and fatigue, ball flight with
+  drag, bounce and roll, goalkeeping, dribbling, tackles, marking and
+  pressing.
+- The laws of the game: offside, fouls and advantage, yellow and red cards,
+  free kicks, penalties, corners, throw-ins, goal kicks and added time.
+- 2D and 3D views of the same match, speeds from 1x to 30x, a Highlights
+  mode and a Quick result button; six 3D cameras including a TV director,
+  with mouse orbit, pan and zoom.
+- Player roles and duties for every position, and a separate shape with
+  the ball that you drag into place on the tactics screen.
+- A substitutions board, an in-match tactics panel and eleven touchline
+  shouts; pre-match and half-time team talks that the players carry onto
+  the pitch.
+- Opposition reports with individual instructions the engine plays out:
+  tight marking, closing down, showing a player onto his weaker foot or
+  doubling up on him.
+- Cup ties played to a winner through extra time and a live penalty
+  shootout; match reports and half-time and full-time analysis.
+- Procedural match sound: crowd, whistles and ball contacts.
 
 **Competitions**
-- 22 leagues with 440 clubs: a top division and a second division in each
-  of eleven countries, with promotion and relegation, and domestic cups.
-- Cup ties and continental deciders are played to a winner, through extra
-  time and a penalty shootout, live or in the background.
+- 22 leagues in eleven countries, each with a top and a second division,
+  promotion and relegation, and a domestic cup.
 - Continental club competitions with Swiss-style league phases, two-legged
   knockout rounds, prize money and coefficients.
-- National teams with qualifiers, finals tournaments, friendlies,
-  international windows and call-ups of your players.
+- National teams with qualifiers, finals tournaments, friendlies and
+  call-ups of your players.
 
-**World simulation**
-- Finances: TV, merit, gate and commercial income, wage and staff budgets,
-  a full ledger, ticket prices, and transfer budgets tied to real cash.
-- Board objectives and confidence, warnings, dismissal and transfer
-  embargoes; facility projects funded by the board.
-- Injuries and a medical screen, fatigue, sharpness, morale and form.
-- Player development driven by age, training, minutes and staff.
+**The club and the world**
+- Finances with TV, merit, gate and commercial income, wage and staff
+  budgets, a ledger and transfer budgets tied to real cash.
+- Board objectives and confidence, warnings, dismissal, transfer embargoes
+  and facility projects.
+- Injuries and a medical centre, fatigue, sharpness, morale and form;
+  player development driven by age, training, minutes and staff.
 - Squad status, captains and set-piece takers, a squad planner and player
-  comparison.
-- Player conversations, promises, dressing-room mood and story chains.
+  comparison; player conversations, promises and dressing-room stories.
+- Coaching, medical, scouting and youth staff; weekly training plans and
+  mentoring groups.
 
-**Youth academy**
-- A yearly intake with a February preview and a March intake, scouted
-  ranges, scholarships and first professional contracts.
-- An under-18 league whose minutes feed development; homegrown status.
-
-**Transfers and negotiation**
-- Search with affordability filters and need-based recommendations.
-- Negotiations with counter-offers, instalments, loans, pre-contracts, free
-  agents, listings and releases; clubs that value key players and long
-  contracts, and agents who open high.
-- Computer-controlled clubs that buy, sell, loan and trim their squads.
-
-**Scouting**
-- Scouts with nationalities, languages and regional experience, sent to a
-  continent, country or league.
-- Players outside your club are shown as estimates whose ranges narrow as
+**Transfers, scouting and youth**
+- Transfer search with affordability filters and need-based
+  recommendations; negotiations with counter-offers, instalments, loans,
+  pre-contracts and free agents; bids for your own players that you can
+  negotiate too.
+- Scouts with nationalities, languages and regional experience. Players
+  outside your club are shown as estimates whose ranges narrow as your
   knowledge grows.
+- A yearly youth intake with a February preview and a March intake, an
+  under-18 league, scholarships and first professional contracts; an
+  under-21 squad for every club with its own league.
 
-**Staff and training**
-- Coaching, medical, scouting and youth staff with contracts.
-- Weekly training plans with presets, per-session intensity and automatic
-  lightening in congested weeks; mentoring groups for young players.
-
-**Manager career**
-- A manager profile with reputation and coaching licence, a job centre with
-  applications, interviews and contract talks, offers from other clubs,
-  resignation and sacking. You can start unemployed.
-
-**Awards and records**
+**Career**
+- A manager profile with reputation and coaching licence, a job centre,
+  interviews, offers from other clubs, resignation and sacking. You can
+  start unemployed.
+- National-team jobs, alone or next to your club job: pick the squad for
+  each international window and qualify for the finals.
 - Monthly and season awards, player honours, and club and league records.
+- Three save slots, autosave and restorable backups. The game plays on an
+  in-memory copy and only replaces a save with a verified snapshot.
 
-**Saves**
-- Three save slots, autosave, and numbered backups restorable from the main
-  menu. The game works on an in-memory copy and replaces the save file only
-  with a verified snapshot. Older saves are migrated when loaded.
+The [changelog](CHANGELOG.md) has the complete list.
 
 ## Screenshots
 
-There are no screenshots in the repository yet. To add some, capture them in
-the running game with F12 (the image is written to `captures/screenshot.bmp`
-in the user data directory, see [Where your files are](#where-your-files-are),
-or to the path in `FM_SCREENSHOT_PATH`). Convert them to PNG, put them in
-`docs/screenshots/` and link them here. Useful shots: the Home dashboard, the
-squad, the transfer negotiation dialog, and a match in both the 2D and the 3D
-view (`FM_MATCH_VIEW=3d` or `2d` forces the initial match view).
-
-## Documentation
-
-- [Getting started](docs/user/getting-started.md): a walkthrough of your
-  first season.
-- [Controls](docs/user/controls.md): every keyboard and mouse shortcut.
-- [Changelog](CHANGELOG.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Reproducible builds](docs/development/builds.md): presets, sanitizers,
-  clang-tidy and dependency updates.
-- [Building and releasing packages](docs/development/release.md)
-- [Data pack format](assets/user_made_data/README.md)
+| | |
+|---|---|
+| ![The squad screen](docs/images/squad.png) | ![Tactics](docs/images/tactics.png) |
+| **Squad**: the first team with a player's details beside the list. | **Tactics**: styles, instructions, roles and the shape with the ball. |
+| ![A transfer offer](docs/images/transfer-offer.png) | ![League table](docs/images/competitions.png) |
+| **Transfers**: an offer for another club's player. | **Competitions**: league tables, cups and continental football. |
+| ![The 3D match view](docs/images/match-3d.png) | ![The 2D match view](docs/images/match-2d.png) |
+| **Match day in 3D**: the broadcast camera. | **Match day in 2D**: the tactical view of the same match. |
+| ![Scouting](docs/images/scouting.png) | ![Youth academy](docs/images/youth.png) |
+| **Scouting**: scouts, assignments and reports. | **Youth academy**: facilities, the under-18 league and the next intake. |
 
 ## Building
 
-### Requirements
+The game builds with CMake 3.29 or newer and a C++23 compiler. The first
+configure needs Git and network access: SDL3, SDL3_ttf, Dear ImGui, fmt,
+spdlog and nlohmann/json (and GoogleTest when tests are enabled) are fetched
+at pinned versions. SQLite comes from the system if CMake finds it and is
+fetched otherwise.
 
-- CMake 3.29 or newer and Ninja (the presets use Ninja).
-- A C++23 compiler. CI uses GCC 14 on Ubuntu 24.04 and Homebrew LLVM on
-  macOS; newer GCC releases work too. AppleClang's libc++ is not enough (see
-  [release.md](docs/development/release.md)).
-- Git and network access for the first configure: SDL3, SDL3_ttf, Dear
-  ImGui, fmt, spdlog, nlohmann/json (and GoogleTest when tests are enabled)
-  are fetched at pinned versions. SQLite is taken from the system if found,
-  otherwise fetched.
+CI builds Linux with GCC 14, macOS with Homebrew LLVM and Windows with
+Visual Studio 2022 and clang-cl. Windows support is experimental: it builds
+in CI, but it has had far less testing than the other two.
 
-SDL is built from source, so on Linux you need its build dependencies. On
-Ubuntu or Debian:
+### Linux
+
+SDL is built from source, so you need its build dependencies. On Ubuntu
+24.04 or Debian:
 
 ```sh
-sudo apt install g++-14 ninja-build pkg-config \
-  libasound2-dev libpulse-dev libx11-dev libxext-dev libxrandr-dev \
-  libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
-  libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev \
-  libgles2-mesa-dev libwayland-dev libdecor-0-dev libdbus-1-dev \
-  libudev-dev libpipewire-0.3-dev
+sudo apt install git g++-14 ninja-build pkg-config \
+  libfreetype-dev libharfbuzz-dev libsqlite3-dev \
+  libasound2-dev libpulse-dev libpipewire-0.3-dev \
+  libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
+  libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+  libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
+  libwayland-dev libdecor-0-dev libdbus-1-dev libudev-dev
 ```
 
-Ubuntu 24.04 defaults to GCC 13, so select GCC 14 with `CC=gcc-14 CXX=g++-14`
-before the first configure. On Ubuntu 24.04 the packaged CMake is 3.28, which
-is too old: install a newer one (for example with `pip install cmake` or from
-cmake.org). The full package list used by CI is in
-`.github/workflows/build.yml`. If CMake cannot find FreeType or HarfBuzz for
-SDL3_ttf, either install their development packages or configure with
-`-DSDLTTF_VENDORED=ON` to build them too.
-
-### Configure and build
+Ubuntu 24.04 ships CMake 3.28, which is too old: install a newer one, for
+example with `pip install cmake` or from [cmake.org](https://cmake.org).
+It also defaults to GCC 13, so select GCC 14 before the first configure.
+Any newer GCC works too. The complete package list CI uses is in
+[`.github/workflows/build.yml`](.github/workflows/build.yml).
 
 ```sh
 git clone https://github.com/FlavioMili/FootballManagement
 cd FootballManagement
-cmake --preset release
-cmake --build --preset release --parallel 2
-```
-
-The build tree is `out/build/release`. Other presets are `release-tests`,
-`debug-sanitized`, `profile` and `clang-tidy`; see
-[builds.md](docs/development/builds.md). A plain build directory works too:
-
-```sh
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel 2
-```
-
-## Running
-
-```sh
+CC=gcc-14 CXX=g++-14 cmake --preset release
+cmake --build --preset release --parallel 4
 ./out/build/release/src/FootballManagement
 ```
 
-(or `./build/src/FootballManagement` for a plain build directory). On macOS
-every build produces `src/FootballManagement.app`.
+If CMake cannot find FreeType or HarfBuzz, add `-DSDLTTF_VENDORED=ON` to the
+configure command to build them as well.
 
-A development build reads the game data from the source checkout, so you can
-run it from any directory. `FM_ASSET_ROOT` points it at another data
-directory.
+### macOS
 
-### Where your files are
+macOS 15 on Apple silicon is the supported setup. AppleClang's standard
+library is missing parts of C++23 that the game uses, so build with
+Homebrew's LLVM and link its libc++ statically, as CI does:
 
-Saves, settings, logs and screenshots are written to the user data
-directory, never next to the executable:
+```sh
+brew install cmake ninja llvm
+LLVM="$(brew --prefix llvm)"
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+  -DCMAKE_C_COMPILER="$LLVM/bin/clang" \
+  -DCMAKE_CXX_COMPILER="$LLVM/bin/clang++" \
+  "-DCMAKE_EXE_LINKER_FLAGS=-nostdlib++ $LLVM/lib/c++/libc++.a $LLVM/lib/c++/libc++abi.a"
+cmake --build build --parallel 4
+open build/src/FootballManagement.app
+```
 
-- Linux: `$XDG_DATA_HOME/FlavioMili/FootballManagement` (usually
-  `~/.local/share/FlavioMili/FootballManagement`)
-- macOS: `~/Library/Application Support/FlavioMili/FootballManagement`
-- Windows: `%APPDATA%\FlavioMili\FootballManagement`
+### Windows (experimental)
 
-`FM_WORLD_SEED` fixes the seed of a new world, which is handy for bug reports.
+Install Visual Studio 2022 with the *Desktop development with C++* workload
+and its *C++ Clang tools for Windows* component (clang-cl), CMake 3.29 or
+newer and Git.
+From a Developer PowerShell:
 
-## Tests
+```powershell
+git clone https://github.com/FlavioMili/FootballManagement
+cd FootballManagement
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -T ClangCL `
+  -DBUILD_TESTING=OFF -DSDLTTF_VENDORED=ON
+cmake --build build --config Release --target FootballManagement
+.\build\src\Release\FootballManagement.exe
+```
 
-Configure with tests enabled (the `release-tests` preset or
-`-DBUILD_TESTING=ON`), then:
+The test suites use POSIX APIs, so tests are not built on Windows.
+
+### Other build options
+
+The presets in [`CMakePresets.json`](CMakePresets.json) are `release`,
+`release-tests`, `debug-sanitized` (AddressSanitizer and UBSan), `profile`
+and `clang-tidy`; their build trees go to `out/build/<preset>`. A plain
+build directory works as well (`cmake -S . -B build -G Ninja`). See
+[docs/development/builds.md](docs/development/builds.md) for the details and
+[docs/development/release.md](docs/development/release.md) for packaging.
+
+## Running
+
+Start the executable from the build tree (see the commands above). A
+development build reads the game data from the source checkout, so it runs
+from any working directory; `FM_ASSET_ROOT` points it at another data
+directory. Installed packages use the data next to the executable.
+
+`FM_WORLD_SEED` fixes the seed of a new world, which helps when you report a
+bug.
+
+## Controls
+
+The game is played with the mouse; the keyboard speeds up what you do all the
+time. The essentials:
+
+| Where | Keys |
+|-------|------|
+| Anywhere | **F12** screenshot |
+| Management screens | **Ctrl+K** command palette, **F1-F7** sidebar hubs, **Space/Enter** Continue, **Ctrl+S** save, **Alt+Left/Right** back and forward, **Esc** close the screen |
+| Match | **Space** pause, **V** 2D/3D view, **1-6** 3D cameras, **S** substitutions, **T** tactics, **Shift+1...0, Shift+-** touchline shouts, **F** pitch focus, **M** mute |
+
+Every shortcut and mouse gesture is listed in
+[docs/user/controls.md](docs/user/controls.md). New to the game? Start with
+the [getting-started guide](docs/user/getting-started.md).
+
+## Where your files are
+
+Saves, settings, logs and screenshots go to the user data directory, never
+next to the executable:
+
+| System | Folder |
+|--------|--------|
+| Linux | `$XDG_DATA_HOME/FlavioMili/FootballManagement` (usually `~/.local/share/FlavioMili/FootballManagement`) |
+| macOS | `~/Library/Application Support/FlavioMili/FootballManagement` |
+| Windows | `%APPDATA%\FlavioMili\FootballManagement` |
+
+Saves are SQLite databases in `saves/` (one per slot, with numbered
+backups beside it that the main menu can restore).
+
+## Tests and tools
+
+Configure with tests (`release-tests` preset or `-DBUILD_TESTING=ON`):
 
 ```sh
 cmake --preset release-tests
-cmake --build --preset release-tests --parallel 2
+cmake --build --preset release-tests --parallel 4
 
-# Fast suites, as in CI
+# The fast suites, as in CI
 ctest --preset release-tests -LE "playtest|monkey|slow"
 
 # Everything, including the long playtest, GUI monkey and adversarial suites
 ctest --preset release-tests
 ```
 
-Tests run headless (SDL's dummy video driver), with fixed world and match
-seeds and a scratch data directory under `/tmp/football-management-tests`,
-so they never touch your saves. The labels are `unit`, `core` (no GUI),
-`gui`, `lab`, `playtest`, `monkey`, `adversarial` and `slow`; select them
-with `-L` or exclude them with `-LE`. Run the full suite before a release.
+Tests run headless (SDL's dummy video driver) with fixed seeds and a scratch
+data directory under `/tmp/football-management-tests`, so they never touch
+your saves. Labels: `unit`, `core` (no GUI), `gui`, `lab`, `playtest`,
+`monkey`, `adversarial` and `slow`.
 
-## Balance lab (`fm_lab`)
-
-`fm_lab` is a headless tool that plays large batches of matches or whole
-seasons and compares the results with real-world ranges. It is built with the
-game (`out/build/release/src/fm_lab`).
+`fm_lab`, built next to the game, is a headless balance lab. It plays large
+batches of matches or whole seasons and compares the results with real-world
+ranges:
 
 ```sh
-# 2000 matches between equal 65-rated sides
-fm_lab matches
-
-# League-like rating gaps, 1000 matches, 4 threads
-fm_lab matches --n 1000 --spread --threads 4
-
-# A fixed pairing, e.g. 70 v 60
-fm_lab matches --home-rating 70 --away-rating 60
-
-# One season of the whole world with only computer-managed clubs
-fm_lab season --seasons 1 --threads 2
-
-# Round robin of the tactic presets
-fm_lab tactics
+fm_lab matches --n 1000 --spread --threads 4   # league-like rating gaps
+fm_lab season --seasons 1 --threads 2          # a season of the whole world
+fm_lab tactics                                 # tactic presets round robin
 ```
 
-`--fidelity background` uses the cheaper step of unwatched fixtures, `--seed`
-makes a run repeatable, and `--out-dir` chooses where `report.md` and
-`metrics.json` go (by default a fresh `/tmp/fm-lab-*` directory). The lab
-lowers its own priority and uses a scratch data directory that is removed at
-exit. It exits with 0 when every gate target passes and 1 when one fails.
-Run `fm_lab --help` for all options.
+`fm_lab --help` lists every option.
 
-## Data and modding
+The screenshots in `docs/images` come from a real career, captured by the
+`showcase_captures` test (skipped unless `FM_SHOWCASE_DIR` is set):
+
+```sh
+FM_SHOWCASE_DIR=/tmp/showcase ctest --preset release-tests -R showcase
+```
+
+It writes PNG files at interface scale 2; the header of
+[test/test_showcase_captures.cpp](test/test_showcase_captures.cpp) explains
+the options.
+
+## Game data and modding
 
 The world a new career starts from is plain JSON under
-`assets/user_made_data/`: leagues, clubs (name, league, short name, kit
-colours, stadium, founding year, nickname), optional hand-made players and
-the name pools for generated players and staff. Every file in `teams/` and
-`players/` is loaded, so you can split a data pack across as many files as
-you like. The format is documented in
-[assets/user_made_data/README.md](assets/user_made_data/README.md).
-Attribute definitions and role weights are in
-`assets/config/stats_config.json`, translations in `assets/lang/`.
+[`assets/user_made_data/`](assets/user_made_data/README.md): leagues, clubs
+(name, league, kit colours, stadium, founding year, nickname), optional
+hand-made players and the name pools for generated players and staff. Every
+file in `teams/` and `players/` is loaded, so a data pack can be split
+across as many files as you like. Attribute definitions and role weights are
+in `assets/config/stats_config.json`, translations in `assets/lang/`.
 
-Clubs carry the names of real cities (plus a few Apulian towns in the
-Italian second division), but there are no real players, crests or kits:
-colours, nicknames, founding years and every player are made up. Please keep
-it that way in contributions.
+Clubs carry the names of real cities and towns, but there are no real
+players, crests or kits: colours, nicknames, founding years and every player
+are made up, and competitions have invented names. Please keep it that way
+in contributions. The game is not affiliated with any league, club or other
+football management game.
+
+## Roadmap
+
+The next steps come from the known limitations of version 1.0 (see the
+[changelog](CHANGELOG.md)):
+
+- More engine calibration: a wider spread of goalscorers, more goals from
+  set pieces and more possession difference between strong and weak sides.
+- Watching and directing your national team's matches live, and players
+  with more than one nationality.
+- Richer loan talks for your players, and buying clubs that check their
+  wage budget before they bid.
+- Match sound with club chants and a commentary voice; Italian commentary
+  with the clubs' articles.
+- Signed and notarised macOS packages, and a fully supported Windows build.
 
 ## Contributing
 
-Contributions are welcome. Read the [contributing guide](CONTRIBUTING.md) and
-the [code of conduct](CODE_OF_CONDUCT.md) before opening a pull request.
+Bug reports, ideas and pull requests are welcome. Read the
+[contributing guide](CONTRIBUTING.md) and the
+[code of conduct](CODE_OF_CONDUCT.md) first; the architecture is described
+in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Licence
+## License
 
-Football Management is free software released under the
-[GNU General Public License v3.0](LICENSE). The licences of the bundled
-third-party components are shipped with the release packages (see
-[release.md](docs/development/release.md)).
+License: to be announced. The licence of the game has not been chosen yet;
+until it is, please ask before reusing the code or the data. The bundled
+third-party components keep their own licences, which ship with the release
+packages (see [release.md](docs/development/release.md)).

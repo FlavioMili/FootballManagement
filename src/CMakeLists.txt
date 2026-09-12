@@ -5,6 +5,11 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/src/global/paths.h.in"
   "${PROJECT_BINARY_DIR}/src/global/paths.h"
 )
+# Only the version: the commit and toolchain go to build_info.cpp alone.
+configure_file(
+  "${PROJECT_SOURCE_DIR}/src/global/version.h.in"
+  "${PROJECT_BINARY_DIR}/src/global/version.h"
+)
 
 # -----------------------------
 # Headless domain and persistence library
@@ -15,6 +20,8 @@ set(FM_CORE_SOURCES
     controller/game_controller_guidance.cpp
     controller/game_controller_offers.cpp
     controller/game_controller_squad.cpp
+    controller/game_controller_career.cpp
+    controller/game_controller_season.cpp
 
     database/database_connection.h
     database/database_connection.cpp
@@ -58,12 +65,18 @@ set(FM_CORE_SOURCES
     database/save_manager.cpp
     database/sqlite_rows.h
 
+    global/build_info.h
+    global/build_info.cpp
+    global/crash_report.h
+    global/crash_report.cpp
     global/global.h
     global/languages.h
     global/language_manager.h
     global/language_manager.cpp
     global/logger.h
     global/logger.cpp
+    global/number_format.h
+    global/number_format.cpp
     global/runtime_paths.h
     global/runtime_paths.cpp
     global/queries.h
@@ -87,8 +100,16 @@ set(FM_CORE_SOURCES
     model/competition_manager.cpp
     model/continental.h
     model/continental.cpp
+    model/draw_ceremony.h
+    model/draw_ceremony.cpp
+    model/news_feed.h
+    model/news_feed.cpp
+    model/career_timeline.h
+    model/career_timeline.cpp
     model/national_teams.h
     model/national_teams.cpp
+    model/national_job.h
+    model/national_job.cpp
     model/discipline.h
     model/discipline.cpp
     model/finances.h
@@ -97,6 +118,7 @@ set(FM_CORE_SOURCES
     model/finances.cpp
     model/game.h
     model/game.cpp
+    model/game_season.cpp
     model/gamedate.h
     model/holiday.h
     model/holiday.cpp
@@ -139,7 +161,12 @@ set(FM_CORE_SOURCES
     model/match_commentary.cpp
     model/match_engine.h
     model/match_engine.cpp
+    model/match_engine_tracking.cpp
     model/match_events.h
+    model/match_insights.h
+    model/match_insights.cpp
+    model/match_tracking.h
+    model/match_tracking.cpp
     model/match_rules.h
     model/match_rules.cpp
     model/match_scenario.h
@@ -160,18 +187,28 @@ set(FM_CORE_SOURCES
     model/season_agenda.cpp
     model/season_history.h
     model/season_history.cpp
+    model/season_review.h
+    model/season_review.cpp
     model/squad_planner.h
     model/squad_planner.cpp
+    model/squad_numbers.h
+    model/squad_numbers.cpp
     model/squad_status.h
     model/squad_status.cpp
     model/staff.h
     model/staff.cpp
     model/stories.h
     model/stories.cpp
+    model/supporters.h
+    model/supporters.cpp
     model/standings.h
     model/standings.cpp
+    model/standings_race.h
+    model/standings_race.cpp
     model/strategy.h
     model/strategy.cpp
+    model/tactics.h
+    model/tactics.cpp
     model/team.h
     model/team.cpp
     model/training.h
@@ -182,8 +219,14 @@ set(FM_CORE_SOURCES
     model/transfer_market.cpp
     model/transfer_negotiation.h
     model/transfer_negotiation.cpp
+    model/transfer_windows.h
+    model/transfer_windows.cpp
     model/buyer_negotiation.h
     model/buyer_negotiation.cpp
+    model/loan_negotiation.h
+    model/loan_negotiation.cpp
+    model/player_agent.h
+    model/player_agent.cpp
     model/world_generation.h
     model/world_generation.cpp
     model/world_rng.h
@@ -232,6 +275,18 @@ if(DEFINED sdl3_SOURCE_DIR)
   target_include_directories(fm_core SYSTEM PUBLIC ${sdl3_SOURCE_DIR}/include)
 endif()
 
+# Build provenance for the main menu, the log and crash reports.
+set(FM_BUILD_COMPILER_NAME "${CMAKE_CXX_COMPILER_ID}")
+if(FM_BUILD_COMPILER_NAME STREQUAL "GNU")
+  set(FM_BUILD_COMPILER_NAME "GCC")
+endif()
+string(TOLOWER "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}" FM_BUILD_PLATFORM)
+set_property(SOURCE global/build_info.cpp APPEND PROPERTY COMPILE_DEFINITIONS
+  "FM_BUILD_COMMIT=\"${FM_BUILD_COMMIT}\""
+  "FM_BUILD_CONFIG=\"$<CONFIG>\""
+  "FM_BUILD_COMPILER=\"${FM_BUILD_COMPILER_NAME} ${CMAKE_CXX_COMPILER_VERSION}\""
+  "FM_BUILD_PLATFORM=\"${FM_BUILD_PLATFORM}\"")
+
 # -----------------------------
 # Presentation library
 # -----------------------------
@@ -269,6 +324,8 @@ set(FM_UI_SOURCES
     gui/gui_view.cpp
     gui/nav_history.h
     gui/nav_history.cpp
+    gui/input_actions.h
+    gui/input_actions.cpp
     gui/swipe_gesture.h
     gui/swipe_gesture.cpp
     gui/render_scale.h
@@ -289,10 +346,15 @@ set(FM_UI_SOURCES
     gui/render/match_renderer_3d.cpp
     gui/render/match_stadium_3d.h
     gui/render/match_stadium_3d.cpp
+    gui/render/match_play_overlay.h
+    gui/render/match_play_overlay.cpp
     gui/scenes/lineup_scene.h
     gui/scenes/lineup_scene.cpp
     gui/scenes/match_scene.h
     gui/scenes/match_scene.cpp
+    gui/scenes/match_scene_play.cpp
+    gui/scenes/match_play_controller.h
+    gui/scenes/match_play_controller.cpp
     gui/scenes/match_scene_tuning.h
     gui/scenes/main_game_scene.h
     gui/scenes/main_game_scene.cpp
@@ -302,6 +364,10 @@ set(FM_UI_SOURCES
     gui/scenes/roster_scene.cpp
     gui/scenes/settings_scene.h
     gui/scenes/settings_scene.cpp
+    gui/scenes/help_scene.h
+    gui/scenes/help_scene.cpp
+    gui/scenes/welcome_tour.h
+    gui/scenes/welcome_tour.cpp
     gui/scenes/strategy_scene.h
     gui/scenes/strategy_scene.cpp
     gui/scenes/team_selection_scene.h
@@ -317,6 +383,8 @@ set(FM_UI_SOURCES
     gui/scenes/player_profile_scene.cpp
     gui/scenes/player_talk_dialog.h
     gui/scenes/player_talk_dialog.cpp
+    gui/scenes/contract_talks_dialog.h
+    gui/scenes/contract_talks_dialog.cpp
     gui/scenes/offer_negotiation_dialog.h
     gui/scenes/offer_negotiation_dialog.cpp
     gui/scenes/transfer_terms_editor.h
@@ -330,6 +398,8 @@ set(FM_UI_SOURCES
     gui/scenes/international_scene.h
     gui/scenes/international_scene.cpp
     gui/scenes/inbox_scene.h
+    gui/scenes/inbox_dilemma_card.h
+    gui/scenes/inbox_dilemma_card.cpp
     gui/scenes/inbox_scene.cpp
     gui/scenes/data_hub_scene.h
     gui/scenes/data_hub_scene.cpp
@@ -351,6 +421,8 @@ set(FM_UI_SOURCES
     gui/scenes/opposition_scene.cpp
     gui/scenes/club_scene.h
     gui/scenes/club_scene.cpp
+    gui/scenes/about_scene.h
+    gui/scenes/about_scene.cpp
     gui/scenes/awards_scene.h
     gui/scenes/awards_scene.cpp
     gui/scenes/records_scene.h
@@ -359,8 +431,18 @@ set(FM_UI_SOURCES
     gui/scenes/preseason_scene.cpp
     gui/scenes/holiday_dialog.h
     gui/scenes/holiday_dialog.cpp
+    gui/scenes/season_review_dialog.h
+    gui/scenes/season_review_dialog.cpp
     gui/scenes/mentoring_dialog.h
     gui/scenes/mentoring_dialog.cpp
+    gui/scenes/draw_ceremony_dialog.h
+    gui/scenes/draw_ceremony_dialog.cpp
+    gui/scenes/news_scene.h
+    gui/scenes/news_scene.cpp
+    gui/scenes/timeline_scene.h
+    gui/scenes/timeline_scene.cpp
+    gui/scenes/match_insights_view.h
+    gui/scenes/match_insights_view.cpp
     gui/scenes/match_report_scene.h
     gui/scenes/match_report_scene.cpp
     gui/scenes/scouting_scene.h
@@ -373,6 +455,10 @@ set(FM_UI_SOURCES
     gui/scenes/staff_scene.cpp
     gui/scenes/youth_scene.h
     gui/scenes/youth_scene.cpp
+    gui/scenes/reserves_scene.h
+    gui/scenes/reserves_scene.cpp
+    gui/scenes/callup_scene.h
+    gui/scenes/callup_scene.cpp
     gui/scenes/medical_scene.h
     gui/scenes/medical_scene.cpp
     gui/scenes/calendar_scene.h
@@ -459,6 +545,14 @@ if(FM_ENABLE_SANITIZERS)
     target_compile_options(${target} PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)
     target_link_options(${target} PUBLIC -fsanitize=address,undefined)
   endforeach()
+endif()
+
+# Seeded simulation results must not depend on the platform: no fused
+# multiply-add contraction (Clang contracts by default, e.g. on Apple
+# silicon). MSVC's default /fp:precise does not contract.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND
+   NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+  target_compile_options(fm_core PRIVATE -ffp-contract=off)
 endif()
 
 if(FM_ENABLE_NATIVE_OPTIMIZATIONS)

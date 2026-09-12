@@ -186,6 +186,14 @@ struct TransferTuning final
     static constexpr int DEADLINE_DAYS = 2;
     static constexpr float DEADLINE_CEILING_BONUS = 0.06f;
     static constexpr float DEADLINE_CONCESSION_BONUS = 0.25f;
+    /** Clubs approach the managed club's players this much more often in
+     * the deadline days. */
+    static constexpr float DEADLINE_APPROACH_MULTIPLIER = 3.0f;
+    /** Wage budget: a club only bids for a player whose wage fits its
+     * wage room; a wage above WAGE_PRESSURE_SHARE of that room lowers its
+     * ceiling by up to WAGE_CEILING_CUT (all of the room). */
+    static constexpr float WAGE_PRESSURE_SHARE = 0.5f;
+    static constexpr float WAGE_CEILING_CUT = 0.25f;
     /** Days the buyer takes to answer a counter (outside the deadline),
      * and days it leaves the club to answer its own proposal. */
     static constexpr int MIN_REPLY_DAYS = 1;
@@ -266,6 +274,38 @@ struct TransferTuning final
     static constexpr int BROKEN_PROMISE_LEVELS = 2;
     static constexpr int PROMISE_GRACE_DAYS = 90;
     static constexpr float BROKEN_PROMISE_MORALE = 12.0f;
+    /** Competitive appearances per week by playing-time role (about 45
+     * competitive matches over a 40-week season for a key player). [P] */
+    static constexpr float KEY_APPS_PER_WEEK = 0.95f;
+    static constexpr float FIRST_TEAM_APPS_PER_WEEK = 0.85f;
+    static constexpr float ROTATION_APPS_PER_WEEK = 0.60f;
+    static constexpr float BACKUP_APPS_PER_WEEK = 0.35f;
+    static constexpr float FRINGE_APPS_PER_WEEK = 0.15f;
+    /** The agent's own fee: clubs usually pay the standard (AGENT_FEE_PERCENT
+     * of a fee, FREE_AGENT_FEE_WEEKS of wage on a free move); he opens above
+     * it by a margin that grows with the player's ambition, comes down to
+     * the standard by the last round and settles for no less than
+     * AGENT_FEE_FLOOR of it. [P] */
+    static constexpr float AGENT_FEE_FLOOR = 0.90f;
+    static constexpr float AGENT_FEE_BASE_MARGIN = 0.10f;
+    static constexpr float AGENT_FEE_AMBITION_MARGIN = 0.15f;
+    /** Structure the agent asks for: a yearly rise for players up to
+     * RISE_MAX_AGE on multi-year deals (by ambition), appearance money as a
+     * share of the weekly wage (more for players unsure of a place) and a
+     * signing-on fee of some weeks of wage on a transfer. The structure is
+     * worth his flat ask: the base wage is lowered to match. [P] */
+    static constexpr int RISE_MAX_AGE = 29;
+    static constexpr std::uint8_t RISE_HIGH = 8;
+    static constexpr std::uint8_t RISE_MEDIUM = 5;
+    static constexpr std::uint8_t RISE_LOW = 3;
+    static constexpr std::uint8_t RISE_HIGH_AMBITION = 75;
+    static constexpr std::uint8_t RISE_MEDIUM_AMBITION = 50;
+    static constexpr std::uint8_t RISE_LOW_AMBITION = 25;
+    static constexpr float APPEARANCE_BONUS_REGULAR_SHARE = 0.15f;
+    static constexpr float APPEARANCE_BONUS_SQUAD_SHARE = 0.30f;
+    static constexpr std::uint32_t TRANSFER_SIGNING_WEEKS = 4;
+    /** A wage below this share of his demand insults the agent. */
+    static constexpr float INSULT_WAGE_SHARE = 0.75f;
   };
 
   /** Loans (RSTP Art. 10 from 2024/25). */
@@ -294,6 +334,39 @@ struct TransferTuning final
     static constexpr std::uint8_t SMALL_BORROWER_WAGE_SHARE = 25;
   };
 
+  /**
+   * An AI club negotiating to borrow one of the managed club's players. It
+   * reads a loan by its cost: the wage share it pays over the loan, the
+   * loan fee, a recall clause (it may lose him mid-season) and the odds of
+   * paying the fee for unplayed games. Its wage room caps the share it can
+   * take on.
+   * Concessions, patience, insults and deadline pressure follow the buyer
+   * (Buyer above). [P]
+   */
+  struct Borrower final
+  {
+    /** Headroom of the ceiling over the cost of its opening offer. */
+    static constexpr float CEILING_HEADROOM_MIN = 0.20f;
+    static constexpr float CEILING_HEADROOM_MAX = 0.60f;
+    /** Share of opening offers for young players with a purchase option
+     * (at OPTION_VALUE_MULTIPLE of the value), and the age limit. */
+    static constexpr float OPENING_OPTION_CHANCE = 0.30f;
+    static constexpr int OPTION_MAX_AGE = 23;
+    /** A mandatory purchase is a decision apart from the loan's cost: the
+     * borrower takes one up to MAX_OBLIGATION_VALUE times the player's
+     * value, if its budget covers it; above that it offers an option. */
+    static constexpr float MAX_OBLIGATION_VALUE = 1.20f;
+    /** A recall clause costs the borrower this many weeks of the full wage. */
+    static constexpr int RECALL_COST_WEEKS = 4;
+    /** Steps of the terms it proposes (the editor's segments). */
+    static constexpr std::uint8_t WAGE_SHARE_STEP = 5;
+    static constexpr std::uint8_t APPEARANCES_STEP = 5;
+    static constexpr std::uint8_t MAX_MIN_APPEARANCES = 30;
+    /** Share of answers in which a borrower short of wage room offers a
+     * loan fee instead of a bigger share. */
+    static constexpr float FEE_INSTEAD_OF_WAGES_CHANCE = 0.5f;
+  };
+
   /** AI market activity. */
   struct Market final
   {
@@ -305,6 +378,8 @@ struct TransferTuning final
     static constexpr float DAILY_EVALUATION_SHARE = 0.24f;
     static constexpr float DAILY_DEAL_SHARE = 0.24f;
     static constexpr float LATE_WINDOW_WEIGHT = 1.8f;
+    /** The day before the deadline (Buyer::DEADLINE_DAYS) the rush starts. */
+    static constexpr float DEADLINE_EVE_WEIGHT = 3.0f;
     static constexpr float DEADLINE_DAY_WEIGHT = 6.0f;
     static constexpr int LATE_WINDOW_DAYS = 7;
     /** Share of clubs signing a free agent per day while the window is

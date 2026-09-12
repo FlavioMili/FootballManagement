@@ -16,6 +16,7 @@
 #include <ranges>
 
 #include "model/transfer_tuning.h"
+#include "model/transfer_windows.h"
 #include "model/world_rng.h"
 #include "model/world_simulation.h"
 
@@ -64,6 +65,7 @@ constexpr std::array<const char*, static_cast<std::size_t>(Reason::COUNT)>
         "NEG_REASON_UNAVAILABLE",
         "NEG_REASON_OVER_BUDGET",
         "NEG_REASON_EMBARGO",
+        "NEG_REASON_AGENT_FEE_LOW",
 };
 
 constexpr std::uint32_t FEE_ROUNDING = 10'000;
@@ -111,6 +113,7 @@ bool isRefusal(Reason reason)
     case Reason::WantsReleaseClause:
     case Reason::TalksEnded:
     case Reason::AgentPushback:
+    case Reason::AgentFeeTooLow:
       return true;
     default:
       return false;
@@ -509,9 +512,15 @@ ContractResponse evaluateContract(const PlayerContext& context,
   {
     const double bonus_delta = static_cast<double>(offer.signing_bonus) -
                                static_cast<double>(demand.signing_bonus);
+    // A yearly rise and appearance money count at what they are worth to
+    // him per week: the average uplift and the games he expects to play.
     const double effective_wage =
         static_cast<double>(offer.weekly_wage) +
-        bonus_delta / (TransferTuning::Contract::WEEKS_PER_YEAR * offer.years);
+        bonus_delta / (TransferTuning::Contract::WEEKS_PER_YEAR * offer.years) +
+        yearlyRiseWorth(offer.weekly_wage, offer.yearly_rise, offer.years) +
+        static_cast<double>(offer.appearance_bonus) *
+            static_cast<double>(
+                appearanceRate(static_cast<SquadRole>(effective)));
     const auto wanted = static_cast<double>(demand.weekly_wage);
     if (effective_wage + 0.5 < wanted)
       reasons.push_back(
@@ -531,6 +540,40 @@ ContractResponse evaluateContract(const PlayerContext& context,
   }
   if (response.accepted) reasons.push_back(Reason::TermsAccepted);
   return response;
+}
+
+float appearanceRate(SquadRole role)
+{
+  using N = TransferTuning::Negotiation;
+  switch (role)
+  {
+    case SquadRole::KeyPlayer:
+      return N::KEY_APPS_PER_WEEK;
+    case SquadRole::FirstTeam:
+      return N::FIRST_TEAM_APPS_PER_WEEK;
+    case SquadRole::Rotation:
+      return N::ROTATION_APPS_PER_WEEK;
+    case SquadRole::Backup:
+      return N::BACKUP_APPS_PER_WEEK;
+    case SquadRole::Fringe:
+      break;
+  }
+  return N::FRINGE_APPS_PER_WEEK;
+}
+
+double yearlyRiseWorth(std::uint32_t wage, std::uint8_t percent,
+                       std::uint8_t years)
+{
+  if (percent == 0 || years < 2) return 0.0;
+  const double rise = 1.0 + percent / 100.0;
+  double total = 0.0;
+  double factor = 1.0;
+  for (int year = 0; year < years; ++year)
+  {
+    total += factor;
+    factor *= rise;
+  }
+  return static_cast<double>(wage) * (total / years - 1.0);
 }
 
 ContractOffer demandedOffer(const ContractDemand& demand)
@@ -636,24 +679,19 @@ bool playerAcceptsLoan(SquadRole at_parent, SquadRole at_borrower,
 // Calendar helpers
 // ---------------------------------------------------------------------------
 
-WindowInfo windowInfo(const GameDateValue& date)
+WindowInfo windowInfo(LeagueID league, const GameDateValue& date)
 {
   WindowInfo window;
-  window.open = date.isTransferWindowOpen();
-  if (!window.open)
+  const std::optional<GameDateValue> end =
+      TransferWindows::windowEnd(league, date);
+  window.open = end.has_value();
+  if (!end)
   {
     window.days_to_deadline = -1;
     return window;
   }
-  window.winter = date.month == 1;
-  constexpr int LONGEST_WINDOW_DAYS = 120;
-  GameDateValue next = date + 1;
-  while (next.isTransferWindowOpen() &&
-         window.days_to_deadline < LONGEST_WINDOW_DAYS)
-  {
-    ++window.days_to_deadline;
-    next = next + 1;
-  }
+  window.winter = TransferWindows::isStartOfYearWindow(league, date);
+  window.days_to_deadline = dayOrdinal(*end) - dayOrdinal(date);
   return window;
 }
 
@@ -662,6 +700,8 @@ float activityWeight(const WindowInfo& window)
   using M = TransferTuning::Market;
   if (!window.open) return 0.0f;
   if (window.days_to_deadline == 0) return M::DEADLINE_DAY_WEIGHT;
+  if (window.days_to_deadline < TransferTuning::Buyer::DEADLINE_DAYS)
+    return M::DEADLINE_EVE_WEIGHT;
   if (window.days_to_deadline <= M::LATE_WINDOW_DAYS)
     return M::LATE_WINDOW_WEIGHT;
   return 1.0f;

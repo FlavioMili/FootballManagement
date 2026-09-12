@@ -103,6 +103,11 @@ struct MatchRender3DTuning final
     static constexpr float SPOT_WEAR_RADIUS = 1.3f;
     static constexpr float GOALMOUTH_DEPTH = 2.4f;
     static constexpr float GOALMOUTH_WIDTH = 3.4f;
+    /** Assistant referees' paths along the touchlines. */
+    static constexpr int LINESMAN_SCUFFS = 5;
+    static constexpr float LINESMAN_OFFSET = 1.4f;
+    static constexpr float LINESMAN_HALF_WIDTH = 0.55f;
+    static constexpr std::uint8_t LINESMAN_ALPHA = 46;
     static constexpr float VIGNETTE_LENGTH = 0.16f;
     static constexpr float VIGNETTE_WIDTH = 0.20f;
     static constexpr ImU32 PITCH_COLOR = IM_COL32(52, 128, 50, 255);
@@ -231,6 +236,10 @@ struct MatchRender3DTuning final
     static constexpr float SWAY_SPEED = 1.3f;
     static constexpr float HOP = 0.3f;
     static constexpr float HOP_SPEED = 8.5f;
+    /** Rising out of the seats for a shot: height share and rates (1/s). */
+    static constexpr float RISE = 0.16f;
+    static constexpr float RISE_RATE = 5.0f;
+    static constexpr float SETTLE_RATE = 1.2f;
     /** Raised arms reach this share of the height above the head. */
     static constexpr float ARM_REACH = 0.42f;
     static constexpr float ARM_WIDTH_SHARE = 0.16f;
@@ -299,12 +308,28 @@ struct MatchRender3DTuning final
     static constexpr float HIP_HEIGHT = 0.93f;
     static constexpr float HIP_SPREAD = 0.095f;
     static constexpr float THIGH_LENGTH = 0.46f;
-    static constexpr float THIGH_HALF_WIDTH = 0.07f;
     static constexpr float SHIN_LENGTH = 0.42f;
-    static constexpr float SHIN_HALF_WIDTH = 0.055f;
+    /**
+     * Tapered limbs (half widths, metres): thighs narrow from the hip to the
+     * knee, calves swell below the knee and thin to the ankle, arms thin
+     * from the shoulder to the wrist.
+     */
+    static constexpr float THIGH_TOP = 0.088f;
+    static constexpr float THIGH_MIDDLE = 0.072f;
+    static constexpr float THIGH_BOTTOM = 0.056f;
+    static constexpr float CALF_TOP = 0.06f;
+    static constexpr float ANKLE_HALF_WIDTH = 0.038f;
+    /** Shorts legs cover this share of the thigh and flare at the hem. */
+    static constexpr float SHORTS_LEG_SHARE = 0.42f;
+    static constexpr float SHORTS_LEG_TOP = 0.1f;
+    static constexpr float SHORTS_LEG_HEM = 0.094f;
+    /** The turned-down sock band ends this share of the way to the ankle. */
+    static constexpr float SOCK_BAND_SHARE = 0.12f;
     static constexpr float BOOT_HALF_LENGTH = 0.13f;
     static constexpr float BOOT_HALF_WIDTH = 0.05f;
     static constexpr float BOOT_HALF_HEIGHT = 0.045f;
+    static constexpr float BOOT_TOE_WIDTH = 0.04f;
+    static constexpr float BOOT_TOE_HEIGHT = 0.03f;
     static constexpr float BOOT_FORWARD = 0.05f;
     static constexpr float SHORTS_HEIGHT = 0.86f;
     static constexpr float SHORTS_HALF_DEPTH = 0.115f;
@@ -316,15 +341,24 @@ struct MatchRender3DTuning final
     static constexpr float WAIST_HALF_WIDTH = 0.15f;
     static constexpr float CHEST_HALF_DEPTH = 0.11f;
     static constexpr float CHEST_HALF_WIDTH = 0.19f;
+    /** Up close the torso widens through the ribs into the shoulders. */
+    static constexpr float RIB_SHARE = 0.55f;
+    static constexpr float RIB_HALF_WIDTH = 0.165f;
     static constexpr float COLLAR_HALF_SIZE = 0.075f;
     static constexpr float COLLAR_HALF_HEIGHT = 0.022f;
     static constexpr float SHOULDER_SPREAD = 0.215f;
     static constexpr float SHOULDER_DROP = 0.05f;
     static constexpr float UPPER_ARM_LENGTH = 0.3f;
-    static constexpr float UPPER_ARM_HALF_WIDTH = 0.048f;
+    static constexpr float UPPER_ARM_TOP = 0.05f;
+    static constexpr float UPPER_ARM_MIDDLE = 0.043f;
+    static constexpr float ELBOW_HALF_WIDTH = 0.036f;
+    static constexpr float WRIST_HALF_WIDTH = 0.028f;
+    /** Short sleeves end this share of the way to the elbow. */
+    static constexpr float SLEEVE_SHARE = 0.55f;
+    static constexpr float SLEEVE_HEM = 0.052f;
     static constexpr float FOREARM_LENGTH = 0.27f;
-    static constexpr float FOREARM_HALF_WIDTH = 0.04f;
     static constexpr float NECK_LENGTH = 0.19f;
+    static constexpr float NECK_HALF_WIDTH = 0.052f;
     static constexpr float HEAD_RADIUS = 0.11f;
     static constexpr float ELBOW_BEND = 0.35f;
     /**
@@ -338,10 +372,10 @@ struct MatchRender3DTuning final
     static constexpr float SOLE_HALF_HEIGHT = 0.012f;
     /**
      * One stride cycle (two steps) covers BASE + PER_SPEED * speed metres:
-     * ~1.8 m walking, ~2.5 m jogging, ~4 m sprinting (0.9-2.3 cycles/s).
+     * ~1.55 m walking, ~2.5 m jogging, ~3.75 m sprinting (0.9-2 cycles/s).
      */
-    static constexpr float STRIDE_BASE_METRES = 1.3f;
-    static constexpr float STRIDE_PER_SPEED = 0.3f;
+    static constexpr float STRIDE_BASE_METRES = 1.05f;
+    static constexpr float STRIDE_PER_SPEED = 0.36f;
     /** Below this ground speed (m/s) the legs settle into an idle stance. */
     static constexpr float IDLE_SPEED = 0.35f;
     static constexpr float FULL_STRIDE_SPEED = 8.0f;
@@ -354,7 +388,6 @@ struct MatchRender3DTuning final
     static constexpr float MARKER_MAX_PIXELS = 34.0f;
     static constexpr float MARKER_RADIUS = 0.42f;
     static constexpr std::uint8_t MARKER_ALPHA = 150;
-    static constexpr ImU32 BOOT_COLOR = IM_COL32(26, 26, 30, 255);
     static constexpr ImU32 SOLE_COLOR = IM_COL32(222, 222, 214, 255);
     /** Hands (keeper gloves) are only modelled above this projected height. */
     static constexpr float HAND_MIN_PIXELS = 44.0f;
@@ -398,12 +431,10 @@ struct MatchRender3DTuning final
     static constexpr float ACCEL_LEAN = 0.05f;
     static constexpr float MAX_ACCEL_LEAN = 0.22f;
     static constexpr float MAX_BRAKE_LEAN = 0.18f;
-    /** Braking harder than this plants the legs in a stop stance. */
+    /** Braking harder than this sits the hips down over the planted feet. */
     static constexpr float STOP_DECELERATION = 3.0f;
-    static constexpr float STOP_KNEE_BEND = 0.45f;
     static constexpr float STOP_HIP_DROP = 0.05f;
     /** Time constant of the acceleration estimate (1/s). */
-    static constexpr float ACCEL_RATE = 6.0f;
     static constexpr float ACCEL_SMOOTHING = 8.0f;
     /** Sideways lean into turns per rad/s of turn rate and m/s of speed. */
     static constexpr float TURN_LEAN = 0.035f;
@@ -411,33 +442,117 @@ struct MatchRender3DTuning final
     static constexpr float TURN_SMOOTHING = 8.0f;
     /** Turn rates above this (rad/s) are snaps, not running turns. */
     static constexpr float MAX_TURN_RATE = 9.0f;
-    static constexpr float BLEND_RATE = 9.0f;
+    /** The shoulders lead a turn: twist per rad/s of turn rate, capped. */
+    static constexpr float TWIST_PER_TURN_RATE = 0.07f;
+    static constexpr float MAX_TWIST = 0.45f;
     /** Longest simulated step one frame may account for (s). */
     static constexpr float MAX_SIM_SECONDS = 0.25f;
   };
 
-  /** Kicks and headers, detected when the ball leaves a player. */
+  /**
+   * Kicks and headers, started on the step the engine strikes the ball: the
+   * kicking ankle is on the ball at that moment, then follows through
+   * (simulated seconds).
+   */
   struct Kick final
   {
-    static constexpr float SECONDS = 0.42f;
-    static constexpr float HEADER_SECONDS = 0.5f;
-    /** Ball speed (m/s) a touch must reach to count as a kick. */
-    static constexpr float MIN_BALL_SPEED = 6.5f;
-    /** Rise in ball speed between two steps that marks a first-time hit. */
-    static constexpr float SPEED_JUMP = 5.0f;
-    /** A player this close to the ball (m) can have struck it. */
-    static constexpr float REACH_METRES = 2.2f;
+    static constexpr float CONTACT_HOLD_SECONDS = 0.05f;
+    static constexpr float FOLLOW_THROUGH_SECONDS = 0.26f;
+    static constexpr float RECOVER_SECONDS = 0.26f;
+    static constexpr float HEADER_SECONDS = 0.45f;
+    static constexpr float HEADER_NOD_SECONDS = 0.14f;
     /** Balls above this height (m) at the touch are headed. */
     static constexpr float HEADER_HEIGHT = 1.35f;
+    /** A ball leaving higher than this (m) after one step is lofted. */
+    static constexpr float LOFT_HEIGHT = 0.6f;
     /** Ball jumps longer than this (m) in one step are restarts. */
     static constexpr float TELEPORT_METRES = 6.0f;
-    static constexpr float BACKSWING = -0.75f;
-    static constexpr float FOLLOW_THROUGH = 1.25f;
-    static constexpr float BACKSWING_KNEE = -1.35f;
+    /** A ball this far to one side (m) is struck with that foot. */
+    static constexpr float WRONG_FOOT_METRES = 0.2f;
+    /** The instep meets the ball: the ankle sits behind and above it. */
+    static constexpr float CONTACT_BEHIND = 0.12f;
+    static constexpr float CONTACT_ABOVE = 0.05f;
     static constexpr float TORSO_LEAN = -0.16f;
+    static constexpr float PASS_LEAN = 0.08f;
     static constexpr float ARM_ABDUCTION = 0.8f;
-    static constexpr float HEADER_JUMP = 0.32f;
     static constexpr float HEADER_NOD = 0.45f;
+  };
+
+  /**
+   * Procedural skeleton: foot planting, the pelvis over the planted feet,
+   * jumps, tackles and throw-ins, and the level of detail.
+   */
+  struct Rig final
+  {
+    /** Ankle above the grass with the boot flat. */
+    static constexpr float ANKLE_HEIGHT = 0.085f;
+    /** Ankle to the ball of the foot: the heel lifts around this point. */
+    static constexpr float TOE_LENGTH = 0.15f;
+    static constexpr float MAX_HEEL_ANGLE = 1.05f;
+    /** Toes drop by this share while a foot swings through the air. */
+    static constexpr float SWING_TOE_DROP = 0.35f;
+    /** The pelvis sinks at most this much to keep a front foot planted. */
+    static constexpr float MAX_PELVIS_DROP = 0.09f;
+    /** Running crouch at full stride (m). */
+    static constexpr float RUN_CROUCH = 0.05f;
+    /** Half the distance between the feet at rest (m, per 1.80 m). */
+    static constexpr float STANCE_WIDTH = 0.11f;
+    /** A foot is put down at most this far ahead of its hip. */
+    static constexpr float FRONT_REACH = 0.32f;
+    /** Swing foot clearance walking and at full stride. */
+    static constexpr float WALK_LIFT = 0.07f;
+    static constexpr float SPRINT_LIFT = 0.32f;
+    /** A planted foot this far off its gait spot is put down again. */
+    static constexpr float MAX_DRIFT = 0.55f;
+    /** Standing: a foot steps once the body is this far off it. */
+    static constexpr float IDLE_STEP_METRES = 0.22f;
+    static constexpr float IDLE_STEP_SECONDS = 0.22f;
+    /** Smoothed gait speed below which a player counts as standing. */
+    static constexpr float IDLE_GAIT_SPEED = 0.6f;
+    /** Direction of travel smoothing (1/s). */
+    static constexpr float DIRECTION_RATE = 10.0f;
+    /** Below this projected height a player is a few flat strokes. */
+    static constexpr float FAR_PIXELS = 30.0f;
+    /** Jumping for a high ball within this distance (m), up to MAX_JUMP. */
+    static constexpr float JUMP_REACH = 1.6f;
+    static constexpr float MAX_JUMP = 0.5f;
+    static constexpr float JUMP_RATE = 9.0f;
+    static constexpr float HEADER_MIN_BALL = 1.3f;
+    static constexpr float HEADER_MAX_BALL = 3.4f;
+    /** In the air the feet rise this share of the jump and gather in. */
+    static constexpr float JUMP_TUCK = 0.85f;
+    static constexpr float JUMP_GATHER = 0.4f;
+    /** A cooldown rise above this (s) marks a challenge. */
+    static constexpr float TACKLE_COOLDOWN_RISE = 0.5f;
+    static constexpr float TACKLE_SECONDS = 0.5f;
+    static constexpr float TACKLE_LEAN = 0.35f;
+    static constexpr float TACKLE_HIP_DROP = 0.14f;
+    /** Challenges from further out (m) or faster (m/s) go to ground. */
+    static constexpr float SLIDE_DISTANCE = 1.5f;
+    static constexpr float SLIDE_SPEED = 4.2f;
+    static constexpr float SLIDE_SECONDS = 1.1f;
+    static constexpr float SLIDE_PELVIS = 0.3f;
+    static constexpr float SLIDE_LEAN = -0.75f;
+    static constexpr float SLIDE_LEG_REACH = 0.85f;
+    static constexpr float SLIDE_TUCK_REACH = 0.25f;
+    /** A ball further than LUNGE_FREE (m) at a strike or block pulls the
+     * body towards it by up to LUNGE_MAX. */
+    static constexpr float LUNGE_FREE = 0.45f;
+    static constexpr float LUNGE_MAX = 0.45f;
+    /** Throw-ins: the taker holds the ball overhead near the spot. */
+    static constexpr float THROW_PICKUP_METRES = 1.6f;
+    static constexpr float THROW_SECONDS = 0.45f;
+    static constexpr float THROW_WHIP_SECONDS = 0.16f;
+    static constexpr float THROW_GRIP_UP = 0.2f;
+    static constexpr float THROW_GRIP_BACK = -0.12f;
+    static constexpr float THROW_RELEASE_FORWARD = 0.38f;
+    /** Half the gap between the hands on a held ball. */
+    static constexpr float HAND_GRIP_HALF = 0.1f;
+    static constexpr float KEEPER_GRIP_DOWN = 0.12f;
+    static constexpr float KEEPER_GRIP_FORWARD = 0.24f;
+    /** Builds vary between these width factors. */
+    static constexpr float MIN_BULK = 0.94f;
+    static constexpr float MAX_BULK = 1.07f;
   };
 
   /** Goalkeeper set stance and dives. */
@@ -445,10 +560,9 @@ struct MatchRender3DTuning final
   {
     /** The set stance is taken while the ball is this close (m). */
     static constexpr float SET_DISTANCE = 26.0f;
-    static constexpr float SET_HIP_DROP = 0.12f;
-    static constexpr float SET_THIGH = 0.55f;
-    static constexpr float SET_KNEE = -1.05f;
-    static constexpr float SET_LEG_SPREAD = 0.16f;
+    static constexpr float SET_HIP_DROP = 0.14f;
+    /** Feet planted wider in the set stance (m). */
+    static constexpr float SET_FOOT_SPREAD = 0.12f;
     static constexpr float SET_ARM_FORWARD = 0.55f;
     static constexpr float SET_ARM_SPREAD = 0.4f;
     static constexpr float SET_LEAN = 0.22f;
@@ -456,8 +570,6 @@ struct MatchRender3DTuning final
     static constexpr float DIVE_ROLL = 1.3f;
     static constexpr float DIVE_LIFT = 0.42f;
     static constexpr float DIVE_RATE = 12.0f;
-    static constexpr float HOLD_ARM = 1.25f;
-    static constexpr float HOLD_ELBOW = 1.3f;
   };
 
   /** Players after a goal (simulated seconds since the goal). */
@@ -575,7 +687,28 @@ struct MatchRender3DTuning final
     static constexpr float SUN_X = -0.45f;
     static constexpr float SUN_Y = -0.55f;
     static constexpr float SUN_Z = 0.7f;
-    static constexpr float GRASS_LIGHT = 1.12f;
+    /** The sward by day (even light, no floodlight falloff). */
+    static constexpr float GRASS_LIGHT = 1.06f;
+    /** Stands by day: sky fill, sun and the sky from above. */
+    static constexpr float STAND_AMBIENT = 0.56f;
+    static constexpr float STAND_DIFFUSE = 0.6f;
+    static constexpr float STAND_SKY = 0.12f;
+    /** Daylight colours of the stands (lit by the sun on build). */
+    static constexpr ImU32 CONCRETE_COLOR = IM_COL32(168, 166, 158, 255);
+    static constexpr ImU32 WALL_COLOR = IM_COL32(112, 114, 120, 255);
+    static constexpr ImU32 SEAT_COLOR = IM_COL32(48, 66, 118, 255);
+    static constexpr ImU32 ROOF_UNDER_COLOR = IM_COL32(96, 100, 108, 255);
+    static constexpr ImU32 ROOF_TOP_COLOR = IM_COL32(200, 202, 208, 255);
+    static constexpr ImU32 FASCIA_COLOR = IM_COL32(38, 50, 88, 255);
+    static constexpr ImU32 WINDOW_COLOR = IM_COL32(70, 84, 98, 255);
+    static constexpr ImU32 MAST_COLOR = IM_COL32(156, 160, 168, 255);
+    static constexpr ImU32 LAMP_OFF_COLOR = IM_COL32(196, 200, 206, 255);
+    static constexpr ImU32 OUTSIDE_COLOR = IM_COL32(86, 90, 88, 255);
+    /** Roof shadows on the ground: darkness and soft edge (m). */
+    static constexpr std::uint8_t STAND_SHADOW_ALPHA = 92;
+    static constexpr float STAND_SHADOW_PENUMBRA = 0.9f;
+    /** Players in a stand's shadow lose the sun but keep the sky. */
+    static constexpr float SHADE_AMBIENT = 0.66f;
     static constexpr ImU32 TOP_COLOR = IM_COL32(58, 118, 196, 255);
     static constexpr ImU32 MIDDLE_COLOR = IM_COL32(116, 170, 226, 255);
     static constexpr ImU32 HORIZON_COLOR = IM_COL32(200, 222, 236, 255);
@@ -733,5 +866,22 @@ struct MatchRender3DTuning final
     static constexpr float PITCH = 0.3f;
     static constexpr float DISTANCE = 15.0f;
     static constexpr float FOV = 0.84f;
+  };
+
+  /** Play-mode camera: the ball and the active footballer in view. */
+  struct Play final
+  {
+    static constexpr float PITCH = 0.6f;
+    static constexpr float DISTANCE = 40.0f;
+    /** Metres pulled back per metre between ball and active player. */
+    static constexpr float SPREAD_DISTANCE_GAIN = 0.75f;
+    static constexpr float MIN_DISTANCE = 34.0f;
+    static constexpr float MAX_DISTANCE = 72.0f;
+    static constexpr float LOOK_AHEAD_SHARE = 0.5f;
+    static constexpr float TARGET_MIN_X = 10.0f;
+    static constexpr float TARGET_MAX_X = 95.0f;
+    static constexpr float TARGET_MIN_Y = 10.0f;
+    static constexpr float TARGET_MAX_Y = 58.0f;
+    static constexpr float FOV = 0.6f;
   };
 };

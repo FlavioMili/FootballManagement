@@ -28,13 +28,32 @@ constexpr float HALF_WIDTH = WIDTH * 0.5f;
 constexpr Vec3 UP{0.0f, 0.0f, 1.0f};
 constexpr float TWO_PI = 2.0f * std::numbers::pi_v<float>;
 
-/// Soft floodlit falloff: brightest at the centre spot, darker in corners.
-float groundLight(float x, float y)
+/// Floodlit falloff at night (brightest at the centre spot, darker in the
+/// corners); daylight is even.
+float groundLight(float x, float y, bool day)
 {
+  if (day) return 1.0f;
   const float dx = (x - HALF_LENGTH) / HALF_LENGTH;
   const float dy = (y - HALF_WIDTH) / HALF_WIDTH;
   return std::max(0.62f, 1.0f - Tuning::Grass::VIGNETTE_LENGTH * dx * dx -
                              Tuning::Grass::VIGNETTE_WIDTH * dy * dy);
+}
+
+/// Unit vector towards the sun.
+Vec3 sunDirection()
+{
+  using D = Tuning::Day;
+  return RenderMath::normalize({D::SUN_X, D::SUN_Y, D::SUN_Z});
+}
+
+/// Daylight on a surface: sky fill plus the sun when it faces it.
+float sunlight(Vec3 normal, bool shaded)
+{
+  using D = Tuning::Day;
+  const float sun =
+      shaded ? 0.0f : std::max(0.0f, RenderMath::dot(normal, sunDirection()));
+  return D::STAND_AMBIENT + D::STAND_DIFFUSE * sun +
+         D::STAND_SKY * std::max(0.0f, normal.z);
 }
 
 float unitHash(std::uint32_t a, std::uint32_t b, std::uint32_t c)
@@ -70,7 +89,7 @@ float valueNoise(float x, float y, std::uint32_t salt)
 }
 
 void addRectangle(std::vector<GroundPolygon>& target, float x0, float y0,
-                  float x1, float y1, ImU32 color, bool lit)
+                  float x1, float y1, ImU32 color, bool lit, bool day)
 {
   GroundPolygon polygon;
   polygon.count = 4;
@@ -82,7 +101,7 @@ void addRectangle(std::vector<GroundPolygon>& target, float x0, float y0,
   {
     polygon.colors[index] =
         lit ? shadeColor(color, groundLight(polygon.points[index].x,
-                                            polygon.points[index].y))
+                                            polygon.points[index].y, day))
             : color;
   }
   target.push_back(polygon);
@@ -156,11 +175,13 @@ void addSpot(std::vector<GroundPolygon>& target, float cx, float cy)
   target.push_back(polygon);
 }
 
-void buildGround(Geometry& geometry)
+void buildGround(Geometry& geometry, bool day)
 {
   const float outside = Tuning::Grass::OUTSIDE_EXTENT;
   addRectangle(geometry.ground, -outside, -outside, LENGTH + outside,
-               WIDTH + outside, Tuning::Grass::OUTSIDE_COLOR, false);
+               WIDTH + outside,
+               day ? Tuning::Day::OUTSIDE_COLOR : Tuning::Grass::OUTSIDE_COLOR,
+               false, day);
 
   // Surround split in a coarse grid so the lighting gradient carries on.
   constexpr int SURROUND_CELLS = 4;
@@ -181,7 +202,7 @@ void buildGround(Geometry& geometry)
       const float y1 = sy0 + (sy1 - sy0) * static_cast<float>(row + 1) /
                                  static_cast<float>(SURROUND_CELLS);
       addRectangle(geometry.ground, x0, y0, x1, y1,
-                   Tuning::Grass::SURROUND_COLOR, true);
+                   Tuning::Grass::SURROUND_COLOR, true, day);
     }
   }
 
@@ -220,7 +241,7 @@ void buildGround(Geometry& geometry)
                 G::FINE_NOISE_STRENGTH;
         grid.points.push_back({x, y, 0.0f});
         grid.colors.push_back(shadeColor(
-            G::PITCH_COLOR, groundLight(x, y) * (1.0f + mottle)));
+            G::PITCH_COLOR, groundLight(x, y, day) * (1.0f + mottle)));
       }
     }
   }
@@ -270,6 +291,22 @@ void buildWear(Geometry& geometry)
             goalLine + inward * Tuning::Markings::PENALTY_SPOT_DISTANCE,
             HALF_WIDTH, W::SPOT_WEAR_RADIUS, W::SPOT_WEAR_RADIUS * 0.8f,
             W::WEAR_ALPHA, ++salt);
+    // The goal area takes a beating in front of the six-yard line too.
+    addWear(wear, goalLine + inward * Tuning::Markings::GOAL_AREA_DEPTH,
+            HALF_WIDTH, W::GOALMOUTH_DEPTH * 1.2f, W::GOALMOUTH_WIDTH * 1.5f,
+            W::WEAR_ALPHA / 2, ++salt);
+  }
+  // The assistant referees' running lines just outside the touchlines, one
+  // half each (diagonal system), in several overlapping scuffs.
+  for (int scuff = 0; scuff < W::LINESMAN_SCUFFS; ++scuff)
+  {
+    const float share =
+        (static_cast<float>(scuff) + 0.5f) / static_cast<float>(W::LINESMAN_SCUFFS);
+    const float length = HALF_LENGTH / static_cast<float>(W::LINESMAN_SCUFFS);
+    addWear(wear, HALF_LENGTH + share * HALF_LENGTH, -W::LINESMAN_OFFSET,
+            length * 0.75f, W::LINESMAN_HALF_WIDTH, W::LINESMAN_ALPHA, ++salt);
+    addWear(wear, share * HALF_LENGTH, WIDTH + W::LINESMAN_OFFSET,
+            length * 0.75f, W::LINESMAN_HALF_WIDTH, W::LINESMAN_ALPHA, ++salt);
   }
 }
 
@@ -367,8 +404,8 @@ struct SectionShape
 class StandBuilder
 {
  public:
-  StandBuilder(Geometry& target, const MatchKits& matchKits)
-      : geometry(target), kits(matchKits)
+  StandBuilder(Geometry& target, const MatchKits& matchKits, bool daylight)
+      : geometry(target), kits(matchKits), day(daylight)
   {
   }
 
@@ -409,7 +446,33 @@ class StandBuilder
  private:
   Geometry& geometry;
   const MatchKits& kits;
+  bool day = false;
   std::uint32_t sectionCounter = 0;
+
+  /// By day: whether the roof (or the stand itself, with the sun behind
+  /// it) keeps the sun off this point of the section.
+  static bool inRoofShadow(const SectionShape& shape, ProfilePoint point)
+  {
+    using S = Tuning::Stands;
+    const Vec3 sun = sunDirection();
+    const float toward = -(sun.x * shape.outward.x + sun.y * shape.outward.y);
+    if (toward <= 0.05f) return true;
+    const float roofHeight = S::ROOF_FRONT_HEIGHT - S::FASCIA_HEIGHT;
+    if (point.z >= roofHeight) return false;
+    // Follow the ray towards the sun up to the roof's height: under the
+    // roof it is blocked, in front of the fascia it is open sky.
+    const float travel =
+        toward * (roofHeight - point.z) / std::max(sun.z, 0.1f);
+    return point.d - travel / std::max(shape.run, 0.3f) > S::ROOF_FRONT_DEPTH;
+  }
+
+  /// Night colours stay as given (floodlit); by day the day colour is lit
+  /// by the sun unless the point is in the roof's shadow.
+  ImU32 daylit(ImU32 nightColor, ImU32 dayColor, Vec3 normal,
+               bool shaded) const
+  {
+    return day ? shadeColor(dayColor, sunlight(normal, shaded)) : nightColor;
+  }
 
   Face& addProfileFace(const SectionShape& shape, ProfilePoint from,
                        ProfilePoint to, ImU32 nearColor, ImU32 farColor,
@@ -429,6 +492,77 @@ class StandBuilder
     face.colors = {nearColor, nearColor, farColor, farColor};
     face.normal = RenderMath::normalize(shape.outward * (-(to.z - from.z)) +
                                         UP * ((to.d - from.d) * shape.run));
+    return face;
+  }
+
+  /// By day a stand with the sun behind it throws its roof's shadow onto
+  /// the ground in front: a dark band from the stand to the shadow of the
+  /// fascia, with a soft edge.
+  void addRoofShadow(const SectionShape& shape)
+  {
+    using S = Tuning::Stands;
+    using D = Tuning::Day;
+    const Vec3 sun = sunDirection();
+    const float toward = -(sun.x * shape.outward.x + sun.y * shape.outward.y);
+    if (toward > 0.05f) return;
+    const ProfilePoint edge{S::ROOF_FRONT_DEPTH,
+                            S::ROOF_FRONT_HEIGHT - S::FASCIA_HEIGHT};
+    const auto onGround = [&](Vec3 point)
+    {
+      return Vec3{point.x - sun.x * point.z / sun.z,
+                  point.y - sun.y * point.z / sun.z, 0.0f};
+    };
+    const Vec3 leftFront = shape.left({0.0f, 0.0f});
+    const Vec3 rightFront = shape.right({0.0f, 0.0f});
+    const Vec3 leftEdge = onGround(shape.left(edge));
+    const Vec3 rightEdge = onGround(shape.right(edge));
+    // Only where the shadow reaches past the front of the stand.
+    const auto inward = [&](Vec3 point)
+    {
+      return -((point.x - leftFront.x) * shape.outward.x +
+               (point.y - leftFront.y) * shape.outward.y);
+    };
+    if (inward(leftEdge) <= 0.1f && inward(rightEdge) <= 0.1f) return;
+    const Vec3 soft = shape.outward * D::STAND_SHADOW_PENUMBRA;
+    const ImU32 dark = IM_COL32(0, 0, 0, D::STAND_SHADOW_ALPHA);
+    const ImU32 clear = IM_COL32(0, 0, 0, 0);
+    GroundPolygon core;
+    core.count = 4;
+    core.points[0] = leftFront;
+    core.points[1] = rightFront;
+    core.points[2] = rightEdge + soft;
+    core.points[3] = leftEdge + soft;
+    core.colors.fill(dark);
+    geometry.standShadows.push_back(core);
+    GroundPolygon fringe;
+    fringe.count = 4;
+    fringe.points[0] = leftEdge + soft;
+    fringe.points[1] = rightEdge + soft;
+    fringe.points[2] = rightEdge - soft;
+    fringe.points[3] = leftEdge - soft;
+    fringe.colors[0] = dark;
+    fringe.colors[1] = dark;
+    fringe.colors[2] = clear;
+    fringe.colors[3] = clear;
+    geometry.standShadows.push_back(fringe);
+    geometry.shadowAreas.push_back({leftFront, rightFront, rightEdge, leftEdge});
+  }
+
+  /// A profile face in night and day colours (`dayNear`/`dayFar` are the
+  /// unlit day colours).
+  Face& addLitFace(const SectionShape& shape, ProfilePoint from,
+                   ProfilePoint to, ImU32 nightNear, ImU32 nightFar,
+                   ImU32 dayNear, ImU32 dayFar, float inset = 0.0f)
+  {
+    Face& face = addProfileFace(shape, from, to, nightNear, nightFar, inset);
+    if (day)
+    {
+      const ImU32 nearColor = daylit(nightNear, dayNear, face.normal,
+                                     inRoofShadow(shape, from));
+      const ImU32 farColor =
+          daylit(nightFar, dayFar, face.normal, inRoofShadow(shape, to));
+      face.colors = {nearColor, nearColor, farColor, farColor};
+    }
     return face;
   }
 
@@ -539,6 +673,8 @@ class StandBuilder
       return IM_COL32(channel(sum[0]), channel(sum[1]), channel(sum[2]), 255);
     };
 
+    const Vec3 spectatorNormal =
+        RenderMath::normalize(shape.outward * -0.8f + UP * 0.6f);
     const int lastPair = rows > 0 ? (rows - 1) / C::CLUMP_ROWS : -1;
     for (int pair = lastPair; pair >= 0; --pair)
     {
@@ -563,7 +699,11 @@ class StandBuilder
           const Vec3 right = shape.right(point);
           const float rowT =
               (point.d - from.d) / std::max(to.d - from.d, 1e-3f);
-          const float rowLight = frontLight + (backLight - frontLight) * rowT;
+          // Spectators face the pitch: lit by the floodlights at night, by
+          // the sun (or only the sky under the roof) by day.
+          const float rowLight =
+              day ? sunlight(spectatorNormal, inRoofShadow(shape, point))
+                  : frontLight + (backLight - frontLight) * rowT;
           for (int seat = firstSeat; seat < endSeat; ++seat)
           {
             const std::uint32_t key =
@@ -673,39 +813,49 @@ class StandBuilder
                                       shape.right(concourseTop), 0.5f);
 
     // Faces are stored back to front as seen from the pitch.
-    addProfileFace(shape, upperTop, backTop, S::WALL_COLOR, S::WALL_COLOR);
-    addProfileFace(shape, roofBack, roofFront, S::ROOF_UNDER_COLOR,
-                   shadeColor(S::ROOF_UNDER_COLOR, 1.4f));
-    Face& upper =
-        addProfileFace(shape, concourseTop, upperTop, shadeColor(seats, 0.9f),
-                       shadeColor(seats, S::BACK_ROW_LIGHT));
+    using D = Tuning::Day;
+    addLitFace(shape, upperTop, backTop, S::WALL_COLOR, S::WALL_COLOR,
+               D::WALL_COLOR, D::WALL_COLOR);
+    addLitFace(shape, roofBack, roofFront, S::ROOF_UNDER_COLOR,
+               shadeColor(S::ROOF_UNDER_COLOR, 1.4f), D::ROOF_UNDER_COLOR,
+               shadeColor(D::ROOF_UNDER_COLOR, 1.2f));
+    Face& upper = addLitFace(shape, concourseTop, upperTop,
+                             shadeColor(seats, 0.9f),
+                             shadeColor(seats, S::BACK_ROW_LIGHT),
+                             D::SEAT_COLOR, D::SEAT_COLOR);
     addCrowd(upper, shape, 1U, concourseTop, upperTop, 0.9f, S::BACK_ROW_LIGHT);
-    addProfileFace(shape, lowerTop, concourseTop, S::WALL_COLOR, S::WALL_COLOR);
-    addProfileFace(shape, {S::LOWER_DEPTH, S::LOWER_TOP + S::WINDOW_INSET},
-                   {S::LOWER_DEPTH, S::CONCOURSE_TOP - S::WINDOW_INSET},
-                   shadeColor(S::WINDOW_COLOR, 0.7f), S::WINDOW_COLOR,
-                   S::WINDOW_INSET);
-    Face& lower =
-        addProfileFace(shape, frontTop, lowerTop, shadeColor(seats, 1.1f),
-                       shadeColor(seats, 0.8f));
+    addLitFace(shape, lowerTop, concourseTop, S::WALL_COLOR, S::WALL_COLOR,
+               D::WALL_COLOR, D::WALL_COLOR);
+    addLitFace(shape, {S::LOWER_DEPTH, S::LOWER_TOP + S::WINDOW_INSET},
+               {S::LOWER_DEPTH, S::CONCOURSE_TOP - S::WINDOW_INSET},
+               shadeColor(S::WINDOW_COLOR, 0.7f), S::WINDOW_COLOR,
+               shadeColor(D::WINDOW_COLOR, 0.8f), D::WINDOW_COLOR,
+               S::WINDOW_INSET);
+    Face& lower = addLitFace(shape, frontTop, lowerTop,
+                             shadeColor(seats, 1.1f), shadeColor(seats, 0.8f),
+                             D::SEAT_COLOR, D::SEAT_COLOR);
     addCrowd(lower, shape, 0U, frontTop, lowerTop, 1.05f, 0.78f);
     if (shape.side == Side::WEST)
     {
       // The home end's front wall carries a banner in the club colours.
       const ImU32 banner =
           sectionCounter % 2U == 0U ? kits.home.shirt : kits.home.trim;
-      addProfileFace(shape, frontBottom, frontTop, shadeColor(banner, 0.8f),
-                     banner);
+      addLitFace(shape, frontBottom, frontTop, shadeColor(banner, 0.8f),
+                 banner, shadeColor(banner, 0.85f), banner);
     }
     else
     {
-      addProfileFace(shape, frontBottom, frontTop, S::CONCRETE_COLOR,
-                     shadeColor(S::CONCRETE_COLOR, 1.2f));
+      addLitFace(shape, frontBottom, frontTop, S::CONCRETE_COLOR,
+                 shadeColor(S::CONCRETE_COLOR, 1.2f), D::CONCRETE_COLOR,
+                 shadeColor(D::CONCRETE_COLOR, 1.08f));
     }
-    addProfileFace(shape, fasciaBottom, roofFront, S::FASCIA_COLOR,
-                   shadeColor(S::FASCIA_COLOR, 1.3f));
-    addProfileFace(shape, roofFront, roofBack, S::ROOF_TOP_COLOR,
-                   shadeColor(S::ROOF_TOP_COLOR, 0.85f));
+    addLitFace(shape, fasciaBottom, roofFront, S::FASCIA_COLOR,
+               shadeColor(S::FASCIA_COLOR, 1.3f), D::FASCIA_COLOR,
+               shadeColor(D::FASCIA_COLOR, 1.15f));
+    addLitFace(shape, roofFront, roofBack, S::ROOF_TOP_COLOR,
+               shadeColor(S::ROOF_TOP_COLOR, 0.85f), D::ROOF_TOP_COLOR,
+               shadeColor(D::ROOF_TOP_COLOR, 0.92f));
+    if (day) addRoofShadow(shape);
 
     section.faceEnd = static_cast<std::uint32_t>(geometry.faces.size());
     geometry.sections.push_back(section);
@@ -713,7 +863,7 @@ class StandBuilder
   }
 };
 
-void buildFloodlights(Geometry& geometry)
+void buildFloodlights(Geometry& geometry, bool day)
 {
   using F = Tuning::Floodlight;
   const std::array<std::array<float, 2>, 4> positions{{
@@ -746,6 +896,16 @@ void buildFloodlights(Geometry& geometry)
       face.normal = RenderMath::normalize(
           RenderMath::cross(face.corners[2] - face.corners[0],
                             face.corners[3] - face.corners[1]));
+      if (day)
+      {
+        for (std::size_t corner = 0; corner < 4; ++corner)
+        {
+          face.colors[corner] = shadeColor(
+              Tuning::Day::MAST_COLOR,
+              sunlight(face.normal, false) *
+                  (face.corners[corner].z > 1.0f ? 1.0f : 0.75f));
+        }
+      }
     }
 
     const Vec3 toCentre = RenderMath::normalize(
@@ -761,14 +921,27 @@ void buildFloodlights(Geometry& geometry)
     Face& back = geometry.faces.emplace_back();
     back.corners = {centre - halfRight - halfUp, centre - halfRight + halfUp,
                     centre + halfRight + halfUp, centre + halfRight - halfUp};
-    back.colors.fill(shadeColor(F::MAST_COLOR, 0.7f));
     back.normal = normal * -1.0f;
+    back.colors.fill(day ? shadeColor(Tuning::Day::MAST_COLOR,
+                                      sunlight(back.normal, false))
+                         : shadeColor(F::MAST_COLOR, 0.7f));
     Face& front = geometry.faces.emplace_back();
     front.corners = back.corners;
-    front.colors = {F::LAMP_COLOR, shadeColor(F::LAMP_COLOR, 0.92f),
-                    shadeColor(F::LAMP_COLOR, 0.92f), F::LAMP_COLOR};
     front.normal = normal;
-    front.glow = F::GLOW_COLOR;
+    if (day)
+    {
+      // Lamps off: a grey panel of unlit lenses.
+      const ImU32 lens =
+          shadeColor(Tuning::Day::LAMP_OFF_COLOR, sunlight(normal, false));
+      front.colors = {lens, shadeColor(lens, 0.9f), shadeColor(lens, 0.9f),
+                      lens};
+    }
+    else
+    {
+      front.colors = {F::LAMP_COLOR, shadeColor(F::LAMP_COLOR, 0.92f),
+                      shadeColor(F::LAMP_COLOR, 0.92f), F::LAMP_COLOR};
+      front.glow = F::GLOW_COLOR;
+    }
     section.faceEnd = static_cast<std::uint32_t>(geometry.faces.size());
     geometry.sections.push_back(section);
   }
@@ -885,8 +1058,33 @@ Box makeAxisBox(Vec3 minimum, Vec3 maximum, ImU32 color)
   return box;
 }
 
-void Geometry::build(const MatchKits& kits)
+bool Geometry::inStandShadow(Vec3 point) const
 {
+  for (const std::array<Vec3, 4>& area : shadowAreas)
+  {
+    // Convex quad: inside when on the same side of all four edges.
+    float sign = 0.0f;
+    bool inside = true;
+    for (std::size_t index = 0; index < area.size() && inside; ++index)
+    {
+      const Vec3& a = area[index];
+      const Vec3& b = area[(index + 1) % area.size()];
+      const float side =
+          (b.x - a.x) * (point.y - a.y) - (b.y - a.y) * (point.x - a.x);
+      if (std::abs(side) < 1e-6f) continue;
+      if (sign == 0.0f) sign = side;
+      inside = side * sign > 0.0f;
+    }
+    if (inside) return true;
+  }
+  return false;
+}
+
+void Geometry::build(const MatchKits& kits, bool daylight)
+{
+  day = daylight;
+  standShadows.clear();
+  shadowAreas.clear();
   ground.clear();
   wear.clear();
   markings.clear();
@@ -897,7 +1095,7 @@ void Geometry::build(const MatchKits& kits)
   flags.clear();
   boards.clear();
 
-  buildGround(*this);
+  buildGround(*this, day);
   buildWear(*this);
   buildMarkings(*this);
 
@@ -912,7 +1110,7 @@ void Geometry::build(const MatchKits& kits)
   const Vec3 north{0.0f, 1.0f, 0.0f};
   const Vec3 west{-1.0f, 0.0f, 0.0f};
   const Vec3 east{1.0f, 0.0f, 0.0f};
-  StandBuilder stands(*this, kits);
+  StandBuilder stands(*this, kits, day);
   stands.buildStand({x0, y0, 0.0f}, east, south, x1 - x0, S::SIDE_SECTIONS,
                     Side::SOUTH);
   stands.buildStand({x1, y1, 0.0f}, west, north, x1 - x0, S::SIDE_SECTIONS,
@@ -925,7 +1123,7 @@ void Geometry::build(const MatchKits& kits)
   stands.buildCorner({x1, y0, 0.0f}, south, east, Side::SOUTH);
   stands.buildCorner({x1, y1, 0.0f}, east, north, Side::NORTH);
   stands.buildCorner({x0, y1, 0.0f}, north, west, Side::NORTH);
-  buildFloodlights(*this);
+  buildFloodlights(*this, day);
   buildBoards(*this);
   buildGoals(*this);
   cornerFlags = {Vec3{0.0f, 0.0f, 0.0f}, Vec3{LENGTH, 0.0f, 0.0f},

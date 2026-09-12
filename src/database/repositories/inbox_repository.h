@@ -16,7 +16,8 @@
 
 /**
  * @class InboxRepository
- * @brief Persists the managed club's inbox (table InboxMessages).
+ * @brief Persists the managed club's inbox (table InboxMessages) and the
+ * inbox screen's filters (table InboxView).
  */
 class InboxRepository
 {
@@ -28,6 +29,12 @@ class InboxRepository
 
   /** Replaces the stored messages (the inbox is capped, so this is cheap). */
   void replaceAll(const std::vector<InboxMessage>& messages) const;
+
+  /** Saved filters of the inbox screen (defaults when none were stored). */
+  InboxView loadView() const;
+
+  /** Stores the filters of the inbox screen (table InboxView). */
+  void saveView(const InboxView& view) const;
 
  private:
   std::shared_ptr<DatabaseConnection> db_conn;

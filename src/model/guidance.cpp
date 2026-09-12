@@ -11,7 +11,10 @@
 #include <sqlite3.h>
 
 #include <algorithm>
+#include <cstdint>
+#include <span>
 #include <string>
+#include <vector>
 
 #include "database/database_connection.h"
 #include "model/world_rng.h"
@@ -109,15 +112,26 @@ void CareerGuidance::load(const std::shared_ptr<DatabaseConnection>& db_conn)
       });
   opposition.restore(std::move(orders));
   forEachRow(*db_conn,
-             "SELECT data FROM ManagedMatchAnalytics ORDER BY game_date, "
-             "home_id, away_id;",
+             "SELECT data, detail FROM ManagedMatchAnalytics ORDER BY "
+             "game_date, home_id, away_id;",
              [this](sqlite3_stmt* stmt)
              {
                const unsigned char* text = sqlite3_column_text(stmt, 0);
                if (text == nullptr) return;
-               if (auto snapshot = ManagedMatchSnapshot::fromJson(
-                       reinterpret_cast<const char*>(text)))
-                 snapshots.push_back(std::move(*snapshot));
+               auto snapshot = ManagedMatchSnapshot::fromJson(
+                   reinterpret_cast<const char*>(text));
+               if (!snapshot) return;
+               const auto* blob =
+                   static_cast<const std::uint8_t*>(sqlite3_column_blob(stmt, 1));
+               const int bytes = sqlite3_column_bytes(stmt, 1);
+               if (blob != nullptr && bytes > 0)
+               {
+                 // A damaged blob only loses the detail, not the snapshot.
+                 if (auto detail = MatchDetail::decode(std::span(
+                         blob, static_cast<std::size_t>(bytes))))
+                   snapshot->detail = std::move(*detail);
+               }
+               snapshots.push_back(std::move(*snapshot));
              });
   if (snapshots.size() > MAX_SNAPSHOTS)
   {
@@ -179,7 +193,7 @@ void CareerGuidance::save(
   }
   stmt = db.prepareStatement(
       "INSERT OR REPLACE INTO ManagedMatchAnalytics (game_date, home_id, "
-      "away_id, data) VALUES (?, ?, ?, ?);");
+      "away_id, data, detail) VALUES (?, ?, ?, ?, ?);");
   for (std::size_t index = unsaved_from; index < snapshots.size(); ++index)
   {
     const ManagedMatchSnapshot& snapshot = snapshots[index];
@@ -188,6 +202,16 @@ void CareerGuidance::save(
     sqlite3_bind_int(stmt, 2, snapshot.home_id);
     sqlite3_bind_int(stmt, 3, snapshot.away_id);
     sqlite3_bind_text(stmt, 4, data.c_str(), -1, SQLITE_TRANSIENT);
+    if (snapshot.detail.empty())
+    {
+      sqlite3_bind_null(stmt, 5);
+    }
+    else
+    {
+      const std::vector<std::uint8_t> detail = snapshot.detail.encode();
+      sqlite3_bind_blob(stmt, 5, detail.data(), static_cast<int>(detail.size()),
+                        SQLITE_TRANSIENT);
+    }
     db.executeStep(stmt);
     sqlite3_reset(stmt);
   }

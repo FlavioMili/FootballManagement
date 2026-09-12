@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <filesystem>
 
 #include "controller/game_controller.h"
@@ -23,6 +24,8 @@
 #include "gui/scenes/main_menu_scene.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/inbox.h"
+#include "model/onboarding.h"
 #include "settings_manager.h"
 
 SceneID SettingsScene::getID() const { return SceneID::SETTINGS; }
@@ -55,7 +58,6 @@ void SettingsScene::onEnter()
 {
   languageOptions.clear();
   availableLanguageEnums.clear();
-  resolutionOptions.clear();
   fpsOptionsStrings.clear();
   for (const auto& [lang, str] : languageToString)
   {
@@ -71,19 +73,17 @@ void SettingsScene::onEnter()
     languageOptions.push_back("English");
     availableLanguageEnums.push_back(Language::EN);
   }
-  for (const auto& res : GUIConstants::RESOLUTIONS)
-  {
-    resolutionOptions.push_back(std::to_string(res.width) + "x" +
-                                std::to_string(res.height));
-  }
   for (const auto& fps : GUIConstants::FPS_OPTIONS)
   {
     fpsOptionsStrings.push_back(std::to_string(fps));
   }
+  original_settings = SettingsManager::instance()->get();
+  syncPendingFromSettings();
+}
 
-  SettingsManager* settingsManager = SettingsManager::instance();
-  const auto& settings = settingsManager->getSettings();
-
+void SettingsScene::syncPendingFromSettings()
+{
+  const Settings& settings = SettingsManager::instance()->get();
   auto itLang = std::find(availableLanguageEnums.begin(),
                           availableLanguageEnums.end(), settings.language);
   selectedLanguage = (itLang != availableLanguageEnums.end())
@@ -96,24 +96,40 @@ void SettingsScene::onEnter()
   selectedFPS = (itFps != GUIConstants::FPS_OPTIONS.end())
                     ? static_cast<int>(std::distance(
                           GUIConstants::FPS_OPTIONS.begin(), itFps))
-                    : 0;
+                    : 1;
 
-  auto itRes = std::find_if(GUIConstants::RESOLUTIONS.begin(),
-                            GUIConstants::RESOLUTIONS.end(),
-                            [&](const auto& r)
-                            {
-                              return r.width == settings.resolution_width &&
-                                     r.height == settings.resolution_height;
-                            });
-  selectedResolution = (itRes != GUIConstants::RESOLUTIONS.end())
-                           ? static_cast<int>(std::distance(
-                                 GUIConstants::RESOLUTIONS.begin(), itRes))
-                           : 0;
+  // The presets, plus a size set in the file that is not one of them.
+  resolutions.assign(GUIConstants::RESOLUTIONS.begin(),
+                     GUIConstants::RESOLUTIONS.end());
+  const auto current = std::ranges::find_if(
+      resolutions, [&settings](const GUIConstants::Resolution& r)
+      {
+        return r.width == settings.resolution_width &&
+               r.height == settings.resolution_height;
+      });
+  if (current == resolutions.end())
+    resolutions.push_back(
+        {settings.resolution_width, settings.resolution_height});
+  resolutionOptions.clear();
+  for (const auto& res : resolutions)
+    resolutionOptions.push_back(std::to_string(res.width) + "x" +
+                                std::to_string(res.height));
+  selectedResolution = static_cast<int>(std::distance(
+      resolutions.begin(),
+      std::ranges::find_if(resolutions,
+                           [&settings](const GUIConstants::Resolution& r)
+                           {
+                             return r.width == settings.resolution_width &&
+                                    r.height == settings.resolution_height;
+                           })));
 
   fullscreen = settings.fullscreen;
-  original_settings = settings;
+  vsync = settings.vsync;
   pending_ui_scale =
       settings.ui_scale > 0.0f ? settings.ui_scale : Theme::scale();
+  pending_text_scale = settings.text_scale;
+  capture.reset();
+  conflict.reset();
 }
 
 void SettingsScene::update(float deltaTime)
@@ -131,15 +147,50 @@ constexpr float LABEL_WIDTH = 210.0f;
 constexpr float SWATCH_HEIGHT = 64.0f;
 constexpr float MIN_SCALE_PERCENT = 75.0f;
 constexpr float MAX_SCALE_PERCENT = 200.0f;
+constexpr float MIN_TEXT_PERCENT = 90.0f;
+constexpr float MAX_TEXT_PERCENT = 130.0f;
 
-void settingLabel(const char* label, const char* help)
+/** When a setting takes effect (said in its tooltip, marked with *). */
+enum class Applies : uint8_t
+{
+  LIVE,    /**< At once (Cancel restores it). */
+  ON_APPLY /**< When the player presses Apply. */
+};
+
+/**
+ * Label of a settings row with its tooltip; settings applied by the Apply
+ * button carry a " *" and say so in the tooltip. Hovering the row's control
+ * shows the same tooltip (see rowTooltip()).
+ */
+void settingLabel(const char* label, const char* help,
+                  Applies applies = Applies::LIVE)
 {
   ImGui::AlignTextToFramePadding();
-  ImGui::TextUnformatted(label);
+  if (applies == Applies::ON_APPLY)
+    ImGui::Text("%s *", label);
+  else
+    ImGui::TextUnformatted(label);
   if (help != nullptr && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
-    ImGui::SetTooltip("%s", help);
+  {
+    if (applies == Applies::ON_APPLY)
+      ImGui::SetTooltip("%s\n%s", help, LOC("SETTINGS_APPLIES_ON_APPLY"));
+    else
+      ImGui::SetTooltip("%s", help);
+  }
   ImGui::SameLine(LABEL_WIDTH * Theme::scale());
   ImGui::SetNextItemWidth(-FLT_MIN);
+}
+
+/** The row's help on its control too (the last item drawn). */
+void rowTooltip(const char* help, Applies applies = Applies::LIVE)
+{
+  if (!ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort |
+                            ImGuiHoveredFlags_AllowWhenDisabled))
+    return;
+  if (applies == Applies::ON_APPLY)
+    ImGui::SetTooltip("%s\n%s", help, LOC("SETTINGS_APPLIES_ON_APPLY"));
+  else
+    ImGui::SetTooltip("%s", help);
 }
 
 template <typename Options>
@@ -206,6 +257,7 @@ bool presetCard(Theme::Preset preset, bool selected, float width)
 }
 }  // namespace
 
+
 void SettingsScene::render()
 {
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -221,8 +273,13 @@ void SettingsScene::render()
                    ImGuiWindowFlags_NoSavedSettings |
                    ImGuiWindowFlags_NoBringToFrontOnFocus);
   ImGui::PopStyleVar(3);
+  // A binding waiting for a key takes every key, Escape included.
+  updateCapture();
+  const bool keysFree =
+      !capture && capture_end_frame != ImGui::GetFrameCount();
   // Escape backs out like Cancel unless a dialog or a combo takes it first.
   const bool leaveWithEscape =
+      keysFree &&
       !ImGui::IsPopupOpen(
           "", ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel) &&
       !ImGui::IsAnyItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape, false);
@@ -240,21 +297,36 @@ void SettingsScene::render()
       ImVec2(width, ImGui::GetContentRegionAvail().y - footerHeight));
   renderGeneral();
   renderAppearance();
+  renderGuidance();
   renderAudio();
+  renderControls();
   renderSaving();
   // Wiping is offered only with no career in memory: a career left for the
   // main menu is still loaded and would be saved back on exit.
   if (!in_career && !guiView->getController().isGameLoaded()) renderData();
+  {
+    Theme::ScopedText small(Theme::Text::SMALL);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(Theme::palette().muted, "%s",
+                       LOC("SETTINGS_APPLY_NOTE"));
+    ImGui::PopTextWrapPos();
+  }
   ImGui::EndChild();
 
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
   const ImVec2 buttonSize(160.0f * Theme::scale(), 0.0f);
-  const bool cancelled =
-      UI::secondaryButton(LOC("SETTINGS_CANCEL"), buttonSize);
+  const bool reset = UI::secondaryButton(LOC("SETTINGS_RESET"), buttonSize);
+  rowTooltip(LOC("SETTINGS_RESET_HELP"));
   ImGui::SameLine();
-  const bool applied = UI::primaryButton(LOC("SETTINGS_APPLY"), buttonSize);
+  const bool cancelled =
+      UI::secondaryButton(LOC("SETTINGS_CANCEL"), buttonSize) && keysFree;
+  ImGui::SameLine();
+  const bool applied =
+      UI::primaryButton(LOC("SETTINGS_APPLY"), buttonSize) && keysFree;
   ImGui::EndGroup();
-  if (cancelled || leaveWithEscape)
+  if (reset && keysFree)
+    resetToDefaults();
+  else if (cancelled || leaveWithEscape)
     cancel();
   else if (applied)
     applyAndSaveSettings();
@@ -265,23 +337,64 @@ void SettingsScene::render()
 void SettingsScene::renderGeneral()
 {
   UI::beginAutoHeightCard("settings_general", LOC("SETTINGS_SECTION_GENERAL"));
-  settingLabel(LOC("SETTINGS_LANGUAGE"), nullptr);
+  settingLabel(LOC("SETTINGS_LANGUAGE"), LOC("SETTINGS_LANGUAGE_HELP"),
+               Applies::ON_APPLY);
   optionCombo("##language", languageOptions, selectedLanguage);
-  settingLabel(LOC("SETTINGS_RESOLUTION"), nullptr);
+  rowTooltip(LOC("SETTINGS_LANGUAGE_HELP"), Applies::ON_APPLY);
+  settingLabel(LOC("SETTINGS_RESOLUTION"), LOC("SETTINGS_RESOLUTION_HELP"),
+               Applies::ON_APPLY);
+  // A fullscreen window takes the display's size.
+  ImGui::BeginDisabled(fullscreen);
   optionCombo("##resolution", resolutionOptions, selectedResolution);
-  settingLabel(LOC("SETTINGS_REFRESH_RATE"), nullptr);
+  ImGui::EndDisabled();
+  rowTooltip(fullscreen ? LOC("SETTINGS_RESOLUTION_FULLSCREEN")
+                        : LOC("SETTINGS_RESOLUTION_HELP"),
+             Applies::ON_APPLY);
+  settingLabel(LOC("SETTINGS_REFRESH_RATE"), LOC("SETTINGS_REFRESH_RATE_HELP"),
+               Applies::ON_APPLY);
   optionCombo("##fps", fpsOptionsStrings, selectedFPS);
-  settingLabel(LOC("SETTINGS_FULLSCREEN"), nullptr);
+  rowTooltip(LOC("SETTINGS_REFRESH_RATE_HELP"), Applies::ON_APPLY);
+  settingLabel(LOC("SETTINGS_FULLSCREEN"), LOC("SETTINGS_FULLSCREEN_HELP"),
+               Applies::ON_APPLY);
   ImGui::Checkbox("##fullscreen", &fullscreen);
+  rowTooltip(LOC("SETTINGS_FULLSCREEN_HELP"), Applies::ON_APPLY);
+  settingLabel(LOC("SETTINGS_VSYNC"), LOC("SETTINGS_VSYNC_HELP"),
+               Applies::ON_APPLY);
+  ImGui::Checkbox("##vsync", &vsync);
+  rowTooltip(LOC("SETTINGS_VSYNC_HELP"), Applies::ON_APPLY);
   // Live match behaviour (applied at once, Cancel restores it).
   Settings& settings = SettingsManager::instance()->get();
   settingLabel(LOC("SETTINGS_MATCH_PAUSE_BREAKS"),
                LOC("SETTINGS_MATCH_PAUSE_BREAKS_HELP"));
   ImGui::Checkbox("##pause_at_breaks", &settings.pause_at_breaks);
+  rowTooltip(LOC("SETTINGS_MATCH_PAUSE_BREAKS_HELP"));
   settingLabel(LOC("SETTINGS_MATCH_PAUSE_CHANGES"),
                LOC("MATCH_PAUSE_FOR_CHANGES_HINT"));
   ImGui::Checkbox("##pause_for_match_changes",
                   &settings.pause_for_match_changes);
+  rowTooltip(LOC("MATCH_PAUSE_FOR_CHANGES_HINT"));
+  // Play mode and its assistance (also in the play pause menu).
+  settingLabel(LOC("SETTINGS_PLAY_MODE"), LOC("SETTINGS_PLAY_MODE_HELP"));
+  ImGui::Checkbox("##play_mode", &settings.play_mode);
+  rowTooltip(LOC("SETTINGS_PLAY_MODE_HELP"));
+  const std::array<const char*, 3> switching{LOC("PLAY_SWITCH_MANUAL"),
+                                             LOC("PLAY_SWITCH_ASSISTED"),
+                                             LOC("PLAY_SWITCH_AUTO")};
+  settingLabel(LOC("PLAY_AUTO_SWITCH"), LOC("PLAY_AUTO_SWITCH_HINT"));
+  ImGui::Combo("##play_auto_switch", &settings.play_auto_switch,
+               switching.data(), static_cast<int>(switching.size()));
+  rowTooltip(LOC("PLAY_AUTO_SWITCH_HINT"));
+  const std::array<const char*, 3> assistance{LOC("PLAY_ASSIST_NONE"),
+                                              LOC("PLAY_ASSIST_NORMAL"),
+                                              LOC("PLAY_ASSIST_STRONG")};
+  settingLabel(LOC("PLAY_PASS_ASSIST"), LOC("SETTINGS_PLAY_HELP"));
+  ImGui::Combo("##play_pass_assist", &settings.play_pass_assist,
+               assistance.data(), static_cast<int>(assistance.size()));
+  rowTooltip(LOC("SETTINGS_PLAY_HELP"));
+  settingLabel(LOC("PLAY_DEAD_ZONE"), LOC("SETTINGS_PLAY_HELP"));
+  ImGui::SliderFloat("##play_dead_zone", &settings.play_dead_zone, 0.05f, 0.5f,
+                     "%.2f");
+  rowTooltip(LOC("SETTINGS_PLAY_HELP"));
   UI::endCard();
 }
 
@@ -293,6 +406,8 @@ void SettingsScene::renderAppearance()
 
   // Theme presets as live swatches.
   ImGui::TextUnformatted(LOC("SETTINGS_THEME"));
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+    ImGui::SetTooltip("%s", LOC("SETTINGS_THEME_HELP"));
   const auto presetCount = static_cast<int>(Theme::Preset::COUNT);
   const float gap = ImGui::GetStyle().ItemSpacing.x;
   const float cardWidth = (ImGui::GetContentRegionAvail().x -
@@ -341,6 +456,29 @@ void SettingsScene::renderAppearance()
     }
   }
 
+  settingLabel(LOC("SETTINGS_COLOR_VISION"), LOC("SETTINGS_COLOR_VISION_HELP"));
+  {
+    const int count = static_cast<int>(Theme::ColorVision::COUNT);
+    const int current = std::clamp(settings.color_vision, 0, count - 1);
+    if (ImGui::BeginCombo(
+            "##color_vision",
+            LOC(Theme::colorVisionKey(
+                static_cast<Theme::ColorVision>(current)))))
+    {
+      for (int index = 0; index < count; ++index)
+        if (ImGui::Selectable(
+                LOC(Theme::colorVisionKey(
+                    static_cast<Theme::ColorVision>(index))),
+                index == current))
+        {
+          settings.color_vision = index;
+          previewAppearance();
+        }
+      ImGui::EndCombo();
+    }
+    rowTooltip(LOC("SETTINGS_COLOR_VISION_HELP"));
+  }
+
   settingLabel(LOC("SETTINGS_UI_SCALE"), LOC("SETTINGS_UI_SCALE_HELP"));
   bool automatic = settings.ui_scale <= 0.0f;
   if (ImGui::Checkbox(LOC("SETTINGS_UI_SCALE_AUTO"), &automatic))
@@ -348,6 +486,7 @@ void SettingsScene::renderAppearance()
     settings.ui_scale = automatic ? 0.0f : pending_ui_scale;
     previewAppearance();
   }
+  rowTooltip(LOC("SETTINGS_UI_SCALE_HELP"));
   if (!automatic)
   {
     ImGui::SameLine();
@@ -360,6 +499,21 @@ void SettingsScene::renderAppearance()
     if (ImGui::IsItemDeactivatedAfterEdit())
     {
       settings.ui_scale = pending_ui_scale;
+      previewAppearance();
+    }
+  }
+
+  settingLabel(LOC("SETTINGS_TEXT_SIZE"), LOC("SETTINGS_TEXT_SIZE_HELP"));
+  {
+    float percent = pending_text_scale * 100.0f;
+    if (ImGui::SliderFloat("##text_scale", &percent, MIN_TEXT_PERCENT,
+                           MAX_TEXT_PERCENT, "%.0f%%"))
+      pending_text_scale = std::round(percent / 5.0f) * 0.05f;
+    rowTooltip(LOC("SETTINGS_TEXT_SIZE_HELP"));
+    // Like the UI scale: text grows under the cursor, so apply on release.
+    if (ImGui::IsItemDeactivatedAfterEdit())
+    {
+      settings.text_scale = pending_text_scale;
       previewAppearance();
     }
   }
@@ -383,12 +537,47 @@ void SettingsScene::renderAppearance()
                LOC("SETTINGS_REDUCED_MOTION_HELP"));
   if (ImGui::Checkbox("##reduced_motion", &settings.reduced_motion))
     previewAppearance();
+  rowTooltip(LOC("SETTINGS_REDUCED_MOTION_HELP"));
+  UI::endCard();
+}
 
+void SettingsScene::renderGuidance()
+{
+  Settings& settings = SettingsManager::instance()->get();
+  UI::beginAutoHeightCard("settings_guidance",
+                          LOC("SETTINGS_SECTION_GUIDANCE"));
   settingLabel(LOC("SETTINGS_SCREEN_TIPS"), LOC("SETTINGS_SCREEN_TIPS_HELP"));
   // Turning tips back on explains every screen again.
   if (ImGui::Checkbox("##screen_tips", &settings.screen_tips) &&
       settings.screen_tips)
     settings.screen_tips_seen = 0;
+  rowTooltip(LOC("SETTINGS_SCREEN_TIPS_HELP"));
+
+  // A hidden first-week checklist can come back (it belongs to the career,
+  // so this acts at once and Cancel does not undo it).
+  GameController& controller = guiView->getController();
+  if (in_career && controller.getManagedTeam())
+  {
+    const OnboardingState& checklist = controller.getOnboarding();
+    settingLabel(LOC("SETTINGS_CHECKLIST"), LOC("SETTINGS_CHECKLIST_HELP"));
+    if (checklist.allDone())
+    {
+      ImGui::TextColored(Theme::palette().muted, "%s",
+                         LOC("SETTINGS_CHECKLIST_DONE"));
+    }
+    else if (checklist.isDismissed())
+    {
+      if (UI::secondaryButton(LOC("SETTINGS_CHECKLIST_SHOW"), ImVec2(0, 0),
+                              UI::ButtonSize::COMPACT))
+        controller.showOnboarding();
+      rowTooltip(LOC("SETTINGS_CHECKLIST_HELP"));
+    }
+    else
+    {
+      ImGui::TextColored(Theme::palette().muted, "%s",
+                         LOC("SETTINGS_CHECKLIST_SHOWN"));
+    }
+  }
   UI::endCard();
 }
 
@@ -398,21 +587,188 @@ void SettingsScene::renderAudio()
   UI::beginAutoHeightCard("settings_audio", LOC("SETTINGS_SECTION_AUDIO"));
   // Volumes apply at once (a running match picks them up next frame);
   // Cancel restores the previous values.
-  const auto volumeSlider = [](const char* id, float& volume)
+  const auto volumeSlider = [](const char* id, float& volume, const char* help)
   {
     float percent = volume * 100.0f;
     if (ImGui::SliderFloat(id, &percent, 0.0f, 100.0f, "%.0f%%"))
       volume = std::clamp(std::round(percent) / 100.0f, 0.0f, 1.0f);
+    rowTooltip(help);
   };
-  settingLabel(LOC("SETTINGS_AUDIO_MASTER"), nullptr);
-  volumeSlider("##master_volume", settings.master_volume);
-  settingLabel(LOC("SETTINGS_AUDIO_CROWD"), nullptr);
-  volumeSlider("##crowd_volume", settings.crowd_volume);
+  settingLabel(LOC("SETTINGS_AUDIO_MASTER"), LOC("SETTINGS_AUDIO_MASTER_HELP"));
+  volumeSlider("##master_volume", settings.master_volume,
+               LOC("SETTINGS_AUDIO_MASTER_HELP"));
+  settingLabel(LOC("SETTINGS_AUDIO_CROWD"), LOC("SETTINGS_AUDIO_CROWD_HELP"));
+  volumeSlider("##crowd_volume", settings.crowd_volume,
+               LOC("SETTINGS_AUDIO_CROWD_HELP"));
   settingLabel(LOC("SETTINGS_AUDIO_EFFECTS"),
                LOC("SETTINGS_AUDIO_EFFECTS_HELP"));
-  volumeSlider("##effects_volume", settings.effects_volume);
+  volumeSlider("##effects_volume", settings.effects_volume,
+               LOC("SETTINGS_AUDIO_EFFECTS_HELP"));
   settingLabel(LOC("SETTINGS_AUDIO_MUTE"), LOC("SETTINGS_AUDIO_MUTE_HELP"));
   ImGui::Checkbox("##audio_muted", &settings.audio_muted);
+  rowTooltip(LOC("SETTINGS_AUDIO_MUTE_HELP"));
+  UI::endCard();
+}
+
+void SettingsScene::updateCapture()
+{
+  if (!capture) return;
+  Input::ActionRegistry& registry = Input::registry();
+  // Escape cancels, Backspace clears the slot, anything else binds.
+  if (ImGui::IsKeyPressed(ImGuiKey_Escape, false) &&
+      ImGui::GetIO().KeyMods == 0)
+  {
+    capture.reset();
+    capture_end_frame = ImGui::GetFrameCount();
+    return;
+  }
+  if (ImGui::IsKeyPressed(ImGuiKey_Backspace, false) &&
+      ImGui::GetIO().KeyMods == 0)
+  {
+    registry.rebind(capture->action, capture->slot, ImGuiKey_None);
+    capture.reset();
+    capture_end_frame = ImGui::GetFrameCount();
+    return;
+  }
+  const auto chord = Input::capturePressedChord();
+  if (!chord) return;
+  const Capture target = *capture;
+  capture.reset();
+  capture_end_frame = ImGui::GetFrameCount();
+  const Input::RebindResult result =
+      registry.rebind(target.action, target.slot, *chord);
+  if (!result.applied && result.conflict)
+    conflict = Conflict{target.action, target.slot, *chord, *result.conflict};
+}
+
+void SettingsScene::renderControlRow(Input::ActionId id,
+                                     const Input::Action& action,
+                                     float labelWidth)
+{
+  Input::ActionRegistry& registry = Input::registry();
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  const float spacing = ImGui::GetStyle().ItemSpacing.x;
+  ImGui::PushID(static_cast<int>(id));
+  ImGui::AlignTextToFramePadding();
+  UI::textFitted(LOC(action.def.label_key.c_str()), labelWidth - spacing,
+                 palette.text);
+  ImGui::SameLine(labelWidth);
+  const char* resetLabel = LOC("CONTROLS_RESET_ONE");
+  const float resetWidth = UI::buttonWidth(resetLabel, UI::ButtonSize::COMPACT);
+  const float slotWidth = std::max(
+      60.0f * scale,
+      (ImGui::GetContentRegionAvail().x - resetWidth - 2.0f * spacing) * 0.5f);
+  for (std::size_t slot = 0; slot < Input::BINDING_SLOTS; ++slot)
+  {
+    ImGui::PushID(static_cast<int>(slot));
+    const bool waiting = capture && capture->action == id && capture->slot == slot;
+    const char* text = waiting ? LOC("CONTROLS_PRESS_KEY")
+                               : chord_labels[id][slot].c_str();
+    ImGui::BeginDisabled(!action.def.rebindable);
+    const bool pressed =
+        waiting ? UI::primaryButton(text, ImVec2(slotWidth, 0.0f),
+                                    UI::ButtonSize::COMPACT)
+                : UI::secondaryButton(text, ImVec2(slotWidth, 0.0f),
+                                      UI::ButtonSize::COMPACT);
+    ImGui::EndDisabled();
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort |
+                             ImGuiHoveredFlags_AllowWhenDisabled))
+      ImGui::SetTooltip("%s", LOC(!action.def.rebindable ? "CONTROLS_FIXED"
+                                  : waiting               ? "CONTROLS_CAPTURE_HELP"
+                                                          : "CONTROLS_SLOT_HELP"));
+    if (pressed && capture_end_frame != ImGui::GetFrameCount())
+    {
+      capture = Capture{id, slot};
+      conflict.reset();
+    }
+    ImGui::PopID();
+    ImGui::SameLine();
+  }
+  ImGui::BeginDisabled(registry.isDefault(id) || !action.def.rebindable);
+  if (UI::secondaryButton(resetLabel, ImVec2(0.0f, 0.0f),
+                          UI::ButtonSize::COMPACT))
+  {
+    registry.resetToDefault(id);
+    conflict.reset();
+  }
+  ImGui::EndDisabled();
+
+  if (conflict && conflict->action == id)
+  {
+    // The clash, and the choice: take the key over or keep things as they are.
+    const std::string message = formatLocalized(
+        "CONTROLS_CONFLICT",
+        {Input::chordLabel(conflict->chord),
+         LOC(registry.action(conflict->other).def.label_key.c_str())});
+    const ImVec2 start = ImGui::GetCursorScreenPos();
+    ImGui::Indent(labelWidth);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(palette.warning, "%s %s", "!", message.c_str());
+    ImGui::PopTextWrapPos();
+    if (UI::secondaryButton(LOC("CONTROLS_REPLACE"), ImVec2(0, 0),
+                            UI::ButtonSize::COMPACT))
+    {
+      registry.rebind(conflict->action, conflict->slot, conflict->chord, true);
+      conflict.reset();
+    }
+    ImGui::SameLine();
+    if (UI::secondaryButton(LOC("SETTINGS_CANCEL"), ImVec2(0, 0),
+                            UI::ButtonSize::COMPACT))
+      conflict.reset();
+    ImGui::Unindent(labelWidth);
+    // A bar beside the warning: shape as well as colour.
+    ImGui::GetWindowDrawList()->AddRectFilled(
+        ImVec2(start.x + labelWidth - Theme::Space::S * scale, start.y),
+        ImVec2(start.x + labelWidth - Theme::Space::S * scale + 3.0f * scale,
+               ImGui::GetCursorScreenPos().y - ImGui::GetStyle().ItemSpacing.y),
+        Theme::toU32(palette.warning));
+  }
+  ImGui::PopID();
+}
+
+void SettingsScene::renderControls()
+{
+  Input::ActionRegistry& registry = Input::registry();
+  if (chord_labels.size() != registry.size() ||
+      labels_revision != registry.revision())
+  {
+    labels_revision = registry.revision();
+    chord_labels.assign(registry.size(), {});
+    for (Input::ActionId id = 0; id < registry.size(); ++id)
+      for (std::size_t slot = 0; slot < Input::BINDING_SLOTS; ++slot)
+        chord_labels[id][slot] = Input::chordLabel(registry.chord(id, slot));
+  }
+  UI::beginAutoHeightCard("settings_controls", LOC("SETTINGS_SECTION_CONTROLS"));
+  ImGui::PushTextWrapPos(0.0f);
+  ImGui::TextColored(Theme::palette().muted, "%s", LOC("CONTROLS_INTRO"));
+  ImGui::PopTextWrapPos();
+  const float labelWidth =
+      std::min(ImGui::GetContentRegionAvail().x * 0.42f, 300.0f * Theme::scale());
+  for (std::size_t index = 0;
+       index < static_cast<std::size_t>(Input::Category::COUNT); ++index)
+  {
+    const auto category = static_cast<Input::Category>(index);
+    bool heading = false;
+    registry.forEach(category,
+                     [&](Input::ActionId id, const Input::Action& action)
+                     {
+                       if (!heading)
+                       {
+                         UI::sectionLabel(LOC(Input::categoryKey(category)));
+                         heading = true;
+                       }
+                       renderControlRow(id, action, labelWidth);
+                     });
+  }
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  if (UI::secondaryButton(LOC("CONTROLS_RESET_ALL")))
+  {
+    registry.resetAll();
+    capture.reset();
+    conflict.reset();
+  }
+  rowTooltip(LOC("CONTROLS_RESET_ALL_HELP"));
   UI::endCard();
 }
 
@@ -423,7 +779,8 @@ void SettingsScene::renderSaving()
   static constexpr std::array<const char*, 6> FREQUENCY_KEYS = {
       "AUTOSAVE_OFF",     "AUTOSAVE_DAILY",    "AUTOSAVE_WEEKLY",
       "AUTOSAVE_MONTHLY", "AUTOSAVE_MATCHDAY", "AUTOSAVE_SEASON"};
-  settingLabel(LOC("SETTINGS_AUTOSAVE"), LOC("SETTINGS_AUTOSAVE_HELP"));
+  settingLabel(LOC("SETTINGS_AUTOSAVE"), LOC("SETTINGS_AUTOSAVE_HELP"),
+               Applies::ON_APPLY);
   const int frequency = std::clamp(settings.autosave_frequency, 0,
                                    static_cast<int>(FREQUENCY_KEYS.size()) - 1);
   ImGui::SetNextItemWidth(260.0f * Theme::scale());
@@ -439,10 +796,12 @@ void SettingsScene::renderSaving()
     }
     ImGui::EndCombo();
   }
+  rowTooltip(LOC("SETTINGS_AUTOSAVE_HELP"), Applies::ON_APPLY);
   settingLabel(LOC("SETTINGS_AUTOSAVE_BACKUPS"),
-               LOC("SETTINGS_AUTOSAVE_BACKUPS_HELP"));
+               LOC("SETTINGS_AUTOSAVE_BACKUPS_HELP"), Applies::ON_APPLY);
   ImGui::SetNextItemWidth(260.0f * Theme::scale());
   ImGui::SliderInt("##autosave_backups", &settings.autosave_backups, 0, 9);
+  rowTooltip(LOC("SETTINGS_AUTOSAVE_BACKUPS_HELP"), Applies::ON_APPLY);
   UI::endCard();
 }
 
@@ -500,9 +859,24 @@ void SettingsScene::renderData()
 
 void SettingsScene::previewAppearance() { guiView->refreshTheme(); }
 
+void SettingsScene::resetToDefaults()
+{
+  Settings& settings = SettingsManager::instance()->get();
+  Settings defaults;
+  // The language stays (a reset should not switch the screen to English),
+  // and so does the record of which screen tips were already shown.
+  defaults.language = settings.language;
+  defaults.screen_tips_seen = settings.screen_tips_seen;
+  settings = defaults;
+  Input::registry().resetAll();
+  syncPendingFromSettings();
+  guiView->refreshTheme();
+}
+
 void SettingsScene::cancel()
 {
   SettingsManager::instance()->get() = original_settings;
+  Input::registry().reloadFromSettings();
   guiView->refreshTheme();
   leave();
 }
@@ -535,18 +909,24 @@ void SettingsScene::applyAndSaveSettings()
   }
 
   if (selectedResolution >= 0 &&
-      selectedResolution < static_cast<int>(GUIConstants::RESOLUTIONS.size()))
+      selectedResolution < static_cast<int>(resolutions.size()))
   {
     settings.resolution_width =
-        GUIConstants::RESOLUTIONS[static_cast<std::size_t>(selectedResolution)]
-            .width;
+        resolutions[static_cast<std::size_t>(selectedResolution)].width;
     settings.resolution_height =
-        GUIConstants::RESOLUTIONS[static_cast<std::size_t>(selectedResolution)]
-            .height;
+        resolutions[static_cast<std::size_t>(selectedResolution)].height;
   }
   settings.fullscreen = fullscreen;
+  settings.vsync = vsync;
 
-  guiView->applyWindowSettings();
+  // Resize only when the size changed or the window leaves fullscreen, so
+  // Apply does not undo a maximised or hand-sized window.
+  const bool resize =
+      !settings.fullscreen &&
+      (settings.resolution_width != original_settings.resolution_width ||
+       settings.resolution_height != original_settings.resolution_height ||
+       original_settings.fullscreen);
+  guiView->applyWindowSettings(resize);
   settingsManager->save();
   guiView->refreshTheme();
   guiView->applySavePolicy();

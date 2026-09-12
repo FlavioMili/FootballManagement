@@ -22,6 +22,8 @@
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
 #include "gui/render/match_kit_colors.h"
+#include "gui/scenes/main_game_scene.h"
+#include "gui/scenes/main_menu_scene.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
@@ -160,6 +162,15 @@ void TeamSelectionScene::render()
   ImGui::SetCursorPosX(std::max(ImGui::GetCursorPosX(),
                                 (ImGui::GetWindowWidth() - width) * 0.5f));
   ImGui::BeginGroup();
+  // The way out of the club choice: Back (or Escape, unless a field or a
+  // list is taking keys) returns to the main menu.
+  const bool escape = !ImGui::IsAnyItemActive() &&
+                      !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId) &&
+                      ImGui::IsKeyPressed(ImGuiKey_Escape, false);
+  if (UI::secondaryButton(LOC("TEAM_SELECTION_BACK"), ImVec2(0.0f, 0.0f),
+                          UI::ButtonSize::COMPACT) ||
+      escape)
+    backToMenu();
   UI::pageHeader(LOC("TEAM_SELECTION_TITLE"), LOC("TEAM_SELECTION_SUBTITLE"));
   if (manager_panel.render(guiView->getController(), width) ==
       ManagerSetupPanel::Action::START_UNEMPLOYED)
@@ -559,7 +570,17 @@ void TeamSelectionScene::startCareer(TeamID teamId)
 {
   guiView->getController().createManager(manager_panel.setup());
   guiView->getController().selectManagedTeam(teamId);
+  // A new career opens on Home with the welcome tour.
+  if (auto* hub = dynamic_cast<MainGameScene*>(guiView->getBaseScene()))
+    hub->offerWelcome();
   guiView->popScene();
+}
+
+void TeamSelectionScene::backToMenu()
+{
+  // The new save stays in its slot as "not started": loading it brings the
+  // player back here.
+  changeScene(std::make_unique<MainMenuScene>(guiView));
 }
 
 void TeamSelectionScene::startUnemployed()
@@ -602,7 +623,7 @@ void TeamSelectionScene::loadAvailableTeams()
   {
     const Team& team = teamRef.get();
     if (team.getLeagueId() == selected_league_id.value() &&
-        team.getName() != FREE_AGENTS_TEAM_NAME)
+        team.getId() != FREE_AGENTS_TEAM_ID)
       available_teams.push_back(teamRef);
   }
 

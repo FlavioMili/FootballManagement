@@ -33,6 +33,9 @@ struct MatchCameraFocus
   bool hasCelebration = false;
   /** The director holds the main camera when motion should be reduced. */
   bool reducedMotion = false;
+  /** Play mode: the human's active footballer, framed with the ball. */
+  RenderMath::Vec3 active;
+  bool hasActive = false;
 };
 
 /** Shots the TV director cuts between. */

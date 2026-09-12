@@ -12,7 +12,9 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include <filesystem>
 #include <memory>
+#include <system_error>
 
 #include "global/paths.h"
 #include "global/runtime_paths.h"
@@ -32,6 +34,12 @@ void Logger::init()
 {
   if (!logger)
   {
+    // The log of the session before (maybe one that crashed) is kept once.
+    const std::filesystem::path log = RuntimePaths::logPath();
+    std::error_code error;
+    if (std::filesystem::file_size(log, error) > 0 && !error)
+      std::filesystem::rename(log, RuntimePaths::previousLogPath(), error);
+
     std::shared_ptr<spdlog::sinks::sink> file_sink =
         std::make_shared<spdlog::sinks::basic_file_sink_mt>(
             RuntimePaths::logPath().string(), true);
@@ -43,6 +51,8 @@ void Logger::init()
 
     logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%^%l%$] %v");
     logger->set_level(spdlog::level::debug);
+    // Warnings and errors reach the file at once, even if the game crashes.
+    logger->flush_on(spdlog::level::warn);
     spdlog::register_logger(logger);
   }
 }
@@ -50,6 +60,7 @@ void Logger::init()
 void Logger::info(const std::string& msg) { getLogger().info(msg); }
 void Logger::error(const std::string& msg) { getLogger().error(msg); }
 void Logger::warn(const std::string& msg) { getLogger().warn(msg); }
+void Logger::flush() { getLogger().flush(); }
 
 #ifdef DEBUG
 void Logger::debug(const std::string& msg) { getLogger().debug(msg); }

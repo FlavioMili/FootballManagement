@@ -25,6 +25,7 @@
 #include "global/paths.h"
 #include "global/runtime_paths.h"
 #include "gui/gui_scene.h"
+#include "gui/input_actions.h"
 #include "gui/render_scale.h"
 #include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/match_scene.h"
@@ -128,6 +129,8 @@ bool GUIView::initialize()
   }
 
   SettingsManager::instance()->load();
+  // Bindings stored in the file replace the defaults.
+  Input::registry().reloadFromSettings();
   applyWindowSettings();
   applySavePolicy();
 
@@ -171,14 +174,14 @@ void GUIView::run()
   }
 
   running = true;
-  Uint64 lastTime = SDL_GetTicks();
+  Uint64 lastTime = SDL_GetTicksNS();
 
   while (running)
   {
-    const Uint64 frameStart = SDL_GetTicks();
-    Uint64 currentTime = SDL_GetTicks();
-    float deltaTime = static_cast<float>(currentTime - lastTime) / 1000.0f;
-    lastTime = currentTime;
+    const Uint64 frameStart = SDL_GetTicksNS();
+    const float deltaTime =
+        static_cast<float>(static_cast<double>(frameStart - lastTime) / 1e9);
+    lastTime = frameStart;
 
     applyPendingSceneChanges();
 
@@ -188,10 +191,11 @@ void GUIView::run()
 
     const int fpsLimit =
         std::clamp(SettingsManager::instance()->get().fps_limit, 15, 360);
-    const Uint64 frameBudget = static_cast<Uint64>(1000 / fpsLimit);
-    const Uint64 elapsed = SDL_GetTicks() - frameStart;
-    if (elapsed < frameBudget)
-      SDL_Delay(static_cast<Uint32>(frameBudget - elapsed));
+    // Nanosecond budget: whole milliseconds turned a 144 cap into ~166.
+    const Uint64 frameBudget =
+        static_cast<Uint64>(SDL_NS_PER_SECOND) / static_cast<Uint64>(fpsLimit);
+    const Uint64 elapsed = SDL_GetTicksNS() - frameStart;
+    if (elapsed < frameBudget) SDL_DelayPrecise(frameBudget - elapsed);
   }
 
   // Release scenes before the caller saves controller state. A scene may own
@@ -621,29 +625,41 @@ void GUIView::applyManagementTheme()
   appearance.ui_scale = settings.ui_scale;
   appearance.compact = settings.compact_density;
   appearance.reduced_motion = settings.reduced_motion;
+  appearance.color_vision = static_cast<Theme::ColorVision>(
+      std::clamp(settings.color_vision, 0,
+                 static_cast<int>(Theme::ColorVision::COUNT) - 1));
+  appearance.text_scale = settings.text_scale;
   Theme::apply(appearance, displayScale());
 }
 
 void GUIView::refreshTheme() { applyManagementTheme(); }
 
-void GUIView::applyWindowSettings()
+void GUIView::applyWindowSettings(bool resize)
 {
   SettingsManager* settings = SettingsManager::instance();
   settings->apply(window);
-  const float scale = displayScale();
-  if (window == nullptr || settings->get().fullscreen || scale <= 1.0f) return;
+  if (renderer != nullptr)
+    SDL_SetRenderVSync(renderer, settings->get().vsync
+                                     ? 1
+                                     : SDL_RENDERER_VSYNC_DISABLED);
+  if (window == nullptr || settings->get().fullscreen || !resize) return;
   // Wayland and macOS report the scale as pixel density (displayScale() is 1
   // there); elsewhere the logical size is scaled up, within the display.
+  const float scale = std::max(1.0f, displayScale());
   int width = static_cast<int>(
       std::lround(static_cast<float>(settings->get().resolution_width) * scale));
   int height = static_cast<int>(std::lround(
       static_cast<float>(settings->get().resolution_height) * scale));
   SDL_Rect usable{};
-  if (SDL_GetDisplayUsableBounds(SDL_GetDisplayForWindow(window), &usable))
+  if (displayScale() > 1.0f &&
+      SDL_GetDisplayUsableBounds(SDL_GetDisplayForWindow(window), &usable))
   {
     width = std::min(width, usable.w);
     height = std::min(height, usable.h);
   }
+  // A maximised window ignores a new size until it is restored.
+  if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MAXIMIZED) != 0)
+    SDL_RestoreWindow(window);
   SDL_SetWindowSize(window, width, height);
 }
 

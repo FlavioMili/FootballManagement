@@ -132,6 +132,13 @@ std::int64_t availableTransferBudget(std::int64_t board_budget,
  */
 std::int64_t ownerRescue(std::int64_t balance, std::int64_t weekly_payroll);
 
+/**
+ * Season parachute of a club relegated from the top division described by
+ * @p top_division, @p seasons_ago seasons after the season it went down
+ * (0 = the season just finished); 0 once the parachute has run out.
+ */
+double parachutePayment(const LeagueEconomy& top_division, int seasons_ago);
+
 /** Board's weekly wage allowance for a new season. */
 std::int64_t seasonWageBudget(const LeagueEconomy& economy, double revenue,
                               std::int64_t weekly_payroll);

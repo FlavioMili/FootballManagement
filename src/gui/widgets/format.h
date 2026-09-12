@@ -19,14 +19,23 @@
 namespace Format
 {
 
-/** @brief Compact currency, e.g. "€12.4M", "€850K", "-€3.1M". */
+/**
+ * @brief Compact currency in the current language, e.g. "€12.4M", "€850K",
+ * "-€3.1M"; Italian "€ 12,4 mln", "€ 850 mila".
+ */
 std::string money(int64_t amount);
 
-/** @brief Full currency with thousands separators, e.g. "€1,250,000". */
+/**
+ * @brief Full currency with thousands separators, e.g. "€1,250,000";
+ * Italian "€ 1.250.000".
+ */
 std::string moneyFull(int64_t amount);
 
-/** @brief Integer with thousands separators, e.g. "38,500". */
+/** @brief Integer with thousands separators, e.g. "38,500" / "38.500". */
 std::string thousands(int64_t value);
+
+/** @brief Fixed decimals with the language's mark, e.g. "7.5" / "7,5". */
+std::string decimal(double value, int digits);
 
 /** @brief Localised short date, e.g. "12 Jul 2025". */
 std::string date(const GameDateValue& value);

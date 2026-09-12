@@ -21,7 +21,7 @@
 #include "model/inbox.h"
 #include "model/match_report.h"
 #include "model/team.h"
-#include "model/transfer_negotiation.h"
+#include "model/transfer_windows.h"
 #include "model/world_rng.h"
 #include "model/world_simulation.h"
 
@@ -378,6 +378,12 @@ void post(Inbox& inbox, const GameDateValue& date, InboxCategory category,
   message.args = std::move(args);
   message.player_id = player_id;
   inbox.add(std::move(message));
+}
+/** League of @p team_id (its country's transfer windows apply). */
+LeagueID leagueOf(const GameData& gamedata, TeamID team_id)
+{
+  const auto team = gamedata.getTeam(team_id);
+  return team ? team->get().getLeagueId() : LeagueID{0};
 }
 }  // namespace
 
@@ -989,17 +995,12 @@ TalkContext InteractionSystem::contextFor(const Player& player,
 }
 
 std::optional<GameDateValue> InteractionSystem::signingDeadline(
-    const GameDateValue& date)
+    const GameDateValue& date, LeagueID league)
 {
-  for (int offset = 0; offset <= SIGNING_WINDOW_SEARCH_DAYS; ++offset)
-  {
-    const GameDateValue day = SeasonCalendar::addDays(date, offset);
-    const TransferNegotiation::WindowInfo window =
-        TransferNegotiation::windowInfo(day);
-    if (window.open)
-      return SeasonCalendar::addDays(day, window.days_to_deadline);
-  }
-  return std::nullopt;
+  const GameDateValue opening = TransferWindows::nextOpening(league, date);
+  if (SeasonCalendar::addDays(date, SIGNING_WINDOW_SEARCH_DAYS) < opening)
+    return std::nullopt;
+  return TransferWindows::windowEnd(league, opening);
 }
 
 TalkBlock InteractionSystem::blockFor(const Player& player, TalkOption option,
@@ -1045,7 +1046,8 @@ TalkBlock InteractionSystem::blockFor(const Player& player, TalkOption option,
     case TalkOption::PromiseSigning:
       if (has_active(PromiseType::Signing)) return TalkBlock::PromiseActive;
       if (!context.promise_credible) return TalkBlock::PromiseNotCredible;
-      if (!signingDeadline(date)) return TalkBlock::NoWindowAhead;
+      if (!signingDeadline(date, leagueOf(*gamedata, managed_team_id)))
+        return TalkBlock::NoWindowAhead;
       break;
     case TalkOption::AskPatience:
       if (context.request == TalkRequest::None && context.morale >= 45.0f)
@@ -1206,7 +1208,9 @@ std::optional<TalkOutcome> InteractionSystem::talk(PlayerID player_id,
         break;
       case PromiseType::Signing:
         promise.target = firstTeamThreshold(managed_team_id);
-        promise.deadline_day = dayOrdinal(signingDeadline(date).value_or(date));
+        promise.deadline_day = dayOrdinal(
+            signingDeadline(date, leagueOf(*gamedata, managed_team_id))
+                .value_or(date));
         break;
     }
     state.promises.push_back(promise);
@@ -1579,6 +1583,14 @@ void InteractionSystem::onTransferCompleted(
         promise.player_id != player_id && overall + 1e-3f >= promise.target)
       promise.fulfilled = true;
   }
+}
+
+float InteractionSystem::adjustTrust(PlayerID player_id, float delta)
+{
+  PlayerRelation& rel = relationFor(player_id);
+  const float before = rel.trust;
+  rel.trust = clampTrust(rel.trust + delta);
+  return rel.trust - before;
 }
 
 float InteractionSystem::onBidRejected(const GameDateValue& date,

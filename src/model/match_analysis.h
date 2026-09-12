@@ -45,6 +45,11 @@ struct ShotRecord
   float y = 0.5f;
   float xg = 0.0f;
   ShotOutcome outcome = ShotOutcome::OffTarget;
+  bool header = false;
+  /** From a set piece (including penalties); only known for tracked
+   * matches (captureSnapshot), false otherwise. */
+  bool set_piece = false;
+  bool penalty = false;
 };
 
 /**

@@ -55,14 +55,17 @@ Usage:
                  [--rating-min A --rating-max B]] [--fidelity full|background]
                  [--threads T] [--out-dir DIR]
   fm_lab season  [--leagues all|top|ID,ID...] [--seasons N] [--seed S]
-                 [--threads T] [--max-days D] [--out-dir DIR]
+                 [--threads T] [--max-days D] [--reload] [--out-dir DIR]
   fm_lab tactics [--n SEEDS_PER_PAIR] [--seed S] [--rating X] [--threads T]
                  [--fidelity full|background] [--out-dir DIR]
 
 matches  isolated matches between synthetic 4-4-2 squads (default 2000 at
          rating 65 v 65; --spread draws both ratings uniformly per match)
 season   whole AI-only world via GameController in a scratch directory
-         ("seasons" is accepted too)
+         ("seasons" is accepted too); the soak trend table tracks
+         population, ability, finances by tier, competitions, save size and
+         day timings season by season; --reload saves and reloads the career
+         after every season
 tactics  round robin of the tactic presets between equal teams; each seed is
          played twice with home and away swapped
 
@@ -104,8 +107,8 @@ class UsageError : public std::runtime_error
 
 Arguments parseArguments(int argc, char** argv)
 {
-  static constexpr std::array<std::string_view, 3> FLAGS = {"--spread",
-                                                           "--help", "-h"};
+  static constexpr std::array<std::string_view, 4> FLAGS = {
+      "--spread", "--reload", "--help", "-h"};
   static constexpr std::array<std::string_view, 13> OPTIONS = {
       "--n",          "--seed",       "--home-rating", "--away-rating",
       "--rating",     "--rating-min", "--rating-max",  "--threads",
@@ -376,6 +379,7 @@ Lab::LabReport runSeasonMode(const Arguments& arguments, unsigned threads)
   options.leagues = arguments.value("--leagues").value_or("all");
   options.threads = threads;
   options.progress = &std::cerr;
+  options.reload = arguments.has("--reload");
   return Lab::runSeasons(options);
 }
 

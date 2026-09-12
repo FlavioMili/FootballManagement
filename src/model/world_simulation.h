@@ -37,6 +37,7 @@
 
 class DatabaseConnection;
 class GameData;
+struct SeasonHistoryEntry;
 class Match;
 class Player;
 class Team;
@@ -204,6 +205,28 @@ class WorldSimulation
    */
   void setLoanCheck(std::function<bool(PlayerID)> is_on_loan);
 
+  /**
+   * Final outcomes of the finished seasons: who went down feeds parachute
+   * payments and relegation wage clauses. Without a provider neither is
+   * applied.
+   */
+  void setSeasonHistoryProvider(
+      std::function<const std::vector<SeasonHistoryEntry>&()> provider);
+
+  /**
+   * Free agents the manager is dealing with (talks, a pre-contract) stay in
+   * the pool until that is settled.
+   */
+  void setFreeAgentHold(std::function<bool(PlayerID)> is_held);
+
+  /**
+   * Takes a departing player out of the managed club's line-up and fills
+   * only his place (the rest of the manager's selection stays). Called for
+   * managed players who retire, before they are erased. Without a filler
+   * the line-up is rebuilt.
+   */
+  void setLineupGapFiller(std::function<void(Team&, const Player&)> filler);
+
   // ---- Transfer events (called by the controller) ----
 
   /** A club bid for a player; unsettles ambitious players. */
@@ -221,6 +244,11 @@ class WorldSimulation
   const Inbox& getInbox() const { return inbox; }
   Inbox& getInbox() { return inbox; }
   const BoardState& getBoardState() const { return board; }
+  /** Moves the board's confidence in the manager by @p delta points
+   * (clamped to 0-100); no-op without a managed club. */
+  void adjustBoardConfidence(float delta);
+  /** Merit money the managed club earned at the latest season end. */
+  std::int64_t getSeasonPrizeMoney() const { return season_prize_money; }
 
   /** Scouting knowledge, assignments, reports and shortlist. */
   ScoutingSystem& getScouting() { return scouting; }
@@ -295,6 +323,20 @@ class WorldSimulation
                   bool monthly);
   /** An AI club deep in the red may be recapitalised by its owner. */
   void rescueByOwner(const GameDateValue& date, Team& team);
+  /**
+   * Parachute money per season of the clubs that went down from a top
+   * division in the last two finished seasons and are still below it.
+   * @param relegated_now Receives the clubs that went down at the end of
+   * the latest finished season.
+   */
+  std::unordered_map<TeamID, double> parachutes(
+      const std::unordered_map<LeagueID, LeagueEconomy>& economies,
+      std::vector<TeamID>* relegated_now = nullptr) const;
+  /** Relegation clauses: AI players of relegated clubs take a wage cut. */
+  void applyRelegationWageCuts(const std::vector<TeamID>& relegated,
+                               TeamID managed_team_id);
+  /** Unsigned free agents leave the world (see WorldTuning::FreeAgents). */
+  void clearFreeAgentPool(const GameDateValue& date);
   void postMedicalDigest(const GameDateValue& date, TeamID managed_team_id);
   void postSquadReport(const GameDateValue& date, const Team& team);
   void postPreseasonSchedule(const GameDateValue& date, const Team& team,
@@ -350,6 +392,11 @@ class WorldSimulation
   std::function<double(PlayerID, const GameDateValue&)> injury_risk_provider;
   TrainingSystem::FixtureOutlook fixture_outlook;
   std::function<bool(PlayerID)> loan_check;
+  std::function<const std::vector<SeasonHistoryEntry>&()>
+      season_history_provider;
+  std::function<bool(PlayerID)> free_agent_hold;
+  std::function<void(Team&, const Player&)> lineup_gap_filler;
+  std::int64_t season_prize_money = 0;
   std::unordered_set<TeamID> lineup_dirty;
   /** Managed-club medical news of the current week, sent as one digest. */
   std::vector<std::string> week_recoveries;

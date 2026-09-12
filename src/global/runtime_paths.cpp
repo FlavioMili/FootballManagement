@@ -133,6 +133,11 @@ std::filesystem::path RuntimePaths::logPath()
   return ensureDirectory(root() / "logs") / "log.txt";
 }
 
+std::filesystem::path RuntimePaths::previousLogPath()
+{
+  return ensureDirectory(root() / "logs") / "log.prev.txt";
+}
+
 std::filesystem::path RuntimePaths::capturePath(const char* filename)
 {
   return ensureDirectory(root() / "captures") / filename;

@@ -68,10 +68,38 @@ transfer embargo until the accounts are back in the black.
   vice-captain and takers for penalties, free kicks, corners and long throws.
 - **Tactics**: start from a tactical style (*Balanced*, *Front Foot*,
   *Counter Attack*, *Control*), then fine-tune pressing, risk, attacking
-  support, width and compactness under *Advanced instructions*. Changes are
-  kept only when you apply them. The team gets more familiar with a tactic
-  the longer it plays it.
-- **Opposition** gives a report on your next opponent.
+  support, width and compactness under *Advanced instructions*. Changes
+  apply straight away and are kept with your career; *Revert changes*
+  restores the tactic you had when you opened the screen. The team gets
+  more familiar with a tactic the longer it plays it.
+- **Roles and shape** (on the Tactics screen): select a player on the pitch
+  or in the *Starting XI* list to give his position a role and a duty
+  (*Defend*, *Support*, *Attack*). The panel describes the role and shows
+  the player's key attributes for it. Roles depend on the position:
+  - goalkeeper: *Line keeper* stays on his line, *Sweeper keeper* starts
+    high and comes out for balls in behind;
+  - full-back: *Inside full-back* steps into midfield with the ball; the
+    duty decides how far he pushes on and whether he overlaps;
+  - centre-back: *Stopper* steps out to meet his man, *Cover defender*
+    drops off to sweep;
+  - midfield: *Anchor*, *Playmaker*, *Box-to-box*, *Second striker*;
+  - wide: *Inside forward* cuts in to shoot, *Touchline winger* stays wide
+    and crosses;
+  - striker: *Target forward*, *Poacher*, *Pressing forward*, *False nine*.
+
+  *Standard* plays the position with no extra bias. *Suggest roles* lets
+  the assistant pick the roles and duties that suit your starters.
+- **Shape with the ball**: the rings on the pitch are the shape without the
+  ball (set on the Lineup screen); drag a numbered player to choose where he
+  stands when your side has the ball, for example a 4-4-2 that becomes a
+  3-2-5 in attack. *Ready-made shapes* offers *Full-backs push on*, *Build
+  with three* and *Narrow front line*; *Reset spot* puts one player back.
+- **Opposition** gives a report on your next opponent. Individual
+  instructions are played out in the match: *Mark tightly* puts a man on him
+  everywhere, *Close down quickly* presses him as soon as he receives, *Show
+  onto weaker foot* forces him onto his weaker side, and *Double up* sends a
+  second player at him (best against dangerous wingers). They last for the
+  next match against that club.
 
 ## 5. Training and staff
 
@@ -109,8 +137,11 @@ transfer embargo until the accounts are back in the black.
   high on wages and comes down round by round.
 - Transfer windows are open from June to August and in January. Free agents
   can be signed at any time, but they need cash, not transfer budget.
-- To sell, list a player or wait for bids in the inbox. Releasing a player
-  costs severance.
+- To sell, list a player or wait for bids in the inbox. A bid is a
+  negotiation too: *Negotiate* lets you counter with a fee, instalments,
+  add-ons and a sell-on clause, name your price or declare the player not
+  for sale. Buyers answer on later days and may walk away if you push too
+  hard. Releasing a player costs severance.
 
 ## 7. The youth academy
 
@@ -130,6 +161,23 @@ and the youth facilities drive their development. You can ask the board for
 better youth facilities and recruitment. On the *Planning* screen, mentoring
 groups let a senior player (25 or older) guide up to three players aged 23 or
 younger: their professionalism and temperament move towards his.
+
+The **Under-21s** screen (Squad hub) holds the club's reserve squad:
+
+- Players aged 21 or younger in the current season can join it, plus three
+  outfield players and one goalkeeper over that age (the over-age places,
+  shown in the tiles).
+- *Candidates* lists the first-team players who fit and the U18 players from
+  17; select a row and choose *Move to U21s*. From the squad list you can
+  promote a player to the first team, offer a scholar his first
+  professional contract or send a player of 18 or younger back to the U18s.
+- U18 players move up to the U21s automatically when they turn 19. At the
+  start of each season U21 players beyond the over-age places join the
+  first team.
+- Every country has one U21 league with all its clubs; it plays a round
+  every week of the season (midweek, the U18s at the weekend). U21 players
+  are out of the first-team squad, so their development comes from these
+  minutes.
 
 ## 8. Advancing the calendar
 
@@ -156,25 +204,37 @@ When your match is due, Continue becomes **Play match**.
 1. **Lineup check**: if someone in your lineup is injured or suspended, the
    assistant replaces him (the default), or the match waits until you fix the
    lineup yourself or press *Auto-fix lineup*.
-2. **Team talk** before kick-off and at half-time.
+2. **Team talk** before kick-off and at half-time. A talk that goes down
+   well makes the team sharper, more composed and keener to press for the
+   first minutes of the half; one that goes down badly does the opposite.
 3. **Watch** in the view you prefer:
    - **2D**: a tactical top-down pitch.
-   - **3D**: the same match from a broadcast, tactical, end, player-follow or
-     free camera. Press V to switch at any time.
+   - **3D**: the same match from a broadcast, tactical, end, player-follow,
+     free or TV director camera. Press V to switch at any time.
 4. **Choose the pace**: 1x is real time; 2x to 30x speed it up. *Highlights*
-   skips to the key moments. *Quick result* plays the rest instantly and
-   opens the match report. After the final whistle, *Finish match* records
-   the result and opens the report.
-5. **Substitutions**: five changes in three windows, with half-time free.
-   Leave them to the assistant with *Assistant makes substitutions*.
-6. **Pitch focus** (F or double-click on the pitch) hides the panels so the
-   match fills the window; Alt+Enter makes the window full screen.
+   skips to the key moments and plays each one live. *Quick result* plays
+   the rest instantly and opens the match report. After the final whistle,
+   *Finish match* records the result and opens the report. With *Pause at
+   half-time* (in *Settings*) your match stops at the break at any speed.
+5. **Substitutions** (S): five changes in three windows, with half-time
+   free. On the substitutions board, drag a substitute onto the player he
+   replaces; changes planned together are made at the next stoppage. Leave
+   them to the assistant with *Assistant makes substitutions during the
+   match*.
+6. **Tactics** (T): change the style, the instructions or the formation
+   during the match. A new formation costs some familiarity for a while.
+7. **Shouts**: Shift with a number key gives a quick instruction from the
+   touchline (*Encourage*, *Press more*, *Keep the ball* and so on). The
+   effect fades after a few minutes; see [controls.md](controls.md#touchline-shouts).
+8. **Pitch focus** (F or double-click on the pitch) hides the panels so the
+   match fills the window; Alt+Enter makes the window full screen and M
+   mutes the sound.
 
 ### 3D camera controls
 
 | Input | Action |
 |-------|--------|
-| 1 to 5 | Broadcast, Tactical, End, Player follow, Free |
+| 1 to 6 | Broadcast, Tactical, End, Player follow, Free, TV director |
 | Left-drag | Orbit (switches to the free camera) |
 | Right-drag, middle-drag, Shift+left-drag | Pan |
 | Mouse wheel | Zoom |
@@ -201,6 +261,19 @@ points out what worked and what did not.
 - **Manager**: your profile, reputation, coaching licence and career
   history. Clubs may approach you when you overachieve, and you can resign
   and apply elsewhere.
+- **National team**: federations look for a new head coach after failed
+  qualifying campaigns and tournaments (and now and then in between). Open
+  national jobs are listed in the Job Centre; federations prefer their own
+  compatriots and want at least a national reputation. Out of work you can
+  take any of them; next to a club job you need a continental reputation
+  (70), otherwise a club job ends the national one. As head coach you pick
+  the squad on the **Call-ups** screen (Matches hub) during the week before
+  each international window: your assistant's provisional squad is ready,
+  drop or add eligible players (18 to 24, 26 for a finals tournament, at
+  least two goalkeepers) and confirm before they report. Continue stops on
+  the day the squad is announced. Results against expectation move your
+  reputation; qualifying for the finals earns a new contract, while a big
+  nation that misses out lets its coach go.
 
 ## Tips
 

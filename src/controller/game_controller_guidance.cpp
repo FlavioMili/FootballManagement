@@ -83,6 +83,11 @@ void GameController::dismissOnboarding()
   if (game) game->getGuidance().onboarding.dismiss();
 }
 
+void GameController::showOnboarding()
+{
+  if (game) game->getGuidance().onboarding.undismiss();
+}
+
 // ========== Next steps ==========
 
 std::vector<NextAction> GameController::getNextActions(size_t limit) const
@@ -109,7 +114,7 @@ namespace
 class AssistantActing
 {
  public:
-  explicit AssistantActing(bool& flag) : flag(flag), previous(flag)
+  explicit AssistantActing(bool& acting) : flag(acting), previous(acting)
   {
     flag = true;
   }
@@ -244,14 +249,28 @@ void GameController::runDelegatedDuties()
     }
     for (const PlayerID player_id : expiring)
     {
-      const ContractTerms terms = getContractDemand(player_id, false);
-      if (terms.years == 0 || !renewContract(player_id, terms)) continue;
+      // The assistant meets the player's demands for an extension of the
+      // seasons he wants beyond this one, within the club's means.
       const auto player = std::as_const(*gamedata).getPlayer(player_id);
+      if (!player || getContractTalkKind(player_id) !=
+                         TransferNegotiation::ContractKind::Renewal)
+        continue;
+      const std::uint8_t before = player->get().getContractYears();
+      const TransferNegotiation::ContractDemand demand =
+          getPlayerDemand(player_id, TransferNegotiation::ContractKind::Renewal);
+      TransferNegotiation::ContractOffer offer =
+          TransferNegotiation::demandedOffer(demand);
+      offer.years = static_cast<std::uint8_t>(
+          std::min<int>(before + std::max<int>(demand.min_years, 1),
+                        TransferNegotiation::maxContractYears(
+                            player->get().getAge())));
+      if (offer.years <= before || !proposeContract(player_id, offer).completed)
+        continue;
       inbox.add(assistantNote(
           today, InboxCategory::Contract, "INBOX_DELEGATE_RENEWED_TITLE",
           "INBOX_DELEGATE_RENEWED_BODY",
-          {player ? player->get().getName() : std::string(),
-           std::to_string(terms.years), formatMoney(terms.weekly_wage)},
+          {player->get().getName(), std::to_string(offer.years - before),
+           formatMoney(offer.weekly_wage)},
           player_id));
     }
   }
@@ -469,7 +488,21 @@ bool GameController::setOppositionInstruction(TeamID opponent, PlayerID player,
   const auto found = std::as_const(*gamedata).getPlayer(player);
   if (!found || found->get().getTeamId() != opponent) return false;
   game->getGuidance().opposition.set(opponent, player, instruction);
+  syncOppositionOrders();
   return true;
+}
+
+void GameController::syncOppositionOrders()
+{
+  if (!game) return;
+  const auto club = managedClub();
+  if (!club) return;
+  // Orders against every planned opponent: a player belongs to one club, so
+  // only the ones against this match's opponent find their man.
+  std::vector<PlayerInstruction> orders;
+  for (const OppositionOrder& order : game->getGuidance().opposition.all())
+    orders.push_back({order.player, order.instruction});
+  club->get().getStrategy().setOppositionOrders(std::move(orders));
 }
 
 OppositionInstruction GameController::getOppositionInstruction(
@@ -516,6 +549,7 @@ void GameController::recordManagedMatch(GameDateValue date, TeamID home_id,
   guidance.onboarding.complete(OnboardingTask::PlayFirstMatch);
   // Instructions were for this meeting.
   guidance.opposition.clear(managed == home_id ? away_id : home_id);
+  syncOppositionOrders();
   std::erase(viewed_opposition, managed == home_id ? away_id : home_id);
 }
 
@@ -553,6 +587,20 @@ GameController::DataHubView GameController::getDataHub() const
   return view;
 }
 
+std::optional<ManagedMatchSnapshot> GameController::getMatchSnapshot(
+    GameDateValue date, TeamID home_id, TeamID away_id) const
+{
+  if (!game) return std::nullopt;
+  for (const ManagedMatchSnapshot& snapshot :
+       game->getGuidance().getSnapshots())
+  {
+    if (snapshot.date == date && snapshot.home_id == home_id &&
+        snapshot.away_id == away_id)
+      return snapshot;
+  }
+  return std::nullopt;
+}
+
 // ========== Inbox decisions ==========
 
 bool GameController::isInboxDecisionPending(const InboxMessage& message) const
@@ -574,9 +622,75 @@ bool GameController::isInboxDecisionPending(const InboxMessage& message) const
       return message.player_id && hasPendingTalk(*message.player_id);
     case InboxAction::YouthTrialists:
       return hasSelectedTeam() && getAcademyOverview().candidates > 0;
+    case InboxAction::Dilemma:
+    {
+      const auto open = getOpenDilemma();
+      return open && open->day == dayOrdinal(message.date) &&
+             Stories::dilemmaForTitle(message.title_key) == open->kind;
+    }
     case InboxAction::Shortlist:
     case InboxAction::None:
       break;
   }
   return false;
+}
+
+InboxView GameController::getInboxView() const
+{
+  return game ? game->getWorld().getInbox().getView() : InboxView{};
+}
+
+void GameController::setInboxView(const InboxView& view)
+{
+  if (game) game->getWorld().getInbox().setView(view);
+}
+
+bool GameController::followPlayer(PlayerID player_id)
+{
+  return game && game->getWorld().getStories().follow(player_id,
+                                                      game->getCurrentDate());
+}
+
+bool GameController::unfollowPlayer(PlayerID player_id)
+{
+  return game && game->getWorld().getStories().unfollow(player_id);
+}
+
+bool GameController::isFollowingPlayer(PlayerID player_id) const
+{
+  return game && game->getWorld().getStories().isFollowed(player_id);
+}
+
+std::vector<PlayerID> GameController::getFollowedPlayers() const
+{
+  std::vector<PlayerID> followed;
+  if (!game) return followed;
+  for (const FollowedPlayer& entry :
+       game->getWorld().getStories().getFollows())
+    followed.push_back(entry.player_id);
+  return followed;
+}
+
+std::optional<Dilemma> GameController::getOpenDilemma() const
+{
+  if (!game || !hasSelectedTeam()) return std::nullopt;
+  const Dilemma* open = game->getWorld().getStories().openDilemma();
+  return open ? std::optional<Dilemma>(*open) : std::nullopt;
+}
+
+std::optional<DilemmaEffects> GameController::getDilemmaEffects(
+    int option) const
+{
+  if (!game || !hasSelectedTeam()) return std::nullopt;
+  return game->getWorld().getStories().previewDilemma(
+      option, game->getManagedTeamId());
+}
+
+bool GameController::resolveDilemma(int option)
+{
+  if (!game || !hasSelectedTeam()) return false;
+  WorldSimulation& world = game->getWorld();
+  return world.getStories().resolveDilemma(
+      option, game->getCurrentDate(), game->getManagedTeamId(),
+      world.getInteractions(), world.getInbox());
 }

@@ -13,11 +13,13 @@
 #include <vector>
 
 #include "gui/scenes/management_scene.h"
+#include "gui/scenes/match_insights_view.h"
 #include "model/match_report.h"
 
 /**
  * @brief Post-match report: score, goal and card timeline, team statistics
- * and player ratings for one played fixture.
+ * and player ratings for one played fixture; tracked matches of the managed
+ * club add an Analysis tab (MatchInsightsView).
  */
 class MatchReportScene : public ManagementScene
 {
@@ -78,4 +80,6 @@ class MatchReportScene : public ManagementScene
   std::vector<EventRow> events;
   std::vector<PlayerRow> home_players;
   std::vector<PlayerRow> away_players;
+  MatchInsightsView insights;
+  int tab = 0; /*!< 0 overview, 1 analysis. */
 };

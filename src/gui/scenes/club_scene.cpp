@@ -25,7 +25,9 @@
 #include "gui/widgets/widgets.h"
 #include "model/board.h"
 #include "model/competition.h"
+#include "model/game.h"
 #include "model/season_history.h"
+#include "model/supporters.h"
 
 namespace
 {
@@ -46,6 +48,8 @@ const std::array<UI::Column, 6>& historyColumns()
 constexpr float TWO_COLUMN_MIN_WIDTH = 860.0f;
 constexpr float KEY_WIDTH = 170.0f;
 constexpr int MAX_TICKET_PRICE = 1000;
+/** Reasons behind the supporters' mood shown on the card. */
+constexpr std::size_t SUPPORTER_REASONS_SHOWN = 3;
 
 std::string teamName(const GameController& controller, TeamID id)
 {
@@ -77,6 +81,8 @@ void ClubScene::refresh()
   const auto managed = controller.getManagedTeam();
   history.clear();
   confidence_trend.clear();
+  supporters_index.reset();
+  supporter_reasons.clear();
   if (!managed) return;
   const Team& club = managed->get();
 
@@ -95,21 +101,60 @@ void ClubScene::refresh()
   for (size_t index = board.result_count; index > 0; --index)
     confidence_trend.push_back(board.recent_deltas[index - 1]);
 
+  if (const Game* game = controller.getGame();
+      game && game->getSupporters().team() == club.getId())
+  {
+    const SupporterMood& mood = game->getSupporters().mood();
+    supporters_index = mood.index;
+    for (const SupporterReason& reason : mood.reasons)
+    {
+      if (supporter_reasons.size() == SUPPORTER_REASONS_SHOWN) break;
+      supporter_reasons.push_back(
+          {LOC(SupporterModel::reasonKey(reason)), reason.points});
+    }
+  }
+
   ticket_price_input = static_cast<int>(club.getProfile().ticket_price);
   fair_ticket_price = controller.getFairTicketPrice(club.getId());
   last_attendance = controller.getLastHomeAttendance(club.getId());
 
-  // Roll of honour: the club's league and its national cup, newest first.
+  // Board targets beyond the league finish, with how they are going.
+  board_targets = controller.getBoardTargets();
+
+  // Roll of honour: the leagues the club played in (from the archived final
+  // tables, so promotion or relegation keeps its past), its national cup
+  // and continental finals it reached, newest first.
   const auto data = controller.getGameData();
   const LeagueID cup =
       data ? Competitions::rootLeague(*data, club.getLeagueId()) : 0;
+  const TeamID club_id = club.getId();
   const auto& entries = controller.getSeasonHistory();
   for (auto entry = entries.rbegin(); entry != entries.rend(); ++entry)
   {
-    const bool relevant = (entry->competition_type == MatchType::LEAGUE &&
-                           entry->competition_id == club.getLeagueId()) ||
-                          (entry->competition_type == MatchType::CUP &&
-                           entry->competition_id == cup);
+    std::optional<uint16_t> finish;
+    bool relevant = false;
+    if (entry->competition_type == MatchType::LEAGUE)
+    {
+      if (const auto placing =
+              controller.getArchivedPlacing(entry->season, club_id))
+      {
+        relevant = placing->first == entry->competition_id;
+        if (relevant) finish = placing->second;
+      }
+      else if (controller.getSeasonStartYear(entry->season) == 0)
+      {
+        // Seasons from before the tables were archived.
+        relevant = entry->competition_id == club.getLeagueId() ||
+                   entry->champion_id == club_id ||
+                   std::ranges::contains(entry->promoted, club_id) ||
+                   std::ranges::contains(entry->relegated, club_id);
+      }
+    }
+    else if (entry->competition_type == MatchType::CUP)
+      relevant = entry->competition_id == cup;
+    else
+      relevant =
+          entry->champion_id == club_id || entry->runner_up_id == club_id;
     if (!relevant) continue;
     HistoryRow line;
     line.season = std::format("{}/{:02}", entry->start_year,
@@ -118,9 +163,12 @@ void ClubScene::refresh()
     line.competition = entry->competition_name;
     if (entry->competition_type == MatchType::CUP)
       line.competition = controller.getCupName(cup);
-    else if (const auto league =
-                 controller.getLeagueById(entry->competition_id))
-      line.competition = Competitions::leagueName(league->get());
+    else if (entry->competition_type == MatchType::LEAGUE)
+      if (const auto league = controller.getLeagueById(entry->competition_id))
+        line.competition = Competitions::leagueName(league->get());
+    if (finish)
+      line.competition =
+          fmt::sprintf(LOC("CLUB_HISTORY_FINISH"), line.competition, *finish);
     line.champion = teamName(controller, entry->champion_id);
     line.runner_up = teamName(controller, entry->runner_up_id);
     if (entry->top_scorer_id != 0 && data)
@@ -201,7 +249,11 @@ void ClubScene::renderContent()
   // Both cards size to their content: nothing clips at any scale.
   renderBoard(half);
   if (twoColumns) ImGui::SameLine();
-  renderStadium(twoColumns ? available - gap - half : available);
+  const float right = twoColumns ? available - gap - half : available;
+  ImGui::BeginGroup();
+  renderStadium(right);
+  renderSupporters(right);
+  ImGui::EndGroup();
   renderHistory();
 }
 
@@ -255,6 +307,77 @@ void ClubScene::renderBoard(float width)
   }
   if (board.low_reviews > 0 && !board.dismissed)
     ImGui::TextColored(palette.warning, "%s", LOC("CLUB_BOARD_CONCERNED"));
+  if (board_targets) renderTargets(*board_targets, keyWidth);
+  UI::endCard();
+}
+
+void ClubScene::renderTargets(const GameController::BoardTargets& targets,
+                              float keyWidth)
+{
+  const Theme::Palette& palette = Theme::palette();
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
+  UI::sectionLabel(LOC("CLUB_TARGETS"));
+  const auto row = [&](const char* label, const std::string& value,
+                       ObjectiveGrade grade)
+  {
+    const char* status = LOC(BoardModel::targetStatusKey(grade));
+    const ImVec4 color = grade == ObjectiveGrade::Failed   ? palette.negative
+                         : grade == ObjectiveGrade::Missed ? palette.warning
+                                                           : palette.positive;
+    UI::keyValue(label, value.c_str(), keyWidth);
+    ImGui::SameLine();
+    ImGui::TextColored(color, "%s", status);
+  };
+  row(LOC("CLUB_TARGET_CUP"), LOC(BoardModel::cupObjectiveKey(targets.cup)),
+      targets.cup_grade);
+  row(LOC("CLUB_TARGET_FINANCES"),
+      LOC(BoardModel::financeObjectiveKey(targets.finances)),
+      targets.finance_grade);
+  const std::string youth =
+      targets.youth_target == 0
+          ? std::string(LOC("BOARD_YOUTH_NONE"))
+          : fmt::sprintf(LOC("CLUB_TARGET_YOUTH_VALUE"), targets.young_regulars,
+                         targets.youth_target);
+  row(LOC("CLUB_TARGET_YOUTH"), youth, targets.youth_grade);
+}
+
+void ClubScene::renderSupporters(float width)
+{
+  const Theme::Palette& palette = Theme::palette();
+  UI::beginAutoHeightCard("club_supporters", LOC("CLUB_SUPPORTERS"), width);
+  if (!supporters_index)
+  {
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(palette.faint, "%s", LOC("SUPPORTERS_PENDING"));
+    ImGui::PopTextWrapPos();
+    UI::endCard();
+    return;
+  }
+  const float index = *supporters_index;
+  const float keyWidth = KEY_WIDTH * Theme::scale();
+  const std::string value = std::format("{:.0f} / 100", index);
+  UI::meter(LOC("SUPPORTERS_INDEX"), index / 100.0f, keyWidth,
+            Theme::ratingColor(index), value.c_str());
+  UI::keyValue(LOC("SUPPORTERS_FEELING"), LOC(SupporterModel::moodKey(index)),
+               keyWidth);
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  UI::sectionLabel(LOC("SUPPORTERS_REASONS"));
+  if (supporter_reasons.empty())
+    ImGui::TextColored(palette.faint, "%s", LOC("SUPPORTERS_NO_REASONS"));
+  const float pointsWidth =
+      ImGui::CalcTextSize("+00").x + Theme::Space::S * Theme::scale();
+  for (const SupporterLine& line : supporter_reasons)
+  {
+    const std::string points = std::format("{:+.0f}", line.points);
+    const float start = ImGui::GetCursorPosX();
+    ImGui::TextColored(line.points > 0.0f ? palette.positive : palette.negative,
+                       "%s", points.c_str());
+    ImGui::SameLine(start + pointsWidth);
+    UI::textFitted(line.text, ImGui::GetContentRegionAvail().x, palette.text);
+  }
+  ImGui::PushTextWrapPos(0.0f);
+  ImGui::TextColored(palette.faint, "%s", LOC("SUPPORTERS_NOTE"));
+  ImGui::PopTextWrapPos();
   UI::endCard();
 }
 

@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 
+#include "gui/scenes/contract_talks_dialog.h"
 #include "gui/scenes/management_scene.h"
 #include "gui/scenes/offer_negotiation_dialog.h"
 #include "gui/scenes/transfer_market_scene_tuning.h"
@@ -106,6 +107,8 @@ class TransferMarketScene : public ManagementScene
     std::string wage_text;
     int contract_years = 0;
     uint32_t asking_price = 0; /**< Listing price, 0 if not listed. */
+    uint32_t release_clause = 0; /**< 0 = none. */
+    std::string clause_text;     /**< "Release clause €40M". */
     bool free_agent = false;
     bool loan_listed = false;
     bool pre_contract = false; /**< In the final six months (Jan-Jun). */
@@ -121,6 +124,9 @@ class TransferMarketScene : public ManagementScene
     bool committed = false; /**< Leaving on a pre-contract. */
     uint32_t asking_price = 0;
     std::string asking_text;
+    std::string clause_text; /**< His release clause, empty if none. */
+    /** Why he cannot be released now (squad floor, loan, leaving). */
+    const char* release_block = "";
   };
 
   /** An AI offer for a managed player. */
@@ -228,27 +234,13 @@ class TransferMarketScene : public ManagementScene
     std::string club;
     int64_t value = 0;
     int64_t asking_price = 0; /**< Listing price, 0 if not listed. */
+    int64_t release_clause = 0; /**< 0 = none. */
     uint32_t wage = 0;        /**< Current weekly wage. */
     std::string estimate_text; /**< Estimated ability ("64-72"). */
     int knowledge = 0;
     TransferNegotiation::OfferTerms terms;
     std::optional<TransferNegotiation::ClubResponse> response;
-  };
-
-  struct ContractDialog
-  {
-    bool requested = false;
-    PlayerID player_id = 0;
-    std::string player;
-    TransferNegotiation::ContractKind kind =
-        TransferNegotiation::ContractKind::Transfer;
-    TransferNegotiation::ContractDemand demand;
-    SquadRole projected{};
-    TransferNegotiation::ContractOffer offer;
-    int promise_index = 0; /**< 0 = no promise. */
-    std::optional<TransferNegotiation::ContractResponse> response;
-    bool over_budget = false;
-    int rounds_left = 0;
+    std::string agent_line; /**< The player's agent on the club's answer. */
   };
 
   struct LoanDialog
@@ -318,10 +310,9 @@ class TransferMarketScene : public ManagementScene
   void renderHistoryTab();
 
   void openOfferDialog(const TargetRow& row);
-  void openContractDialog(PlayerID player_id, const std::string& name);
+  void openContractDialog(PlayerID player_id);
   void openLoanDialog(const TargetRow& row);
   void renderOfferDialog();
-  void renderContractDialog();
   void renderLoanDialog();
   void renderListingDialog();
   void renderReleaseDialog();
@@ -371,7 +362,7 @@ class TransferMarketScene : public ManagementScene
   int loans_out = 0;
 
   OfferDialog offer_dialog;
-  ContractDialog contract_dialog;
+  ContractTalksDialog contract_talks;
   LoanDialog loan_dialog;
   OfferNegotiationDialog negotiation_dialog;
   ListingDialog listing_dialog;

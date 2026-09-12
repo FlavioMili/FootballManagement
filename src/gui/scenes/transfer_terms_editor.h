@@ -100,4 +100,26 @@ bool edit(TransferNegotiation::OfferTerms& terms,
 /** Payment structure in words: "Cash" or "60% upfront, 3 yrs". */
 std::string structureText(const TransferNegotiation::OfferTerms& terms);
 
+// Loan terms: the borrower proposes shares in steps of LOAN_WAGE_SHARE_STEP
+// and guaranteed appearances among MIN_APPEARANCE_OPTIONS.
+inline constexpr int LOAN_WAGE_SHARE_STEP = 5;
+inline constexpr std::array<std::uint8_t, 7> MIN_APPEARANCE_OPTIONS = {
+    0, 5, 10, 15, 20, 25, 30};
+
+/** Snaps loan terms onto the editor's steps; true when something moved. */
+bool snapLoanToOptions(TransferNegotiation::LoanTerms& terms);
+
+/**
+ * Editor of loan terms: length, the borrower's share of the wage, loan
+ * fee, a purchase option or obligation with its fee (chips from
+ * @p market_value), a recall clause and guaranteed appearances with the
+ * fee owed if he plays fewer. Returns true when a value changed.
+ */
+bool editLoan(TransferNegotiation::LoanTerms& terms,
+              std::uint32_t market_value);
+
+/** Loan terms in one line: "60% of wage, to the season's end · fee €100K
+ * · option €2.0M · recall · 10 apps or €200K". */
+std::string loanTermsLine(const TransferNegotiation::LoanTerms& terms);
+
 }  // namespace TransferTermsEditor

@@ -43,8 +43,40 @@ std::string serializeStrategy(const Strategy& strategy)
     text += "\":";
     TextEncoding::appendShortest(text, value);
   }
-  text.push_back('}');
+  // Roles, duties and the in-possession shape; older saves lack the keys
+  // and get Standard roles and one shape for both phases.
+  text += ",\"keeper_role\":";
+  TextEncoding::appendInt(text, static_cast<int>(strategy.getKeeperRole()));
+  text += ",\"slots\":[";
+  bool first = true;
+  for (const SlotInstruction& slot : strategy.getSlotInstructions())
+  {
+    if (!first) text.push_back(',');
+    first = false;
+    text += "{\"x\":";
+    TextEncoding::appendShortest(text, slot.anchor.x);
+    text += ",\"y\":";
+    TextEncoding::appendShortest(text, slot.anchor.y);
+    text += ",\"role\":";
+    TextEncoding::appendInt(text, static_cast<int>(slot.role));
+    text += ",\"duty\":";
+    TextEncoding::appendInt(text, static_cast<int>(slot.duty));
+    text += ",\"ox\":";
+    TextEncoding::appendShortest(text, slot.possessionOffset.x);
+    text += ",\"oy\":";
+    TextEncoding::appendShortest(text, slot.possessionOffset.y);
+    text.push_back('}');
+  }
+  text += "]}";
   return text;
+}
+
+TacticalRole roleFromJson(const nlohmann::json& value, const char* key)
+{
+  const int raw = value.value(key, 0);
+  return raw >= 0 && raw < static_cast<int>(TacticalRole::COUNT)
+             ? static_cast<TacticalRole>(raw)
+             : TacticalRole::Standard;
 }
 
 Strategy deserializeStrategy(const unsigned char* strategyText)
@@ -64,6 +96,27 @@ Strategy deserializeStrategy(const unsigned char* strategyText)
          value.value("offensive_bias", defaults.offensiveBias),
          value.value("width_usage", defaults.widthUsage),
          value.value("compactness", defaults.compactness)});
+    strategy.setKeeperRole(roleFromJson(value, "keeper_role"));
+    const auto slots = value.find("slots");
+    if (slots != value.end() && slots->is_array())
+    {
+      std::vector<SlotInstruction> instructions;
+      for (const auto& entry : *slots)
+      {
+        if (!entry.is_object()) continue;
+        SlotInstruction slot;
+        slot.anchor = {entry.value("x", 0.5f), entry.value("y", 0.5f)};
+        slot.role = roleFromJson(entry, "role");
+        const int duty = entry.value("duty", 1);
+        slot.duty = duty >= 0 && duty < static_cast<int>(RoleDuty::COUNT)
+                        ? static_cast<RoleDuty>(duty)
+                        : RoleDuty::Support;
+        slot.possessionOffset = {entry.value("ox", 0.0f),
+                                 entry.value("oy", 0.0f)};
+        instructions.push_back(slot);
+      }
+      strategy.setSlotInstructions(std::move(instructions));
+    }
   }
   catch (const nlohmann::json::exception&)
   {

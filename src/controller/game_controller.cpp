@@ -32,6 +32,7 @@
 #include "global/logger.h"
 #include "global/runtime_paths.h"
 #include "model/transfer_tuning.h"
+#include "model/transfer_windows.h"
 #include "model/world_rng.h"
 
 namespace
@@ -70,8 +71,10 @@ void GameController::newGame(int slot, std::optional<std::uint64_t> world_seed)
   transfer_listings.clear();
   transfer_rng.seed(transferSeed(*gamedata, game->getCurrentDate()));
 
-  // Seed the market: every club lists its surplus, bids for its needs and
-  // offers prospects for loan. Deals start once the first day is played.
+  // Seed the market: some contracts carry a release clause, every club
+  // lists its surplus, bids for its needs and offers prospects for loan.
+  // Deals start once the first day is played.
+  game->getTransfers().seedReleaseClauses();
   for (const auto& team : gamedata->getTeamsVector())
   {
     const TeamID team_id = team.get().getId();
@@ -188,6 +191,7 @@ bool GameController::loadGame(int slot)
   absorbListingBids();
   if (game->getManagedTeamId() != FREE_AGENTS_TEAM_ID)
     game->getWorld().getScouting().setManagedTeam(game->getManagedTeamId());
+  syncOppositionOrders();
   startSession(slot, inspection.metadata.playtime_seconds);
 
   last_initialization_milliseconds =
@@ -244,7 +248,11 @@ void GameController::selectManagedTeam(uint16_t team_id)
   if (game && gamedata && team_id != FREE_AGENTS_TEAM_ID &&
       gamedata->getTeam(team_id).has_value())
   {
+    // Orders against the old club's opponents stay behind.
+    if (const auto previous = managedClub())
+      previous->get().getStrategy().setOppositionOrders({});
     game->setManagedTeamId(team_id);
+    syncOppositionOrders();
     game->getWorld().getScouting().setManagedTeam(team_id);
     // The market was seeded before the club had a manager: whether its
     // players are transfer- or loan-listed is now the manager's call.
@@ -341,7 +349,9 @@ void GameController::simulateDay()
 
 int GameController::advanceToNextManagedFixture(int max_days)
 {
+  last_continue_stop = ContinueStop::None;
   if (!game || max_days <= 0 || !hasSelectedTeam()) return 0;
+  continue_stop_requested = false;
 
   std::optional<GameDateValue> targetDate;
   const TeamID managedTeamId = game->getManagedTeamId();
@@ -370,12 +380,36 @@ int GameController::advanceToNextManagedFixture(int max_days)
                                   dayOrdinal(game->getCurrentDate()),
                               0, max_days)
                  : 0;
-  while (targetDate && game->getCurrentDate() < *targetDate &&
-         advancedDays < max_days)
+  ContinueStop stop = ContinueStop::Fixture;
+  while (targetDate && game->getCurrentDate() < *targetDate)
   {
+    if (advancedDays >= max_days)
+    {
+      stop = ContinueStop::DayLimit;
+      break;
+    }
+    if (continue_stop_requested)
+    {
+      stop = ContinueStop::Requested;
+      break;
+    }
     simulateDay();
     ++advancedDays;
+    // A sacking (or a contract running out) ends the run for a club the
+    // manager no longer has.
+    if (game->getManagedTeamId() != managedTeamId)
+    {
+      stop = ContinueStop::LostJob;
+      break;
+    }
+    // The national team's call-up is the head coach's to pick.
+    if (game->getLastNationalEvents().squad_to_pick)
+    {
+      stop = ContinueStop::Decision;
+      break;
+    }
   }
+  last_continue_stop = targetDate ? stop : ContinueStop::None;
   return advancedDays;
 }
 
@@ -866,7 +900,9 @@ GameController::SaveSlotMetadata GameController::getSaveSlotMetadata(
 
 void GameController::listPlayerForTransfer(PlayerID pid, uint32_t asking_price)
 {
-  if (!isGameLoaded() || !isTransferWindowOpen() || asking_price == 0) return;
+  // Listed players draw bids from clubs whose own window is open.
+  if (!isGameLoaded() || !isTransferWindowOpenAnywhere() || asking_price == 0)
+    return;
   auto player_opt = gamedata->getPlayer(pid);
   if (!player_opt.has_value()) return;
 
@@ -1171,7 +1207,8 @@ bool GameController::buyPlayerWithContract(PlayerID pid, TeamID buyer_id,
 
   TeamID seller_id = player_opt->get().getTeamId();
   if (seller_id == buyer_id) return false;
-  if (!isTransferWindowOpen() || !game->getTransfers().canBeTraded(pid))
+  if (!isTransferWindowOpenFor(buyer_id) ||
+      !game->getTransfers().canBeTraded(pid))
     return false;
 
   auto it = transfer_listings.find(pid);
@@ -1211,7 +1248,9 @@ bool GameController::signFreeAgentWithContract(PlayerID pid, TeamID buyer_id,
   auto player_opt = gamedata->getPlayer(pid);
   if (!player_opt.has_value()) return false;
 
-  if (player_opt->get().getTeamId() != FREE_AGENTS_TEAM_ID) return false;
+  if (player_opt->get().getTeamId() != FREE_AGENTS_TEAM_ID ||
+      !canSignFreeAgentFor(buyer_id))
+    return false;
   if (!isContractOfferAcceptable(pid, true, terms) ||
       !canAffordPlayer(buyer_id, pid, 0, terms.weekly_wage))
   {
@@ -1246,7 +1285,8 @@ bool GameController::submitBid(PlayerID pid, TeamID bidder_id,
 
   if (bidder_id == it->second.seller_team_id) return false;
 
-  if (!isTransferWindowOpen() || !game->getTransfers().canBeTraded(pid))
+  if (!isTransferWindowOpenFor(bidder_id) ||
+      !game->getTransfers().canBeTraded(pid))
     return false;
 
   if (!canAffordPlayer(bidder_id, pid, bid_amount)) return false;
@@ -1275,7 +1315,7 @@ bool GameController::acceptBid(PlayerID pid)
   if (it == transfer_listings.end()) return false;
   if (!it->second.highest_bidder_id.has_value()) return false;
   const ContractTerms contract = getContractDemand(pid, false);
-  if (!isTransferWindowOpen() ||
+  if (!isTransferWindowOpenFor(*it->second.highest_bidder_id) ||
       !canAffordPlayer(*it->second.highest_bidder_id, pid,
                        it->second.highest_bid, contract.weekly_wage))
   {
@@ -1314,7 +1354,29 @@ bool GameController::counterOffer(PlayerID pid, uint32_t new_price)
 
 bool GameController::isTransferWindowOpen() const
 {
-  return game && game->getCurrentDate().isTransferWindowOpen();
+  return game && hasSelectedTeam() &&
+         isTransferWindowOpenFor(game->getManagedTeamId());
+}
+
+bool GameController::isTransferWindowOpenFor(TeamID club) const
+{
+  if (!game || club == FREE_AGENTS_TEAM_ID) return false;
+  const auto team = std::as_const(*gamedata).getTeam(club);
+  return team && TransferWindows::isOpen(team->get().getLeagueId(),
+                                         game->getCurrentDate());
+}
+
+bool GameController::isTransferWindowOpenAnywhere() const
+{
+  return game && TransferWindows::isOpenAnywhere(game->getCurrentDate());
+}
+
+bool GameController::canSignFreeAgentFor(TeamID club) const
+{
+  if (!game || club == FREE_AGENTS_TEAM_ID) return false;
+  const auto team = std::as_const(*gamedata).getTeam(club);
+  return team && TransferWindows::canSignFreeAgent(team->get().getLeagueId(),
+                                                   game->getCurrentDate());
 }
 
 // ========== AI Squad Evaluation ==========
@@ -1825,14 +1887,16 @@ uint32_t GameController::transferBudgetForTeam(TeamID team_id) const
   // reserve and the instalments still due this season; nothing under an
   // embargo. The market applies the same rule to computer-managed clubs.
   const Finances& finances = team_opt->get().getFinances();
+  // Bonuses and agent fees of agreed pre-contracts are already committed.
   const int64_t budget =
       game ? game->getTransfers().spendableBudget(team_id,
-                                                  game->getCurrentDate())
+                                                  game->getCurrentDate()) -
+                 game->getTransfers().committedPreContractCosts(team_id)
            : ClubEconomy::availableTransferBudget(
                  finances.getTransferBudget(), finances.getBalance(),
                  getWeeklyWageBill(team_id), 0);
-  return static_cast<uint32_t>(
-      std::min<int64_t>(budget, std::numeric_limits<uint32_t>::max()));
+  return static_cast<uint32_t>(std::clamp<int64_t>(
+      budget, 0, std::numeric_limits<uint32_t>::max()));
 }
 
 void GameController::evaluateIncomingAIBids()
@@ -1900,7 +1964,7 @@ bool GameController::completeAiSale(PlayerID pid)
   const auto player = gamedata->getPlayer(pid);
   if (it == transfer_listings.end() || !it->second.highest_bidder_id ||
       !player || player->get().getTeamId() != it->second.seller_team_id ||
-      !isTransferWindowOpen())
+      !isTransferWindowOpenFor(*it->second.highest_bidder_id))
     return false;
   TransferMarket& market = game->getTransfers();
   const TeamID buyer_id = *it->second.highest_bidder_id;
@@ -1960,8 +2024,6 @@ void GameController::processAITransferActivity()
   const GameDateValue today = game->getCurrentDate();
   const TeamID managed = game->getManagedTeamId();
   TransferMarket& market = game->getTransfers();
-  const TransferNegotiation::WindowInfo window =
-      TransferNegotiation::windowInfo(today);
   WorldRng rng = WorldRng::stream(
       gamedata->getWorldSeed(), RngDomain::Transfers,
       static_cast<std::uint64_t>(dayOrdinal(today)), AI_MARKET_STREAM);
@@ -1980,38 +2042,77 @@ void GameController::processAITransferActivity()
   market.runAiPreContracts(
       today, managed, rng,
       Market::perDay(clubs.size(), Market::DAILY_PRE_CONTRACT_SHARE));
-  if (!window.open)
-  {
-    // Out of the windows only free agents can be registered.
-    int signings = 0;
-    const int max_signings =
-        Market::perDay(clubs.size(), Market::CLOSED_WINDOW_SIGNING_SHARE);
-    const auto visits = std::min<size_t>(
-        clubs.size(), static_cast<size_t>(Market::perDay(
-                          clubs.size(), Market::DAILY_EVALUATION_SHARE)));
-    for (size_t index = 0; index < visits && signings < max_signings; ++index)
-    {
-      if (market.runAiClub(clubs[index], transfer_listings, today, managed, rng,
-                           true))
-        ++signings;
-    }
-    return;
-  }
 
-  evaluateIncomingAIBids();
-  const float weight = TransferNegotiation::activityWeight(window);
-  const auto visits = std::min<size_t>(
-      clubs.size(), static_cast<size_t>(Market::perDay(
-                        clubs.size(), Market::DAILY_EVALUATION_SHARE, weight)));
-  const int max_moves =
-      Market::perDay(clubs.size(), Market::DAILY_DEAL_SHARE, weight);
-  int moves = 0;
-  for (size_t index = 0; index < visits && moves < max_moves; ++index)
+  // Every club follows its own country's window. The clubs of a country
+  // share one, so the day's budget is set per country and rises towards
+  // that country's deadline; clubs whose window is shut can only sign free
+  // agents, from one shared budget.
+  struct CountryBudget
+  {
+    const TransferWindows::CountryRules* rules = nullptr;
+    float weight = 1.0f;
+    std::size_t clubs = 0;
+    int visits = 0;
+    int moves = 0;
+  };
+  std::vector<CountryBudget> budgets;
+  std::vector<LeagueID> leagues(clubs.size(), LeagueID{0});
+  constexpr std::size_t SHUT = std::numeric_limits<std::size_t>::max();
+  std::vector<std::size_t> budget_of(clubs.size(), SHUT);
+  std::size_t shut = 0;
+  for (std::size_t index = 0; index < clubs.size(); ++index)
+  {
+    if (const auto team = std::as_const(*gamedata).getTeam(clubs[index]))
+      leagues[index] = team->get().getLeagueId();
+    const TransferNegotiation::WindowInfo window =
+        TransferNegotiation::windowInfo(leagues[index], today);
+    if (!window.open)
+    {
+      ++shut;
+      continue;
+    }
+    const TransferWindows::CountryRules* rules =
+        &TransferWindows::rulesFor(leagues[index]);
+    const auto found = std::ranges::find(budgets, rules, &CountryBudget::rules);
+    budget_of[index] = static_cast<std::size_t>(found - budgets.begin());
+    if (found == budgets.end())
+      budgets.push_back(
+          {rules, TransferNegotiation::activityWeight(window), 0, 0, 0});
+    ++budgets[budget_of[index]].clubs;
+  }
+  for (CountryBudget& budget : budgets)
+  {
+    budget.visits = Market::perDay(budget.clubs, Market::DAILY_EVALUATION_SHARE,
+                                   budget.weight);
+    budget.moves =
+        Market::perDay(budget.clubs, Market::DAILY_DEAL_SHARE, budget.weight);
+  }
+  int shut_visits =
+      shut > 0 ? Market::perDay(shut, Market::DAILY_EVALUATION_SHARE) : 0;
+  int shut_signings =
+      shut > 0 ? Market::perDay(shut, Market::CLOSED_WINDOW_SIGNING_SHARE) : 0;
+
+  if (!budgets.empty()) evaluateIncomingAIBids();
+  for (std::size_t index = 0; index < clubs.size(); ++index)
   {
     const TeamID club = clubs[index];
+    if (budget_of[index] == SHUT)
+    {
+      // Out of its window a club can only register players without a club,
+      // where its country allows that.
+      if (shut_visits <= 0 || shut_signings <= 0) continue;
+      --shut_visits;
+      if (TransferWindows::canSignFreeAgent(leagues[index], today) &&
+          market.runAiClub(club, transfer_listings, today, managed, rng, true))
+        --shut_signings;
+      continue;
+    }
+    CountryBudget& budget = budgets[budget_of[index]];
+    if (budget.visits <= 0 || budget.moves <= 0) continue;
+    --budget.visits;
     market.runAiApproach(club, today, managed, rng);
     if (market.runAiClub(club, transfer_listings, today, managed, rng, false))
-      ++moves;
+      --budget.moves;
     else if (rng.chance(Market::LIST_ACTIVITY_CHANCE))
       evaluateAndActForTeam(club);
   }
@@ -2021,8 +2122,24 @@ void GameController::processAITransferActivity()
 
 TransferNegotiation::WindowInfo GameController::getTransferWindow() const
 {
-  return game ? TransferNegotiation::windowInfo(game->getCurrentDate())
-              : TransferNegotiation::WindowInfo{};
+  return game && hasSelectedTeam()
+             ? getTransferWindowFor(game->getManagedTeamId())
+             : TransferNegotiation::WindowInfo{};
+}
+
+TransferNegotiation::WindowInfo GameController::getTransferWindowFor(
+    TeamID club) const
+{
+  if (!game) return {};
+  const auto team = std::as_const(*gamedata).getTeam(club);
+  if (!team || club == FREE_AGENTS_TEAM_ID)
+  {
+    TransferNegotiation::WindowInfo shut;
+    shut.days_to_deadline = -1;
+    return shut;
+  }
+  return TransferNegotiation::windowInfo(team->get().getLeagueId(),
+                                         game->getCurrentDate());
 }
 
 TransferNegotiation::ClubResponse GameController::makeTransferOffer(
@@ -2101,10 +2218,22 @@ GameController::getContractTalkKind(PlayerID player_id) const
   if (!game || !hasSelectedTeam()) return std::nullopt;
   const auto player = gamedata->getPlayer(player_id);
   const TeamID managed = game->getManagedTeamId();
-  if (!player || player->get().getTeamId() == managed) return std::nullopt;
+  if (!player) return std::nullopt;
+  if (player->get().getTeamId() == managed)
+  {
+    // His own club renews; talks that broke down reopen after a few days.
+    const PlayerActionBlock block = getRenewalBlock(player_id);
+    if (block == PlayerActionBlock::None ||
+        block == PlayerActionBlock::TalksEnded)
+      return TransferNegotiation::ContractKind::Renewal;
+    return std::nullopt;
+  }
   const TransferMarket& market = game->getTransfers();
   if (player->get().getTeamId() == FREE_AGENTS_TEAM_ID)
+  {
+    if (!canSignFreeAgentFor(managed)) return std::nullopt;
     return TransferNegotiation::ContractKind::FreeAgent;
+  }
   if (const Negotiation* talk = market.findNegotiation(player_id);
       talk && talk->club_agreed && isTransferWindowOpen() &&
       talk->seller == player->get().getTeamId())
@@ -2155,6 +2284,7 @@ GameController::ContractTalkResult GameController::proposeContract(
   const GameDateValue today = game->getCurrentDate();
   TransferMarket& market = game->getTransfers();
   const auto player = gamedata->getPlayer(player_id);
+  const bool renewal = *kind == ContractKind::Renewal;
 
   Negotiation talk;
   if (const Negotiation* existing = market.findNegotiation(player_id))
@@ -2164,13 +2294,32 @@ GameController::ContractTalkResult GameController::proposeContract(
   if (*kind != ContractKind::Transfer) talk.kind = *kind;
   if (getContractRoundsLeft(player_id) == 0)
   {
+    result.block = PlayerActionBlock::TalksEnded;
     result.response.reasons.push_back(TransferNegotiation::Reason::TalksEnded);
     return result;
   }
+  // A renewal must run longer than the contract he has, within the rules.
+  if (renewal && offer.years <= player->get().getContractYears())
+  {
+    result.block = PlayerActionBlock::NotLonger;
+    result.rounds_left = getContractRoundsLeft(player_id);
+    return result;
+  }
+  if (renewal &&
+      offer.years > TransferNegotiation::maxContractYears(player->get().getAge()))
+  {
+    result.block = PlayerActionBlock::TooLong;
+    result.rounds_left = getContractRoundsLeft(player_id);
+    return result;
+  }
 
-  result.response = TransferNegotiation::evaluateContract(
+  const std::uint32_t fee =
+      *kind == ContractKind::Transfer ? talk.agreed.fee : 0;
+  const PlayerAgent::Reply reply = PlayerAgent::respond(
       market.playerContext(player_id, managed, *kind), offer,
-      talk.player_rounds);
+      talk.player_rounds, fee);
+  result.response = reply.response;
+  result.agent_line = reply.line_key;
   if (!result.response.accepted)
   {
     ++talk.player_rounds;
@@ -2182,6 +2331,31 @@ GameController::ContractTalkResult GameController::proposeContract(
     return result;
   }
 
+  if (renewal)
+  {
+    // The new wage replaces his current one on the payroll; bonus and
+    // agent fee are paid in cash today.
+    const auto team = gamedata->getTeam(managed);
+    const Finances& finances = team->get().getFinances();
+    const int64_t payroll = getWeeklyWageBill(managed) -
+                            static_cast<int64_t>(player->get().getWage()) +
+                            static_cast<int64_t>(offer.weekly_wage);
+    const int64_t cash =
+        static_cast<int64_t>(offer.signing_bonus) +
+        static_cast<int64_t>(offer.agent_fee.value_or(
+            PlayerAgent::standardAgentFee(ContractKind::Renewal, 0,
+                                          offer.weekly_wage)));
+    if (payroll > finances.getWageBudget() || cash > finances.getBalance())
+    {
+      result.over_budget = true;
+      result.rounds_left = getContractRoundsLeft(player_id);
+      return result;
+    }
+    result.completed = market.renewContract(player_id, offer, today);
+    if (result.completed) market.removeNegotiation(player_id);
+    return result;
+  }
+
   TransferMarket::Deal deal;
   deal.player_id = player_id;
   deal.buyer_id = managed;
@@ -2189,7 +2363,10 @@ GameController::ContractTalkResult GameController::proposeContract(
   deal.kind = *kind == ContractKind::Transfer ? TransferKind::Permanent
                                               : TransferKind::Free;
   if (*kind == ContractKind::Transfer) deal.terms = talk.agreed;
-  if (*kind != ContractKind::PreContract && !canPayDeal(deal))
+  const bool affordable = *kind == ContractKind::PreContract
+                              ? canPayPreContract(deal)
+                              : canPayDeal(deal);
+  if (!affordable)
   {
     result.over_budget = true;
     result.rounds_left = getContractRoundsLeft(player_id);
@@ -2205,6 +2382,20 @@ GameController::ContractTalkResult GameController::proposeContract(
     purgeStaleListings();
   }
   return result;
+}
+
+bool GameController::canPayPreContract(const TransferMarket::Deal& deal) const
+{
+  // He joins on 1 July: his wage must fit next season's wage room (with
+  // the club's other agreed pre-contracts), and the bonus and agent fee due
+  // then come out of the transfer money not already committed.
+  const TransferMarket& market = game->getTransfers();
+  const int64_t costs = static_cast<int64_t>(deal.contract.signing_bonus) +
+                        static_cast<int64_t>(TransferMarket::agentFee(deal));
+  return !game->getWorld().isTransferEmbargoed(deal.buyer_id) &&
+         static_cast<int64_t>(deal.contract.weekly_wage) <=
+             market.nextSeasonWageRoom(deal.buyer_id) &&
+         costs <= static_cast<int64_t>(transferBudgetForTeam(deal.buyer_id));
 }
 
 TransferNegotiation::ClubResponse GameController::makeLoanOffer(
@@ -2341,7 +2532,9 @@ int64_t GameController::getReleaseCost(PlayerID player_id) const
 
 bool GameController::releasePlayer(PlayerID player_id)
 {
-  if (!game || !hasSelectedTeam()) return false;
+  if (!game || !hasSelectedTeam() ||
+      getReleaseBlock(player_id) != PlayerActionBlock::None)
+    return false;
   const auto player = gamedata->getPlayer(player_id);
   const TeamID managed = game->getManagedTeamId();
   if (!player || player->get().getTeamId() != managed) return false;
@@ -2512,22 +2705,120 @@ bool GameController::applyMatchConsequences(PlayerID player_id,
 
 bool GameController::renewContract(PlayerID player_id, ContractTerms terms)
 {
-  const auto team = getManagedTeam();
-  if (!team || !gamedata) return false;
-  auto& players = gamedata->getPlayers();
-  const auto found = players.find(player_id);
-  if (found == players.end() ||
-      found->second.getTeamId() != team->get().getId() ||
-      !game->getTransfers().canBeTraded(player_id) ||
-      !isContractOfferAcceptable(player_id, false, terms))
+  if (getContractTalkKind(player_id) !=
+      TransferNegotiation::ContractKind::Renewal)
     return false;
-  Player& player = found->second;
-  const int64_t payroll = getWeeklyWageBill(team->get().getId()) -
-                          player.getWage() + terms.weekly_wage;
-  if (payroll > team->get().getFinances().getWageBudget()) return false;
-  player.setWage(terms.weekly_wage);
-  player.setContractYears(terms.years);
-  return true;
+  TransferNegotiation::ContractOffer offer;
+  offer.weekly_wage = terms.weekly_wage;
+  offer.years = terms.years;
+  return offer.weekly_wage > 0 && proposeContract(player_id, offer).completed;
+}
+
+const char* GameController::playerActionBlockKey(PlayerActionBlock block)
+{
+  switch (block)
+  {
+    case PlayerActionBlock::None:
+      return "";
+    case PlayerActionBlock::NotYours:
+      return "BLOCK_NOT_YOURS";
+    case PlayerActionBlock::WindowClosed:
+      return "BLOCK_WINDOW_CLOSED";
+    case PlayerActionBlock::OnLoan:
+      return "BLOCK_ON_LOAN";
+    case PlayerActionBlock::Leaving:
+      return "BLOCK_LEAVING";
+    case PlayerActionBlock::SquadFloor:
+      return "BLOCK_SQUAD_FLOOR";
+    case PlayerActionBlock::LastGoalkeeper:
+      return "BLOCK_LAST_GOALKEEPER";
+    case PlayerActionBlock::MaxLength:
+      return "BLOCK_MAX_LENGTH";
+    case PlayerActionBlock::NotLonger:
+      return "BLOCK_NOT_LONGER";
+    case PlayerActionBlock::TooLong:
+      return "BLOCK_TOO_LONG";
+    case PlayerActionBlock::TalksEnded:
+      return "BLOCK_TALKS_ENDED";
+  }
+  return "";
+}
+
+namespace
+{
+/** Shared part of the blocks: a player of the managed club who is neither
+ * borrowed nor committed to another club. */
+GameController::PlayerActionBlock ownershipBlock(const GameData& data,
+                                                 const Game& game,
+                                                 PlayerID player_id)
+{
+  using Block = GameController::PlayerActionBlock;
+  const auto player = data.getPlayer(player_id);
+  if (!player || player->get().getTeamId() != game.getManagedTeamId())
+    return Block::NotYours;
+  const TransferMarket& market = game.getTransfers();
+  if (const LoanDeal* loan = market.findLoan(player_id);
+      loan && loan->borrower == game.getManagedTeamId())
+    return Block::OnLoan;
+  if (market.findPreContract(player_id)) return Block::Leaving;
+  return Block::None;
+}
+}  // namespace
+
+GameController::PlayerActionBlock GameController::getReleaseBlock(
+    PlayerID player_id) const
+{
+  if (!game) return PlayerActionBlock::NotYours;
+  if (const PlayerActionBlock block =
+          ownershipBlock(*gamedata, *game, player_id);
+      block != PlayerActionBlock::None)
+    return block;
+  bool goalkeeper = false;
+  if (!game->getTransfers().keepsSquadFloor(game->getManagedTeamId(),
+                                            player_id, &goalkeeper))
+    return goalkeeper ? PlayerActionBlock::LastGoalkeeper
+                      : PlayerActionBlock::SquadFloor;
+  return PlayerActionBlock::None;
+}
+
+GameController::PlayerActionBlock GameController::getSaleBlock(
+    PlayerID player_id) const
+{
+  if (!game) return PlayerActionBlock::NotYours;
+  // A club abroad may still buy while its own window is open.
+  if (!isTransferWindowOpenAnywhere()) return PlayerActionBlock::WindowClosed;
+  return getReleaseBlock(player_id);
+}
+
+GameController::PlayerActionBlock GameController::getListingBlock(
+    PlayerID player_id) const
+{
+  if (!game) return PlayerActionBlock::NotYours;
+  if (const PlayerActionBlock block =
+          ownershipBlock(*gamedata, *game, player_id);
+      block != PlayerActionBlock::None)
+    return block;
+  if (!isTransferWindowOpenAnywhere()) return PlayerActionBlock::WindowClosed;
+  return PlayerActionBlock::None;
+}
+
+GameController::PlayerActionBlock GameController::getRenewalBlock(
+    PlayerID player_id) const
+{
+  if (!game) return PlayerActionBlock::NotYours;
+  if (const PlayerActionBlock block =
+          ownershipBlock(*gamedata, *game, player_id);
+      block != PlayerActionBlock::None)
+    return block;
+  const Player& player = gamedata->getPlayer(player_id)->get();
+  // Academy contracts are handled by the academy.
+  if (player.isAcademyPlayer()) return PlayerActionBlock::NotYours;
+  if (player.getContractYears() >=
+      TransferNegotiation::maxContractYears(player.getAge()))
+    return PlayerActionBlock::MaxLength;
+  if (getContractRoundsLeft(player_id) == 0)
+    return PlayerActionBlock::TalksEnded;
+  return PlayerActionBlock::None;
 }
 
 // ========== Human side: conversations, team talks, dressing room ==========
@@ -3000,18 +3291,33 @@ bool GameController::resignFromClub()
 
 int GameController::advanceWhileUnemployed(int max_days)
 {
+  last_continue_stop = ContinueStop::None;
   if (!game || max_days <= 0 || !isUnemployed()) return 0;
+  continue_stop_requested = false;
   game->resetSimulationProgress();
   continue_days_started = 0;
   continue_days_total = max_days;
   int days = 0;
+  ContinueStop stop = ContinueStop::DayLimit;
   while (days < max_days && isUnemployed())
   {
+    if (continue_stop_requested)
+    {
+      stop = ContinueStop::Requested;
+      break;
+    }
     simulateDay();
     ++days;
     const CareerDayEvents& events = game->getLastCareerEvents();
-    if (events.new_offer || events.interview_invitation) break;
+    const NationalDayEvents& national = game->getLastNationalEvents();
+    if (events.new_offer || events.interview_invitation ||
+        national.new_offer || national.squad_to_pick)
+    {
+      stop = ContinueStop::Decision;
+      break;
+    }
   }
+  last_continue_stop = stop;
   return days;
 }
 
@@ -3839,13 +4145,17 @@ std::optional<GameDateValue> GameController::getHolidayTarget(
         next_match = day->first;
         break;
       }
-  return Holiday::targetDate(plan, game->getCurrentDate(), next_match);
+  const auto club = managedClub();
+  return Holiday::targetDate(plan, game->getCurrentDate(), next_match,
+                             club ? club->get().getLeagueId() : LeagueID{0});
 }
 
 int GameController::goOnHoliday(const HolidayPlan& plan)
 {
   holiday_summary = HolidaySummary();
+  last_continue_stop = ContinueStop::None;
   if (!game || !hasSelectedTeam()) return 0;
+  continue_stop_requested = false;
   const TeamID managed = game->getManagedTeamId();
   WorldSimulation& world = game->getWorld();
   world.getHolidayPreferences() = plan.preferences;
@@ -3920,6 +4230,12 @@ int GameController::goOnHoliday(const HolidayPlan& plan)
     if (advanced >= limit)
     {
       summary.reason = HolidayStop::DayLimit;
+      break;
+    }
+    // The manager (or closing the game) calls him back after this day.
+    if (continue_stop_requested)
+    {
+      summary.reason = HolidayStop::Interrupted;
       break;
     }
     simulateDay();

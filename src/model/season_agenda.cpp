@@ -14,6 +14,7 @@
 
 #include "model/calendar.h"
 #include "model/match.h"
+#include "model/transfer_windows.h"
 #include "model/youth_academy.h"
 
 namespace
@@ -83,7 +84,8 @@ GameDateValue SeasonAgenda::seasonStart(const GameDateValue& date)
 
 std::vector<AgendaEvent> SeasonAgenda::build(std::uint16_t season_start_year,
                                              const std::vector<Match>& fixtures,
-                                             bool board_reviews)
+                                             bool board_reviews,
+                                             LeagueID league)
 {
   std::vector<AgendaEvent> events;
   const GameDateValue first(season_start_year,
@@ -105,14 +107,16 @@ std::vector<AgendaEvent> SeasonAgenda::build(std::uint16_t season_start_year,
       static_cast<size_t>(YouthModel::DECISION_DAYS);
 
   add(first, AgendaKind::SeasonStart);
-  bool window_open = (first - 1).isTransferWindowOpen();
+  const auto window_on = [league](const GameDateValue& date)
+  { return TransferWindows::isOpen(league, date); };
+  bool window_open = window_on(first - 1);
   bool international = SeasonCalendar::isInternationalBreak(first - 1);
   bool winter = SeasonCalendar::isWinterBreak(first - 1);
   for (GameDateValue date = first; date < next_season; date = date + 1)
   {
-    const bool open = date.isTransferWindowOpen();
+    const bool open = window_on(date);
     if (open && !window_open) add(date, AgendaKind::TransferWindowOpens);
-    if (open && !(date + 1).isTransferWindowOpen())
+    if (TransferWindows::isDeadlineDay(league, date))
       add(date, AgendaKind::TransferDeadline);
     window_open = open;
 

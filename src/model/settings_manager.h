@@ -10,6 +10,10 @@
 #include <SDL3/SDL.h>
 
 #include <cstdint>
+#include <functional>
+#include <map>
+#include <string>
+#include <vector>
 
 #include "global/languages.h"
 
@@ -24,6 +28,7 @@ struct Settings
   int resolution_height = 720;      /**< Screen resolution height */
   bool fullscreen = false;          /**< Fullscreen mode flag */
   int fps_limit = 60;               /**< Frames per second limit */
+  bool vsync = false;               /**< Wait for the display refresh */
 
   // Appearance (applied live by the GUI theme)
   int theme_preset = 0;            /**< Index of the colour preset */
@@ -32,6 +37,8 @@ struct Settings
   float ui_scale = 0.0f;           /**< 0 = automatic (display scale) */
   bool compact_density = false;    /**< Denser tables and controls */
   bool reduced_motion = false;     /**< Avoid non-essential animation */
+  int color_vision = 0;   /**< Theme::ColorVision: status colour hues */
+  float text_scale = 1.0f; /**< Text size on top of the UI scale */
 
   // Guidance
   bool screen_tips = true;         /**< One-line tip on a screen's first visit */
@@ -50,6 +57,19 @@ struct Settings
   // Live match
   bool pause_for_match_changes = true; /**< Substitutions/tactics pause play */
   bool pause_at_breaks = true; /**< Managed match stops at half-time etc. */
+
+  // Play mode (controlling the team on the pitch)
+  bool play_mode = true;        /**< Offer Play / Take control in matches */
+  int play_auto_switch = 2;     /**< PlayAutoSwitch: 0 off, 1 assisted, 2 auto */
+  int play_pass_assist = 1;     /**< 0 none, 1 normal, 2 strong */
+  float play_dead_zone = 0.2f;  /**< Gamepad stick dead zone, 0.05-0.5 */
+
+  // Controls: action id -> chord names (primary, alternate); only bindings
+  // that differ from the defaults (see src/gui/input_actions.h).
+  std::map<std::string, std::vector<std::string>> key_bindings;
+
+  // Table views: table key -> label keys of the columns the user hid.
+  std::map<std::string, std::vector<std::string>, std::less<>> hidden_columns;
 };
 
 /**

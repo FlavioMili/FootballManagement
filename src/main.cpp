@@ -14,6 +14,8 @@
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
+#include "global/build_info.h"
+#include "global/crash_report.h"
 #include "global/logger.h"
 #include "global/paths.h"
 #include "gui/gui_view.h"
@@ -50,6 +52,8 @@ bool loadFirstExistingSave(GameController& controller)
 int main(int argc, char* argv[])
 {
   Logger::init();
+  Logger::info(BuildInfo::summary());
+  CrashReport::install();
   try
   {
     auto controller = std::make_unique<GameController>();
@@ -83,7 +87,10 @@ int main(int argc, char* argv[])
   }
   catch (const std::exception& e)
   {
-    std::cerr << "Error: " << e.what() << "\n";
+    // Shown on the next start; the report stays on this computer.
+    const auto report = CrashReport::write(std::string("error: ") + e.what());
+    std::cerr << "Error: " << e.what() << "\nCrash report: " << report.string()
+              << "\n";
     return 1;
   }
   return 0;

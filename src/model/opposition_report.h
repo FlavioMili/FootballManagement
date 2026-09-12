@@ -19,19 +19,6 @@
 #include "model/match_report.h"
 #include "model/strategy.h"
 
-/**
- * @brief Individual instruction against one opposing player (values are
- * persisted in OppositionInstructions).
- */
-enum class OppositionInstruction : std::uint8_t
-{
-  None = 0,
-  TightMark,    /*!< Stay tight to him; the nearest defender marks him. */
-  Press,        /*!< Close him down as soon as he receives. */
-  ShowWeakFoot, /*!< Force him onto his weaker foot. */
-  COUNT
-};
-
 /** Language key of an instruction. */
 const char* oppositionInstructionKey(OppositionInstruction instruction);
 
@@ -44,12 +31,10 @@ struct OppositionOrder
 };
 
 /**
- * @brief Instructions against upcoming opponents, per opponent and player.
- *
- * The live engine does not read them yet; MatchEngine needs an entry point
- * such as setOppositionInstructions(bool home, span<const OppositionOrder>)
- * mapping TightMark onto its marking assignments, Press onto pressing
- * triggers and ShowWeakFoot onto the defender's approach angle.
+ * @brief Instructions against upcoming opponents, per opponent and player
+ * (OppositionInstruction is declared in model/tactics.h). The managed club's
+ * Strategy carries them into the match engine (see
+ * Strategy::setOppositionOrders and GameController).
  */
 class OppositionPlan
 {

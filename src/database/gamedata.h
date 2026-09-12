@@ -16,9 +16,11 @@
 #include <vector>
 
 #include "gamedate.h"
+#include "global/global.h"
 #include "global/stats_config.h"
 #include "global/types.h"
 #include "model/league.h"
+#include "model/squad_numbers.h"
 #include "model/player.h"
 #include "model/staff.h"
 #include "model/team.h"
@@ -93,8 +95,13 @@ class GameData
 
   void ageAllPlayers();
 
-  /** Advances contracts and releases newly out-of-contract players. */
-  std::vector<PlayerID> advanceContractsAndReleasePlayers();
+  /**
+   * Advances contracts and releases newly out-of-contract players. Clubs
+   * that lose a player get a new line-up, except @p keep_selection (the
+   * manager's club), whose gaps the caller fills.
+   */
+  std::vector<PlayerID> advanceContractsAndReleasePlayers(
+      TeamID keep_selection = FREE_AGENTS_TEAM_ID);
 
   void addPlayer(PlayerID id, const Player& player);
   std::optional<std::reference_wrapper<const Player>> getPlayer(
@@ -118,8 +125,18 @@ class GameData
   void setAcademyMember(PlayerID id, bool academy);
   bool removePlayer(PlayerID id);
   /** Moves a player to another club's senior squad (academy membership
-   * does not travel with him). */
+   * does not travel with him). He keeps his squad number when it is free
+   * at the new club, otherwise he gets a free one (SquadNumbers). */
   void transferPlayer(PlayerID id, TeamID new_team_id);
+
+  /** Gives @p id squad number @p number (1-99) at his club; a teammate
+   * wearing it takes his old number. */
+  SquadNumbers::Change setSquadNumber(PlayerID id, int number);
+  /**
+   * Numbers the club's senior players who have none or share one. The
+   * number of @p newcomer (just arrived) only counts as his wish.
+   */
+  void assignSquadNumbers(TeamID team_id, PlayerID newcomer = 0);
 
   // ---------------- World state ----------------
   /**

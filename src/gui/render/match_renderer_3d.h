@@ -36,6 +36,8 @@ class MatchRenderer3D final : public IMatchRenderer
   void render(const MatchRenderSnapshot& snapshot,
               const MatchRenderOptions& options,
               const MatchViewport& viewport) override;
+  bool projectPitch(Vector2F pitch, float heightMetres, float& screenX,
+                    float& screenY) const override;
 
  private:
   struct State;

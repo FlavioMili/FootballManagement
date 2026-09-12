@@ -32,10 +32,16 @@ MatchContext MatchSimulation::leagueContext(LeagueID league_id)
   MatchContext context;
   if (league_id == 0 || profile.league_id != league_id) return context;
   const LeagueMatchStyle& style = profile.match_style;
-  // Second divisions are the rows without continental income.
-  const float reference = profile.continental_share > 0.0f
-                              ? Reference::REFERENCE_GOALS_TOP
-                              : Reference::REFERENCE_GOALS_SECOND;
+  // Second divisions are the rows without continental income. A league of
+  // more unequal clubs scores more at the same scale (more mismatches).
+  const bool top = profile.continental_share > 0.0f;
+  const float spread =
+      profile.shape.level_sd - (top ? Reference::REFERENCE_SPREAD_TOP
+                                    : Reference::REFERENCE_SPREAD_SECOND);
+  const float reference =
+      (top ? Reference::REFERENCE_GOALS_TOP
+           : Reference::REFERENCE_GOALS_SECOND) *
+      std::max(0.5f, 1.0f + Reference::GOALS_PER_SPREAD_POINT * spread);
   context.goalRateScale = std::pow(style.goals / reference,
                                    1.0f / Reference::GOAL_RESPONSE_EXPONENT);
   context.refereeStrictnessMean =
@@ -63,6 +69,14 @@ MatchSimulationResult MatchSimulation::run(const MatchSimulationInput& input,
     engine.setMatchContext(leagueContext(input.league_id));
   MatchdaySquad::carryCondition(engine, input.home_lineup);
   MatchdaySquad::carryCondition(engine, input.away_lineup);
+  for (int half = 1; half <= 2; ++half)
+  {
+    const auto index = static_cast<std::size_t>(half - 1);
+    if (input.home_talk[index] != 0.0f)
+      engine.setTeamTalkModifier(true, half, input.home_talk[index]);
+    if (input.away_talk[index] != 0.0f)
+      engine.setTeamTalkModifier(false, half, input.away_talk[index]);
+  }
   // Nobody watches these matches: the background fidelity is enough.
   engine.simulateToEnd(MatchFidelity::BACKGROUND);
 

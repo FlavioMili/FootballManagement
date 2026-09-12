@@ -12,6 +12,8 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <format>
 
 #include "controller/game_controller.h"
@@ -151,6 +153,14 @@ void MatchReportScene::refresh()
                                report->away_penalties);
   else if (report->extra_time)
     result_note = LOC("RESULT_AFTER_EXTRA_TIME");
+  // A match the manager played himself says so, with his share of the play.
+  if (report->played_home)
+  {
+    if (!result_note.empty()) result_note += "  ·  ";
+    result_note += fmt::sprintf(
+        LOC("REPORT_PLAYED_BY_YOU"),
+        static_cast<int>(std::lround(report->played_share * 100.0f)));
+  }
 
   const GameData* data = controller.getGameData().get();
   for (const MatchReportEvent& event : report->events)
@@ -184,6 +194,10 @@ void MatchReportScene::refresh()
   };
   std::ranges::sort(home_players, byRole);
   std::ranges::sort(away_players, byRole);
+  insights.build(controller, *report,
+                 controller.getMatchSnapshot(date, home_id, away_id), home_name,
+                 away_name);
+  if (!insights.available()) tab = 0;
 }
 
 void MatchReportScene::renderContent()
@@ -195,6 +209,17 @@ void MatchReportScene::renderContent()
     return;
   }
   renderScore();
+  if (insights.available())
+  {
+    const std::array<const char*, 2> tabs = {LOC("REPORT_TAB_OVERVIEW"),
+                                             LOC("REPORT_TAB_ANALYSIS")};
+    UI::segmented("##report_tab", tab, tabs);
+    if (tab == 1)
+    {
+      insights.render(guiView);
+      return;
+    }
+  }
   const float available = ImGui::GetContentRegionAvail().x;
   const float gap = ImGui::GetStyle().ItemSpacing.x;
   const bool twoColumns = available >= TWO_COLUMN_MIN_WIDTH * Theme::scale();

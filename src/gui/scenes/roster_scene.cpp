@@ -24,11 +24,13 @@
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
 #include "model/role_utils.h"
+#include "model/squad_numbers.h"
 
 namespace
 {
 constexpr float DETAIL_PANEL_WIDTH = 310.0f;
-constexpr float TABLE_MIN_WIDTH = 760.0f;
+constexpr const char* TABLE_KEY = "roster";
+constexpr float TABLE_MIN_WIDTH = 796.0f;
 // The side panel only appears when the full table still fits beside it.
 constexpr float DETAIL_PANEL_MIN_CONTENT =
     TABLE_MIN_WIDTH + DETAIL_PANEL_WIDTH + 12.0f;
@@ -45,6 +47,7 @@ enum class RosterColumn : ImGuiID
   WAGE,
   CONTRACT,
   STATUS,
+  NUMBER,
 };
 
 constexpr ImGuiID columnId(RosterColumn column)
@@ -53,11 +56,13 @@ constexpr ImGuiID columnId(RosterColumn column)
 }
 
 // Unscaled widths; the highest priority numbers hide first on narrow windows.
-const std::array<UI::Column, 10>& rosterColumns()
+const std::array<UI::Column, 11>& rosterColumns()
 {
   constexpr ImGuiTableColumnFlags DESCENDING =
       ImGuiTableColumnFlags_PreferSortDescending;
-  static const std::array<UI::Column, 10> columns = {{
+  static const std::array<UI::Column, 11> columns = {{
+      {"ROSTER_COL_NUMBER", 36.0f, 0, ImGuiTableColumnFlags_None,
+       columnId(RosterColumn::NUMBER)},
       {"ROSTER_COL_NAME", 0.0f, 0, ImGuiTableColumnFlags_DefaultSort,
        columnId(RosterColumn::NAME)},
       {"ROSTER_COL_ROLE", 56.0f, 1, ImGuiTableColumnFlags_None,
@@ -237,6 +242,9 @@ void RosterScene::renderFilters()
     }
     ImGui::EndCombo();
   }
+  UI::sameLineIfFits(
+      UI::buttonWidth(LOC("TABLE_COLUMNS"), UI::ButtonSize::COMPACT));
+  UI::columnPicker(TABLE_KEY, rosterColumns(), table_mask);
   if (filtered_search != search_text.data() ||
       filtered_role != role_filter_index ||
       filtered_group != group_filter_index)
@@ -279,6 +287,11 @@ void RosterScene::applySort()
         {
           case RosterColumn::NAME:
             comparison = a.name.compare(b.name);
+            break;
+          case RosterColumn::NUMBER:
+            // Players without a number go last.
+            comparison = UI::compare(a.squad_number == 0 ? 100 : a.squad_number,
+                                     b.squad_number == 0 ? 100 : b.squad_number);
             break;
           case RosterColumn::ROLE:
             comparison = UI::compare(a.role_id, b.role_id);
@@ -327,10 +340,13 @@ void RosterScene::renderTable(float height)
   }
   // Fills the page height (vertical scroll only); columns drop by priority
   // instead of scrolling sideways.
-  std::array<UI::Column, 10> columns = rosterColumns();
+  // Columns the user hid in the picker never come back on wide windows.
+  std::array<UI::Column, 11> columns = rosterColumns();
+  const UI::ColumnMask hidden = UI::hiddenColumns(TABLE_KEY, columns);
   for (UI::Column& column : columns) column.label = LOC(column.label);
-  const UI::ColumnMask mask =
-      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
+  const UI::ColumnMask mask = UI::fitColumns(
+      columns, ImGui::GetContentRegionAvail().x, 160.0f, hidden);
+  table_mask = mask;
   const ImGuiTableFlags flags =
       ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
       ImGuiTableFlags_Sortable | ImGuiTableFlags_ScrollY;
@@ -368,7 +384,10 @@ void RosterScene::renderTable(float height)
       ImGui::TableNextColumn();
       ImGui::PushID(static_cast<int>(row.id));
       const bool selected = selected_player_id == row.id;
-      if (ImGui::Selectable(row.name.c_str(), selected,
+      // The row's selectable lives in the first column so it spans them all.
+      const std::string number =
+          row.squad_number > 0 ? std::to_string(row.squad_number) : "–";
+      if (ImGui::Selectable(number.c_str(), selected,
                             ImGuiSelectableFlags_SpanAllColumns |
                                 ImGuiSelectableFlags_AllowDoubleClick |
                                 ImGuiSelectableFlags_AllowOverlap))
@@ -381,27 +400,28 @@ void RosterScene::renderTable(float height)
       if (show_details && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
         ImGui::SetTooltip("%s", LOC("ROSTER_OPEN_PROFILE_HINT"));
       ImGui::PopID();
-      if (UI::cell(mask, 1))
+      if (UI::cell(mask, 1)) ImGui::TextUnformatted(row.name.c_str());
+      if (UI::cell(mask, 2))
         ImGui::TextColored(groupColor(row.group), "%s", row.role.c_str());
-      if (UI::cell(mask, 2)) ImGui::Text("%d", row.age);
-      if (UI::cell(mask, 3)) UI::ratingChip(row.overall);
-      if (UI::cell(mask, 4))
+      if (UI::cell(mask, 3)) ImGui::Text("%d", row.age);
+      if (UI::cell(mask, 4)) UI::ratingChip(row.overall);
+      if (UI::cell(mask, 5))
         ImGui::TextColored(conditionColor(row.condition), "%.0f%%",
                            static_cast<double>(row.condition));
-      if (UI::cell(mask, 5))
+      if (UI::cell(mask, 6))
       {
         if (row.form > 0.0f)
           ImGui::Text("%.1f", static_cast<double>(row.form));
         else
           ImGui::TextColored(palette.faint, "–");
       }
-      if (UI::cell(mask, 6)) UI::textRight(row.value_text.c_str());
-      if (UI::cell(mask, 7)) UI::textRight(row.wage_text.c_str());
-      if (UI::cell(mask, 8))
+      if (UI::cell(mask, 7)) UI::textRight(row.value_text.c_str());
+      if (UI::cell(mask, 8)) UI::textRight(row.wage_text.c_str());
+      if (UI::cell(mask, 9))
         ImGui::TextColored(
             row.contract_years <= 1 ? palette.negative : palette.text, "%d",
             row.contract_years);
-      if (!UI::cell(mask, 9)) continue;
+      if (!UI::cell(mask, 10)) continue;
       if (row.injury_days > 0)
       {
         UI::badge(LOC("ROSTER_BADGE_INJURED"), palette.negative);
@@ -434,10 +454,10 @@ void RosterScene::renderTable(float height)
 void RosterScene::renderDetails(float height)
 {
   const Player* player = selectedPlayer();
+  const float button_rows =
+      player == nullptr ? 0.0f : isManagedClub() ? 3.0f : 1.0f;
   const float buttonsHeight =
-      player != nullptr
-          ? (UI::buttonHeight() + ImGui::GetStyle().ItemSpacing.y) * 2.0f
-          : 0.0f;
+      (UI::buttonHeight() + ImGui::GetStyle().ItemSpacing.y) * button_rows;
   PlayerUI::detailPanel("RosterPlayerDetails", player,
                         guiView->getController().getStatsConfig(), nullptr,
                         height - buttonsHeight);
@@ -459,6 +479,63 @@ void RosterScene::renderDetails(float height)
     showToast(LOC(listed ? "PROFILE_UNLISTED_TOAST" : "PROFILE_LISTED_TOAST"));
     loadRoster();
   }
+  renderNumberEditor(*player);
+}
+
+void RosterScene::renderNumberEditor(const Player& player)
+{
+  if (number_edit_for != player.getId())
+  {
+    number_edit_for = player.getId();
+    number_edit = player.getSquadNumber() > 0 ? player.getSquadNumber() : 1;
+  }
+  const ImGuiStyle& style = ImGui::GetStyle();
+  const float width = ImGui::GetContentRegionAvail().x;
+  // The field matches the button height so the row lines up.
+  ImGui::PushStyleVar(
+      ImGuiStyleVar_FramePadding,
+      ImVec2(style.FramePadding.x,
+             std::max(style.FramePadding.y,
+                      (UI::buttonHeight() - ImGui::GetFontSize()) * 0.5f)));
+  ImGui::SetNextItemWidth(width * 0.45f);
+  ImGui::InputInt("##squad_number", &number_edit, 1, 10);
+  ImGui::PopStyleVar();
+  if (ImGui::IsItemHovered())
+    ImGui::SetTooltip("%s", LOC("ROSTER_SQUAD_NUMBER_HINT"));
+  number_edit =
+      std::clamp(number_edit, SquadNumbers::MIN_NUMBER, SquadNumbers::MAX_NUMBER);
+  ImGui::SameLine();
+  ImGui::BeginDisabled(number_edit == player.getSquadNumber());
+  const bool apply =
+      UI::secondaryButton(LOC("ROSTER_SET_NUMBER"), ImVec2(-FLT_MIN, 0.0f));
+  ImGui::EndDisabled();
+  if (!apply) return;
+
+  GameController& controller = guiView->getController();
+  // The holder is looked up before the change: he takes the old number.
+  const PlayerID player_id = player.getId();
+  const int previous = player.getSquadNumber();
+  std::string holder;
+  for (const auto& teammate : roster_players)
+    if (teammate.get().getId() != player_id &&
+        teammate.get().getSquadNumber() == number_edit)
+      holder = teammate.get().getName();
+  const std::string name = player.getName();
+  switch (controller.setSquadNumber(player_id, number_edit))
+  {
+    case SquadNumbers::Change::Changed:
+      showToast(fmt::sprintf(LOC("ROSTER_NUMBER_CHANGED_TOAST"), name,
+                             number_edit));
+      break;
+    case SquadNumbers::Change::Swapped:
+      showToast(fmt::sprintf(LOC("ROSTER_NUMBER_SWAPPED_TOAST"), name,
+                             number_edit, holder, previous));
+      break;
+    case SquadNumbers::Change::Invalid:
+      showToast(LOC("ROSTER_NUMBER_REFUSED_TOAST"), true);
+      break;
+  }
+  loadRoster();
 }
 
 void RosterScene::loadRoster()

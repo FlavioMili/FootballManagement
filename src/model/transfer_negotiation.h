@@ -78,6 +78,8 @@ enum class Reason : std::uint8_t
   Unavailable,
   OverBudget,
   Embargo,
+  // Player's agent
+  AgentFeeTooLow,
   COUNT
 };
 
@@ -201,7 +203,21 @@ struct ContractOffer
   std::uint32_t signing_bonus = 0;
   std::uint32_t release_clause = 0; /*!< 0 = none. */
   std::optional<SquadRole> promised_role;
+  /** Yearly wage rise in percent, applied on each anniversary. */
+  std::uint8_t yearly_rise = 0;
+  /** Paid to the player for every competitive appearance. */
+  std::uint32_t appearance_bonus = 0;
+  /** Fee paid to his agent on signing; none = the standard fee. */
+  std::optional<std::uint32_t> agent_fee;
 };
+
+/** Competitive appearances per week of a player in @p role. */
+float appearanceRate(SquadRole role);
+
+/** Weekly worth of a yearly rise of @p percent over @p years on @p wage
+ * (the average uplift over the contract). */
+double yearlyRiseWorth(std::uint32_t wage, std::uint8_t percent,
+                       std::uint8_t years);
 
 /** What the player weighs. Reputations are 1-100; 0 = no club. */
 struct PlayerContext
@@ -285,6 +301,10 @@ struct LoanTerms
   std::uint32_t option_fee = 0; /*!< 0 = no buy clause. */
   bool obligation = false;      /*!< Buy clause is mandatory at the end. */
   bool recall_clause = false;   /*!< Parent may recall in January. */
+  /** Competitive appearances the borrower guarantees (0 = none); short of
+   * them at the end of the loan it pays @c unplayed_fee to the parent. */
+  std::uint8_t min_appearances = 0;
+  std::uint32_t unplayed_fee = 0;
 };
 
 /** What the parent club weighs. */
@@ -318,7 +338,8 @@ struct WindowInfo
   int days_to_deadline = 0; /*!< 0 on deadline day; -1 when shut. */
 };
 
-WindowInfo windowInfo(const GameDateValue& date);
+/** Window of clubs of @p league on @p date (TransferWindows). */
+WindowInfo windowInfo(LeagueID league, const GameDateValue& date);
 
 /** Relative AI activity: rises in the last week, spikes on deadline day. */
 float activityWeight(const WindowInfo& window);

@@ -53,6 +53,12 @@ enum class SceneID : uint8_t
   AWARDS,          /**< League honours */
   RECORDS,         /**< Records book and hall of fame */
   PLANNING,        /**< Pre-season, facility projects and mentoring */
+  HELP,            /**< Getting started, shortcuts and glossary */
+  RESERVES,        /**< U21 squad and its league */
+  CALL_UPS,        /**< National-team call-ups of the head coach */
+  ABOUT,           /**< Version, build, licence and third-party credits */
+  NEWS,            /**< World news feed */
+  TIMELINE,        /**< Manager's career timeline and journal */
 };
 
 /**

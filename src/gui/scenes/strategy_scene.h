@@ -7,11 +7,19 @@
 // -----------------------------------------------------------------------------
 
 #pragma once
+#include <imgui.h>
+
 #include "gui/scenes/management_scene.h"
+#include "model/lineup.h"
 #include "model/strategy.h"
 
 /**
- * @brief Scene for managing team strategy.
+ * @brief The managed club's tactics: style and instructions, player roles
+ * and duties, and the shape with the ball.
+ *
+ * Every change applies to the club's tactic in memory straight away (it is
+ * written with the next save), so leaving the screen by any route never
+ * loses an edit; Revert restores the tactic as it was on arrival.
  */
 class StrategyScene : public ManagementScene
 {
@@ -48,13 +56,42 @@ class StrategyScene : public ManagementScene
   void refresh() override { loadStrategy(); }
 
  private:
+  friend class GameFlowTest_GUIFlowLifecycle_Test;
+
+  /** Selection on the roles card: the goalkeeper or an outfield slot. */
+  static constexpr int KEEPER_SLOT = -1;
+
   void renderInstructions(float width);
   void renderSummary(float width);
-  [[nodiscard]] bool hasUnsavedChanges() const;
-  void saveStrategy();
+  void renderRoles(float width);
+  void renderShapeEditor(const Lineup& lineup, float width);
+  void renderSlotList(const Lineup& lineup);
+  void renderSlotDetails(const Lineup& lineup);
+  void renderShapePresets(const Lineup& lineup, float width);
+
+  /** The club's tactic and lineup (nullptr without a managed club). */
+  [[nodiscard]] Strategy* clubStrategy() const;
+  [[nodiscard]] const Lineup* clubLineup() const;
+  /** Instruction of an outfield slot (a Standard one when none is stored). */
+  [[nodiscard]] SlotInstruction slotAt(const Lineup& lineup,
+                                       int slot) const;
+  void storeSlot(const SlotInstruction& instruction);
+  void setRole(const Lineup& lineup, TacticalRole role);
+  void setDuty(const Lineup& lineup, RoleDuty duty);
+  void applyShape(const Lineup& lineup, PossessionShape shape);
+  void suggestRoles(const Lineup& lineup);
+  void applySliders();
+
+  /** Whether the tactic differs from the one on arrival. */
+  [[nodiscard]] bool changedSinceEntry() const;
+  void revert();
   void loadStrategy();
 
   StrategySliders current_sliders;
-  StrategySliders saved_sliders;
+  /** The tactic as it was when the screen was opened (Revert). */
+  Strategy entry_strategy;
   int selected_preset = -1;
+  int selected_slot = 0;
+  /** Outfield slot dragged on the shape editor (-1 none). */
+  int dragging_slot = -1;
 };

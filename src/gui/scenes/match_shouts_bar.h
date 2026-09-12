@@ -36,7 +36,7 @@ void render(const TouchlineContext& context, float width);
  */
 int indexForScancode(int scancode);
 
-/** @brief Name of the key that gives the shout at @p index with Shift. */
+/** @brief Key (chord) that gives the shout at @p index, e.g. "Shift+1". */
 std::string keyName(std::size_t index);
 
 /**

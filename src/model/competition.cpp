@@ -25,6 +25,7 @@
 #include "model/lineup.h"
 #include "model/player.h"
 #include "model/team.h"
+#include "model/world_rng.h"
 
 namespace
 {
@@ -479,6 +480,46 @@ size_t Competitions::drawPendingCupRounds(Calendar& calendar,
   return added;
 }
 
+std::optional<Competitions::CupDraw> Competitions::cupDraw(
+    const Calendar& calendar, const GameData& gamedata, LeagueID root,
+    uint8_t stage)
+{
+  if (stage == 0) return std::nullopt;
+  CupDraw draw;
+  draw.cup_id = root;
+  draw.stage = stage;
+  draw.total_rounds = cupRoundCount(cupEntrants(gamedata, root).size());
+  std::optional<GameDateValue> previous_last;
+  for (const auto& [date, matches] : calendar.getFullCalendar())
+  {
+    for (const Match& match : matches)
+    {
+      if (match.getMatchType() != MatchType::CUP ||
+          match.getCompetitionId() != root)
+        continue;
+      if (match.getStage() == stage)
+        draw.ties.push_back(match);
+      else if (match.getStage() + 1 == stage)
+        previous_last = date;  // The calendar is ordered by date.
+    }
+  }
+  if (draw.ties.empty()) return std::nullopt;
+  std::ranges::sort(draw.ties,
+                    [](const Match& left, const Match& right)
+                    {
+                      return std::tuple{left.getDate(), left.getHomeTeamId(),
+                                        left.getAwayTeamId()} <
+                             std::tuple{right.getDate(), right.getHomeTeamId(),
+                                        right.getAwayTeamId()};
+                    });
+  draw.drawn_on =
+      previous_last
+          ? *previous_last
+          : GameDateValue(SeasonCalendar::seasonStartYear(draw.ties.front().getDate()),
+                          7, 1);
+  return draw;
+}
+
 // ---------------- Knockout resolution ----------------
 
 float Competitions::penaltyConversionProbability(float shooting,
@@ -494,7 +535,8 @@ Competitions::ShootoutResult Competitions::simulateShootout(
     const std::vector<float>& home_takers,
     const std::vector<float>& away_takers, std::mt19937& rng)
 {
-  std::uniform_real_distribution<float> roll(0.0f, 1.0f);
+  const auto roll = [](std::mt19937& engine)
+  { return PortableRandom::uniformReal(engine, 0.0f, 1.0f); };
   const auto chance = [](const std::vector<float>& takers, size_t kick)
   {
     // Capped below certainty so sudden death always terminates.
@@ -533,16 +575,16 @@ Competitions::KnockoutResolution Competitions::resolveDrawnKnockout(
                                      MIN_STRENGTH_FACTOR, MAX_STRENGTH_FACTOR);
     return EXTRA_TIME_GOALS_PER_TEAM * factor * edge;
   };
-  std::poisson_distribution<int> home_goals(
-      rate(home_strength, away_strength, EXTRA_TIME_HOME_EDGE));
-  std::poisson_distribution<int> away_goals(
-      rate(away_strength, home_strength, 1.0 / EXTRA_TIME_HOME_EDGE));
+  const double home_rate =
+      rate(home_strength, away_strength, EXTRA_TIME_HOME_EDGE);
+  const double away_rate =
+      rate(away_strength, home_strength, 1.0 / EXTRA_TIME_HOME_EDGE);
 
   KnockoutResolution resolution;
-  resolution.home_extra_goals =
-      static_cast<uint8_t>(std::min(home_goals(rng), 9));
-  resolution.away_extra_goals =
-      static_cast<uint8_t>(std::min(away_goals(rng), 9));
+  resolution.home_extra_goals = static_cast<uint8_t>(
+      std::min(PortableRandom::poisson(rng, home_rate), 9));
+  resolution.away_extra_goals = static_cast<uint8_t>(
+      std::min(PortableRandom::poisson(rng, away_rate), 9));
   if (resolution.home_extra_goals == resolution.away_extra_goals)
   {
     const ShootoutResult shootout = simulateShootout(

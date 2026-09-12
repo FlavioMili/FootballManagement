@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 
 namespace
 {
@@ -89,6 +90,36 @@ constexpr std::array<PresetColors, static_cast<size_t>(Theme::Preset::COUNT)>
          ImVec4(0.420f, 0.460f, 0.500f, 1.0f), 0.022f, false},
     }};
 
+struct StatusColors
+{
+  ImVec4 positive;
+  ImVec4 warning;
+  ImVec4 negative;
+  ImVec4 info;
+};
+
+// Status colours per colour-vision mode, for the dark presets and for the
+// light one. Each keeps at least 4.5:1 against the page background and 3:1
+// against cards and raised controls of every preset (see the contrast test).
+constexpr std::array<StatusColors, static_cast<size_t>(Theme::ColorVision::COUNT)>
+    STATUS_DARK = {{
+        {ImVec4(0.235f, 0.770f, 0.486f, 1.0f), ImVec4(0.945f, 0.706f, 0.255f, 1.0f),
+         ImVec4(0.937f, 0.416f, 0.396f, 1.0f), ImVec4(0.400f, 0.660f, 0.965f, 1.0f)},
+        {ImVec4(0.380f, 0.650f, 1.000f, 1.0f), ImVec4(0.950f, 0.830f, 0.300f, 1.0f),
+         ImVec4(0.960f, 0.520f, 0.180f, 1.0f), ImVec4(0.760f, 0.640f, 0.980f, 1.0f)},
+        {ImVec4(0.200f, 0.780f, 0.740f, 1.0f), ImVec4(0.980f, 0.640f, 0.400f, 1.0f),
+         ImVec4(0.960f, 0.420f, 0.520f, 1.0f), ImVec4(0.640f, 0.660f, 0.980f, 1.0f)},
+    }};
+constexpr std::array<StatusColors, static_cast<size_t>(Theme::ColorVision::COUNT)>
+    STATUS_LIGHT = {{
+        {ImVec4(0.090f, 0.470f, 0.250f, 1.0f), ImVec4(0.560f, 0.360f, 0.000f, 1.0f),
+         ImVec4(0.700f, 0.150f, 0.140f, 1.0f), ImVec4(0.120f, 0.360f, 0.720f, 1.0f)},
+        {ImVec4(0.100f, 0.350f, 0.750f, 1.0f), ImVec4(0.500f, 0.400f, 0.000f, 1.0f),
+         ImVec4(0.650f, 0.270f, 0.000f, 1.0f), ImVec4(0.420f, 0.250f, 0.650f, 1.0f)},
+        {ImVec4(0.000f, 0.430f, 0.400f, 1.0f), ImVec4(0.620f, 0.300f, 0.050f, 1.0f),
+         ImVec4(0.700f, 0.120f, 0.300f, 1.0f), ImVec4(0.330f, 0.300f, 0.700f, 1.0f)},
+    }};
+
 // Club accents are chosen for contrast on the dark surfaces, not to imitate
 // any real club identity.
 constexpr std::array<ImVec4, 10> CLUB_ACCENTS = {
@@ -105,13 +136,28 @@ struct RatingStop
   ImVec4 color;
 };
 
-constexpr std::array<RatingStop, 5> RATING_STOPS = {{
-    {35.0f, ImVec4(0.898f, 0.337f, 0.318f, 1.0f)},
-    {50.0f, ImVec4(0.945f, 0.560f, 0.255f, 1.0f)},
-    {60.0f, ImVec4(0.905f, 0.740f, 0.250f, 1.0f)},
-    {70.0f, ImVec4(0.520f, 0.780f, 0.330f, 1.0f)},
-    {80.0f, ImVec4(0.180f, 0.760f, 0.500f, 1.0f)},
-}};
+using RatingScale = std::array<RatingStop, 5>;
+
+// Weak to strong: red to green, or diverging scales that avoid the
+// red-green (orange to blue) and blue-yellow (magenta to teal) confusions.
+constexpr std::array<RatingScale, static_cast<size_t>(Theme::ColorVision::COUNT)>
+    RATING_SCALES = {{
+        {{{35.0f, ImVec4(0.898f, 0.337f, 0.318f, 1.0f)},
+          {50.0f, ImVec4(0.945f, 0.560f, 0.255f, 1.0f)},
+          {60.0f, ImVec4(0.905f, 0.740f, 0.250f, 1.0f)},
+          {70.0f, ImVec4(0.520f, 0.780f, 0.330f, 1.0f)},
+          {80.0f, ImVec4(0.180f, 0.760f, 0.500f, 1.0f)}}},
+        {{{35.0f, ImVec4(0.900f, 0.420f, 0.100f, 1.0f)},
+          {50.0f, ImVec4(0.940f, 0.620f, 0.250f, 1.0f)},
+          {60.0f, ImVec4(0.800f, 0.780f, 0.600f, 1.0f)},
+          {70.0f, ImVec4(0.500f, 0.680f, 0.950f, 1.0f)},
+          {80.0f, ImVec4(0.300f, 0.550f, 1.000f, 1.0f)}}},
+        {{{35.0f, ImVec4(0.900f, 0.300f, 0.420f, 1.0f)},
+          {50.0f, ImVec4(0.900f, 0.520f, 0.620f, 1.0f)},
+          {60.0f, ImVec4(0.780f, 0.720f, 0.780f, 1.0f)},
+          {70.0f, ImVec4(0.420f, 0.780f, 0.760f, 1.0f)},
+          {80.0f, ImVec4(0.150f, 0.740f, 0.700f, 1.0f)}}},
+    }};
 
 Theme::Appearance activeAppearance;
 std::optional<TeamID> activeClub;
@@ -131,30 +177,31 @@ const PresetColors& presetColors()
   return PRESETS[index];
 }
 
+size_t visionIndex(Theme::ColorVision vision)
+{
+  return std::min(static_cast<size_t>(vision), STATUS_DARK.size() - 1);
+}
+
 void buildPalette()
 {
-  const PresetColors& preset = presetColors();
-  Theme::Palette& p = activePalette;
-  p.background = preset.background;
-  p.sidebar = preset.sidebar;
-  p.surface = preset.surface;
-  p.raised = preset.raised;
-  p.border = preset.border;
-  p.text = preset.text;
-  p.muted = preset.muted;
-  p.faint = preset.faint;
-  const float shade = preset.light ? 0.78f : 1.0f;
-  p.positive = ImVec4(0.235f * shade, 0.770f * shade, 0.486f * shade, 1.0f);
-  p.warning = ImVec4(0.945f * shade, 0.706f * shade, 0.255f * shade, 1.0f);
-  p.negative = ImVec4(0.898f * shade, 0.337f * shade, 0.318f * shade, 1.0f);
-  p.info = ImVec4(0.345f * shade, 0.620f * shade, 0.945f * shade, 1.0f);
-  p.accent = activeAppearance.club_accent && activeClub
-                 ? Theme::clubAccent(*activeClub)
-                 : activeAppearance.custom_accent;
-  const float luminance =
-      0.2126f * p.accent.x + 0.7152f * p.accent.y + 0.0722f * p.accent.z;
-  p.on_accent = luminance > 0.45f ? ImVec4(0.03f, 0.04f, 0.05f, 1.0f)
-                                  : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+  activePalette = Theme::presetPalette(
+      activeAppearance.preset, activeAppearance.color_vision,
+      activeAppearance.club_accent && activeClub
+          ? Theme::clubAccent(*activeClub)
+          : activeAppearance.custom_accent);
+}
+
+float channelLuminance(float channel)
+{
+  return channel <= 0.04045f ? channel / 12.92f
+                             : std::pow((channel + 0.055f) / 1.055f, 2.4f);
+}
+
+float relativeLuminance(const ImVec4& color)
+{
+  return 0.2126f * channelLuminance(color.x) +
+         0.7152f * channelLuminance(color.y) +
+         0.0722f * channelLuminance(color.z);
 }
 
 // Lower saturation and brightness of the accent for control fills.
@@ -254,6 +301,55 @@ void applyColors()
 namespace Theme
 {
 
+Palette presetPalette(Preset preset, ColorVision vision, const ImVec4& accent)
+{
+  const PresetColors& colors =
+      PRESETS[std::min(static_cast<size_t>(preset), PRESETS.size() - 1)];
+  Palette p{};
+  p.background = colors.background;
+  p.sidebar = colors.sidebar;
+  p.surface = colors.surface;
+  p.raised = colors.raised;
+  p.border = colors.border;
+  p.text = colors.text;
+  p.muted = colors.muted;
+  p.faint = colors.faint;
+  const StatusColors& status =
+      (colors.light ? STATUS_LIGHT : STATUS_DARK)[visionIndex(vision)];
+  p.positive = status.positive;
+  p.warning = status.warning;
+  p.negative = status.negative;
+  p.info = status.info;
+  p.accent = accent;
+  const float luminance =
+      0.2126f * p.accent.x + 0.7152f * p.accent.y + 0.0722f * p.accent.z;
+  p.on_accent = luminance > 0.45f ? ImVec4(0.03f, 0.04f, 0.05f, 1.0f)
+                                  : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+  return p;
+}
+
+const char* colorVisionKey(ColorVision vision)
+{
+  switch (vision)
+  {
+    case ColorVision::RED_GREEN:
+      return "SETTINGS_COLOR_VISION_RED_GREEN";
+    case ColorVision::BLUE_YELLOW:
+      return "SETTINGS_COLOR_VISION_BLUE_YELLOW";
+    case ColorVision::STANDARD:
+    case ColorVision::COUNT:
+      break;
+  }
+  return "SETTINGS_COLOR_VISION_STANDARD";
+}
+
+float contrastRatio(const ImVec4& first, const ImVec4& second)
+{
+  const float a = relativeLuminance(first);
+  const float b = relativeLuminance(second);
+  return (std::max(a, b) + 0.05f) / (std::min(a, b) + 0.05f);
+}
+
 const Palette& palette() { return activePalette; }
 
 const Appearance& appearance() { return activeAppearance; }
@@ -303,6 +399,9 @@ void apply(const Appearance& options, float displayScale)
 
   style.ScaleAllSizes(activeScale);
   style.FontScaleDpi = activeScale;
+  // Text size on top of the UI scale: every font size (PushFont included)
+  // is multiplied by it, while paddings and fixed sizes follow the UI scale.
+  style.FontScaleMain = std::clamp(options.text_scale, 0.85f, 1.5f);
 }
 
 void setClub(std::optional<TeamID> teamId)
@@ -353,19 +452,21 @@ ImVec4 clubAccent(TeamID teamId)
 ImVec4 ratingColor(double value)
 {
   const auto rating = static_cast<float>(value);
-  ImVec4 color = RATING_STOPS.back().color;
-  if (rating <= RATING_STOPS.front().value)
+  const RatingScale& stops =
+      RATING_SCALES[visionIndex(activeAppearance.color_vision)];
+  ImVec4 color = stops.back().color;
+  if (rating <= stops.front().value)
   {
-    color = RATING_STOPS.front().color;
+    color = stops.front().color;
   }
   else
   {
-    for (size_t index = 1; index < RATING_STOPS.size(); ++index)
+    for (size_t index = 1; index < stops.size(); ++index)
     {
-      const RatingStop& upper = RATING_STOPS[index];
+      const RatingStop& upper = stops[index];
       if (rating <= upper.value)
       {
-        const RatingStop& lower = RATING_STOPS[index - 1];
+        const RatingStop& lower = stops[index - 1];
         color = mix(lower.color, upper.color,
                     (rating - lower.value) / (upper.value - lower.value));
         break;

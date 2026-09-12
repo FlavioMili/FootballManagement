@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -49,7 +50,25 @@ enum class InboxAction : std::uint8_t
   RespondOffer,   /*!< Accept / reject / counter a bid for player_id. */
   ReplyToPlayer,  /*!< Answer player_id's request or story. */
   YouthTrialists, /*!< Sign or release the intake trialists. */
-  Shortlist       /*!< Add the recommended player_id to the shortlist. */
+  Shortlist,      /*!< Add the recommended player_id to the shortlist. */
+  Dilemma         /*!< Pick one of the two answers of a decision moment. */
+};
+
+/**
+ * @struct InboxView
+ * @brief Filters of the inbox screen, kept with the career (table InboxView)
+ * so they survive a scene change and a reload.
+ */
+struct InboxView
+{
+  std::int8_t tab = -1;      /*!< 0 decisions, 1 information, -1 pick. */
+  std::int8_t category = -1; /*!< InboxCategory, -1 all. */
+  bool unread_only = false;
+  bool followed_only = false; /*!< Messages about followed players. */
+  std::optional<PlayerID> player_id; /*!< Only this player's messages. */
+  std::optional<TeamID> team_id;     /*!< Only this club's messages. */
+
+  bool operator==(const InboxView&) const = default;
 };
 
 /**
@@ -119,6 +138,18 @@ class Inbox
   static bool isArchived(const InboxMessage& message,
                          const GameDateValue& today);
 
+  /**
+   * True when @p message passes the information filters of @p view:
+   * category, unread, the chosen player or club, and the followed players
+   * (@p followed) when followed_only is set.
+   */
+  static bool matchesView(const InboxMessage& message, const InboxView& view,
+                          std::span<const PlayerID> followed);
+
+  /** Saved filters of the inbox screen. */
+  const InboxView& getView() const { return view; }
+  void setView(const InboxView& updated) { view = updated; }
+
   /** Marks a message as read; false if the id is unknown. */
   bool markRead(std::uint32_t id);
 
@@ -137,6 +168,7 @@ class Inbox
  private:
   std::vector<InboxMessage> messages;
   std::uint32_t next_id = 1;
+  InboxView view;
 };
 
 /**
@@ -157,5 +189,9 @@ std::string formatLocalized(const std::string& key,
  */
 std::string localizedDate(const std::string& text);
 
-/** Compact money text for messages, e.g. "€1.25M", "€350K", "-€2.0M". */
+/**
+ * Money for a message argument: "€" and the plain amount ("€1250000"),
+ * shown by formatLocalized() in the reader's language ("€1.25M",
+ * "€ 1,25 mln"), so saved messages follow a later change of language.
+ */
 std::string formatMoney(std::int64_t amount);

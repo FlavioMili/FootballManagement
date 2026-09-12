@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 
@@ -1126,6 +1127,68 @@ struct MatchTuning final
     static constexpr float PASS_MIN_ALIGNMENT = 0.5f;
     /** ... preferring nearer team-mates by this much per metre. */
     static constexpr float PASS_DISTANCE_WEIGHT = 0.006f;
+
+    // --- Play mode: pass assistance (index = MatchPlayerInput::passAssist) --
+    /** Aim cone (cosine) of a pass without, with normal and with strong
+     * assistance; index 1 is PASS_MIN_ALIGNMENT. */
+    static constexpr std::array<float, 3> ASSIST_MIN_ALIGNMENT{0.82f, 0.5f,
+                                                               0.25f};
+    /** Weight of the pass's chance of arriving in picking the receiver. */
+    static constexpr std::array<float, 3> ASSIST_COMPLETION_WEIGHT{0.0f, 0.25f,
+                                                                   0.6f};
+    /** A through ball prefers team-mates going forward (per metre gained)
+     * and those already running in behind. */
+    static constexpr float THROUGH_PROGRESS_WEIGHT = 0.012f;
+    static constexpr float THROUGH_RUNNER_BONUS = 0.25f;
+    /** Space ahead of the receiver a through ball is played into, from a
+     * tap to a full bar (metres). */
+    static constexpr float THROUGH_LEAD_MIN_METRES = 5.0f;
+    static constexpr float THROUGH_LEAD_MAX_METRES = 16.0f;
+    /** Length of a pass into space along the stick (ground and lofted). */
+    static constexpr float SPACE_PASS_MIN_METRES = 10.0f;
+    static constexpr float SPACE_PASS_MAX_METRES = 30.0f;
+    static constexpr float SPACE_LOFT_MIN_METRES = 18.0f;
+    static constexpr float SPACE_LOFT_MAX_METRES = 45.0f;
+    /** Power of a tap (no hold), as a share of the bar. */
+    static constexpr float DEFAULT_POWER = 0.55f;
+
+    // --- Play mode: shots ----------------------------------------------------
+    /** Shot pace scale: SHOT_SPEED_MIN_SCALE + SHOT_SPEED_POWER_GAIN * power.
+     */
+    static constexpr float SHOT_SPEED_MIN_SCALE = 0.72f;
+    static constexpr float SHOT_SPEED_POWER_GAIN = 0.42f;
+    /** Above this share of the bar the shot gets harder to keep down ... */
+    static constexpr float SHOT_OVERPOWER_FROM = 0.75f;
+    /** ... by up to this much extra spread and lift at a full bar. */
+    static constexpr float SHOT_OVERPOWER_SPREAD = 0.55f;
+    static constexpr float SHOT_OVERPOWER_LIFT_METRES = 0.9f;
+
+    // --- Play mode: defending and receiving ---------------------------------
+    /** Jockeying pace as a share of the fresh top speed. */
+    static constexpr float JOCKEY_SPEED_SHARE = 0.42f;
+    /** Goal-side gap kept to the carrier while jockeying (metres). */
+    static constexpr float JOCKEY_CONTAIN_METRES = 2.5f;
+    /** A patient, jockeying defender is harder to beat one against one. */
+    static constexpr float JOCKEY_TAKE_ON_PENALTY = 0.08f;
+    /** With the stick idle the receiver of a pass moves to meet it, aiming
+     * this many seconds of ball travel ahead. */
+    static constexpr float MEET_PASS_LOOKAHEAD_SECONDS = 0.5f;
+    /** On hand-back the AI picks up the run where the momentum carries him
+     * (seconds of travel). */
+    static constexpr float RELEASE_MOMENTUM_SECONDS = 0.6f;
+
+    // --- Play mode: who becomes the active footballer ------------------------
+    /** Ball path looked at, and its sampling (seconds). */
+    static constexpr float SWITCH_HORIZON_SECONDS = 2.5f;
+    static constexpr float SWITCH_SAMPLE_SECONDS = 0.1f;
+    /** Rough deceleration of a ball on the ground for the path (m/s^2). */
+    static constexpr float SWITCH_BALL_DECELERATION = 2.0f;
+    /** Reaction before a team-mate sets off (seconds). */
+    static constexpr float SWITCH_REACTION_SECONDS = 0.25f;
+    /** Head start of the current active footballer (hysteresis) and of a
+     * defender already goal-side of the ball. */
+    static constexpr float SWITCH_CURRENT_PREFERENCE_SECONDS = 0.35f;
+    static constexpr float SWITCH_GOAL_SIDE_BONUS_SECONDS = 0.2f;
   };
 
   /** Accepted ranges of MatchContext (league character). */

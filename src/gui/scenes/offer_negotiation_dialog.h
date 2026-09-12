@@ -21,7 +21,8 @@
 #include "model/transfer_negotiation.h"
 
 /**
- * @brief Modal talks over an AI club's bid for one of the managed players.
+ * @brief Modal talks over an AI club's bid for one of the managed players,
+ * or its offer to borrow him.
  *
  * Self-contained like PlayerTalkDialog: the inbox and the transfer market
  * each keep one, call open() from a button and render() every frame. It
@@ -30,7 +31,9 @@
  * instalments, add-ons, sell-on) and every round so far. The club accepts,
  * rejects, counters with a full structure, names its price or declares the
  * player not for sale; the buyer's answer arrives on a later day (the same
- * day near the deadline).
+ * day near the deadline). A loan offer shows the loan terms instead and is
+ * countered with wage share, length, purchase option or obligation, recall
+ * clause and guaranteed appearances.
  *
  * Text is built when the dialog opens and after each action, never per
  * frame; only the terms editor runs every frame.
@@ -75,6 +78,9 @@ class OfferNegotiationDialog
   void rebuild(GameController& controller);
   /** Upfront and present-value texts of the counter being prepared. */
   void refreshCounterTexts();
+  /** The offer on the table, line by line. */
+  void rebuildTransferLines();
+  void rebuildLoanLines();
   void renderHeader() const;
   void renderBid() const;
   void renderHistory() const;
@@ -114,9 +120,12 @@ class OfferNegotiationDialog
   // The club's answer being prepared.
   Mode mode = Mode::Counter;
   TransferNegotiation::OfferTerms counter;
+  TransferNegotiation::LoanTerms loan_counter;
   std::int64_t price = 0;
   std::string counter_upfront_text;
   std::string counter_worth_text;
+  std::string loan_wage_text;   /**< The borrower's weekly share. */
+  std::string loan_saving_text; /**< Wages saved over the loan. */
   std::string notice; /**< Result of the last action while still open. */
   ImVec4 notice_color{};
 

@@ -1,5 +1,33 @@
 cmake_minimum_required(VERSION 3.29)
-project(FootballManagement LANGUAGES CXX C)
+project(FootballManagement VERSION 1.0.0 LANGUAGES CXX C)
+
+# The game version: the project version unless a release build passes its tag
+# (without the leading v, e.g. -DFM_VERSION=1.0.0-rc1). "0.0.0" was the old
+# default and still means "not set" in existing build trees.
+set(FM_VERSION "" CACHE STRING
+  "Version stamped into the game and its packages; empty for the project version")
+if(FM_VERSION STREQUAL "" OR FM_VERSION STREQUAL "0.0.0")
+  set(FM_GAME_VERSION "${PROJECT_VERSION}")
+else()
+  set(FM_GAME_VERSION "${FM_VERSION}")
+endif()
+
+# Commit shown in crash reports; CI passes it, otherwise ask git.
+set(FM_BUILD_COMMIT "" CACHE STRING "Commit recorded in the build (default: git)")
+if(FM_BUILD_COMMIT STREQUAL "")
+  find_package(Git QUIET)
+  if(Git_FOUND)
+    execute_process(
+      COMMAND "${GIT_EXECUTABLE}" rev-parse --short=12 HEAD
+      WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+      OUTPUT_VARIABLE FM_BUILD_COMMIT
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET)
+  endif()
+  if(FM_BUILD_COMMIT STREQUAL "")
+    set(FM_BUILD_COMMIT "unknown")
+  endif()
+endif()
 
 # Keep newer CMake policy behavior in dependencies without raising the minimum
 # above the version required by this project's TEST_LAUNCHER usage.
@@ -49,7 +77,10 @@ endif()
 # Compiler diagnostics
 # -----------------------------
 set(FM_WARNING_FLAGS)
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+# clang-cl (Clang with the MSVC command line) takes the MSVC flags: its -Wall
+# would mean -Weverything.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND
+   NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
   list(APPEND FM_WARNING_FLAGS
     -Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor
     -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual
@@ -63,6 +94,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   endif()
 elseif(MSVC)
   list(APPEND FM_WARNING_FLAGS /W4 /permissive-)
+endif()
+if(MSVC)
+  # Sources and string literals are UTF-8 (e.g. the "·" separators).
+  add_compile_options(/utf-8)
 endif()
 
 # -----------------------------

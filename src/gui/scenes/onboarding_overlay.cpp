@@ -64,6 +64,29 @@ ImVec4 priorityColor(int priority)
   return palette.info;
 }
 
+/**
+ * Priority of a next step by shape as well as colour: a triangle for
+ * urgent work, a diamond for important, a dot for the rest.
+ */
+void priorityMarker(ImVec2 centre, int priority)
+{
+  const float size = 4.5f * Theme::scale();
+  const ImU32 color = Theme::toU32(priorityColor(priority));
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  if (priority >= 80)
+    drawList->AddTriangleFilled(ImVec2(centre.x, centre.y - size),
+                                ImVec2(centre.x + size, centre.y + size * 0.8f),
+                                ImVec2(centre.x - size, centre.y + size * 0.8f),
+                                color);
+  else if (priority >= 55)
+    drawList->AddQuadFilled(ImVec2(centre.x, centre.y - size),
+                            ImVec2(centre.x + size, centre.y),
+                            ImVec2(centre.x, centre.y + size),
+                            ImVec2(centre.x - size, centre.y), color);
+  else
+    drawList->AddCircleFilled(centre, size * 0.75f, color);
+}
+
 /** Filled dot for done steps, ring for open ones (no glyph dependency). */
 void stepMarker(bool done)
 {
@@ -206,6 +229,24 @@ const char* tipKey(NavSection section)
       return "TIP_DATA_HUB";
     case NavSection::OPPOSITION:
       return "TIP_OPPOSITION";
+    case NavSection::MANAGER:
+      return "TIP_MANAGER";
+    case NavSection::MEDICAL:
+      return "TIP_MEDICAL";
+    case NavSection::CALENDAR:
+      return "TIP_CALENDAR";
+    case NavSection::SQUAD_PLANNER:
+      return "TIP_SQUAD_PLANNER";
+    case NavSection::COMPARE:
+      return "TIP_COMPARE";
+    case NavSection::INTERNATIONAL:
+      return "TIP_INTERNATIONAL";
+    case NavSection::AWARDS:
+      return "TIP_AWARDS";
+    case NavSection::RECORDS:
+      return "TIP_RECORDS";
+    case NavSection::PLANNING:
+      return "TIP_PLANNING";
     default:
       break;
   }
@@ -405,9 +446,8 @@ void NextStepsCard::render(GUIView* view, float width)
         std::max(right - buttonWidth - dot - 2.0f * spacing, 60.0f * scale);
     const ImVec2 start = ImGui::GetCursorScreenPos();
     const float lineHeight = ImGui::GetTextLineHeight();
-    ImGui::GetWindowDrawList()->AddCircleFilled(
-        ImVec2(start.x + dot * 0.4f, start.y + lineHeight * 0.5f), 3.5f * scale,
-        Theme::toU32(priorityColor(row.action.priority)));
+    priorityMarker(ImVec2(start.x + dot * 0.4f, start.y + lineHeight * 0.5f),
+                   row.action.priority);
     ImGui::SetCursorScreenPos(ImVec2(start.x + dot, start.y));
     ImGui::BeginGroup();
     UI::textFitted(row.title, textWidth, palette.text);

@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -19,8 +20,11 @@
 #include <vector>
 
 #include "global/types.h"
+#include "model/finances.h"
 #include "model/gamedate.h"
 
+class AwardSystem;
+struct ClubProfile;
 class DatabaseConnection;
 class GameData;
 class Inbox;
@@ -36,6 +40,9 @@ struct MatchReport;
  * that call for a decision carry a StoryChoice: the inbox offers to talk to
  * the player with the conversation options that answer it. A weekly cap
  * keeps busy periods from flooding the inbox.
+ *
+ * The kinds after Rivalry are decision moments: short two-option dilemmas
+ * (see Dilemma) answered from the inbox. Values are persisted: append only.
  */
 enum class StoryKind : std::uint8_t
 {
@@ -46,7 +53,15 @@ enum class StoryKind : std::uint8_t
   TransferSaga,
   Comeback,
   Milestone,
-  Rivalry
+  Rivalry,
+  CompassionateLeave, /*!< A player asks to be with his family. */
+  HomesickYouth,      /*!< A young player misses home. */
+  FineDispute,        /*!< The captain disputes a club fine. */
+  RivalComments,      /*!< The press asks about the rival's remarks. */
+  SponsorAppearance,  /*!< A sponsor wants the squad before a match. */
+  TrainingClash,      /*!< Two players clash in training. */
+  CoachingCourse,     /*!< A veteran wants to start his coaching badges. */
+  TicketProtest       /*!< Supporters protest about ticket prices. */
 };
 
 /** Competitive career totals of a player (all clubs). */
@@ -75,11 +90,69 @@ struct StoryRecord
   bool posted = false; /*!< False when the weekly cap held it back. */
 };
 
+/**
+ * @brief Bounded effects of one answer to a decision moment.
+ *
+ * Shown before the manager chooses and applied once: morale and match
+ * fitness are 0-100 points, trust is the -100..100 relation scale, money
+ * changes the club balance through the ledger (positive is income).
+ */
+struct DilemmaEffects
+{
+  float morale = 0.0f;       /*!< The player at the centre of it. */
+  float trust = 0.0f;        /*!< His trust in the manager. */
+  float other_morale = 0.0f; /*!< The second player (training clash). */
+  float other_trust = 0.0f;
+  float squad_morale = 0.0f; /*!< Everyone else in the senior squad. */
+  float sharpness = 0.0f;    /*!< The player's match fitness. */
+  std::int64_t money = 0;
+  FinanceCategory category = FinanceCategory::Adjustment;
+};
+
+/** @brief A decision moment of the managed club (table StoryDilemmas). */
+struct Dilemma
+{
+  StoryKind kind = StoryKind::CompassionateLeave;
+  PlayerID subject = 0;  /*!< 0 for club-wide moments. */
+  std::uint32_t other = 0; /*!< Second player, or the rival club. */
+  std::int32_t day = 0;    /*!< Raised on this day (unique). */
+  std::int32_t expires_day = 0;
+  std::int8_t chosen = -1; /*!< -1 open, 0 / 1 answered, 2 lapsed. */
+  std::int32_t resolved_day = 0;
+  std::int64_t money = 0; /*!< Balance change applied by the answer. */
+
+  bool open() const { return chosen < 0; }
+};
+
+/** @brief A followed player and what was last reported about him. */
+struct FollowedPlayer
+{
+  PlayerID player_id = 0;
+  std::int32_t since_day = 0;
+  TeamID team_id = 0;
+  bool injured = false;
+  std::uint8_t contract_years = 0;
+  std::uint32_t wage = 0;
+  std::uint16_t honours = 0;
+  std::int32_t last_match_day = 0; /*!< Last big-match note. */
+};
+
+/** @brief What the day loop knows beyond the squad. */
+struct StoryDayContext
+{
+  /** Days to the managed club's next fixture: 0 today, -1 none soon. */
+  int days_to_match = -1;
+  const AwardSystem* awards = nullptr;
+};
+
 /** @brief Persisted state of the story engine. */
 struct StoryState
 {
   std::vector<StoryRecord> records;
   std::vector<StoryChoice> choices;
+  /** Decision moments, oldest first (open, answered and lapsed). */
+  std::vector<Dilemma> dilemmas;
+  std::vector<FollowedPlayer> follows;
   /** Managed players currently injured: first day out. */
   std::unordered_map<PlayerID, std::int32_t> injury_start;
   /** Returned from a long injury, story due at the next appearance: days
@@ -117,6 +190,52 @@ std::optional<std::uint32_t> goalMilestone(std::uint32_t before,
 bool isPoorRun(std::string_view recent_form);
 /** Language key of a story kind. */
 const char* kindKey(StoryKind kind);
+
+// ---- Decision moments ----
+
+/** At most one decision moment in this many days. */
+constexpr std::int32_t DILEMMA_GAP_DAYS = 14;
+/** The same kind of moment does not come back for this many days. */
+constexpr std::int32_t DILEMMA_KIND_COOLDOWN_DAYS = 180;
+/** Days to answer before the moment lapses (without effects). */
+constexpr std::int32_t DILEMMA_ANSWER_DAYS = 7;
+/** Chance per eligible day once the gap has passed. */
+constexpr double DILEMMA_DAILY_CHANCE = 0.06;
+/** Effect bounds (absolute values). */
+constexpr float DILEMMA_MAX_MORALE = 6.0f;
+constexpr float DILEMMA_MAX_TRUST = 6.0f;
+constexpr float DILEMMA_MAX_SQUAD_MORALE = 2.0f;
+constexpr float DILEMMA_MAX_SHARPNESS = 10.0f;
+constexpr std::int64_t DILEMMA_MAX_MONEY = 250'000;
+constexpr StoryKind FIRST_DILEMMA = StoryKind::CompassionateLeave;
+constexpr StoryKind LAST_DILEMMA = StoryKind::TicketProtest;
+
+/** True for the two-option decision moments. */
+bool isDilemma(StoryKind kind);
+/** Language keys of a moment's message (title and body take the player,
+ * the second player or rival club, and the money at stake). */
+const char* dilemmaTitleKey(StoryKind kind);
+const char* dilemmaBodyKey(StoryKind kind);
+/** Label of answer @p option (0 or 1). */
+const char* dilemmaOptionKey(StoryKind kind, int option);
+/** Body of the note filed once answer @p option is taken. */
+const char* dilemmaDoneKey(StoryKind kind, int option);
+/** The moment a title key belongs to, if any. */
+std::optional<StoryKind> dilemmaForTitle(std::string_view title_key);
+/** Effects of answer @p option (0 or 1) for a club of @p profile. */
+DilemmaEffects dilemmaEffects(StoryKind kind, int option,
+                              const ClubProfile& profile);
+
+// ---- Followed players ----
+
+/** Players the manager can follow at once. */
+constexpr std::size_t MAX_FOLLOWS = 25;
+/** A followed player's match makes news from this rating... */
+constexpr float BIG_MATCH_RATING = 8.5f;
+/** ...or this many goals. */
+constexpr int BIG_MATCH_GOALS = 2;
+/** At most one big-match note per player in this many days. */
+constexpr std::int32_t BIG_MATCH_GAP_DAYS = 7;
 }  // namespace Stories
 
 /**
@@ -135,10 +254,15 @@ class StoryEngine
    */
   void setCareerProvider(std::function<CareerTotals(PlayerID)> provider);
 
-  /** Daily: long-injury tracking, captain disputes (weekly), expiries. */
+  /**
+   * Daily: long-injury tracking, captain disputes (weekly), expiries,
+   * followed players' news and decision moments (never on match day).
+   */
   void onDayAdvanced(const GameDateValue& date, TeamID managed_team_id,
-                     const InteractionSystem& interactions, Inbox& inbox);
-  /** Debut, breakout, milestones, comeback, poor run and rivalry. */
+                     const InteractionSystem& interactions, Inbox& inbox,
+                     const StoryDayContext& context = {});
+  /** Debut, breakout, milestones, comeback, poor run and rivalry of the
+   * managed club; big matches of followed players anywhere. */
   void onMatchPlayed(const MatchReport& report, TeamID managed_team_id,
                      const std::string& recent_form, Inbox& inbox);
   /** Transfer saga: a second bid within a month for a key player. */
@@ -159,6 +283,36 @@ class StoryEngine
   /** The manager answered (or dismissed) the player's story. */
   void resolveChoice(PlayerID player_id);
 
+  // ---- Decision moments ----
+
+  /** The open decision moment, if any. */
+  const Dilemma* openDilemma() const;
+  /** The moment raised on @p day (open or not). */
+  const Dilemma* dilemmaOn(std::int32_t day) const;
+  /** Effects of @p option for the open moment of @p managed_team_id. */
+  std::optional<DilemmaEffects> previewDilemma(int option,
+                                               TeamID managed_team_id) const;
+  /**
+   * Answers the open moment with @p option (0 or 1): applies its effects to
+   * the players, their trust (through @p interactions) and the club's
+   * ledger, records the answer and files a note. False when nothing is
+   * open or the option is invalid.
+   */
+  bool resolveDilemma(int option, const GameDateValue& date,
+                      TeamID managed_team_id, InteractionSystem& interactions,
+                      Inbox& inbox);
+
+  // ---- Followed players ----
+
+  /** Starts following @p player_id (false if unknown, followed or full). */
+  bool follow(PlayerID player_id, const GameDateValue& date);
+  bool unfollow(PlayerID player_id);
+  bool isFollowed(PlayerID player_id) const;
+  const std::vector<FollowedPlayer>& getFollows() const
+  {
+    return state.follows;
+  }
+
   const StoryState& getState() const { return state; }
   void restore(StoryState restored);
   void load(const std::shared_ptr<DatabaseConnection>& db_conn);
@@ -175,6 +329,13 @@ class StoryEngine
             std::optional<TeamID> team_id, Inbox& inbox,
             bool with_choice = false);
   CareerTotals careerBefore(PlayerID player_id);
+  void trackFollows(const GameDateValue& date, TeamID managed_team_id,
+                    const AwardSystem* awards, Inbox& inbox);
+  void followMatch(const MatchReport& report, TeamID managed_team_id,
+                   Inbox& inbox);
+  void raiseDilemma(const GameDateValue& date, TeamID managed_team_id,
+                    const InteractionSystem& interactions,
+                    const StoryDayContext& context, Inbox& inbox);
 
   std::shared_ptr<GameData> gamedata;
   StoryState state;

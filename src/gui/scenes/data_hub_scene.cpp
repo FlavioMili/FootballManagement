@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdio>
 #include <format>
 #include <optional>
 
@@ -32,6 +33,24 @@ constexpr float TREND_HEIGHT = 180.0f;
 constexpr float TWO_COLUMN_MIN_WIDTH = 760.0f;
 constexpr float SHOT_MAP_MAX_WIDTH = 420.0f;
 constexpr float CHART_LEFT_AXIS = 36.0f;
+constexpr float PERFORMANCE_HEIGHT = 150.0f;
+constexpr float LEADER_COLUMN_MIN_WIDTH = 220.0f;
+
+/** Second categorical series colour (orange), stepped for the surface. */
+ImVec4 secondSeries()
+{
+  const ImVec4& surface = Theme::palette().surface;
+  const float luminance =
+      0.2126f * surface.x + 0.7152f * surface.y + 0.0722f * surface.z;
+  return luminance > 0.5f ? ImVec4(0.922f, 0.408f, 0.204f, 1.0f)
+                          : ImVec4(0.851f, 0.349f, 0.149f, 1.0f);
+}
+
+std::string lastName(const std::string& name)
+{
+  const auto space = name.find_last_of(' ');
+  return space == std::string::npos ? name : name.substr(space + 1);
+}
 
 // Pitch proportions of the attacking half (metres).
 constexpr float HALF_LENGTH = MatchTuning::Pitch::LENGTH_METRES * 0.5f;
@@ -45,7 +64,10 @@ std::string decimal(float value) { return std::format("{:.2f}", value); }
 
 std::string metricValue(HubMetric metric, float value)
 {
-  if (metric == HubMetric::PassCompletion) return std::format("{:.0f}%", value);
+  if (metric == HubMetric::PassCompletion || metric == HubMetric::SetPieceShare)
+    return std::format("{:.0f}%", value);
+  if (metric == HubMetric::Finishing || metric == HubMetric::GoalsPrevented)
+    return std::format("{:+.2f}", value);
   if (metric == HubMetric::ShotsFor || metric == HubMetric::ShotsAgainst)
     return std::format("{:.1f}", value);
   return decimal(value);
@@ -82,13 +104,15 @@ void legendItem(const char* label, const ImVec4& color)
   ImGui::TextUnformatted(label);
 }
 
-void footnote(const std::string& text)
+void footnote(const char* text)
 {
   Theme::ScopedText small(Theme::Text::SMALL);
   ImGui::PushTextWrapPos(0.0f);
-  ImGui::TextColored(Theme::palette().muted, "%s", text.c_str());
+  ImGui::TextColored(Theme::palette().muted, "%s", text);
   ImGui::PopTextWrapPos();
 }
+
+void footnote(const std::string& text) { footnote(text.c_str()); }
 }  // namespace
 
 DataHubScene::DataHubScene(GUIView* parent) : ManagementScene(parent) {}
@@ -119,6 +143,53 @@ void DataHubScene::refresh()
       }
     }
     players.push_back(std::move(row));
+  }
+
+  // Finishing and goalkeeping, cached per match.
+  const TeamAnalytics& team = hub.team;
+  performance_tooltips.clear();
+  performance_top = 0.5f;
+  for (std::size_t index = 0; index < team.trend.size(); ++index)
+  {
+    const TeamTrendPoint& point = team.trend[index];
+    const float finishing = team.cumulative_finishing[index];
+    const float prevention = team.cumulative_prevention[index];
+    performance_top =
+        std::max({performance_top, std::abs(finishing), std::abs(prevention)});
+    performance_tooltips.push_back(fmt::sprintf(
+        LOC("HUB_PERF_TOOLTIP"), Format::dayMonth(point.date).c_str(),
+        opponent_names[index].c_str(), point.goals_for,
+        decimal(point.xg_for).c_str(), std::format("{:+.2f}", finishing).c_str(),
+        point.goals_against, decimal(point.xg_against).c_str(),
+        std::format("{:+.2f}", prevention).c_str()));
+  }
+  performance_top = std::ceil(performance_top * 2.0f) / 2.0f;
+
+  // Leaderboards over the tracked matches.
+  leaders_note =
+      fmt::sprintf(LOC("HUB_LEADERS_NOTE"), DataHub::LEADER_MIN_MINUTES);
+  for (std::size_t metric = 0; metric < LEADER_METRIC_COUNT; ++metric)
+  {
+    const auto which = static_cast<LeaderMetric>(metric);
+    leaders[metric].clear();
+    for (const std::size_t index : DataHub::leaders(hub.players, which))
+    {
+      const PlayerAnalyticsRow& stats = hub.players[index];
+      const float value = DataHub::leaderValue(stats, which);
+      const int minutes = DataHub::leaderMinutes(stats, which);
+      const bool counted = which == LeaderMetric::ProgressivePasses ||
+                           which == LeaderMetric::Pressures;
+      LeaderRow row;
+      row.id = stats.player;
+      row.name = players[index].name.empty() ? std::string("\u2013")
+                                             : players[index].name;
+      row.short_name = lastName(row.name);
+      row.value = counted ? std::format("{:.0f}", value) : decimal(value);
+      row.tooltip = fmt::sprintf(
+          LOC("HUB_LEADER_TOOLTIP"),
+          decimal(PlayerAnalyticsRow::per90(value, minutes)).c_str(), minutes);
+      leaders[metric].push_back(std::move(row));
+    }
   }
 }
 
@@ -178,6 +249,7 @@ void DataHubScene::renderTeam()
 
   const float available = ImGui::GetContentRegionAvail().x;
   renderTrendChart(available);
+  renderPerformance(available);
   const float gap = ImGui::GetStyle().ItemSpacing.x;
   if (available >= TWO_COLUMN_MIN_WIDTH * Theme::scale())
   {
@@ -199,6 +271,151 @@ void DataHubScene::renderTeam()
     renderSetPieces(available);
     renderComparison(available);
   }
+  renderLeaders(available);
+}
+
+void DataHubScene::renderPerformance(float width)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  const TeamAnalytics& team = hub.team;
+  UI::beginAutoHeightCard("hub_performance", LOC("HUB_PERF_TITLE"), width);
+  legendItem(LOC("HUB_PERF_FINISHING"), palette.info);
+  ImGui::SameLine(0.0f, Theme::Space::L * scale);
+  legendItem(LOC("HUB_PERF_PREVENTION"), secondSeries());
+
+  const float plotWidth = ImGui::GetContentRegionAvail().x;
+  const float plotHeight = PERFORMANCE_HEIGHT * scale;
+  const ImVec2 origin = ImGui::GetCursorScreenPos();
+  ImGui::InvisibleButton("##performance_plot", ImVec2(plotWidth, plotHeight));
+  const bool hovered = ImGui::IsItemHovered();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  const float left = origin.x + CHART_LEFT_AXIS * scale;
+  const float right = origin.x + plotWidth - Theme::Space::S * scale;
+  const float top = origin.y + Theme::Space::S * scale;
+  const float bottom = origin.y + plotHeight - Theme::Space::S * scale;
+  const float zero = (top + bottom) * 0.5f;
+  const auto yOf = [&](float value)
+  {
+    return zero - (zero - top) *
+                      std::clamp(value / performance_top, -1.0f, 1.0f);
+  };
+  const std::size_t count = team.trend.size();
+  const auto xOf = [&](std::size_t index)
+  {
+    return count <= 1 ? (left + right) * 0.5f
+                      : left + (right - left) * static_cast<float>(index) /
+                                   static_cast<float>(count - 1);
+  };
+  {
+    Theme::ScopedText small(Theme::Text::SMALL);
+    for (int step = -1; step <= 1; ++step)
+    {
+      const float value = performance_top * static_cast<float>(step);
+      const float y = yOf(value);
+      drawList->AddLine(ImVec2(left, y), ImVec2(right, y),
+                        Theme::toU32(step == 0 ? palette.muted : palette.border),
+                        1.0f);
+      char label[16];
+      std::snprintf(label, sizeof(label), "%+.1f", static_cast<double>(value));
+      drawList->AddText(ImVec2(origin.x, y - ImGui::GetTextLineHeight() * 0.5f),
+                        Theme::toU32(palette.muted), step == 0 ? "0" : label);
+    }
+  }
+  const auto series = [&](const std::vector<float>& values, const ImVec4& color)
+  {
+    for (std::size_t index = 0; index < values.size(); ++index)
+    {
+      drawList->AddCircleFilled(ImVec2(xOf(index), yOf(values[index])),
+                                2.5f * scale, Theme::toU32(color));
+      if (index > 0)
+        drawList->AddLine(ImVec2(xOf(index - 1), yOf(values[index - 1])),
+                          ImVec2(xOf(index), yOf(values[index])),
+                          Theme::toU32(color), 2.0f * scale);
+    }
+  };
+  series(team.cumulative_finishing, palette.info);
+  series(team.cumulative_prevention, secondSeries());
+  if (hovered && count > 0)
+  {
+    const float mouse = ImGui::GetIO().MousePos.x;
+    std::size_t nearest = 0;
+    for (std::size_t index = 1; index < count; ++index)
+      if (std::abs(xOf(index) - mouse) < std::abs(xOf(nearest) - mouse))
+        nearest = index;
+    drawList->AddLine(ImVec2(xOf(nearest), top), ImVec2(xOf(nearest), bottom),
+                      Theme::toU32(palette.faint), 1.0f);
+    ImGui::SetTooltip("%s", performance_tooltips[nearest].c_str());
+  }
+  footnote(LOC("HUB_PERF_NOTE"));
+  UI::endCard();
+}
+
+void DataHubScene::renderLeaders(float width)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  UI::beginAutoHeightCard("hub_leaders", LOC("HUB_LEADERS_TITLE"), width);
+  const bool any = std::ranges::any_of(
+      leaders, [](const std::vector<LeaderRow>& rows) { return !rows.empty(); });
+  if (!any)
+  {
+    footnote(LOC("HUB_LEADERS_NONE"));
+    UI::endCard();
+    return;
+  }
+  const float inner = ImGui::GetContentRegionAvail().x;
+  const float gap = ImGui::GetStyle().ItemSpacing.x * 2.0f;
+  const float minimum = LEADER_COLUMN_MIN_WIDTH * scale;
+  const std::size_t columns = inner >= 4.0f * minimum + 3.0f * gap   ? 4
+                              : inner >= 2.0f * minimum + gap ? 2
+                                                              : 1;
+  const float columnWidth =
+      std::floor((inner - gap * static_cast<float>(columns - 1)) /
+                 static_cast<float>(columns));
+  const float startX = ImGui::GetCursorPosX();
+  for (std::size_t metric = 0; metric < LEADER_METRIC_COUNT; ++metric)
+  {
+    if (metric % columns != 0)
+      ImGui::SameLine(startX + static_cast<float>(metric % columns) *
+                                   (columnWidth + gap));
+    ImGui::PushID(static_cast<int>(metric));
+    ImGui::BeginGroup();
+    const float x0 = ImGui::GetCursorPosX();
+    {
+      Theme::ScopedText caption(Theme::Text::CAPTION);
+      ImGui::TextColored(palette.muted, "%s",
+                         LOC(leaderMetricKey(static_cast<LeaderMetric>(metric))));
+    }
+    if (leaders[metric].empty())
+      ImGui::TextColored(palette.faint, "%s", "\u2013");
+    for (std::size_t rank = 0; rank < leaders[metric].size(); ++rank)
+    {
+      const LeaderRow& row = leaders[metric][rank];
+      ImGui::PushID(static_cast<int>(rank));
+      ImGui::SetCursorPosX(x0);
+      ImGui::TextColored(palette.faint, "%zu", rank + 1);
+      // Inside a group SameLine() offsets count from the group's start.
+      ImGui::SameLine(ImGui::CalcTextSize("00").x);
+      const float valueWidth = ImGui::CalcTextSize(row.value.c_str()).x;
+      const float nameRoom = columnWidth - ImGui::CalcTextSize("00").x -
+                             valueWidth - ImGui::GetStyle().ItemSpacing.x;
+      const std::string& label =
+          ImGui::CalcTextSize(row.name.c_str()).x <= nameRoom ? row.name
+                                                              : row.short_name;
+      if (UI::link(label.c_str(), "leader"))
+        Navigation::openPlayer(guiView, row.id);
+      if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+        ImGui::SetTooltip("%s\n%s", row.name.c_str(), row.tooltip.c_str());
+      ImGui::SameLine(columnWidth - valueWidth);
+      ImGui::TextUnformatted(row.value.c_str());
+      ImGui::PopID();
+    }
+    ImGui::EndGroup();
+    ImGui::PopID();
+  }
+  footnote(leaders_note);
+  UI::endCard();
 }
 
 void DataHubScene::renderTrendChart(float width)
@@ -511,9 +728,10 @@ void DataHubScene::renderPlayers()
       {"HUB_COL_PLAYER", 0.0f, 0},     {"HUB_COL_APPS", 44.0f, 3},
       {"HUB_COL_MINUTES", 56.0f, 2},   {"HUB_COL_GOALS90", 56.0f, 1},
       {"HUB_COL_ASSISTS90", 56.0f, 2}, {"HUB_COL_XG90", 56.0f, 3},
-      {"HUB_COL_KEY90", 60.0f, 4},     {"HUB_COL_PASS", 56.0f, 4},
-      {"HUB_COL_SHARE", 60.0f, 5},     {"HUB_COL_RATING", 56.0f, 1},
-      {"HUB_COL_TREND", 96.0f, 3}};
+      {"HUB_COL_KEY90", 60.0f, 4},     {"HUB_COL_XA90", 56.0f, 4},
+      {"HUB_COL_PROG90", 60.0f, 5},    {"HUB_COL_PRESS90", 60.0f, 5},
+      {"HUB_COL_PASS", 56.0f, 4},      {"HUB_COL_SHARE", 60.0f, 5},
+      {"HUB_COL_RATING", 56.0f, 1},    {"HUB_COL_TREND", 96.0f, 3}};
   constexpr std::size_t COLUMN_COUNT = std::size(COLUMNS);
   std::array<UI::Column, COLUMN_COUNT> columns{};
   for (std::size_t index = 0; index < COLUMN_COUNT; ++index)
@@ -557,7 +775,15 @@ void DataHubScene::renderPlayers()
       if (UI::cell(mask, 6))
         UI::textRight(
             per90(static_cast<float>(s.key_passes), s.tracked_minutes).c_str());
-      if (UI::cell(mask, 7))
+      if (UI::cell(mask, 7)) UI::textRight(per90(s.xa, s.detail_minutes).c_str());
+      if (UI::cell(mask, 8))
+        UI::textRight(per90(static_cast<float>(s.progressive_passes),
+                            s.detail_minutes)
+                          .c_str());
+      if (UI::cell(mask, 9))
+        UI::textRight(
+            per90(static_cast<float>(s.pressures), s.detail_minutes).c_str());
+      if (UI::cell(mask, 10))
       {
         const std::string pass =
             s.passes_attempted > 0
@@ -567,7 +793,7 @@ void DataHubScene::renderPlayers()
                 : std::string("–");
         UI::textRight(pass.c_str());
       }
-      if (UI::cell(mask, 8))
+      if (UI::cell(mask, 11))
       {
         const std::string share =
             s.tracked_minutes > 0
@@ -575,14 +801,14 @@ void DataHubScene::renderPlayers()
                 : std::string("–");
         UI::textRight(share.c_str());
       }
-      if (UI::cell(mask, 9))
+      if (UI::cell(mask, 12))
       {
         if (s.rated_matches > 0)
           UI::ratingChip(s.average_rating);
         else
           UI::textRight("–");
       }
-      if (UI::cell(mask, 10) && s.ratings.size() >= 2)
+      if (UI::cell(mask, 13) && s.ratings.size() >= 2)
       {
         UI::sparkline(
             "##trend", s.ratings,

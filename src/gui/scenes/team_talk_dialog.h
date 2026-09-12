@@ -10,6 +10,7 @@
 
 #include <imgui.h>
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -28,9 +29,10 @@ class MatchEngine;
  * break.
  *
  * Each tone shows its predicted reception in this situation (score, stakes,
- * the players' personalities); the result lists how the XI took it. The
- * effect is small by design: a few morale points and an execution hint of at
- * most +-1.2% (GameController::getTeamTalkModifier).
+ * the players' personalities); the result lists how the XI took it. Besides
+ * a few morale points, the talk's outcome (GameController::getTeamTalkModifier)
+ * reaches the live match: sharper (or shakier) decisions, execution and
+ * pressing for the first minutes of the half (MatchEngine::getTeamTalkEffect).
  */
 class TeamTalkDialog
 {
@@ -49,9 +51,10 @@ class TeamTalkDialog
    * One call per frame from a live match screen: opens the pre-match talk
    * at kick-off and the half-time talk at the break, and withdraws an
    * unanswered talk (without effect) once its moment has passed or the
-   * match is over. The match keeps running meanwhile.
+   * match is over. The match keeps running meanwhile. Talks given (here or
+   * before kick-off) are passed on to the engine of the managed side.
    */
-  void renderForMatch(GameController& controller, const MatchEngine& engine,
+  void renderForMatch(GameController& controller, MatchEngine& engine,
                       TeamID home_id, TeamID away_id);
 
   [[nodiscard]] bool isOpen() const { return visible; }
@@ -82,6 +85,8 @@ class TeamTalkDialog
   // Match driving (renderForMatch).
   bool pre_offered = false;
   bool half_offered = false;
+  /** Talk modifiers by half already passed to the engine. */
+  std::array<float, 2> applied_talk{};
 
   std::string title;
   std::string situation;

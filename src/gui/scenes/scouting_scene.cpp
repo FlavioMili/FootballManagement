@@ -36,6 +36,40 @@ namespace
 constexpr float FILTER_LABEL_WIDTH = 240.0f;
 constexpr size_t SEARCH_LIMIT = 250;
 constexpr int ROLE_COUNT = static_cast<int>(PlayerRole::UNKNOWN);
+/** Saved column view shared by the search and shortlist tables. */
+constexpr const char* PLAYER_TABLE_KEY = "scouting";
+
+// Player tables (search and shortlist); unscaled widths, the highest
+// priority numbers hide first. Sort ids follow ScoutingScene::SearchColumn.
+const std::array<UI::Column, 9>& playerColumns()
+{
+  constexpr ImGuiTableColumnFlags DESCENDING =
+      ImGuiTableColumnFlags_PreferSortDescending;
+  static const std::array<UI::Column, 9> columns = {{
+      {"SCOUTING_COL_PLAYER", 0.0f, 0, ImGuiTableColumnFlags_None, 0},
+      {"SCOUTING_COL_CLUB", 150.0f, 3, ImGuiTableColumnFlags_None, 1},
+      {"SCOUTING_COL_ROLE", 56.0f, 2, ImGuiTableColumnFlags_None, 2},
+      {"SCOUTING_COL_AGE", 44.0f, 4, ImGuiTableColumnFlags_None, 3},
+      {"SCOUTING_COL_ABILITY", 64.0f, 0,
+       DESCENDING | ImGuiTableColumnFlags_DefaultSort, 4},
+      {"SCOUTING_COL_POTENTIAL", 76.0f, 1, DESCENDING, 5},
+      {"SCOUTING_COL_KNOWLEDGE", 84.0f, 5, DESCENDING, 6},
+      {"SCOUTING_COL_VALUE", 88.0f, 3, DESCENDING, 7},
+      {"SCOUTING_COL_STATUS", 170.0f, 6, ImGuiTableColumnFlags_NoSort, 8},
+  }};
+  return columns;
+}
+
+/** Column picker at the right end of the current line (or the next). */
+void playerColumnPicker(UI::ColumnMask fitted)
+{
+  const float width =
+      UI::buttonWidth(LOC("TABLE_COLUMNS"), UI::ButtonSize::COMPACT);
+  if (UI::sameLineIfFits(width))
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
+                         ImGui::GetContentRegionAvail().x - width);
+  UI::columnPicker(PLAYER_TABLE_KEY, playerColumns(), fitted);
+}
 }  // namespace
 
 namespace ScoutingUi
@@ -634,6 +668,7 @@ void ScoutingScene::renderSearch()
 {
   renderSearchFilters();
   renderPlayerActions();
+  playerColumnPicker(player_table_mask);
   if (search_rows.empty())
   {
     UI::emptyState(LOC("SCOUTING_SEARCH_EMPTY_TITLE"),
@@ -649,44 +684,39 @@ void ScoutingScene::renderPlayerTable(const char* id,
                                       float height, bool sortable)
 {
   const Theme::Palette& palette = Theme::palette();
-  ImGuiTableFlags flags =
-      ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-      ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit;
+  // Low-priority and user-hidden columns drop out instead of scrolling
+  // sideways.
+  std::array<UI::Column, 9> columns = playerColumns();
+  const UI::ColumnMask hidden = UI::hiddenColumns(PLAYER_TABLE_KEY, columns);
+  for (UI::Column& column : columns) column.label = LOC(column.label);
+  const UI::ColumnMask mask = UI::fitColumns(
+      columns, ImGui::GetContentRegionAvail().x, 160.0f, hidden);
+  player_table_mask = mask;
+  ImGuiTableFlags flags = ImGuiTableFlags_RowBg |
+                          ImGuiTableFlags_BordersInnerH |
+                          ImGuiTableFlags_ScrollY;
   if (sortable) flags |= ImGuiTableFlags_Sortable;
-  if (!UI::beginDataTable(id, 9, flags, 880.0f, ImVec2(0.0f, height))) return;
-  const auto column =
-      [](const char* key, SearchColumn user, ImGuiTableColumnFlags extra = 0)
+  if (!UI::beginResponsiveTable(
+          id, columns, mask, flags,
+          sortable ? UI::TableHeader::SORTABLE : UI::TableHeader::STATIC,
+          ImVec2(0.0f, height)))
+    return;
+  // Follow the header every frame: the table keeps its sort across visits
+  // and column changes while the scene starts from its own default.
+  if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs();
+      sortable && specs != nullptr && specs->SpecsCount > 0)
   {
-    ImGui::TableSetupColumn(LOC(key), extra, 0.0f, static_cast<ImGuiID>(user));
-  };
-  column("SCOUTING_COL_PLAYER", SearchColumn::NAME,
-         ImGuiTableColumnFlags_WidthStretch);
-  column("SCOUTING_COL_CLUB", SearchColumn::CLUB);
-  column("SCOUTING_COL_ROLE", SearchColumn::ROLE);
-  column("SCOUTING_COL_AGE", SearchColumn::AGE);
-  column("SCOUTING_COL_ABILITY", SearchColumn::ABILITY,
-         ImGuiTableColumnFlags_PreferSortDescending |
-             ImGuiTableColumnFlags_DefaultSort);
-  column("SCOUTING_COL_POTENTIAL", SearchColumn::POTENTIAL,
-         ImGuiTableColumnFlags_PreferSortDescending);
-  column("SCOUTING_COL_KNOWLEDGE", SearchColumn::KNOWLEDGE,
-         ImGuiTableColumnFlags_PreferSortDescending);
-  column("SCOUTING_COL_VALUE", SearchColumn::VALUE,
-         ImGuiTableColumnFlags_PreferSortDescending);
-  ImGui::TableSetupColumn(LOC("SCOUTING_COL_STATUS"),
-                          ImGuiTableColumnFlags_NoSort);
-  ImGui::TableHeadersRow();
-  if (sortable)
-  {
-    if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs();
-        specs != nullptr && specs->SpecsDirty && specs->SpecsCount > 0)
+    const auto column = static_cast<SearchColumn>(specs->Specs[0].ColumnUserID);
+    const bool ascending =
+        specs->Specs[0].SortDirection == ImGuiSortDirection_Ascending;
+    if (specs->SpecsDirty || column != sort_column ||
+        ascending != sort_ascending)
     {
-      sort_column = static_cast<SearchColumn>(specs->Specs[0].ColumnUserID);
-      sort_ascending =
-          specs->Specs[0].SortDirection == ImGuiSortDirection_Ascending;
+      sort_column = column;
+      sort_ascending = ascending;
       sortSearch();
-      specs->SpecsDirty = false;
     }
+    specs->SpecsDirty = false;
   }
 
   ImGuiListClipper clipper;
@@ -700,29 +730,26 @@ void ScoutingScene::renderPlayerTable(const char* id,
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
       playerCell(row.player_id, line.name, selected_player == row.player_id);
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(line.club.c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(line.role.c_str());
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.age);
-      ImGui::TableNextColumn();
-      UI::ratingChip(row.overall);
-      if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("%s", fmt::sprintf(LOC("SCOUTING_ESTIMATE_HINT"),
-                                             line.ability_range.c_str())
-                                    .c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextColored(
-          Theme::ratingColor(
-              static_cast<double>(row.potential_low + row.potential_high) *
-              0.5),
-          "%s", line.potential_text.c_str());
-      ImGui::TableNextColumn();
-      knowledgeBar(row.knowledge);
-      ImGui::TableNextColumn();
-      UI::textRight(line.value_text.c_str());
-      ImGui::TableNextColumn();
+      if (UI::cell(mask, 1)) ImGui::TextUnformatted(line.club.c_str());
+      if (UI::cell(mask, 2)) ImGui::TextUnformatted(line.role.c_str());
+      if (UI::cell(mask, 3)) ImGui::Text("%d", row.age);
+      if (UI::cell(mask, 4))
+      {
+        UI::ratingChip(row.overall);
+        if (ImGui::IsItemHovered())
+          ImGui::SetTooltip("%s", fmt::sprintf(LOC("SCOUTING_ESTIMATE_HINT"),
+                                               line.ability_range.c_str())
+                                      .c_str());
+      }
+      if (UI::cell(mask, 5))
+        ImGui::TextColored(
+            Theme::ratingColor(
+                static_cast<double>(row.potential_low + row.potential_high) *
+                0.5),
+            "%s", line.potential_text.c_str());
+      if (UI::cell(mask, 6)) knowledgeBar(row.knowledge);
+      if (UI::cell(mask, 7)) UI::textRight(line.value_text.c_str());
+      if (!UI::cell(mask, 8)) continue;
       const auto badge = [](const char* key, const ImVec4& color)
       {
         UI::badge(LOC(key), color);
@@ -743,6 +770,7 @@ void ScoutingScene::renderPlayerTable(const char* id,
 void ScoutingScene::renderShortlist()
 {
   renderPlayerActions();
+  playerColumnPicker(player_table_mask);
   if (shortlist_rows.empty())
   {
     UI::emptyState(LOC("SCOUTING_SHORTLIST_EMPTY_TITLE"),

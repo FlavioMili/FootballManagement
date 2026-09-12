@@ -50,6 +50,8 @@ HolidayPlan plan(HolidayMode mode)
   result.mode = mode;
   return result;
 }
+/** Clubs of the Italian league follow Italy's transfer windows. */
+constexpr LeagueID ITALY = 1;
 }  // namespace
 
 TEST(Holiday, TargetsPerMode)
@@ -57,27 +59,30 @@ TEST(Holiday, TargetsPerMode)
   const GameDateValue today(2025, 7, 2);
   HolidayPlan until = plan(HolidayMode::UntilDate);
   until.until = GameDateValue(2025, 8, 20);
-  EXPECT_EQ(Holiday::targetDate(until, today, std::nullopt), until.until);
+  EXPECT_EQ(Holiday::targetDate(until, today, std::nullopt, ITALY), until.until);
   until.until = today;
-  EXPECT_FALSE(Holiday::targetDate(until, today, std::nullopt).has_value());
+  EXPECT_FALSE(Holiday::targetDate(until, today, std::nullopt, ITALY).has_value());
   const GameDateValue match(2025, 7, 12);
-  EXPECT_EQ(Holiday::targetDate(plan(HolidayMode::NextMatch), today, match),
+  EXPECT_EQ(Holiday::targetDate(plan(HolidayMode::NextMatch), today, match,
+                                ITALY),
             match);
   EXPECT_FALSE(
-      Holiday::targetDate(plan(HolidayMode::NextMatch), today, std::nullopt));
+      Holiday::targetDate(plan(HolidayMode::NextMatch), today, std::nullopt,
+                          ITALY));
   EXPECT_FALSE(
-      Holiday::targetDate(plan(HolidayMode::NextDecision), today, match));
+      Holiday::targetDate(plan(HolidayMode::NextDecision), today, match,
+                          ITALY));
   // The day after the summer deadline, in the open window...
-  const GameDateValue end = Holiday::windowEndDate(today);
-  const auto window = TransferNegotiation::windowInfo(today);
+  const GameDateValue end = Holiday::windowEndDate(ITALY, today);
+  const auto window = TransferNegotiation::windowInfo(ITALY, today);
   ASSERT_TRUE(window.open);
   EXPECT_EQ(end, SeasonCalendar::addDays(today, window.days_to_deadline + 1));
-  EXPECT_FALSE(TransferNegotiation::windowInfo(end).open);
+  EXPECT_FALSE(TransferNegotiation::windowInfo(ITALY, end).open);
   // ... and from a closed window, the next one's.
-  const GameDateValue winter = Holiday::windowEndDate(end);
+  const GameDateValue winter = Holiday::windowEndDate(ITALY, end);
   EXPECT_TRUE(end < winter);
   EXPECT_TRUE(TransferNegotiation::windowInfo(
-                  SeasonCalendar::addDays(winter, -1))
+                  ITALY, SeasonCalendar::addDays(winter, -1))
                   .open);
 }
 

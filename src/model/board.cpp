@@ -112,14 +112,14 @@ void recordMatch(BoardState& state, float points, float expected_points)
 
 BoardReviewOutcome monthlyReview(BoardState& state, int position,
                                  int league_size, bool negative_balance,
-                                 bool over_wage_budget)
+                                 bool over_wage_budget, bool in_season)
 {
   using Tuning = WorldTuning::Board;
   if (state.dismissed) return BoardReviewOutcome::Dismissed;
 
   const float quarter = std::max(1.0f, static_cast<float>(league_size) / 4.0f);
   float signal = 50.0f;
-  if (state.league_matches > 0)
+  if (in_season && state.league_matches > 0)
   {
     signal += 25.0f *
               std::clamp(static_cast<float>(state.target_position - position) /
@@ -129,6 +129,10 @@ BoardReviewOutcome monthlyReview(BoardState& state, int position,
   if (negative_balance) signal -= 25.0f;
   if (over_wage_budget) signal -= 12.0f;
   state.confidence = blend(state.confidence, signal);
+  if (!in_season)
+    return state.confidence < Tuning::WARNING_THRESHOLD
+               ? BoardReviewOutcome::Warning
+               : BoardReviewOutcome::Satisfied;
 
   if (state.confidence < Tuning::DISMISSAL_THRESHOLD)
     ++state.low_reviews;
@@ -150,9 +154,163 @@ void seasonReview(BoardState& state, int final_position)
 {
   const float margin =
       static_cast<float>(state.target_position - final_position);
-  state.confidence =
-      std::clamp(state.confidence + std::clamp(margin * 3.0f, -20.0f, 15.0f),
-                 0.0f, 100.0f);
+  adjustConfidence(state, std::clamp(margin * 3.0f, -20.0f, 15.0f));
+}
+
+void adjustConfidence(BoardState& state, float delta)
+{
+  state.confidence = std::clamp(state.confidence + delta, 0.0f, 100.0f);
+}
+
+CupObjective cupObjectiveFor(BoardObjective objective, int tier)
+{
+  // Only the top division's leading clubs are expected to go deep. [P]
+  if (tier > 1) return CupObjective::None;
+  switch (objective)
+  {
+    case BoardObjective::WinLeague:
+      return CupObjective::SemiFinal;
+    case BoardObjective::TopFour:
+      return CupObjective::QuarterFinal;
+    case BoardObjective::TopHalf:
+    case BoardObjective::MidTable:
+    case BoardObjective::AvoidRelegation:
+      break;
+  }
+  return CupObjective::None;
+}
+
+FinanceObjective financeObjectiveFor(float tight_budget, std::int64_t balance)
+{
+  return tight_budget >= 0.5f || balance < 0 ? FinanceObjective::BreakEven
+                                             : FinanceObjective::WithinWageBudget;
+}
+
+std::uint8_t youthTargetFor(float youth_focus)
+{
+  if (youth_focus >= 0.75f) return 3;
+  if (youth_focus >= 0.6f) return 2;
+  return 0;
+}
+
+const char* cupObjectiveKey(CupObjective objective)
+{
+  switch (objective)
+  {
+    case CupObjective::None:
+      return "BOARD_CUP_NONE";
+    case CupObjective::QuarterFinal:
+      return "BOARD_CUP_QUARTER_FINAL";
+    case CupObjective::SemiFinal:
+      return "BOARD_CUP_SEMI_FINAL";
+    case CupObjective::Final:
+      return "BOARD_CUP_FINAL";
+    case CupObjective::Win:
+      break;
+  }
+  return "BOARD_CUP_WIN";
+}
+
+const char* financeObjectiveKey(FinanceObjective objective)
+{
+  return objective == FinanceObjective::BreakEven ? "BOARD_FINANCE_BREAK_EVEN"
+                                                  : "BOARD_FINANCE_WAGE_BUDGET";
+}
+
+const char* youthTargetKey(std::uint8_t target)
+{
+  if (target == 0) return "BOARD_YOUTH_NONE";
+  return target >= 3 ? "BOARD_YOUTH_TARGET_3" : "BOARD_YOUTH_TARGET_2";
+}
+
+ObjectiveGrade gradeCup(CupObjective objective, std::optional<int> rounds_left,
+                        bool won, bool still_in)
+{
+  if (won) return ObjectiveGrade::Exceeded;
+  if (objective == CupObjective::None)
+    return rounds_left && *rounds_left == 0 ? ObjectiveGrade::Exceeded
+                                            : ObjectiveGrade::Met;
+  // Rounds still to come after the one the target asks to reach.
+  int required = 0;
+  switch (objective)
+  {
+    case CupObjective::QuarterFinal:
+      required = 2;
+      break;
+    case CupObjective::SemiFinal:
+      required = 1;
+      break;
+    case CupObjective::None:
+    case CupObjective::Final:
+    case CupObjective::Win:
+      break;
+  }
+  const bool reached = rounds_left && *rounds_left <= required;
+  if (objective == CupObjective::Win)
+    return still_in ? ObjectiveGrade::Met
+           : reached ? ObjectiveGrade::Missed
+                     : ObjectiveGrade::Failed;
+  if (reached)
+    return *rounds_left < required ? ObjectiveGrade::Exceeded
+                                   : ObjectiveGrade::Met;
+  if (still_in) return ObjectiveGrade::Met;
+  return rounds_left && *rounds_left == required + 1 ? ObjectiveGrade::Missed
+                                                     : ObjectiveGrade::Failed;
+}
+
+const char* targetStatusKey(ObjectiveGrade grade)
+{
+  switch (grade)
+  {
+    case ObjectiveGrade::Exceeded:
+      return "BOARD_STATUS_AHEAD";
+    case ObjectiveGrade::Met:
+      return "BOARD_STATUS_ON_TRACK";
+    case ObjectiveGrade::Missed:
+      return "BOARD_STATUS_BEHIND";
+    case ObjectiveGrade::Failed:
+      break;
+  }
+  return "BOARD_STATUS_OFF_TRACK";
+}
+
+ObjectiveGrade gradeLeague(int target_position, int position, int league_size)
+{
+  const float quarter = std::max(1.0f, static_cast<float>(league_size) / 4.0f);
+  const float margin =
+      static_cast<float>(target_position - position) / quarter;
+  if (margin >= 1.0f) return ObjectiveGrade::Exceeded;
+  if (margin >= 0.0f) return ObjectiveGrade::Met;
+  if (margin >= -1.0f) return ObjectiveGrade::Missed;
+  return ObjectiveGrade::Failed;
+}
+
+ObjectiveGrade gradeFinances(FinanceObjective objective, std::int64_t balance,
+                             std::int64_t start_balance, bool over_wage_budget)
+{
+  if (balance < 0 && !(objective == FinanceObjective::BreakEven &&
+                       balance >= start_balance))
+    return ObjectiveGrade::Failed;
+  if (objective == FinanceObjective::BreakEven)
+  {
+    if (balance < start_balance) return ObjectiveGrade::Missed;
+    // A clear profit on a tight budget is beyond what was asked. [P]
+    const std::int64_t margin = std::max<std::int64_t>(
+        1'000'000, std::abs(start_balance) / 5);
+    return balance - start_balance >= margin && !over_wage_budget
+               ? ObjectiveGrade::Exceeded
+               : ObjectiveGrade::Met;
+  }
+  return over_wage_budget ? ObjectiveGrade::Missed : ObjectiveGrade::Met;
+}
+
+ObjectiveGrade gradeYouth(std::uint8_t target, int young_regulars)
+{
+  if (target == 0)
+    return young_regulars >= 3 ? ObjectiveGrade::Exceeded : ObjectiveGrade::Met;
+  if (young_regulars >= target + 2) return ObjectiveGrade::Exceeded;
+  if (young_regulars >= target) return ObjectiveGrade::Met;
+  return young_regulars > 0 ? ObjectiveGrade::Missed : ObjectiveGrade::Failed;
 }
 }  // namespace BoardModel
 

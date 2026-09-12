@@ -10,12 +10,14 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstdlib>
 #include <format>
 #include <string_view>
 #include <utility>
 
 #include "global/language_manager.h"
+#include "global/number_format.h"
 #include "model/club_article.h"
 #include "model/world_rng.h"
 
@@ -41,7 +43,7 @@ struct ActionEntry
   InboxAction action;
 };
 
-constexpr std::array<ActionEntry, 13> ACTION_TITLES = {{
+constexpr std::array<ActionEntry, 21> ACTION_TITLES = {{
     {"INBOX_BID_TITLE", InboxAction::RespondOffer},
     {"INBOX_LOAN_OFFER_TITLE", InboxAction::RespondOffer},
     {"INBOX_OFFER_REPLY_TITLE", InboxAction::RespondOffer},
@@ -55,6 +57,14 @@ constexpr std::array<ActionEntry, 13> ACTION_TITLES = {{
     {"SCOUT_MSG_RECOMMEND_TITLE", InboxAction::Shortlist},
     {"SCOUT_MSG_REPORT_TITLE", InboxAction::Shortlist},
     {"INBOX_SCOUT_SUGGESTION_TITLE", InboxAction::Shortlist},
+    {"DILEMMA_LEAVE_TITLE", InboxAction::Dilemma},
+    {"DILEMMA_HOMESICK_TITLE", InboxAction::Dilemma},
+    {"DILEMMA_FINE_TITLE", InboxAction::Dilemma},
+    {"DILEMMA_RIVAL_TITLE", InboxAction::Dilemma},
+    {"DILEMMA_SPONSOR_TITLE", InboxAction::Dilemma},
+    {"DILEMMA_CLASH_TITLE", InboxAction::Dilemma},
+    {"DILEMMA_COURSE_TITLE", InboxAction::Dilemma},
+    {"DILEMMA_TICKETS_TITLE", InboxAction::Dilemma},
 }};
 
 constexpr std::array<const char*, 12> MONTH_KEYS = {
@@ -82,6 +92,80 @@ bool isIsoDate(const std::string& argument)
   return true;
 }
 
+// Money travels as "€" and the plain amount ("€1250000", formatMoney()),
+// so a saved message shows it in the reader's language. Messages saved
+// before that carry finished text ("€1.25M"), which is left as it is.
+std::string expandMoney(const std::string& argument)
+{
+  static constexpr std::string_view EURO = "\xE2\x82\xAC";
+  std::size_t found = argument.find(EURO);
+  if (found == std::string::npos) return argument;
+  std::string result;
+  std::size_t copied = 0;
+  for (; found != std::string::npos; found = argument.find(EURO, found))
+  {
+    std::size_t end = found + EURO.size();
+    if (end < argument.size() && argument[end] == '-') ++end;
+    const std::size_t digits = end;
+    while (end < argument.size() && argument[end] >= '0' &&
+           argument[end] <= '9')
+      ++end;
+    const bool token =
+        end > digits && end - digits <= 18 &&
+        (end == argument.size() ||
+         (std::isalnum(static_cast<unsigned char>(argument[end])) == 0 &&
+          argument[end] != '.' && argument[end] != ','));
+    if (!token)
+    {
+      found += EURO.size();
+      continue;
+    }
+    result.append(argument, copied, found - copied);
+    result += NumberFormat::money(std::strtoll(
+        argument.c_str() + found + EURO.size(), nullptr, 10));
+    copied = end;
+    found = end;
+  }
+  result.append(argument, copied, std::string::npos);
+  return result;
+}
+
+bool isKeyCharacter(char character)
+{
+  return (character >= 'A' && character <= 'Z') ||
+         (character >= 'a' && character <= 'z') ||
+         (character >= '0' && character <= '9') || character == '_';
+}
+
+// A composite argument (a list of transfers, of called-up players) can name
+// language keys inline: "Rossi: @INBOX_FREE_AGENCY -> Roma", "Rossi
+// (@NT_Italian)". Only known keys are replaced, so a lone "@" stays.
+std::string expandKeys(const std::string& argument)
+{
+  std::size_t found = argument.find('@');
+  if (found == std::string::npos) return argument;
+  std::string result;
+  std::size_t copied = 0;
+  for (; found != std::string::npos; found = argument.find('@', found + 1))
+  {
+    std::size_t end = found + 1;
+    while (end < argument.size() && isKeyCharacter(argument[end])) ++end;
+    // Keys start with a capital ("INBOX_...", "NT_Italian").
+    if (end - found < 3 || argument[found + 1] < 'A' ||
+        argument[found + 1] > 'Z')
+      continue;
+    const std::string key = argument.substr(found + 1, end - found - 1);
+    const char* text = LOC(key.c_str());
+    if (text == key.c_str()) continue;
+    result.append(argument, copied, found - copied);
+    result += text;
+    copied = end;
+    found = end - 1;
+  }
+  result.append(argument, copied, std::string::npos);
+  return result;
+}
+
 std::string resolveArgument(const std::string& argument)
 {
   if (isKeyArgument(argument))
@@ -99,7 +183,8 @@ std::string resolveArgument(const std::string& argument)
     }
     return resolved + LOC(argument.c_str() + start);
   }
-  return localizedDate(argument);
+  if (isIsoDate(argument)) return localizedDate(argument);
+  return expandKeys(expandMoney(argument));
 }
 
 // "{N:di}": club name N with the Italian preposition and its article
@@ -175,13 +260,7 @@ std::string localizedDate(const std::string& text)
 
 std::string formatMoney(std::int64_t amount)
 {
-  const char* sign = amount < 0 ? "-" : "";
-  const double magnitude = std::abs(static_cast<double>(amount));
-  if (magnitude >= 1'000'000.0)
-    return std::format("{}€{:.2f}M", sign, magnitude / 1'000'000.0);
-  if (magnitude >= 1'000.0)
-    return std::format("{}€{:.0f}K", sign, magnitude / 1'000.0);
-  return std::format("{}€{:.0f}", sign, magnitude);
+  return "\xE2\x82\xAC" + std::to_string(amount);
 }
 
 std::string InboxMessage::formatTitle() const
@@ -215,7 +294,22 @@ bool Inbox::isDecision(InboxAction action)
 {
   return action == InboxAction::RespondOffer ||
          action == InboxAction::ReplyToPlayer ||
-         action == InboxAction::YouthTrialists;
+         action == InboxAction::YouthTrialists ||
+         action == InboxAction::Dilemma;
+}
+
+bool Inbox::matchesView(const InboxMessage& message, const InboxView& view,
+                        std::span<const PlayerID> followed)
+{
+  if (view.category >= 0 &&
+      static_cast<int>(message.category) != static_cast<int>(view.category))
+    return false;
+  if (view.unread_only && message.read) return false;
+  if (view.player_id && message.player_id != view.player_id) return false;
+  if (view.team_id && message.team_id != view.team_id) return false;
+  return !view.followed_only ||
+         (message.player_id &&
+          std::ranges::contains(followed, *message.player_id));
 }
 
 bool Inbox::isArchived(const InboxMessage& message, const GameDateValue& today)

@@ -277,6 +277,16 @@ std::int64_t ownerRescue(std::int64_t balance, std::int64_t weekly_payroll)
   return Finance::OWNER_RESCUE_CUSHION_WEEKS * payroll - balance;
 }
 
+double parachutePayment(const LeagueEconomy& top_division, int seasons_ago)
+{
+  if (seasons_ago < 0 ||
+      seasons_ago >= static_cast<int>(Finance::PARACHUTE_SHARES.size()))
+    return 0.0;
+  return monthlyBroadcasting(top_division) * 12.0 *
+         static_cast<double>(
+             Finance::PARACHUTE_SHARES[static_cast<std::size_t>(seasons_ago)]);
+}
+
 std::int64_t seasonWageBudget(const LeagueEconomy& economy, double revenue,
                               std::int64_t weekly_payroll)
 {

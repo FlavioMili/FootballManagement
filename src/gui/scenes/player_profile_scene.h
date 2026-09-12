@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "gui/scenes/management_scene.h"
+#include "gui/scenes/contract_talks_dialog.h"
 #include "gui/scenes/player_talk_dialog.h"
 #include "gui/view_models/player_view.h"
 #include "model/player.h"
@@ -116,6 +117,7 @@ class PlayerProfileScene : public ManagementScene
   PlayerView::PlayerRow row;
   std::string club_name;
   std::string nationality;
+  std::string clause_text; /**< His release clause, empty if none. */
   std::vector<PlayerView::RoleFit> fits;
   std::vector<AttributeSection> sections;
   std::vector<StatsRow> season_rows;
@@ -143,8 +145,6 @@ class PlayerProfileScene : public ManagementScene
 
   bool list_confirm_requested = false;
   bool renew_requested = false;
-  int64_t renew_wage = 0;
-  int renew_years = 0;
-  std::string renew_status;
+  ContractTalksDialog contract_talks;
   PlayerTalkDialog talk_dialog;
 };

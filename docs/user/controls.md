@@ -10,6 +10,19 @@ driving the match view.
 |-----|--------|
 | F12 | Save a screenshot as `captures/screenshot.bmp` in the user data directory (see [Where your files are](#where-your-files-are)). Set `FM_SCREENSHOT_PATH` to choose another file. |
 
+## Main menu and club choice
+
+| Key | Action |
+|-----|--------|
+| Esc | Close the open dialog (slot list, backups, a confirmation). With a confirmation open above the slot list, only the confirmation closes. |
+| Esc (club choice) | Back to the main menu, like the Back to menu button. The new career stays in its slot as "not started"; load it to choose a club later. |
+
+Money fields accept either decimal mark and the usual units: `1,5M`,
+`1.5M`, `1500k`, `1.500.000`, `1,500,000`, `€ 2,25 mln` or `850 mila`. The
+amount you typed is shown under the field as you type. Text that could mean
+two amounts (`1.500,000`, or `1,500k` in English) is refused with a short
+explanation instead of being guessed.
+
 ## Management screens
 
 These work on every screen of a career (Home, Squad, Transfers and so on).
@@ -72,16 +85,17 @@ appear as tabs above the page.
 |-----|-----|----------------|
 | F1 | Home | Home |
 | F2 | Inbox | Inbox |
-| F3 | Squad | Squad, Lineup, Tactics, Squad planner, Medical, Compare players |
+| F3 | Squad | Squad, Lineup, Tactics, Squad planner, Medical, Compare players, Under-21s |
 | F4 | Training | Training, Planning |
-| F5 | Matches | Fixtures & Results, Competitions, Calendar, Opposition, International, Data hub |
+| F5 | Matches | Fixtures & Results, Competitions, Calendar, Opposition, International, Call-ups (head coaches only), Data hub |
 | F6 | Recruitment | Transfers, Scouting, Youth |
 | F7 | Club | Club, Finances, Staff, Delegation, Manager, Awards, Records |
 
 Every screen can also be opened with Ctrl+K. While you are out of work, only
 the screens that make sense without a club are available (Home, Inbox,
-Competitions, International, Manager, Awards and Records), and the F-key of
-a hub with none of them does nothing.
+Competitions, International, Manager, Awards and Records, plus Call-ups if
+you coach a national team), and the F-key of a hub with none of them does
+nothing.
 
 ### Mouse on management screens
 
@@ -104,17 +118,56 @@ field.
 
 | Key | Action |
 |-----|--------|
-| Space | Pause or resume the match |
+| Space | Pause or resume the match (while the substitutions board and the tactics panel are closed) |
 | V | Switch between the 2D and the 3D view (the same simulation, only the view changes) |
+| S | Open or close the substitutions board |
+| T | Open or close the tactics panel |
 | F | Toggle pitch focus: the match view fills the window under a compact overlay |
-| Esc | Leave pitch focus |
+| Esc | Close an open dialog or the analysis panel, then leave pitch focus |
+| M | Mute or unmute the match sound |
 | Alt+Enter | Toggle a full-screen window (match screen only; elsewhere use *Settings > Fullscreen*) |
 
 Speed (1x, 2x, 4x, 8x, 16x, 30x), *Highlights*, *Quick result*, *Finish
-match*, substitutions and the assistant options are buttons in the match
-toolbar. At 1x one second of match time takes one real second. With
+match*, substitutions, tactics and the assistant options are buttons in the
+match toolbar. At 1x one second of match time takes one real second. With
 *Highlights* on, the game skips instantly to the next key moment and plays
-that moment at the chosen speed.
+that moment at the chosen speed. With *Settings > Pause at half-time* on,
+your match stops at half-time (and at the breaks around extra time and
+before a shootout) at any speed until you resume it.
+
+### Substitutions board and tactics
+
+| Input | Action |
+|-------|--------|
+| Drag a substitute onto a player | Plan a substitution; several planned changes are made together at the next stoppage |
+| *Pause while open* | Keeps the match paused while the board or the panel is open (a saved setting) |
+
+The tactics panel changes the style, the instructions and the formation
+during the match. A new formation costs some tactical familiarity, which
+the team recovers over the following minutes; *Undo* restores the previous
+tactics.
+
+### Touchline shouts
+
+Hold Shift and press a key of the number row. The keys follow the order of
+the shouts bar; the bar shows the key your keyboard layout prints on each.
+
+| Key | Shout |
+|-----|-------|
+| Shift+1 | Encourage |
+| Shift+2 | Demand more |
+| Shift+3 | Calm down |
+| Shift+4 | Push up |
+| Shift+5 | Drop deeper |
+| Shift+6 | Press more |
+| Shift+7 | Stand off |
+| Shift+8 | Keep the ball |
+| Shift+9 | Counter |
+| Shift+0 | Into the box |
+| Shift+- (the key after 0) | Shoot on sight |
+
+A shout's effect fades over about ten minutes, and shouting again soon
+afterwards has less effect.
 
 ### 3D cameras
 
@@ -125,6 +178,7 @@ that moment at the chosen speed.
 | 3 | End (behind the goal) |
 | 4 | Player follow |
 | 5 | Free |
+| 6 | TV director: cuts between angles, with close-ups after goals |
 | B | Follow the ball while keeping your current angle (switches to the free camera; press again to stop following) |
 | R | Reset the view |
 
@@ -140,6 +194,60 @@ that moment at the chosen speed.
 
 In the 2D view the mouse only toggles pitch focus; orbit, pan and zoom apply
 to the 3D view.
+
+### Play mode
+
+In your club's live match, *Play* (before kick-off) or *Take control* (while
+you watch) lets you play the match yourself. The match pauses first and shows
+the controls; *Start playing* hands you the team. You always control one
+footballer of your side, the *active player*, marked by a yellow ring with
+his name and condition above him; control moves between team-mates as the
+play goes on. Everybody else, both teams' goalkeepers and every restart
+(kick-offs, throw-ins, corners, free kicks, penalties) stay with the AI. A
+played match runs in real time, with the same rules, attributes and fatigue
+as a watched one: what you choose is where the ball should go, while the
+player's technique, the pressure on him and how tired he is decide how well
+he does it.
+
+The stick and the movement keys follow the screen: up is up in the 2D view
+and in the 3D play camera alike.
+
+| Key | Gamepad (standard layout) | Action |
+|-----|---------------------------|--------|
+| W A S D or the arrow keys | Left stick | Move the active player |
+| Shift | RT or RB | Sprint |
+| J | A (bottom) | Pass to the team-mate nearest the direction you aim; when defending, standing tackle |
+| K (hold) | B (right) | Shoot: the longer you hold, the harder the shot (past the mark on the bar it gets hard to keep down); when defending, slide tackle |
+| L (hold) | Y (top) | Through ball into the space ahead of a team-mate's run; hold longer to play it further |
+| I (hold) | X (left) | Lofted pass, or a cross from wide areas; hold longer to play it further |
+| E (hold) | LT | Jockey: stay on your feet facing the ball at a contain pace; with no direction pressed he holds a goal-side line on the carrier |
+| Q | LB | Switch to the team-mate shown with the white dashed ring; press again quickly to cycle to the next one |
+| Esc or P | Start | Pause menu |
+
+A pass, a shot or a tackle pressed a moment before the ball reaches the
+player is played first time. The power bar appears under the player's name
+while you hold a button; a tap plays a soft, deliberate ball.
+
+**Pause menu**: *Resume*, *Tactics*, *Substitutions*, *Hand back to AI* and
+the assistance options below. *Hand back to AI* is also a toolbar button,
+available at any stoppage. Space still pauses and resumes, V switches between
+2D and 3D, and the camera keys work as when watching. Speed, highlights and
+*Quick result* are hidden while you play.
+
+**Assistance** (pause menu, or *Settings*):
+
+| Option | Choices |
+|--------|---------|
+| Player switching | *Manual*: only the ball carrier is taken automatically. *Assisted*: also the receiver of your pass, and the best placed defender once you let go of the stick. *Automatic* (default): control always follows the team-mate best placed to reach the ball. |
+| Pass assistance | *None*: the pass goes along the stick. *Normal* (default): it leans toward the team-mate the ball is likelier to reach near your aim. *Strong*: it picks him in a wide cone. |
+| Stick dead zone | How far the stick must move before the player does (0.05 to 0.50, default 0.20) |
+
+Gamepads can be plugged in and out at any time; the first connected pad is
+used. The views while playing: the 2D view zooms in and follows the active
+player and the ball; the 3D view uses the *Play* camera, which keeps both in
+the picture. A radar of the whole pitch sits at the bottom of the view, and
+an arrow at the edge points to the active player when he is out of the
+picture.
 
 ## Where your files are
 

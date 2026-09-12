@@ -273,6 +273,12 @@ class Player
   /** @brief True for U18 players and intake trialists. */
   bool isAcademyPlayer() const;
 
+  /** @brief Squad number (1-99), 0 when he has none (academy players). */
+  std::uint8_t getSquadNumber() const { return _squad_number; }
+
+  /** @brief Sets the squad number; uniqueness is kept by GameData. */
+  void setSquadNumber(std::uint8_t number) { _squad_number = number; }
+
  private:
   // 32-bit fields first
   PlayerID _id;
@@ -293,6 +299,7 @@ class Player
   uint8_t _contract_years;
   uint8_t _height;
   Foot _foot;
+  std::uint8_t _squad_number = 0;
 
   float _potential = 0.0f;
   PlayerTraits _traits;

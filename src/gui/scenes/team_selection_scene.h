@@ -60,6 +60,7 @@ class TeamSelectionScene : public GUIScene
   [[nodiscard]] SceneID getID() const override;
 
  private:
+  friend class GameFlowTest_GUIFlowLifecycle_Test;
   /** @brief Cached, display-ready summary of one selectable club. */
   struct ClubSummary
   {
@@ -117,6 +118,8 @@ class TeamSelectionScene : public GUIScene
   void startCareer(TeamID teamId);
   /** @brief Starts the career without a club (the Job Centre opens). */
   void startUnemployed();
+  /** @brief Leaves for the main menu (Back button, Escape). */
+  void backToMenu();
 
   std::vector<LeagueEntry> league_entries;
   std::vector<std::reference_wrapper<const Team>> available_teams;

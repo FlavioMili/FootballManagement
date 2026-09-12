@@ -19,9 +19,12 @@
 #include "database/gamedata.h"
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
+#include "gui/scenes/inbox_dilemma_card.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/draw_ceremony.h"
+#include "model/game.h"
 #include "model/role_utils.h"
 
 namespace
@@ -68,14 +71,74 @@ ImVec4 categoryColor(InboxCategory category)
   }
   return palette.muted;
 }
+
+/** Name of the player or club the feed is narrowed to ("" if gone). */
+std::string entityLabel(const GameController& controller,
+                        std::optional<PlayerID> player,
+                        std::optional<TeamID> team)
+{
+  if (player)
+  {
+    const auto found = controller.getGameData()->getPlayer(*player);
+    return found ? found->get().getName() : std::string();
+  }
+  if (team)
+  {
+    const auto found = controller.getTeamById(*team);
+    return found ? found->get().getName() : std::string();
+  }
+  return {};
+}
 }  // namespace
 
 InboxScene::InboxScene(GUIView* parent) : ManagementScene(parent) {}
+
+InboxView InboxScene::currentView() const
+{
+  InboxView view;
+  view.tab = static_cast<std::int8_t>(tab);
+  view.category = static_cast<std::int8_t>(category_filter);
+  view.unread_only = unread_only;
+  view.followed_only = followed_only;
+  view.player_id = filter_player;
+  view.team_id = filter_team;
+  return view;
+}
+
+void InboxScene::applyView(const InboxView& view)
+{
+  stored_view = view;
+  tab = view.tab;
+  category_filter = view.category;
+  unread_only = view.unread_only;
+  followed_only = view.followed_only;
+  filter_player = view.player_id;
+  filter_team = view.team_id;
+  filter_label =
+      entityLabel(guiView->getController(), filter_player, filter_team);
+  selected_thread = -1;
+  expanded_thread = -1;
+}
+
+void InboxScene::storeView()
+{
+  stored_view = currentView();
+  guiView->getController().setInboxView(stored_view);
+  filter_label =
+      entityLabel(guiView->getController(), filter_player, filter_team);
+  selected_thread = -1;
+  expanded_thread = -1;
+  rebuildThreads();
+}
 
 void InboxScene::update(float /*deltaTime*/) {}
 
 void InboxScene::refresh()
 {
+  // Another career (or a reload) brings its own filters.
+  if (const InboxView saved = guiView->getController().getInboxView();
+      !(saved == stored_view))
+    applyView(saved);
   // New messages shift indices once the inbox is full: follow the id.
   if (selected_message != SIZE_MAX)
   {
@@ -146,7 +209,7 @@ void InboxScene::rebuildDecisions()
                                                   : offer.terms.fee)
                              .c_str(),
                          days),
-               !offer.loan, awaiting});
+               true, awaiting});
         }
       }
       else if (action == InboxAction::YouthTrialists)
@@ -175,9 +238,13 @@ void InboxScene::rebuildDecisions()
 void InboxScene::rebuildThreads()
 {
   const auto& messages = guiView->getController().getInbox();
+  followed = guiView->getController().getFollowedPlayers();
+  const InboxView view = currentView();
   threads.clear();
   unread_by_category.fill(0);
   total_by_category.fill(0);
+  followed_unread = 0;
+  followed_total = 0;
   const auto isHidden = [this](size_t index)
   { return index < hidden.size() && hidden[index]; };
   for (size_t index = 0; index < messages.size(); ++index)
@@ -187,6 +254,11 @@ void InboxScene::rebuildThreads()
     if (category >= CATEGORY_COUNT || isHidden(index)) continue;
     ++total_by_category[category];
     if (!message.read) ++unread_by_category[category];
+    if (message.player_id && std::ranges::contains(followed, *message.player_id))
+    {
+      ++followed_total;
+      if (!message.read) ++followed_unread;
+    }
   }
 
   // Newest first; fold same-kind messages from the same week into a digest.
@@ -195,11 +267,8 @@ void InboxScene::rebuildThreads()
   {
     const size_t index = reverse - 1;
     const InboxMessage& message = messages[index];
-    if (isHidden(index)) continue;
-    if (category_filter >= 0 &&
-        static_cast<int>(message.category) != category_filter)
+    if (isHidden(index) || !Inbox::matchesView(message, view, followed))
       continue;
-    if (unread_only && message.read) continue;
     const int day = dayNumber(message.date);
     if (!threads.empty())
     {
@@ -267,7 +336,7 @@ void InboxScene::renderContent()
       fmt::sprintf(LOC("INBOX_TAB_DECISIONS"), decisions.size());
   const std::array<const char*, 2> tabs = {decisionsLabel.c_str(),
                                            LOC("INBOX_TAB_INFO")};
-  UI::segmented("##inbox_tab", tab, tabs);
+  if (UI::segmented("##inbox_tab", tab, tabs)) storeView();
   if (tab == 0)
   {
     renderDecisions();
@@ -282,7 +351,7 @@ void InboxScene::renderContent()
   }
   ImGui::EndDisabled();
   ImGui::SameLine();
-  if (ImGui::Checkbox(LOC("INBOX_UNREAD_ONLY"), &unread_only)) rebuildThreads();
+  if (ImGui::Checkbox(LOC("INBOX_UNREAD_ONLY"), &unread_only)) storeView();
   ImGui::SameLine();
   const std::string archivedLabel =
       fmt::sprintf(LOC("INBOX_SHOW_ARCHIVED"), archived_count);
@@ -295,6 +364,7 @@ void InboxScene::renderContent()
     ImGui::SetTooltip(
         "%s",
         fmt::sprintf(LOC("INBOX_ARCHIVE_HELP"), Inbox::ARCHIVE_DAYS).c_str());
+  renderEntityFilter();
 
   const float height = ImGui::GetContentRegionAvail().y;
   const float available = ImGui::GetContentRegionAvail().x;
@@ -318,13 +388,16 @@ void InboxScene::renderFilters(float width, float height)
       [&](int category, const char* label, size_t unread, size_t total)
   {
     ImGui::PushID(category);
-    if (ImGui::Selectable("##filter", category_filter == category, 0,
+    // Category -2 is the followed players' feed.
+    const bool selected = category == -2 ? followed_only
+                                         : !followed_only &&
+                                               category_filter == category;
+    if (ImGui::Selectable("##filter", selected, 0,
                           ImVec2(0.0f, ImGui::GetFrameHeight())))
     {
-      category_filter = category;
-      selected_thread = -1;
-      expanded_thread = -1;
-      rebuildThreads();
+      followed_only = category == -2;
+      category_filter = category == -2 ? -1 : category;
+      storeView();
     }
     ImGui::SameLine(Theme::Space::S * Theme::scale());
     ImGui::AlignTextToFramePadding();
@@ -353,7 +426,111 @@ void InboxScene::renderFilters(float width, float height)
               LOC(inboxCategoryKey(static_cast<InboxCategory>(index))),
               unread_by_category[index], total_by_category[index]);
   }
+  if (!followed.empty() || followed_only)
+  {
+    ImGui::Separator();
+    filterRow(-2, LOC("INBOX_FILTER_FOLLOWED"), followed_unread,
+              followed_total);
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+      ImGui::SetTooltip("%s", LOC("INBOX_FILTER_FOLLOWED_HELP"));
+  }
   UI::endCard();
+}
+
+void InboxScene::renderEntityFilter()
+{
+  if (!filter_player && !filter_team) return;
+  const std::string text = fmt::sprintf(
+      LOC(filter_player ? "INBOX_FILTER_ACTIVE_PLAYER"
+                        : "INBOX_FILTER_ACTIVE_CLUB"),
+      filter_label.empty() ? LOC("INBOX_FILTER_UNKNOWN") : filter_label);
+  ImGui::AlignTextToFramePadding();
+  ImGui::TextColored(Theme::palette().muted, "%s", text.c_str());
+  ImGui::SameLine();
+  if (UI::link(LOC("INBOX_FILTER_CLEAR"), "clear_entity_filter"))
+  {
+    filter_player.reset();
+    filter_team.reset();
+    storeView();
+  }
+}
+
+void InboxScene::renderReaderActions(const InboxMessage& message)
+{
+  GameController& controller = guiView->getController();
+  bool first = true;
+  const auto place = [&](const char* label)
+  {
+    if (!first) UI::sameLineIfFits(UI::buttonWidth(label));
+    first = false;
+  };
+  if (message.player_id &&
+      controller.getGameData()->getPlayer(*message.player_id))
+  {
+    const PlayerID player_id = *message.player_id;
+    const bool following = controller.isFollowingPlayer(player_id);
+    const char* label = LOC(following ? "INBOX_UNFOLLOW" : "INBOX_FOLLOW");
+    place(label);
+    if (UI::secondaryButton(label))
+    {
+      const std::string name =
+          controller.getGameData()->getPlayer(player_id)->get().getName();
+      if (following)
+      {
+        controller.unfollowPlayer(player_id);
+        showToast(fmt::sprintf(LOC("INBOX_UNFOLLOWED"), name));
+      }
+      else if (controller.followPlayer(player_id))
+        showToast(fmt::sprintf(LOC("INBOX_FOLLOWING"), name));
+      else
+        showToast(fmt::sprintf(LOC("INBOX_FOLLOW_LIMIT"),
+                               static_cast<int>(Stories::MAX_FOLLOWS)),
+                  true);
+      rebuildThreads();
+    }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+      ImGui::SetTooltip("%s", LOC("INBOX_FOLLOW_HELP"));
+  }
+  if (message.player_id && filter_player != message.player_id)
+  {
+    const char* label = LOC("INBOX_FILTER_PLAYER");
+    place(label);
+    if (UI::secondaryButton(label))
+    {
+      filter_player = message.player_id;
+      filter_team.reset();
+      storeView();
+    }
+  }
+  else if (message.team_id && filter_team != message.team_id)
+  {
+    const char* label = LOC("INBOX_FILTER_CLUB");
+    place(label);
+    if (UI::secondaryButton(label))
+    {
+      filter_team = message.team_id;
+      filter_player.reset();
+      storeView();
+    }
+  }
+}
+
+void InboxScene::renderDrawAction(const InboxMessage& message)
+{
+  if (!DrawCeremonies::announcesDraw(message)) return;
+  const GameController& controller = guiView->getController();
+  const ContinentalCompetitions* continental = controller.getContinental();
+  const Game* game = controller.getGame();
+  if (continental == nullptr || game == nullptr) return;
+  if (!UI::primaryButton(LOC("DRAW_WATCH"))) return;
+  const auto managed = controller.getManagedTeam();
+  const std::optional<DrawCeremony> ceremony = DrawCeremonies::forMessage(
+      message, *continental, game->getCalendar(),
+      managed ? managed->get().getId() : message.team_id.value_or(0));
+  if (ceremony)
+    draw_dialog.open(*ceremony, controller);
+  else
+    showToast(LOC("DRAW_UNAVAILABLE"), true);
 }
 
 void InboxScene::renderThreads(float width, float height)
@@ -487,8 +664,11 @@ void InboxScene::renderReader(float height)
         showToast(LOC("INBOX_SHORTLISTED"));
     }
   }
+  renderReaderActions(message);
+  renderDrawAction(message);
   talk_dialog.inboxAction(controller, message);
   talk_dialog.render(controller);
+  draw_dialog.render(guiView);
   UI::endCard();
 }
 
@@ -576,8 +756,8 @@ void InboxScene::renderDecision(const Decision& decision)
       {
         if (option.negotiable)
         {
-          // Transfer bids are answered in the talks: accept, reject,
-          // counter, name a price or not for sale.
+          // Bids and loan offers are answered in the talks: accept,
+          // reject, counter (a price or not for sale for a bid).
           ImGui::PushID(static_cast<int>(option.id));
           ImGui::AlignTextToFramePadding();
           ImGui::TextUnformatted(option.text.c_str());
@@ -627,6 +807,14 @@ void InboxScene::renderDecision(const Decision& decision)
       {
         controller.markInboxMessageRead(messageId);
         talk_dialog.open(controller, decision.player);
+      }
+      break;
+    case InboxAction::Dilemma:
+      if (InboxDilemmaCard::render(controller))
+      {
+        controller.markInboxMessageRead(messageId);
+        showToast(LOC("INBOX_DILEMMA_DONE"));
+        changed = true;
       }
       break;
     case InboxAction::Shortlist:

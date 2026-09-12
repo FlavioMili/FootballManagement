@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <array>
+#include <format>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
@@ -22,6 +23,8 @@
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
 #include "model/competition.h"
+#include "model/draw_ceremony.h"
+#include "model/game.h"
 
 namespace
 {
@@ -53,6 +56,131 @@ const std::array<UI::Column, 11>& standingsColumns()
       {"TABLE_COL_FORM", 118.0f, 2},
   }};
   return columns;
+}
+
+constexpr const char* TABLE_KEY = "standings";
+
+/** Short badge code and tooltip of a decided status. */
+struct ClinchLabel
+{
+  const char* code_key;
+  const char* tooltip_key;
+};
+
+ClinchLabel clinchLabel(Standings::Clinch status)
+{
+  using Standings::Clinch;
+  switch (status)
+  {
+    case Clinch::CHAMPION:
+      return {"STANDINGS_CLINCH_CHAMPION_SHORT", "STANDINGS_CLINCH_CHAMPION"};
+    case Clinch::PROMOTED:
+      return {"STANDINGS_CLINCH_PROMOTED_SHORT", "STANDINGS_CLINCH_PROMOTED"};
+    case Clinch::PLAY_OFF:
+      return {"STANDINGS_CLINCH_PLAY_OFF_SHORT", "STANDINGS_CLINCH_PLAY_OFF"};
+    case Clinch::CONTINENTAL_TOP:
+      return {"STANDINGS_CLINCH_CONTINENTAL_SHORT",
+              "STANDINGS_CLINCH_CONTINENTAL_TOP"};
+    case Clinch::CONTINENTAL:
+      return {"STANDINGS_CLINCH_CONTINENTAL_SHORT",
+              "STANDINGS_CLINCH_CONTINENTAL"};
+    case Clinch::SAFE:
+      return {"STANDINGS_CLINCH_SAFE_SHORT", "STANDINGS_CLINCH_SAFE"};
+    case Clinch::RELEGATED:
+      return {"STANDINGS_CLINCH_RELEGATED_SHORT", "STANDINGS_CLINCH_RELEGATED"};
+    case Clinch::OPEN:
+      break;
+  }
+  return {nullptr, nullptr};
+}
+
+ImVec4 clinchColor(Standings::Clinch status)
+{
+  const Theme::Palette& palette = Theme::palette();
+  switch (status)
+  {
+    case Standings::Clinch::CHAMPION:
+    case Standings::Clinch::PROMOTED:
+      return palette.positive;
+    case Standings::Clinch::PLAY_OFF:
+    case Standings::Clinch::CONTINENTAL_TOP:
+    case Standings::Clinch::CONTINENTAL:
+      return palette.info;
+    case Standings::Clinch::RELEGATED:
+      return palette.negative;
+    case Standings::Clinch::SAFE:
+    case Standings::Clinch::OPEN:
+      break;
+  }
+  return palette.muted;
+}
+
+/** "win the title", "stay up", ... (completes the need sentences). */
+const char* raceGoalKey(Standings::Race race)
+{
+  switch (race)
+  {
+    case Standings::Race::TITLE:
+      return "STANDINGS_GOAL_TITLE";
+    case Standings::Race::PROMOTION:
+      return "STANDINGS_GOAL_PROMOTION";
+    case Standings::Race::PLAY_OFF:
+      return "STANDINGS_GOAL_PLAY_OFF";
+    case Standings::Race::CONTINENTAL_TOP:
+      return "STANDINGS_GOAL_CONTINENTAL_TOP";
+    case Standings::Race::CONTINENTAL:
+      return "STANDINGS_GOAL_CONTINENTAL";
+    case Standings::Race::SURVIVAL:
+      break;
+  }
+  return "STANDINGS_GOAL_SURVIVAL";
+}
+
+/** Whole sentence for a race the club can no longer decide alone. */
+const char* raceHelpKey(Standings::Race race)
+{
+  switch (race)
+  {
+    case Standings::Race::TITLE:
+      return "STANDINGS_NEED_HELP_TITLE";
+    case Standings::Race::PROMOTION:
+      return "STANDINGS_NEED_HELP_PROMOTION";
+    case Standings::Race::PLAY_OFF:
+      return "STANDINGS_NEED_HELP_PLAY_OFF";
+    case Standings::Race::CONTINENTAL_TOP:
+      return "STANDINGS_NEED_HELP_CONTINENTAL_TOP";
+    case Standings::Race::CONTINENTAL:
+      return "STANDINGS_NEED_HELP_CONTINENTAL";
+    case Standings::Race::SURVIVAL:
+      break;
+  }
+  return "STANDINGS_NEED_HELP_SURVIVAL";
+}
+
+std::string needSentence(const Standings::RaceNeed& need,
+                         const std::string& opponent)
+{
+  if (need.kind == Standings::RaceNeed::Kind::NEEDS_HELP)
+    return LOC(raceHelpKey(need.race));
+  const char* goal = LOC(raceGoalKey(need.race));
+  const int points = need.points;
+  const int games = need.games_left;
+  if (games == 1)
+  {
+    const char* key =
+        points <= 1 ? (need.next_at_home ? "STANDINGS_NEED_DRAW_HOME"
+                                         : "STANDINGS_NEED_DRAW_AWAY")
+                    : (need.next_at_home ? "STANDINGS_NEED_WIN_HOME"
+                                         : "STANDINGS_NEED_WIN_AWAY");
+    return fmt::sprintf(LOC(key), opponent.c_str(), goal);
+  }
+  if (points >= 3 * games)
+    return fmt::sprintf(LOC("STANDINGS_NEED_WIN_ALL"), games, goal);
+  if (points % 3 == 0)
+    return fmt::sprintf(LOC("STANDINGS_NEED_WINS"), points / 3, games, goal);
+  if (points == 1)
+    return fmt::sprintf(LOC("STANDINGS_NEED_POINT"), games, goal);
+  return fmt::sprintf(LOC("STANDINGS_NEED_POINTS"), points, games, goal);
 }
 
 constexpr size_t MAX_SCORERS = 15;
@@ -88,10 +216,21 @@ void StandingsScene::refresh()
     cup = controller.getCupStatus(cup_id);
     return;
   }
-  table = CompetitionView::buildStandings(controller, league_id);
+  past_seasons = controller.getArchivedSeasons(league_id);
+  if (past_season && !std::ranges::contains(past_seasons, *past_season))
+    past_season.reset();
   zones = CompetitionView::zonesFor(controller, league_id);
   scorers.clear();
+  clinch.clear();
+  need_lines.clear();
   const auto data = controller.getGameData();
+  if (past_season)
+  {
+    refreshPastSeason(*past_season);
+    return;
+  }
+  table = CompetitionView::buildStandings(controller, league_id);
+  refreshRace();
   for (const PlayerSeasonStats& stats :
        controller.getTopScorers(MatchType::LEAGUE, league_id, MAX_SCORERS))
   {
@@ -103,6 +242,117 @@ void StandingsScene::refresh()
                        club ? club->get().getName() : std::string(),
                        stats.goals, stats.assists});
   }
+}
+
+void StandingsScene::refreshPastSeason(uint16_t season)
+{
+  GameController& controller = guiView->getController();
+  table.clear();
+  if (const std::vector<StandingRow>* rows =
+          controller.getArchivedTable(season, league_id))
+    for (const StandingRow& archived : *rows)
+    {
+      CompetitionView::StandingRow row;
+      row.team_id = archived.team_id;
+      const auto team = controller.getTeamById(archived.team_id);
+      row.name = team ? team->get().getName() : std::string("–");
+      row.played = archived.played;
+      row.won = archived.won;
+      row.drawn = archived.drawn;
+      row.lost = archived.lost;
+      row.goals_for = archived.goals_for;
+      row.goals_against = archived.goals_against;
+      row.points = archived.points;
+      table.push_back(std::move(row));
+    }
+  // The season record keeps the league's top scorer only.
+  const auto data = controller.getGameData();
+  for (const SeasonHistoryEntry& entry : controller.getSeasonHistory())
+  {
+    if (entry.season != season || entry.competition_id != league_id ||
+        entry.competition_type != MatchType::LEAGUE || entry.top_scorer_id == 0)
+      continue;
+    const auto player = data ? data->getPlayer(entry.top_scorer_id)
+                             : std::nullopt;
+    if (!player) continue;
+    const auto club = controller.getTeamById(player->get().getTeamId());
+    scorers.push_back({entry.top_scorer_id, player->get().getName(),
+                       club ? club->get().getName() : std::string(),
+                       entry.top_scorer_goals, 0});
+  }
+}
+
+void StandingsScene::refreshRace()
+{
+  GameController& controller = guiView->getController();
+  clinch.assign(table.size(), Standings::Clinch::OPEN);
+  places = {};
+  const Game* game = controller.getGame();
+  const auto data = controller.getGameData();
+  if (game == nullptr || !data) return;
+  const auto league = data->getLeague(league_id);
+  if (!league) return;
+  places = Standings::racePlaces(*data, controller.getContinental(), league_id);
+  // Before the first round nothing can be decided (and the table is
+  // alphabetical).
+  if (std::ranges::none_of(table, [](const auto& row) { return row.played > 0; }))
+    return;
+  const Standings::RaceInput input =
+      Standings::raceInput(league->get(), game->getCalendar(), *data);
+  for (const Standings::ClinchReport& report :
+       Standings::clinchReports(input, places))
+  {
+    const auto row = std::ranges::find(table, report.team_id,
+                                       &CompetitionView::StandingRow::team_id);
+    if (row != table.end())
+      clinch[static_cast<size_t>(row - table.begin())] = report.status;
+  }
+
+  const auto managed = controller.getManagedTeam();
+  if (!managed || managed->get().getLeagueId() != league_id) return;
+  const std::vector<Standings::RaceNeed> needs =
+      Standings::whatYouNeed(input, places, managed->get().getId());
+  if (needs.empty()) return;
+  // The most ambitious open race; if it is out of the club's hands, also
+  // the best one it can still settle alone; survival whenever it is open.
+  std::vector<const Standings::RaceNeed*> shown = {&needs.front()};
+  if (needs.front().kind == Standings::RaceNeed::Kind::NEEDS_HELP)
+  {
+    const auto own = std::ranges::find(needs,
+                                       Standings::RaceNeed::Kind::IN_HANDS,
+                                       &Standings::RaceNeed::kind);
+    if (own != needs.end()) shown.push_back(&*own);
+  }
+  const auto survival = std::ranges::find(needs, Standings::Race::SURVIVAL,
+                                          &Standings::RaceNeed::race);
+  if (survival != needs.end() && shown.size() < 2 &&
+      !std::ranges::contains(shown, &*survival))
+    shown.push_back(&*survival);
+  const auto opponent = controller.getTeamById(needs.front().next_opponent);
+  const std::string opponent_name =
+      opponent ? opponent->get().getName() : std::string();
+  for (const Standings::RaceNeed* need : shown)
+    need_lines.push_back(needSentence(*need, opponent_name));
+}
+
+void StandingsScene::renderNeeds()
+{
+  const Theme::Palette& palette = Theme::palette();
+  {
+    Theme::ScopedText caption(Theme::Text::CAPTION);
+    ImGui::TextColored(palette.muted, "%s", LOC("STANDINGS_NEED_TITLE"));
+  }
+  ImGui::PushTextWrapPos(0.0f);
+  for (const std::string& line : need_lines)
+    ImGui::TextUnformatted(line.c_str());
+  ImGui::PopTextWrapPos();
+  ImGui::Spacing();
+}
+
+std::string StandingsScene::seasonLabel(uint16_t season) const
+{
+  const uint16_t start = guiView->getController().getSeasonStartYear(season);
+  return std::format("{}/{:02}", start, (start + 1) % 100);
 }
 
 void StandingsScene::renderContent()
@@ -119,10 +369,22 @@ void StandingsScene::renderContent()
     UI::emptyState(LOC("STANDINGS_EMPTY_TITLE"), LOC("STANDINGS_EMPTY_BODY"));
     return;
   }
+  {
+    // Column picker at the right end of the selector line.
+    const float pickerWidth =
+        UI::buttonWidth(LOC("TABLE_COLUMNS"), UI::ButtonSize::COMPACT);
+    if (UI::sameLineIfFits(pickerWidth))
+      ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
+                           ImGui::GetContentRegionAvail().x - pickerWidth);
+    UI::columnPicker(TABLE_KEY, standingsColumns(), table_mask);
+  }
   const bool started = std::ranges::any_of(
       table, [](const auto& row) { return row.played > 0; });
   if (started) renderHighlights();
-  const bool legend = zones.promotion > 0 || zones.relegation > 0;
+  if (!need_lines.empty()) renderNeeds();
+  const bool continental = !past_season && places.continental_top > 0;
+  const bool legend =
+      zones.promotion > 0 || zones.relegation > 0 || continental;
   const float height = ImGui::GetContentRegionAvail().y -
                        (legend ? ImGui::GetFrameHeightWithSpacing() : 0.0f);
   const float available = ImGui::GetContentRegionAvail().x;
@@ -143,6 +405,13 @@ void StandingsScene::renderContent()
   if (zones.promotion > 0)
   {
     UI::badge(LOC("STANDINGS_ZONE_PROMOTION"), palette.positive);
+    ImGui::SameLine();
+  }
+  if (continental)
+  {
+    UI::badge(LOC("STANDINGS_ZONE_CONTINENTAL"), palette.info);
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+      ImGui::SetTooltip("%s", LOC("STANDINGS_ZONE_CONTINENTAL_HINT"));
     ImGui::SameLine();
   }
   if (zones.relegation > 0)
@@ -193,7 +462,44 @@ void StandingsScene::renderCompetitionSelector()
     }
     ImGui::EndCombo();
   }
-  if (!showing_cup)
+  if (!showing_cup && !past_seasons.empty())
+  {
+    // Final tables of earlier seasons, archived when each season ended.
+    const std::string current = past_season ? seasonLabel(*past_season)
+                                            : std::string(LOC("STANDINGS_SEASON_CURRENT"));
+    const float width = 170.0f * Theme::scale();
+    UI::sameLineIfFits(width);
+    ImGui::SetNextItemWidth(width);
+    if (ImGui::BeginCombo("##season", current.c_str()))
+    {
+      if (ImGui::Selectable(LOC("STANDINGS_SEASON_CURRENT"), !past_season))
+      {
+        past_season.reset();
+        refresh();
+      }
+      for (const uint16_t season : past_seasons)
+      {
+        ImGui::PushID(season);
+        if (ImGui::Selectable(seasonLabel(season).c_str(),
+                              past_season && *past_season == season))
+        {
+          past_season = season;
+          refresh();
+        }
+        ImGui::PopID();
+      }
+      ImGui::EndCombo();
+    }
+  }
+  if (!showing_cup && past_season)
+  {
+    const std::string note =
+        fmt::sprintf(LOC("STANDINGS_FINAL_TABLE"), seasonLabel(*past_season));
+    UI::sameLineIfFits(ImGui::CalcTextSize(note.c_str()).x);
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored(Theme::palette().faint, "%s", note.c_str());
+  }
+  else if (!showing_cup)
   {
     UI::sameLineIfFits(ImGui::CalcTextSize(LOC("STANDINGS_TIEBREAK_HELP")).x);
     ImGui::AlignTextToFramePadding();
@@ -251,10 +557,14 @@ void StandingsScene::renderTable(float width, float height)
   UI::beginCard("standings_card", nullptr, ImVec2(width, height));
   // Fills the page height (vertical scroll only); secondary columns hide
   // on narrow windows instead of scrolling sideways.
+  // Columns hidden in the picker stay hidden at any width.
   std::array<UI::Column, 11> columns = standingsColumns();
+  const UI::ColumnMask hidden = UI::hiddenColumns(TABLE_KEY, columns);
   for (UI::Column& column : columns) column.label = LOC(column.label);
-  const UI::ColumnMask mask =
-      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 120.0f);
+  const UI::ColumnMask mask = UI::fitColumns(
+      columns, ImGui::GetContentRegionAvail().x, 120.0f, hidden);
+  table_mask = mask;
+  const size_t continental = past_season ? 0 : places.continental;
   const ImGuiTableFlags flags = ImGuiTableFlags_RowBg |
                                 ImGuiTableFlags_BordersInnerH |
                                 ImGuiTableFlags_ScrollY;
@@ -269,27 +579,43 @@ void StandingsScene::renderTable(float width, float height)
       const bool promoted = row.played > 0 && index < zones.promotion;
       const bool relegated =
           row.played > 0 && index + zones.relegation >= table.size();
+      const bool qualifying = row.played > 0 && index < continental;
       if (row.team_id == clubId)
         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1,
                                Theme::toU32(palette.accent, 0.16f));
-      else if (promoted || relegated)
+      else if (promoted || relegated || qualifying)
         ImGui::TableSetBgColor(
             ImGuiTableBgTarget_RowBg1,
-            Theme::toU32(promoted ? palette.positive : palette.negative,
+            Theme::toU32(promoted    ? palette.positive
+                         : relegated ? palette.negative
+                                     : palette.info,
                          0.07f));
       ImGui::TableNextColumn();
-      ImGui::TextColored(promoted    ? palette.positive
-                         : relegated ? palette.negative
-                                     : palette.muted,
+      ImGui::TextColored(promoted     ? palette.positive
+                         : relegated  ? palette.negative
+                         : qualifying ? palette.info
+                                      : palette.muted,
                          "%zu", index + 1);
       ImGui::TableNextColumn();
       ImGui::PushID(static_cast<int>(row.team_id));
       teamBadge(guiView->getController(), row.team_id);
       if (ImGui::Selectable(row.name.c_str(), false,
-                            ImGuiSelectableFlags_SpanAllColumns))
+                            ImGuiSelectableFlags_SpanAllColumns |
+                                ImGuiSelectableFlags_AllowOverlap))
         Navigation::openClub(guiView, row.team_id);
       if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
         ImGui::SetTooltip("%s", LOC("STANDINGS_OPEN_CLUB_HINT"));
+      // Mathematically decided outcome right after the name.
+      if (const Standings::Clinch status =
+              index < clinch.size() ? clinch[index] : Standings::Clinch::OPEN;
+          status != Standings::Clinch::OPEN)
+      {
+        const ClinchLabel label = clinchLabel(status);
+        ImGui::SameLine(0.0f, Theme::Space::S * Theme::scale());
+        UI::badge(LOC(label.code_key), clinchColor(status));
+        if (ImGui::IsItemHovered())
+          ImGui::SetTooltip("%s", LOC(label.tooltip_key));
+      }
       ImGui::PopID();
       if (UI::cell(mask, 2)) ImGui::Text("%d", row.played);
       if (UI::cell(mask, 3)) ImGui::Text("%d", row.won);
@@ -391,6 +717,24 @@ void StandingsScene::renderCup()
     UI::badge(LOC(stillIn ? "CUP_CLUB_IN" : "CUP_CLUB_OUT"),
               stillIn ? palette.positive : palette.faint);
   }
+
+  // The latest draw, revealed again tie by tie.
+  const char* watch = LOC("DRAW_WATCH");
+  UI::sameLineIfFits(UI::buttonWidth(watch), Theme::Space::L * Theme::scale());
+  if (UI::secondaryButton(watch))
+  {
+    const auto data = controller.getGameData();
+    std::optional<DrawCeremony> ceremony;
+    if (data && controller.getGame() != nullptr)
+      ceremony = DrawCeremonies::latestCupRound(
+          controller.getGame()->getCalendar(), *data, cup_id,
+          controller.getCurrentDate(), clubId);
+    if (ceremony)
+      draw_dialog.open(*ceremony, controller);
+    else
+      showToast(LOC("DRAW_UNAVAILABLE"), true);
+  }
+  draw_dialog.render(guiView);
 
   // One column per round; each tie shows both clubs and the score.
   UI::beginCard("cup_bracket", nullptr,

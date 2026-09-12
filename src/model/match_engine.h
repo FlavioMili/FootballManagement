@@ -24,8 +24,10 @@
 #include "model/match_events.h"
 #include "model/match_rules.h"
 #include "model/match_scenario.h"
+#include "model/match_tracking.h"
 #include "model/match_tuning.h"
 #include "model/strategy.h"
+#include "model/tactics.h"
 
 enum class MatchState
 {
@@ -383,7 +385,9 @@ enum class MatchInputAction : std::uint8_t
   SHOOT,
   CLEAR,
   TACKLE,
-  SLIDE_TACKLE
+  SLIDE_TACKLE,
+  /** A ground pass into the space ahead of a team-mate's run. */
+  THROUGH_BALL
 };
 
 /**
@@ -391,6 +395,10 @@ enum class MatchInputAction : std::uint8_t
  * in play mode. Directions are in pitch metres (x along the length toward
  * x=105, y across toward y=68); only the direction and a magnitude up to 1
  * matter.
+ *
+ * Shots and passes go through the same execution model as the AI's (the
+ * player's technique, pressure, distance and fatigue decide the error), so
+ * the stick only chooses where the player tries to play the ball.
  */
 struct MatchPlayerInput
 {
@@ -410,6 +418,23 @@ struct MatchPlayerInput
   /** Pass aim direction; zero aims along the stick (or the facing). */
   float aimX = 0.0f;
   float aimY = 0.0f;
+  /**
+   * Strength of the action in [0, 1] from how long its button was held: the
+   * shot's pace (a full bar also lifts and widens it), or how far ahead a
+   * through ball or a pass into space is played. 0 lets the player choose.
+   */
+  float power = 0.0f;
+  /**
+   * Jockey (held): the player stays on his feet facing the ball at a contain
+   * pace; with the stick idle he holds a goal-side line on the carrier.
+   */
+  bool jockey = false;
+  /**
+   * Pass assistance: 0 plays the pass along the stick, 1 (default) leans
+   * toward the best placed team-mate near the aim, 2 picks him in a wide
+   * cone.
+   */
+  std::uint8_t passAssist = 1;
 };
 
 /** A controller change, stamped with the fixed step it takes effect on. */
@@ -626,6 +651,19 @@ class MatchEngine
    */
   void setTeamTalkModifier(bool homeTeam, int half, float modifier);
   float getTeamTalkModifier(bool homeTeam, int half) const;
+  /**
+   * Team-talk effect in force for a side: the modifier of the current half
+   * at full strength for the first TacticsTuning::TALK_FULL_MINUTES of the
+   * half, fading to nothing by TALK_FADE_END_MINUTES (none in extra time).
+   * Besides execution it sharpens decisions and pressing (or blunts them,
+   * after a talk that went down badly).
+   */
+  float getTeamTalkEffect(bool homeTeam) const;
+  /**
+   * Role played by an outfield slot of a side (see getFormation), resolved
+   * from the side's tactics by the slot's kick-off position.
+   */
+  TacticalRole getSlotRole(bool homeTeam, std::size_t slot) const;
 
   /**
    * Play-mode seam: hands one outfield player to an external controller from
@@ -633,8 +671,10 @@ class MatchEngine
    * player moves by the stick (at MatchTuning::Control::PHYSICS_SUBSTEPS per
    * step, with the same acceleration, braking, turning and fatigue model) and
    * acts only on the action button; team-mates and opponents stay AI. Set
-   * pieces and goalkeeping remain AI-driven. Returns false (and changes
-   * nothing) for goalkeepers and players not on the pitch.
+   * pieces and goalkeeping remain AI-driven. A controlled player who is
+   * substituted, sent off or goes in goal hands control back to the AI.
+   * Returns false (and changes nothing) for goalkeepers and players not on
+   * the pitch.
    */
   bool setControlledPlayer(PlayerID playerId);
   /** The controlled player, or 0 when the AI controls everyone. */
@@ -652,6 +692,38 @@ class MatchEngine
   const std::vector<MatchInputRecord>& getInputLog() const { return inputLog; }
   /** Schedules a recorded input log (records applied at their steps). */
   void loadInputReplay(std::vector<MatchInputRecord> log);
+  /**
+   * Play mode: the team-mate who should be the human's active footballer
+   * now. The ball carrier while the side has the ball (outfield only), the
+   * intended receiver of the side's pass, otherwise the player who can reach
+   * the ball first along its path (the carrier's run when defending), with a
+   * small preference for `current` so control does not flicker between two
+   * equally placed players. 0 when the side has nobody outfield. Const and
+   * random-free: asking never changes the match.
+   */
+  PlayerID suggestActivePlayer(bool homeTeam, PlayerID current) const;
+  /**
+   * The team-mate a manual switch would pick now: the best candidate by the
+   * same ranking, never `current` nor `skip` (pass the previous pick so
+   * repeated presses cycle). 0 when there is none.
+   */
+  PlayerID nextSwitchCandidate(bool homeTeam, PlayerID current,
+                               PlayerID skip = 0) const;
+  /**
+   * Whether update(`deltaSeconds`) would simulate at least one fixed step,
+   * so a controller can sample its device exactly once per step.
+   */
+  bool stepsWithin(float deltaSeconds) const;
+  /** Play mode: whether a side was ever controlled from outside, and the
+   * passes, shots, clearances and tackles its controlled players made. */
+  bool wasControlled(bool homeTeam) const
+  {
+    return everControlled[homeTeam ? 0 : 1];
+  }
+  int getControlledActions(bool homeTeam) const
+  {
+    return controlledActions[homeTeam ? 0 : 1];
+  }
   /**
    * Every tactical change made from outside (strategy, shout, formation,
    * slot move, substitution), step-stamped. Replaying it with
@@ -717,6 +789,13 @@ class MatchEngine
     return playerStats;
   }
   const PlayerMatchStats* findPlayerStats(PlayerID playerId) const;
+  /**
+   * Touch maps, pass network, pressures and the like for the match report
+   * (indexed like getPlayerStats()). On by default; background fidelity
+   * and highlight look-ahead switch it off.
+   */
+  const MatchTracker& getTracker() const { return tracker; }
+  void setTracking(bool on) { tracker.setEnabled(on); }
   /**
    * Live physical condition in [0, 1] (end-of-match condition after full
    * time) so a career simulation can carry fatigue between matches.
@@ -937,6 +1016,7 @@ class MatchEngine
   std::size_t undescribedEvents = 0;
   std::array<std::string, 2> teamNames;
   MatchStats stats;
+  MatchTracker tracker;
   PassDecision lastPassDecision;
   ScenarioDecision lastScenarioDecision;
   struct GoalkeeperControl
@@ -988,6 +1068,21 @@ class MatchEngine
   std::array<float, 2> underdogShares{};
   /** Team-talk modifiers by side and half. */
   std::array<std::array<float, 2>, 2> teamTalks{};
+  /** Role of an outfield slot and its in-possession shift. */
+  struct SlotTactic
+  {
+    TacticalRole role = TacticalRole::Standard;
+    RoleProfile profile;
+    Vector2F possessionOffset{0.0f, 0.0f};
+  };
+  /** Slot roles by side (index 0 home), indexed by formation slot. */
+  std::array<std::array<SlotTactic, 16>, 2> slotTactics{};
+  std::array<RoleProfile, 2> keeperProfiles{};
+  /** Kick-off slot positions by side (lineup coordinates): the keys that
+   * match slots to the tactics' role instructions. */
+  std::array<std::vector<Vector2F>, 2> slotAnchors{};
+  /** Instructions each side (index 0 home) gives against opposing players. */
+  std::array<std::vector<PlayerInstruction>, 2> oppositionOrders{};
   /** Per-step target blends: home tactical/urgent, away tactical/urgent. */
   std::array<float, 4> targetBlends{};
   std::array<std::uint8_t, 32> separationOrder{};
@@ -1009,9 +1104,23 @@ class MatchEngine
 
   /** External control (play mode); an index keeps the engine copyable. */
   std::optional<std::size_t> controlledIndex;
+  /** Who was handed the controls (the slot may change hands). */
+  PlayerID controlledPlayerId = 0;
+  /** By side (index 0 home): ever controlled, and the actions played. */
+  std::array<bool, 2> everControlled{};
+  std::array<int, 2> controlledActions{};
   MatchPlayerInput controlInput;
   float controlActionRemaining = 0.0f;
   MatchInputAction lastInputAction = MatchInputAction::NONE;
+  /** Aim and power of the controlled player's shot being struck. */
+  struct ControlledShot
+  {
+    bool active = false;
+    /** Aimed crossing point (metres from the goal's centre), if aimed. */
+    std::optional<float> aimMetres;
+    float power = 0.0f;
+  };
+  ControlledShot controlledShot;
   std::vector<MatchInputRecord> inputLog;
   std::size_t inputCursor = 0;
   std::vector<MatchCommandRecord> commandLog;
@@ -1153,6 +1262,48 @@ class MatchEngine
   float familiarityOf(const MatchPlayer& player) const;
   /** Current team-talk modifier of a side (by the current half). */
   float talkOf(bool homeTeam) const;
+  // Roles, opposition instructions and team talks (see model/tactics.h).
+  /** Reads roles and opposition instructions from a side's tactics. */
+  void resolveTactics(bool homeTeam);
+  const RoleProfile& roleProfileOf(const MatchPlayer& player) const;
+  /** Formation spot while his side has the ball (role and shape shift). */
+  Vector2F possessionAnchor(const MatchPlayer& player) const;
+  /** Signed x shift of the role in the defensive block (normalised). */
+  float defensiveRoleShift(const MatchPlayer& player) const;
+  OppositionInstruction instructionAgainst(const MatchPlayer& target) const;
+  /** The man this player marks when he is under a tight-marking order. */
+  const MatchPlayer* tightMarkTarget(const MatchPlayer& marker) const;
+  /** Moves a marker's target tight and goal-side of his man. */
+  Vector2F tightMarkPoint(const MatchPlayer& marker,
+                          const MatchPlayer& target, Vector2F current) const;
+  /** Pass utility lost to a tight marker standing next to the receiver. */
+  float tightMarkPenalty(const MatchPlayer& receiver) const;
+  /** Pass utility added by the passer's and the receiver's roles. */
+  float passingRoleBias(const MatchPlayer& passer, const MatchPlayer& receiver,
+                        float progression, float completion) const;
+  /** Seconds a role is quicker (+) or slower to close the ball down. */
+  float pressEagerness(const MatchPlayer& candidate,
+                       const MatchPlayer* carrier) const;
+  /** Multiplier of a defender's rate of engaging the carrier. */
+  float engageBoost(const MatchPlayer& defender,
+                    const MatchPlayer& carrier) const;
+  /** Share of the presser's normal stand-off distance. */
+  float pressStandOffShare(const MatchPlayer& presser,
+                           const MatchPlayer& carrier) const;
+  /** Presser's lateral shade onto the carrier's stronger side (normalised
+   * y; 0 without a weaker-foot order). */
+  float weakFootShade(const MatchPlayer& carrier) const;
+  /** Pressure in [0, 1] on a carrier forced onto his weaker foot. */
+  float weakFootPressure(const MatchPlayer& carrier) const;
+  /** Second presser's spot when doubling up on the carrier, if ordered. */
+  std::optional<Vector2F> doubleUpPoint(const MatchPlayer& helper,
+                                        const MatchPlayer& carrier,
+                                        const MatchPlayer* firstPresser) const;
+  /** Take-on success lost to a second defender doubling up. */
+  float doubleUpPenalty(const MatchPlayer& carrier,
+                        const MatchPlayer& defender) const;
+  /** Team-talk effect in [-1, 1] (see getTeamTalkEffect). */
+  float talkSwing(bool homeTeam) const;
   StrategySliders computeEffectiveSliders(bool homeTeam) const;
   /** How clearly each side is the weaker one in [0, 1] (see Touchline). */
   void computeUnderdogShares();
@@ -1229,6 +1380,24 @@ class MatchEngine
   void integrateControlled(MatchPlayer& player, float dt);
   /** Performs the controlled carrier's action; true if the ball left him. */
   bool performControlledAction(MatchPlayer& carrier);
+  /** Stick direction of the controlled pass or shot (metres, unit length). */
+  Vector2F controlledAim(const MatchPlayer& carrier) const;
+  /** Team-mate a controlled pass along `aim` goes to (nullptr: none). */
+  MatchPlayer* controlledPassReceiver(MatchPlayer& carrier, Vector2F aim,
+                                      bool throughBall);
+  /** Pass, through ball or lofted ball of the controlled carrier. */
+  void playControlledPass(MatchPlayer& carrier, MatchInputAction action);
+  /** The controlled shot's aim, lift and spread (strikeShot calls it). */
+  void shapeControlledShot(const MatchPlayer& shooter, float halfGoal,
+                           float inset, float& aimY, float& aimZ,
+                           float& spread) const;
+  /** Movement target of the controlled player with the stick idle (meeting
+   * a pass to him, or the goal-side spot while jockeying); nullopt to stand. */
+  std::optional<Vector2F> controlledAssistTarget(const MatchPlayer& player)
+      const;
+  /** Seconds a team-mate needs to get to the ball (see
+   * suggestActivePlayer). */
+  float switchSeconds(const MatchPlayer& candidate) const;
   /** Acceleration, braking, lateral limit, position and facing update. */
   void stepKinematics(MatchPlayer& player, Vector2F desired,
                       float desiredSpeed, float topSpeed, float fatigue,
@@ -1252,6 +1421,15 @@ class MatchEngine
    * sub-step (reach and save roll only, no consequences). */
   SaveAttempt attemptSave(const MatchPlayer& keeper);
   void setPossession(MatchPlayer& player);
+  // Feeds the tracker (match_engine_tracking.cpp); no effect when it is off.
+  void trackTouch(const MatchPlayer& player);
+  void trackPassRelease(const MatchPlayer& passer);
+  void trackPassCompletion(const MatchPlayer& passer,
+                           const MatchPlayer& receiver);
+  void trackShot(const MatchPlayer& shooter, float xg, bool setPiece,
+                 bool header, bool penalty);
+  /** Pressing players close to the carrier apply a pressure. */
+  void trackPressures();
   void clearFlightState();
 
   std::optional<PassOption> choosePassTarget(MatchPlayer& passer);

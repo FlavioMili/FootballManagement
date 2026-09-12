@@ -18,10 +18,15 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <vector>
+
+#include <fmt/printf.h>
 
 #include "global/language_manager.h"
+#include "global/number_format.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
+#include "model/settings_manager.h"
 
 namespace
 {
@@ -701,57 +706,26 @@ bool dangerButton(const char* label, ImVec2 size, ButtonSize buttonSize)
 
 bool parseMoney(std::string_view text, int64_t& value)
 {
-  std::array<char, 32> digits{};
-  size_t length = 0;
-  double multiplier = 1.0;
-  bool sawDigit = false;
-  int dots = 0;
-  size_t lastDot = 0;
-  for (const char character : text)
-  {
-    if ((character >= '0' && character <= '9') || character == '.')
-    {
-      if (length + 1 >= digits.size()) return false;
-      if (character == '.')
-      {
-        ++dots;
-        lastDot = length;
-      }
-      digits[length++] = character;
-      sawDigit |= character != '.';
-    }
-    else if (character == 'k' || character == 'K')
-      multiplier = 1'000.0;
-    else if (character == 'm' || character == 'M')
-      multiplier = 1'000'000.0;
-    else if (character == 'b' || character == 'B')
-      multiplier = 1'000'000'000.0;
-    else if (character == ',' || character == ' ' || character == '\'' ||
-             static_cast<unsigned char>(character) >= 0x80)
-      continue;  // separators and the euro sign (UTF-8 bytes)
-    else
-      return false;
-  }
-  if (!sawDigit) return false;
-  // "1.200.000" or a plain "14.500" use the dot as a thousands separator;
-  // "14.5m" keeps it as the decimal point.
-  const bool dotGroups =
-      dots > 1 || (dots == 1 && multiplier == 1.0 && length - lastDot - 1 == 3);
-  if (dotGroups)
-  {
-    size_t kept = 0;
-    for (size_t index = 0; index < length; ++index)
-      if (digits[index] != '.') digits[kept++] = digits[index];
-    length = kept;
-  }
-  digits[length] = '\0';
-  char* end = nullptr;
-  const double number = std::strtod(digits.data(), &end);
-  if (end != digits.data() + length || !std::isfinite(number)) return false;
-  const double result = number * multiplier;
-  if (result > 9.0e15) return false;
-  value = static_cast<int64_t>(std::llround(result));
+  const NumberFormat::MoneyParse parsed = NumberFormat::parseMoney(text);
+  if (!parsed.value) return false;
+  value = *parsed.value;
   return true;
+}
+
+MoneyPreview moneyPreview(std::string_view text,
+                          const MoneyInputOptions& options)
+{
+  const NumberFormat::MoneyParse parsed = NumberFormat::parseMoney(text);
+  if (!parsed.value) return {LOC(NumberFormat::errorKey(parsed.error)), true};
+  const int64_t clamped =
+      std::clamp(*parsed.value, options.minimum, options.maximum);
+  if (clamped != *parsed.value)
+    return {fmt::sprintf(LOC("WIDGET_MONEY_PREVIEW_LIMITED"),
+                         Format::moneyFull(clamped)),
+            false};
+  return {fmt::sprintf(LOC("WIDGET_MONEY_PREVIEW"),
+                       Format::moneyFull(clamped)),
+          false};
 }
 
 bool moneyInput(const char* id, int64_t& value,
@@ -761,6 +735,13 @@ bool moneyInput(const char* id, int64_t& value,
   static ImGuiID editing = 0;
   static int64_t pending = 0;
   static bool pendingValid = false;
+  static bool edited = false;
+  static MoneyPreview preview;
+  // A refused entry keeps its message under the field until it is edited
+  // again, so the player sees why the amount did not change.
+  static ImGuiID rejected = 0;
+  static std::string rejectedText;
+  static int rejectedFrame = 0;
 
   ImGui::PushID(id);
   bool changed = false;
@@ -780,6 +761,7 @@ bool moneyInput(const char* id, int64_t& value,
   const ImGuiIO& io = ImGui::GetIO();
   const double stepFraction = io.KeyShift ? 0.10 : (io.KeyCtrl ? 0.01 : 0.05);
   const char* stepHelp = LOC("WIDGET_MONEY_STEP_HELP");
+  const float rowStartX = ImGui::GetCursorPosX();
 
   if (ImGui::Button("-", ImVec2(stepWidth, 0.0f)))
   {
@@ -798,13 +780,22 @@ bool moneyInput(const char* id, int64_t& value,
   ImGui::InputText("##money", buffer.data(), buffer.size(),
                    ImGuiInputTextFlags_AutoSelectAll);
   const ImGuiID fieldId = ImGui::GetItemID();
+  const int frame = ImGui::GetFrameCount();
+  // A message left by a dialog that has since closed is dropped.
+  if (rejected == fieldId && rejectedFrame < frame - 1) rejected = 0;
   if (ImGui::IsItemActivated())
   {
     editing = fieldId;
     pendingValid = false;
+    edited = false;
+    if (rejected == fieldId) rejected = 0;
   }
   if (ImGui::IsItemEdited() && editing == fieldId)
+  {
     pendingValid = parseMoney(buffer.data(), pending);
+    preview = moneyPreview(buffer.data(), options);
+    edited = true;
+  }
   if (ImGui::IsItemDeactivated() && editing == fieldId)
   {
     if (pendingValid && clampValue(pending) != value)
@@ -812,9 +803,16 @@ bool moneyInput(const char* id, int64_t& value,
       value = clampValue(pending);
       changed = true;
     }
+    else if (!pendingValid && edited)
+    {
+      rejected = fieldId;
+      rejectedText = preview.text;
+    }
     editing = 0;
     pendingValid = false;
+    edited = false;
   }
+  if (rejected == fieldId) rejectedFrame = frame;
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) &&
       !ImGui::IsItemActive())
     ImGui::SetTooltip("%s", LOC("WIDGET_MONEY_INPUT_HELP"));
@@ -827,6 +825,20 @@ bool moneyInput(const char* id, int64_t& value,
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
     ImGui::SetTooltip("%s", stepHelp);
   ImGui::PopStyleVar();
+  if (changed && rejected == fieldId) rejected = 0;
+
+  // Live reading of the typed text (or why it was refused) under the field.
+  const bool typing = editing == fieldId && edited;
+  if (typing || rejected == fieldId)
+  {
+    const Theme::Palette& palette = Theme::palette();
+    const bool error = !typing || preview.error;
+    Theme::ScopedText caption(Theme::Text::SMALL);
+    ImGui::PushTextWrapPos(rowStartX + width);
+    ImGui::TextColored(error ? palette.negative : palette.muted, "%s",
+                       typing ? preview.text.c_str() : rejectedText.c_str());
+    ImGui::PopTextWrapPos();
+  }
 
   for (size_t index = 0; index < options.chips.size(); ++index)
   {
@@ -989,11 +1001,14 @@ void budgetImpact(const char* label, int64_t current, int64_t after,
 }
 
 ColumnMask fitColumns(std::span<const Column> columns, float availableWidth,
-                      float stretchMinimum)
+                      float stretchMinimum, ColumnMask hidden)
 {
+  // User-hidden columns stay out at any width; must-stay columns ignore it.
   ColumnMask mask = 0;
   for (size_t index = 0; index < columns.size(); ++index)
-    mask |= ColumnMask{1} << index;
+    if (columns[index].priority == 0 ||
+        (hidden & (ColumnMask{1} << index)) == 0)
+      mask |= ColumnMask{1} << index;
   const float cellPadding = 2.0f * ImGui::GetStyle().CellPadding.x;
   const auto required = [&](ColumnMask candidate)
   {
@@ -1026,6 +1041,95 @@ ColumnMask fitColumns(std::span<const Column> columns, float availableWidth,
     mask &= ~(ColumnMask{1} << static_cast<unsigned>(victim));
   }
   return mask;
+}
+
+ColumnMask hiddenColumns(std::string_view table,
+                         std::span<const Column> columns)
+{
+  const auto& views = SettingsManager::instance()->get().hidden_columns;
+  const auto view = views.find(table);
+  if (view == views.end()) return 0;
+  ColumnMask mask = 0;
+  for (size_t index = 0; index < columns.size(); ++index)
+    if (columns[index].priority != 0 &&
+        std::ranges::find(view->second, columns[index].label) !=
+            view->second.end())
+      mask |= ColumnMask{1} << index;
+  return mask;
+}
+
+bool columnPicker(std::string_view table, std::span<const Column> columns,
+                  ColumnMask fitted)
+{
+  const Theme::Palette& palette = Theme::palette();
+  ImGui::PushID(table.data(), table.data() + table.size());
+  if (secondaryButton(LOC("TABLE_COLUMNS"), ImVec2(0.0f, 0.0f),
+                      ButtonSize::COMPACT))
+    ImGui::OpenPopup("##columns");
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    ImGui::SetTooltip("%s", LOC("TABLE_COLUMNS_HINT"));
+  bool changed = false;
+  if (ImGui::BeginPopup("##columns"))
+  {
+    ColumnMask hidden = hiddenColumns(table, columns);
+    ImGui::TextColored(palette.muted, "%s", LOC("TABLE_COLUMNS_TITLE"));
+    for (size_t index = 0; index < columns.size(); ++index)
+    {
+      const Column& column = columns[index];
+      const ColumnMask bit = ColumnMask{1} << index;
+      const bool locked = column.priority == 0;
+      bool shown = locked || (hidden & bit) == 0;
+      ImGui::PushID(static_cast<int>(index));
+      ImGui::BeginDisabled(locked);
+      if (ImGui::Checkbox(LOC(column.label), &shown))
+      {
+        hidden = shown ? hidden & ~bit : hidden | bit;
+        changed = true;
+      }
+      ImGui::EndDisabled();
+      if (locked &&
+          ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled |
+                               ImGuiHoveredFlags_DelayNormal))
+        ImGui::SetTooltip("%s", LOC("TABLE_COLUMN_LOCKED"));
+      if (!locked && shown && (fitted & bit) == 0)
+      {
+        ImGui::SameLine();
+        ImGui::TextColored(palette.faint, "%s", LOC("TABLE_COLUMN_NO_ROOM"));
+      }
+      ImGui::PopID();
+    }
+    ImGui::Spacing();
+    ImGui::BeginDisabled(hidden == 0);
+    if (secondaryButton(LOC("TABLE_COLUMNS_RESET"), ImVec2(0.0f, 0.0f),
+                        ButtonSize::COMPACT))
+    {
+      hidden = 0;
+      changed = true;
+    }
+    ImGui::EndDisabled();
+    if (changed)
+    {
+      SettingsManager* settings = SettingsManager::instance();
+      auto& views = settings->get().hidden_columns;
+      std::vector<std::string> keys;
+      for (size_t index = 0; index < columns.size(); ++index)
+        if ((hidden & (ColumnMask{1} << index)) != 0)
+          keys.emplace_back(columns[index].label);
+      if (keys.empty())
+      {
+        if (const auto view = views.find(table); view != views.end())
+          views.erase(view);
+      }
+      else
+      {
+        views.insert_or_assign(std::string(table), std::move(keys));
+      }
+      settings->save();
+    }
+    ImGui::EndPopup();
+  }
+  ImGui::PopID();
+  return changed;
 }
 
 bool beginResponsiveTable(const char* id, std::span<const Column> columns,

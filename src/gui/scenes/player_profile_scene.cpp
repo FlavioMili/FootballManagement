@@ -42,7 +42,6 @@ constexpr float HEADER_HEIGHT = 112.0f;
 constexpr float BIO_KEY_WIDTH = 130.0f;
 constexpr float ATTRIBUTE_LABEL_WIDTH = 118.0f;
 constexpr const char* LIST_CONFIRM_ID = "##confirm_transfer_list";
-constexpr const char* RENEW_DIALOG_ID = "###renew_contract";
 
 std::string nationalityName(Language nationality)
 {
@@ -187,6 +186,8 @@ void PlayerProfileScene::refresh()
                   ? std::string(LOC("TRANSFER_FREE_AGENT_LABEL"))
                   : club->get().getName();
   nationality = nationalityName(current->getNationality());
+  const uint32_t clause = controller.getReleaseClause(player_id);
+  clause_text = clause > 0 ? Format::money(clause) : std::string();
 
   dynamics = current->getDynamics();
   form = current->getForm();
@@ -504,22 +505,31 @@ void PlayerProfileScene::renderActions()
         refresh();
       }
     }
-    else if (ImGui::SmallButton(LOC("PROFILE_TRANSFER_LIST")))
+    else
     {
-      list_confirm_requested = true;
+      // Disabled with the reason when the club cannot list him now.
+      const GameController::PlayerActionBlock block =
+          controller.getListingBlock(player_id);
+      ImGui::BeginDisabled(block != GameController::PlayerActionBlock::None);
+      if (ImGui::SmallButton(LOC("PROFILE_TRANSFER_LIST")))
+        list_confirm_requested = true;
+      ImGui::EndDisabled();
+      if (block != GameController::PlayerActionBlock::None &&
+          ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        ImGui::SetTooltip("%s", LOC(GameController::playerActionBlockKey(block)));
     }
     ImGui::SameLine();
     if (ImGui::SmallButton(LOC("PROFILE_OPEN_LINEUP")))
       guiView->navigateTo(std::make_unique<LineupScene>(guiView, player_id));
     ImGui::SameLine();
-    if (ImGui::SmallButton(LOC("PROFILE_RENEW")))
-    {
-      const auto demand = controller.getContractDemand(player_id, false);
-      renew_wage = demand.weekly_wage;
-      renew_years = std::max<int>(demand.years, 1);
-      renew_status.clear();
-      renew_requested = true;
-    }
+    const GameController::PlayerActionBlock renewal =
+        controller.getRenewalBlock(player_id);
+    ImGui::BeginDisabled(renewal != GameController::PlayerActionBlock::None);
+    if (ImGui::SmallButton(LOC("PROFILE_RENEW"))) renew_requested = true;
+    ImGui::EndDisabled();
+    if (renewal != GameController::PlayerActionBlock::None &&
+        ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+      ImGui::SetTooltip("%s", LOC(GameController::playerActionBlockKey(renewal)));
     UI::sameLineIfFits(UI::buttonWidth(LOC("TALK_ACTION")));
     if (ImGui::SmallButton(LOC("TALK_ACTION")))
       talk_dialog.open(controller, player_id);
@@ -561,6 +571,26 @@ void PlayerProfileScene::renderActions()
                                 : "SCOUTING_SHORTLIST_ADDED"));
     refresh();
   }
+
+  // Following routes his news (moves, injuries, big matches, honours,
+  // contracts) to the inbox.
+  const bool following = controller.isFollowingPlayer(player_id);
+  const char* followLabel = LOC(following ? "INBOX_UNFOLLOW" : "INBOX_FOLLOW");
+  UI::sameLineIfFits(UI::buttonWidth(followLabel));
+  if (ImGui::SmallButton(followLabel))
+  {
+    if (following ? controller.unfollowPlayer(player_id)
+                  : controller.followPlayer(player_id))
+      showToast(fmt::sprintf(LOC(following ? "INBOX_UNFOLLOWED"
+                                           : "INBOX_FOLLOWING"),
+                             row.name));
+    else
+      showToast(fmt::sprintf(LOC("INBOX_FOLLOW_LIMIT"),
+                             static_cast<int>(Stories::MAX_FOLLOWS)),
+                true);
+  }
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+    ImGui::SetTooltip("%s", LOC("INBOX_FOLLOW_HELP"));
 
   if (!freeAgent)
   {
@@ -615,13 +645,18 @@ void PlayerProfileScene::renderBio(const Player& current, float width,
   UI::sectionLabel(LOC("PROFILE_CONTRACT"));
   const std::string wage =
       fmt::sprintf(LOC("PROFILE_WAGE_VALUE"), row.wage_text.c_str());
+  // A release clause shares the contract's row.
   const std::string contract =
-      fmt::sprintf(LOC("PROFILE_CONTRACT_VALUE"), row.contract_years);
+      fmt::sprintf(LOC("PROFILE_CONTRACT_VALUE"), row.contract_years) +
+      (clause_text.empty()
+           ? std::string()
+           : fmt::sprintf(LOC("PROFILE_CLAUSE_SUFFIX"), clause_text));
   UI::keyValue(LOC("PLAYER_WEEKLY_WAGE"), wage.c_str(), keyWidth);
   ImGui::PushStyleColor(
       ImGuiCol_Text, row.contract_years <= 1 ? palette.negative : palette.text);
   UI::keyValue(LOC("PLAYER_CONTRACT"), contract.c_str(), keyWidth);
   ImGui::PopStyleColor();
+
   UI::keyValue(
       LOC(scouted ? "PROFILE_ESTIMATED_VALUE" : "PROFILE_MARKET_VALUE_LABEL"),
       row.value_text.c_str(), keyWidth);
@@ -937,7 +972,6 @@ void PlayerProfileScene::renderDialogs()
 {
   GameController& controller = guiView->getController();
   if (talk_dialog.render(controller)) refresh();
-  const Theme::Palette& palette = Theme::palette();
   if (list_confirm_requested)
   {
     list_confirm_requested = false;
@@ -952,68 +986,31 @@ void PlayerProfileScene::renderDialogs()
                           body.c_str(), LOC("PROFILE_TRANSFER_LIST"),
                           LOC("TRANSFER_CANCEL")) == UI::DialogResult::CONFIRM)
     {
+      const GameController::PlayerActionBlock block =
+          controller.getListingBlock(row.id);
       controller.listPlayerForTransfer(row.id, row.market_value);
-      showToast(LOC("PROFILE_LISTED_TOAST"));
+      const bool listed = controller.isPlayerListed(row.id);
+      showToast(LOC(listed ? "PROFILE_LISTED_TOAST"
+                    : block != GameController::PlayerActionBlock::None
+                        ? GameController::playerActionBlockKey(block)
+                        : "PROFILE_LIST_FAILED"),
+                !listed);
       refresh();
     }
   }
 
+  // Renewals are contract talks with the player and his agent.
   if (renew_requested)
   {
     renew_requested = false;
-    ImGui::OpenPopup(RENEW_DIALOG_ID);
+    if (!contract_talks.open(controller, player_id))
+      showToast(LOC(GameController::playerActionBlockKey(
+                    controller.getRenewalBlock(player_id))),
+                true);
   }
-  if (!ImGui::IsPopupOpen(RENEW_DIALOG_ID)) return;
-  ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
-                          ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-  const std::string title =
-      std::string(LOC("PROFILE_RENEW_TITLE")) + RENEW_DIALOG_ID;
-  if (!ImGui::BeginPopupModal(title.c_str(), nullptr,
-                              ImGuiWindowFlags_AlwaysAutoResize))
-    return;
-  const auto demand = controller.getContractDemand(player_id, false);
-  ImGui::TextColored(
-      palette.muted, "%s",
-      fmt::sprintf(Format::plural("PROFILE_RENEW_DEMAND", demand.years),
-                   Format::moneyFull(demand.weekly_wage).c_str(), demand.years)
-          .c_str());
-  ImGui::TextUnformatted(LOC("TRANSFER_OFFER_WAGE"));
-  UI::MoneyInputOptions wageOptions;
-  wageOptions.maximum = std::numeric_limits<uint32_t>::max();
-  wageOptions.width = 240.0f * Theme::scale();
-  UI::moneyInput("##renew_wage", renew_wage, wageOptions);
-  ImGui::SetNextItemWidth(240.0f * Theme::scale());
-  ImGui::SliderInt(LOC("TRANSFER_OFFER_YEARS"), &renew_years,
-                   TransferTuning::Contract::MINIMUM_YEARS,
-                   TransferTuning::Contract::MAXIMUM_YEARS);
-  const GameController::ContractTerms offer{static_cast<uint32_t>(renew_wage),
-                                            static_cast<uint8_t>(renew_years)};
-  const bool acceptable =
-      controller.isContractOfferAcceptable(player_id, false, offer);
-  if (!acceptable)
-    ImGui::TextColored(palette.negative, "%s",
-                       LOC("TRANSFER_CONTRACT_REJECTED"));
-  if (!renew_status.empty())
-    ImGui::TextColored(palette.negative, "%s", renew_status.c_str());
-  const ImVec2 buttonSize(150.0f * Theme::scale(), 0.0f);
-  if (ImGui::Button(LOC("TRANSFER_CANCEL"), buttonSize) ||
-      ImGui::IsKeyPressed(ImGuiKey_Escape, false))
-    ImGui::CloseCurrentPopup();
-  ImGui::SameLine();
-  ImGui::BeginDisabled(!acceptable);
-  if (UI::primaryButton(LOC("PROFILE_RENEW_CONFIRM"), buttonSize))
+  if (contract_talks.render(controller) == ContractTalksDialog::Event::Signed)
   {
-    if (controller.renewContract(player_id, offer))
-    {
-      showToast(LOC("PROFILE_RENEWED_TOAST"));
-      refresh();
-      ImGui::CloseCurrentPopup();
-    }
-    else
-    {
-      renew_status = LOC("PROFILE_RENEW_OVER_BUDGET");
-    }
+    showToast(contract_talks.signedMessage());
+    refresh();
   }
-  ImGui::EndDisabled();
-  ImGui::EndPopup();
 }

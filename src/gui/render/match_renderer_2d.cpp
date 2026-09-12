@@ -1579,6 +1579,18 @@ MatchRenderer2D::MatchRenderer2D() : state(std::make_unique<State>()) {}
 
 MatchRenderer2D::~MatchRenderer2D() = default;
 
+bool MatchRenderer2D::projectPitch(Vector2F pitch, float /*heightMetres*/,
+                                   float& screenX, float& screenY) const
+{
+  // Top-down: height does not move a point on the plan.
+  const State& s = *state;
+  if (s.ppm <= 0.0f || s.drawList == nullptr) return false;
+  const ImVec2 point = s.atMetres(pitch.x * LENGTH, pitch.y * WIDTH);
+  screenX = point.x;
+  screenY = point.y;
+  return true;
+}
+
 void MatchRenderer2D::render(const MatchRenderSnapshot& snapshot,
                              const MatchRenderOptions& options,
                              const MatchViewport& viewport)

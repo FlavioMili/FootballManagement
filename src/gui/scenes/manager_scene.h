@@ -16,6 +16,7 @@
 
 #include "gui/scenes/management_scene.h"
 #include "model/manager_career.h"
+#include "model/national_job.h"
 
 class GameController;
 
@@ -157,7 +158,11 @@ class ManagerScene : public ManagementScene
       DECLINE,
       NEGOTIATE,
       RESIGN,
-      INTERVIEW
+      INTERVIEW,
+      NATIONAL_APPLY,
+      NATIONAL_ACCEPT,
+      NATIONAL_DECLINE,
+      NATIONAL_RESIGN
     };
     Kind kind = Kind::NONE;
     std::uint32_t id = 0; /*!< Club or offer. */
@@ -176,6 +181,14 @@ class ManagerScene : public ManagementScene
   void renderInterviewDialog();
   void renderConfirmations();
   void runPendingAction();
+  // National-team jobs (manager_scene_national.cpp).
+  void refreshNational();
+  void renderNationalCard(float width);
+  void renderNationalOffers();
+  void renderNationalVacancies();
+  void renderNationalConfirmation();
+  /** True when the pending action was a national-team one (and ran). */
+  bool runNationalAction(const PendingAction& action);
 
   Tab tab = Tab::PROFILE;
   bool unemployed = false;
@@ -221,4 +234,37 @@ class ManagerScene : public ManagementScene
   bool accept_requested = false;
 
   PendingAction pending;
+
+  // National-team jobs
+  struct NationalVacancyRow
+  {
+    Language nation = Language::EN;
+    std::string name;
+    std::string rank;
+    std::string wage;
+    const char* licence_key = "";
+    bool licence_missing = false;
+    float chance = 0.0f;
+    std::string chance_text;
+    std::optional<NationalApplicationStage> stage;
+  };
+  struct NationalOfferRow
+  {
+    std::uint32_t id = 0;
+    std::string name;
+    std::string wage;
+    std::string terms;
+    bool unsolicited = false;
+  };
+  bool national_job = false;
+  /** He has a club and is not famous enough to add a national team. */
+  bool national_blocked = false;
+  std::string national_value;
+  std::string national_note;
+  std::vector<std::pair<const char*, std::string>> national_facts;
+  std::vector<std::string> national_history;
+  std::vector<NationalVacancyRow> national_vacancies;
+  std::vector<NationalOfferRow> national_offers;
+  int selected_nation = -1;
+  bool resign_national_requested = false;
 };

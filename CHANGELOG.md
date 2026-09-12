@@ -4,7 +4,7 @@ All notable changes to Football Management are listed here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and version
 numbers follow [Semantic Versioning](https://semver.org/).
 
-## v0.1.0 (unreleased)
+## v1.0.0 (unreleased)
 
 First public release. Everything below is new compared to the earlier
 development snapshots, so most of it is listed under *Added*.
@@ -70,7 +70,20 @@ development snapshots, so most of it is listed under *Added*.
   shouts (Shift + number keys) whose effect fades when repeated.
 - Your match pauses at half-time and the other breaks at any speed
   (optional), and Highlights mode opens each highlight on live play.
-- Pre-match and half-time team talks.
+- Pre-match and half-time team talks. How the squad takes a talk sharpens
+  (or unsettles) its decisions, execution and pressing for the first minutes
+  of the half, in watched and simulated matches.
+- Player roles and duties per position (line or sweeper keeper, inside
+  full-back, stopper, cover defender, anchor, playmaker, box-to-box, second
+  striker, inside forward, touchline winger, target forward, poacher,
+  pressing forward, false nine) with Defend, Support or Attack duties. Each
+  role changes how the player positions himself with and without the ball,
+  how often he runs in behind, how much width he keeps, how riskily he
+  passes, when he presses and how readily he shoots. AI clubs give their
+  players the roles that suit them.
+- A separate shape with the ball: drag each player to his attacking-phase
+  spot on the tactics screen, or start from a ready-made shape (full-backs
+  push on, build with three, narrow front line).
 - Lineup gate before kick-off: the assistant replaces injured or suspended
   players, or you fix the lineup yourself.
 - Knockout matches (cup ties, continental second legs and finals, national
@@ -82,7 +95,9 @@ development snapshots, so most of it is listed under *Added*.
   chances, goals and cards, referee whistles and ball contacts, with master,
   crowd and effects volumes and a mute key (M).
 - Match report with per-player lines, and half-time and full-time analysis.
-- Opposition report for the next opponent.
+- Opposition report for the next opponent, with individual instructions
+  the engine plays out: mark a player tightly, close him down, show him onto
+  his weaker foot or double up on him.
 
 **Competitions**
 - 22 leagues with 440 clubs: a top division and a second division in each
@@ -129,6 +144,12 @@ development snapshots, so most of it is listed under *Added*.
   and the country's talent pool, with occasional golden generations.
 - Under-18 league with minutes, ratings and goals that feed development;
   scholarships, first professional contracts and homegrown status.
+- Under-21 squad for every club on its own screen (Squad hub): players move
+  between the first team, the U21s and the U18s under age rules (21 and
+  younger, plus three outfield players and a goalkeeper over age); U18
+  players move up at 19. One U21 league per country plays a cheap weekly
+  round whose minutes speed up development, and AI clubs send young players
+  outside their plans down and promote them when they are ready.
 
 **Transfers and scouting**
 - Transfer market with search, recommendations based on squad needs,
@@ -160,6 +181,12 @@ development snapshots, so most of it is listed under *Added*.
   negotiation; unsolicited offers, resignation, sacking and severance.
 - Option to start unemployed; AI managers for every club with their own
   sackings and appointments.
+- National-team jobs: federations look for a coach after failed campaigns
+  and tournaments; apply or accept an approach, alone or (with a continental
+  reputation) next to your club job. Pick the squad on the Call-ups screen
+  in the week before each window; qualifiers, nations series and finals
+  results move your reputation, qualifying earns a new contract and missing
+  out can cost a big nation's job.
 
 **Awards and records**
 - Monthly awards (player, young player, manager, goal of the month) and
@@ -210,15 +237,14 @@ development snapshots, so most of it is listed under *Added*.
   buying club does not check its wage budget until the deal is settled.
 - The swipe direction and distance for Back/Forward are tuned for common
   touchpads; natural-scrolling setups may need them flipped.
-- Team talks affect morale only; they do not change the match itself yet.
-- Opposition instructions are saved but not used by the engine yet.
 - Italian commentary uses club names without their articles.
 - Match sound is synthesised and still being tuned by ear; there are no club
   chants and no commentary voice.
-- You cannot coach a national team; national teams are run by the game.
+- You do not watch or direct your national team's matches live; they are
+  simulated with the squad you pick.
 - Each player has one nationality.
-- There are no reserve or under-21 squads, only the first team and the
-  under-18 academy.
+- U21 players are not sold or loaned out by AI clubs while in the U21
+  squad (they can be when back in the first team).
 - Awards are not rebuilt for careers saved before awards existed.
 - Engine and world calibration is still being tuned (for example strikers
   score too large a share of the goals, set pieces too few, and possession

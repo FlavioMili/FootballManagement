@@ -10,6 +10,7 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -33,7 +34,8 @@ enum class YouthStatus : std::uint8_t
 {
   Candidate = 0, /*!< Intake trialist waiting for a contract offer. */
   Squad,         /*!< Member of the U18 squad. */
-  Graduated      /*!< Promoted academy product (kept until 21). */
+  Graduated,     /*!< Promoted academy product (kept until 21). */
+  Reserve        /*!< Member of the U21 (reserve) squad. */
 };
 
 /** @brief Contract of an academy player (values are persisted). */
@@ -69,7 +71,8 @@ enum class YouthActionResult : std::uint8_t
   UnknownPlayer,
   NotAllowed, /*!< Wrong status or club for this action. */
   TooYoung,   /*!< Below the first professional contract age. */
-  TooOld      /*!< Beyond the U18 age limit. */
+  TooOld,     /*!< Beyond the age limit of the squad. */
+  OverageFull /*!< The U21 over-age places are taken. */
 };
 
 /** @brief Board answer to an academy investment request. */
@@ -137,7 +140,7 @@ struct YouthTableRow
   int points() const { return 3 * won + drawn; }
 };
 
-/** @brief A U18 match of the managed club, from its point of view. */
+/** @brief A U18 or U21 match of the managed club, from its point of view. */
 struct YouthResult
 {
   GameDateValue date;
@@ -145,6 +148,14 @@ struct YouthResult
   bool home = true;
   std::uint8_t goals_for = 0;
   std::uint8_t goals_against = 0;
+};
+
+/** @brief Over-age places used in a club's U21 squad. */
+struct ReserveQuota
+{
+  std::size_t squad = 0;
+  std::size_t overage_outfield = 0;
+  std::size_t overage_goalkeepers = 0;
 };
 
 /**
@@ -161,6 +172,8 @@ struct AcademyClub
   std::uint8_t project_target = 0;
   std::int32_t last_request_day = 0; /*!< Last board decision (0: none). */
   YouthTableRow table;
+  YouthTableRow reserve_table; /*!< Row in the country's U21 league. */
+  bool reserves_ready = false; /*!< The U21 squad has been set up. */
 };
 
 /** @brief Everything that shapes an intake. Qualities are 0-1. */
@@ -263,6 +276,14 @@ inline constexpr std::uint8_t INTAKE_DAY = 15;
 inline constexpr int DECISION_DAYS = 30;
 /** Oldest age allowed in the U18 squad (season age). */
 inline constexpr int U18_MAX_AGE = 18;
+/** Oldest age of a regular U21 player (season age). */
+inline constexpr int U21_MAX_AGE = 21;
+/** Over-age players a U21 squad may hold: three outfield players and a
+ * goalkeeper, as in the professional development leagues. [RR] */
+inline constexpr std::size_t U21_OVERAGE_OUTFIELD = 3;
+inline constexpr std::size_t U21_OVERAGE_GOALKEEPERS = 1;
+/** Largest U21 squad a computer-managed club keeps. [P] */
+inline constexpr std::size_t U21_SQUAD_LIMIT = 16;
 /** Club-trained status: seasons at the academy between 15 and 21. [RR] */
 inline constexpr int HOMEGROWN_SEASONS = 3;
 /** Contracts of minors are capped at three seasons. [RR] */
@@ -316,6 +337,14 @@ std::uint8_t youthContractYears(int age);
 bool isHomegrown(int joined_age, int age);
 
 /**
+ * Whether a player of @p age and @p role may join a U21 squad whose
+ * over-age places are used as in @p quota: Ok, or OverageFull when he is
+ * over 21 and his kind of over-age place is taken.
+ */
+YouthActionResult reserveEligibility(int age, PlayerRole role,
+                                     const ReserveQuota& quota);
+
+/**
  * Hidden working style of a staff member in [0, 1] (0.7+ professional),
  * derived from the world seed and the staff id.
  */
@@ -355,14 +384,17 @@ std::uint8_t upgradeTarget(AcademyUpgrade kind, int current);
 
 /**
  * @class YouthAcademy
- * @brief Academies of every club: yearly intake cycle, U18 squads and their
- * league, youth contracts and board-funded academy projects.
+ * @brief Academies of every club: yearly intake cycle, U18 and U21 squads
+ * and their leagues, youth contracts and board-funded academy projects.
  *
  * Calendar (every club, same rules): the head of youth development previews
  * the intake on 1 February, candidates arrive on 15 March and the manager
  * has 30 days to offer contracts; computer-managed clubs sign their best
  * prospects on intake day. U18 teams play a cheap aggregate league every
  * week of the season; minutes and junior coaching speed up development.
+ * U21 (reserve) squads hold players aged 21 or younger plus a few over-age
+ * players; they are listed apart from the senior squad like the U18s and
+ * play one cheap league per country midweek.
  */
 class YouthAcademy
 {
@@ -374,6 +406,12 @@ class YouthAcademy
   /** Assigns existing young players to U18 squads once (new worlds). */
   void ensureReady();
 
+  /** Players on loan stay in their senior squads (never sent to the U21s). */
+  void setLoanCheck(std::function<bool(PlayerID)> is_on_loan)
+  {
+    loan_check = std::move(is_on_loan);
+  }
+
   /** Daily: previews, intake day, decision deadline, U18 matchdays,
    * projects and monthly progress snapshots. */
   void onDayAdvanced(const GameDateValue& date, TeamID managed_team_id,
@@ -383,14 +421,15 @@ class YouthAcademy
    * academy players they want to keep. */
   void onSeasonEnd(const GameDateValue& date, TeamID managed_team_id);
 
-  /** After ageing: new U18 league, over-age players join the first team. */
+  /** After ageing: new U18 and U21 leagues; over-age U18 players move up
+   * to the U21s, U21 players beyond the over-age places to the first team. */
   void onSeasonStart(const GameDateValue& date, TeamID managed_team_id,
                      Inbox& inbox);
 
   /**
-   * Development multiplier of a U18 player (1 for everyone else): youth
-   * match minutes replace first-team minutes, junior coaching and youth
-   * facilities replace the senior set-up. Bounded to [0.8, 1.6].
+   * Development multiplier of a U18 or U21 player (1 for everyone else):
+   * youth match minutes replace first-team minutes, junior coaching and
+   * youth facilities replace the senior set-up. Bounded to [0.8, 1.6].
    */
   float developmentMultiplier(const Player& player) const;
 
@@ -400,7 +439,7 @@ class YouthAcademy
   // ---- Queries ----
 
   const YouthRecord* record(PlayerID player_id) const;
-  /** In a U18 squad or a trialist of his current club. */
+  /** In a U18 or U21 squad, or a trialist of his current club. */
   bool isAcademyPlayer(PlayerID player_id) const;
   /** Records of a club with @p status, sorted by player id. */
   std::vector<const YouthRecord*> members(TeamID team_id,
@@ -417,6 +456,15 @@ class YouthAcademy
   std::vector<YouthTableRow> table(LeagueID league_id) const;
   /** Managed club's U18 results this season, oldest first. */
   const std::vector<YouthResult>& results() const { return managed_results; }
+  /** U21 league of @p team_id's country (every division), leader first. */
+  std::vector<YouthTableRow> reserveTable(TeamID team_id) const;
+  /** Managed club's U21 results this season, oldest first. */
+  const std::vector<YouthResult>& reserveResults() const
+  {
+    return managed_reserve_results;
+  }
+  /** Size and over-age places of a club's U21 squad. */
+  ReserveQuota reserveQuota(TeamID team_id) const;
   bool isHomegrown(PlayerID player_id) const;
   /** Players of a club's senior squad (academy players excluded). */
   std::size_t firstTeamSize(TeamID team_id) const;
@@ -436,6 +484,13 @@ class YouthAcademy
   YouthActionResult offerProfessional(TeamID team_id, PlayerID player_id);
   YouthActionResult promote(TeamID team_id, PlayerID player_id);
   YouthActionResult demote(TeamID team_id, PlayerID player_id);
+  /** A first-team or U18 player joins the U21 squad (age rules and the
+   * over-age places apply). */
+  YouthActionResult moveToReserves(TeamID team_id, PlayerID player_id);
+  /** A U21 player joins the first-team squad (professional contract). */
+  YouthActionResult promoteReserve(TeamID team_id, PlayerID player_id);
+  /** A U21 player young enough for the U18s goes back to them. */
+  YouthActionResult reserveToU18(TeamID team_id, PlayerID player_id);
   UpgradeRequestResult requestUpgrade(const GameDateValue& date,
                                       TeamID team_id, AcademyUpgrade kind,
                                       float board_confidence, bool embargoed,
@@ -460,6 +515,29 @@ class YouthAcademy
   void remindDecisions(const GameDateValue& date, TeamID managed_team_id,
                        Inbox& inbox) const;
   void playMatchday(const GameDateValue& date, TeamID managed_team_id);
+  void playReserveMatchday(const GameDateValue& date, TeamID managed_team_id);
+  /**
+   * One round of a youth league for every group of clubs: team sheets from
+   * the players with @p status, stand-ins of @p stand_in ability for short
+   * sheets, results in @p row_of and the managed club's @p results.
+   */
+  void playRound(const GameDateValue& date, TeamID managed_team_id,
+                 YouthStatus status,
+                 const std::vector<std::vector<TeamID>>& groups,
+                 YouthTableRow AcademyClub::* row_of,
+                 std::vector<YouthResult>& results, std::uint64_t salt,
+                 float stand_in);
+  /** Computer-managed clubs without a U21 squad yet (new worlds and older
+   * saves) move young players outside their senior plans down. */
+  void setUpReserves(TeamID managed_team_id);
+  /** Young senior players outside a computer-managed club's plans join its
+   * U21 squad while the senior squad stays at its target size. */
+  void fillComputerReserves(TeamID team_id);
+  /** Season start: U21 players beyond the age rules move on. */
+  void advanceReserves(TeamID managed_team_id,
+                       std::vector<std::string>& to_first_team);
+  /** Joins the U21 squad; resets the season's youth statistics. */
+  void enterReserves(Player& player, YouthRecord& youth);
   void completeProjects(const GameDateValue& date, TeamID managed_team_id,
                         Inbox& inbox);
   void snapshotProgress(const GameDateValue& date, TeamID managed_team_id);
@@ -476,5 +554,8 @@ class YouthAcademy
   std::unordered_map<PlayerID, YouthRecord> records;
   std::unordered_map<TeamID, AcademyClub> clubs;
   std::vector<YouthResult> managed_results;
+  std::vector<YouthResult> managed_reserve_results;
+  std::function<bool(PlayerID)> loan_check;
   bool ready = false;
+  bool reserves_checked = false;
 };

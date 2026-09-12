@@ -22,13 +22,16 @@
 #include "database/repositories/training_repository.h"
 #include "database/repositories/world_state_repository.h"
 #include "global/global.h"
+#include "model/competition.h"
 #include "model/injury.h"
 #include "model/manager_career.h"
 #include "model/match.h"
 #include "model/match_report.h"
 #include "model/player.h"
 #include "model/role_utils.h"
+#include "model/season_history.h"
 #include "model/staff.h"
+#include "model/tactics.h"
 #include "model/team.h"
 #include "model/world_generation.h"
 #include "model/world_rng.h"
@@ -294,6 +297,24 @@ void WorldSimulation::setStandingsProvider(
 void WorldSimulation::setLoanCheck(std::function<bool(PlayerID)> is_on_loan)
 {
   loan_check = std::move(is_on_loan);
+  youth.setLoanCheck(loan_check);
+}
+
+void WorldSimulation::setLineupGapFiller(
+    std::function<void(Team&, const Player&)> filler)
+{
+  lineup_gap_filler = std::move(filler);
+}
+
+void WorldSimulation::setFreeAgentHold(std::function<bool(PlayerID)> is_held)
+{
+  free_agent_hold = std::move(is_held);
+}
+
+void WorldSimulation::setSeasonHistoryProvider(
+    std::function<const std::vector<SeasonHistoryEntry>&()> provider)
+{
+  season_history_provider = std::move(provider);
 }
 
 void WorldSimulation::setFixtureOutlookProvider(
@@ -410,7 +431,13 @@ void WorldSimulation::onDayAdvanced(const GameDateValue& date,
     scouting.setManagedTeam(managed_team_id);
   scouting.onDayAdvanced(date, inbox);
   interactions.onDayAdvanced(date, managed_team_id, inbox);
-  stories.onDayAdvanced(date, managed_team_id, interactions, inbox);
+  StoryDayContext story_context;
+  story_context.awards = &awards;
+  if (const auto next = fixture_outlook.find(managed_team_id);
+      fixture_outlook_provider && next != fixture_outlook.end())
+    story_context.days_to_match = next->second;
+  stories.onDayAdvanced(date, managed_team_id, interactions, inbox,
+                        story_context);
 }
 
 void WorldSimulation::processDaily(const GameDateValue& date,
@@ -544,7 +571,12 @@ void WorldSimulation::refreshAiLineups(TeamID managed_team_id)
   {
     if (team_id == managed_team_id || team_id == FREE_AGENTS_TEAM_ID) continue;
     if (auto team = gamedata->getTeam(team_id))
+    {
       team->get().generateStartingXI(*gamedata, gamedata->getStatsConfig());
+      // AI managers give the new eleven roles that suit them.
+      Tactics::assignRolesToFit(team->get().getStrategy(),
+                                team->get().getLineup());
+    }
   }
   lineup_dirty.clear();
 }
@@ -565,6 +597,14 @@ void WorldSimulation::dropUnavailableFromAiLineups(TeamID managed_team_id)
                             { return unavailable(positioned.player); });
     if (needs_change)
       team.generateStartingXI(*gamedata, gamedata->getStatsConfig());
+    // Roles follow the eleven; new worlds and older saves get theirs here.
+    const Strategy& strategy = team.getStrategy();
+    const bool roles_missing = std::ranges::any_of(
+        team.getLineup().getOutfieldPlayers(),
+        [&strategy](const auto& positioned)
+        { return !strategy.findSlot(positioned.position); });
+    if (needs_change || roles_missing)
+      Tactics::assignRolesToFit(team.getStrategy(), team.getLineup());
   }
 }
 
@@ -762,6 +802,11 @@ void WorldSimulation::processMonthly(const GameDateValue& date,
                                      TeamID managed_team_id)
 {
   const auto economies = buildLeagueEconomies(*gamedata);
+  // July is the rollover month: the parachutes of a season are paid from
+  // August to June.
+  const auto parachute = date.month == 7
+                             ? std::unordered_map<TeamID, double>{}
+                             : parachutes(economies);
   for (auto& [team_id, team] : gamedata->getTeams())
   {
     if (team_id == FREE_AGENTS_TEAM_ID) continue;
@@ -774,6 +819,10 @@ void WorldSimulation::processMonthly(const GameDateValue& date,
     { return static_cast<std::int64_t>(std::llround(value)); };
     finances.record(date, FinanceCategory::Broadcasting,
                     round(ClubEconomy::monthlyBroadcasting(economy)));
+    if (const auto paid = parachute.find(team_id); paid != parachute.end())
+      finances.record(
+          date, FinanceCategory::Broadcasting,
+          round(paid->second / WorldTuning::Finance::PARACHUTE_INSTALMENTS));
     finances.record(
         date, FinanceCategory::Sponsorship,
         round(ClubEconomy::monthlySponsorship(economy, profile.reputation)));
@@ -791,6 +840,8 @@ void WorldSimulation::processMonthly(const GameDateValue& date,
         -round(ClubEconomy::monthlyFacilityCosts(economy, profile)));
     if (team_id != managed_team_id) rescueByOwner(date, team);
   }
+  // The summer belongs to the market; after it the unsigned move on.
+  if (date.month < 6 || date.month > 8) clearFreeAgentPool(date);
 
   const auto managed = gamedata->getTeam(managed_team_id);
   if (managed_team_id == FREE_AGENTS_TEAM_ID || !managed) return;
@@ -809,20 +860,29 @@ void WorldSimulation::processMonthly(const GameDateValue& date,
         formatMoney(summary.net()), formatMoney(finances.getBalance())},
        std::nullopt, managed_team_id, finances.getBalance() >= 0);
 
-  // Monthly board review during the league season (September-May).
-  if (board.team_id != managed_team_id || board.league_matches == 0 ||
-      (date.month >= 6 && date.month <= 8))
+  // Monthly board review. From June to August there is no league to judge:
+  // the board watches the money, and the season itself is judged when it
+  // ends (Game::endSeason).
+  const bool in_season = date.month < 6 || date.month > 8;
+  if (board.team_id != managed_team_id ||
+      (in_season && board.league_matches == 0))
     return;
-  const int position = leaguePosition(managed_team_id);
-  const auto league = gamedata->getLeague(team.getLeagueId());
-  const int league_size =
-      league ? static_cast<int>(league->get().getTeamIDs().size()) : 20;
-  const bool was_dismissed = board.dismissed;
+  const std::vector<TeamID> table = standings(team.getLeagueId());
+  const auto found = std::ranges::find(table, managed_team_id);
+  const int position =
+      found == table.end()
+          ? 0
+          : static_cast<int>(std::distance(table.begin(), found)) + 1;
+  const int league_size = table.empty() ? 20 : static_cast<int>(table.size());
   const BoardReviewOutcome outcome = BoardModel::monthlyReview(
       board, position, league_size, finances.getBalance() < 0,
       finances.getCurrentWageSpending(*gamedata, team) >
-          finances.getWageBudget());
-  if (outcome == BoardReviewOutcome::Warning)
+          finances.getWageBudget(),
+      in_season);
+  // A dismissal is announced once, by the career, when the job ends; on
+  // 1 July the season verdict speaks for the board.
+  if (outcome == BoardReviewOutcome::Warning &&
+      !(date.month == 7 && date.day == 1))
   {
     post(date, InboxCategory::Board, "INBOX_BOARD_WARNING_TITLE",
          "INBOX_BOARD_WARNING_BODY",
@@ -830,11 +890,63 @@ void WorldSimulation::processMonthly(const GameDateValue& date,
           std::string("@") + BoardModel::objectiveKey(board.objective)},
          std::nullopt, managed_team_id);
   }
-  else if (outcome == BoardReviewOutcome::Dismissed && !was_dismissed)
+}
+
+std::unordered_map<TeamID, double> WorldSimulation::parachutes(
+    const std::unordered_map<LeagueID, LeagueEconomy>& economies,
+    std::vector<TeamID>* relegated_now) const
+{
+  std::unordered_map<TeamID, double> paid;
+  if (!season_history_provider) return paid;
+  const std::vector<SeasonHistoryEntry>& history = season_history_provider();
+  std::uint16_t latest = 0;
+  for (const SeasonHistoryEntry& entry : history)
+    latest = std::max(latest, entry.season);
+  for (const SeasonHistoryEntry& entry : history)
   {
-    post(date, InboxCategory::Board, "INBOX_BOARD_DISMISSED_TITLE",
-         "INBOX_BOARD_DISMISSED_BODY", {team.getName()}, std::nullopt,
-         managed_team_id);
+    const int seasons_ago = static_cast<int>(latest) - entry.season;
+    if (entry.competition_type != MatchType::LEAGUE || seasons_ago < 0 ||
+        seasons_ago >= static_cast<int>(
+                           WorldTuning::Finance::PARACHUTE_SHARES.size()) ||
+        Competitions::leagueTier(*gamedata, entry.competition_id) != 1)
+      continue;
+    const auto economy = economies.find(entry.competition_id);
+    for (const TeamID team_id : entry.relegated)
+    {
+      const auto team = gamedata->getTeam(team_id);
+      if (!team ||
+          Competitions::leagueTier(*gamedata, team->get().getLeagueId()) == 1)
+        continue;
+      if (seasons_ago == 0 && relegated_now) relegated_now->push_back(team_id);
+      if (economy == economies.end()) continue;
+      double& amount = paid[team_id];
+      amount = std::max(amount, ClubEconomy::parachutePayment(economy->second,
+                                                              seasons_ago));
+    }
+  }
+  return paid;
+}
+
+void WorldSimulation::applyRelegationWageCuts(
+    const std::vector<TeamID>& relegated, TeamID managed_team_id)
+{
+  const auto keep = static_cast<double>(
+      1.0f - WorldTuning::Finance::RELEGATION_WAGE_CUT);
+  for (const TeamID team_id : relegated)
+  {
+    if (team_id == managed_team_id) continue;
+    const auto team = gamedata->getTeam(team_id);
+    if (!team) continue;
+    for (const PlayerID player_id : team->get().getPlayerIDs())
+    {
+      // Loanees are paid under their parent club's contract; scholars
+      // have no clause.
+      if (loan_check && loan_check(player_id)) continue;
+      Player& player = gamedata->getPlayers().at(player_id);
+      if (player.isAcademyPlayer()) continue;
+      player.setWage(static_cast<std::uint32_t>(
+          std::llround(static_cast<double>(player.getWage()) * keep)));
+    }
   }
 }
 
@@ -868,6 +980,68 @@ void WorldSimulation::rescueByOwner(const GameDateValue& date, Team& team)
                             mixHash(team.getId(), 0x4F57'4E52ULL)) <
       static_cast<double>(chance))
     finances.record(date, FinanceCategory::Investment, rescue);
+}
+
+void WorldSimulation::clearFreeAgentPool(const GameDateValue& date)
+{
+  using FreeAgents = WorldTuning::FreeAgents;
+  const auto pool = gamedata->getTeam(FREE_AGENTS_TEAM_ID);
+  if (!pool) return;
+  const StatsConfig& config = gamedata->getStatsConfig();
+  // Reference: the weakest quarter of second-tier senior players.
+  std::vector<double> second_tier;
+  for (const auto& [team_id, team] : gamedata->getTeams())
+  {
+    if (team_id == FREE_AGENTS_TEAM_ID ||
+        Competitions::leagueTier(*gamedata, team.getLeagueId()) == 1)
+      continue;
+    for (const PlayerID player_id : team.getPlayerIDs())
+    {
+      const Player& player = gamedata->getPlayers().at(player_id);
+      if (!player.isAcademyPlayer())
+        second_tier.push_back(player.getOverall(config));
+    }
+  }
+  if (second_tier.empty()) return;
+  const auto quantile = second_tier.begin() +
+                        static_cast<std::ptrdiff_t>(
+                            FreeAgents::LEVEL_QUANTILE *
+                            static_cast<double>(second_tier.size() - 1));
+  std::ranges::nth_element(second_tier, quantile);
+  const double level = *quantile;
+
+  const std::uint64_t seed = gamedata->getWorldSeed();
+  const auto ordinal = static_cast<std::uint64_t>(dayOrdinal(date));
+  std::vector<PlayerID> leaving;
+  for (const PlayerID player_id : pool->get().getPlayerIDs())
+  {
+    const Player& player = gamedata->getPlayers().at(player_id);
+    if (free_agent_hold && free_agent_hold(player_id)) continue;
+    const int age = player.getAge();
+    double chance = age <= 21   ? FreeAgents::EXIT_CHANCE_YOUNG
+                    : age <= 27 ? FreeAgents::EXIT_CHANCE_PRIME
+                    : age <= 31 ? FreeAgents::EXIT_CHANCE_LATE
+                                : FreeAgents::EXIT_CHANCE_VETERAN;
+    const double overall = player.getOverall(config);
+    const double margin = FreeAgents::LEVEL_MARGIN;
+    if (overall >= level + margin)
+      chance *= FreeAgents::ABOVE_LEVEL_FACTOR;
+    else if (overall < level - margin)
+      chance *= FreeAgents::BELOW_LEVEL_FACTOR;
+    if (age <= 21 &&
+        static_cast<double>(player.getPotential()) >=
+            level + FreeAgents::PROSPECT_POTENTIAL_MARGIN)
+      chance *= FreeAgents::PROSPECT_FACTOR;
+    if (WorldRng::hashUniform(seed, RngDomain::Retirement, ordinal,
+                              player_id) < chance)
+      leaving.push_back(player_id);
+  }
+  std::ranges::sort(leaving);
+  for (const PlayerID player_id : leaving)
+  {
+    pool->get().removePlayerID(player_id);
+    gamedata->removePlayer(player_id);
+  }
 }
 
 void WorldSimulation::ensureBoard(const GameDateValue& date,
@@ -904,8 +1078,7 @@ void WorldSimulation::ensureBoard(const GameDateValue& date,
   }
   else if (new_season)
   {
-    // A new season partly resets patience. [P]
-    board.confidence = 0.5f * board.confidence + 0.5f * 55.0f;
+    // Confidence carries over: the season verdict has already moved it.
     board.low_reviews = 0;
   }
   board.season_year = seasonYear(date);
@@ -913,16 +1086,37 @@ void WorldSimulation::ensureBoard(const GameDateValue& date,
   board.objective = BoardModel::objectiveFor(expected, league_size);
   board.target_position =
       BoardModel::targetPosition(board.objective, league_size);
+  // The other targets follow the club's stature and its owners' vision.
+  const Finances& finances = team.getFinances();
+  const ClubVision vision = ManagerMarketModel::clubVision(
+      gamedata->getWorldSeed(), managed_team_id, team.getReputation(),
+      team.getProfile().youth_facilities, finances.getBalance(), 0);
+  board.cup_objective = BoardModel::cupObjectiveFor(
+      board.objective, Competitions::leagueTier(*gamedata, team.getLeagueId()));
+  board.finance_objective =
+      BoardModel::financeObjectiveFor(vision.tight_budget, finances.getBalance());
+  board.youth_target = BoardModel::youthTargetFor(vision.youth_focus);
+  board.start_balance = finances.getBalance();
   board.league_matches = 0;
   board.result_count = 0;
   board.recent_deltas = {};
 
   if (!post_objective) return;
   post(date, InboxCategory::Board, "INBOX_BOARD_OBJECTIVE_TITLE",
-       "INBOX_BOARD_OBJECTIVE_BODY",
+       "INBOX_BOARD_OBJECTIVES_BODY",
        {std::string("@") + BoardModel::objectiveKey(board.objective),
-        ordinalText(expected), team.getName()},
+        ordinalText(expected), team.getName(),
+        std::string("@") + BoardModel::cupObjectiveKey(board.cup_objective),
+        std::string("@") +
+            BoardModel::financeObjectiveKey(board.finance_objective),
+        std::string("@") + BoardModel::youthTargetKey(board.youth_target)},
        std::nullopt, managed_team_id);
+}
+
+void WorldSimulation::adjustBoardConfidence(float delta)
+{
+  if (board.team_id == FREE_AGENTS_TEAM_ID) return;
+  BoardModel::adjustConfidence(board, delta);
 }
 
 // ---------------------------------------------------------------------------
@@ -956,7 +1150,11 @@ void WorldSimulation::onManagedTeamSelected(
         formatMoney(finances.getTransferBudget()),
         formatMoney(finances.getWageBudget()),
         formatMoney(finances.getCurrentWageSpending(*gamedata, club)),
-        formatMoney(finances.getBalance())},
+        formatMoney(finances.getBalance()),
+        std::string("@") + BoardModel::cupObjectiveKey(board.cup_objective),
+        std::string("@") +
+            BoardModel::financeObjectiveKey(board.finance_objective),
+        std::string("@") + BoardModel::youthTargetKey(board.youth_target)},
        std::nullopt, team_id);
   postSquadReport(date, club);
   postPreseasonSchedule(date, club, schedule);
@@ -1099,7 +1297,7 @@ void WorldSimulation::postPreseasonSchedule(
   {
     const auto other = gamedata->getTeam(fixture.opponent_id);
     return other ? other->get().getName()
-                 : std::string(FREE_AGENTS_TEAM_NAME);
+                 : std::string(FREE_AGENTS_NAME_ARG);
   };
   std::string friendlies;
   const UpcomingFixture* opener = nullptr;
@@ -1587,8 +1785,10 @@ void WorldSimulation::onTransferCompleted(const GameDateValue& date,
 
   const auto name_of = [&](TeamID team_id)
   {
-    const auto team = gamedata->getTeam(team_id);
-    return team ? team->get().getName() : std::string(FREE_AGENTS_TEAM_NAME);
+    const auto team = team_id == FREE_AGENTS_TEAM_ID
+                          ? std::nullopt
+                          : gamedata->getTeam(team_id);
+    return team ? team->get().getName() : std::string(FREE_AGENTS_NAME_ARG);
   };
   if (to_team_id == managed_team_id)
   {
@@ -1689,6 +1889,7 @@ void WorldSimulation::postTrainingWarning(const GameDateValue& date,
 void WorldSimulation::awardPrizeMoney(const GameDateValue& date,
                                       TeamID managed_team_id)
 {
+  season_prize_money = 0;
   const auto economies = buildLeagueEconomies(*gamedata);
   for (const auto& [league_id, league] : gamedata->getLeagues())
   {
@@ -1731,18 +1932,10 @@ void WorldSimulation::awardPrizeMoney(const GameDateValue& date,
           static_cast<int>(std::lround(profile.reputation + delta)), 15, 99));
       team.setProfile(profile);
 
+      // The board judges the season once promotion and relegation are
+      // known (Game::endSeason); its review quotes this money.
       if (team.getId() == managed_team_id)
-      {
-        const int final_position = static_cast<int>(position) + 1;
-        if (board.team_id == managed_team_id)
-          BoardModel::seasonReview(board, final_position);
-        post(date, InboxCategory::Board, "INBOX_SEASON_REVIEW_TITLE",
-             "INBOX_SEASON_REVIEW_BODY",
-             {ordinalText(final_position), ordinalText(board.target_position),
-              formatMoney(merit[position]),
-              std::to_string(std::lround(board.confidence))},
-             std::nullopt, managed_team_id);
-      }
+        season_prize_money = merit[position];
     }
   }
 }
@@ -1761,6 +1954,11 @@ void WorldSimulation::renewAiContracts(TeamID managed_team_id)
         ranked.emplace_back(player->get().getOverall(config), player_id);
     }
     std::ranges::sort(ranked, std::greater<>{});
+    // A club already paying more than its board allows renews without a
+    // raise.
+    const bool over_budget =
+        team.getFinances().getCurrentWageSpending(*gamedata, team) >
+        team.getFinances().getWageBudget();
     // AI clubs keep most of their matchday squad and let the rest go. [P]
     for (std::size_t rank = 0; rank < ranked.size() && rank < 22; ++rank)
     {
@@ -1780,7 +1978,7 @@ void WorldSimulation::renewAiContracts(TeamID managed_team_id)
       else if (player.getAge() < 31)
         years = 2;
       player.setContractYears(static_cast<std::uint8_t>(1 + years));
-      player.setWage(player.getWage() + player.getWage() / 20);
+      if (!over_budget) player.setWage(player.getWage() + player.getWage() / 20);
     }
   }
 }
@@ -1855,10 +2053,22 @@ void WorldSimulation::retirePlayers(const GameDateValue& date,
            team_id);
     }
   }
-  // Rebuild line-ups (the free agents' one too) before the players are
-  // erased: they hold raw pointers.
+  // Line-ups hold raw pointers, so they are fixed before the players are
+  // erased: the manager's keeps his selection with only the gaps filled,
+  // the others (the free agents' one too) are rebuilt.
   for (const TeamID team_id : affected)
-    gamedata->getTeam(team_id)->get().generateStartingXI(*gamedata, config);
+  {
+    Team& team = gamedata->getTeam(team_id)->get();
+    if (team_id != managed_team_id || !lineup_gap_filler)
+    {
+      team.generateStartingXI(*gamedata, config);
+      continue;
+    }
+    for (const PlayerID player_id : retiring)
+      if (const Player& player = gamedata->getPlayers().at(player_id);
+          player.getTeamId() == team_id)
+        lineup_gap_filler(team, player);
+  }
   for (const PlayerID player_id : retiring) gamedata->removePlayer(player_id);
 }
 
@@ -1866,14 +2076,19 @@ void WorldSimulation::onSeasonStart(const GameDateValue& date,
                                     TeamID managed_team_id)
 {
   const auto economies = buildLeagueEconomies(*gamedata);
+  std::vector<TeamID> relegated;
+  const auto parachute = parachutes(economies, &relegated);
+  applyRelegationWageCuts(relegated, managed_team_id);
   for (auto& [team_id, team] : gamedata->getTeams())
   {
     if (team_id == FREE_AGENTS_TEAM_ID) continue;
     const auto economy = economies.find(team.getLeagueId());
     if (economy == economies.end()) continue;
     Finances& finances = team.getFinances();
+    const auto paid = parachute.find(team_id);
     const double income =
-        ClubEconomy::expectedIncome(economy->second, team.getReputation());
+        ClubEconomy::expectedIncome(economy->second, team.getReputation()) +
+        (paid == parachute.end() ? 0.0 : paid->second);
     const std::int64_t payroll =
         finances.getCurrentWageSpending(*gamedata, team);
     finances.setWageBudget(
@@ -1908,6 +2123,7 @@ void WorldSimulation::onSeasonStart(const GameDateValue& date,
 void WorldSimulation::load(const std::shared_ptr<DatabaseConnection>& db_conn)
 {
   inbox.restore(InboxRepository(db_conn).loadAll());
+  inbox.setView(InboxRepository(db_conn).loadView());
   WorldStateRepository(db_conn).loadBoard(board);
   // The cash review follows from the ledger: warned while in the red, and
   // embargoed if the club was already in the red before the latest monthly
@@ -1946,6 +2162,7 @@ void WorldSimulation::save(
     const std::shared_ptr<DatabaseConnection>& db_conn) const
 {
   InboxRepository(db_conn).replaceAll(inbox.getMessages());
+  InboxRepository(db_conn).saveView(inbox.getView());
   ScoutingRepository(db_conn).save(scouting.getState());
   youth.save(db_conn);
   interactions.save(db_conn);

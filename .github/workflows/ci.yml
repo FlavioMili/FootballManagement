@@ -18,10 +18,11 @@ jobs:
   packages:
     uses: ./.github/workflows/build.yml
     with:
-      version: 0.0.0-ci
       retention-days: 3
 
-  # Debug build with AddressSanitizer and UndefinedBehaviorSanitizer (GCC 14).
+  # Debug build with AddressSanitizer and UndefinedBehaviorSanitizer (GCC 14)
+  # over the headless core suite (model, controller, saves); the GUI suites
+  # run in the Release jobs above.
   sanitized:
     name: Linux sanitizers (GCC 14, Debug)
     runs-on: ubuntu-24.04
@@ -74,7 +75,11 @@ jobs:
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
-        run: cmake --build --preset debug-sanitized --parallel 4
+        run: >
+          cmake --build --preset debug-sanitized --parallel 4
+          --target core_unit_tests sanitizer_probe
 
-      - name: Run tests (excluding playtest/monkey/slow)
-        run: ctest --preset debug-sanitized -LE "playtest|monkey|slow"
+      - name: Run the core tests (excluding slow)
+        run: >
+          ctest --preset debug-sanitized --parallel 2 --timeout 900
+          -L "core|sanitizer" -LE "playtest|monkey|slow"

@@ -499,6 +499,14 @@ class ManagerCareer
   void recordAward(ManagerAwardKind kind, std::uint16_t start_year,
                    TeamID team_id);
 
+  /** Results elsewhere (a national team) move the reputation (1-100). */
+  void adjustReputation(float delta);
+  /** Wages of a job outside the club game (a national team). */
+  void addEarnings(std::int64_t amount);
+  /** In charge of a national team: the name does not fade out of work. */
+  void setInternationalDuty(bool in_charge) { national_duty = in_charge; }
+  bool hasInternationalDuty() const { return national_duty; }
+
   /** Contract agreed through @p offer, starting on @p date. */
   ManagerContract contractFor(const JobOffer& offer,
                               const GameDateValue& date) const;
@@ -573,4 +581,5 @@ class ManagerCareer
   std::vector<JobOffer> offers;
   std::uint32_t next_manager_id = 1;
   std::uint32_t next_offer_id = 1;
+  bool national_duty = false;
 };

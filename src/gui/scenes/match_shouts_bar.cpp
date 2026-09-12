@@ -15,6 +15,7 @@
 #include <string>
 
 #include "global/language_manager.h"
+#include "gui/input_actions.h"
 #include "gui/view_models/match_changes.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
@@ -67,13 +68,10 @@ int indexForScancode(int scancode)
 std::string keyName(std::size_t index)
 {
   if (index >= MatchChanges::SHOUTS.size()) return {};
-  const auto scancode = index < 10
-                            ? static_cast<SDL_Scancode>(SDL_SCANCODE_1 + index)
-                            : SDL_SCANCODE_MINUS;
-  // The label the user's keyboard layout prints on that key.
-  const char* name =
-      SDL_GetKeyName(SDL_GetKeyFromScancode(scancode, SDL_KMOD_NONE, false));
-  return name != nullptr ? std::string(name) : std::string();
+  // The binding in force (Settings > Controls can change it).
+  const Input::ActionRegistry& registry = Input::registry();
+  const auto action = registry.find(Input::Ids::shout(index));
+  return action ? registry.label(*action) : std::string();
 }
 
 bool available(const MatchEngine& engine)

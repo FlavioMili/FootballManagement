@@ -966,7 +966,8 @@ TEST(YouthAcademyTest, AcademyPlayersAreListedApartFromTheSeniorSquad)
     }
     EXPECT_EQ(youngsters.size(),
               academy.members(team_id, YouthStatus::Squad).size() +
-                  academy.members(team_id, YouthStatus::Candidate).size());
+                  academy.members(team_id, YouthStatus::Candidate).size() +
+                  academy.members(team_id, YouthStatus::Reserve).size());
     EXPECT_EQ(team.getPlayerIDs().size(), seniors.size());
     EXPECT_EQ(team.getAcademyIDs().size(), youngsters.size());
     EXPECT_EQ(academy.firstTeamSize(team_id), seniors.size());

@@ -9,3 +9,4 @@ Terminal=false
 Categories=Game;SportsGame;
 Keywords=football;soccer;manager;simulation;
 StartupWMClass=FootballManagement
+X-AppImage-Version=@FM_GAME_VERSION@

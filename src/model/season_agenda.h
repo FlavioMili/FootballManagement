@@ -66,11 +66,12 @@ GameDateValue seasonStart(const GameDateValue& date);
 
 /**
  * The agenda of the season starting on 1 July of @p season_start_year for
- * a club with @p fixtures (any order; other seasons' fixtures ignored).
- * Sorted by date, then by kind. Board reviews are only listed when the
- * club has a board to answer to (@p board_reviews).
+ * a club of @p league with @p fixtures (any order; other seasons' fixtures
+ * ignored). Sorted by date, then by kind. Transfer windows and deadline days
+ * are those of the club's country (TransferWindows). Board reviews are only
+ * listed when the club has a board to answer to (@p board_reviews).
  */
 std::vector<AgendaEvent> build(std::uint16_t season_start_year,
                                const std::vector<Match>& fixtures,
-                               bool board_reviews);
+                               bool board_reviews, LeagueID league);
 }  // namespace SeasonAgenda

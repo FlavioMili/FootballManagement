@@ -17,6 +17,7 @@
 
 #include "gui/scenes/management_scene.h"
 #include "gui/view_models/player_view.h"
+#include "gui/widgets/widgets.h"
 #include "model/player.h"
 
 /**
@@ -70,6 +71,7 @@ class RosterScene : public ManagementScene
   void renderFilters();
   void renderTable(float height);
   void renderDetails(float height);
+  void renderNumberEditor(const Player& player);
   void applyFilter();
   void applySort();
   [[nodiscard]] const Player* selectedPlayer() const;
@@ -97,4 +99,9 @@ class RosterScene : public ManagementScene
   int64_t payroll = 0;
   int expiring_contracts = 0;
   bool show_details = false;
+  /** Columns the table showed last frame (for the column picker). */
+  UI::ColumnMask table_mask = ~UI::ColumnMask{0};
+  // Squad number being edited in the side panel, and for whom.
+  int number_edit = 1;
+  PlayerID number_edit_for = 0;
 };

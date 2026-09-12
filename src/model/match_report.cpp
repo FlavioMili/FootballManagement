@@ -36,7 +36,7 @@ uint8_t toSmallCount(long value)
 
 json statsToObject(const TeamMatchStats& stats)
 {
-  return json{{"shots", stats.shots},
+  json object{{"shots", stats.shots},
               {"on_target", stats.shots_on_target},
               {"corners", stats.corners},
               {"fouls", stats.fouls},
@@ -48,6 +48,9 @@ json statsToObject(const TeamMatchStats& stats)
               {"passes_completed", stats.passes_completed},
               {"possession", stats.possession},
               {"xg", stats.expected_goals}};
+  if (stats.set_pieces_known)
+    object["sp"] = json::array({stats.set_piece_shots, stats.set_piece_goals});
+  return object;
 }
 
 TeamMatchStats statsFromObject(const json& object)
@@ -65,6 +68,13 @@ TeamMatchStats statsFromObject(const json& object)
   stats.passes_completed = object.value<uint16_t>("passes_completed", 0);
   stats.possession = object.value("possession", 50.0f);
   stats.expected_goals = object.value("xg", 0.0f);
+  if (const auto set = object.find("sp");
+      set != object.end() && set->is_array() && set->size() == 2)
+  {
+    stats.set_pieces_known = true;
+    stats.set_piece_shots = (*set)[0].get<uint16_t>();
+    stats.set_piece_goals = (*set)[1].get<uint16_t>();
+  }
   return stats;
 }
 
@@ -141,8 +151,28 @@ void MatchReport::fillFromEngine(const MatchEngine& engine, TeamID home_id,
   away_stats.expected_goals = stats.awayShotXG;
   home_stats.red_cards = toCount(stats.homeRedCards);
   away_stats.red_cards = toCount(stats.awayRedCards);
+  home_stats.set_pieces_known = away_stats.set_pieces_known = true;
+  home_stats.set_piece_shots = toCount(stats.homeSetPieceShots);
+  away_stats.set_piece_shots = toCount(stats.awaySetPieceShots);
+  home_stats.set_piece_goals = toCount(stats.homeSetPieceGoals);
+  away_stats.set_piece_goals = toCount(stats.awaySetPieceGoals);
   home_goals = static_cast<uint8_t>(std::clamp(engine.getHomeScore(), 0, 255));
   away_goals = static_cast<uint8_t>(std::clamp(engine.getAwayScore(), 0, 255));
+  played_home.reset();
+  played_share = 0.0f;
+  for (const bool home : {true, false})
+  {
+    if (!engine.wasControlled(home)) continue;
+    played_home = home;
+    const int actions =
+        home ? stats.homePassesAttempted + stats.homeShots +
+                   stats.homeTackleAttempts
+             : stats.awayPassesAttempted + stats.awayShots +
+                   stats.awayTackleAttempts;
+    played_share = std::clamp(static_cast<float>(engine.getControlledActions(home)) /
+                                  static_cast<float>(std::max(actions, 1)),
+                              0.0f, 1.0f);
+  }
   extra_time = engine.wentToExtraTime();
   penalties = engine.hasShootout();
   home_penalties = penalties ? static_cast<uint8_t>(std::clamp(
@@ -320,9 +350,11 @@ std::string MatchReport::playersToJson() const
 
 std::string MatchReport::statsToJson() const
 {
-  return json{{"home", statsToObject(home_stats)},
-              {"away", statsToObject(away_stats)}}
-      .dump();
+  json object{{"home", statsToObject(home_stats)},
+              {"away", statsToObject(away_stats)}};
+  if (played_home)
+    object["play"] = json{{"home", *played_home}, {"share", played_share}};
+  return object.dump();
 }
 
 void MatchReport::eventsFromJson(const std::string& text)
@@ -372,4 +404,12 @@ void MatchReport::statsFromJson(const std::string& text)
   if (!object.is_object()) return;
   if (object.contains("home")) home_stats = statsFromObject(object.at("home"));
   if (object.contains("away")) away_stats = statsFromObject(object.at("away"));
+  played_home.reset();
+  played_share = 0.0f;
+  if (const auto play = object.find("play");
+      play != object.end() && play->is_object())
+  {
+    played_home = play->value("home", true);
+    played_share = std::clamp(play->value("share", 0.0f), 0.0f, 1.0f);
+  }
 }

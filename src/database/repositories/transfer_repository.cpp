@@ -98,7 +98,9 @@ nlohmann::json toJson(const LoanTerms& terms)
           {"loan_fee", terms.loan_fee},
           {"option_fee", terms.option_fee},
           {"obligation", terms.obligation},
-          {"recall", terms.recall_clause}};
+          {"recall", terms.recall_clause},
+          {"min_apps", terms.min_appearances},
+          {"unplayed_fee", terms.unplayed_fee}};
 }
 
 LoanTerms loanFromJson(const nlohmann::json& json)
@@ -110,6 +112,8 @@ LoanTerms loanFromJson(const nlohmann::json& json)
   terms.option_fee = json.value("option_fee", 0U);
   terms.obligation = json.value("obligation", false);
   terms.recall_clause = json.value("recall", false);
+  terms.min_appearances = json.value("min_apps", std::uint8_t{0});
+  terms.unplayed_fee = json.value("unplayed_fee", 0U);
   return terms;
 }
 }  // namespace
@@ -425,6 +429,8 @@ void TransferRepository::loadOffers(
     offer.insults = json.value("insults", std::uint8_t{0});
     offer.firm = json.value("firm", false);
     offer.asked = offerFromJson(json.value("asked", nlohmann::json::object()));
+    offer.asked_loan =
+        loanFromJson(json.value("asked_loan", nlohmann::json::object()));
     offer.status = static_cast<OfferStatus>(sqlite3_column_int(stmt, 8));
     if (const int respond_on = sqlite3_column_int(stmt, 9); respond_on > 0)
       offer.respond_on = dateFromInt(respond_on);
@@ -451,6 +457,8 @@ void TransferRepository::loadOffers(
     round.move = static_cast<BuyerNegotiation::Move>(move);
     round.terms = offerFromJson(json.is_object() ? json
                                                  : nlohmann::json::object());
+    if (json.is_object() && json.contains("loan"))
+      round.loan_terms = loanFromJson(json["loan"]);
     offer->history.push_back(round);
   }
   sqlite3_finalize(stmt);
@@ -476,7 +484,8 @@ void TransferRepository::replaceOffers(
                        {"patience", offer.patience},
                        {"insults", offer.insults},
                        {"firm", offer.firm},
-                       {"asked", toJson(offer.asked)}}
+                       {"asked", toJson(offer.asked)},
+                       {"asked_loan", toJson(offer.asked_loan)}}
             .dump();
     sqlite3_bind_int64(stmt, 1, offer.id);
     sqlite3_bind_int(stmt, 2,
@@ -539,7 +548,9 @@ void TransferRepository::replaceOffers(
     for (std::size_t seq = 0; seq < offer.history.size(); ++seq)
     {
       const OfferRound& round = offer.history[seq];
-      const std::string terms = toJson(round.terms).dump();
+      nlohmann::json json = toJson(round.terms);
+      if (offer.loan) json["loan"] = toJson(round.loan_terms);
+      const std::string terms = json.dump();
       sqlite3_bind_int64(stmt, 1, offer.id);
       sqlite3_bind_int64(stmt, 2, static_cast<sqlite3_int64>(seq));
       sqlite3_bind_int(stmt, 3, dateToInt(round.date));

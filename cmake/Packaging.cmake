@@ -11,9 +11,8 @@
 #  dependencies never leak headers or static libraries into a package.
 # -----------------------------------------------------------------------------
 
-set(FM_VERSION "0.0.0" CACHE STRING
-  "Version stamped into packages (release tag without the leading v)")
-
+# FM_GAME_VERSION (top-level CMakeLists.txt) names the packages; bundle
+# metadata takes the plain numeric project version.
 set(FM_GAME_TARGET FootballManagement)
 set(FM_COMPONENT game)
 
@@ -42,8 +41,8 @@ if(APPLE)
     MACOSX_BUNDLE_INFO_PLIST "${PROJECT_SOURCE_DIR}/packaging/macos/Info.plist.in"
     MACOSX_BUNDLE_BUNDLE_NAME "Football Management"
     MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.flaviomili.footballmanagement"
-    MACOSX_BUNDLE_BUNDLE_VERSION "${FM_VERSION}"
-    MACOSX_BUNDLE_SHORT_VERSION_STRING "${FM_VERSION}"
+    MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
     MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2025 - 2026 Flavio Milinanni")
   install(TARGETS ${FM_GAME_TARGET}
     BUNDLE DESTINATION . COMPONENT ${FM_COMPONENT})
@@ -55,6 +54,10 @@ elseif(WIN32)
     set_target_properties(${FM_GAME_TARGET} PROPERTIES WIN32_EXECUTABLE ON)
     target_link_options(${FM_GAME_TARGET} PRIVATE /ENTRY:mainCRTStartup)
   endif()
+  # UTF-8 as the process code page: narrow paths (SDL, SQLite, std::filesystem)
+  # then work in user folders with non-ASCII names.
+  target_sources(${FM_GAME_TARGET} PRIVATE
+    "${PROJECT_SOURCE_DIR}/packaging/windows/footballmanagement.manifest")
   install(TARGETS ${FM_GAME_TARGET}
     RUNTIME DESTINATION . COMPONENT ${FM_COMPONENT})
 else()
@@ -64,7 +67,10 @@ else()
   set(FM_LICENSE_DESTINATION share/doc/footballmanagement)
   install(TARGETS ${FM_GAME_TARGET}
     RUNTIME DESTINATION bin COMPONENT ${FM_COMPONENT})
-  install(FILES packaging/linux/footballmanagement.desktop
+  # The desktop entry carries the version for AppImage tooling.
+  configure_file(packaging/linux/footballmanagement.desktop.in
+    "${PROJECT_BINARY_DIR}/packaging/footballmanagement.desktop" @ONLY)
+  install(FILES "${PROJECT_BINARY_DIR}/packaging/footballmanagement.desktop"
     DESTINATION share/applications COMPONENT ${FM_COMPONENT})
   install(FILES packaging/linux/footballmanagement.svg
     DESTINATION share/icons/hicolor/scalable/apps COMPONENT ${FM_COMPONENT})
@@ -136,12 +142,12 @@ endif()
 # -----------------------------------------------------------------------------
 set(CPACK_PACKAGE_NAME "FootballManagement")
 set(CPACK_PACKAGE_VENDOR "Flavio Milinanni")
-set(CPACK_PACKAGE_VERSION "${FM_VERSION}")
+set(CPACK_PACKAGE_VERSION "${FM_GAME_VERSION}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Football club management game")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/FlavioMili/FootballManagement")
 set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
 set(CPACK_PACKAGE_FILE_NAME
-  "${CPACK_PACKAGE_NAME}-${FM_VERSION}-${FM_PACKAGE_PLATFORM}")
+  "${CPACK_PACKAGE_NAME}-${FM_GAME_VERSION}-${FM_PACKAGE_PLATFORM}")
 set(CPACK_INSTALL_CMAKE_PROJECTS
   "${CMAKE_BINARY_DIR};${PROJECT_NAME};${FM_COMPONENT};/")
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)

@@ -1372,7 +1372,7 @@ TEST(WorldPersistenceTest, LegacySavesAreMigrated)
 
 // ---------------------------------------------------------------------------
 // Opt-in timing of a complete headless season (match engine included).
-// Run with FM_SEASON_TIMING=1 .local-tools/bin/fm-test -R FullSeasonTiming
+// Run with FM_SEASON_TIMING=1 ctest --test-dir build -R FullSeasonTiming
 // ---------------------------------------------------------------------------
 
 TEST(WorldSimulationTest, FullSeasonTiming)

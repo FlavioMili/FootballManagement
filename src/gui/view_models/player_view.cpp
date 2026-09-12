@@ -48,6 +48,7 @@ PlayerRow makeRow(const GameController& controller, const Player& player)
   row.role = RoleUtils::shortName(row.role_id);
   row.group = groupOf(row.role_id);
   row.age = player.getAge();
+  row.squad_number = player.getSquadNumber();
   row.overall =
       static_cast<float>(player.getOverall(controller.getStatsConfig()));
   row.wage = player.getWage();

@@ -83,6 +83,8 @@ const InjuryProfile* findProfile(InjuryType type)
 constexpr float ACL_TRAINING_FACTOR = 1.0f / 20.0f;
 // P10-P90 of a normal spans 2 * 1.2816 standard deviations.
 constexpr float P10_P90_Z_SPAN = 2.563f;
+// Days an aggravation adds at least to the injury that was carried. [P]
+constexpr float AGGRAVATION_MIN_SETBACK = 3.0f;
 }  // namespace
 
 namespace InjuryModel
@@ -134,5 +136,45 @@ Injury draw(WorldRng& rng, InjuryContext context, InjuryType previous,
     days *= WorldTuning::Fitness::REINJURY_DURATION_MULTIPLIER;
   days = std::clamp(days, 1.0f, 400.0f);
   return {profile.type, static_cast<std::uint16_t>(std::lround(days))};
+}
+
+float aggravationMultiplier(InjurySeverity severity)
+{
+  switch (severity)
+  {
+    case InjurySeverity::Moderate:
+      return 3.0f;
+    case InjurySeverity::Major:
+      return 4.0f;
+    case InjurySeverity::Minor:
+      break;
+  }
+  return 2.0f;
+}
+
+double aggravationChance(std::uint16_t days_left, int minutes)
+{
+  if (days_left == 0 || minutes <= 0) return 0.0;
+  const double hazard = WorldTuning::Fitness::MATCH_INJURY_RATE_PER_HOUR *
+                        static_cast<double>(minutes) / 60.0 *
+                        static_cast<double>(
+                            aggravationMultiplier(severity(days_left)));
+  return 1.0 - std::exp(-hazard);
+}
+
+Injury aggravate(WorldRng& rng, InjuryType type, std::uint16_t days_left)
+{
+  const InjuryProfile* profile = findProfile(type);
+  if (!profile) return {type, days_left};
+  const float sigma =
+      (std::log(profile->p90_days) - std::log(profile->p10_days)) /
+      P10_P90_Z_SPAN;
+  const float drawn = rng.lognormal(profile->median_days, sigma) *
+                      WorldTuning::Fitness::REINJURY_DURATION_MULTIPLIER;
+  // Never shorter than what was left, and always a real setback.
+  const float days = std::clamp(
+      std::max(drawn, static_cast<float>(days_left) + AGGRAVATION_MIN_SETBACK),
+      1.0f, 400.0f);
+  return {type, static_cast<std::uint16_t>(std::lround(days))};
 }
 }  // namespace InjuryModel

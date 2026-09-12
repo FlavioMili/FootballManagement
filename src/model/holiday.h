@@ -39,7 +39,8 @@ enum class HolidayStop : std::uint8_t
   KeyPlayerInjured,
   InjuryCrisis,
   Decision,
-  DayLimit
+  DayLimit,
+  Interrupted /*!< The manager came back early (Stop, or the game closed). */
 };
 
 /**
@@ -159,14 +160,15 @@ inline constexpr std::uint16_t KEY_INJURY_DAYS = 14;
 /**
  * Day the holiday ends on, or nullopt for open-ended modes (NextDecision)
  * and when there is nothing to wait for. @p next_match is the day of the
- * next unplayed managed fixture.
+ * next unplayed managed fixture; @p league that of the managed club, whose
+ * country's transfer window counts.
  */
 std::optional<GameDateValue> targetDate(
     const HolidayPlan& plan, const GameDateValue& today,
-    const std::optional<GameDateValue>& next_match);
+    const std::optional<GameDateValue>& next_match, LeagueID league);
 
-/** Day after the open window's deadline, or after the next window's. */
-GameDateValue windowEndDate(const GameDateValue& today);
+/** Day after the deadline of @p league's open window, or of its next one. */
+GameDateValue windowEndDate(LeagueID league, const GameDateValue& today);
 
 /** The first early-stop rule that fires today, most serious first. */
 std::optional<HolidayStop> checkStop(const HolidayPlan& plan,

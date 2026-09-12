@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
@@ -216,6 +217,7 @@ void downgradeToVersionZero(const fs::path& save)
         "ALTER TABLE Players DROP COLUMN potential;",
         "ALTER TABLE Players DROP COLUMN traits;",
         "ALTER TABLE Players DROP COLUMN dynamics;",
+        "ALTER TABLE Players DROP COLUMN squad_number;",
         "ALTER TABLE Teams DROP COLUMN reputation;",
         "ALTER TABLE Teams DROP COLUMN stadium_capacity;",
         "ALTER TABLE Teams DROP COLUMN recent_form;",
@@ -318,7 +320,7 @@ TEST(SaveMigrations, OfferNegotiationsUpgradeASaveFromBeforeThem)
         "ALTER TABLE TransferOffers DROP COLUMN respond_on;",
         "ALTER TABLE PlayerMarketFlags DROP COLUMN not_for_sale_until;",
         "DROP TABLE TransferOfferRounds;",
-        "DELETE FROM schema_migrations WHERE number = 9;",
+        "DELETE FROM schema_migrations WHERE number >= 9;",
         "UPDATE save_meta SET schema_version = 8;",
         "INSERT INTO TransferOffers (id, kind, player_id, club_id, created, "
         "expires, rounds, terms) VALUES (7, 0, 1, 2, 20250710, 20250715, 0, "
@@ -328,7 +330,9 @@ TEST(SaveMigrations, OfferNegotiationsUpgradeASaveFromBeforeThem)
 
   const auto report = Migrations::migrate(connection);
   EXPECT_EQ(report.from_version, 8);
-  ASSERT_EQ(report.applied, std::vector<int>{9});
+  // Migration 9 and every later one run again.
+  ASSERT_FALSE(report.applied.empty());
+  EXPECT_EQ(report.applied.front(), 9);
   for (const auto& [table, column] :
        {std::pair{"TransferOffers", "status"}, {"TransferOffers", "respond_on"},
         {"PlayerMarketFlags", "not_for_sale_until"}})
@@ -343,6 +347,47 @@ TEST(SaveMigrations, OfferNegotiationsUpgradeASaveFromBeforeThem)
                          "WHERE player_id = 1;"),
             0);
   EXPECT_EQ(queryInt(db, "SELECT loan_listed FROM PlayerMarketFlags;"), 1);
+
+  const std::string upgraded = databaseDigest(db);
+  const auto again = Migrations::migrate(connection);
+  EXPECT_TRUE(again.applied.empty());
+  EXPECT_TRUE(again.repaired.empty());
+  EXPECT_EQ(databaseDigest(db), upgraded);
+}
+
+TEST(SaveMigrations, BoardObjectivesUpgradeASaveFromBeforeThem)
+{
+  Logger::init();
+  DatabaseConnection connection(":memory:");
+  Migrations::migrate(connection);
+  sqlite3* db = connection.getRaw();
+  // A version 11 save: a board with a league objective only.
+  for (const char* sql :
+       {"ALTER TABLE BoardState DROP COLUMN cup_objective;",
+        "ALTER TABLE BoardState DROP COLUMN finance_objective;",
+        "ALTER TABLE BoardState DROP COLUMN youth_target;",
+        "ALTER TABLE BoardState DROP COLUMN start_balance;",
+        "DELETE FROM schema_migrations WHERE number >= 12;",
+        "UPDATE save_meta SET schema_version = 11;",
+        "INSERT INTO BoardState (id, team_id, season_year, objective, "
+        "expected_position, target_position, confidence) VALUES (1, 4, 2025, "
+        "2, 8, 10, 61.5);"})
+    execSql(db, sql);
+
+  const auto report = Migrations::migrate(connection);
+  EXPECT_EQ(report.from_version, 11);
+  ASSERT_FALSE(report.applied.empty());
+  EXPECT_EQ(report.applied.front(), 12);
+  for (const char* column :
+       {"cup_objective", "finance_objective", "youth_target", "start_balance"})
+    EXPECT_TRUE(Migrations::columnExists(db, "BoardState", column)) << column;
+  // The old board keeps its league objective; the new targets start empty
+  // and are set at the next season start.
+  EXPECT_EQ(queryInt(db, "SELECT objective FROM BoardState WHERE id = 1;"), 2);
+  EXPECT_EQ(queryInt(db, "SELECT cup_objective FROM BoardState;"), 0);
+  EXPECT_EQ(queryInt(db, "SELECT youth_target FROM BoardState;"), 0);
+  EXPECT_TRUE(Migrations::tableExists(db, "SeasonTables"));
+  EXPECT_TRUE(Migrations::tableExists(db, "SeasonReviews"));
 
   const std::string upgraded = databaseDigest(db);
   const auto again = Migrations::migrate(connection);
@@ -812,6 +857,55 @@ TEST(SaveSafety, BackupsRotateAndKeepN)
   controller->setAutosavePolicy({AutosaveFrequency::Off, 0});
   ASSERT_TRUE(controller->saveGame());
   EXPECT_EQ(SaveManager::countBackups(path), 0);
+}
+
+TEST(SaveSafety, RecoveryOffersTheNewestBackupThatLoads)
+{
+  const SlotCleanup slot{28};
+  const fs::path path = RuntimePaths::savePath(slot.slot);
+  auto controller = makeCareer(slot.slot);
+  controller->setAutosavePolicy({AutosaveFrequency::Off, 3});
+  std::vector<std::string> dates;
+  for (int save = 0; save < 5; ++save)
+  {
+    advance(*controller, 1);
+    ASSERT_TRUE(controller->saveGame());
+    dates.push_back(controller->getCurrentDate().toString());
+  }
+  controller.reset();
+  // Rotation: the slot holds save 5, .bak.1..3 saves 4, 3 and 2.
+  ASSERT_EQ(SaveManager::countBackups(path), 3);
+  EXPECT_EQ(SaveManager::inspect(SaveManager::backupPath(path, 3)).game_date,
+            dates[1]);
+
+  // The slot is cut short (half the file) and the newest backup has a
+  // damaged header.
+  fs::resize_file(path, fs::file_size(path) / 2);
+  {
+    const fs::path newest = SaveManager::backupPath(path, 1);
+    std::string bytes = fileBytes(newest);
+    std::fill_n(bytes.begin(), 100, '\x5A');
+    std::ofstream(newest, std::ios::binary | std::ios::trunc) << bytes;
+  }
+
+  GameController loader;
+  EXPECT_EQ(loader.getSaveSlotMetadata(slot.slot).status, SaveStatus::Corrupt);
+  EXPECT_FALSE(loader.loadGame(slot.slot));
+  ASSERT_TRUE(loader.getLastLoadError().has_value());
+  EXPECT_EQ(loader.getLastLoadError()->kind, SaveErrorKind::Corrupt);
+
+  std::vector<SaveBackup> backups = loader.getSaveBackups(slot.slot);
+  const SaveBackup* offered = SaveManager::newestUsable(backups);
+  ASSERT_NE(offered, nullptr);
+  EXPECT_EQ(offered->index, 2) << "the damaged newest backup is skipped";
+  EXPECT_EQ(offered->inspection.game_date, dates[2]);
+  ASSERT_TRUE(loader.restoreBackup(slot.slot, offered->path));
+  EXPECT_EQ(loader.getCurrentDate().toString(), dates[2]);
+  EXPECT_EQ(SaveManager::inspect(path).status, SaveStatus::Ok);
+
+  for (SaveBackup& backup : backups)
+    backup.inspection.status = SaveStatus::Corrupt;
+  EXPECT_EQ(SaveManager::newestUsable(backups), nullptr) << "nothing to offer";
 }
 
 TEST(SaveSafety, FailedNewGameKeepsTheOldCareer)

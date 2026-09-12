@@ -73,6 +73,37 @@ MainGameScene::MainGameScene(GUIView* guiViewPtr) : ManagementScene(guiViewPtr)
 {
 }
 
+MainGameScene::~MainGameScene()
+{
+  // The worker never outlives the hub. A holiday or an off-season run is
+  // called back after the day being simulated; a Continue to the next
+  // fixture completes its days first.
+  if (continuation_running && stop_on_close && continue_controller != nullptr)
+    continue_controller->requestContinueStop();
+  if (continue_operation.valid()) continue_operation.wait();
+}
+
+void MainGameScene::requestStop()
+{
+  if (!continuation_running || stop_requested) return;
+  stop_requested = true;
+  guiView->getController().requestContinueStop();
+}
+
+void MainGameScene::showPendingSeasonReview()
+{
+  // After the Continue that ended the season, once the screens above the
+  // hub, the holiday report and the welcome tour are out of the way.
+  if (continuation_running || continuation_requested ||
+      season_review_dialog.isOpen() || holidayDialog().isOpen() ||
+      welcome_requested || welcome_tour.isOpen() ||
+      guiView->getOverlayDepth() > 0)
+    return;
+  const GameController& controller = guiView->getController();
+  if (const SeasonReview* review = controller.getUnseenSeasonReview())
+    season_review_dialog.open(controller, *review);
+}
+
 NavSection MainGameScene::navSection() const
 {
   return active_page == Page::FINANCES ? NavSection::FINANCES
@@ -91,6 +122,7 @@ void MainGameScene::onEnter()
 
 void MainGameScene::update(float /*deltaTime*/)
 {
+  showPendingSeasonReview();
   // Wait for the frozen backdrop first so it shows the screen, not the card.
   if (continuation_requested && !continuation_running &&
       !guiView->isBackdropPending())
@@ -112,11 +144,20 @@ void MainGameScene::update(float /*deltaTime*/)
     try
     {
       const int advancedDays = continue_operation.get();
-      // After a match its report is the news, not the day count.
-      if (!match_report)
-        showToast(fmt::sprintf(
-            Format::plural("DASHBOARD_ADVANCED_DAYS", advancedDays),
-            advancedDays));
+      // After a match its report is the news, not the day count; otherwise
+      // the toast says why the days stopped.
+      const ContinueStop stop = guiView->getController().getLastContinueStop();
+      const bool atFixture =
+          stop == ContinueStop::None || stop == ContinueStop::Fixture;
+      std::string toast = fmt::sprintf(
+          Format::plural(atFixture ? "DASHBOARD_ADVANCED_DAYS"
+                                   : "CONTINUE_ADVANCED_DAYS",
+                         advancedDays),
+          advancedDays);
+      if (!atFixture)
+        toast += std::string("  ·  ") +
+                 LOC(GameController::continueStopKey(stop));
+      if (!match_report && !holiday_running) showToast(toast);
       refreshData();
       if (holiday_running)
         holidayDialog().showSummary(guiView->getController(),
@@ -231,7 +272,14 @@ void MainGameScene::startContinuation()
   continue_started_at = ImGui::GetTime();
   continue_overlay_shown = false;
   GameController* controllerPtr = &guiView->getController();
+  continue_controller = controllerPtr;
   holiday_running = pending_holiday.has_value();
+  stop_requested = false;
+  // Closing the game interrupts open-ended runs; a Continue to the next
+  // fixture (at most a few weeks) and the rest of a match day complete.
+  stop_on_close = !match_report &&
+                  (holiday_running || !cached_next.has_value() ||
+                   controllerPtr->isUnemployed());
   // The rest of a managed match day: exactly one day, whatever comes next.
   if (match_report)
   {
@@ -261,8 +309,8 @@ void MainGameScene::startContinuation()
                      return controllerPtr->advanceWhileUnemployed(7);
                    if (hasFixture)
                      return controllerPtr->advanceToNextManagedFixture();
-                   controllerPtr->advanceDay();
-                   return 1;
+                   // Off-season: on to whatever needs the manager next.
+                   return controllerPtr->advanceToNextEvent();
                  });
 }
 
@@ -367,6 +415,17 @@ void MainGameScene::renderContinueOverlay()
     for (auto line = continue_log.rbegin(); line != continue_log.rend(); ++line)
       ImGui::TextColored(palette.faint, "%s", line->c_str());
   }
+  // Stop ends the run once the day being simulated is complete.
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale));
+  if (stop_requested)
+  {
+    ImGui::TextColored(palette.muted, "%s", LOC("CONTINUE_STOPPING"));
+  }
+  else if (UI::secondaryButton(LOC("CONTINUE_STOP")) ||
+           ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+  {
+    requestStop();
+  }
   ImGui::EndChild();
   ImGui::PopStyleVar();
 }
@@ -400,6 +459,8 @@ void MainGameScene::renderContent()
   if (guiView->getController().isUnemployed())
   {
     ManagerScene::renderUnemployedHome(guiView);
+    // A season that ended with the sack still gets its summary.
+    renderSeasonReview();
     return;
   }
   if (!guiView->getController().getManagedTeam())
@@ -411,6 +472,20 @@ void MainGameScene::renderContent()
     renderFinances();
   else
     renderOverview();
+  // The welcome tour of a new career, over Home.
+  if (welcome_requested)
+  {
+    welcome_requested = false;
+    welcome_tour.open(guiView->getController());
+  }
+  welcome_tour.render();
+  renderSeasonReview();
+}
+
+void MainGameScene::renderSeasonReview()
+{
+  if (const auto season = season_review_dialog.render())
+    guiView->getController().markSeasonReviewSeen(*season);
 }
 
 void MainGameScene::renderOverview()

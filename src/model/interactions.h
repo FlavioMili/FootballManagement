@@ -463,6 +463,9 @@ class InteractionSystem
   float onBidRejected(const GameDateValue& date, PlayerID player_id,
                       const std::string& buyer_name, float morale_delta,
                       float trust_delta, bool transfer_request, Inbox& inbox);
+  /** Moves a player's trust by @p delta (decision moments); returns the
+   * change applied after clamping. */
+  float adjustTrust(PlayerID player_id, float delta);
   /** Weekly morale target offset of a player (trust and open requests). */
   float moraleTargetOffset(PlayerID player_id) const;
 
@@ -525,10 +528,11 @@ class InteractionSystem
   void load(const std::shared_ptr<DatabaseConnection>& db_conn);
   void save(const std::shared_ptr<DatabaseConnection>& db_conn) const;
 
-  /** Deadline of a signing promise made on @p date (end of the next
-   * window within 120 days), nullopt if no window is that close. */
+  /** Deadline of a signing promise made on @p date by a club of @p league
+   * (end of its next window within 120 days), nullopt if no window is that
+   * close. */
   static std::optional<GameDateValue> signingDeadline(
-      const GameDateValue& date);
+      const GameDateValue& date, LeagueID league);
 
  private:
   struct TeamTalkRecord

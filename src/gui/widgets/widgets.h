@@ -13,6 +13,7 @@
 #include <climits>
 #include <cstdint>
 #include <span>
+#include <string>
 #include <string_view>
 
 /**
@@ -276,8 +277,10 @@ struct MoneyInputOptions
 };
 
 /**
- * @brief Currency field showing "€14.4M"; typing accepts plain numbers and
- * k/M/B suffixes. -/+ step 5% (Shift 10%, Ctrl 1%), chips set preset values.
+ * @brief Currency field showing the full amount; typing accepts plain
+ * numbers, either decimal mark and k/M/B (mila/mln/mld) units, with the
+ * reading or the reason for refusing it shown under the field. -/+ step 5%
+ * (Shift 10%, Ctrl 1%), chips set preset values.
  * @return True on the frame the value changed.
  */
 bool moneyInput(const char* id, int64_t& value,
@@ -289,8 +292,22 @@ bool moneyInput(const char* id, int64_t& value,
  */
 int64_t stepMoney(int64_t value, bool up, double fraction);
 
-/** @brief Parses "14.4M", "850k", "€1,200,000" (false when invalid). */
+/**
+ * @brief Parses "14.4M", "1,5M", "850k", "€1,200,000", "€ 2,25 mln" (false
+ * when invalid or ambiguous; see NumberFormat::parseMoney()).
+ */
 bool parseMoney(std::string_view text, int64_t& value);
+
+/** @brief Line shown under a money input while typing. */
+struct MoneyPreview
+{
+  std::string text; /**< "Amount: €1,500,000" or why the text is refused. */
+  bool error = false;
+};
+
+/** @brief What moneyInput() shows for the typed @p text. */
+MoneyPreview moneyPreview(std::string_view text,
+                          const MoneyInputOptions& options = {});
 
 /**
  * @brief Filter/tab button: neutral when off, selection fill with an accent
@@ -338,9 +355,32 @@ using ColumnMask = uint32_t;
  * @brief Chooses the columns that fit the available width, dropping the
  * highest priority numbers first (never horizontal scrolling).
  * @param stretchMinimum Unscaled minimum width left for stretch columns.
+ * @param hidden Columns the user hid (hiddenColumns()): never shown, however
+ * wide the table. Priority-0 columns ignore it and always stay.
  */
 ColumnMask fitColumns(std::span<const Column> columns, float availableWidth,
-                      float stretchMinimum = 160.0f);
+                      float stretchMinimum = 160.0f, ColumnMask hidden = 0);
+
+/**
+ * @brief Columns the user hid in a table, saved in the settings per table.
+ * @param table Stable table key.
+ * @param columns The table's columns with their untranslated label keys
+ * (the keys identify the columns in the settings).
+ */
+ColumnMask hiddenColumns(std::string_view table,
+                         std::span<const Column> columns);
+
+/**
+ * @brief "Columns" button opening a checklist of the table's columns; the
+ * choice is saved in the settings at once. Priority-0 columns are listed
+ * but locked; columns that are on but squeezed out by the window width are
+ * marked as such.
+ * @param columns Columns with untranslated label keys.
+ * @param fitted Visible mask from fitColumns().
+ * @return True when the choice changed this frame.
+ */
+bool columnPicker(std::string_view table, std::span<const Column> columns,
+                  ColumnMask fitted);
 
 /** @brief Header row emitted by beginResponsiveTable(). */
 enum class TableHeader : uint8_t

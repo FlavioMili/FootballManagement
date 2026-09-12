@@ -67,7 +67,9 @@ extern "C" const char* __lsan_default_suppressions()
 #include "gui/widgets/theme.h"
 #include "model/settings_manager.h"
 #include "model/game.h"
+#include "model/holiday.h"
 #include "model/player.h"
+#include "model/season_review.h"
 #include "model/scouting.h"
 #include "model/team.h"
 
@@ -101,6 +103,42 @@ class GameFlowTest : public ::testing::Test
   void TearDown() override
   {
     // cleanup
+  }
+
+  /** Opens the window of @p view (GUIView grants this fixture access). */
+  static bool initializeView(GUIView& view) { return view.initialize(); }
+
+  /** One GUI frame. */
+  static void hubFrame(GUIView& view)
+  {
+    view.applyPendingSceneChanges();
+    view.handleEvents();
+    view.update(0.016f);
+    view.render();
+  }
+
+  /** A long holiday started from the hub, running on the Continue worker
+   * with its first day complete. Returns the day it would end on. */
+  static GameDateValue startLongHoliday(GUIView& view, MainGameScene& hub,
+                                        const GameController& controller)
+  {
+    HolidayPlan plan;
+    plan.mode = HolidayMode::UntilDate;
+    plan.until = SeasonCalendar::addDays(controller.getCurrentDate(), 120);
+    plan.preferences.stop_big_bid = false;
+    plan.preferences.stop_injury_crisis = false;
+    plan.preferences.stop_key_injury = false;
+    plan.preferences.stop_sacking_warning = false;
+    hub.requestHoliday(plan);
+    for (int frame = 0; frame < 20 && !hub.isAdvancing(); ++frame)
+      hubFrame(view);
+    const auto deadline =
+        std::chrono::steady_clock::now() + std::chrono::seconds(60);
+    while (hub.isAdvancing() &&
+           controller.getContinueProgress().days_done < 1 &&
+           std::chrono::steady_clock::now() < deadline)
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    return plan.until;
   }
 
   std::unique_ptr<GameController> controller;
@@ -1641,6 +1679,105 @@ TEST_F(GameFlowTest, PlaybackModeAndSpeedNeverChangeTheResult)
   }
   EXPECT_EQ(highlights.getDroppedSimulationSteps(), 0u);
   EXPECT_EQ(full.getDroppedSimulationSteps(), 0u);
+}
+
+TEST_F(GameFlowTest, StopOnTheProgressCardEndsTheHolidayAfterTheDay)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  controller->selectManagedTeam(controller->getTeams().front().get().getId());
+  GUIView view(*controller);
+  ASSERT_TRUE(initializeView(view));
+  view.changeScene(std::make_unique<MainGameScene>(&view));
+  hubFrame(view);
+  hubFrame(view);
+  auto* hub = dynamic_cast<MainGameScene*>(view.getBaseScene());
+  ASSERT_NE(hub, nullptr);
+  const GameDateValue target = startLongHoliday(view, *hub, *controller);
+  ASSERT_TRUE(hub->isAdvancing());
+  hub->requestStop();
+  EXPECT_TRUE(controller->isContinueStopRequested());
+  for (int frame = 0; frame < 4000 && hub->isAdvancing(); ++frame)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    hubFrame(view);
+  }
+  ASSERT_FALSE(hub->isAdvancing());
+  EXPECT_EQ(controller->getHolidaySummary().reason, HolidayStop::Interrupted);
+  EXPECT_LT(dayOrdinal(controller->getCurrentDate()) + 60, dayOrdinal(target));
+}
+
+TEST_F(GameFlowTest, ClosingTheWindowEndsAHolidayAfterTheCurrentDay)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  controller->selectManagedTeam(controller->getTeams().front().get().getId());
+  const GameDateValue start = controller->getCurrentDate();
+  GameDateValue target;
+  {
+    GUIView view(*controller);
+    ASSERT_TRUE(initializeView(view));
+    view.changeScene(std::make_unique<MainGameScene>(&view));
+    hubFrame(view);
+    hubFrame(view);
+    auto* hub = dynamic_cast<MainGameScene*>(view.getBaseScene());
+    ASSERT_NE(hub, nullptr);
+    target = startLongHoliday(view, *hub, *controller);
+    ASSERT_TRUE(hub->isAdvancing());
+  }
+  // The window closed mid-holiday: the days in flight were completed, the
+  // rest of the holiday was not simulated, and the career saves cleanly.
+  EXPECT_LT(start, controller->getCurrentDate());
+  EXPECT_LT(dayOrdinal(controller->getCurrentDate()) + 60, dayOrdinal(target));
+  EXPECT_EQ(controller->getHolidaySummary().reason, HolidayStop::Interrupted);
+  EXPECT_TRUE(controller->saveGame());
+}
+
+TEST_F(GameFlowTest, TheSeasonSummaryOpensOnceOnTheHub)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  const TeamID managed = controller->getTeams().front().get().getId();
+  controller->selectManagedTeam(managed);
+  SeasonReview review;
+  review.season = 1;
+  review.start_year = 2025;
+  review.team_id = managed;
+  review.league_id = controller->getTeamById(managed)->get().getLeagueId();
+  review.position = 2;
+  review.league_size = 20;
+  review.promoted = true;
+  review.next_league_id = review.league_id;
+  review.top_scorer = "Test Scorer";
+  review.top_scorer_goals = 21;
+  review.result.verdict = SeasonVerdict::Delighted;
+  review.next_objective = BoardObjective::MidTable;
+  controller->getGame()->getSeasonArchive().recordReview(review);
+
+  GUIView view(*controller);
+  ASSERT_TRUE(initializeView(view));
+  view.changeScene(std::make_unique<MainGameScene>(&view));
+  auto* hub = dynamic_cast<MainGameScene*>(view.getBaseScene());
+  for (int frame = 0; frame < 4; ++frame)
+  {
+    hubFrame(view);
+    hub = dynamic_cast<MainGameScene*>(view.getBaseScene());
+    EXPECT_EQ(ImGui::GetCurrentContext()->ErrorCountCurrentFrame, 0);
+  }
+  ASSERT_NE(hub, nullptr);
+  EXPECT_TRUE(hub->isShowingSeasonReview());
+  const auto capture = RuntimePaths::capturePath("season_review.bmp");
+  std::filesystem::remove(capture);
+  EXPECT_TRUE(view.captureScreenshot(capture.string()));
+
+  ImGuiIO& io = ImGui::GetIO();
+  io.AddKeyEvent(ImGuiKey_Escape, true);
+  hubFrame(view);
+  io.AddKeyEvent(ImGuiKey_Escape, false);
+  for (int frame = 0; frame < 4; ++frame) hubFrame(view);
+  hub = dynamic_cast<MainGameScene*>(view.getBaseScene());
+  ASSERT_NE(hub, nullptr);
+  EXPECT_FALSE(hub->isShowingSeasonReview());
+  EXPECT_EQ(GImGui->OpenPopupStack.Size, 0) << "Escape opened another dialog";
+  EXPECT_EQ(controller->getUnseenSeasonReview(), nullptr)
+      << "closing the summary marks it seen";
 }
 
 #if defined(__linux__)

@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -51,6 +52,9 @@ struct MatchSimulationInput
   /** League whose match style (goals, referees, home advantage) the match
    * is played in; 0 keeps the calibrated engine default. */
   LeagueID league_id = 0;
+  /** Team-talk modifiers by half (see MatchEngine::setTeamTalkModifier). */
+  std::array<float, 2> home_talk{};
+  std::array<float, 2> away_talk{};
 };
 
 /** Final score, engine summary and physical outcome of one match. */

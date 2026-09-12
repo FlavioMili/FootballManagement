@@ -50,6 +50,9 @@ struct MatchRenderPlayer
   float heightMetres = MatchTuning::Units::DEFAULT_PLAYER_HEIGHT_METRES;
   /** Running speed in metres per simulated second (drives the stride). */
   float speedMetresPerSecond = 0.0f;
+  /** Seconds before this player may challenge again; it jumps up when he
+   * goes into a tackle (renderers start the tackle pose on the rise). */
+  float tackleCooldown = 0.0f;
 };
 
 struct MatchRenderBall
@@ -65,6 +68,15 @@ struct MatchRenderBall
   float currentHeightMetres = 0.0f;
   bool isShot = false;
   bool isAerialDelivery = false;
+  /** Thrown in from the touchline (until the next touch). */
+  bool fromThrowIn = false;
+  /**
+   * Who last struck the ball and the seconds left in his lockout. The
+   * lockout is reset on every kick and only counts down otherwise, so a rise
+   * between two snapshots marks the step the ball was struck.
+   */
+  const Player* kicker = nullptr;
+  float kickerLockout = 0.0f;
 };
 
 struct MatchRenderSnapshot
@@ -92,13 +104,17 @@ struct MatchRenderSnapshot
   const std::vector<PlayerMatchStats>* playerStats = nullptr;
 };
 
-/** Builds a read-only render snapshot from a live engine. */
-inline MatchRenderSnapshot buildMatchRenderSnapshot(const MatchEngine& engine)
+/**
+ * Refills `snapshot` from a live engine, reusing its storage so a view that
+ * keeps one snapshot allocates nothing per frame.
+ */
+inline void fillMatchRenderSnapshot(const MatchEngine& engine,
+                                    MatchRenderSnapshot& snapshot)
 {
-  MatchRenderSnapshot snapshot;
   const auto& players = engine.getPlayers();
   const auto& previousPositions = engine.getPreviousPlayerPositions();
   const auto& previousFacingAngles = engine.getPreviousPlayerFacingAngles();
+  snapshot.players.clear();
   snapshot.players.reserve(players.size());
   for (std::size_t index = 0; index < players.size(); ++index)
   {
@@ -122,6 +138,7 @@ inline MatchRenderSnapshot buildMatchRenderSnapshot(const MatchEngine& engine)
     renderPlayer.speedMetresPerSecond =
         std::sqrt(source.velocity.x * source.velocity.x +
                   source.velocity.y * source.velocity.y);
+    renderPlayer.tackleCooldown = source.tackleCooldown;
     renderPlayer.previousPosition = index < previousPositions.size()
                                         ? previousPositions[index]
                                         : renderPlayer.currentPosition;
@@ -142,6 +159,9 @@ inline MatchRenderSnapshot buildMatchRenderSnapshot(const MatchEngine& engine)
       engine.getPreviousBallZ() * MatchTuning::Units::BALL_Z_METRES;
   snapshot.ball.isShot = ball.isShot;
   snapshot.ball.isAerialDelivery = ball.isAerialDelivery;
+  snapshot.ball.fromThrowIn = ball.fromThrowIn;
+  snapshot.ball.kicker = ball.kicker;
+  snapshot.ball.kickerLockout = ball.kickerLockout;
 
   snapshot.state = engine.getState();
   snapshot.homePhase = engine.getHomePhase();
@@ -161,6 +181,13 @@ inline MatchRenderSnapshot buildMatchRenderSnapshot(const MatchEngine& engine)
   snapshot.homeGoalkeeperState = engine.getHomeGoalkeeperState();
   snapshot.awayGoalkeeperState = engine.getAwayGoalkeeperState();
   snapshot.playerStats = &engine.getPlayerStats();
+}
+
+/** Builds a read-only render snapshot from a live engine. */
+inline MatchRenderSnapshot buildMatchRenderSnapshot(const MatchEngine& engine)
+{
+  MatchRenderSnapshot snapshot;
+  fillMatchRenderSnapshot(engine, snapshot);
   return snapshot;
 }
 

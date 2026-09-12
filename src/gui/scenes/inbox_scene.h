@@ -10,10 +10,12 @@
 
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "gui/scenes/management_scene.h"
+#include "gui/scenes/draw_ceremony_dialog.h"
 #include "gui/scenes/offer_negotiation_dialog.h"
 #include "gui/scenes/player_talk_dialog.h"
 #include "model/inbox.h"
@@ -31,6 +33,11 @@
  * Routine messages of the same kind that arrive in the same week are folded
  * into one digest row, so a busy matchday reads as a single entry instead of
  * a wall of near-identical notifications.
+ *
+ * The filters (tab, category, unread, followed players, one player or club)
+ * are kept with the career (InboxView), so they survive a scene change and
+ * a reload. Decision moments are answered on the Decisions tab with their
+ * effects shown (InboxDilemmaCard).
  */
 class InboxScene : public ManagementScene
 {
@@ -90,6 +97,15 @@ class InboxScene : public ManagementScene
   void renderThreads(float width, float height);
   void renderReader(float height);
   void openMessage(size_t messageIndex);
+  void renderReaderActions(const InboxMessage& message);
+  /** Watch the draw: continental draw messages open the ceremony. */
+  void renderDrawAction(const InboxMessage& message);
+  void renderEntityFilter();
+  /** The filters as shown now. */
+  InboxView currentView() const;
+  void applyView(const InboxView& view);
+  /** Keeps the filters with the career and rebuilds the feed. */
+  void storeView();
 
   static constexpr size_t CATEGORY_COUNT =
       static_cast<size_t>(InboxCategory::COUNT);
@@ -100,6 +116,14 @@ class InboxScene : public ManagementScene
   int category_filter = -1; /**< -1 = all categories. */
   bool unread_only = false;
   int tab = -1; /**< 0 = decisions, 1 = information (-1: pick). */
+  bool followed_only = false;
+  std::optional<PlayerID> filter_player;
+  std::optional<TeamID> filter_team;
+  std::string filter_label; /**< Name of the filtered player or club. */
+  InboxView stored_view;    /**< Last view read from or kept with the career. */
+  std::vector<PlayerID> followed;
+  size_t followed_unread = 0;
+  size_t followed_total = 0;
   bool show_archived = false;
   size_t archived_count = 0;
   std::vector<Decision> decisions;
@@ -113,4 +137,5 @@ class InboxScene : public ManagementScene
   std::string selected_body;
   PlayerTalkDialog talk_dialog;
   OfferNegotiationDialog offer_dialog;
+  DrawCeremonyDialog draw_dialog;
 };

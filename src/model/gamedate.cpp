@@ -159,18 +159,3 @@ SeasonPhase GameDateValue::checkPhase() const
   // Sept through April is regular season
   return SeasonPhase::REGULAR_SEASON;
 }
-
-bool GameDateValue::isTransferWindowOpen() const
-{
-  // Summer window: June-August
-  if (month >= 6 && month <= 8)
-  {
-    return true;
-  }
-  // Winter window: January
-  if (month == 1)
-  {
-    return true;
-  }
-  return false;
-}

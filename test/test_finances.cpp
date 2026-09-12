@@ -319,6 +319,25 @@ TEST_F(FinanceWorldTest, LedgersReconcileThroughMonthsOfPlayAndReload)
   EXPECT_EQ(reloaded.getWageBudget(), wage_budget);
 }
 
+// Relegated clubs keep a falling share of the top division's equal TV money
+// for two seasons, then nothing.
+TEST(ClubEconomyTest, ParachutesRunForTwoSeasons)
+{
+  using Finance = WorldTuning::Finance;
+  const LeagueEconomy top = makeLeagueEconomy(3, {60, 70, 80, 90});
+  const double equal_share = ClubEconomy::monthlyBroadcasting(top) * 12.0;
+  ASSERT_GT(equal_share, 0.0);
+  const double first = ClubEconomy::parachutePayment(top, 0);
+  const double second = ClubEconomy::parachutePayment(top, 1);
+  EXPECT_NEAR(first,
+              equal_share * static_cast<double>(Finance::PARACHUTE_SHARES[0]),
+              1.0);
+  EXPECT_GT(first, second);
+  EXPECT_GT(second, 0.0);
+  EXPECT_EQ(ClubEconomy::parachutePayment(top, 2), 0.0);
+  EXPECT_EQ(ClubEconomy::parachutePayment(top, -1), 0.0);
+}
+
 TEST(ClubEconomyTest, OwnerRescueRestoresACushion)
 {
   using Finance = WorldTuning::Finance;

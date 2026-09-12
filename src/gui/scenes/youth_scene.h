@@ -114,7 +114,8 @@ class YouthScene : public ManagementScene
       DEMOTE,
       LOAN,
       RELEASE,
-      UPGRADE
+      UPGRADE,
+      TO_U21
     };
     Kind kind = Kind::NONE;
     PlayerID id = 0;

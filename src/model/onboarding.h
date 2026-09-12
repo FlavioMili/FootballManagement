@@ -47,6 +47,8 @@ class OnboardingState
   bool allDone() const { return doneCount() == ONBOARDING_TASK_COUNT; }
 
   void dismiss() { dismissed = true; }
+  /** Brings a dismissed checklist back (steps already done stay done). */
+  void undismiss() { dismissed = false; }
   bool isDismissed() const { return dismissed; }
   /** Still worth showing: neither finished nor dismissed. */
   bool isVisible() const { return !dismissed && !allDone(); }

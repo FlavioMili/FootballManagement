@@ -49,6 +49,7 @@ struct PlayerRow
   PlayerRole role_id = PlayerRole::UNKNOWN;
   PositionGroup group = PositionGroup::MIDFIELDER;
   int age = 0;
+  int squad_number = 0; /**< 1-99, 0 = none. */
   float overall = 0.0f;
   uint32_t wage = 0;
   int contract_years = 0;

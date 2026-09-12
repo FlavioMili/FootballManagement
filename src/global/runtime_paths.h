@@ -25,6 +25,8 @@ class RuntimePaths
   static std::filesystem::path savePath(int slot);
   static std::filesystem::path settingsPath();
   static std::filesystem::path logPath();
+  /** The log of the previous session, kept by Logger::init(). */
+  static std::filesystem::path previousLogPath();
   static std::filesystem::path capturePath(const char* filename);
   static std::filesystem::path imguiIniPath();
 

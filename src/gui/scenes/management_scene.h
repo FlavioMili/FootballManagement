@@ -129,7 +129,9 @@ class ManagementScene : public GUIScene
       SECTION,
       CLUB,
       PLAYER,
-      ACTION /*!< A pending next step (id: index into palette_actions). */
+      ACTION, /*!< A pending next step (id: index into palette_actions). */
+      HELP,   /*!< Help screen (id 0) or a glossary term (id: term + 1). */
+      ABOUT   /*!< About screen: version, build and credits. */
     };
     Kind kind;
     uint32_t id;

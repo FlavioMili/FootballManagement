@@ -120,19 +120,19 @@ inline constexpr std::array<LeagueProfile, 22> LEAGUE_PROFILES = {{
      0.40f, WorldRegion::Europe, 0.96f, {9.0f, 6, 0.4f, 0.0f}, 0.45f,
      {2.95f, 3.89f, 0.25f, 13.1f}},
     {2, 87, 194e6f, 0.35f, 0.12f, 0.15f, 0.38f, 0.60f, 27000.0f, Language::ES,
-     0.62f, WorldRegion::Europe, 0.83f, {8.5f, 3, 1.0f, 0.0f}, 0.40f,
+     0.62f, WorldRegion::Europe, 0.83f, {9.5f, 3, 1.2f, 0.0f}, 0.40f,
      {2.62f, 4.67f, 0.30f, 18.0f}},
     {1, 85, 146e6f, 0.38f, 0.12f, 0.15f, 0.35f, 0.66f, 28000.0f, Language::IT,
-     0.40f, WorldRegion::Europe, 0.81f, {9.0f, 4, 0.6f, 0.0f}, 0.55f,
+     0.40f, WorldRegion::Europe, 0.81f, {9.5f, 4, 0.6f, 0.0f}, 0.55f,
      {2.54f, 4.09f, 0.30f, 9.0f}},
     {4, 84, 230e6f, 0.29f, 0.12f, 0.14f, 0.45f, 0.54f, 40000.0f, Language::DE,
-     0.52f, WorldRegion::Europe, 0.97f, {7.5f, 1, 1.5f, 0.0f}, 0.40f,
+     0.52f, WorldRegion::Europe, 0.97f, {8.5f, 1, 2.0f, 0.0f}, 0.40f,
      {3.19f, 3.99f, 0.30f, 11.9f}},
     {5, 80, 120e6f, 0.19f, 0.09f, 0.18f, 0.54f, 0.80f, 26000.0f, Language::FR,
-     0.56f, WorldRegion::Europe, 0.78f, {8.5f, 1, 1.5f, 0.0f}, 0.50f,
+     0.56f, WorldRegion::Europe, 0.78f, {9.0f, 1, 1.5f, 0.0f}, 0.50f,
      {2.83f, 3.67f, 0.30f, 11.3f}},
     {12, 70, 35e6f, 0.38f, 0.15f, 0.12f, 0.35f, 0.55f, 8000.0f, Language::PT,
-     0.47f, WorldRegion::Europe, 0.50f, {10.0f, 3, 1.2f, -3.0f}, 0.50f,
+     0.47f, WorldRegion::Europe, 0.50f, {11.0f, 3, 1.2f, -3.0f}, 0.50f,
      {2.65f, 5.13f, 0.35f, 12.3f}},
     {11, 70, 90e6f, 0.45f, 0.05f, 0.15f, 0.35f, 0.80f, 22000.0f, Language::BR,
      0.90f, WorldRegion::SouthAmerica, 0.55f, {5.5f, 0, 0.0f, 0.0f}, 0.95f,
@@ -144,40 +144,40 @@ inline constexpr std::array<LeagueProfile, 22> LEAGUE_PROFILES = {{
      0.52f, WorldRegion::NorthAmerica, 0.55f, {5.5f, 4, 0.5f, 0.0f}, 0.70f,
      {2.82f, 4.50f, 0.35f, 17.8f}},
     {8, 62, 60e6f, 0.12f, 0.05f, 0.05f, 0.78f, 0.70f, 11000.0f, Language::RU,
-     0.62f, WorldRegion::EasternEurope, 0.34f, {8.0f, 2, 0.8f, 0.0f}, 0.40f,
+     0.62f, WorldRegion::EasternEurope, 0.34f, {9.0f, 2, 0.8f, 0.0f}, 0.40f,
      {2.73f, 4.50f, 0.35f, 16.9f}},
     {7, 60, 65e6f, 0.35f, 0.02f, 0.28f, 0.35f, 0.55f, 21000.0f, Language::US,
      0.40f, WorldRegion::NorthAmerica, 0.85f, {3.5f, 0, 0.0f, 0.0f}, 0.35f,
      {2.96f, 4.30f, 0.30f, 19.1f}},
     {6, 55, 24e6f, 0.45f, 0.00f, 0.15f, 0.40f, 0.82f, 8500.0f, Language::IT,
-     0.70f, WorldRegion::Europe, 0.55f, {4.0f, 3, 0.5f, -2.2f}, 0.90f,
+     0.70f, WorldRegion::Europe, 0.55f, {4.5f, 3, 0.5f, -2.2f}, 0.90f,
      {2.47f, 4.92f, 0.50f, 13.5f}},
     {14, 68, 46e6f, 0.30f, 0.00f, 0.25f, 0.45f, 0.93f, 20000.0f, Language::EN,
-     0.65f, WorldRegion::Europe, 0.75f, {4.0f, 3, 0.5f, -6.7f}, 0.55f,
+     0.65f, WorldRegion::Europe, 0.75f, {5.0f, 3, 0.5f, -6.7f}, 0.55f,
      {2.54f, 3.79f, 0.50f, 12.9f}},
     {13, 64, 12e6f, 0.50f, 0.00f, 0.12f, 0.38f, 0.70f, 11000.0f, Language::ES,
-     0.80f, WorldRegion::Europe, 0.68f, {3.2f, 0, 0.0f, -1.4f}, 0.55f,
+     0.80f, WorldRegion::Europe, 0.68f, {3.5f, 0, 0.0f, -1.4f}, 0.55f,
      {2.36f, 4.89f, 0.50f, 20.1f}},
     {15, 62, 50e6f, 0.30f, 0.00f, 0.25f, 0.45f, 0.40f, 28000.0f, Language::DE,
      0.70f, WorldRegion::Europe, 0.80f, {4.2f, 0, 0.0f, -3.3f}, 0.50f,
      {3.00f, 4.51f, 0.50f, 14.2f}},
     {16, 58, 11e6f, 0.35f, 0.00f, 0.12f, 0.53f, 0.92f, 7000.0f, Language::FR,
-     0.75f, WorldRegion::Europe, 0.60f, {3.9f, 0, 0.0f, -3.3f}, 0.45f,
+     0.75f, WorldRegion::Europe, 0.60f, {4.8f, 0, 0.0f, -3.3f}, 0.45f,
      {2.49f, 3.71f, 0.50f, 12.7f}},
     {22, 48, 3.5e6f, 0.40f, 0.00f, 0.15f, 0.45f, 0.90f, 1800.0f, Language::PT,
-     0.65f, WorldRegion::Europe, 0.30f, {4.0f, 0, 0.0f, -4.4f}, 0.60f,
+     0.65f, WorldRegion::Europe, 0.30f, {4.4f, 0, 0.0f, -4.4f}, 0.60f,
      {2.50f, 5.70f, 0.60f, 7.2f}},
     {21, 50, 10e6f, 0.45f, 0.00f, 0.20f, 0.35f, 0.90f, 6000.0f, Language::BR,
-     0.95f, WorldRegion::SouthAmerica, 0.35f, {3.2f, 0, 0.0f, -0.6f}, 1.00f,
+     0.95f, WorldRegion::SouthAmerica, 0.35f, {3.7f, 0, 0.0f, -0.6f}, 1.00f,
      {2.17f, 5.50f, 0.60f, 24.5f}},
     {20, 44, 3e6f, 0.35f, 0.00f, 0.30f, 0.35f, 0.90f, 5000.0f, Language::ES,
      0.95f, WorldRegion::SouthAmerica, 0.45f, {3.0f, 0, 0.0f, 0.8f}, 0.90f,
      {1.91f, 5.00f, 0.60f, 23.7f}},
     {19, 42, 2.5e6f, 0.30f, 0.00f, 0.25f, 0.45f, 0.50f, 3400.0f, Language::MX,
-     0.85f, WorldRegion::NorthAmerica, 0.20f, {4.0f, 0, 0.0f, -1.9f}, 0.80f,
+     0.85f, WorldRegion::NorthAmerica, 0.20f, {4.5f, 0, 0.0f, -1.9f}, 0.80f,
      {2.85f, 4.50f, 0.50f, 25.9f}},
     {18, 42, 8e6f, 0.15f, 0.00f, 0.10f, 0.75f, 0.90f, 3500.0f, Language::RU,
-     0.90f, WorldRegion::EasternEurope, 0.30f, {3.6f, 0, 0.0f, -3.1f}, 0.50f,
+     0.90f, WorldRegion::EasternEurope, 0.30f, {4.1f, 0, 0.0f, -3.1f}, 0.50f,
      {2.24f, 4.70f, 0.50f, 14.5f}},
     {17, 40, 7e6f, 0.10f, 0.00f, 0.40f, 0.50f, 0.80f, 5000.0f, Language::US,
      0.60f, WorldRegion::NorthAmerica, 0.60f, {3.2f, 0, 0.0f, 1.1f}, 0.40f,
@@ -286,6 +286,17 @@ struct WorldTuning final
     static constexpr float BENEFACTOR_RESCUE_CHANCE = 1.0f;
     static constexpr float AMBITIOUS_RESCUE_CHANCE = 0.5f;
     static constexpr float PATIENT_RESCUE_CHANCE = 0.25f;
+    /** Parachute payments for the two seasons after relegation from a top
+     * division, as shares of that division's equal TV share, paid in
+     * monthly instalments from August to June. [S: England ~GBP 49m and
+     * 40m in years 1-2 against a ~GBP 97m equal share (2024-25); Serie A
+     * and LaLiga pay smaller relegation funds] */
+    static constexpr std::array<float, 2> PARACHUTE_SHARES = {0.45f, 0.35f};
+    static constexpr int PARACHUTE_INSTALMENTS = 11;
+    /** AI players' wages fall by this share when their club goes down from
+     * a top division. [S/P: relegation clauses of 25-50% are standard in
+     * English top-flight contracts] */
+    static constexpr float RELEGATION_WAGE_CUT = 0.30f;
   };
 
   struct Fitness final
@@ -381,8 +392,16 @@ struct WorldTuning final
      * (their lower finishing), so those have their own goal reference.
      * [Fitted to fm_lab season: goals per league against the scale, 22
      * leagues] */
-    static constexpr float REFERENCE_GOALS_TOP = 2.85f;
+    static constexpr float REFERENCE_GOALS_TOP = 2.89f;
     static constexpr float REFERENCE_GOALS_SECOND = 2.42f;
+    /** The references hold for a league of this quality spread (LeagueShape
+     * level_sd); a more unequal league has more mismatches and scores more
+     * at the same scale, about this share more per point of spread. [Fitted
+     * to fm_lab season: goals against target over the 11 top divisions,
+     * slope 0.017 +- 0.006 per point] */
+    static constexpr float REFERENCE_SPREAD_TOP = 7.0f;
+    static constexpr float REFERENCE_SPREAD_SECOND = 3.7f;
+    static constexpr float GOALS_PER_SPREAD_POINT = 0.017f;
     /** Goals grow about as goalRateScale^1.3 in the world (the scale acts on
      * shot precision; the fit gives 1.35 in top and 1.24 in second
      * divisions, 1.06 between two 65-rated lab sides), so the scale is the
@@ -421,6 +440,32 @@ struct WorldTuning final
      * this size at the season end, releasing the weakest players outside the
      * matchday squad. [P: real senior squads hold 25-30 players] */
     static constexpr std::size_t AI_SQUAD_TARGET = 28;
+  };
+
+  /**
+   * The world has two divisions per country; players nobody signs drop
+   * below them (lower leagues, abroad) or stop playing. From September to
+   * May an unsigned free agent leaves the world with a monthly chance by
+   * age, scaled by his level against the weakest quarter of second-tier
+   * players. [P: most players released in the summer and still unsigned
+   * after the window sign at a lower level within the season]
+   */
+  struct FreeAgents final
+  {
+    static constexpr double EXIT_CHANCE_YOUNG = 0.05;   /*!< Up to 21. */
+    static constexpr double EXIT_CHANCE_PRIME = 0.10;   /*!< 22-27. */
+    static constexpr double EXIT_CHANCE_LATE = 0.15;    /*!< 28-31. */
+    static constexpr double EXIT_CHANCE_VETERAN = 0.25; /*!< 32 and older. */
+    /** Level gap (overall points) that counts as clearly above/below. */
+    static constexpr double LEVEL_MARGIN = 5.0;
+    static constexpr double ABOVE_LEVEL_FACTOR = 0.4;
+    static constexpr double BELOW_LEVEL_FACTOR = 2.0;
+    /** Prospects (21 or younger, potential this far above the level) are
+     * kept in the pool for clubs to find. */
+    static constexpr double PROSPECT_POTENTIAL_MARGIN = 10.0;
+    static constexpr double PROSPECT_FACTOR = 0.3;
+    /** Share of second-tier senior players below the reference level. */
+    static constexpr double LEVEL_QUANTILE = 0.25;
   };
 
   struct Board final

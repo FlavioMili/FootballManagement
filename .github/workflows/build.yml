@@ -7,9 +7,12 @@ on:
   workflow_call:
     inputs:
       version:
-        description: Version stamped into the packages (a leading "v" is dropped)
+        description: >-
+          Version stamped into the game and packages (a leading "v" is
+          dropped); empty for the project version in CMakeLists.txt. Its
+          numbers must equal the project version.
         type: string
-        default: 0.0.0-ci
+        default: ""
       retention-days:
         description: Days to keep the uploaded package artifacts
         type: number
@@ -47,7 +50,10 @@ jobs:
       - name: Version
         env:
           INPUT_VERSION: ${{ inputs.version }}
-        run: echo "FM_VERSION=${INPUT_VERSION#v}" >> "$GITHUB_ENV"
+        run: |
+          version=$(packaging/release_version.sh "$INPUT_VERSION")
+          echo "Building version $version"
+          echo "FM_VERSION=$version" >> "$GITHUB_ENV"
 
       - name: Install toolchain and SDL build dependencies
         run: |
@@ -103,11 +109,14 @@ jobs:
         env:
           APPIMAGE_EXTRACT_AND_RUN: 1
           LINUXDEPLOY_URL: https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
+          LINUXDEPLOY_SHA256: c20cd71e3a4e3b80c3483cef793cda3f4e990aca14014d23c544ca3ce1270b4d
         run: |
           curl -fsSL -o "$RUNNER_TEMP/linuxdeploy" "$LINUXDEPLOY_URL"
+          echo "$LINUXDEPLOY_SHA256  $RUNNER_TEMP/linuxdeploy" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/linuxdeploy"
           cmake --install build --component game --strip --prefix "$RUNNER_TEMP/AppDir/usr"
-          (cd "$RUNNER_TEMP" && "$RUNNER_TEMP/linuxdeploy" --appdir AppDir \
+          (cd "$RUNNER_TEMP" && LINUXDEPLOY_OUTPUT_VERSION="$FM_VERSION" \
+            "$RUNNER_TEMP/linuxdeploy" --appdir AppDir \
             --executable AppDir/usr/bin/FootballManagement \
             --desktop-file AppDir/usr/share/applications/footballmanagement.desktop \
             --icon-file AppDir/usr/share/icons/hicolor/scalable/apps/footballmanagement.svg \
@@ -123,6 +132,20 @@ jobs:
           pkg=$(find "$RUNNER_TEMP/extract" -mindepth 1 -maxdepth 1 -type d)
           ldd "$pkg/bin/FootballManagement"
           packaging/smoke_test.sh "$pkg" "$pkg/bin/FootballManagement" \
+            "$XDG_DATA_HOME/FlavioMili/FootballManagement"
+
+      # Runners have no FUSE: check the AppImage's own contents and AppRun
+      # through the extracted image instead of mounting it.
+      - name: Smoke test AppImage
+        env:
+          XDG_DATA_HOME: ${{ runner.temp }}/xdg-data-appimage
+        run: |
+          appimage=$(realpath dist/*.AppImage)
+          mkdir -p "$RUNNER_TEMP/appimage"
+          (cd "$RUNNER_TEMP/appimage" && "$appimage" --appimage-extract > /dev/null)
+          root="$RUNNER_TEMP/appimage/squashfs-root"
+          grep -x "X-AppImage-Version=$FM_VERSION" "$root"/*.desktop
+          packaging/smoke_test.sh "$root" "$root/AppRun" \
             "$XDG_DATA_HOME/FlavioMili/FootballManagement"
 
       - name: Upload packages
@@ -148,7 +171,10 @@ jobs:
       - name: Version
         env:
           INPUT_VERSION: ${{ inputs.version }}
-        run: echo "FM_VERSION=${INPUT_VERSION#v}" >> "$GITHUB_ENV"
+        run: |
+          version=$(packaging/release_version.sh "$INPUT_VERSION")
+          echo "Building version $version"
+          echo "FM_VERSION=$version" >> "$GITHUB_ENV"
 
       # AppleClang's libc++ lacks floating-point std::from_chars and
       # non-experimental std::jthread (both need libc++ 20), so the game is
@@ -250,7 +276,10 @@ jobs:
       - name: Version
         env:
           INPUT_VERSION: ${{ inputs.version }}
-        run: echo "FM_VERSION=${INPUT_VERSION#v}" >> "$GITHUB_ENV"
+        run: |
+          version=$(packaging/release_version.sh "$INPUT_VERSION")
+          echo "Building version $version"
+          echo "FM_VERSION=$version" >> "$GITHUB_ENV"
 
       - name: Cache FetchContent sources
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

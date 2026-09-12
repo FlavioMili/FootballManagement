@@ -48,7 +48,7 @@ constexpr int ANNOUNCE_DAYS = 7;
 constexpr int FINALS_DRAW_DAYS = 21;
 constexpr size_t MATCH_RESERVES = 9;
 constexpr size_t MIN_PLAYERS_TO_PLAY = 7;
-constexpr int MIN_SQUAD_AGE = 17;
+using International::MIN_SQUAD_AGE;
 constexpr uint32_t GROUP_DRAW_SALT = 0x6E'61'74;
 constexpr uint32_t FRIENDLY_SALT = 0x66'72'69;
 constexpr uint32_t MATCH_SEED_SALT = 0x6D'61'74;
@@ -215,6 +215,30 @@ const char* International::competitionKey(Competition competition)
   return "INTL_FRIENDLY";
 }
 
+const char* International::callUpResultKey(CallUpResult result)
+{
+  switch (result)
+  {
+    case CallUpResult::Ok:
+      return "CALLUP_RESULT_OK";
+    case CallUpResult::NoSquad:
+      return "CALLUP_RESULT_NO_SQUAD";
+    case CallUpResult::Locked:
+      return "CALLUP_RESULT_LOCKED";
+    case CallUpResult::TooMany:
+      return "CALLUP_RESULT_TOO_MANY";
+    case CallUpResult::TooFew:
+      return "CALLUP_RESULT_TOO_FEW";
+    case CallUpResult::NeedGoalkeepers:
+      return "CALLUP_RESULT_GOALKEEPERS";
+    case CallUpResult::Ineligible:
+      return "CALLUP_RESULT_INELIGIBLE";
+    case CallUpResult::Duplicate:
+      break;
+  }
+  return "CALLUP_RESULT_DUPLICATE";
+}
+
 bool International::isFinals(Competition competition)
 {
   return competition == Competition::WorldFinals ||
@@ -364,9 +388,8 @@ size_t International::finalsSize(size_t pool)
   return 0;
 }
 
-std::vector<PlayerID> International::selectSquad(
-    std::vector<const Player*> eligible, size_t size, const StatsConfig& config,
-    const std::unordered_map<PlayerID, uint16_t>& caps)
+double International::selectionScore(const Player& player, uint16_t caps,
+                                     const StatsConfig& config)
 {
   constexpr double FORM_PIVOT = 6.5;
   constexpr double FORM_WEIGHT = 2.0;
@@ -374,21 +397,30 @@ std::vector<PlayerID> International::selectSquad(
   constexpr double CONDITION_WEIGHT = 0.1;
   constexpr double CAPS_CAP = 50.0;
   constexpr double CAPS_WEIGHT = 1.0 / 25.0;
+  double score = player.getOverall(config);
+  if (const double form = player.getForm(); form > 0.0)
+    score += (form - FORM_PIVOT) * FORM_WEIGHT;
+  score += (static_cast<double>(player.getDynamics().condition) -
+            CONDITION_PIVOT) *
+           CONDITION_WEIGHT;
+  score += std::min<double>(caps, CAPS_CAP) * CAPS_WEIGHT;
+  return score;
+}
+
+std::vector<PlayerID> International::selectSquad(
+    std::vector<const Player*> eligible, size_t size, const StatsConfig& config,
+    const std::unordered_map<PlayerID, uint16_t>& caps)
+{
   constexpr size_t GOALKEEPERS = 3;
   constexpr size_t MAX_GOALKEEPERS = 4;
   std::vector<std::pair<double, const Player*>> ranked;
   ranked.reserve(eligible.size());
   for (const Player* player : eligible)
   {
-    double score = player->getOverall(config);
-    if (const double form = player->getForm(); form > 0.0)
-      score += (form - FORM_PIVOT) * FORM_WEIGHT;
-    score += (static_cast<double>(player->getDynamics().condition) -
-              CONDITION_PIVOT) *
-             CONDITION_WEIGHT;
-    if (const auto it = caps.find(player->getId()); it != caps.end())
-      score += std::min<double>(it->second, CAPS_CAP) * CAPS_WEIGHT;
-    ranked.emplace_back(score, player);
+    const auto it = caps.find(player->getId());
+    ranked.emplace_back(
+        selectionScore(*player, it != caps.end() ? it->second : 0, config),
+        player);
   }
   std::ranges::sort(ranked, [](const auto& a, const auto& b)
                     {
@@ -523,6 +555,98 @@ bool NationalTeams::isEligibleFor(const Player& player, Language nation,
   const auto record = records.find(player.getId());
   return record == records.end() || record->second.nation == nation ||
          International::canSwitchNation(record->second, date);
+}
+
+const NationalTeams::Squad* NationalTeams::squadOf(
+    Language nation, const GameDateValue& date) const
+{
+  const Squad* found = nullptr;
+  for (const Squad& squad : squads)
+  {
+    if (squad.nation != nation || squad.until < date) continue;
+    if (!found || squad.start < found->start) found = &squad;
+  }
+  return found;
+}
+
+std::vector<PlayerID> NationalTeams::eligiblePool(
+    Language nation, const GameDateValue& date) const
+{
+  std::vector<PlayerID> ids;
+  for (const auto& [id, player] : gamedata->getPlayers())
+  {
+    if (player.getNationality() == nation &&
+        player.getAge() >= MIN_SQUAD_AGE &&
+        player.getTeamId() != FREE_AGENTS_TEAM_ID &&
+        isEligibleFor(player, nation, date))
+      ids.push_back(id);
+  }
+  std::ranges::sort(ids);
+  return ids;
+}
+
+International::CallUpResult NationalTeams::validateSquad(
+    Language nation, const std::vector<PlayerID>& players,
+    const GameDateValue& today) const
+{
+  using International::CallUpResult;
+  const Squad* squad = squadOf(nation, today);
+  if (!squad) return CallUpResult::NoSquad;
+  if (!(today < squad->start)) return CallUpResult::Locked;
+  if (players.size() > squadLimit(*squad)) return CallUpResult::TooMany;
+  if (players.size() < International::MIN_CALL_UPS) return CallUpResult::TooFew;
+  std::vector<PlayerID> sorted = players;
+  std::ranges::sort(sorted);
+  if (std::ranges::adjacent_find(sorted) != sorted.end())
+    return CallUpResult::Duplicate;
+  size_t goalkeepers = 0;
+  for (const PlayerID player_id : players)
+  {
+    const auto player = gamedata->getPlayer(player_id);
+    if (!player || player->get().getAge() < MIN_SQUAD_AGE ||
+        player->get().getTeamId() == FREE_AGENTS_TEAM_ID ||
+        !player->get().isAvailable() ||
+        !isEligibleFor(player->get(), nation, today))
+      return CallUpResult::Ineligible;
+    if (player->get().getRole() == PlayerRole::GK) ++goalkeepers;
+  }
+  if (goalkeepers < International::MIN_CALL_UP_GOALKEEPERS)
+    return CallUpResult::NeedGoalkeepers;
+  return CallUpResult::Ok;
+}
+
+International::CallUpResult NationalTeams::setSquad(
+    Language nation, std::vector<PlayerID> players, const GameDateValue& today)
+{
+  const International::CallUpResult verdict =
+      validateSquad(nation, players, today);
+  if (verdict != International::CallUpResult::Ok) return verdict;
+  for (Squad& squad : squads)
+  {
+    if (&squad != squadOf(nation, today)) continue;
+    squad.players = std::move(players);
+    break;
+  }
+  rebuildDutyIndex();
+  return verdict;
+}
+
+void NationalTeams::setCoach(Language nation, std::string name)
+{
+  const auto it = std::ranges::find(teams, nation, &Team::nation);
+  if (it != teams.end()) it->coach = std::move(name);
+}
+
+double NationalTeams::expectedScore(Language home, Language away,
+                                    bool neutral) const
+{
+  const Team* home_team = getTeam(home);
+  const Team* away_team = getTeam(away);
+  if (!home_team || !away_team) return 0.5;
+  const double advantage = neutral ? 0.0 : HOME_ADVANTAGE;
+  return 1.0 / (1.0 + std::pow(10.0, (away_team->rating - home_team->rating -
+                                      advantage) /
+                                         ELO_SCALE));
 }
 
 void NationalTeams::refreshNations()
@@ -902,9 +1026,8 @@ void NationalTeams::announceWindow(const GameDateValue& today,
       const auto player = gamedata->getPlayer(player_id);
       if (player && player->get().getTeamId() == managed_team_id &&
           managed_team_id != FREE_AGENTS_TEAM_ID)
-        called.push_back(player->get().getName() + " (" +
-                         LOC(International::teamNameKey(team.nation).c_str()) +
-                         ")");
+        called.push_back(player->get().getName() + " (@" +
+                         International::teamNameKey(team.nation) + ")");
     }
     squads.push_back(std::move(squad));
   }
@@ -1111,6 +1234,9 @@ void NationalTeams::playMatches(const GameDateValue& today,
     }
     for (const PlayerMatchConsequence& consequence : result.consequences)
       world.applyMatchConsequences(today, consequence, managed_team_id);
+    if (result_sink)
+      result_sink(fixture,
+                  expectedScore(fixture.home, fixture.away, fixture.neutral));
     updateRatings(fixture);
   }
 }
@@ -1227,12 +1353,13 @@ void NationalTeams::drawFinals(Finals& entry, const GameDateValue& today,
 
   std::string names;
   for (const Language nation : qualified)
-    names += (names.empty() ? "" : ", ") +
-             std::string(LOC(International::teamNameKey(nation).c_str()));
+    names += (names.empty() ? "@" : ", @") +
+             International::teamNameKey(nation);
   post(world, today, "INBOX_INTL_FINALS_DRAW_TITLE", "INBOX_INTL_FINALS_DRAW_BODY",
        {std::string("@") + International::competitionKey(entry.competition), names,
         entry.start.toString()},
        true);
+  if (finals_sink) finals_sink(entry, false);
 }
 
 void NationalTeams::progressFinals(Finals& entry, const GameDateValue& today,
@@ -1342,6 +1469,7 @@ void NationalTeams::progressFinals(Finals& entry, const GameDateValue& today,
            {std::string("@") + International::competitionKey(entry.competition),
             nationArg(*entry.winner), nationArg(*entry.runner_up)},
            true);
+      if (finals_sink) finals_sink(entry, true);
       return;
     }
     for (size_t i = 0; i + 1 < winners.size(); i += 2)

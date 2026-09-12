@@ -66,6 +66,7 @@ enum class Why : std::uint8_t
   OutOfPatience,
   RivalBids,
   DeadlineDay,
+  WageBudget, /*!< His wage no longer fits its wage budget. */
   COUNT
 };
 
@@ -97,6 +98,9 @@ struct BuyerContext
   std::uint8_t insults = 0;  /*!< Unrealistic demands so far. */
   std::uint8_t rivals = 0;   /*!< Other clubs bidding for the player. */
   int days_to_deadline = 30; /*!< -1 when the window is shut. */
+  /** The wage he would ask fits the buyer's wage room: it never agrees a
+   * deal it cannot pay, and walks away when it no longer fits. */
+  bool wage_fits = true;
 };
 
 /** True in the last days of an open window. */

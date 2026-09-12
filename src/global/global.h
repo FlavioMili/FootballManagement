@@ -21,8 +21,14 @@
 /** @brief Team ID reserved for free agents. */
 constexpr uint8_t FREE_AGENTS_TEAM_ID = 0;
 
-/** @brief The name of the free agents team. */
+/** @brief Internal name of the free agents team (never shown). */
 constexpr const char* FREE_AGENTS_TEAM_NAME = "Free agents";
+
+/**
+ * @brief The free agents in a message argument where a club name goes: a
+ * language key, so the reader sees it in their own language.
+ */
+constexpr const char* FREE_AGENTS_NAME_ARG = "@INBOX_FREE_AGENCY";
 
 /** @brief Number of teams in each league. */
 constexpr uint8_t TEAMS_PER_LEAGUE = 16;

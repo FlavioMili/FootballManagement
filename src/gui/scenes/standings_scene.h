@@ -12,9 +12,11 @@
 #include <string>
 #include <vector>
 
+#include "gui/scenes/draw_ceremony_dialog.h"
 #include "gui/scenes/management_scene.h"
 #include "gui/view_models/competition_view.h"
 #include "model/competition.h"
+#include "model/standings_race.h"
 
 /**
  * @brief Competitions: the full table of any league (form, promotion and
@@ -54,6 +56,12 @@ class StandingsScene : public ManagementScene
   void renderTable(float width, float height);
   void renderScorers(float width, float height);
   void renderCup();
+  /** Clinched and lost places of every club, and the managed club's run-in. */
+  void refreshRace();
+  void renderNeeds();
+  /** Loads an archived final table and its top scorer. */
+  void refreshPastSeason(uint16_t season);
+  [[nodiscard]] std::string seasonLabel(uint16_t season) const;
 
   LeagueID league_id = 0;
   bool league_chosen = false;
@@ -61,7 +69,21 @@ class StandingsScene : public ManagementScene
   LeagueID cup_id = 0;
   std::vector<CompetitionView::StandingRow> table;
   CompetitionView::Zones zones;
+  /** Deciding places of the shown league (continental places included). */
+  Standings::RacePlaces places;
+  /** Mathematically decided status of each table row (current season). */
+  std::vector<Standings::Clinch> clinch;
+  /** What the managed club needs from its own games, ready to show. */
+  std::vector<std::string> need_lines;
+  /** Columns the table showed last frame (for the column picker). */
+  UI::ColumnMask table_mask = ~UI::ColumnMask{0};
   std::vector<ScorerRow> scorers;
   std::optional<Competitions::CupStatus> cup;
   std::vector<std::pair<LeagueID, std::string>> cup_names;
+  /** Archived seasons of the shown league, newest first. */
+  std::vector<uint16_t> past_seasons;
+  /** The archived season shown (nullopt: the current table). */
+  std::optional<uint16_t> past_season;
+  /** Ceremony of the cup's latest draw. */
+  DrawCeremonyDialog draw_dialog;
 };

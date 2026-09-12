@@ -324,3 +324,18 @@ TEST(BuyerNegotiationTest, PlayerStanceAndHisReactionToARejection)
   EXPECT_TRUE(isBigBid(cash(9'000'000), 25, 10'000'000));
   EXPECT_FALSE(isBigBid(cash(5'000'000), 25, 10'000'000));
 }
+
+TEST(BuyerNegotiationTest, NeverAgreesADealItsWageBudgetCannotCarry)
+{
+  BuyerContext context = buyer();
+  context.wage_fits = false;
+  // Even a counter well within its ceiling is not agreed.
+  const BuyerReply reply =
+      respond(context, cash(8'000'000), cash(8'500'000), false, 0.5);
+  EXPECT_EQ(reply.decision, Decision::WalkAway);
+  EXPECT_TRUE(has(reply, Why::WageBudget));
+  context.wage_fits = true;
+  EXPECT_EQ(respond(context, cash(8'000'000), cash(8'500'000), false, 0.5)
+                .decision,
+            Decision::Accept);
+}

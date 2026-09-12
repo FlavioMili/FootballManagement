@@ -21,6 +21,7 @@
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
+#include "global/language_manager.h"
 #include "global/logger.h"
 #include "global/paths.h"
 #include "gui/gui_view.h"
@@ -84,6 +85,21 @@ TEST(FormatTest, MoneyIsCompactAndSigned)
   EXPECT_EQ(Format::moneyFull(-999), "-€999");
   EXPECT_EQ(Format::signedInt(4), "+4");
   EXPECT_EQ(Format::signedInt(-2), "-2");
+  EXPECT_EQ(Format::thousands(38'500), "38,500");
+  EXPECT_EQ(Format::decimal(7.5, 1), "7.5");
+}
+
+TEST(FormatTest, ItalianUsesDecimalCommaAndItalianUnits)
+{
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::IT));
+  EXPECT_EQ(Format::money(13'400), "€\u00a013\u00a0mila");
+  EXPECT_EQ(Format::money(2'450'000), "€\u00a02,45\u00a0mln");
+  EXPECT_EQ(Format::money(-31'000'000), "-€\u00a031,0\u00a0mln");
+  EXPECT_EQ(Format::moneyFull(1'250'000), "€\u00a01.250.000");
+  EXPECT_EQ(Format::thousands(38'500), "38.500");
+  EXPECT_EQ(Format::decimal(7.5, 1), "7,5");
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::EN));
+  EXPECT_EQ(Format::money(2'450'000), "€2.45M");
 }
 
 TEST(FormationTest, RoleFitPrefersNaturalAndAdjacentRoles)
@@ -324,6 +340,41 @@ TEST(WidgetsTest, ParseMoneyAcceptsSuffixesAndSeparators)
   EXPECT_FALSE(UI::parseMoney("abc", value));
   EXPECT_FALSE(UI::parseMoney("12x", value));
   EXPECT_EQ(value, 7);
+  // The decimal comma no longer multiplies the amount by ten.
+  ASSERT_TRUE(UI::parseMoney("1,5M", value));
+  EXPECT_EQ(value, 1'500'000);
+  value = 7;
+  EXPECT_FALSE(UI::parseMoney("1.50.000", value));
+  EXPECT_EQ(value, 7);
+}
+
+TEST(WidgetsTest, MoneyPreviewReadsTheTypedAmountOrSaysWhyNot)
+{
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::EN));
+  UI::MoneyPreview preview = UI::moneyPreview("1,5M");
+  EXPECT_FALSE(preview.error);
+  EXPECT_EQ(preview.text, "Amount: €1,500,000");
+  preview = UI::moneyPreview("1,5M", {.maximum = 1'000'000});
+  EXPECT_FALSE(preview.error);
+  EXPECT_EQ(preview.text, "Amount: €1,000,000 (the limit)");
+  preview = UI::moneyPreview("1,500k");
+  EXPECT_TRUE(preview.error);
+  EXPECT_EQ(preview.text, LOC("WIDGET_MONEY_ERROR_AMBIGUOUS"));
+  preview = UI::moneyPreview("lots");
+  EXPECT_TRUE(preview.error);
+  EXPECT_EQ(preview.text, LOC("WIDGET_MONEY_ERROR_INVALID"));
+
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::IT));
+  preview = UI::moneyPreview("€ 2,25 mln");
+  EXPECT_FALSE(preview.error);
+  EXPECT_EQ(preview.text, "Importo: €\u00a02.250.000");
+  preview = UI::moneyPreview("1,500k");
+  EXPECT_FALSE(preview.error);
+  EXPECT_EQ(preview.text, "Importo: €\u00a01.500");
+  preview = UI::moneyPreview("");
+  EXPECT_TRUE(preview.error);
+  EXPECT_EQ(preview.text, "Inserisci un importo.");
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::EN));
 }
 
 TEST(WidgetsTest, MoneyStepsStayProportionalForSmallAmounts)

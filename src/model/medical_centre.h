@@ -8,13 +8,21 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include "global/types.h"
+#include "model/gamedate.h"
 #include "model/injury.h"
 #include "model/staff.h"
 #include "model/training.h"
+
+class DatabaseConnection;
+class GameData;
+class Inbox;
 
 /** @brief Three-step risk band shown by the medical centre. */
 enum class RiskBand : std::uint8_t
@@ -101,10 +109,40 @@ struct MedicalReport
   float average_sharpness = 0.0f;
 };
 
+/**
+ * @brief Instructions of the medical staff for one player (bit flags,
+ * persisted).
+ */
+enum MedicalFlag : std::uint8_t
+{
+  MEDICAL_FLAG_NONE = 0,
+  /** Left out of the assistant's selections while anyone else is fit. */
+  MEDICAL_FLAG_REST = 1 << 0,
+  /** Should come off around the hour mark. */
+  MEDICAL_FLAG_LIMIT_MINUTES = 1 << 1,
+};
+
+/** @brief One day of a player's load chart. */
+struct LoadChartDay
+{
+  std::int32_t day = 0; /*!< Day ordinal. */
+  float load = 0.0f;    /*!< Training and match load, in session units. */
+  float ratio = 1.0f;   /*!< Acute:chronic ratio once the day was closed. */
+  bool recorded = false;
+};
+
 namespace MedicalCentre
 {
 /** Days after an injury during which a recurrence is more likely. */
 inline constexpr int RECURRENCE_WINDOW_DAYS = 60;
+/** Days kept for the load chart. */
+inline constexpr int LOAD_CHART_DAYS = 28;
+/** Minute around which a player limited by the medical staff comes off. */
+inline constexpr int MINUTE_LIMIT = 60;
+/** Acute:chronic ratios of the low-risk zone and of a load spike. */
+inline constexpr float LOAD_ZONE_LOW = 0.8f;
+inline constexpr float LOAD_ZONE_HIGH = 1.3f;
+inline constexpr float LOAD_SPIKE = 1.5f;
 
 /**
  * Medical staff quality in [0, 1] from the layoff multiplier the staff
@@ -136,4 +174,86 @@ InjuryRiskAssessment assess(const InjuryRiskInputs& inputs);
 
 /** Language key naming @p band ("MEDICAL_RISK_LOW", ...). */
 const char* bandKey(RiskBand band);
+
+/**
+ * Risk zone of an acute:chronic workload ratio: 0.8-1.3 is the low-risk
+ * zone, a spike of 1.5 or more is high, and both a ratio between them and
+ * an under-loaded player (below 0.8) are moderate.
+ */
+RiskBand loadBand(float ratio);
+
+/** Whether a player with @p flags should come off at @p minute. */
+bool substitutionDue(std::uint8_t flags, int minute);
 }  // namespace MedicalCentre
+
+/**
+ * @class MedicalDesk
+ * @brief The medical staff's day-to-day work for the managed club: rest and
+ * minute-limit instructions, the 28-day load log behind the load chart,
+ * aggravated injuries of players who play through pain and the staff's
+ * warnings in the inbox.
+ *
+ * Persisted in MedicalFlags and MedicalLoad (assets/db/schema.sql) inside
+ * the game's save transaction.
+ */
+class MedicalDesk
+{
+ public:
+  /** Flags of @p player_id (MEDICAL_FLAG_NONE when he has none). */
+  std::uint8_t flags(PlayerID player_id) const;
+  bool hasFlag(PlayerID player_id, MedicalFlag flag) const
+  {
+    return (flags(player_id) & flag) != 0;
+  }
+  void setFlag(PlayerID player_id, MedicalFlag flag, bool enabled);
+  /** Players the staff wants rested (not picked by the assistant). */
+  bool isRested(PlayerID player_id) const
+  {
+    return hasFlag(player_id, MEDICAL_FLAG_REST);
+  }
+
+  /**
+   * A player's match was applied (WorldSimulation::applyMatchConsequences
+   * returned true). If he played carrying an injury he may aggravate it:
+   * the chance is InjuryModel::aggravationChance() for his minutes, and
+   * certain when the match engine injured him again. The layoff is drawn
+   * by InjuryModel::aggravate() and shortened by the club's medical staff.
+   * @return Whether the injury was aggravated.
+   */
+  bool afterMatch(GameData& gamedata, const GameDateValue& date,
+                  PlayerID player_id, int minutes, bool engine_injured,
+                  TeamID managed_team_id, Inbox& inbox);
+
+  /**
+   * Closes @p date (before the calendar moves on, so the day's training and
+   * match loads are complete): logs every managed player's load and
+   * acute:chronic ratio, forgets players who left and warns once a week
+   * per player about load spikes and players selected while injured.
+   */
+  void onDayEnd(GameData& gamedata, const GameDateValue& date,
+                TeamID managed_team_id, Inbox& inbox);
+
+  /** The last LOAD_CHART_DAYS days up to @p today, oldest first. */
+  std::array<LoadChartDay, MedicalCentre::LOAD_CHART_DAYS> loadChart(
+      PlayerID player_id, std::int32_t today) const;
+
+  void load(const std::shared_ptr<DatabaseConnection>& db_conn);
+  /** Writes the state; must run inside the caller's transaction. */
+  void save(const std::shared_ptr<DatabaseConnection>& db_conn) const;
+
+ private:
+  /** Ring of daily loads indexed by day ordinal modulo LOAD_CHART_DAYS. */
+  struct LoadLog
+  {
+    std::array<std::int32_t, MedicalCentre::LOAD_CHART_DAYS> days{};
+    std::array<float, MedicalCentre::LOAD_CHART_DAYS> load{};
+    std::array<float, MedicalCentre::LOAD_CHART_DAYS> ratio{};
+  };
+
+  void record(PlayerID player_id, std::int32_t day, float load, float ratio);
+
+  std::unordered_map<PlayerID, std::uint8_t> player_flags;
+  /** Day of the last warning about each player. */
+  std::unordered_map<PlayerID, std::int32_t> warned;
+  std::unordered_map<PlayerID, LoadLog> logs;
+};

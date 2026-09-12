@@ -8,7 +8,9 @@
 
 // Back and Forward through the real GUIView: sideways touchpad swipes and
 // mouse side buttons arrive as SDL events, Alt+arrows as keys, and the
-// screen on top follows the history like a browser's.
+// screen on top follows the history like a browser's. Also the ways out of
+// the first screens: Back and Escape on the club choice, Escape on the main
+// menu's dialogs, and Settings closing onto the screen it was opened from.
 
 #include <SDL3/SDL.h>
 #include <gtest/gtest.h>
@@ -20,12 +22,15 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <string_view>
 
 #include "controller/game_controller.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
+#include "global/language_manager.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/main_game_scene.h"
+#include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/management_scene.h"
 
 /**
@@ -49,6 +54,19 @@ class GameFlowTest_GUIFlowLifecycle_Test
   static void setContinueRequested(MainGameScene& hub, bool requested)
   {
     hub.continuation_requested = requested;
+  }
+  static void openSlotPicker(MainMenuScene& menu, bool newGame)
+  {
+    menu.is_new_game = newGame;
+    menu.slot_picker_requested = true;
+  }
+  static void openBackups(MainMenuScene& menu, int slot)
+  {
+    menu.openBackups(slot);
+  }
+  static void askOverwrite(MainMenuScene& menu, int slot)
+  {
+    menu.overwrite_slot = slot;
   }
 };
 
@@ -144,6 +162,69 @@ void altArrow(GUIView& view, ImGuiKey arrow)
   io.AddKeyEvent(arrow, false);
   io.AddKeyEvent(ImGuiMod_Alt, false);
   frames(view, 2);
+}
+/** Modal dialogs open now (the main menu's slot picker, backups...). */
+int openPopups() { return GImGui->OpenPopupStack.Size; }
+
+/**
+ * Moves the mouse over the item @p id of the first active window whose name
+ * contains @p window_part (scanning @p from the top or the bottom) and
+ * clicks it. False when the item never got the hover.
+ */
+bool clickItem(GUIView& view, std::string_view window_part,
+               ImGuiID (*id_of)(const ImGuiWindow&), bool from_bottom)
+{
+  const ImGuiWindow* window = nullptr;
+  for (const ImGuiWindow* candidate : GImGui->Windows)
+    if (candidate->Active &&
+        std::string_view(candidate->Name).find(window_part) !=
+            std::string_view::npos)
+    {
+      window = candidate;
+      break;
+    }
+  if (window == nullptr) return false;
+  const ImGuiID item = id_of(*window);
+  ImGuiIO& io = ImGui::GetIO();
+  const ImRect area(ImMax(window->Rect().Min, ImVec2(0.0f, 0.0f)),
+                    ImMin(window->Rect().Max, io.DisplaySize));
+  const float step = 8.0f;
+  for (float offset = 4.0f; offset < area.GetHeight(); offset += step)
+  {
+    const float y = from_bottom ? area.Max.y - offset : area.Min.y + offset;
+    for (float x = area.Min.x + 4.0f; x < area.Max.x; x += 2.0f * step)
+    {
+      io.AddMousePosEvent(x, y);
+      Bridge::frame(view);
+      if (GImGui->HoveredId != item) continue;
+      io.AddMouseButtonEvent(0, true);
+      Bridge::frame(view);
+      io.AddMouseButtonEvent(0, false);
+      Bridge::frame(view);
+      io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+      Bridge::frame(view);
+      return true;
+    }
+  }
+  io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+  Bridge::frame(view);
+  return false;
+}
+
+ImGuiID backToMenuButton(const ImGuiWindow& window)
+{
+  return ImHashStr(LOC("TEAM_SELECTION_BACK"), 0, window.ID);
+}
+
+/** The sidebar's Settings entry (a full row, or an icon when short). */
+ImGuiID settingsRow(const ImGuiWindow& window)
+{
+  return ImHashStr("##nav", 0, ImHashStr(LOC("MENU_SETTINGS"), 0, window.ID));
+}
+ImGuiID settingsIcon(const ImGuiWindow& window)
+{
+  return ImHashStr("##footer", 0,
+                   ImHashStr(LOC("MENU_SETTINGS"), 0, window.ID));
 }
 }  // namespace
 
@@ -346,4 +427,135 @@ TEST(NavigationUiTest, EdgeCasesKeepTheHistoryConsistent)
   pressEscape(view);
   EXPECT_EQ(view.getTopScene()->historyEntry(), home);
   EXPECT_EQ(view.getOverlayDepth(), 0U);
+}
+
+TEST(NavigationUiTest, ClubSelectionGoesBackToTheMainMenu)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  Logger::init();
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::EN));
+  const SlotCleanup slot{uniqueSlot(2)};
+  GameController controller;
+  controller.newGame(slot.slot, WORLD_SEED);
+  ASSERT_FALSE(controller.hasSelectedTeam());
+
+  GUIView view(controller);
+  ASSERT_TRUE(Bridge::initialize(view));
+  view.changeScene(std::make_unique<MainGameScene>(&view));
+  frames(view, 3);
+  ASSERT_EQ(topId(view), SceneID::TEAM_SELECTION);
+
+  // Escape leaves the club choice for the main menu; the new save stays
+  // in its slot as a career not started yet.
+  pressEscape(view);
+  EXPECT_EQ(topId(view), SceneID::MAIN_MENU);
+  EXPECT_EQ(view.getOverlayDepth(), 0U);
+  const GameController::SaveSlotMetadata metadata =
+      controller.getSaveSlotMetadata(slot.slot);
+  EXPECT_TRUE(metadata.exists);
+  EXPECT_TRUE(metadata.team_name.empty());
+
+  // The Back button does the same.
+  view.changeScene(std::make_unique<MainGameScene>(&view));
+  frames(view, 3);
+  ASSERT_EQ(topId(view), SceneID::TEAM_SELECTION);
+  ASSERT_TRUE(clickItem(view, "##team_selection", backToMenuButton, false));
+  frames(view, 2);
+  EXPECT_EQ(topId(view), SceneID::MAIN_MENU);
+}
+
+TEST(NavigationUiTest, MainMenuDialogsCloseWithEscapeOneAtATime)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  Logger::init();
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::EN));
+  GameController controller;
+  GUIView view(controller);
+  ASSERT_TRUE(Bridge::initialize(view));
+  view.changeScene(std::make_unique<MainMenuScene>(&view));
+  frames(view, 2);
+  auto* menu = dynamic_cast<MainMenuScene*>(view.getTopScene());
+  ASSERT_NE(menu, nullptr);
+  ASSERT_EQ(openPopups(), 0);
+
+  // The slot picker.
+  Bridge::openSlotPicker(*menu, true);
+  frames(view, 2);
+  ASSERT_EQ(openPopups(), 1);
+  pressEscape(view);
+  EXPECT_EQ(openPopups(), 0);
+
+  // The backups list on its own.
+  Bridge::openBackups(*menu, 1);
+  frames(view, 2);
+  ASSERT_EQ(openPopups(), 1);
+  pressEscape(view);
+  EXPECT_EQ(openPopups(), 0);
+
+  // Backups opened from the picker: Escape closes the list, then the
+  // picker.
+  Bridge::openSlotPicker(*menu, false);
+  frames(view, 2);
+  Bridge::openBackups(*menu, 1);
+  frames(view, 2);
+  ASSERT_EQ(openPopups(), 2);
+  pressEscape(view);
+  EXPECT_EQ(openPopups(), 1);
+  pressEscape(view);
+  EXPECT_EQ(openPopups(), 0);
+
+  // An overwrite confirmation above the picker closes first as well.
+  Bridge::openSlotPicker(*menu, true);
+  frames(view, 2);
+  Bridge::askOverwrite(*menu, 1);
+  frames(view, 2);
+  ASSERT_EQ(openPopups(), 2);
+  pressEscape(view);
+  EXPECT_EQ(openPopups(), 1);
+  pressEscape(view);
+  EXPECT_EQ(openPopups(), 0);
+  EXPECT_EQ(topId(view), SceneID::MAIN_MENU);
+}
+
+TEST(NavigationUiTest, SettingsReturnsToTheScreenItWasOpenedFrom)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  Logger::init();
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::EN));
+  const SlotCleanup slot{uniqueSlot(3)};
+  GameController controller;
+  controller.newGame(slot.slot, WORLD_SEED);
+  const TeamID club = controller.getTeams().front().get().getId();
+  controller.selectManagedTeam(club);
+  const PlayerID own = controller.getPlayersForTeam(club).front().get().getId();
+
+  GUIView view(controller);
+  ASSERT_TRUE(Bridge::initialize(view));
+  view.changeScene(std::make_unique<MainGameScene>(&view));
+  frames(view, 2);
+  ImGui::GetIO().AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+  Navigation::open(&view, NavSection::TRANSFERS);
+  frames(view, 2);
+  Navigation::openPlayer(&view, own);
+  frames(view, 2);
+  ASSERT_EQ(topId(view), SceneID::PLAYER_PROFILE);
+  ASSERT_EQ(view.getOverlayDepth(), 2U);
+  const std::optional<NavEntry> before = view.navHistory().current();
+
+  // The sidebar's Settings entry stacks Settings over the profile...
+  const bool clicked =
+      clickItem(view, "##sidebar", settingsRow, true) ||
+      clickItem(view, "##sidebar", settingsIcon, true);
+  ASSERT_TRUE(clicked);
+  frames(view, 2);
+  ASSERT_EQ(topId(view), SceneID::SETTINGS);
+  EXPECT_EQ(view.getOverlayDepth(), 3U);
+
+  // ...and leaving it (Escape) shows the profile again, over the market,
+  // with the history where it was.
+  pressEscape(view);
+  EXPECT_EQ(topId(view), SceneID::PLAYER_PROFILE);
+  EXPECT_EQ(view.getOverlayDepth(), 2U);
+  EXPECT_EQ(view.getSceneBelowTop()->getID(), SceneID::TRANSFER_MARKET);
+  EXPECT_EQ(view.navHistory().current(), before);
 }

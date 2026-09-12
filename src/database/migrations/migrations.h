@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "database/database_exception.h"
+#include "global/build_info.h"
 
 class DatabaseConnection;
 
@@ -23,10 +24,10 @@ class DatabaseConnection;
 namespace SaveFormat
 {
 inline constexpr std::string_view FORMAT_ID = "open-football-career";
-inline constexpr std::string_view GAME_VERSION = "0.3.0";
+inline const std::string_view GAME_VERSION = BuildInfo::version();
 inline constexpr std::string_view ENGINE_VERSION = "1.0.0";
 inline constexpr std::string_view RULES_EDITION = "2026-27";
-inline constexpr int RNG_VERSION = 1;
+inline constexpr int RNG_VERSION = 2;  // 2: platform-independent distributions
 inline constexpr int SIM_VERSION = 1;
 }  // namespace SaveFormat
 

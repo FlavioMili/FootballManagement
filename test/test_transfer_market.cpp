@@ -28,6 +28,7 @@
 #include "model/transfer_listing.h"
 #include "model/transfer_market.h"
 #include "model/transfer_tuning.h"
+#include "model/transfer_windows.h"
 #include "model/world_tuning.h"
 #include "model/world_rng.h"
 #include "model/world_simulation.h"
@@ -676,13 +677,16 @@ using OfferOutcome = GameController::OfferOutcome;
 /** Manages the club with the lowest reputation, so bigger buyers exist. */
 TeamID manageSmallClub(GameController& controller)
 {
+  // Among the clubs whose country's window is open today (early July some
+  // countries, e.g. Brazil, have not opened theirs yet).
   TeamID club = 0;
   int lowest = std::numeric_limits<int>::max();
   for (const auto& team : controller.getTeams())
   {
     const TeamID id = team.get().getId();
     if (id != FREE_AGENTS_TEAM_ID && team.get().getReputation() < lowest &&
-        !controller.getPlayersForTeam(id).empty())
+        !controller.getPlayersForTeam(id).empty() &&
+        controller.isTransferWindowOpenFor(id))
     {
       lowest = team.get().getReputation();
       club = id;
@@ -1756,4 +1760,489 @@ TEST_F(TransferMarketTest, RelegationClausesLetPlayersLeaveRelegatedClubs)
   }
   // ~25% of 16 first-team players at 19 clubs, capped at three a club.
   EXPECT_GT(total, 19);
+}
+
+// ---------------------------------------------------------------------------
+// Loan talks, wage budgets, release clauses, agents, renewals, squad floor
+// and the deadline
+// ---------------------------------------------------------------------------
+
+namespace
+{
+/** A managed outfield player who may be lent or sold without breaking the
+ * squad floor, and the richest other club, given room for his wage. */
+struct LoanCase
+{
+  PlayerID player = 0;
+  TeamID borrower = 0;
+  std::uint32_t wage = 0;
+};
+
+LoanCase loanCase(GameController& controller, TeamID managed)
+{
+  auto data = controller.getGameData();
+  const TransferMarket& market = marketOf(controller);
+  LoanCase found;
+  for (const auto& reference : controller.getPlayersForTeam(managed))
+  {
+    const Player& player = reference.get();
+    if (player.getRole() != PlayerRole::GK && market.canBeTraded(player.getId()) &&
+        player.getContractYears() > 1 && player.getWage() > 0 &&
+        controller.getSaleBlock(player.getId()) ==
+            GameController::PlayerActionBlock::None)
+    {
+      found.player = player.getId();
+      found.wage = player.getWage();
+      break;
+    }
+  }
+  for (const auto& team : controller.getTeams())
+    if (team.get().getId() != managed &&
+        team.get().getId() != FREE_AGENTS_TEAM_ID &&
+        controller.isTransferWindowOpenFor(team.get().getId()))
+      found.borrower = team.get().getId();
+  Finances& finances = data->getTeams().at(found.borrower).getFinances();
+  finances.addBalance(200'000'000LL);
+  finances.setWageBudget(
+      controller.getWeeklyWageBill(found.borrower) + 10 * found.wage + 1'000'000);
+  return found;
+}
+
+std::uint32_t addLoanOffer(GameController& controller, const LoanCase& loan,
+                           std::uint8_t share, std::uint32_t ceiling)
+{
+  IncomingOffer offer;
+  offer.player_id = loan.player;
+  offer.buyer = loan.borrower;
+  offer.loan = true;
+  offer.loan_terms.wage_share = share;
+  offer.max_fee = ceiling;
+  offer.patience = 3;
+  offer.created = controller.getCurrentDate();
+  offer.expires = controller.getCurrentDate() + 5;
+  return controller.getGame()->getTransfers().addIncomingOffer(offer);
+}
+
+/** Manages the smallest club whose transfer window is open today. */
+TeamID manageOpenClub(GameController& controller)
+{
+  TeamID club = 0;
+  int lowest = std::numeric_limits<int>::max();
+  for (const auto& team : controller.getTeams())
+  {
+    const TeamID id = team.get().getId();
+    if (id != FREE_AGENTS_TEAM_ID && controller.isTransferWindowOpenFor(id) &&
+        team.get().getReputation() < lowest &&
+        controller.getPlayersForTeam(id).size() > 16)
+    {
+      lowest = team.get().getReputation();
+      club = id;
+    }
+  }
+  controller.selectManagedTeam(club);
+  return club;
+}
+
+bool inboxHas(const GameController& controller, const std::string& key)
+{
+  return std::ranges::any_of(controller.getInbox(),
+                             [&](const InboxMessage& message)
+                             {
+                               return message.title_key == key ||
+                                      message.body_key == key;
+                             });
+}
+
+/** Deadline day of the window open today for @p club, and the day after. */
+std::pair<GameDateValue, GameDateValue> windowClose(
+    const GameController& controller, TeamID club)
+{
+  const LeagueID league = controller.getTeamById(club)->get().getLeagueId();
+  const GameDateValue last = TransferWindows::windowEnd(
+                                 league, controller.getCurrentDate())
+                                 .value_or(controller.getCurrentDate());
+  return {last, last + 1};
+}
+}  // namespace
+
+TEST_F(TransferMarketTest, LoanOfferIsNegotiatedAndItsTermsSurviveReload)
+{
+  const TeamID managed = manageOpenClub(*controller);
+  ASSERT_TRUE(controller->isTransferWindowOpen());
+  const LoanCase loan = loanCase(*controller, managed);
+  ASSERT_NE(loan.player, 0u);
+  const int weeks = TransferNegotiation::weeksBetween(
+      controller->getCurrentDate(),
+      TransferNegotiation::loanEndDate(controller->getCurrentDate(),
+                                       TransferNegotiation::LoanDuration::SeasonEnd));
+  // It would pay all of his wage over the season and a little more.
+  const auto ceiling =
+      static_cast<std::uint32_t>(loan.wage * 1.2 * std::max(1, weeks));
+  // The fee for unplayed games is a few weeks of his wage.
+  const std::uint32_t unplayed = (loan.wage * 4 / 1'000 + 1) * 1'000;
+  const std::uint32_t offer_id = addLoanOffer(*controller, loan, 40, ceiling);
+  const auto view = controller->getIncomingOfferView(offer_id);
+  ASSERT_TRUE(view.has_value()) << "loan offers are negotiated in the talks";
+  EXPECT_TRUE(view->loan);
+  ASSERT_EQ(view->history.size(), 1u);
+  EXPECT_EQ(view->history.front().loan_terms.wage_share, 40);
+
+  TransferNegotiation::LoanTerms asked;
+  asked.wage_share = 70;
+  asked.recall_clause = true;
+  asked.min_appearances = 5;
+  asked.unplayed_fee = unplayed;
+  asked.option_fee = 9'000'000;
+  const OfferOutcome sent = controller->counterLoanOffer(offer_id, asked);
+  ASSERT_TRUE(sent == OfferOutcome::AwaitingReply || sent == OfferOutcome::Sold);
+  if (sent == OfferOutcome::AwaitingReply)
+  {
+    const IncomingOffer before =
+        *marketOf(*controller).findIncomingOffer(offer_id);
+    EXPECT_EQ(before.status, OfferStatus::AwaitingBuyer);
+    EXPECT_EQ(before.history.back().move, BuyerNegotiation::Move::Counter);
+    controller->saveGame();
+    controller = std::make_unique<GameController>();
+    ASSERT_TRUE(controller->loadGame(0));
+    const IncomingOffer* after = marketOf(*controller).findIncomingOffer(offer_id);
+    ASSERT_NE(after, nullptr);
+    EXPECT_TRUE(after->loan);
+    EXPECT_EQ(after->max_fee, before.max_fee);
+    EXPECT_EQ(after->patience, before.patience);
+    EXPECT_EQ(after->respond_on, before.respond_on);
+    EXPECT_EQ(after->asked_loan.wage_share, 70);
+    EXPECT_TRUE(after->asked_loan.recall_clause);
+    EXPECT_EQ(after->asked_loan.min_appearances, 5);
+    EXPECT_EQ(after->asked_loan.unplayed_fee, unplayed);
+    EXPECT_EQ(after->asked_loan.option_fee, 9'000'000u);
+    ASSERT_EQ(after->history.size(), before.history.size());
+    EXPECT_EQ(after->history.front().loan_terms.wage_share, 40);
+    EXPECT_EQ(after->history.back().loan_terms.min_appearances, 5);
+    waitForAnswer(*controller, offer_id);
+  }
+  // Within its ceiling and wage room: it agreed and he left on loan.
+  auto data = controller->getGameData();
+  EXPECT_EQ(data->getPlayer(loan.player)->get().getTeamId(), loan.borrower);
+  const LoanDeal* deal = marketOf(*controller).findLoan(loan.player);
+  ASSERT_NE(deal, nullptr);
+  EXPECT_EQ(deal->wage_share, 70);
+  EXPECT_TRUE(deal->recall_clause);
+  EXPECT_EQ(deal->option_fee, 9'000'000u);
+  const auto clause = std::ranges::find(marketOf(*controller).obligations(),
+                                        ObligationKind::LoanUnplayedFee,
+                                        &TransferObligation::kind);
+  ASSERT_NE(clause, marketOf(*controller).obligations().end());
+  EXPECT_EQ(clause->target, 5);
+  EXPECT_EQ(clause->amount, unplayed);
+
+  // The clause survives a reload and is paid when he played too little.
+  controller->saveGame();
+  controller = std::make_unique<GameController>();
+  ASSERT_TRUE(controller->loadGame(0));
+  MarketHarness harness(*controller);
+  data = controller->getGameData();
+  const int64_t received = categoryTotal(
+      data->getTeams().at(managed).getFinances(), FinanceCategory::TransferFeeIn);
+  harness.market.onDayAdvanced(deal->end, managed);
+  EXPECT_EQ(data->getPlayer(loan.player)->get().getTeamId(), managed);
+  EXPECT_EQ(categoryTotal(data->getTeams().at(managed).getFinances(),
+                          FinanceCategory::TransferFeeIn) -
+                received,
+            unplayed);
+  EXPECT_TRUE(std::ranges::any_of(
+      harness.world.getInbox().getMessages(), [](const InboxMessage& message)
+      { return message.title_key == "INBOX_LOAN_UNPLAYED_FEE_TITLE"; }));
+}
+
+TEST_F(TransferMarketTest, BorrowersAndBuyersStayWithinTheirWageBudget)
+{
+  const TeamID managed = manageOpenClub(*controller);
+  const LoanCase loan = loanCase(*controller, managed);
+  ASSERT_NE(loan.player, 0u);
+  auto data = controller->getGameData();
+  // Room for only 30% of his wage: the full wage is never agreed.
+  data->getTeams().at(loan.borrower).getFinances().setWageBudget(
+      controller->getWeeklyWageBill(loan.borrower) + loan.wage * 3 / 10);
+  const std::uint32_t offer_id =
+      addLoanOffer(*controller, loan, 20, 1'000'000'000);
+  TransferNegotiation::LoanTerms asked;
+  asked.wage_share = 100;
+  const OfferOutcome sent = controller->counterLoanOffer(offer_id, asked);
+  if (sent == OfferOutcome::AwaitingReply) waitForAnswer(*controller, offer_id);
+  EXPECT_NE(data->getPlayer(loan.player)->get().getTeamId(), loan.borrower);
+  const IncomingOffer* countered = marketOf(*controller).findIncomingOffer(offer_id);
+  ASSERT_NE(countered, nullptr);
+  EXPECT_EQ(countered->status, OfferStatus::AwaitingClub);
+  EXPECT_LE(countered->loan_terms.wage_share, 30);
+
+  // A buyer whose wage budget no longer fits his wage walks away.
+  const KeenOffer keen =
+      openKeenOffer(*controller, managed, 1'000'000, 1'500'000);
+  ASSERT_NE(keen.offer_id, 0u);
+  data->getTeams().at(keen.buyer).getFinances().setWageBudget(0);
+  TransferNegotiation::OfferTerms counter;
+  counter.fee = 1'100'000;
+  const OfferOutcome answer = controller->counterIncomingOffer(keen.offer_id, counter);
+  if (answer == OfferOutcome::AwaitingReply)
+    waitForAnswer(*controller, keen.offer_id);
+  EXPECT_EQ(marketOf(*controller).findIncomingOffer(keen.offer_id), nullptr);
+  EXPECT_NE(data->getPlayer(keen.player)->get().getTeamId(), keen.buyer);
+  EXPECT_TRUE(inboxHas(*controller, "INBOX_OFFER_WITHDRAWN_WAGES_BODY"));
+}
+
+TEST_F(TransferMarketTest, ReleaseClausesArePaidByTheClubAndByAiClubs)
+{
+  const TeamID managed = manageOpenClub(*controller);
+  auto data = controller->getGameData();
+  TransferMarket& market = controller->getGame()->getTransfers();
+  data->getTeams().at(managed).getFinances().addBalance(500'000'000LL);
+  data->getTeams().at(managed).getFinances().setWageBudget(
+      controller->getWeeklyWageBill(managed) + 1'000'000);
+
+  // The managed club pays a target's clause: no talks with his club.
+  const PlayerID target = findWillingTarget(*controller, managed);
+  ASSERT_NE(target, 0u);
+  const uint32_t clause = controller->getPlayerMarketValue(target) * 2;
+  market.setReleaseClause(target, clause);
+  EXPECT_EQ(controller->getReleaseClause(target), clause);
+  const ClubResponse paid = controller->payReleaseClause(target);
+  ASSERT_EQ(paid.decision, ClubResponse::Decision::Accept);
+  EXPECT_TRUE(std::ranges::contains(paid.reasons,
+                                    TransferNegotiation::Reason::ReleaseClauseMet));
+  ASSERT_EQ(controller->getContractTalkKind(target), ContractKind::Transfer);
+  const auto demands = controller->getAgentDemands(target, ContractKind::Transfer, 3);
+  EXPECT_EQ(demands.standard_agent_fee, clause / 10)
+      << "the agent's usual fee follows the clause paid";
+  TransferNegotiation::ContractOffer offer = TransferNegotiation::demandedOffer(
+      controller->getPlayerDemand(target, ContractKind::Transfer));
+  const auto signed_up = controller->proposeContract(target, offer);
+  ASSERT_TRUE(signed_up.completed)
+      << (signed_up.response.reasons.empty()
+              ? "no reason"
+              : TransferNegotiation::reasonKey(signed_up.response.reasons.front()));
+  EXPECT_EQ(data->getPlayer(target)->get().getTeamId(), managed);
+  EXPECT_EQ(market.history().back().fee, clause);
+
+  // An AI club pays a managed player's clause: the club cannot refuse.
+  const LoanCase sale = loanCase(*controller, managed);
+  ASSERT_NE(sale.player, 0u);
+  market.setReleaseClause(sale.player, 1'000'000);
+  ASSERT_TRUE(market.payReleaseClause(sale.borrower, sale.player,
+                                      controller->getCurrentDate(), managed));
+  EXPECT_EQ(data->getPlayer(sale.player)->get().getTeamId(), sale.borrower);
+  EXPECT_EQ(market.history().back().fee, 1'000'000u);
+  EXPECT_TRUE(inboxHas(*controller, "INBOX_RELEASE_CLAUSE_PAID_TITLE"));
+  EXPECT_EQ(market.releaseClause(sale.player), 0u) << "a new contract, no clause";
+}
+
+TEST_F(TransferMarketTest, RenewalsExtendTheContractAndPayItsExtras)
+{
+  const TeamID managed = manageFirstClub(*controller);
+  auto data = controller->getGameData();
+  Finances& finances = data->getTeams().at(managed).getFinances();
+  finances.addBalance(100'000'000LL);
+  finances.setWageBudget(controller->getWeeklyWageBill(managed) + 1'000'000);
+  // His club's best player whose contract can still be extended.
+  PlayerID own = 0;
+  double best = -1.0;
+  const StatsConfig& config = data->getStatsConfig();
+  for (const auto& reference : controller->getPlayersForTeam(managed))
+    if (controller->getRenewalBlock(reference.get().getId()) ==
+            GameController::PlayerActionBlock::None &&
+        reference.get().getOverall(config) > best)
+    {
+      best = reference.get().getOverall(config);
+      own = reference.get().getId();
+    }
+  ASSERT_NE(own, 0u);
+  Player& player = data->getPlayers().at(own);
+  ASSERT_EQ(controller->getContractTalkKind(own), ContractKind::Renewal);
+  const std::uint8_t before = player.getContractYears();
+
+  // A renewal is priced on what players of his level earn at the club.
+  const std::uint32_t deserved =
+      marketOf(*controller).deservedWage(own, managed);
+  ASSERT_GT(deserved, 1'000u);
+  player.setWage(deserved / 4);
+  const auto demand = controller->getPlayerDemand(own, ContractKind::Renewal);
+  EXPECT_GE(demand.weekly_wage, deserved) << "not his old wage x 1.10";
+
+  TransferNegotiation::ContractOffer offer = TransferNegotiation::demandedOffer(demand);
+  offer.years = before;
+  EXPECT_EQ(controller->proposeContract(own, offer).block,
+            GameController::PlayerActionBlock::NotLonger)
+      << "the same length would not extend it";
+  offer.years = static_cast<std::uint8_t>(
+      TransferNegotiation::maxContractYears(player.getAge()) + 1);
+  EXPECT_EQ(controller->proposeContract(own, offer).block,
+            GameController::PlayerActionBlock::TooLong);
+  EXPECT_EQ(controller->getContractRoundsLeft(own),
+            TransferTuning::Negotiation::MAX_PLAYER_ROUNDS)
+      << "invalid proposals use no round";
+
+  offer.years = static_cast<std::uint8_t>(before + 1);
+  offer.weekly_wage = demand.weekly_wage + 1'000;
+  offer.yearly_rise = 5;
+  offer.appearance_bonus = 1'000;
+  const auto renewed = controller->proposeContract(own, offer);
+  ASSERT_TRUE(renewed.completed);
+  EXPECT_STREQ(renewed.agent_line, "AGENT_LINE_AGREED");
+  EXPECT_EQ(player.getContractYears(), before + 1) << "one more season";
+  EXPECT_EQ(player.getWage(), offer.weekly_wage);
+  const auto& obligations = marketOf(*controller).obligations();
+  EXPECT_TRUE(std::ranges::any_of(obligations, [&](const TransferObligation& o)
+                                  { return o.kind == ObligationKind::WageRise &&
+                                           o.player_id == own && o.amount == 5; }));
+  EXPECT_TRUE(std::ranges::any_of(
+      obligations, [&](const TransferObligation& o)
+      { return o.kind == ObligationKind::AppearanceFee && o.player_id == own &&
+               o.amount == 1'000; }));
+
+  // The extras survive a reload and the rise comes a year later.
+  const GameDateValue today = controller->getCurrentDate();
+  controller->saveGame();
+  controller = std::make_unique<GameController>();
+  ASSERT_TRUE(controller->loadGame(0));
+  MarketHarness harness(*controller);
+  data = controller->getGameData();
+  harness.market.onDayAdvanced(today + 364, managed);
+  EXPECT_EQ(data->getPlayer(own)->get().getWage(), offer.weekly_wage);
+  harness.market.onDayAdvanced(today + 365, managed);
+  EXPECT_EQ(data->getPlayer(own)->get().getWage(),
+            offer.weekly_wage * 105 / 100);
+}
+
+TEST_F(TransferMarketTest, TheSquadNeverDropsBelowElevenOrLosesItsGoalkeeper)
+{
+  const TeamID managed = manageOpenClub(*controller);
+  auto data = controller->getGameData();
+  const auto seniors = [&]
+  {
+    int count = 0;
+    for (const PlayerID id : data->getTeams().at(managed).getPlayerIDs())
+      if (!data->getPlayer(id)->get().isAcademyPlayer()) ++count;
+    return count;
+  };
+  // Release every goalkeeper but one, then outfield players down to eleven.
+  std::vector<PlayerID> keepers;
+  std::vector<PlayerID> outfield;
+  for (const PlayerID id : data->getTeams().at(managed).getPlayerIDs())
+  {
+    const Player& player = data->getPlayer(id)->get();
+    if (player.isAcademyPlayer()) continue;
+    (player.getRole() == PlayerRole::GK ? keepers : outfield).push_back(id);
+  }
+  ASSERT_FALSE(keepers.empty());
+  for (std::size_t index = 1; index < keepers.size(); ++index)
+    controller->releasePlayer(keepers[index]);
+  EXPECT_EQ(controller->getReleaseBlock(keepers.front()),
+            GameController::PlayerActionBlock::LastGoalkeeper);
+  EXPECT_FALSE(controller->releasePlayer(keepers.front()));
+  for (const PlayerID id : outfield)
+    if (seniors() > 11) controller->releasePlayer(id);
+  ASSERT_EQ(seniors(), 11);
+  const PlayerID last = std::ranges::find_if(
+      outfield, [&](PlayerID id)
+      { return data->getPlayer(id)->get().getTeamId() == managed; })[0];
+  EXPECT_EQ(controller->getReleaseBlock(last),
+            GameController::PlayerActionBlock::SquadFloor);
+  EXPECT_FALSE(controller->releasePlayer(last));
+  EXPECT_EQ(seniors(), 11);
+
+  // A bid for him cannot be accepted either; it stays on the table.
+  IncomingOffer bid;
+  bid.player_id = last;
+  for (const auto& team : controller->getTeams())
+    if (team.get().getId() != managed && team.get().getId() != FREE_AGENTS_TEAM_ID)
+      bid.buyer = team.get().getId();
+  bid.terms.fee = 50'000'000;
+  bid.created = controller->getCurrentDate();
+  bid.expires = controller->getCurrentDate() + 5;
+  const std::uint32_t id = controller->getGame()->getTransfers().addIncomingOffer(bid);
+  EXPECT_EQ(controller->getIncomingOfferView(id)->sale_block,
+            GameController::PlayerActionBlock::SquadFloor);
+  EXPECT_EQ(controller->settleIncomingOffer(id), OfferOutcome::SquadTooSmall);
+  EXPECT_EQ(data->getPlayer(last)->get().getTeamId(), managed);
+  EXPECT_NE(marketOf(*controller).findIncomingOffer(id), nullptr);
+}
+
+TEST_F(TransferMarketTest, DeadlineDaysAreBusierAndTheCloseIsSummedUp)
+{
+  using TransferNegotiation::WindowInfo;
+  using M = TransferTuning::Market;
+  EXPECT_FLOAT_EQ(TransferNegotiation::activityWeight(WindowInfo{true, false, 0}),
+                  M::DEADLINE_DAY_WEIGHT);
+  EXPECT_FLOAT_EQ(TransferNegotiation::activityWeight(WindowInfo{true, false, 1}),
+                  M::DEADLINE_EVE_WEIGHT);
+  EXPECT_LT(TransferNegotiation::activityWeight(WindowInfo{true, false, 2}),
+            M::DEADLINE_EVE_WEIGHT);
+  EXPECT_EQ(BuyerNegotiation::replyDelay(0.99, 1), 0) << "same-day answers";
+
+  const TeamID managed = manageOpenClub(*controller);
+  const LoanCase loan = loanCase(*controller, managed);
+  ASSERT_NE(loan.player, 0u);
+  controller->saveGame();
+  MarketHarness harness(*controller);
+  const auto [last_day, closed] = windowClose(*controller, managed);
+  TransferNegotiation::LoanTerms terms;
+  terms.wage_share = 50;
+  ASSERT_TRUE(harness.market.startLoan(loan.player, loan.borrower, terms,
+                                       last_day, managed));
+  harness.market.onDayAdvanced(closed, managed);
+  const auto& messages = harness.world.getInbox().getMessages();
+  const auto summary = std::ranges::find(messages, "INBOX_DEADLINE_SUMMARY_TITLE",
+                                         &InboxMessage::title_key);
+  ASSERT_NE(summary, messages.end());
+  ASSERT_GE(summary->args.size(), 6u);
+  EXPECT_NE(summary->args[5].find(
+                controller->getGameData()->getPlayer(loan.player)->get().getName()),
+            std::string::npos)
+      << "the club's own deadline business is listed";
+}
+
+TEST_F(TransferMarketTest, PreContractExtrasAndAgentFeeWaitForFirstJuly)
+{
+  controller->saveGame();
+  const TeamID managed = manageFirstClub(*controller);
+  auto gamedata = controller->getGameData();
+  const TeamID owner = controller->getTeams()[8].get().getId();
+  const PlayerID player =
+      controller->getPlayersForTeam(owner).front().get().getId();
+  gamedata->getPlayers().at(player).setContractYears(1);
+  TransferNegotiation::ContractOffer terms;
+  terms.weekly_wage = 10'000;
+  terms.years = 3;
+  terms.signing_bonus = 40'000;
+  terms.yearly_rise = 8;
+  terms.appearance_bonus = 500;
+  terms.agent_fee = 25'000;  // Below the usual eight weeks of wage.
+  {
+    MarketHarness harness(*controller);
+    ASSERT_TRUE(harness.market.agreePreContract(
+        player, managed, terms, GameDateValue(2026, 1, 5), managed));
+    harness.market.save(controller->getDbConn());
+  }
+  MarketHarness reloaded(*controller);
+  const auto& obligations = reloaded.market.obligations();
+  const auto kinds = [&](ObligationKind kind)
+  {
+    return std::ranges::count_if(obligations, [&](const TransferObligation& o)
+                                 { return o.kind == kind && o.player_id == player; });
+  };
+  EXPECT_EQ(kinds(ObligationKind::AgentFee), 1);
+  EXPECT_EQ(kinds(ObligationKind::WageRise), 1);
+  EXPECT_EQ(kinds(ObligationKind::AppearanceFee), 1);
+  const int64_t balance =
+      gamedata->getTeams().at(managed).getFinances().getBalance();
+  reloaded.market.onDayAdvanced(GameDateValue(2026, 7, 1), managed);
+  ASSERT_EQ(gamedata->getPlayer(player)->get().getTeamId(), managed);
+  // The bonus and the agreed agent fee, not the standard one.
+  EXPECT_EQ(
+      balance - gamedata->getTeams().at(managed).getFinances().getBalance(),
+      40'000 + 25'000);
+  EXPECT_EQ(kinds(ObligationKind::AgentFee), 0);
+  EXPECT_EQ(kinds(ObligationKind::WageRise), 1) << "his contract's rise stays";
+  reloaded.market.onDayAdvanced(GameDateValue(2027, 7, 1), managed);
+  EXPECT_EQ(gamedata->getPlayer(player)->get().getWage(), 10'800u)
+      << "8% a year after joining";
 }

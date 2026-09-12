@@ -178,9 +178,11 @@ class GUIView
    * Applies the saved window mode and size. The size is in logical units:
    * where window coordinates are physical pixels (Windows, scaled X11) it
    * is multiplied by the display scale, so 1280x720 at 200% opens a
-   * 2560x1440-pixel window instead of a 640x360 layout.
+   * 2560x1440-pixel window instead of a 640x360 layout, always kept
+   * within the display's usable area. With @p resize false only the mode,
+   * VSync and language are applied (a maximised window stays maximised).
    */
-  void applyWindowSettings();
+  void applyWindowSettings(bool resize = true);
 
   /** Captures the current renderer contents as a BMP image. */
   bool captureScreenshot(std::string_view path) const;
@@ -188,6 +190,7 @@ class GUIView
  private:
   friend class GameFlowTest_GUIFlowLifecycle_Test;
   friend class GameFlowTest_ManagementScreensMidSeason_Test;
+  friend class GameFlowTest;
   bool initialize();
   void applyManagementTheme();
   float displayScale() const;

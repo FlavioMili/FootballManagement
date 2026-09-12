@@ -10,6 +10,7 @@
 
 #include <array>
 #include <cstdint>
+#include <optional>
 
 #include "global/types.h"
 
@@ -24,6 +25,32 @@ enum class BoardObjective : std::uint8_t
   TopHalf,
   MidTable,
   AvoidRelegation
+};
+
+/** @brief How far the board expects the domestic cup run to go (persisted). */
+enum class CupObjective : std::uint8_t
+{
+  None = 0, /*!< The cup is a bonus. */
+  QuarterFinal,
+  SemiFinal,
+  Final,
+  Win
+};
+
+/** @brief What the board expects from the books (persisted). */
+enum class FinanceObjective : std::uint8_t
+{
+  WithinWageBudget = 0, /*!< Wages within budget, cash never negative. */
+  BreakEven             /*!< End the season with at least the cash it began. */
+};
+
+/** @brief How one objective went, or is going (values are persisted). */
+enum class ObjectiveGrade : std::uint8_t
+{
+  Exceeded = 0,
+  Met,
+  Missed,
+  Failed
 };
 
 /** @brief Outcome of a monthly board review. */
@@ -51,6 +78,10 @@ struct BoardState
   std::uint8_t low_reviews = 0;       /*!< Consecutive critical reviews. */
   std::uint8_t league_matches = 0;    /*!< League matches this season. */
   bool dismissed = false;
+  CupObjective cup_objective = CupObjective::None;
+  FinanceObjective finance_objective = FinanceObjective::WithinWageBudget;
+  std::uint8_t youth_target = 0;  /*!< Young regulars expected (0 = none). */
+  std::int64_t start_balance = 0; /*!< Cash when the season (job) began. */
   std::uint8_t result_count = 0;
   /** Points minus expected points of recent league matches, newest first. */
   std::array<float, RESULT_WINDOW> recent_deltas{};
@@ -87,14 +118,49 @@ void recordMatch(BoardState& state, float points, float expected_points);
 /**
  * Monthly review of league position (vs target) and finances. Dismissal
  * needs several consecutive critical reviews after enough matches, so only
- * sustained, extreme failure ends the job.
+ * sustained, extreme failure ends the job. Out of the league season
+ * (@p in_season false) only the finances are reviewed and nobody is
+ * dismissed: the season is judged once, when it ends.
  */
 BoardReviewOutcome monthlyReview(BoardState& state, int position,
                                  int league_size, bool negative_balance,
-                                 bool over_wage_budget);
+                                 bool over_wage_budget, bool in_season = true);
 
 /** Season-end adjustment from the final position. */
 void seasonReview(BoardState& state, int final_position);
+
+/** Moves the board's confidence by @p delta points (clamped to 0-100). */
+void adjustConfidence(BoardState& state, float delta);
+
+/** Cup target of a club with @p objective in a division of @p tier. */
+CupObjective cupObjectiveFor(BoardObjective objective, int tier);
+/** Finance target: tight budgets and clubs in the red must break even. */
+FinanceObjective financeObjectiveFor(float tight_budget, std::int64_t balance);
+/** Young regulars a board with @p youth_focus (0-1) expects; 0 = none. */
+std::uint8_t youthTargetFor(float youth_focus);
+
+/** Language keys of the targets (e.g. "BOARD_CUP_SEMI_FINAL"). */
+const char* cupObjectiveKey(CupObjective objective);
+const char* financeObjectiveKey(FinanceObjective objective);
+const char* youthTargetKey(std::uint8_t target);
+/** How a target is going during the season (e.g. "BOARD_STATUS_BEHIND"). */
+const char* targetStatusKey(ObjectiveGrade grade);
+
+/**
+ * Cup run against its target. @p rounds_left is how many rounds were still
+ * to come after the furthest one the club played (0 = it played the final;
+ * nullopt = it has not played yet). While @p still_in the run is on track.
+ */
+ObjectiveGrade gradeCup(CupObjective objective, std::optional<int> rounds_left,
+                        bool won, bool still_in);
+/** League position against the worst acceptable one, a quarter of the
+ * table per grade. */
+ObjectiveGrade gradeLeague(int target_position, int position, int league_size);
+/** Books against the finance target. */
+ObjectiveGrade gradeFinances(FinanceObjective objective, std::int64_t balance,
+                             std::int64_t start_balance, bool over_wage_budget);
+/** Young regulars against the youth target. */
+ObjectiveGrade gradeYouth(std::uint8_t target, int young_regulars);
 }  // namespace BoardModel
 
 // ---------------------------------------------------------------------------

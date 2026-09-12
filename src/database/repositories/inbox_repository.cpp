@@ -97,3 +97,50 @@ void InboxRepository::replaceAll(
   }
   sqlite3_finalize(stmt);
 }
+
+InboxView InboxRepository::loadView() const
+{
+  InboxView view;
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      "SELECT tab, category, unread_only, followed_only, player_id, team_id "
+      "FROM InboxView WHERE id = 1;");
+  if (sqlite3_step(stmt) == SQLITE_ROW)
+  {
+    const int tab = sqlite3_column_int(stmt, 0);
+    const int category = sqlite3_column_int(stmt, 1);
+    view.tab = static_cast<std::int8_t>(tab >= -1 && tab <= 1 ? tab : -1);
+    view.category = static_cast<std::int8_t>(
+        category >= 0 && category < static_cast<int>(InboxCategory::COUNT)
+            ? category
+            : -1);
+    view.unread_only = sqlite3_column_int(stmt, 2) != 0;
+    view.followed_only = sqlite3_column_int(stmt, 3) != 0;
+    if (sqlite3_column_type(stmt, 4) != SQLITE_NULL)
+      view.player_id = static_cast<PlayerID>(sqlite3_column_int64(stmt, 4));
+    if (sqlite3_column_type(stmt, 5) != SQLITE_NULL)
+      view.team_id = static_cast<TeamID>(sqlite3_column_int(stmt, 5));
+  }
+  sqlite3_finalize(stmt);
+  return view;
+}
+
+void InboxRepository::saveView(const InboxView& view) const
+{
+  sqlite3_stmt* stmt = db_conn->prepareStatement(
+      "INSERT OR REPLACE INTO InboxView (id, tab, category, unread_only, "
+      "followed_only, player_id, team_id) VALUES (1, ?, ?, ?, ?, ?, ?);");
+  sqlite3_bind_int(stmt, 1, view.tab);
+  sqlite3_bind_int(stmt, 2, view.category);
+  sqlite3_bind_int(stmt, 3, view.unread_only ? 1 : 0);
+  sqlite3_bind_int(stmt, 4, view.followed_only ? 1 : 0);
+  if (view.player_id)
+    sqlite3_bind_int64(stmt, 5, *view.player_id);
+  else
+    sqlite3_bind_null(stmt, 5);
+  if (view.team_id)
+    sqlite3_bind_int(stmt, 6, *view.team_id);
+  else
+    sqlite3_bind_null(stmt, 6);
+  db_conn->executeStep(stmt);
+  sqlite3_finalize(stmt);
+}

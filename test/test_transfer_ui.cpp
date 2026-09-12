@@ -35,6 +35,7 @@
 #include "global/logger.h"
 #include "global/runtime_paths.h"
 #include "gui/gui_view.h"
+#include "gui/scenes/contract_talks_dialog.h"
 #include "gui/scenes/inbox_scene.h"
 #include "gui/scenes/main_game_scene.h"
 #include "gui/scenes/management_scene.h"
@@ -45,6 +46,7 @@
 #include "model/finances.h"
 #include "model/game.h"
 #include "model/inbox.h"
+#include "model/player_agent.h"
 #include "model/settings_manager.h"
 #include "model/transfer_market.h"
 #include "model/world_simulation.h"
@@ -113,6 +115,33 @@ class GameFlowTest_GUIFlowLifecycle_Test
       const OfferNegotiationDialog& dialog)
   {
     return dialog.view;
+  }
+  static void counterLoan(OfferNegotiationDialog& dialog,
+                          const TransferNegotiation::LoanTerms& terms,
+                          GameController& controller)
+  {
+    dialog.loan_counter = terms;
+    dialog.submit(controller);
+  }
+  static const TransferNegotiation::LoanTerms& loanCounter(
+      const OfferNegotiationDialog& dialog)
+  {
+    return dialog.loan_counter;
+  }
+  static ContractTalksDialog& contractTalks(TransferMarketScene& scene)
+  {
+    return scene.contract_talks;
+  }
+  static void proposePackage(ContractTalksDialog& dialog,
+                             GameController& controller)
+  {
+    dialog.offer = PlayerAgent::askedOffer(dialog.agent, dialog.offer.years);
+    dialog.agent_fee = dialog.agent.agent_fee;
+    dialog.propose(controller);
+  }
+  static std::size_t agentLines(const ContractTalksDialog& dialog)
+  {
+    return dialog.agent_lines.size();
   }
 };
 
@@ -299,13 +328,13 @@ bool clickNegotiate(GUIView& view, std::uint32_t offer_id)
  * surface inside it (the dialog itself is the only one) and never wider
  * than the display. Returns what is wrong (empty when fine).
  */
-std::string dialogLayoutProblems()
+std::string dialogLayoutProblems(
+    std::string_view popup = "###offer_negotiation")
 {
   std::string problems;
   const ImGuiWindow* dialog = nullptr;
   for (const ImGuiWindow* window : GImGui->Windows)
-    if (window->Active && std::string_view(window->Name).ends_with(
-                              "###offer_negotiation"))
+    if (window->Active && std::string_view(window->Name).ends_with(popup))
       dialog = window;
   if (dialog == nullptr) return "dialog not shown";
   if (dialog->ScrollbarX) problems += " [sideways scrolling]";
@@ -568,4 +597,220 @@ TEST(TransferUiTest, CounterStartsFromTheBuyersExactStructure)
   EXPECT_TRUE(highlighted(TransferTermsEditor::SELL_ON_OPTIONS,
                           counter.sell_on_percent));
   capture(view, "offer_talks_structured_bid_1280.bmp");
+}
+
+namespace
+{
+/** Manages the smallest club whose transfer window is open today. */
+TeamID manageOpenClub(GameController& controller)
+{
+  TeamID club = 0;
+  int lowest = std::numeric_limits<int>::max();
+  for (const auto& team : controller.getTeams())
+  {
+    const TeamID id = team.get().getId();
+    if (id != FREE_AGENTS_TEAM_ID && controller.isTransferWindowOpenFor(id) &&
+        team.get().getReputation() < lowest &&
+        controller.getPlayersForTeam(id).size() > 16)
+    {
+      lowest = team.get().getReputation();
+      club = id;
+    }
+  }
+  controller.selectManagedTeam(club);
+  return club;
+}
+
+/**
+ * A loan offer from a well funded club with room for his wage for a managed
+ * outfield player, announced in the inbox like the AI's own offers.
+ */
+Bid receiveLoanOffer(GameController& controller, TeamID managed,
+                     std::uint8_t share, double ceiling_share)
+{
+  auto data = controller.getGameData();
+  TransferMarket& market = controller.getGame()->getTransfers();
+  PlayerID player = 0;
+  for (const auto& reference : controller.getPlayersForTeam(managed))
+    if (reference.get().getRole() != PlayerRole::GK &&
+        market.canBeTraded(reference.get().getId()) &&
+        reference.get().getContractYears() > 1 &&
+        controller.getSaleBlock(reference.get().getId()) ==
+            GameController::PlayerActionBlock::None)
+      player = reference.get().getId();
+  TeamID buyer = 0;
+  for (const auto& team : controller.getTeams())
+    if (team.get().getId() != managed &&
+        team.get().getId() != FREE_AGENTS_TEAM_ID &&
+        controller.isTransferWindowOpenFor(team.get().getId()))
+      buyer = team.get().getId();
+  if (player == 0 || buyer == 0) return {};
+  const std::uint32_t wage = data->getPlayer(player)->get().getWage();
+  Finances& finances = data->getTeams().at(buyer).getFinances();
+  finances.addBalance(200'000'000LL);
+  finances.setWageBudget(controller.getWeeklyWageBill(buyer) + 10 * wage +
+                         1'000'000);
+  const GameDateValue today = controller.getCurrentDate();
+  IncomingOffer offer;
+  offer.player_id = player;
+  offer.buyer = buyer;
+  offer.loan = true;
+  offer.loan_terms.wage_share = share;
+  offer.max_fee = static_cast<std::uint32_t>(wage * 52 * ceiling_share);
+  offer.patience = 3;
+  offer.created = today;
+  offer.expires = today + 5;
+  const std::uint32_t id = market.addIncomingOffer(offer);
+  InboxMessage message;
+  message.date = today;
+  message.category = InboxCategory::Transfer;
+  message.title_key = "INBOX_LOAN_OFFER_TITLE";
+  message.body_key = "INBOX_LOAN_OFFER_BODY";
+  message.args = {data->getPlayer(player)->get().getName(),
+                  controller.getTeamById(buyer)->get().getName(),
+                  std::to_string(static_cast<int>(share))};
+  message.player_id = player;
+  message.team_id = buyer;
+  controller.getGame()->getWorld().getInbox().add(std::move(message));
+  return {player, buyer, id};
+}
+}  // namespace
+
+TEST(TransferUiTest, LoanIsNegotiatedInTheTalksAtEverySize)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  Logger::init();
+  const SlotCleanup slot{uniqueSlot(3)};
+  SettingsManager::instance()->get().screen_tips = false;
+  GameController controller;
+  controller.newGame(slot.slot, WORLD_SEED);
+  const TeamID managed = manageOpenClub(controller);
+  ASSERT_TRUE(controller.isTransferWindowOpen());
+  const Bid loan = receiveLoanOffer(controller, managed, 40, 1.3);
+  ASSERT_NE(loan.offer_id, 0u);
+
+  GUIView view(controller);
+  ASSERT_TRUE(Bridge::initialize(view));
+  resize(view, 1280, 720);
+  view.changeScene(std::make_unique<MainGameScene>(&view));
+  frames(view, 2);
+  // The inbox offers talks for the loan, not just accept or reject.
+  Navigation::open(&view, NavSection::INBOX);
+  frames(view, 3);
+  auto* inbox = dynamic_cast<InboxScene*>(Bridge::activeScene(view));
+  ASSERT_NE(inbox, nullptr);
+  Bridge::refresh(*inbox);
+  frames(view, 2);
+  EXPECT_TRUE(Bridge::offersNegotiation(*inbox, loan.offer_id));
+
+  Navigation::open(&view, NavSection::TRANSFERS);
+  frames(view, 3);
+  auto* scene = dynamic_cast<TransferMarketScene*>(Bridge::activeScene(view));
+  ASSERT_NE(scene, nullptr);
+  OfferNegotiationDialog& talks = Bridge::talks(*scene);
+  talks.open(controller, loan.offer_id);
+  frames(view, 3);
+  ASSERT_TRUE(talks.isOpen());
+  ASSERT_TRUE(Bridge::view(talks).has_value());
+  EXPECT_TRUE(Bridge::view(talks)->loan);
+  // The counter starts above their share, on the editor's steps.
+  EXPECT_GT(Bridge::loanCounter(talks).wage_share, 40);
+  EXPECT_EQ(Bridge::loanCounter(talks).wage_share %
+                TransferTermsEditor::LOAN_WAGE_SHARE_STEP,
+            0);
+  EXPECT_EQ(dialogLayoutProblems(), "") << "1280x720";
+  capture(view, "loan_talks_1280.bmp");
+
+  TransferNegotiation::LoanTerms asked;
+  asked.wage_share = 70;
+  asked.recall_clause = true;
+  asked.min_appearances = 5;
+  // A few weeks of his wage if he plays fewer games.
+  asked.unplayed_fee =
+      (controller.getGameData()->getPlayer(loan.player)->get().getWage() * 4 /
+           1'000 +
+       1) *
+      1'000;
+  Bridge::counterLoan(talks, asked, controller);
+  frames(view, 2);
+  const bool awaiting = Bridge::view(talks).has_value() &&
+                        Bridge::view(talks)->status == OfferStatus::AwaitingBuyer;
+  EXPECT_TRUE(awaiting || Bridge::finished(talks));
+  capture(view, "loan_talks_awaiting_1280.bmp");
+
+  // At 2560x1440 with scale 2 the talks still fit without inner scrolling.
+  setUiScale(view, 2.0f);
+  resize(view, 2560, 1440);
+  frames(view, 3);
+  EXPECT_EQ(dialogLayoutProblems(), "") << "2560x1440 scale 2";
+  capture(view, "loan_talks_2560_scale2.bmp");
+  setUiScale(view, 0.0f);
+  resize(view, 1280, 720);
+  frames(view, 3);
+
+  if (awaiting) waitForAnswer(controller, loan.offer_id);
+  frames(view, 3);
+  if (const IncomingOffer* open =
+          controller.getGame()->getTransfers().findIncomingOffer(loan.offer_id);
+      open != nullptr && open->status == OfferStatus::AwaitingClub)
+    Bridge::accept(talks, controller);
+  frames(view, 2);
+  capture(view, "loan_talks_done_1280.bmp");
+  auto data = controller.getGameData();
+  EXPECT_EQ(data->getPlayer(loan.player)->get().getTeamId(), loan.buyer);
+  const LoanDeal* deal = controller.getGame()->getTransfers().findLoan(loan.player);
+  ASSERT_NE(deal, nullptr);
+  EXPECT_TRUE(deal->recall_clause);
+}
+
+TEST(TransferUiTest, ContractTalksWithTheAgentFitTheWindow)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  Logger::init();
+  const SlotCleanup slot{uniqueSlot(4)};
+  SettingsManager::instance()->get().screen_tips = false;
+  GameController controller;
+  controller.newGame(slot.slot, WORLD_SEED);
+  const TeamID managed = manageOpenClub(controller);
+  auto data = controller.getGameData();
+  Finances& finances = data->getTeams().at(managed).getFinances();
+  finances.addBalance(50'000'000LL);
+  finances.setWageBudget(controller.getWeeklyWageBill(managed) + 500'000);
+  PlayerID own = 0;
+  for (const auto& reference : controller.getPlayersForTeam(managed))
+    if (controller.getRenewalBlock(reference.get().getId()) ==
+        GameController::PlayerActionBlock::None)
+      own = reference.get().getId();
+  ASSERT_NE(own, 0u);
+  const std::uint8_t before = data->getPlayer(own)->get().getContractYears();
+
+  GUIView view(controller);
+  ASSERT_TRUE(Bridge::initialize(view));
+  resize(view, 1280, 720);
+  view.changeScene(std::make_unique<MainGameScene>(&view));
+  frames(view, 2);
+  Navigation::open(&view, NavSection::TRANSFERS);
+  frames(view, 3);
+  auto* scene = dynamic_cast<TransferMarketScene*>(Bridge::activeScene(view));
+  ASSERT_NE(scene, nullptr);
+  ContractTalksDialog& talks = Bridge::contractTalks(*scene);
+  ASSERT_TRUE(talks.open(controller, own));
+  frames(view, 3);
+  ASSERT_TRUE(talks.isOpen());
+  EXPECT_EQ(Bridge::agentLines(talks), 1u) << "the agent opens the talks";
+  EXPECT_EQ(dialogLayoutProblems("###contract_talks"), "") << "1280x720";
+  capture(view, "contract_talks_1280.bmp");
+  setUiScale(view, 2.0f);
+  resize(view, 2560, 1440);
+  frames(view, 3);
+  EXPECT_EQ(dialogLayoutProblems("###contract_talks"), "") << "2560x1440 scale 2";
+  capture(view, "contract_talks_2560_scale2.bmp");
+  setUiScale(view, 0.0f);
+  resize(view, 1280, 720);
+  frames(view, 3);
+  // His agent's own package is a proposal he answers, with a line.
+  Bridge::proposePackage(talks, controller);
+  frames(view, 2);
+  EXPECT_EQ(Bridge::agentLines(talks), 2u);
+  EXPECT_GE(data->getPlayer(own)->get().getContractYears(), before);
 }

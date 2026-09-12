@@ -32,10 +32,12 @@
 #include "gui/gui_view.h"
 #include "gui/render/match_camera_3d.h"
 #include "gui/render/match_kit_colors.h"
+#include "gui/render/match_player_rig.h"
 #include "gui/render/match_render_3d_tuning.h"
 #include "gui/render/match_render_math.h"
 #include "gui/render/match_renderer_2d.h"
 #include "gui/render/match_renderer_3d.h"
+#include "gui/render/match_stadium_3d.h"
 #include "gui/scenes/match_scene.h"
 #include "gui/widgets/theme.h"
 
@@ -451,8 +453,7 @@ TEST(MatchRender3DProportions, WorldIsBuiltAtRealScale)
   EXPECT_NEAR(headTop, P::REFERENCE_HEIGHT_METRES, 0.01f);
   EXPECT_NEAR(P::HIP_HEIGHT - P::THIGH_LENGTH - P::SHIN_LENGTH,
               P::BOOT_HALF_HEIGHT, 0.01f);
-  const float span =
-      2.0f * (P::SHOULDER_SPREAD + P::UPPER_ARM_HALF_WIDTH) * P::SCALE;
+  const float span = 2.0f * (P::SHOULDER_SPREAD + P::UPPER_ARM_TOP) * P::SCALE;
   EXPECT_GE(span, 0.45f);
   EXPECT_LE(span, 0.56f);
   EXPECT_GE(2.0f * P::CHEST_HALF_WIDTH * P::SCALE, 0.34f);
@@ -669,6 +670,338 @@ TEST(MatchKitColorsTest, NumbersAndGlovesStandOut)
       }
     }
   }
+}
+
+TEST(MatchRenderer3DRig, TwoBoneIkReachesTargetsAndBendsTowardsThePole)
+{
+  constexpr float UPPER = 0.46f;
+  constexpr float LOWER = 0.42f;
+  const Vec3 hip{0.0f, 0.0f, 0.93f};
+  const Vec3 pole{1.0f, 0.0f, 0.0f};
+  for (const Vec3 target : {Vec3{0.2f, 0.1f, 0.12f}, Vec3{-0.3f, 0.0f, 0.2f},
+                            Vec3{0.5f, -0.1f, 0.6f}})
+  {
+    const PlayerRig::TwoBone leg =
+        PlayerRig::solveTwoBone(hip, target, UPPER, LOWER, pole);
+    EXPECT_TRUE(leg.reached);
+    EXPECT_NEAR(RenderMath::length(leg.middle - hip), UPPER, 1e-4f);
+    EXPECT_NEAR(RenderMath::length(leg.end - leg.middle), LOWER, 1e-4f);
+    EXPECT_NEAR(RenderMath::length(leg.end - target), 0.0f, 1e-4f);
+    // The knee bends forward, never backwards.
+    const Vec3 halfway = (hip + target) * 0.5f;
+    EXPECT_GT(RenderMath::dot(leg.middle - halfway, pole), 0.0f);
+  }
+  // Out of reach: the leg points straight at the target.
+  const PlayerRig::TwoBone stretched = PlayerRig::solveTwoBone(
+      hip, {0.0f, 0.0f, -2.0f}, UPPER, LOWER, pole);
+  EXPECT_FALSE(stretched.reached);
+  EXPECT_NEAR(RenderMath::length(stretched.end - hip), UPPER + LOWER, 1e-3f);
+  EXPECT_LT(stretched.end.z, hip.z);
+}
+
+TEST(MatchRenderer3DRig, PoseSelectionFollowsTheEngineState)
+{
+  using PlayerRig::Action;
+  using PlayerRig::Event;
+  PlayerRig::ActionInput input;
+  EXPECT_EQ(PlayerRig::selectAction(input), Action::IDLE);
+  const std::array<std::pair<float, Action>, 5> gaits{{{0.2f, Action::IDLE},
+                                                       {1.4f, Action::WALK},
+                                                       {3.8f, Action::JOG},
+                                                       {5.5f, Action::RUN},
+                                                       {8.0f, Action::SPRINT}}};
+  for (const auto& [speed, action] : gaits)
+  {
+    input.speed = speed;
+    EXPECT_EQ(PlayerRig::selectAction(input), action) << speed;
+  }
+  // A sharp turn at low speed.
+  input.speed = 2.0f;
+  input.turnRate = 4.0f;
+  EXPECT_EQ(PlayerRig::selectAction(input), Action::TURN);
+  input.turnRate = 0.0f;
+
+  const std::array<std::pair<Event, Action>, 7> events{
+      {{Event::PASS, Action::PASS},
+       {Event::SHOT, Action::SHOT},
+       {Event::CROSS, Action::CROSS},
+       {Event::HEADER, Action::HEADER},
+       {Event::TACKLE, Action::TACKLE},
+       {Event::SLIDE, Action::SLIDE},
+       {Event::THROW, Action::THROW_IN}}};
+  for (const auto& [event, action] : events)
+  {
+    input.event = event;
+    EXPECT_EQ(PlayerRig::selectAction(input), action);
+  }
+  input.event = Event::NONE;
+  input.throwIn = true;
+  EXPECT_EQ(PlayerRig::selectAction(input), Action::THROW_IN);
+  input.throwIn = false;
+
+  // Keepers: a dive beats everything, then holding, then the set stance.
+  input.goalkeeper = true;
+  input.keeperSet = true;
+  input.speed = 0.5f;
+  EXPECT_EQ(PlayerRig::selectAction(input), Action::KEEPER_SET);
+  input.holding = true;
+  EXPECT_EQ(PlayerRig::selectAction(input), Action::KEEPER_HOLD);
+  input.diving = true;
+  input.event = Event::PASS;
+  EXPECT_EQ(PlayerRig::selectAction(input), Action::KEEPER_DIVE);
+
+  // Goal reactions win over the gait but not over a ball action.
+  PlayerRig::ActionInput outfield;
+  outfield.speed = 6.0f;
+  outfield.mood = PlayerRig::Mood::CELEBRATE;
+  EXPECT_EQ(PlayerRig::selectAction(outfield), Action::CELEBRATE);
+  outfield.mood = PlayerRig::Mood::DEJECTED;
+  EXPECT_EQ(PlayerRig::selectAction(outfield), Action::DEJECTED);
+  outfield.event = Event::HEADER;
+  EXPECT_EQ(PlayerRig::selectAction(outfield), Action::HEADER);
+}
+
+TEST(MatchRenderer3DRig, PlantedFootStaysPutThroughTheStance)
+{
+  // A player crossing the pitch at a walk, a jog and a sprint at 60 frames
+  // per second: every foot on the ground keeps its exact spot until it
+  // lifts, the legs alternate, and walking always keeps a foot down.
+  using P = MatchRender3DTuning::Player;
+  using R = MatchRender3DTuning::Rig;
+  constexpr float DT = 1.0f / 60.0f;
+  constexpr float PI = std::numbers::pi_v<float>;
+  for (const float speed : {1.4f, 4.0f, 7.5f})
+  {
+    std::array<PlayerRig::FootState, 2> feet{};
+    std::array<Vec3, 2> last{};
+    std::array<bool, 2> wasDown{};
+    std::array<int, 2> landings{};
+    const float cycle = P::STRIDE_BASE_METRES + P::STRIDE_PER_SPEED * speed;
+    const float duty = PlayerRig::dutyFactor(speed);
+    float phase = 0.0f;
+    Vec3 root{10.0f, 30.0f, 0.0f};
+    int stanceFrames = 0;
+    int flightFrames = 0;
+    float worstSlide = 0.0f;
+    float worstReach = 0.0f;
+    for (int frame = 0; frame < 900; ++frame)
+    {
+      const float step = speed * DT;
+      root.x += step;
+      phase = std::fmod(phase + 2.0f * PI * step / cycle, 2.0f * PI);
+      bool anyDown = false;
+      for (std::size_t leg = 0; leg < 2; ++leg)
+      {
+        PlayerRig::StrideInput input;
+        input.rest =
+            root + Vec3{0.0f, (leg == 0 ? 1.0f : -1.0f) * R::STANCE_WIDTH, 0.0f};
+        input.forward = {1.0f, 0.0f, 0.0f};
+        input.legPhase = std::fmod(phase + (leg == 0 ? 0.0f : PI), 2.0f * PI);
+        input.duty = duty;
+        input.stanceLength = duty * cycle;
+        input.frontReach = R::FRONT_REACH;
+        input.liftHeight = R::WALK_LIFT;
+        input.maxDrift = R::MAX_DRIFT;
+        input.deltaSeconds = DT;
+        const Vec3 foot = PlayerRig::stepFoot(feet[leg], input);
+        if (feet[leg].inStance)
+        {
+          anyDown = true;
+          if (wasDown[leg])
+          {
+            worstSlide =
+                std::max(worstSlide, RenderMath::length(foot - last[leg]));
+            ++stanceFrames;
+          }
+          else
+          {
+            ++landings[leg];
+          }
+          EXPECT_FLOAT_EQ(foot.z, 0.0f);
+          worstReach = std::max(worstReach, std::abs(foot.x - root.x));
+        }
+        last[leg] = foot;
+        wasDown[leg] = feet[leg].inStance;
+      }
+      if (!anyDown) ++flightFrames;
+    }
+    EXPECT_GT(stanceFrames, 150) << speed;
+    EXPECT_LT(worstSlide, 1e-4f) << speed;
+    // Both legs keep stepping, the same number of times give or take one.
+    EXPECT_GT(landings[0], 3) << speed;
+    EXPECT_LE(std::abs(landings[0] - landings[1]), 1) << speed;
+    // A planted foot never ends up further from the body than a stride.
+    EXPECT_LT(worstReach, duty * cycle + 0.05f) << speed;
+    if (speed < 2.0f)
+      EXPECT_EQ(flightFrames, 0) << "walking keeps a foot down";
+    else if (speed > 7.0f)
+      EXPECT_GT(flightFrames, 0) << "sprinting has flight phases";
+  }
+}
+
+TEST(MatchRenderer3DRig, StandingFeetStayDownUntilTheBodyDrifts)
+{
+  using R = MatchRender3DTuning::Rig;
+  constexpr float DT = 1.0f / 60.0f;
+  std::array<PlayerRig::FootState, 2> feet{};
+  Vec3 root{50.0f, 30.0f, 0.0f};
+  const auto update = [&]
+  {
+    for (std::size_t leg = 0; leg < 2; ++leg)
+    {
+      PlayerRig::StrideInput input;
+      input.rest =
+          root + Vec3{0.0f, (leg == 0 ? 1.0f : -1.0f) * R::STANCE_WIDTH, 0.0f};
+      input.idle = true;
+      input.idleStepMetres = R::IDLE_STEP_METRES;
+      input.stepDuration = R::IDLE_STEP_SECONDS;
+      input.otherStepping = feet[1 - leg].stepSeconds > 0.0f;
+      input.deltaSeconds = DT;
+      PlayerRig::stepFoot(feet[leg], input);
+    }
+  };
+  update();
+  const std::array<Vec3, 2> start{feet[0].position, feet[1].position};
+  // Small sway of the body: the boots do not move at all.
+  for (int frame = 0; frame < 30; ++frame)
+  {
+    root.y += 0.1f / 30.0f;
+    update();
+  }
+  EXPECT_FLOAT_EQ(feet[0].position.x, start[0].x);
+  EXPECT_FLOAT_EQ(feet[0].position.y, start[0].y);
+  EXPECT_FLOAT_EQ(feet[1].position.y, start[1].y);
+  // A real shuffle: the feet step one at a time and end under the hips.
+  bool bothStepping = false;
+  for (int frame = 0; frame < 120; ++frame)
+  {
+    if (frame < 40) root.y += 0.5f / 40.0f;
+    update();
+    bothStepping = bothStepping ||
+                   (feet[0].stepSeconds > 0.0f && feet[1].stepSeconds > 0.0f);
+  }
+  EXPECT_FALSE(bothStepping);
+  for (std::size_t leg = 0; leg < 2; ++leg)
+  {
+    const float restY = root.y + (leg == 0 ? 1.0f : -1.0f) * R::STANCE_WIDTH;
+    EXPECT_TRUE(feet[leg].inStance);
+    EXPECT_NEAR(feet[leg].position.y, restY, R::IDLE_STEP_METRES);
+  }
+}
+
+TEST(MatchRenderer3DRig, HeelRollsOntoTheToesInsteadOfSliding)
+{
+  // A planted foot left behind the hip lifts its heel around the toe; the
+  // toe stays exactly where it was.
+  const Vec3 hip{0.0f, 0.0f, 0.9f};
+  const Vec3 forward{1.0f, 0.0f, 0.0f};
+  constexpr float TOE = 0.15f;
+  constexpr float REACH = 0.875f;
+  Vec3 ankle{-0.55f, 0.0f, 0.085f};
+  const Vec3 toe = ankle + forward * TOE;
+  const float heel =
+      PlayerRig::rollOntoToes(ankle, hip, forward, TOE, REACH, 1.05f);
+  EXPECT_GT(heel, 0.1f);
+  EXPECT_NEAR(RenderMath::length(ankle - toe), TOE, 1e-4f);
+  EXPECT_LE(RenderMath::length(ankle - hip), REACH + 1e-3f);
+  // Within reach nothing changes.
+  Vec3 under{0.05f, 0.0f, 0.085f};
+  EXPECT_FLOAT_EQ(
+      PlayerRig::rollOntoToes(under, hip, forward, TOE, REACH, 1.05f), 0.0f);
+  EXPECT_FLOAT_EQ(under.x, 0.05f);
+}
+
+TEST(MatchRenderer3DRig, KickPutsTheAnkleOnTheBallAtContact)
+{
+  using PlayerRig::Event;
+  const PlayerRig::KickTiming timing;
+  const Vec3 contact{30.0f, 20.0f, 0.16f};
+  const Vec3 direction{0.0f, 1.0f, 0.0f};
+  const Vec3 across{1.0f, 0.0f, 0.0f};
+  for (const Event event : {Event::PASS, Event::SHOT, Event::CROSS})
+  {
+    float weight = 0.0f;
+    // At the strike the ankle is on the ball and owns the leg fully.
+    const Vec3 strike = PlayerRig::kickAnkle(event, 0.0f, contact, direction,
+                                             across, timing, weight);
+    EXPECT_FLOAT_EQ(weight, 1.0f);
+    EXPECT_NEAR(RenderMath::length(strike - contact), 0.0f, 1e-5f);
+    // Then it follows through along the ball's path and up.
+    const Vec3 through = PlayerRig::kickAnkle(
+        event, timing.contactHold + timing.followThrough * 0.9f, contact,
+        direction, across, timing, weight);
+    EXPECT_FLOAT_EQ(weight, 1.0f);
+    EXPECT_GT(RenderMath::dot(through - contact, direction), 0.2f);
+    EXPECT_GT(through.z, contact.z);
+    // And hands the leg back to the gait.
+    PlayerRig::kickAnkle(event, timing.total() - 0.01f, contact, direction,
+                         across, timing, weight);
+    EXPECT_LT(weight, 0.05f);
+    PlayerRig::kickAnkle(event, timing.total() + 0.1f, contact, direction,
+                         across, timing, weight);
+    EXPECT_FLOAT_EQ(weight, 0.0f);
+  }
+  // Shots follow through higher than passes.
+  float weight = 0.0f;
+  const float late = timing.contactHold + timing.followThrough;
+  EXPECT_GT(PlayerRig::kickAnkle(Event::SHOT, late, contact, direction, across,
+                                 timing, weight)
+                .z,
+            PlayerRig::kickAnkle(Event::PASS, late, contact, direction, across,
+                                 timing, weight)
+                .z);
+}
+
+TEST(MatchRenderer3DStadium, DaylightLightsTheStandsAndShadesUnderTheRoof)
+{
+  const auto luminance = [](ImU32 color)
+  {
+    return 0.3f * static_cast<float>((color >> IM_COL32_R_SHIFT) & 0xFFU) +
+           0.59f * static_cast<float>((color >> IM_COL32_G_SHIFT) & 0xFFU) +
+           0.11f * static_cast<float>((color >> IM_COL32_B_SHIFT) & 0xFFU);
+  };
+  const MatchKits kits = chooseMatchKits(1, 2);
+  Stadium3D::Geometry night;
+  night.build(kits, false);
+  Stadium3D::Geometry day;
+  day.build(kits, true);
+  ASSERT_EQ(night.faces.size(), day.faces.size());
+  ASSERT_EQ(night.crowd.size(), day.crowd.size());
+  // Concrete, walls, roofs and masts (not the crowd, not the lamps) are no
+  // longer in their floodlit night colours by day.
+  float nightFaces = 0.0f;
+  float dayFaces = 0.0f;
+  for (std::size_t index = 0; index < day.faces.size(); ++index)
+  {
+    const Stadium3D::Face& face = night.faces[index];
+    if (face.glow != 0U || face.clumpEnd != face.clumpBegin) continue;
+    nightFaces += luminance(face.colors[0]);
+    dayFaces += luminance(day.faces[index].colors[0]);
+  }
+  EXPECT_GT(dayFaces, nightFaces * 1.3f);
+  // The far (north) stand faces the afternoon sun: its crowd is brighter by
+  // day than under the floodlights.
+  float nightCrowd = 0.0f;
+  float dayCrowd = 0.0f;
+  for (std::size_t index = 0; index < day.crowd.size(); ++index)
+  {
+    if (day.crowd[index].base.y < MatchTuning::Pitch::WIDTH_METRES + 8.0f)
+      continue;
+    nightCrowd += luminance(night.crowd[index].body);
+    dayCrowd += luminance(day.crowd[index].body);
+  }
+  EXPECT_GT(nightCrowd, 0.0f);
+  EXPECT_GT(dayCrowd, nightCrowd);
+  // Lamps are off by day.
+  for (const Stadium3D::Face& face : day.faces) EXPECT_EQ(face.glow, 0U);
+
+  // Only daylight casts the roofs' shadows: along the main stand's
+  // touchline, never over the centre circle.
+  EXPECT_TRUE(night.standShadows.empty());
+  EXPECT_FALSE(night.inStandShadow({60.0f, 1.0f, 0.0f}));
+  EXPECT_FALSE(day.standShadows.empty());
+  EXPECT_TRUE(day.inStandShadow({60.0f, 1.0f, 0.0f}));
+  EXPECT_FALSE(day.inStandShadow({52.5f, 34.0f, 0.0f}));
 }
 
 class MatchRenderer3DSceneTest : public ::testing::Test
@@ -1070,6 +1403,68 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
     dayOptions.cameraMode = MatchCameraMode::PLAYER_FOLLOW;
     direct(dayRenderer, dayOptions, 90, nullptr);
     capture("match_3d_day_follow.bmp");
+
+    // Night and day at 720p and at 2560x1440 with the HiDPI scale of 2,
+    // broadcast and follow cameras, straight through the renderer.
+    const auto lookAround = [&](const std::string& prefix, bool day)
+    {
+      MatchRenderer3D lookRenderer;
+      MatchRenderOptions options;
+      options.frameSeconds = FRAME_SECONDS;
+      options.dayLook = day;
+      options.cameraMode = MatchCameraMode::BROADCAST;
+      const std::string name = "match_3d_" + prefix + (day ? "_day" : "_night");
+      const float broadcast = direct(lookRenderer, options, 60, nullptr);
+      std::cout << "[match-3d] " << name << " broadcast render CPU median "
+                << broadcast << " ms (renderer only), draw list "
+                << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
+      capture(name + "_broadcast.bmp");
+      options.cameraMode = MatchCameraMode::PLAYER_FOLLOW;
+      const float follow = direct(lookRenderer, options, 60, nullptr);
+      std::cout << "[match-3d] " << name << " follow render CPU median "
+                << follow << " ms (renderer only), draw list "
+                << ImGui::GetDrawData()->TotalVtxCount << " vertices\n";
+      capture(name + "_follow.bmp");
+      return broadcast;
+    };
+    SDL_SetWindowSize(window, 1280, 720);
+    SDL_PumpEvents();
+    lookAround("720p", false);
+    lookAround("720p", true);
+    SDL_SetWindowSize(window, 2560, 1440);
+    SDL_PumpEvents();
+    Theme::apply(Theme::Appearance{}, 2.0f);
+    const float hidpiNight = lookAround("1440p2x", false);
+    const float hidpiDay = lookAround("1440p2x", true);
+    RecordProperty("render_3d_1440p2x_night_median_microseconds",
+                   static_cast<int>(hidpiNight * 1000.0f));
+    RecordProperty("render_3d_1440p2x_day_median_microseconds",
+                   static_cast<int>(hidpiDay * 1000.0f));
+    EXPECT_LT(hidpiNight, 12.0f);
+    EXPECT_LT(hidpiDay, 12.0f);
+    // The next goal at 1440p, by night and in a second renderer by day.
+    bool scoredAgain = false;
+    for (int step = 0; step < 60 * 100 && !scoredAgain; ++step)
+    {
+      scene.engine->advance(1.0f);
+      scoredAgain = scene.engine->getState() == MatchState::GOAL;
+    }
+    if (scoredAgain)
+    {
+      MatchRenderer3D goalRenderer;
+      MatchRenderOptions goalOptions;
+      goalOptions.frameSeconds = FRAME_SECONDS;
+      goalOptions.cameraMode = MatchCameraMode::BROADCAST;
+      direct(goalRenderer, goalOptions, 30, nullptr);
+      capture("match_3d_1440p2x_night_goal.bmp");
+      goalOptions.cameraMode = MatchCameraMode::DIRECTOR;
+      direct(goalRenderer, goalOptions, 40, nullptr);
+      if (scene.engine->getState() == MatchState::GOAL)
+        capture("match_3d_1440p2x_night_goal_director.bmp");
+    }
+    Theme::apply(Theme::Appearance{}, 1.0f);
+    SDL_SetWindowSize(window, 1280, 800);
+    SDL_PumpEvents();
 
     MatchRenderer2D overlayRenderer;
     MatchRenderOptions overlayOptions;

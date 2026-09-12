@@ -15,6 +15,8 @@
 #include <random>
 #include <vector>
 
+#include "model/world_rng.h"
+
 namespace Lab
 {
 namespace
@@ -179,12 +181,11 @@ Estimate bootstrapEstimate(
     return estimate;
   }
   std::mt19937_64 rng(seed);
-  std::uniform_int_distribution<std::size_t> pick(0, units - 1);
   std::vector<double> draws;
   draws.reserve(static_cast<std::size_t>(std::max(resamples, 0)));
   for (int r = 0; r < resamples; ++r)
   {
-    for (std::size_t& index : indices) index = pick(rng);
+    for (std::size_t& index : indices) index = PortableRandom::below(rng, units);
     const double value = statistic(indices);
     if (std::isfinite(value)) draws.push_back(value);
   }
