@@ -22,9 +22,11 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <tuple>
 
 #include "controller/game_controller.h"
+#include "global/language_manager.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
 #include "gui/gui_view.h"
@@ -186,6 +188,80 @@ TEST(ManagerUiTest, ClubChoiceShowsTheManagerStep)
   resize(view, 1280, 720);
   frames(view, 3);
   capture(view, "manager_setup_1280_scale2.bmp");
+  setUiScale(view, 0.0f);
+}
+
+namespace
+{
+/**
+ * True when the start button of the club card can be hovered on screen: a
+ * grid of mouse probes over the card must land on it inside the window.
+ */
+bool startButtonReachable(GUIView& view)
+{
+  const ImGuiWindow* card = nullptr;
+  for (const ImGuiWindow* window : GImGui->Windows)
+  {
+    const std::string_view name(window->Name);
+    if (window->Active && (name.ends_with("##selected_club") ||
+                           name.find("/##selected_club_") != std::string::npos))
+      card = window;
+  }
+  if (card == nullptr) return false;
+  const ImGuiID button = ImHashStr(LOC("TEAM_SELECTION_CONFIRM"), 0, card->ID);
+  const ImVec2 display = ImGui::GetIO().DisplaySize;
+  const ImRect area(ImMax(card->Rect().Min, ImVec2(0.0f, 0.0f)),
+                    ImMin(card->Rect().Max, display));
+  bool found = false;
+  for (float y = area.Min.y + 4.0f; y < area.Max.y && !found; y += 8.0f)
+    for (float x = area.Min.x + 4.0f; x < area.Max.x && !found; x += 24.0f)
+    {
+      ImGui::GetIO().AddMousePosEvent(x, y);
+      Bridge::frame(view);
+      found = GImGui->HoveredId == button;
+    }
+  ImGui::GetIO().AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+  Bridge::frame(view);
+  return found;
+}
+}  // namespace
+
+TEST(ManagerUiTest, TeamSelectionKeepsStartVisibleAtEverySize)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  Logger::init();
+  const SlotCleanup slot{uniqueSlot(2)};
+  GameController controller;
+  controller.newGame(slot.slot, WORLD_SEED);
+  GUIView view(controller);
+  ASSERT_TRUE(Bridge::initialize(view));
+  resize(view, 1280, 720);
+  view.changeScene(std::make_unique<MainGameScene>(&view));
+  // The very first frame, before auto-sized cards have measured themselves.
+  frames(view, 1);
+  ASSERT_EQ(Bridge::activeScene(view)->getID(), SceneID::TEAM_SELECTION);
+  capture(view, "team_selection_first_frame.bmp");
+  // Every size the start button must be on screen without scrolling; the
+  // narrow one shows the club card as a strip above the table.
+  for (const auto& [width, height, scale, name] :
+       {std::tuple{1280, 720, 0.0f, "team_selection_1280.bmp"},
+        std::tuple{1366, 768, 0.0f, "team_selection_1366.bmp"},
+        std::tuple{1920, 1080, 0.0f, "team_selection_1920.bmp"},
+        std::tuple{2560, 1440, 2.0f, "team_selection_2560_scale2.bmp"},
+        std::tuple{900, 700, 0.0f, "team_selection_900.bmp"}})
+  {
+    setUiScale(view, scale);
+    resize(view, width, height);
+    frames(view, 3);
+    capture(view, name);
+    EXPECT_TRUE(startButtonReachable(view)) << name;
+  }
+  // Too short for the club browser at scale 2: the page scrolls instead of
+  // squeezing it.
+  setUiScale(view, 2.0f);
+  resize(view, 1280, 720);
+  frames(view, 3);
+  capture(view, "team_selection_1280_scale2.bmp");
   setUiScale(view, 0.0f);
 }
 

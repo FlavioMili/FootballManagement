@@ -153,6 +153,7 @@ std::vector<AgendaEvent> SeasonAgenda::build(std::uint16_t season_start_year,
     event.played = match.isPlayed();
     event.home_score = match.getHomeScore();
     event.away_score = match.getAwayScore();
+    event.kickoff = match.getKickoff();
     events.push_back(event);
   }
   std::ranges::stable_sort(events,

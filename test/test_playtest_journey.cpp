@@ -524,7 +524,11 @@ WorldCheck checkWorld(const GameController& controller,
     if (teamId == FREE_AGENTS_TEAM_ID) continue;
     result.min_squad = std::min(result.min_squad, team.getPlayerIDs().size());
     result.max_squad = std::max(result.max_squad, team.getPlayerIDs().size());
-    for (const PlayerID playerId : team.getPlayerIDs())
+    // Club players: the senior squad plus the academy.
+    std::vector<PlayerID> members = team.getPlayerIDs();
+    members.insert(members.end(), team.getAcademyIDs().begin(),
+                   team.getAcademyIDs().end());
+    for (const PlayerID playerId : members)
     {
       const auto [previous, inserted] = owner.emplace(playerId, teamId);
       const auto player = data->getPlayer(playerId);
@@ -1060,7 +1064,15 @@ LiveMatchResult playLiveMatch(Tester& player, bool showcase,
   if (!finishPoint) return result;
   player.click(*finishPoint);
   player.frames(2);
-  // Finish shows the match report; Back (Escape) returns to the club hub.
+  // Finish returns to the hub, which simulates the rest of the day on its
+  // Continue worker and then shows the match report.
+  const auto finishStart = Clock::now();
+  while ((player.activeId() != SceneID::MATCH_REPORT || hub->isAdvancing()) &&
+         Clock::now() - finishStart < LOAD_DEADLINE)
+    player.frame();
+  player.frames(2);
+  EXPECT_FALSE(hub->isAdvancing()) << "the rest of the match day never ended";
+  // Back (Escape) from the report returns to the club hub.
   EXPECT_EQ(player.activeId(), SceneID::MATCH_REPORT)
       << "Finish Match did not show the match report";
   if (showcase) player.shot("j39_match_report_after_finish");

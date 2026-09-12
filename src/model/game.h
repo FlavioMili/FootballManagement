@@ -232,6 +232,13 @@ class Game
   // Matchday simulation helper
   void simulateMatches(std::vector<Match>& matches,
                        bool include_managed = false);
+  /**
+   * Fallback for a knockout tie recorded level without extra time (a
+   * score-only result, or a match abandoned before the engine could settle
+   * it): extra time and penalties are resolved from the squads and the
+   * extra-time goals credited to players who finished the match.
+   */
+  void settleLevelTie(Match& match, MatchReport& report);
 
   std::shared_ptr<DatabaseConnection> db_conn;
   std::shared_ptr<class GameData> gamedata;

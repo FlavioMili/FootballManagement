@@ -124,10 +124,11 @@ bool levelMatches(OpponentLevel level, std::uint8_t own, std::uint8_t other);
  * @class PreseasonPlanner
  * @brief Friendlies, tour and training camp of the managed club.
  *
- * Every club plays the generated pre-season friendlies. Choosing an
- * opponent swaps fixtures on that date (the managed club's old opponent
- * meets the new opponent's old one), so nobody plays twice a day or loses a
- * match. Away friendlies against clubs from another country can be booked
+ * Every club plays the generated pre-season friendlies, one a week (spread
+ * from Tuesday to Sunday). Choosing an opponent swaps fixtures within that
+ * week (the managed club's old opponent meets the new opponent's old one on
+ * the day the new opponent was to play), so nobody plays twice a week or
+ * loses a match. Away friendlies against clubs from another country can be booked
  * as tour dates.
  */
 class PreseasonPlanner
@@ -138,7 +139,8 @@ class PreseasonPlanner
                                        TeamID managed_team_id,
                                        const GameDateValue& today) const;
 
-  /** Clubs free to be swapped in on @p date, best fit first. */
+  /** Clubs free to be swapped in on @p date (their only match that week is
+   * an unplayed friendly, or none), best fit first. */
   std::vector<OpponentOption> opponents(const GameData& gamedata,
                                         const Calendar& calendar,
                                         TeamID managed_team_id,

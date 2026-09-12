@@ -76,8 +76,11 @@ class Team
   /** @brief Gets the name of the team. */
   const std::string& getName() const;
 
-  /** @brief Gets the list of player IDs in the team. */
+  /** @brief Player IDs of the senior squad (academy players excluded). */
   const std::vector<PlayerID>& getPlayerIDs() const;
+
+  /** @brief Player IDs of the club's academy (U18 squad and trialists). */
+  const std::vector<PlayerID>& getAcademyIDs() const;
 
   // Manage roster
 
@@ -87,8 +90,17 @@ class Team
    */
   void addPlayerID(PlayerID id);
 
+  /** @brief Adds a player to the club's academy. */
+  void addAcademyID(PlayerID id);
+
   /**
-   * @brief Removes a player from the team.
+   * @brief Moves a club player between the senior squad and the academy
+   * (use GameData::setAcademyMember, which keeps the player's flag too).
+   */
+  void setAcademyMember(PlayerID id, bool academy);
+
+  /**
+   * @brief Removes a player from the team (senior squad or academy).
    * @param id The player's ID.
    * @return True if successful, false otherwise.
    */
@@ -163,6 +175,7 @@ class Team
    * and here we just iterate on the ids to get *all players.
    */
   std::vector<PlayerID> player_ids;
+  std::vector<PlayerID> academy_ids;
 
   Strategy team_strategy;
   Lineup lineup;

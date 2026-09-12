@@ -94,6 +94,7 @@ class TransferMarketScene : public ManagementScene
     bool ranged = false; /**< Too little knowledge for a point value. */
     std::string overall_text;
     std::string potential_text;
+    float potential = 0.0f; /**< Centre of the scouted potential range. */
     int knowledge = 0;
     TransferNegotiation::SquadFit fit;
     std::string fit_text;

@@ -25,6 +25,7 @@
 #include "model/game.h"
 #include "model/injury.h"
 #include "model/transfer_market.h"
+#include "model/youth_academy.h"
 #include "tools/lab_runner.h"
 
 namespace Lab
@@ -125,6 +126,30 @@ struct InjuryOnset
   double days = 0.0;
 };
 
+/** Per-league tallies for the league-by-league table. */
+struct LeagueTally
+{
+  std::size_t matches = 0;
+  std::size_t home_wins = 0;
+  std::size_t draws = 0;
+  double goals = 0.0;
+  double yellows = 0.0;
+  double reds = 0.0;
+  std::vector<double> champion_ppg;
+  std::vector<double> points_sd;
+  /** Clubs promoted into the league last season / relegated again now. */
+  std::size_t promoted_in = 0;
+  std::size_t promoted_down = 0;
+  /** Clubs relegated into the league last season / promoted back now. */
+  std::size_t relegated_in = 0;
+  std::size_t relegated_up = 0;
+  std::size_t manager_changes = 0;
+  std::size_t club_seasons = 0;
+  double wages = 0.0;
+  double revenue = 0.0;
+  std::vector<double> net;
+};
+
 /** Everything collected over all seasons. */
 struct WorldTotals
 {
@@ -176,7 +201,35 @@ struct WorldTotals
   std::size_t fee_moves = 0;
   std::size_t counted_moves = 0;
   std::vector<InjuryOnset> injuries;
+  std::map<LeagueID, LeagueTally> by_league;
+  // Youth academies and young players.
+  std::vector<double> rosters_with_academy;
+  std::vector<double> academy_sizes;
+  std::size_t u18_professional = 0;
+  std::size_t u18_contracts = 0;
+  std::array<std::vector<double>, 4> intake_candidates_by_grade;
+  std::array<std::vector<double>, 4> intake_signed_by_grade;
+  std::array<double, 3> league_minutes{};  // all, tier 1, tier 2
+  std::array<double, 3> u21_minutes{};
+  double minutes_17_18 = 0.0;
+  double minutes_19_20 = 0.0;
+  double minutes_21 = 0.0;
+  std::size_t starts = 0;
+  std::size_t u21_starts = 0;
+  std::array<std::vector<double>, 3> development_by_age;  // 16-18, 19-21, 22-24
 };
+
+/** Academy grade bucket from the four academy ratings (0 = best). */
+std::size_t academyGrade(const AcademyRatings& ratings)
+{
+  const double mean = (ratings.facilities + ratings.recruitment +
+                       ratings.junior_coaching + ratings.head) /
+                      4.0;
+  if (mean >= 70.0) return 0;
+  if (mean >= 55.0) return 1;
+  if (mean >= 40.0) return 2;
+  return 3;
+}
 
 class SeasonRunner
 {
@@ -206,6 +259,11 @@ class SeasonRunner
   WorldTotals totals;
   std::unordered_map<PlayerID, std::int32_t> last_injury_day;
   std::unordered_map<TeamID, int> injuries_by_club;
+  std::unordered_map<TeamID, std::uint32_t> manager_of_club;
+  std::unordered_set<TeamID> promoted_last;
+  std::unordered_set<TeamID> relegated_last;
+  PlayerID season_first_id = 0;
+  std::unordered_map<PlayerID, std::pair<int, double>> start_ability;
 
   bool selected(LeagueID league) const
   {
@@ -249,20 +307,29 @@ class SeasonRunner
 
     std::unordered_map<PlayerID, TeamID> startPlayers;
     std::unordered_map<TeamID, int> startSquads;
+    season_first_id = gamedata->peekNextPlayerId();
+    start_ability.clear();
+    const StatsConfig& config = controller.getStatsConfig();
     for (const auto& [id, player] : gamedata->getPlayers())
     {
       startPlayers.emplace(id, player.getTeamId());
       if (player.getTeamId() != FREE_AGENTS_TEAM_ID)
+      {
         ++startSquads[player.getTeamId()];
+        start_ability.emplace(
+            id, std::pair{player.getAge(), player.getOverall(config)});
+      }
     }
     injuries_by_club.clear();
     pollInjuries(false);
+    pollManagers(false);
 
     int days = 0;
     while (!isSeasonEnd(controller.getCurrentDate()))
     {
       controller.advanceDay();
       pollInjuries(true);
+      pollManagers(true);
       if (++days > options.max_days_per_season)
         throw std::runtime_error(std::format(
             "season {} did not reach 30 June within {} days", seasonNumber,
@@ -276,13 +343,17 @@ class SeasonRunner
     std::map<LeagueID, std::vector<StandingRow>> tables;
     captureSeasonEnd(tables);
     captureClubs();
+    captureYouth();
 
     // 1 July: season transition (prize money, history, retirements, youth).
     controller.advanceDay();
+    // Season-end sackings happen at the rollover.
+    pollManagers(true);
     const GameDateValue rollover = controller.getCurrentDate();
     if (controller.getCurrentSeason() == seasonNumber)
       throw std::runtime_error("season transition did not happen on 1 July");
     captureHistory(seasonNumber, tables);
+    captureMovements(seasonNumber, tables);
     captureFinances(seasonStart, rollover);
     captureTransfers(seasonStart, rollover);
     capturePopulation(startPlayers, startSquads);
@@ -306,7 +377,11 @@ class SeasonRunner
           continue;
         if (const auto report = controller.getMatchReport(
                 date, match.getHomeTeamId(), match.getAwayTeamId()))
+        {
           totals.matches.push_back(sampleFromReport(*report));
+          tallyMatch(match.getCompetitionId(), totals.matches.back());
+          captureMinutes(*report, match.getCompetitionId());
+        }
       }
     }
     for (const LeagueID league : leagues)
@@ -325,6 +400,9 @@ class SeasonRunner
         goalDiff.push_back(row.goal_difference / played);
       }
       totals.points_sd.push_back(populationSd(ppg));
+      totals.by_league[league].champion_ppg.push_back(rows.front().points /
+                                                      games);
+      totals.by_league[league].points_sd.push_back(populationSd(ppg));
       totals.goal_diff_sd.push_back(populationSd(goalDiff));
       const auto scorers =
           controller.getTopScorers(MatchType::LEAGUE, league, 1);
@@ -362,10 +440,15 @@ class SeasonRunner
       const Team& club = team.get();
       if (!selected(club.getLeagueId())) continue;
       const auto& squad = controller.getPlayersForTeam(club.getId());
-      totals.squad_sizes.push_back(static_cast<double>(squad.size()));
+      totals.squad_sizes.push_back(static_cast<double>(std::ranges::count_if(
+          squad, [](const Player& player) { return !player.isAcademyPlayer(); })));
       double ageSum = 0.0;
+      std::size_t seniors = 0;
       for (const auto& player : squad)
       {
+        // Academy players are not part of the senior squad.
+        if (player.get().isAcademyPlayer()) continue;
+        ++seniors;
         const double age = player.get().getAge();
         ageSum += age;
         totals.ages.push_back(age);
@@ -373,10 +456,165 @@ class SeasonRunner
             static_cast<double>(player.get().getPotential()));
         totals.overalls.push_back(player.get().getOverall(config));
       }
-      if (!squad.empty() && controller.getLeagueTier(club.getLeagueId()) == 1)
-        totals.top_mean_ages.push_back(ageSum /
-                                       static_cast<double>(squad.size()));
+      if (seniors > 0 && controller.getLeagueTier(club.getLeagueId()) == 1)
+        totals.top_mean_ages.push_back(ageSum / static_cast<double>(seniors));
     }
+  }
+
+  /** League minutes by age (age at season end). */
+  void captureMinutes(const MatchReport& report, LeagueID league)
+  {
+    const int tier = controller.getLeagueTier(league);
+    const auto& players = controller.getGameData()->getPlayers();
+    for (const PlayerMatchLine& line : report.players)
+    {
+      const auto found = players.find(line.player_id);
+      if (found == players.end() || line.minutes == 0) continue;
+      const int age = found->second.getAge();
+      const double minutes = line.minutes;
+      const bool young = age < 21;
+      for (const std::size_t slot :
+           {std::size_t{0}, static_cast<std::size_t>(tier == 1 ? 1 : 2)})
+      {
+        totals.league_minutes[slot] += minutes;
+        if (young) totals.u21_minutes[slot] += minutes;
+      }
+      if (age <= 18)
+        totals.minutes_17_18 += minutes;
+      else if (young)
+        totals.minutes_19_20 += minutes;
+      else if (age == 21)
+        totals.minutes_21 += minutes;
+      if (line.started)
+      {
+        ++totals.starts;
+        if (young) ++totals.u21_starts;
+      }
+    }
+  }
+
+  /** Academy sizes, contracts, intake by academy grade and development. */
+  void captureYouth()
+  {
+    const auto gamedata = controller.getGameData();
+    const YouthAcademy& academy = controller.getGame()->getWorld().getYouth();
+    const StatsConfig& config = controller.getStatsConfig();
+    const auto year = static_cast<std::uint16_t>(controller.getCurrentDate().year);
+    for (const auto& team : controller.getTeams())
+    {
+      const Team& club = team.get();
+      if (!selected(club.getLeagueId())) continue;
+      const auto squad = academy.members(club.getId(), YouthStatus::Squad);
+      std::size_t signed_now = 0;
+      for (const YouthRecord* youth : squad)
+      {
+        ++totals.u18_contracts;
+        if (youth->contract == YouthContract::Professional)
+          ++totals.u18_professional;
+        if (youth->player_id >= season_first_id) ++signed_now;
+      }
+      totals.academy_sizes.push_back(static_cast<double>(squad.size()));
+      const auto seniors = std::ranges::count_if(
+          controller.getPlayersForTeam(club.getId()),
+          [](const Player& player) { return !player.isAcademyPlayer(); });
+      totals.rosters_with_academy.push_back(
+          static_cast<double>(seniors) + static_cast<double>(squad.size()));
+      const std::size_t grade = academyGrade(academy.ratings(club.getId()));
+      totals.intake_signed_by_grade[grade].push_back(
+          static_cast<double>(signed_now));
+      totals.intake_candidates_by_grade[grade].push_back(
+          static_cast<double>(academy.preview(club.getId(), year).size));
+    }
+    for (const auto& [id, before] : start_ability)
+    {
+      const auto player = gamedata->getPlayer(id);
+      if (!player || player->get().getTeamId() == FREE_AGENTS_TEAM_ID ||
+          !selected(gamedata->getTeam(player->get().getTeamId())
+                        ->get()
+                        .getLeagueId()))
+        continue;
+      const auto [age, overall] = before;
+      const double delta = player->get().getOverall(config) - overall;
+      if (age >= 16 && age <= 18)
+        totals.development_by_age[0].push_back(delta);
+      else if (age >= 19 && age <= 21)
+        totals.development_by_age[1].push_back(delta);
+      else if (age >= 22 && age <= 24)
+        totals.development_by_age[2].push_back(delta);
+    }
+  }
+
+  /** Counts managers leaving AI clubs (sackings and other departures). */
+  void pollManagers(bool count)
+  {
+    std::unordered_map<TeamID, std::uint32_t> current;
+    for (const AiManager& manager :
+         controller.getGame()->getCareer().getAiManagers())
+      if (manager.team_id != FREE_AGENTS_TEAM_ID)
+        current.emplace(manager.team_id, manager.id);
+    if (count)
+    {
+      for (const auto& [team_id, manager_id] : manager_of_club)
+      {
+        const auto now = current.find(team_id);
+        if (now != current.end() && now->second == manager_id) continue;
+        const auto team = controller.getGameData()->getTeam(team_id);
+        if (team && selected(team->get().getLeagueId()))
+          ++totals.by_league[team->get().getLeagueId()].manager_changes;
+      }
+    }
+    manager_of_club = std::move(current);
+  }
+
+  void tallyMatch(LeagueID league, const MatchSample& sample)
+  {
+    LeagueTally& tally = totals.by_league[league];
+    ++tally.matches;
+    if (sample.goals[0] > sample.goals[1])
+      ++tally.home_wins;
+    else if (sample.goals[0] == sample.goals[1])
+      ++tally.draws;
+    tally.goals += sample.goals[0] + sample.goals[1];
+    tally.yellows += sample.yellows;
+    tally.reds += sample.reds;
+  }
+
+  /** Promoted clubs going straight down and relegated clubs coming back. */
+  void captureMovements(
+      int seasonNumber,
+      const std::map<LeagueID, std::vector<StandingRow>>& tables)
+  {
+    std::unordered_set<TeamID> promoted_now;
+    std::unordered_set<TeamID> relegated_now;
+    for (const SeasonHistoryEntry& entry : controller.getSeasonHistory())
+    {
+      if (entry.season != seasonNumber ||
+          entry.competition_type != MatchType::LEAGUE)
+        continue;
+      promoted_now.insert(entry.promoted.begin(), entry.promoted.end());
+      relegated_now.insert(entry.relegated.begin(), entry.relegated.end());
+      const auto table = tables.find(entry.competition_id);
+      if (table == tables.end()) continue;
+      LeagueTally& tally = totals.by_league[entry.competition_id];
+      for (const StandingRow& row : table->second)
+      {
+        if (promoted_last.contains(row.team_id))
+        {
+          ++tally.promoted_in;
+          if (std::ranges::contains(entry.relegated, row.team_id))
+            ++tally.promoted_down;
+        }
+        if (relegated_last.contains(row.team_id))
+        {
+          ++tally.relegated_in;
+          if (std::ranges::contains(entry.promoted, row.team_id))
+            ++tally.relegated_up;
+        }
+      }
+      tally.club_seasons += table->second.size();
+    }
+    promoted_last = std::move(promoted_now);
+    relegated_last = std::move(relegated_now);
   }
 
   void captureHistory(int seasonNumber,
@@ -433,6 +671,11 @@ class SeasonRunner
       const auto wages =
           static_cast<double>(std::abs(category(FinanceCategory::Wages)));
       totals.revenue.push_back(revenue);
+      LeagueTally& tally = totals.by_league[club.getLeagueId()];
+      tally.wages += wages;
+      tally.revenue += revenue;
+      tally.net.push_back(static_cast<double>(
+          summary.net() - category(FinanceCategory::OpeningBalance)));
       totals.net.push_back(static_cast<double>(
           summary.net() - category(FinanceCategory::OpeningBalance)));
       if (controller.getLeagueTier(club.getLeagueId()) == 1)
@@ -625,10 +868,12 @@ class SeasonRunner
     static constexpr std::array SCOPES = {Scope::Match, Scope::World};
     report.rows = evaluateTargets(metrics, SCOPES);
     report.tables.push_back(totals.leagues);
+    report.tables.push_back(leagueTable());
     for (TextTable& table : matchTables(totals.matches))
       report.tables.push_back(std::move(table));
     report.tables.push_back(revenueMixTable());
     report.tables.push_back(populationTable());
+    report.tables.push_back(youthTable());
     report.tables.push_back(transferTable());
     report.tables.push_back(injuryTable(layoffs));
     report.notes.push_back(
@@ -638,6 +883,68 @@ class SeasonRunner
     report.notes.push_back(
         "AI-only world (no managed club); every club is run by the AI.");
     return report;
+  }
+
+  TextTable leagueTable() const
+  {
+    TextTable table{
+        "League by league (all measured seasons; promoted/relegated need two "
+        "or more seasons; finances are for the clubs in the league at the "
+        "season end)",
+        {"League", "Tier", "Matches", "Goals/m", "H/D/A %", "Yellows/m",
+         "Reds/m", "Champion ppg", "Points SD/g", "Promoted down",
+         "Relegated back up", "Manager changes/club-season",
+         "Wages/revenue", "Median net (M)"},
+        {}};
+    const auto mean = [](const std::vector<double>& values)
+    {
+      if (values.empty()) return std::string("-");
+      double sum = 0.0;
+      for (const double value : values) sum += value;
+      return std::format("{:.2f}", sum / static_cast<double>(values.size()));
+    };
+    const auto share = [](std::size_t part, std::size_t whole)
+    {
+      return whole == 0 ? std::string("-")
+                        : std::format("{}/{} ({:.0f}%)", part, whole,
+                                      100.0 * static_cast<double>(part) /
+                                          static_cast<double>(whole));
+    };
+    for (const auto& [league, tally] : totals.by_league)
+    {
+      if (tally.matches == 0) continue;
+      const auto games = static_cast<double>(tally.matches);
+      const auto found = controller.getLeagueById(league);
+      const std::size_t away_wins =
+          tally.matches - tally.home_wins - tally.draws;
+      const std::size_t club_seasons =
+          tally.club_seasons > 0 ? tally.club_seasons : tally.net.size();
+      table.rows.push_back(
+          {found ? found->get().getName() : std::to_string(league),
+           std::to_string(controller.getLeagueTier(league)),
+           std::to_string(tally.matches),
+           std::format("{:.2f}", tally.goals / games),
+           std::format("{:.1f}/{:.1f}/{:.1f}",
+                       100.0 * static_cast<double>(tally.home_wins) / games,
+                       100.0 * static_cast<double>(tally.draws) / games,
+                       100.0 * static_cast<double>(away_wins) / games),
+           std::format("{:.2f}", tally.yellows / games),
+           std::format("{:.3f}", tally.reds / games), mean(tally.champion_ppg),
+           mean(tally.points_sd), share(tally.promoted_down, tally.promoted_in),
+           share(tally.relegated_up, tally.relegated_in),
+           club_seasons == 0
+               ? std::string("-")
+               : std::format("{:.2f}",
+                             static_cast<double>(tally.manager_changes) /
+                                 static_cast<double>(club_seasons)),
+           tally.revenue > 0.0
+               ? std::format("{:.0f}%", 100.0 * tally.wages / tally.revenue)
+               : std::string("-"),
+           tally.net.empty()
+               ? std::string("-")
+               : std::format("{:.1f}", percentile(tally.net, 0.5) / 1e6)});
+    }
+    return table;
   }
 
   TextTable revenueMixTable() const
@@ -693,6 +1000,68 @@ class SeasonRunner
     row("Potential", totals.potentials);
     row("Overall", totals.overalls);
     row("Age", totals.ages);
+    return table;
+  }
+
+  TextTable youthTable() const
+  {
+    TextTable table{"Senior squads, academies and young players (selected "
+                    "leagues, season end)",
+                    {"Measure", "Value", "n"},
+                    {}};
+    const auto mean = [&](const char* name, const std::vector<double>& values)
+    {
+      const Estimate estimate = meanEstimate(values);
+      table.rows.push_back(
+          {name,
+           estimate.valid()
+               ? std::format("{:.2f} [{:.2f}, {:.2f}]", estimate.value,
+                             estimate.low, estimate.high)
+               : "-",
+           std::to_string(values.size())});
+    };
+    const auto share = [&](const char* name, double part, double whole)
+    {
+      table.rows.push_back(
+          {name, whole > 0.0 ? std::format("{:.1f}%", 100.0 * part / whole) : "-",
+           std::format("{:.0f}", whole)});
+    };
+    mean("Senior squad size", totals.squad_sizes);
+    mean("Club players incl. academy", totals.rosters_with_academy);
+    mean("U18 academy squad size", totals.academy_sizes);
+    mean("Mean senior age, top divisions", totals.top_mean_ages);
+    share("U18 academy players on professional contracts",
+          static_cast<double>(totals.u18_professional),
+          static_cast<double>(totals.u18_contracts));
+    static constexpr std::array<const char*, 4> GRADES = {
+        "grade >= 70", "grade 55-69", "grade 40-54", "grade < 40"};
+    for (std::size_t grade = 0; grade < GRADES.size(); ++grade)
+    {
+      mean(std::format("Intake candidates, academy {}", GRADES[grade]).c_str(),
+           totals.intake_candidates_by_grade[grade]);
+      mean(std::format("Intake signed, academy {}", GRADES[grade]).c_str(),
+           totals.intake_signed_by_grade[grade]);
+    }
+    share("League minutes to U21 players", totals.u21_minutes[0],
+          totals.league_minutes[0]);
+    share("League minutes to U21 players, tier 1", totals.u21_minutes[1],
+          totals.league_minutes[1]);
+    share("League minutes to U21 players, tier 2", totals.u21_minutes[2],
+          totals.league_minutes[2]);
+    share("League minutes to players aged 18 or younger", totals.minutes_17_18,
+          totals.league_minutes[0]);
+    share("League minutes to players aged 19-20", totals.minutes_19_20,
+          totals.league_minutes[0]);
+    share("League minutes to players aged 21", totals.minutes_21,
+          totals.league_minutes[0]);
+    share("League starts by U21 players", static_cast<double>(totals.u21_starts),
+          static_cast<double>(totals.starts));
+    mean("Overall change over the season, age 16-18",
+         totals.development_by_age[0]);
+    mean("Overall change over the season, age 19-21",
+         totals.development_by_age[1]);
+    mean("Overall change over the season, age 22-24",
+         totals.development_by_age[2]);
     return table;
   }
 

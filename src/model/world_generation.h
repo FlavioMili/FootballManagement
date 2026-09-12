@@ -112,6 +112,27 @@ namespace WorldGeneration
 /** Mean overall rating of a first-team regular at a club. */
 float teamLevel(std::uint8_t reputation);
 
+/**
+ * First-team level of each club relative to its league's mean, by rank
+ * (0 = strongest): normal scores with the elite pulled clear, rescaled to
+ * the shape's standard deviation.
+ */
+std::vector<float> levelOffsets(const LeagueShape& shape, std::size_t clubs);
+
+/**
+ * Reputation the clubs of @p league spread around: the league's own
+ * reputation, lowered when needed so that its strongest club stays below
+ * the cap of 99.
+ */
+float reputationCentre(const LeagueProfile& league, std::size_t clubs);
+
+/**
+ * Mean first-team level a club of @p reputation is generated at: the
+ * league's level (teamLevel of its reputation plus the shape's offset) and
+ * the club's place in the league's hierarchy.
+ */
+float clubLevel(const LeagueEconomy& economy, std::uint8_t reputation);
+
 /** Overall rating of @p stats for @p role (same formula as Player). */
 double overallFor(PlayerRole role, const std::map<std::string, float>& stats,
                   const StatsConfig& stats_config);

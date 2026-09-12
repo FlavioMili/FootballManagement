@@ -537,9 +537,11 @@ void MainGameScene::renderNextMatchCard(float width, float height)
             home ? palette.positive : palette.warning);
   ImGui::SameLine();
   const bool today = next.date == controller.getCurrentDate();
-  ImGui::TextColored(
-      today ? palette.accent : palette.muted, "%s",
-      today ? LOC("FIXTURE_TODAY") : Format::date(next.date).c_str());
+  const std::string when =
+      today ? std::string(LOC("FIXTURE_TODAY")) + " " + Format::kickoff(next.kickoff)
+            : Format::matchDay(next.date, next.kickoff);
+  ImGui::TextColored(today ? palette.accent : palette.muted, "%s",
+                     when.c_str());
 
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
   {
@@ -594,13 +596,18 @@ void MainGameScene::renderNextMatchCard(float width, float height)
     Navigation::openClub(guiView, opponentId);
 
   // Match readiness on the same row, right-aligned: players who cannot play
-  // this fixture (injured, suspended) do not count as ready starters.
+  // this fixture (injured, suspended) do not count as ready starters. With
+  // nobody fit to replace them the injured play through it: nothing to fix.
   const size_t ready = cached_starters - cached_unavailable_starters;
-  const bool blocked = !cached_unavailable.empty();
+  const bool blocked = lineupBlocked();
+  const bool playingInjured = !blocked && !cached_unavailable.empty();
   const std::string readiness =
       blocked ? fmt::sprintf(LOC("DASHBOARD_XI_UNAVAILABLE"), ready,
                              cached_unavailable.size())
-              : fmt::sprintf(LOC("DASHBOARD_STARTING_XI"), cached_starters);
+      : playingInjured
+          ? fmt::sprintf(LOC("DASHBOARD_XI_PLAYING_INJURED"), ready,
+                         cached_unavailable.size())
+          : fmt::sprintf(LOC("DASHBOARD_STARTING_XI"), cached_starters);
   const char* fixLabel = LOC("DASHBOARD_AUTO_FIX");
   const float fixWidth =
       blocked ? UI::buttonWidth(fixLabel) + ImGui::GetStyle().ItemSpacing.x
@@ -612,9 +619,9 @@ void MainGameScene::renderNextMatchCard(float width, float height)
       std::max(ImGui::GetCursorPosX(),
                ImGui::GetWindowContentRegionMax().x - readinessWidth));
   ImGui::AlignTextToFramePadding();
-  ImGui::TextColored(blocked                 ? palette.negative
-                     : cached_starters == 11 ? palette.positive
-                                             : palette.warning,
+  ImGui::TextColored(blocked                                    ? palette.negative
+                     : cached_starters == 11 && !playingInjured ? palette.positive
+                                                                : palette.warning,
                      "%s", readiness.c_str());
   if (blocked)
   {
@@ -984,6 +991,8 @@ void MainGameScene::refreshData()
                     (lineup.getGoalkeeper() != nullptr ? 1U : 0U);
   cached_unavailable_starters =
       Formation::unavailableStarters(lineup, cached_unavailable);
+  cached_can_kick_off = cached_unavailable.empty() ||
+                        controller.canKickOff(club.getId(), nextType);
 
   cached_recent.clear();
   const auto fixtures =

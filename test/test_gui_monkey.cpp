@@ -447,7 +447,11 @@ std::vector<std::string> checkWorld(const GameController& controller)
       report("squad size", std::format("club {} has {} players", teamId, squad));
     if (teamId == managedId && squad > 60)
       report("squad size", std::format("managed club has {} players", squad));
-    for (const PlayerID playerId : team.getPlayerIDs())
+    // Club players: the senior squad plus the academy.
+    std::vector<PlayerID> members = team.getPlayerIDs();
+    members.insert(members.end(), team.getAcademyIDs().begin(),
+                   team.getAcademyIDs().end());
+    for (const PlayerID playerId : members)
     {
       const auto [previous, inserted] = owner.emplace(playerId, teamId);
       const auto player = data->getPlayer(playerId);
@@ -1579,6 +1583,8 @@ class Monkey
         driver.click(*point);
         Driver::parkMouse();
         driver.frame();
+        // The hub simulates the rest of the day before the report opens.
+        driver.settle(problems);
         return std::format("finish match -> '{}' {}",
                            sceneName(driver.activeId()),
                            controller.getCurrentDate().toString());

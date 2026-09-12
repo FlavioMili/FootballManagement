@@ -1399,6 +1399,127 @@ TEST(MatchEngineTest, BackgroundFidelityIsDeterministicAndCompletes)
   EXPECT_EQ(headless.getEvents().size(), full.getEvents().size());
 }
 
+TEST(MatchEngineTest, DefaultMatchContextPlaysExactlyLikeNone)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 70, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine plain(home.getLineup(), away.getLineup(), home.getStrategy(),
+                    away.getStrategy(), config, 4242);
+  MatchEngine withContext(home.getLineup(), away.getLineup(),
+                          home.getStrategy(), away.getStrategy(), config, 4242);
+  withContext.setMatchContext(MatchContext{});
+  EXPECT_EQ(plain.getRefereeStrictness(), withContext.getRefereeStrictness());
+  plain.simulateToEnd(MatchFidelity::BACKGROUND);
+  withContext.simulateToEnd(MatchFidelity::BACKGROUND);
+  EXPECT_EQ(plain.getHomeScore(), withContext.getHomeScore());
+  EXPECT_EQ(plain.getAwayScore(), withContext.getAwayScore());
+  EXPECT_EQ(plain.getSimulatedSteps(), withContext.getSimulatedSteps());
+  EXPECT_EQ(plain.getStats().homePossession,
+            withContext.getStats().homePossession);
+  ASSERT_EQ(plain.getEvents().size(), withContext.getEvents().size());
+  for (std::size_t index = 0; index < plain.getEvents().size(); ++index)
+  {
+    EXPECT_EQ(plain.getEvents()[index].type, withContext.getEvents()[index].type);
+    EXPECT_EQ(plain.getEvents()[index].timeMinute,
+              withContext.getEvents()[index].timeMinute);
+    EXPECT_EQ(plain.getEvents()[index].primaryPlayerId,
+              withContext.getEvents()[index].primaryPlayerId);
+  }
+}
+
+TEST(MatchEngineTest, MatchContextIsSetBeforeKickOffWithinLimits)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 70, players);
+  Team away = createSquadWithBench(2, "Away", 70, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 7);
+  MatchContext extreme;
+  extreme.goalRateScale = 50.0f;
+  extreme.refereeStrictnessMean = -3.0f;
+  extreme.homeAdvantageScale = std::numeric_limits<float>::quiet_NaN();
+  engine.setMatchContext(extreme);
+  EXPECT_LE(engine.getMatchContext().goalRateScale,
+            MatchTuning::Context::MAX_GOAL_RATE_SCALE);
+  EXPECT_GE(engine.getMatchContext().refereeStrictnessMean,
+            MatchTuning::Context::MIN_REFEREE_STRICTNESS);
+  EXPECT_EQ(engine.getMatchContext().homeAdvantageScale, 1.0f);
+  EXPECT_GT(engine.getRefereeStrictness(), 0.0f);
+
+  // Once the match is under way the context no longer changes.
+  engine.advance(30.0f);
+  const MatchContext before = engine.getMatchContext();
+  MatchContext later;
+  later.goalRateScale = 0.7f;
+  engine.setMatchContext(later);
+  EXPECT_EQ(engine.getMatchContext().goalRateScale, before.goalRateScale);
+}
+
+TEST(MatchEngineTest, MatchContextMovesGoalsCardsAndHomeAdvantage)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 68, players);
+  Team away = createSquadWithBench(2, "Away", 68, players);
+  const StatsConfig config = createStatsConfig();
+  struct Totals
+  {
+    int goals = 0;
+    int yellows = 0;
+    int homePoints = 0;
+  };
+  // The same seeds under each context, so only the context differs.
+  const auto run = [&](const MatchContext& context, int matches)
+  {
+    Totals totals;
+    for (int index = 0; index < matches; ++index)
+    {
+      MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                         away.getStrategy(), config,
+                         900U + static_cast<uint32_t>(index) * 31U);
+      engine.setMatchContext(context);
+      engine.simulateToEnd(MatchFidelity::BACKGROUND);
+      totals.goals += engine.getHomeScore() + engine.getAwayScore();
+      totals.yellows +=
+          engine.getStats().homeYellowCards + engine.getStats().awayYellowCards;
+      totals.homePoints += engine.getHomeScore() > engine.getAwayScore()    ? 3
+                           : engine.getHomeScore() == engine.getAwayScore() ? 1
+                                                                            : 0;
+    }
+    return totals;
+  };
+  MatchContext lowScoring;
+  lowScoring.goalRateScale = 0.8f;
+  MatchContext highScoring;
+  highScoring.goalRateScale = 1.25f;
+  const Totals fewGoals = run(lowScoring, 60);
+  const Totals manyGoals = run(highScoring, 60);
+  std::printf("[context] goals %d vs %d\n", fewGoals.goals, manyGoals.goals);
+  EXPECT_LT(fewGoals.goals * 115, manyGoals.goals * 100);
+
+  MatchContext lenient;
+  lenient.refereeStrictnessMean = 0.75f;
+  MatchContext strict;
+  strict.refereeStrictnessMean = 1.35f;
+  const Totals fewCards = run(lenient, 40);
+  const Totals manyCards = run(strict, 40);
+  std::printf("[context] yellows %d vs %d\n", fewCards.yellows,
+              manyCards.yellows);
+  EXPECT_LT(fewCards.yellows * 130, manyCards.yellows * 100);
+
+  MatchContext neutral;
+  neutral.homeAdvantageScale = 0.0f;
+  MatchContext fortress;
+  fortress.homeAdvantageScale = 2.0f;
+  const Totals neutralVenue = run(neutral, 80);
+  const Totals strongHome = run(fortress, 80);
+  std::printf("[context] home points %d vs %d\n", neutralVenue.homePoints,
+              strongHome.homePoints);
+  EXPECT_LT(neutralVenue.homePoints, strongHome.homePoints);
+}
+
 namespace
 {
 /** Plays a knockout match between two squads to the end. */

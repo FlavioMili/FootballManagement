@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS Fixtures (
     extra_time INTEGER NOT NULL DEFAULT 0,
     home_penalties INTEGER,                    -- NULL unless decided on penalties
     away_penalties INTEGER,
+    kickoff INTEGER NOT NULL DEFAULT 0,        -- minutes after midnight; 0: usual time of the competition
     FOREIGN KEY(home_team_id) REFERENCES Teams(id),
     FOREIGN KEY(away_team_id) REFERENCES Teams(id),
     UNIQUE(game_date, home_team_id, away_team_id)

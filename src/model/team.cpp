@@ -19,7 +19,37 @@
 namespace
 {
 constexpr std::size_t RECENT_FORM_LENGTH = 5;
+/** Oldest (season) age at which automatic selection treats a player as an
+ * unproven youngster. */
+constexpr int YOUNG_MAX_AGE = 20;
+/** Youngest (season) age of an experienced player. */
+constexpr int EXPERIENCED_MIN_AGE = 23;
+/** A youngster starts ahead of an experienced player of his position group
+ * only when he is this much better: at similar ability managers trust
+ * experience, and U21 players get 2-10% of league minutes. [RR2 3.3] */
+constexpr double YOUTH_START_MARGIN = 2.0;
+
+int positionGroup(PlayerRole role)
+{
+  switch (role)
+  {
+    case PlayerRole::GK:
+      return 0;
+    case PlayerRole::LB:
+    case PlayerRole::CB:
+    case PlayerRole::RB:
+      return 1;
+    case PlayerRole::CDM:
+    case PlayerRole::CM:
+    case PlayerRole::CAM:
+    case PlayerRole::LM:
+    case PlayerRole::RM:
+      return 2;
+    default:
+      return 3;
+  }
 }
+}  // namespace
 
 // Constructor
 Team::Team(TeamID team_id, uint8_t team_league_id, std::string_view team_name,
@@ -44,21 +74,39 @@ const std::string& Team::getName() const { return name; }
 
 const std::vector<PlayerID>& Team::getPlayerIDs() const { return player_ids; }
 
+const std::vector<PlayerID>& Team::getAcademyIDs() const
+{
+  return academy_ids;
+}
+
 void Team::addPlayerID(PlayerID player_id)
 {
+  std::erase(academy_ids, player_id);
   if (!std::ranges::contains(player_ids, player_id))
   {
     player_ids.push_back(player_id);
   }
 }
 
+void Team::addAcademyID(PlayerID player_id)
+{
+  std::erase(player_ids, player_id);
+  if (!std::ranges::contains(academy_ids, player_id))
+    academy_ids.push_back(player_id);
+}
+
+void Team::setAcademyMember(PlayerID player_id, bool academy)
+{
+  auto& from = academy ? player_ids : academy_ids;
+  if (std::erase(from, player_id) > 0)
+    (academy ? academy_ids : player_ids).push_back(player_id);
+}
+
 bool Team::removePlayerID(PlayerID player_id)
 {
-  if (std::erase(player_ids, player_id) > 0)
-  {
-    return true;
-  }
-  return false;
+  const bool senior = std::erase(player_ids, player_id) > 0;
+  const bool academy = std::erase(academy_ids, player_id) > 0;
+  return senior || academy;
 }
 
 // Lineup access
@@ -77,21 +125,50 @@ void Team::generateStartingXI(const class GameData& gamedata,
   // Academy players only fill in when the senior squad runs short.
   constexpr std::size_t MIN_SENIORS = 14;
   std::vector<PlayerID> available;
-  std::vector<PlayerID> academy;
-  available.reserve(player_ids.size());
+  available.reserve(player_ids.size() + academy_ids.size());
   const auto& players = gamedata.getPlayers();
-  for (const PlayerID player_id : player_ids)
+  const auto addAvailable = [&](const std::vector<PlayerID>& ids)
   {
-    const auto found = players.find(player_id);
-    if (found == players.end() || !found->second.isAvailable()) continue;
-    if (found->second.isAcademyPlayer())
-      academy.push_back(player_id);
-    else
-      available.push_back(player_id);
-  }
-  if (available.size() < MIN_SENIORS)
-    available.insert(available.end(), academy.begin(), academy.end());
+    for (const PlayerID player_id : ids)
+    {
+      const auto found = players.find(player_id);
+      if (found != players.end() && found->second.isAvailable())
+        available.push_back(player_id);
+    }
+  };
+  addAvailable(player_ids);
+  if (available.size() < MIN_SENIORS) addAvailable(academy_ids);
   lineup.generateStartingXI(gamedata, available, stats_config);
+
+  // Youngsters who are not clearly better than an experienced player of
+  // their position group left out of the XI start on the bench instead.
+  std::vector<PlayerID> benched;
+  for (const Player* starter : lineup.starters())
+  {
+    if (starter->getAge() > YOUNG_MAX_AGE) continue;
+    const double threshold =
+        starter->getOverall(stats_config) - YOUTH_START_MARGIN;
+    const int group = positionGroup(starter->getRole());
+    const bool experienced_option = std::ranges::any_of(
+        available,
+        [&](PlayerID player_id)
+        {
+          const Player& other = players.at(player_id);
+          return other.getAge() >= EXPERIENCED_MIN_AGE &&
+                 positionGroup(other.getRole()) == group &&
+                 other.getOverall(stats_config) >= threshold &&
+                 !lineup.isStarter(player_id);
+        });
+    if (experienced_option) benched.push_back(starter->getId());
+  }
+  if (benched.empty()) return;
+  std::erase_if(available, [&](PlayerID player_id)
+                { return std::ranges::contains(benched, player_id); });
+  lineup.generateStartingXI(gamedata, available, stats_config);
+  std::vector<const Player*> reserves = lineup.getReserves();
+  for (const PlayerID player_id : benched)
+    reserves.push_back(&players.at(player_id));
+  lineup.setReserves(reserves);
 }
 
 // Finances access

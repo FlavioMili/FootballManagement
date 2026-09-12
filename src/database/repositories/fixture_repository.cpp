@@ -24,8 +24,8 @@ namespace
 constexpr const char* INSERT_FIXTURE_SQL =
     "INSERT OR REPLACE INTO Fixtures (game_date, home_team_id, away_team_id, "
     "match_type, home_goals, away_goals, played, competition_id, stage, "
-    "extra_time, home_penalties, away_penalties) "
-    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    "extra_time, home_penalties, away_penalties, kickoff) "
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
 constexpr const char* REPORT_COLUMNS =
     "game_date, home_team_id, away_team_id, season, match_type, "
@@ -61,9 +61,11 @@ void bindFixture(sqlite3_stmt* stmt, const Match& match)
     sqlite3_bind_null(stmt, 11);
     sqlite3_bind_null(stmt, 12);
   }
+  sqlite3_bind_int(stmt, 13, match.getScheduledKickoff());
 }
 
-/** Columns of a fixture that change after it was scheduled. */
+/** Columns of a fixture that change after it was scheduled (the kick-off
+ * never does: a fixture moved to another day is a new row). */
 struct FixtureState
 {
   int match_type = 0;
@@ -150,7 +152,7 @@ std::vector<Match> FixtureRepository::loadAllMatches() const
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       "SELECT home_team_id, away_team_id, game_date, match_type, home_goals, "
       "away_goals, played, competition_id, stage, extra_time, home_penalties, "
-      "away_penalties FROM Fixtures;");
+      "away_penalties, kickoff FROM Fixtures;");
 
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
@@ -162,6 +164,7 @@ std::vector<Match> FixtureRepository::loadAllMatches() const
     Match match(home_id, away_id, GameDateValue::fromString(date_str),
                 match_type, static_cast<LeagueID>(sqlite3_column_int(stmt, 7)),
                 static_cast<uint8_t>(sqlite3_column_int(stmt, 8)));
+    match.setKickoff(static_cast<uint16_t>(sqlite3_column_int(stmt, 12)));
     if (sqlite3_column_int(stmt, 6) != 0)
     {
       std::optional<std::pair<uint8_t, uint8_t>> penalties;
@@ -285,6 +288,7 @@ void FixtureRepository::loadCalendar(Calendar& calendar) const
   {
     calendar.addMatch(match);
   }
+  calendar.markRestChecked();
 }
 
 void FixtureRepository::saveMatchReports(

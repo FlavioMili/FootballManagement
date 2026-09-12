@@ -204,6 +204,17 @@ TEST(NextActionTest, LimitAndOrderAreDeterministic)
   EXPECT_EQ(rankNextActions(facts, 2).size(), 2U);
 }
 
+TEST(NextActionTest, NothingToFixWhenNobodyFitCanReplaceThem)
+{
+  NextActionFacts facts;
+  facts.days_to_match = 0;
+  facts.next_opponent = "Rivals";
+  facts.unavailable_selected = {"A", "B"};
+  facts.no_fit_replacements = true;
+  EXPECT_FALSE(hasKind(rankNextActions(facts),
+                       NextActionKind::UnavailableInLineup));
+}
+
 TEST(NextActionTest, ControllerReportsUnavailableStarters)
 {
   Logger::init();
@@ -224,7 +235,38 @@ TEST(NextActionTest, ControllerReportsUnavailableStarters)
 
   const NextActionFacts facts = gatherNextActionFacts(controller);
   EXPECT_FALSE(facts.unavailable_selected.empty());
+  EXPECT_FALSE(facts.no_fit_replacements) << "the reserve keeper can play";
   EXPECT_FALSE(facts.assistant_fixes_lineup);
   const auto actions = controller.getNextActions(10);
   EXPECT_TRUE(hasKind(actions, NextActionKind::UnavailableInLineup));
+}
+
+TEST(NextActionTest, EveryoneInjuredIsNotReportedAsAFixableLineup)
+{
+  Logger::init();
+  SlotCleanup slot{uniqueSlot(2)};
+  GameController controller;
+  controller.newGame(slot.slot, WORLD_SEED);
+  controller.selectManagedTeam(controller.getTeams().front().get().getId());
+  controller.setAssistantFixesLineup(false);
+  const Team& club = controller.getManagedTeam()->get();
+  for (const PlayerID id : club.getPlayerIDs())
+  {
+    PlayerDynamics& dynamics =
+        controller.getGameData()->getPlayers().at(id).mutableDynamics();
+    dynamics.injury = InjuryType::HamstringStrain;
+    dynamics.injury_days = 30;
+  }
+  const auto fixture = controller.getNextManagedFixture();
+  ASSERT_TRUE(fixture.has_value());
+  const MatchType type = fixture->type;
+  // The assistant's best selection: injured players nobody can replace.
+  controller.autoFixLineup(club.getId(), type);
+  ASSERT_TRUE(controller.canKickOff(club.getId(), type));
+
+  const NextActionFacts facts = gatherNextActionFacts(controller);
+  EXPECT_FALSE(facts.unavailable_selected.empty());
+  EXPECT_TRUE(facts.no_fit_replacements);
+  EXPECT_FALSE(hasKind(controller.getNextActions(10),
+                       NextActionKind::UnavailableInLineup));
 }

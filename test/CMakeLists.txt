@@ -24,6 +24,7 @@ add_executable(unit_tests
   test_transfer_market.cpp
   test_transfer_negotiation.cpp
   test_competitions.cpp
+  test_staggered_rounds.cpp
   test_view_models.cpp
   test_finances.cpp
   test_world_sim.cpp
@@ -70,6 +71,7 @@ add_executable(core_unit_tests
   test_transfer_market.cpp
   test_transfer_negotiation.cpp
   test_competitions.cpp
+  test_staggered_rounds.cpp
   test_finances.cpp
   test_world_sim.cpp
   test_match_scheduler.cpp

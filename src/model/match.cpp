@@ -15,6 +15,7 @@
 
 #include "database/gamedata.h"
 #include "lineup.h"
+#include "model/calendar.h"
 #include "model/competition.h"
 #include "model/match_engine.h"
 #include "model/match_report.h"
@@ -41,6 +42,29 @@ uint32_t Match::getSeed() const
          static_cast<uint32_t>(away_team_id) ^
          (static_cast<uint32_t>(match_date.year) << 8U) ^
          (static_cast<uint32_t>(match_date.month) << 4U) ^ match_date.day;
+}
+
+uint16_t Match::getKickoff() const
+{
+  if (kickoff != 0) return kickoff;
+  constexpr auto at = [](int hour, int minute)
+  { return static_cast<uint16_t>(hour * 60 + minute); };
+  constexpr uint8_t THURSDAY = 3;
+  const uint8_t weekday = SeasonCalendar::dayOfWeek(match_date);
+  const bool weekend = weekday == SeasonCalendar::SATURDAY ||
+                       weekday == SeasonCalendar::SUNDAY;
+  switch (match_type)
+  {
+    case MatchType::FRIENDLY:
+      return at(17, 0);
+    case MatchType::CUP:
+      return weekend ? at(21, 0) : at(20, 45);
+    case MatchType::CONTINENTAL:
+      return weekday == THURSDAY ? at(18, 45) : at(21, 0);
+    case MatchType::LEAGUE:
+      break;
+  }
+  return weekend ? at(15, 0) : at(20, 45);
 }
 
 void Match::simulate(const GameData& game_data, MatchReport* report,
@@ -72,19 +96,21 @@ std::optional<MatchSimulationInput> Match::prepareSimulation(
   input.away_lineup = away_team->get().getLineup();
   input.home_strategy = home_team->get().getStrategy();
   input.away_strategy = away_team->get().getStrategy();
-  // Seeded by the fixture alone, so drawing it up front for every tie gives
-  // the same extra time as drawing it after a level 90 minutes.
-  if (isKnockout())
-    input.knockout = Competitions::resolveDrawnKnockout(
-        home_team->get(), away_team->get(), game_data.getStatsConfig(),
-        input.seed);
+  // A cup tie is a single match: level after 90 minutes it goes to extra
+  // time and penalties. Two-legged continental ties get their aggregate
+  // from the competition (CompetitionManager::knockoutRules).
+  input.knockout.required = isKnockout();
+  // League and domestic cup matches are played in the style of the home
+  // club's league; continental matches and friendlies keep the default.
+  if (match_type == MatchType::LEAGUE || match_type == MatchType::CUP)
+    input.league_id = home_team->get().getLeagueId();
   return input;
 }
 
 MatchReport Match::applySimulation(MatchSimulationResult result)
 {
-  if (result.extra_time)
-    setKnockoutResult(result.home_goals, result.away_goals, true,
+  if (result.extra_time || result.penalties)
+    setKnockoutResult(result.home_goals, result.away_goals, result.extra_time,
                       result.penalties);
   else
     setPlayedResult(result.home_goals, result.away_goals);
@@ -122,6 +148,7 @@ std::optional<TeamID> Match::getWinnerId() const
 
 void Match::writeResultTo(MatchReport& report) const
 {
+  constexpr uint8_t REGULATION_MINUTES = 90;
   constexpr uint8_t EXTRA_TIME_MINUTES = 120;
   report.date = match_date;
   report.home_team_id = home_team_id;
@@ -135,7 +162,13 @@ void Match::writeResultTo(MatchReport& report) const
   report.penalties = penalties;
   report.home_penalties = home_penalties;
   report.away_penalties = away_penalties;
-  if (extra_time)
+  // Lines still on the 90-minute scale (score-only results, extra time
+  // settled without the engine) stretch to the extra half hour; an engine
+  // that played extra time already reported 120-minute lines.
+  const bool regulation_lines = std::ranges::none_of(
+      report.players, [](const PlayerMatchLine& line)
+      { return line.minutes > REGULATION_MINUTES; });
+  if (extra_time && regulation_lines)
   {
     for (PlayerMatchLine& line : report.players)
       if (line.started) line.minutes = EXTRA_TIME_MINUTES;

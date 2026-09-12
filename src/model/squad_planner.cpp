@@ -47,13 +47,8 @@ float growthRate(int age)
 /** Yearly decline of overall at @p age (after the birthday). */
 float declineRate(int age)
 {
-  if (age < 30) return 0.0f;
-  if (age <= 32) return PHYSICAL_SHARE * Development::PHYSICAL_DECLINE_30_32;
-  if (age == 33)
-    return PHYSICAL_SHARE * Development::PHYSICAL_DECLINE_AFTER_32 +
-           (1.0f - PHYSICAL_SHARE) * Development::TECHNICAL_DECLINE_32_33;
-  return PHYSICAL_SHARE * Development::PHYSICAL_DECLINE_AFTER_32 +
-         (1.0f - PHYSICAL_SHARE) * Development::TECHNICAL_DECLINE_AFTER_33;
+  return PHYSICAL_SHARE * Development::physicalDecline(age) +
+         (1.0f - PHYSICAL_SHARE) * Development::technicalDecline(age);
 }
 
 std::size_t ageBand(int age)

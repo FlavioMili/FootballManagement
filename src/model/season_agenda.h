@@ -46,6 +46,7 @@ struct AgendaEvent
   bool played = false;
   std::uint8_t home_score = 0;
   std::uint8_t away_score = 0;
+  std::uint16_t kickoff = 0; /*!< Minutes after midnight. */
 };
 
 /**

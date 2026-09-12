@@ -197,6 +197,15 @@ set(FM_CORE_SOURCES
     model/transfer_tuning.h
 )
 
+# The match engine advances the players with straight-line code; without
+# errno and trapping semantics for floating point (the engine reads neither)
+# GCC and Clang vectorise it. Results are unchanged.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND
+   NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+  set_source_files_properties(model/match_engine.cpp PROPERTIES
+    COMPILE_OPTIONS "-fno-math-errno;-fno-trapping-math")
+endif()
+
 find_package(Threads REQUIRED)
 add_library(fm_core STATIC ${FM_CORE_SOURCES})
 

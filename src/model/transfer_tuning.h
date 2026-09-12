@@ -188,6 +188,10 @@ struct TransferTuning final
     static constexpr float OBLIGATION_VALUE_MULTIPLE = 1.0f;
     /** Loanees above this age are rarely wanted by the parent back. */
     static constexpr int PROSPECT_MAX_AGE = 23;
+    /** A parent this many reputation points above the borrower pays most
+     * of the wage, so smaller clubs can afford its prospects. [P] */
+    static constexpr int SMALL_BORROWER_REPUTATION_GAP = 10;
+    static constexpr std::uint8_t SMALL_BORROWER_WAGE_SHARE = 25;
   };
 
   /** AI market activity. */
@@ -198,8 +202,8 @@ struct TransferTuning final
      * activity per club does not depend on the size of the world. Tuned for
      * ~10-15 moves per club and season with 15-25% of them paying a fee.
      * The deadline-day spike carries ~10-15% of window spend. [S/P] */
-    static constexpr float DAILY_EVALUATION_SHARE = 0.16f;
-    static constexpr float DAILY_DEAL_SHARE = 0.16f;
+    static constexpr float DAILY_EVALUATION_SHARE = 0.24f;
+    static constexpr float DAILY_DEAL_SHARE = 0.24f;
     static constexpr float LATE_WINDOW_WEIGHT = 1.8f;
     static constexpr float DEADLINE_DAY_WEIGHT = 6.0f;
     static constexpr int LATE_WINDOW_DAYS = 7;
@@ -220,11 +224,11 @@ struct TransferTuning final
      * AI_MAX_SQUAD + 2. [P] */
     static constexpr std::size_t AI_TARGET_SQUAD = 26;
     static constexpr std::size_t AI_MAX_SQUAD = 30;
-    static constexpr int MAX_LOAN_LISTED_PER_CLUB = 6;
+    static constexpr int MAX_LOAN_LISTED_PER_CLUB = 8;
     /** Clubs sounded out when placing a loan-listed prospect. */
     static constexpr int LOAN_PLACEMENT_TRIES = 8;
     /** AI clubs loan out prospects ranked beyond the matchday squad. */
-    static constexpr std::size_t LOAN_OUT_MIN_RANK = 18;
+    static constexpr std::size_t LOAN_OUT_MIN_RANK = 16;
     /** Veterans beyond this rank and age are released by AI clubs. */
     static constexpr std::size_t RELEASE_MIN_RANK = 22;
     static constexpr int RELEASE_MIN_AGE = 30;
@@ -236,8 +240,37 @@ struct TransferTuning final
     static constexpr float UPGRADE_DEFICIT = 2.0f;
     static constexpr float UPGRADE_MARGIN = 1.0f;
     static constexpr float SHORTAGE_LEVEL_MARGIN = 12.0f;
-    /** Share of needs a club first tries to fill with a loan. [P] */
+    /** A club below AI_TARGET_SQUAD with no position need signs cover
+     * for its thinnest group down to this far below its level. [P] */
+    static constexpr float DEPTH_LEVEL_MARGIN = 6.0f;
+    /** No AI signing pays one player more than this share of the club's
+     * weekly wage budget: a top earner takes ~10-15% of a wage bill, i.e.
+     * ~6-9% of revenue, so wage demands stay at the club's level. [P] */
+    static constexpr float MAX_SINGLE_WAGE_SHARE = 0.15f;
+    /** Pre-contract targets more than this above the club's level do not
+     * drop down to it. [P] */
+    static constexpr float PRE_CONTRACT_MAX_ABOVE_LEVEL = 6.0f;
+    /** Unsigned free agents lower their wage expectations each month. [P] */
+    static constexpr float FREE_AGENT_MONTHLY_WAGE_FACTOR = 0.90f;
+    /** Relegation: this share of a relegated club's first-team players have
+     * a clause that lets them leave for free, at most this many per club.
+     * In the summer after promotion a club measures its starters against
+     * its level plus PROMOTED_LEVEL_BOOST. [P] */
+    static constexpr float RELEGATION_CLAUSE_SHARE = 0.25f;
+    static constexpr int RELEGATION_CLAUSE_MAX_EXITS = 3;
+    static constexpr int RELEGATION_CLAUSE_MAX_AGE = 31;
+    static constexpr float PROMOTED_LEVEL_BOOST = 3.0f;
+    /** Share of visits without a structured move on which a club also
+     * works the transfer list (bids for its targets, lists its surplus):
+     * most moves are free or loans, few carry a fee. [P] */
+    static constexpr double LIST_ACTIVITY_CHANCE = 0.35;
+    /** Share of needs a club first tries to fill with a loan, and share
+     * of the needs left over that it pays a fee for. [P] */
     static constexpr double LOAN_BEFORE_FEE_CHANCE = 0.9;
+    static constexpr double FEE_ROUTE_CHANCE = 0.6;
+    /** A club with less cash than this many weeks of payroll only signs
+     * players for a missing position. [P] */
+    static constexpr std::int64_t UPGRADE_CASH_RESERVE_WEEKS = 8;
     /** A loanee may be this far below the level asked of a signing. [P] */
     static constexpr float LOAN_LEVEL_SLACK = 4.0f;
     /** Fee route: players sampled beyond the list, offers tried, and the
@@ -247,7 +280,7 @@ struct TransferTuning final
     static constexpr double AI_MAX_VALUE_MULTIPLE = 1.6;
     /** Chance per evaluated club that an AI club approaches one of the
      * managed club's players. [P] */
-    static constexpr float MANAGED_APPROACH_CHANCE = 0.005f;
+    static constexpr float MANAGED_APPROACH_CHANCE = 0.0035f;
     /** Transfer news kept for the feed, posted every NEWS_DIGEST_DAYS
      * while a window is open (and when it closes). [P] */
     static constexpr std::size_t NEWS_DIGEST_LIMIT = 5;

@@ -200,7 +200,6 @@ TEST(GuidanceUiTest, GuidanceScreensAtEverySize)
   settings.screen_tips_seen = 0;
   GameController controller;
   controller.newGame(slot.slot, WORLD_SEED);
-  controller.setSimulationThreads(1);
   controller.selectManagedTeam(controller.getTeams().front().get().getId());
 
   GUIView view(controller);
@@ -295,7 +294,6 @@ TEST(GuidanceUiTest, HalfTimeAnalysisOpensAtTheBreak)
   const SlotCleanup slot{uniqueSlot(1)};
   GameController controller;
   controller.newGame(slot.slot, WORLD_SEED);
-  controller.setSimulationThreads(1);
   controller.selectManagedTeam(controller.getTeams().front().get().getId());
   controller.advanceToNextManagedFixture(60);
   const auto fixture = controller.getNextManagedFixture();
@@ -344,7 +342,6 @@ TEST(GuidanceUiTest, OpeningAnUnreadDigestRebuildsTheListSafely)
   const SlotCleanup slot{uniqueSlot(2)};
   GameController controller;
   controller.newGame(slot.slot, WORLD_SEED);
-  controller.setSimulationThreads(1);
   controller.selectManagedTeam(controller.getTeams().front().get().getId());
   controller.markAllInboxMessagesRead();
   Inbox& inbox = controller.getGame()->getWorld().getInbox();

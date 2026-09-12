@@ -34,6 +34,15 @@ std::string date(const GameDateValue& value);
 /** @brief Localised short date without the year, e.g. "12 Jul". */
 std::string dayMonth(const GameDateValue& value);
 
+/** @brief Localised short weekday, e.g. "Sun". */
+const char* weekday(const GameDateValue& value);
+
+/** @brief Kick-off time (minutes after midnight), e.g. "20:45". */
+std::string kickoff(uint16_t minutes);
+
+/** @brief Weekday, short date and kick-off, e.g. "Sun 17 Aug 20:45". */
+std::string matchDay(const GameDateValue& value, uint16_t kickoff_minutes);
+
 /**
  * @brief Localised pattern for a count: KEY_ONE when count is 1 and such a
  * translation exists, otherwise KEY. Avoids "1 days" style texts.

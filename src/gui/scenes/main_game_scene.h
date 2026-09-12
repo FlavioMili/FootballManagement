@@ -128,6 +128,12 @@ class MainGameScene : public ManagementScene
   void renderKeyPlayersCard(float width, float height);
   void startContinuation();
   void autoFixLineup();
+  /** The next fixture's selection has unavailable players the assistant
+   * could still replace (players nobody fit can replace play through it). */
+  [[nodiscard]] bool lineupBlocked() const
+  {
+    return !cached_unavailable.empty() && !cached_can_kick_off;
+  }
 
   void refreshData();
 
@@ -168,6 +174,8 @@ class MainGameScene : public ManagementScene
   std::unordered_set<PlayerID> cached_unavailable;
   size_t cached_starters = 0;
   size_t cached_unavailable_starters = 0;
+  /** Auto-fix would change nothing (see GameController::canKickOff). */
+  bool cached_can_kick_off = true;
   std::vector<CompetitionView::FixtureRow> cached_recent;
   std::optional<CompetitionView::FixtureRow> cached_next;
   std::vector<PlayerView::PlayerRow> cached_squad;

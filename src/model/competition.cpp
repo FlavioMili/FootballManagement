@@ -12,7 +12,9 @@
 #include <cctype>
 #include <cmath>
 #include <map>
+#include <optional>
 #include <string_view>
+#include <tuple>
 #include <unordered_set>
 
 #include "database/gamedata.h"
@@ -88,9 +90,64 @@ std::vector<float> penaltyTakers(const Team& shooters, const Team& keepers)
   return chances;
 }
 
+/**
+ * Day of a tie of a midweek round (@p date is its Wednesday): Tuesday,
+ * Wednesday or Thursday, whichever rests both clubs best and is quietest, so
+ * a round is spread over the three days. Weekend dates (the final) stay.
+ */
+GameDateValue tieDay(const Calendar& calendar, TeamID home_id, TeamID away_id,
+                     const GameDateValue& date, const GameDateValue& after)
+{
+  if (SeasonCalendar::dayOfWeek(date) != SeasonCalendar::WEDNESDAY) return date;
+  std::optional<GameDateValue> best;
+  std::tuple<int, size_t, int> best_key{};
+  for (const int offset : {0, -1, 1})
+  {
+    const GameDateValue day = SeasonCalendar::addDays(date, offset);
+    if (!(after < day) ||
+        (offset != 0 && (SeasonCalendar::isBlackout(day) ||
+                         SeasonCalendar::isContinentalWeek(day))))
+      continue;
+    // Clashes with the clubs' other matches (league fixtures can still move
+    // within their round, see Calendar::protectRest).
+    int clashes = 0;
+    for (int near = -SeasonCalendar::MIN_REST_BEFORE_TIE;
+         near <= SeasonCalendar::MIN_REST_BEFORE_TIE; ++near)
+    {
+      for (const Match& match :
+           calendar.getMatchesForDate(SeasonCalendar::addDays(day, near)))
+      {
+        const bool involved =
+            match.getHomeTeamId() == home_id || match.getAwayTeamId() == home_id ||
+            match.getHomeTeamId() == away_id || match.getAwayTeamId() == away_id;
+        if (!involved) continue;
+        if (near == 0)
+          clashes += 10;
+        else if (near < 0 &&
+                 -near < SeasonCalendar::restDays(match.getMatchType(),
+                                                  MatchType::CUP))
+          ++clashes;
+        else if (near > 0 &&
+                 near < SeasonCalendar::restDays(MatchType::CUP,
+                                                 match.getMatchType()))
+          ++clashes;
+      }
+    }
+    const std::tuple key{clashes, calendar.getMatchesForDate(day).size(),
+                         std::abs(offset)};
+    if (!best || key < best_key)
+    {
+      best = day;
+      best_key = key;
+    }
+  }
+  return best.value_or(date);
+}
+
 void addTies(Calendar& calendar, const GameData& gamedata,
              std::vector<TeamID> participants, std::mt19937& rng,
-             const GameDateValue& date, LeagueID cup_id, uint8_t stage)
+             const GameDateValue& date, LeagueID cup_id, uint8_t stage,
+             const GameDateValue& after)
 {
   std::ranges::shuffle(participants, rng);
   for (size_t i = 0; i + 1 < participants.size(); i += 2)
@@ -104,8 +161,9 @@ void addTies(Calendar& calendar, const GameData& gamedata,
         Competitions::leagueTier(gamedata, home_team->get().getLeagueId()) <
             Competitions::leagueTier(gamedata, away_team->get().getLeagueId()))
       std::swap(home_id, away_id);
-    calendar.addMatch(
-        Match(home_id, away_id, date, MatchType::CUP, cup_id, stage));
+    calendar.addMatch(Match(home_id, away_id,
+                            tieDay(calendar, home_id, away_id, date, after),
+                            MatchType::CUP, cup_id, stage));
   }
 }
 
@@ -354,7 +412,7 @@ void Competitions::scheduleCupFirstRounds(Calendar& calendar,
     }
     const auto dates = SeasonCalendar::cupRoundDates(season_year, rounds);
     addTies(calendar, gamedata, std::move(participants), rng, dates.front(),
-            root, 1);
+            root, 1, SeasonCalendar::addDays(dates.front(), -2));
   }
 }
 
@@ -381,7 +439,8 @@ size_t Competitions::drawPendingCupRounds(Calendar& calendar,
       date = SeasonCalendar::nextFreeMidweek(date);
 
     std::mt19937 rng(mixSeed(season_year, root, CUP_DRAW_SALT + next_stage));
-    addTies(calendar, gamedata, status.remaining, rng, date, root, next_stage);
+    addTies(calendar, gamedata, status.remaining, rng, date, root, next_stage,
+            today);
     added += status.remaining.size() / 2;
   }
   return added;

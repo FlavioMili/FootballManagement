@@ -161,6 +161,8 @@ void CalendarScene::refresh()
         entry.detail = LOC("CALENDAR_OTHER_COMPETITION");
         break;
     }
+    // League rounds are spread over several days: show the kick-off.
+    entry.detail = Format::kickoff(event.kickoff) + "  " + entry.detail;
     if (event.played)
     {
       const int own = home ? event.home_score : event.away_score;

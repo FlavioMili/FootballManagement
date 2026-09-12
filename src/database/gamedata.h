@@ -103,9 +103,22 @@ class GameData
   std::unordered_map<PlayerID, Player>& getPlayers();
   const std::vector<std::reference_wrapper<const Player>>& getPlayersVector()
       const;
+  /** Senior squad of a club: academy players (U18 squad and intake
+   * trialists) are listed by getAcademyForTeam(). */
   const std::vector<std::reference_wrapper<const Player>>& getPlayersForTeam(
       TeamID team_id) const;
+  /** Academy players of a club (still club players for contracts and
+   * wages, but not part of the senior squad). */
+  const std::vector<std::reference_wrapper<const Player>>& getAcademyForTeam(
+      TeamID team_id) const;
+  /**
+   * Moves a player of his club between the senior squad and the academy:
+   * sets Player::isAcademyPlayer() and keeps the club's lists in sync.
+   */
+  void setAcademyMember(PlayerID id, bool academy);
   bool removePlayer(PlayerID id);
+  /** Moves a player to another club's senior squad (academy membership
+   * does not travel with him). */
   void transferPlayer(PlayerID id, TeamID new_team_id);
 
   // ---------------- World state ----------------
@@ -167,6 +180,8 @@ class GameData
   std::vector<std::reference_wrapper<const Player>> _playersVec;
   std::unordered_map<TeamID, std::vector<std::reference_wrapper<const Player>>>
       _teamPlayers;
+  std::unordered_map<TeamID, std::vector<std::reference_wrapper<const Player>>>
+      _teamAcademies;
   StatsConfig stats_config;
   std::shared_ptr<DatabaseConnection> db_conn;
   std::uint64_t world_seed = 0;

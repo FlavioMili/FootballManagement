@@ -17,8 +17,11 @@
 #include "controller/game_controller.h"
 #include "database/database_connection.h"
 #include "database/gamedata.h"
+#include "database/repositories/competition_repository.h"
 #include "global/logger.h"
+#include "model/calendar.h"
 #include "model/competition_manager.h"
+#include "model/season_history.h"
 #include "model/transfer_listing.h"
 #include "model/transfer_market.h"
 #include "model/transfer_tuning.h"
@@ -723,13 +726,14 @@ TEST_F(TransferMarketTest, SummerMarketIsMostlyFreeAndLoanMoves)
             << static_cast<double>(moves) /
                    static_cast<double>(controller->getTeams().size())
             << " seconds=" << seconds << "\n";
-  EXPECT_GT(moves, 150);
+  // About two moves per club in the first 40 days of the summer window.
+  EXPECT_GT(moves, 800);
   EXPECT_GT(fee_moves, 0);
   EXPECT_GT(loans, 0);
   EXPECT_GT(free_moves, 0);
   // FIFA 2025: 17.7% of men's professional moves carried a fee.
   EXPECT_GT(fee_share, 0.08);
-  EXPECT_LT(fee_share, 0.35);
+  EXPECT_LT(fee_share, 0.25);
   for (const auto& team : controller->getTeams())
   {
     EXPECT_EQ(team.get().getFinances().getBalance(),
@@ -740,8 +744,20 @@ TEST_F(TransferMarketTest, SummerMarketIsMostlyFreeAndLoanMoves)
 
 TEST_F(TransferMarketTest, FreeAgentsNeedCashNotTransferBudget)
 {
-  const TeamID managed = manageFirstClub(*controller);
   auto gamedata = controller->getGameData();
+  // The club with the most wage room, so only the fee budget is at stake:
+  // many lower-league clubs start at their wage cap.
+  const auto wageRoom = [&](const Team& team)
+  {
+    return team.getFinances().getWageBudget() -
+           controller->getWeeklyWageBill(team.getId());
+  };
+  const auto roomiest = std::ranges::max_element(
+      controller->getTeams(), {},
+      [&](const auto& team) { return wageRoom(team.get()); });
+  ASSERT_NE(roomiest, controller->getTeams().end());
+  const TeamID managed = roomiest->get().getId();
+  controller->selectManagedTeam(managed);
   const auto& squad = controller->getPlayersForTeam(managed);
   const auto best = std::ranges::max_element(
       squad, {}, [&](const auto& player)
@@ -755,6 +771,9 @@ TEST_F(TransferMarketTest, FreeAgentsNeedCashNotTransferBudget)
   ASSERT_EQ(controller->getContractTalkKind(player), ContractKind::FreeAgent);
   const auto offer = TransferNegotiation::demandedOffer(
       controller->getPlayerDemand(player, ContractKind::FreeAgent));
+  ASSERT_GE(wageRoom(gamedata->getTeams().at(managed)),
+            static_cast<int64_t>(offer.weekly_wage))
+      << "the scenario needs a club with room for the wage";
   const auto result = controller->proposeContract(player, offer);
   EXPECT_TRUE(result.response.accepted);
   ASSERT_TRUE(result.completed)
@@ -1046,4 +1065,234 @@ TEST_F(TransferMarketTest, AMoveEndsTheLoanForGood)
   EXPECT_EQ(gamedata->getPlayer(signed_elsewhere)->get().getTeamId(), next_club);
   EXPECT_EQ(gamedata->getPlayer(stranded)->get().getTeamId(),
             FREE_AGENTS_TEAM_ID);
+}
+
+namespace
+{
+/** Wages a club is committed to next season: contracts that run beyond
+ * 30 June and the pre-contracts it has agreed. */
+int64_t committedNextSeason(const GameController& controller,
+                            const TransferMarket& market, TeamID club)
+{
+  int64_t wages = 0;
+  for (const auto& player : controller.getPlayersForTeam(club))
+  {
+    if (player.get().getContractYears() > 1 &&
+        market.findLoan(player.get().getId()) == nullptr)
+      wages += player.get().getWage();
+  }
+  for (const auto& [id, loan] : market.loans())
+  {
+    if (loan.parent == club &&
+        controller.getGameData()->getPlayer(id)->get().getContractYears() > 1)
+      wages += loan.full_wage;
+  }
+  for (const auto& [id, deal] : market.preContracts())
+  {
+    if (deal.to_team == club) wages += deal.terms.weekly_wage;
+  }
+  return wages;
+}
+}  // namespace
+
+TEST_F(TransferMarketTest, AiPreContractsFitTheBuyersBudgets)
+{
+  const TeamID managed = manageFirstClub(*controller);
+  controller->saveGame();
+  MarketHarness harness(*controller);
+  auto gamedata = controller->getGameData();
+  const std::size_t clubs = controller->getTeams().size();
+  const int attempts = TransferTuning::Market::perDay(
+      clubs, TransferTuning::Market::DAILY_PRE_CONTRACT_SHARE);
+  const GameDateValue first(2026, 1, 1);
+  const GameDateValue last(2026, 6, 30);
+  WorldRng rng = WorldRng::stream(gamedata->getWorldSeed(),
+                                  RngDomain::Transfers, 11, 7);
+  for (GameDateValue day = first; !(last < day); day = day + 1)
+    harness.market.runAiPreContracts(day, managed, rng, attempts);
+
+  const auto& deals = harness.market.preContracts();
+  ASSERT_GT(deals.size(), 50u) << "the market still works";
+  std::unordered_map<TeamID, int64_t> costs;
+  for (const auto& [player_id, deal] : deals)
+  {
+    const Team& buyer = gamedata->getTeams().at(deal.to_team);
+    const int64_t budget = buyer.getFinances().getWageBudget();
+    EXPECT_LE(static_cast<double>(deal.terms.weekly_wage),
+              static_cast<double>(budget) *
+                  TransferTuning::Market::MAX_SINGLE_WAGE_SHARE)
+        << buyer.getName() << " pays one player out of its league";
+    costs[deal.to_team] +=
+        deal.terms.signing_bonus +
+        static_cast<int64_t>(deal.terms.weekly_wage) *
+            TransferTuning::Offer::FREE_AGENT_FEE_WEEKS;
+  }
+  for (const auto& [club, cost] : costs)
+  {
+    const Team& buyer = gamedata->getTeams().at(club);
+    EXPECT_LE(committedNextSeason(*controller, harness.market, club),
+              buyer.getFinances().getWageBudget())
+        << buyer.getName() << " breaks its wage budget";
+    EXPECT_LE(cost, harness.market.spendableBudget(club, last))
+        << buyer.getName() << " cannot fund the bonuses and agent fees";
+  }
+}
+
+TEST_F(TransferMarketTest, FreeAgentsLowerTheirDemandsAndSignWithinMeans)
+{
+  const TeamID managed = manageFirstClub(*controller);
+  controller->saveGame();
+  MarketHarness harness(*controller);
+  auto gamedata = controller->getGameData();
+
+  // A big club lets its best-paid seniors go.
+  const auto richest = std::ranges::max_element(
+      controller->getTeams(), {}, [](const auto& team)
+      { return team.get().getFinances().getWageBudget(); });
+  const TeamID big_club = richest->get().getId();
+  ASSERT_NE(big_club, managed);
+  std::vector<PlayerID> released;
+  for (const auto& player : controller->getPlayersForTeam(big_club))
+  {
+    if (player.get().getAge() >= 24 && released.size() < 12)
+      released.push_back(player.get().getId());
+  }
+  const GameDateValue august(2025, 8, 20);
+  for (const PlayerID id : released)
+    ASSERT_TRUE(harness.market.releasePlayer(id, august, managed));
+
+  const PlayerID star = released.front();
+  const uint32_t wage = gamedata->getPlayer(star)->get().getWage();
+  const TeamID other = controller->getTeams()[3].get().getId();
+  const uint32_t demand =
+      TransferNegotiation::contractDemand(
+          harness.market.playerContext(star, other, ContractKind::FreeAgent))
+          .weekly_wage;
+  // Two months without a club.
+  harness.market.onDayAdvanced(GameDateValue(2025, 9, 1), managed);
+  harness.market.onDayAdvanced(GameDateValue(2025, 10, 1), managed);
+  const uint32_t lowered = gamedata->getPlayer(star)->get().getWage();
+  EXPECT_LT(lowered, wage);
+  EXPECT_NEAR(static_cast<double>(lowered),
+              wage * TransferTuning::Market::FREE_AGENT_MONTHLY_WAGE_FACTOR *
+                  TransferTuning::Market::FREE_AGENT_MONTHLY_WAGE_FACTOR,
+              2.0);
+  EXPECT_LT(TransferNegotiation::contractDemand(
+                harness.market.playerContext(star, other,
+                                             ContractKind::FreeAgent))
+                .weekly_wage,
+            demand);
+  EXPECT_GE(lowered, TransferTuning::Contract::MINIMUM_WEEKLY_WAGE);
+
+  // Clubs sign the free agents they can pay, and pay them within their
+  // wage budget and the single-player share of it.
+  std::unordered_map<TeamID, int64_t> room;
+  for (const auto& team : controller->getTeams())
+    room[team.get().getId()] =
+        team.get().getFinances().getWageBudget() -
+        controller->getWeeklyWageBill(team.get().getId());
+  WorldRng rng = WorldRng::stream(gamedata->getWorldSeed(),
+                                  RngDomain::Transfers, 12, 7);
+  const GameDateValue october(2025, 10, 10);
+  for (int round = 0; round < 3; ++round)
+  {
+    for (const auto& team : controller->getTeams())
+      harness.market.runAiClub(team.get().getId(), {}, october, managed, rng,
+                               true);
+  }
+  int signed_players = 0;
+  std::unordered_map<TeamID, int64_t> added;
+  for (const TransferRecord& record : harness.market.history())
+  {
+    if (record.kind != TransferKind::Free || !(record.date == october))
+      continue;
+    ++signed_players;
+    const Team& club = gamedata->getTeams().at(record.to_team);
+    const uint32_t paid =
+        gamedata->getPlayer(record.player_id)->get().getWage();
+    added[record.to_team] += paid;
+    EXPECT_LE(added[record.to_team], room[record.to_team]) << club.getName();
+    EXPECT_LE(static_cast<double>(paid),
+              static_cast<double>(club.getFinances().getWageBudget()) *
+                  TransferTuning::Market::MAX_SINGLE_WAGE_SHARE)
+        << club.getName();
+  }
+  EXPECT_GT(signed_players, 0);
+}
+
+TEST_F(TransferMarketTest, RelegationClausesLetPlayersLeaveRelegatedClubs)
+{
+  const TeamID managed = manageFirstClub(*controller);
+  auto gamedata = controller->getGameData();
+  // One whole division goes down (the managed club included).
+  const LeagueID league = gamedata->getTeams().at(managed).getLeagueId();
+  SeasonHistoryEntry entry;
+  entry.season = 1;
+  entry.start_year = 2025;
+  entry.competition_type = MatchType::LEAGUE;
+  entry.competition_id = league;
+  entry.competition_name = "League";
+  std::vector<TeamID> relegated;
+  for (const auto& team : controller->getTeams())
+  {
+    if (team.get().getLeagueId() == league)
+      relegated.push_back(team.get().getId());
+  }
+  entry.relegated = relegated;
+  controller->saveGame();
+  CompetitionRepository(controller->getDbConn()).saveSeasonHistory({entry});
+  MarketHarness harness(*controller);
+  Calendar calendar;
+  harness.competitions.load(calendar, 2);
+
+  std::unordered_map<TeamID, int64_t> balances;
+  std::unordered_map<TeamID, std::vector<PlayerID>> first_team;
+  const StatsConfig& config = gamedata->getStatsConfig();
+  for (const auto& team : controller->getTeams())
+  {
+    const TeamID id = team.get().getId();
+    balances[id] = team.get().getFinances().getBalance();
+    std::vector<std::pair<double, PlayerID>> ranked;
+    for (const auto& player : controller->getPlayersForTeam(id))
+    {
+      if (!player.get().isAcademyPlayer())
+        ranked.emplace_back(player.get().getOverall(config),
+                            player.get().getId());
+    }
+    std::ranges::sort(ranked, std::greater<>{});
+    for (std::size_t i = 0; i < ranked.size() && i < 16; ++i)
+      first_team[id].push_back(ranked[i].second);
+  }
+
+  const GameDateValue july(2026, 7, 1);
+  harness.market.onDayAdvanced(july, managed);
+  std::unordered_map<TeamID, int> exits;
+  for (const TransferRecord& record : harness.market.history())
+  {
+    if (record.kind != TransferKind::Release || !(record.date == july))
+      continue;
+    ++exits[record.from_team];
+    EXPECT_TRUE(std::ranges::contains(relegated, record.from_team))
+        << "only relegated clubs lose players this way";
+    EXPECT_TRUE(
+        std::ranges::contains(first_team[record.from_team], record.player_id))
+        << "the clause is for first-team players";
+    EXPECT_EQ(record.fee, 0u) << "the clause frees the player at no cost";
+    const Player& player = gamedata->getPlayer(record.player_id)->get();
+    EXPECT_EQ(player.getTeamId(), FREE_AGENTS_TEAM_ID);
+    EXPECT_LE(player.getAge(),
+              TransferTuning::Market::RELEGATION_CLAUSE_MAX_AGE);
+  }
+  EXPECT_EQ(exits[managed], 0) << "the manager's contracts carry no clause";
+  int total = 0;
+  for (const auto& [club, count] : exits)
+  {
+    total += count;
+    EXPECT_LE(count, TransferTuning::Market::RELEGATION_CLAUSE_MAX_EXITS);
+    EXPECT_EQ(gamedata->getTeams().at(club).getFinances().getBalance(),
+              balances[club])
+        << "no severance is due";
+  }
+  // ~25% of 16 first-team players at 19 clubs, capped at three a club.
+  EXPECT_GT(total, 19);
 }

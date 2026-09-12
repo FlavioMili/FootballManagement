@@ -68,7 +68,8 @@ std::vector<NextAction> rankNextActions(const NextActionFacts& facts,
         {kind, target, ref, priority, std::move(title), std::move(reason)});
   };
 
-  if (!facts.unavailable_selected.empty() && facts.days_to_match >= 0)
+  if (!facts.unavailable_selected.empty() && facts.days_to_match >= 0 &&
+      !facts.no_fit_replacements)
   {
     // The assistant replaces them at kick-off when he is in charge of it.
     const int priority = facts.assistant_fixes_lineup
@@ -199,6 +200,9 @@ NextActionFacts gatherNextActionFacts(const GameController& controller)
     for (const PlayerID player :
          controller.getIneligibleSelections(club_id, match.getMatchType()))
       facts.unavailable_selected.push_back(playerName(controller, player));
+    facts.no_fit_replacements =
+        !facts.unavailable_selected.empty() &&
+        controller.canKickOff(club_id, match.getMatchType());
     break;
   }
   facts.assistant_fixes_lineup = controller.isDelegated(Duty::LineupFixes);

@@ -293,6 +293,8 @@ class WorldSimulation
   void processWeekly(const GameDateValue& date, TeamID managed_team_id);
   void reviewCash(const GameDateValue& date, TeamID managed_team_id,
                   bool monthly);
+  /** An AI club deep in the red may be recapitalised by its owner. */
+  void rescueByOwner(const GameDateValue& date, Team& team);
   void postMedicalDigest(const GameDateValue& date, TeamID managed_team_id);
   void postSquadReport(const GameDateValue& date, const Team& team);
   void postPreseasonSchedule(const GameDateValue& date, const Team& team,

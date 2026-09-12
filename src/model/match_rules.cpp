@@ -212,9 +212,12 @@ float aerialDuelStrength(float heightMetres, float physicality,
 FoulSanction decideFoulSanction(const FoulContext& context)
 {
   using D = MatchTuning::Discipline;
+  const float bias =
+      context.offenderIsAway ? D::AWAY_CARD_BIAS : D::HOME_CARD_BIAS;
   const float strictness =
-      std::clamp(context.strictness, D::MIN_STRICTNESS, D::MAX_STRICTNESS) *
-      (context.offenderIsAway ? D::AWAY_CARD_BIAS : D::HOME_CARD_BIAS);
+      std::clamp(context.strictness, D::MIN_CONTEXT_STRICTNESS,
+                 D::MAX_CONTEXT_STRICTNESS) *
+      (1.0f + (bias - 1.0f) * context.venueBiasScale);
 
   if (context.severityRoll >= 1.0f - D::SERIOUS_FOUL_PLAY_SHARE * strictness)
     return FoulSanction::RED;
@@ -270,20 +273,5 @@ float tackleFoulPropensity(const TackleContext& context)
          (context.fromBehind ? D::FROM_BEHIND_FOUL_FACTOR : 1.0f) *
          (context.sliding ? D::SLIDE_FOUL_FACTOR : 1.0f) *
          (1.0f - std::clamp(context.exposure, 0.0f, 1.0f) * D::EXPOSED_FOUL_RELIEF);
-}
-
-float staminaDrainPerSecond(float speedRatio, float endurance,
-                            float pressingIntensity)
-{
-  using P = MatchTuning::Fatigue;
-  const float ratio = std::clamp(speedRatio, 0.0f, 1.5f);
-  const float sprint = std::max(0.0f, ratio - P::SPRINT_THRESHOLD) /
-                       (1.0f - P::SPRINT_THRESHOLD);
-  const float work =
-      P::IDLE_DRAIN + ratio * ratio * P::RUNNING_DRAIN +
-      sprint * P::SPRINT_DRAIN +
-      std::clamp(pressingIntensity, 0.0f, 1.0f) * P::PRESSING_DRAIN;
-  return work * (P::ENDURANCE_BASE -
-                 std::clamp(endurance, 0.0f, 1.0f) * P::ENDURANCE_RELIEF);
 }
 }  // namespace MatchRules

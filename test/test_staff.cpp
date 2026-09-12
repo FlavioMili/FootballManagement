@@ -389,7 +389,8 @@ TEST(StaffPersistenceTest, DepartedStaffIdsAreNotReusedAfterReload)
             SQLITE_OK);
   ASSERT_EQ(sqlite3_exec(db,
                          "ALTER TABLE WorldState DROP COLUMN next_staff_id; "
-                         "DELETE FROM schema_migrations WHERE number = 7; "
+                         "ALTER TABLE Fixtures DROP COLUMN kickoff; "
+                         "DELETE FROM schema_migrations WHERE number >= 7; "
                          "UPDATE save_meta SET schema_version = 6;",
                          nullptr, nullptr, nullptr),
             SQLITE_OK);

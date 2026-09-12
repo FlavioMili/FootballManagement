@@ -26,6 +26,7 @@
 #include "global/runtime_paths.h"
 #include "model/club_economy.h"
 #include "model/finances.h"
+#include "model/manager_career.h"
 #include "model/match.h"
 #include "model/match_report.h"
 #include "model/team.h"
@@ -316,6 +317,65 @@ TEST_F(FinanceWorldTest, LedgersReconcileThroughMonthsOfPlayAndReload)
   EXPECT_EQ(reloaded.ledgerTotal(), balance);
   EXPECT_EQ(reloaded.getTransferBudget(), transfer_budget);
   EXPECT_EQ(reloaded.getWageBudget(), wage_budget);
+}
+
+TEST(ClubEconomyTest, OwnerRescueRestoresACushion)
+{
+  using Finance = WorldTuning::Finance;
+  constexpr std::int64_t PAYROLL = 100'000;
+  // Small overdrafts are the club's own business.
+  EXPECT_EQ(ClubEconomy::ownerRescue(1'000'000, PAYROLL), 0);
+  EXPECT_EQ(ClubEconomy::ownerRescue(
+                -Finance::OWNER_RESCUE_TRIGGER_WEEKS * PAYROLL, PAYROLL),
+            0);
+  // Deep in the red the owner restores the cushion.
+  const std::int64_t balance = -10 * PAYROLL;
+  EXPECT_EQ(balance + ClubEconomy::ownerRescue(balance, PAYROLL),
+            Finance::OWNER_RESCUE_CUSHION_WEEKS * PAYROLL);
+  EXPECT_EQ(ClubEconomy::ownerRescue(balance, 0), 0);
+}
+
+// Benefactors recapitalise their AI clubs at the next monthly review;
+// member-owned clubs have nobody to call.
+TEST_F(FinanceWorldTest, AiOwnersRescueClubsDeepInTheRed)
+{
+  auto gamedata = controller->getGameData();
+  TeamID benefactor = FREE_AGENTS_TEAM_ID;
+  TeamID members = FREE_AGENTS_TEAM_ID;
+  for (const auto& team_ref : controller->getTeams())
+  {
+    const Team& team = team_ref.get();
+    const OwnerType owner =
+        ManagerMarketModel::clubVision(gamedata->getWorldSeed(), team.getId(),
+                                       team.getReputation(),
+                                       team.getProfile().youth_facilities, 0,
+                                       0)
+            .owner;
+    if (owner == OwnerType::ImpatientBenefactor &&
+        benefactor == FREE_AGENTS_TEAM_ID)
+      benefactor = team.getId();
+    if (owner == OwnerType::MemberOwned && members == FREE_AGENTS_TEAM_ID)
+      members = team.getId();
+  }
+  ASSERT_NE(benefactor, FREE_AGENTS_TEAM_ID);
+  ASSERT_NE(members, FREE_AGENTS_TEAM_ID);
+  for (const TeamID team_id : {benefactor, members})
+  {
+    Finances& finances = gamedata->getTeams().at(team_id).getFinances();
+    finances.record(controller->getCurrentDate(),
+                    FinanceCategory::TransferFeeOut,
+                    -finances.getBalance() - 500'000'000);
+  }
+  while (!(controller->getCurrentDate().day == 2 &&
+           controller->getCurrentDate().month == 8))
+    controller->advanceDay();
+
+  const Finances& rescued = gamedata->getTeams().at(benefactor).getFinances();
+  EXPECT_GT(categoryTotal(rescued, FinanceCategory::Investment), 500'000'000);
+  EXPECT_GT(rescued.getBalance(), 0);
+  const Finances& unrescued = gamedata->getTeams().at(members).getFinances();
+  EXPECT_EQ(categoryTotal(unrescued, FinanceCategory::Investment), 0);
+  EXPECT_LT(unrescued.getBalance(), 0);
 }
 
 TEST_F(FinanceWorldTest, TransferFeesAreRecordedForBothClubs)

@@ -276,10 +276,17 @@ class GameController
 
   /** Records a managed match with the structured summary of the live engine
    * (team stats, per-player lines and the measured condition and injuries,
-   * applied like for simulated matches). Drawn cup ties go to extra time and
-   * penalties. */
+   * applied like for simulated matches). A knockout engine brings its extra
+   * time and shootout; a tie still level is settled statistically. */
   bool setMatchResult(GameDateValue date, uint16_t home_id, uint16_t away_id,
                       const MatchEngine& engine);
+
+  /** Knockout rules of a fixture for the engine that plays it (extra time
+   * and penalties, aggregate of the first leg); nullopt for matches that may
+   * end drawn or unknown fixtures. */
+  std::optional<MatchRules::Knockout> getKnockoutRules(GameDateValue date,
+                                                       TeamID home_id,
+                                                       TeamID away_id) const;
 
   /** Selected players (XI and reserves) injured or suspended for @p type. */
   std::vector<PlayerID> getIneligibleSelections(TeamID team_id,

@@ -171,11 +171,15 @@ int64_t Finances::getCurrentWageSpending(const GameData& gamedata,
                                          const Team& team) const
 {
   int64_t wages{};
-  for (const auto player_id : team.getPlayerIDs())
+  // Academy scholarships and contracts are part of the payroll too.
+  for (const auto* ids : {&team.getPlayerIDs(), &team.getAcademyIDs()})
   {
-    if (const auto player = gamedata.getPlayer(player_id))
+    for (const auto player_id : *ids)
     {
-      wages += player->get().getWage();
+      if (const auto player = gamedata.getPlayer(player_id))
+      {
+        wages += player->get().getWage();
+      }
     }
   }
   return wages;

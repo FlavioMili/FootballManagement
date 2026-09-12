@@ -22,6 +22,7 @@ using json = nlohmann::json;
 namespace
 {
 constexpr uint8_t REGULATION_MINUTES = 90;
+constexpr uint8_t EXTRA_TIME_MINUTES = 120;
 
 uint16_t toCount(int value)
 {
@@ -142,23 +143,31 @@ void MatchReport::fillFromEngine(const MatchEngine& engine, TeamID home_id,
   away_stats.red_cards = toCount(stats.awayRedCards);
   home_goals = static_cast<uint8_t>(std::clamp(engine.getHomeScore(), 0, 255));
   away_goals = static_cast<uint8_t>(std::clamp(engine.getAwayScore(), 0, 255));
+  extra_time = engine.wentToExtraTime();
+  penalties = engine.hasShootout();
+  home_penalties = penalties ? static_cast<uint8_t>(std::clamp(
+                                   engine.getShootoutScore(true), 0, 255))
+                             : uint8_t{0};
+  away_penalties = penalties ? static_cast<uint8_t>(std::clamp(
+                                   engine.getShootoutScore(false), 0, 255))
+                             : uint8_t{0};
 
   players.clear();
   players.reserve(engine.getPlayerStats().size());
-  // Minutes are reported on the usual 90-minute scale (a full match is 90
-  // whatever the added time), as a share of the clock time played.
+  // Minutes are reported on the usual 90-minute scale (120 after extra
+  // time) whatever the added time, as a share of the clock time played.
+  const float fullMatch = static_cast<float>(
+      extra_time ? EXTRA_TIME_MINUTES : REGULATION_MINUTES);
   const float clockMinutes =
-      std::max(static_cast<float>(REGULATION_MINUTES),
-               engine.getElapsedMatchMinutes());
+      std::max(fullMatch, engine.getElapsedMatchMinutes());
   for (const PlayerMatchStats& entry : engine.getPlayerStats())
   {
     PlayerMatchLine line;
     line.player_id = entry.playerId;
     line.team_id = entry.isHomeTeam ? home_id : away_id;
     line.started = entry.started;
-    line.minutes = toSmallCount(std::lround(
-        entry.minutesPlayed * static_cast<float>(REGULATION_MINUTES) /
-        clockMinutes));
+    line.minutes =
+        toSmallCount(std::lround(entry.minutesPlayed * fullMatch / clockMinutes));
     line.goals = toSmallCount(entry.goals);
     line.assists = toSmallCount(entry.assists);
     line.yellow_cards = toSmallCount(entry.yellowCards);

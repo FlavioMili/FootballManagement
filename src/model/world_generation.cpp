@@ -153,7 +153,7 @@ struct NationalityWeight
   Language nationality;
   float weight;
 };
-constexpr std::array<NationalityWeight, 26> FOREIGN_POOL = {{
+constexpr std::array<NationalityWeight, 26> EUROPEAN_FOREIGN_POOL = {{
     {Language::BR, 9.0f}, {Language::FR, 8.0f}, {Language::ES, 6.0f},
     {Language::PT, 6.0f}, {Language::DE, 4.0f}, {Language::NL, 4.0f},
     {Language::IT, 3.0f}, {Language::EN, 3.0f}, {Language::BE, 3.0f},
@@ -164,6 +164,28 @@ constexpr std::array<NationalityWeight, 26> FOREIGN_POOL = {{
     {Language::TR, 1.5f}, {Language::US, 1.5f}, {Language::MX, 1.5f},
     {Language::JP, 1.5f}, {Language::KR, 1.0f},
 }};
+
+// Imports of the American leagues: mostly from elsewhere in the Americas
+// (Spanish-speaking South Americans carry Spanish names), plus Europeans in
+// the MLS. [S: CIES, MLS player pool reports; P weights]
+constexpr std::array<NationalityWeight, 12> AMERICAN_FOREIGN_POOL = {{
+    {Language::ES, 10.0f}, {Language::BR, 5.0f}, {Language::MX, 4.0f},
+    {Language::US, 3.0f},  {Language::EN, 2.5f}, {Language::FR, 1.5f},
+    {Language::DE, 1.5f},  {Language::PT, 1.0f}, {Language::IT, 1.0f},
+    {Language::JP, 1.0f},  {Language::KR, 0.8f}, {Language::IE, 0.7f},
+}};
+
+// Standard normal quantile (Abramowitz-Stegun 26.2.23, |error| < 4.5e-4).
+double normalQuantile(double p)
+{
+  const double q = std::clamp(p, 1e-6, 1.0 - 1e-6);
+  const double tail = q < 0.5 ? q : 1.0 - q;
+  const double t = std::sqrt(-2.0 * std::log(tail));
+  const double z = t - (2.515517 + 0.802853 * t + 0.010328 * t * t) /
+                           (1.0 + 1.432788 * t + 0.189269 * t * t +
+                            0.001308 * t * t * t);
+  return q < 0.5 ? -z : z;
+}
 
 std::uint8_t clampTrait(float value)
 {
@@ -186,10 +208,11 @@ PlayerTraits drawTraits(WorldRng& rng)
 
 float potentialHeadroom(int age)
 {
-  // [P] Mean remaining growth by age; growth mostly ends by the mid-20s.
-  if (age <= 20) return 1.6f * static_cast<float>(25 - age) + 4.0f;
-  if (age <= 24) return 1.4f * static_cast<float>(25 - age) + 1.0f;
-  return 0.3f * static_cast<float>(std::max(0, 28 - age));
+  // [P] Mean remaining growth by age: about +3 a season at 19-21 and +1.5
+  // at 22-24, ending around 26-27 (peaks 25-27). [S: realism-research-2 4]
+  if (age <= 20) return 1.7f * static_cast<float>(26 - age) + 3.0f;
+  if (age <= 25) return 1.8f * static_cast<float>(26 - age) + 1.5f;
+  return 0.4f * static_cast<float>(std::max(0, 29 - age));
 }
 
 float drawPotential(WorldRng& rng, float current, int age)
@@ -210,18 +233,26 @@ NameRegistry& generationRegistry()
   return registry;
 }
 
+template <std::size_t N>
+Language drawForeign(WorldRng& rng, const std::array<NationalityWeight, N>& pool,
+                     Language domestic)
+{
+  std::array<float, N> weights{};
+  for (std::size_t i = 0; i < N; ++i)
+    weights[i] = pool[i].nationality == domestic ? 0.0f : pool[i].weight;
+  return pool[rng.weightedIndex(weights)].nationality;
+}
+
 Language drawNationality(WorldRng& rng, const LeagueProfile& league)
 {
   if (rng.chance(static_cast<double>(league.domestic_share)))
     return league.domestic_nationality;
-  std::array<float, FOREIGN_POOL.size()> weights{};
-  for (std::size_t i = 0; i < FOREIGN_POOL.size(); ++i)
-  {
-    weights[i] = FOREIGN_POOL[i].nationality == league.domestic_nationality
-                     ? 0.0f
-                     : FOREIGN_POOL[i].weight;
-  }
-  return FOREIGN_POOL[rng.weightedIndex(weights)].nationality;
+  const bool americas = league.region == WorldRegion::NorthAmerica ||
+                        league.region == WorldRegion::SouthAmerica;
+  return americas ? drawForeign(rng, AMERICAN_FOREIGN_POOL,
+                                league.domestic_nationality)
+                  : drawForeign(rng, EUROPEAN_FOREIGN_POOL,
+                                league.domestic_nationality);
 }
 
 std::map<std::string, float> drawStats(WorldRng& rng, PlayerRole role,
@@ -589,6 +620,54 @@ float teamLevel(std::uint8_t reputation)
              static_cast<float>(reputation);
 }
 
+std::vector<float> levelOffsets(const LeagueShape& shape, std::size_t clubs)
+{
+  std::vector<float> offsets(clubs, 0.0f);
+  if (clubs < 2) return offsets;
+  // Normal scores by rank, the elite pulled clear, then rescaled to the
+  // league's spread around a zero mean.
+  std::vector<double> scores(clubs);
+  for (std::size_t rank = 0; rank < clubs; ++rank)
+  {
+    scores[rank] = normalQuantile(
+        1.0 - (static_cast<double>(rank) + 0.5) / static_cast<double>(clubs));
+    if (rank < shape.elite_clubs)
+      scores[rank] += static_cast<double>(shape.elite_gap);
+  }
+  double mean = 0.0;
+  for (const double score : scores) mean += score;
+  mean /= static_cast<double>(clubs);
+  double squares = 0.0;
+  for (const double score : scores) squares += (score - mean) * (score - mean);
+  const double sd = std::sqrt(squares / static_cast<double>(clubs));
+  for (std::size_t rank = 0; rank < clubs; ++rank)
+    offsets[rank] = static_cast<float>(static_cast<double>(shape.level_sd) *
+                                       (scores[rank] - mean) / sd);
+  return offsets;
+}
+
+float reputationCentre(const LeagueProfile& league, std::size_t clubs)
+{
+  using Generation = WorldTuning::Generation;
+  const std::vector<float> offsets = levelOffsets(league.shape, clubs);
+  const float top = offsets.empty() ? 0.0f : offsets.front();
+  return std::min(static_cast<float>(league.reputation),
+                  99.0f - Generation::REPUTATION_CAP_MARGIN -
+                      Generation::REPUTATION_PER_LEVEL * top);
+}
+
+float clubLevel(const LeagueEconomy& economy, std::uint8_t reputation)
+{
+  using Generation = WorldTuning::Generation;
+  const LeagueProfile& league = *economy.profile;
+  const std::size_t clubs = std::max<std::size_t>(economy.clubs, 2);
+  const float level =
+      teamLevel(league.reputation) + league.shape.level_offset +
+      (static_cast<float>(reputation) - reputationCentre(league, clubs)) /
+          Generation::REPUTATION_PER_LEVEL;
+  return std::min(level, Generation::MAX_CLUB_LEVEL);
+}
+
 double overallFor(PlayerRole role, const std::map<std::string, float>& stats,
                   const StatsConfig& stats_config)
 {
@@ -627,26 +706,20 @@ void generateClubProfiles(std::unordered_map<TeamID, Team>& teams,
     rng.shuffle(std::span<TeamID>(team_ids));
     const LeagueProfile& league = leagueProfile(league_id);
 
+    // The league's shape ranks the (shuffled) clubs; reputation, and with it
+    // revenue, follows the first-team level they are generated at.
+    const std::vector<float> offsets =
+        levelOffsets(league.shape, team_ids.size());
+    const float centre = reputationCentre(league, team_ids.size());
     std::vector<std::uint8_t> reputations;
     reputations.reserve(team_ids.size());
-    std::size_t bucket = 0;
-    float bucket_end = Generation::TIER_SHARE[0];
     for (std::size_t i = 0; i < team_ids.size(); ++i)
     {
-      const float position =
-          (static_cast<float>(i) + 0.5f) / static_cast<float>(team_ids.size());
-      while (position > bucket_end &&
-             bucket + 1 < Generation::TIER_SHARE.size())
-      {
-        ++bucket;
-        bucket_end += Generation::TIER_SHARE[bucket];
-      }
       ClubProfile profile;
-      profile.reputation =
-          clampRating(static_cast<float>(league.reputation) +
-                          Generation::TIER_REPUTATION_OFFSET[bucket] +
-                          rng.normal(0.0f, 2.0f),
-                      15.0f);
+      profile.reputation = clampRating(
+          centre + Generation::REPUTATION_PER_LEVEL * offsets[i] +
+              rng.normal(0.0f, Generation::CLUB_REPUTATION_NOISE),
+          15.0f);
       profile.training_facilities = clampRating(
           static_cast<float>(profile.reputation) + rng.normal(0.0f, 8.0f),
           10.0f);
@@ -699,7 +772,7 @@ std::vector<Player> generateSquad(const Team& team,
   if (existing_players >= SQUAD_TEMPLATE.size()) return players;
   WorldRng rng = WorldRng::stream(world_seed, RngDomain::Generation, 0x5C0AD,
                                   team.getId());
-  const float level = teamLevel(team.getReputation());
+  const float level = clubLevel(economy, team.getReputation());
 
   std::vector<double> wage_indices;
   SquadSurnames surnames;

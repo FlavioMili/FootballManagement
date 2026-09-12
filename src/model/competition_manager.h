@@ -19,6 +19,7 @@
 #include "model/continental.h"
 #include "model/discipline.h"
 #include "model/match_report.h"
+#include "model/match_rules.h"
 #include "model/season_history.h"
 #include "model/standings.h"
 
@@ -55,8 +56,8 @@ class CompetitionManager
   void recordResult(const Match& match, MatchReport report);
 
   /** Refreshes league points, draws cup rounds that became due and runs
-   * the continental competitions (draws, extra time of level aggregates,
-   * knockout rounds). */
+   * the continental competitions (draws, knockout rounds, and a decider
+   * recorded level from a score alone settled by extra time). */
   void afterMatchday(Calendar& calendar, const GameDateValue& today);
 
   /** Enters the continental clubs of the season containing @p today (after
@@ -92,6 +93,15 @@ class CompetitionManager
 
   /** Sets the season number used for new reports and statistics. */
   void setCurrentSeason(uint16_t season) { current_season = season; }
+
+  /**
+   * How a level score settles @p match, for the engine that plays it: a cup
+   * tie and a continental final go to extra time and penalties, a second leg
+   * too when level on aggregate (goals of the first leg included). nullopt
+   * for matches that may end drawn.
+   */
+  std::optional<MatchRules::Knockout> knockoutRules(const Calendar& calendar,
+                                                    const Match& match) const;
 
   // ---------------- Queries ----------------
   std::vector<StandingRow> getStandings(const Calendar& calendar,

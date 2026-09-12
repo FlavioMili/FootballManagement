@@ -460,6 +460,15 @@ bool GameController::setMatchResult(GameDateValue date, uint16_t home_id,
   return true;
 }
 
+std::optional<MatchRules::Knockout> GameController::getKnockoutRules(
+    GameDateValue date, TeamID home_id, TeamID away_id) const
+{
+  if (!game) return std::nullopt;
+  const Match* match = game->getCalendar().findMatch(date, home_id, away_id);
+  if (!match) return std::nullopt;
+  return game->getCompetitions().knockoutRules(game->getCalendar(), *match);
+}
+
 std::vector<PlayerID> GameController::getIneligibleSelections(
     TeamID team_id, MatchType type) const
 {
@@ -2013,7 +2022,7 @@ void GameController::processAITransferActivity()
     market.runAiApproach(club, today, managed, rng);
     if (market.runAiClub(club, transfer_listings, today, managed, rng, false))
       ++moves;
-    else
+    else if (rng.chance(Market::LIST_ACTIVITY_CHANCE))
       evaluateAndActForTeam(club);
   }
 }

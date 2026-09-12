@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -85,12 +86,14 @@ class TeamSelectionScene : public GUIScene
     std::vector<std::pair<std::string, float>> key_players;
   };
 
-  /** @brief One entry of the grouped league list. */
+  /** @brief One entry of the league list, grouped by country. */
   struct LeagueEntry
   {
     LeagueID id = 0;
+    LeagueID root = 0; /**< Top division of the country. */
     std::string name;
     uint8_t tier = 1;
+    size_t lower_divisions = 0; /**< Set on the top division only. */
   };
 
   void loadAvailableLeagues();
@@ -98,7 +101,15 @@ class TeamSelectionScene : public GUIScene
   void sortClubs();
   void renderLeagueList(float width, float height);
   void renderClubTable(float height);
+  /** @brief Club card beside the table; the start button sits at its top. */
   void renderSelectedClub(float width, float height);
+  /** @brief One-row club card above the table for narrow windows. */
+  void renderSelectedClubStrip();
+  /** @brief Badge, name, nickname and reputation of a club in @p width. */
+  static void renderClubIdentity(const ClubSummary& club, float badgeHeight,
+                                 float width);
+  [[nodiscard]] const ClubSummary* selectedClub() const;
+  void selectLeague(const LeagueEntry& entry);
   void startCareer(TeamID teamId);
   /** @brief Starts the career without a club (the Job Centre opens). */
   void startUnemployed();
@@ -107,6 +118,9 @@ class TeamSelectionScene : public GUIScene
   std::vector<std::reference_wrapper<const Team>> available_teams;
   std::optional<uint8_t> selected_league_id;
   std::optional<TeamID> selected_team_id;
+  /** Countries (top division IDs) whose lower divisions are listed. */
+  std::set<LeagueID> expanded_countries;
+  bool laid_out = false; /**< False until the first frame has been drawn. */
   std::vector<ClubSummary> club_summaries;
   ImGuiID sort_column = 0;
   bool sort_ascending = false;

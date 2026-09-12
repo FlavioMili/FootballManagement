@@ -132,6 +132,11 @@ class GameFlowTest_GUIFlowLifecycle_Test
   {
     return hub.continuation_requested;
   }
+  static void refresh(MainGameScene& hub) { hub.refreshData(); }
+  static bool lineupBlocked(const MainGameScene& hub)
+  {
+    return hub.lineupBlocked();
+  }
   static std::optional<GameDateValue> nextFixtureDate(const MainGameScene& hub)
   {
     if (!hub.cached_next) return std::nullopt;
@@ -224,7 +229,17 @@ std::vector<std::string> checkWorld(const GameController& controller)
   for (const auto& [teamId, team] : data->getTeams())
   {
     if (teamId == FREE_AGENTS_TEAM_ID) continue;
-    for (const PlayerID playerId : team.getPlayerIDs())
+    // Club players: the senior squad plus the academy.
+    std::vector<PlayerID> members = team.getPlayerIDs();
+    members.insert(members.end(), team.getAcademyIDs().begin(),
+                   team.getAcademyIDs().end());
+    for (const PlayerID playerId : team.getAcademyIDs())
+      if (const auto player = data->getPlayer(playerId);
+          player && !player->get().isAcademyPlayer())
+        problems.push_back(
+            std::format("club {} lists senior {} in its academy", teamId,
+                        playerId));
+    for (const PlayerID playerId : members)
     {
       const auto player = data->getPlayer(playerId);
       if (!owner.emplace(playerId, teamId).second)
@@ -1129,6 +1144,20 @@ TEST_F(Adversarial, AllPlayersInjuredOnMatchDay)
   const auto fixture = managedFixtureToday();
   ASSERT_TRUE(fixture.has_value());
   openGui();
+  // The assistant's best selection is injured players nobody fit can
+  // replace: the dashboard and the next steps must not ask for a fix that
+  // changes nothing.
+  controller->autoFixLineup(managed_id, fixture->getMatchType());
+  ASSERT_TRUE(controller->canKickOff(managed_id, fixture->getMatchType()));
+  ASSERT_FALSE(
+      controller->getIneligibleSelections(managed_id, fixture->getMatchType())
+          .empty());
+  Bridge::refresh(*driver->hub());
+  driver->frames(2);
+  EXPECT_FALSE(Bridge::lineupBlocked(*driver->hub()));
+  EXPECT_TRUE(std::ranges::none_of(
+      controller->getNextActions(10), [](const NextAction& action)
+      { return action.kind == NextActionKind::UnavailableInLineup; }));
   const std::string matchDay = controller->getCurrentDate().toString();
   bool kickedOff = false;
   for (int attempt = 0; attempt < 4 && !kickedOff; ++attempt)

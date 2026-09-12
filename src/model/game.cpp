@@ -295,6 +295,7 @@ void Game::simulateMatches(std::vector<Match>& matches, bool include_managed)
       const std::vector<PlayerMatchConsequence> consequences =
           std::move(results[i].consequences);
       MatchReport report = match.applySimulation(std::move(results[i]));
+      settleLevelTie(match, report);
       for (const PlayerMatchConsequence& consequence : consequences)
         world.applyMatchConsequences(match.getDate(), consequence,
                                      managed_team_id);
@@ -339,17 +340,10 @@ void Game::simulateMatches(std::vector<Match>& matches, bool include_managed)
       gamedata->getTeam(managed_team_id)->get().getLineup() =
           *managed_selection;
     if (!input) continue;
-    // A continental decider level on aggregate goes to extra time here, so
-    // form, the manager's record and the season statistics see the result.
-    if (const std::optional<int> lead =
-            competitions.getContinental().deciderLead(calendar, match))
-    {
-      input->knockout = Competitions::resolveDrawnKnockout(
-          gamedata->getTeam(match.getHomeTeamId())->get(),
-          gamedata->getTeam(match.getAwayTeamId())->get(),
-          gamedata->getStatsConfig(), input->seed);
-      input->knockout_lead = *lead;
-    }
+    // Knockout ties are played to a winner (extra time, penalties), so form,
+    // the manager's record and the season statistics see the final result.
+    if (const auto rules = competitions.knockoutRules(calendar, match))
+      input->knockout = *rules;
     batch.push_back(&match);
     inputs.push_back(std::move(*input));
     batch_teams.push_back(match.getHomeTeamId());
@@ -357,6 +351,36 @@ void Game::simulateMatches(std::vector<Match>& matches, bool include_managed)
     if (one_by_one) flush();
   }
   flush();
+}
+
+void Game::settleLevelTie(Match& match, MatchReport& report)
+{
+  if (match.wentToExtraTime() || match.wentToPenalties()) return;
+  const auto rules = competitions.knockoutRules(calendar, match);
+  if (!rules || match.getHomeScore() + rules->homeAggregate !=
+                    match.getAwayScore() + rules->awayAggregate)
+    return;
+  const auto home_team = gamedata->getTeam(match.getHomeTeamId());
+  const auto away_team = gamedata->getTeam(match.getAwayTeamId());
+  if (!home_team || !away_team) return;
+  const Competitions::KnockoutResolution resolution =
+      Competitions::resolveDrawnKnockout(home_team->get(), away_team->get(),
+                                         gamedata->getStatsConfig(),
+                                         match.getSeed());
+  std::optional<std::pair<uint8_t, uint8_t>> shootout;
+  if (resolution.penalties)
+    shootout.emplace(resolution.home_penalties, resolution.away_penalties);
+  match.setKnockoutResult(
+      static_cast<uint8_t>(match.getHomeScore() + resolution.home_extra_goals),
+      static_cast<uint8_t>(match.getAwayScore() + resolution.away_extra_goals),
+      true, shootout);
+  match.writeResultTo(report);
+  report.creditExtraTimeGoals(home_team->get().getLineup(),
+                              match.getHomeTeamId(), true,
+                              resolution.home_extra_goals, match.getSeed());
+  report.creditExtraTimeGoals(away_team->get().getLineup(),
+                              match.getAwayTeamId(), false,
+                              resolution.away_extra_goals, match.getSeed());
 }
 
 bool Game::setMatchResult(const GameDateValue& date, TeamID home_id,
@@ -381,37 +405,15 @@ bool Game::setMatchResult(
   const auto home_team = gamedata->getTeam(home_id);
   const auto away_team = gamedata->getTeam(away_id);
 
-  uint8_t home_goals = report.home_goals;
-  uint8_t away_goals = report.away_goals;
-  bool extra_time = report.extra_time;
+  // A knockout engine reports extra time and the shootout it played.
   std::optional<std::pair<uint8_t, uint8_t>> shootout;
   if (report.penalties)
     shootout.emplace(report.home_penalties, report.away_penalties);
-  // Cup ties, and continental deciders level on aggregate, are settled by
-  // extra time and penalties before the result is recorded.
-  const std::optional<int> lead =
-      match->isKnockout()
-          ? std::optional<int>(0)
-          : competitions.getContinental().deciderLead(calendar, *match);
-  std::optional<Competitions::KnockoutResolution> resolution;
-  if (lead && home_goals + *lead == away_goals && !shootout && home_team &&
-      away_team)
-  {
-    resolution = Competitions::resolveDrawnKnockout(
-        home_team->get(), away_team->get(), gamedata->getStatsConfig(),
-        match->getSeed());
-    extra_time = true;
-    home_goals =
-        static_cast<uint8_t>(home_goals + resolution->home_extra_goals);
-    away_goals =
-        static_cast<uint8_t>(away_goals + resolution->away_extra_goals);
-    if (resolution->penalties)
-      shootout.emplace(resolution->home_penalties, resolution->away_penalties);
-  }
-  if (extra_time || shootout)
-    match->setKnockoutResult(home_goals, away_goals, extra_time, shootout);
+  if (report.extra_time || shootout)
+    match->setKnockoutResult(report.home_goals, report.away_goals,
+                             report.extra_time, shootout);
   else
-    match->setPlayedResult(home_goals, away_goals);
+    match->setPlayedResult(report.home_goals, report.away_goals);
   match->writeResultTo(report);
 
   if (report.players.empty())
@@ -421,15 +423,7 @@ bool Game::setMatchResult(
     if (away_team)
       report.addLineupAppearances(away_team->get().getLineup(), away_id);
   }
-  if (resolution)
-  {
-    report.creditExtraTimeGoals(home_team->get().getLineup(), home_id, true,
-                                resolution->home_extra_goals,
-                                match->getSeed());
-    report.creditExtraTimeGoals(away_team->get().getLineup(), away_id, false,
-                                resolution->away_extra_goals,
-                                match->getSeed());
-  }
+  settleLevelTie(*match, report);
   for (const PlayerMatchConsequence& consequence : consequences)
     world.applyMatchConsequences(date, consequence, managed_team_id);
   world.onMatchPlayed(*match, report, managed_team_id);
@@ -495,14 +489,18 @@ std::size_t Game::fillMatchdaySquad(Lineup& lineup, TeamID team_id,
   // Trialists of the academy intake are the last fit players to be asked.
   std::vector<const Player*> squad;
   std::vector<const Player*> everyone;
-  for (const PlayerID player_id : team->get().getPlayerIDs())
+  for (const auto* ids :
+       {&team->get().getPlayerIDs(), &team->get().getAcademyIDs()})
   {
-    const auto player = gamedata->getPlayer(player_id);
-    if (!player) continue;
-    everyone.push_back(&player->get());
-    const YouthRecord* youth = world.getYouth().record(player_id);
-    if (!youth || youth->status != YouthStatus::Candidate)
-      squad.push_back(&player->get());
+    for (const PlayerID player_id : *ids)
+    {
+      const auto player = gamedata->getPlayer(player_id);
+      if (!player) continue;
+      everyone.push_back(&player->get());
+      const YouthRecord* youth = world.getYouth().record(player_id);
+      if (!youth || youth->status != YouthStatus::Candidate)
+        squad.push_back(&player->get());
+    }
   }
   const StatsConfig& config = gamedata->getStatsConfig();
   const Lineup before = lineup;

@@ -34,6 +34,9 @@ namespace
 constexpr float BASE_WEEKLY_HAZARD = 0.0052f;
 /** Log-hazard change per 25 points of confidence. */
 constexpr float HAZARD_BETA = 1.9f;
+/** Coach changes per club-season the hazards produce at a league factor of
+ * one; each league scales them to its own turnover (LeagueProfile). */
+constexpr float REFERENCE_COACH_CHANGES = 0.5f;
 /** Matches before the honeymoon damping is gone. */
 constexpr std::uint16_t HONEYMOON_MATCHES = 10;
 /** League matches before a board sacks anyone mid-season. */
@@ -110,6 +113,16 @@ GameDateValue seasonEnd(const GameDateValue& date, int years)
 bool inSeason(const GameDateValue& date)
 {
   return MONTH_FACTOR[date.month] > 0.0f;
+}
+
+/** Boards in Brazil or Serie B change coach almost every season, MLS
+ * boards about one season in three. [S: LMA, CIES coach tenure reports] */
+float leagueTurnover(const GameData& gamedata, TeamID team_id)
+{
+  const auto team = gamedata.getTeam(team_id);
+  if (!team) return 1.0f;
+  return leagueProfile(team->get().getLeagueId()).coach_changes /
+         REFERENCE_COACH_CHANGES;
 }
 
 float ownerFactor(OwnerType owner)
@@ -1333,8 +1346,10 @@ void ManagerCareer::weeklyReviews(const GameDateValue& date,
           manager.team_id == managed_team_id)
         continue;
       const float hazard =
-          month * weeklyDismissalHazard(manager.confidence, manager.matches,
-                                        visionOf(manager.team_id).owner);
+          month *
+          weeklyDismissalHazard(manager.confidence, manager.matches,
+                                visionOf(manager.team_id).owner) *
+          leagueTurnover(*gamedata, manager.team_id);
       if (hazard > 0.0f && uniform(*gamedata, today, manager.team_id) <
                                static_cast<double>(hazard))
       {
@@ -1561,9 +1576,12 @@ bool ManagerCareer::onSeasonEnd(const GameDateValue& date,
     for (const TeamID other :
          league ? league->get().getTeamIDs() : std::vector<TeamID>{})
       if (clubReputation(other) > team->get().getReputation()) ++expected;
-    const float chance = seasonEndDismissalChance(
-        positions(manager.team_id), expected, league_size, manager.confidence,
-        visionOf(manager.team_id).owner);
+    const float chance =
+        std::min(0.9f, seasonEndDismissalChance(
+                           positions(manager.team_id), expected, league_size,
+                           manager.confidence,
+                           visionOf(manager.team_id).owner) *
+                           leagueTurnover(*gamedata, manager.team_id));
     if (uniform(*gamedata, dayOrdinal(date), mixHash(manager.team_id, 15)) <
         static_cast<double>(chance))
       dismissAi(manager, date, inbox, managed_team_id);

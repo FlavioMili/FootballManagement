@@ -21,8 +21,11 @@
 #include "model/competition.h"
 #include "model/lineup.h"
 #include "model/match_report.h"
+#include "model/match_rules.h"
 #include "model/strategy.h"
 #include "model/world_simulation.h"
+
+struct MatchContext;
 
 /**
  * Everything a headless match needs, captured on the thread that owns the
@@ -40,12 +43,14 @@ struct MatchSimulationInput
   Strategy home_strategy;
   Strategy away_strategy;
   /**
-   * Extra time and shootout of a knockout tie, used if it ends level (on
-   * aggregate, for the second leg of a two-legged tie).
+   * Knockout rules: a tie level after 90 minutes (on aggregate, for the
+   * second leg of a two-legged tie) is played on through extra time and a
+   * penalty shootout. League matches keep the default and may end drawn.
    */
-  std::optional<Competitions::KnockoutResolution> knockout;
-  /** Aggregate lead of the home side from the first leg (0 otherwise). */
-  int knockout_lead = 0;
+  MatchRules::Knockout knockout;
+  /** League whose match style (goals, referees, home advantage) the match
+   * is played in; 0 keeps the calibrated engine default. */
+  LeagueID league_id = 0;
 };
 
 /** Final score, engine summary and physical outcome of one match. */
@@ -55,12 +60,24 @@ struct MatchSimulationResult
   uint8_t away_goals = 0;
   bool extra_time = false;
   std::optional<std::pair<uint8_t, uint8_t>> penalties;
+  /** Winner of a knockout tie as the engine decided it (true = home side);
+   * empty for league matches and for ties left level (an abandoned match). */
+  std::optional<bool> tie_winner_home;
   MatchReport report;
   std::vector<PlayerMatchConsequence> consequences;
 };
 
 namespace MatchSimulation
 {
+/**
+ * Engine context of a match played in the style of league @p league_id:
+ * its goal rate, referee strictness (mean and spread) and home advantage
+ * relative to the calibrated engine (LeagueProfile::match_style). League 0
+ * or an unknown league gives the engine default. Live matches call this
+ * too, so a watched match plays like the same fixture simulated unwatched.
+ */
+MatchContext leagueContext(LeagueID league_id);
+
 /** Runs one match to full time. Thread-safe for distinct inputs. */
 MatchSimulationResult run(const MatchSimulationInput& input,
                           const StatsConfig& config);

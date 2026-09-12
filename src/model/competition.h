@@ -101,6 +101,8 @@ CupStatus cupStatus(const Calendar& calendar, const GameData& gamedata,
  *
  * When the entrant count is not a power of two only the lowest-tier clubs
  * play a preliminary round; everybody else receives a bye to round 2.
+ * Midweek rounds are spread from Tuesday to Thursday: each tie takes the
+ * day that best rests both clubs, then the quietest.
  */
 void scheduleCupFirstRounds(Calendar& calendar, const GameData& gamedata,
                             uint16_t season_year);

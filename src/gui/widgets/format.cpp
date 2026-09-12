@@ -12,6 +12,7 @@
 #include <format>
 
 #include "global/language_manager.h"
+#include "model/calendar.h"
 
 namespace
 {
@@ -72,6 +73,26 @@ std::string date(const GameDateValue& value)
 std::string dayMonth(const GameDateValue& value)
 {
   return std::format("{} {}", value.day, monthName(value.month));
+}
+
+const char* weekday(const GameDateValue& value)
+{
+  static constexpr std::array<const char*, 7> KEYS = {
+      "CALENDAR_WEEKDAY_MON", "CALENDAR_WEEKDAY_TUE", "CALENDAR_WEEKDAY_WED",
+      "CALENDAR_WEEKDAY_THU", "CALENDAR_WEEKDAY_FRI", "CALENDAR_WEEKDAY_SAT",
+      "CALENDAR_WEEKDAY_SUN"};
+  return LOC(KEYS[SeasonCalendar::dayOfWeek(value) % KEYS.size()]);
+}
+
+std::string kickoff(uint16_t minutes)
+{
+  return std::format("{:02}:{:02}", minutes / 60, minutes % 60);
+}
+
+std::string matchDay(const GameDateValue& value, uint16_t kickoff_minutes)
+{
+  return std::format("{} {} {}", weekday(value), dayMonth(value),
+                     kickoff(kickoff_minutes));
 }
 
 const char* plural(const char* key, int64_t count)

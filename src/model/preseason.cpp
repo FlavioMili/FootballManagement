@@ -9,7 +9,9 @@
 #include "model/preseason.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -54,6 +56,17 @@ double seasonIncome(const GameData& gamedata, const Team& team)
 bool involves(const Match& match, TeamID team_id)
 {
   return match.getHomeTeamId() == team_id || match.getAwayTeamId() == team_id;
+}
+
+/** The pre-season week (Monday to Sunday) of @p date. */
+std::array<GameDateValue, 7> weekOf(const GameDateValue& date)
+{
+  const GameDateValue monday =
+      SeasonCalendar::addDays(date, -SeasonCalendar::dayOfWeek(date));
+  std::array<GameDateValue, 7> days;
+  for (int offset = 0; offset < 7; ++offset)
+    days[static_cast<std::size_t>(offset)] = SeasonCalendar::addDays(monday, offset);
+  return days;
 }
 
 TeamID otherSide(const Match& match, TeamID team_id)
@@ -179,18 +192,18 @@ std::vector<OpponentOption> PreseasonPlanner::opponents(
   const std::uint8_t own = managed->get().getReputation();
   const LeagueID home_root =
       Competitions::rootLeague(gamedata, managed->get().getLeagueId());
-  // Clubs busy with anything but an unplayed friendly that day cannot move.
+  // Clubs busy that week with anything but one unplayed friendly cannot
+  // move (a week's friendlies are spread from Tuesday to Sunday).
   std::unordered_map<TeamID, bool> movable;
-  if (const auto day = calendar.getFullCalendar().find(date);
-      day != calendar.getFullCalendar().end())
-    for (const Match& match : day->second)
+  for (const GameDateValue& day : weekOf(date))
+    for (const Match& match : calendar.getMatchesForDate(day))
     {
       const bool free = match.getMatchType() == MatchType::FRIENDLY &&
                         !match.isPlayed();
       for (const TeamID team_id : {match.getHomeTeamId(), match.getAwayTeamId()})
       {
-        auto& entry = movable.try_emplace(team_id, true).first->second;
-        entry = entry && free;
+        const auto [entry, added] = movable.try_emplace(team_id, free);
+        if (!added) entry->second = false;  // Two matches that week.
       }
     }
   std::vector<OpponentOption> options;
@@ -231,21 +244,31 @@ bool PreseasonPlanner::setFriendly(Calendar& calendar, const GameData& gamedata,
   const auto day_it = calendar.getFullCalendar().find(date);
   if (day_it == calendar.getFullCalendar().end()) return false;
   std::vector<Match>& day = calendar.getMatchesForDateMutable(date);
-  std::optional<std::size_t> managed_index;
-  std::optional<std::size_t> opponent_index;
-  for (std::size_t index = 0; index < day.size(); ++index)
-  {
-    if (involves(day[index], managed_team_id)) managed_index = index;
-    if (involves(day[index], opponent_id)) opponent_index = index;
-  }
-  if (!managed_index) return false;
-  const Match& current = day[*managed_index];
+  const auto managed_it = std::ranges::find_if(
+      day, [&](const Match& match) { return involves(match, managed_team_id); });
+  if (managed_it == day.end()) return false;
+  Match& current = *managed_it;
   if (current.getMatchType() != MatchType::FRIENDLY || current.isPlayed())
     return false;
-  if (opponent_index && *opponent_index != *managed_index &&
-      (day[*opponent_index].getMatchType() != MatchType::FRIENDLY ||
-       day[*opponent_index].isPlayed()))
-    return false;
+  // The opponent's own match of that week (friendlies run Tuesday-Sunday).
+  std::optional<std::pair<GameDateValue, std::size_t>> opponent_slot;
+  for (const GameDateValue& other_day : weekOf(date))
+  {
+    const std::vector<Match>& matches = calendar.getMatchesForDate(other_day);
+    for (std::size_t index = 0; index < matches.size(); ++index)
+    {
+      const Match& match = matches[index];
+      if (!involves(match, opponent_id)) continue;
+      if (opponent_slot || match.getMatchType() != MatchType::FRIENDLY ||
+          match.isPlayed() || !(today < other_day))
+        return false;
+      opponent_slot.emplace(other_day, index);
+    }
+  }
+  Match* opponent_match =
+      opponent_slot ? &calendar.getMatchesForDateMutable(
+                          opponent_slot->first)[opponent_slot->second]
+                    : nullptr;
   // Only competitive-free weeks: the date must still be pre-season.
   const auto slots = friendlies(calendar, managed_team_id, today);
   if (!std::ranges::contains(slots, date, &FriendlySlot::date)) return false;
@@ -256,16 +279,22 @@ bool PreseasonPlanner::setFriendly(Calendar& calendar, const GameData& gamedata,
       Competitions::rootLeague(gamedata, managed->get().getLeagueId()) !=
       Competitions::rootLeague(gamedata, opponent->get().getLeagueId());
   const TeamID previous = otherSide(current, managed_team_id);
-  const Match chosen(home ? managed_team_id : opponent_id,
-                     home ? opponent_id : managed_team_id, date,
-                     MatchType::FRIENDLY);
-  if (opponent_id != previous && opponent_index)
+  Match chosen(home ? managed_team_id : opponent_id,
+               home ? opponent_id : managed_team_id, date,
+               MatchType::FRIENDLY);
+  chosen.setKickoff(current.getScheduledKickoff());
+  if (opponent_id != previous && opponent_match)
   {
-    // The two left-over clubs meet instead (the old opponent at home).
-    const TeamID left_over = otherSide(day[*opponent_index], opponent_id);
-    day[*opponent_index] = Match(previous, left_over, date, MatchType::FRIENDLY);
+    // The two left-over clubs meet instead (the old opponent at home) on
+    // the day the new opponent was to play, so every club still plays once
+    // that week and the days keep their number of matches.
+    const TeamID left_over = otherSide(*opponent_match, opponent_id);
+    Match replacement(previous, left_over, opponent_match->getDate(),
+                      MatchType::FRIENDLY);
+    replacement.setKickoff(opponent_match->getScheduledKickoff());
+    *opponent_match = replacement;
   }
-  day[*managed_index] = chosen;
+  current = chosen;
 
   if (state.season_year != seasonOf(date)) onSeasonStart(seasonOf(date));
   std::erase(state.tour_dates, date);

@@ -914,37 +914,75 @@ void ContinentalCompetitions::assignPots(Season& season) const
   const size_t pots = std::max<size_t>(1, season.matches / 2);
   const size_t pot_size = std::max<size_t>(1, season.entrants.size() / pots);
   // Clubs meet two pot-mates each and never one of their association, so a
-  // pot holds at most half its clubs from one association; the others move
-  // down to the next pot with room (coefficient order otherwise).
+  // pot, the last one included, holds at most half its clubs from one
+  // association; the others move down to the next pot with room
+  // (coefficient order otherwise).
   const size_t per_association = std::max<size_t>(1, pot_size / 2);
   std::vector<std::map<LeagueID, size_t>> counts(pots);
   std::vector<size_t> filled(pots, 0);
-  std::vector<Entrant> ordered;
-  ordered.reserve(season.entrants.size());
   std::vector<Entrant> waiting = season.entrants;
+  std::vector<Entrant> placed;
+  placed.reserve(season.entrants.size());
+  const auto put = [&](Entrant entrant, size_t pot)
+  {
+    ++counts[pot][entrant.association];
+    ++filled[pot];
+    entrant.pot = static_cast<uint8_t>(pot);
+    placed.push_back(entrant);
+  };
   for (size_t pot = 0; pot < pots; ++pot)
   {
-    for (auto it = waiting.begin(); it != waiting.end() && filled[pot] < pot_size;)
+    for (auto it = waiting.begin();
+         it != waiting.end() && filled[pot] < pot_size;)
     {
-      const bool last_pot = pot + 1 == pots;
-      if (!last_pot && counts[pot][it->association] >= per_association)
+      if (counts[pot][it->association] >= per_association)
       {
         ++it;
         continue;
       }
-      ++counts[pot][it->association];
-      ++filled[pot];
-      it->pot = static_cast<uint8_t>(pot);
-      ordered.push_back(*it);
+      put(*it, pot);
       it = waiting.erase(it);
     }
   }
-  for (Entrant& entrant : waiting)
+  // A club no pot with room could take (its association is full there)
+  // swaps with a club of another association in a full pot that still has
+  // room for it; that club moves to the pot with room.
+  for (const Entrant& entrant : waiting)
   {
-    entrant.pot = static_cast<uint8_t>(pots - 1);
-    ordered.push_back(entrant);
+    size_t room = pots - 1;
+    for (size_t pot = 0; pot < pots; ++pot)
+      if (filled[pot] < pot_size)
+      {
+        room = pot;
+        break;
+      }
+    bool swapped = false;
+    for (size_t index = 0; index < placed.size() && !swapped; ++index)
+    {
+      const Entrant other = placed[index];
+      const size_t pot = other.pot;
+      if (pot == room || other.association == entrant.association ||
+          counts[pot][entrant.association] >= per_association ||
+          counts[room][other.association] >= per_association)
+        continue;
+      --counts[pot][other.association];
+      ++counts[pot][entrant.association];
+      placed[index] = entrant;
+      placed[index].pot = static_cast<uint8_t>(pot);
+      put(other, room);
+      swapped = true;
+    }
+    if (!swapped) put(entrant, room);
   }
-  season.entrants = std::move(ordered);
+  std::ranges::sort(placed,
+                    [](const Entrant& left, const Entrant& right)
+                    {
+                      if (left.pot != right.pot) return left.pot < right.pot;
+                      if (left.coefficient != right.coefficient)
+                        return left.coefficient > right.coefficient;
+                      return left.team_id < right.team_id;
+                    });
+  season.entrants = std::move(placed);
 }
 
 void ContinentalCompetitions::startSeason(uint16_t season_year,
@@ -1247,10 +1285,18 @@ bool ContinentalCompetitions::needsExtraTime(const Calendar& calendar,
 std::optional<int> ContinentalCompetitions::deciderLead(
     const Calendar& calendar, const Match& match) const
 {
+  const auto aggregate = deciderAggregate(calendar, match);
+  if (!aggregate) return std::nullopt;
+  return aggregate->first - aggregate->second;
+}
+
+std::optional<std::pair<int, int>> ContinentalCompetitions::deciderAggregate(
+    const Calendar& calendar, const Match& match) const
+{
   if (match.getMatchType() != MatchType::CONTINENTAL) return std::nullopt;
   const Round round = Continental::roundOf(match.getStage());
   if (round == Round::LeaguePhase) return std::nullopt;
-  if (round == Round::Final) return 0;
+  if (round == Round::Final) return std::pair(0, 0);
   if (Continental::legOf(match.getStage()) != 2) return std::nullopt;
   // The home side of the second leg was the away side of the first.
   const Match* first =
@@ -1258,8 +1304,8 @@ std::optional<int> ContinentalCompetitions::deciderLead(
               Continental::stageCode(round, 1), match.getAwayTeamId(),
               match.getHomeTeamId());
   if (!first || !first->isPlayed()) return std::nullopt;
-  return static_cast<int>(first->getAwayScore()) -
-         static_cast<int>(first->getHomeScore());
+  return std::pair(static_cast<int>(first->getAwayScore()),
+                   static_cast<int>(first->getHomeScore()));
 }
 
 bool ContinentalCompetitions::resolveDecider(const Calendar& calendar,

@@ -480,7 +480,7 @@ TEST(MatchSchedulerTest, SchedulerKeepsTheFixtureVenue)
     for (const bool swapped : {false, true})
     {
       MatchSimulationInput venue = input;
-      venue.knockout.reset();
+      venue.knockout = {};
       if (swapped)
       {
         std::swap(venue.home_id, venue.away_id);
@@ -491,6 +491,8 @@ TEST(MatchSchedulerTest, SchedulerKeepsTheFixtureVenue)
       MatchEngine engine(venue.home_lineup, venue.away_lineup,
                          venue.home_strategy, venue.away_strategy, config,
                          venue.seed);
+      // Both paths play the fixture in its league's style.
+      engine.setMatchContext(MatchSimulation::leagueContext(venue.league_id));
       MatchdaySquad::carryCondition(engine, venue.home_lineup);
       MatchdaySquad::carryCondition(engine, venue.away_lineup);
       engine.simulateToEnd(MatchFidelity::BACKGROUND);
@@ -574,33 +576,77 @@ TEST(MatchSchedulerTest, MatchdayTiming)
     GTEST_SKIP() << "set FM_SEASON_TIMING=1 to time a matchday";
   const SlotCleanup slot{uniqueSlot(4)};
   const auto controller = makeWorld(slot.slot);
-  const auto matchday = firstBusyDay(*controller, 50);
+  const Calendar& calendar = controller->getGame()->getCalendar();
+
+  // League rounds are spread from Friday to Monday: the Continue that
+  // matters is the busiest day of a round, not the whole round.
+  const auto leagueMatches = [](const std::vector<Match>& matches)
+  {
+    return std::ranges::count_if(matches, [](const Match& match)
+                                 { return match.getMatchType() == MatchType::LEAGUE; });
+  };
+  const GameDateValue first_round =
+      SeasonCalendar::leagueStart(SeasonCalendar::seasonStartYear(
+          controller->getCurrentDate()));
+  std::optional<GameDateValue> matchday;
+  for (int offset = -1; offset <= 2; ++offset)
+  {
+    const GameDateValue day = SeasonCalendar::addDays(first_round, offset);
+    const auto& matches = calendar.getMatchesForDate(day);
+    std::cout << "[matchday] first round " << day.toString() << ": "
+              << matches.size() << " matches\n";
+    if (!matchday || matches.size() > calendar.getMatchesForDate(*matchday).size())
+      matchday = day;
+  }
   ASSERT_TRUE(matchday);
   advanceUntil(*controller, SeasonCalendar::addDays(*matchday, -1));
-  const std::vector<MatchSimulationInput> inputs =
-      prepareDay(*controller, *matchday);
-
-  const auto time = [&](unsigned threads)
+  // Busiest days still ahead (the season's worst league day is a short
+  // weekend: no Monday before an international window).
+  std::optional<GameDateValue> season_busiest;
+  std::optional<GameDateValue> busiest_day;
+  for (const auto& [date, matches] : calendar.getFullCalendar())
   {
-    MatchScheduler scheduler(threads);
-    const auto started = std::chrono::steady_clock::now();
-    const auto results = scheduler.run(inputs, controller->getStatsConfig());
-    EXPECT_EQ(results.size(), inputs.size());
-    return std::chrono::duration<double, std::milli>(
-               std::chrono::steady_clock::now() - started)
-        .count();
-  };
-  const double sequential_ms = time(1);
+    if (date < *matchday) continue;
+    if (!season_busiest ||
+        leagueMatches(matches) >
+            leagueMatches(calendar.getMatchesForDate(*season_busiest)))
+      season_busiest = date;
+    if (!busiest_day ||
+        matches.size() > calendar.getMatchesForDate(*busiest_day).size())
+      busiest_day = date;
+  }
+  ASSERT_TRUE(season_busiest && busiest_day);
+
   const unsigned threads = timingThreads();
-  const double parallel_ms = time(threads);
-  std::cout << "[matchday] " << inputs.size() << " matches: 1 thread "
-            << sequential_ms << " ms, " << threads << " threads " << parallel_ms
-            << " ms\n";
+  const auto time = [&](const GameDateValue& date, const char* label)
+  {
+    const std::vector<MatchSimulationInput> inputs =
+        prepareDay(*controller, date);
+    const auto run = [&](unsigned workers)
+    {
+      MatchScheduler scheduler(workers);
+      const auto started = std::chrono::steady_clock::now();
+      const auto results = scheduler.run(inputs, controller->getStatsConfig());
+      EXPECT_EQ(results.size(), inputs.size());
+      return std::chrono::duration<double, std::milli>(
+                 std::chrono::steady_clock::now() - started)
+          .count();
+    };
+    const double sequential_ms = run(1);
+    const double parallel_ms = run(threads);
+    std::cout << "[matchday] " << label << " " << date.toString() << ", "
+              << inputs.size() << " matches: 1 thread " << sequential_ms
+              << " ms, " << threads << " threads " << parallel_ms << " ms\n";
+  };
+  time(*matchday, "busiest day of the first round");
+  time(*season_busiest, "busiest league day of the season");
+  time(*busiest_day, "busiest day ahead (any competition)");
 
   controller->setSimulationThreads(threads);
   const auto started = std::chrono::steady_clock::now();
   controller->advanceDay();
-  std::cout << "[matchday] full advanceDay with " << threads << " threads: "
+  std::cout << "[matchday] full advanceDay of " << matchday->toString()
+            << " with " << threads << " threads: "
             << std::chrono::duration<double, std::milli>(
                    std::chrono::steady_clock::now() - started)
                    .count()
@@ -622,4 +668,95 @@ TEST(MatchSchedulerTest, SeasonTiming)
                                              started)
                    .count()
             << " s\n";
+}
+
+// ---------------------------------------------------------------------------
+// League match context
+// ---------------------------------------------------------------------------
+
+// Each league plays in its own style: Portuguese referees book more than
+// French ones, Argentina scores less than Germany, home advantage is strong
+// in Brazil's Serie B and weak in Portugal's Liga 2, and second tiers have
+// more variable referees. Unknown leagues keep the calibrated engine.
+TEST(MatchContextTest, LeaguesCarryTheirOwnMatchStyle)
+{
+  constexpr LeagueID ENGLAND = 3;
+  constexpr LeagueID ENGLAND_2 = 14;
+  constexpr LeagueID GERMANY = 4;
+  constexpr LeagueID FRANCE = 5;
+  constexpr LeagueID PORTUGAL = 12;
+  constexpr LeagueID PORTUGAL_2 = 22;
+  constexpr LeagueID ARGENTINA = 10;
+  constexpr LeagueID BRAZIL_2 = 21;
+
+  const MatchContext neutral;
+  for (const LeagueID league : {LeagueID{0}, LeagueID{250}})
+  {
+    const MatchContext context = MatchSimulation::leagueContext(league);
+    EXPECT_FLOAT_EQ(context.goalRateScale, neutral.goalRateScale);
+    EXPECT_FLOAT_EQ(context.refereeStrictnessMean,
+                    neutral.refereeStrictnessMean);
+    EXPECT_FLOAT_EQ(context.refereeStrictnessSd, neutral.refereeStrictnessSd);
+    EXPECT_FLOAT_EQ(context.homeAdvantageScale, neutral.homeAdvantageScale);
+  }
+
+  const auto context = [](LeagueID league)
+  { return MatchSimulation::leagueContext(league); };
+  EXPECT_GT(context(PORTUGAL).refereeStrictnessMean,
+            1.3f * context(FRANCE).refereeStrictnessMean);
+  EXPECT_LT(context(ENGLAND).refereeStrictnessMean, 1.0f);
+  EXPECT_GT(context(GERMANY).goalRateScale,
+            1.4f * context(ARGENTINA).goalRateScale);
+  EXPECT_GT(context(BRAZIL_2).homeAdvantageScale,
+            1.5f * context(PORTUGAL_2).homeAdvantageScale);
+  EXPECT_GT(context(ENGLAND_2).refereeStrictnessSd,
+            1.5f * context(ENGLAND).refereeStrictnessSd);
+  EXPECT_LT(context(ENGLAND_2).goalRateScale, context(ENGLAND).goalRateScale);
+
+  // Every league's context is inside the engine's accepted ranges.
+  for (const LeagueProfile& profile : LEAGUE_PROFILES)
+  {
+    const MatchContext value = context(profile.league_id);
+    EXPECT_GE(value.goalRateScale, MatchTuning::Context::MIN_GOAL_RATE_SCALE);
+    EXPECT_LE(value.goalRateScale, MatchTuning::Context::MAX_GOAL_RATE_SCALE);
+    EXPECT_GE(value.refereeStrictnessMean,
+              MatchTuning::Context::MIN_REFEREE_STRICTNESS);
+    EXPECT_LE(value.refereeStrictnessMean,
+              MatchTuning::Context::MAX_REFEREE_STRICTNESS);
+    EXPECT_LE(value.refereeStrictnessSd, MatchTuning::Context::MAX_REFEREE_SD);
+    EXPECT_LE(value.homeAdvantageScale,
+              MatchTuning::Context::MAX_HOME_ADVANTAGE_SCALE);
+  }
+}
+
+// Domestic league fixtures are prepared in their league's style; friendlies
+// keep the calibrated engine.
+TEST(MatchContextTest, LeagueFixturesCarryTheirLeague)
+{
+  const SlotCleanup slot{uniqueSlot(7)};
+  const auto controller = makeWorld(slot.slot);
+  bool league_seen = false;
+  bool friendly_seen = false;
+  for (const auto& [date, matches] :
+       controller->getGame()->getCalendar().getFullCalendar())
+  {
+    for (const Match& match : matches)
+    {
+      const auto input = match.prepareSimulation(*controller->getGameData());
+      if (!input) continue;
+      if (match.getMatchType() == MatchType::LEAGUE)
+      {
+        EXPECT_EQ(input->league_id, match.getCompetitionId());
+        league_seen = true;
+      }
+      else if (match.getMatchType() == MatchType::FRIENDLY)
+      {
+        EXPECT_EQ(input->league_id, 0);
+        friendly_seen = true;
+      }
+    }
+    if (league_seen && friendly_seen) break;
+  }
+  EXPECT_TRUE(league_seen);
+  EXPECT_TRUE(friendly_seen);
 }

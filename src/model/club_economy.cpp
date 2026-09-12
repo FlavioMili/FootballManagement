@@ -135,12 +135,16 @@ double expectedIncome(const LeagueEconomy& economy, std::uint8_t reputation)
 
 double baseDemand(const LeagueEconomy& economy, std::uint8_t reputation)
 {
-  // [P] Mid-table clubs fill ~80%, the biggest sell out.
-  return std::clamp(0.80 + 0.25 *
-                               (static_cast<double>(reputation) -
-                                static_cast<double>(economy.mean_reputation)) /
-                               20.0,
-                    0.35, 1.15);
+  // Mid-table clubs fill the league's typical share of their ground (97% in
+  // Germany, 34% in Russia) [S]; bigger clubs draw proportionally more (a
+  // 20-point reputation edge fills about 30% more). [P]
+  const double fill = static_cast<double>(economy.profile->stadium_fill);
+  return std::clamp(fill * (1.0 + 0.3 *
+                                      (static_cast<double>(reputation) -
+                                       static_cast<double>(
+                                           economy.mean_reputation)) /
+                                      20.0),
+                    0.4 * fill, 1.15);
 }
 
 double fairTicketPrice(const LeagueEconomy& economy, const ClubProfile& profile)
@@ -220,7 +224,8 @@ double monthlyFacilityCosts(const LeagueEconomy& economy,
 double playerWageShare(const LeagueEconomy& economy)
 {
   // [S] ECFIL: wages are 57-73% of revenue by league; leagues with a high
-  // total wage ratio spend more on players. Kept within 55-70%.
+  // total wage ratio spend more on players, from ~48% in the 2. Bundesliga
+  // to 76% in second tiers that overspend (Championship, Ligue 2).
   return std::clamp(
       static_cast<double>(Finance::PLAYER_WAGE_SHARE_BASE) +
           static_cast<double>(Finance::PLAYER_WAGE_SHARE_SLOPE) *
@@ -261,6 +266,14 @@ std::int64_t availableTransferBudget(std::int64_t board_budget,
                                                   0, weekly_payroll) -
       std::max<std::int64_t>(0, committed);
   return std::max<std::int64_t>(0, std::min(board_budget, spare_cash));
+}
+
+std::int64_t ownerRescue(std::int64_t balance, std::int64_t weekly_payroll)
+{
+  const std::int64_t payroll = std::max<std::int64_t>(0, weekly_payroll);
+  if (payroll == 0 || balance >= -Finance::OWNER_RESCUE_TRIGGER_WEEKS * payroll)
+    return 0;
+  return Finance::OWNER_RESCUE_CUSHION_WEEKS * payroll - balance;
 }
 
 std::int64_t seasonWageBudget(const LeagueEconomy& economy, double revenue,

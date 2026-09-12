@@ -58,6 +58,7 @@ class MatchScene : public GUIScene
   friend class GameFlowTest_ManagedMatchIntegration_Test;
   friend class GameFlowTest_ManagementScreensMidSeason_Test;
   friend class GameFlowTest_WatchedMatchSeedIsDeterministic_Test;
+  friend class GameFlowTest_WatchedCupTieIsPlayedToAWinner_Test;
   friend class MatchRenderer3DSceneTest_SwitchesViewsAndCapturesFrames_Test;
 
   /** A selected player who may not take part in today's fixture. */
@@ -85,6 +86,8 @@ class MatchScene : public GUIScene
   std::optional<bool> managed_is_home;
   /** Type of today's calendar fixture between the teams, if there is one. */
   std::optional<MatchType> fixture_type;
+  /** Weekday, date and kick-off of that fixture ("Sun 17 Aug 20:45"). */
+  std::string fixture_when;
   std::vector<LineupProblem> lineup_problems;
   std::string lineup_status;
   /** What the assistant changed before kick-off, shown in the HUD. */
@@ -117,6 +120,9 @@ class MatchScene : public GUIScene
   float frame_seconds = 0.0f;
 
   bool match_finished = false;
+  /** "a.e.t." / "4-3 on penalties" under the full-time score (built once). */
+  std::string decided_by;
+  bool decided_by_ready = false;
 
   /** Multiplier of the engine's real-time pace (1x = real time). */
   float match_speed = 1.0f;

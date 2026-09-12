@@ -1058,18 +1058,25 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
   capture("season_match_assistant_fixed.bmp");
   // Quick result: the rest is played off the UI thread (a progress card
   // shows meanwhile) and the report opens.
+  const GameDateValue matchDate = controller->getCurrentDate();
   ASSERT_TRUE(live->quickResult());
   step_frame();
   capture("season_match_quick_progress.bmp");
+  // Once the match is over the hub simulates the rest of the day on its
+  // Continue worker, then opens the report.
   for (int frame = 0;
-       frame < 3000 && view.getActiveScene()->getID() == SceneID::MATCH;
+       frame < 6000 && (view.getActiveScene()->getID() != SceneID::MATCH_REPORT ||
+                        hub->isAdvancing());
        ++frame)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     step_frame();
   }
   step_frame();
+  EXPECT_FALSE(hub->isAdvancing());
   EXPECT_EQ(view.getActiveScene()->getID(), SceneID::MATCH_REPORT);
+  EXPECT_TRUE(controller->getCurrentDate() == matchDate + size_t{1})
+      << controller->getCurrentDate().toString();
   capture("season_match_quick_report.bmp");
 }
 
@@ -1179,6 +1186,14 @@ TEST(MatchClock, MinuteLabelsShowAddedTime)
   EXPECT_EQ(MatchClock::minuteLabel(45.0f, 2, false), "46'");
   EXPECT_EQ(MatchClock::minuteLabel(89.99f, 2, false), "90'");
   EXPECT_EQ(MatchClock::minuteLabel(93.1f, 2, true), "90+4'");
+  // Extra time runs on from 90 to 105 and 120, each with its added time.
+  EXPECT_EQ(MatchClock::minuteLabel(90.0f, 3, false), "91'");
+  EXPECT_EQ(MatchClock::minuteLabel(104.9f, 3, false), "105'");
+  EXPECT_EQ(MatchClock::minuteLabel(106.2f, 3, true), "105+2'");
+  EXPECT_EQ(MatchClock::minuteLabel(105.0f, 4, false), "106'");
+  EXPECT_EQ(MatchClock::minuteLabel(121.5f, 4, true), "120+2'");
+  EXPECT_EQ(MatchClock::clockLabel(98.5f, 3, false), "98:30");
+  EXPECT_EQ(MatchClock::clockLabel(121.25f, 4, true), "120+1:15");
 }
 
 TEST(MatchClock, ReportEventsMatchTheLiveFeed)
@@ -1195,6 +1210,8 @@ TEST(MatchClock, ReportEventsMatchTheLiveFeed)
   EXPECT_EQ(reported(12.0f, 0.0f), MatchClock::minuteLabel(12.0f, 1, false));
   EXPECT_EQ(reported(47.3f, 2.3f), MatchClock::minuteLabel(47.3f, 1, true));
   EXPECT_EQ(reported(94.8f, 4.8f), MatchClock::minuteLabel(94.8f, 2, true));
+  EXPECT_EQ(reported(99.2f, 0.0f), MatchClock::minuteLabel(99.2f, 3, false));
+  EXPECT_EQ(reported(121.5f, 1.5f), MatchClock::minuteLabel(121.5f, 4, true));
 }
 
 TEST_F(GameFlowTest, ManagedMatchIntegration)
@@ -1368,6 +1385,74 @@ TEST_F(GameFlowTest, MissedManagedFixtureFieldsOnlyEligiblePlayers)
     EXPECT_NE(line.player_id, injuredId);
   // The manager's own selection is kept.
   EXPECT_EQ(lineup.getOutfieldPlayers().front().player->getId(), injuredId);
+}
+
+TEST_F(GameFlowTest, WatchedCupTieIsPlayedToAWinner)
+{
+  // A cup tie opened on the match screen gets the knockout rules and the
+  // clubs' names; level after 90 minutes the clock runs on into extra time
+  // and, still level, shows the shootout score.
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::EN));
+  const TeamID managedId = controller->getTeams().front().get().getId();
+  controller->selectManagedTeam(managedId);
+  const GameDateValue today = controller->getCurrentDate();
+  const auto busyToday = [&](TeamID team_id)
+  {
+    return std::ranges::any_of(controller->getTeamFixtures(team_id),
+                               [&](const Match& match)
+                               { return match.getDate() == today; });
+  };
+  ASSERT_FALSE(busyToday(managedId));
+  const std::string homeName =
+      controller->getTeamById(managedId)->get().getName();
+  GUIView view(*controller);
+  bool extraTime = false;
+  int tries = 0;
+  for (const auto& team : controller->getTeams())
+  {
+    const TeamID opponent = team.get().getId();
+    if (opponent == managedId || opponent == FREE_AGENTS_TEAM_ID ||
+        busyToday(opponent))
+      continue;
+    if (++tries > 40) break;
+    controller->getGame()->getCalendar().addMatch(
+        Match(managedId, opponent, today, MatchType::CUP));
+    MatchScene scene(&view, managedId, opponent);
+    scene.onEnter();
+    ASSERT_NE(scene.engine, nullptr);
+    MatchEngine& engine = *scene.engine;
+    ASSERT_TRUE(engine.getKnockout().required);
+    for (int step = 0; step < 400000 && engine.getState() != MatchState::FULL_TIME &&
+                       engine.getPeriod() < 3;
+         ++step)
+      engine.update(0.05f);
+    // Commentary names the clubs, not "home side".
+    EXPECT_TRUE(std::ranges::any_of(
+        engine.getEvents(), [&](const MatchEvent& event)
+        { return event.description.find(homeName) != std::string::npos; }))
+        << homeName;
+    if (engine.getState() == MatchState::FULL_TIME) continue;
+    extraTime = true;
+    EXPECT_TRUE(engine.wentToExtraTime());
+    const std::string clock = scene.clockText();
+    EXPECT_TRUE(clock.starts_with("9") || clock.starts_with("10")) << clock;
+    for (int step = 0; step < 400000 && engine.getState() != MatchState::FULL_TIME &&
+                       !engine.hasShootout();
+         ++step)
+      engine.update(0.05f);
+    if (engine.hasShootout())
+    {
+      EXPECT_EQ(scene.clockText(),
+                std::format("{}-{}", engine.getShootoutScore(true),
+                            engine.getShootoutScore(false)));
+      engine.simulateToEnd();
+    }
+    ASSERT_EQ(engine.getState(), MatchState::FULL_TIME);
+    EXPECT_TRUE(engine.getTieWinnerHome().has_value());
+    EXPECT_EQ(scene.clockText(), LOC("MATCH_CLOCK_FULL_TIME"));
+    break;
+  }
+  EXPECT_TRUE(extraTime) << "no cup tie went to extra time";
 }
 
 TEST_F(GameFlowTest, WatchedMatchSeedIsDeterministic)

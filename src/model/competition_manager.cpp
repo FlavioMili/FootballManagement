@@ -150,7 +150,8 @@ void CompetitionManager::afterMatchday(Calendar& calendar,
   Competitions::drawPendingCupRounds(
       calendar, *gamedata, SeasonCalendar::seasonStartYear(today), today);
 
-  // A level aggregate after 90 minutes goes to extra time and penalties.
+  // Deciders are played through extra time and penalties by the engine;
+  // this settles one recorded level from a score alone.
   for (const FixtureKey& key : pending_deciders)
   {
     Match* match =
@@ -162,6 +163,19 @@ void CompetitionManager::afterMatchday(Calendar& calendar,
   }
   pending_deciders.clear();
   continental.afterMatchday(calendar, today);
+  // New cup and continental ties may move league fixtures within their round.
+  calendar.protectRest(today);
+}
+
+std::optional<MatchRules::Knockout> CompetitionManager::knockoutRules(
+    const Calendar& calendar, const Match& match) const
+{
+  if (match.isKnockout()) return MatchRules::Knockout{.required = true};
+  const auto aggregate = continental.deciderAggregate(calendar, match);
+  if (!aggregate) return std::nullopt;
+  return MatchRules::Knockout{.required = true,
+                              .homeAggregate = aggregate->first,
+                              .awayAggregate = aggregate->second};
 }
 
 void CompetitionManager::startContinentalSeason(const GameDateValue& today)

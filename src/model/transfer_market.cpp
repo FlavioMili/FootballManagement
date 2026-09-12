@@ -699,6 +699,12 @@ bool TransferMarket::releasePlayer(PlayerID player_id,
                                    const GameDateValue& date,
                                    TeamID managed_team_id)
 {
+  return endContract(player_id, date, managed_team_id, true);
+}
+
+bool TransferMarket::endContract(PlayerID player_id, const GameDateValue& date,
+                                 TeamID managed_team_id, bool severance_due)
+{
   Player* player = mutablePlayer(player_id);
   if (!player) return false;
   const TeamID club_id = player->getTeamId();
@@ -706,7 +712,9 @@ bool TransferMarket::releasePlayer(PlayerID player_id,
   if (!club || club_id == FREE_AGENTS_TEAM_ID || !canBeTraded(player_id))
     return false;
   const std::int64_t severance =
-      severancePay(player->getWage(), player->getContractYears(), date);
+      severance_due
+          ? severancePay(player->getWage(), player->getContractYears(), date)
+          : 0;
   if (severance > 0)
     club->get().getFinances().record(date, FinanceCategory::Wages, -severance);
   std::erase_if(pending_obligations,
@@ -848,6 +856,86 @@ std::int64_t TransferMarket::spendableBudget(TeamID team_id,
       committedPayables(team_id, date));
 }
 
+std::int64_t TransferMarket::aiWageRoom(TeamID club_id, bool next_season) const
+{
+  const auto club = gamedata->getTeam(club_id);
+  if (!club || club_id == FREE_AGENTS_TEAM_ID) return 0;
+  std::int64_t committed = 0;
+  if (next_season)
+  {
+    // Contracts in their final year run out on 30 June and loanees go back
+    // to their clubs; the club's own loanees return to its payroll.
+    for (const PlayerID player_id : club->get().getPlayerIDs())
+    {
+      const auto player = gamedata->getPlayer(player_id);
+      const LoanDeal* loan = findLoan(player_id);
+      if (player && player->get().getContractYears() > 1 &&
+          !(loan && loan->borrower == club_id))
+        committed += player->get().getWage();
+    }
+    for (const auto& [player_id, loan] : active_loans)
+    {
+      const auto player = gamedata->getPlayer(player_id);
+      if (loan.parent == club_id && player &&
+          player->get().getContractYears() > 1)
+        committed += loan.full_wage;
+    }
+  }
+  else
+  {
+    committed = weeklyPayroll(*gamedata, club->get());
+  }
+  for (const auto& [player_id, deal] : pre_contracts)
+  {
+    if (deal.to_team == club_id) committed += deal.terms.weekly_wage;
+  }
+  return club->get().getFinances().getWageBudget() - committed;
+}
+
+std::int64_t TransferMarket::preContractCosts(TeamID club_id) const
+{
+  std::int64_t costs = 0;
+  for (const auto& [player_id, deal] : pre_contracts)
+  {
+    if (deal.to_team == club_id)
+      costs += static_cast<std::int64_t>(deal.terms.signing_bonus) +
+               static_cast<std::int64_t>(deal.terms.weekly_wage) *
+                   TransferTuning::Offer::FREE_AGENT_FEE_WEEKS;
+  }
+  return costs;
+}
+
+bool TransferMarket::aiAffordsWage(const Team& club, std::uint32_t weekly_wage,
+                                   std::int64_t room)
+{
+  const auto wage = static_cast<double>(weekly_wage);
+  return wage <= static_cast<double>(room) &&
+         wage <= static_cast<double>(club.getFinances().getWageBudget()) *
+                     static_cast<double>(
+                         TransferTuning::Market::MAX_SINGLE_WAGE_SHARE);
+}
+
+bool TransferMarket::lastSeasonMove(TeamID club_id, bool promoted) const
+{
+  const auto& history = competitions.getSeasonHistory();
+  std::uint16_t last = 0;
+  for (const SeasonHistoryEntry& entry : history)
+  {
+    if (entry.competition_type == MatchType::LEAGUE)
+      last = std::max(last, entry.season);
+  }
+  return last > 0 &&
+         std::ranges::any_of(
+             history,
+             [&](const SeasonHistoryEntry& entry)
+             {
+               return entry.season == last &&
+                      entry.competition_type == MatchType::LEAGUE &&
+                      std::ranges::contains(
+                          promoted ? entry.promoted : entry.relegated, club_id);
+             });
+}
+
 // ---------------------------------------------------------------------------
 // Daily processing
 // ---------------------------------------------------------------------------
@@ -858,8 +946,13 @@ void TransferMarket::onDayAdvanced(const GameDateValue& date,
   const bool week_end = dayOrdinal(date) % 7 == 0;
   if (week_end) payLoanWageShares(date);
   processLoanEnds(date, managed_team_id);
+  // Contracts that ran out on 30 June start the clock on 1 July.
+  if (date.day == 1 && date.month != 7) lowerFreeAgentExpectations();
   if (date.month == 7 && date.day == 1)
+  {
     executePreContracts(date, managed_team_id);
+    releaseOnRelegation(date, managed_team_id);
+  }
   payDueInstalments(date, managed_team_id);
   if (week_end) checkAddOns(date, managed_team_id);
   if (date.day == 1) checkPromises(date, managed_team_id);
@@ -943,6 +1036,64 @@ void TransferMarket::executePreContracts(const GameDateValue& date,
     // Retired players simply drop out of their agreement.
     if (player && player->getTeamId() != agreement.to_team)
       completeTransfer(deal, date, managed_team_id);
+  }
+}
+
+void TransferMarket::lowerFreeAgentExpectations()
+{
+  // Nobody pays what a free agent earned before: the longer he waits, the
+  // closer his demands come to what clubs at his level can offer.
+  const auto free_agents = gamedata->getTeam(FREE_AGENTS_TEAM_ID);
+  if (!free_agents) return;
+  for (const PlayerID player_id : free_agents->get().getPlayerIDs())
+  {
+    Player* player = mutablePlayer(player_id);
+    if (!player) continue;
+    player->setWage(std::max(
+        TransferTuning::Contract::MINIMUM_WEEKLY_WAGE,
+        static_cast<std::uint32_t>(
+            static_cast<float>(player->getWage()) *
+            TransferTuning::Market::FREE_AGENT_MONTHLY_WAGE_FACTOR)));
+  }
+}
+
+void TransferMarket::releaseOnRelegation(const GameDateValue& date,
+                                         TeamID managed_team_id)
+{
+  using M = TransferTuning::Market;
+  // Relegation clauses: some first-team players of a relegated club may
+  // leave for free. Whether a player has one is drawn from the world seed,
+  // so it needs no saved state. The manager's own contracts carry none.
+  constexpr std::uint64_t RELEGATION_CLAUSE_KEY = 0x2E1E6A;
+  const std::uint64_t seed = gamedata->getWorldSeed();
+  std::vector<TeamID> relegated;
+  for (const auto& team : gamedata->getTeamsVector())
+  {
+    const TeamID id = team.get().getId();
+    if (id != FREE_AGENTS_TEAM_ID && id != managed_team_id &&
+        lastSeasonMove(id, false))
+      relegated.push_back(id);
+  }
+  std::ranges::sort(relegated);
+  for (const TeamID club_id : relegated)
+  {
+    const auto ranked =
+        rankedSquad(*gamedata, gamedata->getTeam(club_id)->get());
+    int exits = 0;
+    for (std::size_t rank = 0; rank < ranked.size() && rank < FIRST_TEAM_SIZE &&
+                               exits < M::RELEGATION_CLAUSE_MAX_EXITS;
+         ++rank)
+    {
+      const PlayerID player_id = ranked[rank].second;
+      const auto player = gamedata->getPlayer(player_id);
+      if (player && player->get().getAge() <= M::RELEGATION_CLAUSE_MAX_AGE &&
+          player->get().getContractYears() > 0 &&
+          WorldRng::hashUniform(seed, RngDomain::Transfers, player_id,
+                                RELEGATION_CLAUSE_KEY) <
+              static_cast<double>(M::RELEGATION_CLAUSE_SHARE) &&
+          endContract(player_id, date, managed_team_id, false))
+        ++exits;
+    }
   }
 }
 
@@ -1137,7 +1288,8 @@ void TransferMarket::postNewsDigest(const GameDateValue& date,
 // ---------------------------------------------------------------------------
 
 std::optional<TransferMarket::AiNeed> TransferMarket::assessNeed(
-    const std::vector<std::pair<double, PlayerID>>& ranked) const
+    const std::vector<std::pair<double, PlayerID>>& ranked,
+    float level_boost) const
 {
   using M = TransferTuning::Market;
   struct Group
@@ -1157,6 +1309,10 @@ std::optional<TransferMarket::AiNeed> TransferMarket::assessNeed(
   const float team_level = squadLevel(ranked);
   std::optional<AiNeed> need;
   float worst_deficit = static_cast<float>(M::UPGRADE_DEFICIT);
+  // Thinnest group relative to the depth wanted, for a squad short of
+  // players overall.
+  PlayerRole thinnest = PlayerRole::UNKNOWN;
+  std::ptrdiff_t thinnest_margin = std::numeric_limits<std::ptrdiff_t>::max();
   for (const Group& group : GROUPS)
   {
     std::vector<double> overalls;
@@ -1170,16 +1326,27 @@ std::optional<TransferMarket::AiNeed> TransferMarket::assessNeed(
     }
     if (overalls.size() < group.depth)
       return AiNeed{group.group, team_level - M::SHORTAGE_LEVEL_MARGIN};
+    const auto margin = static_cast<std::ptrdiff_t>(overalls.size()) -
+                        static_cast<std::ptrdiff_t>(group.depth);
+    if (margin < thinnest_margin)
+    {
+      thinnest_margin = margin;
+      thinnest = group.group;
+    }
     // overalls are sorted best first because ranked is.
     const auto weakest_starter =
         static_cast<float>(overalls[group.starters - 1]);
-    const float deficit = team_level - weakest_starter;
+    const float deficit = team_level + level_boost - weakest_starter;
     if (deficit > worst_deficit)
     {
       worst_deficit = deficit;
-      need = AiNeed{group.group, weakest_starter + M::UPGRADE_MARGIN};
+      need =
+          AiNeed{group.group, weakest_starter + M::UPGRADE_MARGIN, false, true};
     }
   }
+  if (!need && ranked.size() < M::AI_TARGET_SQUAD &&
+      thinnest != PlayerRole::UNKNOWN)
+    need = AiNeed{thinnest, team_level - M::DEPTH_LEVEL_MARGIN, true};
   return need;
 }
 
@@ -1239,39 +1406,51 @@ bool TransferMarket::aiShedSurplus(
   }
   if (ranked.size() <= M::AI_TARGET_SQUAD) return false;
   listLoanProspects(ranked);
-  // Parent clubs place their prospects where they will play. [P]
+  // Parent clubs place their prospects where they will play: smaller
+  // clubs, often in the division below, whose wages the parent mostly
+  // covers. [P]
   const auto& clubs = gamedata->getTeamsVector();
+  const int parent_reputation =
+      gamedata->getTeam(club_id)->get().getReputation();
   for (const auto& [overall, player_id] : ranked)
   {
     if (!isLoanListed(player_id) || clubs.empty()) continue;
     const Player& player = gamedata->getPlayer(player_id)->get();
     const SquadRole role = world.squadRole(player_id);
-    for (int attempt = 0; attempt < M::LOAN_PLACEMENT_TRIES; ++attempt)
+    int tries = 0;
+    for (int draw = 0; draw < 3 * M::LOAN_PLACEMENT_TRIES &&
+                       tries < M::LOAN_PLACEMENT_TRIES;
+         ++draw)
     {
       const Team& borrower = clubs[static_cast<std::size_t>(rng.uniformInt(
                                        0, static_cast<int>(clubs.size()) - 1))]
                                  .get();
       const TeamID borrower_id = borrower.getId();
+      const int gap = parent_reputation - borrower.getReputation();
       if (borrower_id == club_id || borrower_id == managed_team_id ||
-          rankedSquad(*gamedata, borrower).size() >= M::AI_MAX_SQUAD)
+          borrower_id == FREE_AGENTS_TEAM_ID || gap < 0)
         continue;
-      const auto parent = gamedata->getTeam(club_id);
+      ++tries;
+      if (rankedSquad(*gamedata, borrower).size() >= M::AI_MAX_SQUAD)
+        continue;
       std::vector<Reason> reasons;
-      if (!playerAcceptsLoan(
-              role, projectedRole(player_id, borrower_id),
-              player.getTraits().ambition,
-              parent->get().getReputation() - borrower.getReputation(),
-              reasons) ||
+      if (!playerAcceptsLoan(role, projectedRole(player_id, borrower_id),
+                             player.getTraits().ambition, gap, reasons) ||
           !loanWithinLimits(player_id, club_id, borrower_id))
         continue;
       LoanTerms terms;
-      terms.wage_share = TransferTuning::Loan::LISTED_WAGE_SHARE;
+      terms.wage_share =
+          gap >= TransferTuning::Loan::SMALL_BORROWER_REPUTATION_GAP
+              ? TransferTuning::Loan::SMALL_BORROWER_WAGE_SHARE
+              : TransferTuning::Loan::LISTED_WAGE_SHARE;
       terms.duration =
           rng.chance(0.25) ? LoanDuration::SixMonths : LoanDuration::SeasonEnd;
-      const std::int64_t room = borrower.getFinances().getWageBudget() -
-                                weeklyPayroll(*gamedata, borrower);
-      if (static_cast<std::int64_t>(player.getWage()) * terms.wage_share / 100 >
-          room)
+      if (!aiAffordsWage(
+              borrower,
+              static_cast<std::uint32_t>(
+                  static_cast<std::uint64_t>(player.getWage()) *
+                  terms.wage_share / 100U),
+              aiWageRoom(borrower_id, false)))
         continue;
       if (startLoan(player_id, borrower_id, terms, date, managed_team_id))
         return true;
@@ -1286,27 +1465,40 @@ bool TransferMarket::aiSignFreeAgent(TeamID club_id, const AiNeed& need,
                                      const GameDateValue& date,
                                      TeamID managed_team_id)
 {
+  const auto club = gamedata->getTeam(club_id);
+  if (!club || wage_room <= 0) return false;
+  // Bonus and agent fee are paid in cash, not from the transfer budget.
+  const std::int64_t cash = club->get().getFinances().getBalance();
+  if (cash <= 0) return false;
   const StatsConfig& config = gamedata->getStatsConfig();
   std::vector<std::pair<double, PlayerID>> free_agents;
   for (const auto& reference : gamedata->getPlayersForTeam(FREE_AGENTS_TEAM_ID))
   {
     const Player& player = reference.get();
     const double overall = player.getOverall(config);
+    // Expectations far beyond the club's means rule a player out.
     if (positionGroup(player.getRole()) == need.group &&
-        overall >= static_cast<double>(need.min_overall))
+        overall >= static_cast<double>(need.min_overall) &&
+        aiAffordsWage(club->get(), player.getWage(), wage_room))
       free_agents.emplace_back(overall, player.getId());
   }
+  // The best affordable players are sounded out.
   std::ranges::sort(free_agents, std::greater<>{});
-  const std::size_t checks = std::min(free_agents.size(), AI_FREE_AGENT_CHECKS);
-  for (std::size_t i = 0; i < checks; ++i)
+  std::size_t checks = 0;
+  for (const auto& [overall, player_id] : free_agents)
   {
-    const PlayerID player_id = free_agents[i].second;
+    if (checks == AI_FREE_AGENT_CHECKS) break;
     const PlayerContext context =
         playerContext(player_id, club_id, ContractKind::FreeAgent);
     const ContractOffer offer = demandedOffer(contractDemand(context));
-    if (static_cast<std::int64_t>(offer.weekly_wage) > wage_room ||
-        !evaluateContract(context, offer, 0).accepted)
+    if (!aiAffordsWage(club->get(), offer.weekly_wage, wage_room) ||
+        static_cast<std::int64_t>(offer.signing_bonus) +
+                static_cast<std::int64_t>(offer.weekly_wage) *
+                    TransferTuning::Offer::FREE_AGENT_FEE_WEEKS >
+            cash)
       continue;
+    ++checks;
+    if (!evaluateContract(context, offer, 0).accepted) continue;
     Deal deal;
     deal.player_id = player_id;
     deal.buyer_id = club_id;
@@ -1388,15 +1580,22 @@ bool TransferMarket::aiTakeLoan(TeamID club_id, const AiNeed& need,
   terms.duration =
       rng.chance(0.25) ? LoanDuration::SixMonths : LoanDuration::SeasonEnd;
   const auto parent_team = gamedata->getTeam(parent);
-  const bool bigger_borrower =
-      parent_team &&
-      club->get().getReputation() > parent_team->get().getReputation();
-  terms.wage_share = static_cast<std::uint8_t>(
-      std::min(100, L::LISTED_WAGE_SHARE +
-                        (bigger_borrower ? BIGGER_BORROWER_EXTRA_SHARE : 0)));
-  const std::int64_t borrower_wage =
-      static_cast<std::int64_t>(loanee.getWage()) * terms.wage_share / 100;
-  if (borrower_wage > wage_room) return false;
+  const int gap = parent_team ? parent_team->get().getReputation() -
+                                    club->get().getReputation()
+                              : 0;
+  if (gap < 0)
+    terms.wage_share = static_cast<std::uint8_t>(
+        std::min(100, L::LISTED_WAGE_SHARE + BIGGER_BORROWER_EXTRA_SHARE));
+  else
+    terms.wage_share = gap >= L::SMALL_BORROWER_REPUTATION_GAP
+                           ? L::SMALL_BORROWER_WAGE_SHARE
+                           : L::LISTED_WAGE_SHARE;
+  if (!aiAffordsWage(club->get(),
+                     static_cast<std::uint32_t>(
+                         static_cast<std::uint64_t>(loanee.getWage()) *
+                         terms.wage_share / 100U),
+                     wage_room))
+    return false;
   return startLoan(*best, club_id, terms, date, managed_team_id);
 }
 
@@ -1473,7 +1672,8 @@ bool TransferMarket::aiBuy(
         static_cast<std::int64_t>(upfrontAmount(deal.terms)) +
         static_cast<std::int64_t>(agentFee(deal));
     if (cash > budget ||
-        static_cast<std::int64_t>(deal.contract.weekly_wage) > wage_room ||
+        !aiAffordsWage(gamedata->getTeam(club_id)->get(),
+                       deal.contract.weekly_wage, wage_room) ||
         !evaluateContract(context, deal.contract, 0).accepted ||
         evaluateOffer(sale, deal.terms, 0).decision !=
             ClubResponse::Decision::Accept)
@@ -1497,25 +1697,38 @@ bool TransferMarket::runAiClub(
   if (!free_agents_only &&
       aiShedSurplus(club_id, ranked, date, managed_team_id, rng))
     return true;
-  const auto need = assessNeed(ranked);
+  // In the summer after promotion a club measures itself against the
+  // division it has joined.
+  const WindowInfo window = windowInfo(date);
+  const bool promoted =
+      window.open && !window.winter && lastSeasonMove(club_id, true);
+  const float boost = promoted ? M::PROMOTED_LEVEL_BOOST : 0.0f;
+  const auto need = assessNeed(ranked, boost);
   if (!need) return false;
-  const Finances& finances = club->get().getFinances();
-  const std::int64_t wage_room =
-      finances.getWageBudget() - weeklyPayroll(*gamedata, club->get());
+  // A club running out of cash adds wages only to fill a missing position.
+  const std::int64_t payroll = weeklyPayroll(*gamedata, club->get());
+  if ((need->upgrade || need->depth) &&
+      club->get().getFinances().getBalance() <
+          M::UPGRADE_CASH_RESERVE_WEEKS * payroll)
+    return false;
+  const std::int64_t wage_room = aiWageRoom(club_id, false);
   if (aiSignFreeAgent(club_id, *need, wage_room, date, managed_team_id))
     return true;
   if (free_agents_only) return false;
-  // Most clubs look for a loan before paying a fee. [P]
-  if (rng.chance(M::LOAN_BEFORE_FEE_CHANCE) &&
+  // Most clubs look for a loan before paying a fee; squad cover is never
+  // worth one. [P]
+  if ((need->depth || rng.chance(M::LOAN_BEFORE_FEE_CHANCE)) &&
       aiTakeLoan(club_id, *need, wage_room, date, managed_team_id, rng))
     return true;
-  return aiBuy(club_id, *need, wage_room, listings, date, managed_team_id, rng);
+  return !need->depth && rng.chance(M::FEE_ROUTE_CHANCE) &&
+         aiBuy(club_id, *need, wage_room, listings, date, managed_team_id, rng);
 }
 
 void TransferMarket::runAiPreContracts(const GameDateValue& date,
                                        TeamID managed_team_id, WorldRng& rng,
                                        int attempts)
 {
+  using M = TransferTuning::Market;
   if (!canSignPreContract(1, date) || attempts <= 0) return;
   const StatsConfig& config = gamedata->getStatsConfig();
   std::vector<PlayerID> candidates;
@@ -1545,8 +1758,15 @@ void TransferMarket::runAiPreContracts(const GameDateValue& date,
         rng.uniformInt(0, static_cast<int>(clubs.size()) - 1))];
     const auto club = gamedata->getTeam(club_id);
     if (!club) continue;
+    // The club pays the wage from next season's budget and the bonus and
+    // agent fee from its spendable money, like any other signing.
+    const std::int64_t wage_room = aiWageRoom(club_id, true);
+    const std::int64_t budget =
+        spendableBudget(club_id, date) - preContractCosts(club_id);
+    if (wage_room <= 0 || budget <= 0) continue;
     const float team_level = squadLevel(rankedSquad(*gamedata, club->get()));
     std::optional<PlayerID> best;
+    ContractOffer best_offer;
     double best_overall = 0.0;
     for (std::size_t sample = 0; sample < PRE_CONTRACT_SAMPLE; ++sample)
     {
@@ -1559,17 +1779,27 @@ void TransferMarket::runAiPreContracts(const GameDateValue& date,
       const double overall = player->get().getOverall(config);
       if (overall <
               static_cast<double>(team_level - PRE_CONTRACT_LEVEL_MARGIN) ||
+          overall > static_cast<double>(
+                        team_level + M::PRE_CONTRACT_MAX_ABOVE_LEVEL) ||
           overall <= best_overall ||
-          !wouldJoin(player_id, club_id, ContractKind::PreContract))
+          !aiAffordsWage(club->get(), player->get().getWage(), wage_room))
+        continue;
+      const PlayerContext context =
+          playerContext(player_id, club_id, ContractKind::PreContract);
+      const ContractOffer offer = demandedOffer(contractDemand(context));
+      if (!aiAffordsWage(club->get(), offer.weekly_wage, wage_room) ||
+          static_cast<std::int64_t>(offer.signing_bonus) +
+                  static_cast<std::int64_t>(offer.weekly_wage) *
+                      TransferTuning::Offer::FREE_AGENT_FEE_WEEKS >
+              budget ||
+          !evaluateContract(context, offer, 0).accepted)
         continue;
       best = player_id;
+      best_offer = offer;
       best_overall = overall;
     }
-    if (!best) continue;
-    const PlayerContext context =
-        playerContext(*best, club_id, ContractKind::PreContract);
-    agreePreContract(*best, club_id, demandedOffer(contractDemand(context)),
-                     date, managed_team_id);
+    if (best)
+      agreePreContract(*best, club_id, best_offer, date, managed_team_id);
   }
 }
 
@@ -1582,7 +1812,7 @@ void TransferMarket::runAiApproach(TeamID club_id, const GameDateValue& date,
   const auto club = gamedata->getTeam(club_id);
   if (!club) return;
   const auto need = assessNeed(rankedSquad(*gamedata, club->get()));
-  if (!need) return;
+  if (!need || need->depth) return;
   const StatsConfig& config = gamedata->getStatsConfig();
   std::optional<PlayerID> best;
   double best_overall = static_cast<double>(need->min_overall);

@@ -148,59 +148,6 @@ std::string nationArg(Language nation)
   return "@" + International::teamNameKey(nation);
 }
 
-/** Extra time and penalties for a finals knockout from the two line-ups. */
-Competitions::KnockoutResolution resolveLevel(const Lineup& home,
-                                              const Lineup& away,
-                                              const StatsConfig& config,
-                                              uint32_t seed)
-{
-  constexpr double GOALS_PER_TEAM = 0.33;  // Per 30 minutes (as clubs).
-  constexpr float AVERAGE_SKILL = 50.0f;
-  const auto strength = [&config](const Lineup& lineup)
-  {
-    double total = 0.0;
-    const std::vector<const Player*> xi = lineup.starters();
-    for (const Player* player : xi) total += player->getOverall(config);
-    return xi.empty() ? 50.0 : total / static_cast<double>(xi.size());
-  };
-  const auto stat = [](const Player& player, const char* name)
-  {
-    const auto it = player.getStats().find(name);
-    return it == player.getStats().end() ? AVERAGE_SKILL : it->second;
-  };
-  const auto takers = [&](const Lineup& shooters, const Lineup& keepers)
-  {
-    std::vector<const Player*> order = shooters.starters();
-    std::ranges::stable_sort(order, [&](const Player* a, const Player* b)
-                             { return stat(*a, "Shooting") > stat(*b, "Shooting"); });
-    const Player* keeper = keepers.getGoalkeeper();
-    const float keeping = keeper ? stat(*keeper, "Goalkeeping") : AVERAGE_SKILL;
-    std::vector<float> chances;
-    for (const Player* player : order)
-      chances.push_back(Competitions::penaltyConversionProbability(
-          stat(*player, "Shooting"), keeping));
-    return chances;
-  };
-  std::mt19937 rng(seed);
-  const double home_strength = std::max(1.0, strength(home));
-  const double away_strength = std::max(1.0, strength(away));
-  const auto rate = [](double own, double other)
-  { return GOALS_PER_TEAM * std::clamp((own / other) * (own / other), 0.5, 2.0); };
-  std::poisson_distribution<int> home_goals(rate(home_strength, away_strength));
-  std::poisson_distribution<int> away_goals(rate(away_strength, home_strength));
-  Competitions::KnockoutResolution resolution;
-  resolution.home_extra_goals = static_cast<uint8_t>(std::min(home_goals(rng), 9));
-  resolution.away_extra_goals = static_cast<uint8_t>(std::min(away_goals(rng), 9));
-  if (resolution.home_extra_goals == resolution.away_extra_goals)
-  {
-    const Competitions::ShootoutResult shootout = Competitions::simulateShootout(
-        takers(home, away), takers(away, home), rng);
-    resolution.penalties = true;
-    resolution.home_penalties = shootout.home;
-    resolution.away_penalties = shootout.away;
-  }
-  return resolution;
-}
 }  // namespace
 
 // ---------------------------------------------------------------------------
@@ -1125,9 +1072,8 @@ void NationalTeams::playMatches(const GameDateValue& today,
       fixture.played = true;  // Not enough players: recorded as 0-0.
       continue;
     }
-    if (fixture.stage != Stage::Group)
-      input.knockout = resolveLevel(input.home_lineup, input.away_lineup, config,
-                                    Competitions::mixSeed(input.seed, 1, 2));
+    // Knockout matches are played on through extra time and penalties.
+    input.knockout.required = fixture.stage != Stage::Group;
     simulated.push_back(index);
     inputs.push_back(std::move(input));
   }

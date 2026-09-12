@@ -396,6 +396,30 @@ enum class MatchFidelity : std::uint8_t
   BACKGROUND
 };
 
+/**
+ * League character of a match, set before kick-off with
+ * MatchEngine::setMatchContext(). The defaults are the calibrated engine
+ * and play exactly like an engine without a context.
+ */
+struct MatchContext
+{
+  /**
+   * Finishing sharpness: above 1 more chances are converted (a high-scoring
+   * league), below 1 fewer (about 0.9 for a second tier). It acts on the
+   * precision of shots, not on the score, so shot volume and xG stay put.
+   */
+  float goalRateScale = 1.0f;
+  /**
+   * Mean and spread of the per-match referee strictness drawn at kick-off;
+   * booking rates scale about linearly with it.
+   */
+  float refereeStrictnessMean = 1.0f;
+  float refereeStrictnessSd = MatchTuning::Discipline::STRICTNESS_SD;
+  /** Scales the home crowd's edge on attributes, execution and refereeing
+   * (0 = neutral venue). */
+  float homeAdvantageScale = 1.0f;
+};
+
 /** How advancePlayback() presents the match. */
 enum class MatchPlaybackMode
 {
@@ -635,6 +659,12 @@ class MatchEngine
    */
   void setKnockout(const MatchRules::Knockout& rules);
   const MatchRules::Knockout& getKnockout() const { return knockout; }
+  /**
+   * Sets the league character (see MatchContext) before kick-off; ignored
+   * once the match has started. Redraws the referee from the same seed.
+   */
+  void setMatchContext(const MatchContext& context);
+  const MatchContext& getMatchContext() const { return matchContext; }
   /** True once the match has gone into extra time. */
   bool wentToExtraTime() const { return extraTimeReached; }
   /** True once a penalty shootout has started. */
@@ -734,6 +764,15 @@ class MatchEngine
   /** Ticks advanced per simulated step (1, or more in background fidelity). */
   std::uint32_t stepTicks = 1;
   float refereeStrictness = 1.0f;
+  /** Standard normal draw behind the referee's strictness. */
+  float refereeDraw = 0.0f;
+  MatchContext matchContext;
+  /** Shot precision factor from MatchContext::goalRateScale. */
+  float finishingPrecision = 1.0f;
+  /** Raw attribute shift toward the reference level, and the finishing
+   * precision of the match's level. */
+  float levelShift = 0.0f;
+  float levelPrecision = 1.0f;
 
   std::vector<PlayerMatchStats> playerStats;
   std::vector<MatchSubstitution> substitutions;
@@ -795,9 +834,11 @@ class MatchEngine
   const Player* shotAssistCandidate = nullptr;
   const Player* lastShooter = nullptr;
   bool restartIsSetPiece = false;
-  /** Shots shortly after a corner or attacking free kick count as set-piece
-   * shots. */
+  /** Shots by the attacking side shortly after a corner or attacking free
+   * kick count as set-piece shots, until the defence wins the ball or play
+   * stops. */
   float setPiecePhaseRemaining = 0.0f;
+  bool setPieceHome = true;
 
   std::vector<Vector2F> previousPlayerPositions;
   std::vector<float> previousPlayerFacingAngles;
@@ -851,6 +892,8 @@ class MatchEngine
   std::array<ShoutState, 2> shouts{};
   /** Sliders in force (tactics plus shout), refreshed when they change. */
   std::array<StrategySliders, 2> effectiveSliders{};
+  /** The score changed (or was set) since the sliders were computed. */
+  bool slidersStale = false;
   /** Underdog caution by side (0 = not the weaker side), from the XIs. */
   std::array<float, 2> underdogShares{};
   /** Team-talk modifiers by side and half. */
@@ -956,8 +999,13 @@ class MatchEngine
   void updatePendingAdvantage(float dt);
   /** Current top speed (m/s) after fatigue, sprint reserve and injury. */
   float currentTopSpeed(const MatchPlayer& player) const;
-  void integrateMovement(MatchPlayer& player, Vector2F target, float dt,
-                         bool urgent, bool walking = false);
+  /**
+   * Moves the players in `slots` toward their targets: the tactical target
+   * (urgent when urgentMovement is set) in play, or the restart spot
+   * (movementTarget) at a walk.
+   */
+  void integrateMovements(const std::uint8_t* slots, std::size_t count,
+                          float dt, bool walking);
   void updateRestartMovement(float dt);
   void separatePlayers();
   Vector2F goalkeeperTarget(MatchPlayer& keeper, const MatchPlayer* carrier);
@@ -966,6 +1014,9 @@ class MatchEngine
   void resolveShotAtGoalkeeper(MatchPlayer& goalkeeper);
   bool resolveAerialContest();
   void headBall(MatchPlayer& header);
+  /** A defender's touch in front of his own goal that now and then goes
+   * toward it instead (true when it did). */
+  bool tryOwnGoalTouch(MatchPlayer& defender);
   void clearBehind(MatchPlayer& defender);
   void clearBall(MatchPlayer& defender);
   void parryShot(MatchPlayer& goalkeeper, bool overTheBar);
@@ -1006,6 +1057,8 @@ class MatchEngine
   void refreshEffectiveSliders();
   /** Team execution edge: home crowd, team talk and numerical advantage. */
   float teamEdge(bool homeTeam) const;
+  /** Per-match referee strictness from the draw and the context. */
+  float drawRefereeStrictness() const;
   /** Shot appetite added by a shout (positive shoots more). */
   float shoutShotBias(bool homeTeam) const;
   /** Work-rate bonus from an encouraging shout. */
@@ -1033,6 +1086,8 @@ class MatchEngine
   void simulateStep(float dt);
   void updateTeamPhases();
   void updateMovement(float dt);
+  /** Team shape and every off-ball target (see updateMovement). */
+  void refreshTacticalTargets(float dt);
   /** Integrates the free ball in sub-steps, resolving contacts in each. */
   void updateBall(float dt);
   /** Pure ball physics for one sub-step (no contacts or rules). */
@@ -1053,6 +1108,9 @@ class MatchEngine
   /** Applies input records due at the current step. */
   void applyDueInputs();
   bool isControlled(const MatchPlayer& player) const;
+  /** Whether a wide forward in the final third is cutting inside toward
+   * the box rather than going down the line to cross. */
+  bool cutsInside(const MatchPlayer& player) const;
   /** Stick-driven movement of the controlled player (fine sub-steps). */
   void integrateControlled(MatchPlayer& player, float dt);
   /** Performs the controlled carrier's action; true if the ball left him. */
@@ -1064,11 +1122,11 @@ class MatchEngine
   void passBall(MatchPlayer& passer, const PassOption& option,
                 bool forceLofted = false);
   void takeShot(MatchPlayer& shooter, float forcedXG = -1.0f,
-                bool header = false);
+                bool header = false, bool freeKick = false);
   /** Strikes a shot at goal (aim, execution error, launch) and returns its
    * xG; takeShot() adds the statistics and the event. */
   float strikeShot(MatchPlayer& shooter, float forcedXG, bool header,
-                   bool penalty);
+                   bool penalty, bool freeKick = false);
   struct SaveAttempt
   {
     bool saved = false;
@@ -1094,8 +1152,10 @@ class MatchEngine
   float passingLaneRisk(const MatchPlayer& passer,
                         const MatchPlayer& receiver) const;
   float estimateShotXG(const MatchPlayer& shooter) const;
+  /** Whether `receiver` stands offside against the given offside line
+   * (see offsideLine()), with an extra tolerance for misjudged lines. */
   bool isOffside(const MatchPlayer& receiver, bool attackingHome,
-                 float lineTolerance = 0.0f) const;
+                 float defenderLine, float lineTolerance = 0.0f) const;
   float offsideLine(bool attackingHome) const;
 
   void checkOutOfBounds();
@@ -1114,6 +1174,10 @@ class MatchEngine
 
   void recordHighlight(MatchEventType type);
   float attribute(const Player* player, std::string_view name) const;
+  /** Rating of an attribute in [0, 1] before the stretch. */
+  float rawAttribute(const Player* player, std::string_view name) const;
+  /** Match level from both elevens (see MatchTuning::Player). */
+  void computeLevel(const Lineup& home, const Lineup& away);
   /** Uniform in [minimum, maximum) from the play stream (portable). */
   float randomFloat(float minimum, float maximum);
   /** Uniform in [0, 1) from the referee/injury stream (portable). */

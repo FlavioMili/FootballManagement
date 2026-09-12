@@ -13,13 +13,17 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <nlohmann/json.hpp>
@@ -328,12 +332,20 @@ TEST(WorldGenerationTest, NamesFollowNationalityAndAreUnique)
   EXPECT_GT(matching_first_names,
             static_cast<int>(0.98 * gamedata->getPlayers().size()));
 
+  // Each league's domestic share follows its profile (CIES: about 40% in
+  // England, Italy and the MLS, 90% in Brazil and Argentina).
   for (const auto& [league_id, counts] : domestic)
   {
     const double share = static_cast<double>(counts.first) / counts.second;
-    EXPECT_GE(share, 0.62) << "league " << league_id;
-    EXPECT_LE(share, 0.92) << "league " << league_id;
+    EXPECT_NEAR(share, leagueProfile(league_id).domestic_share, 0.08)
+        << "league " << league_id;
   }
+  EXPECT_LT(static_cast<double>(domestic[3].first) / domestic[3].second,
+            0.55)
+      << "most Premier League players are foreign";
+  EXPECT_GT(static_cast<double>(domestic[11].first) / domestic[11].second,
+            0.8)
+      << "Brazil's top flight is mostly Brazilian";
 
   // At most one surname appears twice in a squad, none three times.
   for (const auto& team : controller->getTeams())
@@ -349,6 +361,155 @@ TEST(WorldGenerationTest, NamesFollowNationalityAndAreUnique)
     }
     EXPECT_LE(repeated, 1) << team.get().getName();
   }
+}
+
+// Top divisions are far more stratified than second tiers (points SD per
+// game 0.43-0.54 against 0.28-0.36), Germany has a single hegemon and Spain
+// three giants, and the best second-tier clubs are about as strong as the
+// weakest top-flight ones, so promoted clubs usually finish near the bottom.
+TEST(WorldGenerationTest, LeagueShapesStratifyTopDivisions)
+{
+  // Shape arithmetic: zero mean, the league's spread, the elite pulled clear.
+  for (const LeagueProfile& profile : LEAGUE_PROFILES)
+  {
+    const std::vector<float> offsets =
+        WorldGeneration::levelOffsets(profile.shape, 20);
+    double mean = 0.0;
+    for (const float offset : offsets) mean += offset;
+    mean /= 20.0;
+    double squares = 0.0;
+    for (const float offset : offsets) squares += (offset - mean) * (offset - mean);
+    EXPECT_NEAR(mean, 0.0, 1e-3) << int(profile.league_id);
+    EXPECT_NEAR(std::sqrt(squares / 20.0), profile.shape.level_sd, 1e-3)
+        << int(profile.league_id);
+    EXPECT_TRUE(std::ranges::is_sorted(offsets, std::greater<>{}));
+    EXPECT_LE(WorldGeneration::reputationCentre(profile, 20) +
+                  WorldTuning::Generation::REPUTATION_PER_LEVEL * offsets[0],
+              99.0f - WorldTuning::Generation::REPUTATION_CAP_MARGIN + 1e-3f);
+  }
+  const std::vector<float> germany =
+      WorldGeneration::levelOffsets(leagueProfile(4).shape, 20);
+  EXPECT_GT(germany[0] - germany[1], 2.0f * (germany[1] - germany[2]))
+      << "one hegemon";
+  const std::vector<float> spain =
+      WorldGeneration::levelOffsets(leagueProfile(2).shape, 20);
+  EXPECT_GT(spain[2] - spain[3], 2.0f * (spain[3] - spain[4]))
+      << "three giants";
+
+  const SlotCleanup slot{uniqueSlot(8)};
+  const auto controller = makeWorld(slot.slot);
+  const WorldSimulation& world = controller->getGame()->getWorld();
+  const auto strengths = [&](LeagueID league_id)
+  {
+    std::vector<double> values;
+    for (const auto& team : controller->getTeams())
+      if (team.get().getLeagueId() == league_id)
+        values.push_back(world.lineupStrength(team.get().getId()));
+    std::ranges::sort(values, std::greater<>{});
+    return values;
+  };
+  const auto sd = [](const std::vector<double>& values)
+  {
+    double mean = 0.0;
+    for (const double value : values) mean += value;
+    mean /= static_cast<double>(values.size());
+    double squares = 0.0;
+    for (const double value : values) squares += (value - mean) * (value - mean);
+    return std::sqrt(squares / static_cast<double>(values.size()));
+  };
+  // Every country with its second tier; the first six (England, Spain,
+  // Italy, Germany, France, Portugal) have strongly stratified top flights.
+  constexpr std::array<std::pair<LeagueID, LeagueID>, 11> COUNTRIES = {
+      {{3, 14},
+       {2, 13},
+       {1, 6},
+       {4, 15},
+       {5, 16},
+       {12, 22},
+       {11, 21},
+       {10, 20},
+       {9, 19},
+       {7, 17},
+       {8, 18}}};
+  for (std::size_t country = 0; country < COUNTRIES.size(); ++country)
+  {
+    const auto [top, second] = COUNTRIES[country];
+    const std::vector<double> upper = strengths(top);
+    const std::vector<double> lower = strengths(second);
+    ASSERT_EQ(upper.size(), 20u);
+    ASSERT_EQ(lower.size(), 20u);
+    const double promoted = (lower[0] + lower[1] + lower[2]) / 3.0;
+    std::printf("[shape] league %d strength SD %.2f (1st %.1f, 11th %.1f, "
+                "16th %.1f, 20th %.1f); league %d SD %.2f (top three %.1f)\n",
+                int(top), sd(upper), upper[0], upper[10], upper[15], upper[19],
+                int(second), sd(lower), promoted);
+    if (country < 6)
+    {
+      EXPECT_GT(sd(upper), 1.4 * sd(lower)) << "league " << int(top);
+      EXPECT_GT(sd(upper), 5.5) << "league " << int(top);
+    }
+    EXPECT_GT(sd(upper), sd(lower)) << "league " << int(top);
+    // The best second-tier clubs sit among the weakest top-flight ones.
+    EXPECT_LT(promoted, upper[10]) << "league " << int(second);
+    EXPECT_GT(promoted, upper[19] - 3.0) << "league " << int(second);
+  }
+}
+
+namespace
+{
+/** Players whose club does not list them (senior squad or academy). */
+std::vector<std::string> rosterProblems(const GameController& controller)
+{
+  const auto data = controller.getGameData();
+  std::unordered_map<PlayerID, TeamID> listed;
+  std::vector<std::string> problems;
+  for (const auto& [team_id, team] : data->getTeams())
+  {
+    if (team_id == FREE_AGENTS_TEAM_ID) continue;
+    for (const auto* ids : {&team.getPlayerIDs(), &team.getAcademyIDs()})
+      for (const PlayerID player_id : *ids)
+        if (!listed.emplace(player_id, team_id).second)
+          problems.push_back("player " + std::to_string(player_id) +
+                             " listed twice");
+  }
+  for (const auto& [player_id, player] : data->getPlayers())
+  {
+    if (player.getTeamId() == FREE_AGENTS_TEAM_ID) continue;
+    const auto found = listed.find(player_id);
+    if (found == listed.end() || found->second != player.getTeamId())
+      problems.push_back("player " + std::to_string(player_id) + " of club " +
+                         std::to_string(player.getTeamId()) +
+                         " is not on its roster");
+  }
+  if (problems.size() > 8) problems.resize(8);
+  return problems;
+}
+
+std::string joinProblems(const std::vector<std::string>& problems)
+{
+  std::string text;
+  for (const std::string& problem : problems) text += "\n  " + problem;
+  return text;
+}
+}  // namespace
+
+// Every club player is on his club's roster (senior squad or academy), in a
+// new world, after saving and loading, and after weeks of play.
+TEST(WorldGenerationTest, EveryClubPlayerIsOnHisClubsRoster)
+{
+  const SlotCleanup slot{uniqueSlot(10)};
+  auto controller = makeWorld(slot.slot);
+  EXPECT_TRUE(rosterProblems(*controller).empty())
+      << "new world:" << joinProblems(rosterProblems(*controller));
+  controller->selectManagedTeam(controller->getTeams().front().get().getId());
+  controller->saveGame();
+  controller = std::make_unique<GameController>();
+  ASSERT_TRUE(controller->loadGame(slot.slot));
+  EXPECT_TRUE(rosterProblems(*controller).empty())
+      << "after loading:" << joinProblems(rosterProblems(*controller));
+  for (int day = 0; day < 45; ++day) controller->advanceDay();
+  EXPECT_TRUE(rosterProblems(*controller).empty())
+      << "after 45 days:" << joinProblems(rosterProblems(*controller));
 }
 
 TEST(WorldGenerationTest, VeteransHaveNoHiddenGrowth)
@@ -368,6 +529,55 @@ TEST(WorldGenerationTest, VeteransHaveNoHiddenGrowth)
   EXPECT_FLOAT_EQ(WorldGeneration::maxPotential(34, 70.0f),
                   70.0f + WorldTuning::Generation::VETERAN_HEADROOM);
   EXPECT_GT(WorldGeneration::maxPotential(19, 60.0f), 90.0f);
+}
+
+// Ageing by attribute group: pace and strength fall from about 28, technique
+// from 31, passing and vision still improve into the early 30s, and
+// goalkeepers and centre-backs hold their peak longer. Overall change per
+// year: about -0.5 at 29-30, -1.5 at 31-32 and -3 from 33. [S: realism
+// research 2, section 4]
+TEST(PlayerAgeingTest, AttributeGroupsAgeAtDifferentRates)
+{
+  const SlotCleanup slot{uniqueSlot(9)};
+  const auto controller = makeWorld(slot.slot);
+  const StatsConfig& config = controller->getStatsConfig();
+  const auto yearly = [&](PlayerRole role, int age)
+  {
+    std::map<std::string, float> stats;
+    for (const std::string& name : config.possible_stats) stats[name] = 70.0f;
+    Player player(1, 1, "Test", "Veteran", role, Language::EN, 1000, 0,
+                  static_cast<std::uint8_t>(age - 1), 2, 180, Foot::Right,
+                  stats);
+    const double before = player.getOverall(config);
+    player.agePlayer();
+    return player.getOverall(config) - before;
+  };
+  constexpr std::array<PlayerRole, 6> OUTFIELD = {
+      PlayerRole::CB, PlayerRole::LB, PlayerRole::CM,
+      PlayerRole::CAM, PlayerRole::LW, PlayerRole::ST};
+  const auto outfield = [&](int age)
+  {
+    double total = 0.0;
+    for (const PlayerRole role : OUTFIELD) total += yearly(role, age);
+    return total / static_cast<double>(OUTFIELD.size());
+  };
+  for (const int age : {26, 27, 29, 30, 31, 32, 33, 34, 35})
+    std::printf("[ageing] age %d outfield %.2f GK %.2f CB %.2f ST %.2f\n", age,
+                outfield(age), yearly(PlayerRole::GK, age),
+                yearly(PlayerRole::CB, age), yearly(PlayerRole::ST, age));
+
+  EXPECT_NEAR(outfield(26), 0.0, 0.05) << "no ageing before 27";
+  EXPECT_GE(outfield(27), 0.0) << "passing and vision still improve";
+  EXPECT_LT(outfield(29), -0.1);
+  EXPECT_GT(outfield(29), -0.9);
+  EXPECT_LT(outfield(31), -0.9);
+  EXPECT_GT(outfield(31), -2.2);
+  EXPECT_LT(outfield(34), -2.0);
+  EXPECT_GT(outfield(34), -4.5);
+  // Goalkeepers and centre-backs keep their level longer.
+  EXPECT_GT(yearly(PlayerRole::GK, 31), 0.5 * outfield(31));
+  EXPECT_GT(yearly(PlayerRole::CB, 31), yearly(PlayerRole::ST, 31));
+  EXPECT_LT(yearly(PlayerRole::GK, 36), -1.0) << "but not forever";
 }
 
 TEST(WorldGenerationTest, PreseasonFriendliesStayInTheRegion)

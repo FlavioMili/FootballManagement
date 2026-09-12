@@ -6,7 +6,7 @@
 
 Football Management is an open-source football management game written in
 C++23 with SDL3, Dear ImGui and SQLite. You run a club in a living world of
-twelve leagues: pick the squad and the tactics, deal with the board, the
+22 leagues: pick the squad and the tactics, deal with the board, the
 dressing room and the transfer market, bring players through the academy and
 build a manager career across clubs.
 
@@ -46,10 +46,14 @@ like. Every other match in the world runs on the same engine.
   mode, a quick result, five 3D cameras with mouse orbit, pan and zoom, and
   a pitch focus mode.
 - Match reports, half-time and full-time analysis, and opposition reports.
+- Procedural match sound (crowd, whistles, ball) with master, crowd and
+  effects volumes.
 
 **Competitions**
-- Twelve leagues with 240 clubs, promotion and relegation between the two
-  Italian tiers, and domestic cups.
+- 22 leagues with 440 clubs: a top division and a second division in each
+  of eleven countries, with promotion and relegation, and domestic cups.
+- Cup ties and continental deciders are played to a winner, through extra
+  time and a penalty shootout, live or in the background.
 - Continental club competitions with Swiss-style league phases, two-legged
   knockout rounds, prize money and coefficients.
 - National teams with qualifiers, finals tournaments, friendlies,

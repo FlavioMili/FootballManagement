@@ -343,9 +343,33 @@ class TransferMarket
   {
     PlayerRole group = PlayerRole::UNKNOWN;
     float min_overall = 0.0f;
+    bool depth = false;   /*!< Cover for a thin squad, not a starter. */
+    bool upgrade = false; /*!< A better starter, the position is filled. */
   };
+  /** @p level_boost raises the level starters are measured against. */
   std::optional<AiNeed> assessNeed(
-      const std::vector<std::pair<double, PlayerID>>& ranked) const;
+      const std::vector<std::pair<double, PlayerID>>& ranked,
+      float level_boost = 0.0f) const;
+  /**
+   * Weekly wages an AI club can still commit: its wage budget less the
+   * payroll and the wages of the pre-contracts it has agreed. With
+   * @p next_season only contracts that run beyond this season count, and
+   * its players out on loan are back.
+   */
+  std::int64_t aiWageRoom(TeamID club_id, bool next_season) const;
+  /** Signing bonuses and agent fees due on the club's pre-contracts. */
+  std::int64_t preContractCosts(TeamID club_id) const;
+  /** A wage within @p room and the single-player share of the budget. */
+  static bool aiAffordsWage(const Team& club, std::uint32_t weekly_wage,
+                            std::int64_t room);
+  /** Clubs promoted or relegated at the last season's close. */
+  bool lastSeasonMove(TeamID club_id, bool promoted) const;
+  /** Terminates a contract; @p severance_due pays the remaining wages
+   * (a relegation clause ends it for free). */
+  bool endContract(PlayerID player_id, const GameDateValue& date,
+                   TeamID managed_team_id, bool severance_due);
+  void releaseOnRelegation(const GameDateValue& date, TeamID managed_team_id);
+  void lowerFreeAgentExpectations();
   void listLoanProspects(
       const std::vector<std::pair<double, PlayerID>>& ranked);
   bool aiShedSurplus(TeamID club_id,

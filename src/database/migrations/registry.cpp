@@ -127,9 +127,15 @@ constexpr std::array STAFF_ID_COUNTER = {
                            "INTEGER NOT NULL DEFAULT 0"},
 };
 
+// League rounds are spread over several days with a kick-off time per
+// fixture; fixtures of older saves keep the usual time of their competition.
+constexpr std::array FIXTURE_KICKOFF = {
+    Migrations::ColumnSpec{"Fixtures", "kickoff", "INTEGER NOT NULL DEFAULT 0"},
+};
+
 // Append new migrations at the end with the next number; never renumber,
 // edit or remove a released one (see README.md).
-constexpr std::array<Migrations::Migration, 7> REGISTRY = {{
+constexpr std::array<Migrations::Migration, 8> REGISTRY = {{
     {1, "0001_version_metadata", {}, &versionMetadata},
     {2, "0002_league_tiebreak", LEAGUE_TIEBREAK, nullptr},
     {3, "0003_fixture_competitions", FIXTURE_COMPETITIONS, nullptr},
@@ -137,6 +143,7 @@ constexpr std::array<Migrations::Migration, 7> REGISTRY = {{
     {5, "0005_world_simulation", WORLD_SIMULATION, nullptr},
     {6, "0006_scout_report_details", SCOUT_REPORT_DETAILS, nullptr},
     {7, "0007_staff_id_counter", STAFF_ID_COUNTER, nullptr},
+    {8, "0008_fixture_kickoff", FIXTURE_KICKOFF, nullptr},
 }};
 
 static_assert(std::ranges::is_sorted(REGISTRY, {}, &Migrations::Migration::number),

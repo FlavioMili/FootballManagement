@@ -255,6 +255,9 @@ ManagerSetupPanel::Action ManagerSetupPanel::render(
     if (placed % per_row != 0) ImGui::SameLine();
     ++placed;
     ImGui::BeginGroup();
+    // Same baseline for every label: fields placed with SameLine() inherit
+    // the frame padding of the previous field's input.
+    ImGui::AlignTextToFramePadding();
     ImGui::TextColored(palette.muted, "%s", label);
     ImGui::SetNextItemWidth(field);
   };

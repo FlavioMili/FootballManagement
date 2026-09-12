@@ -115,6 +115,7 @@ bool GameData::loadFromDB(std::shared_ptr<DatabaseConnection> database_ptr)
   _teamsVec.clear();
   _playersVec.clear();
   _teamPlayers.clear();
+  _teamAcademies.clear();
   removed_player_ids.clear();
 
   loadStatsConfig();
@@ -396,13 +397,19 @@ void GameData::loadExistingData()
     const PlayerID playerId = player.getId();
     const TeamID teamId = player.getTeamId();
     auto it = _players.try_emplace(playerId, std::move(player)).first;
-    _teamPlayers[teamId].push_back(it->second);
+    // The academy flag is stored with the player's status: academy players
+    // stay out of the senior squad.
+    const bool academy = it->second.isAcademyPlayer();
+    (academy ? _teamAcademies : _teamPlayers)[teamId].push_back(it->second);
 
     // Add to Team's player list
     auto team_it = _teams.find(teamId);
     if (team_it != _teams.end())
     {
-      team_it->second.addPlayerID(playerId);
+      if (academy)
+        team_it->second.addAcademyID(playerId);
+      else
+        team_it->second.addPlayerID(playerId);
     }
   }
 
@@ -522,7 +529,9 @@ void GameData::addPlayer(PlayerID id, const Player& player)
   {
     _playersVec.push_back(it->second);
   }
-  _teamPlayers[player.getTeamId()].push_back(it->second);
+  (player.isAcademyPlayer() ? _teamAcademies
+                            : _teamPlayers)[player.getTeamId()]
+      .push_back(it->second);
 }
 
 std::optional<std::reference_wrapper<const Player>> GameData::getPlayer(
@@ -604,6 +613,29 @@ GameData::getPlayersForTeam(TeamID team_id) const
   return empty_vec;
 }
 
+const std::vector<std::reference_wrapper<const Player>>&
+GameData::getAcademyForTeam(TeamID team_id) const
+{
+  static const std::vector<std::reference_wrapper<const Player>> empty_vec;
+  const auto it = _teamAcademies.find(team_id);
+  return it != _teamAcademies.end() ? it->second : empty_vec;
+}
+
+void GameData::setAcademyMember(PlayerID id, bool academy)
+{
+  const auto it = _players.find(id);
+  if (it == _players.end()) return;
+  Player& player = it->second;
+  player.setAcademyPlayer(academy);
+  const TeamID team_id = player.getTeamId();
+  auto& from = (academy ? _teamPlayers : _teamAcademies)[team_id];
+  if (std::erase_if(from, [id](const auto& ref)
+                    { return ref.get().getId() == id; }) > 0)
+    (academy ? _teamAcademies : _teamPlayers)[team_id].push_back(player);
+  if (const auto team = _teams.find(team_id); team != _teams.end())
+    team->second.setAcademyMember(id, academy);
+}
+
 bool GameData::removePlayer(PlayerID id)
 {
   auto player_it = _players.find(id);
@@ -618,9 +650,9 @@ bool GameData::removePlayer(PlayerID id)
   for (auto& [team_key, team] : _teams) team.getLineup().removePlayer(id);
 
   const TeamID team_id = player_it->second.getTeamId();
-  auto& team_players = _teamPlayers[team_id];
-  std::erase_if(team_players,
-                [id](const auto& ref) { return ref.get().getId() == id; });
+  const auto same = [id](const auto& ref) { return ref.get().getId() == id; };
+  std::erase_if(_teamPlayers[team_id], same);
+  std::erase_if(_teamAcademies[team_id], same);
   std::erase_if(_playersVec,
                 [id](const auto& ref) { return ref.get().getId() == id; });
   _players.erase(player_it);
@@ -637,10 +669,11 @@ void GameData::transferPlayer(PlayerID id, TeamID new_team_id)
   if (old_team_id == new_team_id) return;
 
   it->second.setTeamId(new_team_id);
+  it->second.setAcademyPlayer(false);
 
-  auto& old_team_vec = _teamPlayers[old_team_id];
-  std::erase_if(old_team_vec,
-                [id](const auto& ref) { return ref.get().getId() == id; });
+  const auto same = [id](const auto& ref) { return ref.get().getId() == id; };
+  std::erase_if(_teamPlayers[old_team_id], same);
+  std::erase_if(_teamAcademies[old_team_id], same);
 
   _teamPlayers[new_team_id].push_back(it->second);
 }

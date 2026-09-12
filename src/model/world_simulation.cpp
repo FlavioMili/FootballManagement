@@ -23,6 +23,7 @@
 #include "database/repositories/world_state_repository.h"
 #include "global/global.h"
 #include "model/injury.h"
+#include "model/manager_career.h"
 #include "model/match.h"
 #include "model/match_report.h"
 #include "model/player.h"
@@ -788,6 +789,7 @@ void WorldSimulation::processMonthly(const GameDateValue& date,
     finances.record(
         date, FinanceCategory::Facilities,
         -round(ClubEconomy::monthlyFacilityCosts(economy, profile)));
+    if (team_id != managed_team_id) rescueByOwner(date, team);
   }
 
   const auto managed = gamedata->getTeam(managed_team_id);
@@ -834,6 +836,38 @@ void WorldSimulation::processMonthly(const GameDateValue& date,
          "INBOX_BOARD_DISMISSED_BODY", {team.getName()}, std::nullopt,
          managed_team_id);
   }
+}
+
+void WorldSimulation::rescueByOwner(const GameDateValue& date, Team& team)
+{
+  using Finance = WorldTuning::Finance;
+  Finances& finances = team.getFinances();
+  const std::int64_t rescue = ClubEconomy::ownerRescue(
+      finances.getBalance(), finances.getCurrentWageSpending(*gamedata, team));
+  if (rescue <= 0) return;
+  float chance = 0.0f;
+  const ClubVision vision = ManagerMarketModel::clubVision(
+      gamedata->getWorldSeed(), team.getId(), team.getReputation(),
+      team.getProfile().youth_facilities, 0, 0);
+  switch (vision.owner)
+  {
+    case OwnerType::ImpatientBenefactor:
+      chance = Finance::BENEFACTOR_RESCUE_CHANCE;
+      break;
+    case OwnerType::Ambitious:
+      chance = Finance::AMBITIOUS_RESCUE_CHANCE;
+      break;
+    case OwnerType::Patient:
+      chance = Finance::PATIENT_RESCUE_CHANCE;
+      break;
+    case OwnerType::MemberOwned:
+      break;
+  }
+  if (WorldRng::hashUniform(gamedata->getWorldSeed(), RngDomain::Transfers,
+                            static_cast<std::uint64_t>(dayOrdinal(date)),
+                            mixHash(team.getId(), 0x4F57'4E52ULL)) <
+      static_cast<double>(chance))
+    finances.record(date, FinanceCategory::Investment, rescue);
 }
 
 void WorldSimulation::ensureBoard(const GameDateValue& date,

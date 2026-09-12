@@ -10,6 +10,7 @@
 
 #include <fmt/printf.h>
 #include <imgui.h>
+#include <imgui_internal.h>
 
 #include <algorithm>
 #include <array>
@@ -28,7 +29,7 @@ constexpr float BADGE_HEIGHT = 16.0f;
 const std::array<UI::Column, 6>& clubFixtureColumns()
 {
   static const std::array<UI::Column, 6> columns = {{
-      {"FIXTURES_COL_DATE", 118.0f, 1},
+      {"FIXTURES_COL_DATE", 140.0f, 1},
       {"FIXTURES_COL_COMPETITION", 170.0f, 2},
       {"FIXTURES_COL_VENUE", 70.0f, 3},
       {"FIXTURES_COL_OPPONENT", 0.0f, 0},
@@ -112,11 +113,17 @@ void FixturesScene::refresh()
 void FixturesScene::renderContent()
 {
   UI::pageHeader(LOC("FIXTURES_TITLE"), LOC("FIXTURES_SUBTITLE"));
-  if (UI::toggleButton(LOC("FIXTURES_VIEW_CLUB"), view == View::CLUB))
-    view = View::CLUB;
+  // The view already shown is a label, not a button that does nothing.
+  const auto viewToggle = [this](const char* label, View option)
+  {
+    const bool active = view == option;
+    ImGui::PushItemFlag(ImGuiItemFlags_Disabled, active);
+    if (UI::toggleButton(label, active)) view = option;
+    ImGui::PopItemFlag();
+  };
+  viewToggle(LOC("FIXTURES_VIEW_CLUB"), View::CLUB);
   ImGui::SameLine();
-  if (UI::toggleButton(LOC("FIXTURES_VIEW_LEAGUE"), view == View::LEAGUE))
-    view = View::LEAGUE;
+  viewToggle(LOC("FIXTURES_VIEW_LEAGUE"), View::LEAGUE);
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
 
   if (view == View::CLUB)
@@ -205,7 +212,9 @@ void FixturesScene::renderClubFixtures(float height)
         }
         if (UI::cell(mask, 0))
           ImGui::TextColored(fixture.played ? palette.muted : palette.text,
-                             "%s", Format::date(fixture.date).c_str());
+                             "%s",
+                             Format::matchDay(fixture.date, fixture.kickoff)
+                                 .c_str());
         if (UI::cell(mask, 1))
         {
           UI::badge(LOC(CompetitionView::matchTypeKey(fixture.type)),
@@ -293,9 +302,18 @@ void FixturesScene::renderLeagueRound()
   ImGui::EndDisabled();
   if (firstInRound != league_fixtures.end())
   {
+    // A round is spread over several days: show the first and the last.
+    GameDateValue lastDay = firstInRound->date;
+    for (auto fixture = firstInRound;
+         fixture != league_fixtures.end() && fixture->round == selected_round;
+         ++fixture)
+      if (lastDay < fixture->date) lastDay = fixture->date;
+    const std::string days =
+        lastDay == firstInRound->date
+            ? Format::date(lastDay)
+            : Format::dayMonth(firstInRound->date) + " – " + Format::date(lastDay);
     ImGui::SameLine(0.0f, Theme::Space::L * Theme::scale());
-    ImGui::TextColored(palette.muted, "%s",
-                       Format::date(firstInRound->date).c_str());
+    ImGui::TextColored(palette.muted, "%s", days.c_str());
   }
 
   UI::beginCard("league_round_card", nullptr,
@@ -329,10 +347,13 @@ void FixturesScene::renderLeagueRound()
         Navigation::openClub(guiView, fixture->home_id);
       ImGui::PopID();
       ImGui::TableNextColumn();
+      // Upcoming matches show when they kick off.
       const std::string score =
-          fixture->played ? fmt::sprintf("%u – %u", fixture->home_score,
-                                         fixture->away_score)
-                          : std::string(LOC("FIXTURE_VS"));
+          fixture->played
+              ? fmt::sprintf("%u – %u", fixture->home_score,
+                             fixture->away_score)
+              : std::string(Format::weekday(fixture->date)) + " " +
+                    Format::kickoff(fixture->kickoff);
       const float scoreWidth = ImGui::CalcTextSize(score.c_str()).x;
       ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
                            (ImGui::GetContentRegionAvail().x - scoreWidth) *

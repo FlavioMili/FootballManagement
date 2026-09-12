@@ -88,6 +88,8 @@ struct NextActionFacts
   int days_to_match = -1;
   std::string next_opponent;
   std::vector<std::string> unavailable_selected;
+  /** Nobody fit can replace them: they play through it, nothing to fix. */
+  bool no_fit_replacements = false;
   bool assistant_fixes_lineup = false;
   std::vector<Offer> offers;
   std::vector<Person> pending_talks;

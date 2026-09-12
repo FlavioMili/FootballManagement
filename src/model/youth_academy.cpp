@@ -64,16 +64,19 @@ constexpr float MIN_BOARD_CONFIDENCE = 35.0f;
 constexpr int STATURE_HEADROOM = 25;
 /** Weeks of payroll kept in reserve before funding a project. */
 constexpr std::int64_t PAYROLL_RESERVE_WEEKS = 12;
-/** Computer-managed clubs keep at most this many in their U18 squad. [P] */
-constexpr std::size_t U18_SQUAD_LIMIT = 24;
-/** Promotions never take a computer-managed senior squad beyond this. [P] */
-constexpr std::size_t FIRST_TEAM_LIMIT = 30;
+/** Promotions never take a computer-managed senior squad beyond the size
+ * the season-end trim keeps. */
+constexpr std::size_t FIRST_TEAM_LIMIT = WorldTuning::Youth::AI_SQUAD_TARGET;
 /** Ability below the club's first-team level still good enough to move up
  * at 19 (a squad player), and early for a 17 or 18-year-old. [P] */
 constexpr float READY_MARGIN = 10.0f;
 constexpr float EARLY_READY_MARGIN = 5.0f;
 /** Expected potential (below first-team level) worth a new contract. [P] */
 constexpr float KEEP_MARGIN = 18.0f;
+/** Expected potential (below first-team level) worth a first professional
+ * contract: only the best prospects of an academy sign one before 19, the
+ * rest stay on scholarships. [RR 4, FW 5] */
+constexpr float PRO_PROSPECT_MARGIN = 8.0f;
 /** Ability of the stand-ins who fill a short U18 team sheet. */
 constexpr float STAND_IN_OVERALL = 26.0f;
 
@@ -485,6 +488,33 @@ int firstProfessionalAge(Language country)
   return country == Language::EN ? 17 : 16;
 }
 
+float academyGrade(const IntakeInputs& inputs)
+{
+  return std::clamp(0.35f * inputs.facilities + 0.35f * inputs.recruitment +
+                        0.15f * std::clamp(inputs.junior_coaching, 0.0f, 1.0f) +
+                        0.15f * inputs.head_ability,
+                    0.0f, 1.0f);
+}
+
+std::size_t u18SquadLimit(float grade)
+{
+  // Category-one academies carry two full scholar years, small ones a
+  // squad of about eighteen. [FW 5]
+  return static_cast<std::size_t>(
+      16 + std::lround(10.0f * std::clamp(grade, 0.0f, 1.0f)));
+}
+
+int computerSignings(float grade, std::size_t candidates)
+{
+  // The best academies keep most of a large intake, small ones only the
+  // few they can coach. [RR 4.3]
+  const float share = 0.45f + 0.5f * std::clamp(grade, 0.0f, 1.0f);
+  return std::clamp(static_cast<int>(std::lround(
+                        share * static_cast<float>(candidates))),
+                    std::min<int>(SIGN_MIN, static_cast<int>(candidates)),
+                    SIGN_MAX);
+}
+
 std::uint32_t scholarshipWage(LeagueID league_id)
 {
   const double revenue_millions =
@@ -673,23 +703,42 @@ void YouthAcademy::bootstrap()
   records.clear();
   clubs.clear();
   managed_results.clear();
+  // Clubs in id order: a contract changes the wage scale later contracts of
+  // the same club read.
+  std::vector<TeamID> team_ids;
   for (const auto& [team_id, team] : gamedata->getTeams())
+    if (team_id != FREE_AGENTS_TEAM_ID) team_ids.push_back(team_id);
+  std::ranges::sort(team_ids);
+  auto& players = gamedata->getPlayers();
+  for (const TeamID team_id : team_ids)
   {
-    if (team_id == FREE_AGENTS_TEAM_ID) continue;
     clubState(team_id);
-    const Language country = leagueProfile(team.getLeagueId()).domestic_nationality;
-    for (const PlayerID player_id : team.getPlayerIDs())
+    // Every club player (a save may already list some in the academy).
+    const Team& team = gamedata->getTeam(team_id)->get();
+    std::vector<PlayerID> teenagers;
+    for (const auto* ids : {&team.getPlayerIDs(), &team.getAcademyIDs()})
     {
-      const auto player = gamedata->getPlayer(player_id);
-      if (!player || player->get().getAge() > 17) continue;
+      for (const PlayerID player_id : *ids)
+      {
+        const auto player = players.find(player_id);
+        if (player != players.end() && player->second.getAge() <= 17)
+          teenagers.push_back(player_id);
+      }
+    }
+    std::ranges::sort(teenagers);
+    for (const PlayerID player_id : teenagers)
+    {
       YouthRecord youth;
       youth.player_id = player_id;
       youth.team_id = team_id;
       youth.status = YouthStatus::Squad;
-      youth.contract = player->get().getAge() >=
-                               YouthModel::firstProfessionalAge(country)
-                           ? YouthContract::Professional
-                           : YouthContract::Scholarship;
+      // Most teenagers are scholars; the best prospects already hold a
+      // first professional contract.
+      Player& player = players.at(player_id);
+      applyContract(player, youth,
+                    deservesProfessional(team_id, player)
+                        ? YouthContract::Professional
+                        : YouthContract::Scholarship);
       records.emplace(player_id, std::move(youth));
     }
   }
@@ -702,9 +751,12 @@ void YouthAcademy::syncFlags()
   for (auto& [player_id, player] : gamedata->getPlayers())
   {
     const auto found = records.find(player_id);
-    player.setAcademyPlayer(found != records.end() &&
-                            found->second.status != YouthStatus::Graduated &&
-                            found->second.team_id == player.getTeamId());
+    const bool academy = found != records.end() &&
+                         found->second.status != YouthStatus::Graduated &&
+                         found->second.team_id == player.getTeamId();
+    // Also moves him between the club's senior and academy lists.
+    if (player.isAcademyPlayer() != academy)
+      gamedata->setAcademyMember(player_id, academy);
   }
 }
 
@@ -725,8 +777,9 @@ AcademyClub& YouthAcademy::clubState(TeamID team_id)
 void YouthAcademy::prune()
 {
   auto& players = gamedata->getPlayers();
+  std::vector<PlayerID> moved;
   std::erase_if(records,
-                [&players](const auto& entry)
+                [&players, &moved](const auto& entry)
                 {
                   const YouthRecord& youth = entry.second;
                   const auto player = players.find(youth.player_id);
@@ -735,12 +788,14 @@ void YouthAcademy::prune()
                   {
                     // Sold, released or loaned out: no longer an academy
                     // player anywhere.
-                    player->second.setAcademyPlayer(false);
+                    moved.push_back(youth.player_id);
                     return true;
                   }
                   return youth.status == YouthStatus::Graduated &&
                          player->second.getAge() > 21;
                 });
+  for (const PlayerID player_id : moved)
+    gamedata->setAcademyMember(player_id, false);
 }
 
 void YouthAcademy::onDayAdvanced(const GameDateValue& date,
@@ -792,9 +847,14 @@ void YouthAcademy::onSeasonEnd(const GameDateValue& /*date*/,
       continue;
     const YouthEstimate judged = estimate(youth.team_id, player_id);
     const float expected = 0.5f * (judged.potential_low + judged.potential_high);
-    if (expected >= WorldGeneration::teamLevel(team->get().getReputation()) -
-                        KEEP_MARGIN)
+    // The best prospects sign a first professional contract, the others
+    // worth keeping another scholarship year or two.
+    if (deservesProfessional(youth.team_id, found->second))
       applyContract(found->second, youth, YouthContract::Professional);
+    else if (expected >=
+             WorldGeneration::teamLevel(team->get().getReputation()) -
+                 KEEP_MARGIN)
+      applyContract(found->second, youth, YouthContract::Scholarship);
     else
       leaving.emplace_back(player_id, youth.team_id);
   }
@@ -830,7 +890,7 @@ void YouthAcademy::onSeasonStart(const GameDateValue& date,
     {
       // Over-age players move up to the first-team squad.
       youth.status = YouthStatus::Graduated;
-      player.setAcademyPlayer(false);
+      gamedata->setAcademyMember(player_id, false);
       graduates.push_back(player.getName());
       continue;
     }
@@ -1192,14 +1252,7 @@ void YouthAcademy::leaveFootball(TeamID team_id, PlayerID player_id)
 std::size_t YouthAcademy::firstTeamSize(TeamID team_id) const
 {
   const auto team = gamedata->getTeam(team_id);
-  if (!team) return 0;
-  return static_cast<std::size_t>(std::ranges::count_if(
-      team->get().getPlayerIDs(),
-      [this](PlayerID player_id)
-      {
-        const auto player = gamedata->getPlayer(player_id);
-        return player && !player->get().isAcademyPlayer();
-      }));
+  return team ? team->get().getPlayerIDs().size() : 0;
 }
 
 void YouthAcademy::promoteComputerAcademies(TeamID managed_team_id)
@@ -1235,15 +1288,25 @@ void YouthAcademy::promoteComputerAcademies(TeamID managed_team_id)
       Player& player = gamedata->getPlayers().at(player_id);
       const bool over_age = player.getAge() > YouthModel::U18_MAX_AGE;
       const float margin = over_age ? READY_MARGIN : EARLY_READY_MARGIN;
+      YouthRecord& youth = records.at(player_id);
       if (overall >= level - margin && seniors < FIRST_TEAM_LIMIT)
       {
+        // First-team players hold professional contracts.
+        if (youth.contract != YouthContract::Professional)
+          applyContract(player, youth, YouthContract::Professional);
         records.erase(player_id);
-        player.setAcademyPlayer(false);
+        gamedata->setAcademyMember(player.getId(), false);
         ++seniors;
       }
       else if (over_age)
       {
         leaving.push_back(player_id);
+      }
+      else if (youth.contract == YouthContract::Scholarship &&
+               deservesProfessional(team_id, player))
+      {
+        // A year older: the best scholars turn professional.
+        applyContract(player, youth, YouthContract::Professional);
       }
     }
     for (const PlayerID player_id : leaving) leaveFootball(team_id, player_id);
@@ -1291,7 +1354,7 @@ YouthActionResult YouthAcademy::promote(TeamID team_id, PlayerID player_id)
     if (signed_pro != YouthActionResult::Ok) return signed_pro;
   }
   youth.status = YouthStatus::Graduated;
-  player->second.setAcademyPlayer(false);
+  gamedata->setAcademyMember(player_id, false);
   return YouthActionResult::Ok;
 }
 
@@ -1315,7 +1378,7 @@ YouthActionResult YouthAcademy::demote(TeamID team_id, PlayerID player_id)
     youth.contract = YouthContract::Professional;
   }
   youth.status = YouthStatus::Squad;
-  gamedata->getPlayers().at(player_id).setAcademyPlayer(true);
+  gamedata->setAcademyMember(player_id, true);
   return YouthActionResult::Ok;
 }
 
@@ -1416,7 +1479,11 @@ std::uint32_t YouthAcademy::contractWage(TeamID team_id, const Player& player,
     return YouthModel::scholarshipWage(team->get().getLeagueId());
   const double index = ClubEconomy::wageIndex(
       player.getOverall(gamedata->getStatsConfig()), player.getAge());
-  return roundWage(wageScale(team_id) * index, 300.0);
+  // A first professional contract always pays more than a scholarship.
+  const double scholarship =
+      YouthModel::scholarshipWage(team->get().getLeagueId());
+  return roundWage(wageScale(team_id) * index,
+                   std::max(300.0, 2.0 * scholarship));
 }
 
 void YouthAcademy::applyContract(Player& player, YouthRecord& youth,
@@ -1427,6 +1494,22 @@ void YouthAcademy::applyContract(Player& player, YouthRecord& youth,
   player.setContractYears(contract == YouthContract::Scholarship
                               ? YouthModel::youthContractYears(player.getAge())
                               : YouthModel::MINOR_CONTRACT_YEARS);
+}
+
+bool YouthAcademy::deservesProfessional(TeamID team_id,
+                                        const Player& player) const
+{
+  const auto team = gamedata->getTeam(team_id);
+  if (!team) return false;
+  const int age = std::max(
+      YouthModel::PRO_POLICY_AGE,
+      YouthModel::firstProfessionalAge(
+          leagueProfile(team->get().getLeagueId()).domestic_nationality));
+  if (player.getAge() < age) return false;
+  const YouthEstimate judged = estimate(team_id, player.getId());
+  const float expected = 0.5f * (judged.potential_low + judged.potential_high);
+  return expected >= WorldGeneration::teamLevel(team->get().getReputation()) -
+                         PRO_PROSPECT_MARGIN;
 }
 
 void YouthAcademy::runIntake(const GameDateValue& date, TeamID managed_team_id,
@@ -1475,16 +1558,12 @@ void YouthAcademy::runIntake(const GameDateValue& date, TeamID managed_team_id,
     std::size_t take = ranked.size();
     if (!managed)
     {
-      const float threshold =
-          WorldGeneration::teamLevel(team.getReputation()) - 20.0f;
-      const auto wanted = static_cast<int>(std::ranges::count_if(
-          ranked, [threshold](const auto& entry)
-          { return entry.first >= threshold; }));
-      const int room = static_cast<int>(U18_SQUAD_LIMIT) - u18_sizes[team_id];
+      // Bigger and better academies sign more of their (bigger) intake.
+      const float grade = YouthModel::academyGrade(inputs);
+      const int room = static_cast<int>(YouthModel::u18SquadLimit(grade)) -
+                       u18_sizes[team_id];
       take = static_cast<std::size_t>(std::clamp(
-          std::min({std::clamp(wanted, YouthModel::SIGN_MIN,
-                               YouthModel::SIGN_MAX),
-                    static_cast<int>(ranked.size()), room}),
+          std::min(YouthModel::computerSignings(grade, ranked.size()), room),
           0, YouthModel::SIGN_MAX));
     }
     if (take == 0) continue;
@@ -1492,12 +1571,14 @@ void YouthAcademy::runIntake(const GameDateValue& date, TeamID managed_team_id,
     WorldRng rng = WorldRng::stream(seed, RngDomain::YouthIntake,
                                     MATERIALIZE_SALT | date.year, team_id);
     SquadSurnames surnames;
-    for (const PlayerID player_id : team.getPlayerIDs())
+    for (const auto* ids : {&team.getPlayerIDs(), &team.getAcademyIDs()})
     {
-      if (const auto player = gamedata->getPlayer(player_id))
-        surnames.add(player->get().getLastName());
+      for (const PlayerID player_id : *ids)
+      {
+        if (const auto player = gamedata->getPlayer(player_id))
+          surnames.add(player->get().getLastName());
+      }
     }
-    const int pro_age = YouthModel::firstProfessionalAge(inputs.country);
     PlayerID best = 0;
     bool special = false;
     for (std::size_t rank = 0; rank < take; ++rank)
@@ -1530,7 +1611,7 @@ void YouthAcademy::runIntake(const GameDateValue& date, TeamID managed_team_id,
       youngster.setAcademyPlayer(true);
       const PlayerID youngster_id = youngster.getId();
       gamedata->addPlayer(youngster_id, youngster);
-      team.addPlayerID(youngster_id);
+      team.addAcademyID(youngster_id);
 
       YouthRecord youth;
       youth.player_id = youngster_id;
@@ -1544,10 +1625,14 @@ void YouthAcademy::runIntake(const GameDateValue& date, TeamID managed_team_id,
       }
       else
       {
+        // Scholarships for the intake; a first professional contract only
+        // for an outstanding prospect old enough to sign one.
         youth.status = YouthStatus::Squad;
-        applyContract(gamedata->getPlayers().at(youngster_id), youth,
-                      profile.age >= pro_age ? YouthContract::Professional
-                                             : YouthContract::Scholarship);
+        Player& signed_player = gamedata->getPlayers().at(youngster_id);
+        applyContract(signed_player, youth,
+                      deservesProfessional(team_id, signed_player)
+                          ? YouthContract::Professional
+                          : YouthContract::Scholarship);
       }
       records.insert_or_assign(youngster_id, std::move(youth));
       if (rank == 0) best = youngster_id;

@@ -16,6 +16,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "global/types.h"
@@ -330,6 +331,13 @@ class ContinentalCompetitions
    */
   std::optional<int> deciderLead(const Calendar& calendar,
                                  const Match& match) const;
+
+  /**
+   * For a deciding match: the goals this match's home and away sides scored
+   * in the earlier leg ({0, 0} for a final); nullopt for any other match.
+   */
+  std::optional<std::pair<int, int>> deciderAggregate(
+      const Calendar& calendar, const Match& match) const;
 
   /**
    * Settles a deciding match whose aggregate is level with extra time and

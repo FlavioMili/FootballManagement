@@ -96,9 +96,11 @@ struct YouthProgressPoint
  * @struct YouthRecord
  * @brief Academy registration of one player.
  *
- * Players stay on their club's roster (wages, training and persistence work
- * as for everyone else); the record tells the U18 squad, trialists and
- * graduates apart and carries youth match statistics.
+ * Academy players remain club players (wages, contracts, training and
+ * persistence work as for everyone else) but are listed apart from the
+ * senior squad (Team::getAcademyIDs, GameData::getAcademyForTeam); the
+ * record tells the U18 squad, trialists and graduates apart and carries
+ * youth match statistics.
  */
 struct YouthRecord
 {
@@ -265,9 +267,13 @@ inline constexpr int U18_MAX_AGE = 18;
 inline constexpr int HOMEGROWN_SEASONS = 3;
 /** Contracts of minors are capped at three seasons. [RR] */
 inline constexpr int MINOR_CONTRACT_YEARS = 3;
-/** Computer-managed clubs sign between these numbers per intake. */
-inline constexpr int SIGN_MIN = 3;
-inline constexpr int SIGN_MAX = 7;
+/** Computer-managed clubs sign between these numbers per intake: a handful
+ * at small academies, 8-12 scholars at the best. [RR 4.3, FW 5] */
+inline constexpr int SIGN_MIN = 2;
+inline constexpr int SIGN_MAX = 12;
+/** Computer-managed clubs offer first professional contracts from this age
+ * (never below the country's legal minimum). [RR 4, FW 5] */
+inline constexpr int PRO_POLICY_AGE = 17;
 
 /**
  * The intake of @p team_id in @p year. Every candidate draws from its own
@@ -285,6 +291,20 @@ float regionTalent(Language country);
 
 /** Age of the first professional contract in a country (16 or 17). [RR] */
 int firstProfessionalAge(Language country);
+
+/**
+ * Academy grade in [0, 1]: youth facilities, recruitment reach, junior
+ * coaching and the head of youth development, like an audited academy
+ * category.
+ */
+float academyGrade(const IntakeInputs& inputs);
+
+/** Largest U18 squad a computer-managed academy of @p grade keeps. */
+std::size_t u18SquadLimit(float grade);
+
+/** How many of @p candidates a computer-managed academy of @p grade signs
+ * (before squad room). */
+int computerSignings(float grade, std::size_t candidates);
 
 /** Weekly scholarship stipend in a league. */
 std::uint32_t scholarshipWage(LeagueID league_id);
@@ -445,6 +465,9 @@ class YouthAcademy
   void snapshotProgress(const GameDateValue& date, TeamID managed_team_id);
   void applyContract(Player& player, YouthRecord& record,
                      YouthContract contract) const;
+  /** Computer-managed clubs' first professional contracts: old enough and
+   * judged among the club's best prospects. */
+  bool deservesProfessional(TeamID team_id, const Player& player) const;
   double wageScale(TeamID team_id) const;
   float judgingSd(TeamID team_id) const;
   std::string headName(TeamID team_id) const;

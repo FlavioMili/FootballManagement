@@ -118,10 +118,10 @@ struct MatchReport
   void addLineupAppearances(const Lineup& lineup, TeamID team_id);
 
   /**
-   * Credits @p goals extra-time goals of one side. Extra time is resolved
-   * statistically (Competitions::resolveDrawnKnockout), not played by the
-   * engine, so each goal is given to a player of @p lineup who finished the
-   * match, drawn from @p seed with forwards and good finishers favoured: it
+   * Credits @p goals extra-time goals of one side when extra time was
+   * resolved statistically (Competitions::resolveDrawnKnockout, the fallback
+   * for a tie recorded level without the engine playing it): each goal is
+   * given to a player of @p lineup who finished the match, drawn from @p seed with forwards and good finishers favoured: it
    * counts on his line and becomes a GOAL event between minutes 91 and 120.
    * When the side has nobody left to credit, the event has no player (a team
    * goal).

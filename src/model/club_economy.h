@@ -125,6 +125,13 @@ std::int64_t availableTransferBudget(std::int64_t board_budget,
                                      std::int64_t weekly_payroll,
                                      std::int64_t committed);
 
+/**
+ * Owner money that rescues a club whose cash has fallen more than
+ * Finance::OWNER_RESCUE_TRIGGER_WEEKS of @p weekly_payroll into the red:
+ * enough to restore a cushion of OWNER_RESCUE_CUSHION_WEEKS; 0 otherwise.
+ */
+std::int64_t ownerRescue(std::int64_t balance, std::int64_t weekly_payroll);
+
 /** Board's weekly wage allowance for a new season. */
 std::int64_t seasonWageBudget(const LeagueEconomy& economy, double revenue,
                               std::int64_t weekly_payroll);

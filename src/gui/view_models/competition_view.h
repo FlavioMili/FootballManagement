@@ -62,6 +62,7 @@ struct FixtureRow
   uint8_t home_score = 0;
   uint8_t away_score = 0;
   int round = 0; /**< League round (1-based); 0 for non-league matches. */
+  uint16_t kickoff = 0; /**< Minutes after midnight. */
 };
 
 /** @brief Number of promotion and relegation places in a league table. */

@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 
 #include "model/match_events.h"
@@ -104,6 +105,8 @@ struct FoulContext
   bool inPenaltyArea = false;
   bool offenderAlreadyBooked = false;
   bool offenderIsAway = false;
+  /** Scales the referee's lean toward the home side (0 = neutral venue). */
+  float venueBiasScale = 1.0f;
 };
 
 FoulSanction decideFoulSanction(const FoulContext& context);
@@ -142,6 +145,18 @@ float tackleFoulPropensity(const TackleContext& context);
  * Match condition drained per second for a player moving at `speedRatio`
  * of their fresh top speed. `endurance` is the Stamina attribute in [0, 1].
  */
-float staminaDrainPerSecond(float speedRatio, float endurance,
-                            float pressingIntensity);
+inline float staminaDrainPerSecond(float speedRatio, float endurance,
+                                   float pressingIntensity)
+{
+  using P = MatchTuning::Fatigue;
+  const float ratio = std::clamp(speedRatio, 0.0f, 1.5f);
+  const float sprint = std::max(0.0f, ratio - P::SPRINT_THRESHOLD) /
+                       (1.0f - P::SPRINT_THRESHOLD);
+  const float work =
+      P::IDLE_DRAIN + ratio * ratio * P::RUNNING_DRAIN +
+      sprint * P::SPRINT_DRAIN +
+      std::clamp(pressingIntensity, 0.0f, 1.0f) * P::PRESSING_DRAIN;
+  return work * (P::ENDURANCE_BASE -
+                 std::clamp(endurance, 0.0f, 1.0f) * P::ENDURANCE_RELIEF);
+}
 }  // namespace MatchRules

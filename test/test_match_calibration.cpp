@@ -192,6 +192,10 @@ struct CalibrationTotals
   int setPieceGoals = 0;
   int penaltyGoals = 0;
   int ownGoals = 0;
+  // Goals by the scorer's role: forwards, midfielders and defenders.
+  int forwardGoals = 0;
+  int midfieldGoals = 0;
+  int defenderGoals = 0;
   double substitutionMinuteSum = 0.0;
   double xg = 0.0;
   double possessionSpread = 0.0;
@@ -288,6 +292,25 @@ void accumulate(CalibrationTotals& totals, const MatchEngine& engine)
   for (const PlayerMatchStats& entry : engine.getPlayerStats())
   {
     (entry.isHomeTeam ? homeGoalsByPlayers : awayGoalsByPlayers) += entry.goals;
+    switch (entry.role)
+    {
+      case PlayerRole::ST:
+      case PlayerRole::LW:
+      case PlayerRole::RW:
+        totals.forwardGoals += entry.goals;
+        break;
+      case PlayerRole::CB:
+      case PlayerRole::LB:
+      case PlayerRole::RB:
+        totals.defenderGoals += entry.goals;
+        break;
+      case PlayerRole::GK:
+      case PlayerRole::UNKNOWN:
+        break;
+      default:
+        totals.midfieldGoals += entry.goals;
+        break;
+    }
     (entry.isHomeTeam ? awayGoalsByPlayers : homeGoalsByPlayers) +=
         entry.ownGoals;
     totals.interceptions += entry.interceptions;
@@ -435,6 +458,15 @@ void report(const char* label, const CalibrationTotals& t)
                 t.perMatch(count));
   }
   std::printf("\n");
+  const int scored = t.forwardGoals + t.midfieldGoals + t.defenderGoals;
+  if (scored > 0)
+  {
+    std::printf(
+        "[calibration] %s goals by role: forwards=%.1f%% midfield=%.1f%% "
+        "defence=%.1f%%\n",
+        label, 100.0 * t.forwardGoals / scored, 100.0 * t.midfieldGoals / scored,
+        100.0 * t.defenderGoals / scored);
+  }
 }
 }  // namespace
 
@@ -555,11 +587,50 @@ TEST(MatchEngineCalibration, HeadlessSeasonMatchesRealisticBands)
   EXPECT_LE(equal.maximumRating, MatchTuning::Rating::MAXIMUM);
   EXPECT_EQ(equal.statGoalMismatches, 0)
       << "per-player goals must add up to the score";
+  // Goals come from all over the team: strikers score most, midfielders'
+  // late runs and defenders at set pieces the rest, and a few are own goals.
+  const int scored = equal.forwardGoals + equal.midfieldGoals + equal.defenderGoals;
+  ASSERT_GT(scored, 0);
+  EXPECT_LE(static_cast<double>(equal.forwardGoals) / scored, 0.70);
+  EXPECT_GE(static_cast<double>(equal.forwardGoals) / scored, 0.40);
+  EXPECT_GE(static_cast<double>(equal.midfieldGoals) / scored, 0.14);
+  EXPECT_GE(static_cast<double>(equal.defenderGoals) / scored, 0.05);
+  EXPECT_LE(static_cast<double>(equal.defenderGoals) / scored, 0.22);
+  EXPECT_GE(static_cast<double>(equal.setPieceGoals - equal.penaltyGoals) / goals,
+            0.15)
+      << "corners, free kicks and attacking throw-ins";
+  EXPECT_GT(equal.ownGoals, 0);
+  EXPECT_LE(static_cast<double>(equal.ownGoals) / goals, 0.06);
 
   // The stronger side wins most games wherever it plays.
   EXPECT_GT(strongHome.homeWins, strongHome.awayWins * 2);
   EXPECT_GT(weakHome.awayWins, weakHome.homeWins * 2);
   EXPECT_LT(equal.seconds / equal.matches, 0.2) << "a match must stay fast";
+}
+
+// A weaker league is not a shooting gallery: poorer finishing makes games
+// between two low-rated sides lower scoring than between two strong ones
+// (second tiers score ~9% fewer goals than top tiers), and the home edge does
+// not balloon at the lower level.
+TEST(MatchEngineCalibration, WeakerLeaguesScoreLessThanStrongerOnes)
+{
+  std::vector<std::unique_ptr<Player>> pool;
+  const StatsConfig config = createStatsConfig();
+  const Team lowHome = createCalibrationTeam(5, 55.0f, pool);
+  const Team lowAway = createCalibrationTeam(6, 55.0f, pool);
+  const Team highHome = createCalibrationTeam(7, 75.0f, pool);
+  const Team highAway = createCalibrationTeam(8, 75.0f, pool);
+  const CalibrationTotals low = runCalibration(lowHome, lowAway, config, 80, 3);
+  const CalibrationTotals high =
+      runCalibration(highHome, highAway, config, 80, 3);
+  report("low-level", low);
+  report("high-level", high);
+  const int lowGoals = low.homeGoals + low.awayGoals;
+  const int highGoals = high.homeGoals + high.awayGoals;
+  EXPECT_LT(lowGoals, highGoals);
+  EXPECT_LT(static_cast<double>(lowGoals) / low.shots,
+            static_cast<double>(highGoals) / high.shots);
+  EXPECT_LE(low.perMatch(low.homeWins), 0.55);
 }
 
 TEST(MatchEngineCalibration, LeagueSeasonProducesARealisticTable)

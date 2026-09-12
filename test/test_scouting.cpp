@@ -83,12 +83,16 @@ std::vector<PlayerID> playersOf(const GameController& controller,
 std::vector<PlayerID> leaguePlayers(const GameController& controller,
                                     LeagueID league_id)
 {
+  // Senior squads and academies: the scouting search covers both.
   std::vector<PlayerID> ids;
   for (const TeamID team_id :
        controller.getLeagueById(league_id)->get().getTeamIDs())
   {
     const auto team = playersOf(controller, team_id);
     ids.insert(ids.end(), team.begin(), team.end());
+    const auto& academy =
+        controller.getTeamById(team_id)->get().getAcademyIDs();
+    ids.insert(ids.end(), academy.begin(), academy.end());
   }
   std::ranges::sort(ids);
   return ids;

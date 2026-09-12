@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <optional>
@@ -197,20 +198,29 @@ TEST(CalendarTest, GeneratesBalancedRealisticSeason)
             << match.getDate().toString();
       if (match.getMatchType() == MatchType::FRIENDLY)
       {
+        // Pre-season weeks: Tuesday to Sunday, at most one a week.
         ++friendlies;
-        EXPECT_EQ(SeasonCalendar::dayOfWeek(match.getDate()),
-                  SeasonCalendar::SATURDAY);
-        EXPECT_TRUE(match.getDate() < league_start);
+        EXPECT_NE(SeasonCalendar::dayOfWeek(match.getDate()),
+                  SeasonCalendar::MONDAY);
+        EXPECT_TRUE(SeasonCalendar::addDays(match.getDate(), 4) < league_start);
+        if (i > 0 && fixtures[i - 1].getMatchType() == MatchType::FRIENDLY)
+          EXPECT_TRUE(SeasonCalendar::addDays(fixtures[i - 1].getDate(), 1) <
+                      match.getDate());
         continue;
       }
       if (match.getMatchType() != MatchType::LEAGUE) continue;
       ++league_matches;
       EXPECT_EQ(match.getCompetitionId(), team.getLeagueId());
-      const uint8_t weekday = SeasonCalendar::dayOfWeek(match.getDate());
-      EXPECT_TRUE(weekday == SeasonCalendar::SATURDAY ||
-                  weekday == SeasonCalendar::SUNDAY ||
-                  weekday == SeasonCalendar::WEDNESDAY);
+      // Weekend rounds run Friday to Monday, midweek rounds Tuesday and
+      // Wednesday (Thursday when Tuesday is still in a break); every fixture
+      // gets a kick-off time.
+      if (SeasonCalendar::dayOfWeek(match.getDate()) == SeasonCalendar::THURSDAY)
+        EXPECT_TRUE(SeasonCalendar::isBlackout(
+            SeasonCalendar::addDays(match.getDate(), -2)))
+            << match.getDate().toString();
+      EXPECT_GT(match.getScheduledKickoff(), 0) << match.getDate().toString();
       EXPECT_FALSE(SeasonCalendar::isBlackout(match.getDate()));
+      EXPECT_FALSE(SeasonCalendar::isContinentalWeek(match.getDate()));
       if (match.getHomeTeamId() == team_id) ++home_matches;
       ++meetings[match.getHomeTeamId() == team_id ? match.getAwayTeamId()
                                                   : match.getHomeTeamId()];
@@ -231,7 +241,9 @@ TEST(CalendarTest, GeneratesBalancedRealisticSeason)
   const auto first_cup_date = SeasonCalendar::cupRoundDates(2025, 6).front();
   for (const Match& tie : italy.rounds.front().ties)
   {
-    EXPECT_EQ(tie.getDate(), first_cup_date);
+    // Spread from Tuesday to Thursday around the round's Wednesday.
+    EXPECT_FALSE(tie.getDate() < SeasonCalendar::addDays(first_cup_date, -1));
+    EXPECT_FALSE(SeasonCalendar::addDays(first_cup_date, 1) < tie.getDate());
     EXPECT_GE(tie.getHomeTeamId(), 601);
     EXPECT_GE(tie.getAwayTeamId(), 601);
   }
@@ -253,6 +265,8 @@ TEST(CalendarTest, GeneratesBalancedRealisticSeason)
     {
       EXPECT_EQ(other_matches[i].getHomeTeamId(), matches[i].getHomeTeamId());
       EXPECT_EQ(other_matches[i].getAwayTeamId(), matches[i].getAwayTeamId());
+      EXPECT_EQ(other_matches[i].getScheduledKickoff(),
+                matches[i].getScheduledKickoff());
     }
   }
 }
@@ -482,14 +496,15 @@ TEST(CupTest, BracketRunsToASingleWinner)
   {
     const auto status = Competitions::cupStatus(calendar, gamedata, TOP_LEAGUE);
     if (status.winner) break;
-    const GameDateValue round_date = status.rounds.back().ties.front().getDate();
-    settleCupTies(calendar, round_date);
-    const GameDateValue other_date =
-        Competitions::cupStatus(calendar, gamedata, OTHER_COUNTRY)
-            .rounds.back()
-            .ties.front()
-            .getDate();
-    settleCupTies(calendar, other_date);
+    // A round's ties are spread over several days: settle all of them.
+    GameDateValue round_date = status.rounds.back().ties.front().getDate();
+    for (const LeagueID cup : {TOP_LEAGUE, OTHER_COUNTRY})
+      for (const Match& tie :
+           Competitions::cupStatus(calendar, gamedata, cup).rounds.back().ties)
+      {
+        settleCupTies(calendar, tie.getDate());
+        if (round_date < tie.getDate()) round_date = tie.getDate();
+      }
     Competitions::drawPendingCupRounds(calendar, gamedata, 2025, round_date);
   }
 
@@ -1001,6 +1016,62 @@ TEST(SeasonRolloverTest, SeasonEndRecordsHistoryPromotesAndRegenerates)
       }
       if (next == GameDateValue(2026, 6, 30))
       {
+        // Cup and continental ties drawn during the season still left every
+        // club its rest (league fixtures moved within their round).
+        std::map<TeamID, std::vector<const Match*>> by_club;
+        for (const auto& [date, matches] : game.getCalendar().getFullCalendar())
+          for (const Match& match : matches)
+            if (match.getMatchType() != MatchType::FRIENDLY)
+              for (const TeamID team : {match.getHomeTeamId(), match.getAwayTeamId()})
+                by_club[team].push_back(&match);
+        size_t tired = 0;
+        for (const auto& [team, fixtures] : by_club)
+          for (size_t i = 1; i < fixtures.size(); ++i)
+          {
+            const Match& earlier = *fixtures[i - 1];
+            const Match& later = *fixtures[i];
+            const int required = earlier.getMatchType() == MatchType::LEAGUE &&
+                                         later.getMatchType() != MatchType::LEAGUE
+                                     ? SeasonCalendar::MIN_REST_BEFORE_TIE
+                                     : SeasonCalendar::MIN_REST_DAYS;
+            if (SeasonCalendar::addDays(earlier.getDate(), required - 1) <
+                later.getDate())
+              continue;
+            if (++tired <= 5)
+              ADD_FAILURE() << "club " << team << " plays "
+                            << earlier.getDate().toString() << " and "
+                            << later.getDate().toString();
+          }
+        EXPECT_EQ(tired, 0u);
+        // Matches of every competition per day over the whole season.
+        std::map<size_t, size_t> histogram;
+        size_t busiest = 0;
+        GameDateValue busiest_date;
+        for (const auto& [date, matches] : game.getCalendar().getFullCalendar())
+        {
+          if (matches.empty()) continue;
+          ++histogram[(matches.size() + 9) / 10 * 10];
+          if (matches.size() > 60)
+          {
+            std::map<int, int> types;
+            for (const Match& match : matches)
+              ++types[static_cast<int>(match.getMatchType())];
+            std::cout << "[season]   crowded " << date.toString() << ":";
+            for (const auto& [type, count] : types)
+              std::cout << " type" << type << "=" << count;
+            std::cout << "\n";
+          }
+          if (matches.size() > busiest)
+          {
+            busiest = matches.size();
+            busiest_date = date;
+          }
+        }
+        std::cout << "[season] busiest day " << busiest_date.toString() << ": "
+                  << busiest << " matches\n";
+        for (const auto& [bucket, days] : histogram)
+          std::cout << "[season]   " << bucket - 9 << "-" << bucket
+                    << " matches: " << days << " days\n";
         final_top = game.getCompetitions().getStandings(game.getCalendar(),
                                                         TOP_LEAGUE);
         final_second = game.getCompetitions().getStandings(game.getCalendar(),

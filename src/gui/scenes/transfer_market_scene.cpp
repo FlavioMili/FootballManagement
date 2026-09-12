@@ -465,6 +465,7 @@ TransferMarketScene::TargetRow TransferMarketScene::makeTargetRow(
                  : fmt::format("{:.0f}", row.overall);
   row.potential_text = fmt::format("{:.0f}-{:.0f}", scouted.potential_low,
                                    scouted.potential_high);
+  row.potential = (scouted.potential_low + scouted.potential_high) * 0.5f;
   row.fit = TransferNegotiation::squadFit(needs, row.role_id, row.overall);
   row.fit_text = fitText(row.fit);
   row.value = scouted.estimated_value;
@@ -722,12 +723,14 @@ void TransferMarketScene::sortTargets(const std::vector<TargetRow>& rows,
                         case TargetColumn::AGE:
                           cmp = UI::compare(a.age, b.age);
                           break;
-                        case TargetColumn::POTENTIAL:
                         case TargetColumn::OVERALL:
                         case TargetColumn::ACTION:
                           // Ranges sort by their midpoint.
                           cmp = UI::compare(a.overall_low + a.overall_high,
                                             b.overall_low + b.overall_high);
+                          break;
+                        case TargetColumn::POTENTIAL:
+                          cmp = UI::compare(a.potential, b.potential);
                           break;
                         case TargetColumn::FIT:
                           // Equal fit: the cheaper player first.
@@ -1328,7 +1331,7 @@ void TransferMarketScene::renderTargetTable(const char* id,
   column("TRANSFER_COL_EST_OVR", TargetColumn::OVERALL,
          ImGuiTableColumnFlags_PreferSortDescending);
   column("TRANSFER_COL_POTENTIAL", TargetColumn::POTENTIAL,
-         ImGuiTableColumnFlags_NoSort);
+         ImGuiTableColumnFlags_PreferSortDescending);
   column("TRANSFER_COL_FIT", TargetColumn::FIT,
          ImGuiTableColumnFlags_PreferSortDescending |
              ImGuiTableColumnFlags_DefaultSort);
@@ -1338,7 +1341,17 @@ void TransferMarketScene::renderTargetTable(const char* id,
   column("TRANSFER_COL_CONTRACT", TargetColumn::CONTRACT);
   column("TRANSFER_COL_ACTION", TargetColumn::ACTION,
          ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_NoHide);
-  ImGui::TableHeadersRow();
+  // Sortable columns get clickable headers; the action column's is a label.
+  ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+  for (int index = 0; index < Tuning::Tables::TARGET_COLUMN_COUNT; ++index)
+  {
+    if (!ImGui::TableSetColumnIndex(index)) continue;
+    const char* name = ImGui::TableGetColumnName(index);
+    if ((ImGui::TableGetColumnFlags(index) & ImGuiTableColumnFlags_NoSort) != 0)
+      ImGui::TextUnformatted(name);
+    else
+      ImGui::TableHeader(name);
+  }
 
   // The table keeps its sort state across scene instances: follow it.
   if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs();

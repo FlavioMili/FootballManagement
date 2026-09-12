@@ -9,6 +9,7 @@
 #include "gui/view_models/match_clock.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <format>
 
@@ -16,14 +17,19 @@
 
 namespace
 {
-constexpr int HALF_TIME_MINUTE = 45;
-constexpr int FULL_TIME_MINUTE = 90;
+/** Clock minute at which a period's regulation time ends (45, 90, then
+ * 105 and 120 in extra time). */
+int regulationEndOf(int period)
+{
+  constexpr std::array<int, 4> ENDS{45, 90, 105, 120};
+  return ENDS[static_cast<std::size_t>(std::clamp(period, 1, 4) - 1)];
+}
 }  // namespace
 
 std::string MatchClock::minuteLabel(float matchMinutes, int period,
                                     bool addedTime)
 {
-  const int regulationEnd = period >= 2 ? FULL_TIME_MINUTE : HALF_TIME_MINUTE;
+  const int regulationEnd = regulationEndOf(period);
   if (addedTime)
   {
     const int added = std::max(
@@ -43,7 +49,7 @@ std::string MatchClock::minuteLabel(float matchMinutes, int period,
 std::string MatchClock::clockLabel(float matchMinutes, int period,
                                    bool addedTime)
 {
-  const int regulationEnd = period >= 2 ? FULL_TIME_MINUTE : HALF_TIME_MINUTE;
+  const int regulationEnd = regulationEndOf(period);
   const float shown =
       std::max(0.0f, addedTime ? matchMinutes - static_cast<float>(regulationEnd)
                                : matchMinutes);

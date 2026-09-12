@@ -38,6 +38,7 @@ CompetitionView::FixtureRow makeRow(const GameController& controller,
   row.home_score = match.getHomeScore();
   row.away_score = match.getAwayScore();
   row.round = round;
+  row.kickoff = match.getKickoff();
   return row;
 }
 

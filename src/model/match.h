@@ -125,6 +125,17 @@ class Match
   void setKnockoutResult(uint8_t h, uint8_t a, bool extra_time,
                          std::optional<std::pair<uint8_t, uint8_t>> penalties);
 
+  /**
+   * Kick-off time in minutes after midnight (local time at the venue).
+   * Fixtures scheduled without one (cup ties, continental matches, fixtures
+   * of older saves) report the usual time for their competition and weekday.
+   */
+  uint16_t getKickoff() const;
+  /** Scheduled kick-off in minutes after midnight; 0 restores the default. */
+  void setKickoff(uint16_t minutes) { kickoff = minutes; }
+  /** Kick-off chosen when the fixture was scheduled; 0 when defaulted. */
+  uint16_t getScheduledKickoff() const { return kickoff; }
+
   LeagueID getCompetitionId() const { return competition_id; }
   void setCompetitionId(LeagueID id) { competition_id = id; }
   uint8_t getStage() const { return stage; }
@@ -154,6 +165,7 @@ class Match
   uint8_t away_score;
   LeagueID competition_id;
   uint8_t stage;
+  uint16_t kickoff = 0;
   uint8_t home_penalties = 0;
   uint8_t away_penalties = 0;
   bool extra_time = false;

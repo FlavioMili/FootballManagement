@@ -134,38 +134,41 @@ enum class StatGroup
   Physical,
   Endurance,
   Technical,
-  Mental
+  Craft,
+  Goalkeeping
 };
 
 StatGroup statGroup(std::string_view stat)
 {
   if (stat == "Pace" || stat == "Physicality") return StatGroup::Physical;
   if (stat == "Stamina") return StatGroup::Endurance;
-  if (stat == "Vision") return StatGroup::Mental;
+  if (stat == "Passing" || stat == "Vision") return StatGroup::Craft;
+  if (stat == "Goalkeeping") return StatGroup::Goalkeeping;
   return StatGroup::Technical;
 }
 
-float yearlyDecline(StatGroup group, int age)
+/** Fractional change of an attribute over the year to @p age (negative =
+ * decline): physical first, technical later, passing and vision last. */
+float yearlyChange(StatGroup group, int age, PlayerRole role)
 {
   using Tuning = WorldTuning::Development;
+  const bool late_peak =
+      (role == PlayerRole::GK || role == PlayerRole::CB) &&
+      age < Tuning::LATE_PEAK_ROLE_UNTIL;
+  const float role_factor = late_peak ? Tuning::LATE_PEAK_ROLE_FACTOR : 1.0f;
   switch (group)
   {
     case StatGroup::Physical:
+      return -Tuning::physicalDecline(age) * role_factor;
     case StatGroup::Endurance:
-    {
-      float rate = 0.0f;
-      if (age > 32)
-        rate = Tuning::PHYSICAL_DECLINE_AFTER_32;
-      else if (age >= 30)
-        rate = Tuning::PHYSICAL_DECLINE_30_32;
-      return group == StatGroup::Endurance ? rate * 0.5f : rate;
-    }
+      return -Tuning::physicalDecline(age) * Tuning::ENDURANCE_FACTOR *
+             role_factor;
     case StatGroup::Technical:
-      if (age > 33) return Tuning::TECHNICAL_DECLINE_AFTER_33;
-      if (age >= 32) return Tuning::TECHNICAL_DECLINE_32_33;
-      return 0.0f;
-    case StatGroup::Mental:
-      return age > 34 ? Tuning::MENTAL_DECLINE_AFTER_34 : 0.0f;
+      return -Tuning::technicalDecline(age) * role_factor;
+    case StatGroup::Craft:
+      return Tuning::craftChange(age);
+    case StatGroup::Goalkeeping:
+      return -Tuning::goalkeepingDecline(age);
   }
   return 0.0f;
 }
@@ -181,8 +184,10 @@ void Player::agePlayer()
       1.2f - 0.4f * static_cast<float>(_traits.professionalism) / 100.0f;
   for (auto& [stat_name, value] : _stats)
   {
-    const float rate = yearlyDecline(statGroup(stat_name), _age) * care;
-    value = std::max(static_cast<float>(MIN_STAT_VAL), value * (1.0f - rate));
+    float change = yearlyChange(statGroup(stat_name), _age, _role);
+    if (change < 0.0f) change *= care;
+    value = std::clamp(value * (1.0f + change), static_cast<float>(MIN_STAT_VAL),
+                       static_cast<float>(MAX_STAT_VAL));
   }
 }
 

@@ -17,8 +17,8 @@ struct MatchReportEvent;
  *
  * The label names the minute being played: "1'" during the first minute,
  * "45'" up to the half, then "45+N'" in first-half added time, "46'".."90'"
- * and "90+N'". Live events and stored report events of the same moment get
- * the same label.
+ * and "90+N'"; in extra time "91'".."105+N'" and "106'".."120+N'". Live
+ * events and stored report events of the same moment get the same label.
  */
 namespace MatchClock
 {

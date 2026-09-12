@@ -34,6 +34,8 @@ constexpr float LEAGUE_LIST_WIDTH = 260.0f;
 constexpr float CARD_WIDTH = 320.0f;
 constexpr float CARD_MIN_CONTENT = 1080.0f;
 constexpr float CONTENT_MAX_WIDTH = 1480.0f;
+// Below this the page scrolls rather than squeezing the club browser.
+constexpr float BROWSER_MIN_HEIGHT = 360.0f;
 constexpr size_t KEY_PLAYERS = 3;
 constexpr int STARS = 5;
 
@@ -123,11 +125,7 @@ TeamSelectionScene::TeamSelectionScene(GUIView* parent) : GUIScene(parent) {}
 void TeamSelectionScene::onEnter()
 {
   loadAvailableLeagues();
-  if (!league_entries.empty())
-  {
-    selected_league_id = league_entries.front().id;
-    loadAvailableTeams();
-  }
+  if (!league_entries.empty()) selectLeague(league_entries.front());
 }
 
 void TeamSelectionScene::update(float deltaTime) { (void)deltaTime; }
@@ -142,10 +140,18 @@ void TeamSelectionScene::render()
                              Theme::Space::XL * Theme::scale()));
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+  // The page scrolls (and is the only scroll surface) when the window is too
+  // short for the club browser below the manager card.
   ImGui::Begin("##team_selection", nullptr,
-               ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+               ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                   ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove |
                    ImGuiWindowFlags_NoSavedSettings);
   ImGui::PopStyleVar(3);
+  // Auto-sized cards (the manager card) measure themselves on their first
+  // frame: that frame is drawn transparent instead of as empty boxes.
+  const bool measuring = !laid_out;
+  if (measuring) ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.0f);
+  laid_out = true;
 
   const float width = std::min(ImGui::GetContentRegionAvail().x,
                                CONTENT_MAX_WIDTH * Theme::scale());
@@ -156,7 +162,8 @@ void TeamSelectionScene::render()
   if (manager_panel.render(guiView->getController(), width) ==
       ManagerSetupPanel::Action::START_UNEMPLOYED)
     startUnemployed();
-  const float height = ImGui::GetContentRegionAvail().y;
+  const float height = std::max(ImGui::GetContentRegionAvail().y,
+                                BROWSER_MIN_HEIGHT * Theme::scale());
   const float gap = ImGui::GetStyle().ItemSpacing.x;
   const float listWidth = LEAGUE_LIST_WIDTH * Theme::scale();
   const bool showCard = width >= CARD_MIN_CONTENT * Theme::scale();
@@ -165,13 +172,17 @@ void TeamSelectionScene::render()
   ImGui::SameLine();
   const float tableWidth =
       width - listWidth - gap - (showCard ? cardWidth + gap : 0.0f);
-  ImGui::BeginChild("##club_area", ImVec2(tableWidth, height));
+  ImGui::BeginChild("##club_area", ImVec2(tableWidth, height),
+                    ImGuiChildFlags_None,
+                    ImGuiWindowFlags_NoScrollbar |
+                        ImGuiWindowFlags_NoScrollWithMouse);
+  // Narrow windows: the club card becomes a strip above the table, so the
+  // start button stays in view.
+  if (!showCard) renderSelectedClubStrip();
   if (selected_league_id)
-    renderClubTable(ImGui::GetContentRegionAvail().y -
-                    (showCard ? 0.0f : 150.0f * Theme::scale()));
+    renderClubTable(ImGui::GetContentRegionAvail().y);
   else
     UI::emptyState(LOC("TEAM_SELECTION_SELECT_LEAGUE_FIRST"), nullptr);
-  if (!showCard) renderSelectedClub(0.0f, ImGui::GetContentRegionAvail().y);
   ImGui::EndChild();
   if (showCard)
   {
@@ -179,7 +190,17 @@ void TeamSelectionScene::render()
     renderSelectedClub(cardWidth, height);
   }
   ImGui::EndGroup();
+  if (measuring) ImGui::PopStyleVar();
   ImGui::End();
+}
+
+void TeamSelectionScene::selectLeague(const LeagueEntry& entry)
+{
+  if (entry.lower_divisions > 0) expanded_countries.insert(entry.root);
+  if (selected_league_id == entry.id) return;
+  selected_league_id = entry.id;
+  selected_team_id.reset();
+  loadAvailableTeams();
 }
 
 void TeamSelectionScene::renderLeagueList(float width, float height)
@@ -187,31 +208,63 @@ void TeamSelectionScene::renderLeagueList(float width, float height)
   const Theme::Palette& palette = Theme::palette();
   UI::beginCard("##leagues", LOC("TEAM_SELECTION_LEAGUES_CAPTION"),
                 ImVec2(width, height), true);
-  for (size_t index = 0; index < league_entries.size(); ++index)
+  // One row per country (its top division); the arrow lists the lower
+  // divisions underneath, indented. Compact rows: every country fits.
+  const float scale = Theme::scale();
+  const float rowHeight = ImGui::GetTextLineHeight() + 10.0f * scale;
+  const float arrowSize = ImGui::GetTextLineHeight() * 0.4f;
+  const float nameStart = rowHeight + Theme::Space::XS * scale;
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,
+                      ImVec2(0.0f, 2.0f * scale));
+  ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.0f, 0.5f));
+  for (const LeagueEntry& entry : league_entries)
   {
-    const LeagueEntry& entry = league_entries[index];
-    // Countries are separated by a gap; lower divisions are indented.
-    if (entry.tier == 1 && index > 0)
-      ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
-    const bool selected = selected_league_id && *selected_league_id == entry.id;
+    const bool expanded = expanded_countries.contains(entry.root);
+    if (entry.tier > 1 && !expanded) continue;
     ImGui::PushID(static_cast<int>(entry.id));
-    const float indent =
-        static_cast<float>(entry.tier - 1) * Theme::Space::L * Theme::scale();
-    if (indent > 0.0f) ImGui::Indent(indent);
-    if (ImGui::Selectable("##league", selected, 0,
-                          ImVec2(0.0f, ImGui::GetFrameHeight())))
+    const float rowStart = ImGui::GetCursorPosX();
+    if (entry.lower_divisions > 0)
     {
-      selected_league_id = entry.id;
-      selected_team_id.reset();
-      loadAvailableTeams();
+      if (ImGui::InvisibleButton("##expand", ImVec2(rowHeight, rowHeight)))
+      {
+        if (expanded)
+          expanded_countries.erase(entry.root);
+        else
+          expanded_countries.insert(entry.root);
+      }
+      const ImVec2 min = ImGui::GetItemRectMin();
+      const ImVec2 center(min.x + rowHeight * 0.5f, min.y + rowHeight * 0.5f);
+      ImDrawList* drawList = ImGui::GetWindowDrawList();
+      if (ImGui::IsItemHovered())
+        drawList->AddRectFilled(min, ImGui::GetItemRectMax(),
+                                Theme::toU32(palette.raised),
+                                Theme::Space::XS * scale);
+      const ImU32 arrow = Theme::toU32(palette.muted);
+      if (expanded)
+        drawList->AddTriangleFilled(
+            ImVec2(center.x - arrowSize, center.y - arrowSize * 0.5f),
+            ImVec2(center.x + arrowSize, center.y - arrowSize * 0.5f),
+            ImVec2(center.x, center.y + arrowSize * 0.7f), arrow);
+      else
+        drawList->AddTriangleFilled(
+            ImVec2(center.x - arrowSize * 0.5f, center.y - arrowSize),
+            ImVec2(center.x - arrowSize * 0.5f, center.y + arrowSize),
+            ImVec2(center.x + arrowSize * 0.7f, center.y), arrow);
+      ImGui::SameLine(0.0f, 0.0f);
     }
-    ImGui::SameLine(indent + Theme::Space::S * Theme::scale());
-    ImGui::AlignTextToFramePadding();
-    UI::textFitted(entry.name, ImGui::GetContentRegionAvail().x,
-                   entry.tier == 1 ? palette.text : palette.muted);
-    if (indent > 0.0f) ImGui::Unindent(indent);
+    const float indent =
+        nameStart +
+        static_cast<float>(entry.tier - 1) * Theme::Space::L * scale;
+    ImGui::SetCursorPosX(rowStart + indent);
+    ImGui::PushStyleColor(ImGuiCol_Text,
+                          entry.tier == 1 ? palette.text : palette.muted);
+    if (ImGui::Selectable(entry.name.c_str(), selected_league_id == entry.id,
+                          0, ImVec2(0.0f, rowHeight)))
+      selectLeague(entry);
+    ImGui::PopStyleColor();
     ImGui::PopID();
   }
+  ImGui::PopStyleVar(2);
   UI::endCard();
 }
 
@@ -337,14 +390,41 @@ void TeamSelectionScene::renderClubTable(float height)
   UI::endCard();
 }
 
+const TeamSelectionScene::ClubSummary* TeamSelectionScene::selectedClub()
+    const
+{
+  const auto selected =
+      std::ranges::find_if(club_summaries, [this](const ClubSummary& club)
+                           { return selected_team_id == club.id; });
+  return selected == club_summaries.end() ? nullptr : &*selected;
+}
+
+void TeamSelectionScene::renderClubIdentity(const ClubSummary& club,
+                                            float badgeHeight, float width)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const float start = ImGui::GetCursorScreenPos().x;
+  UI::clubBadge(club.code.c_str(), club.primary, club.secondary, badgeHeight);
+  ImGui::SameLine();
+  const float textWidth =
+      std::max(0.0f, start + width - ImGui::GetCursorScreenPos().x);
+  ImGui::BeginGroup();
+  {
+    Theme::ScopedText title(Theme::Text::HEADING);
+    UI::textFitted(club.name, textWidth, palette.text);
+  }
+  if (!club.nickname.empty())
+    UI::textFitted(club.nickname, textWidth, palette.muted);
+  reputationStars(club.reputation);
+  ImGui::EndGroup();
+}
+
 void TeamSelectionScene::renderSelectedClub(float width, float height)
 {
   const Theme::Palette& palette = Theme::palette();
   UI::beginCard("##selected_club", nullptr, ImVec2(width, height), true);
-  const auto selected =
-      std::ranges::find_if(club_summaries, [this](const ClubSummary& club)
-                           { return selected_team_id == club.id; });
-  if (selected == club_summaries.end())
+  const ClubSummary* selected = selectedClub();
+  if (selected == nullptr)
   {
     ImGui::PushTextWrapPos(0.0f);
     ImGui::TextColored(palette.muted, "%s", LOC("TEAM_SELECTION_CHOOSE_CLUB"));
@@ -353,19 +433,13 @@ void TeamSelectionScene::renderSelectedClub(float width, float height)
     return;
   }
   const ClubSummary& club = *selected;
-  UI::clubBadge(club.code.c_str(), club.primary, club.secondary, 48.0f);
-  ImGui::SameLine();
-  ImGui::BeginGroup();
-  {
-    Theme::ScopedText title(Theme::Text::HEADING);
-    UI::textFitted(club.name, ImGui::GetContentRegionAvail().x, palette.text);
-  }
-  if (!club.nickname.empty())
-    UI::textFitted(club.nickname, ImGui::GetContentRegionAvail().x,
-                   palette.muted);
-  reputationStars(club.reputation);
-  ImGui::EndGroup();
+  renderClubIdentity(club, 48.0f, ImGui::GetContentRegionAvail().x);
+  // The primary action comes right after the club's name: it stays visible
+  // however short the card is.
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  if (UI::primaryButton(LOC("TEAM_SELECTION_CONFIRM"), ImVec2(-FLT_MIN, 0.0f)))
+    startCareer(club.id);
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
 
   const float keyWidth = 150.0f * Theme::scale();
   UI::keyValue(LOC("TEAM_SELECTION_EXPECTATION"), LOC(club.objective_key),
@@ -400,10 +474,34 @@ void TeamSelectionScene::renderSelectedClub(float width, float height)
     ImGui::SameLine();
     UI::textFitted(name, ImGui::GetContentRegionAvail().x, palette.text);
   }
+  UI::endCard();
+}
 
-  ImGui::Dummy(ImVec2(0.0f, Theme::Space::M * Theme::scale()));
-  if (UI::primaryButton(LOC("TEAM_SELECTION_CONFIRM"), ImVec2(-FLT_MIN, 0.0f)))
-    startCareer(club.id);
+void TeamSelectionScene::renderSelectedClubStrip()
+{
+  const ClubSummary* selected = selectedClub();
+  if (selected == nullptr) return;
+  const ClubSummary& club = *selected;
+  UI::beginAutoHeightCard("##selected_club_strip", nullptr, 0.0f);
+  const char* confirm = LOC("TEAM_SELECTION_CONFIRM");
+  const float button = UI::buttonWidth(confirm);
+  const float identityWidth = std::max(
+      ImGui::GetContentRegionAvail().x - button - ImGui::GetStyle().ItemSpacing.x,
+      ImGui::GetContentRegionAvail().x * 0.5f);
+  ImGui::BeginGroup();
+  renderClubIdentity(club, 40.0f, identityWidth);
+  ImGui::EndGroup();
+  if (UI::sameLineIfFits(button))
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
+                         std::max(0.0f, ImGui::GetContentRegionAvail().x - button));
+  if (UI::primaryButton(confirm)) startCareer(club.id);
+  // The facts the compact table leaves out.
+  const std::string facts = std::format(
+      "{}: {}    {}: {}    {}: {}", LOC("TEAM_SELECTION_EXPECTATION"),
+      LOC(club.objective_key), LOC("TEAM_SELECTION_BALANCE"), club.balance_text,
+      LOC("TEAM_SELECTION_WAGES"), club.wages_text);
+  UI::textFitted(facts, ImGui::GetContentRegionAvail().x,
+                 Theme::palette().muted);
   UI::endCard();
 }
 
@@ -429,13 +527,18 @@ void TeamSelectionScene::loadAvailableLeagues()
   // Grouped by country, top division first.
   for (const LeagueID root : Competitions::countryRoots(*data))
   {
+    const size_t top = league_entries.size();
     for (const LeagueID id : Competitions::countryLeagues(*data, root))
     {
       const auto league = controller.getLeagueById(id);
       if (!league) continue;
-      league_entries.push_back({id, Competitions::leagueName(league->get()),
-                                controller.getLeagueTier(id)});
+      league_entries.push_back({.id = id,
+                                .root = root,
+                                .name = Competitions::leagueName(league->get()),
+                                .tier = controller.getLeagueTier(id)});
     }
+    if (league_entries.size() > top)
+      league_entries[top].lower_divisions = league_entries.size() - top - 1;
   }
 }
 

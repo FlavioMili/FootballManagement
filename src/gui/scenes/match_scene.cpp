@@ -43,6 +43,7 @@
 #include "gui/widgets/widgets.h"
 #include "model/injury.h"
 #include "model/match.h"
+#include "model/match_rules.h"
 #include "model/role_utils.h"
 #include "model/settings_manager.h"
 #include "model/team.h"
@@ -102,6 +103,7 @@ ImVec4 eventColor(MatchEventType type)
     case MatchEventType::YELLOW_CARD:
     case MatchEventType::PENALTY:
     case MatchEventType::PENALTY_MISSED:
+    case MatchEventType::PENALTY_SHOOTOUT:
       return palette.warning;
     case MatchEventType::SUBSTITUTION:
     case MatchEventType::ADDED_TIME:
@@ -136,6 +138,7 @@ bool isKeyEvent(MatchEventType type)
     case MatchEventType::SUBSTITUTION:
     case MatchEventType::PENALTY:
     case MatchEventType::PENALTY_MISSED:
+    case MatchEventType::PENALTY_SHOOTOUT:
     case MatchEventType::ADDED_TIME:
     case MatchEventType::HALF_TIME:
     case MatchEventType::SECOND_HALF:
@@ -143,6 +146,29 @@ bool isKeyEvent(MatchEventType type)
       return true;
     default:
       return false;
+  }
+}
+
+/// Label under the clock: the half being played (extra time included), the
+/// breaks and the shootout.
+const char* periodKey(const MatchEngine& engine)
+{
+  const int period = engine.getPeriod();
+  switch (engine.getState())
+  {
+    case MatchState::FULL_TIME:
+      return "MATCH_PERIOD_FULL";
+    case MatchState::PENALTY_SHOOTOUT:
+      return "MATCH_PERIOD_SHOOTOUT";
+    case MatchState::HALF_TIME:
+      return period == 1   ? "MATCH_PERIOD_HALF"
+             : period == 2 ? "MATCH_PERIOD_EXTRA_BREAK"
+                           : "MATCH_PERIOD_EXTRA_HALF";
+    default:
+      return period >= 4   ? "MATCH_PERIOD_EXTRA_SECOND"
+             : period == 3 ? "MATCH_PERIOD_EXTRA_FIRST"
+             : period == 2 ? "MATCH_PERIOD_SECOND"
+                           : "MATCH_PERIOD_FIRST";
   }
 }
 
@@ -356,7 +382,10 @@ void MatchScene::onEnter()
     {
       if (const Match* fixture = game->getCalendar().findMatch(
               controller.getCurrentDate(), home_team_id, away_team_id))
+      {
         fixture_type = fixture->getMatchType();
+        fixture_when = Format::matchDay(fixture->getDate(), fixture->getKickoff());
+      }
     }
 
     renderer_2d = std::make_unique<MatchRenderer2D>();
@@ -497,6 +526,14 @@ void MatchScene::startMatch()
   engine = std::make_unique<MatchEngine>(
       home_team.getLineup(), away_team.getLineup(), home_team.getStrategy(),
       away_team.getStrategy(), controller.getStatsConfig(), seed);
+  // Cup ties and continental deciders are played to a winner: extra time,
+  // then penalties (the first leg counts in a second leg).
+  if (const auto rules = controller.getKnockoutRules(
+          controller.getCurrentDate(), home_team_id, away_team_id))
+    engine->setKnockout(*rules);
+  engine->setTeamNames(home_team.getName(), away_team.getName());
+  decided_by.clear();
+  decided_by_ready = false;
   // Fatigue carried over from recent matches and training.
   MatchdaySquad::carryCondition(*engine, home_team.getLineup());
   MatchdaySquad::carryCondition(*engine, away_team.getLineup());
@@ -639,9 +676,16 @@ std::string MatchScene::clockText() const
   switch (engine->getState())
   {
     case MatchState::HALF_TIME:
+      // The break before extra time comes after the full 90 minutes.
+      if (engine->getPeriod() == 2)
+        return MatchClock::clockLabel(MatchRules::periodEndMinute(2), 2,
+                                      false);
       return LOC("MATCH_CLOCK_HALF_TIME");
     case MatchState::FULL_TIME:
       return LOC("MATCH_CLOCK_FULL_TIME");
+    case MatchState::PENALTY_SHOOTOUT:
+      return std::format("{}-{}", engine->getShootoutScore(true),
+                         engine->getShootoutScore(false));
     default:
       return MatchClock::clockLabel(engine->getMatchTimeMinutes(),
                                     engine->getPeriod(),
@@ -1078,22 +1122,31 @@ void MatchScene::renderScoreboard()
   // Clock pill and period under the score.
   const std::string clock = clockText();
   const MatchState state = engine->getState();
-  const char* periodKey = state == MatchState::FULL_TIME ? "MATCH_PERIOD_FULL"
-                          : state == MatchState::HALF_TIME
-                              ? "MATCH_PERIOD_HALF"
-                          : engine->getPeriod() >= 2 ? "MATCH_PERIOD_SECOND"
-                                                     : "MATCH_PERIOD_FIRST";
+  // After extra time the result says how it was decided.
+  if (state == MatchState::FULL_TIME && !decided_by_ready)
+  {
+    decided_by_ready = true;
+    if (engine->hasShootout())
+      decided_by = fmt::sprintf(LOC("RESULT_PENALTIES"),
+                                engine->getShootoutScore(true),
+                                engine->getShootoutScore(false));
+    else if (engine->wentToExtraTime())
+      decided_by = LOC("RESULT_AFTER_EXTRA_TIME");
+  }
+  const char* periodText = state == MatchState::FULL_TIME && !decided_by.empty()
+                               ? decided_by.c_str()
+                               : LOC(periodKey(*engine));
   const int announced = engine->getAddedMinutes(engine->getPeriod());
   std::array<char, 16> addedText{};
   if (announced > 0 && state != MatchState::HALF_TIME &&
-      state != MatchState::FULL_TIME)
+      state != MatchState::FULL_TIME && state != MatchState::PENALTY_SHOOTOUT)
     std::snprintf(addedText.data(), addedText.size(), "+%d", announced);
   {
     Theme::ScopedText caption(Theme::Text::CAPTION);
     const ImVec2 padding(scaled(6.0f), scaled(2.0f));
     const float clockWidth =
         ImGui::CalcTextSize(clock.c_str()).x + 2.0f * padding.x;
-    const float periodWidth = ImGui::CalcTextSize(LOC(periodKey)).x;
+    const float periodWidth = ImGui::CalcTextSize(periodText).x;
     const float addedWidth =
         addedText[0] != '\0'
             ? ImGui::CalcTextSize(addedText.data()).x + 2.0f * padding.x +
@@ -1115,7 +1168,7 @@ void MatchScene::renderScoreboard()
     ImGui::Dummy(ImVec2(clockWidth, pillMax.y - pillMin.y));
     ImGui::SameLine();
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + padding.y);
-    ImGui::TextColored(palette.muted, "%s", LOC(periodKey));
+    ImGui::TextColored(palette.muted, "%s", periodText);
     if (addedText[0] != '\0')
     {
       ImGui::SameLine();
@@ -1161,6 +1214,9 @@ void MatchScene::renderScoreboard()
     ImGui::SetCursorPos(origin);
     UI::badge(LOC(CompetitionView::matchTypeKey(*fixture_type)),
               palette.info);
+    ImGui::SameLine();
+    Theme::ScopedText caption(Theme::Text::CAPTION);
+    ImGui::TextColored(palette.muted, "%s", fixture_when.c_str());
   }
   // Highlight playback state on the right edge.
   if (highlights_only)
@@ -1188,15 +1244,25 @@ void MatchScene::renderTimeline()
   // A strip along the bottom of the scoreboard: time played, half-time and
   // the key moments (goals above/below for home/away, cards).
   const Theme::Palette& palette = Theme::palette();
-  const float half = MatchTuning::Timing::HALF_TIME_MINUTE;
-  const float firstHalf =
-      half + static_cast<float>(engine->getAddedMinutes(1));
-  const float total = firstHalf + half +
-                      static_cast<float>(engine->getAddedMinutes(2));
+  // One segment per period played (the two halves of extra time once they
+  // are reached), each as long as its regulation time plus added time.
+  const int periods = engine->wentToExtraTime() ? 4 : 2;
+  std::array<float, 5> segmentEnd{};
+  for (int period = 1; period <= periods; ++period)
+    segmentEnd[static_cast<std::size_t>(period)] =
+        segmentEnd[static_cast<std::size_t>(period - 1)] +
+        MatchRules::periodEndMinute(period) -
+        MatchRules::periodStartMinute(period) +
+        static_cast<float>(engine->getAddedMinutes(period));
+  const float total = segmentEnd[static_cast<std::size_t>(periods)];
   const auto position = [&](float minute, int period)
   {
-    return period >= 2 ? firstHalf + std::max(0.0f, minute - half)
-                       : std::min(minute, firstHalf);
+    const auto index =
+        static_cast<std::size_t>(std::clamp(period, 1, periods));
+    const float start = segmentEnd[index - 1];
+    return start + std::clamp(minute - MatchRules::periodStartMinute(
+                                           static_cast<int>(index)),
+                              0.0f, segmentEnd[index] - start);
   };
   const float played =
       engine->getState() == MatchState::FULL_TIME
@@ -1222,9 +1288,13 @@ void MatchScene::renderTimeline()
   drawList->AddRectFilled(ImVec2(left, trackY - trackHeight * 0.5f),
                           ImVec2(xAt(played), trackY + trackHeight * 0.5f),
                           Theme::toU32(palette.accent, 0.7f), trackHeight);
-  drawList->AddLine(ImVec2(xAt(firstHalf), trackY - markerSize),
-                    ImVec2(xAt(firstHalf), trackY + markerSize),
-                    Theme::toU32(palette.faint), 1.0f);
+  for (int period = 1; period < periods; ++period)
+  {
+    const float x = xAt(segmentEnd[static_cast<std::size_t>(period)]);
+    drawList->AddLine(ImVec2(x, trackY - markerSize),
+                      ImVec2(x, trackY + markerSize),
+                      Theme::toU32(palette.faint), 1.0f);
+  }
   for (const MatchEvent& event : engine->getEvents())
   {
     const bool goal = event.type == MatchEventType::GOAL ||
