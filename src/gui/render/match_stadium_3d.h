@@ -44,19 +44,36 @@ struct Face
   std::array<Vec3, 4> corners{};
   std::array<ImU32, 4> colors{};
   Vec3 normal;
-  /** Crowd dots drawn right after this face when it is visible. */
-  std::uint32_t crowdBegin = 0;
-  std::uint32_t crowdEnd = 0;
+  /** Crowd clumps drawn right after this face when it is visible. */
+  std::uint32_t clumpBegin = 0;
+  std::uint32_t clumpEnd = 0;
   /** Non-zero for floodlight heads: colour of the halo drawn on top. */
   ImU32 glow = 0;
 };
 
-/** One spectator block: a small upright billboard on a tier. */
+/** One spectator: a small upright billboard on a tier. */
 struct CrowdDot
 {
   Vec3 base;
   ImU32 body = 0;
   ImU32 head = 0;
+};
+
+/**
+ * A few neighbouring spectators (up to CLUMP_SEATS x CLUMP_ROWS) drawn as
+ * one billboard when they are far away. Members are stored back row first
+ * so nearer rows overlap the ones behind them.
+ */
+struct CrowdClump
+{
+  Vec3 base; /**< Bottom centre on the front row. */
+  float halfWidth = 0.0f;
+  /** Billboard height covering every member row, metres. */
+  float height = 0.0f;
+  /** Average colour of the members (the far-away look). */
+  ImU32 color = 0;
+  std::uint32_t dotBegin = 0;
+  std::uint32_t dotEnd = 0;
 };
 
 /** Which stand a section belongs to; used to hide the stand behind the eye. */
@@ -149,6 +166,7 @@ struct Geometry
   std::vector<Face> faces;
   std::vector<Section> sections;
   std::vector<CrowdDot> crowd;
+  std::vector<CrowdClump> clumps;
   std::vector<AdBoard> boards;
   std::array<Goal, 2> goals{};
   std::array<Vec3, 4> cornerFlags{};

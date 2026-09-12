@@ -175,6 +175,8 @@ const char* matchTypeKey(MatchType type)
       return "MATCH_TYPE_FRIENDLY";
     case MatchType::CUP:
       return "MATCH_TYPE_CUP";
+    case MatchType::CONTINENTAL:
+      return "MATCH_TYPE_CONTINENTAL";
   }
   return "MATCH_TYPE_LEAGUE";
 }

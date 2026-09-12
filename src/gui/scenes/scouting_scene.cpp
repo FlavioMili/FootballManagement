@@ -22,6 +22,7 @@
 #include "global/global.h"
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
+#include "gui/scenes/scouting_scene_internal.h"
 #include "gui/view_models/player_view.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
@@ -30,13 +31,17 @@
 
 namespace
 {
-constexpr std::array<uint16_t, 4> DURATIONS = {7, 14, 30, 60};
-constexpr float TWO_COLUMN_MIN_WIDTH = 1000.0f;
-constexpr float SCOUT_LIST_WIDTH = 340.0f;
-constexpr float KNOWLEDGE_BAR_WIDTH = 64.0f;
 constexpr float FILTER_LABEL_WIDTH = 240.0f;
 constexpr size_t SEARCH_LIMIT = 250;
 constexpr int ROLE_COUNT = static_cast<int>(PlayerRole::UNKNOWN);
+}  // namespace
+
+namespace ScoutingUi
+{
+namespace
+{
+constexpr float KNOWLEDGE_BAR_WIDTH = 64.0f;
+}  // namespace
 
 float dpi() { return ImGui::GetStyle().FontScaleDpi; }
 
@@ -108,6 +113,12 @@ void knowledgeBar(uint8_t knowledge)
         "%s", fmt::sprintf(LOC("SCOUTING_KNOWLEDGE_HINT"), knowledge).c_str());
 }
 
+}  // namespace ScoutingUi
+
+using namespace ScoutingUi;
+
+namespace
+{
 std::string roleLabel(int index)
 {
   return index == 0 ? std::string(LOC("SCOUTING_ANY"))
@@ -155,76 +166,11 @@ void ScoutingScene::refresh()
   for (const League& league : controller.getLeagues())
     leagues.emplace_back(league.getId(), league.getName());
   std::ranges::sort(leagues, {}, &std::pair<LeagueID, std::string>::second);
-  rebuildTargets();
-  rebuildAssignments();
+  rebuildWorld();
   rebuildReports();
   rebuildShortlist();
+  rebuildScouts();
   search_dirty = true;
-}
-
-void ScoutingScene::rebuildTargets()
-{
-  targets.clear();
-  for (const auto& [id, name] : leagues)
-  {
-    targets.push_back({ScoutTargetKind::League, id,
-                       fmt::sprintf(LOC("SCOUTING_TARGET_LEAGUE_FMT"), name)});
-  }
-  GameController& controller = guiView->getController();
-  for (const auto& [id, name] : leagues)
-  {
-    const auto league = controller.getLeagueById(id);
-    if (!league || league->get().getParentLeagueID()) continue;
-    targets.push_back({ScoutTargetKind::Country, id,
-                       fmt::sprintf(LOC("SCOUTING_TARGET_COUNTRY_FMT"), name)});
-  }
-  targets.push_back(
-      {ScoutTargetKind::FreeAgents, 0, LOC("SCOUTING_TARGET_FREE_AGENTS")});
-  form_target =
-      std::clamp(form_target, 0, static_cast<int>(targets.size()) - 1);
-}
-
-void ScoutingScene::rebuildAssignments()
-{
-  GameController& controller = guiView->getController();
-  active_assignments.clear();
-  finished_assignments.clear();
-  std::unordered_map<uint32_t, std::string> scoutNames;
-  for (const ScoutProfile& scout : scouts) scoutNames[scout.id] = scout.name;
-  for (const ScoutAssignment& assignment : controller.getScoutAssignments())
-  {
-    AssignmentLine line{assignment, {}, {}, Format::money(assignment.cost),
-                        {},         {}};
-    if (const auto name = scoutNames.find(assignment.scout_id);
-        name != scoutNames.end())
-      line.scout_name = name->second;
-    switch (assignment.kind)
-    {
-      case ScoutTargetKind::Player:
-        if (const auto player =
-                controller.getGameData()->getPlayer(assignment.target_id))
-          line.target_text = player->get().getName();
-        break;
-      case ScoutTargetKind::League:
-      case ScoutTargetKind::Country:
-        if (const auto league = controller.getLeagueById(
-                static_cast<LeagueID>(assignment.target_id)))
-          line.target_text = league->get().getName();
-        break;
-      case ScoutTargetKind::FreeAgents:
-        line.target_text = LOC("SCOUTING_TARGET_FREE_AGENTS");
-        break;
-    }
-    line.target_text = std::string(LOC(scoutTargetKindKey(assignment.kind))) +
-                       " · " + line.target_text;
-    line.period_text = fmt::sprintf(
-        LOC("SCOUTING_PERIOD"), assignment.days_done, assignment.duration_days);
-    line.started_text = fmt::sprintf(
-        LOC("SCOUTING_STARTED"), Format::date(assignment.start_date).c_str());
-    (assignment.finished ? finished_assignments : active_assignments)
-        .push_back(std::move(line));
-  }
-  std::ranges::reverse(finished_assignments);
 }
 
 void ScoutingScene::rebuildReports()
@@ -234,24 +180,32 @@ void ScoutingScene::rebuildReports()
   const auto& source = controller.getScoutReports();
   reports.reserve(source.size());
   for (auto it = source.rbegin(); it != source.rend(); ++it)
+    reports.push_back(makeReportLine(*it));
+}
+
+ScoutingScene::ReportLine ScoutingScene::makeReportLine(
+    const ScoutReport& report) const
+{
+  const GameController& controller = guiView->getController();
+  ReportLine line{
+      report,
+      {},
+      {},
+      Format::date(report.date),
+      rangeText(report.potential_low, report.potential_high),
+      Format::money(report.estimated_fee),
+      rangeText(report.overall_low, report.overall_high),
+      std::ranges::find(fresh_reports, report.id) != fresh_reports.end()};
+  if (const auto player = controller.getGameData()->getPlayer(report.player_id))
   {
-    ReportLine line{*it,
-                    {},
-                    {},
-                    Format::date(it->date),
-                    rangeText(it->potential_low, it->potential_high),
-                    Format::money(it->estimated_fee)};
-    if (const auto player = controller.getGameData()->getPlayer(it->player_id))
-    {
-      line.player_name = player->get().getName();
-      const TeamID teamId = player->get().getTeamId();
-      const auto team = controller.getTeamById(teamId);
-      line.club = teamId == FREE_AGENTS_TEAM_ID || !team
-                      ? std::string(LOC("TRANSFER_FREE_AGENT_LABEL"))
-                      : team->get().getName();
-    }
-    reports.push_back(std::move(line));
+    line.player_name = player->get().getName();
+    const TeamID teamId = player->get().getTeamId();
+    const auto team = controller.getTeamById(teamId);
+    line.club = teamId == FREE_AGENTS_TEAM_ID || !team
+                    ? std::string(LOC("TRANSFER_FREE_AGENT_LABEL"))
+                    : team->get().getName();
   }
+  return line;
 }
 
 ScoutingScene::PlayerLine ScoutingScene::makeLine(
@@ -392,11 +346,13 @@ void ScoutingScene::renderContent()
     return;
   }
   if (search_dirty) rebuildSearch();
-  const std::string subtitle =
-      fmt::sprintf(LOC("SCOUTING_SUBTITLE"), static_cast<int>(scouts.size()),
-                   static_cast<int>(active_assignments.size()),
-                   static_cast<int>(reports.size()),
-                   static_cast<int>(shortlist_rows.size()));
+  const std::string subtitle = fmt::sprintf(
+      LOC("SCOUTING_SUBTITLE"), static_cast<int>(scouts.size()),
+      static_cast<int>(std::ranges::count_if(
+          scout_lines, [](const ScoutLine& line)
+          { return line.summary.status == ScoutStatus::OnAssignment; })),
+      static_cast<int>(reports.size()),
+      static_cast<int>(shortlist_rows.size()));
   UI::pageHeader(LOC("SCOUTING_TITLE"), subtitle.c_str());
 
   if (ImGui::BeginTabBar("ScoutingTabs"))
@@ -421,265 +377,6 @@ void ScoutingScene::renderContent()
     tab_pending = false;
     ImGui::EndTabBar();
   }
-}
-
-void ScoutingScene::renderOverview()
-{
-  const float available = ImGui::GetContentRegionAvail().x;
-  const float height = ImGui::GetContentRegionAvail().y;
-  if (available >= TWO_COLUMN_MIN_WIDTH * dpi())
-  {
-    renderScouts(SCOUT_LIST_WIDTH * dpi(), height);
-    ImGui::SameLine();
-    ImGui::BeginGroup();
-    renderNewAssignment();
-    renderAssignments(ImGui::GetContentRegionAvail().y);
-    ImGui::EndGroup();
-  }
-  else
-  {
-    ImGui::BeginChild("##scouting_overview_scroll", ImVec2(0.0f, height));
-    renderScouts(0.0f, 0.0f);
-    renderNewAssignment();
-    renderAssignments(360.0f * dpi());
-    ImGui::EndChild();
-  }
-}
-
-void ScoutingScene::renderScouts(float width, float height)
-{
-  const Theme::Palette& palette = Theme::palette();
-  if (height > 0.0f)
-    UI::beginCard("scouting_scouts", LOC("SCOUTING_SCOUTS"),
-                  ImVec2(width, height), true);
-  else
-    UI::beginAutoHeightCard("scouting_scouts", LOC("SCOUTING_SCOUTS"));
-  const float labelWidth = 140.0f * dpi();
-  for (const ScoutProfile& scout : scouts)
-  {
-    ImGui::PushID(static_cast<int>(scout.id));
-    {
-      const Theme::ScopedText title(Theme::Text::TITLE);
-      ImGui::TextUnformatted(scout.name.c_str());
-    }
-    const auto busy = std::ranges::find(active_assignments, scout.id,
-                                        [](const AssignmentLine& line)
-                                        { return line.assignment.scout_id; });
-    if (busy == active_assignments.end())
-    {
-      ImGui::TextColored(palette.positive, "%s", LOC("SCOUTING_IDLE"));
-    }
-    else
-    {
-      ImGui::TextColored(
-          palette.warning, "%s",
-          fmt::sprintf(LOC("SCOUTING_BUSY"), busy->assignment.duration_days -
-                                                 busy->assignment.days_done)
-              .c_str());
-      ImGui::TextColored(palette.muted, "%s", busy->target_text.c_str());
-    }
-    UI::attributeBar(LOC("SCOUTING_JUDGING_ABILITY"), scout.judging_ability,
-                     labelWidth);
-    UI::attributeBar(LOC("SCOUTING_JUDGING_POTENTIAL"), scout.judging_potential,
-                     labelWidth);
-    UI::attributeBar(LOC("SCOUTING_ADAPTABILITY"), scout.adaptability,
-                     labelWidth);
-    ImGui::Separator();
-    ImGui::PopID();
-  }
-  UI::endCard();
-}
-
-void ScoutingScene::renderNewAssignment()
-{
-  const Theme::Palette& palette = Theme::palette();
-  GameController& controller = guiView->getController();
-  UI::beginAutoHeightCard("scouting_new", LOC("SCOUTING_NEW_ASSIGNMENT"));
-  std::vector<const ScoutProfile*> idle;
-  for (const ScoutProfile& scout : scouts)
-  {
-    if (std::ranges::none_of(active_assignments,
-                             [&scout](const AssignmentLine& line)
-                             { return line.assignment.scout_id == scout.id; }))
-      idle.push_back(&scout);
-  }
-  if (idle.empty())
-  {
-    ImGui::TextColored(
-        palette.muted, "%s",
-        LOC(scouts.empty() ? "SCOUTING_NO_SCOUTS" : "SCOUTING_NO_IDLE_SCOUT"));
-    UI::endCard();
-    return;
-  }
-  form_scout = std::clamp(form_scout, 0, static_cast<int>(idle.size()) - 1);
-  const float fieldWidth =
-      std::min(360.0f * dpi(),
-               ImGui::GetContentRegionAvail().x - FILTER_LABEL_WIDTH * dpi());
-  labelled(LOC("SCOUTING_FORM_SCOUT"));
-  ImGui::SetNextItemWidth(fieldWidth);
-  if (ImGui::BeginCombo("##form_scout",
-                        idle[static_cast<size_t>(form_scout)]->name.c_str()))
-  {
-    for (size_t index = 0; index < idle.size(); ++index)
-    {
-      if (ImGui::Selectable(idle[index]->name.c_str(),
-                            static_cast<int>(index) == form_scout))
-        form_scout = static_cast<int>(index);
-    }
-    ImGui::EndCombo();
-  }
-  labelled(LOC("SCOUTING_FORM_TARGET"));
-  ImGui::SetNextItemWidth(fieldWidth);
-  if (!targets.empty() &&
-      ImGui::BeginCombo(
-          "##form_target",
-          targets[static_cast<size_t>(form_target)].label.c_str()))
-  {
-    for (size_t index = 0; index < targets.size(); ++index)
-    {
-      if (ImGui::Selectable(targets[index].label.c_str(),
-                            static_cast<int>(index) == form_target))
-        form_target = static_cast<int>(index);
-    }
-    ImGui::EndCombo();
-  }
-  labelled(LOC("SCOUTING_FORM_DURATION"));
-  for (size_t index = 0; index < DURATIONS.size(); ++index)
-  {
-    if (index > 0) ImGui::SameLine();
-    const std::string label =
-        fmt::sprintf(LOC("SCOUTING_DAYS"), DURATIONS[index]) + "##duration" +
-        std::to_string(index);
-    if (ImGui::RadioButton(label.c_str(),
-                           form_duration == static_cast<int>(index)))
-      form_duration = static_cast<int>(index);
-  }
-  if (!targets.empty())
-  {
-    const TargetOption& target = targets[static_cast<size_t>(form_target)];
-    const int64_t cost = controller.getScoutAssignmentCost(
-        target.kind, target.id, DURATIONS[static_cast<size_t>(form_duration)]);
-    ImGui::TextColored(
-        palette.muted, "%s",
-        fmt::sprintf(LOC("SCOUTING_FORM_COST"), Format::money(cost).c_str())
-            .c_str());
-    ImGui::SameLine();
-    if (UI::primaryButton(LOC("SCOUTING_SEND")))
-      sendScout(target.kind, target.id);
-  }
-  UI::endCard();
-}
-
-void ScoutingScene::sendScout(ScoutTargetKind kind, uint32_t targetId)
-{
-  GameController& controller = guiView->getController();
-  std::vector<uint32_t> idle;
-  for (const ScoutProfile& scout : scouts)
-  {
-    if (std::ranges::none_of(active_assignments,
-                             [&scout](const AssignmentLine& line)
-                             { return line.assignment.scout_id == scout.id; }))
-      idle.push_back(scout.id);
-  }
-  if (idle.empty())
-  {
-    showToast(
-        LOC(scouts.empty() ? "SCOUTING_NO_SCOUTS" : "SCOUTING_NO_IDLE_SCOUT"),
-        true);
-    return;
-  }
-  const uint32_t scoutId = idle[static_cast<size_t>(
-      std::clamp(form_scout, 0, static_cast<int>(idle.size()) - 1))];
-  const ScoutAssignError error = controller.startScoutAssignment(
-      scoutId, kind, targetId, DURATIONS[static_cast<size_t>(form_duration)]);
-  showToast(LOC(scoutAssignErrorKey(error)), error != ScoutAssignError::None);
-  if (error == ScoutAssignError::None) rebuildAssignments();
-}
-
-void ScoutingScene::renderAssignments(float height)
-{
-  const Theme::Palette& palette = Theme::palette();
-  GameController& controller = guiView->getController();
-  UI::beginCard("scouting_assignments", LOC("SCOUTING_ACTIVE"),
-                ImVec2(0.0f, height), true);
-  if (active_assignments.empty() && finished_assignments.empty())
-  {
-    UI::emptyState(LOC("SCOUTING_NO_ASSIGNMENTS_TITLE"),
-                   LOC("SCOUTING_NO_ASSIGNMENTS_BODY"));
-    UI::endCard();
-    return;
-  }
-  const auto table =
-      [&](const char* id, std::vector<AssignmentLine>& lines, bool active)
-  {
-    if (lines.empty()) return;
-    if (!UI::beginDataTable(id, 6,
-                            ImGuiTableFlags_RowBg |
-                                ImGuiTableFlags_BordersInnerH |
-                                ImGuiTableFlags_SizingFixedFit,
-                            620.0f, ImVec2(0.0f, 0.0f)))
-      return;
-    ImGui::TableSetupColumn(LOC("SCOUTING_COL_SCOUT"));
-    ImGui::TableSetupColumn(LOC("SCOUTING_COL_TARGET"),
-                            ImGuiTableColumnFlags_WidthStretch);
-    ImGui::TableSetupColumn(LOC("SCOUTING_COL_PROGRESS"));
-    ImGui::TableSetupColumn(LOC("SCOUTING_COL_OBSERVED"));
-    ImGui::TableSetupColumn(LOC("SCOUTING_COL_COST"));
-    ImGui::TableSetupColumn("");
-    ImGui::TableHeadersRow();
-    for (const AssignmentLine& line : lines)
-    {
-      const ScoutAssignment& assignment = line.assignment;
-      ImGui::PushID(static_cast<int>(assignment.id));
-      ImGui::TableNextRow();
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(line.scout_name.c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(line.target_text.c_str());
-      ImGui::TableNextColumn();
-      const float fraction =
-          assignment.duration_days == 0
-              ? 1.0f
-              : static_cast<float>(assignment.days_done) /
-                    static_cast<float>(assignment.duration_days);
-      ImGui::ProgressBar(fraction, ImVec2(140.0f * dpi(), 0.0f),
-                         line.period_text.c_str());
-      if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("%s", line.started_text.c_str());
-      ImGui::TableNextColumn();
-      ImGui::Text("%d / %d", assignment.players_observed,
-                  assignment.reports_filed);
-      ImGui::TableNextColumn();
-      UI::textRight(line.cost_text.c_str());
-      ImGui::TableNextColumn();
-      if (active)
-      {
-        if (ImGui::SmallButton(LOC("SCOUTING_RECALL")) &&
-            controller.cancelScoutAssignment(assignment.id))
-        {
-          showToast(LOC("SCOUTING_RECALLED"));
-          ImGui::PopID();
-          ImGui::EndTable();
-          rebuildAssignments();
-          return;
-        }
-        if (ImGui::IsItemHovered())
-          ImGui::SetTooltip("%s", LOC("SCOUTING_RECALL_HINT"));
-      }
-      ImGui::PopID();
-    }
-    ImGui::EndTable();
-  };
-  if (active_assignments.empty())
-    ImGui::TextColored(palette.muted, "%s", LOC("SCOUTING_NONE_ACTIVE"));
-  table("active_assignments", active_assignments, true);
-  if (!finished_assignments.empty())
-  {
-    ImGui::Dummy(ImVec2(0.0f, Theme::Space::M * dpi()));
-    UI::sectionLabel(LOC("SCOUTING_RECENT"));
-    table("finished_assignments", finished_assignments, false);
-  }
-  UI::endCard();
 }
 
 bool ScoutingScene::playerCell(PlayerID playerId, const std::string& name,
@@ -750,7 +447,7 @@ void ScoutingScene::renderPlayerActions()
     }
   }
   ImGui::SameLine();
-  const uint16_t days = DURATIONS[static_cast<size_t>(form_duration)];
+  const auto days = static_cast<uint16_t>(send_days);
   const int64_t cost = controller.getScoutAssignmentCost(
       ScoutTargetKind::Player, selected_player, days);
   const std::string label = fmt::sprintf(LOC("SCOUTING_SCOUT_PLAYER"), days,

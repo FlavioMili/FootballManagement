@@ -72,6 +72,7 @@ struct StoryRecord
   std::uint32_t entity = 0;
   std::uint32_t key = 0;
   std::int32_t day = 0;
+  bool posted = false; /*!< False when the weekly cap held it back. */
 };
 
 /** @brief Persisted state of the story engine. */
@@ -97,6 +98,8 @@ constexpr std::int32_t LONG_INJURY_DAYS = 60;
 /** Mean recent rating of a young player that makes a breakout. */
 constexpr float BREAKOUT_RATING = 7.3f;
 constexpr int BREAKOUT_MAX_AGE = 21;
+/** Senior debuts are told for players up to this age. */
+constexpr int DEBUT_MAX_AGE = 19;
 /** Competitive matches without a win that make a poor run. */
 constexpr int POOR_RUN_MATCHES = 5;
 /** Bids within this many days that make a transfer saga. */
@@ -140,8 +143,8 @@ class StoryEngine
                      const std::string& recent_form, Inbox& inbox);
   /** Transfer saga: a second bid within a month for a key player. */
   void onTransferBid(const GameDateValue& date, PlayerID player_id,
-                     TeamID bidder_id, bool key_player,
-                     TeamID managed_team_id, Inbox& inbox);
+                     TeamID bidder_id, bool key_player, TeamID managed_team_id,
+                     Inbox& inbox);
   /** A player left: his open choices lapse. */
   void onPlayerLeft(PlayerID player_id);
   /** Rivals are recomputed at the start of each season. */

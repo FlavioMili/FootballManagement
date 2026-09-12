@@ -12,6 +12,8 @@ configure_file(
 set(FM_CORE_SOURCES
     controller/game_controller.h
     controller/game_controller.cpp
+    controller/game_controller_guidance.cpp
+    controller/game_controller_squad.cpp
 
     database/database_connection.h
     database/database_connection.cpp
@@ -47,6 +49,12 @@ set(FM_CORE_SOURCES
     database/SQLLoader.cpp
     database/gamedata.h
     database/gamedata.cpp
+    database/migrations/migrations.h
+    database/migrations/migration_runner.cpp
+    database/migrations/registry.cpp
+    database/save_manager.h
+    database/save_manager.cpp
+    database/sqlite_rows.h
 
     global/global.h
     global/languages.h
@@ -63,6 +71,8 @@ set(FM_CORE_SOURCES
     global/thread_pool.cpp
     global/types.h
 
+    model/awards.h
+    model/awards.cpp
     model/board.h
     model/board.cpp
     model/calendar.h
@@ -73,23 +83,51 @@ set(FM_CORE_SOURCES
     model/competition.cpp
     model/competition_manager.h
     model/competition_manager.cpp
+    model/continental.h
+    model/continental.cpp
+    model/national_teams.h
+    model/national_teams.cpp
     model/discipline.h
     model/discipline.cpp
     model/finances.h
+    model/facility_projects.h
+    model/facility_projects.cpp
     model/finances.cpp
     model/game.h
     model/game.cpp
     model/gamedate.h
+    model/holiday.h
+    model/holiday.cpp
     model/gamedate.cpp
     model/inbox.h
     model/inbox.cpp
+    model/data_hub.h
+    model/data_hub.cpp
+    model/delegation.h
+    model/delegation.cpp
+    model/guidance.h
+    model/guidance.cpp
+    model/match_analysis.h
+    model/match_analysis.cpp
+    model/next_action.h
+    model/next_action.cpp
+    model/onboarding.h
+    model/onboarding.cpp
+    model/opposition_report.h
+    model/opposition_report.cpp
     model/injury.h
     model/injury.cpp
+    model/interactions.h
+    model/interactions.cpp
     model/league.h
     model/league.cpp
     model/lineup.h
     model/lineup.cpp
+    model/manager_career.h
+    model/manager_career.cpp
     model/match.h
+    model/mentoring.h
+    model/mentoring.cpp
     model/match.cpp
     model/match_report.h
     model/match_report.cpp
@@ -102,14 +140,28 @@ set(FM_CORE_SOURCES
     model/match_scheduler.h
     model/match_scheduler.cpp
     model/match_tuning.h
+    model/medical_centre.h
+    model/medical_centre.cpp
     model/player.h
+    model/preseason.h
+    model/preseason.cpp
+    model/records.h
+    model/records.cpp
     model/player.cpp
     model/role_utils.h
     model/role_utils.cpp
+    model/season_agenda.h
+    model/season_agenda.cpp
     model/season_history.h
     model/season_history.cpp
+    model/squad_planner.h
+    model/squad_planner.cpp
+    model/squad_status.h
+    model/squad_status.cpp
     model/staff.h
     model/staff.cpp
+    model/stories.h
+    model/stories.cpp
     model/standings.h
     model/standings.cpp
     model/strategy.h
@@ -130,8 +182,12 @@ set(FM_CORE_SOURCES
     model/world_rng.cpp
     model/world_simulation.h
     model/world_simulation.cpp
+    model/youth_academy.h
+    model/youth_academy.cpp
     model/scouting.h
     model/scouting.cpp
+    model/scout_expertise.h
+    model/scout_expertise.cpp
     model/world_tuning.h
     model/transfer_tuning.h
 )
@@ -224,8 +280,14 @@ set(FM_UI_SOURCES
     gui/scenes/transfer_market_scene_tuning.h
     gui/scenes/management_scene.h
     gui/scenes/management_scene.cpp
+    gui/scenes/manager_scene.h
+    gui/scenes/manager_scene.cpp
     gui/scenes/player_profile_scene.h
     gui/scenes/player_profile_scene.cpp
+    gui/scenes/player_talk_dialog.h
+    gui/scenes/player_talk_dialog.cpp
+    gui/scenes/team_talk_dialog.h
+    gui/scenes/team_talk_dialog.cpp
     gui/scenes/fixtures_scene.h
     gui/scenes/fixtures_scene.cpp
     gui/scenes/standings_scene.h
@@ -238,10 +300,24 @@ set(FM_UI_SOURCES
     gui/scenes/match_report_scene.cpp
     gui/scenes/scouting_scene.h
     gui/scenes/scouting_scene.cpp
+    gui/scenes/scouting_scene_internal.h
+    gui/scenes/scouting_scouts_page.cpp
     gui/scenes/training_scene.h
     gui/scenes/training_scene.cpp
     gui/scenes/staff_scene.h
     gui/scenes/staff_scene.cpp
+    gui/scenes/youth_scene.h
+    gui/scenes/youth_scene.cpp
+    gui/scenes/medical_scene.h
+    gui/scenes/medical_scene.cpp
+    gui/scenes/calendar_scene.h
+    gui/scenes/calendar_scene.cpp
+    gui/scenes/squad_planner_scene.h
+    gui/scenes/squad_planner_scene.cpp
+    gui/scenes/player_compare_scene.h
+    gui/scenes/player_compare_scene.cpp
+    gui/scenes/set_pieces_dialog.h
+    gui/scenes/set_pieces_dialog.cpp
     gui/view_models/competition_view.h
     gui/view_models/competition_view.cpp
     gui/view_models/formation.h
@@ -345,3 +421,26 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
   target_compile_definitions(fm_ui PRIVATE NDEBUG)
   target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
 endif()
+
+# -----------------------------
+# Balance lab: headless batch simulation and calibration reports (fm_lab).
+# Links fm_core only (no window, no ImGui).
+# -----------------------------
+add_library(fm_lab_lib STATIC
+    tools/lab_stats.h
+    tools/lab_stats.cpp
+    tools/lab_report.h
+    tools/lab_report.cpp
+    tools/lab_fixtures.h
+    tools/lab_fixtures.cpp
+    tools/lab_runner.h
+    tools/lab_runner.cpp
+    tools/lab_season.h
+    tools/lab_season.cpp
+)
+target_link_libraries(fm_lab_lib PUBLIC fm_core)
+target_compile_options(fm_lab_lib PRIVATE ${FM_WARNING_FLAGS})
+
+add_executable(fm_lab tools/lab_main.cpp)
+target_link_libraries(fm_lab PRIVATE fm_lab_lib)
+target_compile_options(fm_lab PRIVATE ${FM_WARNING_FLAGS})

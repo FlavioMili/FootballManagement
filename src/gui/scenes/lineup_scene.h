@@ -10,9 +10,11 @@
 
 #include <imgui.h>
 
+#include <string>
 #include <unordered_map>
 
 #include "gui/scenes/management_scene.h"
+#include "gui/scenes/set_pieces_dialog.h"
 #include "model/lineup.h"
 
 /**
@@ -78,4 +80,9 @@ class LineupScene : public ManagementScene
   Lineup* current_lineup = nullptr;
   PlayerID selected_pitch_player_id = 0;
   PlayerID selected_bench_player_id = 0;
+
+  // Captain and set-piece takers.
+  void renderLeadership();
+  SetPiecesDialog set_pieces;
+  std::string captain_summary;
 };

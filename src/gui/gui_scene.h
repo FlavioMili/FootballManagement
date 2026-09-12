@@ -38,6 +38,15 @@ enum class SceneID : uint8_t
   SCOUTING,        /**< Scouting and recruitment */
   TRAINING,        /**< Training schedule and workload */
   STAFF,           /**< Backroom staff and staff market */
+  MANAGER,         /**< Manager profile, career and job centre */
+  YOUTH,           /**< Youth academy and intake */
+  MEDICAL,         /**< Medical centre: injuries, risk, medical staff */
+  CALENDAR,        /**< Season calendar and agenda */
+  SQUAD_PLANNER,   /**< Depth chart and squad planning */
+  PLAYER_COMPARE,  /**< Side-by-side player comparison */
+  DELEGATION,      /**< Who handles which duty */
+  DATA_HUB,        /**< Team and player analytics */
+  OPPOSITION,      /**< Pre-match opposition report */
 };
 
 /**

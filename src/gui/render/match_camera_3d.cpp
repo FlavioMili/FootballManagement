@@ -48,10 +48,20 @@ float chaseHeading(const MatchCameraFocus& focus)
   return focus.attackDirection >= 0.0f ? 0.0f : std::numbers::pi_v<float>;
 }
 
-/// Keeps a low eye inside the stadium bowl so no preset ends up inside a
+/** Horizontal region a low camera eye must stay in. */
+struct EyeBounds
+{
+  float minX = Tuning::Camera::EYE_MIN_X;
+  float maxX = Tuning::Camera::EYE_MAX_X;
+  float minY = Tuning::Camera::EYE_MIN_Y;
+  float maxY = Tuning::Camera::EYE_MAX_Y;
+};
+
+/// Keeps a low eye inside the given bounds so no camera ends up inside a
 /// stand: the camera first tilts down (keeping its distance), and only moves
 /// closer once it is as steep as allowed. Eyes above the roofs are free.
-void clampToBowl(Vec3 target, float yaw, float& pitch, float& distance)
+void clampToBowl(Vec3 target, float yaw, float& pitch, float& distance,
+                 const EyeBounds& bounds)
 {
   const Vec3 flat{std::cos(yaw), std::sin(yaw), 0.0f};
   const auto horizontalReach = [&]()
@@ -63,10 +73,8 @@ void clampToBowl(Vec3 target, float yaw, float& pitch, float& distance)
       if (step > 1e-4f) reach = std::min(reach, (origin - minimum) / step);
       if (step < -1e-4f) reach = std::min(reach, (origin - maximum) / step);
     };
-    limit(target.x, flat.x, Tuning::Camera::EYE_MIN_X,
-          Tuning::Camera::EYE_MAX_X);
-    limit(target.y, flat.y, Tuning::Camera::EYE_MIN_Y,
-          Tuning::Camera::EYE_MAX_Y);
+    limit(target.x, flat.x, bounds.minX, bounds.maxX);
+    limit(target.y, flat.y, bounds.minY, bounds.maxY);
     return std::max(reach, 0.0f);
   };
   if (target.z + std::sin(pitch) * distance >=
@@ -77,6 +85,15 @@ void clampToBowl(Vec3 target, float yaw, float& pitch, float& distance)
   pitch = std::min(std::acos(std::clamp(reach / distance, 0.0f, 1.0f)),
                    Tuning::Camera::MAX_CLAMP_PITCH);
   distance = std::max(std::min(distance, reach / std::cos(pitch)), 1.0f);
+}
+
+Vec3 clampFreeTarget(Vec3 target)
+{
+  return {std::clamp(target.x, -Tuning::Free::TARGET_MARGIN,
+                     PITCH_LENGTH + Tuning::Free::TARGET_MARGIN),
+          std::clamp(target.y, -Tuning::Free::TARGET_MARGIN,
+                     PITCH_WIDTH + Tuning::Free::TARGET_MARGIN),
+          std::clamp(target.z, 0.0f, Tuning::Free::MAX_TARGET_HEIGHT)};
 }
 }  // namespace
 
@@ -140,32 +157,99 @@ MatchCamera3D::Rig MatchCamera3D::desiredRig(const MatchCameraFocus& focus,
       rig.distance = Tuning::Follow::DISTANCE * zoomFactor;
       rig.fov = Tuning::Follow::FOV;
       break;
+    case MatchCameraMode::FREE:
+      rig = freeRig;
+      break;
   }
-  clampToBowl(rig.target, rig.yaw, rig.pitch, rig.distance);
+  // The free camera may also use the gantry positions of the presets (the
+  // stand behind the eye is not drawn), so taking over never jumps.
+  const EyeBounds bounds =
+      mode == MatchCameraMode::FREE
+          ? EyeBounds{Tuning::Free::EYE_MIN_X, Tuning::Free::EYE_MAX_X,
+                      Tuning::Free::EYE_MIN_Y, Tuning::Free::EYE_MAX_Y}
+          : EyeBounds{};
+  clampToBowl(rig.target, rig.yaw, rig.pitch, rig.distance, bounds);
   return rig;
+}
+
+void MatchCamera3D::steerFree(const MatchCameraFocus& focus,
+                              const MatchCameraControl& control)
+{
+  using F = Tuning::Free;
+  if (!freeActive || control.reset)
+  {
+    // Taking over keeps the pose on screen; a reset (or a free camera
+    // selected before any other) starts from the default overview.
+    if (!initialized || control.reset)
+    {
+      freeRig.target = control.followBall
+                           ? focus.ball
+                           : Vec3{HALF_LENGTH, HALF_WIDTH, 0.0f};
+      freeRig.yaw = F::DEFAULT_YAW;
+      freeRig.pitch = F::DEFAULT_PITCH;
+      freeRig.distance = F::DEFAULT_DISTANCE;
+      freeRig.fov = F::FOV;
+    }
+    else
+    {
+      freeRig = current;
+    }
+    freeActive = true;
+  }
+
+  if (control.zoomSteps != 0.0f)
+    freeRig.distance *= std::pow(Tuning::Camera::ZOOM_STEP, control.zoomSteps);
+  freeRig.yaw = RenderMath::wrapAngle(freeRig.yaw + control.orbitYaw);
+  freeRig.pitch += control.orbitPitch;
+  if (control.retarget)
+    freeRig.target = control.retargetPoint;
+  else if (control.followBall)
+    freeRig.target = focus.ball;
+  else
+    freeRig.target = freeRig.target + control.pan;
+
+  freeRig.target = clampFreeTarget(freeRig.target);
+  freeRig.distance =
+      std::clamp(freeRig.distance, F::MIN_DISTANCE, F::MAX_DISTANCE);
+  // Never under the pitch: the eye stays above the minimum eye height.
+  const float lowest =
+      std::asin(std::clamp(Tuning::Camera::MIN_EYE_HEIGHT / freeRig.distance,
+                           0.0f, 1.0f));
+  freeRig.pitch = std::clamp(freeRig.pitch, std::max(F::MIN_PITCH, lowest),
+                             F::MAX_PITCH);
 }
 
 void MatchCamera3D::snap(const MatchCameraFocus& focus, MatchCameraMode mode)
 {
   chaseYaw = chaseHeading(focus);
+  if (mode == MatchCameraMode::FREE)
+    steerFree(focus, {});
+  else
+    freeActive = false;
   current = desiredRig(focus, mode);
   initialized = true;
 }
 
 void MatchCamera3D::update(const MatchCameraFocus& focus, MatchCameraMode mode,
-                           float zoomSteps, float deltaSeconds)
+                           const MatchCameraControl& control,
+                           float deltaSeconds)
 {
-  if (zoomSteps != 0.0f)
+  if (mode != MatchCameraMode::FREE)
   {
-    zoomFactor =
-        std::clamp(zoomFactor * std::pow(Tuning::Camera::ZOOM_STEP, zoomSteps),
-                   Tuning::Camera::MIN_ZOOM, Tuning::Camera::MAX_ZOOM);
+    freeActive = false;
+    if (control.zoomSteps != 0.0f)
+    {
+      zoomFactor = std::clamp(
+          zoomFactor * std::pow(Tuning::Camera::ZOOM_STEP, control.zoomSteps),
+          Tuning::Camera::MIN_ZOOM, Tuning::Camera::MAX_ZOOM);
+    }
   }
   if (!initialized)
   {
     snap(focus, mode);
     return;
   }
+  if (mode == MatchCameraMode::FREE) steerFree(focus, control);
 
   const float dt =
       std::clamp(deltaSeconds, 0.0f, Tuning::Camera::MAX_FRAME_SECONDS);
@@ -174,20 +258,23 @@ void MatchCamera3D::update(const MatchCameraFocus& focus, MatchCameraMode mode,
       RenderMath::dampingFactor(Tuning::Follow::YAW_RATE, dt));
 
   const Rig desired = desiredRig(focus, mode);
-  const float targetBlend =
-      RenderMath::dampingFactor(Tuning::Camera::TARGET_RATE, dt);
-  const float angleBlend =
-      RenderMath::dampingFactor(Tuning::Camera::ANGLE_RATE, dt);
+  const bool freeMode = mode == MatchCameraMode::FREE;
+  const auto blend = [freeMode, dt](float presetRate)
+  {
+    return RenderMath::dampingFactor(
+        freeMode ? Tuning::Free::RESPONSE_RATE : presetRate, dt);
+  };
+  const float targetBlend = blend(Tuning::Camera::TARGET_RATE);
+  const float angleBlend = blend(Tuning::Camera::ANGLE_RATE);
   current.target =
       RenderMath::lerp(current.target, desired.target, targetBlend);
   current.yaw = RenderMath::wrapAngle(
       RenderMath::lerpAngle(current.yaw, desired.yaw, angleBlend));
   current.pitch += (desired.pitch - current.pitch) * angleBlend;
-  current.distance +=
-      (desired.distance - current.distance) *
-      RenderMath::dampingFactor(Tuning::Camera::DISTANCE_RATE, dt);
-  current.fov += (desired.fov - current.fov) *
-                 RenderMath::dampingFactor(Tuning::Camera::FOV_RATE, dt);
+  current.distance += (desired.distance - current.distance) *
+                      blend(Tuning::Camera::DISTANCE_RATE);
+  current.fov +=
+      (desired.fov - current.fov) * blend(Tuning::Camera::FOV_RATE);
 }
 
 Vec3 MatchCamera3D::eye() const

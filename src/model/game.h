@@ -18,9 +18,12 @@
 #include "model/calendar.h"
 #include "model/competition_manager.h"
 #include "model/gamedate.h"
+#include "model/guidance.h"
+#include "model/manager_career.h"
 #include "model/match.h"
 #include "model/match_report.h"
 #include "model/match_scheduler.h"
+#include "model/national_teams.h"
 #include "model/transfer_market.h"
 #include "model/world_simulation.h"
 
@@ -65,13 +68,17 @@ class Game
       MatchReport report,
       std::span<const PlayerMatchConsequence> consequences = {});
 
-  /** Fit (not injured) and, outside friendlies, not suspended for @p type. */
-  bool isEligible(const Player& player, MatchType type) const;
+  /** Fit (not injured), outside friendlies not suspended for @p type, and
+   * not away with his national team on @p date (default: today). */
+  bool isEligible(const Player& player, MatchType type,
+                  std::optional<GameDateValue> date = std::nullopt) const;
   /** Selected players of a club who may not play a match of @p type. */
   std::vector<PlayerID> ineligibleSelections(TeamID team_id,
                                              MatchType type) const;
-  /** Replaces them with eligible squad players; returns how many left. */
-  std::size_t fixMatchdaySquad(TeamID team_id, MatchType type);
+  /** Replaces them with eligible squad players; returns how many left.
+   * Availability is judged on @p date (default: today). */
+  std::size_t fixMatchdaySquad(TeamID team_id, MatchType type,
+                               std::optional<GameDateValue> date = std::nullopt);
   /** What fixMatchdaySquad() would change: (replaced, replacement or 0). */
   std::vector<std::pair<PlayerID, PlayerID>> previewMatchdaySquadFix(
       TeamID team_id, MatchType type) const;
@@ -79,11 +86,25 @@ class Game
    * Whether the assistant keeps the managed selection eligible: after each
    * day, and at kick-off, injured or suspended players are replaced.
    */
-  void setAssistantFixesLineup(bool enabled) { assistant_fixes_lineup = enabled; }
-  bool getAssistantFixesLineup() const { return assistant_fixes_lineup; }
+  void setAssistantFixesLineup(bool enabled)
+  {
+    guidance.delegation.set(Duty::LineupFixes,
+                            enabled ? DutyOwner::Assistant : DutyOwner::Manager);
+  }
+  bool getAssistantFixesLineup() const
+  {
+    return guidance.delegation.delegated(Duty::LineupFixes);
+  }
+
+  /** Checklist, delegation, opposition instructions, match analytics. */
+  CareerGuidance& getGuidance() { return guidance; }
+  const CareerGuidance& getGuidance() const { return guidance; }
 
   /** Standings, cups, reports, player season stats and season history. */
   const CompetitionManager& getCompetitions() const { return competitions; }
+
+  /** National teams: calendar, call-ups, finals, caps. */
+  const NationalTeams& getNationalTeams() const { return international; }
 
   /** Inbox, board, injuries, finances and development between matches. */
   WorldSimulation& getWorld() { return world; }
@@ -92,6 +113,31 @@ class Game
   /** Deals, loans, pre-contracts, scheduled payments and transfer history. */
   TransferMarket& getTransfers() { return transfers; }
   const TransferMarket& getTransfers() const { return transfers; }
+
+  /** The human manager's career and the market for managers. */
+  ManagerCareer& getCareer() { return career; }
+  const ManagerCareer& getCareer() const { return career; }
+  /** What the manager market did on the latest simulated day. */
+  const CareerDayEvents& getLastCareerEvents() const
+  {
+    return last_career_events;
+  }
+
+  /**
+   * The manager leaves the managed club (sacked, resigned, contract
+   * expired, or moving on): the club gets a vacancy and an AI manager in
+   * due course, its board, shortlist, transfer talks and offers are dropped
+   * and no command reaches it any more. The inbox stays.
+   */
+  void leaveManagedTeam(DepartureReason reason);
+
+  /**
+   * The manager takes charge of @p team_id under @p contract (leaving the
+   * current club first): the board sets objectives and budgets for the new
+   * club, scouting starts afresh and the club's squad, line-up, tactics and
+   * training plan become the manager's.
+   */
+  void takeJob(TeamID team_id, const ManagerContract& contract);
 
   /**
    * Matches simulated / scheduled so far in the current advanceDay(). Safe to
@@ -161,6 +207,11 @@ class Game
   /** Replaces unavailable managed players for the next managed fixture. */
   void keepManagedSelectionEligible();
 
+  /** Manager market day and the board's verdict on the manager. */
+  void runCareerDay();
+  /** Job security of AI managers and the human's record. */
+  void recordCareerMatch(const Match& match);
+
   // Matchday simulation helper
   void simulateMatches(std::vector<Match>& matches,
                        bool include_managed = false);
@@ -171,9 +222,12 @@ class Game
   CompetitionManager competitions;
   WorldSimulation world;
   TransferMarket transfers;
+  ManagerCareer career;
+  CareerDayEvents last_career_events;
+  NationalTeams international;
   MatchScheduler scheduler;
   GameDateValue currentDate;
   uint8_t current_season = 1;
   uint16_t managed_team_id;
-  bool assistant_fixes_lineup = true;
+  CareerGuidance guidance;
 };

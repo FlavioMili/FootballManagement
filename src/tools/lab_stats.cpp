@@ -69,6 +69,9 @@ Estimate meanEstimate(std::span<const double> values)
                       std::sqrt(squares / (n - 1.0)) / std::sqrt(n);
   estimate.low = mean - half;
   estimate.high = mean + half;
+  // Counts and durations cannot be negative: keep the interval meaningful.
+  if (std::ranges::all_of(values, [](double value) { return value >= 0.0; }))
+    estimate.low = std::max(estimate.low, 0.0);
   return estimate;
 }
 
@@ -125,6 +128,14 @@ Estimate ratioEstimate(std::span<const double> numerators,
   const double half = tQuantile975(units - 1) * se;
   estimate.low = ratio - half;
   estimate.high = ratio + half;
+  const auto nonNegative = [](double value) { return value >= 0.0; };
+  if (std::all_of(numerators.begin(),
+                  numerators.begin() + static_cast<std::ptrdiff_t>(units),
+                  nonNegative) &&
+      std::all_of(denominators.begin(),
+                  denominators.begin() + static_cast<std::ptrdiff_t>(units),
+                  nonNegative))
+    estimate.low = std::max(estimate.low, 0.0);
   return estimate;
 }
 

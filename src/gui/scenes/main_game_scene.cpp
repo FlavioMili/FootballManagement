@@ -19,7 +19,9 @@
 #include "database/gamedata.h"
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
+#include "gui/scenes/manager_scene.h"
 #include "gui/scenes/match_scene.h"
+#include "gui/scenes/onboarding_overlay.h"
 #include "gui/scenes/team_selection_scene.h"
 #include "gui/view_models/competition_view.h"
 #include "gui/view_models/formation.h"
@@ -33,7 +35,10 @@ namespace
 constexpr size_t MAX_KEY_PLAYERS = 11;
 constexpr size_t MAX_RECENT_RESULTS = 5;
 constexpr float TWO_COLUMN_MIN_WIDTH = 860.0f;
-constexpr float NEXT_MATCH_HEIGHT = 172.0f;
+constexpr float NEXT_MATCH_HEIGHT = 192.0f;
+/** Below these heights the cards stop filling the window and flow. */
+constexpr float DASHBOARD_FILL_MIN_HEIGHT = 420.0f;
+constexpr float FINANCE_FILL_MIN_HEIGHT = 360.0f;
 constexpr int WEEKS_PER_YEAR = 52;
 constexpr uint8_t SEASON_START_MONTH = 7;
 constexpr size_t MAX_TREND_POINTS = 120;
@@ -42,6 +47,16 @@ constexpr size_t CONTINUE_LOG_LINES = 4;
 constexpr double CONTINUE_OVERLAY_DELAY = 0.15;
 constexpr double CONTINUE_FADE_SECONDS = 0.12;
 constexpr float CONTINUE_DIM = 120.0f;
+
+/** Fixed-height card when height > 0, otherwise a card sized to content. */
+void beginDashboardCard(const char* id, const char* title, float width,
+                        float height)
+{
+  if (height > 0.0f)
+    UI::beginCard(id, title, ImVec2(width, height), true);
+  else
+    UI::beginAutoHeightCard(id, title, width);
+}
 
 std::string ordinalPosition(size_t position)
 {
@@ -64,7 +79,9 @@ NavSection MainGameScene::navSection() const
 
 void MainGameScene::onEnter()
 {
-  if (!guiView->getController().hasSelectedTeam())
+  const GameController& controller = guiView->getController();
+  // A career out of work has no club to choose: it looks for a job.
+  if (!controller.hasSelectedTeam() && !controller.isUnemployed())
     guiView->overlayScene(std::make_unique<TeamSelectionScene>(guiView));
   else
     refreshData();
@@ -115,7 +132,15 @@ void MainGameScene::update(float /*deltaTime*/)
 void MainGameScene::refreshIfStale()
 {
   const GameController& controller = guiView->getController();
-  if (continuation_running || !controller.hasSelectedTeam()) return;
+  if (continuation_running) return;
+  // A new job (or the loss of one) changes the club the page shows.
+  const auto managed = controller.getManagedTeam();
+  if (cached_club != (managed ? managed->get().getId() : TeamID{0}))
+  {
+    refreshData();
+    return;
+  }
+  if (!managed) return;
   bool stale = !(cached_date == controller.getCurrentDate());
   if (!stale && cached_next)
     if (const Game* game = controller.getGame())
@@ -128,6 +153,7 @@ void MainGameScene::refreshIfStale()
 std::string MainGameScene::continueLabel() const
 {
   const GameController& controller = guiView->getController();
+  if (controller.isUnemployed()) return LOC("DASHBOARD_CONTINUE_UNEMPLOYED");
   if (!controller.hasSelectedTeam()) return {};
   if (cached_next && cached_next->date == controller.getCurrentDate())
     return LOC("DASHBOARD_PLAY_MATCH");
@@ -140,7 +166,9 @@ std::string MainGameScene::continueLabel() const
 void MainGameScene::requestContinue()
 {
   const GameController& controller = guiView->getController();
-  if (continuation_running || !controller.hasSelectedTeam()) return;
+  if (continuation_running ||
+      (!controller.hasSelectedTeam() && !controller.isUnemployed()))
+    return;
   if (cached_next && cached_next->date == controller.getCurrentDate())
   {
     guiView->navigateTo(std::make_unique<MatchScene>(
@@ -167,8 +195,12 @@ void MainGameScene::startContinuation()
   GameController* controllerPtr = &guiView->getController();
   continue_operation =
       std::async(std::launch::async,
-                 [controllerPtr, hasFixture = cached_next.has_value()]()
+                 [controllerPtr, hasFixture = cached_next.has_value(),
+                  unemployed = controllerPtr->isUnemployed()]()
                  {
+                   // Out of work a week passes, or less when news arrives.
+                   if (unemployed)
+                     return controllerPtr->advanceWhileUnemployed(7);
                    if (hasFixture)
                      return controllerPtr->advanceToNextManagedFixture();
                    controllerPtr->advanceDay();
@@ -307,6 +339,11 @@ void MainGameScene::autoFixLineup()
 
 void MainGameScene::renderContent()
 {
+  if (guiView->getController().isUnemployed())
+  {
+    ManagerScene::renderUnemployedHome(guiView);
+    return;
+  }
   if (!guiView->getController().getManagedTeam())
   {
     UI::emptyState(LOC("DASHBOARD_CHOOSE_CLUB"), nullptr);
@@ -371,6 +408,7 @@ void MainGameScene::renderOverview()
   UI::statTile("tile_value", LOC("DASHBOARD_TILE_VALUE"), valueText.c_str(),
                LOC("DASHBOARD_VALUE_FOOTNOTE"), palette.text, width);
 
+  next_steps.render(guiView, ImGui::GetContentRegionAvail().x);
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
   const float available = ImGui::GetContentRegionAvail().x;
   const float gap = ImGui::GetStyle().ItemSpacing.x;
@@ -378,32 +416,40 @@ void MainGameScene::renderOverview()
   {
     const float leftWidth = std::floor((available - gap) * 0.58f);
     const float rightWidth = available - gap - leftWidth;
-    const float columnHeight =
-        std::max(ImGui::GetContentRegionAvail().y, 420.0f * Theme::scale());
+    // Fill the window when the cards fit (the tables scroll inside, the page
+    // does not); otherwise cards take their natural height and the page
+    // scrolls. Never both at once.
+    const float columnHeight = ImGui::GetContentRegionAvail().y;
+    const bool fill =
+        columnHeight >= DASHBOARD_FILL_MIN_HEIGHT * Theme::scale();
     const float nextHeight = NEXT_MATCH_HEIGHT * Theme::scale();
+    const float spacing = ImGui::GetStyle().ItemSpacing.y;
     ImGui::BeginGroup();
     renderNextMatchCard(leftWidth, nextHeight);
-    renderStandingsCard(
-        leftWidth, columnHeight - nextHeight - ImGui::GetStyle().ItemSpacing.y);
+    renderStandingsCard(leftWidth,
+                        fill ? columnHeight - nextHeight - spacing : 0.0f);
     ImGui::EndGroup();
     ImGui::SameLine();
     ImGui::BeginGroup();
     const float recentHeight =
-        std::min(columnHeight * 0.45f,
-                 ImGui::GetTextLineHeightWithSpacing() *
-                         (static_cast<float>(MAX_RECENT_RESULTS) + 2.5f) +
-                     2.0f * Theme::Space::M * Theme::scale());
+        fill
+            ? std::min(columnHeight * 0.45f,
+                       ImGui::GetTextLineHeightWithSpacing() *
+                               (static_cast<float>(MAX_RECENT_RESULTS) + 2.5f) +
+                           2.0f * Theme::Space::M * Theme::scale())
+            : 0.0f;
     renderRecentResultsCard(rightWidth, recentHeight);
-    renderKeyPlayersCard(rightWidth, columnHeight - recentHeight -
-                                         ImGui::GetStyle().ItemSpacing.y);
+    renderKeyPlayersCard(rightWidth,
+                         fill ? columnHeight - recentHeight - spacing : 0.0f);
     ImGui::EndGroup();
   }
   else
   {
+    // Stacked: every card sizes to its content and the page scrolls.
     renderNextMatchCard(available, NEXT_MATCH_HEIGHT * Theme::scale());
-    renderRecentResultsCard(available, 230.0f * Theme::scale());
-    renderKeyPlayersCard(available, 320.0f * Theme::scale());
-    renderStandingsCard(available, 520.0f * Theme::scale());
+    renderRecentResultsCard(available, 0.0f);
+    renderKeyPlayersCard(available, 0.0f);
+    renderStandingsCard(available, 0.0f);
   }
 }
 
@@ -475,15 +521,15 @@ void MainGameScene::renderNextMatchCard(float width, float height)
   }
 
   const float buttonsY =
-      height - ImGui::GetFrameHeight() - ImGui::GetStyle().WindowPadding.y;
+      height - UI::buttonHeight() - ImGui::GetStyle().WindowPadding.y;
   ImGui::SetCursorPosY(std::max(ImGui::GetCursorPosY(), buttonsY));
-  if (ImGui::Button(LOC("NAV_LINEUP")))
+  if (UI::secondaryButton(LOC("NAV_LINEUP")))
     Navigation::open(guiView, NavSection::LINEUP);
   ImGui::SameLine();
-  if (ImGui::Button(LOC("NAV_TACTICS")))
+  if (UI::secondaryButton(LOC("NAV_TACTICS")))
     Navigation::open(guiView, NavSection::TACTICS);
   ImGui::SameLine();
-  if (ImGui::Button(LOC("DASHBOARD_SCOUT_OPPONENT")))
+  if (UI::secondaryButton(LOC("DASHBOARD_SCOUT_OPPONENT")))
     Navigation::openClub(guiView, opponentId);
 
   // Match readiness on the same row, right-aligned: players who cannot play
@@ -524,12 +570,13 @@ void MainGameScene::renderStandingsCard(float width, float height)
   const Theme::Palette& palette = Theme::palette();
   const TeamID clubId =
       guiView->getController().getManagedTeam()->get().getId();
-  UI::beginCard("league_table", LOC("DASHBOARD_LEAGUE_TABLE"),
-                ImVec2(width, height));
+  // height 0: natural height, no inner scrolling (the page scrolls).
+  beginDashboardCard("league_table", LOC("DASHBOARD_LEAGUE_TABLE"), width,
+                     height);
   if (ImGui::BeginTable("dashboard_table", 6,
-                        ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY |
-                            ImGuiTableFlags_BordersInnerH |
-                            ImGuiTableFlags_SizingFixedFit))
+                        ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
+                            ImGuiTableFlags_SizingFixedFit |
+                            (height > 0.0f ? ImGuiTableFlags_ScrollY : 0)))
   {
     ImGui::TableSetupScrollFreeze(0, 1);
     ImGui::TableSetupColumn(LOC("MAIN_GAME_POS"));
@@ -582,8 +629,8 @@ void MainGameScene::renderRecentResultsCard(float width, float height)
   const Theme::Palette& palette = Theme::palette();
   const TeamID clubId =
       guiView->getController().getManagedTeam()->get().getId();
-  UI::beginCard("recent_results", LOC("DASHBOARD_RECENT_RESULTS"),
-                ImVec2(width, height));
+  beginDashboardCard("recent_results", LOC("DASHBOARD_RECENT_RESULTS"), width,
+                     height);
   if (cached_recent.empty())
   {
     UI::emptyState(LOC("DASHBOARD_NO_RESULTS"), nullptr);
@@ -631,11 +678,11 @@ void MainGameScene::renderRecentResultsCard(float width, float height)
 void MainGameScene::renderKeyPlayersCard(float width, float height)
 {
   const Theme::Palette& palette = Theme::palette();
-  UI::beginCard("key_players", LOC("DASHBOARD_KEY_PLAYERS"),
-                ImVec2(width, height));
-  if (ImGui::BeginTable(
-          "key_players_table", 3,
-          ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY))
+  beginDashboardCard("key_players", LOC("DASHBOARD_KEY_PLAYERS"), width,
+                     height);
+  if (ImGui::BeginTable("key_players_table", 3,
+                        ImGuiTableFlags_SizingFixedFit |
+                            (height > 0.0f ? ImGuiTableFlags_ScrollY : 0)))
   {
     ImGui::TableSetupColumn("name", ImGuiTableColumnFlags_WidthStretch);
     ImGui::TableSetupColumn("role");
@@ -715,23 +762,25 @@ void MainGameScene::renderFinances()
   const float leftWidth =
       twoColumns ? std::floor((available - gap) * 0.45f) : available;
   const float rightWidth = twoColumns ? available - gap - leftWidth : available;
-  const float cardHeight =
-      twoColumns
-          ? std::max(ImGui::GetContentRegionAvail().y, 320.0f * Theme::scale())
-          : 320.0f * Theme::scale();
+  // Side by side and tall enough: fill the window, the ledger scrolls inside.
+  // Otherwise both cards take their natural height and the page scrolls.
+  const bool fill = twoColumns && ImGui::GetContentRegionAvail().y >=
+                                      FINANCE_FILL_MIN_HEIGHT * Theme::scale();
+  const float cardHeight = fill ? ImGui::GetContentRegionAvail().y : 0.0f;
 
   // Income and expenses by category, this season or the last 30 days.
-  UI::beginCard("fin_breakdown", nullptr, ImVec2(leftWidth, cardHeight), true);
+  beginDashboardCard("fin_breakdown", nullptr, leftWidth, cardHeight);
   UI::sectionLabel(LOC(finance_show_month ? "FINANCE_BREAKDOWN_MONTH"
                                           : "FINANCE_BREAKDOWN"));
   ImGui::SameLine();
   const char* periodToggle =
       LOC(finance_show_month ? "FINANCE_SHOW_SEASON" : "FINANCE_SHOW_MONTH");
-  ImGui::SetCursorPosX(std::max(ImGui::GetCursorPosX(),
-                                ImGui::GetWindowContentRegionMax().x -
-                                    ImGui::CalcTextSize(periodToggle).x -
-                                    2.0f * ImGui::GetStyle().FramePadding.x));
-  if (ImGui::SmallButton(periodToggle))
+  ImGui::SetCursorPosX(
+      std::max(ImGui::GetCursorPosX(),
+               ImGui::GetWindowContentRegionMax().x -
+                   UI::buttonWidth(periodToggle, UI::ButtonSize::COMPACT)));
+  if (UI::secondaryButton(periodToggle, ImVec2(0.0f, 0.0f),
+                          UI::ButtonSize::COMPACT))
     finance_show_month = !finance_show_month;
   const std::vector<FinanceBar>& periodBars =
       finance_show_month ? cached_month_bars : cached_finance_bars;
@@ -789,8 +838,8 @@ void MainGameScene::renderFinances()
   if (twoColumns) ImGui::SameLine();
 
   // Balance trend and the ledger itself.
-  UI::beginCard("fin_ledger", LOC("FINANCE_LEDGER"),
-                ImVec2(rightWidth, cardHeight), true);
+  beginDashboardCard("fin_ledger", LOC("FINANCE_LEDGER"), rightWidth,
+                     cardHeight);
   if (cached_balance_trend.size() >= 2)
   {
     UI::sparkline(
@@ -806,7 +855,8 @@ void MainGameScene::renderFinances()
   else if (ImGui::BeginTable(
                "ledger", 3,
                ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-                   ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit))
+                   ImGuiTableFlags_SizingFixedFit |
+                   (cardHeight > 0.0f ? ImGuiTableFlags_ScrollY : 0)))
   {
     ImGui::TableSetupScrollFreeze(0, 1);
     ImGui::TableSetupColumn(LOC("FIXTURES_COL_DATE"));
@@ -843,8 +893,15 @@ void MainGameScene::refreshData()
   cached_date = controller.getCurrentDate();
   cached_season = controller.getCurrentSeason();
   const auto managed = controller.getManagedTeam();
-  if (!managed) return;
+  cached_club = managed ? managed->get().getId() : TeamID{0};
+  if (!managed)
+  {
+    cached_next.reset();
+    cached_squad.clear();
+    return;
+  }
   const Team& club = managed->get();
+  next_steps.refresh(controller);
 
   cached_table =
       CompetitionView::buildStandings(controller, club.getLeagueId());

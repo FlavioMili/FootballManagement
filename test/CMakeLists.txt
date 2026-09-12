@@ -8,6 +8,11 @@ set(FM_TEST_LAUNCHER
   "${CMAKE_COMMAND};-E;env;${FM_TEST_ENVIRONMENT}")
 
 add_executable(unit_tests
+  test_next_action.cpp
+  test_opposition_report.cpp
+  test_match_analysis.cpp
+  test_delegation.cpp
+  test_data_hub.cpp
   test_player.cpp
   test_game_flow.cpp
   test_gamedata.cpp
@@ -25,6 +30,23 @@ add_executable(unit_tests
   test_scouting.cpp
   test_training.cpp
   test_staff.cpp
+  test_world_data.cpp
+  test_interactions.cpp
+  test_save_migrations.cpp
+  test_continental.cpp
+  test_national_teams.cpp
+  test_youth_academy.cpp
+  test_manager_career.cpp
+  test_squad_status.cpp
+  test_squad_planner.cpp
+  test_set_pieces.cpp
+  test_medical_agenda.cpp
+  test_awards.cpp
+  test_records.cpp
+  test_facility_projects.cpp
+  test_preseason.cpp
+  test_mentoring.cpp
+  test_holiday.cpp
 )
 target_link_libraries(unit_tests PRIVATE GTest::gtest_main fm_ui)
 set_property(TARGET unit_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
@@ -32,6 +54,11 @@ set_property(TARGET unit_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
 # This target deliberately excludes all GUI sources. It is the fast headless
 # correctness and leak-check lane for model, controller, and persistence code.
 add_executable(core_unit_tests
+  test_next_action.cpp
+  test_opposition_report.cpp
+  test_match_analysis.cpp
+  test_delegation.cpp
+  test_data_hub.cpp
   test_player.cpp
   test_gamedata.cpp
   test_database.cpp
@@ -47,6 +74,23 @@ add_executable(core_unit_tests
   test_scouting.cpp
   test_training.cpp
   test_staff.cpp
+  test_world_data.cpp
+  test_interactions.cpp
+  test_save_migrations.cpp
+  test_continental.cpp
+  test_national_teams.cpp
+  test_youth_academy.cpp
+  test_manager_career.cpp
+  test_squad_status.cpp
+  test_squad_planner.cpp
+  test_set_pieces.cpp
+  test_medical_agenda.cpp
+  test_awards.cpp
+  test_records.cpp
+  test_facility_projects.cpp
+  test_preseason.cpp
+  test_mentoring.cpp
+  test_holiday.cpp
 )
 target_link_libraries(core_unit_tests PRIVATE GTest::gtest_main fm_core)
 set_property(TARGET core_unit_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
@@ -107,6 +151,36 @@ gtest_discover_tests(
     TIMEOUT 900
 )
 
+# Scout pages of the Scouting screen through the real GUIView (screenshots
+# in the runtime captures folder; FM_KEEP_TEST_ARTIFACTS=1 keeps them).
+add_executable(scouting_ui_tests test_scouting_ui.cpp)
+target_link_libraries(scouting_ui_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET scouting_ui_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  scouting_ui_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "scouting_ui::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "unit;gui"
+    TIMEOUT 600
+)
+
+# The Youth screen through the real GUIView (screenshots in the runtime
+# captures folder; FM_KEEP_TEST_ARTIFACTS=1 keeps them).
+add_executable(youth_ui_tests test_youth_ui.cpp)
+target_link_libraries(youth_ui_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET youth_ui_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  youth_ui_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "youth_ui::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "unit;gui"
+    TIMEOUT 600
+)
+
 # Adversarial user scenarios (double Continue, saves during Continue, empty
 # squads, old saves, corrupt settings, HiDPI). Exclude with `-LE adversarial`.
 add_executable(adversarial_tests test_adversarial.cpp)
@@ -120,6 +194,20 @@ gtest_discover_tests(
     ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
     LABELS "adversarial;slow"
     TIMEOUT 600
+)
+
+# Balance lab (fm_lab): report math, verdicts, JSON schema and a tiny
+# thread-count-invariant smoke run. Headless, links fm_core only.
+add_executable(lab_tests test_lab_report.cpp)
+target_link_libraries(lab_tests PRIVATE GTest::gtest_main fm_lab_lib)
+set_property(TARGET lab_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+gtest_discover_tests(
+  lab_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "lab::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "unit;lab"
 )
 
 # A deliberately invalid executable verifies that the sanitizer preset really

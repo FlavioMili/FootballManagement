@@ -11,6 +11,7 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <format>
 
@@ -25,7 +26,9 @@
 namespace
 {
 constexpr float TWO_COLUMN_MIN_WIDTH = 1000.0f;
-constexpr float SCHEDULE_CARD_HEIGHT = 250.0f;
+/** Below this card width the microcycle turns into one row per day. */
+constexpr float MICROCYCLE_WIDE_WIDTH = 760.0f;
+constexpr float WEEK_CELL_MIN_WIDTH = 104.0f;
 constexpr float WEEK_CELL_HEIGHT = 64.0f;
 constexpr float TREND_UP = 0.03f;
 constexpr int VETERAN_AGE = 31;
@@ -43,7 +46,24 @@ enum Column : int
   COLUMN_COUNT
 };
 
-float dpi() { return ImGui::GetStyle().FontScaleDpi; }
+float dpi() { return Theme::scale(); }
+
+// Individual table: columns hide from the highest priority number down.
+const std::array<UI::Column, COLUMN_COUNT>& playerColumns()
+{
+  static const std::array<UI::Column, COLUMN_COUNT> columns = {{
+      {"TRAINING_COL_PLAYER", 0.0f, 0, ImGuiTableColumnFlags_DefaultSort, NAME},
+      {"TRAINING_COL_POSITION", 64.0f, 1, ImGuiTableColumnFlags_None, POSITION},
+      {"TRAINING_COL_AGE", 44.0f, 4, ImGuiTableColumnFlags_None, AGE},
+      {"TRAINING_COL_CONDITION", 130.0f, 1, ImGuiTableColumnFlags_None,
+       CONDITION},
+      {"TRAINING_COL_WORKLOAD", 76.0f, 3, ImGuiTableColumnFlags_None, WORKLOAD},
+      {"TRAINING_COL_RISK", 84.0f, 2, ImGuiTableColumnFlags_None, RISK},
+      {"TRAINING_COL_TREND", 52.0f, 3, ImGuiTableColumnFlags_None, TREND},
+      {"TRAINING_COL_FOCUS", 180.0f, 0, ImGuiTableColumnFlags_None, FOCUS},
+  }};
+  return columns;
+}
 
 ImVec4 riskColor(WorkloadRisk risk)
 {
@@ -261,60 +281,63 @@ void TrainingScene::renderContent()
   const Theme::Palette& palette = Theme::palette();
   UI::pageHeader(LOC("TRAINING_TITLE"), LOC("TRAINING_SUBTITLE"));
 
-  const float gap = ImGui::GetStyle().ItemSpacing.x;
-  const float tile = (ImGui::GetContentRegionAvail().x - 3.0f * gap) / 4.0f;
+  UI::TileRow tiles(4);
+  const float tile = tiles.width();
   const std::string condition = std::format("{:.0f}%", average_condition);
+  tiles.next();
   UI::statTile("condition", LOC("TRAINING_TILE_CONDITION"), condition.c_str(),
                LOC("TRAINING_TILE_CONDITION_NOTE"),
                average_condition >= 85.0f   ? palette.positive
                : average_condition >= 75.0f ? palette.warning
                                             : palette.negative,
                tile);
-  ImGui::SameLine();
   const std::string drilled = std::format("{:.0f}%", familiarity * 100.0f);
+  tiles.next();
   UI::statTile("familiarity", LOC("TRAINING_TILE_FAMILIARITY"), drilled.c_str(),
                LOC("TRAINING_TILE_FAMILIARITY_NOTE"),
                familiarity >= 0.7f    ? palette.positive
                : familiarity >= 0.45f ? palette.warning
                                       : palette.negative,
                tile);
-  ImGui::SameLine();
   const std::string risk = std::to_string(at_risk);
+  tiles.next();
   UI::statTile("risk", LOC("TRAINING_TILE_RISK"), risk.c_str(),
                LOC("TRAINING_TILE_RISK_NOTE"),
                at_risk == 0 ? palette.positive : palette.negative, tile);
-  ImGui::SameLine();
   const std::string coaching = std::format("{:.0f}", effectiveness * 100.0f);
+  tiles.next();
   UI::statTile("coaching", LOC("TRAINING_TILE_COACHING"), coaching.c_str(),
                LOC("TRAINING_TILE_COACHING_NOTE"),
                Theme::ratingColor(effectiveness * 100.0f), tile);
 
+  // One scroll surface: every card sizes to its content and the page scrolls.
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * dpi()));
   const float available = ImGui::GetContentRegionAvail().x;
+  const float gap = ImGui::GetStyle().ItemSpacing.x;
   const bool twoColumns = available >= TWO_COLUMN_MIN_WIDTH * dpi();
-  const float height = SCHEDULE_CARD_HEIGHT * dpi();
   const float left =
-      twoColumns ? std::floor((available - gap) * 0.64f) : available;
-  renderMicrocycle(left, height);
+      twoColumns ? std::floor((available - gap) * 0.66f) : available;
+  renderMicrocycle(left);
   if (twoColumns) ImGui::SameLine();
-  // Stacked on narrow windows: the advice card only takes what it needs.
-  renderAdvice(twoColumns ? available - gap - left : available,
-               twoColumns ? height : 0.0f);
-  renderWeek(available);
-  renderPlayers(std::max(ImGui::GetContentRegionAvail().y, 260.0f * dpi()));
+  renderAdvice(twoColumns ? available - gap - left : available);
+  renderWeek();
+  renderPlayers();
 }
 
 void TrainingScene::renderControls()
 {
   GameController& controller = guiView->getController();
-  const float comboWidth = 170.0f * dpi();
+  const Theme::Palette& palette = Theme::palette();
+  const float spacing = Theme::Space::L * dpi();
+  const float presetWidth = 170.0f * dpi();
+  const float intensityWidth = 120.0f * dpi();
   ImGui::AlignTextToFramePadding();
-  ImGui::TextColored(Theme::palette().muted, "%s", LOC("TRAINING_PRESET"));
+  ImGui::TextColored(palette.muted, "%s", LOC("TRAINING_PRESET"));
   ImGui::SameLine();
   TrainingPreset preset = plan.preset;
   if (enumCombo("##preset", preset,
                 static_cast<std::size_t>(TrainingPreset::Custom),
-                TrainingModel::presetKey, comboWidth) &&
+                TrainingModel::presetKey, presetWidth) &&
       controller.setTrainingPreset(preset))
   {
     refresh();
@@ -322,95 +345,150 @@ void TrainingScene::renderControls()
   }
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("%s", LOC("TRAINING_PRESET_HELP"));
-  ImGui::SameLine(0.0f, Theme::Space::L * dpi());
-  ImGui::TextColored(Theme::palette().muted, "%s", LOC("TRAINING_INTENSITY"));
+
+  const char* intensityLabel = LOC("TRAINING_INTENSITY");
+  UI::sameLineIfFits(ImGui::CalcTextSize(intensityLabel).x +
+                         ImGui::GetStyle().ItemSpacing.x + intensityWidth,
+                     spacing);
+  ImGui::AlignTextToFramePadding();
+  ImGui::TextColored(palette.muted, "%s", intensityLabel);
   ImGui::SameLine();
   TrainingIntensity intensity = plan.intensity;
   if (enumCombo("##squad_intensity", intensity,
                 static_cast<std::size_t>(TrainingIntensity::COUNT),
-                TrainingModel::intensityKey, 120.0f * dpi()) &&
+                TrainingModel::intensityKey, intensityWidth) &&
       controller.setTrainingIntensity(intensity))
     refresh();
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("%s", LOC("TRAINING_INTENSITY_HELP"));
-  ImGui::SameLine(0.0f, Theme::Space::L * dpi());
+
+  const char* autoLabel = LOC("TRAINING_AUTO_CONGESTION");
+  UI::sameLineIfFits(ImGui::GetFrameHeight() +
+                         ImGui::GetStyle().ItemInnerSpacing.x +
+                         ImGui::CalcTextSize(autoLabel).x,
+                     spacing);
   bool automatic = plan.auto_congestion;
-  if (ImGui::Checkbox(LOC("TRAINING_AUTO_CONGESTION"), &automatic) &&
+  if (ImGui::Checkbox(autoLabel, &automatic) &&
       controller.setCongestionAutoAdjust(automatic))
     refresh();
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("%s", LOC("TRAINING_AUTO_CONGESTION_HELP"));
 }
 
-void TrainingScene::renderMicrocycle(float width, float height)
+void TrainingScene::renderSlot(int day, bool compact)
 {
   GameController& controller = guiView->getController();
   const Theme::Palette& palette = Theme::palette();
-  UI::beginCard("training_schedule", LOC("TRAINING_SCHEDULE"),
-                ImVec2(width, height));
+  ImGui::PushID(day);
+  TrainingSlot slot = plan.slots[static_cast<std::size_t>(day)];
+  bool changed = false;
+  if (!compact)
+  {
+    ImGui::TableNextColumn();
+    const float cellWidth = ImGui::GetContentRegionAvail().x;
+    changed |= enumCombo("##session", slot.session, SESSION_TYPE_COUNT,
+                         TrainingModel::sessionKey, cellWidth);
+    ImGui::BeginDisabled(slot.session == SessionType::Rest);
+    changed |= enumCombo("##intensity", slot.intensity,
+                         static_cast<std::size_t>(TrainingIntensity::COUNT),
+                         TrainingModel::intensityKey, cellWidth);
+    ImGui::EndDisabled();
+  }
+  else
+  {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored(
+        palette.muted, "%s",
+        LOC(TrainingModel::dayKey(static_cast<MicrocycleDay>(day))));
+    ImGui::TableNextColumn();
+    changed |= enumCombo("##session", slot.session, SESSION_TYPE_COUNT,
+                         TrainingModel::sessionKey, -FLT_MIN);
+    ImGui::TableNextColumn();
+    ImGui::BeginDisabled(slot.session == SessionType::Rest);
+    changed |= enumCombo("##intensity", slot.intensity,
+                         static_cast<std::size_t>(TrainingIntensity::COUNT),
+                         TrainingModel::intensityKey, -FLT_MIN);
+    ImGui::EndDisabled();
+    ImGui::TableNextColumn();
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() +
+                         ImGui::GetStyle().FramePadding.y);
+  }
+  const float load = TrainingModel::sessionLoad(slot, plan.intensity);
+  UI::meter("", std::min(1.0f, load / 1.8f), 0.0f,
+            load > 1.3f   ? palette.negative
+            : load > 0.7f ? palette.warning
+                          : palette.positive,
+            "");
+  if (ImGui::IsItemHovered())
+    ImGui::SetTooltip("%s", LOC("TRAINING_LOAD_HELP"));
+  if (changed &&
+      controller.setTrainingSlot(static_cast<MicrocycleDay>(day), slot))
+    refresh();
+  ImGui::PopID();
+}
+
+void TrainingScene::renderMicrocycle(float width)
+{
+  const Theme::Palette& palette = Theme::palette();
+  UI::beginAutoHeightCard("training_schedule", LOC("TRAINING_SCHEDULE"), width);
   renderControls();
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * dpi()));
   constexpr int DAYS = static_cast<int>(MICROCYCLE_DAYS);
-  if (UI::beginDataTable(
-          "microcycle", DAYS,
-          ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchSame,
-          640.0f, ImVec2(0.0f, 0.0f), 0))
+  // Seven columns when they fit, otherwise one row per day: never scrolls.
+  const bool wide =
+      ImGui::GetContentRegionAvail().x >= MICROCYCLE_WIDE_WIDTH * dpi();
+  if (wide && ImGui::BeginTable("microcycle", DAYS,
+                                ImGuiTableFlags_BordersInnerV |
+                                    ImGuiTableFlags_SizingStretchSame))
   {
     for (int day = 0; day < DAYS; ++day)
       ImGui::TableSetupColumn(
           LOC(TrainingModel::dayKey(static_cast<MicrocycleDay>(day))));
-    ImGui::TableHeadersRow();
+    UI::staticHeadersRow();
     ImGui::TableNextRow();
-    for (int day = 0; day < DAYS; ++day)
-    {
-      ImGui::TableNextColumn();
-      ImGui::PushID(day);
-      TrainingSlot slot = plan.slots[static_cast<std::size_t>(day)];
-      const float cellWidth = ImGui::GetContentRegionAvail().x;
-      bool changed = enumCombo("##session", slot.session, SESSION_TYPE_COUNT,
-                               TrainingModel::sessionKey, cellWidth);
-      ImGui::BeginDisabled(slot.session == SessionType::Rest);
-      changed |= enumCombo("##intensity", slot.intensity,
-                           static_cast<std::size_t>(TrainingIntensity::COUNT),
-                           TrainingModel::intensityKey, cellWidth);
-      ImGui::EndDisabled();
-      const float load = TrainingModel::sessionLoad(slot, plan.intensity);
-      UI::meter("", std::min(1.0f, load / 1.8f), 0.0f,
-                load > 1.3f   ? palette.negative
-                : load > 0.7f ? palette.warning
-                              : palette.positive,
-                "");
-      if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("%s", LOC("TRAINING_LOAD_HELP"));
-      if (changed &&
-          controller.setTrainingSlot(static_cast<MicrocycleDay>(day), slot))
-        refresh();
-      ImGui::PopID();
-    }
+    for (int day = 0; day < DAYS; ++day) renderSlot(day, false);
     ImGui::EndTable();
   }
+  else if (!wide && ImGui::BeginTable("microcycle_rows", 4,
+                                      ImGuiTableFlags_BordersInnerH |
+                                          ImGuiTableFlags_SizingStretchProp))
+  {
+    ImGui::TableSetupColumn(LOC("TRAINING_COL_DAY"),
+                            ImGuiTableColumnFlags_WidthStretch, 0.8f);
+    ImGui::TableSetupColumn(LOC("TRAINING_COL_SESSION"),
+                            ImGuiTableColumnFlags_WidthStretch, 1.6f);
+    ImGui::TableSetupColumn(LOC("TRAINING_COL_INTENSITY"),
+                            ImGuiTableColumnFlags_WidthStretch, 1.2f);
+    ImGui::TableSetupColumn(LOC("TRAINING_COL_LOAD"),
+                            ImGuiTableColumnFlags_WidthStretch, 1.0f);
+    UI::staticHeadersRow();
+    for (int day = 0; day < DAYS; ++day) renderSlot(day, true);
+    ImGui::EndTable();
+  }
+  ImGui::PushTextWrapPos(0.0f);
   ImGui::TextColored(palette.faint, "%s", LOC("TRAINING_SCHEDULE_HELP"));
+  ImGui::PopTextWrapPos();
   UI::endCard();
 }
 
-void TrainingScene::renderWeek(float width)
+void TrainingScene::renderWeek()
 {
   const Theme::Palette& palette = Theme::palette();
   UI::beginAutoHeightCard("training_week", LOC("TRAINING_WEEK"));
-  const int count = static_cast<int>(week.size());
-  if (count > 0)
+  if (!week.empty())
   {
-    const float gap = ImGui::GetStyle().ItemSpacing.x;
-    const float inner = ImGui::GetContentRegionAvail().x;
-    const float cellWidth = std::max(
-        1.0f, (std::min(inner, width) - gap * static_cast<float>(count - 1)) /
-                  static_cast<float>(count));
+    // Seven cells on one line when they fit, wrapping onto more lines below.
+    UI::TileRow cells(static_cast<int>(week.size()), WEEK_CELL_MIN_WIDTH);
+    const float cellWidth = cells.width();
     const float cellHeight = WEEK_CELL_HEIGHT * dpi();
+    const float pad = Theme::Space::S * dpi();
+    const float line = ImGui::GetTextLineHeight();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
-    for (int index = 0; index < count; ++index)
+    for (const DayCell& cell : week)
     {
-      const DayCell& cell = week[static_cast<std::size_t>(index)];
-      if (index > 0) ImGui::SameLine();
+      cells.next();
       const ImVec2 start = ImGui::GetCursorScreenPos();
       const ImVec2 end(start.x + cellWidth, start.y + cellHeight);
       const ImVec4& tone = cell.match_day ? palette.accent : palette.raised;
@@ -425,19 +503,16 @@ void TrainingScene::renderWeek(float width)
             ImVec2(start.x + cellWidth * bar, end.y),
             Theme::toU32(bar > 0.72f ? palette.negative : palette.warning));
       }
-      const float pad = Theme::Space::S * dpi();
-      drawList->PushClipRect(start, end, true);
-      drawList->AddText(ImVec2(start.x + pad, start.y + pad * 0.5f),
-                        Theme::toU32(palette.muted), cell.date.c_str());
-      drawList->AddText(ImVec2(start.x + pad, start.y + pad * 0.5f +
-                                                  ImGui::GetTextLineHeight()),
-                        Theme::toU32(palette.text), cell.title.c_str());
-      drawList->AddText(
-          ImVec2(start.x + pad,
-                 start.y + pad * 0.5f + 2.0f * ImGui::GetTextLineHeight()),
+      const float textWidth = cellWidth - 2.0f * pad;
+      const float top = start.y + pad * 0.5f;
+      UI::drawTextFitted(drawList, ImVec2(start.x + pad, top),
+                         Theme::toU32(palette.muted), cell.date, textWidth);
+      UI::drawTextFitted(drawList, ImVec2(start.x + pad, top + line),
+                         Theme::toU32(palette.text), cell.title, textWidth);
+      UI::drawTextFitted(
+          drawList, ImVec2(start.x + pad, top + 2.0f * line),
           Theme::toU32(cell.adjusted ? palette.warning : palette.faint),
-          cell.detail.c_str());
-      drawList->PopClipRect();
+          cell.detail, textWidth);
       ImGui::Dummy(ImVec2(cellWidth, cellHeight));
       if (cell.adjusted && ImGui::IsItemHovered())
         ImGui::SetTooltip("%s", LOC("TRAINING_ADJUSTED_HELP"));
@@ -446,13 +521,9 @@ void TrainingScene::renderWeek(float width)
   UI::endCard();
 }
 
-void TrainingScene::renderAdvice(float width, float height)
+void TrainingScene::renderAdvice(float width)
 {
-  if (height > 0.0f)
-    UI::beginCard("training_advice", LOC("TRAINING_ADVICE"),
-                  ImVec2(width, height), true);
-  else
-    UI::beginAutoHeightCard("training_advice", LOC("TRAINING_ADVICE"));
+  UI::beginAutoHeightCard("training_advice", LOC("TRAINING_ADVICE"), width);
   for (const AdviceLine& line : advice)
   {
     const ImVec4 color = severityColor(line.severity);
@@ -472,12 +543,11 @@ void TrainingScene::renderAdvice(float width, float height)
   UI::endCard();
 }
 
-void TrainingScene::renderPlayers(float height)
+void TrainingScene::renderPlayers()
 {
   GameController& controller = guiView->getController();
   const Theme::Palette& palette = Theme::palette();
-  UI::beginCard("training_players", LOC("TRAINING_INDIVIDUAL"),
-                ImVec2(0.0f, height));
+  UI::beginAutoHeightCard("training_players", LOC("TRAINING_INDIVIDUAL"));
   if (rows.empty())
   {
     UI::emptyState(LOC("TRAINING_NO_PLAYERS_TITLE"),
@@ -485,31 +555,22 @@ void TrainingScene::renderPlayers(float height)
     UI::endCard();
     return;
   }
-  if (UI::beginDataTable("training_table", COLUMN_COUNT,
-                         ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-                             ImGuiTableFlags_ScrollY |
-                             ImGuiTableFlags_Sortable |
-                             ImGuiTableFlags_SizingFixedFit,
-                         820.0f, ImVec2(0.0f, 0.0f), 1))
+  std::array<UI::Column, COLUMN_COUNT> columns = playerColumns();
+  for (UI::Column& column : columns) column.label = LOC(column.label);
+  const UI::ColumnMask mask =
+      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
+  // No inner scrolling: the table grows and the page scrolls (the clipper
+  // still skips rows outside the page viewport).
+  if (UI::beginResponsiveTable("training_table", columns, mask,
+                               ImGuiTableFlags_RowBg |
+                                   ImGuiTableFlags_BordersInnerH |
+                                   ImGuiTableFlags_Sortable,
+                               UI::TableHeader::SORTABLE))
   {
-    ImGui::TableSetupColumn(
-        LOC("TRAINING_COL_PLAYER"),
-        ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_DefaultSort);
-    ImGui::TableSetupColumn(LOC("TRAINING_COL_POSITION"));
-    ImGui::TableSetupColumn(LOC("TRAINING_COL_AGE"));
-    ImGui::TableSetupColumn(LOC("TRAINING_COL_CONDITION"),
-                            ImGuiTableColumnFlags_WidthFixed, 130.0f * dpi());
-    ImGui::TableSetupColumn(LOC("TRAINING_COL_WORKLOAD"));
-    ImGui::TableSetupColumn(LOC("TRAINING_COL_RISK"));
-    ImGui::TableSetupColumn(LOC("TRAINING_COL_TREND"));
-    ImGui::TableSetupColumn(LOC("TRAINING_COL_FOCUS"),
-                            ImGuiTableColumnFlags_WidthFixed, 190.0f * dpi());
-    ImGui::TableSetupScrollFreeze(1, 1);
-    ImGui::TableHeadersRow();
     if (ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs();
         specs && specs->SpecsDirty && specs->SpecsCount > 0)
     {
-      sort_column = specs->Specs[0].ColumnIndex;
+      sort_column = static_cast<int>(specs->Specs[0].ColumnUserID);
       sort_ascending =
           specs->Specs[0].SortDirection == ImGuiSortDirection_Ascending;
       sortRows();
@@ -527,34 +588,52 @@ void TrainingScene::renderPlayers(float height)
         ImGui::PushID(static_cast<int>(row.id));
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
+        ImGui::AlignTextToFramePadding();
         if (UI::link(row.name.c_str(), "##player"))
           Navigation::openPlayer(guiView, row.id);
-        ImGui::TableNextColumn();
-        ImGui::TextColored(palette.muted, "%s", row.role.c_str());
-        ImGui::TableNextColumn();
-        ImGui::Text("%d", row.age);
-        ImGui::TableNextColumn();
-        if (row.injured)
+        if (UI::cell(mask, POSITION))
         {
-          UI::badge(LOC("TRAINING_INJURED"), palette.negative);
+          ImGui::AlignTextToFramePadding();
+          ImGui::TextColored(palette.muted, "%s", row.role.c_str());
         }
-        else
+        if (UI::cell(mask, AGE))
         {
-          UI::meter("", row.condition / 100.0f, 0.0f,
-                    row.condition >= 85.0f   ? palette.positive
-                    : row.condition >= 70.0f ? palette.warning
-                                             : palette.negative,
-                    row.condition_text.c_str());
+          ImGui::AlignTextToFramePadding();
+          ImGui::Text("%d", row.age);
         }
-        ImGui::TableNextColumn();
-        ImGui::TextColored(row.ratio > 1.3f ? palette.warning : palette.text,
-                           "%s", row.ratio_text.c_str());
-        if (ImGui::IsItemHovered())
-          ImGui::SetTooltip("%s", LOC("TRAINING_WORKLOAD_HELP"));
-        ImGui::TableNextColumn();
-        UI::badge(LOC(TrainingModel::riskKey(row.risk)), riskColor(row.risk));
-        ImGui::TableNextColumn();
-        trendArrow(row.trend, row.veteran);
+        if (UI::cell(mask, CONDITION))
+        {
+          ImGui::SetCursorPosY(ImGui::GetCursorPosY() +
+                               ImGui::GetStyle().FramePadding.y);
+          if (row.injured)
+            UI::badge(LOC("TRAINING_INJURED"), palette.negative);
+          else
+            UI::meter("", row.condition / 100.0f, 0.0f,
+                      row.condition >= 85.0f   ? palette.positive
+                      : row.condition >= 70.0f ? palette.warning
+                                               : palette.negative,
+                      row.condition_text.c_str());
+        }
+        if (UI::cell(mask, WORKLOAD))
+        {
+          ImGui::AlignTextToFramePadding();
+          ImGui::TextColored(row.ratio > 1.3f ? palette.warning : palette.text,
+                             "%s", row.ratio_text.c_str());
+          if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("%s", LOC("TRAINING_WORKLOAD_HELP"));
+        }
+        if (UI::cell(mask, RISK))
+        {
+          ImGui::SetCursorPosY(ImGui::GetCursorPosY() +
+                               ImGui::GetStyle().FramePadding.y);
+          UI::badge(LOC(TrainingModel::riskKey(row.risk)), riskColor(row.risk));
+        }
+        if (UI::cell(mask, TREND))
+        {
+          ImGui::SetCursorPosY(ImGui::GetCursorPosY() +
+                               ImGui::GetStyle().FramePadding.y);
+          trendArrow(row.trend, row.veteran);
+        }
         ImGui::TableNextColumn();
         if (enumCombo("##focus", row.focus, TRAINING_FOCUS_COUNT,
                       TrainingModel::focusKey, -FLT_MIN) &&

@@ -39,6 +39,9 @@ enum class RngDomain : std::uint64_t
   Scouting,
   Staff,
   Training,
+  Interactions,
+  Stories,
+  Managers,
 };
 
 /**

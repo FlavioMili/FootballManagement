@@ -20,6 +20,7 @@
 #include "database/SQLLoader.h"
 #include "database/database_connection.h"
 #include "database/datagenerator.h"
+#include "database/migrations/migrations.h"
 #include "database/repositories/finance_repository.h"
 #include "database/repositories/game_state_repository.h"
 #include "database/repositories/league_repository.h"
@@ -38,24 +39,6 @@
 
 namespace
 {
-// Columns added after the first release; ALTER fails harmlessly when the
-// column already exists.
-constexpr const char* LEGACY_COLUMN_MIGRATIONS[] = {
-    "ALTER TABLE Players ADD COLUMN potential REAL NOT NULL DEFAULT 0;",
-    "ALTER TABLE Players ADD COLUMN traits TEXT NOT NULL DEFAULT '';",
-    "ALTER TABLE Players ADD COLUMN dynamics TEXT NOT NULL DEFAULT '';",
-    "ALTER TABLE Teams ADD COLUMN reputation INTEGER NOT NULL DEFAULT 0;",
-    "ALTER TABLE Teams ADD COLUMN stadium_capacity INTEGER NOT NULL DEFAULT 0;",
-    "ALTER TABLE Teams ADD COLUMN ticket_price INTEGER NOT NULL DEFAULT 0;",
-    "ALTER TABLE Teams ADD COLUMN training_facilities INTEGER NOT NULL "
-    "DEFAULT 0;",
-    "ALTER TABLE Teams ADD COLUMN youth_facilities INTEGER NOT NULL DEFAULT "
-    "0;",
-    "ALTER TABLE Teams ADD COLUMN transfer_budget INTEGER NOT NULL DEFAULT 0;",
-    "ALTER TABLE Teams ADD COLUMN wage_budget INTEGER NOT NULL DEFAULT 0;",
-    "ALTER TABLE Teams ADD COLUMN recent_form TEXT NOT NULL DEFAULT '';",
-};
-
 std::uint64_t defaultWorldSeed()
 {
   if (const char* configured = std::getenv("FM_WORLD_SEED"))
@@ -110,6 +93,12 @@ bool restoreLineup(Team& team, const StoredLineup& stored,
     reserves.push_back(player);
   }
   lineup.setReserves(reserves);
+  // Designations of players who left the club fall back to automatic.
+  SetPieceDesignations designations = stored.designations;
+  for (PlayerID& designated : designations)
+    if (designated != PlayerID{} && !resolvePlayer(designated))
+      designated = PlayerID{};
+  lineup.setDesignations(designations);
   return true;
 }
 }  // namespace
@@ -187,7 +176,7 @@ void GameData::generateAndSaveInitialData()
   LeagueRepository leagueRepo(db_conn);
   PlayerRepository playerRepo(db_conn);
 
-  db_conn->initialize();
+  migrateSchema();
   sqlite3_exec(
       db_conn->getRaw(),
       "DELETE FROM Players; DELETE FROM Teams; DELETE FROM Leagues; DELETE "
@@ -297,11 +286,9 @@ void GameData::generateAndSaveInitialData()
 
 void GameData::migrateSchema() const
 {
-  // Creates tables introduced after this save was written (the schema is
-  // idempotent), then adds new columns to existing tables.
-  db_conn->initialize();
-  for (const char* migration : LEGACY_COLUMN_MIGRATIONS)
-    sqlite3_exec(db_conn->getRaw(), migration, nullptr, nullptr, nullptr);
+  // Rejects saves from newer versions before any write, creates tables
+  // introduced after the save was written and applies pending migrations.
+  Migrations::migrate(*db_conn);
 }
 
 void GameData::restoreWorldState()
@@ -709,17 +696,6 @@ GameData::loadAllTransferListings() const
 {
   std::unordered_map<PlayerID, TransferListing> listings;
 
-  // Forward-compatible migration for save files created before bids were
-  // persisted. Duplicate-column errors are intentionally ignored.
-  sqlite3_exec(db_conn->getRaw(),
-               "ALTER TABLE TransferList ADD COLUMN highest_bidder_id "
-               "INTEGER;",
-               nullptr, nullptr, nullptr);
-  sqlite3_exec(db_conn->getRaw(),
-               "ALTER TABLE TransferList ADD COLUMN highest_bid INTEGER NOT "
-               "NULL DEFAULT 0;",
-               nullptr, nullptr, nullptr);
-
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       SQLLoader::getQuery(Query::LOAD_ALL_TRANSFER_LISTINGS));
 
@@ -763,7 +739,7 @@ void from_json(const nlohmann::json& j, StatsConfig& sc)
 
 void GameData::loadStatsConfig()
 {
-  std::ifstream f(STATS_CONFIG_PATH);
+  std::ifstream f(AssetPaths::statsConfig());
   if (!f.is_open())
   {
     throw std::runtime_error("FATAL: Could not open stats config file");

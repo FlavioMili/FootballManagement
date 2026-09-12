@@ -12,11 +12,15 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <string>
 
 #include "global/language_manager.h"
+#include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 
 namespace
@@ -149,9 +153,9 @@ void beginCard(const char* id, const char* title, ImVec2 size, bool scroll)
   openCard(id, title, size, ImGuiChildFlags_None, flags);
 }
 
-void beginAutoHeightCard(const char* id, const char* title)
+void beginAutoHeightCard(const char* id, const char* title, float width)
 {
-  openCard(id, title, ImVec2(0.0f, 0.0f), ImGuiChildFlags_AutoResizeY,
+  openCard(id, title, ImVec2(width, 0.0f), ImGuiChildFlags_AutoResizeY,
            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 }
 
@@ -244,16 +248,21 @@ void barRow(const char* label, float fraction, float labelWidth,
   const ImVec2 start = ImGui::GetCursorScreenPos();
   const float available =
       width > 0.0f ? width : ImGui::GetContentRegionAvail().x;
-  const float valueWidth =
-      std::max(scaled(VALUE_COLUMN_WIDTH), ImGui::CalcTextSize(valueText).x);
+  // Bare bars (no label, no value) use the whole width.
+  const bool hasValue = valueText != nullptr && *valueText != '\0';
+  const bool hasLabel = label != nullptr && *label != '\0' && labelWidth > 0.0f;
+  const float valueWidth = hasValue
+                               ? std::max(scaled(VALUE_COLUMN_WIDTH),
+                                          ImGui::CalcTextSize(valueText).x) +
+                                     scaled(Theme::Space::S)
+                               : 0.0f;
   const float barWidth =
-      std::max(scaled(24.0f),
-               available - labelWidth - valueWidth - scaled(Theme::Space::S));
+      std::max(scaled(24.0f), available - labelWidth - valueWidth);
 
   ImDrawList* drawList = ImGui::GetWindowDrawList();
   const bool labelCut =
-      drawTextFitted(drawList, start, Theme::toU32(palette.muted), label,
-                     labelWidth - scaled(Theme::Space::S));
+      hasLabel && drawTextFitted(drawList, start, Theme::toU32(palette.muted),
+                                 label, labelWidth - scaled(Theme::Space::S));
 
   const float barHeight = scaled(BAR_HEIGHT);
   const ImVec2 barMin(start.x + labelWidth,
@@ -266,9 +275,12 @@ void barRow(const char* label, float fraction, float labelWidth,
     drawList->AddRectFilled(barMin,
                             ImVec2(barMin.x + barWidth * clamped, barMax.y),
                             Theme::toU32(color), barHeight * 0.5f);
-  const float textWidth = ImGui::CalcTextSize(valueText).x;
-  drawList->AddText(ImVec2(start.x + available - textWidth, start.y),
-                    Theme::toU32(color), valueText);
+  if (hasValue)
+  {
+    const float textWidth = ImGui::CalcTextSize(valueText).x;
+    drawList->AddText(ImVec2(start.x + available - textWidth, start.y),
+                      Theme::toU32(color), valueText);
+  }
   ImGui::Dummy(ImVec2(available, lineHeight));
   if (labelCut && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", label);
 }
@@ -554,21 +566,428 @@ void staticHeadersRow()
   }
 }
 
-bool primaryButton(const char* label, ImVec2 size)
+namespace
 {
-  const ImVec4& accent = Theme::palette().accent;
-  ImGui::PushStyleColor(ImGuiCol_Button, accent);
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
-                        ImVec4(std::min(1.0f, accent.x * 1.15f + 0.03f),
-                               std::min(1.0f, accent.y * 1.15f + 0.03f),
-                               std::min(1.0f, accent.z * 1.15f + 0.03f), 1.0f));
-  ImGui::PushStyleColor(
-      ImGuiCol_ButtonActive,
-      ImVec4(accent.x * 0.82f, accent.y * 0.82f, accent.z * 0.82f, 1.0f));
-  ImGui::PushStyleColor(ImGuiCol_Text, Theme::palette().on_accent);
-  const bool pressed = ImGui::Button(label, size);
+ImVec2 buttonExtent(const char* label, ImVec2 size, ButtonSize buttonSize)
+{
+  const float height = buttonHeight(buttonSize);
+  if (size.x == 0.0f) size.x = buttonWidth(label, buttonSize);
+  if (size.y == 0.0f) size.y = height;
+  return size;
+}
+
+bool styledButton(const char* label, ImVec2 size, ButtonSize buttonSize,
+                  const ImVec4& fill, const ImVec4& text)
+{
+  const ImVec4 hover(std::min(1.0f, fill.x * 1.12f + 0.03f),
+                     std::min(1.0f, fill.y * 1.12f + 0.03f),
+                     std::min(1.0f, fill.z * 1.12f + 0.03f), 1.0f);
+  const ImVec4 active(fill.x * 0.82f, fill.y * 0.82f, fill.z * 0.82f, 1.0f);
+  ImGui::PushStyleColor(ImGuiCol_Button, fill);
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover);
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, active);
+  ImGui::PushStyleColor(ImGuiCol_Text, text);
+  ImGui::PushStyleVar(
+      ImGuiStyleVar_FramePadding,
+      ImVec2(scaled(Size::BUTTON_PADDING_X), ImGui::GetStyle().FramePadding.y));
+  const bool pressed =
+      ImGui::Button(label, buttonExtent(label, size, buttonSize));
+  ImGui::PopStyleVar();
   ImGui::PopStyleColor(4);
   return pressed;
+}
+
+ImVec4 readableOn(const ImVec4& fill)
+{
+  const float luminance =
+      0.2126f * fill.x + 0.7152f * fill.y + 0.0722f * fill.z;
+  return luminance > 0.45f ? ImVec4(0.03f, 0.04f, 0.05f, 1.0f)
+                           : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+int64_t roundToSignificant(double value)
+{
+  if (value <= 0.0) return 0;
+  // Three significant figures keep steps readable (e.g. €14.4M, €950K).
+  const double magnitude = std::pow(10.0, std::floor(std::log10(value)) - 2.0);
+  return static_cast<int64_t>(std::llround(value / magnitude) *
+                              static_cast<long long>(std::max(1.0, magnitude)));
+}
+}  // namespace
+
+float buttonHeight(ButtonSize buttonSize)
+{
+  return scaled(buttonSize == ButtonSize::COMPACT ? Size::BUTTON_COMPACT
+                                                  : Size::BUTTON);
+}
+
+bool primaryButton(const char* label, ImVec2 size, ButtonSize buttonSize)
+{
+  const ImVec4& accent = Theme::palette().accent;
+  return styledButton(label, size, buttonSize, accent,
+                      Theme::palette().on_accent);
+}
+
+bool secondaryButton(const char* label, ImVec2 size, ButtonSize buttonSize)
+{
+  const Theme::Palette& palette = Theme::palette();
+  return styledButton(label, size, buttonSize, palette.raised, palette.text);
+}
+
+bool dangerButton(const char* label, ImVec2 size, ButtonSize buttonSize)
+{
+  const ImVec4& negative = Theme::palette().negative;
+  return styledButton(label, size, buttonSize, negative, readableOn(negative));
+}
+
+bool parseMoney(std::string_view text, int64_t& value)
+{
+  std::array<char, 32> digits{};
+  size_t length = 0;
+  double multiplier = 1.0;
+  bool sawDigit = false;
+  int dots = 0;
+  size_t lastDot = 0;
+  for (const char character : text)
+  {
+    if ((character >= '0' && character <= '9') || character == '.')
+    {
+      if (length + 1 >= digits.size()) return false;
+      if (character == '.')
+      {
+        ++dots;
+        lastDot = length;
+      }
+      digits[length++] = character;
+      sawDigit |= character != '.';
+    }
+    else if (character == 'k' || character == 'K')
+      multiplier = 1'000.0;
+    else if (character == 'm' || character == 'M')
+      multiplier = 1'000'000.0;
+    else if (character == 'b' || character == 'B')
+      multiplier = 1'000'000'000.0;
+    else if (character == ',' || character == ' ' || character == '\'' ||
+             static_cast<unsigned char>(character) >= 0x80)
+      continue;  // separators and the euro sign (UTF-8 bytes)
+    else
+      return false;
+  }
+  if (!sawDigit) return false;
+  // "1.200.000" or a plain "14.500" use the dot as a thousands separator;
+  // "14.5m" keeps it as the decimal point.
+  const bool dotGroups =
+      dots > 1 || (dots == 1 && multiplier == 1.0 && length - lastDot - 1 == 3);
+  if (dotGroups)
+  {
+    size_t kept = 0;
+    for (size_t index = 0; index < length; ++index)
+      if (digits[index] != '.') digits[kept++] = digits[index];
+    length = kept;
+  }
+  digits[length] = '\0';
+  char* end = nullptr;
+  const double number = std::strtod(digits.data(), &end);
+  if (end != digits.data() + length || !std::isfinite(number)) return false;
+  const double result = number * multiplier;
+  if (result > 9.0e15) return false;
+  value = static_cast<int64_t>(std::llround(result));
+  return true;
+}
+
+bool moneyInput(const char* id, int64_t& value,
+                const MoneyInputOptions& options)
+{
+  // Only the field being edited needs a text buffer of its own.
+  static ImGuiID editing = 0;
+  static int64_t pending = 0;
+  static bool pendingValid = false;
+
+  ImGui::PushID(id);
+  bool changed = false;
+  // The field and its step buttons share the regular button height.
+  const ImVec2 padding = ImGui::GetStyle().FramePadding;
+  ImGui::PushStyleVar(
+      ImGuiStyleVar_FramePadding,
+      ImVec2(
+          padding.x,
+          std::max(padding.y, (buttonHeight() - ImGui::GetFontSize()) * 0.5f)));
+  const float stepWidth = ImGui::GetFrameHeight();
+  const float gap = ImGui::GetStyle().ItemInnerSpacing.x;
+  const float width =
+      (options.width > 0.0f ? options.width : ImGui::GetContentRegionAvail().x);
+  const auto clampValue = [&options](int64_t candidate)
+  { return std::clamp(candidate, options.minimum, options.maximum); };
+  const ImGuiIO& io = ImGui::GetIO();
+  const double stepFraction = io.KeyShift ? 0.10 : (io.KeyCtrl ? 0.01 : 0.05);
+  const char* stepHelp = LOC("WIDGET_MONEY_STEP_HELP");
+
+  if (ImGui::Button("-", ImVec2(stepWidth, 0.0f)))
+  {
+    value = clampValue(
+        roundToSignificant(static_cast<double>(value) * (1.0 - stepFraction)));
+    changed = true;
+  }
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    ImGui::SetTooltip("%s", stepHelp);
+  ImGui::SameLine(0.0f, gap);
+
+  std::array<char, 48> buffer{};
+  const std::string shown = Format::moneyFull(value);
+  std::snprintf(buffer.data(), buffer.size(), "%s", shown.c_str());
+  ImGui::SetNextItemWidth(
+      std::max(scaled(80.0f), width - 2.0f * (stepWidth + gap)));
+  ImGui::InputText("##money", buffer.data(), buffer.size(),
+                   ImGuiInputTextFlags_AutoSelectAll);
+  const ImGuiID fieldId = ImGui::GetItemID();
+  if (ImGui::IsItemActivated())
+  {
+    editing = fieldId;
+    pendingValid = false;
+  }
+  if (ImGui::IsItemEdited() && editing == fieldId)
+    pendingValid = parseMoney(buffer.data(), pending);
+  if (ImGui::IsItemDeactivated() && editing == fieldId)
+  {
+    if (pendingValid && clampValue(pending) != value)
+    {
+      value = clampValue(pending);
+      changed = true;
+    }
+    editing = 0;
+    pendingValid = false;
+  }
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) &&
+      !ImGui::IsItemActive())
+    ImGui::SetTooltip("%s", LOC("WIDGET_MONEY_INPUT_HELP"));
+  ImGui::SameLine(0.0f, gap);
+  if (ImGui::Button("+", ImVec2(stepWidth, 0.0f)))
+  {
+    value = clampValue(std::max<int64_t>(
+        value + 1,
+        roundToSignificant(static_cast<double>(value) * (1.0 + stepFraction))));
+    changed = true;
+  }
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    ImGui::SetTooltip("%s", stepHelp);
+  ImGui::PopStyleVar();
+
+  for (size_t index = 0; index < options.chips.size(); ++index)
+  {
+    const MoneyChip& chip = options.chips[index];
+    if (index > 0) sameLineIfFits(buttonWidth(chip.label, ButtonSize::COMPACT));
+    ImGui::PushID(static_cast<int>(index));
+    const bool active = chip.value == value;
+    if (active) ImGui::PushStyleColor(ImGuiCol_Text, Theme::palette().accent);
+    if (secondaryButton(chip.label, ImVec2(0.0f, 0.0f), ButtonSize::COMPACT))
+    {
+      value = clampValue(chip.value);
+      changed = true;
+    }
+    if (active) ImGui::PopStyleColor();
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+      ImGui::SetTooltip("%s", Format::moneyFull(chip.value).c_str());
+    ImGui::PopID();
+  }
+  ImGui::PopID();
+  return changed;
+}
+
+bool toggleButton(const char* label, bool active, ImVec2 size,
+                  ButtonSize buttonSize)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const ImVec4 fill =
+      active ? ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive) : palette.raised;
+  const bool pressed = styledButton(label, size, buttonSize, fill,
+                                    active ? palette.text : palette.muted);
+  if (active)
+  {
+    const ImVec2 min = ImGui::GetItemRectMin();
+    const ImVec2 max = ImGui::GetItemRectMax();
+    ImGui::GetWindowDrawList()->AddRectFilled(
+        ImVec2(min.x + scaled(6.0f), max.y - scaled(2.5f)),
+        ImVec2(max.x - scaled(6.0f), max.y), Theme::toU32(palette.accent),
+        scaled(1.5f));
+  }
+  return pressed;
+}
+
+bool segmented(const char* id, int& selected,
+               std::span<const char* const> labels, float width)
+{
+  if (labels.empty()) return false;
+  ImGui::PushID(id);
+  const float gap = scaled(2.0f);
+  float natural = 0.0f;
+  for (const char* label : labels)
+    natural = std::max(natural, ImGui::CalcTextSize(label, nullptr, true).x +
+                                    2.0f * scaled(Theme::Space::M));
+  const auto count = static_cast<float>(labels.size());
+  const float segmentWidth =
+      width > 0.0f ? (width - gap * (count - 1.0f)) / count : natural;
+  bool changed = false;
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(gap, gap));
+  for (size_t index = 0; index < labels.size(); ++index)
+  {
+    if (index > 0) ImGui::SameLine();
+    const bool active = static_cast<int>(index) == selected;
+    ImGui::PushID(static_cast<int>(index));
+    if (toggleButton(labels[index], active, ImVec2(segmentWidth, 0.0f)) &&
+        !active)
+    {
+      selected = static_cast<int>(index);
+      changed = true;
+    }
+    ImGui::PopID();
+  }
+  ImGui::PopStyleVar();
+  ImGui::PopID();
+  return changed;
+}
+
+void summaryRow(const char* label, const char* value, const ImVec4* valueColor,
+                bool emphasis)
+{
+  const Theme::Palette& palette = Theme::palette();
+  if (emphasis)
+  {
+    const ImVec2 start = ImGui::GetCursorScreenPos();
+    ImGui::GetWindowDrawList()->AddLine(
+        start, ImVec2(start.x + ImGui::GetContentRegionAvail().x, start.y),
+        Theme::toU32(palette.border), scaled(1.0f));
+    ImGui::Dummy(ImVec2(0.0f, scaled(Theme::Space::XS)));
+  }
+  const Theme::Text level = emphasis ? Theme::Text::TITLE : Theme::Text::BODY;
+  Theme::ScopedText text(level);
+  const float available = ImGui::GetContentRegionAvail().x;
+  const float valueWidth = ImGui::CalcTextSize(value).x;
+  textFitted(label, available - valueWidth - scaled(Theme::Space::M),
+             emphasis ? palette.text : palette.muted);
+  ImGui::SameLine();
+  textRightColored(valueColor != nullptr ? *valueColor : palette.text, value);
+}
+
+void budgetImpact(const char* label, int64_t current, int64_t after,
+                  const char* reasonWhenNegative)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const bool negative = after < 0;
+  const std::string change =
+      Format::money(current) + "  →  " + Format::money(after);
+  const ImVec4& tone = negative ? palette.negative : palette.text;
+  summaryRow(label, change.c_str(), &tone);
+
+  // Track: the full bar is the current amount, the kept part is filled.
+  const float width = ImGui::GetContentRegionAvail().x;
+  const float height = scaled(6.0f);
+  const ImVec2 start = ImGui::GetCursorScreenPos();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  drawList->AddRectFilled(start, ImVec2(start.x + width, start.y + height),
+                          Theme::toU32(palette.raised), height * 0.5f);
+  const double base = static_cast<double>(std::max<int64_t>(current, 1));
+  const float kept =
+      std::clamp(static_cast<float>(
+                     static_cast<double>(std::max<int64_t>(after, 0)) / base),
+                 0.0f, 1.0f);
+  if (kept > 0.0f)
+    drawList->AddRectFilled(start,
+                            ImVec2(start.x + width * kept, start.y + height),
+                            Theme::toU32(palette.positive), height * 0.5f);
+  if (after < current)
+    drawList->AddRectFilled(
+        ImVec2(start.x + width * kept, start.y),
+        ImVec2(start.x + width, start.y + height),
+        Theme::toU32(negative ? palette.negative : palette.warning, 0.55f),
+        height * 0.5f);
+  ImGui::Dummy(ImVec2(width, height));
+  if (negative && reasonWhenNegative != nullptr && *reasonWhenNegative != '\0')
+  {
+    Theme::ScopedText small(Theme::Text::SMALL);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(palette.negative, "%s", reasonWhenNegative);
+    ImGui::PopTextWrapPos();
+  }
+}
+
+ColumnMask fitColumns(std::span<const Column> columns, float availableWidth,
+                      float stretchMinimum)
+{
+  ColumnMask mask = 0;
+  for (size_t index = 0; index < columns.size(); ++index)
+    mask |= ColumnMask{1} << index;
+  const float cellPadding = 2.0f * ImGui::GetStyle().CellPadding.x;
+  const auto required = [&](ColumnMask candidate)
+  {
+    float total = 0.0f;
+    bool stretch = false;
+    for (size_t index = 0; index < columns.size(); ++index)
+    {
+      if ((candidate & (ColumnMask{1} << index)) == 0) continue;
+      if (columns[index].width > 0.0f)
+        total += scaled(columns[index].width) + cellPadding;
+      else
+        stretch = true;
+    }
+    return total + (stretch ? scaled(stretchMinimum) + cellPadding : 0.0f);
+  };
+  // Drop the highest priority number first (last column first on ties).
+  while (required(mask) > availableWidth)
+  {
+    int victim = -1;
+    for (size_t index = 0; index < columns.size(); ++index)
+    {
+      if ((mask & (ColumnMask{1} << index)) == 0 ||
+          columns[index].priority == 0)
+        continue;
+      if (victim < 0 || columns[index].priority >=
+                            columns[static_cast<size_t>(victim)].priority)
+        victim = static_cast<int>(index);
+    }
+    if (victim < 0) break;
+    mask &= ~(ColumnMask{1} << static_cast<unsigned>(victim));
+  }
+  return mask;
+}
+
+bool beginResponsiveTable(const char* id, std::span<const Column> columns,
+                          ColumnMask mask, ImGuiTableFlags flags,
+                          TableHeader header, ImVec2 size)
+{
+  const int visible = std::popcount(mask);
+  if (visible == 0) return false;
+  // One table state per column set: ImGui keeps per-column state (order,
+  // widths, sort) that must not leak between different visible sets.
+  std::array<char, 96> name{};
+  std::snprintf(name.data(), name.size(), "%s##cols%08x", id, mask);
+  if (!ImGui::BeginTable(name.data(), visible, flags, size)) return false;
+  for (size_t index = 0; index < columns.size(); ++index)
+  {
+    if ((mask & (ColumnMask{1} << index)) == 0) continue;
+    const Column& column = columns[index];
+    ImGuiTableColumnFlags columnFlags = column.flags;
+    columnFlags |= column.width > 0.0f ? ImGuiTableColumnFlags_WidthFixed
+                                       : ImGuiTableColumnFlags_WidthStretch;
+    ImGui::TableSetupColumn(
+        column.label, columnFlags,
+        column.width > 0.0f ? scaled(column.width) : 0.0f,
+        column.user_id != 0 ? column.user_id : static_cast<ImGuiID>(index));
+  }
+  if ((flags & ImGuiTableFlags_ScrollY) != 0)
+    ImGui::TableSetupScrollFreeze(0, 1);
+  if (header == TableHeader::STATIC)
+    staticHeadersRow();
+  else if (header == TableHeader::SORTABLE)
+    ImGui::TableHeadersRow();
+  return true;
+}
+
+bool cell(ColumnMask mask, int index)
+{
+  if ((mask & (ColumnMask{1} << static_cast<unsigned>(index))) == 0)
+    return false;
+  ImGui::TableNextColumn();
+  return true;
 }
 
 bool link(const char* label, const char* id)
@@ -620,19 +1039,23 @@ void keyValue(const char* key, const char* value, float keyWidth)
   ImGui::PopTextWrapPos();
 }
 
-void sameLineIfFits(float nextWidth)
+bool sameLineIfFits(float nextWidth, float spacing)
 {
   const float lineEnd =
       ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
-  if (ImGui::GetItemRectMax().x + ImGui::GetStyle().ItemSpacing.x + nextWidth <=
-      lineEnd)
-    ImGui::SameLine();
+  const float gap = spacing < 0.0f ? ImGui::GetStyle().ItemSpacing.x : spacing;
+  if (ImGui::GetItemRectMax().x + gap + nextWidth > lineEnd) return false;
+  ImGui::SameLine(0.0f, gap);
+  return true;
 }
 
-float buttonWidth(const char* label)
+float buttonWidth(const char* label, ButtonSize buttonSize)
 {
-  return ImGui::CalcTextSize(label, nullptr, true).x +
-         2.0f * ImGui::GetStyle().FramePadding.x;
+  const float natural = ImGui::CalcTextSize(label, nullptr, true).x +
+                        2.0f * scaled(Size::BUTTON_PADDING_X);
+  return buttonSize == ButtonSize::COMPACT
+             ? natural
+             : std::max(natural, scaled(Size::BUTTON_MIN_WIDTH));
 }
 
 void textRight(const char* text)

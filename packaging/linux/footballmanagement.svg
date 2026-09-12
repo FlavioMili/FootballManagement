@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Football Management application icon: a top-down pitch with a ball.
+     Original artwork for this project; see the LICENSE file. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <rect x="8" y="8" width="240" height="240" rx="48" fill="#2f7d4a"/>
+  <rect x="8" y="8" width="240" height="120" rx="48" fill="#358c53"/>
+  <rect x="8" y="80" width="240" height="48" fill="#358c53"/>
+  <g fill="none" stroke="#e8f3ea" stroke-width="6" stroke-linejoin="round">
+    <rect x="36" y="36" width="184" height="184" rx="6"/>
+    <line x1="36" y1="128" x2="220" y2="128"/>
+    <circle cx="128" cy="128" r="30"/>
+    <rect x="88" y="36" width="80" height="30"/>
+    <rect x="88" y="190" width="80" height="30"/>
+  </g>
+  <circle cx="128" cy="128" r="17" fill="#ffffff" stroke="#1f2a24" stroke-width="3"/>
+  <path d="M128 118 l9 6.5 -3.4 10.5 h-11.2 l-3.4 -10.5 z" fill="#1f2a24"/>
+</svg>

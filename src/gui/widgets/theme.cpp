@@ -157,16 +157,35 @@ void buildPalette()
                                   : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
+// Lower saturation and brightness of the accent for control fills.
+ImVec4 mutedAccent(const ImVec4& accent, bool light)
+{
+  float hue = 0.0f;
+  float saturation = 0.0f;
+  float value = 0.0f;
+  ImGui::ColorConvertRGBtoHSV(accent.x, accent.y, accent.z, hue, saturation,
+                              value);
+  saturation *= 0.62f;
+  value = light ? std::min(value, 0.62f) : std::clamp(value, 0.45f, 0.72f);
+  ImVec4 result(0, 0, 0, 1);
+  ImGui::ColorConvertHSVtoRGB(hue, saturation, value, result.x, result.y,
+                              result.z);
+  return result;
+}
+
 void applyColors()
 {
   buildPalette();
   const Theme::Palette& p = activePalette;
   const PresetColors& preset = presetColors();
   ImVec4* colors = ImGui::GetStyle().Colors;
-  const ImVec4 accentHover = mix(p.accent, p.text, 0.14f);
-  const ImVec4 accentActive = mix(p.accent, p.background, 0.18f);
-  const ImVec4 accentTint = mix(p.raised, p.accent, 0.35f);
-  const ImVec4 accentSoft = mix(p.surface, p.accent, 0.22f);
+  // Controls stay neutral; only handles, checks and fills carry a muted
+  // version of the accent, so bright custom accents never flood the screen.
+  const ImVec4 control = mutedAccent(p.accent, preset.light);
+  const ImVec4 controlHover = mix(control, p.text, 0.18f);
+  const ImVec4 neutralHover = mix(p.raised, p.border, 0.65f);
+  const ImVec4 neutralActive = mix(p.raised, p.border, 0.95f);
+  const ImVec4 selection = mix(p.raised, control, 0.22f);
   const ImVec4 stripe = preset.light ? ImVec4(0, 0, 0, preset.row_stripe_alpha)
                                      : ImVec4(1, 1, 1, preset.row_stripe_alpha);
 
@@ -179,7 +198,7 @@ void applyColors()
   colors[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
   colors[ImGuiCol_FrameBg] = p.raised;
   colors[ImGuiCol_FrameBgHovered] = mix(p.raised, p.border, 0.7f);
-  colors[ImGuiCol_FrameBgActive] = accentSoft;
+  colors[ImGuiCol_FrameBgActive] = neutralActive;
   colors[ImGuiCol_TitleBg] = p.surface;
   colors[ImGuiCol_TitleBgActive] = p.raised;
   colors[ImGuiCol_TitleBgCollapsed] = p.background;
@@ -187,22 +206,22 @@ void applyColors()
   colors[ImGuiCol_ScrollbarBg] = ImVec4(0, 0, 0, 0);
   colors[ImGuiCol_ScrollbarGrab] = p.border;
   colors[ImGuiCol_ScrollbarGrabHovered] = p.faint;
-  colors[ImGuiCol_ScrollbarGrabActive] = p.accent;
-  colors[ImGuiCol_CheckMark] = p.accent;
-  colors[ImGuiCol_SliderGrab] = p.accent;
-  colors[ImGuiCol_SliderGrabActive] = accentHover;
+  colors[ImGuiCol_ScrollbarGrabActive] = p.muted;
+  colors[ImGuiCol_CheckMark] = control;
+  colors[ImGuiCol_SliderGrab] = control;
+  colors[ImGuiCol_SliderGrabActive] = controlHover;
   colors[ImGuiCol_Button] = p.raised;
-  colors[ImGuiCol_ButtonHovered] = accentTint;
-  colors[ImGuiCol_ButtonActive] = accentActive;
-  colors[ImGuiCol_Header] = accentSoft;
-  colors[ImGuiCol_HeaderHovered] = mix(p.raised, p.accent, 0.18f);
-  colors[ImGuiCol_HeaderActive] = accentTint;
+  colors[ImGuiCol_ButtonHovered] = neutralHover;
+  colors[ImGuiCol_ButtonActive] = neutralActive;
+  colors[ImGuiCol_Header] = selection;
+  colors[ImGuiCol_HeaderHovered] = neutralHover;
+  colors[ImGuiCol_HeaderActive] = mix(p.raised, control, 0.32f);
   colors[ImGuiCol_Separator] = p.border;
   colors[ImGuiCol_SeparatorHovered] = p.accent;
-  colors[ImGuiCol_SeparatorActive] = accentHover;
+  colors[ImGuiCol_SeparatorActive] = controlHover;
   colors[ImGuiCol_ResizeGrip] = ImVec4(0, 0, 0, 0);
   colors[ImGuiCol_ResizeGripHovered] = p.accent;
-  colors[ImGuiCol_ResizeGripActive] = accentHover;
+  colors[ImGuiCol_ResizeGripActive] = controlHover;
   colors[ImGuiCol_InputTextCursor] = p.text;
   colors[ImGuiCol_Tab] = p.surface;
   colors[ImGuiCol_TabHovered] = p.raised;
@@ -212,9 +231,9 @@ void applyColors()
   colors[ImGuiCol_TabDimmedSelected] = p.surface;
   colors[ImGuiCol_TabDimmedSelectedOverline] = p.border;
   colors[ImGuiCol_PlotLines] = p.accent;
-  colors[ImGuiCol_PlotLinesHovered] = accentHover;
+  colors[ImGuiCol_PlotLinesHovered] = controlHover;
   colors[ImGuiCol_PlotHistogram] = p.accent;
-  colors[ImGuiCol_PlotHistogramHovered] = accentHover;
+  colors[ImGuiCol_PlotHistogramHovered] = controlHover;
   colors[ImGuiCol_TableHeaderBg] = p.surface;
   colors[ImGuiCol_TableBorderStrong] = p.border;
   colors[ImGuiCol_TableBorderLight] = mix(p.surface, p.border, 0.6f);
@@ -223,8 +242,8 @@ void applyColors()
   colors[ImGuiCol_TextLink] =
       mix(p.accent, p.text, preset.light ? 0.1f : 0.35f);
   colors[ImGuiCol_TextSelectedBg] = mix(p.surface, p.accent, 0.45f);
-  colors[ImGuiCol_DragDropTarget] = accentHover;
-  colors[ImGuiCol_NavCursor] = accentHover;
+  colors[ImGuiCol_DragDropTarget] = controlHover;
+  colors[ImGuiCol_NavCursor] = controlHover;
   colors[ImGuiCol_NavWindowingHighlight] = p.text;
   colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0, 0, 0, 0.45f);
   colors[ImGuiCol_ModalWindowDimBg] =
@@ -253,7 +272,7 @@ void apply(const Appearance& options, float displayScale)
   const bool compact = options.compact;
   style.FontSizeBase = BASE_FONT_SIZE;
   style.WindowPadding = ImVec2(Space::L, Space::M);
-  style.FramePadding = compact ? ImVec2(8.0f, 4.0f) : ImVec2(10.0f, 6.0f);
+  style.FramePadding = compact ? ImVec2(8.0f, 5.0f) : ImVec2(10.0f, 8.0f);
   style.CellPadding = compact ? ImVec2(6.0f, 2.0f) : ImVec2(Space::S, 5.0f);
   style.ItemSpacing = compact ? ImVec2(6.0f, 5.0f) : ImVec2(Space::S, Space::S);
   style.ItemInnerSpacing = ImVec2(6.0f, Space::XS);

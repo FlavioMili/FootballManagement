@@ -18,12 +18,22 @@
 #include <vector>
 
 #include "global/types.h"
+#include "model/awards.h"
 #include "model/board.h"
 #include "model/club_economy.h"
+#include "model/facility_projects.h"
 #include "model/gamedate.h"
+#include "model/holiday.h"
 #include "model/inbox.h"
+#include "model/interactions.h"
+#include "model/mentoring.h"
+#include "model/preseason.h"
+#include "model/records.h"
 #include "model/training.h"
 #include "model/scouting.h"
+#include "model/squad_status.h"
+#include "model/stories.h"
+#include "model/youth_academy.h"
 
 class DatabaseConnection;
 class GameData;
@@ -127,6 +137,13 @@ class WorldSimulation
                              const std::vector<UpcomingFixture>& schedule);
 
   /**
+   * The manager left the managed club (sacked, resigned or moved): the
+   * board, cash warnings and the shortlist belong to that club and are
+   * dropped. The inbox stays; the next club's welcome joins it.
+   */
+  void onManagerLeft();
+
+  /**
    * True while the board freezes the managed club's transfer spending: its
    * cash has been negative since at least the previous monthly review (a
    * warning comes first). Lifts as soon as the balance is positive again.
@@ -195,7 +212,47 @@ class WorldSimulation
   ScoutingSystem& getScouting() { return scouting; }
   const ScoutingSystem& getScouting() const { return scouting; }
 
-  /** Playing-time expectation of a player in his squad. */
+  /** Conversations, promises, team talks and the dressing room. */
+  InteractionSystem& getInteractions() { return interactions; }
+  const InteractionSystem& getInteractions() const { return interactions; }
+
+  /** Story chains of the managed club. */
+  StoryEngine& getStories() { return stories; }
+  const StoryEngine& getStories() const { return stories; }
+
+  /** Academies: intake cycle, U18 squads and academy projects. */
+  YouthAcademy& getYouth() { return youth; }
+  const YouthAcademy& getYouth() const { return youth; }
+
+  /** Squad statuses the manager gave players of his club. */
+  SquadStatusBook& getSquadStatuses() { return squad_statuses; }
+  const SquadStatusBook& getSquadStatuses() const { return squad_statuses; }
+
+  /** League honours, records book, facility projects, pre-season plan,
+   * mentoring groups and holiday preferences. */
+  AwardSystem& getAwards() { return awards; }
+  const AwardSystem& getAwards() const { return awards; }
+  RecordBook& getRecords() { return records; }
+  const RecordBook& getRecords() const { return records; }
+  FacilityProjects& getFacilityProjects() { return facility_projects; }
+  const FacilityProjects& getFacilityProjects() const
+  {
+    return facility_projects;
+  }
+  PreseasonPlanner& getPreseason() { return preseason; }
+  const PreseasonPlanner& getPreseason() const { return preseason; }
+  MentoringSystem& getMentoring() { return mentoring; }
+  const MentoringSystem& getMentoring() const { return mentoring; }
+  HolidayPreferences& getHolidayPreferences() { return holiday_preferences; }
+  const HolidayPreferences& getHolidayPreferences() const
+  {
+    return holiday_preferences;
+  }
+
+  /**
+   * Playing-time expectation of a player in his squad: the status the
+   * manager gave him (managed club), else derived from his ability rank.
+   */
   SquadRole squadRole(PlayerID player_id) const;
 
   /** Crowd of the club's latest home match (0 if none this session). */
@@ -228,7 +285,6 @@ class WorldSimulation
                              const std::vector<UpcomingFixture>& schedule);
   void postScoutSuggestion(const GameDateValue& date, const Team& team);
   void processMonthly(const GameDateValue& date, TeamID managed_team_id);
-  void runYouthIntake(const GameDateValue& date, TeamID managed_team_id);
   void sendContractNotices(const GameDateValue& date, TeamID managed_team_id);
   void awardPrizeMoney(const GameDateValue& date, TeamID managed_team_id);
   void renewAiContracts(TeamID managed_team_id);
@@ -257,6 +313,16 @@ class WorldSimulation
 
   std::shared_ptr<GameData> gamedata;
   ScoutingSystem scouting;
+  InteractionSystem interactions;
+  StoryEngine stories;
+  YouthAcademy youth;
+  SquadStatusBook squad_statuses;
+  AwardSystem awards;
+  RecordBook records;
+  FacilityProjects facility_projects;
+  PreseasonPlanner preseason;
+  MentoringSystem mentoring;
+  HolidayPreferences holiday_preferences;
   Inbox inbox;
   BoardState board;
   mutable std::unordered_map<std::string, FocusStats> focus_by_category;

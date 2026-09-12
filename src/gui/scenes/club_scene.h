@@ -50,7 +50,7 @@ class ClubScene : public ManagementScene
 
   void renderBoard(float width, float height);
   void renderStadium(float width, float height);
-  void renderHistory(float height);
+  void renderHistory();
 
   std::vector<HistoryRow> history;
   std::vector<float> confidence_trend;

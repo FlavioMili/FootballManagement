@@ -17,6 +17,7 @@
 #include "gui/gui_scene.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/management_scene.h"
+#include "gui/scenes/onboarding_overlay.h"
 #include "gui/view_models/competition_view.h"
 #include "gui/view_models/player_view.h"
 #include "model/finances.h"
@@ -121,6 +122,7 @@ class MainGameScene : public ManagementScene
   std::vector<std::reference_wrapper<const Player>> cached_top_players;
   int cached_season = -1;
   GameDateValue cached_date;
+  TeamID cached_club = 0; /**< Club the cached page shows (0: none). */
   std::future<int> continue_operation;
   bool continuation_running = false;
   bool continuation_requested = false;
@@ -170,4 +172,7 @@ class MainGameScene : public ManagementScene
   std::vector<LedgerRow> cached_ledger; /**< Newest first. */
   std::vector<float> cached_balance_trend;
   float budget_shift = 0.0f;
+
+  /** Checklist and next steps card on Home. */
+  NextStepsCard next_steps;
 };

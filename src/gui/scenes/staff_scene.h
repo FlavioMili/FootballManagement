@@ -54,6 +54,7 @@ class StaffScene : public ManagementScene
     int contract_years = 0;
     std::string contract;    /*!< Remaining seasons, formatted. */
     std::string extend_help; /*!< Terms of a one-season extension. */
+    std::string hire_label;  /*!< Market rows: "Hire for <demand> / week". */
     bool role_full = false;  /*!< Market rows: the club's quota is used. */
   };
 
@@ -65,9 +66,14 @@ class StaffScene : public ManagementScene
     std::string holder;
   };
 
-  void renderStaff(float width, float height);
-  void renderImpact(float width, float height);
-  void renderMarket(float height);
+  void renderStaff(float width);
+  void renderImpact(float width);
+  void renderMarket();
+  void renderFilters();
+  /** Rows grouped by department, each group with a header and a table. */
+  void renderGroups(const char* id, const std::vector<StaffRow>& rows,
+                    bool market);
+  void renderDetail(const StaffRow& row, bool market);
   void renderReleaseConfirm();
   void rebuildMarket();
   void showResult(int result, const char* success_key);
@@ -94,6 +100,8 @@ class StaffScene : public ManagementScene
   int role_filter = -1; /*!< -1: every role. */
   int min_rating = 0;
   int hire_years = 2;
+  StaffID selected = 0; /*!< Row whose detail strip is open (0: none). */
+  bool reveal_selected = false; /*!< Scroll the new strip into view. */
   StaffID release_candidate = 0;
   std::string release_text;
   bool release_requested = false;

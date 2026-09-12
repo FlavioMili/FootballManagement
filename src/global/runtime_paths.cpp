@@ -16,6 +16,9 @@
 #include <string_view>
 #include <utility>
 
+#include "global/logger.h"
+#include "global/paths.h"
+
 #if defined(_WIN32)
 #include <process.h>
 #else
@@ -138,6 +141,45 @@ std::filesystem::path RuntimePaths::capturePath(const char* filename)
 std::filesystem::path RuntimePaths::imguiIniPath()
 {
   return root() / "imgui.ini";
+}
+
+const std::filesystem::path& RuntimePaths::assetRoot()
+{
+  static const std::filesystem::path resolved = []
+  {
+    const auto hasAssets = [](const std::filesystem::path& candidate)
+    {
+      std::error_code error;
+      return std::filesystem::is_regular_file(
+          candidate / "assets" / "db" / "schema.sql", error);
+    };
+
+    std::filesystem::path chosen = FM_SOURCE_DIR;
+    if (const char* configured = std::getenv("FM_ASSET_ROOT");
+        configured != nullptr && *configured != '\0')
+    {
+      chosen = std::filesystem::absolute(configured);
+    }
+    else if (const char* base = SDL_GetBasePath(); base != nullptr)
+    {
+      // SDL owns the returned string; on macOS bundles it already points at
+      // Contents/Resources.
+      const std::filesystem::path executableDir(base);
+      for (const auto& candidate :
+           {executableDir / ".." / "share" / "footballmanagement",
+            executableDir / ".." / "Resources", executableDir})
+      {
+        if (hasAssets(candidate))
+        {
+          chosen = candidate.lexically_normal();
+          break;
+        }
+      }
+    }
+    Logger::info("Game data root: " + chosen.string());
+    return chosen;
+  }();
+  return resolved;
 }
 
 void RuntimePaths::removeSave(int slot) { removeDatabaseFiles(savePath(slot)); }

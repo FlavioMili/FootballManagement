@@ -17,6 +17,7 @@
 #include "database/repositories/competition_repository.h"
 #include "database/repositories/fixture_repository.h"
 #include "database/repositories/league_repository.h"
+#include "global/language_manager.h"
 #include "model/calendar.h"
 #include "model/league.h"
 #include "model/player.h"
@@ -53,7 +54,9 @@ void setTopScorer(SeasonHistoryEntry& entry,
 CompetitionManager::CompetitionManager(
     std::shared_ptr<GameData> game_data,
     std::shared_ptr<DatabaseConnection> connection)
-    : gamedata(std::move(game_data)), db_conn(std::move(connection))
+    : gamedata(std::move(game_data)),
+      db_conn(std::move(connection)),
+      continental(gamedata)
 {
 }
 
@@ -90,6 +93,9 @@ void CompetitionManager::load(Calendar& calendar, uint16_t season)
   discipline.restore(repository.loadDiscipline());
   for (const auto& [id, league] : gamedata->getLeagues())
     refreshLeaguePoints(calendar, id);
+  pending_deciders.clear();
+  continental.load(*db_conn);
+  continental.refresh(calendar);
 }
 
 void CompetitionManager::save() const
@@ -103,6 +109,7 @@ void CompetitionManager::save() const
   if (history_dirty) repository.saveSeasonHistory(season_history);
   repository.savePlayerSeasonStats(player_stats);
   repository.saveDiscipline(discipline.records());
+  continental.save(*db_conn);
 
   LeagueRepository league_repository(db_conn);
   for (const auto& [id, league] : gamedata->getLeagues())
@@ -126,6 +133,15 @@ void CompetitionManager::recordResult(const Match& match, MatchReport report)
   SeasonStats::accumulate(player_stats, report);
   discipline.processMatch(report, *gamedata);
   const FixtureKey key{report.date, report.home_team_id, report.away_team_id};
+  if (report.match_type == MatchType::CONTINENTAL)
+  {
+    continental.onResult(match);
+    const Continental::Round round = Continental::roundOf(report.stage);
+    if (round == Continental::Round::Final ||
+        (round != Continental::Round::LeaguePhase &&
+         Continental::legOf(report.stage) == 2))
+      pending_deciders.push_back(key);
+  }
   pending_reports.insert_or_assign(key, std::move(report));
 }
 
@@ -137,6 +153,24 @@ void CompetitionManager::afterMatchday(Calendar& calendar,
   dirty_leagues.clear();
   Competitions::drawPendingCupRounds(
       calendar, *gamedata, SeasonCalendar::seasonStartYear(today), today);
+
+  // A level aggregate after 90 minutes goes to extra time and penalties.
+  for (const FixtureKey& key : pending_deciders)
+  {
+    Match* match =
+        calendar.findMatch(std::get<0>(key), std::get<1>(key), std::get<2>(key));
+    if (!match || !continental.resolveDecider(calendar, *match)) continue;
+    if (const auto report = pending_reports.find(key);
+        report != pending_reports.end())
+      match->writeResultTo(report->second);
+  }
+  pending_deciders.clear();
+  continental.afterMatchday(calendar, today);
+}
+
+void CompetitionManager::startContinentalSeason(const GameDateValue& today)
+{
+  continental.startSeason(SeasonCalendar::seasonStartYear(today), today);
 }
 
 void CompetitionManager::closeSeason(const Calendar& calendar, uint16_t season,
@@ -151,6 +185,38 @@ void CompetitionManager::closeSeason(const Calendar& calendar, uint16_t season,
   }
   std::ranges::sort(league_ids);
   const auto movements = Competitions::computeLeagueMovements(*gamedata, tables);
+
+  // Continental coefficients and next season's clubs, from the final tables
+  // (before promotion and relegation) and the domestic cup winners.
+  std::map<LeagueID, TeamID> cup_winners;
+  for (const LeagueID root : Competitions::countryRoots(*gamedata))
+  {
+    const auto status = Competitions::cupStatus(calendar, *gamedata, root);
+    if (status.winner) cup_winners[root] = *status.winner;
+  }
+  continental.closeSeason(calendar, start_year, tables, cup_winners);
+  for (const ContinentalCompetitions::Season& competition :
+       continental.getSeasons())
+  {
+    const Continental::CompetitionRules* rules =
+        Continental::rules(competition.competition_id);
+    if (!rules || competition.season_year != start_year || !competition.drawn)
+      continue;
+    SeasonHistoryEntry entry;
+    entry.season = season;
+    entry.start_year = start_year;
+    entry.competition_type = MatchType::CONTINENTAL;
+    entry.competition_id = competition.competition_id;
+    entry.competition_name = LOC(rules->name_key);
+    entry.champion_id = competition.winner_id;
+    entry.runner_up_id = competition.runner_up_id;
+    setTopScorer(entry, SeasonStats::topScorers(
+                            player_stats, season, MatchType::CONTINENTAL,
+                            competitionTeams(MatchType::CONTINENTAL,
+                                             competition.competition_id),
+                            1));
+    upsertHistory(season_history, std::move(entry));
+  }
 
   for (const LeagueID league_id : league_ids)
   {
@@ -240,6 +306,14 @@ std::vector<TeamID> CompetitionManager::competitionTeams(
 {
   if (competition_type == MatchType::CUP)
     return Competitions::cupEntrants(*gamedata, competition_id);
+  if (competition_type == MatchType::CONTINENTAL)
+  {
+    std::vector<TeamID> teams;
+    if (const auto* season = continental.getSeason(competition_id))
+      for (const auto& entrant : season->entrants)
+        teams.push_back(entrant.team_id);
+    return teams;
+  }
   const auto league = gamedata->getLeague(competition_id);
   return league ? league->get().getTeamIDs() : std::vector<TeamID>{};
 }

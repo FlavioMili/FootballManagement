@@ -47,6 +47,38 @@ enum class RosterColumn : ImGuiID
   STATUS,
 };
 
+constexpr ImGuiID columnId(RosterColumn column)
+{
+  return static_cast<ImGuiID>(column);
+}
+
+// Unscaled widths; the highest priority numbers hide first on narrow windows.
+const std::array<UI::Column, 10>& rosterColumns()
+{
+  constexpr ImGuiTableColumnFlags DESCENDING =
+      ImGuiTableColumnFlags_PreferSortDescending;
+  static const std::array<UI::Column, 10> columns = {{
+      {"ROSTER_COL_NAME", 0.0f, 0, ImGuiTableColumnFlags_DefaultSort,
+       columnId(RosterColumn::NAME)},
+      {"ROSTER_COL_ROLE", 56.0f, 1, ImGuiTableColumnFlags_None,
+       columnId(RosterColumn::ROLE)},
+      {"ROSTER_COL_AGE", 44.0f, 3, ImGuiTableColumnFlags_None,
+       columnId(RosterColumn::AGE)},
+      {"ROSTER_COL_OVERALL", 60.0f, 0, DESCENDING,
+       columnId(RosterColumn::OVERALL)},
+      {"ROSTER_COL_CONDITION", 78.0f, 2, DESCENDING,
+       columnId(RosterColumn::CONDITION)},
+      {"ROSTER_COL_FORM", 54.0f, 4, DESCENDING, columnId(RosterColumn::FORM)},
+      {"ROSTER_COL_VALUE", 88.0f, 3, DESCENDING, columnId(RosterColumn::VALUE)},
+      {"ROSTER_COL_WAGE", 84.0f, 4, DESCENDING, columnId(RosterColumn::WAGE)},
+      {"ROSTER_COL_CONTRACT", 70.0f, 5, ImGuiTableColumnFlags_None,
+       columnId(RosterColumn::CONTRACT)},
+      {"ROSTER_COL_STATUS", 150.0f, 2, ImGuiTableColumnFlags_None,
+       columnId(RosterColumn::STATUS)},
+  }};
+  return columns;
+}
+
 ImVec4 conditionColor(float condition)
 {
   const Theme::Palette& palette = Theme::palette();
@@ -172,14 +204,10 @@ void RosterScene::renderFilters()
   {
     UI::sameLineIfFits(UI::buttonWidth(LOC(GROUP_FILTER_KEYS[index])));
     const bool active = group_filter_index == static_cast<int>(index);
-    if (active)
-      ImGui::PushStyleColor(ImGuiCol_Button,
-                            ImGui::GetStyleColorVec4(ImGuiCol_Header));
     ImGui::PushID(static_cast<int>(index));
-    if (ImGui::Button(LOC(GROUP_FILTER_KEYS[index])))
+    if (UI::toggleButton(LOC(GROUP_FILTER_KEYS[index]), active))
       group_filter_index = static_cast<int>(index);
     ImGui::PopID();
-    if (active) ImGui::PopStyleColor();
   }
   UI::sameLineIfFits(130.0f * Theme::scale());
   ImGui::SetNextItemWidth(130.0f * Theme::scale());
@@ -291,43 +319,19 @@ void RosterScene::renderTable(float height)
     UI::emptyState(LOC("ROSTER_EMPTY_TITLE"), LOC("ROSTER_EMPTY_BODY"));
     return;
   }
+  // Fills the page height (vertical scroll only); columns drop by priority
+  // instead of scrolling sideways.
+  std::array<UI::Column, 10> columns = rosterColumns();
+  for (UI::Column& column : columns) column.label = LOC(column.label);
+  const UI::ColumnMask mask =
+      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
   const ImGuiTableFlags flags =
       ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-      ImGuiTableFlags_Sortable | ImGuiTableFlags_ScrollY |
-      ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_Hideable |
-      ImGuiTableFlags_Reorderable;
-  if (!UI::beginDataTable("RosterTable", 10, flags, TABLE_MIN_WIDTH,
-                          ImVec2(0.0f, height)))
+      ImGuiTableFlags_Sortable | ImGuiTableFlags_ScrollY;
+  if (!UI::beginResponsiveTable("RosterTable", columns, mask, flags,
+                                UI::TableHeader::SORTABLE,
+                                ImVec2(0.0f, height)))
     return;
-  ImGui::TableSetupColumn(LOC("ROSTER_COL_NAME"),
-                          ImGuiTableColumnFlags_WidthStretch |
-                              ImGuiTableColumnFlags_NoHide |
-                              ImGuiTableColumnFlags_DefaultSort,
-                          0.0f, static_cast<ImGuiID>(RosterColumn::NAME));
-  ImGui::TableSetupColumn(LOC("ROSTER_COL_ROLE"), 0, 0.0f,
-                          static_cast<ImGuiID>(RosterColumn::ROLE));
-  ImGui::TableSetupColumn(LOC("ROSTER_COL_AGE"), 0, 0.0f,
-                          static_cast<ImGuiID>(RosterColumn::AGE));
-  ImGui::TableSetupColumn(LOC("ROSTER_COL_OVERALL"),
-                          ImGuiTableColumnFlags_PreferSortDescending, 0.0f,
-                          static_cast<ImGuiID>(RosterColumn::OVERALL));
-  ImGui::TableSetupColumn(LOC("ROSTER_COL_CONDITION"),
-                          ImGuiTableColumnFlags_PreferSortDescending, 0.0f,
-                          static_cast<ImGuiID>(RosterColumn::CONDITION));
-  ImGui::TableSetupColumn(LOC("ROSTER_COL_FORM"),
-                          ImGuiTableColumnFlags_PreferSortDescending, 0.0f,
-                          static_cast<ImGuiID>(RosterColumn::FORM));
-  ImGui::TableSetupColumn(LOC("ROSTER_COL_VALUE"),
-                          ImGuiTableColumnFlags_PreferSortDescending, 0.0f,
-                          static_cast<ImGuiID>(RosterColumn::VALUE));
-  ImGui::TableSetupColumn(LOC("ROSTER_COL_WAGE"),
-                          ImGuiTableColumnFlags_PreferSortDescending, 0.0f,
-                          static_cast<ImGuiID>(RosterColumn::WAGE));
-  ImGui::TableSetupColumn(LOC("ROSTER_COL_CONTRACT"), 0, 0.0f,
-                          static_cast<ImGuiID>(RosterColumn::CONTRACT));
-  ImGui::TableSetupColumn(LOC("ROSTER_COL_STATUS"), 0, 0.0f,
-                          static_cast<ImGuiID>(RosterColumn::STATUS));
-  ImGui::TableHeadersRow();
 
   // The table remembers its sort across screen visits while this scene is
   // new, so follow the header state every frame, not only when it changes.
@@ -371,29 +375,27 @@ void RosterScene::renderTable(float height)
       if (show_details && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
         ImGui::SetTooltip("%s", LOC("ROSTER_OPEN_PROFILE_HINT"));
       ImGui::PopID();
-      ImGui::TableNextColumn();
-      ImGui::TextColored(groupColor(row.group), "%s", row.role.c_str());
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.age);
-      ImGui::TableNextColumn();
-      UI::ratingChip(row.overall);
-      ImGui::TableNextColumn();
-      ImGui::TextColored(conditionColor(row.condition), "%.0f%%",
-                         static_cast<double>(row.condition));
-      ImGui::TableNextColumn();
-      if (row.form > 0.0f)
-        ImGui::Text("%.1f", static_cast<double>(row.form));
-      else
-        ImGui::TextColored(palette.faint, "–");
-      ImGui::TableNextColumn();
-      UI::textRight(row.value_text.c_str());
-      ImGui::TableNextColumn();
-      UI::textRight(row.wage_text.c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextColored(
-          row.contract_years <= 1 ? palette.negative : palette.text, "%d",
-          row.contract_years);
-      ImGui::TableNextColumn();
+      if (UI::cell(mask, 1))
+        ImGui::TextColored(groupColor(row.group), "%s", row.role.c_str());
+      if (UI::cell(mask, 2)) ImGui::Text("%d", row.age);
+      if (UI::cell(mask, 3)) UI::ratingChip(row.overall);
+      if (UI::cell(mask, 4))
+        ImGui::TextColored(conditionColor(row.condition), "%.0f%%",
+                           static_cast<double>(row.condition));
+      if (UI::cell(mask, 5))
+      {
+        if (row.form > 0.0f)
+          ImGui::Text("%.1f", static_cast<double>(row.form));
+        else
+          ImGui::TextColored(palette.faint, "–");
+      }
+      if (UI::cell(mask, 6)) UI::textRight(row.value_text.c_str());
+      if (UI::cell(mask, 7)) UI::textRight(row.wage_text.c_str());
+      if (UI::cell(mask, 8))
+        ImGui::TextColored(
+            row.contract_years <= 1 ? palette.negative : palette.text, "%d",
+            row.contract_years);
+      if (!UI::cell(mask, 9)) continue;
       if (row.injury_days > 0)
       {
         UI::badge(LOC("ROSTER_BADGE_INJURED"), palette.negative);
@@ -427,7 +429,9 @@ void RosterScene::renderDetails(float height)
 {
   const Player* player = selectedPlayer();
   const float buttonsHeight =
-      player != nullptr ? ImGui::GetFrameHeightWithSpacing() * 2.0f : 0.0f;
+      player != nullptr
+          ? (UI::buttonHeight() + ImGui::GetStyle().ItemSpacing.y) * 2.0f
+          : 0.0f;
   PlayerUI::detailPanel("RosterPlayerDetails", player,
                         guiView->getController().getStatsConfig(), nullptr,
                         height - buttonsHeight);
@@ -437,8 +441,9 @@ void RosterScene::renderDetails(float height)
   if (!isManagedClub()) return;
   GameController& controller = guiView->getController();
   const bool listed = controller.isPlayerListed(player->getId());
-  if (ImGui::Button(LOC(listed ? "TRANSFER_UNLIST" : "PROFILE_TRANSFER_LIST"),
-                    ImVec2(-FLT_MIN, 0.0f)))
+  if (UI::secondaryButton(
+          LOC(listed ? "TRANSFER_UNLIST" : "PROFILE_TRANSFER_LIST"),
+          ImVec2(-FLT_MIN, 0.0f)))
   {
     if (listed)
       controller.removePlayerFromTransfer(player->getId());
@@ -465,6 +470,9 @@ void RosterScene::loadRoster()
   const auto club = controller.getTeamById(*clubId);
   club_name = club ? club->get().getName() : std::string();
   roster_players = controller.getPlayersForTeam(*clubId);
+  // U18 players and intake trialists belong to the academy, not the squad.
+  std::erase_if(roster_players, [&controller](const auto& player)
+                { return controller.isAcademyPlayer(player.get().getId()); });
 
   if (club)
   {

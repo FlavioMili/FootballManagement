@@ -48,6 +48,7 @@
 #include "backends/imgui_impl_sdlrenderer3.h"
 #include "controller/game_controller.h"
 #include "database/database_connection.h"
+#include "database/save_manager.h"
 #include "database/gamedata.h"
 #include "global/global.h"
 #include "global/language_manager.h"
@@ -60,6 +61,7 @@
 #include "gui/scenes/management_scene.h"
 #include "gui/scenes/match_scene.h"
 #include "gui/scenes/player_profile_scene.h"
+#include "gui/scenes/transfer_market_scene.h"
 #include "gui/widgets/theme.h"
 #include "model/finances.h"
 #include "model/injury.h"
@@ -138,11 +140,29 @@ class GameFlowTest_GUIFlowLifecycle_Test
     scene.renew_requested = true;
   }
 
+  static void showSubstitutions(MatchScene& scene)
+  {
+    scene.show_substitutions = true;
+  }
+  static bool openFirstOffer(TransferMarketScene& scene, bool loan)
+  {
+    if (scene.targets.empty()) return false;
+    if (loan)
+      scene.openLoanDialog(scene.targets.front());
+    else
+      scene.openOfferDialog(scene.targets.front());
+    return true;
+  }
   static MatchEngine* engine(MatchScene& scene) { return scene.engine.get(); }
   static bool finished(const MatchScene& scene) { return scene.match_finished; }
   static void setSpeed(MatchScene& scene, float speed)
   {
-    scene.match_speed = speed;
+    scene.setPlaybackSpeed(speed);
+  }
+  /** Quick Result simulates on a worker thread until update() sees it. */
+  static bool quickResultPending(const MatchScene& scene)
+  {
+    return scene.quick_result.valid();
   }
   static bool quickResult(MatchScene& scene) { return scene.quickResult(); }
   static size_t lineupProblems(const MatchScene& scene)
@@ -242,6 +262,14 @@ std::vector<std::string> checkWorld(const GameController& controller)
                                      player.get().getTeamId()));
   if (problems.size() > 8) problems.resize(8);
   return problems;
+}
+
+/** Explicit saves only, so a test can tell what wrote the slot. */
+void disableAutosave(GameController& controller)
+{
+  AutosavePolicy policy = controller.getAutosavePolicy();
+  policy.frequency = AutosaveFrequency::Off;
+  controller.setAutosavePolicy(policy);
 }
 
 std::string joined(const std::vector<std::string>& lines)
@@ -362,7 +390,9 @@ class Driver
       const bool requested = hub() != nullptr &&
                              Bridge::continueRequested(*hub()) &&
                              active() == hub();
-      if (!advancing() && !loading && !requested) break;
+      const auto* match = dynamic_cast<const MatchScene*>(active());
+      const bool quick = match != nullptr && Bridge::quickResultPending(*match);
+      if (!advancing() && !loading && !requested && !quick) break;
       frame();
     }
     frames(2);
@@ -509,6 +539,7 @@ TEST_F(Adversarial, InputDuringContinueIsIgnored)
   MainGameScene* hub = driver->hub();
   const auto next = Bridge::nextFixtureDate(*hub);
   ASSERT_TRUE(next.has_value());
+  disableAutosave(*controller);
   const std::string saved = savedDate(WORK_SLOT);
   ASSERT_FALSE(saved.empty());
   driver->space();
@@ -551,11 +582,22 @@ TEST_F(Adversarial, InputDuringContinueIsIgnored)
   EXPECT_EQ(driver->imgui_errors, 0);
   EXPECT_EQ(savedDate(WORK_SLOT), saved)
       << "Ctrl+S pressed during Continue saved the game mid-simulation";
-  // Saving works again once the days are done.
+  // Saving works again once the days are done (a key mashed in the frame
+  // Continue finished may have opened the palette: close it first).
+  driver->escape();
+  driver->escape();
+  const std::string state = std::format(
+      "scene {} overlays {} popup {} active id {} text input {} nav {} "
+      "mashes {}",
+      static_cast<int>(driver->activeId()), view->getOverlayDepth(),
+      ImGui::IsPopupOpen(
+          "", ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel),
+      GImGui->ActiveId, ImGui::GetIO().WantTextInput,
+      ImGui::GetIO().NavVisible, mashes);
   driver->save();
   driver->frames(2);
   EXPECT_EQ(savedDate(WORK_SLOT), controller->getCurrentDate().toString())
-      << "Ctrl+S after Continue did not save";
+      << "Ctrl+S after Continue did not save (" << state << ")";
   expectWorldConsistent("after mashing during Continue");
 }
 
@@ -814,7 +856,7 @@ TEST_F(Adversarial, ReleasePlayerInLineup)
   ASSERT_NE(match, nullptr) << "PLAY MATCH did not open the match";
   if (Bridge::engine(*match) == nullptr) GTEST_SKIP() << "lineup gate shown";
   EXPECT_TRUE(Bridge::quickResult(*match));
-  driver->frames(3);
+  driver->settle();
   expectWorldConsistent("after the match without the released player");
 }
 
@@ -843,7 +885,7 @@ TEST_F(Adversarial, SquadBelowElevenThenPlay)
   {
     if (Bridge::engine(*match) != nullptr)
       EXPECT_TRUE(Bridge::quickResult(*match));
-    driver->frames(3);
+    driver->settle();
   }
   for (int attempt = 0; attempt < 3 && driver->activeId() != SceneID::GAME_MENU;
        ++attempt)
@@ -884,7 +926,7 @@ TEST_F(Adversarial, AllPlayersInjuredOnMatchDay)
       if (Bridge::engine(*match) != nullptr)
       {
         EXPECT_TRUE(Bridge::quickResult(*match));
-        driver->frames(3);
+        driver->settle();
         break;
       }
     }
@@ -989,7 +1031,7 @@ TEST_F(Adversarial, ResizeAndMinimizeDuringMatch)
   driver->frames(3);
   EXPECT_EQ(driver->imgui_errors, 0) << "ImGui errors while resizing a match";
   EXPECT_TRUE(Bridge::quickResult(*match));
-  driver->frames(3);
+  driver->settle();
   expectWorldConsistent("after resizing a match");
 }
 
@@ -1075,10 +1117,12 @@ TEST_F(Adversarial, QuitWithoutSavingKeepsTheSave)
     std::ranges::sort(squads[team.get().getId()]);
     balances[team.get().getId()] = team.get().getFinances().getBalance();
   }
+  disableAutosave(*controller);
   for (int day = 0; day < 14; ++day) controller->advanceDay();
   controller = std::make_unique<GameController>();
   ASSERT_TRUE(controller->loadGame(WORK_SLOT));
-  EXPECT_EQ(controller->getCurrentDate().toString(), date);
+  EXPECT_EQ(controller->getCurrentDate().toString(), date)
+      << "the slot moved on without a save (autosave is off)";
   int changedSquads = 0;
   int changedBalances = 0;
   for (const auto& team : controller->getTeams())
@@ -1091,12 +1135,11 @@ TEST_F(Adversarial, QuitWithoutSavingKeepsTheSave)
   }
   const auto problems = checkWorld(*controller);
   if (changedSquads > 0 || changedBalances > 0 || !problems.empty())
-    GTEST_SKIP() << "KNOWN BUG: F-AUTOPERSIST - unsaved days leaked into the "
-                    "slot (AI transfers/listings are written straight to the "
-                    "save database): after 14 unsaved days and a reload, "
-                 << changedSquads << " squads and " << changedBalances
-                 << " balances differ from the last save; invariants:"
-                 << joined(problems);
+    ADD_FAILURE() << "unsaved days leaked into the slot: after 14 unsaved "
+                     "days and a reload, "
+                  << changedSquads << " squads and " << changedBalances
+                  << " balances differ from the last save; invariants:"
+                  << joined(problems);
 }
 
 /** Season rollover with talks, offers, a loan and a pre-contract open. */
@@ -1148,7 +1191,138 @@ TEST_F(Adversarial, SeasonRolloverWithOpenDeals)
   EXPECT_TRUE(checkWorld(reloaded).empty()) << joined(checkWorld(reloaded));
 }
 
+/**
+ * The world is a pure function of the save and the days simulated: the same
+ * month played twice (parallel matchdays included) ends identically.
+ */
+TEST_F(Adversarial, SameSaveSameMonth)
+{
+  const auto playMonth = [](std::string& out)
+  {
+    GameController run;
+    ASSERT_TRUE(run.loadGame(WORK_SLOT));
+    disableAutosave(run);
+    for (int day = 0; day < 30; ++day) run.advanceDay();
+    for (const auto& team : run.getTeams())
+    {
+      std::vector<PlayerID> ids = team.get().getPlayerIDs();
+      std::ranges::sort(ids);
+      out += std::format("{}:{}:", team.get().getId(),
+                         team.get().getFinances().getBalance());
+      for (const PlayerID id : ids) out += std::to_string(id) + ",";
+      out += "\n";
+    }
+    for (const auto& [date, matches] :
+         run.getGame()->getCalendar().getFullCalendar())
+      for (const Match& match : matches)
+        if (match.isPlayed())
+          out += std::format("{} {}-{} {}:{}\n", date.toString(),
+                             match.getHomeTeamId(), match.getAwayTeamId(),
+                             match.getHomeScore(), match.getAwayScore());
+  };
+  controller.reset();
+  std::string first;
+  std::string second;
+  playMonth(first);
+  playMonth(second);
+  ASSERT_FALSE(first.empty());
+  if (first != second)
+  {
+    size_t line = 0;
+    size_t index = 0;
+    while (index < first.size() && index < second.size() &&
+           first[index] == second[index])
+      line += first[index++] == '\n';
+    ADD_FAILURE() << "two runs of the same month differ from line " << line
+                  << ":\n  " << first.substr(first.rfind('\n', index) + 1, 120)
+                  << "\n  " << second.substr(second.rfind('\n', index) + 1, 120);
+  }
+}
+
 // ---- Settings and language -------------------------------------------------------
+
+/** Escape closes every dialog, as it does the confirmation dialogs. */
+TEST_F(Adversarial, EscapeClosesEveryDialog)
+{
+  advanceToMatchDay();
+  fixLineupForToday();
+  openGui();
+  const auto anyPopup = []()
+  {
+    return ImGui::IsPopupOpen(
+        "", ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
+  };
+  std::vector<std::string> stuck;
+  const auto check = [&](const char* name)
+  {
+    driver->frames(3);
+    if (!anyPopup())
+    {
+      ADD_FAILURE() << name << " did not open";
+      return;
+    }
+    driver->escape();
+    driver->frames(2);
+    if (anyPopup())
+    {
+      stuck.emplace_back(name);
+      // Leaving its screen drops the dialog (ImGui closes popups that are
+      // no longer submitted).
+      Navigation::open(view.get(), NavSection::HOME);
+      driver->frames(3);
+    }
+  };
+
+  auto* shell = dynamic_cast<ManagementScene*>(driver->active());
+  ASSERT_NE(shell, nullptr);
+  Bridge::requestMainMenu(*shell);
+  check("main menu confirmation");
+
+  driver->key(SDLK_K, SDL_SCANCODE_K, SDL_KMOD_LCTRL);
+  check("command palette");
+
+  Navigation::openPlayer(view.get(), club().getPlayerIDs().front());
+  driver->frames(3);
+  if (auto* profile = dynamic_cast<PlayerProfileScene*>(driver->active()))
+  {
+    Bridge::requestRenew(*profile);
+    check("contract renewal (player profile)");
+  }
+  Navigation::open(view.get(), NavSection::HOME);
+  driver->frames(2);
+
+  Navigation::open(view.get(), NavSection::TRANSFERS);
+  driver->frames(3);
+  if (auto* market = dynamic_cast<TransferMarketScene*>(driver->active()))
+  {
+    if (Bridge::openFirstOffer(*market, false)) check("transfer offer");
+    Navigation::open(view.get(), NavSection::TRANSFERS);
+    driver->frames(3);
+    market = dynamic_cast<TransferMarketScene*>(driver->active());
+    if (market != nullptr && Bridge::openFirstOffer(*market, true))
+      check("loan offer");
+  }
+  Navigation::open(view.get(), NavSection::HOME);
+  driver->frames(2);
+
+  driver->space();
+  driver->frames(3);
+  if (auto* match = dynamic_cast<MatchScene*>(driver->active());
+      match != nullptr && Bridge::engine(*match) != nullptr)
+  {
+    Bridge::showSubstitutions(*match);
+    check("substitutions (live match)");
+  }
+  EXPECT_EQ(driver->imgui_errors, 0);
+  if (!stuck.empty())
+  {
+    std::string list;
+    for (const std::string& name : stuck) list += "\n  " + name;
+    GTEST_SKIP() << "KNOWN BUG: F-ESC - Escape does not close these dialogs "
+                    "(only UI::confirmDialog handles it):"
+                 << list;
+  }
+}
 
 /** Switching language mid-session re-renders every screen cleanly. */
 TEST_F(Adversarial, SwitchLanguageMidSession)

@@ -151,3 +151,60 @@ TEST(MatchRulesTest, StaminaDrainFollowsIntensityAndEndurance)
             MatchRules::staminaDrainPerSecond(0.6f, 0.9f, 0.0f));
   EXPECT_GT(MatchRules::staminaDrainPerSecond(0.6f, 0.5f, 1.0f), running);
 }
+
+TEST(MatchRulesTest, ChallengeTimingAndAngleDecideTackles)
+{
+  MatchRules::TackleContext closeControl;
+  closeControl.exposure = 0.0f;
+  MatchRules::TackleContext exposed = closeControl;
+  exposed.exposure = 1.0f;
+  // A challenge while the ball is away from the attacker's foot wins it more
+  // often and catches the man less often.
+  EXPECT_GT(MatchRules::tackleWinChance(exposed),
+            MatchRules::tackleWinChance(closeControl) + 0.2f);
+  EXPECT_LT(MatchRules::tackleFoulPropensity(exposed),
+            MatchRules::tackleFoulPropensity(closeControl));
+
+  MatchRules::TackleContext fromBehind = closeControl;
+  fromBehind.fromBehind = true;
+  MatchRules::TackleContext slidingFromBehind = fromBehind;
+  slidingFromBehind.sliding = true;
+  EXPECT_LT(MatchRules::tackleWinChance(fromBehind),
+            MatchRules::tackleWinChance(closeControl));
+  EXPECT_GT(MatchRules::tackleFoulPropensity(fromBehind),
+            MatchRules::tackleFoulPropensity(closeControl) * 2.0f);
+  EXPECT_GT(MatchRules::tackleFoulPropensity(slidingFromBehind),
+            MatchRules::tackleFoulPropensity(fromBehind));
+
+  // Skill and strength matter, and a strong player shielding is hard to rob.
+  MatchRules::TackleContext skilledDefender = closeControl;
+  skilledDefender.defending = 0.9f;
+  skilledDefender.dribbling = 0.3f;
+  MatchRules::TackleContext skilledDribbler = closeControl;
+  skilledDribbler.defending = 0.3f;
+  skilledDribbler.dribbling = 0.9f;
+  EXPECT_GT(MatchRules::tackleWinChance(skilledDefender),
+            MatchRules::tackleWinChance(skilledDribbler));
+  MatchRules::TackleContext shielding = closeControl;
+  shielding.shielding = true;
+  shielding.carrierPhysicality = 0.9f;
+  EXPECT_LT(MatchRules::tackleWinChance(shielding),
+            MatchRules::tackleWinChance(closeControl));
+
+  // A careful defender in his own box or on a booking fouls far less.
+  MatchRules::TackleContext inBox = closeControl;
+  inBox.inPenaltyArea = true;
+  MatchRules::TackleContext booked = closeControl;
+  booked.defenderBooked = true;
+  EXPECT_LT(MatchRules::tackleFoulPropensity(inBox),
+            MatchRules::tackleFoulPropensity(closeControl) * 0.2f);
+  EXPECT_LT(MatchRules::tackleFoulPropensity(booked),
+            MatchRules::tackleFoulPropensity(closeControl));
+  for (const auto* context : {&closeControl, &exposed, &slidingFromBehind})
+  {
+    EXPECT_GE(MatchRules::tackleWinChance(*context),
+              MatchTuning::Defending::MIN_WIN_CHANCE);
+    EXPECT_LE(MatchRules::tackleWinChance(*context),
+              MatchTuning::Defending::MAX_WIN_CHANCE);
+  }
+}

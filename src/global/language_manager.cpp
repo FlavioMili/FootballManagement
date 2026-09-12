@@ -30,8 +30,7 @@ bool LanguageManager::loadLanguage(Language lang)
   auto it = languageToString.find(lang);
   if (it == languageToString.end()) return false;
 
-  std::string filePath =
-      std::string(PROJECT_ROOT) + "assets/lang/" + it->second + ".json";
+  std::string filePath = AssetPaths::language(it->second);
   std::ifstream file(filePath);
   if (!file.is_open())
   {

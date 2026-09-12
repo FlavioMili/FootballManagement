@@ -12,6 +12,7 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <array>
 
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
@@ -22,6 +23,20 @@
 
 namespace
 {
+// Club fixture columns (unscaled widths); priority 0 never hides.
+const std::array<UI::Column, 6>& clubFixtureColumns()
+{
+  static const std::array<UI::Column, 6> columns = {{
+      {"FIXTURES_COL_DATE", 118.0f, 1},
+      {"FIXTURES_COL_COMPETITION", 170.0f, 2},
+      {"FIXTURES_COL_VENUE", 70.0f, 3},
+      {"FIXTURES_COL_OPPONENT", 0.0f, 0},
+      {"FIXTURES_COL_RESULT", 76.0f, 0},
+      {"FIXTURES_COL_OUTCOME", 60.0f, 3},
+  }};
+  return columns;
+}
+
 ImVec4 matchTypeColor(MatchType type)
 {
   const Theme::Palette& palette = Theme::palette();
@@ -32,20 +47,12 @@ ImVec4 matchTypeColor(MatchType type)
     case MatchType::FRIENDLY:
       return palette.muted;
     case MatchType::CUP:
+    case MatchType::CONTINENTAL:
       return palette.warning;
   }
   return palette.info;
 }
 
-bool segment(const char* label, bool active)
-{
-  if (active)
-    ImGui::PushStyleColor(ImGuiCol_Button,
-                          ImGui::GetStyleColorVec4(ImGuiCol_Header));
-  const bool pressed = ImGui::Button(label);
-  if (active) ImGui::PopStyleColor();
-  return pressed;
-}
 }  // namespace
 
 FixturesScene::FixturesScene(GUIView* parent) : ManagementScene(parent) {}
@@ -104,9 +111,10 @@ void FixturesScene::refresh()
 void FixturesScene::renderContent()
 {
   UI::pageHeader(LOC("FIXTURES_TITLE"), LOC("FIXTURES_SUBTITLE"));
-  if (segment(LOC("FIXTURES_VIEW_CLUB"), view == View::CLUB)) view = View::CLUB;
+  if (UI::toggleButton(LOC("FIXTURES_VIEW_CLUB"), view == View::CLUB))
+    view = View::CLUB;
   ImGui::SameLine();
-  if (segment(LOC("FIXTURES_VIEW_LEAGUE"), view == View::LEAGUE))
+  if (UI::toggleButton(LOC("FIXTURES_VIEW_LEAGUE"), view == View::LEAGUE))
     view = View::LEAGUE;
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
 
@@ -160,21 +168,16 @@ void FixturesScene::renderClubFixtures(float height)
     return;
   }
   UI::beginCard("club_fixtures_card", nullptr, ImVec2(0.0f, height));
-  const ImGuiTableFlags flags =
-      ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-      ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit;
-  if (UI::beginDataTable("club_fixtures", 6, flags, 620.0f, ImVec2(0.0f, 0.0f),
-                         1))
+  // Fills the page height (vertical scroll only); columns hide by priority.
+  std::array<UI::Column, 6> columns = clubFixtureColumns();
+  for (UI::Column& column : columns) column.label = LOC(column.label);
+  const UI::ColumnMask mask =
+      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
+  const ImGuiTableFlags flags = ImGuiTableFlags_RowBg |
+                                ImGuiTableFlags_BordersInnerH |
+                                ImGuiTableFlags_ScrollY;
+  if (UI::beginResponsiveTable("club_fixtures", columns, mask, flags))
   {
-    ImGui::TableSetupColumn(LOC("FIXTURES_COL_DATE"));
-    ImGui::TableSetupColumn(LOC("FIXTURES_COL_COMPETITION"));
-    ImGui::TableSetupColumn(LOC("FIXTURES_COL_VENUE"));
-    ImGui::TableSetupColumn(LOC("FIXTURES_COL_OPPONENT"),
-                            ImGuiTableColumnFlags_WidthStretch);
-    ImGui::TableSetupColumn(LOC("FIXTURES_COL_RESULT"));
-    ImGui::TableSetupColumn(LOC("FIXTURES_COL_OUTCOME"));
-    UI::staticHeadersRow();
-
     ImGuiListClipper clipper;
     clipper.Begin(static_cast<int>(club_fixtures.size()));
     if (next_fixture_index >= 0) clipper.IncludeItemByIndex(next_fixture_index);
@@ -199,23 +202,25 @@ void FixturesScene::renderClubFixtures(float height)
             scroll_to_next = false;
           }
         }
-        ImGui::TableNextColumn();
-        ImGui::TextColored(fixture.played ? palette.muted : palette.text, "%s",
-                           Format::date(fixture.date).c_str());
-        ImGui::TableNextColumn();
-        UI::badge(LOC(CompetitionView::matchTypeKey(fixture.type)),
-                  matchTypeColor(fixture.type));
-        if (fixture.round > 0)
+        if (UI::cell(mask, 0))
+          ImGui::TextColored(fixture.played ? palette.muted : palette.text,
+                             "%s", Format::date(fixture.date).c_str());
+        if (UI::cell(mask, 1))
         {
-          ImGui::SameLine();
-          ImGui::TextColored(
-              palette.faint, "%s",
-              fmt::sprintf(LOC("FIXTURES_MATCHDAY_SHORT"), fixture.round)
-                  .c_str());
+          UI::badge(LOC(CompetitionView::matchTypeKey(fixture.type)),
+                    matchTypeColor(fixture.type));
+          if (fixture.round > 0)
+          {
+            ImGui::SameLine();
+            ImGui::TextColored(
+                palette.faint, "%s",
+                fmt::sprintf(LOC("FIXTURES_MATCHDAY_SHORT"), fixture.round)
+                    .c_str());
+          }
         }
-        ImGui::TableNextColumn();
-        ImGui::TextColored(palette.muted, "%s",
-                           LOC(home ? "FIXTURE_HOME" : "FIXTURE_AWAY"));
+        if (UI::cell(mask, 2))
+          ImGui::TextColored(palette.muted, "%s",
+                             LOC(home ? "FIXTURE_HOME" : "FIXTURE_AWAY"));
         ImGui::TableNextColumn();
         ImGui::PushID(line);
         const std::string& opponentName =
@@ -240,8 +245,7 @@ void FixturesScene::renderClubFixtures(float height)
         else
           ImGui::TextColored(palette.faint, "%s",
                              isNext ? LOC("FIXTURES_NEXT") : "–");
-        ImGui::TableNextColumn();
-        if (fixture.played)
+        if (UI::cell(mask, 5) && fixture.played)
         {
           const UI::Outcome outcome =
               CompetitionView::outcomeFor(fixture, club_id);

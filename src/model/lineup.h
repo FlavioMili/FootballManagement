@@ -17,6 +17,60 @@
 #include "strategy.h"
 
 /**
+ * @enum SetPieceDuty
+ * @brief Leadership and dead-ball duties the manager can hand out (values
+ * are persisted in the lineup).
+ */
+enum class SetPieceDuty : uint8_t
+{
+  Captain,
+  ViceCaptain,
+  Penalties,
+  FreeKicks, /*!< Direct free kicks in shooting range. */
+  CornersLeft,
+  CornersRight,
+  LongThrows,
+  COUNT
+};
+
+inline constexpr size_t SET_PIECE_DUTY_COUNT =
+    static_cast<size_t>(SetPieceDuty::COUNT);
+
+/** @brief Player designated for each duty; 0 = chosen automatically. */
+using SetPieceDesignations = std::array<PlayerID, SET_PIECE_DUTY_COUNT>;
+
+/**
+ * @brief Attribute-based suitability of players for set-piece duties.
+ *
+ * The weights mirror the match engine's own choice of taker (shooting for
+ * penalties and direct free kicks, delivery for corners), so a manager's
+ * pick and the automatic fallback are judged on the same scale.
+ */
+namespace SetPieces
+{
+/** Language key naming @p duty (e.g. "SET_PIECE_PENALTIES"). */
+const char* dutyKey(SetPieceDuty duty);
+
+/** True for the captaincy duties (chosen by standing, not attributes). */
+bool isLeadership(SetPieceDuty duty);
+
+/**
+ * Suitability of @p player for a dead-ball duty on the 0-100 attribute
+ * scale. Goalkeepers score 0 for every kicking or throwing duty, and so does
+ * everyone for the leadership duties (the captain comes from the
+ * dressing-room hierarchy).
+ */
+float score(SetPieceDuty duty, const Player& player);
+
+/**
+ * Best candidate for a dead-ball duty among @p candidates (ties: lower id);
+ * nullptr when nobody qualifies. Leadership duties return nullptr.
+ */
+const Player* best(SetPieceDuty duty,
+                   const std::vector<const Player*>& candidates);
+}  // namespace SetPieces
+
+/**
  * @class Lineup
  * @brief Manages the starting XI and reserves of a team.
  *
@@ -114,6 +168,34 @@ class Lineup
    */
   const Strategy& getStrategy() const;
 
+  // Captain and set-piece takers
+  /** @brief Designated player of a duty (0 = automatic). */
+  PlayerID getDesignated(SetPieceDuty duty) const;
+
+  /** @brief Designates a player (0 = automatic) for a duty. */
+  void setDesignated(SetPieceDuty duty, PlayerID playerID);
+
+  /** @brief Every designation, indexed by SetPieceDuty. */
+  const SetPieceDesignations& getDesignations() const;
+
+  /** @brief Replaces every designation (persistence). */
+  void setDesignations(const SetPieceDesignations& designations);
+
+  /** @brief Goalkeeper and outfield players of the XI (no null entries). */
+  std::vector<const Player*> starters() const;
+
+  /** @brief True when the player is in the starting XI. */
+  bool isStarter(PlayerID playerID) const;
+
+  /**
+   * @brief Who performs a dead-ball duty at kick-off: the designated player
+   * when he starts, otherwise the best starter for it (SetPieces::best).
+   * Leadership duties return the designated captain when he starts (the
+   * designated vice-captain stands in for an absent one), else nullptr:
+   * an automatic captain comes from the dressing-room hierarchy.
+   */
+  const Player* effectiveTaker(SetPieceDuty duty) const;
+
   // Debug / visualisation
   /**
    * @brief Converts the lineup to a string representation for debugging.
@@ -145,6 +227,7 @@ class Lineup
   std::vector<PositionedPlayer> outfield_players;
   std::vector<const Player*> reserves;
   Strategy strategy;
+  SetPieceDesignations designations{};
 };
 
 /***************************************************************

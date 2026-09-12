@@ -40,6 +40,20 @@ std::string MatchClock::minuteLabel(float matchMinutes, int period,
   return std::format("{}'", minute);
 }
 
+std::string MatchClock::clockLabel(float matchMinutes, int period,
+                                   bool addedTime)
+{
+  const int regulationEnd = period >= 2 ? FULL_TIME_MINUTE : HALF_TIME_MINUTE;
+  const float shown =
+      std::max(0.0f, addedTime ? matchMinutes - static_cast<float>(regulationEnd)
+                               : matchMinutes);
+  const int totalSeconds = static_cast<int>(std::floor(shown * 60.0f));
+  if (addedTime)
+    return std::format("{}+{}:{:02}", regulationEnd, totalSeconds / 60,
+                       totalSeconds % 60);
+  return std::format("{:02}:{:02}", totalSeconds / 60, totalSeconds % 60);
+}
+
 std::string MatchClock::minuteLabel(const MatchReportEvent& event)
 {
   // The event stores the whole minutes elapsed on the clock and, in added

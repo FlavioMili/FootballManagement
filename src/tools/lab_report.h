@@ -39,7 +39,8 @@ enum class Scope : std::uint8_t
 {
   Match,  /*!< Isolated matches (full engine detail) and world matches. */
   Engine, /*!< Isolated matches only (needs engine-only statistics). */
-  World   /*!< Season runs only. */
+  World,  /*!< Season runs only. */
+  Tactics /*!< Tactic round-robin only. */
 };
 
 /** How a value is printed: fraction as percent, or a plain number. */
@@ -141,8 +142,7 @@ struct LabReport
   std::map<std::string, std::string> parameters;
   std::vector<ReportRow> rows;
   std::vector<TextTable> tables;
-  /** Extra non-target findings (e.g. tactic dominance). Any Gate failure
-   * among them is counted by exitCode(). */
+  /** Findings outside the target table (definitions, caveats). */
   std::vector<std::string> notes;
 
   Summary summary() const;

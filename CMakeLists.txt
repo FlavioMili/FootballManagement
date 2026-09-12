@@ -104,11 +104,11 @@ if(NOT SQLite3_FOUND)
   FetchContent_Declare(
     sqlite3
     GIT_REPOSITORY https://github.com/sjinks/sqlite3-cmake.git
-    GIT_TAG        v3.45.1.0
+    GIT_TAG        v3.45.1
   )
   FetchContent_MakeAvailable(sqlite3)
   if(NOT TARGET SQLite3::SQLite3)
-    add_library(SQLite3::SQLite3 ALIAS sqlite3)
+    add_library(SQLite3::SQLite3 ALIAS SQLite3)
   endif()
 else()
   # CMake < 3.30 defines SQLite::SQLite3 but not SQLite3::SQLite3
@@ -190,6 +190,7 @@ endif()
 # Subdirectories
 # -----------------------------
 add_subdirectory(src)
+include(cmake/Packaging.cmake)
 
 if(BUILD_TESTING)
   enable_testing()

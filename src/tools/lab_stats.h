@@ -55,7 +55,10 @@ enum class Verdict : std::uint8_t
 /** Two-sided 97.5% quantile of Student's t (1.96 for large samples). */
 double tQuantile975(std::size_t degrees_of_freedom);
 
-/** Mean of per-unit values; t interval mean +- t * sd / sqrt(n). */
+/**
+ * Mean of per-unit values; t interval mean +- t * sd / sqrt(n), lower bound
+ * clamped at 0 when every value is non-negative.
+ */
 Estimate meanEstimate(std::span<const double> values);
 
 /** Share of successes; Wilson score interval (z = 1.96). */
@@ -65,7 +68,8 @@ Estimate proportionEstimate(std::size_t successes, std::size_t trials);
  * Ratio of sums sum(num) / sum(den) over sampling units (e.g. goals per
  * shot with matches as units). Delta-method interval:
  * var(R) = sum((num_i - R den_i)^2) / (n (n - 1) mean(den)^2).
- * Units with den = 0 still count (their numerator must then be 0).
+ * Units with den = 0 still count (their numerator must then be 0). The
+ * lower bound is clamped at 0 when all inputs are non-negative.
  */
 Estimate ratioEstimate(std::span<const double> numerators,
                        std::span<const double> denominators);

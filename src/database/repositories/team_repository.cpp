@@ -10,6 +10,7 @@
 
 #include <sqlite3.h>
 
+#include <algorithm>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 
@@ -76,6 +77,9 @@ std::string serializeLineup(const Lineup& lineup)
   {
     if (reserve) value["reserves"].push_back(reserve->getId());
   }
+  // Captain and set-piece takers by SetPieceDuty (0 = automatic); older
+  // saves simply lack the key.
+  value["set_pieces"] = lineup.getDesignations();
   return value.dump();
 }
 
@@ -108,6 +112,14 @@ StoredLineup deserializeLineup(const unsigned char* lineupText)
     {
       for (const auto& reserve : value["reserves"])
         lineup.reserves.push_back(reserve.get<PlayerID>());
+    }
+    if (value.contains("set_pieces") && value["set_pieces"].is_array())
+    {
+      const auto& duties = value["set_pieces"];
+      for (size_t duty = 0;
+           duty < std::min(duties.size(), lineup.designations.size()); ++duty)
+        if (duties[duty].is_number_unsigned())
+          lineup.designations[duty] = duties[duty].get<PlayerID>();
     }
   }
   catch (const nlohmann::json::exception&)

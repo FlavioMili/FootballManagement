@@ -1,0 +1,299 @@
+# Reusable build: Release build, headless tests, package and package smoke
+# test on Linux, macOS and Windows. Called by ci.yml (every push/PR) and
+# release.yml (tags). See docs/development/release.md.
+name: Build packages
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Version stamped into the packages (a leading "v" is dropped)
+        type: string
+        default: 0.0.0-ci
+      retention-days:
+        description: Days to keep the uploaded package artifacts
+        type: number
+        default: 7
+
+permissions:
+  contents: read
+
+env:
+  CMAKE_BUILD_TYPE: Release
+  # Headless SDL for tests and smoke runs (SDL3 name and legacy name).
+  SDL_VIDEO_DRIVER: dummy
+  SDL_VIDEODRIVER: dummy
+  SDL_AUDIO_DRIVER: dummy
+  SDL_AUDIODRIVER: dummy
+  CTEST_LABEL_EXCLUDE: playtest|monkey|slow
+  # Self-contained packages: vendored FreeType/HarfBuzz and a static SQLite.
+  FM_PACKAGE_OPTIONS: >-
+    -DSDLTTF_VENDORED=ON
+    -DCMAKE_DISABLE_FIND_PACKAGE_SQLite3=ON
+  CCACHE_MAXSIZE: 500M
+
+jobs:
+  linux:
+    name: Linux x86_64 (GCC 14)
+    runs-on: ubuntu-24.04
+    env:
+      CC: gcc-14
+      CXX: g++-14
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: echo "FM_VERSION=${INPUT_VERSION#v}" >> "$GITHUB_ENV"
+
+      - name: Install toolchain and SDL build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-14 g++-14 ninja-build ccache pkg-config file \
+            libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev \
+            libpipewire-0.3-dev libx11-dev libxext-dev libxrandr-dev \
+            libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
+            libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev \
+            libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev \
+            libudev-dev libwayland-dev libdecor-0-dev liburing-dev
+
+      - name: Cache FetchContent sources
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            build/_deps/*-src
+            build/_deps/*-subbuild
+          key: fetchcontent-linux-${{ hashFiles('CMakeLists.txt') }}
+
+      - name: Cache ccache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ccache
+          key: ccache-linux-gcc14-${{ github.sha }}
+          restore-keys: ccache-linux-gcc14-
+
+      - name: Configure
+        run: |
+          # shellcheck disable=SC2086 # FM_PACKAGE_OPTIONS is a flag list
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
+            -DBUILD_TESTING=ON \
+            -DFM_VERSION="$FM_VERSION" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++ -static-libgcc" \
+            $FM_PACKAGE_OPTIONS
+
+      - name: Build
+        run: cmake --build build --parallel 4
+
+      - name: Test (headless, excluding playtest/monkey/slow)
+        run: >
+          ctest --test-dir build --output-on-failure --parallel 2
+          --timeout 900 -LE "$CTEST_LABEL_EXCLUDE"
+
+      - name: Package (tar.gz)
+        run: cpack --config build/CPackConfig.cmake -B dist
+
+      - name: Package (AppImage)
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+          LINUXDEPLOY_URL: https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/linuxdeploy" "$LINUXDEPLOY_URL"
+          chmod +x "$RUNNER_TEMP/linuxdeploy"
+          cmake --install build --component game --strip --prefix "$RUNNER_TEMP/AppDir/usr"
+          (cd "$RUNNER_TEMP" && "$RUNNER_TEMP/linuxdeploy" --appdir AppDir \
+            --executable AppDir/usr/bin/FootballManagement \
+            --desktop-file AppDir/usr/share/applications/footballmanagement.desktop \
+            --icon-file AppDir/usr/share/icons/hicolor/scalable/apps/footballmanagement.svg \
+            --output appimage)
+          mv "$RUNNER_TEMP"/*.AppImage "dist/FootballManagement-$FM_VERSION-linux-x86_64.AppImage"
+
+      - name: Smoke test extracted package
+        env:
+          XDG_DATA_HOME: ${{ runner.temp }}/xdg-data
+        run: |
+          mkdir -p "$RUNNER_TEMP/extract"
+          tar -xzf dist/*.tar.gz -C "$RUNNER_TEMP/extract"
+          pkg=$(find "$RUNNER_TEMP/extract" -mindepth 1 -maxdepth 1 -type d)
+          ldd "$pkg/bin/FootballManagement"
+          packaging/smoke_test.sh "$pkg" "$pkg/bin/FootballManagement" \
+            "$XDG_DATA_HOME/FlavioMili/FootballManagement"
+
+      - name: Upload packages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: package-linux-x86_64
+          path: |
+            dist/*.tar.gz
+            dist/*.AppImage
+          if-no-files-found: error
+          retention-days: ${{ inputs.retention-days }}
+
+  macos:
+    name: macOS arm64 (Homebrew LLVM)
+    runs-on: macos-15
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      MACOSX_DEPLOYMENT_TARGET: "15.0"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: echo "FM_VERSION=${INPUT_VERSION#v}" >> "$GITHUB_ENV"
+
+      # AppleClang's libc++ lacks floating-point std::from_chars and
+      # non-experimental std::jthread (both need libc++ 20), so the game is
+      # built with Homebrew LLVM and its libc++ is linked statically.
+      - name: Install Homebrew LLVM, Ninja and ccache
+        run: |
+          brew install llvm ninja ccache
+          LLVM_PREFIX="$(brew --prefix llvm)"
+          echo "LLVM_PREFIX=$LLVM_PREFIX" >> "$GITHUB_ENV"
+          "$LLVM_PREFIX/bin/clang++" --version
+          ls "$LLVM_PREFIX/lib/c++"
+
+      - name: Cache FetchContent sources
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            build/_deps/*-src
+            build/_deps/*-subbuild
+          key: fetchcontent-macos-${{ hashFiles('CMakeLists.txt') }}
+
+      - name: Cache ccache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ccache
+          key: ccache-macos-llvm-${{ github.sha }}
+          restore-keys: ccache-macos-llvm-
+
+      - name: Configure
+        run: |
+          # shellcheck disable=SC2086 # FM_PACKAGE_OPTIONS is a flag list
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
+            -DBUILD_TESTING=ON \
+            -DFM_VERSION="$FM_VERSION" \
+            -DCMAKE_C_COMPILER="$LLVM_PREFIX/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$LLVM_PREFIX/bin/clang++" \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            "-DCMAKE_EXE_LINKER_FLAGS=-nostdlib++ $LLVM_PREFIX/lib/c++/libc++.a $LLVM_PREFIX/lib/c++/libc++abi.a" \
+            $FM_PACKAGE_OPTIONS
+
+      - name: Build
+        run: cmake --build build --parallel 3
+
+      - name: Check the game links no Homebrew libraries
+        run: |
+          exe=build/src/FootballManagement.app/Contents/MacOS/FootballManagement
+          otool -L "$exe"
+          if otool -L "$exe" | tail -n +2 | grep -Ev '^[[:space:]]+(/usr/lib/|/System/Library/)'; then
+            echo "::error::FootballManagement links a library that is not part of macOS"
+            exit 1
+          fi
+          # libc++ must be the static Homebrew copy, never the system dylib.
+          if otool -L "$exe" | grep -E 'libc\+\+|libunwind'; then
+            echo "::error::FootballManagement links a dynamic libc++/libunwind"
+            exit 1
+          fi
+
+      - name: Test (headless, excluding playtest/monkey/slow)
+        run: >
+          ctest --test-dir build --output-on-failure --parallel 2
+          --timeout 900 -LE "$CTEST_LABEL_EXCLUDE"
+
+      - name: Package (zip with FootballManagement.app)
+        run: cpack --config build/CPackConfig.cmake -B dist
+
+      - name: Smoke test extracted package
+        run: |
+          mkdir -p "$RUNNER_TEMP/extract"
+          ditto -x -k dist/*.zip "$RUNNER_TEMP/extract"
+          pkg=$(find "$RUNNER_TEMP/extract" -mindepth 1 -maxdepth 1 -type d)
+          codesign --verify --deep --strict --verbose=2 "$pkg/FootballManagement.app"
+          packaging/smoke_test.sh "$pkg" \
+            "$pkg/FootballManagement.app/Contents/MacOS/FootballManagement" \
+            "$HOME/Library/Application Support/FlavioMili/FootballManagement"
+
+      - name: Upload packages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: package-macos-arm64
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: ${{ inputs.retention-days }}
+
+  windows:
+    name: Windows x86_64 (clang-cl, experimental)
+    runs-on: windows-2022
+    # Not yet validated on Windows: a failure here must not block the Linux
+    # and macOS results or a release (see docs/development/release.md).
+    continue-on-error: true
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: echo "FM_VERSION=${INPUT_VERSION#v}" >> "$GITHUB_ENV"
+
+      - name: Cache FetchContent sources
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            build/_deps/*-src
+            build/_deps/*-subbuild
+          key: fetchcontent-windows-${{ hashFiles('CMakeLists.txt') }}
+
+      # The unit tests use POSIX headers (unistd.h, setenv), so Windows builds
+      # the game and the balance lab only.
+      - name: Configure
+        run: |
+          # shellcheck disable=SC2086 # FM_PACKAGE_OPTIONS is a flag list
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -T ClangCL \
+            -DBUILD_TESTING=OFF \
+            -DFM_VERSION="$FM_VERSION" \
+            $FM_PACKAGE_OPTIONS
+
+      - name: Build
+        run: >
+          cmake --build build --config "$CMAKE_BUILD_TYPE" --parallel 4
+          --target FootballManagement fm_lab
+
+      # Chocolatey ships an unrelated cpack.exe earlier in PATH: use CMake's.
+      - name: Package (zip)
+        run: |
+          cpack="$(dirname "$(command -v cmake)")/cpack"
+          "$cpack" -C "$CMAKE_BUILD_TYPE" --config build/CPackConfig.cmake -B dist
+
+      - name: Smoke test extracted package
+        run: |
+          extract="$(cygpath -u "$RUNNER_TEMP")/extract"
+          mkdir -p "$extract"
+          7z x -y -o"$(cygpath -w "$extract")" dist/*.zip > /dev/null
+          pkg=$(find "$extract" -mindepth 1 -maxdepth 1 -type d)
+          packaging/smoke_test.sh "$pkg" "$pkg/FootballManagement.exe" \
+            "$(cygpath -u "$APPDATA")/FlavioMili/FootballManagement"
+
+      - name: Upload packages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: package-windows-x86_64
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: ${{ inputs.retention-days }}

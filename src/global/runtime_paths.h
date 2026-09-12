@@ -28,6 +28,15 @@ class RuntimePaths
   static std::filesystem::path capturePath(const char* filename);
   static std::filesystem::path imguiIniPath();
 
+  /**
+   * Read-only data root: the directory that contains assets/. FM_ASSET_ROOT
+   * overrides; otherwise the first of <exe>/../share/footballmanagement
+   * (Linux install), <exe>/../Resources (macOS bundle) or <exe> (Windows,
+   * portable) holding the assets, falling back to the source checkout.
+   * Resolved once per process.
+   */
+  static const std::filesystem::path& assetRoot();
+
   /** Removes only save files owned by this runtime root, including WAL files. */
   static void removeSave(int slot);
   static void removeAllSaves();

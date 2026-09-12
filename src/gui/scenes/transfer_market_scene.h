@@ -12,6 +12,7 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -122,6 +123,7 @@ class TransferMarketScene : public ManagementScene
     std::string club;
     bool loan = false;
     uint32_t fee = 0;
+    int64_t value = 0; /**< Market value of the player. */
     std::string amount_text;
     std::string terms_text;
     float value_ratio = 0.0f;
@@ -214,6 +216,8 @@ class TransferMarketScene : public ManagementScene
     std::string player;
     std::string club;
     int64_t value = 0;
+    int64_t asking_price = 0; /**< Listing price, 0 if not listed. */
+    uint32_t wage = 0;        /**< Current weekly wage. */
     std::string estimate_text; /**< Estimated ability ("64-72"). */
     int knowledge = 0;
     TransferNegotiation::OfferTerms terms;
@@ -242,6 +246,8 @@ class TransferMarketScene : public ManagementScene
     PlayerID player_id = 0;
     std::string player;
     std::string club;
+    uint32_t wage = 0;
+    int64_t value = 0;
     TransferNegotiation::LoanTerms terms;
     std::optional<TransferNegotiation::ClubResponse> response;
   };
@@ -260,6 +266,7 @@ class TransferMarketScene : public ManagementScene
     PlayerID player_id = 0;
     std::string player;
     uint32_t price = 0;
+    int64_t value = 0;
   };
 
   struct ReleaseDialog
@@ -316,6 +323,12 @@ class TransferMarketScene : public ManagementScene
   void renderReleaseDialog();
   void renderReasons(const std::vector<TransferNegotiation::Reason>& reasons,
                      const ImVec4& color) const;
+  void renderClubResponse(const TransferNegotiation::ClubResponse& response,
+                          const std::string& detail) const;
+  /** Terms and summary side by side on wide screens, stacked otherwise. */
+  void renderDialogColumns(const std::function<void()>& terms,
+                           const std::function<void()>& summary) const;
+  [[nodiscard]] bool wideDialogs() const;
   float dialogWidth() const;
 
   Filters filters;

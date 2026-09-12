@@ -159,7 +159,7 @@ void InboxScene::renderContent()
                    controller.getInbox().size());
   UI::pageHeader(LOC("INBOX_TITLE"), subtitle.c_str());
   ImGui::BeginDisabled(controller.getUnreadInboxCount() == 0);
-  if (ImGui::Button(LOC("INBOX_MARK_ALL_READ")))
+  if (UI::secondaryButton(LOC("INBOX_MARK_ALL_READ")))
   {
     controller.markAllInboxMessagesRead();
     rebuildThreads();
@@ -333,10 +333,12 @@ void InboxScene::renderReader(float height)
   ImGui::TextUnformatted(selected_body.c_str());
   ImGui::PopTextWrapPos();
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::M * Theme::scale()));
-  if (message.player_id && ImGui::Button(LOC("INBOX_OPEN_PLAYER")))
+  if (message.player_id && UI::secondaryButton(LOC("INBOX_OPEN_PLAYER")))
     Navigation::openPlayer(guiView, *message.player_id);
   if (message.player_id && message.team_id) ImGui::SameLine();
-  if (message.team_id && ImGui::Button(LOC("INBOX_OPEN_CLUB")))
+  if (message.team_id && UI::secondaryButton(LOC("INBOX_OPEN_CLUB")))
     Navigation::openClub(guiView, *message.team_id);
+  talk_dialog.inboxAction(guiView->getController(), message);
+  talk_dialog.render(guiView->getController());
   UI::endCard();
 }

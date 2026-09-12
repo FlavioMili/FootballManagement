@@ -2,45 +2,79 @@ name: C++ CI
 
 on:
   push:
+    branches: ["**"]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  # Release builds, headless tests and package smoke tests on Linux, macOS
+  # and (experimental) Windows. Packages are kept as short-lived artifacts.
+  packages:
+    uses: ./.github/workflows/build.yml
+    with:
+      version: 0.0.0-ci
+      retention-days: 3
+
+  # Debug build with AddressSanitizer and UndefinedBehaviorSanitizer (GCC 14).
+  sanitized:
+    name: Linux sanitizers (GCC 14, Debug)
     runs-on: ubuntu-24.04
     env:
       CC: gcc-14
       CXX: g++-14
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_MAXSIZE: 500M
+      SDL_VIDEO_DRIVER: dummy
+      SDL_VIDEODRIVER: dummy
+      SDL_AUDIO_DRIVER: dummy
+      SDL_AUDIODRIVER: dummy
 
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-    - name: Setup SDL3
-      uses: libsdl-org/setup-sdl@afd98199e97f9c2aa739474be7e0886d149a5e47
-      with:
-        version: 3.4.16
-        install-linux-dependencies: true
+      - name: Install toolchain and dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-14 g++-14 ninja-build ccache pkg-config \
+            libsqlite3-dev libfreetype-dev libharfbuzz-dev \
+            libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev \
+            libpipewire-0.3-dev libx11-dev libxext-dev libxrandr-dev \
+            libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
+            libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev \
+            libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev \
+            libudev-dev libwayland-dev libdecor-0-dev liburing-dev
 
-    - name: Install Tools & Dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y \
-          gcc-14 \
-          g++-14 \
-          clang-tidy \
-          cppcheck \
-          libsqlite3-dev \
-          libfreetype-dev \
-          libharfbuzz-dev
+      - name: Cache FetchContent sources
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            out/build/debug-sanitized/_deps/*-src
+            out/build/debug-sanitized/_deps/*-subbuild
+          key: fetchcontent-linux-sanitized-${{ hashFiles('CMakeLists.txt') }}
 
-    - name: Configure
-      run: cmake --preset debug-sanitized
+      - name: Cache ccache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ccache
+          key: ccache-linux-sanitized-${{ github.sha }}
+          restore-keys: ccache-linux-sanitized-
 
-    - name: Build
-      run: cmake --build --preset debug-sanitized --parallel 2
+      - name: Configure
+        run: >
+          cmake --preset debug-sanitized
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
-    - name: Run tests
-      run: ctest --preset debug-sanitized
+      - name: Build
+        run: cmake --build --preset debug-sanitized --parallel 4
 
-
+      - name: Run tests (excluding playtest/monkey/slow)
+        run: ctest --preset debug-sanitized -LE "playtest|monkey|slow"

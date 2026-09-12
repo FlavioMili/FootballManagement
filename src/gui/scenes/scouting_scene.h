@@ -11,6 +11,7 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -20,6 +21,11 @@
 /**
  * @brief Scouting and recruitment: scouts, assignments, reports, player
  * search on estimated values, shortlist and recruitment focus.
+ *
+ * The first tab is built around the scouts: clicking one opens his page with
+ * his live assignment and the reports he filed so far, his past assignments
+ * and their reports, or (when he has done nothing yet) the world picker to
+ * send him somewhere, with his expected effectiveness and its reasons.
  *
  * Every figure about another club's player comes from the scouting
  * estimates (GameController::getScoutedView / searchScoutedPlayers), never
@@ -76,23 +82,59 @@ class ScoutingScene : public ManagementScene
     std::string date_text;
     std::string potential_text;
     std::string fee_text;
+    std::string ability_text; /**< 80% range of the estimated ability. */
+    bool fresh = false;       /**< Unread when the scout page opened. */
+    bool shortlisted = false;
   };
 
   struct AssignmentLine
   {
     ScoutAssignment assignment;
-    std::string scout_name;
     std::string target_text;
     std::string cost_text;
     std::string period_text;
-    std::string started_text;
   };
 
-  struct TargetOption
+  /** @brief One row of the scouts list. */
+  struct ScoutLine
   {
-    ScoutTargetKind kind;
-    uint32_t id;
-    std::string label;
+    ScoutSummary summary;
+    std::string nationality;
+    std::string languages; /**< Short codes, e.g. "IT · EN · ES". */
+    std::string judging;
+    std::string target;
+    float progress = 0.0f;
+    int days_left = 0;
+  };
+
+  struct CountryNode
+  {
+    LeagueID id = 0;
+    std::string name;
+    std::vector<std::pair<LeagueID, std::string>> divisions;
+  };
+
+  struct ContinentNode
+  {
+    Continent continent = Continent::Europe;
+    std::string name;
+    std::vector<CountryNode> countries;
+  };
+
+  struct EffectLine
+  {
+    std::string text;
+    float delta = 0.0f;
+  };
+
+  enum class ReportColumn : uint8_t
+  {
+    PLAYER,
+    GRADE,
+    ABILITY,
+    POTENTIAL,
+    FEE,
+    DATE
   };
 
   struct ComparisonLine
@@ -116,18 +158,34 @@ class ScoutingScene : public ManagementScene
     VALUE
   };
 
-  void rebuildAssignments();
   void rebuildReports();
   void rebuildSearch();
   void rebuildShortlist();
-  void rebuildTargets();
+  void rebuildScouts();
+  void rebuildWorld();
+  void rebuildScoutDetail();
+  void rebuildScoutReportList();
+  void rebuildSendPreview();
+  void rebuildPlayerMatches();
+  void sortScoutReports();
+  void selectScout(uint32_t scoutId);
+  ReportLine makeReportLine(const ScoutReport& report) const;
+  std::string targetLabel(ScoutTargetKind kind, uint32_t targetId) const;
+  std::string effectText(const EffectFactor& factor) const;
+  const ScoutLine* selectedScoutLine() const;
   PlayerLine makeLine(const ScoutedPlayerRow& row) const;
   void sortSearch();
 
   void renderOverview();
-  void renderScouts(float width, float height);
-  void renderAssignments(float height);
-  void renderNewAssignment();
+  void renderScoutList(float width, float height);
+  void renderScoutDetail(float height);
+  void renderScoutHeader(const ScoutLine& line);
+  void renderActiveAssignment(const ScoutLine& line);
+  void renderScoutHistory();
+  void renderScoutReports(const char* id, float height);
+  void renderSendFlow(const ScoutLine& line);
+  void renderWorldPicker(float width, float height);
+  void renderSendSummary(const ScoutLine& line);
   void renderReports();
   void renderSearch();
   void renderSearchFilters();
@@ -144,19 +202,40 @@ class ScoutingScene : public ManagementScene
   bool playerCell(PlayerID playerId, const std::string& name, bool selected);
 
   std::vector<ScoutProfile> scouts;
-  std::vector<AssignmentLine> active_assignments;
-  std::vector<AssignmentLine> finished_assignments;
   std::vector<ReportLine> reports;
   std::vector<PlayerLine> search_rows;
   std::vector<PlayerLine> shortlist_rows;
   std::vector<ComparisonLine> comparison;
-  std::vector<TargetOption> targets;
   std::vector<std::pair<LeagueID, std::string>> leagues;
 
-  // Assignment form.
-  int form_scout = 0;
-  int form_target = 0;
-  int form_duration = 1;
+  // Scouts page.
+  std::vector<ScoutLine> scout_lines;
+  std::vector<ContinentNode> world;
+  uint32_t selected_scout = 0;
+  ScoutExpertise selected_expertise;
+  std::string languages_full;
+  std::vector<std::string> expertise_lines;
+  std::vector<ReportLine> scout_reports;
+  std::vector<AssignmentLine> scout_history;
+  uint32_t history_assignment = 0; /**< Past assignment shown, 0 = none. */
+  std::vector<uint32_t> fresh_reports;
+  ReportColumn report_sort = ReportColumn::DATE;
+  bool report_sort_ascending = false;
+
+  // Send flow of the selected scout.
+  bool send_open = false;
+  ScoutTargetKind send_kind = ScoutTargetKind::League;
+  uint32_t send_target = 0;
+  int send_days = 30;
+  bool send_dirty = true;
+  int64_t send_cost = 0;
+  ScoutEffectiveness send_effect;
+  std::vector<EffectLine> effect_lines;
+  std::string send_target_text;
+  std::array<char, 48> player_query{};
+  std::vector<std::pair<PlayerID, std::string>> player_matches;
+  /** Effectiveness of the selected scout per picker entry (kind, id). */
+  std::unordered_map<uint64_t, float> picker_multipliers;
 
   // Search filters.
   ScoutSearchFilter filter;

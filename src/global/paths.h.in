@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 //  Football Management Project
-//  Copyright (c) 2025 Flavio Milinanni. All Rights Reserved.
+//  Copyright (c) 2025 - 2026 Flavio Milinanni. All Rights Reserved.
 //
 //  This file is part of the Football Management Project.
 //  See the LICENSE file in the project root.
@@ -8,25 +8,45 @@
 
 #pragma once
 
-// Root directory configured by CMake
-constexpr const char *PROJECT_ROOT = "@PROJECT_SOURCE_DIR@/";
+#include <string>
 
-// File where to include all relevant paths
-constexpr const char *LOGGER_PATH = "@PROJECT_SOURCE_DIR@/logs/log.txt";
-constexpr const char *SETTINGS_PATH = "@PROJECT_SOURCE_DIR@/assets/config/settings.json";
-constexpr const char *STATS_CONFIG_PATH = "@PROJECT_SOURCE_DIR@/assets/config/stats_config.json";
+#include "global/runtime_paths.h"
 
-// User Made data
-constexpr const char *LEAGUES_PATH = "@PROJECT_SOURCE_DIR@/assets/user_made_data/leagues/leagues.json";
-constexpr const char *LEAGUES_DIR = "@PROJECT_SOURCE_DIR@/assets/user_made_data/leagues/";
-constexpr const char *TEAMS_DIR = "@PROJECT_SOURCE_DIR@/assets/user_made_data/teams/";
-constexpr const char *PLAYERS_DIR = "@PROJECT_SOURCE_DIR@/assets/user_made_data/players/";
-constexpr const char *FIRST_NAMES_PATH = "@PROJECT_SOURCE_DIR@/assets/user_made_data/names_files/first_names.json";
-constexpr const char *LAST_NAMES_PATH = "@PROJECT_SOURCE_DIR@/assets/user_made_data/names_files/last_names.json";
+// Source checkout configured by CMake: the development fallback for game
+// data. Packaged builds resolve their installed copy at runtime instead.
+constexpr const char *FM_SOURCE_DIR = "@PROJECT_SOURCE_DIR@/";
+
+/**
+ * Read-only game data under RuntimePaths::assetRoot() (installed data next to
+ * the executable, else the source checkout). Writable files (saves, settings,
+ * logs) live under RuntimePaths::root() instead.
+ */
+namespace AssetPaths
+{
+/** Directory containing assets/, with a trailing separator. */
+inline std::string root() { return (RuntimePaths::assetRoot() / "").string(); }
+inline std::string file(const char *relative)
+{
+  return (RuntimePaths::assetRoot() / relative).string();
+}
+
+inline std::string statsConfig() { return file("assets/config/stats_config.json"); }
+
+// User made data
+inline std::string leagues() { return file("assets/user_made_data/leagues/leagues.json"); }
+inline std::string teamsDir() { return file("assets/user_made_data/teams/"); }
+inline std::string playersDir() { return file("assets/user_made_data/players/"); }
+inline std::string firstNames() { return file("assets/user_made_data/names_files/first_names.json"); }
+inline std::string lastNames() { return file("assets/user_made_data/names_files/last_names.json"); }
 
 // Database assets
-constexpr const char *SCHEMA_PATH = "@PROJECT_SOURCE_DIR@/assets/db/schema.sql";
-constexpr const char *QUERIES_PATH = "@PROJECT_SOURCE_DIR@/assets/db/queries.sql";
+inline std::string schema() { return file("assets/db/schema.sql"); }
+inline std::string queries() { return file("assets/db/queries.sql"); }
 
-// Fonts
-constexpr const char *FONT_PATH = "@PROJECT_SOURCE_DIR@/assets/fonts/font.ttf";
+// Fonts and languages
+inline std::string font() { return file("assets/fonts/font.ttf"); }
+inline std::string language(const std::string &name)
+{
+  return (RuntimePaths::assetRoot() / "assets" / "lang" / (name + ".json")).string();
+}
+}  // namespace AssetPaths

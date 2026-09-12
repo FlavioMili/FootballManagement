@@ -770,6 +770,8 @@ const char* sectionName(NavSection section)
       return "training";
     case NavSection::STAFF:
       return "staff";
+    case NavSection::YOUTH:
+      return "youth";
     case NavSection::NONE:
       return "none";
   }
@@ -805,18 +807,20 @@ SceneID sectionScene(NavSection section)
       return SceneID::TRAINING;
     case NavSection::STAFF:
       return SceneID::STAFF;
+    case NavSection::YOUTH:
+      return SceneID::YOUTH;
     case NavSection::NONE:
       break;
   }
   return SceneID::GAME_MENU;
 }
 
-constexpr std::array<NavSection, 13> ALL_SECTIONS = {
+constexpr std::array<NavSection, 14> ALL_SECTIONS = {
     NavSection::HOME,      NavSection::INBOX,    NavSection::CLUB,
     NavSection::SQUAD,     NavSection::LINEUP,   NavSection::TACTICS,
-    NavSection::TRAINING,  NavSection::FIXTURES, NavSection::STANDINGS,
-    NavSection::TRANSFERS, NavSection::SCOUTING, NavSection::STAFF,
-    NavSection::FINANCES};
+    NavSection::TRAINING,  NavSection::YOUTH,    NavSection::FIXTURES,
+    NavSection::STANDINGS, NavSection::TRANSFERS, NavSection::SCOUTING,
+    NavSection::STAFF,     NavSection::FINANCES};
 
 void openSection(Tester& player, NavSection section)
 {
@@ -1000,8 +1004,15 @@ LiveMatchResult playLiveMatch(Tester& player, bool showcase,
   if (!finishPoint) return result;
   player.click(*finishPoint);
   player.frames(2);
+  // Finish shows the match report; Back (Escape) returns to the club hub.
+  EXPECT_EQ(player.activeId(), SceneID::MATCH_REPORT)
+      << "Finish Match did not show the match report";
+  if (showcase) player.shot("j39_match_report_after_finish");
+  player.step = "close match report";
+  player.key(ImGuiKey_Escape);
+  player.frames(2);
   EXPECT_EQ(player.activeId(), SceneID::GAME_MENU)
-      << "Finish Match did not return to the club hub";
+      << "Back from the match report did not return to the club hub";
   EXPECT_FALSE(controller.getCurrentDate() == matchDate)
       << "Finish Match did not advance the day";
   result.played = player.activeId() == SceneID::GAME_MENU;

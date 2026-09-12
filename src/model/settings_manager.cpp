@@ -67,6 +67,9 @@ void SettingsManager::load()
         j.value("compact_density", settings_.compact_density);
     settings_.reduced_motion =
         j.value("reduced_motion", settings_.reduced_motion);
+    settings_.screen_tips = j.value("screen_tips", settings_.screen_tips);
+    settings_.screen_tips_seen =
+        j.value("screen_tips_seen", settings_.screen_tips_seen);
   }
   catch (const json::exception& exception)
   {
@@ -90,6 +93,8 @@ void SettingsManager::save() const
   j["ui_scale"] = settings_.ui_scale;
   j["compact_density"] = settings_.compact_density;
   j["reduced_motion"] = settings_.reduced_motion;
+  j["screen_tips"] = settings_.screen_tips;
+  j["screen_tips_seen"] = settings_.screen_tips_seen;
 
   std::ofstream out(RuntimePaths::settingsPath());
   out << j.dump(2);

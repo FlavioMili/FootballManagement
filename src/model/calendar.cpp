@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <array>
+#include <map>
 #include <random>
 #include <vector>
 
@@ -18,6 +19,7 @@
 #include "global/logger.h"
 #include "model/competition.h"
 #include "model/league.h"
+#include "model/world_tuning.h"
 
 namespace
 {
@@ -98,11 +100,93 @@ constexpr std::array<MonthDay, 8> CUP_MIDWEEK_TARGETS = {{{8, 27, 0},
                                                           {3, 4, 1},
                                                           {4, 22, 1}}};
 
-// International windows: nth Saturday of the month is skipped by leagues.
-constexpr std::array<MonthDay, 4> INTERNATIONAL_BREAKS = {
-    {{9, 2, 0}, {10, 2, 0}, {11, 3, 0}, {3, 4, 1}}};
-constexpr int BREAK_DAYS_BEFORE_SATURDAY = 5;  // From the Monday.
-constexpr int BREAK_DAYS_AFTER_SATURDAY = 3;   // To the Tuesday.
+// International windows, anchored on the nth Saturday of a month. Players
+// report on the Monday five days before it; a window ends on a Tuesday.
+// From 2026 September and October form one 16-day window with four
+// matches, and November moves to the second Saturday (FIFA 2026-2030).
+struct WindowRule
+{
+  int month;
+  int nth_saturday;
+  int year_offset;
+  int days_after;  // Last day of duty, counted from the Saturday.
+  std::array<int, 4> match_offsets;
+  uint8_t matches;
+  bool summer;
+  uint16_t first_season;
+  uint16_t last_season;
+};
+constexpr uint16_t DOUBLE_WINDOW_SEASON = 2026;
+constexpr uint16_t NO_LAST_SEASON = 0xFFFF;
+constexpr int WINDOW_DAYS_BEFORE_SATURDAY = 5;
+constexpr std::array<WindowRule, 7> INTERNATIONAL_WINDOWS = {{
+    {9, 2, 0, 3, {-1, 2, 0, 0}, 2, false, 0, DOUBLE_WINDOW_SEASON - 1},
+    {10, 2, 0, 3, {-1, 2, 0, 0}, 2, false, 0, DOUBLE_WINDOW_SEASON - 1},
+    {11, 3, 0, 3, {-1, 2, 0, 0}, 2, false, 0, DOUBLE_WINDOW_SEASON - 1},
+    {9, 4, 0, 10, {-1, 2, 6, 9}, 4, false, DOUBLE_WINDOW_SEASON,
+     NO_LAST_SEASON},
+    {11, 2, 0, 3, {-1, 2, 0, 0}, 2, false, DOUBLE_WINDOW_SEASON,
+     NO_LAST_SEASON},
+    {3, 4, 1, 3, {-1, 2, 0, 0}, 2, false, 0, NO_LAST_SEASON},
+    // Always three weeks after the last league Saturday (24 May at the
+    // latest), so it never overlaps the domestic season or the finals.
+    {6, 2, 1, 3, {-1, 2, 0, 0}, 2, true, 0, NO_LAST_SEASON},
+}};
+
+// Continental club weeks (Tuesday targets): eight league-phase matchdays,
+// then two legs each of the play-off, round of 16, quarter- and semi-finals.
+constexpr std::array<MonthDay, SeasonCalendar::CONTINENTAL_WEEKS> CONTINENTAL_TARGETS = {
+    {{9, 16, 0},
+     {9, 30, 0},
+     {10, 21, 0},
+     {11, 4, 0},
+     {11, 25, 0},
+     {12, 9, 0},
+     {1, 20, 1},
+     {1, 27, 1},
+     {2, 10, 1},
+     {2, 17, 1},
+     {3, 3, 1},
+     {3, 10, 1},
+     {4, 7, 1},
+     {4, 14, 1},
+     {4, 28, 1},
+     {5, 5, 1}}};
+constexpr uint8_t TUESDAY = 1;
+constexpr int CONTINENTAL_DAYS_PER_WEEK = 3;  // Tuesday to Thursday.
+
+std::vector<int> continentalWeekDays(uint16_t season_year)
+{
+  std::vector<int> weeks;
+  weeks.reserve(CONTINENTAL_TARGETS.size());
+  const auto blocked = [](int tuesday)
+  {
+    for (int offset = 0; offset < CONTINENTAL_DAYS_PER_WEEK; ++offset)
+      if (SeasonCalendar::isBlackout(fromDayNumber(tuesday + offset)))
+        return true;
+    return false;
+  };
+  for (const MonthDay& target : CONTINENTAL_TARGETS)
+  {
+    int day = firstWeekdayOnOrAfter(
+        toDayNumber(season_year + target.year_offset, target.month, target.day),
+        TUESDAY);
+    while (blocked(day) || (!weeks.empty() && day <= weeks.back())) day += 7;
+    weeks.push_back(day);
+  }
+  return weeks;
+}
+
+bool inContinentalWeek(int day)
+{
+  const std::vector<int> weeks = continentalWeekDays(
+      SeasonCalendar::seasonStartYear(fromDayNumber(day)));
+  return std::ranges::any_of(weeks, [day](int tuesday)
+                             {
+                               return day >= tuesday &&
+                                      day < tuesday + CONTINENTAL_DAYS_PER_WEEK;
+                             });
+}
 
 std::vector<int> cupMidweekCandidates(uint16_t season_year)
 {
@@ -113,7 +197,9 @@ std::vector<int> cupMidweekCandidates(uint16_t season_year)
     int day = firstWeekdayOnOrAfter(
         toDayNumber(season_year + target.year_offset, target.month, target.day),
         SeasonCalendar::WEDNESDAY);
-    while (SeasonCalendar::isBlackout(fromDayNumber(day))) day += 7;
+    while (SeasonCalendar::isBlackout(fromDayNumber(day)) ||
+           inContinentalWeek(day))
+      day += 7;
     days.push_back(day);
   }
   return days;
@@ -164,19 +250,60 @@ GameDateValue SeasonCalendar::leagueEnd(uint16_t season_year)
       lastWeekdayOnOrBefore(toDayNumber(season_year + 1, 5, 24), SATURDAY));
 }
 
+std::vector<SeasonCalendar::InternationalWindow>
+SeasonCalendar::internationalWindows(uint16_t season_year)
+{
+  std::vector<InternationalWindow> windows;
+  for (const WindowRule& rule : INTERNATIONAL_WINDOWS)
+  {
+    if (season_year < rule.first_season || season_year > rule.last_season)
+      continue;
+    const int saturday =
+        nthSaturday(season_year + rule.year_offset, rule.month, rule.nth_saturday);
+    InternationalWindow window;
+    window.start = fromDayNumber(saturday - WINDOW_DAYS_BEFORE_SATURDAY);
+    window.end = fromDayNumber(saturday + rule.days_after);
+    window.summer = rule.summer;
+    for (uint8_t match = 0; match < rule.matches; ++match)
+      window.match_days.push_back(
+          fromDayNumber(saturday + rule.match_offsets[match]));
+    windows.push_back(std::move(window));
+  }
+  std::sort(windows.begin(), windows.end(),
+            [](const InternationalWindow& left, const InternationalWindow& right)
+            { return left.start < right.start; });
+  return windows;
+}
+
 bool SeasonCalendar::isInternationalBreak(const GameDateValue& date)
 {
   const int season_year = seasonStartYear(date);
   const int day = toDayNumber(date);
   return std::ranges::any_of(
-      INTERNATIONAL_BREAKS,
-      [&](const MonthDay& window)
+      INTERNATIONAL_WINDOWS,
+      [&](const WindowRule& rule)
       {
-        const int saturday = nthSaturday(season_year + window.year_offset,
-                                         window.month, window.day);
-        return day >= saturday - BREAK_DAYS_BEFORE_SATURDAY &&
-               day <= saturday + BREAK_DAYS_AFTER_SATURDAY;
+        if (season_year < rule.first_season || season_year > rule.last_season)
+          return false;
+        const int saturday = nthSaturday(season_year + rule.year_offset,
+                                         rule.month, rule.nth_saturday);
+        return day >= saturday - WINDOW_DAYS_BEFORE_SATURDAY &&
+               day <= saturday + rule.days_after;
       });
+}
+
+std::vector<GameDateValue> SeasonCalendar::continentalWeeks(
+    uint16_t season_year)
+{
+  std::vector<GameDateValue> weeks;
+  for (const int day : continentalWeekDays(season_year))
+    weeks.push_back(fromDayNumber(day));
+  return weeks;
+}
+
+bool SeasonCalendar::isContinentalWeek(const GameDateValue& date)
+{
+  return inContinentalWeek(toDayNumber(date));
 }
 
 bool SeasonCalendar::isWinterBreak(const GameDateValue& date)
@@ -243,7 +370,8 @@ std::vector<GameDateValue> SeasonCalendar::leagueRoundDates(
     std::vector<int> midweeks;
     for (int day = first + 4; day < last; day += 7)
     {
-      if (!isBlackout(fromDayNumber(day)) && !std::ranges::contains(cup_days, day))
+      if (!isBlackout(fromDayNumber(day)) &&
+          !std::ranges::contains(cup_days, day) && !inContinentalWeek(day))
         midweeks.push_back(day);
     }
     const size_t needed = rounds - weekends.size();
@@ -279,7 +407,7 @@ std::vector<GameDateValue> SeasonCalendar::friendlyDates(
 GameDateValue SeasonCalendar::nextFreeMidweek(const GameDateValue& date)
 {
   int day = firstWeekdayOnOrAfter(toDayNumber(date) + 1, WEDNESDAY);
-  while (isBlackout(fromDayNumber(day))) day += 7;
+  while (isBlackout(fromDayNumber(day)) || inContinentalWeek(day)) day += 7;
   return fromDayNumber(day);
 }
 
@@ -440,14 +568,16 @@ void Calendar::generateFriendlies(const class GameData& gamedata,
                                   const GameDateValue& startDate,
                                   size_t numFriendlies)
 {
-  std::vector<TeamID> team_ids;
-  team_ids.reserve(gamedata.getTeams().size());
+  // Pre-season tours stay in the club's region (same country or nearby):
+  // clubs are paired within their region, and leftovers of odd-sized
+  // regions play each other.
+  std::map<WorldRegion, std::vector<TeamID>> regions;
   for (const auto& [id, team] : gamedata.getTeams())
   {
-    if (id != FREE_AGENTS_TEAM_ID) team_ids.push_back(id);
+    if (id != FREE_AGENTS_TEAM_ID)
+      regions[leagueProfile(team.getLeagueId()).region].push_back(id);
   }
-  if (team_ids.size() < 2) return;
-  std::ranges::sort(team_ids);
+  for (auto& [region, team_ids] : regions) std::ranges::sort(team_ids);
 
   const uint16_t season_year = SeasonCalendar::seasonStartYear(startDate);
   const std::vector<GameDateValue> dates =
@@ -456,11 +586,22 @@ void Calendar::generateFriendlies(const class GameData& gamedata,
   {
     std::mt19937 rng(Competitions::mixSeed(
         season_year, static_cast<uint32_t>(round), 2));
-    std::ranges::shuffle(team_ids, rng);
-    for (size_t i = 0; i + 1 < team_ids.size(); i += 2)
+    std::vector<TeamID> leftovers;
+    for (auto& [region, team_ids] : regions)
     {
-      addMatch(
-          Match(team_ids[i], team_ids[i + 1], dates[round], MatchType::FRIENDLY));
+      std::ranges::shuffle(team_ids, rng);
+      size_t i = 0;
+      for (; i + 1 < team_ids.size(); i += 2)
+      {
+        addMatch(Match(team_ids[i], team_ids[i + 1], dates[round],
+                       MatchType::FRIENDLY));
+      }
+      if (i < team_ids.size()) leftovers.push_back(team_ids[i]);
+    }
+    for (size_t i = 0; i + 1 < leftovers.size(); i += 2)
+    {
+      addMatch(Match(leftovers[i], leftovers[i + 1], dates[round],
+                     MatchType::FRIENDLY));
     }
   }
 }

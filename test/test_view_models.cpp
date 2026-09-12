@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <unordered_set>
 
@@ -22,6 +23,7 @@
 #include "gui/view_models/player_view.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
+#include "gui/widgets/widgets.h"
 #include "model/game.h"
 #include "model/lineup.h"
 #include "model/settings_manager.h"
@@ -267,4 +269,49 @@ TEST(RenderScaleTest, ScopedScaleAppliesFramebufferScaleAndRestores)
   EXPECT_FLOAT_EQ(y, 1.0f);
   SDL_DestroyRenderer(renderer);
   SDL_DestroySurface(surface);
+}
+
+TEST(WidgetsTest, ParseMoneyAcceptsSuffixesAndSeparators)
+{
+  int64_t value = 0;
+  ASSERT_TRUE(UI::parseMoney("15m", value));
+  EXPECT_EQ(value, 15'000'000);
+  ASSERT_TRUE(UI::parseMoney("\xE2\x82\xAC14.4M", value));
+  EXPECT_EQ(value, 14'400'000);
+  ASSERT_TRUE(UI::parseMoney("850k", value));
+  EXPECT_EQ(value, 850'000);
+  ASSERT_TRUE(UI::parseMoney("1,200,000", value));
+  EXPECT_EQ(value, 1'200'000);
+  ASSERT_TRUE(UI::parseMoney("1.200.000", value));
+  EXPECT_EQ(value, 1'200'000);
+  ASSERT_TRUE(UI::parseMoney("14.500", value));
+  EXPECT_EQ(value, 14'500);
+  value = 7;
+  EXPECT_FALSE(UI::parseMoney("", value));
+  EXPECT_FALSE(UI::parseMoney("abc", value));
+  EXPECT_FALSE(UI::parseMoney("12x", value));
+  EXPECT_EQ(value, 7);
+}
+
+TEST(WidgetsTest, FitColumnsDropsHighestPriorityFirst)
+{
+  ImGuiContext* previous = ImGui::GetCurrentContext();
+  ImGuiContext* context = ImGui::CreateContext();
+  ImGui::GetStyle().FontScaleDpi = 1.0f;
+  ImGui::GetStyle().CellPadding = ImVec2(0.0f, 0.0f);
+  const std::array<UI::Column, 4> columns = {{
+      {"Name", 0.0f, 0},
+      {"Role", 100.0f, 1},
+      {"Age", 50.0f, 3},
+      {"Wage", 80.0f, 2},
+  }};
+  const auto all = UI::fitColumns(columns, 1000.0f, 100.0f);
+  EXPECT_EQ(all, 0b1111U);
+  // 100 stretch + 100 + 80 fits once Age (priority 3) is gone.
+  EXPECT_EQ(UI::fitColumns(columns, 290.0f, 100.0f), 0b1011U);
+  EXPECT_EQ(UI::fitColumns(columns, 210.0f, 100.0f), 0b0011U);
+  // Priority 0 columns always stay, even when nothing fits.
+  EXPECT_EQ(UI::fitColumns(columns, 10.0f, 100.0f), 0b0001U);
+  ImGui::DestroyContext(context);
+  ImGui::SetCurrentContext(previous);
 }

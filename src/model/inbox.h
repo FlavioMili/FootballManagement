@@ -38,6 +38,21 @@ enum class InboxCategory : std::uint8_t
 const char* inboxCategoryKey(InboxCategory category);
 
 /**
+ * @enum InboxAction
+ * @brief What the manager can do straight from a message. Derived from the
+ * title key (see Inbox::actionFor()), so producers only need to add their
+ * key to the table in inbox.cpp; the linked player identifies the entity.
+ */
+enum class InboxAction : std::uint8_t
+{
+  None = 0,
+  RespondOffer,   /*!< Accept / reject / counter a bid for player_id. */
+  ReplyToPlayer,  /*!< Answer player_id's request or story. */
+  YouthTrialists, /*!< Sign or release the intake trialists. */
+  Shortlist       /*!< Add the recommended player_id to the shortlist. */
+};
+
+/**
  * @struct InboxMessage
  * @brief A news item for the managed club.
  *
@@ -90,6 +105,19 @@ class Inbox
 
   /** Messages grouped into a weekly digest (one unread per week). */
   static bool isDigested(const std::string& title_key);
+
+  /** Days after which read information leaves the main list. */
+  static constexpr std::int32_t ARCHIVE_DAYS = 14;
+
+  /** Action offered by messages with this title key. */
+  static InboxAction actionFor(const std::string& title_key);
+
+  /** Actions that ask for a decision (pinned while pending). */
+  static bool isDecision(InboxAction action);
+
+  /** Read information older than ARCHIVE_DAYS on @p today. */
+  static bool isArchived(const InboxMessage& message,
+                         const GameDateValue& today);
 
   /** Marks a message as read; false if the id is unknown. */
   bool markRead(std::uint32_t id);

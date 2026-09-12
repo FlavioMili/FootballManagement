@@ -11,6 +11,7 @@
 #include <imgui.h>
 
 #include "gui/render/imatch_renderer.h"
+#include "gui/render/match_kit_colors.h"
 #include "gui/scenes/match_scene_tuning.h"
 
 /**
@@ -26,11 +27,17 @@ class MatchRenderer2D final : public IMatchRenderer
   void render(const MatchRenderSnapshot& snapshot,
               const MatchRenderOptions& options,
               const MatchViewport& viewport) override;
+
+ private:
+  MatchKits kits;
+  TeamID kitHomeTeam = 0;
+  TeamID kitAwayTeam = 0;
+  bool kitsChosen = false;
 };
 
 /**
- * Fits the pitch into the available screen space while preserving its aspect
- * ratio and applying the tuning scale limits.
+ * Fits the pitch into the available screen space at its real 105 x 68 m
+ * proportions (never stretched); the caller centres the result.
  */
 MatchViewport computeMatchViewport(float topLeftX, float topLeftY,
                                    float availableWidth, float availableHeight);

@@ -9,22 +9,34 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
+#include <filesystem>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <random>
 #include <unordered_map>
 #include <vector>
 
+#include "database/save_manager.h"
 #include "global/stats_config.h"
 #include "model/competition.h"
 #include "model/game.h"
+#include "model/guidance.h"
 #include "model/league.h"
+#include "model/manager_career.h"
+#include "model/next_action.h"
+#include "model/medical_centre.h"
 #include "model/player.h"
+#include "model/season_agenda.h"
+#include "model/squad_planner.h"
+#include "model/squad_status.h"
 #include "model/staff.h"
 #include "model/team.h"
 #include "model/training.h"
 #include "model/transfer_listing.h"
+#include "model/youth_academy.h"
 
 class MatchEngine;
 
@@ -51,6 +63,29 @@ class GameController
     std::string team_name = "";
     std::string game_date = "";
     std::string real_date = "";
+    /** Ok, Incomplete, Corrupt or FutureVersion (Missing if !exists). */
+    SaveStatus status = SaveStatus::Missing;
+    /** Localized key describing a status other than Ok. */
+    const char* status_key = "";
+    int season = 0;
+    std::int64_t playtime_seconds = 0;
+    int schema_version = 0;
+    int supported_schema_version = 0;
+    std::string last_saved_game_date = "";
+    std::string last_saved_utc = "";  ///< ISO-8601, empty for old saves.
+    std::string game_version = "";
+    int backups = 0;  ///< Restorable previous saves (<slot>.bak.N).
+  };
+
+  /** Outcome of the latest save of this session (manual or autosave). */
+  struct SaveStatusInfo
+  {
+    bool ok = true;
+    bool autosave = false;
+    SaveError error;           ///< error.langKey() for the UI message.
+    SaveTimings timings;
+    std::string game_date;     ///< In-game date of the save.
+    int successful_saves = 0;  ///< Since the game was loaded.
   };
 
   /**
@@ -70,6 +105,35 @@ class GameController
    * @return True if loaded successfully, false otherwise.
    */
   bool loadGame(int slot);
+
+  /**
+   * Why the last loadGame() failed (FutureVersion, Corrupt, Incomplete,
+   * Missing); empty after a successful load.
+   */
+  const std::optional<SaveError>& getLastLoadError() const
+  {
+    return last_load_error;
+  }
+
+  /** Slot of the loaded career. */
+  std::optional<int> getCurrentSlot() const;
+
+  /** Previous saves and pre-upgrade copies of a slot, newest first. */
+  std::vector<SaveBackup> getSaveBackups(int slot) const;
+
+  /**
+   * Replaces the slot with one of its backups (the replaced file is kept
+   * aside, never deleted) and loads it; unsaved progress of a loaded
+   * career in that slot is discarded.
+   */
+  bool restoreBackup(int slot, const std::filesystem::path& backup);
+
+  /** Deletes a slot with its backups (not the loaded one). */
+  bool deleteSave(int slot);
+
+  /** When the game saves on its own and how many backups a slot keeps. */
+  void setAutosavePolicy(const AutosavePolicy& policy);
+  AutosavePolicy getAutosavePolicy() const;
 
   /** Duration of the most recent load/new-game initialization. */
   float getLastInitializationMilliseconds() const
@@ -248,9 +312,17 @@ class GameController
   std::vector<DisciplinaryRecord> getSuspendedPlayers(TeamID team_id) const;
 
   /**
-   * @brief Saves the current state of the game.
+   * @brief Saves the current state of the game to its slot.
+   *
+   * The slot file is replaced atomically by a verified snapshot and the
+   * previous one kept as a backup; on failure (disk full, read-only folder)
+   * the previous save is untouched. Never throws.
+   * @return False on failure; details in getSaveStatus().
    */
-  void saveGame();
+  bool saveGame();
+
+  /** Latest save result; safe to poll from the UI thread during Continue. */
+  SaveStatusInfo getSaveStatus() const;
 
   /**
    * @brief Gets metadata for a save slot.
@@ -465,6 +537,91 @@ class GameController
   /** Extends a managed player's contract if he accepts the terms. */
   bool renewContract(PlayerID player_id, ContractTerms terms);
 
+  // ========== Human side: conversations, team talks, dressing room ==========
+  /**
+   * The manager's standing with the players, 0-100: board confidence
+   * blended with the club's reputation (there is no manager reputation).
+   */
+  float getManagerStanding() const;
+  /** Conversation options for a managed player: availability, cooldowns
+   * and the predicted reaction. */
+  std::vector<TalkOptionView> getTalkOptions(PlayerID player_id) const;
+  /**
+   * Holds one conversation line (morale, trust, promises, requests).
+   * Accepting a transfer request also lists the player at his market
+   * value. Answers the player's open story, if any. nullopt when the
+   * option is not available.
+   */
+  std::optional<TalkOutcome> talkToPlayer(PlayerID player_id,
+                                          TalkOption option);
+  /** nullptr when the manager and player have no history. */
+  const PlayerRelation* getPlayerRelation(PlayerID player_id) const;
+  /** Promises made to a player, newest first (resolved ones for a year). */
+  std::vector<Promise> getPlayerPromises(PlayerID player_id) const;
+  /** Active promises to managed players, soonest deadline first. */
+  std::vector<Promise> getActivePromises() const;
+  /** Open story decision for a player (transfer saga, captain dispute). */
+  std::optional<StoryChoice> getStoryChoice(PlayerID player_id) const;
+  /** True when the player waits for an answer (request or story). */
+  bool hasPendingTalk(PlayerID player_id) const;
+
+  /** Situation of the managed club's team talk for today's fixture. */
+  TeamTalkContext getTeamTalkContext(TeamTalkMoment moment, int own_goals = 0,
+                                     int other_goals = 0) const;
+  /** False once this moment's talk was given for today's match. */
+  bool canGiveTeamTalk(TeamTalkMoment moment) const;
+  /** Gives the talk to the selected XI (once per moment and match). */
+  std::optional<TeamTalkResult> giveTeamTalk(TeamTalkMoment moment,
+                                             TeamTalkTone tone,
+                                             int own_goals = 0,
+                                             int other_goals = 0);
+  /**
+   * Execution-quality hint of today's team talks for @p half (1 or 2),
+   * within +-1.2%. For the match engine; nothing reads it yet.
+   */
+  float getTeamTalkModifier(TeamID team_id, int half) const;
+  /** Team talks plus squad cohesion, capped at +-2% (FR-119, FR-123). */
+  float getHumanFactorModifier(TeamID team_id, int half) const;
+  /** Leaders, cliques, cohesion, mood, requests and promises. */
+  DressingRoom getDressingRoom() const;
+
+  // ========== Squad management: leaders, statuses, planning ==========
+  /** Player designated for a duty in the managed lineup (0 = automatic). */
+  PlayerID getSetPieceDesignation(SetPieceDuty duty) const;
+  /**
+   * Designates a managed player for a duty (0 = automatic). Goalkeepers
+   * cannot take kicks or throws; false when the player is not allowed.
+   */
+  bool setSetPieceDesignation(SetPieceDuty duty, PlayerID player_id);
+  /**
+   * Who performs a duty at the next kick-off: the designated player when he
+   * starts, else the automatic choice among the XI (captain: the highest
+   * dressing-room standing, vice-captain: the next one). 0 without an XI.
+   */
+  PlayerID getEffectiveSetPieceTaker(SetPieceDuty duty) const;
+  /** Designates every duty from the current XI (the automatic choices). */
+  void autoPickSetPieces();
+
+  /** Status the manager gave a managed player (nullopt: none given). */
+  std::optional<SquadStatus> getSquadStatus(PlayerID player_id) const;
+  /** Status the player's ability rank in his squad earns in his own eyes. */
+  SquadStatus getDeservedSquadStatus(PlayerID player_id) const;
+  /**
+   * Gives a managed player a status (nullopt clears it). It becomes his
+   * playing-time expectation (getSquadRole()) for morale, requests and
+   * contract talks. Prospect is only for players up to
+   * SquadStatusModel::PROSPECT_MAX_AGE.
+   */
+  bool setSquadStatus(PlayerID player_id, std::optional<SquadStatus> status);
+
+  /** Depth chart, needs, age profile and contracts of the managed squad for
+   * this season (0) or a projected later one (1 = next season). */
+  SquadPlan getSquadPlan(int season_offset) const;
+  /** Injuries, fitness, injury risk and the medical staff of the club. */
+  MedicalReport getMedicalReport() const;
+  /** Dated events of the managed club's current season. */
+  std::vector<AgendaEvent> getSeasonAgenda() const;
+
   // ========== Scouting & recruitment ==========
   // Screens must show and sort other clubs' players by these estimates,
   // never by Player::getStats()/getOverall()/getPotential().
@@ -492,6 +649,19 @@ class GameController
   bool cancelScoutAssignment(uint32_t assignment_id);
   /** Scout reports, oldest first. */
   const std::vector<ScoutReport>& getScoutReports() const;
+  /** Scouts with status (on assignment / idle with history / new) and
+   * report counters, in roster order. */
+  std::vector<ScoutSummary> getScoutSummaries() const;
+  /** Nationality, languages and league experience of a scout. */
+  ScoutExpertise getScoutExpertise(uint32_t scout_id) const;
+  /** Expected effectiveness (0.6x-1.5x) with its breakdown. */
+  ScoutEffectiveness getScoutEffectiveness(uint32_t scout_id,
+                                           ScoutTargetKind kind,
+                                           uint32_t target_id) const;
+  /** Scout reports not yet opened on their scout's page. */
+  size_t getUnreadScoutReportCount() const;
+  /** Marks a scout's reports as opened. */
+  bool markScoutReportsSeen(uint32_t scout_id);
 
   const std::vector<RecruitmentFocus>& getRecruitmentFocuses() const;
   /** Adds (id 0) or updates a focus; returns its id, 0 on failure. */
@@ -579,10 +749,276 @@ class GameController
    * renewal wage. */
   StaffActionResult extendStaffContract(StaffID staff_id, uint8_t years);
 
+  // ========== Youth academy ==========
+  /** An academy player of the managed club (scouted ranges, never exact). */
+  struct YouthPlayerView
+  {
+    PlayerID id = 0;
+    std::string name;
+    PlayerRole role = PlayerRole::UNKNOWN;
+    int age = 0;
+    Language nationality = Language::EN;
+    uint8_t height = 0;
+    YouthStatus status = YouthStatus::Squad;
+    YouthContract contract = YouthContract::None;
+    int contract_years = 0;
+    uint32_t wage = 0;       /*!< Weekly wage (0 for trialists). */
+    YouthContract offer = YouthContract::None; /*!< Contract he would get. */
+    uint32_t offer_wage = 0; /*!< Weekly wage of that contract. */
+    YouthEstimate estimate;
+    const char* personality_key = "";
+    bool homegrown = false;
+    bool loan_listed = false;
+    uint16_t appearances = 0;
+    uint16_t goals = 0;
+    float average_rating = 0.0f;
+    /** Monthly overall snapshots, oldest first. */
+    std::vector<YouthProgressPoint> progress;
+  };
+  /** Managed club's academy players with @p status, best prospect first. */
+  std::vector<YouthPlayerView> getYouthPlayers(YouthStatus status) const;
+  /** First-team players of the managed club young enough for the U18s. */
+  std::vector<YouthPlayerView> getYouthEligibleFirstTeam() const;
+  /** True for U18 players and intake trialists (they are not first-team
+   * players of their club). */
+  bool isAcademyPlayer(PlayerID player_id) const;
+
+  struct AcademyOverview
+  {
+    AcademyRatings ratings;
+    HeadOfYouth head;
+    GameDateValue preview_date; /*!< Of the next (or current) intake. */
+    GameDateValue intake_date;
+    GameDateValue decision_deadline;
+    bool preview_ready = false; /*!< The head has reported on this intake. */
+    IntakePreview preview;
+    size_t candidates = 0; /*!< Trialists waiting for a decision. */
+    size_t squad = 0;
+    int league_position = 0; /*!< In the U18 league (0: no league). */
+    int league_size = 0;
+    YouthTableRow table;
+  };
+  AcademyOverview getAcademyOverview() const;
+  /** U18 league of the managed club, leader first. */
+  std::vector<YouthTableRow> getYouthTable() const;
+  /** Managed club's U18 results this season, oldest first. */
+  const std::vector<YouthResult>& getYouthResults() const;
+  /** Next step of an academy investment and the board's answer today. */
+  UpgradeQuote getAcademyUpgradeQuote(AcademyUpgrade kind) const;
+  /** Asks the board to fund the next step (cost booked when approved). */
+  UpgradeRequestResult requestAcademyUpgrade(AcademyUpgrade kind);
+  /** Offers a trialist a scholarship or, from the first professional
+   * contract age, a professional contract. */
+  YouthActionResult signYouthCandidate(PlayerID player_id);
+  /** Lets a trialist go. */
+  YouthActionResult releaseYouthCandidate(PlayerID player_id);
+  /** Turns a scholarship into a first professional contract. */
+  YouthActionResult offerYouthProfessionalContract(PlayerID player_id);
+  /** Moves a U18 player up to the first-team squad. */
+  YouthActionResult promoteYouthPlayer(PlayerID player_id);
+  /** Moves a first-team player aged 18 or younger to the U18 squad. */
+  YouthActionResult moveToYouthSquad(PlayerID player_id);
+
+  // ========== Manager career ==========
+  /** A manager exists (created in the new-game step, or for older saves). */
+  bool hasCareer() const;
+  /**
+   * The career runs without a club: Continue advances time, the inbox and
+   * the Job Centre work, club screens and commands are closed.
+   */
+  bool isUnemployed() const;
+  /** nullptr before the manager step. */
+  const ManagerProfile* getManagerProfile() const;
+  /** Creates the manager; the career starts without a club until
+   * selectManagedTeam() or an accepted job offer. */
+  void createManager(const ManagerSetup& setup);
+  const std::vector<ManagerStint>& getManagerStints() const;
+  const std::vector<ManagerSeasonLine>& getManagerSeasons() const;
+  const std::vector<ManagerAward>& getManagerAwards() const;
+  /** AI manager of a club (nullptr for the managed club and vacancies). */
+  const AiManager* getClubManager(TeamID team_id) const;
+
+  /** A vacancy as the Job Centre shows it. */
+  struct VacancyView
+  {
+    TeamID team_id = 0;
+    LeagueID league_id = 0;
+    uint8_t tier = 1;
+    uint8_t reputation = 0;
+    int expected_position = 0; /*!< Board expectation (wage-bill rank). */
+    const char* objective_key = "";
+    OwnerType owner = OwnerType::Patient;
+    float chance = 0.0f; /*!< Chance of an interview invitation. */
+    CoachingLicence required_licence = CoachingLicence::None;
+    GameDateValue opened = GameDateValue();
+    std::optional<ApplicationStage> stage; /*!< When applied. */
+  };
+  /** Open jobs, best chance first. */
+  std::vector<VacancyView> getVacancies() const;
+  const std::vector<JobApplication>& getJobApplications() const;
+  ApplyResult applyForJob(TeamID team_id);
+  /** Answers the interview (one option per InterviewTopic). */
+  std::optional<InterviewResult> attendInterview(
+      TeamID team_id, std::span<const std::uint8_t> answers);
+  const std::vector<JobOffer>& getJobOffers() const;
+  OfferReply negotiateJobOffer(std::uint32_t offer_id, int64_t weekly_wage,
+                               std::uint8_t years);
+  /**
+   * Takes the job: a manager under contract leaves his club (the new club
+   * pays it the release compensation) and every managed-club binding moves.
+   */
+  bool acceptJobOffer(std::uint32_t offer_id);
+  bool declineJobOffer(std::uint32_t offer_id);
+  /** Leaves the managed club without compensation. */
+  bool resignFromClub();
+  /**
+   * Continue while out of work: up to @p max_days, stopping early when an
+   * offer or an interview invitation arrives. Returns the days simulated.
+   */
+  int advanceWhileUnemployed(int max_days = 7);
+
+  // ========== Guidance: checklist, next steps, delegation, analysis ==========
+  // Implemented in game_controller_guidance.cpp.
+  /** First-week checklist of the career. */
+  const OnboardingState& getOnboarding() const;
+  /** Ticks a checklist step; false when it was already done. */
+  bool completeOnboardingTask(OnboardingTask task);
+  /** Hides the checklist for good. */
+  void dismissOnboarding();
+
+  /** Pending work of the managed club, most important first. */
+  std::vector<NextAction> getNextActions(size_t limit = 5) const;
+
+  /** Who handles each duty of the managed club. */
+  const DelegationPolicy& getDelegation() const;
+  /** True when the assistant handles @p duty (systems check this). */
+  bool isDelegated(Duty duty) const;
+  /** Changes one duty (fixed duties refuse). */
+  bool setDutyOwner(Duty duty, DutyOwner owner);
+  void applyDelegationPreset(DelegationPreset preset);
+  /** Staff member acting for the manager (assistant, else best coach). */
+  const StaffMember* getDelegate() const;
+
+  /** The managed club's next fixture. */
+  struct NextFixture
+  {
+    GameDateValue date;
+    TeamID opponent = 0;
+    bool home = true;
+    MatchType type = MatchType::LEAGUE;
+  };
+  std::optional<NextFixture> getNextManagedFixture() const;
+  /** Opponent's form, likely XI (scouted estimates only), strengths,
+   * weaknesses and counter-tactics. */
+  OppositionReport getOppositionReport(TeamID opponent) const;
+  /** Remembers (for this session) that the report was read. */
+  void markOppositionReportViewed(TeamID opponent);
+  bool wasOppositionReportViewed(TeamID opponent) const;
+  /** Instruction against an opposing player for the next meeting. */
+  bool setOppositionInstruction(TeamID opponent, PlayerID player,
+                                OppositionInstruction instruction);
+  OppositionInstruction getOppositionInstruction(TeamID opponent,
+                                                 PlayerID player) const;
+  /** Instructions against @p opponent (for the match engine). */
+  std::vector<OppositionOrder> getOppositionInstructions(TeamID opponent) const;
+  /** Adds a counter-tactic's slider changes to the managed tactic. */
+  bool applyCounterTactic(const CounterTactic& counter);
+
+  /** Data hub of the managed club: this season's matches and players. */
+  struct DataHubView
+  {
+    TeamAnalytics team;
+    std::vector<PlayerAnalyticsRow> players;
+  };
+  DataHubView getDataHub() const;
+
+  /** A decision message still waits for the manager (offer, player
+   * request, youth trialists). */
+  bool isInboxDecisionPending(const InboxMessage& message) const;
+
+  // ========== Honours: awards, records, hall of fame ==========
+  /** Every league honour given so far, oldest first. */
+  const std::vector<AwardRecord>& getAwardHistory() const;
+  /** Honours of a league in a season, in award order. */
+  std::vector<AwardRecord> getLeagueAwards(LeagueID league_id,
+                                           uint16_t season_year) const;
+  /** Honours of a player, newest first (profile honours section). */
+  std::vector<AwardRecord> getPlayerHonours(PlayerID player_id) const;
+  /** Current season award race of a league (qualified players first,
+   * then by the award score); @p young keeps players up to 21. */
+  std::vector<AwardPlayerTally> getAwardRace(LeagueID league_id, bool young,
+                                             size_t limit = 5) const;
+  std::vector<RecordEntry> getClubRecords(TeamID team_id) const;
+  std::vector<RecordEntry> getLeagueRecords(LeagueID league_id) const;
+  std::vector<ClubPlayerTotal> getClubTopScorers(TeamID team_id,
+                                                 size_t limit = 10) const;
+  std::vector<ClubPlayerTotal> getClubMostAppearances(TeamID team_id,
+                                                      size_t limit = 10) const;
+  std::vector<AllTimeRow> getAllTimeTable(LeagueID league_id) const;
+  std::vector<LegendEntry> getHallOfFame(TeamID team_id) const;
+
+  // ========== Board: facility projects ==========
+  /** Quote for the managed club (seats only matter for stadiums). */
+  ProjectQuote getProjectQuote(FacilityProjectType type,
+                               uint32_t seats = 0) const;
+  /** Asks the board to fund a project for the managed club. */
+  ProjectVerdict requestFacilityProject(FacilityProjectType type,
+                                        uint32_t seats = 0);
+  /** Managed club's projects, running first. */
+  std::vector<FacilityProject> getFacilityProjects() const;
+  /** Medical centre level of a club (50 = standard). */
+  uint8_t getMedicalLevel(TeamID team_id) const;
+  /** Day a refused project type may be asked for again. */
+  std::optional<GameDateValue> getProjectCooldown(
+      FacilityProjectType type) const;
+
+  // ========== Pre-season planner ==========
+  std::vector<FriendlySlot> getPreseasonFriendlies() const;
+  std::vector<OpponentOption> getFriendlyOpponents(GameDateValue date,
+                                                   OpponentLevel level,
+                                                   bool abroad) const;
+  bool setPreseasonFriendly(GameDateValue date, TeamID opponent_id, bool home,
+                            bool tour);
+  /** The assistant's friendlies for the editable dates. */
+  std::vector<FriendlySuggestion> getPreseasonSuggestion() const;
+  /** Applies the assistant's friendlies; returns how many were set. */
+  size_t applyPreseasonSuggestion();
+  CampQuote getCampQuote(TrainingCamp camp) const;
+  TrainingCamp getSuggestedCamp() const;
+  bool bookTrainingCamp(TrainingCamp camp);
+  const PreseasonState& getPreseasonState() const;
+  /** Net fee of a tour match against @p opponent_id. */
+  int64_t getTourFee(TeamID opponent_id) const;
+
+  // ========== Mentoring groups ==========
+  std::vector<MentoringGroup> getMentoringGroups() const;
+  MentoringError createMentoringGroup(PlayerID mentor_id,
+                                      uint32_t* group_id = nullptr);
+  MentoringError addMentee(uint32_t group_id, PlayerID mentee_id);
+  MentoringError removeMentee(uint32_t group_id, PlayerID mentee_id);
+  MentoringError dissolveMentoringGroup(uint32_t group_id);
+  /** Development multiplier a player gets from his mentor (1.0 = none). */
+  float getMentoringMultiplier(PlayerID player_id) const;
+
+  // ========== Holiday / continue until ==========
+  HolidayPreferences getHolidayPreferences() const;
+  void setHolidayPreferences(const HolidayPreferences& preferences);
+  /** Day a plan would end on (nullopt: open-ended or nothing to wait for). */
+  std::optional<GameDateValue> getHolidayTarget(const HolidayPlan& plan) const;
+  /**
+   * Simulates days on the Continue machinery (progress in
+   * getContinueProgress()) with the assistant in charge, until the plan's
+   * target or an early stop; the report is in getHolidaySummary().
+   * @return Days advanced.
+   */
+  int goOnHoliday(const HolidayPlan& plan);
+  const HolidaySummary& getHolidaySummary() const { return holiday_summary; }
+
   /** Seed of the current world. */
   uint64_t getWorldSeed() const;
 
   const Game* getGame() const { return game.get(); }
+  Game* getGame() { return game.get(); }
 
   /** @brief Gets the database connection (for repos that need it). */
   std::shared_ptr<DatabaseConnection> getDbConn() const { return db_conn; }
@@ -600,6 +1036,21 @@ class GameController
   float last_initialization_milliseconds = 0.0f;
   std::atomic<int> continue_days_started{0};
   std::atomic<int> continue_days_total{0};
+  HolidaySummary holiday_summary;
+
+  int current_slot = -1;
+  AutosavePolicy autosave_policy;
+  GameDateValue last_autosave_date;
+  int last_autosave_season = 0;
+  std::int64_t playtime_before_session = 0;
+  std::chrono::steady_clock::time_point session_started;
+  std::optional<SaveError> last_load_error;
+  mutable std::mutex save_status_mutex;
+  SaveStatusInfo save_status;
+  /** Flushes the game and atomically replaces the slot file. */
+  bool persist(bool autosave);
+  void maybeAutosave();
+  void startSession(int slot, std::int64_t playtime_seconds);
   /** One day of simulation plus the AI transfer activity that follows. */
   void simulateDay();
   bool executeTransfer(PlayerID pid, TeamID buyer_id, TeamID seller_id,
@@ -617,7 +1068,14 @@ class GameController
    * new wage its wage budget. */
   bool canPayDeal(const TransferMarket::Deal& deal) const;
 
-  std::string getSavePath(int slot) const;
+  /** Opponents whose report was opened this session. */
+  std::vector<TeamID> viewed_opposition;
+  /** The assistant's delegated daily jobs (after each simulated day). */
+  void runDelegatedDuties();
+  /** Match snapshot and checklist after a managed live match. */
+  void recordManagedMatch(GameDateValue date, TeamID home_id, TeamID away_id,
+                          const MatchEngine& engine);
+
   /** The managed club, only once one has been selected. */
   std::optional<std::reference_wrapper<Team>> managedClub();
   std::optional<std::reference_wrapper<const Team>> managedClub() const;

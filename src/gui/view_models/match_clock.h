@@ -25,6 +25,12 @@ namespace MatchClock
 /** @brief Label of a match clock reading (minutes since kick-off). */
 std::string minuteLabel(float matchMinutes, int period, bool addedTime);
 
+/**
+ * @brief Running clock with seconds: "67:23", "45+2:10" in added time
+ * (minutes beyond the regulation end of the half).
+ */
+std::string clockLabel(float matchMinutes, int period, bool addedTime);
+
 /** @brief Label of a stored event (whole minutes elapsed, see its doc). */
 std::string minuteLabel(const MatchReportEvent& event);
 }  // namespace MatchClock

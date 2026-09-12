@@ -156,6 +156,9 @@ struct Projection
   Mat4 viewProjection = Mat4::identity();
   Vec3 eye;
   Vec3 forward{0.0f, 1.0f, 0.0f};
+  /** Camera right and up axes in world space (for un-projecting). */
+  Vec3 side{1.0f, 0.0f, 0.0f};
+  Vec3 up{0.0f, 0.0f, 1.0f};
   ScreenRect rect;
   float nearPlane = 0.5f;
   /** Pixels per metre at one metre depth (for sizing billboards). */
@@ -167,6 +170,8 @@ struct Projection
     Projection projection;
     projection.eye = eye;
     projection.forward = normalize(target - eye);
+    projection.side = normalize(cross(projection.forward, {0.0f, 0.0f, 1.0f}));
+    projection.up = cross(projection.side, projection.forward);
     projection.rect = rect;
     projection.nearPlane = nearPlane;
     const float aspect = rect.width / (rect.height > 0.0f ? rect.height : 1.0f);
@@ -198,6 +203,31 @@ struct Projection
   }
 
   float depth(Vec3 point) const { return dot(point - eye, forward); }
+
+  /** World-space direction (not normalised) of the ray through a pixel. */
+  Vec3 rayThrough(float pixelX, float pixelY) const
+  {
+    const float right =
+        (pixelX - (rect.x + rect.width * 0.5f)) / focalPixels;
+    const float upward =
+        ((rect.y + rect.height * 0.5f) - pixelY) / focalPixels;
+    return forward + side * right + up * upward;
+  }
+
+  /**
+   * Intersects the ray through a pixel with the horizontal plane at
+   * `planeHeight`; false when the ray points away from it (sky pixels).
+   */
+  bool groundPointAt(float pixelX, float pixelY, Vec3& out,
+                     float planeHeight = 0.0f) const
+  {
+    const Vec3 direction = rayThrough(pixelX, pixelY);
+    if (direction.z > -1e-4f) return false;
+    const float distance = (planeHeight - eye.z) / direction.z;
+    if (distance <= 0.0f) return false;
+    out = eye + direction * distance;
+    return true;
+  }
 };
 
 /**

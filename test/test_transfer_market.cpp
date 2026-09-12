@@ -832,3 +832,21 @@ TEST_F(TransferMarketTest, OpeningBidAtValueIsCounteredThenAgreed)
                 .asking_wage,
             demand.asking_wage);
 }
+
+TEST_F(TransferMarketTest, TakingChargeLeavesListingsToTheManager)
+{
+  // The seeded market lists surplus players of every club; once a manager
+  // takes charge those decisions are his, so no unsolicited loan offers.
+  auto fresh = std::make_unique<GameController>();
+  fresh->newGame(1);
+  const TeamID club = manageFirstClub(*fresh);
+  for (const auto& player : fresh->getPlayersForTeam(club))
+  {
+    EXPECT_FALSE(marketOf(*fresh).isLoanListed(player.get().getId()));
+    EXPECT_FALSE(fresh->isPlayerListed(player.get().getId()));
+  }
+  for (int day = 0; day < 20; ++day) fresh->advanceDay();
+  EXPECT_TRUE(std::ranges::none_of(fresh->getIncomingOffers(),
+                                   [](const IncomingOffer& offer)
+                                   { return offer.loan; }));
+}

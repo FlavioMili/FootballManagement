@@ -12,6 +12,7 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <array>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
@@ -23,6 +24,25 @@
 
 namespace
 {
+// League table columns (unscaled widths); priority 0 never hides.
+const std::array<UI::Column, 11>& standingsColumns()
+{
+  static const std::array<UI::Column, 11> columns = {{
+      {"MAIN_GAME_POS", 36.0f, 0},
+      {"MAIN_GAME_TEAM", 0.0f, 0},
+      {"TABLE_COL_PLAYED", 34.0f, 1},
+      {"TABLE_COL_WON", 34.0f, 3},
+      {"TABLE_COL_DRAWN", 34.0f, 3},
+      {"TABLE_COL_LOST", 34.0f, 3},
+      {"TABLE_COL_GF", 38.0f, 4},
+      {"TABLE_COL_GA", 38.0f, 4},
+      {"TABLE_COL_GD", 46.0f, 2},
+      {"MAIN_GAME_PTS", 44.0f, 0},
+      {"TABLE_COL_FORM", 118.0f, 2},
+  }};
+  return columns;
+}
+
 constexpr size_t MAX_SCORERS = 15;
 constexpr float SCORERS_WIDTH = 300.0f;
 constexpr float SCORERS_MIN_WIDTH = 980.0f;
@@ -217,24 +237,17 @@ void StandingsScene::renderTable(float width, float height)
   const auto managed = guiView->getController().getManagedTeam();
   const TeamID clubId = managed ? managed->get().getId() : 0;
   UI::beginCard("standings_card", nullptr, ImVec2(width, height));
-  const ImGuiTableFlags flags =
-      ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-      ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit;
-  if (UI::beginDataTable("standings", 11, flags, 620.0f, ImVec2(0.0f, 0.0f), 2))
+  // Fills the page height (vertical scroll only); secondary columns hide
+  // on narrow windows instead of scrolling sideways.
+  std::array<UI::Column, 11> columns = standingsColumns();
+  for (UI::Column& column : columns) column.label = LOC(column.label);
+  const UI::ColumnMask mask =
+      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 120.0f);
+  const ImGuiTableFlags flags = ImGuiTableFlags_RowBg |
+                                ImGuiTableFlags_BordersInnerH |
+                                ImGuiTableFlags_ScrollY;
+  if (UI::beginResponsiveTable("standings", columns, mask, flags))
   {
-    ImGui::TableSetupColumn(LOC("MAIN_GAME_POS"));
-    ImGui::TableSetupColumn(LOC("MAIN_GAME_TEAM"),
-                            ImGuiTableColumnFlags_WidthStretch, 0.0f);
-    ImGui::TableSetupColumn(LOC("TABLE_COL_PLAYED"));
-    ImGui::TableSetupColumn(LOC("TABLE_COL_WON"));
-    ImGui::TableSetupColumn(LOC("TABLE_COL_DRAWN"));
-    ImGui::TableSetupColumn(LOC("TABLE_COL_LOST"));
-    ImGui::TableSetupColumn(LOC("TABLE_COL_GF"));
-    ImGui::TableSetupColumn(LOC("TABLE_COL_GA"));
-    ImGui::TableSetupColumn(LOC("TABLE_COL_GD"));
-    ImGui::TableSetupColumn(LOC("MAIN_GAME_PTS"));
-    ImGui::TableSetupColumn(LOC("TABLE_COL_FORM"));
-    UI::staticHeadersRow();
     for (size_t index = 0; index < table.size(); ++index)
     {
       const CompetitionView::StandingRow& row = table[index];
@@ -265,28 +278,23 @@ void StandingsScene::renderTable(float width, float height)
       if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
         ImGui::SetTooltip("%s", LOC("STANDINGS_OPEN_CLUB_HINT"));
       ImGui::PopID();
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.played);
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.won);
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.drawn);
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.lost);
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.goals_for);
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.goals_against);
-      ImGui::TableNextColumn();
-      const int difference = row.goalDifference();
-      ImGui::TextColored(difference > 0   ? palette.positive
-                         : difference < 0 ? palette.negative
-                                          : palette.muted,
-                         "%s", Format::signedInt(difference).c_str());
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.points);
-      ImGui::TableNextColumn();
-      UI::formStrip(std::span(row.form.data(), row.form_count));
+      if (UI::cell(mask, 2)) ImGui::Text("%d", row.played);
+      if (UI::cell(mask, 3)) ImGui::Text("%d", row.won);
+      if (UI::cell(mask, 4)) ImGui::Text("%d", row.drawn);
+      if (UI::cell(mask, 5)) ImGui::Text("%d", row.lost);
+      if (UI::cell(mask, 6)) ImGui::Text("%d", row.goals_for);
+      if (UI::cell(mask, 7)) ImGui::Text("%d", row.goals_against);
+      if (UI::cell(mask, 8))
+      {
+        const int difference = row.goalDifference();
+        ImGui::TextColored(difference > 0   ? palette.positive
+                           : difference < 0 ? palette.negative
+                                            : palette.muted,
+                           "%s", Format::signedInt(difference).c_str());
+      }
+      if (UI::cell(mask, 9)) ImGui::Text("%d", row.points);
+      if (UI::cell(mask, 10))
+        UI::formStrip(std::span(row.form.data(), row.form_count));
     }
     ImGui::EndTable();
   }

@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "gui/scenes/management_scene.h"
+#include "gui/scenes/player_talk_dialog.h"
 #include "model/inbox.h"
 
 /**
@@ -73,4 +74,5 @@ class InboxScene : public ManagementScene
   size_t selected_message = SIZE_MAX;
   std::string selected_title;
   std::string selected_body;
+  PlayerTalkDialog talk_dialog;
 };

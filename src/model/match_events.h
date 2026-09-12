@@ -115,9 +115,17 @@ struct PlayerMatchStats
   int foulsSuffered = 0;
   int yellowCards = 0;
   int redCards = 0;
-  /** Estimated real-match distance (see MatchTuning::Units). */
+  /** Distance covered in metres (the simulation runs in real time). */
   float distanceMetres = 0.0f;
   float secondHalfDistanceMetres = 0.0f;
+  /** Distance above 5.5 m/s (19.8 km/h) and above 7 m/s (25.2 km/h). */
+  float highIntensityMetres = 0.0f;
+  float secondHalfHighIntensityMetres = 0.0f;
+  float sprintMetres = 0.0f;
+  /** Efforts above 7 m/s. */
+  int sprints = 0;
+  /** Highest speed reached (m/s). */
+  float topSpeed = 0.0f;
   /** Physical condition in [0, 1] when the player last left or at the end. */
   float condition = 1.0f;
   /** Event-driven rating, 6.0 baseline, bounded to [3, 10]. */

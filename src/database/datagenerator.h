@@ -10,11 +10,31 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "league.h"
 #include "player.h"
 #include "team.h"
+
+/**
+ * @struct ClubIdentity
+ * @brief Descriptive club data read from the team files of the data pack.
+ *
+ * Not persisted: the data pack stays the source. The stadium capacity used by
+ * the simulation lives in ClubProfile and is derived from reputation when the
+ * world is generated; the capacity here is the pack's nominal figure.
+ */
+struct ClubIdentity
+{
+  std::string short_name;                   /*!< Three-letter code. */
+  std::uint32_t primary_colour = 0xFFFFFF;   /*!< Kit colour, 0xRRGGBB. */
+  std::uint32_t secondary_colour = 0x1A1A1A; /*!< Kit colour, 0xRRGGBB. */
+  std::string stadium_name;
+  std::uint32_t stadium_capacity = 0; /*!< Nominal seats; 0 if unknown. */
+  std::uint16_t founded = 0;          /*!< Founding year; 0 if unknown. */
+  std::string nickname;
+};
 
 /**
  * @class DataGenerator
@@ -35,6 +55,14 @@ class DataGenerator
    * @return A vector of generated Team objects.
    */
   static std::vector<Team> generateTeams();
+
+  /**
+   * @brief Reads short name, kit colours, stadium, founding year and
+   * nickname of every club in the data pack. Missing fields keep the
+   * ClubIdentity defaults, so minimal packs still load.
+   * @return Identities keyed by team id.
+   */
+  static std::unordered_map<TeamID, ClubIdentity> loadClubIdentities();
 
   /**
    * @brief Loads the predefined players and completes every club's squad

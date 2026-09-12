@@ -124,8 +124,8 @@ bool ScoutingRepository::load(ScoutingState& state) const
   forEachRow(*db_conn,
              "SELECT id, game_date, player_id, assignment_id, scout_id, "
              "scout_name, knowledge, confidence, overall, potential_low, "
-             "potential_high, estimated_fee, grade, reasons "
-             "FROM ScoutReports ORDER BY id;",
+             "potential_high, estimated_fee, grade, reasons, overall_low, "
+             "overall_high, seen FROM ScoutReports ORDER BY id;",
              [&](sqlite3_stmt* stmt)
              {
                ScoutReport report;
@@ -146,6 +146,15 @@ bool ScoutingRepository::load(ScoutingState& state) const
                report.fits_need = (reasons & REASON_FITS) != 0;
                report.affordable = (reasons & REASON_AFFORDABLE) != 0;
                report.available = (reasons & REASON_AVAILABLE) != 0;
+               report.overall_low = columnFloat(stmt, 14);
+               report.overall_high = columnFloat(stmt, 15);
+               if (report.overall_high <= 0.0f)
+               {
+                 // Reports from before ranges were recorded.
+                 report.overall_low = report.overall;
+                 report.overall_high = report.overall;
+               }
+               report.seen = sqlite3_column_int(stmt, 16) != 0;
                state.reports.push_back(std::move(report));
              });
 
@@ -177,6 +186,26 @@ bool ScoutingRepository::load(ScoutingState& state) const
                entry.last_flags = columnAs<std::uint8_t>(stmt, 3);
                state.shortlist.push_back(entry);
              });
+
+  forEachRow(*db_conn,
+             "SELECT scout_id, nationality, languages FROM ScoutExpertise;",
+             [&](sqlite3_stmt* stmt)
+             {
+               ScoutExpertise& expertise =
+                   state.expertise[columnAs<std::uint32_t>(stmt, 0)];
+               expertise.nationality = columnAs<Language>(stmt, 1);
+               expertise.languages = columnAs<LanguageSet>(stmt, 2);
+             });
+  forEachRow(*db_conn,
+             "SELECT scout_id, league_id, days FROM ScoutLeagueExperience;",
+             [&](sqlite3_stmt* stmt)
+             {
+               const auto scout =
+                   state.expertise.find(columnAs<std::uint32_t>(stmt, 0));
+               if (scout == state.expertise.end()) return;
+               scout->second.league_days[columnAs<LeagueID>(stmt, 1)] =
+                   columnAs<std::uint16_t>(stmt, 2);
+             });
   return true;
 }
 
@@ -184,7 +213,8 @@ void ScoutingRepository::save(const ScoutingState& state) const
 {
   for (const char* table :
        {"ScoutingState", "ScoutingKnowledge", "ScoutAssignments",
-        "ScoutReports", "RecruitmentFocus", "ScoutShortlist"})
+        "ScoutReports", "RecruitmentFocus", "ScoutShortlist", "ScoutExpertise",
+        "ScoutLeagueExperience"})
   {
     sqlite3_exec(db_conn->getRaw(),
                  (std::string("DELETE FROM ") + table + ";").c_str(), nullptr,
@@ -241,7 +271,8 @@ void ScoutingRepository::save(const ScoutingState& state) const
             "INSERT INTO ScoutReports (id, game_date, player_id, "
             "assignment_id, scout_id, scout_name, knowledge, confidence, "
             "overall, potential_low, potential_high, estimated_fee, grade, "
-            "reasons) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            "reasons, overall_low, overall_high, seen) VALUES (?, ?, ?, ?, ?, "
+            "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
             state.reports,
             [](sqlite3_stmt* insert, const ScoutReport& report)
             {
@@ -263,6 +294,9 @@ void ScoutingRepository::save(const ScoutingState& state) const
               sqlite3_bind_int64(insert, 12, report.estimated_fee);
               sqlite3_bind_int(insert, 13, static_cast<int>(report.grade));
               sqlite3_bind_int(insert, 14, reasons);
+              sqlite3_bind_double(insert, 15, report.overall_low);
+              sqlite3_bind_double(insert, 16, report.overall_high);
+              sqlite3_bind_int(insert, 17, report.seen ? 1 : 0);
             });
 
   insertAll(*db_conn,
@@ -291,4 +325,32 @@ void ScoutingRepository::save(const ScoutingState& state) const
               sqlite3_bind_int(insert, 3, entry.last_team);
               sqlite3_bind_int(insert, 4, entry.last_flags);
             });
+
+  insertAll(*db_conn,
+            "INSERT INTO ScoutExpertise (scout_id, nationality, languages) "
+            "VALUES (?, ?, ?);",
+            state.expertise,
+            [](sqlite3_stmt* insert, const auto& item)
+            {
+              const auto& [scout_id, expertise] = item;
+              sqlite3_bind_int64(insert, 1, scout_id);
+              sqlite3_bind_int(insert, 2,
+                               static_cast<int>(expertise.nationality));
+              sqlite3_bind_int64(insert, 3, expertise.languages);
+            });
+  sqlite3_stmt* experience = db_conn->prepareStatement(
+      "INSERT INTO ScoutLeagueExperience (scout_id, league_id, days) VALUES "
+      "(?, ?, ?);");
+  for (const auto& [scout_id, expertise] : state.expertise)
+  {
+    for (const auto& [league_id, days] : expertise.league_days)
+    {
+      sqlite3_bind_int64(experience, 1, scout_id);
+      sqlite3_bind_int(experience, 2, league_id);
+      sqlite3_bind_int(experience, 3, days);
+      db_conn->executeStep(experience);
+      sqlite3_reset(experience);
+    }
+  }
+  sqlite3_finalize(experience);
 }

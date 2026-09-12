@@ -32,6 +32,10 @@ struct Settings
   float ui_scale = 0.0f;           /**< 0 = automatic (display scale) */
   bool compact_density = false;    /**< Denser tables and controls */
   bool reduced_motion = false;     /**< Avoid non-essential animation */
+
+  // Guidance
+  bool screen_tips = true;         /**< One-line tip on a screen's first visit */
+  uint64_t screen_tips_seen = 0;   /**< Bit per NavSection already explained */
 };
 
 /**

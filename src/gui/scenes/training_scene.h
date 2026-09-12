@@ -77,10 +77,11 @@ class TrainingScene : public ManagementScene
   };
 
   void renderControls();
-  void renderMicrocycle(float width, float height);
-  void renderWeek(float width);
-  void renderAdvice(float width, float height);
-  void renderPlayers(float height);
+  void renderMicrocycle(float width);
+  void renderSlot(int day, bool compact);
+  void renderWeek();
+  void renderAdvice(float width);
+  void renderPlayers();
   void sortRows();
 
   TeamTrainingPlan plan;

@@ -14,6 +14,7 @@
 #include <cmath>
 #include <numbers>
 
+#include "gui/render/match_kit_colors.h"
 #include "model/player.h"
 #include "model/role_utils.h"
 
@@ -47,6 +48,9 @@ float crowdHash(std::int32_t x, std::int32_t y)
   value ^= value >> 15;
   return static_cast<float>(value & 0xffffU) / 65535.0f;
 }
+
+/** Player names are drawn at this share of the UI font size. */
+constexpr float NAME_FONT_SCALE = 0.82f;
 
 void drawStadium(ImDrawList& drawList, const MatchViewport& viewport)
 {
@@ -138,9 +142,48 @@ ImU32 intentDebugColor(PlayerIntent intent)
 void drawGoalFrame(ImDrawList& drawList, bool leftGoal, float lineX, float top,
                    float bottom, float depthPx);
 
+/**
+ * Real pitch geometry in metres (Law 1). Everything on the 2D pitch is drawn
+ * from these at the viewport's pixels-per-metre scale, so the markings,
+ * players and ball keep their true proportions at any window size.
+ */
+namespace PitchMetres
+{
+constexpr float LENGTH = MatchTuning::Pitch::LENGTH_METRES;
+constexpr float WIDTH = MatchTuning::Pitch::WIDTH_METRES;
+constexpr float LINE = 0.12f;
+constexpr float CENTRE_CIRCLE = 9.15f;
+constexpr float PENALTY_AREA_DEPTH = 16.5f;
+constexpr float PENALTY_AREA_WIDTH = 40.32f;
+constexpr float GOAL_AREA_DEPTH = 5.5f;
+constexpr float GOAL_AREA_WIDTH = 18.32f;
+constexpr float PENALTY_SPOT = 11.0f;
+constexpr float SPOT_RADIUS = 0.2f;
+constexpr float CORNER_ARC = 1.0f;
+constexpr float GOAL_WIDTH = 7.32f;
+constexpr float GOAL_DEPTH = 2.0f;
+/** Player marker ~1.8 m across (a body plus shoulders seen from above). */
+constexpr float PLAYER_RADIUS = 0.9f;
+constexpr float PLAYER_OUTLINE = 0.18f;
+constexpr float DIRECTION_LENGTH = 1.7f;
+/** The ball is drawn larger than life (0.7 m) so it stays readable. */
+constexpr float BALL_RADIUS = 0.35f;
+constexpr float MIN_LINE_PIXELS = 1.0f;
+constexpr float MIN_PLAYER_PIXELS = 3.0f;
+constexpr float MIN_BALL_PIXELS = 2.0f;
+}  // namespace PitchMetres
+
+float pixelsPerMetre(const MatchViewport& viewport)
+{
+  return viewport.width / PitchMetres::LENGTH;
+}
+
 void drawPitch(ImDrawList& drawList, const MatchViewport& viewport)
 {
+  namespace M = PitchMetres;
   constexpr ImU32 line_color = MatchSceneTuning::Pitch::LINE_COLOR;
+  const float ppm = pixelsPerMetre(viewport);
+  const float line = std::max(M::MIN_LINE_PIXELS, M::LINE * ppm);
   const ImVec2 p_min{viewport.x, viewport.y};
   const ImVec2 p_max{viewport.x + viewport.width, viewport.y + viewport.height};
 
@@ -160,121 +203,56 @@ void drawPitch(ImDrawList& drawList, const MatchViewport& viewport)
         ImVec2(p_min.x + static_cast<float>(stripe + 1) * stripeWidth, p_max.y),
         color);
   }
-  // Border
-  drawList.AddRect(p_min, p_max, line_color,
-                   MatchSceneTuning::Pitch::RECTANGLE_ROUNDING,
-                   ImDrawFlags_None, MatchSceneTuning::Pitch::LINE_THICKNESS);
+  drawList.AddRect(p_min, p_max, line_color, 0.0f, ImDrawFlags_None, line);
 
-  const float center_y =
-      p_min.y + viewport.height * MatchSceneTuning::Pitch::CENTRE_RATIO;
-  const float center_x =
-      p_min.x + viewport.width * MatchSceneTuning::Pitch::CENTRE_RATIO;
-  // Center line (vertical)
+  const float center_x = p_min.x + viewport.width * 0.5f;
+  const float center_y = p_min.y + viewport.height * 0.5f;
   drawList.AddLine(ImVec2(center_x, p_min.y), ImVec2(center_x, p_max.y),
-                   line_color, MatchSceneTuning::Pitch::LINE_THICKNESS);
-
-  // Center circle
-  drawList.AddCircle(
-      ImVec2(center_x, center_y),
-      viewport.height * MatchSceneTuning::Pitch::CENTRE_CIRCLE_RADIUS_RATIO,
-      line_color, MatchSceneTuning::Pitch::CENTRE_CIRCLE_SEGMENTS,
-      MatchSceneTuning::Pitch::LINE_THICKNESS);
+                   line_color, line);
+  drawList.AddCircle(ImVec2(center_x, center_y), M::CENTRE_CIRCLE * ppm,
+                     line_color, MatchSceneTuning::Pitch::CENTRE_CIRCLE_SEGMENTS,
+                     line);
   drawList.AddCircleFilled(ImVec2(center_x, center_y),
-                           MatchSceneTuning::Pitch::CENTRE_SPOT_RADIUS,
-                           line_color);
+                           std::max(line, M::SPOT_RADIUS * ppm), line_color);
 
-  // Penalty boxes
-  const float pen_box_w =
-      viewport.width * MatchSceneTuning::Pitch::PENALTY_BOX_WIDTH_RATIO;
-  const float pen_box_h =
-      viewport.height * MatchSceneTuning::Pitch::PENALTY_BOX_HEIGHT_RATIO;
-  const float pen_box_y =
-      center_y - pen_box_h * MatchSceneTuning::Pitch::CENTRE_RATIO;
+  const auto drawArea = [&](float depth, float width)
+  {
+    const float top = center_y - width * 0.5f * ppm;
+    const float bottom = center_y + width * 0.5f * ppm;
+    drawList.AddRect(ImVec2(p_min.x, top), ImVec2(p_min.x + depth * ppm, bottom),
+                     line_color, 0.0f, ImDrawFlags_None, line);
+    drawList.AddRect(ImVec2(p_max.x - depth * ppm, top), ImVec2(p_max.x, bottom),
+                     line_color, 0.0f, ImDrawFlags_None, line);
+  };
+  drawArea(M::PENALTY_AREA_DEPTH, M::PENALTY_AREA_WIDTH);
+  drawArea(M::GOAL_AREA_DEPTH, M::GOAL_AREA_WIDTH);
+  const float spotRadius = std::max(line, M::SPOT_RADIUS * ppm);
+  drawList.AddCircleFilled(ImVec2(p_min.x + M::PENALTY_SPOT * ppm, center_y),
+                           spotRadius, line_color);
+  drawList.AddCircleFilled(ImVec2(p_max.x - M::PENALTY_SPOT * ppm, center_y),
+                           spotRadius, line_color);
 
-  drawList.AddRect(ImVec2(p_min.x, pen_box_y),
-                   ImVec2(p_min.x + pen_box_w, pen_box_y + pen_box_h),
-                   line_color, MatchSceneTuning::Pitch::RECTANGLE_ROUNDING,
-                   ImDrawFlags_None, MatchSceneTuning::Pitch::LINE_THICKNESS);
-  drawList.AddRect(ImVec2(p_max.x - pen_box_w, pen_box_y),
-                   ImVec2(p_max.x, pen_box_y + pen_box_h), line_color,
-                   MatchSceneTuning::Pitch::RECTANGLE_ROUNDING,
-                   ImDrawFlags_None, MatchSceneTuning::Pitch::LINE_THICKNESS);
+  // Goals extend beyond the goal line. A back panel, posts, crossbar and net
+  // mesh make the ball visibly enter the goal mouth instead of vanishing.
+  const float goalTop = center_y - M::GOAL_WIDTH * 0.5f * ppm;
+  const float goalBottom = center_y + M::GOAL_WIDTH * 0.5f * ppm;
+  const float goalDepth = M::GOAL_DEPTH * ppm;
+  drawGoalFrame(drawList, true, p_min.x, goalTop, goalBottom, goalDepth);
+  drawGoalFrame(drawList, false, p_max.x, goalTop, goalBottom, goalDepth);
 
-  // Goal boxes
-  const float goal_box_w =
-      viewport.width * MatchSceneTuning::Pitch::GOAL_BOX_WIDTH_RATIO;
-  const float goal_box_h =
-      viewport.height * MatchSceneTuning::Pitch::GOAL_BOX_HEIGHT_RATIO;
-  const float goal_box_y =
-      center_y - goal_box_h * MatchSceneTuning::Pitch::CENTRE_RATIO;
-
-  drawList.AddRect(ImVec2(p_min.x, goal_box_y),
-                   ImVec2(p_min.x + goal_box_w, goal_box_y + goal_box_h),
-                   line_color, MatchSceneTuning::Pitch::RECTANGLE_ROUNDING,
-                   ImDrawFlags_None, MatchSceneTuning::Pitch::LINE_THICKNESS);
-  drawList.AddRect(ImVec2(p_max.x - goal_box_w, goal_box_y),
-                   ImVec2(p_max.x, goal_box_y + goal_box_h), line_color,
-                   MatchSceneTuning::Pitch::RECTANGLE_ROUNDING,
-                   ImDrawFlags_None, MatchSceneTuning::Pitch::LINE_THICKNESS);
-
-  // Goals extend beyond the touchline. A back panel, posts, crossbar, and net
-  // mesh make the ball visibly enter the goal mouth instead of vanishing at
-  // the line.
-  const float goalHeight =
-      viewport.height * MatchSceneTuning::Pitch::GOAL_WIDTH_RATIO;
-  const float goalTop =
-      center_y - goalHeight * MatchSceneTuning::Pitch::CENTRE_RATIO;
-  const float goalDepth = MatchSceneTuning::Pitch::GOAL_DEPTH;
-  drawList.AddRectFilled(ImVec2(p_min.x - goalDepth, goalTop),
-                         ImVec2(p_min.x, goalTop + goalHeight),
-                         MatchSceneTuning::Stadium::APRON_COLOR);
-  drawList.AddRectFilled(ImVec2(p_max.x, goalTop),
-                         ImVec2(p_max.x + goalDepth, goalTop + goalHeight),
-                         MatchSceneTuning::Stadium::APRON_COLOR);
-  drawGoalFrame(drawList, true, p_min.x, goalTop, goalTop + goalHeight,
-                goalDepth);
-  drawGoalFrame(drawList, false, p_max.x, goalTop, goalTop + goalHeight,
-                goalDepth);
-  drawList.AddCircleFilled(
-      ImVec2(p_min.x +
-                 viewport.width * MatchSceneTuning::Pitch::PENALTY_SPOT_X_RATIO,
-             center_y),
-      MatchSceneTuning::Pitch::PENALTY_SPOT_RADIUS, line_color);
-  drawList.AddCircleFilled(
-      ImVec2(p_max.x -
-                 viewport.width * MatchSceneTuning::Pitch::PENALTY_SPOT_X_RATIO,
-             center_y),
-      MatchSceneTuning::Pitch::PENALTY_SPOT_RADIUS, line_color);
-
-  // Corner arcs
-  const float corner_r =
-      viewport.height * MatchSceneTuning::Pitch::CORNER_RADIUS_RATIO;
+  const float corner_r = M::CORNER_ARC * ppm;
   const float PI = std::numbers::pi_v<float>;
-  // Top-left
-  drawList.PathArcTo(ImVec2(p_min.x, p_min.y), corner_r, 0.0f,
-                     PI * MatchSceneTuning::Pitch::CENTRE_RATIO,
-                     MatchSceneTuning::Pitch::CORNER_ARC_SEGMENTS);
-  drawList.PathStroke(line_color, ImDrawFlags_None,
-                      MatchSceneTuning::Pitch::LINE_THICKNESS);
-  // Top-right
-  drawList.PathArcTo(ImVec2(p_max.x, p_min.y), corner_r,
-                     PI * MatchSceneTuning::Pitch::CENTRE_RATIO, PI,
-                     MatchSceneTuning::Pitch::CORNER_ARC_SEGMENTS);
-  drawList.PathStroke(line_color, ImDrawFlags_None,
-                      MatchSceneTuning::Pitch::LINE_THICKNESS);
-  // Bottom-left
-  drawList.PathArcTo(ImVec2(p_min.x, p_max.y), corner_r,
-                     -PI * MatchSceneTuning::Pitch::CENTRE_RATIO, 0.0f,
-                     MatchSceneTuning::Pitch::CORNER_ARC_SEGMENTS);
-  drawList.PathStroke(line_color, ImDrawFlags_None,
-                      MatchSceneTuning::Pitch::LINE_THICKNESS);
-  // Bottom-right
-  drawList.PathArcTo(
-      ImVec2(p_max.x, p_max.y), corner_r, PI,
-      PI * MatchSceneTuning::Pitch::BOTTOM_RIGHT_ARC_END_MULTIPLIER,
-      MatchSceneTuning::Pitch::CORNER_ARC_SEGMENTS);
-  drawList.PathStroke(line_color, ImDrawFlags_None,
-                      MatchSceneTuning::Pitch::LINE_THICKNESS);
+  const int segments = MatchSceneTuning::Pitch::CORNER_ARC_SEGMENTS;
+  drawList.PathArcTo(p_min, corner_r, 0.0f, PI * 0.5f, segments);
+  drawList.PathStroke(line_color, ImDrawFlags_None, line);
+  drawList.PathArcTo(ImVec2(p_max.x, p_min.y), corner_r, PI * 0.5f, PI,
+                     segments);
+  drawList.PathStroke(line_color, ImDrawFlags_None, line);
+  drawList.PathArcTo(ImVec2(p_min.x, p_max.y), corner_r, -PI * 0.5f, 0.0f,
+                     segments);
+  drawList.PathStroke(line_color, ImDrawFlags_None, line);
+  drawList.PathArcTo(p_max, corner_r, PI, PI * 1.5f, segments);
+  drawList.PathStroke(line_color, ImDrawFlags_None, line);
 }
 
 /// Draws a single goal: back panel, white posts and crossbar, and a net mesh
@@ -326,66 +304,75 @@ void drawGoalFrame(ImDrawList& drawList, bool leftGoal, float lineX, float top,
 }
 
 void drawPlayer(ImDrawList& drawList, const MatchRenderPlayer& player,
-                float alpha, const MatchViewport& viewport)
+                float alpha, const MatchViewport& viewport, const MatchKits& kits,
+                bool showName)
 {
+  namespace M = PitchMetres;
+  const float ppm = pixelsPerMetre(viewport);
   const Vector2F interpolated = lerpRenderPosition(
       player.previousPosition, player.currentPosition, alpha);
   const ImVec2 pos = worldToScreen(interpolated, viewport);
+  const float radius = std::max(M::MIN_PLAYER_PIXELS, M::PLAYER_RADIUS * ppm);
+  const float outline = std::max(1.0f, M::PLAYER_OUTLINE * ppm);
 
-  const ImU32 color = player.isHomeTeam ? MatchSceneTuning::Marker::HOME_COLOR
-                                        : MatchSceneTuning::Marker::AWAY_COLOR;
-  drawList.AddCircleFilled(
-      ImVec2(pos.x + MatchSceneTuning::Marker::PLAYER_SHADOW_OFFSET,
-             pos.y + MatchSceneTuning::Marker::PLAYER_SHADOW_OFFSET),
-      MatchSceneTuning::Marker::PLAYER_SHADOW_RADIUS,
-      MatchSceneTuning::Marker::PLAYER_SHADOW_COLOR);
-  drawList.AddCircleFilled(pos, MatchSceneTuning::Marker::PLAYER_OUTLINE_RADIUS,
-                           MatchSceneTuning::Marker::PLAYER_OUTLINE_COLOR);
-  drawList.AddCircleFilled(pos, MatchSceneTuning::Marker::PLAYER_RADIUS, color);
+  const KitColors& kit =
+      player.isGoalkeeper
+          ? (player.isHomeTeam ? kits.homeGoalkeeper : kits.awayGoalkeeper)
+          : (player.isHomeTeam ? kits.home : kits.away);
+  drawList.AddCircleFilled(ImVec2(pos.x + outline, pos.y + outline),
+                           radius + outline,
+                           MatchSceneTuning::Marker::PLAYER_SHADOW_COLOR);
+  drawList.AddCircleFilled(pos, radius + outline, kit.trim);
+  drawList.AddCircleFilled(pos, radius, kit.shirt);
   if (player.possessesBall)
   {
-    drawList.AddCircle(pos, MatchSceneTuning::Marker::POSSESSION_RING_RADIUS,
+    drawList.AddCircle(pos, radius + outline * 3.0f,
                        MatchSceneTuning::Marker::POSSESSION_RING_COLOR, 0,
-                       MatchSceneTuning::Marker::POSSESSION_RING_THICKNESS);
+                       std::max(1.0f, outline));
   }
 
-  // Direction pointer
+  // Direction pointer.
   const float facingAngle =
       player.previousFacingAngle +
       (player.currentFacingAngle - player.previousFacingAngle) * alpha;
-  constexpr float dirLen = MatchSceneTuning::Marker::DIRECTION_LENGTH;
+  const float dirLen = std::max(radius * 1.6f, M::DIRECTION_LENGTH * ppm);
   const ImVec2 dirEnd(pos.x + std::cos(facingAngle) * dirLen,
                       pos.y + std::sin(facingAngle) * dirLen);
   drawList.AddLine(pos, dirEnd, MatchSceneTuning::Marker::DIRECTION_COLOR,
-                   MatchSceneTuning::Marker::DIRECTION_THICKNESS);
+                   std::max(1.0f, outline));
 
-  // Full labels are useful on demand, but drawing 22 of them continuously
-  // makes compact formations unreadable.
+  // Names sit centred below the marker at a small size; by default only the
+  // ball carrier and a hovered player are labelled so formations stay
+  // readable.
   const ImVec2 mouse = ImGui::GetMousePos();
-  const float mouseDistanceSquared = (mouse.x - pos.x) * (mouse.x - pos.x) +
-                                     (mouse.y - pos.y) * (mouse.y - pos.y);
-  if (player.player &&
-      (player.possessesBall ||
-       mouseDistanceSquared < MatchSceneTuning::Marker::HOVER_RADIUS *
-                                  MatchSceneTuning::Marker::HOVER_RADIUS))
+  const float hoverRadius = radius + MatchSceneTuning::Marker::HOVER_RADIUS * 0.5f;
+  const bool hovered = (mouse.x - pos.x) * (mouse.x - pos.x) +
+                           (mouse.y - pos.y) * (mouse.y - pos.y) <
+                       hoverRadius * hoverRadius;
+  if (player.player && (showName || player.possessesBall || hovered))
   {
-    drawList.AddText(ImVec2(pos.x + MatchSceneTuning::Marker::LABEL_X_OFFSET,
-                            pos.y + MatchSceneTuning::Marker::LABEL_Y_OFFSET),
-                     MatchSceneTuning::Marker::LABEL_COLOR,
-                     player.player->getName().c_str());
+    const float fontSize = ImGui::GetFontSize() * NAME_FONT_SCALE;
+    const std::string& name = player.player->getName();
+    const ImVec2 size =
+        ImGui::GetFont()->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, name.c_str());
+    const ImVec2 textPos{pos.x - size.x * 0.5f, pos.y + radius + outline * 2.0f};
+    drawList.AddText(ImGui::GetFont(), fontSize,
+                     {textPos.x + 1.0f, textPos.y + 1.0f},
+                     MatchSceneTuning::Marker::PLAYER_SHADOW_COLOR, name.c_str());
+    drawList.AddText(ImGui::GetFont(), fontSize, textPos,
+                     MatchSceneTuning::Marker::LABEL_COLOR, name.c_str());
   }
-  if (player.player &&
-      mouseDistanceSquared < MatchSceneTuning::Marker::HOVER_RADIUS *
-                                 MatchSceneTuning::Marker::HOVER_RADIUS)
+  if (player.player && hovered)
   {
     ImGui::BeginTooltip();
     ImGui::TextUnformatted(player.player->getName().c_str());
     ImGui::Text(
-        "%s | %s | stamina %.0f%%",
+        "%s | %s | stamina %.0f%% | %.1f m/s",
         RoleUtils::toString(player.player->getRole()).c_str(),
         playerIntentLabel(player.intent),
         static_cast<double>(player.stamina *
-                            MatchSceneTuning::Scoreboard::PERCENT_SCALE));
+                            MatchSceneTuning::Scoreboard::PERCENT_SCALE),
+        static_cast<double>(player.speedMetresPerSecond));
     ImGui::EndTooltip();
   }
 }
@@ -430,17 +417,18 @@ const char* playerIntentLabel(PlayerIntent intent)
 MatchViewport computeMatchViewport(float topLeftX, float topLeftY,
                                    float availableWidth, float availableHeight)
 {
-  const float referenceWidth = MatchSceneTuning::Pitch::WIDTH;
-  const float referenceHeight = MatchSceneTuning::Pitch::HEIGHT;
-  const float scale = std::clamp(std::min(availableWidth / referenceWidth,
-                                          availableHeight / referenceHeight),
-                                 MatchSceneTuning::Pitch::MIN_SCALE,
-                                 MatchSceneTuning::Pitch::MAX_SCALE);
+  // The pitch keeps its real 105 x 68 proportions at any size: fit the
+  // available area and letterbox the rest (the caller centres it).
+  constexpr float MIN_PIXELS_PER_METRE = 2.0f;
+  const float pixelsPerMetreFit =
+      std::max(MIN_PIXELS_PER_METRE,
+               std::min(availableWidth / PitchMetres::LENGTH,
+                        availableHeight / PitchMetres::WIDTH));
   MatchViewport viewport;
   viewport.x = topLeftX;
   viewport.y = topLeftY;
-  viewport.width = referenceWidth * scale;
-  viewport.height = referenceHeight * scale;
+  viewport.width = PitchMetres::LENGTH * pixelsPerMetreFit;
+  viewport.height = PitchMetres::WIDTH * pixelsPerMetreFit;
   return viewport;
 }
 
@@ -504,6 +492,23 @@ void MatchRenderer2D::render(const MatchRenderSnapshot& snapshot,
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
   if (!draw_list) return;
 
+  // The same strips as the 3D view, chosen once per fixture.
+  TeamID home = 0;
+  TeamID away = 0;
+  for (const MatchRenderPlayer& player : snapshot.players)
+  {
+    if (!player.player) continue;
+    if (player.isHomeTeam && home == 0) home = player.player->getTeamId();
+    if (!player.isHomeTeam && away == 0) away = player.player->getTeamId();
+  }
+  if (!kitsChosen || home != kitHomeTeam || away != kitAwayTeam)
+  {
+    kits = chooseMatchKits(home, away);
+    kitHomeTeam = home;
+    kitAwayTeam = away;
+    kitsChosen = true;
+  }
+
   drawStadium(*draw_list, viewport);
   drawPitch(*draw_list, viewport);
 
@@ -527,31 +532,32 @@ void MatchRenderer2D::render(const MatchRenderSnapshot& snapshot,
                            debugColor);
     }
   }
-#else
-  (void)options;
 #endif
 
   for (const MatchRenderPlayer& player : snapshot.players)
   {
-    drawPlayer(*draw_list, player, alpha, viewport);
+    drawPlayer(*draw_list, player, alpha, viewport, kits,
+               options.showPlayerNames);
   }
 
   const Vector2F interpolatedBall = lerpRenderPosition(
       snapshot.ball.previousPosition, snapshot.ball.currentPosition, alpha);
   const ImVec2 ballPos = worldToScreen(interpolatedBall, viewport);
-  const float ballZ =
-      snapshot.ball.previousZ +
-      (snapshot.ball.currentZ - snapshot.ball.previousZ) * alpha;
-  // Ground shadow keeps the ball readable when it is lifted over the grass.
-  draw_list->AddCircleFilled(ballPos,
-                             MatchSceneTuning::Marker::BALL_RADIUS *
-                                 MatchSceneTuning::Marker::BALL_SHADOW_SCALE,
-                             MatchSceneTuning::Marker::BALL_SHADOW_COLOR);
-  const float elevation = ballZ * MatchSceneTuning::Marker::BALL_HEIGHT_SCALE *
-                          MatchSceneTuning::Marker::BALL_RADIUS;
+  const float ppm = pixelsPerMetre(viewport);
+  const float ballRadius =
+      std::max(PitchMetres::MIN_BALL_PIXELS, PitchMetres::BALL_RADIUS * ppm);
+  const float heightMetres =
+      snapshot.ball.previousHeightMetres +
+      (snapshot.ball.currentHeightMetres - snapshot.ball.previousHeightMetres) *
+          alpha;
+  // Ground shadow keeps the ball readable when it is lifted over the grass;
+  // the lifted ball is offset upward by half its real height.
+  draw_list->AddCircleFilled(
+      ballPos, ballRadius * MatchSceneTuning::Marker::BALL_SHADOW_SCALE,
+      MatchSceneTuning::Marker::BALL_SHADOW_COLOR);
+  const float elevation = heightMetres * 0.5f * ppm;
   draw_list->AddCircleFilled(ImVec2(ballPos.x, ballPos.y - elevation),
-                             MatchSceneTuning::Marker::BALL_RADIUS,
-                             MatchSceneTuning::Marker::BALL_COLOR);
+                             ballRadius, MatchSceneTuning::Marker::BALL_COLOR);
 
   if (snapshot.state == MatchState::GOAL)
   {

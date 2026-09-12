@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <iostream>
 #include <optional>
+#include <unordered_map>
+#include <vector>
 
 #include "database/database_connection.h"
 #include "database/gamedata.h"
@@ -19,6 +21,7 @@
 #include "database/repositories/league_repository.h"
 #include "database/repositories/player_repository.h"
 #include "database/repositories/team_repository.h"
+#include "database/save_manager.h"
 #include "global/global.h"
 #include "global/logger.h"
 #include "global/paths.h"
@@ -35,9 +38,24 @@ Game::Game(std::shared_ptr<GameData> gd,
       competitions(gamedata, db_conn),
       world(gamedata),
       transfers(gamedata, world, competitions),
+      career(gamedata),
+      international(gamedata),
       currentDate(START_DATE)
 {
   (*gamedata).loadFromDB(db_conn);
+  // Continental news reaches the inbox when it concerns the managed club;
+  // results everybody talks about (winners) are filed as read.
+  competitions.getContinental().setNewsSink(
+      [this](InboxMessage message, const std::vector<TeamID>& clubs,
+             bool headline)
+      {
+        const bool ours = managed_team_id != FREE_AGENTS_TEAM_ID &&
+                          std::ranges::contains(clubs, managed_team_id);
+        if (!ours && !headline) return;
+        message.read = !ours;
+        if (ours) message.team_id = managed_team_id;
+        world.getInbox().add(std::move(message));
+      });
   world.setStandingsProvider(
       [this](LeagueID league_id)
       {
@@ -65,6 +83,18 @@ Game::Game(std::shared_ptr<GameData> gd,
           }
         }
       });
+  world.getStories().setCareerProvider(
+      [this](PlayerID player_id)
+      {
+        CareerTotals totals;
+        for (const PlayerSeasonStats& stats :
+             competitions.getPlayerCareer(player_id))
+        {
+          totals.appearances += stats.appearances;
+          totals.goals += stats.goals;
+        }
+        return totals;
+      });
   loadGame();
 }
 
@@ -80,6 +110,12 @@ void Game::loadGame()
     competitions.load(calendar, current_season);
     world.load(db_conn);
     transfers.load(db_conn);
+    career.load(db_conn);
+    guidance.load(db_conn);
+    international.load(*db_conn);
+    // Saves from before the continental competitions join them next
+    // season unless the league phase can still be drawn.
+    competitions.startContinentalSeason(currentDate);
     Logger::debug("Game loaded. Date: " + game_date_str +
                   ", Season: " + std::to_string(current_season));
   }
@@ -91,6 +127,7 @@ void Game::loadGame()
     currentDate = START_DATE;
     calendar.generate((*gamedata), currentDate);
     competitions.load(calendar, current_season);
+    competitions.startContinentalSeason(currentDate);
     Logger::debug("First run, initializing game state.");
     saveGame();
   }
@@ -107,6 +144,10 @@ void Game::loadGame()
     world.onManagedTeamSelected(currentDate, managed_team_id,
                                 upcomingFixtures(managed_team_id));
   }
+  // Careers from before the manager market get a manager and AI rivals.
+  if (managed_team_id != FREE_AGENTS_TEAM_ID)
+    career.ensureProfile(managed_team_id, currentDate);
+  career.ensureClubManagers(currentDate, managed_team_id);
 }
 
 void Game::saveGame()
@@ -125,7 +166,11 @@ void Game::saveGame()
     fixtureRepo.saveCalendar(calendar);
     competitions.save();
     world.save(db_conn);
+    SaveManager::fault(SaveManager::FaultPoint::MidFlush);
     transfers.save(db_conn);
+    career.save(db_conn);
+    guidance.save(db_conn);
+    international.save(*db_conn);
 
     for (const auto& [id, league] : (*gamedata).getLeagues())
     {
@@ -144,6 +189,7 @@ void Game::saveGame()
   competitions.onSaved();
   world.onSaved();
   transfers.onSaved();
+  guidance.onSaved();
 
   Logger::debug("Game saved.");
 }
@@ -154,6 +200,10 @@ void Game::advanceDay()
   currentDate.nextDay();
   Logger::debug("Date changed to: " + currentDate.toString());
   world.onDayAdvanced(currentDate, managed_team_id);
+  runCareerDay();
+  // National-team matches run through the same batch scheduler; windows
+  // never overlap competitive club fixtures.
+  international.onDay(currentDate, scheduler, world, managed_team_id);
 
   if (currentDate.month == 7 && currentDate.day == 1)
   {
@@ -183,7 +233,7 @@ void Game::advanceDay()
 
 void Game::keepManagedSelectionEligible()
 {
-  if (!assistant_fixes_lineup || managed_team_id == FREE_AGENTS_TEAM_ID)
+  if (!getAssistantFixesLineup() || managed_team_id == FREE_AGENTS_TEAM_ID)
     return;
   // Suspensions depend on the competition of the next managed fixture.
   const auto& schedule = calendar.getFullCalendar();
@@ -195,7 +245,7 @@ void Game::keepManagedSelectionEligible()
       if (match.isPlayed() || (match.getHomeTeamId() != managed_team_id &&
                                match.getAwayTeamId() != managed_team_id))
         continue;
-      fixMatchdaySquad(managed_team_id, match.getMatchType());
+      fixMatchdaySquad(managed_team_id, match.getMatchType(), day->first);
       return;
     }
   }
@@ -225,6 +275,7 @@ void Game::simulateMatches(std::vector<Match>& matches, bool include_managed)
         world.applyMatchConsequences(match.getDate(), consequence,
                                      managed_team_id);
       world.onMatchPlayed(match, report, managed_team_id);
+      recordCareerMatch(match);
       competitions.recordResult(match, std::move(report));
     }
     batch.clear();
@@ -329,16 +380,19 @@ bool Game::setMatchResult(
   for (const PlayerMatchConsequence& consequence : consequences)
     world.applyMatchConsequences(date, consequence, managed_team_id);
   world.onMatchPlayed(*match, report, managed_team_id);
+  recordCareerMatch(*match);
   competitions.recordResult(*match, std::move(report));
   competitions.afterMatchday(calendar, currentDate);
   return true;
 }
 
-bool Game::isEligible(const Player& player, MatchType type) const
+bool Game::isEligible(const Player& player, MatchType type,
+                      std::optional<GameDateValue> date) const
 {
   return player.isAvailable() &&
          (type == MatchType::FRIENDLY ||
-          !competitions.getDiscipline().isSuspended(player.getId(), type));
+          !competitions.getDiscipline().isSuspended(player.getId(), type)) &&
+         !international.isOnDuty(player.getId(), date.value_or(currentDate));
 }
 
 std::vector<PlayerID> Game::ineligibleSelections(TeamID team_id,
@@ -351,7 +405,8 @@ std::vector<PlayerID> Game::ineligibleSelections(TeamID team_id,
       [this, type](const Player& player) { return isEligible(player, type); });
 }
 
-std::size_t Game::fixMatchdaySquad(TeamID team_id, MatchType type)
+std::size_t Game::fixMatchdaySquad(TeamID team_id, MatchType type,
+                                   std::optional<GameDateValue> date)
 {
   const auto team = gamedata->getTeam(team_id);
   if (!team) return 0;
@@ -363,7 +418,8 @@ std::size_t Game::fixMatchdaySquad(TeamID team_id, MatchType type)
   }
   return MatchdaySquad::replaceIneligible(
       team->get().getLineup(), squad,
-      [this, type](const Player& player) { return isEligible(player, type); },
+      [this, type, date](const Player& player)
+      { return isEligible(player, type, date); },
       gamedata->getStatsConfig());
 }
 
@@ -393,9 +449,34 @@ void Game::endSeason()
             << " has concluded. ---"
             << "\n";
   world.onSeasonEnd(currentDate, managed_team_id);
+  // Final tables are read before promotion and relegation move the clubs.
+  std::unordered_map<TeamID, int> final_positions;
+  for (const auto& [league_id, league] : gamedata->getLeagues())
+  {
+    int position = 0;
+    for (const StandingRow& row :
+         competitions.getStandings(calendar, league_id))
+      final_positions[row.team_id] = ++position;
+  }
+  const BoardState board = world.getBoardState();
   competitions.closeSeason(
       calendar, current_season,
       SeasonCalendar::seasonStartYear(SeasonCalendar::addDays(currentDate, -1)));
+  std::vector<SeasonHistoryEntry> finished;
+  for (const SeasonHistoryEntry& entry : competitions.getSeasonHistory())
+    if (entry.season == current_season) finished.push_back(entry);
+  const bool managing = managed_team_id != FREE_AGENTS_TEAM_ID &&
+                        board.team_id == managed_team_id;
+  const bool contract_ran_out = career.onSeasonEnd(
+      currentDate, managed_team_id, managing ? board.expected_position : 0,
+      managing ? board.confidence : 50.0f,
+      [&final_positions](TeamID team_id)
+      {
+        const auto found = final_positions.find(team_id);
+        return found == final_positions.end() ? 0 : found->second;
+      },
+      finished, world.getInbox());
+  if (contract_ran_out) leaveManagedTeam(DepartureReason::ContractExpired);
   (*gamedata).ageAllPlayers();
   (*gamedata).advanceContractsAndReleasePlayers();
   current_season++;
@@ -415,6 +496,7 @@ void Game::startNewSeason()
     league.resetPoints();
   }
   calendar.generate((*gamedata), currentDate);
+  competitions.startContinentalSeason(currentDate);
   world.onSeasonStart(currentDate, managed_team_id);
 }
 
@@ -431,7 +513,64 @@ uint16_t Game::getManagedTeamId() const { return managed_team_id; }
 void Game::setManagedTeamId(uint16_t id)
 {
   managed_team_id = id;
+  if (id != FREE_AGENTS_TEAM_ID) career.ensureProfile(id, currentDate);
   world.onManagedTeamSelected(currentDate, id, upcomingFixtures(id));
+}
+
+void Game::leaveManagedTeam(DepartureReason reason)
+{
+  if (managed_team_id == FREE_AGENTS_TEAM_ID) return;
+  career.leaveJob(reason, currentDate, world.getInbox());
+  world.onManagerLeft();
+  // Talks and offers were the manager's business at that club.
+  std::vector<std::uint32_t> offer_ids;
+  for (const IncomingOffer& offer : transfers.incomingOffers())
+    offer_ids.push_back(offer.id);
+  for (const std::uint32_t offer_id : offer_ids)
+    transfers.removeIncomingOffer(offer_id);
+  std::vector<PlayerID> talks;
+  for (const auto& [player_id, talk] : transfers.talks())
+    talks.push_back(player_id);
+  for (const PlayerID player_id : talks) transfers.removeNegotiation(player_id);
+  managed_team_id = FREE_AGENTS_TEAM_ID;
+}
+
+void Game::takeJob(TeamID team_id, const ManagerContract& contract)
+{
+  if (team_id == FREE_AGENTS_TEAM_ID || !gamedata->getTeam(team_id)) return;
+  if (managed_team_id != FREE_AGENTS_TEAM_ID)
+    leaveManagedTeam(DepartureReason::Moved);
+  career.startJob(team_id, contract, currentDate);
+  managed_team_id = team_id;
+  world.onManagedTeamSelected(currentDate, team_id, upcomingFixtures(team_id));
+}
+
+void Game::runCareerDay()
+{
+  const BoardState& board = world.getBoardState();
+  const bool managing = managed_team_id != FREE_AGENTS_TEAM_ID &&
+                        board.team_id == managed_team_id;
+  last_career_events = career.onDayAdvanced(
+      currentDate, managed_team_id, managing ? board.confidence : 50.0f,
+      managing ? board.expected_position : 0,
+      [this](TeamID team_id) { return world.leaguePosition(team_id); },
+      world.getInbox());
+  if (managing && board.dismissed) leaveManagedTeam(DepartureReason::Sacked);
+}
+
+void Game::recordCareerMatch(const Match& match)
+{
+  if (match.getMatchType() == MatchType::FRIENDLY) return;
+  const TeamID home_id = match.getHomeTeamId();
+  const TeamID away_id = match.getAwayTeamId();
+  const float home_strength = world.lineupStrength(home_id);
+  const float away_strength = world.lineupStrength(away_id);
+  career.onMatchPlayed(
+      home_id, away_id, match.getHomeScore(), match.getAwayScore(),
+      match.getMatchType() == MatchType::LEAGUE,
+      BoardModel::expectedPoints(home_strength, away_strength, true),
+      BoardModel::expectedPoints(away_strength, home_strength, false),
+      managed_team_id);
 }
 
 std::vector<UpcomingFixture> Game::upcomingFixtures(TeamID team_id) const

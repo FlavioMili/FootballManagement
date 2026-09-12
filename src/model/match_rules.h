@@ -79,9 +79,39 @@ struct FoulContext
 
 FoulSanction decideFoulSanction(const FoulContext& context);
 
+/** Everything that decides a ground challenge on a dribbler. */
+struct TackleContext
+{
+  float defending = 0.5f;
+  float dribbling = 0.5f;
+  float defenderPhysicality = 0.5f;
+  float carrierPhysicality = 0.5f;
+  /** Team pressing instruction in [0, 1]. */
+  float pressing = 0.5f;
+  /** Team risk-taking instruction in [0, 1]. */
+  float riskTaking = 0.5f;
+  /** Share of the touch the ball is still away from the carrier's foot. */
+  float exposure = 0.0f;
+  /** The carrier is shielding the ball at walking pace. */
+  bool shielding = false;
+  bool sliding = false;
+  bool fromBehind = false;
+  bool inPenaltyArea = false;
+  bool defenderBooked = false;
+};
+
+/** Chance that a challenge reaches the ball first. */
+float tackleWinChance(const TackleContext& context);
+
 /**
- * Stamina drained per simulated second for a player moving at `speedRatio`
- * of their top speed. `endurance` is the Stamina attribute in [0, 1].
+ * Propensity for the challenge to be a foul: applied in full to a missed
+ * challenge and scaled down for one that also reached the ball.
+ */
+float tackleFoulPropensity(const TackleContext& context);
+
+/**
+ * Match condition drained per second for a player moving at `speedRatio`
+ * of their fresh top speed. `endurance` is the Stamina attribute in [0, 1].
  */
 float staminaDrainPerSecond(float speedRatio, float endurance,
                             float pressingIntensity);

@@ -7,10 +7,14 @@
 // -----------------------------------------------------------------------------
 
 #include <gtest/gtest.h>
+#include <sqlite3.h>
 #include <unistd.h>
 
 #include <algorithm>
+#include <array>
+#include <chrono>
 #include <cmath>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -19,6 +23,7 @@
 #include "global/global.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
+#include "model/scout_expertise.h"
 #include "model/scouting.h"
 
 namespace
@@ -145,8 +150,9 @@ TEST(ScoutingTest, BaselineKnowledgeFollowsTheRelationToTheClub)
     EXPECT_FALSE(scout.name.empty());
     EXPECT_GE(scout.judging_ability, 1);
     EXPECT_LE(scout.judging_ability, 100);
-    EXPECT_GE(scout.adaptability, 30);
-    EXPECT_LE(scout.adaptability, 90);
+    const ScoutExpertise expertise = controller->getScoutExpertise(scout.id);
+    EXPECT_EQ(expertise.nationality, scout.nationality);
+    EXPECT_TRUE(speaks(expertise.languages, nativeLanguage(scout.nationality)));
   }
 }
 
@@ -407,8 +413,16 @@ TEST(ScoutingTest, CoverageAssignmentFollowsTheRecruitmentFocus)
 
   const ScoutAssignment& assignment = controller->getScoutAssignments().back();
   EXPECT_TRUE(assignment.finished);
-  EXPECT_EQ(assignment.players_observed,
-            30 * ScoutingTuning::COVERAGE_PLAYERS_PER_DAY);
+  // Players watched per day scale with the scout's effectiveness.
+  const float multiplier =
+      controller
+          ->getScoutEffectiveness(scout.id, ScoutTargetKind::League,
+                                  FOREIGN_LEAGUE)
+          .multiplier;
+  const auto per_day = static_cast<int>(
+      std::lround(static_cast<float>(ScoutingTuning::COVERAGE_PLAYERS_PER_DAY) *
+                  multiplier));
+  EXPECT_NEAR(assignment.players_observed, 30 * per_day, 30);
   EXPECT_GT(assignment.reports_filed, 0);
   int strikers = 0;
   for (const ScoutReport& report : controller->getScoutReports())
@@ -534,6 +548,9 @@ TEST(ScoutingTest, StateSurvivesSaveAndLoad)
     EXPECT_EQ(a.affordable, b.affordable);
     EXPECT_EQ(a.available, b.available);
     EXPECT_FLOAT_EQ(a.overall, b.overall);
+    EXPECT_FLOAT_EQ(a.overall_low, b.overall_low);
+    EXPECT_FLOAT_EQ(a.overall_high, b.overall_high);
+    EXPECT_EQ(a.seen, b.seen);
     EXPECT_EQ(a.estimated_fee, b.estimated_fee);
   }
   ASSERT_EQ(reloaded->getScoutAssignments().size(), assignments.size());
@@ -577,16 +594,15 @@ TEST(ScoutingTest, UnscoutedEstimatesAreRealisticAndRangesAreHonest)
     ASSERT_LT(row.knowledge, ScoutingTuning::RANGE_DISPLAY_KNOWLEDGE);
     EXPECT_LE(row.overall_low, row.overall);
     EXPECT_GE(row.overall_high, row.overall);
-    EXPECT_NEAR(0.5f * (row.overall_low + row.overall_high), row.overall,
-                0.5f)
+    EXPECT_NEAR(0.5f * (row.overall_low + row.overall_high), row.overall, 0.5f)
         << "the estimate is the centre of its range";
     const double truth = trueOverall(*controller, id);
     errors.push_back(std::abs(row.overall - truth));
     if (truth >= row.overall_low - 0.5 && truth <= row.overall_high + 0.5)
       ++inside;
     if (row.age >= 30)
-      EXPECT_LE(row.potential_high, std::max(row.overall, row.overall_high) +
-                                        1e-3f)
+      EXPECT_LE(row.potential_high,
+                std::max(row.overall, row.overall_high) + 1e-3f)
           << "veterans have no headroom beyond their current ability";
     const auto view = *scouting.view(id);
     EXPECT_FLOAT_EQ(view.overall_low, row.overall_low);
@@ -601,4 +617,282 @@ TEST(ScoutingTest, UnscoutedEstimatesAreRealisticAndRangesAreHonest)
   const double coverage =
       static_cast<double>(inside) / static_cast<double>(foreign.size());
   EXPECT_GT(coverage, 0.65);
+
+  // Cost of one world-wide search (the transfer screen runs two on entry).
+  ScoutSearchFilter filter;
+  filter.limit = 1000;
+  const auto started = std::chrono::steady_clock::now();
+  const auto rows = controller->searchScoutedPlayers(filter);
+  const double ms = std::chrono::duration<double, std::milli>(
+                        std::chrono::steady_clock::now() - started)
+                        .count();
+  std::cout << "[scouting-estimates] p90 error=" << p90
+            << " range coverage=" << coverage << " search rows=" << rows.size()
+            << " ms=" << ms << "\n";
+}
+
+namespace
+{
+constexpr LeagueID ITALY = 1;
+constexpr LeagueID ENGLAND = 3;
+constexpr LeagueID BRAZIL = 11;
+constexpr std::array<LeagueID, 11> WORLD_COUNTRIES = {1, 2, 3,  4,  5, 7,
+                                                      8, 9, 10, 11, 12};
+
+float multiplierFor(const ScoutExpertise& expertise, std::uint8_t judging,
+                    LeagueID country, LeagueID league = 0)
+{
+  std::uint32_t country_days = 0;
+  for (const auto& [id, days] : expertise.league_days)
+    if (id == country) country_days += days;
+  const std::array<TargetCountry, 1> targets = {
+      TargetCountry{country, 1.0f, country_days}};
+  std::uint32_t league_days = 0;
+  if (const auto found = expertise.league_days.find(league);
+      found != expertise.league_days.end())
+    league_days = found->second;
+  return ScoutExpertiseModel::compute(expertise, judging, targets, league,
+                                      league_days)
+      .multiplier;
+}
+
+bool hasFactor(const ScoutEffectiveness& effectiveness, EffectFactorKind kind)
+{
+  return std::ranges::any_of(effectiveness.factors,
+                             [kind](const EffectFactor& factor)
+                             { return factor.kind == kind; });
+}
+}  // namespace
+
+TEST(ScoutExpertiseTest, HomeLanguageAndExperienceRaiseEffectiveness)
+{
+  ScoutExpertise italian;
+  italian.nationality = Language::IT;
+  italian.languages = languageBit(SpokenLanguage::Italian);
+
+  const float neutral = multiplierFor(italian, 50, ENGLAND);
+  const float home = multiplierFor(italian, 50, ITALY);
+  EXPECT_GT(home, 1.0f);
+  EXPECT_LT(neutral, 1.0f) << "no English: language barrier";
+
+  ScoutExpertise bilingual = italian;
+  bilingual.languages |= languageBit(SpokenLanguage::English);
+  const float speaks_english = multiplierFor(bilingual, 50, ENGLAND);
+  EXPECT_GT(speaks_english, neutral);
+  EXPECT_GT(speaks_english, 1.0f);
+
+  ScoutExpertise experienced = bilingual;
+  experienced.league_days[ENGLAND] = 400;
+  const float knows_league = multiplierFor(experienced, 50, ENGLAND, ENGLAND);
+  EXPECT_GT(knows_league, speaks_english);
+
+  // Judging ability matters, far from home and without the language hurts.
+  EXPECT_GT(multiplierFor(italian, 90, ITALY), home);
+  EXPECT_LT(multiplierFor(italian, 50, BRAZIL), neutral);
+
+  // Bounded both ways.
+  EXPECT_FLOAT_EQ(multiplierFor(italian, 1, BRAZIL),
+                  ScoutExpertiseModel::MIN_MULTIPLIER);
+  experienced.league_days[ITALY] = 2000;
+  EXPECT_LE(multiplierFor(experienced, 100, ENGLAND, ENGLAND),
+            ScoutExpertiseModel::MAX_MULTIPLIER);
+  EXPECT_LE(multiplierFor(experienced, 100, ITALY, ITALY),
+            ScoutExpertiseModel::MAX_MULTIPLIER);
+
+  // The breakdown names the reasons.
+  const std::array<TargetCountry, 1> england = {
+      TargetCountry{ENGLAND, 1.0f, 400}};
+  const ScoutEffectiveness breakdown =
+      ScoutExpertiseModel::compute(experienced, 70, england, ENGLAND, 400);
+  EXPECT_TRUE(hasFactor(breakdown, EffectFactorKind::KnowsLeague));
+  EXPECT_TRUE(hasFactor(breakdown, EffectFactorKind::SpeaksLanguage));
+  EXPECT_TRUE(hasFactor(breakdown, EffectFactorKind::Judging));
+  EXPECT_FALSE(hasFactor(breakdown, EffectFactorKind::FarFromHome));
+  float total = 1.0f;
+  for (const EffectFactor& factor : breakdown.factors) total += factor.delta;
+  EXPECT_NEAR(breakdown.multiplier,
+              std::clamp(total, ScoutExpertiseModel::MIN_MULTIPLIER,
+                         ScoutExpertiseModel::MAX_MULTIPLIER),
+              1e-5f);
+}
+
+TEST(ScoutExpertiseTest, BackgroundsArePlausibleAndDeterministic)
+{
+  int italians_with_english = 0;
+  int brazilians_with_spanish = 0;
+  int italians_with_home_spell = 0;
+  constexpr int SCOUTS = 300;
+  for (std::uint32_t id = 1; id <= SCOUTS; ++id)
+  {
+    const ScoutExpertise italian =
+        ScoutExpertiseModel::generate(Language::IT, 42, id, WORLD_COUNTRIES);
+    const ScoutExpertise again =
+        ScoutExpertiseModel::generate(Language::IT, 42, id, WORLD_COUNTRIES);
+    EXPECT_EQ(italian.languages, again.languages);
+    EXPECT_EQ(italian.league_days, again.league_days);
+    EXPECT_TRUE(speaks(italian.languages, SpokenLanguage::Italian));
+    EXPECT_LE(italian.league_days.size(), 3u);
+    if (speaks(italian.languages, SpokenLanguage::English))
+      ++italians_with_english;
+    if (italian.league_days.contains(ITALY)) ++italians_with_home_spell;
+
+    const ScoutExpertise brazilian =
+        ScoutExpertiseModel::generate(Language::BR, 42, id, WORLD_COUNTRIES);
+    EXPECT_TRUE(speaks(brazilian.languages, SpokenLanguage::Portuguese));
+    if (speaks(brazilian.languages, SpokenLanguage::Spanish))
+      ++brazilians_with_spanish;
+  }
+  EXPECT_GT(italians_with_english, SCOUTS * 2 / 5);
+  EXPECT_LT(italians_with_english, SCOUTS * 9 / 10);
+  EXPECT_GT(brazilians_with_spanish, SCOUTS / 2);
+  EXPECT_GT(italians_with_home_spell, SCOUTS * 7 / 10);
+}
+
+TEST(ScoutingTest, ScoutSummariesGroupScoutsByWhatTheyAreDoing)
+{
+  const SlotCleanup slot{uniqueSlot(9)};
+  auto controller = makeCareer(slot.slot);
+  const auto summaries = controller->getScoutSummaries();
+  ASSERT_GE(summaries.size(), 2u);
+  for (const ScoutSummary& summary : summaries)
+    EXPECT_EQ(summary.status, ScoutStatus::IdleNew);
+
+  const std::uint32_t busy = summaries[0].profile.id;
+  const std::uint32_t fresh = summaries[1].profile.id;
+  const PlayerID target = leaguePlayers(*controller, FOREIGN_LEAGUE)[2];
+  ASSERT_EQ(controller->startScoutAssignment(busy, ScoutTargetKind::Player,
+                                             target, 3),
+            ScoutAssignError::None);
+  const auto statusOf = [&](std::uint32_t id)
+  {
+    for (const ScoutSummary& summary : controller->getScoutSummaries())
+      if (summary.profile.id == id) return summary;
+    return ScoutSummary{};
+  };
+  EXPECT_EQ(statusOf(busy).status, ScoutStatus::OnAssignment);
+  EXPECT_NE(statusOf(busy).active_assignment_id, 0u);
+  EXPECT_EQ(statusOf(fresh).status, ScoutStatus::IdleNew);
+
+  for (int day = 0; day < 3; ++day) controller->advanceDay();
+  const ScoutSummary done = statusOf(busy);
+  EXPECT_EQ(done.status, ScoutStatus::IdleWithHistory);
+  EXPECT_EQ(done.finished_assignments, 1u);
+  EXPECT_EQ(done.total_reports, 1u);
+  EXPECT_EQ(done.unread_reports, 1u);
+  EXPECT_EQ(controller->getUnreadScoutReportCount(), 1u);
+  EXPECT_TRUE(controller->markScoutReportsSeen(busy));
+  EXPECT_EQ(controller->getUnreadScoutReportCount(), 0u);
+  EXPECT_EQ(statusOf(busy).unread_reports, 0u);
+  EXPECT_FALSE(controller->markScoutReportsSeen(busy));
+  EXPECT_EQ(statusOf(fresh).status, ScoutStatus::IdleNew);
+}
+
+TEST(ScoutingTest, ExperienceAccruesAndSurvivesSaveAndLoad)
+{
+  const SlotCleanup slot{uniqueSlot(10)};
+  auto controller = makeCareer(slot.slot);
+  const std::uint32_t scout = controller->getScouts().front().id;
+  const auto daysIn = [](const ScoutExpertise& expertise, LeagueID league)
+  {
+    const auto found = expertise.league_days.find(league);
+    return found == expertise.league_days.end() ? 0 : int{found->second};
+  };
+  const ScoutExpertise before = controller->getScoutExpertise(scout);
+  const float effectiveness_before =
+      controller
+          ->getScoutEffectiveness(scout, ScoutTargetKind::League,
+                                  FOREIGN_LEAGUE)
+          .multiplier;
+  ASSERT_EQ(controller->startScoutAssignment(scout, ScoutTargetKind::League,
+                                             FOREIGN_LEAGUE, 20),
+            ScoutAssignError::None);
+  for (int day = 0; day < 20; ++day) controller->advanceDay();
+
+  const ScoutExpertise after = controller->getScoutExpertise(scout);
+  EXPECT_EQ(daysIn(after, FOREIGN_LEAGUE), daysIn(before, FOREIGN_LEAGUE) + 20);
+  EXPECT_EQ(after.languages, before.languages);
+  const ScoutEffectiveness effectiveness = controller->getScoutEffectiveness(
+      scout, ScoutTargetKind::League, FOREIGN_LEAGUE);
+  if (effectiveness_before < ScoutExpertiseModel::MAX_MULTIPLIER)
+    EXPECT_GT(effectiveness.multiplier, effectiveness_before);
+  EXPECT_TRUE(hasFactor(effectiveness, EffectFactorKind::KnowsLeague));
+
+  controller->saveGame();
+  auto reloaded = std::make_unique<GameController>();
+  ASSERT_TRUE(reloaded->loadGame(slot.slot));
+  const ScoutExpertise restored = reloaded->getScoutExpertise(scout);
+  EXPECT_EQ(restored.nationality, after.nationality);
+  EXPECT_EQ(restored.languages, after.languages);
+  EXPECT_EQ(restored.league_days, after.league_days);
+  EXPECT_FLOAT_EQ(reloaded
+                      ->getScoutEffectiveness(scout, ScoutTargetKind::League,
+                                              FOREIGN_LEAGUE)
+                      .multiplier,
+                  effectiveness.multiplier);
+  // Unread reports stay unread across the reload.
+  EXPECT_EQ(reloaded->getUnreadScoutReportCount(),
+            controller->getUnreadScoutReportCount());
+}
+
+TEST(ScoutingTest, ContinentAssignmentsCoverEveryCountryOnIt)
+{
+  const SlotCleanup slot{uniqueSlot(11)};
+  auto controller = makeCareer(slot.slot);
+  const std::uint32_t scout = controller->getScouts().front().id;
+  const auto south_america =
+      static_cast<std::uint32_t>(Continent::SouthAmerica);
+  EXPECT_EQ(controller->getScoutAssignmentCost(ScoutTargetKind::Region,
+                                               south_america, 10),
+            10 * ScoutingTuning::DAILY_COST_FOREIGN);
+  EXPECT_EQ(controller->getScoutAssignmentCost(
+                ScoutTargetKind::Region,
+                static_cast<std::uint32_t>(Continent::COUNT), 10),
+            0);
+  ASSERT_EQ(controller->startScoutAssignment(scout, ScoutTargetKind::Region,
+                                             south_america, 10),
+            ScoutAssignError::None);
+  for (int day = 0; day < 10; ++day) controller->advanceDay();
+  const ScoutExpertise expertise = controller->getScoutExpertise(scout);
+  const ScoutingSystem& scouting = scoutingOf(*controller);
+  bool worked_there = false;
+  for (const auto& [league, days] : expertise.league_days)
+    if (countryContinent(scouting.countryOf(league)) == Continent::SouthAmerica)
+      worked_there = true;
+  EXPECT_TRUE(worked_there);
+}
+
+TEST(ScoutingTest, ReportsOfOlderSavesAreMigratedAsRead)
+{
+  const SlotCleanup slot{uniqueSlot(12)};
+  auto controller = makeCareer(slot.slot);
+  const std::uint32_t scout = controller->getScouts().front().id;
+  ASSERT_EQ(controller->startScoutAssignment(
+                scout, ScoutTargetKind::Player,
+                leaguePlayers(*controller, FOREIGN_LEAGUE)[4], 3),
+            ScoutAssignError::None);
+  for (int day = 0; day < 3; ++day) controller->advanceDay();
+  ASSERT_EQ(controller->getUnreadScoutReportCount(), 1u);
+  const float overall = controller->getScoutReports().back().overall;
+  controller->saveGame();
+  controller.reset();
+
+  // A save written before the report details existed.
+  sqlite3* db = nullptr;
+  ASSERT_EQ(sqlite3_open(RuntimePaths::savePath(slot.slot).c_str(), &db),
+            SQLITE_OK);
+  for (const char* sql : {"ALTER TABLE ScoutReports DROP COLUMN seen;",
+                          "ALTER TABLE ScoutReports DROP COLUMN overall_low;",
+                          "ALTER TABLE ScoutReports DROP COLUMN overall_high;"})
+    ASSERT_EQ(sqlite3_exec(db, sql, nullptr, nullptr, nullptr), SQLITE_OK)
+        << sqlite3_errmsg(db);
+  sqlite3_close(db);
+
+  auto reloaded = std::make_unique<GameController>();
+  ASSERT_TRUE(reloaded->loadGame(slot.slot));
+  ASSERT_EQ(reloaded->getScoutReports().size(), 1u);
+  const ScoutReport& report = reloaded->getScoutReports().back();
+  EXPECT_TRUE(report.seen);
+  EXPECT_EQ(reloaded->getUnreadScoutReportCount(), 0u);
+  EXPECT_FLOAT_EQ(report.overall_low, overall);
+  EXPECT_FLOAT_EQ(report.overall_high, overall);
 }

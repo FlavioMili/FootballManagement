@@ -187,9 +187,8 @@ void StrategyScene::renderContent()
 
 void StrategyScene::renderInstructions(float width)
 {
-  const float height =
-      std::max(ImGui::GetContentRegionAvail().y, 420.0f * Theme::scale());
-  UI::beginCard("tactic_setup", LOC("TACTIC_PRESETS"), ImVec2(width, height));
+  // Sized to content: never clips the sliders, the page scrolls if needed.
+  UI::beginAutoHeightCard("tactic_setup", LOC("TACTIC_PRESETS"), width);
   const float gap = ImGui::GetStyle().ItemSpacing.x;
   const float buttonWidth =
       (ImGui::GetContentRegionAvail().x - gap * (PRESETS.size() - 1)) /
@@ -199,17 +198,13 @@ void StrategyScene::renderInstructions(float width)
     if (index > 0) ImGui::SameLine();
     ImGui::PushID(static_cast<int>(index));
     const bool active = selected_preset == static_cast<int>(index);
-    if (active)
-      ImGui::PushStyleColor(ImGuiCol_Button,
-                            ImGui::GetStyleColorVec4(ImGuiCol_Header));
-    if (ImGui::Button(
-            LOC(PRESETS[index].nameKey),
+    if (UI::toggleButton(
+            LOC(PRESETS[index].nameKey), active,
             ImVec2(buttonWidth, PRESET_BUTTON_HEIGHT * Theme::scale())))
     {
       current_sliders = PRESETS[index].sliders;
       selected_preset = static_cast<int>(index);
     }
-    if (active) ImGui::PopStyleColor();
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
       ImGui::SetTooltip("%s", LOC(PRESETS[index].descriptionKey));
     ImGui::PopID();
@@ -238,7 +233,7 @@ void StrategyScene::renderInstructions(float width)
   ImGui::PopTextWrapPos();
   const bool dirty = hasUnsavedChanges();
   ImGui::BeginDisabled(!dirty);
-  if (ImGui::Button(LOC("TACTIC_REVERT"))) loadStrategy();
+  if (UI::secondaryButton(LOC("TACTIC_REVERT"))) loadStrategy();
   ImGui::SameLine();
   if (UI::primaryButton(LOC("STRATEGY_APPLY")))
   {
@@ -258,9 +253,7 @@ void StrategyScene::renderInstructions(float width)
 void StrategyScene::renderSummary(float width)
 {
   const Theme::Palette& palette = Theme::palette();
-  const float height =
-      std::max(ImGui::GetContentRegionAvail().y, 260.0f * Theme::scale());
-  UI::beginCard("tactic_summary", LOC("TACTIC_SUMMARY"), ImVec2(width, height));
+  UI::beginAutoHeightCard("tactic_summary", LOC("TACTIC_SUMMARY"), width);
   if (const auto managed = guiView->getController().getManagedTeam())
   {
     const float previewWidth = ImGui::GetContentRegionAvail().x;

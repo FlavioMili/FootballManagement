@@ -1,0 +1,87 @@
+# Builds the desktop packages and publishes them on a GitHub Release.
+#  - Pushing a tag "v*" (e.g. v0.3.0) publishes release "v0.3.0".
+#  - Running it manually builds the packages as artifacts; with "publish"
+#    it also creates a draft release for the given version.
+# See docs/development/release.md.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version without the leading v (e.g. 0.3.0-rc1)
+        required: true
+        type: string
+      publish:
+        description: Create a draft GitHub Release tagged v<version> at this commit
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  packages:
+    uses: ./.github/workflows/build.yml
+    with:
+      version: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
+      retention-days: 30
+
+  publish:
+    name: Publish GitHub Release
+    needs: packages
+    if: >-
+      !cancelled() && needs.packages.result == 'success' &&
+      (github.event_name == 'push' || inputs.publish)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      EVENT_NAME: ${{ github.event_name }}
+      REF_NAME: ${{ github.ref_name }}
+      INPUT_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: package-*
+          path: dist
+          merge-multiple: true
+
+      - name: Check packages and write checksums
+        working-directory: dist
+        run: |
+          ls -l
+          # Linux and macOS are required; Windows is experimental and optional.
+          compgen -G "*-linux-x86_64.tar.gz" > /dev/null
+          compgen -G "*-macos-arm64.zip" > /dev/null
+          compgen -G "*-windows-x86_64.zip" > /dev/null ||
+            echo "::warning::No Windows package: the experimental Windows job failed."
+          sha256sum -- * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create or update the release
+        run: |
+          if [[ $EVENT_NAME == push ]]; then
+            tag=$REF_NAME
+            flags=(--verify-tag)
+          else
+            tag="v${INPUT_VERSION#v}"
+            flags=(--draft --target "$GITHUB_SHA")
+          fi
+          [[ $tag == *-* ]] && flags+=(--prerelease)
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" dist/* --clobber
+          else
+            gh release create "$tag" dist/* --title "Football Management $tag" \
+              --generate-notes "${flags[@]}"
+          fi

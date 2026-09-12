@@ -12,6 +12,7 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <array>
 #include <format>
 
 #include "controller/game_controller.h"
@@ -28,6 +29,20 @@
 
 namespace
 {
+// Season history columns (unscaled widths); priority 0 never hides.
+const std::array<UI::Column, 6>& historyColumns()
+{
+  static const std::array<UI::Column, 6> columns = {{
+      {"CLUB_COL_SEASON", 70.0f, 0},
+      {"CLUB_COL_COMPETITION", 170.0f, 1},
+      {"CLUB_COL_CHAMPION", 0.0f, 0},
+      {"CLUB_COL_RUNNER_UP", 170.0f, 2},
+      {"CLUB_COL_TOP_SCORER", 200.0f, 3},
+      {"CLUB_COL_MOVEMENTS", 280.0f, 4},
+  }};
+  return columns;
+}
+
 constexpr float TWO_COLUMN_MIN_WIDTH = 860.0f;
 constexpr float CARD_HEIGHT = 262.0f;
 constexpr float KEY_WIDTH = 170.0f;
@@ -171,8 +186,7 @@ void ClubScene::renderContent()
   renderBoard(half, cardHeight);
   if (twoColumns) ImGui::SameLine();
   renderStadium(twoColumns ? available - gap - half : available, cardHeight);
-  renderHistory(
-      std::max(ImGui::GetContentRegionAvail().y, 150.0f * Theme::scale()));
+  renderHistory();
 }
 
 void ClubScene::renderBoard(float width, float height)
@@ -254,10 +268,17 @@ void ClubScene::renderStadium(float width, float height)
   ImGui::AlignTextToFramePadding();
   ImGui::TextColored(palette.muted, "%s", LOC("CLUB_SET_PRICE"));
   ImGui::SameLine(keyWidth);
-  ImGui::SetNextItemWidth(130.0f * Theme::scale());
-  ImGui::InputInt("##ticket_price", &ticket_price_input, 1, 5);
-  ticket_price_input = std::clamp(ticket_price_input, 1, MAX_TICKET_PRICE);
-  ImGui::SameLine();
+  int64_t priceInput = ticket_price_input;
+  const std::array<UI::MoneyChip, 1> chips = {
+      {{LOC("CLUB_FAIR_PRICE"), static_cast<int64_t>(fair_ticket_price)}}};
+  UI::MoneyInputOptions options;
+  options.minimum = 1;
+  options.maximum = MAX_TICKET_PRICE;
+  options.width = 190.0f * Theme::scale();
+  if (fair_ticket_price > 0) options.chips = chips;
+  if (UI::moneyInput("##ticket_price", priceInput, options))
+    ticket_price_input = static_cast<int>(priceInput);
+  UI::sameLineIfFits(UI::buttonWidth(LOC("CLUB_APPLY_PRICE")));
   ImGui::BeginDisabled(ticket_price_input ==
                        static_cast<int>(profile.ticket_price));
   if (UI::primaryButton(LOC("CLUB_APPLY_PRICE")) &&
@@ -276,10 +297,11 @@ void ClubScene::renderStadium(float width, float height)
   UI::endCard();
 }
 
-void ClubScene::renderHistory(float height)
+void ClubScene::renderHistory()
 {
   const Theme::Palette& palette = Theme::palette();
-  UI::beginCard("club_history", LOC("CLUB_HISTORY"), ImVec2(0.0f, height));
+  // Grows with the seasons played; the page scrolls, never the card.
+  UI::beginAutoHeightCard("club_history", LOC("CLUB_HISTORY"));
   if (history.empty())
   {
     UI::emptyState(LOC("CLUB_HISTORY_EMPTY_TITLE"),
@@ -287,35 +309,29 @@ void ClubScene::renderHistory(float height)
     UI::endCard();
     return;
   }
-  if (UI::beginDataTable("history", 6,
-                         ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-                             ImGuiTableFlags_ScrollY |
-                             ImGuiTableFlags_SizingFixedFit,
-                         760.0f, ImVec2(0.0f, 0.0f), 1))
+  std::array<UI::Column, 6> columns = historyColumns();
+  for (UI::Column& column : columns) column.label = LOC(column.label);
+  const UI::ColumnMask mask =
+      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 150.0f);
+  if (UI::beginResponsiveTable(
+          "history", columns, mask,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
   {
-    ImGui::TableSetupColumn(LOC("CLUB_COL_SEASON"));
-    ImGui::TableSetupColumn(LOC("CLUB_COL_COMPETITION"));
-    ImGui::TableSetupColumn(LOC("CLUB_COL_CHAMPION"));
-    ImGui::TableSetupColumn(LOC("CLUB_COL_RUNNER_UP"));
-    ImGui::TableSetupColumn(LOC("CLUB_COL_TOP_SCORER"));
-    ImGui::TableSetupColumn(LOC("CLUB_COL_MOVEMENTS"),
-                            ImGuiTableColumnFlags_WidthStretch);
-    UI::staticHeadersRow();
     for (const HistoryRow& line : history)
     {
       ImGui::TableNextRow();
       ImGui::TableNextColumn();
       ImGui::TextColored(palette.muted, "%s", line.season.c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(line.competition.c_str());
+      if (UI::cell(mask, 1)) ImGui::TextUnformatted(line.competition.c_str());
       ImGui::TableNextColumn();
       ImGui::TextColored(palette.text, "%s", line.champion.c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(line.runner_up.c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(line.top_scorer.c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextColored(palette.muted, "%s", line.movements.c_str());
+      if (UI::cell(mask, 3)) ImGui::TextUnformatted(line.runner_up.c_str());
+      if (UI::cell(mask, 4)) ImGui::TextUnformatted(line.top_scorer.c_str());
+      if (UI::cell(mask, 5))
+      {
+        UI::textFitted(line.movements, ImGui::GetContentRegionAvail().x,
+                       palette.muted);
+      }
     }
     ImGui::EndTable();
   }

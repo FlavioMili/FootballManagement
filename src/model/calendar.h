@@ -21,8 +21,10 @@
  * A season runs from July (friendlies) to May. League rounds are played on
  * weekends (Saturday/Sunday) with a few midweek (Wednesday) rounds, cups on
  * Wednesdays with the final on the Saturday after the last league weekend.
- * There is a winter break and four international breaks (September,
- * October, November, March) during which no competitive matches are played.
+ * Continental club competitions use their own Tuesday-Thursday weeks. There
+ * is a winter break and the international windows (September/October,
+ * November, March and June) during which no competitive club matches are
+ * played.
  */
 namespace SeasonCalendar
 {
@@ -48,8 +50,34 @@ GameDateValue leagueStart(uint16_t season_year);
 /** @brief Last regular league Saturday (on or before 24 May). */
 GameDateValue leagueEnd(uint16_t season_year);
 
+/** @brief Days in which clubs release players to their national teams. */
+struct InternationalWindow
+{
+  GameDateValue start; /*!< Players report (a Monday). */
+  GameDateValue end;   /*!< Last day of duty (a Tuesday). */
+  std::vector<GameDateValue> match_days;
+  bool summer = false; /*!< June window (the finals in tournament years). */
+};
+
+/** @brief Windows of the season starting in @p season_year, by date. */
+std::vector<InternationalWindow> internationalWindows(uint16_t season_year);
+
 bool isInternationalBreak(const GameDateValue& date);
 bool isWinterBreak(const GameDateValue& date);
+
+/** Continental club weeks per season: eight league-phase matchdays and two
+ * legs each of the play-off, round of 16, quarter- and semi-finals. */
+constexpr size_t CONTINENTAL_WEEKS = 16;
+
+/**
+ * @brief Tuesday of every continental club week (see CONTINENTAL_WEEKS).
+ * Continental matches are played Tuesday to Thursday; domestic midweek
+ * rounds and cup ties avoid these weeks.
+ */
+std::vector<GameDateValue> continentalWeeks(uint16_t season_year);
+
+/** @brief True from Tuesday to Thursday of a continental club week. */
+bool isContinentalWeek(const GameDateValue& date);
 
 /** @brief No competitive fixtures may be scheduled on this date. */
 bool isBlackout(const GameDateValue& date);

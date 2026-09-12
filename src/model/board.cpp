@@ -155,3 +155,122 @@ void seasonReview(BoardState& state, int final_position)
                  0.0f, 100.0f);
 }
 }  // namespace BoardModel
+
+// ---------------------------------------------------------------------------
+// Facility projects
+// ---------------------------------------------------------------------------
+
+namespace BoardModel
+{
+ProjectQuote quoteProject(FacilityProjectType type, std::uint8_t current_level,
+                          std::uint32_t capacity, std::uint8_t reputation,
+                          double season_income, std::uint32_t seats)
+{
+  ProjectQuote quote;
+  quote.type = type;
+  const double level_factor =
+      1.0 + static_cast<double>(current_level) / 100.0;
+  switch (type)
+  {
+    case FacilityProjectType::TrainingGround:
+    case FacilityProjectType::MedicalCentre:
+    {
+      const bool training = type == FacilityProjectType::TrainingGround;
+      quote.amount = static_cast<std::uint32_t>(
+          std::clamp(100 - static_cast<int>(current_level), 0, 10));
+      // [P] A modern training centre costs a few percent of a season's
+      // income per step; medical wings less.
+      quote.cost = static_cast<std::int64_t>(std::llround(
+          season_income * (training ? 0.06 : 0.035) * level_factor));
+      quote.days = training ? 180 : 120;
+      break;
+    }
+    case FacilityProjectType::StadiumExpansion:
+    case FacilityProjectType::COUNT:
+    {
+      const std::uint32_t room =
+          capacity >= MAX_STADIUM_CAPACITY ? 0 : MAX_STADIUM_CAPACITY - capacity;
+      const std::uint32_t limit = std::min(room, std::max<std::uint32_t>(
+                                                     MIN_EXPANSION_SEATS,
+                                                     capacity / 2));
+      std::uint32_t added = std::min(std::max(seats, MIN_EXPANSION_SEATS), limit);
+      added -= added % 500;
+      quote.amount = added;
+      // [P] Expansions cost EUR 2,500-8,500 per seat with the club's stature.
+      const double per_seat = 2'500.0 + 60.0 * static_cast<double>(reputation);
+      quote.cost = static_cast<std::int64_t>(
+          std::llround(per_seat * static_cast<double>(added)));
+      quote.days = static_cast<std::uint16_t>(240 + std::min(added, 9'000U) / 50);
+      quote.disruption = std::min(added, capacity / 10);
+      break;
+    }
+  }
+  if (quote.amount == 0) quote.cost = 0;
+  return quote;
+}
+
+ProjectVerdict reviewProject(const ProjectQuote& quote,
+                             const ProjectRequestContext& context)
+{
+  if (context.same_type_running) return ProjectVerdict::AlreadyRunning;
+  if (context.running_projects >= MAX_RUNNING_PROJECTS)
+    return ProjectVerdict::TooManyProjects;
+  if (context.cooling_down) return ProjectVerdict::Cooldown;
+  if (quote.amount == 0) return ProjectVerdict::AtMaximum;
+  // Facilities far above the club's stature do not pay back. [P]
+  if (quote.type != FacilityProjectType::StadiumExpansion &&
+      context.current_level >= context.reputation + 25)
+    return ProjectVerdict::NotNeeded;
+  if (context.confidence < PROJECT_MIN_CONFIDENCE)
+    return ProjectVerdict::LowConfidence;
+  if (context.balance - quote.cost <
+      PROJECT_CASH_RESERVE_WEEKS * context.weekly_payroll)
+    return ProjectVerdict::CannotAfford;
+  return ProjectVerdict::Approved;
+}
+
+float medicalLayoffMultiplier(std::uint8_t medical_level)
+{
+  return 1.0f - 0.003f * static_cast<float>(
+                             std::max(0, static_cast<int>(medical_level) - 50));
+}
+
+const char* projectTypeKey(FacilityProjectType type)
+{
+  switch (type)
+  {
+    case FacilityProjectType::TrainingGround:
+      return "PROJECT_TRAINING_GROUND";
+    case FacilityProjectType::MedicalCentre:
+      return "PROJECT_MEDICAL_CENTRE";
+    case FacilityProjectType::StadiumExpansion:
+    case FacilityProjectType::COUNT:
+      break;
+  }
+  return "PROJECT_STADIUM_EXPANSION";
+}
+
+const char* projectVerdictKey(ProjectVerdict verdict)
+{
+  switch (verdict)
+  {
+    case ProjectVerdict::Approved:
+      return "PROJECT_VERDICT_APPROVED";
+    case ProjectVerdict::AlreadyRunning:
+      return "PROJECT_VERDICT_RUNNING";
+    case ProjectVerdict::TooManyProjects:
+      return "PROJECT_VERDICT_TOO_MANY";
+    case ProjectVerdict::Cooldown:
+      return "PROJECT_VERDICT_COOLDOWN";
+    case ProjectVerdict::AtMaximum:
+      return "PROJECT_VERDICT_MAXIMUM";
+    case ProjectVerdict::NotNeeded:
+      return "PROJECT_VERDICT_NOT_NEEDED";
+    case ProjectVerdict::LowConfidence:
+      return "PROJECT_VERDICT_CONFIDENCE";
+    case ProjectVerdict::CannotAfford:
+      break;
+  }
+  return "PROJECT_VERDICT_AFFORD";
+}
+}  // namespace BoardModel

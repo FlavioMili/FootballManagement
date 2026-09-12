@@ -161,6 +161,9 @@ void TeamSelectionScene::render()
                                 (ImGui::GetWindowWidth() - width) * 0.5f));
   ImGui::BeginGroup();
   UI::pageHeader(LOC("TEAM_SELECTION_TITLE"), LOC("TEAM_SELECTION_SUBTITLE"));
+  if (manager_panel.render(guiView->getController(), width) ==
+      ManagerSetupPanel::Action::START_UNEMPLOYED)
+    startUnemployed();
   const float height = ImGui::GetContentRegionAvail().y;
   const float gap = ImGui::GetStyle().ItemSpacing.x;
   const float listWidth = LEAGUE_LIST_WIDTH * Theme::scale();
@@ -229,12 +232,15 @@ void TeamSelectionScene::renderClubTable(float height)
       ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
       ImGuiTableFlags_ScrollY | ImGuiTableFlags_Sortable |
       ImGuiTableFlags_SizingFixedFit;
-  // Narrow tables drop stadium and balance (both are on the club card).
-  const bool compact =
-      ImGui::GetContentRegionAvail().x < 900.0f * Theme::scale();
-  if (UI::beginDataTable("TeamsTable", compact ? 5 : 7, flags,
-                         compact ? 600.0f : 900.0f, ImVec2(0.0f, 0.0f), 1))
+  // Narrow tables drop stadium and balance (both are on the club card),
+  // then the expectation: columns hide instead of scrolling sideways.
+  const float tableWidth = ImGui::GetContentRegionAvail().x;
+  const bool compact = tableWidth < 900.0f * Theme::scale();
+  const bool showExpectation = tableWidth >= 600.0f * Theme::scale();
+  const int columnCount = (compact ? 4 : 6) + (showExpectation ? 1 : 0);
+  if (ImGui::BeginTable("TeamsTable", columnCount, flags))
   {
+    ImGui::TableSetupScrollFreeze(0, 1);
     ImGui::TableSetupColumn(LOC("MAIN_GAME_TEAM"),
                             ImGuiTableColumnFlags_WidthStretch, 0.0f,
                             static_cast<ImGuiID>(ClubColumn::NAME));
@@ -264,8 +270,9 @@ void TeamSelectionScene::renderClubTable(float height)
     for (const ClubSummary& club : club_summaries)
       objectiveWidth = std::max(objectiveWidth,
                                 ImGui::CalcTextSize(LOC(club.objective_key)).x);
-    column(LOC("TEAM_SELECTION_EXPECTATION"), 0,
-           objectiveWidth / Theme::scale(), ClubColumn::EXPECTATION);
+    if (showExpectation)
+      column(LOC("TEAM_SELECTION_EXPECTATION"), 0,
+             objectiveWidth / Theme::scale(), ClubColumn::EXPECTATION);
     column(LOC("TEAM_SELECTION_DIFFICULTY"), 0, 90.0f, ClubColumn::DIFFICULTY);
     if (!compact)
       column(LOC("TEAM_SELECTION_BALANCE"),
@@ -317,8 +324,11 @@ void TeamSelectionScene::renderClubTable(float height)
       }
       ImGui::TableNextColumn();
       UI::ratingChip(club.average_overall);
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(LOC(club.objective_key));
+      if (showExpectation)
+      {
+        ImGui::TableNextColumn();
+        ImGui::TextUnformatted(LOC(club.objective_key));
+      }
       ImGui::TableNextColumn();
       ImGui::TextColored(
           difficultyColor(club.difficulty), "%s",
@@ -400,7 +410,14 @@ void TeamSelectionScene::renderSelectedClub(float width, float height)
 
 void TeamSelectionScene::startCareer(TeamID teamId)
 {
+  guiView->getController().createManager(manager_panel.setup());
   guiView->getController().selectManagedTeam(teamId);
+  guiView->popScene();
+}
+
+void TeamSelectionScene::startUnemployed()
+{
+  guiView->getController().createManager(manager_panel.setup());
   guiView->popScene();
 }
 

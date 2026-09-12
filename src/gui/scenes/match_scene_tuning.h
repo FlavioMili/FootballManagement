@@ -35,13 +35,12 @@ struct MatchSceneTuning final
     static constexpr float SUBSTITUTION_BUTTON_WIDTH = 170.0f;
     static constexpr float DEBUG_BUTTON_WIDTH = 150.0f;
     static constexpr float AI_DEBUG_BUTTON_WIDTH = 130.0f;
-    /** Playback speeds offered as multiples of the engine's real-time
-     * pace (1x); the default comes from the engine tuning when it has one. */
-    static constexpr std::array<float, 5> SPEED_STEPS = {1.0f, 2.0f, 4.0f,
-                                                         8.0f, 16.0f};
+    /** Playback speeds offered: simulated seconds per real second (1x is
+     * real time, the engine allows up to 30x). */
+    static constexpr std::array<float, 6> SPEED_STEPS = {1.0f, 2.0f,  4.0f,
+                                                         8.0f, 16.0f, 30.0f};
     static constexpr float SPEED_BUTTON_GAP = 2.0f;
-    /** Engine step of a quick result when it has no headless fast path. */
-    static constexpr float HEADLESS_STEP_SECONDS = 0.25f;
+    static constexpr float SKIP_INDICATOR_SECONDS = 1.5f;
     static constexpr float VIEW_BUTTON_WIDTH = 130.0f;
   };
 

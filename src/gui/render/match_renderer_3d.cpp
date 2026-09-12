@@ -84,7 +84,6 @@ struct AnimationSlot
   Vec3 lastPosition;
   float phase = 0.0f;
   float stride = 0.0f;
-  bool goalkeeper = false;
 };
 
 /** Where a player landed on screen, for labels and hover tooltips. */
@@ -145,6 +144,26 @@ bool outsideClipVolume(std::span<const ClipVertex> vertices)
 }
 
 ImVec2 toImVec(const ScreenPoint& point) { return {point.x, point.y}; }
+
+/// Interpolated ball height above the grass in metres.
+float ballHeightMetres(const MatchRenderBall& ball, float alpha)
+{
+  return std::max(0.0f, ball.previousHeightMetres +
+                            (ball.currentHeightMetres -
+                             ball.previousHeightMetres) *
+                                alpha);
+}
+
+/// The player's standing height in metres (engine value, else his data).
+float playerHeightMetres(const MatchRenderPlayer& player)
+{
+  using P = Tuning::Player;
+  float height = player.heightMetres;
+  if (height <= 0.0f && player.player && player.player->getHeight() > 0)
+    height = static_cast<float>(player.player->getHeight()) * 0.01f;
+  if (height <= 0.0f) height = P::REFERENCE_HEIGHT_METRES;
+  return std::clamp(height, P::MIN_HEIGHT_METRES, P::MAX_HEIGHT_METRES);
+}
 }  // namespace
 
 struct MatchRenderer3D::State
@@ -156,6 +175,8 @@ struct MatchRenderer3D::State
   MatchKits kits;
   MatchCamera3D camera;
   RenderMath::Projection projection;
+  /** False until a frame was projected (input maps through it). */
+  bool hasProjection = false;
   ImDrawList* drawList = nullptr;
   ImVec2 whitePixel;
   float elapsedSeconds = 0.0f;
@@ -183,6 +204,8 @@ struct MatchRenderer3D::State
   void prepareMatch(const MatchRenderSnapshot& snapshot);
   MatchCameraFocus computeFocus(const MatchRenderSnapshot& snapshot,
                                 float deltaSeconds);
+  /** Turns the view's mouse input into world-space camera control. */
+  MatchCameraControl cameraControl(const MatchCameraInput& input) const;
 
   // --- immediate (unsorted) layers ----------------------------------------
   void drawSky();
@@ -212,6 +235,9 @@ struct MatchRenderer3D::State
   void addBall(const MatchRenderSnapshot& snapshot, float alpha);
   void flushSorted();
   void drawBoard(const Primitive& primitive);
+  void drawBoardLogo(const Stadium3D::AdBoard& board,
+                     const Stadium3D::SponsorStyle& style, Vec3 origin,
+                     float width, float height);
 
   // --- overlays -----------------------------------------------------------
   void drawLabelsAndHover(const MatchRenderOptions& options);
@@ -262,11 +288,10 @@ MatchCameraFocus MatchRenderer3D::State::computeFocus(
     // Attack direction comes from where the carrier's own keeper stands, so
     // it stays right even if the engine ever swaps ends.
     float direction = carrier->isHomeTeam ? 1.0f : -1.0f;
-    for (std::size_t index = 0; index < snapshot.players.size(); ++index)
+    for (const MatchRenderPlayer& player : snapshot.players)
     {
-      const MatchRenderPlayer& player = snapshot.players[index];
-      if (player.isHomeTeam == carrier->isHomeTeam && index < slots.size() &&
-          slots[index].goalkeeper)
+      if (player.isHomeTeam == carrier->isHomeTeam && player.isGoalkeeper &&
+          player.onPitch)
       {
         direction = player.currentPosition.x < MatchTuning::Pitch::CENTRE
                         ? 1.0f
@@ -285,6 +310,51 @@ MatchCameraFocus MatchRenderer3D::State::computeFocus(
   }
   focus.attackDirection = attackDirection;
   return focus;
+}
+
+MatchCameraControl MatchRenderer3D::State::cameraControl(
+    const MatchCameraInput& input) const
+{
+  MatchCameraControl control;
+  control.zoomSteps = input.zoomSteps;
+  control.orbitYaw = -input.orbitX * Tuning::Free::ORBIT_RADIANS_PER_PIXEL;
+  control.orbitPitch = input.orbitY * Tuning::Free::ORBIT_RADIANS_PER_PIXEL;
+  control.followBall = input.followBall;
+  control.reset = input.reset;
+  if (!hasProjection) return control;
+  if (input.pan)
+  {
+    // Grab the ground: the point under the cursor follows the cursor. Near
+    // the horizon (or over the sky) fall back to a distance-scaled pan.
+    Vec3 from;
+    Vec3 to;
+    const float limit = camera.distance() * 0.5f;
+    if (projection.groundPointAt(input.panFromX, input.panFromY, from) &&
+        projection.groundPointAt(input.panToX, input.panToY, to) &&
+        RenderMath::length(from - to) <= limit)
+    {
+      control.pan = from - to;
+    }
+    else
+    {
+      const float metresPerPixel = camera.distance() / projection.focalPixels;
+      const Vec3 flatSide =
+          RenderMath::normalize({projection.side.x, projection.side.y, 0.0f});
+      const Vec3 flatForward = RenderMath::normalize(
+          {projection.forward.x, projection.forward.y, 0.0f});
+      control.pan = flatSide * ((input.panFromX - input.panToX) *
+                                metresPerPixel) +
+                    flatForward *
+                        ((input.panToY - input.panFromY) * metresPerPixel);
+    }
+    control.pan.z = 0.0f;
+  }
+  if (input.retarget)
+  {
+    control.retarget = projection.groundPointAt(
+        input.retargetX, input.retargetY, control.retargetPoint);
+  }
+  return control;
 }
 
 void MatchRenderer3D::State::emitRaw(std::span<const ImVec2> screen,
@@ -425,6 +495,27 @@ void MatchRenderer3D::State::drawShadows(const MatchRenderSnapshot& snapshot,
         player.previousPosition, player.currentPosition, alpha));
     ScreenPoint screen;
     if (!projection.project(root, screen)) continue;
+    // Far away, a soft disc in the shirt colour keeps the teams readable.
+    const float pixelHeight = playerHeightMetres(player) *
+                              projection.focalPixels / screen.depth;
+    if (pixelHeight < Tuning::Player::MARKER_MAX_PIXELS)
+    {
+      const KitColors& kit =
+          player.isHomeTeam
+              ? (player.isGoalkeeper ? kits.homeGoalkeeper : kits.home)
+              : (player.isGoalkeeper ? kits.awayGoalkeeper : kits.away);
+      const float fade = std::clamp(
+          (Tuning::Player::MARKER_MAX_PIXELS - pixelHeight) /
+              (Tuning::Player::MARKER_MAX_PIXELS * 0.5f),
+          0.0f, 1.0f);
+      const float radius = Tuning::Player::MARKER_RADIUS;
+      drawGroundEllipse(
+          root, {radius, 0.0f, 0.0f}, {0.0f, radius, 0.0f},
+          withAlpha(kit.shirt,
+                    static_cast<std::uint8_t>(
+                        static_cast<float>(Tuning::Player::MARKER_ALPHA) *
+                        fade)));
+    }
     for (const Vec3& light : lights)
     {
       const Vec3 away = RenderMath::normalize(root - light);
@@ -468,10 +559,7 @@ void MatchRenderer3D::State::drawShadows(const MatchRenderSnapshot& snapshot,
 
   const Vector2F ball = lerpRenderPosition(
       snapshot.ball.previousPosition, snapshot.ball.currentPosition, alpha);
-  const float height =
-      (snapshot.ball.previousZ +
-       (snapshot.ball.currentZ - snapshot.ball.previousZ) * alpha) *
-      Tuning::Ball::HEIGHT_SCALE;
+  const float height = ballHeightMetres(snapshot.ball, alpha);
   const float radius = Tuning::Ball::SHADOW_RADIUS *
                        (1.0f + height * Tuning::Ball::SHADOW_GROWTH);
   const auto shadowAlpha = static_cast<std::uint8_t>(
@@ -500,66 +588,106 @@ void MatchRenderer3D::State::emitQuad(ImVec2 bottomLeft, ImVec2 bottomRight,
 void MatchRenderer3D::State::drawCrowd(const Stadium3D::Face& face)
 {
   using C = Tuning::Crowd;
-  if (face.crowdEnd <= face.crowdBegin) return;
+  if (face.clumpEnd <= face.clumpBegin) return;
   const Vec3 centre = (face.corners[0] + face.corners[2]) * 0.5f;
   ScreenPoint centreScreen;
   ScreenPoint aboveScreen;
   if (!projection.project(centre, centreScreen) ||
       !projection.project(centre + UP, aboveScreen))
     return;
-  // Screen-space "up" per metre at the face centre, rescaled per dot depth.
+  // Screen-space "up" per metre at the face centre, rescaled per depth.
   const float upX = (aboveScreen.x - centreScreen.x) * centreScreen.depth;
   const float upY = (aboveScreen.y - centreScreen.y) * centreScreen.depth;
   const float left = projection.rect.x;
   const float right = projection.rect.x + projection.rect.width;
   const float top = projection.rect.y;
   const float bottom = projection.rect.y + projection.rect.height;
+  const float seatFocal = C::SEAT_SPACING * projection.focalPixels;
+  const float halfDotFocal = C::DOT_WIDTH * 0.5f * projection.focalPixels;
 
-  // Near dots get a separate head block (two quads), far dots one gradient
-  // quad; reserve for the worst case and hand back what was not used.
-  const auto count = static_cast<int>(face.crowdEnd - face.crowdBegin);
-  drawList->PrimReserve(count * 12, count * 8);
+  // Worst case: every spectator with a separate head (two quads); what is
+  // not used is handed back at the end.
+  const std::uint32_t firstDot = geometry.clumps[face.clumpBegin].dotBegin;
+  const std::uint32_t endDot = geometry.clumps[face.clumpEnd - 1].dotEnd;
+  const auto worstQuads = static_cast<int>(endDot - firstDot) * 2;
+  drawList->PrimReserve(worstQuads * 6, worstQuads * 4);
   int quads = 0;
-  for (std::uint32_t index = face.crowdBegin; index < face.crowdEnd; ++index)
+  for (std::uint32_t clumpIndex = face.clumpBegin; clumpIndex < face.clumpEnd;
+       ++clumpIndex)
   {
-    const Stadium3D::CrowdDot& dot = geometry.crowd[index];
-    const Vec4 clip = projection.toClip(dot.base);
-    if (clip.w < projection.nearPlane) continue;
-    const ScreenPoint base = projection.clipToScreen(clip);
-    const float inverseDepth = 1.0f / clip.w;
-    const float halfWidth =
-        std::max(C::DOT_WIDTH * 0.5f * projection.focalPixels * inverseDepth,
-                 C::MIN_DOT_PIXELS * 0.5f);
-    const float dx = upX * C::DOT_HEIGHT * inverseDepth;
-    const float dy = upY * C::DOT_HEIGHT * inverseDepth;
-    if (base.x + halfWidth < left || base.x - halfWidth > right ||
-        base.y + dy > bottom || base.y < top)
-      continue;
-    if (halfWidth * 2.0f < C::HEAD_DETAIL_PIXELS)
+    const Stadium3D::CrowdClump& clump = geometry.clumps[clumpIndex];
+    const Vec4 clumpClip = projection.toClip(clump.base);
+    if (clumpClip.w < projection.nearPlane) continue;
+    const float clumpInverse = 1.0f / clumpClip.w;
+    const float seatPixels = seatFocal * clumpInverse;
+    if (seatPixels < C::CLUMP_PIXELS)
     {
+      // Far: one billboard in the members' average colour.
+      const float halfWidth =
+          clump.halfWidth * projection.focalPixels * clumpInverse;
+      if (halfWidth * 2.0f < C::MIN_CLUMP_PIXELS) continue;
+      const ScreenPoint base = projection.clipToScreen(clumpClip);
+      const float dx = upX * clump.height * clumpInverse;
+      const float dy = upY * clump.height * clumpInverse;
+      if (base.x + halfWidth < left || base.x - halfWidth > right ||
+          base.y + dy > bottom || base.y < top)
+        continue;
       emitQuad({base.x - halfWidth, base.y}, {base.x + halfWidth, base.y},
                {base.x + halfWidth + dx, base.y + dy},
                {base.x - halfWidth + dx, base.y + dy},
-               shadeColor(dot.body, 0.7f), mixColor(dot.body, dot.head, 0.6f));
+               shadeColor(clump.color, 0.8f), clump.color);
       ++quads;
       continue;
     }
-    const float shoulderX = base.x + dx * C::BODY_SHARE;
-    const float shoulderY = base.y + dy * C::BODY_SHARE;
-    emitQuad({base.x - halfWidth, base.y}, {base.x + halfWidth, base.y},
-             {shoulderX + halfWidth, shoulderY},
-             {shoulderX - halfWidth, shoulderY}, shadeColor(dot.body, 0.7f),
-             dot.body);
-    const float headHalf = halfWidth * C::HEAD_WIDTH_SHARE;
-    const float neckX = base.x + dx * (C::BODY_SHARE + C::NECK_GAP);
-    const float neckY = base.y + dy * (C::BODY_SHARE + C::NECK_GAP);
-    emitQuad({neckX - headHalf, neckY}, {neckX + headHalf, neckY},
-             {base.x + dx + headHalf, base.y + dy},
-             {base.x + dx - headHalf, base.y + dy}, shadeColor(dot.head, 0.8f),
-             dot.head);
-    quads += 2;
+    // Near: individual spectators whose colours fade towards the clump
+    // average while they are still small (cheap mip-mapping).
+    const float detail =
+        std::clamp((seatPixels - C::CLUMP_PIXELS) /
+                       (C::FULL_DETAIL_PIXELS - C::CLUMP_PIXELS),
+                   0.0f, 1.0f);
+    for (std::uint32_t index = clump.dotBegin; index < clump.dotEnd; ++index)
+    {
+      const Stadium3D::CrowdDot& dot = geometry.crowd[index];
+      const Vec4 clip = projection.toClip(dot.base);
+      if (clip.w < projection.nearPlane) continue;
+      const ScreenPoint base = projection.clipToScreen(clip);
+      const float inverseDepth = 1.0f / clip.w;
+      const float halfWidth = halfDotFocal * inverseDepth;
+      const float dx = upX * C::DOT_HEIGHT * inverseDepth;
+      const float dy = upY * C::DOT_HEIGHT * inverseDepth;
+      if (base.x + halfWidth < left || base.x - halfWidth > right ||
+          base.y + dy > bottom || base.y < top)
+        continue;
+      const ImU32 body =
+          detail < 1.0f ? mixColor(clump.color, dot.body, detail) : dot.body;
+      const ImU32 head =
+          detail < 1.0f ? mixColor(clump.color, dot.head, detail) : dot.head;
+      if (halfWidth * 2.0f < C::HEAD_DETAIL_PIXELS)
+      {
+        emitQuad({base.x - halfWidth, base.y}, {base.x + halfWidth, base.y},
+                 {base.x + halfWidth + dx, base.y + dy},
+                 {base.x - halfWidth + dx, base.y + dy},
+                 shadeColor(body, 0.75f), mixColor(body, head, 0.5f));
+        ++quads;
+        continue;
+      }
+      const float shoulderX = base.x + dx * C::BODY_SHARE;
+      const float shoulderY = base.y + dy * C::BODY_SHARE;
+      emitQuad({base.x - halfWidth, base.y}, {base.x + halfWidth, base.y},
+               {shoulderX + halfWidth, shoulderY},
+               {shoulderX - halfWidth, shoulderY}, shadeColor(body, 0.75f),
+               body);
+      const float headHalf = halfWidth * C::HEAD_WIDTH_SHARE;
+      const float neckX = base.x + dx * (C::BODY_SHARE + C::NECK_GAP);
+      const float neckY = base.y + dy * (C::BODY_SHARE + C::NECK_GAP);
+      emitQuad({neckX - headHalf, neckY}, {neckX + headHalf, neckY},
+               {base.x + dx + headHalf, base.y + dy},
+               {base.x + dx - headHalf, base.y + dy}, shadeColor(head, 0.8f),
+               head);
+      quads += 2;
+    }
   }
-  const int unused = count * 2 - quads;
+  const int unused = worstQuads - quads;
   drawList->PrimUnreserve(unused * 6, unused * 4);
 }
 
@@ -695,25 +823,27 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
                   100.0f
             : 0.0f;
   }
-  if (player.intent == PlayerIntent::GOALKEEP ||
-      (player.player && player.player->getRole() == PlayerRole::GK))
-    slot.goalkeeper = true;
-
-  // Stride phase follows the distance actually travelled on screen, so leg
-  // cadence always matches the simulated speed; standing players go idle.
+  // The gait (stride length, swing amplitude, idling) comes from the
+  // simulated ground speed; the leg phase advances with the distance the
+  // player actually covers on screen, so boots never slide over the grass
+  // at any playback speed.
   Vec3 moved = root - slot.lastPosition;
   moved.z = 0.0f;
   float distance = RenderMath::length(moved);
   if (distance > P::TELEPORT_METRES) distance = 0.0f;
   slot.lastPosition = root;
-  const float speed = deltaSeconds > 0.0f ? distance / deltaSeconds : 0.0f;
+  const float groundSpeed = player.speedMetresPerSecond;
   const float targetStride =
-      std::clamp(speed / P::FULL_STRIDE_SPEED, 0.0f, 1.0f);
+      groundSpeed < P::IDLE_SPEED
+          ? 0.0f
+          : std::clamp(groundSpeed / P::FULL_STRIDE_SPEED, 0.0f, 1.0f);
   slot.stride += (targetStride - slot.stride) *
                  RenderMath::dampingFactor(P::STRIDE_RATE, deltaSeconds);
+  const float cycleMetres =
+      P::STRIDE_BASE_METRES + P::STRIDE_PER_SPEED * groundSpeed;
   slot.phase = std::fmod(
-      slot.phase + TWO_PI * std::min(distance / P::STRIDE_CYCLE_METRES,
-                                     P::MAX_CADENCE_HZ * deltaSeconds),
+      slot.phase + TWO_PI * std::min(distance / cycleMetres,
+                                     P::MAX_CYCLES_PER_FRAME),
       TWO_PI);
 
   ScreenPoint anchor;
@@ -725,7 +855,7 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
       anchor.y > rect.y + rect.height + P::CULL_MARGIN_PIXELS)
     return;
 
-  const bool keeper = slot.goalkeeper;
+  const bool keeper = player.isGoalkeeper;
   const KitColors& kit = player.isHomeTeam
                              ? (keeper ? kits.homeGoalkeeper : kits.home)
                              : (keeper ? kits.awayGoalkeeper : kits.away);
@@ -733,12 +863,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
       cosmeticHash(player.player ? player.player->getId() + 17U : 17U);
   const ImU32 skin = SKIN_TONES[looks % SKIN_TONES.size()];
   const ImU32 hair = HAIR_COLORS[(looks >> 8) % HAIR_COLORS.size()];
-  const float heightCm = player.player && player.player->getHeight() > 0
-                             ? static_cast<float>(player.player->getHeight())
-                             : P::REFERENCE_HEIGHT_CM;
   const float scale =
-      P::SCALE * std::clamp(heightCm / P::REFERENCE_HEIGHT_CM,
-                            P::MIN_HEIGHT_SCALE, P::MAX_HEIGHT_SCALE);
+      P::SCALE * playerHeightMetres(player) / P::REFERENCE_HEIGHT_METRES;
 
   const float yaw = RenderMath::worldYawFromFacing(RenderMath::lerpAngle(
       player.previousFacingAngle, player.currentFacingAngle, alpha));
@@ -1004,24 +1130,28 @@ void MatchRenderer3D::State::addBoards()
 void MatchRenderer3D::State::addBall(const MatchRenderSnapshot& snapshot,
                                      float alpha)
 {
+  using B = Tuning::Ball;
   const Vector2F ball = lerpRenderPosition(
       snapshot.ball.previousPosition, snapshot.ball.currentPosition, alpha);
-  const float height =
-      (snapshot.ball.previousZ +
-       (snapshot.ball.currentZ - snapshot.ball.previousZ) * alpha) *
-      Tuning::Ball::HEIGHT_SCALE;
+  const float height = ballHeightMetres(snapshot.ball, alpha);
   ScreenPoint screen;
-  if (!projection.project(RenderMath::worldFromPitch(
-                              ball, height + Tuning::Ball::VISUAL_RADIUS),
-                          screen))
+  if (!projection.project(
+          RenderMath::worldFromPitch(ball, height + B::RADIUS), screen))
     return;
+  // True size up close; a gentle boost with distance keeps it readable on
+  // wide shots without ever looking oversized.
+  const float boost =
+      1.0f + (B::MAX_BOOST - 1.0f) *
+                 std::clamp((screen.depth - B::BOOST_START_DEPTH) /
+                                (B::BOOST_FULL_DEPTH - B::BOOST_START_DEPTH),
+                            0.0f, 1.0f);
   Primitive primitive;
   primitive.firstPoint = static_cast<std::uint32_t>(points.size());
   primitive.pointCount = 1;
   primitive.kind = PrimitiveKind::BALL;
-  primitive.size = std::max(
-      Tuning::Ball::MIN_PIXELS,
-      Tuning::Ball::VISUAL_RADIUS * projection.focalPixels / screen.depth);
+  primitive.size =
+      std::max(B::MIN_PIXELS,
+               B::RADIUS * boost * projection.focalPixels / screen.depth);
   points.push_back(toImVec(screen));
   keys.push_back({screen.depth, screen.depth,
                   static_cast<std::uint32_t>(primitives.size())});
@@ -1044,16 +1174,14 @@ void MatchRenderer3D::State::drawBoard(const Primitive& primitive)
       shadeColor(style.background, 1.15f), shadeColor(style.background, 1.15f)};
   emitRaw(corners, colors);
 
-  const float pixelHeight = std::abs(quad[3].y - quad[0].y);
-  if (pixelHeight < B::MIN_TEXT_PIXELS) return;
-  // Lay the text out once in a canonical box, then map every glyph vertex
-  // onto the board plane so the lettering follows the perspective.
+  // Fit the lettering box on the board, then decide how it can be shown
+  // from its projected height at the board centre.
   ImFont* font = ImGui::GetFont();
-  const ImVec2 textSize =
-      font->CalcTextSizeA(B::TEXT_FONT_SIZE, FLT_MAX, 0.0f, style.text);
-  if (textSize.x <= 0.0f || textSize.y <= 0.0f) return;
+  const ImVec2 unitSize =
+      font->CalcTextSizeA(B::MIN_FONT_SIZE, FLT_MAX, 0.0f, style.text);
+  if (unitSize.x <= 0.0f || unitSize.y <= 0.0f) return;
   float textHeight = B::HEIGHT * B::TEXT_HEIGHT_RATIO;
-  float textWidth = textHeight * textSize.x / textSize.y;
+  float textWidth = textHeight * unitSize.x / unitSize.y;
   const float maximumWidth = B::LENGTH * B::TEXT_WIDTH_RATIO;
   if (textWidth > maximumWidth)
   {
@@ -1063,11 +1191,32 @@ void MatchRenderer3D::State::drawBoard(const Primitive& primitive)
   const Vec3 textOrigin = board.origin +
                           board.right * ((B::LENGTH - textWidth) * 0.5f) +
                           UP * ((B::HEIGHT - textHeight) * 0.5f);
+  const Vec3 textCentre =
+      textOrigin + board.right * (textWidth * 0.5f) + UP * (textHeight * 0.5f);
+  ScreenPoint centre;
+  if (!projection.project(textCentre, centre)) return;
+  const float textPixels = textHeight * projection.focalPixels / centre.depth;
+  if (textPixels < B::MIN_TEXT_PIXELS)
+  {
+    drawBoardLogo(board, style, textOrigin, textWidth, textHeight);
+    return;
+  }
+
+  // Bake the glyphs close to their on-screen size (quantised so only a few
+  // sizes are ever cached) and map each vertex onto the board plane, so the
+  // lettering stays crisp and follows the perspective.
+  const float step = std::round(std::log(textPixels / B::MIN_FONT_SIZE) /
+                                std::log(B::FONT_STEP));
+  const float fontSize = std::min(
+      B::MIN_FONT_SIZE * std::pow(B::FONT_STEP, step), B::MAX_FONT_SIZE);
+  const ImVec2 textSize =
+      font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, style.text);
+  if (textSize.x <= 0.0f || textSize.y <= 0.0f) return;
   const ImVec2 canonical{projection.rect.x, projection.rect.y};
   const ImVec4 unclipped{-1e6f, -1e6f, 1e6f, 1e6f};
   const int firstVertex = drawList->VtxBuffer.Size;
-  drawList->AddText(font, B::TEXT_FONT_SIZE, canonical, style.foreground,
-                    style.text, nullptr, 0.0f, &unclipped);
+  drawList->AddText(font, fontSize, canonical, style.foreground, style.text,
+                    nullptr, 0.0f, &unclipped);
   for (int index = firstVertex; index < drawList->VtxBuffer.Size; ++index)
   {
     ImDrawVert& vertex = drawList->VtxBuffer[index];
@@ -1080,6 +1229,30 @@ void MatchRenderer3D::State::drawBoard(const Primitive& primitive)
         {clip.x, clip.y, clip.z, std::max(clip.w, projection.nearPlane)});
     vertex.pos = {mapped.x, mapped.y};
   }
+}
+
+void MatchRenderer3D::State::drawBoardLogo(const Stadium3D::AdBoard& board,
+                                           const Stadium3D::SponsorStyle& style,
+                                           Vec3 origin, float width,
+                                           float height)
+{
+  // Too small to read: a clean two-tone word mark in the sponsor's colours.
+  using B = Tuning::Boards;
+  const float barHeight = height * B::LOGO_BAR_HEIGHT;
+  const Vec3 bottom = origin + UP * ((height - barHeight) * 0.5f);
+  const float markWidth = width * B::LOGO_MARK_SHARE;
+  const auto bar = [&](float from, float to, ImU32 color)
+  {
+    const std::array<Vec3, 4> corners{
+        bottom + board.right * from, bottom + board.right * to,
+        bottom + board.right * to + UP * barHeight,
+        bottom + board.right * from + UP * barHeight};
+    const std::array<ImU32, 4> colors{color, color, color, color};
+    drawWorldPolygon(corners, colors, false);
+  };
+  bar(0.0f, markWidth * 0.8f, mixColor(style.foreground, style.background,
+                                       0.35f));
+  bar(markWidth, width, style.foreground);
 }
 
 void MatchRenderer3D::State::flushSorted()
@@ -1232,11 +1405,14 @@ void MatchRenderer3D::State::drawScoreBug(const MatchRenderSnapshot& snapshot,
   char score[16];
   std::snprintf(score, sizeof(score), "%d - %d", snapshot.homeScore,
                 snapshot.awayScore);
-  const int minute = static_cast<int>(snapshot.matchTimeMinutes);
-  const int second = static_cast<int>(
-      (snapshot.matchTimeMinutes - static_cast<float>(minute)) * 60.0f);
-  char clock[16];
-  std::snprintf(clock, sizeof(clock), "%02d:%02d", minute, second);
+  char fallbackClock[16];
+  const char* clock = options.clockLabel;
+  if (!clock)
+  {
+    std::snprintf(fallbackClock, sizeof(fallbackClock), "%d'",
+                  static_cast<int>(snapshot.matchTimeMinutes) + 1);
+    clock = fallbackClock;
+  }
 
   const ImVec2 homeSize = ImGui::CalcTextSize(options.homeLabel);
   const ImVec2 awaySize = ImGui::CalcTextSize(options.awayLabel);
@@ -1296,11 +1472,14 @@ void MatchRenderer3D::render(const MatchRenderSnapshot& snapshot,
   if (s.slots.size() != snapshot.players.size())
     s.slots.resize(snapshot.players.size());
   const MatchCameraFocus focus = s.computeFocus(snapshot, deltaSeconds);
-  s.camera.update(focus, options.cameraMode, options.zoomSteps, deltaSeconds);
+  // Mouse input maps through the frame the user was looking at.
+  s.camera.update(focus, options.cameraMode,
+                  s.cameraControl(options.cameraInput), deltaSeconds);
   s.projection = RenderMath::Projection::make(
       s.camera.eye(), s.camera.target(), s.camera.verticalFov(),
       Tuning::Camera::NEAR_PLANE, Tuning::Camera::FAR_PLANE,
       {viewport.x, viewport.y, viewport.width, viewport.height});
+  s.hasProjection = true;
 
   drawList->PushClipRect(
       {viewport.x, viewport.y},

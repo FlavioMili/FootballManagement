@@ -144,34 +144,136 @@ ImVec4 fitColor(TransferNegotiation::FitKind kind)
   return palette.faint;
 }
 
-/** Currency field with steps, followed by the amount in compact form. */
-bool moneyInput(const char* label, uint32_t& value, uint32_t step,
-                uint32_t fast)
+constexpr int64_t BID_ROUNDING = 10'000;
+constexpr int64_t WAGE_ROUNDING = 100;
+constexpr uint8_t DEFAULT_INSTALMENT_YEARS = 2;
+constexpr int64_t WEEKS_PER_YEAR =
+    static_cast<int64_t>(TransferTuning::Contract::WEEKS_PER_YEAR);
+
+constexpr std::array<uint8_t, 5> UPFRONT_OPTIONS = {100, 80, 60, 40, 20};
+constexpr std::array<const char*, 5> UPFRONT_LABELS = {"100%", "80%", "60%",
+                                                       "40%", "20%"};
+constexpr std::array<const char*, 5> YEAR_LABELS = {"1", "2", "3", "4", "5"};
+constexpr std::array<uint16_t, 4> APPEARANCE_TARGETS = {10, 20, 30, 50};
+constexpr std::array<uint16_t, 4> GOAL_TARGETS = {5, 10, 15, 20};
+constexpr std::array<uint8_t, 5> SELL_ON_OPTIONS = {0, 10, 15, 20, 30};
+constexpr std::array<const char*, 5> SELL_ON_LABELS = {"0%", "10%", "15%",
+                                                       "20%", "30%"};
+constexpr std::array<uint8_t, 5> WAGE_SHARE_OPTIONS = {0, 25, 50, 75, 100};
+constexpr std::array<const char*, 5> WAGE_SHARE_LABELS = {"0%", "25%", "50%",
+                                                          "75%", "100%"};
+
+/** Index of @p value among @p options (the nearest one if absent). */
+template <typename T, typename V>
+int optionIndex(std::span<const T> options, V value)
 {
-  const bool changed =
-      ImGui::InputScalar(label, ImGuiDataType_U32, &value, &step, &fast, "%u");
-  ImGui::SameLine();
-  ImGui::AlignTextToFramePadding();
-  ImGui::TextColored(Theme::palette().muted, "%s",
-                     Format::money(value).c_str());
-  return changed;
+  size_t best = 0;
+  for (size_t index = 1; index < options.size(); ++index)
+  {
+    if (std::abs(static_cast<int>(options[index]) - static_cast<int>(value)) <
+        std::abs(static_cast<int>(options[best]) - static_cast<int>(value)))
+      best = index;
+  }
+  return static_cast<int>(best);
 }
 
-bool countInput(const char* label, uint16_t& value)
+template <typename T, size_t N, typename V>
+int optionIndex(const std::array<T, N>& options, V value)
 {
-  const uint16_t step = Tuning::MoneyInput::TARGET_STEP;
-  const uint16_t fast = Tuning::MoneyInput::TARGET_LARGE_STEP;
-  return ImGui::InputScalar(label, ImGuiDataType_U16, &value, &step, &fast,
-                            "%u");
+  return optionIndex(std::span<const T>(options), value);
 }
 
-/** Label on the left, widget on the right, one row per field. */
-void fieldLabel(const char* text)
+uint32_t clampFee(int64_t fee)
 {
-  ImGui::AlignTextToFramePadding();
+  return static_cast<uint32_t>(std::clamp<int64_t>(
+      fee, BID_ROUNDING, std::numeric_limits<uint32_t>::max()));
+}
+
+/** @p amount times @p factor, rounded to a sensible fee. */
+int64_t scaledAmount(int64_t amount, double factor)
+{
+  return std::llround(static_cast<double>(amount) * factor /
+                      static_cast<double>(BID_ROUNDING)) *
+         BID_ROUNDING;
+}
+
+int64_t scaledWage(int64_t wage, double factor)
+{
+  return std::llround(static_cast<double>(wage) * factor /
+                      static_cast<double>(WAGE_ROUNDING)) *
+         WAGE_ROUNDING;
+}
+
+/** Small muted caption above a dialog field. */
+void formLabel(const char* text)
+{
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale()));
+  Theme::ScopedText caption(Theme::Text::SMALL);
   ImGui::TextColored(Theme::palette().muted, "%s", text);
-  ImGui::SameLine(Tuning::Layout::LABEL_WIDTH * scale());
-  ImGui::SetNextItemWidth(Tuning::Layout::INPUT_WIDTH * scale());
+}
+
+/** Moves the cursor so the buttons labelled @p labels end at the right
+ * edge (null labels are skipped). */
+void alignActions(std::initializer_list<const char*> labels)
+{
+  float total = 0.0f;
+  int count = 0;
+  for (const char* label : labels)
+  {
+    if (label == nullptr) continue;
+    total += UI::buttonWidth(label);
+    ++count;
+  }
+  total += ImGui::GetStyle().ItemSpacing.x * static_cast<float>(count - 1);
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
+                       std::max(0.0f, ImGui::GetContentRegionAvail().x - total));
+}
+
+/** An offer structure that fits the budget, if any. */
+struct Suggestion
+{
+  std::optional<TransferNegotiation::OfferTerms> terms;
+};
+
+int64_t signingCash(const TransferNegotiation::OfferTerms& terms)
+{
+  TransferMarket::Deal deal;
+  deal.terms = terms;
+  return static_cast<int64_t>(TransferNegotiation::upfrontAmount(terms)) +
+         static_cast<int64_t>(TransferMarket::agentFee(deal));
+}
+
+/** Spread the payments if that is enough, else lower the fee. */
+Suggestion budgetFix(const TransferNegotiation::OfferTerms& terms,
+                     int64_t budget)
+{
+  Suggestion fix;
+  if (budget <= 0) return fix;
+  for (const uint8_t percent : UPFRONT_OPTIONS)
+  {
+    if (percent >= terms.upfront_percent) continue;
+    TransferNegotiation::OfferTerms candidate = terms;
+    candidate.upfront_percent = percent;
+    candidate.instalment_years =
+        std::max(terms.instalment_years, DEFAULT_INSTALMENT_YEARS);
+    if (signingCash(candidate) <= budget)
+    {
+      fix.terms = candidate;
+      return fix;
+    }
+  }
+  TransferNegotiation::OfferTerms candidate = terms;
+  const double share =
+      terms.upfront_percent / 100.0 +
+      TransferTuning::Offer::AGENT_FEE_PERCENT / 100.0;
+  candidate.fee = static_cast<uint32_t>(std::clamp<int64_t>(
+      static_cast<int64_t>(static_cast<double>(budget) / share) /
+          BID_ROUNDING * BID_ROUNDING,
+      0, std::numeric_limits<uint32_t>::max()));
+  while (candidate.fee >= BID_ROUNDING && signingCash(candidate) > budget)
+    candidate.fee -= static_cast<uint32_t>(BID_ROUNDING);
+  if (candidate.fee >= BID_ROUNDING) fix.terms = candidate;
+  return fix;
 }
 
 const char* decisionKey(ClubResponse::Decision decision)
@@ -457,10 +559,27 @@ void TransferMarketScene::refreshNeeds()
 
 void TransferMarketScene::refreshRecommended()
 {
-  // Need-based and affordable, whatever the Search tab filters say.
-  ScoutSearchFilter search;
-  search.limit = Tuning::Filters::RESULT_LIMIT;
-  std::vector<TargetRow> pool = searchRows(search, true);
+  // Need-based and affordable, whatever the Search tab filters say. With
+  // the default filters the Search rows are exactly that pool: reuse them
+  // instead of estimating the world again.
+  const Filters defaults;
+  const bool default_search =
+      filters.affordable_only && filters.role_index == 0 &&
+      filters.league_index == 0 && filters.min_age == defaults.min_age &&
+      filters.max_age == defaults.max_age && filters.min_overall == 0 &&
+      filters.max_value_index == 0 &&
+      filters.availability == Availability::ANY;
+  std::vector<TargetRow> pool;
+  if (default_search)
+  {
+    pool = targets;
+  }
+  else
+  {
+    ScoutSearchFilter search;
+    search.limit = Tuning::Filters::RESULT_LIMIT;
+    pool = searchRows(search, true);
+  }
   std::erase_if(pool,
                 [](const TargetRow& row)
                 {
@@ -666,6 +785,7 @@ void TransferMarketScene::refreshOffers()
     row.terms_text = incoming.loan ? loanTermsText(incoming.loan_terms)
                                    : offerTermsText(incoming.terms);
     const uint32_t value = controller.getPlayerMarketValue(incoming.player_id);
+    row.value = value;
     row.value_ratio = !incoming.loan && value > 0
                           ? static_cast<float>(incoming.terms.fee) /
                                 static_cast<float>(value) *
@@ -685,6 +805,7 @@ void TransferMarketScene::refreshOffers()
     row.terms_text = fmt::sprintf(LOC("TRANSFER_TERMS_LISTED"),
                                   Format::money(listing.asking_price));
     const uint32_t value = controller.getPlayerMarketValue(player_id);
+    row.value = value;
     row.value_ratio = value > 0 ? static_cast<float>(listing.highest_bid) /
                                       static_cast<float>(value) *
                                       Tuning::PERCENT_SCALE
@@ -1613,7 +1734,8 @@ void TransferMarketScene::renderSquadTab()
       {
         ImGui::BeginDisabled(!window.open);
         if (ImGui::SmallButton(LOC("TRANSFER_LIST_SHORT")))
-          listing_dialog = {true, player.id, player.name, player.market_value};
+          listing_dialog = {true, player.id, player.name,
+                            player.market_value, player.market_value};
         ImGui::EndDisabled();
       }
       ImGui::SameLine();
@@ -1715,23 +1837,76 @@ void TransferMarketScene::renderHistoryTab()
 // Dialogs
 // ---------------------------------------------------------------------------
 
+bool TransferMarketScene::wideDialogs() const
+{
+  return ImGui::GetMainViewport()->Size.x >=
+         Tuning::Layout::TWO_COLUMN_MIN_VIEWPORT * scale();
+}
+
 float TransferMarketScene::dialogWidth() const
 {
-  return std::min(
-      Tuning::Layout::DIALOG_WIDTH * scale(),
-      ImGui::GetMainViewport()->Size.x * Tuning::Layout::DIALOG_VIEWPORT_SHARE);
+  return std::min((wideDialogs() ? Tuning::Layout::WIDE_DIALOG_WIDTH
+                                 : Tuning::Layout::DIALOG_WIDTH) *
+                      scale(),
+                  ImGui::GetMainViewport()->Size.x *
+                      Tuning::Layout::DIALOG_VIEWPORT_SHARE);
+}
+
+void TransferMarketScene::renderDialogColumns(
+    const std::function<void()>& terms,
+    const std::function<void()>& summary) const
+{
+  // Terms on the left, a summary card on the right; stacked when narrow.
+  if (wideDialogs() &&
+      ImGui::BeginTable("##dialog_columns", 2, ImGuiTableFlags_SizingStretchProp))
+  {
+    ImGui::TableSetupColumn("##terms", ImGuiTableColumnFlags_WidthStretch,
+                            Tuning::Layout::TERMS_COLUMN_WEIGHT);
+    ImGui::TableSetupColumn("##summary", ImGuiTableColumnFlags_WidthStretch,
+                            Tuning::Layout::SUMMARY_COLUMN_WEIGHT);
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    terms();
+    ImGui::TableNextColumn();
+    summary();
+    ImGui::EndTable();
+    return;
+  }
+  terms();
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
+  summary();
 }
 
 void TransferMarketScene::renderReasons(
     const std::vector<TransferNegotiation::Reason>& reasons,
     const ImVec4& color) const
 {
+  ImGui::PushTextWrapPos(0.0f);
   for (const TransferNegotiation::Reason reason : reasons)
   {
     ImGui::Bullet();
     ImGui::TextColored(color, "%s",
                        LOC(TransferNegotiation::reasonKey(reason)));
   }
+  ImGui::PopTextWrapPos();
+}
+
+void TransferMarketScene::renderClubResponse(const ClubResponse& response,
+                                             const std::string& detail) const
+{
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
+  {
+    Theme::ScopedText heading(Theme::Text::TITLE);
+    ImGui::TextColored(decisionColor(response.decision), "%s",
+                       LOC(decisionKey(response.decision)));
+  }
+  if (!detail.empty())
+  {
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextUnformatted(detail.c_str());
+    ImGui::PopTextWrapPos();
+  }
+  renderReasons(response.reasons, Theme::palette().muted);
 }
 
 void TransferMarketScene::openOfferDialog(const TargetRow& row)
@@ -1742,17 +1917,17 @@ void TransferMarketScene::openOfferDialog(const TargetRow& row)
   offer_dialog.player = row.name;
   offer_dialog.club = row.club;
   offer_dialog.value = row.value;
+  offer_dialog.asking_price = row.asking_price;
+  offer_dialog.wage = row.wage;
   offer_dialog.estimate_text = row.overall_text;
   offer_dialog.knowledge = row.knowledge;
   // Opening bid: the asking price, else the estimated value rounded to a
   // bid a club would make.
-  constexpr int64_t BID_ROUNDING = 10'000;
   offer_dialog.terms.fee =
       row.asking_price > 0
           ? row.asking_price
-          : static_cast<uint32_t>(std::clamp<int64_t>(
-                (row.value + BID_ROUNDING / 2) / BID_ROUNDING * BID_ROUNDING,
-                BID_ROUNDING, std::numeric_limits<uint32_t>::max()));
+          : clampFee((row.value + BID_ROUNDING / 2) / BID_ROUNDING *
+                     BID_ROUNDING);
 }
 
 void TransferMarketScene::openContractDialog(PlayerID player_id,
@@ -1784,6 +1959,8 @@ void TransferMarketScene::openLoanDialog(const TargetRow& row)
   loan_dialog.player_id = row.id;
   loan_dialog.player = row.name;
   loan_dialog.club = row.club;
+  loan_dialog.wage = row.wage;
+  loan_dialog.value = row.value;
   loan_dialog.terms.wage_share = TransferTuning::Loan::LISTED_WAGE_SHARE;
 }
 
@@ -1804,118 +1981,219 @@ void TransferMarketScene::renderOfferDialog()
   auto& controller = guiView->getController();
   const Theme::Palette& palette = Theme::palette();
   TransferNegotiation::OfferTerms& terms = offer_dialog.terms;
-  ImGui::TextColored(
-      palette.muted, "%s",
-      fmt::sprintf(LOC("TRANSFER_OFFER_HEADER"), offer_dialog.club,
-                   Format::money(offer_dialog.value))
-          .c_str());
-  ImGui::TextColored(palette.faint, "%s",
-                     fmt::sprintf(LOC("TRANSFER_OFFER_ESTIMATE"),
-                                  offer_dialog.estimate_text,
-                                  offer_dialog.knowledge)
-                         .c_str());
-  ImGui::Separator();
+  const std::optional<ClubResponse>& response = offer_dialog.response;
+  const bool accepted =
+      response && response->decision == ClubResponse::Decision::Accept;
 
-  using MI = Tuning::MoneyInput;
-  fieldLabel(LOC("TRANSFER_FIELD_FEE"));
-  moneyInput("##fee", terms.fee, MI::SMALL_STEP, MI::LARGE_STEP);
-  int upfront = terms.upfront_percent;
-  fieldLabel(LOC("TRANSFER_FIELD_UPFRONT"));
-  if (ImGui::SliderInt("##upfront", &upfront,
-                       TransferTuning::Offer::MIN_UPFRONT_PERCENT, 100, "%d%%"))
-    terms.upfront_percent = static_cast<uint8_t>(upfront);
-  int years = terms.instalment_years;
-  fieldLabel(LOC("TRANSFER_FIELD_INSTALMENTS"));
-  if (ImGui::SliderInt("##years", &years, 0,
-                       TransferTuning::Offer::MAX_INSTALMENT_YEARS))
-    terms.instalment_years = static_cast<uint8_t>(years);
-  // Keep the structure consistent: deferred money needs instalment years.
-  if (terms.instalment_years == 0) terms.upfront_percent = 100;
-  if (terms.upfront_percent == 100) terms.instalment_years = 0;
-  if (ImGui::CollapsingHeader(LOC("TRANSFER_ADD_ONS")))
-  {
-    fieldLabel(LOC("TRANSFER_FIELD_APPEARANCE_BONUS"));
-    moneyInput("##app_bonus", terms.appearance_bonus, MI::SMALL_STEP,
-               MI::LARGE_STEP);
-    fieldLabel(LOC("TRANSFER_FIELD_APPEARANCES"));
-    countInput("##app_target", terms.appearance_target);
-    fieldLabel(LOC("TRANSFER_FIELD_GOAL_BONUS"));
-    moneyInput("##goal_bonus", terms.goal_bonus, MI::SMALL_STEP,
-               MI::LARGE_STEP);
-    fieldLabel(LOC("TRANSFER_FIELD_GOALS"));
-    countInput("##goal_target", terms.goal_target);
-    int sellOn = terms.sell_on_percent;
-    fieldLabel(LOC("TRANSFER_FIELD_SELL_ON"));
-    if (ImGui::SliderInt("##sell_on", &sellOn, 0,
-                         TransferTuning::Offer::MAX_SELL_ON_PERCENT, "%d%%"))
-      terms.sell_on_percent = static_cast<uint8_t>(sellOn);
-  }
-
+  // Figures shared by the terms and the summary.
   TransferMarket::Deal probe;
   probe.terms = terms;
-  const uint32_t upfrontFee = TransferNegotiation::upfrontAmount(terms);
-  const uint32_t agent = TransferMarket::agentFee(probe);
+  const int64_t upfront = TransferNegotiation::upfrontAmount(terms);
+  const int64_t agent = TransferMarket::agentFee(probe);
+  const int64_t signing = upfront + agent;
   const auto instalments = TransferNegotiation::instalmentAmounts(terms);
-  ImGui::Separator();
-  UI::keyValue(LOC("TRANSFER_SUMMARY_UPFRONT"),
-               Format::moneyFull(upfrontFee).c_str(),
-               Tuning::Layout::LABEL_WIDTH * scale());
-  if (!instalments.empty())
-    UI::keyValue(LOC("TRANSFER_SUMMARY_INSTALMENTS"),
-                 fmt::sprintf(LOC("TRANSFER_SUMMARY_INSTALMENTS_VALUE"),
-                              static_cast<int>(instalments.size()),
-                              Format::money(instalments.front()))
-                     .c_str(),
-                 Tuning::Layout::LABEL_WIDTH * scale());
-  UI::keyValue(LOC("TRANSFER_SUMMARY_AGENT"), Format::moneyFull(agent).c_str(),
-               Tuning::Layout::LABEL_WIDTH * scale());
-  const int64_t signing = static_cast<int64_t>(upfrontFee) + agent;
-  UI::keyValue(LOC("TRANSFER_SUMMARY_BUDGET_AFTER"),
-               Format::moneyFull(available_budget - signing).c_str(),
-               Tuning::Layout::LABEL_WIDTH * scale());
-  if (signing > available_budget)
-    ImGui::TextColored(palette.negative, "%s",
-                       LOC("TRANSFER_NOT_ENOUGH_BUDGET"));
-  const bool valid = TransferNegotiation::isValid(terms) && terms.fee > 0;
+  const int64_t add_ons = static_cast<int64_t>(terms.appearance_bonus) +
+                          static_cast<int64_t>(terms.goal_bonus);
+  const int64_t expected_wage = static_cast<int64_t>(std::llround(
+      static_cast<double>(offer_dialog.wage) *
+      static_cast<double>(ScoutingTuning::EXPECTED_WAGE_RAISE)));
+  const bool over_budget = signing > available_budget;
 
-  if (offer_dialog.response)
+  const auto termsColumn = [&]
   {
-    const ClubResponse& response = *offer_dialog.response;
-    ImGui::Separator();
-    {
-      Theme::ScopedText heading(Theme::Text::TITLE);
-      ImGui::TextColored(decisionColor(response.decision), "%s",
-                         LOC(decisionKey(response.decision)));
-    }
-    if (response.counter_fee > 0 &&
-        response.decision != ClubResponse::Decision::Accept)
-      ImGui::TextUnformatted(
-          fmt::sprintf(LOC("TRANSFER_COUNTER_FEE"),
-                       Format::moneyFull(response.counter_fee))
-              .c_str());
-    renderReasons(response.reasons, palette.muted);
-  }
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(
+        palette.muted, "%s",
+        fmt::sprintf(LOC("TRANSFER_OFFER_HEADER"), offer_dialog.club,
+                     Format::money(offer_dialog.value))
+            .c_str());
+    ImGui::TextColored(palette.faint, "%s",
+                       fmt::sprintf(LOC("TRANSFER_OFFER_ESTIMATE"),
+                                    offer_dialog.estimate_text,
+                                    offer_dialog.knowledge)
+                           .c_str());
+    ImGui::PopTextWrapPos();
 
+    formLabel(LOC("TRANSFER_FIELD_FEE"));
+    int64_t fee = terms.fee;
+    std::vector<UI::MoneyChip> chips;
+    if (offer_dialog.asking_price > 0)
+      chips.push_back({LOC("TRANSFER_CHIP_ASKING"), offer_dialog.asking_price});
+    chips.push_back({LOC("TRANSFER_CHIP_VALUE"), offer_dialog.value});
+    if (response && response->counter_fee > 0 && !accepted)
+      chips.push_back({LOC("TRANSFER_CHIP_COUNTER"), response->counter_fee});
+    chips.push_back({LOC("TRANSFER_CHIP_MINUS_10"), scaledAmount(fee, 0.9)});
+    chips.push_back({LOC("TRANSFER_CHIP_PLUS_10"), scaledAmount(fee, 1.1)});
+    if (UI::moneyInput("##fee", fee,
+                       {.minimum = BID_ROUNDING,
+                        .maximum = std::numeric_limits<uint32_t>::max(),
+                        .chips = chips}))
+      terms.fee = clampFee(fee);
+
+    formLabel(LOC("TRANSFER_FIELD_UPFRONT"));
+    int upfrontIndex = optionIndex(UPFRONT_OPTIONS, terms.upfront_percent);
+    if (UI::segmented("##upfront", upfrontIndex, UPFRONT_LABELS))
+    {
+      terms.upfront_percent = UPFRONT_OPTIONS[static_cast<size_t>(upfrontIndex)];
+      if (terms.upfront_percent < 100 && terms.instalment_years == 0)
+        terms.instalment_years = DEFAULT_INSTALMENT_YEARS;
+    }
+    if (terms.upfront_percent < 100)
+    {
+      formLabel(LOC("TRANSFER_FIELD_INSTALMENTS"));
+      int yearIndex = std::max(0, terms.instalment_years - 1);
+      if (UI::segmented("##years", yearIndex,
+                        std::span(YEAR_LABELS).first(
+                            TransferTuning::Offer::MAX_INSTALMENT_YEARS)))
+        terms.instalment_years = static_cast<uint8_t>(yearIndex + 1);
+    }
+    else
+    {
+      terms.instalment_years = 0;
+    }
+
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
+    UI::beginAutoHeightCard("offer_add_ons", LOC("TRANSFER_ADD_ONS"));
+    const auto bonusRow = [&](const char* label, const char* id,
+                              uint32_t& bonus, uint16_t& target,
+                              std::span<const uint16_t> options,
+                              const char* target_key)
+    {
+      formLabel(label);
+      int64_t amount = bonus;
+      if (UI::moneyInput(id, amount,
+                         {.maximum = std::numeric_limits<uint32_t>::max()}))
+        bonus = static_cast<uint32_t>(amount);
+      if (bonus == 0)
+      {
+        target = 0;
+        return;
+      }
+      std::array<std::string, 4> texts;
+      std::array<const char*, 4> labels{};
+      for (size_t index = 0; index < options.size(); ++index)
+      {
+        texts[index] = fmt::sprintf(LOC(target_key), options[index]);
+        labels[index] = texts[index].c_str();
+      }
+      int targetIndex = optionIndex(options, target);
+      if (target == 0) target = options[static_cast<size_t>(targetIndex)];
+      ImGui::PushID(id);
+      if (UI::segmented("##target", targetIndex,
+                        std::span(labels).first(options.size())))
+        target = options[static_cast<size_t>(targetIndex)];
+      ImGui::PopID();
+    };
+    bonusRow(LOC("TRANSFER_FIELD_APPEARANCE_BONUS"), "##app_bonus",
+             terms.appearance_bonus, terms.appearance_target,
+             APPEARANCE_TARGETS, "TRANSFER_APPS_SHORT");
+    bonusRow(LOC("TRANSFER_FIELD_GOAL_BONUS"), "##goal_bonus",
+             terms.goal_bonus, terms.goal_target, GOAL_TARGETS,
+             "TRANSFER_GOALS_SHORT");
+    formLabel(LOC("TRANSFER_FIELD_SELL_ON"));
+    int sellOnIndex = optionIndex(SELL_ON_OPTIONS, terms.sell_on_percent);
+    if (UI::segmented("##sell_on", sellOnIndex, SELL_ON_LABELS))
+      terms.sell_on_percent = SELL_ON_OPTIONS[static_cast<size_t>(sellOnIndex)];
+    UI::endCard();
+  };
+
+  const auto summaryColumn = [&]
+  {
+    UI::beginAutoHeightCard("offer_summary", LOC("TRANSFER_SUMMARY_TITLE"));
+    UI::summaryRow(LOC("TRANSFER_SUMMARY_FEE"),
+                   Format::moneyFull(terms.fee).c_str());
+    UI::summaryRow(LOC("TRANSFER_SUMMARY_UPFRONT"),
+                   Format::moneyFull(upfront).c_str());
+    if (!instalments.empty())
+      UI::summaryRow(LOC("TRANSFER_SUMMARY_INSTALMENTS"),
+                     fmt::sprintf(LOC("TRANSFER_SUMMARY_INSTALMENTS_VALUE"),
+                                  static_cast<int>(instalments.size()),
+                                  Format::money(instalments.front()))
+                         .c_str());
+    UI::summaryRow(LOC("TRANSFER_SUMMARY_AGENT"),
+                   Format::moneyFull(agent).c_str());
+    if (add_ons > 0)
+      UI::summaryRow(LOC("TRANSFER_SUMMARY_ADD_ONS"),
+                     Format::moneyFull(add_ons).c_str());
+    UI::summaryRow(LOC("TRANSFER_SUMMARY_TOTAL"),
+                   Format::moneyFull(static_cast<int64_t>(terms.fee) + agent +
+                                     add_ons)
+                       .c_str(),
+                   nullptr, true);
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
+    UI::budgetImpact(LOC("TRANSFER_BUDGET_IMPACT"), available_budget,
+                     available_budget - signing);
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale()));
+    UI::summaryRow(
+        LOC("TRANSFER_WAGE_EXPECTED"),
+        fmt::sprintf(LOC("TRANSFER_WAGE_EXPECTED_VALUE"),
+                     Format::money(expected_wage))
+            .c_str());
+    UI::budgetImpact(LOC("TRANSFER_WAGE_IMPACT"), wage_room,
+                     wage_room - expected_wage, LOC("TRANSFER_WAGE_WARNING"));
+    UI::endCard();
+
+    if (over_budget && !accepted)
+    {
+      // Say what would fit: spread the payments, else lower the fee.
+      const Suggestion fix = budgetFix(terms, available_budget);
+      ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
+      ImGui::PushTextWrapPos(0.0f);
+      ImGui::TextColored(palette.negative, "%s",
+                         fmt::sprintf(LOC("TRANSFER_OVER_BUDGET_BY"),
+                                      Format::money(signing - available_budget))
+                             .c_str());
+      if (fix.terms)
+      {
+        const std::string text =
+            fix.terms->fee == terms.fee
+                ? fmt::sprintf(LOC("TRANSFER_SUGGEST_SPREAD"),
+                               static_cast<int>(fix.terms->upfront_percent),
+                               static_cast<int>(fix.terms->instalment_years))
+                : fmt::sprintf(LOC("TRANSFER_SUGGEST_LOWER"),
+                               Format::money(fix.terms->fee));
+        ImGui::TextColored(palette.muted, "%s", text.c_str());
+        ImGui::PopTextWrapPos();
+        if (UI::secondaryButton(LOC("TRANSFER_APPLY_SUGGESTION")))
+          terms = *fix.terms;
+      }
+      else
+      {
+        ImGui::TextColored(palette.muted, "%s",
+                           LOC("TRANSFER_NOT_ENOUGH_BUDGET"));
+        ImGui::PopTextWrapPos();
+      }
+    }
+    if (response)
+      renderClubResponse(
+          *response,
+          response->counter_fee > 0 && !accepted
+              ? fmt::sprintf(LOC("TRANSFER_COUNTER_FEE"),
+                             Format::moneyFull(response->counter_fee))
+              : std::string());
+  };
+  renderDialogColumns(termsColumn, summaryColumn);
+
+  const bool valid = TransferNegotiation::isValid(terms) && terms.fee > 0;
   ImGui::Separator();
-  const ImVec2 buttonSize(Tuning::Layout::STANDARD_BUTTON_WIDTH * scale(),
-                          0.0f);
-  if (ImGui::Button(LOC("TRANSFER_CANCEL"), buttonSize) ||
+  const char* submit =
+      LOC(accepted ? "TRANSFER_ACTION_TERMS" : "TRANSFER_SUBMIT_OFFER");
+  const bool counter = response && response->counter_fee > 0 && !accepted;
+  alignActions({LOC("TRANSFER_CANCEL"),
+                counter ? LOC("TRANSFER_MATCH_COUNTER") : nullptr, submit});
+  if (UI::secondaryButton(LOC("TRANSFER_CANCEL")) ||
       ImGui::IsKeyPressed(ImGuiKey_Escape, false))
     ImGui::CloseCurrentPopup();
-  const bool accepted =
-      offer_dialog.response &&
-      offer_dialog.response->decision == ClubResponse::Decision::Accept;
-  if (offer_dialog.response && offer_dialog.response->counter_fee > 0 &&
-      !accepted)
+  if (counter)
   {
     ImGui::SameLine();
-    if (ImGui::Button(LOC("TRANSFER_MATCH_COUNTER")))
-      terms.fee = offer_dialog.response->counter_fee;
+    if (UI::secondaryButton(LOC("TRANSFER_MATCH_COUNTER")))
+      terms.fee = response->counter_fee;
   }
   ImGui::SameLine();
   if (accepted)
   {
-    if (UI::primaryButton(LOC("TRANSFER_ACTION_TERMS")))
+    if (UI::primaryButton(submit))
     {
       ImGui::CloseCurrentPopup();
       openContractDialog(offer_dialog.player_id, offer_dialog.player);
@@ -1923,8 +2201,8 @@ void TransferMarketScene::renderOfferDialog()
   }
   else
   {
-    ImGui::BeginDisabled(!valid || signing > available_budget);
-    if (UI::primaryButton(LOC("TRANSFER_SUBMIT_OFFER"), buttonSize))
+    ImGui::BeginDisabled(!valid || over_budget);
+    if (UI::primaryButton(submit))
     {
       offer_dialog.response =
           controller.makeTransferOffer(offer_dialog.player_id, terms);
@@ -1953,125 +2231,167 @@ void TransferMarketScene::renderContractDialog()
   const Theme::Palette& palette = Theme::palette();
   const TransferNegotiation::ContractDemand& demand = contract_dialog.demand;
   TransferNegotiation::ContractOffer& offer = contract_dialog.offer;
-  const float keyWidth = Tuning::Layout::LABEL_WIDTH * scale();
 
-  const char* kindKey = contract_dialog.kind == ContractKind::PreContract
-                            ? "TRANSFER_TALK_PRE_CONTRACT"
-                        : contract_dialog.kind == ContractKind::FreeAgent
-                            ? "TRANSFER_TALK_FREE"
-                            : "TRANSFER_TALK_TRANSFER";
-  ImGui::TextColored(palette.muted, "%s", LOC(kindKey));
-  UI::sectionLabel(LOC("TRANSFER_AGENT_DEMANDS"));
-  UI::keyValue(LOC("TRANSFER_FIELD_AGENT_ASK"),
-               fmt::sprintf(LOC("TRANSFER_PER_WEEK"),
-                            Format::moneyFull(demand.asking_wage))
-                   .c_str(),
-               keyWidth);
-  if (ImGui::IsItemHovered())
-    ImGui::SetTooltip("%s", LOC("TRANSFER_AGENT_ASK_TIP"));
-  UI::keyValue(LOC("TRANSFER_FIELD_YEARS"),
-               fmt::format("{}-{}", static_cast<int>(demand.min_years),
-                           static_cast<int>(demand.max_years))
-                   .c_str(),
-               keyWidth);
-  if (demand.signing_bonus > 0)
-    UI::keyValue(LOC("TRANSFER_FIELD_SIGNING_BONUS"),
-                 Format::moneyFull(demand.signing_bonus).c_str(), keyWidth);
-  if (demand.wants_release_clause)
-    UI::keyValue(LOC("TRANSFER_FIELD_RELEASE_CLAUSE"),
-                 fmt::sprintf(LOC("TRANSFER_CLAUSE_AT_MOST"),
-                              Format::moneyFull(demand.max_release_clause))
-                     .c_str(),
-                 keyWidth);
-  UI::keyValue(LOC("TRANSFER_FIELD_DESIRED_ROLE"),
-               LOC(squadRoleKey(demand.desired_role)), keyWidth);
-  UI::keyValue(LOC("TRANSFER_FIELD_PROJECTED_ROLE"),
-               LOC(squadRoleKey(contract_dialog.projected)), keyWidth);
-
-  UI::sectionLabel(LOC("TRANSFER_YOUR_OFFER"));
-  using MI = Tuning::MoneyInput;
-  fieldLabel(LOC("TRANSFER_FIELD_WAGE"));
-  moneyInput("##wage", offer.weekly_wage, MI::WAGE_SMALL_STEP,
-             MI::WAGE_LARGE_STEP);
-  int years = offer.years;
-  fieldLabel(LOC("TRANSFER_FIELD_YEARS"));
-  if (ImGui::SliderInt("##contract_years", &years,
-                       TransferTuning::Contract::MINIMUM_YEARS,
-                       demand.max_years))
-    offer.years = static_cast<uint8_t>(years);
-  fieldLabel(LOC("TRANSFER_FIELD_SIGNING_BONUS"));
-  moneyInput("##bonus", offer.signing_bonus, MI::SMALL_STEP, MI::LARGE_STEP);
-  fieldLabel(LOC("TRANSFER_FIELD_RELEASE_CLAUSE"));
-  moneyInput("##clause", offer.release_clause, MI::LARGE_STEP,
-             10 * MI::LARGE_STEP);
-  if (ImGui::IsItemHovered())
-    ImGui::SetTooltip("%s", LOC("TRANSFER_CLAUSE_TIP"));
-  fieldLabel(LOC("TRANSFER_FIELD_PROMISE"));
-  const char* promisePreview =
-      contract_dialog.promise_index == 0
-          ? LOC("TRANSFER_PROMISE_NONE")
-          : LOC(squadRoleKey(PROMISE_ROLES[static_cast<size_t>(
-                contract_dialog.promise_index - 1)]));
-  if (ImGui::BeginCombo("##promise", promisePreview))
+  const auto termsColumn = [&]
   {
-    if (ImGui::Selectable(LOC("TRANSFER_PROMISE_NONE"),
-                          contract_dialog.promise_index == 0))
-      contract_dialog.promise_index = 0;
-    for (size_t index = 0; index < PROMISE_ROLES.size(); ++index)
-    {
-      if (ImGui::Selectable(
-              LOC(squadRoleKey(PROMISE_ROLES[index])),
-              contract_dialog.promise_index == static_cast<int>(index + 1)))
-        contract_dialog.promise_index = static_cast<int>(index + 1);
-    }
-    ImGui::EndCombo();
-  }
-  offer.promised_role =
-      contract_dialog.promise_index == 0
-          ? std::nullopt
-          : std::optional<SquadRole>(PROMISE_ROLES[static_cast<size_t>(
-                contract_dialog.promise_index - 1)]);
+    const char* kindKey = contract_dialog.kind == ContractKind::PreContract
+                              ? "TRANSFER_TALK_PRE_CONTRACT"
+                          : contract_dialog.kind == ContractKind::FreeAgent
+                              ? "TRANSFER_TALK_FREE"
+                              : "TRANSFER_TALK_TRANSFER";
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(palette.muted, "%s", LOC(kindKey));
+    ImGui::PopTextWrapPos();
 
-  ImGui::TextColored(
-      palette.faint, "%s",
-      fmt::sprintf(LOC("TRANSFER_ROUNDS_LEFT"), contract_dialog.rounds_left)
-          .c_str());
-  if (contract_dialog.response)
-  {
-    ImGui::Separator();
-    const bool accepted = contract_dialog.response->accepted;
+    formLabel(LOC("TRANSFER_FIELD_WAGE"));
+    int64_t wage = offer.weekly_wage;
+    const std::array<UI::MoneyChip, 3> wageChips = {
+        {{LOC("TRANSFER_CHIP_AGENT_ASK"), demand.asking_wage},
+         {LOC("TRANSFER_CHIP_MINUS_5"), scaledWage(demand.asking_wage, 0.95)},
+         {LOC("TRANSFER_CHIP_MINUS_10"),
+          scaledWage(demand.asking_wage, 0.90)}}};
+    if (UI::moneyInput("##wage", wage,
+                       {.maximum = std::numeric_limits<uint32_t>::max(),
+                        .chips = wageChips}))
+      offer.weekly_wage = static_cast<uint32_t>(wage);
+
+    formLabel(LOC("TRANSFER_FIELD_YEARS"));
+    int yearIndex = std::max(0, offer.years - 1);
+    if (UI::segmented("##contract_years", yearIndex,
+                      std::span(YEAR_LABELS).first(demand.max_years)))
+      offer.years = static_cast<uint8_t>(yearIndex + 1);
+
+    formLabel(LOC("TRANSFER_FIELD_SIGNING_BONUS"));
+    int64_t bonus = offer.signing_bonus;
+    std::vector<UI::MoneyChip> bonusChips = {{LOC("TRANSFER_CHIP_NONE"), 0}};
+    if (demand.signing_bonus > 0)
+      bonusChips.push_back(
+          {LOC("TRANSFER_CHIP_ASKED_BONUS"), demand.signing_bonus});
+    if (UI::moneyInput("##bonus", bonus,
+                       {.maximum = std::numeric_limits<uint32_t>::max(),
+                        .chips = bonusChips}))
+      offer.signing_bonus = static_cast<uint32_t>(bonus);
+
+    formLabel(LOC("TRANSFER_FIELD_RELEASE_CLAUSE"));
+    int64_t clause = offer.release_clause;
+    std::vector<UI::MoneyChip> clauseChips = {{LOC("TRANSFER_CHIP_NONE"), 0}};
+    if (demand.wants_release_clause)
+      clauseChips.push_back(
+          {LOC("TRANSFER_CHIP_MAX_CLAUSE"), demand.max_release_clause});
+    if (UI::moneyInput("##clause", clause,
+                       {.maximum = std::numeric_limits<uint32_t>::max(),
+                        .chips = clauseChips}))
+      offer.release_clause = static_cast<uint32_t>(clause);
+    if (ImGui::IsItemHovered())
+      ImGui::SetTooltip("%s", LOC("TRANSFER_CLAUSE_TIP"));
+
+    formLabel(LOC("TRANSFER_FIELD_PROMISE"));
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    const char* promisePreview =
+        contract_dialog.promise_index == 0
+            ? LOC("TRANSFER_PROMISE_NONE")
+            : LOC(squadRoleKey(PROMISE_ROLES[static_cast<size_t>(
+                  contract_dialog.promise_index - 1)]));
+    if (ImGui::BeginCombo("##promise", promisePreview))
     {
-      Theme::ScopedText heading(Theme::Text::TITLE);
-      ImGui::TextColored(
-          accepted ? palette.positive : palette.negative, "%s",
-          LOC(accepted ? "TRANSFER_PLAYER_AGREES" : "TRANSFER_PLAYER_REFUSES"));
+      if (ImGui::Selectable(LOC("TRANSFER_PROMISE_NONE"),
+                            contract_dialog.promise_index == 0))
+        contract_dialog.promise_index = 0;
+      for (size_t index = 0; index < PROMISE_ROLES.size(); ++index)
+      {
+        if (ImGui::Selectable(
+                LOC(squadRoleKey(PROMISE_ROLES[index])),
+                contract_dialog.promise_index == static_cast<int>(index + 1)))
+          contract_dialog.promise_index = static_cast<int>(index + 1);
+      }
+      ImGui::EndCombo();
     }
-    renderReasons(contract_dialog.response->reasons, palette.muted);
-    if (!accepted && contract_dialog.rounds_left > 0)
-      ImGui::TextUnformatted(
-          fmt::sprintf(LOC("TRANSFER_AGENT_NOW_ASKS"),
-                       Format::moneyFull(contract_dialog.demand.asking_wage))
-              .c_str());
-    if (contract_dialog.over_budget)
-      ImGui::TextColored(palette.negative, "%s",
-                         LOC("TRANSFER_NOT_ENOUGH_BUDGET"));
-  }
+    offer.promised_role =
+        contract_dialog.promise_index == 0
+            ? std::nullopt
+            : std::optional<SquadRole>(PROMISE_ROLES[static_cast<size_t>(
+                  contract_dialog.promise_index - 1)]);
+  };
+
+  const auto summaryColumn = [&]
+  {
+    UI::beginAutoHeightCard("agent_demands", LOC("TRANSFER_AGENT_DEMANDS"));
+    UI::summaryRow(LOC("TRANSFER_FIELD_AGENT_ASK"),
+                   fmt::sprintf(LOC("TRANSFER_PER_WEEK"),
+                                Format::moneyFull(demand.asking_wage))
+                       .c_str());
+    if (ImGui::IsItemHovered())
+      ImGui::SetTooltip("%s", LOC("TRANSFER_AGENT_ASK_TIP"));
+    UI::summaryRow(LOC("TRANSFER_FIELD_YEARS"),
+                   fmt::format("{}-{}", static_cast<int>(demand.min_years),
+                               static_cast<int>(demand.max_years))
+                       .c_str());
+    if (demand.signing_bonus > 0)
+      UI::summaryRow(LOC("TRANSFER_FIELD_SIGNING_BONUS"),
+                     Format::moneyFull(demand.signing_bonus).c_str());
+    if (demand.wants_release_clause)
+      UI::summaryRow(LOC("TRANSFER_FIELD_RELEASE_CLAUSE"),
+                     fmt::sprintf(LOC("TRANSFER_CLAUSE_AT_MOST"),
+                                  Format::money(demand.max_release_clause))
+                         .c_str());
+    UI::summaryRow(LOC("TRANSFER_FIELD_DESIRED_ROLE"),
+                   LOC(squadRoleKey(demand.desired_role)));
+    UI::summaryRow(LOC("TRANSFER_FIELD_PROJECTED_ROLE"),
+                   LOC(squadRoleKey(contract_dialog.projected)));
+    UI::endCard();
+
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
+    UI::beginAutoHeightCard("contract_summary", LOC("TRANSFER_SUMMARY_TITLE"));
+    const int64_t yearly = static_cast<int64_t>(offer.weekly_wage) *
+                           static_cast<int64_t>(WEEKS_PER_YEAR);
+    UI::summaryRow(LOC("TRANSFER_SUMMARY_YEARLY"),
+                   Format::moneyFull(yearly).c_str());
+    UI::summaryRow(LOC("TRANSFER_SUMMARY_CONTRACT_TOTAL"),
+                   Format::moneyFull(yearly * offer.years +
+                                     static_cast<int64_t>(offer.signing_bonus))
+                       .c_str(),
+                   nullptr, true);
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale()));
+    UI::budgetImpact(LOC("TRANSFER_WAGE_IMPACT"), wage_room,
+                     wage_room - static_cast<int64_t>(offer.weekly_wage),
+                     LOC("TRANSFER_WAGE_OVER_ROOM"));
+    ImGui::TextColored(
+        palette.faint, "%s",
+        fmt::sprintf(LOC("TRANSFER_ROUNDS_LEFT"), contract_dialog.rounds_left)
+            .c_str());
+    UI::endCard();
+
+    if (contract_dialog.response)
+    {
+      const bool agreed = contract_dialog.response->accepted;
+      ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
+      {
+        Theme::ScopedText heading(Theme::Text::TITLE);
+        ImGui::TextColored(agreed ? palette.positive : palette.negative, "%s",
+                           LOC(agreed ? "TRANSFER_PLAYER_AGREES"
+                                      : "TRANSFER_PLAYER_REFUSES"));
+      }
+      renderReasons(contract_dialog.response->reasons, palette.muted);
+      if (!agreed && contract_dialog.rounds_left > 0)
+        ImGui::TextUnformatted(
+            fmt::sprintf(LOC("TRANSFER_AGENT_NOW_ASKS"),
+                         Format::moneyFull(demand.asking_wage))
+                .c_str());
+      if (contract_dialog.over_budget)
+        ImGui::TextColored(palette.negative, "%s",
+                           LOC("TRANSFER_NOT_ENOUGH_BUDGET"));
+    }
+  };
+  renderDialogColumns(termsColumn, summaryColumn);
 
   ImGui::Separator();
-  const ImVec2 buttonSize(Tuning::Layout::STANDARD_BUTTON_WIDTH * scale(),
-                          0.0f);
-  if (ImGui::Button(LOC("TRANSFER_CANCEL"), buttonSize) ||
+  alignActions({LOC("TRANSFER_CANCEL"), LOC("TRANSFER_PROPOSE")});
+  if (UI::secondaryButton(LOC("TRANSFER_CANCEL")) ||
       ImGui::IsKeyPressed(ImGuiKey_Escape, false))
     ImGui::CloseCurrentPopup();
-  if (offer.weekly_wage != demand.asking_wage)
-  {
-    ImGui::SameLine();
-    if (ImGui::Button(LOC("TRANSFER_MEET_AGENT_ASK")))
-      offer.weekly_wage = demand.asking_wage;
-  }
   ImGui::SameLine();
   ImGui::BeginDisabled(contract_dialog.rounds_left == 0 || offer.years == 0);
-  if (UI::primaryButton(LOC("TRANSFER_PROPOSE"), buttonSize))
+  if (UI::primaryButton(LOC("TRANSFER_PROPOSE")))
   {
     const auto result =
         controller.proposeContract(contract_dialog.player_id, offer);
@@ -2116,78 +2436,108 @@ void TransferMarketScene::renderLoanDialog()
   auto& controller = guiView->getController();
   const Theme::Palette& palette = Theme::palette();
   TransferNegotiation::LoanTerms& terms = loan_dialog.terms;
-  ImGui::TextColored(
-      palette.muted, "%s",
-      fmt::sprintf(LOC("TRANSFER_LOAN_HEADER"), loan_dialog.club).c_str());
-  ImGui::Separator();
-  fieldLabel(LOC("TRANSFER_FIELD_DURATION"));
-  if (ImGui::BeginCombo(
-          "##duration",
-          LOC(terms.duration == TransferNegotiation::LoanDuration::SeasonEnd
-                  ? "TRANSFER_LOAN_SEASON"
-                  : "TRANSFER_LOAN_SIX_MONTHS")))
-  {
-    if (ImGui::Selectable(
-            LOC("TRANSFER_LOAN_SEASON"),
-            terms.duration == TransferNegotiation::LoanDuration::SeasonEnd))
-      terms.duration = TransferNegotiation::LoanDuration::SeasonEnd;
-    if (ImGui::Selectable(
-            LOC("TRANSFER_LOAN_SIX_MONTHS"),
-            terms.duration == TransferNegotiation::LoanDuration::SixMonths))
-      terms.duration = TransferNegotiation::LoanDuration::SixMonths;
-    ImGui::EndCombo();
-  }
-  int share = terms.wage_share;
-  fieldLabel(LOC("TRANSFER_FIELD_WAGE_SHARE"));
-  if (ImGui::SliderInt("##share", &share, 0, 100, "%d%%"))
-    terms.wage_share = static_cast<uint8_t>(share);
-  using MI = Tuning::MoneyInput;
-  fieldLabel(LOC("TRANSFER_FIELD_LOAN_FEE"));
-  moneyInput("##loan_fee", terms.loan_fee, MI::SMALL_STEP, MI::LARGE_STEP);
-  fieldLabel(LOC("TRANSFER_FIELD_OPTION_FEE"));
-  moneyInput("##option_fee", terms.option_fee, MI::SMALL_STEP, MI::LARGE_STEP);
-  ImGui::Checkbox(LOC("TRANSFER_FIELD_OBLIGATION"), &terms.obligation);
-  ImGui::SameLine();
-  ImGui::Checkbox(LOC("TRANSFER_FIELD_RECALL"), &terms.recall_clause);
+  const GameDateValue today = controller.getCurrentDate();
+  const int weeks = TransferNegotiation::weeksBetween(
+      today, TransferNegotiation::loanEndDate(today, terms.duration));
+  const int64_t weekly = static_cast<int64_t>(loan_dialog.wage) *
+                         terms.wage_share / 100;
 
-  if (loan_dialog.response)
+  const auto termsColumn = [&]
   {
-    const ClubResponse& response = *loan_dialog.response;
-    ImGui::Separator();
+    ImGui::TextColored(
+        palette.muted, "%s",
+        fmt::sprintf(LOC("TRANSFER_LOAN_HEADER"), loan_dialog.club).c_str());
+    formLabel(LOC("TRANSFER_FIELD_DURATION"));
+    int duration =
+        terms.duration == TransferNegotiation::LoanDuration::SeasonEnd ? 0 : 1;
+    const std::array<const char*, 2> durations = {
+        LOC("TRANSFER_LOAN_SEASON"), LOC("TRANSFER_LOAN_SIX_MONTHS")};
+    if (UI::segmented("##duration", duration, durations))
+      terms.duration = duration == 0
+                           ? TransferNegotiation::LoanDuration::SeasonEnd
+                           : TransferNegotiation::LoanDuration::SixMonths;
+    formLabel(LOC("TRANSFER_FIELD_WAGE_SHARE"));
+    int shareIndex = optionIndex(WAGE_SHARE_OPTIONS, terms.wage_share);
+    if (UI::segmented("##share", shareIndex, WAGE_SHARE_LABELS))
+      terms.wage_share = WAGE_SHARE_OPTIONS[static_cast<size_t>(shareIndex)];
+    formLabel(LOC("TRANSFER_FIELD_LOAN_FEE"));
+    int64_t fee = terms.loan_fee;
+    if (UI::moneyInput("##loan_fee", fee,
+                       {.maximum = std::numeric_limits<uint32_t>::max()}))
+      terms.loan_fee = static_cast<uint32_t>(fee);
+    formLabel(LOC("TRANSFER_FIELD_OPTION_FEE"));
+    int64_t option = terms.option_fee;
+    const std::array<UI::MoneyChip, 2> optionChips = {
+        {{LOC("TRANSFER_CHIP_NONE"), 0},
+         {LOC("TRANSFER_CHIP_OPTION_VALUE"),
+          scaledAmount(loan_dialog.value,
+                       TransferTuning::Loan::OPTION_VALUE_MULTIPLE)}}};
+    if (UI::moneyInput("##option_fee", option,
+                       {.maximum = std::numeric_limits<uint32_t>::max(),
+                        .chips = optionChips}))
+      terms.option_fee = static_cast<uint32_t>(option);
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale()));
+    ImGui::Checkbox(LOC("TRANSFER_FIELD_OBLIGATION"), &terms.obligation);
+    ImGui::SameLine();
+    ImGui::Checkbox(LOC("TRANSFER_FIELD_RECALL"), &terms.recall_clause);
+  };
+
+  const auto summaryColumn = [&]
+  {
+    UI::beginAutoHeightCard("loan_summary", LOC("TRANSFER_SUMMARY_TITLE"));
+    UI::summaryRow(LOC("TRANSFER_SUMMARY_WEEKLY_SHARE"),
+                   fmt::sprintf(LOC("TRANSFER_PER_WEEK"),
+                                Format::moneyFull(weekly))
+                       .c_str());
+    UI::summaryRow(
+        LOC("TRANSFER_SUMMARY_LOAN_TOTAL"),
+        Format::moneyFull(weekly * weeks + static_cast<int64_t>(terms.loan_fee))
+            .c_str(),
+        nullptr, true);
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale()));
+    UI::budgetImpact(LOC("TRANSFER_BUDGET_IMPACT"), available_budget,
+                     available_budget - static_cast<int64_t>(terms.loan_fee),
+                     LOC("TRANSFER_NOT_ENOUGH_BUDGET"));
+    UI::budgetImpact(LOC("TRANSFER_WAGE_IMPACT"), wage_room,
+                     wage_room - weekly, LOC("TRANSFER_WAGE_OVER_ROOM"));
+    UI::endCard();
+    if (loan_dialog.response)
     {
-      Theme::ScopedText heading(Theme::Text::TITLE);
-      ImGui::TextColored(decisionColor(response.decision), "%s",
-                         LOC(decisionKey(response.decision)));
+      const ClubResponse& response = *loan_dialog.response;
+      renderClubResponse(
+          response,
+          response.decision == ClubResponse::Decision::Counter
+              ? fmt::sprintf(LOC("TRANSFER_LOAN_COUNTER"),
+                             static_cast<int>(response.counter_wage_share),
+                             response.counter_option_fee > 0
+                                 ? Format::moneyFull(response.counter_option_fee)
+                                 : std::string("-"))
+              : std::string());
     }
-    if (response.decision == ClubResponse::Decision::Counter)
-      ImGui::TextUnformatted(
-          fmt::sprintf(LOC("TRANSFER_LOAN_COUNTER"),
-                       static_cast<int>(response.counter_wage_share),
-                       response.counter_option_fee > 0
-                           ? Format::moneyFull(response.counter_option_fee)
-                           : std::string("-"))
-              .c_str());
-    renderReasons(response.reasons, palette.muted);
-  }
+  };
+  renderDialogColumns(termsColumn, summaryColumn);
 
   ImGui::Separator();
-  const ImVec2 buttonSize(Tuning::Layout::STANDARD_BUTTON_WIDTH * scale(),
-                          0.0f);
-  if (ImGui::Button(LOC("TRANSFER_CANCEL"), buttonSize) ||
+  const bool counter =
+      loan_dialog.response &&
+      loan_dialog.response->decision == ClubResponse::Decision::Counter;
+  alignActions({LOC("TRANSFER_CANCEL"),
+                counter ? LOC("TRANSFER_MATCH_COUNTER") : nullptr,
+                LOC("TRANSFER_SUBMIT_OFFER")});
+  if (UI::secondaryButton(LOC("TRANSFER_CANCEL")) ||
       ImGui::IsKeyPressed(ImGuiKey_Escape, false))
     ImGui::CloseCurrentPopup();
-  if (loan_dialog.response &&
-      loan_dialog.response->decision == ClubResponse::Decision::Counter)
+  if (counter)
   {
     ImGui::SameLine();
-    if (ImGui::Button(LOC("TRANSFER_MATCH_COUNTER")))
+    if (UI::secondaryButton(LOC("TRANSFER_MATCH_COUNTER")))
     {
       terms.wage_share = loan_dialog.response->counter_wage_share;
       terms.option_fee = loan_dialog.response->counter_option_fee;
     }
   }
   ImGui::SameLine();
-  if (UI::primaryButton(LOC("TRANSFER_SUBMIT_OFFER"), buttonSize))
+  if (UI::primaryButton(LOC("TRANSFER_SUBMIT_OFFER")))
   {
     loan_dialog.response =
         controller.makeLoanOffer(loan_dialog.player_id, terms);
@@ -2208,43 +2558,50 @@ void TransferMarketScene::renderCounterDialog()
     ImGui::OpenPopup("###transfer_counter");
     counter_dialog.requested = false;
   }
-  ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
-                          ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+  placeDialog(std::min(Tuning::Layout::DIALOG_WIDTH * scale(),
+                       ImGui::GetMainViewport()->Size.x *
+                           Tuning::Layout::DIALOG_VIEWPORT_SHARE));
   const std::string title =
       std::string(LOC("TRANSFER_COUNTER_TITLE")) + "###transfer_counter";
   if (!ImGui::BeginPopupModal(title.c_str(), nullptr,
-                              ImGuiWindowFlags_AlwaysAutoResize))
+                              ImGuiWindowFlags_NoSavedSettings))
     return;
   auto& controller = guiView->getController();
-  const Theme::Palette& palette = Theme::palette();
   const OfferRow& offer = counter_dialog.offer;
+  ImGui::PushTextWrapPos(0.0f);
   ImGui::TextUnformatted(fmt::sprintf(LOC("TRANSFER_COUNTER_HEADER"),
                                       offer.club, offer.player,
                                       offer.amount_text)
                              .c_str());
-  fieldLabel(LOC("TRANSFER_NEW_PRICE"));
-  moneyInput("##counter_fee", counter_dialog.fee,
-             Tuning::MoneyInput::SMALL_STEP, Tuning::MoneyInput::LARGE_STEP);
+  ImGui::PopTextWrapPos();
+  formLabel(LOC("TRANSFER_NEW_PRICE"));
+  int64_t fee = counter_dialog.fee;
+  const std::array<UI::MoneyChip, 4> chips = {
+      {{LOC("TRANSFER_CHIP_THEIR_OFFER"), offer.fee},
+       {LOC("TRANSFER_CHIP_VALUE"), offer.value},
+       {LOC("TRANSFER_CHIP_PLUS_10"), scaledAmount(offer.fee, 1.1)},
+       {LOC("TRANSFER_CHIP_PLUS_25"), scaledAmount(offer.fee, 1.25)}}};
+  if (UI::moneyInput("##counter_fee", fee,
+                     {.maximum = std::numeric_limits<uint32_t>::max(),
+                      .chips = chips}))
+    counter_dialog.fee = static_cast<uint32_t>(fee);
   if (counter_dialog.response)
   {
     const ClubResponse& response = *counter_dialog.response;
-    ImGui::TextColored(decisionColor(response.decision), "%s",
-                       LOC(decisionKey(response.decision)));
-    if (response.decision == ClubResponse::Decision::Counter)
-      ImGui::TextUnformatted(
-          fmt::sprintf(LOC("TRANSFER_COUNTER_IMPROVED"),
-                       Format::moneyFull(response.counter_fee))
-              .c_str());
-    renderReasons(response.reasons, palette.muted);
+    renderClubResponse(
+        response, response.decision == ClubResponse::Decision::Counter
+                      ? fmt::sprintf(LOC("TRANSFER_COUNTER_IMPROVED"),
+                                     Format::moneyFull(response.counter_fee))
+                      : std::string());
   }
-  const ImVec2 buttonSize(Tuning::Layout::STANDARD_BUTTON_WIDTH * scale(),
-                          0.0f);
-  if (ImGui::Button(LOC("TRANSFER_CANCEL"), buttonSize) ||
+  ImGui::Separator();
+  alignActions({LOC("TRANSFER_CANCEL"), LOC("TRANSFER_SUBMIT_COUNTER")});
+  if (UI::secondaryButton(LOC("TRANSFER_CANCEL")) ||
       ImGui::IsKeyPressed(ImGuiKey_Escape, false))
     ImGui::CloseCurrentPopup();
   ImGui::SameLine();
   ImGui::BeginDisabled(counter_dialog.fee == 0);
-  if (UI::primaryButton(LOC("TRANSFER_SUBMIT_COUNTER"), buttonSize))
+  if (UI::primaryButton(LOC("TRANSFER_SUBMIT_COUNTER")))
   {
     if (offer.offer_id == 0)
     {
@@ -2276,25 +2633,34 @@ void TransferMarketScene::renderListingDialog()
     ImGui::OpenPopup("###transfer_listing");
     listing_dialog.requested = false;
   }
-  ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
-                          ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+  placeDialog(std::min(Tuning::Layout::DIALOG_WIDTH * scale(),
+                       ImGui::GetMainViewport()->Size.x *
+                           Tuning::Layout::DIALOG_VIEWPORT_SHARE));
   const std::string title =
       fmt::sprintf(LOC("TRANSFER_LIST_TITLE"), listing_dialog.player) +
       "###transfer_listing";
   if (!ImGui::BeginPopupModal(title.c_str(), nullptr,
-                              ImGuiWindowFlags_AlwaysAutoResize))
+                              ImGuiWindowFlags_NoSavedSettings))
     return;
-  fieldLabel(LOC("TRANSFER_ASKING_PRICE"));
-  moneyInput("##asking", listing_dialog.price, Tuning::MoneyInput::SMALL_STEP,
-             Tuning::MoneyInput::LARGE_STEP);
-  const ImVec2 buttonSize(Tuning::Layout::STANDARD_BUTTON_WIDTH * scale(),
-                          0.0f);
-  if (ImGui::Button(LOC("TRANSFER_CANCEL"), buttonSize) ||
+  formLabel(LOC("TRANSFER_ASKING_PRICE"));
+  int64_t price = listing_dialog.price;
+  const std::array<UI::MoneyChip, 3> chips = {
+      {{LOC("TRANSFER_CHIP_MARKET_VALUE"), listing_dialog.value},
+       {LOC("TRANSFER_CHIP_PLUS_25"), scaledAmount(listing_dialog.value, 1.25)},
+       {LOC("TRANSFER_CHIP_PLUS_50"),
+        scaledAmount(listing_dialog.value, 1.5)}}};
+  if (UI::moneyInput("##asking", price,
+                     {.maximum = std::numeric_limits<uint32_t>::max(),
+                      .chips = chips}))
+    listing_dialog.price = static_cast<uint32_t>(price);
+  ImGui::Separator();
+  alignActions({LOC("TRANSFER_CANCEL"), LOC("TRANSFER_LIST_PLAYER")});
+  if (UI::secondaryButton(LOC("TRANSFER_CANCEL")) ||
       ImGui::IsKeyPressed(ImGuiKey_Escape, false))
     ImGui::CloseCurrentPopup();
   ImGui::SameLine();
   ImGui::BeginDisabled(listing_dialog.price == 0);
-  if (UI::primaryButton(LOC("TRANSFER_LIST_PLAYER"), buttonSize))
+  if (UI::primaryButton(LOC("TRANSFER_LIST_PLAYER")))
   {
     auto& controller = guiView->getController();
     controller.listPlayerForTransfer(listing_dialog.player_id,

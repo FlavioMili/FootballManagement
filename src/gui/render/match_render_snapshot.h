@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <vector>
 
 #include "model/match_engine.h"
@@ -47,6 +48,8 @@ struct MatchRenderPlayer
   bool isInjured = false;
   int yellowCards = 0;
   float heightMetres = MatchTuning::Units::DEFAULT_PLAYER_HEIGHT_METRES;
+  /** Running speed in metres per simulated second (drives the stride). */
+  float speedMetresPerSecond = 0.0f;
 };
 
 struct MatchRenderBall
@@ -116,6 +119,9 @@ inline MatchRenderSnapshot buildMatchRenderSnapshot(const MatchEngine& engine)
     renderPlayer.isInjured = source.isInjured;
     renderPlayer.yellowCards = source.yellowCards;
     renderPlayer.heightMetres = source.heightMetres;
+    renderPlayer.speedMetresPerSecond =
+        std::sqrt(source.velocity.x * source.velocity.x +
+                  source.velocity.y * source.velocity.y);
     renderPlayer.previousPosition = index < previousPositions.size()
                                         ? previousPositions[index]
                                         : renderPlayer.currentPosition;

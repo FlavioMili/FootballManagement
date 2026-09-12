@@ -18,16 +18,19 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <string>
 #include <vector>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
 #include "global/global.h"
+#include "global/language_manager.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
 #include "model/injury.h"
 #include "model/match.h"
 #include "model/match_report.h"
+#include "model/world_generation.h"
 #include "model/world_rng.h"
 #include "model/world_simulation.h"
 
@@ -289,6 +292,105 @@ TEST(WorldGenerationTest, RolesLeaguesAndReputationShapeTheWorld)
 // ---------------------------------------------------------------------------
 // Injuries
 // ---------------------------------------------------------------------------
+
+TEST(WorldGenerationTest, NamesFollowNationalityAndAreUnique)
+{
+  const SlotCleanup slot{uniqueSlot(0)};
+  const auto controller = makeWorld(slot.slot);
+  auto gamedata = controller->getGameData();
+  const NamePool& pool = NamePool::instance();
+
+  std::map<std::string, int> full_names;
+  std::map<LeagueID, std::pair<int, int>> domestic;  // domestic, total
+  int matching_first_names = 0;
+  for (const auto& [id, player] : gamedata->getPlayers())
+  {
+    ++full_names[player.getName()];
+    EXPECT_FALSE(pool.excluded_full_names.contains(player.getName()));
+    const auto& firsts = pool.firstNames(player.getNationality());
+    if (std::ranges::contains(firsts, player.getFirstName()))
+      ++matching_first_names;
+    const auto team = gamedata->getTeam(player.getTeamId());
+    if (!team || player.getTeamId() == FREE_AGENTS_TEAM_ID) continue;
+    auto& [home_grown, total] = domestic[team->get().getLeagueId()];
+    ++total;
+    if (player.getNationality() ==
+        leagueProfile(team->get().getLeagueId()).domestic_nationality)
+      ++home_grown;
+  }
+  int duplicates = 0;
+  for (const auto& [name, count] : full_names) duplicates += count - 1;
+  EXPECT_EQ(duplicates, 0);
+  EXPECT_GT(matching_first_names,
+            static_cast<int>(0.98 * gamedata->getPlayers().size()));
+
+  for (const auto& [league_id, counts] : domestic)
+  {
+    const double share = static_cast<double>(counts.first) / counts.second;
+    EXPECT_GE(share, 0.62) << "league " << league_id;
+    EXPECT_LE(share, 0.92) << "league " << league_id;
+  }
+
+  // At most one surname appears twice in a squad, none three times.
+  for (const auto& team : controller->getTeams())
+  {
+    std::map<std::string, int> surnames;
+    for (const auto& player : controller->getPlayersForTeam(team.get().getId()))
+      ++surnames[player.get().getLastName()];
+    int repeated = 0;
+    for (const auto& [surname, count] : surnames)
+    {
+      EXPECT_LE(count, 2) << team.get().getName() << " " << surname;
+      if (count > 1) ++repeated;
+    }
+    EXPECT_LE(repeated, 1) << team.get().getName();
+  }
+}
+
+TEST(WorldGenerationTest, VeteransHaveNoHiddenGrowth)
+{
+  const SlotCleanup slot{uniqueSlot(1)};
+  const auto controller = makeWorld(slot.slot);
+  int veterans = 0;
+  for (const auto& [id, player] : controller->getGameData()->getPlayers())
+  {
+    if (player.getAge() < WorldTuning::Generation::VETERAN_AGE) continue;
+    ++veterans;
+    EXPECT_LE(player.getPotential() - overallOf(*controller, player),
+              WorldTuning::Generation::VETERAN_HEADROOM + 0.01)
+        << player.getName() << " age " << player.getAge();
+  }
+  EXPECT_GT(veterans, 500);
+  EXPECT_FLOAT_EQ(WorldGeneration::maxPotential(34, 70.0f),
+                  70.0f + WorldTuning::Generation::VETERAN_HEADROOM);
+  EXPECT_GT(WorldGeneration::maxPotential(19, 60.0f), 90.0f);
+}
+
+TEST(WorldGenerationTest, PreseasonFriendliesStayInTheRegion)
+{
+  const SlotCleanup slot{uniqueSlot(2)};
+  const auto controller = makeWorld(slot.slot);
+  auto gamedata = controller->getGameData();
+  int friendlies = 0;
+  for (const auto& [date, matches] :
+       controller->getGame()->getCalendar().getFullCalendar())
+  {
+    for (const Match& match : matches)
+    {
+      if (match.getMatchType() != MatchType::FRIENDLY) continue;
+      ++friendlies;
+      const LeagueID home = gamedata->getTeam(match.getHomeTeamId())
+                                ->get()
+                                .getLeagueId();
+      const LeagueID away = gamedata->getTeam(match.getAwayTeamId())
+                                ->get()
+                                .getLeagueId();
+      EXPECT_EQ(leagueProfile(home).region, leagueProfile(away).region)
+          << static_cast<int>(home) << " vs " << static_cast<int>(away);
+    }
+  }
+  EXPECT_GT(friendlies, 100);
+}
 
 TEST(InjuryModelTest, DiagnosisMixAndLayoffsFollowTheStudies)
 {
@@ -624,6 +726,11 @@ TEST(WorldSimulationTest, AYearOfDevelopmentInjuriesYouthFinanceAndNews)
   EXPECT_GE(youth, 3u * controller->getTeams().size());
   EXPECT_FALSE(gamedata->getRemovedPlayerIds().empty()) << "no retirements";
 
+  // Graduates get names nobody else carries.
+  std::set<std::string> names;
+  for (const auto& [id, player] : gamedata->getPlayers())
+    EXPECT_TRUE(names.insert(player.getName()).second) << player.getName();
+
   // Finances: ledgers reconcile and every revenue stream was paid.
   for (const auto& team : controller->getTeams())
   {
@@ -676,6 +783,7 @@ TEST(WorldSimulationTest, AYearOfDevelopmentInjuriesYouthFinanceAndNews)
 TEST(WorldSimulationTest, TakingChargeFillsTheDayOneInbox)
 {
   const SlotCleanup slot{uniqueSlot(3)};
+  ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::EN));
   auto controller = makeWorld(slot.slot);
   const TeamID managed = controller->getTeams().front().get().getId();
   controller->selectManagedTeam(managed);

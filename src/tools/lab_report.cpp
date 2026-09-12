@@ -95,6 +95,13 @@ constexpr std::array TARGETS = {
   TargetSpec{"CT-M41", "xg_per_shot", "Mean xG per shot", "0.105", Band{0.09, 0.12}, Monitor, "PUB", Number, Match, ""},
   TargetSpec{"CT-M42", "", "Goalkeeper reaction + dive", "0.21 s + 0.7-0.8 s", NO_BAND, Monitor, "PEER", Number, Engine, "not measurable yet: keeper timings not exposed"},
   TargetSpec{"CT-M43", "", "Home points advantage without crowd", "-45%", Band{-0.57, -0.33}, Monitor, "PEER", Percent, Engine, "not measurable yet: no crowd/empty-stadium switch"},
+  // ---- Skill sensitivity (NFR-019; needs --spread) --------------------------
+  TargetSpec{"NFR-019A", "stronger_win_gap_lt3", "Stronger side win share, rating gap < 3", "38-48%", Band{0.38, 0.48}, Monitor, "spec NFR-019", Percent, Engine, "starter mean overall gap; exact ties excluded (use --spread)"},
+  TargetSpec{"NFR-019B", "stronger_win_gap_3_8", "Stronger side win share, gap 3-8", "45-55%", Band{0.45, 0.55}, Monitor, "spec NFR-019", Percent, Engine, ""},
+  TargetSpec{"NFR-019C", "stronger_win_gap_8_15", "Stronger side win share, gap 8-15", "52-65%", Band{0.52, 0.65}, Monitor, "spec NFR-019", Percent, Engine, ""},
+  TargetSpec{"NFR-019D", "stronger_win_gap_gt15", "Stronger side win share, gap > 15", "60-75%", Band{0.60, 0.75}, Monitor, "spec NFR-019", Percent, Engine, ""},
+  // ---- Tactics (fm_lab tactics) ---------------------------------------------
+  TargetSpec{"SC-004", "max_preset_points_share", "Best preset points share vs the others", "<= 60%", Band{0.0, 0.60}, Gate, "spec SC-004", Percent, Tactics, "points / (3 x matches) over paired-seed home/away round robin"},
   // ---- Match INFO (no spec band) --------------------------------------------
   TargetSpec{"LAB-ONENIL", "one_nil_share", "1-0 or 0-1 share", "~17% (big-5 leagues)", NO_BAND, Info, "orientation", Percent, Match, ""},
   TargetSpec{"LAB-ONTGT", "on_target_share", "Shots on target share", "~35%", NO_BAND, Info, "orientation", Percent, Match, ""},

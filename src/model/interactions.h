@@ -194,7 +194,7 @@ struct TalkContext
   PlayerTraits traits;
   int age = 25;
   SquadRole role{};
-  float form = 0.0f;           /*!< Mean recent rating, 0 when none. */
+  float form = 0.0f; /*!< Mean recent rating, 0 when none. */
   std::uint8_t rated_matches = 0;
   float expected_rating = 6.7f; /*!< What the squad role demands. */
   float playing_share = 0.0f;
@@ -266,8 +266,8 @@ struct TalkListener
 struct TeamTalkContext
 {
   TeamTalkMoment moment = TeamTalkMoment::PreMatch;
-  int goal_difference = 0;       /*!< Own minus opponent (half-time). */
-  float expected_points = 1.4f;  /*!< Own expectation before kick-off. */
+  int goal_difference = 0;      /*!< Own minus opponent (half-time). */
+  float expected_points = 1.4f; /*!< Own expectation before kick-off. */
   bool derby = false;
   bool final = false;
   bool cup = false;
@@ -333,8 +333,8 @@ struct DressingRoom
   std::vector<LeaderInfo> leaders; /*!< Best first; the first is captain. */
   std::vector<SocialGroup> groups;
   float team_morale = 0.0f;
-  float cohesion = 1.0f;      /*!< 1 - weighted new-signing share. */
-  float new_share = 0.0f;     /*!< Minutes share of settling newcomers. */
+  float cohesion = 1.0f;          /*!< 1 - weighted new-signing share. */
+  float new_share = 0.0f;         /*!< Minutes share of settling newcomers. */
   float cohesion_modifier = 0.0f; /*!< 0 to -2% execution quality. */
   DressingMood mood = DressingMood::Settled;
   std::uint8_t unhappy = 0;
@@ -397,8 +397,7 @@ TalkOutcome evaluateTalk(const TalkContext& context, TalkOption option,
                          double roll, double variant_roll);
 
 /** Predicted reception of every tone in @p context. */
-std::vector<TeamTalkPrediction> predictTeamTalk(
-    const TeamTalkContext& context);
+std::vector<TeamTalkPrediction> predictTeamTalk(const TeamTalkContext& context);
 
 /**
  * Applies nothing: computes each listener's reaction (rolls keyed by
@@ -448,8 +447,7 @@ class InteractionSystem
   void onDayAdvanced(const GameDateValue& date, TeamID managed_team_id,
                      Inbox& inbox);
   /** Weekly: trust drift, leader influence, request lifecycle. */
-  void onWeek(const GameDateValue& date, TeamID managed_team_id,
-              Inbox& inbox);
+  void onWeek(const GameDateValue& date, TeamID managed_team_id, Inbox& inbox);
   /** Playing-time promise progress; clears the match's team talks. */
   void onMatchPlayed(const MatchReport& report, TeamID managed_team_id);
   /** Arrival dates, voided promises, signing promises. */
@@ -486,8 +484,7 @@ class InteractionSystem
                        const GameDateValue& date) const;
   /** Gives the talk once per moment and match; applies morale changes. */
   std::optional<TeamTalkResult> giveTeamTalk(const TeamTalkContext& context,
-                                             TeamID team_id,
-                                             TeamTalkTone tone);
+                                             TeamID team_id, TeamTalkTone tone);
   /**
    * Execution-quality modifier of the team's talks for @p half (1 or 2) of
    * its match on @p date: the pre-match talk counts fully in the first half
@@ -537,7 +534,7 @@ class InteractionSystem
   TalkContext contextFor(const Player& player, const GameDateValue& date,
                          float manager_standing) const;
   TalkBlock blockFor(const Player& player, TalkOption option,
-                     const TalkContext& context, std::int32_t today,
+                     const TalkContext& context, const GameDateValue& date,
                      TeamID managed_team_id, std::int32_t& cooldown) const;
   void evaluatePromises(const GameDateValue& date, TeamID managed_team_id,
                         Inbox& inbox);
@@ -546,7 +543,7 @@ class InteractionSystem
                       Inbox& inbox);
   void raiseRequests(const GameDateValue& date, TeamID managed_team_id,
                      Inbox& inbox);
-  void spreadLeaderMood(TeamID managed_team_id, std::int32_t today);
+  void spreadLeaderMood(TeamID managed_team_id, const GameDateValue& date);
   PlayerRelation& relationFor(PlayerID player_id);
   float firstTeamThreshold(TeamID team_id) const;
 

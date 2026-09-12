@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "model/competition.h"
+#include "model/continental.h"
 #include "model/discipline.h"
 #include "model/match_report.h"
 #include "model/season_history.h"
@@ -53,8 +54,18 @@ class CompetitionManager
   /** Stores the report of a played match and aggregates its statistics. */
   void recordResult(const Match& match, MatchReport report);
 
-  /** Refreshes league points and draws cup rounds that became due. */
+  /** Refreshes league points, draws cup rounds that became due and runs
+   * the continental competitions (draws, extra time of level aggregates,
+   * knockout rounds). */
   void afterMatchday(Calendar& calendar, const GameDateValue& today);
+
+  /** Enters the continental clubs of the season containing @p today (after
+   * the calendar has been generated); no-op when already done or too late. */
+  void startContinentalSeason(const GameDateValue& today);
+
+  /** Continental club competitions (seasons, tables, coefficients). */
+  const ContinentalCompetitions& getContinental() const { return continental; }
+  ContinentalCompetitions& getContinental() { return continental; }
 
   /**
    * @brief Records the season history and applies promotion/relegation.
@@ -121,5 +132,9 @@ class CompetitionManager
   std::set<LeagueID> dirty_leagues;
   std::vector<SeasonHistoryEntry> season_history;
   Discipline discipline;
+  ContinentalCompetitions continental;
+  /** Continental second legs and finals recorded since the last matchday
+   * processing (extra time when the aggregate is level). */
+  std::vector<FixtureKey> pending_deciders;
   bool history_dirty = false;
 };

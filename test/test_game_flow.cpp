@@ -395,6 +395,17 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   EXPECT_FALSE(staffScene->staff_rows.empty());
   EXPECT_FALSE(staffScene->market_rows.empty());
   captureScreen("shell_staff.bmp");
+  // Selecting a row opens its inline detail strip (actions live there).
+  staffScene->selected = staffScene->staff_rows.front().id;
+  step_frame();
+  step_frame();
+  captureScreen("shell_staff_detail.bmp");
+  staffScene->selected = staffScene->market_rows.front().id;
+  staffScene->reveal_selected = true;
+  step_frame();
+  step_frame();
+  captureScreen("shell_staff_market_detail.bmp");
+  staffScene->selected = 0;
   openSection(NavSection::FINANCES, SceneID::GAME_MENU);
   EXPECT_EQ(view.getOverlayDepth(), 0u);
   captureScreen("shell_finances.bmp");
@@ -895,7 +906,9 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
     for (const auto& [section, name] :
          {std::pair{NavSection::HOME, "home"},
           std::pair{NavSection::SQUAD, "squad"},
-          std::pair{NavSection::CLUB, "club"}})
+          std::pair{NavSection::CLUB, "club"},
+          std::pair{NavSection::STAFF, "staff"},
+          std::pair{NavSection::TRAINING, "training"}})
     {
       Navigation::open(&view, section);
       step_frame();
@@ -983,9 +996,18 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
   ASSERT_NE(live->engine, nullptr);
   EXPECT_FALSE(live->pre_match_note.empty());
   capture("season_match_assistant_fixed.bmp");
-  // Quick result: the rest is played instantly and the report opens.
+  // Quick result: the rest is played off the UI thread (a progress card
+  // shows meanwhile) and the report opens.
   ASSERT_TRUE(live->quickResult());
   step_frame();
+  capture("season_match_quick_progress.bmp");
+  for (int frame = 0;
+       frame < 3000 && view.getActiveScene()->getID() == SceneID::MATCH;
+       ++frame)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    step_frame();
+  }
   step_frame();
   EXPECT_EQ(view.getActiveScene()->getID(), SceneID::MATCH_REPORT);
   capture("season_match_quick_report.bmp");
@@ -1030,7 +1052,7 @@ TEST_F(GameFlowTest, SaveSlotMetadata)
 TEST_F(GameFlowTest, RuntimeRootDoesNotTouchExternalSentinels)
 {
   const auto runtimeRoot = RuntimePaths::root();
-  const auto sourceRoot = std::filesystem::path(PROJECT_ROOT);
+  const auto sourceRoot = std::filesystem::path(FM_SOURCE_DIR);
   EXPECT_NE(runtimeRoot, sourceRoot);
 
   const auto sentinel =
@@ -1336,4 +1358,60 @@ TEST_F(GameFlowTest, AssistantKeepsSelectionEligibleBetweenMatches)
   controller->advanceDay();
   EXPECT_TRUE(controller->getUnavailableLineupPlayers(managedId).empty());
   EXPECT_NE(lineup.getOutfieldPlayers().front().player->getId(), injuredId);
+}
+
+TEST_F(GameFlowTest, PlaybackModeAndSpeedNeverChangeTheResult)
+{
+  const TeamID managedId = controller->getTeams().front().get().getId();
+  controller->selectManagedTeam(managedId);
+  const auto fixture = nextFixtureOf(*controller, managedId);
+  ASSERT_TRUE(fixture.has_value());
+  const Team& home = controller->getTeamById(fixture->getHomeTeamId())->get();
+  const Team& away = controller->getTeamById(fixture->getAwayTeamId())->get();
+  const auto makeEngine = [&]
+  {
+    return MatchEngine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), controller->getStatsConfig(), 2024u);
+  };
+
+  // Reference: the headless fast path (what Quick result uses).
+  MatchEngine reference = makeEngine();
+  const auto startedAt = std::chrono::steady_clock::now();
+  reference.simulateToEnd();
+  RecordProperty("simulate_to_end_milliseconds",
+                 static_cast<int>(std::chrono::duration_cast<
+                                      std::chrono::milliseconds>(
+                                      std::chrono::steady_clock::now() -
+                                      startedAt)
+                                      .count()));
+
+  // Highlights only, and the full match with the speed changed repeatedly.
+  MatchEngine highlights = makeEngine();
+  highlights.setPlaybackMode(MatchPlaybackMode::HIGHLIGHTS);
+  highlights.setHighlightPlaybackSpeed(30.0f);
+  MatchEngine full = makeEngine();
+  full.setPlaybackMode(MatchPlaybackMode::FULL_MATCH);
+  constexpr std::array<float, 4> SPEEDS = {30.0f, 7.0f, 16.0f, 1.0f};
+  for (int frame = 0; frame < 2'000'000 &&
+                      (highlights.getState() != MatchState::FULL_TIME ||
+                       full.getState() != MatchState::FULL_TIME);
+       ++frame)
+  {
+    highlights.advancePlayback(1.0f / 60.0f);
+    full.setPlaybackSpeed(SPEEDS[static_cast<size_t>(frame / 500) % SPEEDS.size()]);
+    full.advancePlayback(1.0f / 60.0f);
+  }
+  for (const MatchEngine* played : {&highlights, &full})
+  {
+    ASSERT_EQ(played->getState(), MatchState::FULL_TIME);
+    EXPECT_EQ(played->getHomeScore(), reference.getHomeScore());
+    EXPECT_EQ(played->getAwayScore(), reference.getAwayScore());
+    EXPECT_EQ(played->getEvents().size(), reference.getEvents().size());
+    EXPECT_EQ(played->getStats().homeShots, reference.getStats().homeShots);
+    EXPECT_EQ(played->getStats().awayShots, reference.getStats().awayShots);
+    EXPECT_EQ(played->getStats().homePassesCompleted,
+              reference.getStats().homePassesCompleted);
+  }
+  EXPECT_EQ(highlights.getDroppedSimulationSteps(), 0u);
+  EXPECT_EQ(full.getDroppedSimulationSteps(), 0u);
 }

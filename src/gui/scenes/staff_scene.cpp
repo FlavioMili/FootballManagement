@@ -9,10 +9,15 @@
 #include "gui/scenes/staff_scene.h"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdio>
 #include <format>
+#include <tuple>
+#include <vector>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
@@ -25,14 +30,77 @@
 
 namespace
 {
-constexpr float TWO_COLUMN_MIN_WIDTH = 1000.0f;
-constexpr float TOP_CARD_HEIGHT = 330.0f;
+constexpr float TWO_COLUMN_MIN_WIDTH = 940.0f;
 constexpr float KEY_WIDTH = 150.0f;
 constexpr const char* RELEASE_POPUP_ID = "##release_staff";
 constexpr int MAX_HIRE_YEARS = 4;
 constexpr int MAX_CONTRACT_YEARS = 5;
 
-float dpi() { return ImGui::GetStyle().FontScaleDpi; }
+/** Backroom departments, in display order. */
+constexpr std::array<const char*, 4> DEPARTMENT_KEYS = {
+    "STAFF_DEPT_COACHING", "STAFF_DEPT_MEDICAL", "STAFF_DEPT_SCOUTING",
+    "STAFF_DEPT_YOUTH"};
+
+std::size_t departmentOf(StaffRole role)
+{
+  switch (role)
+  {
+    case StaffRole::Physio:
+    case StaffRole::SportsScientist:
+      return 1;
+    case StaffRole::Scout:
+      return 2;
+    case StaffRole::YouthCoach:
+    case StaffRole::HeadOfYouth:
+      return 3;
+    default:
+      return 0;
+  }
+}
+
+/** Department, then role, then best rating first: groups become ranges. */
+template <typename Row>
+void sortByDepartment(std::vector<Row>& rows)
+{
+  std::ranges::stable_sort(
+      rows,
+      [](const Row& a, const Row& b)
+      {
+        const auto left = std::tuple(departmentOf(a.role),
+                                     static_cast<int>(a.role), -a.rating);
+        const auto right = std::tuple(departmentOf(b.role),
+                                      static_cast<int>(b.role), -b.rating);
+        return left < right;
+      });
+}
+
+// Columns hide from the highest priority number down as the card narrows;
+// actions live in the selected row's detail strip, never in a column.
+const std::array<UI::Column, 6>& staffColumns()
+{
+  static const std::array<UI::Column, 6> columns = {{
+      {"STAFF_COL_NAME", 0.0f, 0},
+      {"STAFF_COL_ROLE", 150.0f, 1},
+      {"STAFF_COL_RATING", 60.0f, 0},
+      {"STAFF_COL_AGE", 44.0f, 3},
+      {"STAFF_COL_WAGE", 84.0f, 2},
+      {"STAFF_COL_CONTRACT", 118.0f, 1},
+  }};
+  return columns;
+}
+
+const std::array<UI::Column, 6>& marketColumns()
+{
+  static const std::array<UI::Column, 6> columns = {{
+      {"STAFF_COL_NAME", 0.0f, 0},
+      {"STAFF_COL_ROLE", 150.0f, 1},
+      {"STAFF_COL_RATING", 60.0f, 0},
+      {"STAFF_COL_AGE", 44.0f, 3},
+      {"STAFF_COL_ATTRIBUTES", 230.0f, 2},
+      {"STAFF_COL_DEMAND", 84.0f, 1},
+  }};
+  return columns;
+}
 
 std::string keyAttributes(const StaffMember& member)
 {
@@ -103,6 +171,7 @@ void StaffScene::refresh()
     row.extend_help = formatLocalized("STAFF_EXTEND_HELP", {row.demand});
     staff_rows.push_back(std::move(row));
   }
+  sortByDepartment(staff_rows);
 
   // Who covers each area (the best specialist, else the assistant).
   const auto holder = [&](StaffRole role) -> std::string
@@ -165,10 +234,12 @@ void StaffScene::rebuildMarket()
     row.age = member->age;
     row.rating = rating;
     row.demand = Format::money(controller.getStaffWageDemand(member->id));
+    row.hire_label = formatLocalized("STAFF_HIRE_FOR", {row.demand});
     const auto role = static_cast<std::size_t>(member->role);
     row.role_full = employed[role] >= StaffModel::ROLE_LIMITS[role];
     market_rows.push_back(std::move(row));
   }
+  sortByDepartment(market_rows);
 }
 
 void StaffScene::showResult(int result, const char* success_key)
@@ -192,44 +263,46 @@ void StaffScene::renderContent()
   const Theme::Palette& palette = Theme::palette();
   UI::pageHeader(LOC("STAFF_TITLE"), LOC("STAFF_SUBTITLE"));
 
-  const float gap = ImGui::GetStyle().ItemSpacing.x;
-  const float tile = (ImGui::GetContentRegionAvail().x - 3.0f * gap) / 4.0f;
+  UI::TileRow tiles(4);
+  const float tile = tiles.width();
   const std::string payroll = Format::money(effects.weekly_payroll);
   const std::string payroll_note = formatLocalized(
       "STAFF_TILE_PAYROLL_NOTE", {std::to_string(staff_rows.size())});
+  tiles.next();
   UI::statTile("payroll", LOC("STAFF_TILE_PAYROLL"), payroll.c_str(),
                payroll_note.c_str(), palette.text, tile);
-  ImGui::SameLine();
   const std::string coaching =
       std::format("{:.0f}", effects.training_quality * 100.0f);
+  tiles.next();
   UI::statTile("coaching", LOC("STAFF_TILE_COACHING"), coaching.c_str(),
                LOC("STAFF_TILE_COACHING_NOTE"),
                Theme::ratingColor(effects.training_quality * 100.0f), tile);
-  ImGui::SameLine();
   const std::string layoffs =
       std::format("{:+.0f}%", (effects.layoff_multiplier - 1.0f) * 100.0f);
+  tiles.next();
   UI::statTile(
       "medical", LOC("STAFF_TILE_MEDICAL"), layoffs.c_str(),
       LOC("STAFF_TILE_MEDICAL_NOTE"),
       effects.layoff_multiplier <= 1.0f ? palette.positive : palette.negative,
       tile);
-  ImGui::SameLine();
   const std::string scouting =
       std::format("{:.0f}%", effects.scouting_accuracy * 100.0f);
+  tiles.next();
   UI::statTile("scouting", LOC("STAFF_TILE_SCOUTING"), scouting.c_str(),
                LOC("STAFF_TILE_SCOUTING_NOTE"),
                Theme::ratingColor(effects.scouting_accuracy * 100.0f), tile);
 
-  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * dpi()));
+  // One scroll surface: cards grow with their content and the page scrolls.
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
   const float available = ImGui::GetContentRegionAvail().x;
-  const bool twoColumns = available >= TWO_COLUMN_MIN_WIDTH * dpi();
-  const float height = TOP_CARD_HEIGHT * dpi();
+  const float gap = ImGui::GetStyle().ItemSpacing.x;
+  const bool twoColumns = available >= TWO_COLUMN_MIN_WIDTH * Theme::scale();
   const float left =
       twoColumns ? std::floor((available - gap) * 0.62f) : available;
-  renderStaff(left, height);
+  renderStaff(left);
   if (twoColumns) ImGui::SameLine();
-  renderImpact(twoColumns ? available - gap - left : available, height);
-  renderMarket(std::max(ImGui::GetContentRegionAvail().y, 260.0f * dpi()));
+  renderImpact(twoColumns ? available - gap - left : available);
+  renderMarket();
   renderReleaseConfirm();
 
   // Actions run after the tables so the rows are never rebuilt mid-draw.
@@ -240,6 +313,7 @@ void StaffScene::renderContent()
       showResult(
           static_cast<int>(controller.hireStaff(pending.id, pending.years)),
           "STAFF_HIRED_TOAST");
+      selected = 0;
       break;
     case PendingAction::Kind::EXTEND:
       showResult(static_cast<int>(
@@ -249,6 +323,7 @@ void StaffScene::renderContent()
     case PendingAction::Kind::RELEASE:
       showResult(static_cast<int>(controller.releaseStaff(pending.id)),
                  "STAFF_RELEASED_TOAST");
+      selected = 0;
       break;
     case PendingAction::Kind::NONE:
       break;
@@ -256,90 +331,195 @@ void StaffScene::renderContent()
   pending = {};
 }
 
-void StaffScene::renderStaff(float width, float height)
+void StaffScene::renderStaff(float width)
 {
-  GameController& controller = guiView->getController();
-  const Theme::Palette& palette = Theme::palette();
-  UI::beginCard("staff_current", LOC("STAFF_CURRENT"), ImVec2(width, height));
+  UI::beginAutoHeightCard("staff_current", LOC("STAFF_CURRENT"), width);
   if (staff_rows.empty())
-  {
     UI::emptyState(LOC("STAFF_EMPTY_TITLE"), LOC("STAFF_EMPTY_BODY"));
-    UI::endCard();
-    return;
-  }
-  if (UI::beginDataTable("staff_table", 7,
-                         ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-                             ImGuiTableFlags_ScrollY |
-                             ImGuiTableFlags_SizingFixedFit,
-                         760.0f, ImVec2(0.0f, 0.0f), 1))
-  {
-    ImGui::TableSetupColumn(LOC("STAFF_COL_NAME"),
-                            ImGuiTableColumnFlags_WidthStretch);
-    ImGui::TableSetupColumn(LOC("STAFF_COL_ROLE"));
-    ImGui::TableSetupColumn(LOC("STAFF_COL_AGE"));
-    ImGui::TableSetupColumn(LOC("STAFF_COL_RATING"));
-    ImGui::TableSetupColumn(LOC("STAFF_COL_WAGE"));
-    ImGui::TableSetupColumn(LOC("STAFF_COL_CONTRACT"));
-    ImGui::TableSetupColumn(LOC("STAFF_COL_ACTIONS"));
-    ImGui::TableSetupScrollFreeze(1, 1);
-    ImGui::TableHeadersRow();
-    for (const StaffRow& row : staff_rows)
-    {
-      ImGui::PushID(static_cast<int>(row.id));
-      ImGui::TableNextRow();
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(row.name.c_str());
-      if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("%s\n%s", row.attributes.c_str(),
-                          LOC(StaffModel::roleDescriptionKey(row.role)));
-      ImGui::TableNextColumn();
-      ImGui::TextColored(palette.muted, "%s",
-                         LOC(StaffModel::roleKey(row.role)));
-      ImGui::TableNextColumn();
-      ImGui::Text("%d", row.age);
-      ImGui::TableNextColumn();
-      UI::ratingChip(row.rating);
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(row.wage.c_str());
-      ImGui::TableNextColumn();
-      ImGui::TextColored(
-          row.contract_years <= 1 ? palette.warning : palette.text, "%s",
-          row.contract.c_str());
-      ImGui::TableNextColumn();
-      const int extended = row.contract_years + 1;
-      ImGui::BeginDisabled(extended > MAX_CONTRACT_YEARS);
-      if (ImGui::SmallButton(LOC("STAFF_EXTEND")))
-        pending = {PendingAction::Kind::EXTEND, row.id,
-                   static_cast<uint8_t>(extended)};
-      ImGui::EndDisabled();
-      if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-        ImGui::SetTooltip("%s", row.extend_help.c_str());
-      ImGui::SameLine();
-      if (ImGui::SmallButton(LOC("STAFF_RELEASE")))
-      {
-        release_candidate = row.id;
-        const auto data = controller.getGameData();
-        const StaffMember* member =
-            data ? data->getStaff().find(row.id) : nullptr;
-        release_text = formatLocalized(
-            "STAFF_RELEASE_BODY",
-            {row.name,
-             Format::money(member ? StaffModel::severance(*member) : 0)});
-        release_requested = true;
-      }
-      ImGui::PopID();
-    }
-    ImGui::EndTable();
-  }
+  else
+    renderGroups("staff", staff_rows, false);
   UI::endCard();
 }
 
-void StaffScene::renderImpact(float width, float height)
+void StaffScene::renderGroups(const char* id, const std::vector<StaffRow>& rows,
+                              bool market)
 {
   const Theme::Palette& palette = Theme::palette();
-  UI::beginCard("staff_impact", LOC("STAFF_IMPACT"), ImVec2(width, height),
-                true);
-  const float keyWidth = KEY_WIDTH * dpi();
+  const auto& columns = market ? marketColumns() : staffColumns();
+  std::array<UI::Column, 6> localized = columns;
+  for (UI::Column& column : localized) column.label = LOC(column.label);
+  const UI::ColumnMask mask =
+      UI::fitColumns(localized, ImGui::GetContentRegionAvail().x);
+  const ImGuiTableFlags flags =
+      ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH;
+
+  ImGui::PushID(id);
+  // Rows are kept sorted by department, so each group is a contiguous range.
+  std::size_t begin = 0;
+  while (begin < rows.size())
+  {
+    const std::size_t department = departmentOf(rows[begin].role);
+    std::size_t end = begin;
+    while (end < rows.size() && departmentOf(rows[end].role) == department)
+      ++end;
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+    char header[96];
+    std::snprintf(header, sizeof(header), "%s  \xC2\xB7  %zu",
+                  LOC(DEPARTMENT_KEYS[department]), end - begin);
+    UI::sectionLabel(header);
+    ImGui::PushID(static_cast<int>(department));
+
+    // The selected row opens a detail strip right under it: the table is
+    // split there and continues with the same id (shared column widths).
+    UI::TableHeader tableHeader = UI::TableHeader::STATIC;
+    std::size_t first = begin;
+    while (first < end)
+    {
+      if (!UI::beginResponsiveTable("group", localized, mask, flags,
+                                    tableHeader))
+        break;
+      tableHeader = UI::TableHeader::NONE;
+      std::size_t index = first;
+      const StaffRow* opened = nullptr;
+      while (index < end && opened == nullptr)
+      {
+        const StaffRow& row = rows[index++];
+        ImGui::PushID(static_cast<int>(row.id));
+        ImGui::TableNextRow(ImGuiTableRowFlags_None,
+                            UI::buttonHeight(UI::ButtonSize::COMPACT));
+        ImGui::TableNextColumn();
+        const bool isSelected = selected == row.id;
+        if (ImGui::Selectable(row.name.c_str(), isSelected,
+                              ImGuiSelectableFlags_SpanAllColumns))
+        {
+          selected = isSelected ? 0 : row.id;
+          reveal_selected = selected != 0;
+        }
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+          ImGui::SetTooltip("%s", LOC("STAFF_ROW_HINT"));
+        if (UI::cell(mask, 1))
+          ImGui::TextColored(palette.muted, "%s",
+                             LOC(StaffModel::roleKey(row.role)));
+        if (UI::cell(mask, 2)) UI::ratingChip(row.rating);
+        if (UI::cell(mask, 3)) ImGui::Text("%d", row.age);
+        if (market)
+        {
+          if (UI::cell(mask, 4))
+            UI::textFitted(row.attributes, ImGui::GetContentRegionAvail().x,
+                           palette.muted);
+          if (UI::cell(mask, 5)) ImGui::TextUnformatted(row.demand.c_str());
+        }
+        else
+        {
+          if (UI::cell(mask, 4)) ImGui::TextUnformatted(row.wage.c_str());
+          if (UI::cell(mask, 5))
+            ImGui::TextColored(
+                row.contract_years <= 1 ? palette.warning : palette.text, "%s",
+                row.contract.c_str());
+        }
+        ImGui::PopID();
+        if (selected == row.id) opened = &row;
+      }
+      ImGui::EndTable();
+      if (opened != nullptr) renderDetail(*opened, market);
+      first = index;
+    }
+    ImGui::PopID();
+    begin = end;
+  }
+  ImGui::PopID();
+}
+
+void StaffScene::renderDetail(const StaffRow& row, bool market)
+{
+  GameController& controller = guiView->getController();
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  drawList->ChannelsSplit(2);
+  drawList->ChannelsSetCurrent(1);
+  const ImVec2 start = ImGui::GetCursorScreenPos();
+  const float width = ImGui::GetContentRegionAvail().x;
+  const float pad = Theme::Space::M * scale;
+  ImGui::SetCursorScreenPos(ImVec2(start.x + pad, start.y + pad));
+  ImGui::BeginGroup();
+  ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + width - 2.0f * pad);
+  ImGui::TextColored(palette.muted, "%s",
+                     LOC(StaffModel::roleDescriptionKey(row.role)));
+  ImGui::TextUnformatted(row.attributes.c_str());
+  ImGui::PopTextWrapPos();
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale));
+  ImGui::PushID(static_cast<int>(row.id));
+  if (market)
+  {
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored(palette.muted, "%s", LOC("STAFF_HIRE_YEARS"));
+    ImGui::SameLine();
+    static constexpr std::array<const char*, MAX_HIRE_YEARS> YEARS = {"1", "2",
+                                                                      "3", "4"};
+    int years = hire_years - 1;
+    if (UI::segmented("##years", years, YEARS)) hire_years = years + 1;
+    const char* hire = row.hire_label.c_str();
+    UI::sameLineIfFits(UI::buttonWidth(hire));
+    ImGui::BeginDisabled(row.role_full);
+    if (UI::primaryButton(hire))
+      pending = {PendingAction::Kind::HIRE, row.id,
+                 static_cast<uint8_t>(hire_years)};
+    ImGui::EndDisabled();
+    if (row.role_full)
+      ImGui::TextColored(palette.warning, "%s", LOC("STAFF_RESULT_ROLE_FULL"));
+  }
+  else
+  {
+    const int extended = row.contract_years + 1;
+    ImGui::BeginDisabled(extended > MAX_CONTRACT_YEARS);
+    if (UI::secondaryButton(LOC("STAFF_EXTEND")))
+      pending = {PendingAction::Kind::EXTEND, row.id,
+                 static_cast<uint8_t>(extended)};
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored(palette.faint, "%s", row.extend_help.c_str());
+    UI::sameLineIfFits(UI::buttonWidth(LOC("STAFF_RELEASE")));
+    if (UI::dangerButton(LOC("STAFF_RELEASE")))
+    {
+      release_candidate = row.id;
+      const auto data = controller.getGameData();
+      const StaffMember* member =
+          data ? data->getStaff().find(row.id) : nullptr;
+      release_text = formatLocalized(
+          "STAFF_RELEASE_BODY",
+          {row.name,
+           Format::money(member ? StaffModel::severance(*member) : 0)});
+      release_requested = true;
+    }
+  }
+  ImGui::PopID();
+  ImGui::EndGroup();
+  const float bottom = ImGui::GetItemRectMax().y + pad;
+  if (reveal_selected)
+  {
+    // The strip may open below the fold: bring it into the page viewport.
+    ImGui::ScrollToRect(ImGui::GetCurrentWindow(),
+                        ImRect(start, ImVec2(start.x + width, bottom)),
+                        ImGuiScrollFlags_KeepVisibleEdgeY);
+    reveal_selected = false;
+  }
+  drawList->ChannelsSetCurrent(0);
+  drawList->AddRectFilled(start, ImVec2(start.x + width, bottom),
+                          Theme::toU32(palette.accent, 0.07f), 4.0f * scale);
+  drawList->AddRectFilled(start, ImVec2(start.x + 3.0f * scale, bottom),
+                          Theme::toU32(palette.accent), 2.0f * scale);
+  drawList->ChannelsMerge();
+  ImGui::SetCursorScreenPos(ImVec2(start.x, bottom));
+  ImGui::Dummy(ImVec2(width, Theme::Space::XS * scale));
+}
+
+void StaffScene::renderImpact(float width)
+{
+  const Theme::Palette& palette = Theme::palette();
+  UI::beginAutoHeightCard("staff_impact", LOC("STAFF_IMPACT"), width);
+  const float keyWidth = KEY_WIDTH * Theme::scale();
   for (const Responsibility& item : responsibilities)
   {
     const float quality = std::clamp(item.quality, 0.0f, 1.0f);
@@ -347,9 +527,10 @@ void StaffScene::renderImpact(float width, float height)
     UI::meter(LOC(item.area_key), quality, keyWidth,
               Theme::ratingColor(quality * 100.0f), value.c_str());
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + keyWidth);
-    ImGui::TextColored(palette.faint, "%s", item.holder.c_str());
+    UI::textFitted(item.holder, ImGui::GetContentRegionAvail().x,
+                   palette.faint);
   }
-  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * dpi()));
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
   UI::sectionLabel(LOC("STAFF_EFFECTS"));
   const std::string risk =
       std::format("x{:.2f}", static_cast<double>(effects.injury_prevention));
@@ -363,16 +544,14 @@ void StaffScene::renderImpact(float width, float height)
   UI::endCard();
 }
 
-void StaffScene::renderMarket(float height)
+void StaffScene::renderFilters()
 {
   const Theme::Palette& palette = Theme::palette();
-  UI::beginCard("staff_market", LOC("STAFF_MARKET"), ImVec2(0.0f, height));
-
   bool filters_changed = false;
   ImGui::AlignTextToFramePadding();
   ImGui::TextColored(palette.muted, "%s", LOC("STAFF_FILTER_ROLE"));
   ImGui::SameLine();
-  ImGui::SetNextItemWidth(200.0f * dpi());
+  ImGui::SetNextItemWidth(200.0f * Theme::scale());
   const char* role_label =
       role_filter < 0
           ? LOC("STAFF_FILTER_ALL")
@@ -396,82 +575,27 @@ void StaffScene::renderMarket(float height)
     }
     ImGui::EndCombo();
   }
-  ImGui::SameLine(0.0f, Theme::Space::L * dpi());
+  const float ratingWidth = 160.0f * Theme::scale();
+  UI::sameLineIfFits(ImGui::CalcTextSize(LOC("STAFF_FILTER_RATING")).x +
+                     ratingWidth + Theme::Space::L * Theme::scale());
+  ImGui::AlignTextToFramePadding();
   ImGui::TextColored(palette.muted, "%s", LOC("STAFF_FILTER_RATING"));
   ImGui::SameLine();
-  ImGui::SetNextItemWidth(160.0f * dpi());
+  ImGui::SetNextItemWidth(ratingWidth);
   ImGui::SliderInt("##min_rating", &min_rating, 0, 90);
   filters_changed |= ImGui::IsItemDeactivatedAfterEdit();
-  ImGui::SameLine(0.0f, Theme::Space::L * dpi());
-  ImGui::TextColored(palette.muted, "%s", LOC("STAFF_HIRE_YEARS"));
-  ImGui::SameLine();
-  ImGui::SetNextItemWidth(110.0f * dpi());
-  ImGui::SliderInt("##hire_years", &hire_years, 1, MAX_HIRE_YEARS);
   if (filters_changed) rebuildMarket();
+}
 
+void StaffScene::renderMarket()
+{
+  UI::beginAutoHeightCard("staff_market", LOC("STAFF_MARKET"));
+  renderFilters();
   if (market_rows.empty())
-  {
     UI::emptyState(LOC("STAFF_MARKET_EMPTY_TITLE"),
                    LOC("STAFF_MARKET_EMPTY_BODY"));
-    UI::endCard();
-    return;
-  }
-  if (UI::beginDataTable("market_table", 7,
-                         ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-                             ImGuiTableFlags_ScrollY |
-                             ImGuiTableFlags_SizingFixedFit,
-                         820.0f, ImVec2(0.0f, 0.0f), 1))
-  {
-    ImGui::TableSetupColumn(LOC("STAFF_COL_NAME"),
-                            ImGuiTableColumnFlags_WidthStretch);
-    ImGui::TableSetupColumn(LOC("STAFF_COL_ROLE"));
-    ImGui::TableSetupColumn(LOC("STAFF_COL_AGE"));
-    ImGui::TableSetupColumn(LOC("STAFF_COL_RATING"));
-    ImGui::TableSetupColumn(LOC("STAFF_COL_ATTRIBUTES"));
-    ImGui::TableSetupColumn(LOC("STAFF_COL_DEMAND"));
-    ImGui::TableSetupColumn("");
-    ImGui::TableSetupScrollFreeze(1, 1);
-    ImGui::TableHeadersRow();
-    ImGuiListClipper clipper;
-    clipper.Begin(static_cast<int>(market_rows.size()));
-    while (clipper.Step())
-    {
-      for (int index = clipper.DisplayStart; index < clipper.DisplayEnd;
-           ++index)
-      {
-        const StaffRow& row = market_rows[static_cast<std::size_t>(index)];
-        ImGui::PushID(static_cast<int>(row.id));
-        ImGui::TableNextRow();
-        ImGui::TableNextColumn();
-        ImGui::TextUnformatted(row.name.c_str());
-        ImGui::TableNextColumn();
-        ImGui::TextColored(palette.muted, "%s",
-                           LOC(StaffModel::roleKey(row.role)));
-        if (ImGui::IsItemHovered())
-          ImGui::SetTooltip("%s",
-                            LOC(StaffModel::roleDescriptionKey(row.role)));
-        ImGui::TableNextColumn();
-        ImGui::Text("%d", row.age);
-        ImGui::TableNextColumn();
-        UI::ratingChip(row.rating);
-        ImGui::TableNextColumn();
-        ImGui::TextColored(palette.muted, "%s", row.attributes.c_str());
-        ImGui::TableNextColumn();
-        ImGui::TextUnformatted(row.demand.c_str());
-        ImGui::TableNextColumn();
-        ImGui::BeginDisabled(row.role_full);
-        if (ImGui::SmallButton(LOC("STAFF_HIRE")))
-          pending = {PendingAction::Kind::HIRE, row.id,
-                     static_cast<uint8_t>(hire_years)};
-        ImGui::EndDisabled();
-        if (row.role_full &&
-            ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-          ImGui::SetTooltip("%s", LOC("STAFF_RESULT_ROLE_FULL"));
-        ImGui::PopID();
-      }
-    }
-    ImGui::EndTable();
-  }
+  else
+    renderGroups("market", market_rows, true);
   UI::endCard();
 }
 

@@ -519,6 +519,9 @@ void PlayerProfileScene::renderActions()
       renew_status.clear();
       renew_requested = true;
     }
+    UI::sameLineIfFits(UI::buttonWidth(LOC("TALK_ACTION")));
+    if (ImGui::SmallButton(LOC("TALK_ACTION")))
+      talk_dialog.open(controller, player_id);
     return;
   }
 
@@ -932,6 +935,7 @@ void PlayerProfileScene::renderTransfers()
 void PlayerProfileScene::renderDialogs()
 {
   GameController& controller = guiView->getController();
+  if (talk_dialog.render(controller)) refresh();
   const Theme::Palette& palette = Theme::palette();
   if (list_confirm_requested)
   {

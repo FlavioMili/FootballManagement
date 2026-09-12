@@ -25,6 +25,18 @@
  */
 
 /**
+ * @enum WorldRegion
+ * @brief Football region of a league (pre-season tours stay inside it).
+ */
+enum class WorldRegion : std::uint8_t
+{
+  Europe,
+  EasternEurope,
+  NorthAmerica,
+  SouthAmerica
+};
+
+/**
  * @struct LeagueProfile
  * @brief Economic and sporting profile of a league.
  */
@@ -40,7 +52,8 @@ struct LeagueProfile
   float wage_ratio;              /*!< Total wages / revenue. */
   float average_attendance;      /*!< Typical crowd for a mid-table club. */
   Language domestic_nationality; /*!< Most common nationality. */
-  float domestic_share;          /*!< Share of domestic players. */
+  float domestic_share;          /*!< Share of domestic players. [P] */
+  WorldRegion region;            /*!< Where the league is played. */
 };
 
 /**
@@ -51,35 +64,35 @@ struct LeagueProfile
  */
 inline constexpr std::array<LeagueProfile, 12> LEAGUE_PROFILES = {{
     {3, 92, 372e6f, 0.46f, 0.05f, 0.14f, 0.35f, 0.64f, 38000.0f, Language::EN,
-     0.40f},
+     0.70f, WorldRegion::Europe},
     {2, 87, 194e6f, 0.35f, 0.12f, 0.15f, 0.38f, 0.62f, 28000.0f, Language::ES,
-     0.60f},
+     0.75f, WorldRegion::Europe},
     {1, 85, 146e6f, 0.38f, 0.12f, 0.15f, 0.35f, 0.66f, 30000.0f, Language::IT,
-     0.55f},
+     0.75f, WorldRegion::Europe},
     {4, 84, 217e6f, 0.29f, 0.12f, 0.14f, 0.45f, 0.57f, 42000.0f, Language::DE,
-     0.55f},
+     0.72f, WorldRegion::Europe},
     {5, 80, 140e6f, 0.19f, 0.09f, 0.18f, 0.54f, 0.73f, 26000.0f, Language::FR,
-     0.60f},
+     0.75f, WorldRegion::Europe},
     {12, 70, 35e6f, 0.30f, 0.20f, 0.12f, 0.38f, 0.70f, 12000.0f, Language::PT,
-     0.60f},
+     0.72f, WorldRegion::Europe},
     {11, 70, 55e6f, 0.35f, 0.05f, 0.15f, 0.45f, 0.75f, 20000.0f, Language::BR,
-     0.85f},
+     0.85f, WorldRegion::SouthAmerica},
     {10, 64, 20e6f, 0.30f, 0.05f, 0.25f, 0.40f, 0.80f, 22000.0f, Language::ES,
-     0.85f},
+     0.85f, WorldRegion::SouthAmerica},
     {9, 62, 40e6f, 0.35f, 0.03f, 0.20f, 0.42f, 0.70f, 24000.0f, Language::MX,
-     0.70f},
+     0.78f, WorldRegion::NorthAmerica},
     {8, 62, 35e6f, 0.25f, 0.08f, 0.10f, 0.57f, 0.75f, 15000.0f, Language::RU,
-     0.70f},
+     0.78f, WorldRegion::EasternEurope},
     {7, 60, 45e6f, 0.20f, 0.02f, 0.30f, 0.48f, 0.60f, 20000.0f, Language::US,
-     0.65f},
+     0.72f, WorldRegion::NorthAmerica},
     {6, 55, 15e6f, 0.30f, 0.00f, 0.15f, 0.55f, 0.95f, 9000.0f, Language::IT,
-     0.80f},
+     0.85f, WorldRegion::Europe},
 }};
 
 /** Profile used for leagues that are not listed above. [P] */
 inline constexpr LeagueProfile DEFAULT_LEAGUE_PROFILE = {
     0,     50,    10e6f,   0.25f,        0.00f, 0.20f,
-    0.55f, 0.80f, 8000.0f, Language::EN, 0.80f};
+    0.55f, 0.80f, 8000.0f, Language::EN, 0.80f, WorldRegion::Europe};
 
 /** Returns the profile of @p league_id or the default profile. */
 constexpr const LeagueProfile& leagueProfile(LeagueID league_id)
@@ -105,6 +118,12 @@ struct WorldTuning final
     /** First-team level = base + slope * reputation. [P] */
     static constexpr float TEAM_LEVEL_BASE = 38.0f;
     static constexpr float TEAM_LEVEL_SLOPE = 0.42f;
+    /** From this age potential is at most the current ability plus a
+     * small headroom: growth ends in the mid-20s. [S: peaks 25-27] */
+    static constexpr int VETERAN_AGE = 29;
+    static constexpr float VETERAN_HEADROOM = 2.0f;
+    /** Name draws before a double surname is used. [P] */
+    static constexpr int NAME_ATTEMPTS = 48;
     /** Wage elasticity to ability: W ~ overall^gamma. [P] */
     static constexpr float WAGE_ABILITY_EXPONENT = 7.0f;
     /** Opening cash as a share of expected income (uniform range). [P] */

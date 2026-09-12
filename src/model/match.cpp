@@ -312,6 +312,8 @@ void MatchdaySquad::carryCondition(MatchEngine& engine, const Lineup& lineup)
   carry(lineup.getGoalkeeper());
   for (const Lineup::PositionedPlayer& slot : lineup.getOutfieldPlayers())
     carry(slot.player);
+  // Substitutes come on with their own condition.
+  for (const Player* reserve : lineup.getReserves()) carry(reserve);
 }
 
 std::vector<PlayerMatchConsequence> MatchdaySquad::consequences(

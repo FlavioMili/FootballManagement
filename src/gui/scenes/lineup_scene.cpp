@@ -116,6 +116,7 @@ void LineupScene::loadLineup()
   if (!managedTeamOpt) return;
   Team& team = managedTeamOpt.value().get();
   current_lineup = &team.getLineup();
+  captain_summary = SetPiecesDialog::captainSummary(guiView->getController());
   formation_index = Formation::detectPreset(*current_lineup);
   GameController& controller = guiView->getController();
   unavailable.clear();
@@ -169,6 +170,8 @@ void LineupScene::renderContent()
   ImGui::BeginChild("lineup_side", ImVec2(0.0f, height));
   renderBench(height);
   ImGui::EndChild();
+  if (set_pieces.render(guiView->getController()))
+    captain_summary = SetPiecesDialog::captainSummary(guiView->getController());
 }
 
 void LineupScene::renderToolbar()
@@ -204,6 +207,7 @@ void LineupScene::renderToolbar()
   if (UI::primaryButton(LOC("LINEUP_AUTO_PICK"))) autoPickBestEleven();
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
     ImGui::SetTooltip("%s", LOC("LINEUP_AUTO_PICK_HELP"));
+  renderLeadership();
 
   const auto& statsConfig = guiView->getController().getStatsConfig();
   double total = 0.0;
@@ -267,6 +271,18 @@ void LineupScene::autoPickBestEleven()
   selected_pitch_player_id = PlayerID{};
   selected_bench_player_id = PlayerID{};
   showToast(LOC("LINEUP_AUTO_PICKED"));
+  captain_summary = SetPiecesDialog::captainSummary(controller);
+}
+
+void LineupScene::renderLeadership()
+{
+  const char* label = LOC("LINEUP_SET_PIECES");
+  UI::sameLineIfFits(UI::buttonWidth(label));
+  if (UI::secondaryButton(label)) set_pieces.open();
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+    ImGui::SetTooltip("%s", captain_summary.empty()
+                                ? LOC("LINEUP_SET_PIECES_HELP")
+                                : captain_summary.c_str());
 }
 
 void LineupScene::renderPlayerToken(const Player& player, ImVec2 center,

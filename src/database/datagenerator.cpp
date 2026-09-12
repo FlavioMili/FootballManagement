@@ -9,12 +9,15 @@
 #include "database/datagenerator.h"
 
 #include <algorithm>
+#include <charconv>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <map>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <system_error>
+#include <utility>
 #include <vector>
 
 #include "gamedata.h"
@@ -33,9 +36,38 @@
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
+namespace
+{
+/** Calls @p visit for every element of every .json array in @p directory. */
+template <typename Visitor>
+void forEachPackItem(const std::string& directory, Visitor&& visit)
+{
+  for (const auto& entry : fs::directory_iterator(directory))
+  {
+    if (!entry.is_regular_file() || entry.path().extension() != ".json")
+      continue;
+    std::ifstream f(entry.path());
+    for (const auto& item : json::parse(f)) visit(item);
+  }
+}
+
+/** Parses "#RRGGBB" into 0xRRGGBB; keeps @p fallback when malformed. */
+std::uint32_t parseColour(const json& value, std::uint32_t fallback)
+{
+  if (!value.is_string()) return fallback;
+  const auto& text = value.get_ref<const std::string&>();
+  std::uint32_t rgb = 0;
+  if (text.size() != 7 || text[0] != '#') return fallback;
+  const auto [end, error] =
+      std::from_chars(text.data() + 1, text.data() + text.size(), rgb, 16);
+  return error == std::errc{} && end == text.data() + text.size() ? rgb
+                                                                  : fallback;
+}
+}  // namespace
+
 std::vector<League> DataGenerator::generateLeagues()
 {
-  std::ifstream f(LEAGUES_PATH);
+  std::ifstream f(AssetPaths::leagues());
   json data = json::parse(f);
 
   std::vector<League> leagues;
@@ -63,23 +95,45 @@ std::vector<League> DataGenerator::generateLeagues()
 std::vector<Team> DataGenerator::generateTeams()
 {
   std::vector<Team> teams;
-  for (const auto& entry : fs::directory_iterator(TEAMS_DIR))
-  {
-    if (entry.is_regular_file() && entry.path().extension() == ".json")
-    {
-      std::ifstream f(entry.path());
-      json data = json::parse(f);
-      for (const auto& item : data)
-      {
-        teams.emplace_back(item.at("id").get<uint16_t>(),
-                           item.at("league_id").get<uint8_t>(),
-                           item.at("name").get<std::string>(),
-                           item.value<int64_t>("balance", 50'000'000));
-      }
-    }
-  }
-
+  forEachPackItem(AssetPaths::teamsDir(),
+                  [&teams](const json& item)
+                  {
+                    teams.emplace_back(
+                        item.at("id").get<uint16_t>(),
+                        item.at("league_id").get<uint8_t>(),
+                        item.at("name").get<std::string>(),
+                        item.value<int64_t>("balance", 50'000'000));
+                  });
   return teams;
+}
+
+std::unordered_map<TeamID, ClubIdentity> DataGenerator::loadClubIdentities()
+{
+  std::unordered_map<TeamID, ClubIdentity> identities;
+  forEachPackItem(
+      AssetPaths::teamsDir(),
+      [&identities](const json& item)
+      {
+        ClubIdentity identity;
+        identity.short_name = item.value("short_name", std::string());
+        identity.nickname = item.value("nickname", std::string());
+        identity.founded = item.value<std::uint16_t>("founded", 0);
+        if (const auto colours = item.find("colours"); colours != item.end())
+        {
+          identity.primary_colour = parseColour(
+              colours->value("primary", json()), identity.primary_colour);
+          identity.secondary_colour = parseColour(
+              colours->value("secondary", json()), identity.secondary_colour);
+        }
+        if (const auto stadium = item.find("stadium"); stadium != item.end())
+        {
+          identity.stadium_name = stadium->value("name", std::string());
+          identity.stadium_capacity =
+              stadium->value<std::uint32_t>("capacity", 0);
+        }
+        identities.emplace(item.at("id").get<TeamID>(), std::move(identity));
+      });
+  return identities;
 }
 
 std::vector<Player> DataGenerator::generatePlayers(const GameData& gamedata)
@@ -91,7 +145,7 @@ std::vector<Player> DataGenerator::generatePlayers(const GameData& gamedata)
   PlayerID next_player_id = 50'000;
 
   // Load pre-defined players from JSON and count them
-  for (const auto& entry : fs::directory_iterator(PLAYERS_DIR))
+  for (const auto& entry : fs::directory_iterator(AssetPaths::playersDir()))
   {
     if (entry.is_regular_file() && entry.path().extension() == ".json")
     {

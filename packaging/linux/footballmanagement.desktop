@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Football Management
+GenericName=Football club management game
+Comment=Run a football club: squad, tactics, transfers and live matches
+Exec=FootballManagement
+Icon=footballmanagement
+Terminal=false
+Categories=Game;SportsGame;
+Keywords=football;soccer;manager;simulation;
+StartupWMClass=FootballManagement

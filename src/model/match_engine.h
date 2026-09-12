@@ -134,6 +134,12 @@ struct ScenarioDecision
   float shieldUtility = -std::numeric_limits<float>::infinity();
 };
 
+/**
+ * One on-pitch slot. `position`, `basePosition` and `movementTarget` are
+ * normalised pitch coordinates; `velocity` is in metres per second (x along
+ * the length, y across the width). `facingAngle` is the heading in
+ * normalised pitch space, as renderers expect.
+ */
 struct MatchPlayer
 {
   const Player* player = nullptr;
@@ -147,7 +153,7 @@ struct MatchPlayer
 
   float facingAngle = 0.0f;
   float targetAngle = 0.0f;
-  float turnRate = MatchTuning::Player::TURN_RATE_RADIANS;
+  float turnRate = MatchTuning::Player::FACING_TURN_RATE_RADIANS;
 
   bool isTrapping = false;
   float trapTimer = 0.0f;
@@ -156,9 +162,15 @@ struct MatchPlayer
   bool isPressing = false;
   bool isMakingRun = false;
 
+  /** Slow energy pool (match condition) in [MINIMUM_STAMINA, 1]. */
   float stamina = 1.0f;
-  float maxSpeed = MatchTuning::Player::BASE_MAX_SPEED;
-  float acceleration = MatchTuning::Player::BASE_ACCELERATION;
+  /** Fast repeat-sprint reserve in [0, 1]. */
+  float sprintReserve = 1.0f;
+  /** Fresh top speed (m/s), maximum acceleration A0 and braking (m/s^2). */
+  float maxSpeed = MatchTuning::Player::TOP_SPEED_BASE;
+  float acceleration = MatchTuning::Player::ACCELERATION_BASE;
+  float braking = MatchTuning::Player::BRAKING_BASE;
+  bool isSprinting = false;
   float tackleCooldown = 0.0f;
   float actionCooldown = 0.0f;
 
@@ -184,6 +196,11 @@ struct MatchPlayer
   std::size_t statsIndex = 0;
 };
 
+/**
+ * The ball. `position` is normalised; `z` is the height in length units
+ * (z * MatchTuning::Units::BALL_Z_METRES = metres) for renderers. Velocities
+ * are in m/s and `curve` is the heading rotation rate in rad/s.
+ */
 struct MatchBall
 {
   Vector2F position{MatchTuning::Pitch::CENTRE, MatchTuning::Pitch::CENTRE};
@@ -191,12 +208,22 @@ struct MatchBall
   Vector2F velocity{0.0f, 0.0f};
   float velocityZ = 0.0f;
   float curve = 0.0f;
-  float friction = MatchTuning::Passing::GROUND_FRICTION;
 
   const Player* possessedBy = nullptr;
   const Player* lastPossessor = nullptr;
   const Player* intendedReceiver = nullptr;
-  float passCooldown = 0.0f;
+  /** The player who last kicked or deflected the ball. */
+  const Player* kicker = nullptr;
+  /** Seconds during which the kicker cannot touch the ball again. */
+  float kickerLockout = 0.0f;
+  /** Players (by slot bit) who already tried to reach this ball in flight. */
+  std::uint32_t touchAttempts = 0;
+  /** While dribbled: metres ahead of the carrier's feet and the metric
+   * direction of the last touch. */
+  float dribbleExposure = 0.0f;
+  float dribbleTouchLength = 0.0f;
+  Vector2F dribbleDirection{1.0f, 0.0f};
+  float touchTimer = 0.0f;
 
   bool isPass = false;
   bool passByHome = false;
@@ -286,12 +313,39 @@ struct MatchStats
   float ballInPlayMinutes = 0.0f;
 };
 
+/** How advancePlayback() presents the match. */
+enum class MatchPlaybackMode
+{
+  /** Every simulated second is shown at the playback speed. */
+  FULL_MATCH,
+  /** Only highlight windows are shown; the rest is simulated headless. */
+  HIGHLIGHTS
+};
+
 /**
- * Stateful, deterministic-when-seeded live match simulation.
+ * A stretch of play worth showing, in simulated seconds since kick-off (see
+ * MatchEngine::getSimulatedSeconds()): the build-up before a trigger event
+ * (shot, goal, penalty, card) and a short aftermath.
+ */
+struct MatchHighlight
+{
+  MatchEventType type = MatchEventType::INFO;
+  double startSeconds = 0.0;
+  double triggerSeconds = 0.0;
+  double endSeconds = 0.0;
+  /** Match clock minute of the (most important) trigger. */
+  float triggerMinute = 0.0f;
+};
+
+/**
+ * Stateful, deterministic-when-seeded live match simulation in real match
+ * time: one simulated second is one second of the match (a full match with
+ * stoppages and added time is roughly 5,900 simulated seconds).
  *
  * update() uses a fixed internal timestep, so the same seed produces the same
  * match at different render frame rates. Home attacks toward x=1 and away
- * attacks toward x=0.
+ * attacks toward x=0. The engine is copyable, which highlight prediction uses
+ * to look ahead deterministically.
  */
 class MatchEngine
 {
@@ -303,7 +357,74 @@ class MatchEngine
               const Strategy& home_strat, const Strategy& away_strat,
               const StatsConfig& config, uint32_t seed);
 
+  /**
+   * Live update: advances `deltaTime` simulated seconds (wall-clock seconds
+   * times the viewer's speed; 1 = real time). Catch-up is bounded
+   * (MAX_FRAME_DELTA_SECONDS, MAX_FIXED_STEPS_PER_UPDATE) so a stalled frame
+   * never freezes the view; excess steps are dropped and counted in
+   * getDroppedSimulationSteps().
+   */
   void update(float deltaTime);
+  /**
+   * Headless: advances exactly the whole fixed steps covering `seconds` of
+   * simulated time (never drops steps), stopping early at full time. Returns
+   * the simulated seconds advanced.
+   */
+  float advance(float seconds);
+  /** Headless: plays the rest of the match; the fast path for background
+   * fixtures and "quick result". */
+  void simulateToEnd();
+  /** Simulated seconds since kick-off, including stoppages and half-time. */
+  double getSimulatedSeconds() const;
+
+  /** Playback mode used by advancePlayback(); FULL_MATCH by default. */
+  void setPlaybackMode(MatchPlaybackMode mode);
+  MatchPlaybackMode getPlaybackMode() const { return playbackMode; }
+  /** Simulated seconds per wall second in FULL_MATCH mode (clamped). */
+  void setPlaybackSpeed(float simulatedSecondsPerWallSecond);
+  float getPlaybackSpeed() const { return playbackSpeed; }
+  /** Simulated seconds per wall second inside highlight windows. */
+  void setHighlightPlaybackSpeed(float simulatedSecondsPerWallSecond);
+  float getHighlightPlaybackSpeed() const { return highlightSpeed; }
+  /**
+   * Presentation helper for the live view: advances the match by
+   * `wallSeconds` of wall-clock time according to the playback mode. In
+   * HIGHLIGHTS mode it skips (simulates headless, never dropping steps) to
+   * the start of the next predicted highlight window and then plays the
+   * window at the highlight speed. Returns true when this call skipped
+   * ahead, so the view can cut instead of interpolating.
+   */
+  bool advancePlayback(float wallSeconds);
+  /** Whether the current moment lies inside a highlight window. */
+  bool isInHighlight() const;
+  /** The highlight window being played in HIGHLIGHTS mode, if any. */
+  const std::optional<MatchHighlight>& getScheduledHighlight() const
+  {
+    return scheduledHighlight;
+  }
+  /**
+   * Predicts the next highlight window after the current moment by running a
+   * copy of the match up to `horizonSeconds` ahead. Deterministic: the live
+   * match plays out identically unless a manual change is made first.
+   */
+  std::optional<MatchHighlight> predictNextHighlight(
+      float horizonSeconds =
+          MatchTuning::Playback::PREDICTION_HORIZON_SECONDS) const;
+  /** Highlight windows of the match so far (merged when they overlap). */
+  const std::vector<MatchHighlight>& getHighlights() const
+  {
+    return highlights;
+  }
+  /**
+   * Tactical familiarity of a side in [0, 1] (1 = fully drilled, the
+   * default). Low familiarity makes decisions noisier and positioning
+   * looser.
+   */
+  void setTacticalFamiliarity(bool homeTeam, float familiarity);
+  float getTacticalFamiliarity(bool homeTeam) const
+  {
+    return homeTeam ? homeFamiliarity : awayFamiliarity;
+  }
 
   const std::vector<MatchPlayer>& getPlayers() const { return players; }
   const MatchBall& getBall() const { return ball; }
@@ -350,7 +471,11 @@ class MatchEngine
    * time) so a career simulation can carry fatigue between matches.
    */
   std::optional<float> getPlayerCondition(PlayerID playerId) const;
-  /** Sets a starter's condition before kick-off; false if not applicable. */
+  /**
+   * Sets a player's condition before kick-off: a starter directly, a bench
+   * player when he comes on. False if the player is not in the squad or the
+   * match has started.
+   */
   bool setPlayerCondition(PlayerID playerId, float condition);
 
   /** Current half: 1 or 2. */
@@ -505,11 +630,42 @@ class MatchEngine
   TeamPhase awayPhase = TeamPhase::SET_PIECE;
   std::optional<bool> lastControlledTeamHome;
   float transitionSecondsRemaining = 0.0f;
-  MatchPlayer* restartTaker = nullptr;
+  /** Slot index of the restart taker (an index keeps the engine copyable). */
+  std::optional<std::size_t> restartTakerIndex;
   float setPieceTimer = 0.0f;
   bool goalScoredByHome = false;
   float goalCelebrationRemaining = 0.0f;
   float accumulator = 0.0f;
+  float ratingRefreshTimer = 0.0f;
+  /** When the current carrier gained the ball (simulated seconds). */
+  double possessionStartSeconds = 0.0;
+  /** Ball state at the start of the current ball sub-step. */
+  Vector2F substepBallPosition{MatchTuning::Pitch::CENTRE,
+                               MatchTuning::Pitch::CENTRE};
+  float substepBallZ = 0.0f;
+  float homeFamiliarity = 1.0f;
+  float awayFamiliarity = 1.0f;
+  /** Per-step target blends: home tactical/urgent, away tactical/urgent. */
+  std::array<float, 4> targetBlends{};
+  std::array<std::uint8_t, 32> separationOrder{};
+  std::size_t separationCount = 0;
+  /** Opponent slot each outfield player marks (-1 when unassigned). */
+  std::array<std::int8_t, 32> markAssignments{};
+  /** Pre-match condition of bench players, applied when they come on. */
+  std::vector<std::pair<PlayerID, float>> benchConditions;
+
+  std::vector<MatchHighlight> highlights;
+  std::uint64_t highlightTriggerCount = 0;
+  MatchEventType lastTriggerType = MatchEventType::INFO;
+  double lastTriggerSeconds = 0.0;
+  float lastTriggerMinute = 0.0f;
+  MatchPlaybackMode playbackMode = MatchPlaybackMode::FULL_MATCH;
+  float playbackSpeed = MatchTuning::Playback::DEFAULT_SPEED;
+  float highlightSpeed = MatchTuning::Playback::DEFAULT_HIGHLIGHT_SPEED;
+  std::optional<MatchHighlight> scheduledHighlight;
+  /** Bumped by manual interventions; stale predictions are discarded. */
+  std::uint32_t inputRevision = 0;
+  std::uint32_t scheduledRevision = 0;
   float homePossessionMinutes = 0.0f;
   float awayPossessionMinutes = 0.0f;
   float matchTimeMinutes = 0.0f;
@@ -537,6 +693,8 @@ class MatchEngine
   std::size_t addPlayerStats(const MatchPlayer& matchPlayer, bool started);
   PlayerMatchStats& statsOf(const MatchPlayer& matchPlayer);
   void refreshRatings();
+  /** Clock, minutes played, distance, load statistics and energy. */
+  void advanceClock(float dt);
   void accumulatePlayerLoad(float dt);
   void updateMatchClock();
   void announceAddedTime();
@@ -547,6 +705,8 @@ class MatchEngine
   void rebalanceShape(bool homeTeam, Vector2F vacatedBase);
   void ensureGoalkeeper(bool homeTeam);
   void beginStoppage();
+  /** Extends the current restart delay (card, treatment, substitution). */
+  void extendRestart(float seconds);
   void runAiSubstitutions();
   void runAiSubstitutionsFor(bool homeTeam);
   bool performSubstitution(MatchPlayer& outgoing, const Player* inPlayer,
@@ -559,8 +719,10 @@ class MatchEngine
   bool deniesGoalChance(const MatchPlayer& victim,
                         const MatchPlayer& offender) const;
   void updatePendingAdvantage(float dt);
+  /** Current top speed (m/s) after fatigue, sprint reserve and injury. */
+  float currentTopSpeed(const MatchPlayer& player) const;
   void integrateMovement(MatchPlayer& player, Vector2F target, float dt,
-                         bool urgent);
+                         bool urgent, bool walking = false);
   void updateRestartMovement(float dt);
   void separatePlayers();
   Vector2F goalkeeperTarget(MatchPlayer& keeper, const MatchPlayer* carrier);
@@ -572,14 +734,31 @@ class MatchEngine
   void clearBehind(MatchPlayer& defender);
   void clearBall(MatchPlayer& defender);
   void parryShot(MatchPlayer& goalkeeper, bool overTheBar);
-  float verticalSpeedFor(float horizontalDistance, float speed, float friction,
-                         float startZ, float arrivalZ) const;
+  /**
+   * Sends the ball from `origin` toward `target` (normalised) with a
+   * horizontal speed and vertical speed in m/s; the kicker is locked out of
+   * touching it again for a moment.
+   */
+  void launchBall(const MatchPlayer& kicker, Vector2F origin, Vector2F target,
+                  float horizontalSpeed, float verticalSpeed, float curve);
+  /** Launch speed for a ground ball to arrive at `arrivalSpeed`. */
+  static float groundLaunchSpeed(float distanceMetres, float arrivalSpeed);
+  /** Vertical launch speed so the ball is at `arrivalHeight` metres after
+   * `distanceMetres` of horizontal travel. */
+  static float loftVerticalSpeed(float distanceMetres, float horizontalSpeed,
+                                 float startHeight, float arrivalHeight);
   void takeSetPiece(MatchPlayer& taker, MatchState restartState);
   void takeCorner(MatchPlayer& taker);
   void takeDirectFreeKick(MatchPlayer& taker);
   void arrangeSetPiece(bool attackingHome, Vector2F ballPosition);
   MatchPlayer* bestSetPieceTaker(bool homeTeam, bool shooting);
   void placeTaker(MatchPlayer& taker, Vector2F spot);
+  MatchPlayer* restartTaker();
+  void setRestartTaker(MatchPlayer* taker);
+  std::size_t slotOf(const MatchPlayer& player) const;
+  float familiarityOf(const MatchPlayer& player) const;
+  void refreshTargetBlends();
+  void assignMarks();
   float hashNoise(std::uint32_t salt, std::uint32_t key) const;
   /** Like hashNoise, but constant over windows of `epochSteps` steps. */
   float epochNoise(std::uint32_t salt, std::uint32_t key,
@@ -590,11 +769,22 @@ class MatchEngine
   void simulateStep(float dt);
   void updateTeamPhases();
   void updateMovement(float dt);
+  /** Integrates the free ball in sub-steps, resolving contacts in each. */
   void updateBall(float dt);
+  /** Pure ball physics for one sub-step (no contacts or rules). */
+  void integrateBall(float dt);
   void updateBallInNet(float dt);
   void resolvePossessionAndActions(float dt);
+  /** Moves the dribbled ball with its carrier; false if a heavy touch lost it. */
+  bool updateDribble(MatchPlayer& carrier, float dt);
+  /** Share of the current touch the ball is still away from the foot. */
+  float dribbleExposureShare() const;
+  /** Tries to beat a jockeying defender; true if the carrier kept the ball. */
+  bool attemptTakeOn(MatchPlayer& carrier, MatchPlayer& defender);
+  /** Swept first-touch resolution over the last ball sub-step. */
   void resolveLooseBall();
-  void attemptTackle(MatchPlayer& carrier, MatchPlayer& defender);
+  void attemptTackle(MatchPlayer& carrier, MatchPlayer& defender,
+                     bool sliding);
   void decideAction(MatchPlayer& carrier);
   void passBall(MatchPlayer& passer, const PassOption& option,
                 bool forceLofted = false);
@@ -630,9 +820,15 @@ class MatchEngine
   void setupFreeKick(bool homeTeam, Vector2F foulPos);
   void setupPenalty(bool homeTeam);
   void resetPositions();
+  /** Kick-off formation spot of a player (his own half). */
+  Vector2F kickOffPosition(const MatchPlayer& player) const;
 
+  void recordHighlight(MatchEventType type);
   float attribute(const Player* player, std::string_view name) const;
+  /** Uniform in [minimum, maximum) from the play stream (portable). */
   float randomFloat(float minimum, float maximum);
+  /** Uniform in [0, 1) from the referee/injury stream (portable). */
+  float incidentRoll();
   bool isHomePlayer(const Player* player) const;
   MatchEvent& logEvent(MatchEventType type, const std::string& message);
   MatchEvent& logEvent(MatchEventType type, const std::string& message,

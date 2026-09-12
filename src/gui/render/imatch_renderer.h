@@ -28,6 +28,35 @@ enum class MatchCameraMode : std::uint8_t
   TACTICAL,      /**< High, near top-down view of the whole pitch. */
   END,           /**< Behind the play, looking along the attack. */
   PLAYER_FOLLOW, /**< Low chase camera behind the ball carrier. */
+  FREE,          /**< User-driven orbit camera (drag, pan, zoom). */
+};
+
+/**
+ * Mouse input for the 3D camera gathered over the view since the previous
+ * frame. Deltas are logical pixels; the renderer turns them into orbit
+ * angles and ground movement with the projection the user was looking at.
+ */
+struct MatchCameraInput
+{
+  /** Mouse-wheel steps (positive zooms in). */
+  float zoomSteps = 0.0f;
+  /** Orbit drag in pixels (x turns around the target, y tilts). */
+  float orbitX = 0.0f;
+  float orbitY = 0.0f;
+  /** Pan drag: the ground under `panFrom` moves to `panTo` (pixels). */
+  bool pan = false;
+  float panFromX = 0.0f;
+  float panFromY = 0.0f;
+  float panToX = 0.0f;
+  float panToY = 0.0f;
+  /** Re-target the free camera on the ground point under this pixel. */
+  bool retarget = false;
+  float retargetX = 0.0f;
+  float retargetY = 0.0f;
+  /** Free camera orbits the moving ball, keeping the user's angle. */
+  bool followBall = false;
+  /** Returns the free camera to its default overview. */
+  bool reset = false;
 };
 
 /** Presentation-only switches passed to a renderer. */
@@ -38,12 +67,14 @@ struct MatchRenderOptions
   bool showPlayerNames = false;
   /** Real (unscaled) seconds since the previous rendered frame. */
   float frameSeconds = 0.0f;
-  /** Mouse-wheel steps over the viewport since the previous frame. */
-  float zoomSteps = 0.0f;
+  /** Camera mouse input over the viewport since the previous frame. */
+  MatchCameraInput cameraInput;
   MatchCameraMode cameraMode = MatchCameraMode::BROADCAST;
   /** Short team labels for the in-view score bug; may be null. */
   const char* homeLabel = nullptr;
   const char* awayLabel = nullptr;
+  /** Match clock for the score bug (e.g. "45+2'"); may be null. */
+  const char* clockLabel = nullptr;
 };
 
 /**

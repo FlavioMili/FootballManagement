@@ -12,8 +12,11 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
+#include "global/languages.h"
 #include "global/stats_config.h"
 #include "global/types.h"
 #include "model/club_economy.h"
@@ -25,14 +28,59 @@ class WorldRng;
 /**
  * @struct NamePool
  * @brief First and last names from assets/user_made_data/names_files.
+ *
+ * Besides a generic list, every nationality has its own fictional but
+ * culture-appropriate names; a short list of real players' full names is
+ * never generated.
  */
 struct NamePool
 {
   std::vector<std::string> first_names;
   std::vector<std::string> last_names;
+  std::unordered_map<Language, std::vector<std::string>> first_by_nationality;
+  std::unordered_map<Language, std::vector<std::string>> last_by_nationality;
+  std::unordered_set<std::string> excluded_full_names;
+
+  /** First names of @p nationality (the generic list if it has none). */
+  const std::vector<std::string>& firstNames(Language nationality) const;
+
+  /** Last names of @p nationality (the generic list if it has none). */
+  const std::vector<std::string>& lastNames(Language nationality) const;
 
   /** Loads the name files once and returns the shared pool. */
   static const NamePool& instance();
+};
+
+/**
+ * @class NameRegistry
+ * @brief Full names in use in a world, so that no two players share one.
+ */
+class NameRegistry
+{
+ public:
+  /** Not taken yet and not a reserved real name. */
+  bool isAvailable(const std::string& full_name) const;
+  void claim(const std::string& full_name);
+  void clear() { names.clear(); }
+  std::size_t size() const { return names.size(); }
+
+ private:
+  std::unordered_set<std::string> names;
+};
+
+/**
+ * @class SquadSurnames
+ * @brief Surnames of one squad: at most one surname may appear twice.
+ */
+class SquadSurnames
+{
+ public:
+  bool allows(const std::string& last_name) const;
+  void add(const std::string& last_name);
+
+ private:
+  std::unordered_map<std::string, int> counts;
+  bool repeated = false;
 };
 
 /**
@@ -56,17 +104,37 @@ double overallFor(PlayerRole role, const std::map<std::string, float>& stats,
 /**
  * Assigns reputation, facilities, stadium and ticket price to every club
  * (except free agents), league by league. With @p assign_opening_balance the
- * clubs also get opening cash scaled to their revenue (new worlds); legacy
- * saves keep their balance.
+ * clubs also get opening cash scaled to their expected income (new worlds)
+ * and the registry of generated names starts afresh; legacy saves keep
+ * their balance.
  */
 void generateClubProfiles(std::unordered_map<TeamID, Team>& teams,
                           std::uint64_t world_seed,
                           bool assign_opening_balance);
 
 /**
+ * Draws a name of @p nationality that is free in @p registry and keeps the
+ * squad's surnames distinct (one repeat allowed), then claims it. After many
+ * clashes a double surname is used.
+ */
+std::pair<std::string, std::string> drawName(WorldRng& rng,
+                                             Language nationality,
+                                             NameRegistry& registry,
+                                             SquadSurnames& squad);
+
+/**
+ * Highest believable potential for a player of @p age and current
+ * @p overall: veterans (Generation::VETERAN_AGE and older) have at most
+ * Generation::VETERAN_HEADROOM left.
+ */
+float maxPotential(int age, float overall);
+
+/**
  * Generates the missing players of a 30-man squad. Wages are scaled so the
  * club's payroll (including @p existing_weekly_wages) matches the league's
- * player-wage share of the club's revenue.
+ * player-wage share of the club's expected income. Names are unique among
+ * the squads generated since the last generateClubProfiles() of a new world
+ * and follow each player's nationality.
  */
 std::vector<Player> generateSquad(const Team& team,
                                   const LeagueEconomy& economy,
@@ -79,10 +147,12 @@ std::vector<Player> generateSquad(const Team& team,
 /**
  * Generates an academy graduate aged 15-17 whose potential scales with the
  * club level and youth facilities. @p wage_scale converts the wage index to
- * euros for this club (weekly payroll / sum of wage indices).
+ * euros for this club (weekly payroll / sum of wage indices). The name is
+ * drawn against @p registry (every name in the world) and @p squad.
  */
 Player generateYouthPlayer(const Team& team, PlayerID player_id, WorldRng& rng,
-                           const StatsConfig& stats_config, double wage_scale);
+                           const StatsConfig& stats_config, double wage_scale,
+                           NameRegistry& registry, SquadSurnames& squad);
 
 /** Draws potential and personality for a player that has none yet. */
 void initializeHiddenAttributes(Player& player, WorldRng& rng,

@@ -9,7 +9,6 @@
 #include "controller/game_controller.h"
 
 #include <SDL3/SDL.h>
-#include <sqlite3.h>
 
 #include <algorithm>
 #include <array>
@@ -20,10 +19,13 @@
 #include <iomanip>
 #include <limits>
 #include <span>
+#include <unordered_set>
 #include <sstream>
 
 #include "database/gamedata.h"
+#include "database/migrations/migrations.h"
 #include "model/club_economy.h"
+#include "model/injury.h"
 #include "database/repositories/player_repository.h"
 #include "database/repositories/team_repository.h"
 #include "global/global.h"
@@ -50,19 +52,14 @@ std::uint32_t transferSeed(const GameData& gamedata, const GameDateValue& date)
 
 GameController::GameController() : game(nullptr), gamedata(nullptr) {}
 
-std::string GameController::getSavePath(int slot) const
-{
-  return RuntimePaths::savePath(slot).string();
-}
-
 void GameController::newGame(int slot, std::optional<std::uint64_t> world_seed)
 {
   const auto startedAt = std::chrono::steady_clock::now();
-  std::string path = getSavePath(slot);
-  RuntimePaths::removeSave(slot);
+  SaveManager::deleteSave(RuntimePaths::savePath(slot));
+  last_load_error.reset();
   gamedata = std::make_shared<GameData>();
   if (world_seed) gamedata->setWorldSeed(*world_seed);
-  db_conn = std::make_shared<DatabaseConnection>(path);
+  db_conn = SaveManager::createWorkingCopy();
   game = std::make_unique<Game>(gamedata, db_conn);
   transfer_listings.clear();
   transfer_rng.seed(transferSeed(*gamedata, game->getCurrentDate()));
@@ -75,6 +72,8 @@ void GameController::newGame(int slot, std::optional<std::uint64_t> world_seed)
     evaluateAndActForTeam(team_id);
     game->getTransfers().listLoanProspects(team_id);
   }
+  startSession(slot, 0);
+  persist(false);
   last_initialization_milliseconds =
       std::chrono::duration<float, std::milli>(
           std::chrono::steady_clock::now() - startedAt)
@@ -86,14 +85,83 @@ void GameController::newGame(int slot, std::optional<std::uint64_t> world_seed)
 bool GameController::loadGame(int slot)
 {
   const auto startedAt = std::chrono::steady_clock::now();
-  std::string path = getSavePath(slot);
-  if (!std::filesystem::exists(path))
+  const std::filesystem::path path = RuntimePaths::savePath(slot);
+  last_load_error.reset();
+  // Checked read-only first: a damaged, unfinished or newer save is
+  // refused without being modified.
+  const SaveInspection inspection = SaveManager::inspect(path, SaveCheck::Full);
+  if (inspection.status != SaveStatus::Ok)
   {
+    SaveError error;
+    error.detail = inspection.detail;
+    error.found_version = inspection.schema_version;
+    error.supported_version = inspection.supported_version;
+    switch (inspection.status)
+    {
+      case SaveStatus::Missing:
+        error.kind = SaveErrorKind::Missing;
+        break;
+      case SaveStatus::Incomplete:
+        error.kind = SaveErrorKind::Incomplete;
+        break;
+      case SaveStatus::FutureVersion:
+        error.kind = SaveErrorKind::FutureVersion;
+        break;
+      case SaveStatus::Ok:
+      case SaveStatus::Corrupt:
+        error.kind = SaveErrorKind::Corrupt;
+        break;
+    }
+    Logger::warn(std::format("Save slot {} refused: {}", slot, error.detail));
+    last_load_error = std::move(error);
     return false;
   }
-  gamedata = std::make_shared<GameData>();
-  db_conn = std::make_shared<DatabaseConnection>(path);
-  game = std::make_unique<Game>(gamedata, db_conn);
+  if (inspection.foreign_key_issues > 0)
+    Logger::warn(std::format("Save slot {} has {} dangling references", slot,
+                             inspection.foreign_key_issues));
+  if (inspection.schema_version < Migrations::currentSchemaVersion())
+  {
+    // The slot file itself changes only on the next save; this copy stays.
+    try
+    {
+      SaveManager::preserveBeforeMigration(path, inspection.schema_version);
+    }
+    catch (const std::exception& error)
+    {
+      Logger::warn(std::string("Could not keep a pre-upgrade copy: ") +
+                   error.what());
+    }
+  }
+  try
+  {
+    auto loaded_data = std::make_shared<GameData>();
+    auto connection = SaveManager::openWorkingCopy(path);
+    auto loaded_game = std::make_unique<Game>(loaded_data, connection);
+    gamedata = std::move(loaded_data);
+    db_conn = std::move(connection);
+    game = std::move(loaded_game);
+  }
+  catch (const std::exception& exception)
+  {
+    SaveError error;
+    error.kind = SaveErrorKind::Corrupt;
+    error.detail = exception.what();
+    if (const auto* future =
+            dynamic_cast<const Migrations::FutureVersionError*>(&exception))
+    {
+      error.kind = SaveErrorKind::FutureVersion;
+      error.found_version = future->found;
+      error.supported_version = future->supported;
+    }
+    else if (const auto* failure = dynamic_cast<const SaveFailure*>(&exception))
+    {
+      error = failure->error;
+    }
+    Logger::error(std::format("Save slot {} failed to load: {}", slot,
+                              error.detail));
+    last_load_error = std::move(error);
+    return false;
+  }
   transfer_rng.seed(transferSeed(*gamedata, game->getCurrentDate()));
 
   // Load transfer listings
@@ -113,6 +181,7 @@ bool GameController::loadGame(int slot)
   purgeStaleListings();
   if (game->getManagedTeamId() != FREE_AGENTS_TEAM_ID)
     game->getWorld().getScouting().setManagedTeam(game->getManagedTeamId());
+  startSession(slot, inspection.metadata.playtime_seconds);
 
   last_initialization_milliseconds =
       std::chrono::duration<float, std::milli>(
@@ -149,14 +218,17 @@ bool GameController::hasSelectedTeam() const
 
 std::optional<std::reference_wrapper<Team>> GameController::getManagedTeam()
 {
-  if (!game || !gamedata) return std::nullopt;
+  // The free-agent pool is not a club anyone manages.
+  if (!game || !gamedata || game->getManagedTeamId() == FREE_AGENTS_TEAM_ID)
+    return std::nullopt;
   return (*gamedata).getTeam(game->getManagedTeamId());
 }
 
 std::optional<std::reference_wrapper<const Team>>
 GameController::getManagedTeam() const
 {
-  if (!game || !gamedata) return std::nullopt;
+  if (!game || !gamedata || game->getManagedTeamId() == FREE_AGENTS_TEAM_ID)
+    return std::nullopt;
   return (*gamedata).getTeam(game->getManagedTeamId());
 }
 
@@ -247,6 +319,8 @@ void GameController::simulateDay()
   transfer_rng.seed(transferSeed(*gamedata, game->getCurrentDate()));
   purgeStaleListings();
   processAITransferActivity();
+  runDelegatedDuties();
+  maybeAutosave();
 }
 
 int GameController::advanceToNextManagedFixture(int max_days)
@@ -353,8 +427,11 @@ bool GameController::setMatchResult(GameDateValue date, uint16_t home_id,
   if (!game) return false;
   MatchReport report;
   report.fillFromEngine(engine, home_id, away_id);
-  return game->setMatchResult(date, home_id, away_id, std::move(report),
-                              MatchdaySquad::consequences(engine));
+  if (!game->setMatchResult(date, home_id, away_id, std::move(report),
+                            MatchdaySquad::consequences(engine)))
+    return false;
+  recordManagedMatch(date, home_id, away_id, engine);
+  return true;
 }
 
 std::vector<PlayerID> GameController::getIneligibleSelections(
@@ -472,21 +549,167 @@ std::vector<DisciplinaryRecord> GameController::getSuspendedPlayers(
                                                                   *gamedata);
 }
 
-void GameController::saveGame()
+bool GameController::saveGame() { return persist(false); }
+
+bool GameController::persist(bool autosave)
 {
-  if (game) game->saveGame();
+  if (!game || current_slot < 0) return false;
+  using Clock = std::chrono::steady_clock;
+  const auto started = Clock::now();
+  SaveStatusInfo status;
+  status.autosave = autosave;
+  status.game_date = game->getCurrentDate().toString();
+  try
+  {
+    game->saveGame();
+    status.timings.flush_ms =
+        std::chrono::duration<double, std::milli>(Clock::now() - started)
+            .count();
+    const auto playtime = std::chrono::duration_cast<std::chrono::seconds>(
+        Clock::now() - session_started);
+    SaveManager::stampMetadata(*db_conn, gamedata->getWorldSeed(),
+                               game->getCurrentDate(),
+                               playtime_before_session + playtime.count());
+    const SaveTimings file = SaveManager::persist(
+        *db_conn, RuntimePaths::savePath(current_slot), autosave_policy.backups);
+    status.timings.snapshot_ms = file.snapshot_ms;
+    status.timings.verify_ms = file.verify_ms;
+    status.timings.sync_ms = file.sync_ms;
+  }
+  catch (const SaveFailure& failure)
+  {
+    status.ok = false;
+    status.error = failure.error;
+  }
+  catch (const std::exception& exception)
+  {
+    status.ok = false;
+    status.error.kind = SaveErrorKind::Io;
+    status.error.detail = exception.what();
+  }
+  status.timings.total_ms =
+      std::chrono::duration<double, std::milli>(Clock::now() - started).count();
+  if (status.ok)
+  {
+    // Any save restarts the autosave interval.
+    last_autosave_date = game->getCurrentDate();
+    last_autosave_season = game->getCurrentSeason();
+    Logger::info(std::format(
+        "{} slot {} in {:.1f} ms (flush {:.1f}, snapshot {:.1f}, verify "
+        "{:.1f}, sync {:.1f})",
+        autosave ? "Autosaved" : "Saved", current_slot, status.timings.total_ms,
+        status.timings.flush_ms, status.timings.snapshot_ms,
+        status.timings.verify_ms, status.timings.sync_ms));
+  }
+  else
+  {
+    Logger::error(std::format("Saving slot {} failed ({}): {}", current_slot,
+                              status.error.langKey(), status.error.detail));
+  }
+  const std::scoped_lock lock(save_status_mutex);
+  status.successful_saves = save_status.successful_saves + (status.ok ? 1 : 0);
+  save_status = std::move(status);
+  return save_status.ok;
+}
+
+GameController::SaveStatusInfo GameController::getSaveStatus() const
+{
+  const std::scoped_lock lock(save_status_mutex);
+  return save_status;
+}
+
+void GameController::startSession(int slot, std::int64_t playtime_seconds)
+{
+  current_slot = slot;
+  playtime_before_session = playtime_seconds;
+  session_started = std::chrono::steady_clock::now();
+  last_autosave_date = game->getCurrentDate();
+  last_autosave_season = game->getCurrentSeason();
+  const std::scoped_lock lock(save_status_mutex);
+  save_status = {};
+}
+
+void GameController::maybeAutosave()
+{
+  const GameDateValue today = game->getCurrentDate();
+  bool managed_match_yesterday = false;
+  if (autosave_policy.frequency == AutosaveFrequency::Matchday)
+  {
+    const TeamID managed = game->getManagedTeamId();
+    const auto& schedule = game->getCalendar().getFullCalendar();
+    if (const auto day = schedule.find(SeasonCalendar::addDays(today, -1));
+        day != schedule.end())
+    {
+      managed_match_yesterday = std::ranges::any_of(
+          day->second,
+          [managed](const Match& match)
+          {
+            return match.isPlayed() && (match.getHomeTeamId() == managed ||
+                                        match.getAwayTeamId() == managed);
+          });
+    }
+  }
+  if (SaveManager::isAutosaveDue(autosave_policy.frequency, last_autosave_date,
+                                 last_autosave_season, today,
+                                 game->getCurrentSeason(),
+                                 managed_match_yesterday))
+    persist(true);
+}
+
+void GameController::setAutosavePolicy(const AutosavePolicy& policy)
+{
+  autosave_policy = policy;
+  autosave_policy.backups = std::clamp(policy.backups, 0, 9);
+}
+
+AutosavePolicy GameController::getAutosavePolicy() const
+{
+  return autosave_policy;
+}
+
+std::optional<int> GameController::getCurrentSlot() const
+{
+  if (!game || current_slot < 0) return std::nullopt;
+  return current_slot;
+}
+
+std::vector<SaveBackup> GameController::getSaveBackups(int slot) const
+{
+  return SaveManager::listBackups(RuntimePaths::savePath(slot));
+}
+
+bool GameController::restoreBackup(int slot,
+                                   const std::filesystem::path& backup)
+{
+  try
+  {
+    SaveManager::restoreBackup(RuntimePaths::savePath(slot), backup);
+  }
+  catch (const SaveFailure& failure)
+  {
+    Logger::error("Restoring a backup failed: " + failure.error.detail);
+    last_load_error = failure.error;
+    return false;
+  }
+  return loadGame(slot);
+}
+
+bool GameController::deleteSave(int slot)
+{
+  if (game && slot == current_slot) return false;
+  SaveManager::deleteSave(RuntimePaths::savePath(slot));
+  return true;
 }
 
 GameController::SaveSlotMetadata GameController::getSaveSlotMetadata(
     int slot) const
 {
   SaveSlotMetadata metadata;
-  std::string path = getSavePath(slot);
-  if (!std::filesystem::exists(path))
-  {
-    metadata.exists = false;
-    return metadata;
-  }
+  const std::filesystem::path path = RuntimePaths::savePath(slot);
+  const SaveInspection inspection = SaveManager::inspect(path, SaveCheck::Quick);
+  metadata.status = inspection.status;
+  metadata.supported_schema_version = inspection.supported_version;
+  if (inspection.status == SaveStatus::Missing) return metadata;
   metadata.exists = true;
 
   try
@@ -497,8 +720,13 @@ GameController::SaveSlotMetadata GameController::getSaveSlotMetadata(
             ftime - std::filesystem::file_time_type::clock::now() +
             std::chrono::system_clock::now());
     std::time_t tt = std::chrono::system_clock::to_time_t(sct);
-    std::tm tm_buf;
-    if (const std::tm* tm = localtime_r(&tt, &tm_buf))
+    std::tm tm_buf{};
+#if defined(_WIN32)
+    const std::tm* tm = localtime_s(&tm_buf, &tt) == 0 ? &tm_buf : nullptr;
+#else
+    const std::tm* tm = localtime_r(&tt, &tm_buf);
+#endif
+    if (tm != nullptr)
     {
       char buf[100];
       if (std::strftime(buf, sizeof(buf), "%d/%m/%Y %H:%M", tm))
@@ -512,45 +740,30 @@ GameController::SaveSlotMetadata GameController::getSaveSlotMetadata(
     metadata.real_date = "";
   }
 
-  if (sqlite3* db = nullptr;
-      sqlite3_open_v2(path.c_str(), &db, SQLITE_OPEN_READONLY, nullptr) ==
-      SQLITE_OK)
+  switch (inspection.status)
   {
-    sqlite3_stmt* stmt = nullptr;
-    const char* sql_state =
-        "SELECT managed_team_id, game_date FROM GameState WHERE id = 1;";
-    if (sqlite3_prepare_v2(db, sql_state, -1, &stmt, nullptr) == SQLITE_OK)
-    {
-      if (sqlite3_step(stmt) == SQLITE_ROW)
-      {
-        int team_id = sqlite3_column_int(stmt, 0);
-        const unsigned char* date_text = sqlite3_column_text(stmt, 1);
-        metadata.game_date =
-            date_text ? reinterpret_cast<const char*>(date_text) : "";
-
-        if (team_id != FREE_AGENTS_TEAM_ID)
-        {
-          sqlite3_stmt* team_stmt = nullptr;
-          const char* sql_team = "SELECT name FROM Teams WHERE id = ?;";
-          if (sqlite3_prepare_v2(db, sql_team, -1, &team_stmt, nullptr) ==
-              SQLITE_OK)
-          {
-            sqlite3_bind_int(team_stmt, 1, team_id);
-            if (sqlite3_step(team_stmt) == SQLITE_ROW)
-            {
-              const unsigned char* name_text =
-                  sqlite3_column_text(team_stmt, 0);
-              metadata.team_name =
-                  name_text ? reinterpret_cast<const char*>(name_text) : "";
-            }
-            sqlite3_finalize(team_stmt);
-          }
-        }
-      }
-      sqlite3_finalize(stmt);
-    }
-    sqlite3_close(db);
+    case SaveStatus::Incomplete:
+      metadata.status_key = "SAVE_ERROR_INCOMPLETE";
+      break;
+    case SaveStatus::Corrupt:
+      metadata.status_key = "SAVE_ERROR_CORRUPT";
+      break;
+    case SaveStatus::FutureVersion:
+      metadata.status_key = "SAVE_ERROR_FUTURE_VERSION";
+      break;
+    case SaveStatus::Ok:
+    case SaveStatus::Missing:
+      break;
   }
+  metadata.team_name = inspection.club_name;
+  metadata.game_date = inspection.game_date;
+  metadata.season = inspection.season;
+  metadata.schema_version = inspection.schema_version;
+  metadata.playtime_seconds = inspection.metadata.playtime_seconds;
+  metadata.last_saved_game_date = inspection.metadata.last_saved_game_date;
+  metadata.last_saved_utc = inspection.metadata.updated_at_utc;
+  metadata.game_version = inspection.metadata.game_version;
+  metadata.backups = SaveManager::countBackups(path);
   return metadata;
 }
 
@@ -914,7 +1127,12 @@ uint32_t GameController::getPlayerMarketValue(PlayerID pid) const
 
   const Player& player = player_opt->get();
   player.updateMarketValue(gamedata->getStatsConfig());
-  return player.getMarketValue();
+  if (!game) return player.getMarketValue();
+  // Recent honours raise the price (at most +25%).
+  return static_cast<uint32_t>(std::lround(
+      static_cast<double>(player.getMarketValue()) *
+      game->getWorld().getAwards().valueMultiplier(pid,
+                                                   game->getCurrentDate())));
 }
 
 // ========== Negotiation ==========
@@ -1061,9 +1279,15 @@ GameController::SquadNeeds GameController::evaluateSquadNeeds(
     }
   }
 
-  // Target squad sizes per role group
-  constexpr int TARGET_GK = 3, TARGET_CB = 5, TARGET_LB = 2, TARGET_RB = 2;
-  constexpr int TARGET_MID = 6, TARGET_WING = 4, TARGET_ST = 3;
+  // Target squad sizes per role group (shared with the squad planner)
+  using SquadPlanner::targetDepth;
+  const int TARGET_GK = targetDepth(PlannerGroup::Goalkeeper);
+  const int TARGET_CB = targetDepth(PlannerGroup::CentreBack);
+  const int TARGET_LB = targetDepth(PlannerGroup::LeftBack);
+  const int TARGET_RB = targetDepth(PlannerGroup::RightBack);
+  const int TARGET_MID = targetDepth(PlannerGroup::Midfield);
+  const int TARGET_WING = targetDepth(PlannerGroup::Wide);
+  const int TARGET_ST = targetDepth(PlannerGroup::Striker);
 
   auto calc = [](int current, int target, int& missing, int& surplus)
   {
@@ -2296,6 +2520,159 @@ bool GameController::renewContract(PlayerID player_id, ContractTerms terms)
   return true;
 }
 
+// ========== Human side: conversations, team talks, dressing room ==========
+
+float GameController::getManagerStanding() const
+{
+  const auto team = managedClub();
+  if (!game || !team) return 50.0f;
+  // Board confidence carries most weight; a big club lends some stature.
+  return std::clamp(0.6f * game->getWorld().getBoardState().confidence +
+                        0.4f * static_cast<float>(team->get().getReputation()),
+                    0.0f, 100.0f);
+}
+
+std::vector<TalkOptionView> GameController::getTalkOptions(
+    PlayerID player_id) const
+{
+  if (!game) return {};
+  return game->getWorld().getInteractions().options(
+      player_id, game->getCurrentDate(), game->getManagedTeamId(),
+      getManagerStanding());
+}
+
+std::optional<TalkOutcome> GameController::talkToPlayer(PlayerID player_id,
+                                                        TalkOption option)
+{
+  if (!game || !hasSelectedTeam()) return std::nullopt;
+  WorldSimulation& world = game->getWorld();
+  auto outcome = world.getInteractions().talk(
+      player_id, option, game->getCurrentDate(), game->getManagedTeamId(),
+      getManagerStanding());
+  if (!outcome) return std::nullopt;
+  world.getStories().resolveChoice(player_id);
+  if (outcome->list_player && !isPlayerListed(player_id))
+    listPlayerForTransfer(player_id, getPlayerMarketValue(player_id));
+  return outcome;
+}
+
+const PlayerRelation* GameController::getPlayerRelation(
+    PlayerID player_id) const
+{
+  return game ? game->getWorld().getInteractions().relation(player_id)
+              : nullptr;
+}
+
+std::vector<Promise> GameController::getPlayerPromises(
+    PlayerID player_id) const
+{
+  if (!game) return {};
+  return game->getWorld().getInteractions().promisesFor(player_id);
+}
+
+std::vector<Promise> GameController::getActivePromises() const
+{
+  if (!game) return {};
+  std::vector<Promise> active;
+  for (const Promise& promise : game->getWorld().getInteractions().promises())
+    if (promise.state == PromiseState::Active) active.push_back(promise);
+  std::ranges::sort(active, [](const Promise& a, const Promise& b)
+                    {
+                      return a.deadline_day < b.deadline_day ||
+                             (a.deadline_day == b.deadline_day && a.id < b.id);
+                    });
+  return active;
+}
+
+std::optional<StoryChoice> GameController::getStoryChoice(
+    PlayerID player_id) const
+{
+  if (!game) return std::nullopt;
+  return game->getWorld().getStories().choiceFor(
+      player_id, dayOrdinal(game->getCurrentDate()));
+}
+
+bool GameController::hasPendingTalk(PlayerID player_id) const
+{
+  const PlayerRelation* relation = getPlayerRelation(player_id);
+  return (relation != nullptr && relation->request != TalkRequest::None) ||
+         getStoryChoice(player_id).has_value();
+}
+
+TeamTalkContext GameController::getTeamTalkContext(TeamTalkMoment moment,
+                                                   int own_goals,
+                                                   int other_goals) const
+{
+  if (!game) return {};
+  const WorldSimulation& world = game->getWorld();
+  const TeamID managed = game->getManagedTeamId();
+  const GameDateValue date = game->getCurrentDate();
+  TeamTalkContext context =
+      world.getInteractions().teamTalkContext(managed, moment, date);
+  context.goal_difference = own_goals - other_goals;
+  for (const Match& match : game->getCalendar().getMatchesForDate(date))
+  {
+    const bool home = match.getHomeTeamId() == managed;
+    if (!home && match.getAwayTeamId() != managed) continue;
+    const TeamID opponent =
+        home ? match.getAwayTeamId() : match.getHomeTeamId();
+    context.expected_points = BoardModel::expectedPoints(
+        world.lineupStrength(managed), world.lineupStrength(opponent), home);
+    context.derby = world.getStories().rivalOf(managed) == opponent;
+    context.cup = match.getMatchType() == MatchType::CUP;
+    if (context.cup)
+    {
+      const auto cup = getCupStatus(match.getCompetitionId());
+      context.final = cup && cup->total_rounds > 0 &&
+                      match.getStage() == cup->total_rounds;
+    }
+    break;
+  }
+  return context;
+}
+
+bool GameController::canGiveTeamTalk(TeamTalkMoment moment) const
+{
+  return game && hasSelectedTeam() &&
+         game->getWorld().getInteractions().canGiveTeamTalk(
+             game->getManagedTeamId(), moment, game->getCurrentDate());
+}
+
+std::optional<TeamTalkResult> GameController::giveTeamTalk(
+    TeamTalkMoment moment, TeamTalkTone tone, int own_goals, int other_goals)
+{
+  if (!canGiveTeamTalk(moment)) return std::nullopt;
+  return game->getWorld().getInteractions().giveTeamTalk(
+      getTeamTalkContext(moment, own_goals, other_goals),
+      game->getManagedTeamId(), tone);
+}
+
+float GameController::getTeamTalkModifier(TeamID team_id, int half) const
+{
+  if (!game) return 0.0f;
+  return game->getWorld().getInteractions().teamTalkModifier(
+      team_id, game->getCurrentDate(), half);
+}
+
+float GameController::getHumanFactorModifier(TeamID team_id, int half) const
+{
+  if (!game) return 0.0f;
+  const float cohesion =
+      team_id == game->getManagedTeamId()
+          ? game->getWorld().getInteractions().cohesionModifier(
+                team_id, game->getCurrentDate())
+          : 0.0f;
+  return std::clamp(getTeamTalkModifier(team_id, half) + cohesion,
+                    -Interactions::TOTAL_CAP, Interactions::TOTAL_CAP);
+}
+
+DressingRoom GameController::getDressingRoom() const
+{
+  if (!game || !hasSelectedTeam()) return {};
+  return game->getWorld().getInteractions().dressingRoom(
+      game->getManagedTeamId(), game->getCurrentDate());
+}
+
 std::optional<ScoutedPlayerView> GameController::getScoutedView(
     PlayerID player_id) const
 {
@@ -2365,6 +2742,36 @@ const std::vector<ScoutReport>& GameController::getScoutReports() const
   return game ? game->getWorld().getScouting().getReports() : EMPTY;
 }
 
+std::vector<ScoutSummary> GameController::getScoutSummaries() const
+{
+  if (!game) return {};
+  return game->getWorld().getScouting().scoutSummaries();
+}
+
+ScoutExpertise GameController::getScoutExpertise(uint32_t scout_id) const
+{
+  return game ? game->getWorld().getScouting().expertiseOf(scout_id)
+              : ScoutExpertise{};
+}
+
+ScoutEffectiveness GameController::getScoutEffectiveness(
+    uint32_t scout_id, ScoutTargetKind kind, uint32_t target_id) const
+{
+  return game ? game->getWorld().getScouting().effectiveness(scout_id, kind,
+                                                             target_id)
+              : ScoutEffectiveness{};
+}
+
+size_t GameController::getUnreadScoutReportCount() const
+{
+  return game ? game->getWorld().getScouting().unreadReports() : 0;
+}
+
+bool GameController::markScoutReportsSeen(uint32_t scout_id)
+{
+  return game && game->getWorld().getScouting().markReportsSeen(scout_id);
+}
+
 const std::vector<RecruitmentFocus>& GameController::getRecruitmentFocuses()
     const
 {
@@ -2414,6 +2821,184 @@ std::vector<SquadComparisonRow> GameController::compareShortlistWithSquad()
 uint64_t GameController::getWorldSeed() const
 {
   return gamedata ? gamedata->getWorldSeed() : 0;
+}
+
+// ========== Manager career ==========
+
+bool GameController::hasCareer() const
+{
+  return game && game->getCareer().hasProfile();
+}
+
+bool GameController::isUnemployed() const
+{
+  return hasCareer() && !hasSelectedTeam();
+}
+
+const ManagerProfile* GameController::getManagerProfile() const
+{
+  return hasCareer() ? &game->getCareer().getProfile() : nullptr;
+}
+
+void GameController::createManager(const ManagerSetup& setup)
+{
+  if (game) game->getCareer().createProfile(setup, game->getCurrentDate());
+}
+
+const std::vector<ManagerStint>& GameController::getManagerStints() const
+{
+  static const std::vector<ManagerStint> none;
+  return game ? game->getCareer().getStints() : none;
+}
+
+const std::vector<ManagerSeasonLine>& GameController::getManagerSeasons() const
+{
+  static const std::vector<ManagerSeasonLine> none;
+  return game ? game->getCareer().getSeasons() : none;
+}
+
+const std::vector<ManagerAward>& GameController::getManagerAwards() const
+{
+  static const std::vector<ManagerAward> none;
+  return game ? game->getCareer().getAwards() : none;
+}
+
+const AiManager* GameController::getClubManager(TeamID team_id) const
+{
+  return game ? game->getCareer().clubManager(team_id) : nullptr;
+}
+
+std::vector<GameController::VacancyView> GameController::getVacancies() const
+{
+  std::vector<VacancyView> views;
+  if (!game) return views;
+  const ManagerCareer& career = game->getCareer();
+  for (const Vacancy& vacancy : career.getVacancies())
+  {
+    const auto team = gamedata->getTeam(vacancy.team_id);
+    if (!team) continue;
+    VacancyView view;
+    view.team_id = vacancy.team_id;
+    view.league_id = team->get().getLeagueId();
+    view.tier = Competitions::leagueTier(*gamedata, view.league_id);
+    view.reputation = team->get().getReputation();
+    view.owner = career.visionOf(vacancy.team_id).owner;
+    view.chance = career.applicationChance(vacancy.team_id);
+    view.required_licence =
+        ManagerMarketModel::requiredLicence(view.reputation, view.tier);
+    view.opened = vacancy.opened;
+    // The board's expectation follows the wage-bill rank, as for the
+    // managed club's objective.
+    const int64_t own_wages =
+        team->get().getFinances().getCurrentWageSpending(*gamedata,
+                                                         team->get());
+    int league_size = 0;
+    int richer = 0;
+    const auto league = gamedata->getLeague(view.league_id);
+    for (const TeamID other_id :
+         league ? league->get().getTeamIDs() : std::vector<TeamID>{})
+    {
+      const auto other = gamedata->getTeam(other_id);
+      if (!other) continue;
+      ++league_size;
+      if (other_id != vacancy.team_id &&
+          other->get().getFinances().getCurrentWageSpending(
+              *gamedata, other->get()) > own_wages)
+        ++richer;
+    }
+    view.expected_position = richer + 1;
+    view.objective_key = BoardModel::objectiveKey(
+        BoardModel::objectiveFor(view.expected_position, league_size));
+    if (const JobApplication* application =
+            career.findApplication(vacancy.team_id))
+      view.stage = application->stage;
+    views.push_back(view);
+  }
+  std::ranges::sort(views, [](const VacancyView& a, const VacancyView& b)
+                    {
+                      return a.chance != b.chance ? a.chance > b.chance
+                                                  : a.team_id < b.team_id;
+                    });
+  return views;
+}
+
+const std::vector<JobApplication>& GameController::getJobApplications() const
+{
+  static const std::vector<JobApplication> none;
+  return game ? game->getCareer().getApplications() : none;
+}
+
+ApplyResult GameController::applyForJob(TeamID team_id)
+{
+  if (!game) return ApplyResult::NoProfile;
+  return game->getCareer().apply(team_id, game->getCurrentDate());
+}
+
+std::optional<InterviewResult> GameController::attendInterview(
+    TeamID team_id, std::span<const std::uint8_t> answers)
+{
+  if (!game) return std::nullopt;
+  return game->getCareer().interview(team_id, answers, game->getCurrentDate(),
+                                     game->getWorld().getInbox());
+}
+
+const std::vector<JobOffer>& GameController::getJobOffers() const
+{
+  static const std::vector<JobOffer> none;
+  return game ? game->getCareer().getOffers() : none;
+}
+
+OfferReply GameController::negotiateJobOffer(std::uint32_t offer_id,
+                                             int64_t weekly_wage,
+                                             std::uint8_t years)
+{
+  if (!game) return OfferReply::Withdrawn;
+  return game->getCareer().negotiate(offer_id, weekly_wage, years,
+                                     game->getCurrentDate());
+}
+
+bool GameController::acceptJobOffer(std::uint32_t offer_id)
+{
+  if (!game) return false;
+  ManagerCareer& career = game->getCareer();
+  const GameDateValue today = game->getCurrentDate();
+  const std::optional<JobOffer> offer = career.takeOffer(offer_id, today);
+  if (!offer) return false;
+  const TeamID former = game->getManagedTeamId();
+  if (former != FREE_AGENTS_TEAM_ID)
+    career.payCompensation(former, offer->team_id, offer->compensation,
+                           today);
+  game->takeJob(offer->team_id, career.contractFor(*offer, today));
+  return game->getManagedTeamId() == offer->team_id;
+}
+
+bool GameController::declineJobOffer(std::uint32_t offer_id)
+{
+  return game && game->getCareer().decline(offer_id);
+}
+
+bool GameController::resignFromClub()
+{
+  if (!game || !hasSelectedTeam()) return false;
+  game->leaveManagedTeam(DepartureReason::Resigned);
+  return true;
+}
+
+int GameController::advanceWhileUnemployed(int max_days)
+{
+  if (!game || max_days <= 0 || !isUnemployed()) return 0;
+  game->resetSimulationProgress();
+  continue_days_started = 0;
+  continue_days_total = max_days;
+  int days = 0;
+  while (days < max_days && isUnemployed())
+  {
+    simulateDay();
+    ++days;
+    const CareerDayEvents& events = game->getLastCareerEvents();
+    if (events.new_offer || events.interview_invitation) break;
+  }
+  return days;
 }
 
 // ========== Training ==========
@@ -2689,4 +3274,736 @@ GameController::StaffActionResult GameController::extendStaffContract(
   member->contract_years = years;
   roster.invalidate();
   return StaffActionResult::Ok;
+}
+
+// ========== Youth academy ==========
+
+namespace
+{
+GameDateValue intakeDateFor(std::uint16_t year)
+{
+  return GameDateValue(year, YouthModel::INTAKE_MONTH, YouthModel::INTAKE_DAY);
+}
+}  // namespace
+
+std::vector<GameController::YouthPlayerView> GameController::getYouthPlayers(
+    YouthStatus status) const
+{
+  std::vector<YouthPlayerView> views;
+  const auto team = managedClub();
+  if (!team || !game) return views;
+  const TeamID team_id = team->get().getId();
+  const YouthAcademy& academy = game->getWorld().getYouth();
+  const int pro_age = YouthModel::firstProfessionalAge(
+      leagueProfile(team->get().getLeagueId()).domestic_nationality);
+  for (const YouthRecord* youth : academy.members(team_id, status))
+  {
+    const Player& player = gamedata->getPlayers().at(youth->player_id);
+    YouthPlayerView view;
+    view.id = player.getId();
+    view.name = player.getName();
+    view.role = player.getRole();
+    view.age = player.getAge();
+    view.nationality = player.getNationality();
+    view.height = player.getHeight();
+    view.status = youth->status;
+    view.contract = youth->contract;
+    view.contract_years = player.getContractYears();
+    view.wage = player.getWage();
+    if (youth->contract == YouthContract::None)
+      view.offer = view.age >= pro_age ? YouthContract::Professional
+                                       : YouthContract::Scholarship;
+    else if (youth->contract == YouthContract::Scholarship &&
+             view.age >= pro_age)
+      view.offer = YouthContract::Professional;
+    view.offer_wage = academy.contractWage(team_id, player, view.offer);
+    view.estimate = academy.estimate(team_id, view.id);
+    view.personality_key = YouthModel::personalityKey(player.getTraits());
+    view.homegrown = academy.isHomegrown(view.id);
+    view.loan_listed = game->getTransfers().isLoanListed(view.id);
+    view.appearances = youth->appearances;
+    view.goals = youth->goals;
+    view.average_rating = youth->averageRating();
+    view.progress = youth->progress;
+    views.push_back(std::move(view));
+  }
+  std::ranges::stable_sort(
+      views, [](const YouthPlayerView& a, const YouthPlayerView& b)
+      {
+        return a.estimate.potential_low + a.estimate.potential_high >
+               b.estimate.potential_low + b.estimate.potential_high;
+      });
+  return views;
+}
+
+std::vector<GameController::YouthPlayerView>
+GameController::getYouthEligibleFirstTeam() const
+{
+  std::vector<YouthPlayerView> views;
+  const auto team = managedClub();
+  if (!team || !game) return views;
+  const YouthAcademy& academy = game->getWorld().getYouth();
+  for (const auto& player_ref : gamedata->getPlayersForTeam(team->get().getId()))
+  {
+    const Player& player = player_ref.get();
+    if (player.getAge() > YouthModel::U18_MAX_AGE ||
+        academy.isAcademyPlayer(player.getId()))
+      continue;
+    YouthPlayerView view;
+    view.id = player.getId();
+    view.name = player.getName();
+    view.role = player.getRole();
+    view.age = player.getAge();
+    view.nationality = player.getNationality();
+    view.height = player.getHeight();
+    view.status = YouthStatus::Graduated;
+    view.contract = YouthContract::Professional;
+    view.contract_years = player.getContractYears();
+    view.wage = player.getWage();
+    view.estimate = academy.estimate(team->get().getId(), view.id);
+    view.personality_key = YouthModel::personalityKey(player.getTraits());
+    view.homegrown = academy.isHomegrown(view.id);
+    view.loan_listed = game->getTransfers().isLoanListed(view.id);
+    views.push_back(std::move(view));
+  }
+  std::ranges::sort(views, {}, &YouthPlayerView::id);
+  return views;
+}
+
+bool GameController::isAcademyPlayer(PlayerID player_id) const
+{
+  return game && game->getWorld().getYouth().isAcademyPlayer(player_id);
+}
+
+GameController::AcademyOverview GameController::getAcademyOverview() const
+{
+  AcademyOverview overview;
+  const auto team = managedClub();
+  if (!team || !game) return overview;
+  const TeamID team_id = team->get().getId();
+  const YouthAcademy& academy = game->getWorld().getYouth();
+  const GameDateValue today = game->getCurrentDate();
+  overview.ratings = academy.ratings(team_id);
+  overview.head = academy.headOfYouth(team_id);
+  overview.candidates = academy.members(team_id, YouthStatus::Candidate).size();
+  overview.squad = academy.members(team_id, YouthStatus::Squad).size();
+
+  // The intake cycle in progress: this year's until its decision deadline,
+  // afterwards next year's.
+  std::uint16_t year = today.year;
+  if (dayOrdinal(today) >
+      dayOrdinal(intakeDateFor(year)) + YouthModel::DECISION_DAYS)
+    ++year;
+  overview.intake_date = intakeDateFor(year);
+  overview.preview_date =
+      GameDateValue(year, YouthModel::PREVIEW_MONTH, YouthModel::PREVIEW_DAY);
+  overview.decision_deadline =
+      SeasonCalendar::addDays(overview.intake_date, YouthModel::DECISION_DAYS);
+  overview.preview_ready = !(today < overview.preview_date);
+  if (overview.preview_ready) overview.preview = academy.preview(team_id, year);
+
+  const std::vector<YouthTableRow> rows =
+      academy.table(team->get().getLeagueId());
+  overview.league_size = static_cast<int>(rows.size());
+  for (std::size_t index = 0; index < rows.size(); ++index)
+  {
+    if (rows[index].team_id != team_id) continue;
+    overview.league_position = static_cast<int>(index) + 1;
+    overview.table = rows[index];
+  }
+  return overview;
+}
+
+std::vector<YouthTableRow> GameController::getYouthTable() const
+{
+  const auto team = managedClub();
+  if (!team || !game) return {};
+  return game->getWorld().getYouth().table(team->get().getLeagueId());
+}
+
+const std::vector<YouthResult>& GameController::getYouthResults() const
+{
+  static const std::vector<YouthResult> EMPTY;
+  return game ? game->getWorld().getYouth().results() : EMPTY;
+}
+
+UpgradeQuote GameController::getAcademyUpgradeQuote(AcademyUpgrade kind) const
+{
+  const auto team = managedClub();
+  if (!team || !game) return {};
+  return game->getWorld().getYouth().quote(
+      team->get().getId(), kind, game->getCurrentDate(),
+      game->getWorld().getBoardState().confidence, isTransferEmbargoed());
+}
+
+UpgradeRequestResult GameController::requestAcademyUpgrade(AcademyUpgrade kind)
+{
+  const auto team = managedClub();
+  if (!team || !game) return UpgradeRequestResult::NoClub;
+  WorldSimulation& world = game->getWorld();
+  return world.getYouth().requestUpgrade(
+      game->getCurrentDate(), team->get().getId(), kind,
+      world.getBoardState().confidence, isTransferEmbargoed(),
+      world.getInbox());
+}
+
+YouthActionResult GameController::signYouthCandidate(PlayerID player_id)
+{
+  const auto team = managedClub();
+  if (!team || !game) return YouthActionResult::NoClub;
+  return game->getWorld().getYouth().signCandidate(team->get().getId(),
+                                                   player_id);
+}
+
+YouthActionResult GameController::releaseYouthCandidate(PlayerID player_id)
+{
+  const auto team = managedClub();
+  if (!team || !game) return YouthActionResult::NoClub;
+  return game->getWorld().getYouth().releaseCandidate(team->get().getId(),
+                                                      player_id);
+}
+
+YouthActionResult GameController::offerYouthProfessionalContract(
+    PlayerID player_id)
+{
+  const auto team = managedClub();
+  if (!team || !game) return YouthActionResult::NoClub;
+  return game->getWorld().getYouth().offerProfessional(team->get().getId(),
+                                                       player_id);
+}
+
+YouthActionResult GameController::promoteYouthPlayer(PlayerID player_id)
+{
+  const auto team = managedClub();
+  if (!team || !game) return YouthActionResult::NoClub;
+  return game->getWorld().getYouth().promote(team->get().getId(), player_id);
+}
+
+YouthActionResult GameController::moveToYouthSquad(PlayerID player_id)
+{
+  const auto team = managedClub();
+  if (!team || !game) return YouthActionResult::NoClub;
+  return game->getWorld().getYouth().demote(team->get().getId(), player_id);
+}
+
+// ========== Honours: awards, records, hall of fame ==========
+
+const std::vector<AwardRecord>& GameController::getAwardHistory() const
+{
+  static const std::vector<AwardRecord> NONE;
+  return game ? game->getWorld().getAwards().history() : NONE;
+}
+
+std::vector<AwardRecord> GameController::getLeagueAwards(
+    LeagueID league_id, uint16_t season_year) const
+{
+  if (!game) return {};
+  return game->getWorld().getAwards().forLeague(league_id, season_year);
+}
+
+std::vector<AwardRecord> GameController::getPlayerHonours(
+    PlayerID player_id) const
+{
+  if (!game) return {};
+  return game->getWorld().getAwards().honoursFor(player_id);
+}
+
+std::vector<AwardPlayerTally> GameController::getAwardRace(LeagueID league_id,
+                                                           bool young,
+                                                           size_t limit) const
+{
+  if (!game) return {};
+  std::vector<AwardCandidate> pool;
+  const auto& tallies = game->getWorld().getAwards().seasonTallies();
+  for (auto it = tallies.lower_bound({league_id, 0});
+       it != tallies.end() && it->first.first == league_id; ++it)
+  {
+    const auto player = gamedata->getPlayer(it->second.player_id);
+    if (!player || it->second.rated == 0 ||
+        (young && player->get().getAge() > Awards::YOUNG_MAX_AGE))
+      continue;
+    pool.push_back({player->get().getRole(), player->get().getAge(),
+                    it->second});
+  }
+  const std::uint16_t min_minutes = Awards::seasonMinMinutes(pool);
+  const auto score = [](const AwardCandidate& candidate)
+  {
+    return Awards::playerScore(candidate.tally,
+                               candidate.role == PlayerRole::GK);
+  };
+  std::ranges::sort(pool,
+                    [&](const AwardCandidate& a, const AwardCandidate& b)
+                    {
+                      const bool qa = a.tally.minutes >= min_minutes;
+                      const bool qb = b.tally.minutes >= min_minutes;
+                      if (qa != qb) return qa;
+                      const float sa = score(a);
+                      const float sb = score(b);
+                      return sa != sb ? sa > sb
+                                      : a.tally.player_id < b.tally.player_id;
+                    });
+  std::vector<AwardPlayerTally> race;
+  for (size_t index = 0; index < pool.size() && index < limit; ++index)
+    race.push_back(pool[index].tally);
+  return race;
+}
+
+std::vector<RecordEntry> GameController::getClubRecords(TeamID team_id) const
+{
+  if (!game) return {};
+  return game->getWorld().getRecords().clubRecords(team_id);
+}
+
+std::vector<RecordEntry> GameController::getLeagueRecords(
+    LeagueID league_id) const
+{
+  if (!game) return {};
+  return game->getWorld().getRecords().leagueRecords(league_id);
+}
+
+std::vector<ClubPlayerTotal> GameController::getClubTopScorers(
+    TeamID team_id, size_t limit) const
+{
+  if (!game) return {};
+  return game->getWorld().getRecords().topScorers(team_id, limit);
+}
+
+std::vector<ClubPlayerTotal> GameController::getClubMostAppearances(
+    TeamID team_id, size_t limit) const
+{
+  if (!game) return {};
+  return game->getWorld().getRecords().mostAppearances(team_id, limit);
+}
+
+std::vector<AllTimeRow> GameController::getAllTimeTable(
+    LeagueID league_id) const
+{
+  if (!game) return {};
+  return game->getWorld().getRecords().allTimeTable(league_id);
+}
+
+std::vector<LegendEntry> GameController::getHallOfFame(TeamID team_id) const
+{
+  if (!game) return {};
+  const AwardSystem& awards = game->getWorld().getAwards();
+  return game->getWorld().getRecords().hallOfFame(
+      team_id, [&awards](PlayerID player_id, TeamID club)
+      { return awards.seasonHonours(player_id, club); });
+}
+
+// ========== Board: facility projects ==========
+
+ProjectQuote GameController::getProjectQuote(FacilityProjectType type,
+                                             uint32_t seats) const
+{
+  const auto team = managedClub();
+  if (!team || !game) return {};
+  return game->getWorld().getFacilityProjects().quote(
+      *gamedata, team->get().getId(), type, seats);
+}
+
+ProjectVerdict GameController::requestFacilityProject(FacilityProjectType type,
+                                                      uint32_t seats)
+{
+  const auto team = managedClub();
+  if (!team || !game) return ProjectVerdict::AtMaximum;
+  WorldSimulation& world = game->getWorld();
+  return world.getFacilityProjects().request(
+      *gamedata, world.getBoardState(), team->get().getId(), type, seats,
+      game->getCurrentDate());
+}
+
+std::vector<FacilityProject> GameController::getFacilityProjects() const
+{
+  const auto team = managedClub();
+  if (!team || !game) return {};
+  return game->getWorld().getFacilityProjects().projectsFor(
+      team->get().getId());
+}
+
+uint8_t GameController::getMedicalLevel(TeamID team_id) const
+{
+  if (!game) return 50;
+  return game->getWorld().getFacilityProjects().medicalLevel(team_id);
+}
+
+std::optional<GameDateValue> GameController::getProjectCooldown(
+    FacilityProjectType type) const
+{
+  const auto team = managedClub();
+  if (!team || !game) return std::nullopt;
+  return game->getWorld().getFacilityProjects().cooldownUntil(
+      team->get().getId(), type, game->getCurrentDate());
+}
+
+// ========== Pre-season planner ==========
+
+std::vector<FriendlySlot> GameController::getPreseasonFriendlies() const
+{
+  const auto team = managedClub();
+  if (!team || !game) return {};
+  return game->getWorld().getPreseason().friendlies(
+      game->getCalendar(), team->get().getId(), game->getCurrentDate());
+}
+
+std::vector<OpponentOption> GameController::getFriendlyOpponents(
+    GameDateValue date, OpponentLevel level, bool abroad) const
+{
+  const auto team = managedClub();
+  if (!team || !game) return {};
+  return game->getWorld().getPreseason().opponents(
+      *gamedata, game->getCalendar(), team->get().getId(), date, level,
+      abroad);
+}
+
+bool GameController::setPreseasonFriendly(GameDateValue date,
+                                          TeamID opponent_id, bool home,
+                                          bool tour)
+{
+  const auto team = managedClub();
+  if (!team || !game) return false;
+  return game->getWorld().getPreseason().setFriendly(
+      game->getCalendar(), *gamedata, team->get().getId(), date, opponent_id,
+      home, tour, game->getCurrentDate());
+}
+
+std::vector<FriendlySuggestion> GameController::getPreseasonSuggestion() const
+{
+  const auto team = managedClub();
+  if (!team || !game) return {};
+  return game->getWorld().getPreseason().suggest(
+      *gamedata, game->getCalendar(), team->get().getId(),
+      game->getCurrentDate());
+}
+
+size_t GameController::applyPreseasonSuggestion()
+{
+  size_t applied = 0;
+  for (const FriendlySuggestion& friendly : getPreseasonSuggestion())
+    if (setPreseasonFriendly(friendly.date, friendly.opponent_id,
+                             friendly.home, false))
+      ++applied;
+  return applied;
+}
+
+CampQuote GameController::getCampQuote(TrainingCamp camp) const
+{
+  const auto team = managedClub();
+  if (!team || !game) return {};
+  return game->getWorld().getPreseason().campQuote(
+      *gamedata, game->getCalendar(), team->get().getId(), camp);
+}
+
+TrainingCamp GameController::getSuggestedCamp() const
+{
+  const auto team = managedClub();
+  if (!team || !game) return TrainingCamp::None;
+  return game->getWorld().getPreseason().suggestCamp(
+      *gamedata, game->getCalendar(), team->get().getId(),
+      game->getCurrentDate());
+}
+
+bool GameController::bookTrainingCamp(TrainingCamp camp)
+{
+  const auto team = managedClub();
+  if (!team || !game) return false;
+  return game->getWorld().getPreseason().bookCamp(
+      *gamedata, game->getCalendar(), team->get().getId(), camp,
+      game->getCurrentDate());
+}
+
+const PreseasonState& GameController::getPreseasonState() const
+{
+  static const PreseasonState NONE;
+  return game ? game->getWorld().getPreseason().getState() : NONE;
+}
+
+int64_t GameController::getTourFee(TeamID opponent_id) const
+{
+  const auto team = managedClub();
+  const auto opponent = gamedata->getTeam(opponent_id);
+  if (!team || !opponent) return 0;
+  std::vector<std::uint8_t> reputations;
+  if (const auto league = gamedata->getLeague(team->get().getLeagueId()))
+    for (const TeamID id : league->get().getTeamIDs())
+      if (const auto club = gamedata->getTeam(id))
+        reputations.push_back(club->get().getReputation());
+  const double income = ClubEconomy::expectedIncome(
+      makeLeagueEconomy(team->get().getLeagueId(), reputations),
+      team->get().getReputation());
+  return Preseason::tourFee(income, opponent->get().getReputation());
+}
+
+// ========== Mentoring groups ==========
+
+std::vector<MentoringGroup> GameController::getMentoringGroups() const
+{
+  const auto team = managedClub();
+  if (!team || !game) return {};
+  return game->getWorld().getMentoring().groupsFor(team->get().getId());
+}
+
+MentoringError GameController::createMentoringGroup(PlayerID mentor_id,
+                                                    uint32_t* group_id)
+{
+  const auto team = managedClub();
+  if (!team || !game) return MentoringError::NotSameClub;
+  return game->getWorld().getMentoring().createGroup(
+      *gamedata, team->get().getId(), mentor_id, group_id);
+}
+
+MentoringError GameController::addMentee(uint32_t group_id,
+                                         PlayerID mentee_id)
+{
+  if (!game) return MentoringError::UnknownGroup;
+  return game->getWorld().getMentoring().addMentee(*gamedata, group_id,
+                                                   mentee_id);
+}
+
+MentoringError GameController::removeMentee(uint32_t group_id,
+                                            PlayerID mentee_id)
+{
+  if (!game) return MentoringError::UnknownGroup;
+  return game->getWorld().getMentoring().removeMentee(group_id, mentee_id);
+}
+
+MentoringError GameController::dissolveMentoringGroup(uint32_t group_id)
+{
+  if (!game) return MentoringError::UnknownGroup;
+  return game->getWorld().getMentoring().dissolve(group_id);
+}
+
+float GameController::getMentoringMultiplier(PlayerID player_id) const
+{
+  if (!game) return 1.0f;
+  return game->getWorld().getMentoring().developmentMultiplier(*gamedata,
+                                                               player_id);
+}
+
+// ========== Holiday / continue until ==========
+
+HolidayPreferences GameController::getHolidayPreferences() const
+{
+  return game ? game->getWorld().getHolidayPreferences()
+              : HolidayPreferences{};
+}
+
+void GameController::setHolidayPreferences(
+    const HolidayPreferences& preferences)
+{
+  if (game) game->getWorld().getHolidayPreferences() = preferences;
+}
+
+std::optional<GameDateValue> GameController::getHolidayTarget(
+    const HolidayPlan& plan) const
+{
+  if (!game || !hasSelectedTeam()) return std::nullopt;
+  const TeamID managed = game->getManagedTeamId();
+  std::optional<GameDateValue> next_match;
+  const auto& schedule = game->getCalendar().getFullCalendar();
+  for (auto day = schedule.lower_bound(game->getCurrentDate());
+       day != schedule.end() && !next_match; ++day)
+    for (const Match& match : day->second)
+      if (!match.isPlayed() && (match.getHomeTeamId() == managed ||
+                                match.getAwayTeamId() == managed))
+      {
+        next_match = day->first;
+        break;
+      }
+  return Holiday::targetDate(plan, game->getCurrentDate(), next_match);
+}
+
+int GameController::goOnHoliday(const HolidayPlan& plan)
+{
+  holiday_summary = HolidaySummary{};
+  if (!game || !hasSelectedTeam()) return 0;
+  const TeamID managed = game->getManagedTeamId();
+  WorldSimulation& world = game->getWorld();
+  world.getHolidayPreferences() = plan.preferences;
+  const HolidayPreferences& rules = plan.preferences;
+  const std::optional<GameDateValue> target = getHolidayTarget(plan);
+  // Open-ended holidays wait at most three months for a decision.
+  constexpr int OPEN_ENDED_DAYS = 90;
+  const int limit =
+      std::clamp(target ? plan.max_days : std::min(plan.max_days, OPEN_ENDED_DAYS),
+                 0, 366);
+  if (!target && plan.mode != HolidayMode::NextDecision) return 0;
+
+  HolidaySummary summary;
+  summary.valid = true;
+  summary.start = game->getCurrentDate();
+  const Team& club = gamedata->getTeam(managed)->get();
+  const LeagueID league_id = club.getLeagueId();
+  const auto tableSpot = [&](int& position, int& points)
+  {
+    for (const StandingRow& row : getStandings(league_id))
+      if (row.team_id == managed)
+      {
+        position = row.position;
+        points = row.points;
+      }
+  };
+  tableSpot(summary.position_before, summary.points_before);
+  summary.balance_before = club.getFinances().getBalance();
+  const size_t history_before = game->getTransfers().history().size();
+  const auto& messages = world.getInbox().getMessages();
+  const uint32_t first_new_message =
+      messages.empty() ? 0 : messages.back().id + 1;
+  uint32_t next_message = first_new_message;
+
+  std::unordered_set<uint32_t> known_offers;
+  for (const IncomingOffer& offer : getIncomingOffers())
+    known_offers.insert(offer.id);
+  std::unordered_map<PlayerID, uint16_t> injured;
+  std::unordered_set<PlayerID> pending;
+  for (const auto& player : gamedata->getPlayersForTeam(managed))
+  {
+    if (player.get().getDynamics().injury_days > 0)
+      injured.emplace(player.get().getId(),
+                      player.get().getDynamics().injury_days);
+    if (hasPendingTalk(player.get().getId()))
+      pending.insert(player.get().getId());
+  }
+  const int injured_at_start = static_cast<int>(injured.size());
+  const bool dismissed_before = world.getBoardState().dismissed;
+
+  // While the manager is away the assistant also takes the duties handed
+  // to him for the holiday; the manager's own policy returns afterwards.
+  DelegationPolicy& delegation = game->getGuidance().delegation;
+  const DelegationPolicy delegation_before = delegation;
+  if (rules.assistant_lineup)
+    delegation.set(Duty::LineupFixes, DutyOwner::Assistant);
+  if (rules.assistant_training)
+    delegation.set(Duty::TrainingSchedule, DutyOwner::Assistant);
+
+  game->resetSimulationProgress();
+  continue_days_started = 0;
+  continue_days_total =
+      target ? std::clamp(dayOrdinal(*target) -
+                              dayOrdinal(game->getCurrentDate()),
+                          0, limit)
+             : 0;
+  int advanced = 0;
+  while (!target || game->getCurrentDate() < *target)
+  {
+    if (advanced >= limit)
+    {
+      summary.reason = HolidayStop::DayLimit;
+      break;
+    }
+    simulateDay();
+    ++advanced;
+
+    HolidayDay day;
+    day.dismissed = world.getBoardState().dismissed && !dismissed_before;
+    for (const InboxMessage& message : world.getInbox().getMessages())
+    {
+      if (message.id < next_message) continue;
+      day.board_warning = day.board_warning ||
+                          message.title_key == "INBOX_BOARD_WARNING_TITLE";
+      day.new_decision =
+          day.new_decision || (!message.read &&
+                               (message.category == InboxCategory::Board ||
+                                message.category == InboxCategory::Contract));
+    }
+    if (!world.getInbox().getMessages().empty())
+      next_message = world.getInbox().getMessages().back().id + 1;
+    for (const IncomingOffer& offer : getIncomingOffers())
+    {
+      if (!known_offers.insert(offer.id).second) continue;
+      day.new_offers.push_back(
+          {offer.player_id,
+           offer.loan ? offer.loan_terms.loan_fee : offer.terms.fee,
+           offer.loan, getSquadRole(offer.player_id) == SquadRole::KeyPlayer});
+      day.new_decision = true;
+    }
+    std::unordered_map<PlayerID, uint16_t> injured_now;
+    for (const auto& player : gamedata->getPlayersForTeam(managed))
+    {
+      const PlayerID id = player.get().getId();
+      const PlayerDynamics& dynamics = player.get().getDynamics();
+      if (dynamics.injury_days > 0)
+      {
+        injured_now.emplace(id, dynamics.injury_days);
+        if (!injured.contains(id))
+        {
+          HolidayInjury injury{id, player.get().getName(),
+                               InjuryModel::nameKey(dynamics.injury),
+                               dynamics.injury_days,
+                               getSquadRole(id) == SquadRole::KeyPlayer};
+          day.new_injuries.push_back(injury);
+          summary.injuries.push_back(std::move(injury));
+        }
+      }
+      if (hasPendingTalk(id) && pending.insert(id).second)
+        day.new_decision = true;
+    }
+    injured = std::move(injured_now);
+    day.injured = static_cast<int>(injured.size());
+    day.injured_at_start = injured_at_start;
+
+    if (const auto stop = Holiday::checkStop(plan, day))
+    {
+      summary.reason = *stop;
+      if (*stop == HolidayStop::BigBid)
+        for (const HolidayOffer& offer : day.new_offers)
+          if (!offer.loan)
+          {
+            if (const auto player = gamedata->getPlayer(offer.player_id))
+              summary.stop_detail = player->get().getName();
+            summary.stop_amount = offer.fee;
+            break;
+          }
+      if (*stop == HolidayStop::KeyPlayerInjured)
+        for (const HolidayInjury& injury : day.new_injuries)
+          if (injury.key_player) summary.stop_detail = injury.name;
+      break;
+    }
+  }
+  delegation = delegation_before;
+
+  summary.end = game->getCurrentDate();
+  summary.days = advanced;
+  if (rules.assistant_inbox)
+    for (const InboxMessage& message : world.getInbox().getMessages())
+      if (message.id >= first_new_message && !message.read &&
+          message.category != InboxCategory::Board &&
+          message.category != InboxCategory::Contract &&
+          world.getInbox().markRead(message.id))
+        ++summary.messages_filed;
+
+  for (const Match& match : getTeamFixtures(managed))
+  {
+    if (!match.isPlayed() || match.getDate() < summary.start ||
+        summary.end < match.getDate())
+      continue;
+    const bool home = match.getHomeTeamId() == managed;
+    summary.results.push_back(
+        {match.getDate(), home ? match.getAwayTeamId() : match.getHomeTeamId(),
+         home, match.getMatchType(),
+         home ? match.getHomeScore() : match.getAwayScore(),
+         home ? match.getAwayScore() : match.getHomeScore()});
+  }
+  const auto& history = game->getTransfers().history();
+  for (size_t index = history_before; index < history.size(); ++index)
+  {
+    const TransferRecord& record = history[index];
+    if (record.to_team != managed && record.from_team != managed) continue;
+    const bool incoming = record.to_team == managed;
+    const auto player = gamedata->getPlayer(record.player_id);
+    summary.moves.push_back(
+        {record.player_id, player ? player->get().getName() : std::string(),
+         incoming ? record.from_team : record.to_team, record.fee, incoming});
+  }
+  tableSpot(summary.position_after, summary.points_after);
+  summary.balance_after = club.getFinances().getBalance();
+  if (summary.start < summary.end)
+  {
+    const FinanceSummary finance =
+        getFinanceSummary(managed, summary.start + 1, summary.end);
+    summary.income = finance.income;
+    summary.expenses = finance.expenses;
+  }
+  holiday_summary = std::move(summary);
+  return advanced;
 }

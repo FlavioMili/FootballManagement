@@ -10,6 +10,7 @@
 
 #include <imgui.h>
 
+#include <climits>
 #include <cstdint>
 #include <span>
 #include <string_view>
@@ -20,6 +21,53 @@
  * All widgets draw with the current Theme palette, never allocate per call
  * beyond ImGui's own buffers, and keep ImGui's ID/layout semantics so they can
  * be mixed freely with regular ImGui calls.
+ *
+ * Quick reference (sizes are unscaled; widgets multiply by Theme::scale()):
+ *
+ *   Buttons (min height UI::Size::BUTTON = 36 px, COMPACT = 28 px for rows)
+ *     if (UI::primaryButton("Submit offer")) ...          // accent, main CTA
+ *     if (UI::secondaryButton("Cancel")) ...               // neutral
+ *     if (UI::dangerButton("Release")) ...                 // destructive
+ *     UI::secondaryButton("Hire", {}, UI::ButtonSize::COMPACT);  // in tables
+ *     size.x: 0 = fit label (>= BUTTON_MIN_WIDTH), -FLT_MIN = fill width.
+ *
+ *   Money and negotiation
+ *     int64_t fee = 14'400'000;
+ *     const UI::MoneyChip chips[] = {{"Asking", asking}, {"Value", value}};
+ *     if (UI::moneyInput("##fee", fee, {.minimum = 0, .chips = chips})) ...
+ *       Shows "€14.4M"; accepts "15m", "850k", "1,200,000"; the -/+ buttons
+ *       step 5% (Shift 10%, Ctrl 1%).
+ *     int upfront = 2;  // index into the labels
+ *     const char* parts[] = {"20%", "40%", "60%", "80%", "100%"};
+ *     UI::segmented("##upfront", upfront, parts);
+ *     UI::summaryRow("Transfer fee", "€14.4M");
+ *     UI::summaryRow("Total cost", "€21.0M", nullptr, true);   // emphasis
+ *     UI::budgetImpact("Transfer budget", budget, budget - fee, "Over budget");
+ *
+ *   Filters and tabs
+ *     if (UI::toggleButton("Defenders", filter == DEF)) filter = DEF;
+ *
+ *   Layout (one scroll surface per page: the page scrolls, cards size to
+ *   content; never nest scrolling tables inside fixed-height cards)
+ *     UI::beginAutoHeightCard("id", "TITLE", width); ... UI::endCard();
+ *     A fixed-height card with a ScrollY table is only for layouts that fill
+ *     the window exactly (the page itself must not scroll then).
+ *
+ *   Tables (no horizontal scrolling: low-priority columns hide instead)
+ *     static const UI::Column COLUMNS[] = {
+ *         {"Name", 0.0f, 0},        // width 0 = stretch; priority 0 = keep
+ *         {"Age", 44.0f, 3},        // hides first
+ *         {"Wage", 84.0f, 2}};
+ *     const UI::ColumnMask mask =
+ *         UI::fitColumns(COLUMNS, ImGui::GetContentRegionAvail().x);
+ *     if (UI::beginResponsiveTable("t", COLUMNS, mask, flags)) {
+ *       ImGui::TableNextRow();
+ *       ImGui::TableNextColumn(); ...           // column 0 always visible
+ *       if (UI::cell(mask, 1)) ImGui::Text(...);
+ *       ImGui::EndTable();
+ *     }
+ *     Row actions go into a detail strip under the selected row: end the
+ *     table, draw the strip, reopen the same id with UI::TableHeader::NONE.
  */
 namespace UI
 {
@@ -78,8 +126,11 @@ void sectionLabel(const char* text);
 void beginCard(const char* id, const char* title, ImVec2 size,
                bool scroll = false);
 
-/** @brief Starts a full-width card that grows to fit its content. */
-void beginAutoHeightCard(const char* id, const char* title);
+/**
+ * @brief Starts a card that grows to fit its content (never scrolls).
+ * @param width Card width (0 = the full available width).
+ */
+void beginAutoHeightCard(const char* id, const char* title, float width = 0.0f);
 
 /** @brief Ends a card started with beginCard() or beginAutoHeightCard(). */
 void endCard();
@@ -165,8 +216,135 @@ bool beginDataTable(const char* id, int columns, ImGuiTableFlags flags,
  */
 void staticHeadersRow();
 
+/** @brief Design-system sizes in unscaled pixels. */
+namespace Size
+{
+constexpr float BUTTON = 36.0f;           /**< Regular button height. */
+constexpr float BUTTON_COMPACT = 28.0f;   /**< Buttons inside table rows. */
+constexpr float BUTTON_PADDING_X = 16.0f; /**< Horizontal label padding. */
+constexpr float BUTTON_MIN_WIDTH = 96.0f; /**< Minimum regular width. */
+}  // namespace Size
+
+/** @brief Button height class. */
+enum class ButtonSize : uint8_t
+{
+  REGULAR,
+  COMPACT
+};
+
 /** @brief Accent-filled call-to-action button. */
-bool primaryButton(const char* label, ImVec2 size = ImVec2(0, 0));
+bool primaryButton(const char* label, ImVec2 size = ImVec2(0, 0),
+                   ButtonSize buttonSize = ButtonSize::REGULAR);
+
+/** @brief Neutral button for secondary actions. */
+bool secondaryButton(const char* label, ImVec2 size = ImVec2(0, 0),
+                     ButtonSize buttonSize = ButtonSize::REGULAR);
+
+/** @brief Red button for destructive actions (release, cancel contract). */
+bool dangerButton(const char* label, ImVec2 size = ImVec2(0, 0),
+                  ButtonSize buttonSize = ButtonSize::REGULAR);
+
+/** @brief Scaled height of a button class. */
+float buttonHeight(ButtonSize buttonSize = ButtonSize::REGULAR);
+
+/** @brief A quick-pick value offered under a money input. */
+struct MoneyChip
+{
+  const char* label;
+  int64_t value;
+};
+
+/** @brief Options of moneyInput(). */
+struct MoneyInputOptions
+{
+  int64_t minimum = 0;
+  int64_t maximum = INT64_MAX;
+  std::span<const MoneyChip> chips = {};
+  float width = 0.0f; /**< 0 = available width. */
+};
+
+/**
+ * @brief Currency field showing "€14.4M"; typing accepts plain numbers and
+ * k/M/B suffixes. -/+ step 5% (Shift 10%, Ctrl 1%), chips set preset values.
+ * @return True on the frame the value changed.
+ */
+bool moneyInput(const char* id, int64_t& value,
+                const MoneyInputOptions& options = {});
+
+/** @brief Parses "14.4M", "850k", "€1,200,000" (false when invalid). */
+bool parseMoney(std::string_view text, int64_t& value);
+
+/**
+ * @brief Filter/tab button: neutral when off, selection fill with an accent
+ * underline when on (one segment of UI::segmented()).
+ */
+bool toggleButton(const char* label, bool active, ImVec2 size = ImVec2(0, 0),
+                  ButtonSize buttonSize = ButtonSize::REGULAR);
+
+/**
+ * @brief Segmented control for small enumerations (joined buttons).
+ * @param selected Index of the active segment, updated on click.
+ * @return True when the selection changed.
+ */
+bool segmented(const char* id, int& selected,
+               std::span<const char* const> labels, float width = 0.0f);
+
+/**
+ * @brief Label on the left, value right-aligned; emphasis draws a rule above
+ * and a larger value (totals).
+ */
+void summaryRow(const char* label, const char* value,
+                const ImVec4* valueColor = nullptr, bool emphasis = false);
+
+/**
+ * @brief Budget before/after bar: "€20.0M → €5.6M". The after part turns red
+ * below zero and the reason is shown underneath.
+ */
+void budgetImpact(const char* label, int64_t current, int64_t after,
+                  const char* reasonWhenNegative = nullptr);
+
+/** @brief One column of a responsive table. */
+struct Column
+{
+  const char* label;
+  float width = 0.0f; /**< Unscaled fixed width; 0 = stretch. */
+  int priority = 0;   /**< 0 = always shown; higher hides first. */
+  ImGuiTableColumnFlags flags = ImGuiTableColumnFlags_None;
+  ImGuiID user_id = 0; /**< Sort id (0 = the column index). */
+};
+
+/** @brief Visible-column mask produced by fitColumns(). */
+using ColumnMask = uint32_t;
+
+/**
+ * @brief Chooses the columns that fit the available width, dropping the
+ * highest priority numbers first (never horizontal scrolling).
+ * @param stretchMinimum Unscaled minimum width left for stretch columns.
+ */
+ColumnMask fitColumns(std::span<const Column> columns, float availableWidth,
+                      float stretchMinimum = 160.0f);
+
+/** @brief Header row emitted by beginResponsiveTable(). */
+enum class TableHeader : uint8_t
+{
+  STATIC,   /**< Plain labels (non-sortable tables). */
+  SORTABLE, /**< ImGui header row with sort arrows. */
+  NONE      /**< No header: continuation of a split table. */
+};
+
+/**
+ * @brief BeginTable + setup of the visible columns and the header row. Pair
+ * with ImGui::EndTable() when it returns true. Re-opening the same id with
+ * TableHeader::NONE continues a table split around an inline detail strip
+ * (column widths stay shared).
+ */
+bool beginResponsiveTable(const char* id, std::span<const Column> columns,
+                          ColumnMask mask, ImGuiTableFlags flags,
+                          TableHeader header = TableHeader::STATIC,
+                          ImVec2 size = ImVec2(0, 0));
+
+/** @brief Moves to the next cell when column index is visible. */
+bool cell(ColumnMask mask, int index);
 
 /** @brief Selectable text that looks like a link; returns true on click. */
 bool link(const char* label, const char* id);
@@ -174,11 +352,16 @@ bool link(const char* label, const char* id);
 /** @brief Muted key on the left, value on the right of the current row. */
 void keyValue(const char* key, const char* value, float keyWidth);
 
-/** @brief SameLine() only when an item of the given width still fits. */
-void sameLineIfFits(float nextWidth);
+/**
+ * @brief SameLine() only when an item of the given width still fits.
+ * @param spacing Gap before the item (negative = style item spacing).
+ * @return true when the item stays on the current line.
+ */
+bool sameLineIfFits(float nextWidth, float spacing = -1.0f);
 
-/** @brief Width of a regular button with this label. */
-float buttonWidth(const char* label);
+/** @brief Width of a button with this label (at least the minimum width). */
+float buttonWidth(const char* label,
+                  ButtonSize buttonSize = ButtonSize::REGULAR);
 
 /** @brief Text right-aligned in the current table cell or content region. */
 void textRight(const char* text);

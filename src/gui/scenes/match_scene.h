@@ -11,6 +11,7 @@
 #include <imgui.h>
 
 #include <cstdint>
+#include <future>
 #include <memory>
 #include <optional>
 #include <string>
@@ -19,6 +20,7 @@
 #include "gui/gui_scene.h"
 #include "gui/render/imatch_renderer.h"
 #include "gui/scenes/match_scene_tuning.h"
+#include "gui/scenes/team_talk_dialog.h"
 #include "model/match_engine.h"
 
 /** Which renderer presents the live match. */
@@ -87,12 +89,27 @@ class MatchScene : public GUIScene
   std::string pre_match_note;
 
   std::unique_ptr<MatchEngine> engine;
+  /** Quick result running on a worker thread (declared after the engine
+   * so it is joined before the engine is destroyed). */
+  std::future<void> quick_result;
+  /** Seconds the "skipping to the next highlight" note stays visible. */
+  float skip_indicator_seconds = 0.0f;
   std::unique_ptr<IMatchRenderer> renderer_2d;
   std::unique_ptr<IMatchRenderer> renderer_3d;
   MatchViewMode view_mode = MatchViewMode::PITCH_2D;
   MatchCameraMode camera_mode = MatchCameraMode::BROADCAST;
   bool show_player_names = false;
   float pending_zoom_steps = 0.0f;
+  /** Mouse input over the 3D view waiting for the next rendered frame. */
+  MatchCameraInput pending_camera_input;
+  /** The free camera orbits the moving ball (B). */
+  bool free_follow_ball = false;
+  /** "Pitch focus": the view fills the window under a compact HUD (F). */
+  bool pitch_focus = false;
+  /** Statistics and events hidden so the view gets the whole width. */
+  bool side_panels_hidden = false;
+  /** Width of the focus HUD's control strip last frame (right-aligned). */
+  float focus_controls_width = 0.0f;
   float frame_seconds = 0.0f;
 
   bool match_finished = false;
@@ -101,6 +118,7 @@ class MatchScene : public GUIScene
   float match_speed = 1.0f;
   bool highlights_only = false;
   bool is_paused = false;
+  TeamTalkDialog team_talk;
 
   bool show_substitutions = false;
 #ifdef DEBUG
@@ -146,7 +164,20 @@ class MatchScene : public GUIScene
   void setHighlightsOnly(bool enabled);
   void setViewMode(MatchViewMode mode);
   void setCameraMode(MatchCameraMode mode);
+  /** Enters or leaves pitch focus (full-window view with overlay HUD). */
+  void setPitchFocus(bool enabled);
+  void setSidePanelsHidden(bool hidden);
+  /** Hands the 3D view to the free camera from the pose on screen. */
+  void takeFreeCamera();
+  void setFreeFollowBall(bool follow);
+  /** Toggles the real window between windowed and full screen. */
+  void toggleWindowFullscreen();
+  /** Orbit, pan, zoom and double-click over the view (last item). */
+  void handleViewInput();
+  void renderPitchFocus();
+  void renderFocusHud(ImVec2 origin, ImVec2 size);
   void renderLineupGate();
+  void renderQuickResultProgress();
   void renderScoreboard();
   void renderTimeline();
   /** Appends new engine events to the (optionally filtered) feed. */

@@ -194,9 +194,19 @@ float potentialHeadroom(int age)
 float drawPotential(WorldRng& rng, float current, int age)
 {
   const float headroom = potentialHeadroom(age);
+  const float spread = age >= WorldTuning::Generation::VETERAN_AGE
+                           ? 0.5f
+                           : 0.45f * headroom + 1.5f;
   return std::min(
-      static_cast<float>(MAX_STAT_VAL) - 1.0f,
-      current + std::max(0.0f, rng.normal(headroom, 0.45f * headroom + 1.5f)));
+      WorldGeneration::maxPotential(age, current),
+      current + std::max(0.0f, rng.normal(headroom, spread)));
+}
+
+NameRegistry& generationRegistry()
+{
+  // Names of the world being generated; reset by generateClubProfiles().
+  static NameRegistry registry;
+  return registry;
 }
 
 Language drawNationality(WorldRng& rng, const LeagueProfile& league)
@@ -312,14 +322,12 @@ std::uint8_t clampRating(float value, float lo)
 
 Player makePlayer(WorldRng& rng, PlayerID player_id, TeamID team_id,
                   PlayerRole role, int age, float target_overall,
-                  const LeagueProfile& league, const StatsConfig& stats_config)
+                  const LeagueProfile& league, const StatsConfig& stats_config,
+                  NameRegistry& registry, SquadSurnames& squad)
 {
-  const NamePool& names = NamePool::instance();
-  const auto& first = names.first_names[static_cast<std::size_t>(
-      rng.uniformInt(0, static_cast<int>(names.first_names.size()) - 1))];
-  const auto& last = names.last_names[static_cast<std::size_t>(
-      rng.uniformInt(0, static_cast<int>(names.last_names.size()) - 1))];
   const Language nationality = drawNationality(rng, league);
+  const auto [first, last] =
+      WorldGeneration::drawName(rng, nationality, registry, squad);
   const std::uint8_t height = drawHeight(rng, role);
   const Foot foot = drawFoot(rng, role);
   auto stats = drawStats(rng, role, target_overall, stats_config);
@@ -338,31 +346,132 @@ std::uint32_t roundWage(double wage, double minimum)
 }
 }  // namespace
 
+const std::vector<std::string>& NamePool::firstNames(Language nationality) const
+{
+  const auto found = first_by_nationality.find(nationality);
+  return found == first_by_nationality.end() ? first_names : found->second;
+}
+
+const std::vector<std::string>& NamePool::lastNames(Language nationality) const
+{
+  const auto found = last_by_nationality.find(nationality);
+  return found == last_by_nationality.end() ? last_names : found->second;
+}
+
 const NamePool& NamePool::instance()
 {
   static const NamePool pool = []
   {
     NamePool loaded;
-    const auto read = [](const char* path)
+    const auto read = [](const std::string& path)
     {
       std::ifstream file(path);
       if (!file.is_open())
         throw std::runtime_error(std::string("Could not open ") + path);
-      return nlohmann::json::parse(file)
-          .at("names")
-          .get<std::vector<std::string>>();
+      return nlohmann::json::parse(file);
     };
-    loaded.first_names = read(FIRST_NAMES_PATH);
-    loaded.last_names = read(LAST_NAMES_PATH);
+    const auto byNationality =
+        [](const nlohmann::json& json,
+           std::unordered_map<Language, std::vector<std::string>>& out)
+    {
+      if (!json.contains("by_nationality")) return;
+      for (const auto& [name, list] : json.at("by_nationality").items())
+      {
+        const auto language = stringToLanguage.find(name);
+        auto names = list.get<std::vector<std::string>>();
+        if (language != stringToLanguage.end() && !names.empty())
+          out.emplace(language->second, std::move(names));
+      }
+    };
+    const nlohmann::json first = read(AssetPaths::firstNames());
+    const nlohmann::json last = read(AssetPaths::lastNames());
+    loaded.first_names = first.at("names").get<std::vector<std::string>>();
+    loaded.last_names = last.at("names").get<std::vector<std::string>>();
     if (loaded.first_names.empty() || loaded.last_names.empty())
       throw std::runtime_error("Name files must not be empty");
+    byNationality(first, loaded.first_by_nationality);
+    byNationality(last, loaded.last_by_nationality);
+    if (first.contains("excluded_full_names"))
+    {
+      for (const auto& name : first.at("excluded_full_names"))
+        loaded.excluded_full_names.insert(name.get<std::string>());
+    }
     return loaded;
   }();
   return pool;
 }
 
+bool NameRegistry::isAvailable(const std::string& full_name) const
+{
+  return !names.contains(full_name) &&
+         !NamePool::instance().excluded_full_names.contains(full_name);
+}
+
+void NameRegistry::claim(const std::string& full_name)
+{
+  names.insert(full_name);
+}
+
+bool SquadSurnames::allows(const std::string& last_name) const
+{
+  const auto found = counts.find(last_name);
+  return found == counts.end() || (found->second == 1 && !repeated);
+}
+
+void SquadSurnames::add(const std::string& last_name)
+{
+  if (++counts[last_name] > 1) repeated = true;
+}
+
 namespace WorldGeneration
 {
+std::pair<std::string, std::string> drawName(WorldRng& rng,
+                                             Language nationality,
+                                             NameRegistry& registry,
+                                             SquadSurnames& squad)
+{
+  const NamePool& pool = NamePool::instance();
+  const std::vector<std::string>& firsts = pool.firstNames(nationality);
+  const std::vector<std::string>& lasts = pool.lastNames(nationality);
+  const auto pick = [&rng](const std::vector<std::string>& names)
+  {
+    return names[static_cast<std::size_t>(
+        rng.uniformInt(0, static_cast<int>(names.size()) - 1))];
+  };
+  // Iberian and Brazilian players commonly carry two surnames.
+  const char* joiner = nationality == Language::ES ||
+                               nationality == Language::PT ||
+                               nationality == Language::BR ||
+                               nationality == Language::MX
+                           ? " "
+                           : "-";
+  std::string first;
+  std::string last;
+  for (int attempt = 0; attempt < 2 * WorldTuning::Generation::NAME_ATTEMPTS;
+       ++attempt)
+  {
+    first = pick(firsts);
+    last = pick(lasts);
+    if (attempt >= WorldTuning::Generation::NAME_ATTEMPTS)
+    {
+      const std::string second = pick(lasts);
+      if (second != last) last += joiner + second;
+    }
+    if (registry.isAvailable(first + " " + last) && squad.allows(last)) break;
+  }
+  registry.claim(first + " " + last);
+  squad.add(last);
+  return {std::move(first), std::move(last)};
+}
+
+float maxPotential(int age, float overall)
+{
+  if (age >= WorldTuning::Generation::VETERAN_AGE)
+    return std::min(static_cast<float>(MAX_STAT_VAL) - 1.0f,
+                    overall + WorldTuning::Generation::VETERAN_HEADROOM);
+  return static_cast<float>(MAX_STAT_VAL) - 1.0f;
+}
+
 float teamLevel(std::uint8_t reputation)
 {
   return WorldTuning::Generation::TEAM_LEVEL_BASE +
@@ -392,6 +501,7 @@ void generateClubProfiles(std::unordered_map<TeamID, Team>& teams,
                           std::uint64_t world_seed, bool assign_opening_balance)
 {
   using Generation = WorldTuning::Generation;
+  if (assign_opening_balance) generationRegistry().clear();
   std::map<LeagueID, std::vector<TeamID>> by_league;
   for (const auto& [team_id, team] : teams)
   {
@@ -482,6 +592,7 @@ std::vector<Player> generateSquad(const Team& team,
   const float level = teamLevel(team.getReputation());
 
   std::vector<double> wage_indices;
+  SquadSurnames surnames;
   players.reserve(SQUAD_TEMPLATE.size() - existing_players);
   wage_indices.reserve(SQUAD_TEMPLATE.size() - existing_players);
   for (std::size_t slot = existing_players; slot < SQUAD_TEMPLATE.size();
@@ -494,7 +605,7 @@ std::vector<Player> generateSquad(const Team& team,
                    20.0f, 95.0f);
     players.push_back(makePlayer(rng, next_player_id++, team.getId(),
                                  squad_slot.role, age, target, *economy.profile,
-                                 stats_config));
+                                 stats_config, generationRegistry(), surnames));
     wage_indices.push_back(ClubEconomy::wageIndex(target, age) *
                            static_cast<double>(rng.uniform(0.85f, 1.15f)));
   }
@@ -517,7 +628,8 @@ std::vector<Player> generateSquad(const Team& team,
 }
 
 Player generateYouthPlayer(const Team& team, PlayerID player_id, WorldRng& rng,
-                           const StatsConfig& stats_config, double wage_scale)
+                           const StatsConfig& stats_config, double wage_scale,
+                           NameRegistry& registry, SquadSurnames& squad)
 {
   using Youth = WorldTuning::Youth;
   static constexpr std::array<PlayerRole, 12> ROLES = {
@@ -542,8 +654,10 @@ Player generateYouthPlayer(const Team& team, PlayerID player_id, WorldRng& rng,
       std::max(15.0f, potential * rng.uniform(0.50f, 0.62f) -
                           1.5f * static_cast<float>(17 - age));
 
-  Player player = makePlayer(rng, player_id, team.getId(), role, age, current,
-                             leagueProfile(team.getLeagueId()), stats_config);
+  Player player =
+      makePlayer(rng, player_id, team.getId(), role, age, current,
+                 leagueProfile(team.getLeagueId()), stats_config, registry,
+                 squad);
   player.setPotential(potential);
   player.setContractYears(3);
   player.setWage(

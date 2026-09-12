@@ -246,7 +246,7 @@ void MainMenuScene::render()
   }
   const bool firstRun = latest_career_slot == 0;
   if (firstRun ? UI::primaryButton(LOC("MENU_NEW_GAME"), buttonSize)
-               : ImGui::Button(LOC("MENU_NEW_GAME"), buttonSize))
+               : UI::secondaryButton(LOC("MENU_NEW_GAME"), buttonSize))
   {
     ImGui::OpenPopup("###select_save_slot");
     is_new_game = true;
@@ -254,15 +254,15 @@ void MainMenuScene::render()
   const bool anySave = std::ranges::any_of(
       cached_metadata, [](const auto& metadata) { return metadata.exists; });
   ImGui::BeginDisabled(!anySave);
-  if (ImGui::Button(LOC("MENU_LOAD_GAME"), buttonSize))
+  if (UI::secondaryButton(LOC("MENU_LOAD_GAME"), buttonSize))
   {
     ImGui::OpenPopup("###select_save_slot");
     is_new_game = false;
   }
   ImGui::EndDisabled();
-  if (ImGui::Button(LOC("MENU_SETTINGS"), buttonSize))
+  if (UI::secondaryButton(LOC("MENU_SETTINGS"), buttonSize))
     changeScene(std::make_unique<SettingsScene>(guiView));
-  if (ImGui::Button(LOC("MENU_QUIT"), buttonSize)) quit();
+  if (UI::secondaryButton(LOC("MENU_QUIT"), buttonSize)) quit();
   ImGui::PopFont();
   renderSlotPicker();
   ImGui::EndGroup();
@@ -345,7 +345,7 @@ void MainMenuScene::renderSlotPicker()
     }
 
     ImGui::Spacing();
-    if (ImGui::Button(LOC("SETTINGS_CANCEL"), ImVec2(slotSize.x, 0.0f)))
+    if (UI::secondaryButton(LOC("SETTINGS_CANCEL"), ImVec2(slotSize.x, 0.0f)))
       ImGui::CloseCurrentPopup();
 
     // Overwriting a save is irreversible: ask first.

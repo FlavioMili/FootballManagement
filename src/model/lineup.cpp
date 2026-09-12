@@ -145,6 +145,177 @@ void Lineup::setStrategy(const Strategy& strat) { strategy = strat; }
 
 const Strategy& Lineup::getStrategy() const { return strategy; }
 
+// ---------- Captain and set-piece takers ---------
+namespace
+{
+float stat(const Player& player, const char* name)
+{
+  const auto found = player.getStats().find(name);
+  return found == player.getStats().end() ? 0.0f : found->second;
+}
+}  // namespace
+
+const char* SetPieces::dutyKey(SetPieceDuty duty)
+{
+  switch (duty)
+  {
+    case SetPieceDuty::Captain:
+      return "SET_PIECE_CAPTAIN";
+    case SetPieceDuty::ViceCaptain:
+      return "SET_PIECE_VICE_CAPTAIN";
+    case SetPieceDuty::Penalties:
+      return "SET_PIECE_PENALTIES";
+    case SetPieceDuty::FreeKicks:
+      return "SET_PIECE_FREE_KICKS";
+    case SetPieceDuty::CornersLeft:
+      return "SET_PIECE_CORNERS_LEFT";
+    case SetPieceDuty::CornersRight:
+      return "SET_PIECE_CORNERS_RIGHT";
+    case SetPieceDuty::LongThrows:
+      return "SET_PIECE_LONG_THROWS";
+    case SetPieceDuty::COUNT:
+      break;
+  }
+  return "SET_PIECE_CAPTAIN";
+}
+
+bool SetPieces::isLeadership(SetPieceDuty duty)
+{
+  return duty == SetPieceDuty::Captain || duty == SetPieceDuty::ViceCaptain;
+}
+
+float SetPieces::score(SetPieceDuty duty, const Player& player)
+{
+  if (isLeadership(duty) || player.getRole() == PlayerRole::GK) return 0.0f;
+  // A corner from the side of the preferred foot is the natural delivery.
+  constexpr float FOOT_BONUS = 3.0f;
+  switch (duty)
+  {
+    case SetPieceDuty::Penalties:
+    case SetPieceDuty::FreeKicks:
+      return stat(player, "Shooting") * 0.75f + stat(player, "Passing") * 0.15f +
+             stat(player, "Vision") * 0.10f;
+    case SetPieceDuty::CornersLeft:
+    case SetPieceDuty::CornersRight:
+    {
+      const bool leftCorner = duty == SetPieceDuty::CornersLeft;
+      const bool leftFooted = player.getFoot() == Foot::Left;
+      return stat(player, "Passing") * 0.6f + stat(player, "Vision") * 0.4f +
+             (leftCorner == leftFooted ? FOOT_BONUS : 0.0f);
+    }
+    case SetPieceDuty::LongThrows:
+    {
+      // Strength first; every centimetre above 175 adds some distance.
+      const float reach =
+          std::clamp((static_cast<float>(player.getHeight()) - 175.0f) * 0.5f,
+                     -5.0f, 10.0f);
+      return std::clamp(stat(player, "Physicality") * 0.85f +
+                            stat(player, "Stamina") * 0.15f + reach,
+                        0.0f, 100.0f);
+    }
+    default:
+      return 0.0f;
+  }
+}
+
+const Player* SetPieces::best(SetPieceDuty duty,
+                              const std::vector<const Player*>& candidates)
+{
+  const Player* chosen = nullptr;
+  float chosenScore = 0.0f;
+  for (const Player* player : candidates)
+  {
+    if (player == nullptr) continue;
+    const float value = score(duty, *player);
+    if (value <= 0.0f) continue;
+    if (chosen == nullptr || value > chosenScore ||
+        (value == chosenScore && player->getId() < chosen->getId()))
+    {
+      chosen = player;
+      chosenScore = value;
+    }
+  }
+  return chosen;
+}
+
+PlayerID Lineup::getDesignated(SetPieceDuty duty) const
+{
+  return duty < SetPieceDuty::COUNT ? designations[static_cast<size_t>(duty)]
+                                    : PlayerID{};
+}
+
+void Lineup::setDesignated(SetPieceDuty duty, PlayerID playerID)
+{
+  if (duty >= SetPieceDuty::COUNT) return;
+  designations[static_cast<size_t>(duty)] = playerID;
+  // One player cannot be captain and vice-captain at once.
+  if (playerID == PlayerID{} || !SetPieces::isLeadership(duty)) return;
+  const SetPieceDuty other = duty == SetPieceDuty::Captain
+                                 ? SetPieceDuty::ViceCaptain
+                                 : SetPieceDuty::Captain;
+  if (designations[static_cast<size_t>(other)] == playerID)
+    designations[static_cast<size_t>(other)] = PlayerID{};
+}
+
+const SetPieceDesignations& Lineup::getDesignations() const
+{
+  return designations;
+}
+
+void Lineup::setDesignations(const SetPieceDesignations& values)
+{
+  designations = values;
+}
+
+std::vector<const Player*> Lineup::starters() const
+{
+  std::vector<const Player*> result;
+  result.reserve(outfield_players.size() + 1);
+  if (goalkeeper) result.push_back(goalkeeper);
+  for (const auto& positioned : outfield_players)
+    if (positioned.player) result.push_back(positioned.player);
+  return result;
+}
+
+bool Lineup::isStarter(PlayerID playerID) const
+{
+  if (playerID == PlayerID{}) return false;
+  if (goalkeeper && goalkeeper->getId() == playerID) return true;
+  return std::ranges::any_of(outfield_players,
+                             [playerID](const PositionedPlayer& positioned)
+                             {
+                               return positioned.player &&
+                                      positioned.player->getId() == playerID;
+                             });
+}
+
+const Player* Lineup::effectiveTaker(SetPieceDuty duty) const
+{
+  if (duty >= SetPieceDuty::COUNT) return nullptr;
+  const std::vector<const Player*> xi = starters();
+  const auto starter = [&xi](PlayerID playerID) -> const Player*
+  {
+    if (playerID == PlayerID{}) return nullptr;
+    const auto found = std::ranges::find_if(
+        xi, [playerID](const Player* player)
+        { return player->getId() == playerID; });
+    return found == xi.end() ? nullptr : *found;
+  };
+  if (duty == SetPieceDuty::Captain)
+  {
+    const PlayerID captainID = getDesignated(SetPieceDuty::Captain);
+    if (captainID == PlayerID{}) return nullptr;
+    if (const Player* captain = starter(captainID)) return captain;
+    return starter(getDesignated(SetPieceDuty::ViceCaptain));
+  }
+  if (duty == SetPieceDuty::ViceCaptain)
+    return starter(getDesignated(SetPieceDuty::ViceCaptain));
+  if (const Player* designated = starter(getDesignated(duty));
+      designated && SetPieces::score(duty, *designated) > 0.0f)
+    return designated;
+  return SetPieces::best(duty, xi);
+}
+
 // ---------- Debug / Visualisation --------------
 std::string Lineup::toString() const
 {

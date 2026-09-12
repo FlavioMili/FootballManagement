@@ -17,6 +17,7 @@
 //   FM_MONKEY_STEPS=<n>   steps per seed (default 300; long run: 20000)
 //   FM_MONKEY_OUT=<dir>   keep the action logs (default: per-process root)
 //   FM_MONKEY_FRAME_BUDGET_MS=<ms>  UI build budget per frame (default 1500)
+//   FM_MONKEY_SHOT_AT=<step>  screenshot (BMP, in the output dir) after it
 //
 // A failure prints the seed, the step and the tail of the action log; the
 // same seed and step count replay it exactly (fixed delta time, fixed world
@@ -31,7 +32,6 @@
 #include <gtest/gtest.h>
 #include <imgui.h>
 #include <imgui_internal.h>
-#include <sqlite3.h>
 
 #include <algorithm>
 #include <array>
@@ -62,7 +62,6 @@
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
 #include "controller/game_controller.h"
-#include "database/database_connection.h"
 #include "database/gamedata.h"
 #include "global/global.h"
 #include "global/language_manager.h"
@@ -174,7 +173,12 @@ class GameFlowTest_GUIFlowLifecycle_Test
   static bool finished(const MatchScene& scene) { return scene.match_finished; }
   static void setSpeed(MatchScene& scene, float speed)
   {
-    scene.match_speed = speed;
+    scene.setPlaybackSpeed(speed);
+  }
+  /** Quick Result simulates on a worker thread until update() sees it. */
+  static bool quickResultPending(const MatchScene& scene)
+  {
+    return scene.quick_result.valid();
   }
   static bool paused(const MatchScene& scene) { return scene.is_paused; }
 
@@ -277,6 +281,8 @@ const char* sceneName(SceneID id)
       return "training";
     case SceneID::STAFF:
       return "staff";
+    case SceneID::YOUTH:
+      return "youth";
   }
   return "?";
 }
@@ -646,18 +652,6 @@ struct Fingerprint
   }
 };
 
-/** Slot the controller's database belongs to (0 if none matches). */
-int currentSlot(const GameController& controller)
-{
-  const auto connection = controller.getDbConn();
-  if (!connection) return 0;
-  const char* file = sqlite3_db_filename(connection->getRaw(), "main");
-  if (file == nullptr) return 0;
-  std::error_code error;
-  for (int slot = 1; slot <= 3; ++slot)
-    if (fs::equivalent(file, RuntimePaths::savePath(slot), error)) return slot;
-  return 0;
-}
 
 // ---- Crash breadcrumbs ---------------------------------------------------------
 
@@ -826,7 +820,7 @@ class Driver
   }
 
   // ---- Discovery ----
-  /** Visible windows the mouse can reach (the top popup's, if one is open). */
+  /** Visible windows the mouse can reach (only the top modal's, if any). */
   static std::vector<ImRect> reachableWindows()
   {
     ImGuiContext& context = *GImGui;
@@ -841,11 +835,18 @@ class Driver
       if (!window->Active || window->Hidden ||
           (window->Flags & (ImGuiWindowFlags_Tooltip | ImGuiWindowFlags_NoInputs)))
         continue;
-      if (popup != nullptr && window->RootWindow != popup) continue;
+      // Outside a modal nothing reacts; outside a plain popup a click
+      // closes it (what users do), so those stay reachable, less often.
+      const bool inPopup = popup != nullptr && window->RootWindow == popup;
+      if (popup != nullptr && !inPopup &&
+          (popup->Flags & ImGuiWindowFlags_Modal))
+        continue;
       ImRect rect = window->InnerClipRect;
       rect.ClipWithFull(screen);
       if (rect.GetWidth() < 4.0f || rect.GetHeight() < 4.0f) continue;
       rects.push_back(rect);
+      if (inPopup && !(popup->Flags & ImGuiWindowFlags_Modal))
+        rects.push_back(rect);
     }
     return rects;
   }
@@ -948,6 +949,17 @@ class Driver
       if (!path.empty()) path += '/';
       path += description;
     }
+    // Pointer IDs differ between runs: keep the log replayable.
+    for (size_t at = path.find("0x"); at != std::string::npos;
+         at = path.find("0x", at + 3))
+    {
+      size_t end = at + 2;
+      while (end < path.size() &&
+             (std::isxdigit(static_cast<unsigned char>(path[end])) ||
+              path[end] == 'x'))
+        ++end;
+      path.replace(at, end - at, "0x?");
+    }
     return path;
   }
 
@@ -958,6 +970,13 @@ class Driver
   std::optional<ImVec2> findLabel(const std::string& needle, ImVec2 min,
                                   ImVec2 max)
   {
+    return findLabel(std::vector<std::string>{needle}, min, max);
+  }
+  std::optional<ImVec2> findLabel(const std::vector<std::string>& needles,
+                                  ImVec2 min, ImVec2 max)
+  {
+    std::string needle;
+    for (const std::string& part : needles) needle += part + "|";
     if (const auto cached = found_labels.find(needle);
         cached != found_labels.end())
     {
@@ -976,7 +995,10 @@ class Driver
         const ImGuiID id = GImGui->HoveredId;
         if (id == 0 || GImGui->HoveredIdIsDisabled || !seen.insert(id).second)
           continue;
-        if (labelOf(id, {x, y}).find(needle) == std::string::npos) continue;
+        const std::string label = labelOf(id, {x, y});
+        if (std::ranges::none_of(needles, [&label](const std::string& part)
+                                 { return label.find(part) != std::string::npos; }))
+          continue;
         found_labels[needle] = {id, ImVec2(x, y)};
         return ImVec2(x, y);
       }
@@ -1028,7 +1050,9 @@ class Driver
               "simulated",
               sceneName(activeId()), view.getOverlayDepth()));
       }
-      if (!running && !loadingSlot())
+      const auto* match = dynamic_cast<const MatchScene*>(active());
+      const bool quick = match != nullptr && Bridge::quickResultPending(*match);
+      if (!running && !loadingSlot() && !quick)
       {
         if (!requested || active() != base || ++stuckFrames > 6) break;
       }
@@ -1093,6 +1117,7 @@ enum class Action : uint8_t
   MATCH_KEY,
   MATCH_RUN,
   MATCH_FINISH,
+  CLOSE_DIALOG,
   LANGUAGE,
   COUNT
 };
@@ -1117,6 +1142,9 @@ class Monkey
     resetSingletons();
     log_path = outputDir() / std::format("monkey_seed{}.log", seed);
     log_file.open(log_path, std::ios::trunc);
+    perf_file.open(outputDir() / std::format("monkey_seed{}_slow_frames.txt",
+                                             seed),
+                   std::ios::trunc);
 
     GameController controller;
     controller.newGame(1, 0xF00DULL + seed);
@@ -1145,6 +1173,7 @@ class Monkey
 
     std::optional<GameDateValue> lastDate = controller.getCurrentDate();
     const double budget = envInt("FM_MONKEY_FRAME_BUDGET_MS", 1500);
+    const int shotAt = envInt("FM_MONKEY_SHOT_AT", 0);
     const auto started = Clock::now();
     for (step = 1; step <= steps && violations.size() < MAX_VIOLATIONS; ++step)
     {
@@ -1170,6 +1199,13 @@ class Monkey
       }
       sawMenu = sawMenu || driver.menu() != nullptr;
       line(std::format("#{} [{}] {}", step, sceneName(scene), detail));
+      if (step == shotAt)
+      {
+        driver.frame(true);
+        view.captureScreenshot(
+            (outputDir() / std::format("monkey_seed{}_step{}.bmp", seed, step))
+                .string());
+      }
 
       if (driver.imgui_errors > 0)
         problems.push_back(std::format("imgui: {} usage error(s) on '{}'",
@@ -1180,6 +1216,11 @@ class Monkey
                                        driver.worst_frame_ms,
                                        driver.worst_frame_scene));
       slowest_frame_ms = std::max(slowest_frame_ms, driver.worst_frame_ms);
+      // Wall-clock data stays out of the (replayable) action log.
+      if (driver.worst_frame_ms > 100.0)
+        perf_file << std::format("step {} [{}] {:.0f} ms UI build: {}\n", step,
+                                 driver.worst_frame_scene,
+                                 driver.worst_frame_ms, detail);
       if (MainGameScene* hub = driver.hub(); hub && !hub->isAdvancing() &&
                                              !Bridge::continueRequested(*hub) &&
                                              Bridge::backdropAlive(view))
@@ -1244,6 +1285,7 @@ class Monkey
   Rng rng;
   fs::path log_path;
   std::ofstream log_file;
+  std::ofstream perf_file;
   std::vector<std::string> log_lines;
   std::vector<std::string> violations;
   std::set<std::string> reported;
@@ -1285,6 +1327,11 @@ class Monkey
       if (match != nullptr && Bridge::finished(*match))
         table.push_back({Action::MATCH_FINISH, 14});
     }
+    // A stuck user eventually looks for the way out of a dialog or screen.
+    if (ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId |
+                                   ImGuiPopupFlags_AnyPopupLevel) ||
+        scene == SceneID::SETTINGS || scene == SceneID::TEAM_SELECTION)
+      table.push_back({Action::CLOSE_DIALOG, 8});
     int total = 0;
     for (const Weighted& entry : table) total += entry.weight;
     int roll = static_cast<int>(rng.below(static_cast<size_t>(total)));
@@ -1494,6 +1541,32 @@ class Monkey
                            sceneName(driver.activeId()),
                            controller.getCurrentDate().toString());
       }
+      case Action::CLOSE_DIALOG:
+      {
+        ImVec2 min(0.0f, 0.0f);
+        ImVec2 max = ImGui::GetIO().DisplaySize;
+        if (GImGui->OpenPopupStack.Size > 0)
+          if (const ImGuiWindow* popup = GImGui->OpenPopupStack.back().Window)
+          {
+            min = popup->Rect().Min;
+            max = popup->Rect().Max;
+          }
+        const auto point = driver.findLabel(
+            std::vector<std::string>{"#CLOSE", LOC("SUBSTITUTION_CLOSE"),
+                                     LOC("SETTINGS_CANCEL"),
+                                     LOC("SETTINGS_APPLY"),
+                                     LOC("TEAM_SELECTION_CONFIRM"),
+                                     LOC("NAV_BACK")},
+            min, max);
+        if (!point) return "way out: none found";
+        const std::string label =
+            driver.labelOf(GImGui->HoveredId, *point);
+        driver.click(*point);
+        Driver::parkMouse();
+        driver.frame();
+        return std::format("way out `{}` -> '{}'", label,
+                           sceneName(driver.activeId()));
+      }
       case Action::COUNT:
         break;
     }
@@ -1533,7 +1606,7 @@ class Monkey
   std::string saveReload(Driver& driver, std::vector<std::string>& problems)
   {
     GameController& controller = driver.controller;
-    const int slot = currentSlot(controller);
+    const int slot = controller.getCurrentSlot().value_or(0);
     if (slot == 0) return "save/reload: no slot";
     driver.key(KEY_CTRL_S);
     const Fingerprint saved = Fingerprint::of(controller);
@@ -1787,7 +1860,7 @@ TEST(GuiWidgetSweep, EveryEnabledWidgetHasAnEffect)
          ++attempt)
       driver.key(KEY_ESCAPE);
   };
-  constexpr std::array<std::pair<NavSection, const char*>, 13> SECTIONS = {{
+  constexpr std::array<std::pair<NavSection, const char*>, 14> SECTIONS = {{
       {NavSection::HOME, "home"},
       {NavSection::INBOX, "inbox"},
       {NavSection::CLUB, "club"},
@@ -1800,6 +1873,7 @@ TEST(GuiWidgetSweep, EveryEnabledWidgetHasAnEffect)
       {NavSection::TRANSFERS, "transfers"},
       {NavSection::SCOUTING, "scouting"},
       {NavSection::STAFF, "staff"},
+      {NavSection::YOUTH, "youth"},
       {NavSection::FINANCES, "finances"},
   }};
 
@@ -1819,6 +1893,8 @@ TEST(GuiWidgetSweep, EveryEnabledWidgetHasAnEffect)
       const size_t tab = label.find("Tabs/");
       const bool isTab = tab != std::string::npos &&
                          label.find('/', tab + 5) == std::string::npos;
+      if (std::getenv("FM_SWEEP_VERBOSE") != nullptr)
+        std::cout << "[sweep] " << name << ": " << label << '\n';
       (isTab ? tabs : order).emplace_back(&item, std::move(label));
     }
     // Tab bars remember their tab across screen instances: click tabs last.

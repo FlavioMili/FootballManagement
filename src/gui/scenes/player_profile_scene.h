@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "gui/scenes/management_scene.h"
+#include "gui/scenes/player_talk_dialog.h"
 #include "gui/view_models/player_view.h"
 #include "model/player.h"
 #include "model/season_history.h"
@@ -141,4 +142,5 @@ class PlayerProfileScene : public ManagementScene
   float renew_wage = 0.0f;
   int renew_years = 0;
   std::string renew_status;
+  PlayerTalkDialog talk_dialog;
 };

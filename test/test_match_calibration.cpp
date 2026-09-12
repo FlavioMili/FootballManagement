@@ -198,6 +198,12 @@ struct CalibrationTotals
   double fullMatchDistance = 0.0;
   double fullMatchSecondHalfDistance = 0.0;
   double fullMatchCondition = 0.0;
+  double fullMatchHighIntensity = 0.0;
+  double fullMatchSecondHalfHighIntensity = 0.0;
+  double fullMatchSprintDistance = 0.0;
+  int fullMatchSprints = 0;
+  double fullMatchTopSpeed = 0.0;
+  double matchSeconds = 0.0;
   // Minutes of each half, to compare per-minute work rates.
   double firstHalfMinutes = 0.0;
   double secondHalfMinutes = 0.0;
@@ -295,6 +301,12 @@ void accumulate(CalibrationTotals& totals, const MatchEngine& engine)
     totals.fullMatchDistance += entry.distanceMetres;
     totals.fullMatchSecondHalfDistance += entry.secondHalfDistanceMetres;
     totals.fullMatchCondition += entry.condition;
+    totals.fullMatchHighIntensity += entry.highIntensityMetres;
+    totals.fullMatchSecondHalfHighIntensity +=
+        entry.secondHalfHighIntensityMetres;
+    totals.fullMatchSprintDistance += entry.sprintMetres;
+    totals.fullMatchSprints += entry.sprints;
+    totals.fullMatchTopSpeed += entry.topSpeed;
     totals.minimumCondition =
         std::min(totals.minimumCondition, entry.condition);
   }
@@ -304,6 +316,7 @@ void accumulate(CalibrationTotals& totals, const MatchEngine& engine)
   const double firstHalf = engine.getElapsedMatchMinutes() - secondHalf;
   totals.firstHalfMinutes += firstHalf;
   totals.secondHalfMinutes += secondHalf;
+  totals.matchSeconds += engine.getSimulatedSeconds();
 }
 
 CalibrationTotals runCalibration(const Team& home, const Team& away,
@@ -317,11 +330,7 @@ CalibrationTotals runCalibration(const Team& home, const Team& away,
     MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
                        away.getStrategy(), config,
                        firstSeed + static_cast<std::uint32_t>(index) * 7919U);
-    for (int frame = 0;
-         frame < 20'000 && engine.getState() != MatchState::FULL_TIME; ++frame)
-    {
-      engine.update(0.25f);
-    }
+    engine.simulateToEnd();
     accumulate(totals, engine);
   }
   totals.seconds =
@@ -394,6 +403,24 @@ void report(const char* label, const CalibrationTotals& t)
       t.ratedPlayers > 0 ? t.ratingSum / t.ratedPlayers : 0.0, t.minimumRating,
       t.maximumRating, t.statGoalMismatches,
       t.matches > 0 ? 1000.0 * t.seconds / t.matches : 0.0);
+  const double players = t.fullMatchPlayers > 0 ? t.fullMatchPlayers : 1.0;
+  const double firstHalfHighIntensity =
+      t.fullMatchHighIntensity - t.fullMatchSecondHalfHighIntensity;
+  std::printf(
+      "[calibration] %s highIntensity=%.0fm (1st %.0f / 2nd %.0f, per-minute "
+      "drop %.1f%%) sprintDistance=%.0fm sprints=%.1f topSpeed=%.2fm/s "
+      "matchSeconds=%.0f\n",
+      label, t.fullMatchHighIntensity / players,
+      firstHalfHighIntensity / players,
+      t.fullMatchSecondHalfHighIntensity / players,
+      t.secondHalfMinutes > 0.0 && firstHalfHighIntensity > 0.0
+          ? 100.0 * (1.0 - (t.fullMatchSecondHalfHighIntensity /
+                            t.secondHalfMinutes) /
+                               (firstHalfHighIntensity / t.firstHalfMinutes))
+          : 0.0,
+      t.fullMatchSprintDistance / players, t.fullMatchSprints / players,
+      t.fullMatchTopSpeed / players,
+      t.matches > 0 ? t.matchSeconds / t.matches : 0.0);
   std::printf(
       "[calibration] %s ballInPlay=%.1f min crosses/team=%.2f "
       "interceptions/team=%.2f clearances/team=%.2f events/match:",
@@ -409,9 +436,10 @@ void report(const char* label, const CalibrationTotals& t)
 }
 }  // namespace
 
-// Headless calibration against broad real-football bands (top-five-league
+// Headless calibration against real-football bands (top-five-league
 // averages: ~2.8 goals, ~25% draws, ~12.8 shots and ~11.5 fouls per team,
-// ~4 yellows per match). Fixed seeds keep the test deterministic.
+// ~4 yellows per match, ~57 minutes of ball in play, ~10.5 km per
+// outfielder). Fixed seeds keep the test deterministic.
 TEST(MatchEngineCalibration, HeadlessSeasonMatchesRealisticBands)
 {
   std::vector<std::unique_ptr<Player>> pool;
@@ -432,46 +460,47 @@ TEST(MatchEngineCalibration, HeadlessSeasonMatchesRealisticBands)
   report("weak-home", weakHome);
 
   const int goals = equal.homeGoals + equal.awayGoals;
-  EXPECT_GE(equal.perMatch(goals), 2.2);
-  EXPECT_LE(equal.perMatch(goals), 3.3);
-  EXPECT_GE(equal.perMatch(equal.draws), 0.20);
-  EXPECT_LE(equal.perMatch(equal.draws), 0.32);
+  EXPECT_GE(equal.perMatch(goals), 2.45);
+  EXPECT_LE(equal.perMatch(goals), 3.2);
+  EXPECT_GE(equal.perMatch(equal.draws), 0.19);
+  EXPECT_LE(equal.perMatch(equal.draws), 0.33);
   EXPECT_GT(equal.homeWins, equal.awayWins) << "home advantage";
-  // The engine condenses ~57 minutes of live play into about a minute of
-  // simulated action (the clock runs one match minute per simulated second),
-  // so it produces roughly a quarter of the real number of possessions.
-  // Shot volume is therefore below the real ~12.8 per team and conversion
-  // above the real ~10.5%, which keeps goals, results and scorelines
-  // realistic. These bands pin that trade-off.
-  EXPECT_GE(equal.perTeam(equal.shots), 4.0);
-  EXPECT_LE(equal.perTeam(equal.shots), 17.0);
-  const double onTargetShare =
-      static_cast<double>(equal.onTarget) / equal.shots;
-  EXPECT_GE(onTargetShare, 0.30);
-  EXPECT_LE(onTargetShare, 0.55);
+  // Real match time: shot volume, accuracy and conversion come from the
+  // same number of possessions as a real match (~12.8 shots, ~4.5 on target
+  // per team, ~10.5% converted, xG per shot ~0.105).
+  EXPECT_GE(equal.perTeam(equal.shots), 10.0);
+  EXPECT_LE(equal.perTeam(equal.shots), 16.0);
+  EXPECT_GE(equal.perTeam(equal.onTarget), 3.5);
+  EXPECT_LE(equal.perTeam(equal.onTarget), 6.0);
   const double conversion = static_cast<double>(goals) / equal.shots;
   EXPECT_GE(conversion, 0.08);
-  EXPECT_LE(conversion, 0.35);
-  EXPECT_GE(equal.xg / equal.shots, 0.08);
-  EXPECT_LE(equal.xg / equal.shots, 0.25);
+  EXPECT_LE(conversion, 0.135);
+  EXPECT_GE(equal.xg / equal.shots, 0.09);
+  EXPECT_LE(equal.xg / equal.shots, 0.14);
   const double headedShare =
       static_cast<double>(equal.headedShots) / equal.shots;
-  EXPECT_GE(headedShare, 0.05);
-  EXPECT_LE(headedShare, 0.30);
+  EXPECT_GE(headedShare, 0.08);
+  EXPECT_LE(headedShare, 0.35);
   EXPECT_GE(static_cast<double>(equal.penaltyGoals) / equal.penalties, 0.6);
   EXPECT_LE(static_cast<double>(equal.penaltyGoals) / equal.penalties, 0.95);
-  EXPECT_GE(equal.perTeam(equal.fouls), 8.0);
-  EXPECT_LE(equal.perTeam(equal.fouls), 15.0);
-  EXPECT_GE(equal.perMatch(equal.yellows), 2.0);
-  EXPECT_LE(equal.perMatch(equal.yellows), 5.0);
+  EXPECT_GE(equal.perTeam(equal.passesAttempted), 380.0);
+  EXPECT_LE(equal.perTeam(equal.passesAttempted), 620.0);
+  const double passCompletion =
+      static_cast<double>(equal.passesCompleted) / equal.passesAttempted;
+  EXPECT_GE(passCompletion, 0.74);
+  EXPECT_LE(passCompletion, 0.86);
+  EXPECT_GE(equal.perTeam(equal.fouls), 9.0);
+  EXPECT_LE(equal.perTeam(equal.fouls), 14.0);
+  EXPECT_GE(equal.perMatch(equal.yellows), 2.8);
+  EXPECT_LE(equal.perMatch(equal.yellows), 5.2);
   EXPECT_GE(equal.perMatch(equal.reds), 0.03);
   EXPECT_LE(equal.perMatch(equal.reds), 0.40);
-  EXPECT_GE(equal.perMatch(equal.penalties), 0.08);
-  EXPECT_LE(equal.perMatch(equal.penalties), 0.50);
-  EXPECT_GE(equal.perTeam(equal.corners), 3.0);
-  EXPECT_LE(equal.perTeam(equal.corners), 7.5);
-  EXPECT_GE(equal.perTeam(equal.offsides), 0.6);
-  EXPECT_LE(equal.perTeam(equal.offsides), 3.0);
+  EXPECT_GE(equal.perMatch(equal.penalties), 0.1);
+  EXPECT_LE(equal.perMatch(equal.penalties), 0.6);
+  EXPECT_GE(equal.perTeam(equal.corners), 4.0);
+  EXPECT_LE(equal.perTeam(equal.corners), 8.0);
+  EXPECT_GE(equal.perTeam(equal.offsides), 1.0);
+  EXPECT_LE(equal.perTeam(equal.offsides), 4.0);
   EXPECT_GE(equal.perTeam(equal.injuries), 0.05);
   EXPECT_LE(equal.perTeam(equal.injuries), 0.40);
   EXPECT_GE(equal.perTeam(equal.substitutions), 3.0);
@@ -482,18 +511,41 @@ TEST(MatchEngineCalibration, HeadlessSeasonMatchesRealisticBands)
   EXPECT_LE(equal.perMatch(equal.addedFirstHalf), 5.0);
   EXPECT_GE(equal.perMatch(equal.addedSecondHalf), 3.0);
   EXPECT_LE(equal.perMatch(equal.addedSecondHalf), 8.0);
+  // Ball in play ~55-60 of ~98 minutes; a match is ~5,900 real seconds.
+  EXPECT_GE(equal.ballInPlay / equal.matches, 53.0);
+  EXPECT_LE(equal.ballInPlay / equal.matches, 62.0);
+  EXPECT_GE(equal.matchSeconds / equal.matches, 5'600.0);
+  EXPECT_LE(equal.matchSeconds / equal.matches, 6'600.0);
   ASSERT_GT(equal.fullMatchPlayers, 0);
   const double distance = equal.fullMatchDistance / equal.fullMatchPlayers;
-  EXPECT_GE(distance, 8'500.0);
-  EXPECT_LE(distance, 12'500.0);
+  EXPECT_GE(distance, 9'000.0);
+  EXPECT_LE(distance, 13'000.0);
+  const double highIntensity =
+      equal.fullMatchHighIntensity / equal.fullMatchPlayers;
+  EXPECT_GE(highIntensity, 400.0);
+  EXPECT_LE(highIntensity, 1'400.0);
+  const double sprints =
+      static_cast<double>(equal.fullMatchSprints) / equal.fullMatchPlayers;
+  EXPECT_GE(sprints, 8.0);
+  EXPECT_LE(sprints, 70.0);
+  const double topSpeed = equal.fullMatchTopSpeed / equal.fullMatchPlayers;
+  EXPECT_GE(topSpeed, 7.0);
+  EXPECT_LE(topSpeed, 10.4);
   // Per minute played, fatigue must show in the second half.
   const double firstHalfRate =
       (equal.fullMatchDistance - equal.fullMatchSecondHalfDistance) /
       equal.firstHalfMinutes;
   const double secondHalfRate =
       equal.fullMatchSecondHalfDistance / equal.secondHalfMinutes;
-  EXPECT_LT(secondHalfRate, firstHalfRate * 0.98)
+  EXPECT_LT(secondHalfRate, firstHalfRate * 0.99)
       << "second-half work rate must drop";
+  const double firstHalfHighIntensityRate =
+      (equal.fullMatchHighIntensity - equal.fullMatchSecondHalfHighIntensity) /
+      equal.firstHalfMinutes;
+  const double secondHalfHighIntensityRate =
+      equal.fullMatchSecondHalfHighIntensity / equal.secondHalfMinutes;
+  EXPECT_LT(secondHalfHighIntensityRate, firstHalfHighIntensityRate * 0.97)
+      << "second-half high-intensity running must drop";
   const double condition = equal.fullMatchCondition / equal.fullMatchPlayers;
   EXPECT_GE(condition, 0.45);
   EXPECT_LE(condition, 0.85);
@@ -505,5 +557,5 @@ TEST(MatchEngineCalibration, HeadlessSeasonMatchesRealisticBands)
   // The stronger side wins most games wherever it plays.
   EXPECT_GT(strongHome.homeWins, strongHome.awayWins * 2);
   EXPECT_GT(weakHome.awayWins, weakHome.homeWins * 2);
-  EXPECT_LT(equal.seconds / equal.matches, 0.05) << "a match must stay fast";
+  EXPECT_LT(equal.seconds / equal.matches, 0.2) << "a match must stay fast";
 }

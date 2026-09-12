@@ -45,6 +45,30 @@ float unitHash(std::uint32_t a, std::uint32_t b, std::uint32_t c)
   return static_cast<float>(mixed & 0xFFFFU) / 65536.0f;
 }
 
+/// Smooth value noise in [0, 1): bilinear blend of hashed lattice values.
+float valueNoise(float x, float y, std::uint32_t salt)
+{
+  const float cellX = std::floor(x);
+  const float cellY = std::floor(y);
+  const auto lattice = [salt](float cx, float cy)
+  {
+    return unitHash(static_cast<std::uint32_t>(static_cast<std::int32_t>(cx)),
+                    static_cast<std::uint32_t>(static_cast<std::int32_t>(cy)),
+                    salt);
+  };
+  const auto smooth = [](float t) { return t * t * (3.0f - 2.0f * t); };
+  const float fx = smooth(x - cellX);
+  const float fy = smooth(y - cellY);
+  const float bottom = lattice(cellX, cellY) +
+                       (lattice(cellX + 1.0f, cellY) - lattice(cellX, cellY)) *
+                           fx;
+  const float top =
+      lattice(cellX, cellY + 1.0f) +
+      (lattice(cellX + 1.0f, cellY + 1.0f) - lattice(cellX, cellY + 1.0f)) *
+          fx;
+  return bottom + (top - bottom) * fy;
+}
+
 void addRectangle(std::vector<GroundPolygon>& target, float x0, float y0,
                   float x1, float y1, ImU32 color, bool lit)
 {
@@ -340,65 +364,159 @@ class StandBuilder
     return face;
   }
 
-  ImU32 crowdClothes(const SectionShape& shape, std::uint32_t key) const
+  /// Fans in team colours gather in low-frequency blocks; everyone else
+  /// wears muted everyday clothes.
+  ImU32 crowdClothes(const SectionShape& shape, std::uint32_t key,
+                     float teamNoise) const
   {
-    const float teamShare = shape.awayEnd ? Tuning::Crowd::AWAY_END_SHARE
-                                          : Tuning::Crowd::HOME_SHARE;
+    using C = Tuning::Crowd;
+    const float teamShare =
+        (shape.awayEnd ? C::AWAY_END_SHARE : C::HOME_SHARE) +
+        C::SHARE_SWING * (teamNoise - 0.5f) * 2.0f;
     if (unitHash(key, 3U, 0U) < teamShare)
     {
       const KitColors& kit = shape.awayEnd ? kits.away : kits.home;
       return unitHash(key, 4U, 0U) < 0.75f ? kit.shirt : kit.trim;
     }
-    constexpr std::array<ImU32, 8> NEUTRAL{
-        IM_COL32(30, 36, 60, 255),    IM_COL32(26, 26, 30, 255),
-        IM_COL32(118, 120, 128, 255), IM_COL32(222, 222, 228, 255),
-        IM_COL32(60, 82, 122, 255),   IM_COL32(112, 52, 42, 255),
-        IM_COL32(72, 82, 52, 255),    IM_COL32(170, 150, 120, 255)};
-    return NEUTRAL[static_cast<std::size_t>(unitHash(key, 5U, 0U) * 8.0f) %
+    constexpr std::array<ImU32, 9> NEUTRAL{
+        IM_COL32(34, 40, 62, 255),    IM_COL32(30, 30, 34, 255),
+        IM_COL32(92, 96, 104, 255),   IM_COL32(176, 178, 184, 255),
+        IM_COL32(52, 70, 104, 255),   IM_COL32(96, 56, 46, 255),
+        IM_COL32(70, 78, 56, 255),    IM_COL32(150, 132, 108, 255),
+        IM_COL32(120, 36, 40, 255)};
+    return NEUTRAL[static_cast<std::size_t>(unitHash(key, 5U, 0U) * 9.0f) %
                    NEUTRAL.size()];
   }
 
+  /// Fills a tier with spectators grouped in clumps (back rows first) and
+  /// tints the tier face with the crowd's average colour, so the stand looks
+  /// full even where no spectator is drawn.
   void addCrowd(Face& face, const SectionShape& shape, std::uint32_t tier,
                 ProfilePoint from, ProfilePoint to, float frontLight,
                 float backLight)
   {
-    face.crowdBegin = static_cast<std::uint32_t>(geometry.crowd.size());
+    using C = Tuning::Crowd;
     constexpr std::array<ImU32, 4> SKIN{
         IM_COL32(236, 196, 164, 255), IM_COL32(204, 150, 112, 255),
         IM_COL32(150, 100, 70, 255), IM_COL32(96, 64, 44, 255)};
-    std::uint32_t row = 0;
-    for (float d = from.d + Tuning::Crowd::ROW_DEPTH * 0.5f; d < to.d;
-         d += Tuning::Crowd::ROW_DEPTH, ++row)
+    face.clumpBegin = static_cast<std::uint32_t>(geometry.clumps.size());
+    const int rows = static_cast<int>((to.d - from.d) / C::ROW_DEPTH);
+    const auto rowPoint = [&](int row)
     {
+      const float d = from.d + (static_cast<float>(row) + 0.5f) * C::ROW_DEPTH;
       const float t = (d - from.d) / (to.d - from.d);
-      const ProfilePoint point{d, from.z + (to.z - from.z) * t};
-      const Vec3 left = shape.left(point);
-      const Vec3 right = shape.right(point);
-      const float rowLength = RenderMath::length(right - left);
-      const auto seats =
-          static_cast<std::uint32_t>(rowLength / Tuning::Crowd::SEAT_SPACING);
-      const float rowLight = frontLight + (backLight - frontLight) * t;
-      for (std::uint32_t seat = 0; seat < seats; ++seat)
+      return ProfilePoint{d, from.z + (to.z - from.z) * t};
+    };
+    std::array<float, 3> nearSum{};
+    std::array<float, 3> farSum{};
+    float nearCount = 0.0f;
+    float farCount = 0.0f;
+    const auto accumulate = [](std::array<float, 3>& sum, ImU32 color)
+    {
+      sum[0] += static_cast<float>((color >> IM_COL32_R_SHIFT) & 0xFFU);
+      sum[1] += static_cast<float>((color >> IM_COL32_G_SHIFT) & 0xFFU);
+      sum[2] += static_cast<float>((color >> IM_COL32_B_SHIFT) & 0xFFU);
+    };
+    const auto average = [](const std::array<float, 3>& sum, float count)
+    {
+      const auto channel = [count](float value)
+      { return static_cast<int>(value / count + 0.5f); };
+      return IM_COL32(channel(sum[0]), channel(sum[1]), channel(sum[2]), 255);
+    };
+
+    const int lastPair = rows > 0 ? (rows - 1) / C::CLUMP_ROWS : -1;
+    for (int pair = lastPair; pair >= 0; --pair)
+    {
+      const int firstRow = pair * C::CLUMP_ROWS;
+      const int endRow = std::min(firstRow + C::CLUMP_ROWS, rows);
+      const ProfilePoint front = rowPoint(firstRow);
+      const float rowLength =
+          RenderMath::length(shape.right(front) - shape.left(front));
+      const int seats = static_cast<int>(rowLength / C::SEAT_SPACING);
+      for (int firstSeat = 0; firstSeat < seats; firstSeat += C::CLUMP_SEATS)
       {
-        const std::uint32_t key =
-            ((sectionCounter * 4U + tier) * 64U + row) * 1024U + seat;
-        if (unitHash(key, 1U, 0U) < Tuning::Crowd::EMPTY_SEAT_RATIO) continue;
-        const float jitter =
-            (unitHash(key, 2U, 0U) - 0.5f) * Tuning::Crowd::JITTER * 2.0f;
-        const float along = (static_cast<float>(seat) + 0.5f + jitter) /
-                            static_cast<float>(seats);
-        const ImU32 clothes = crowdClothes(shape, key);
-        const ImU32 skin =
-            SKIN[static_cast<std::size_t>(unitHash(key, 6U, 0U) * 4.0f) %
-                 SKIN.size()];
-        const float light = rowLight * (0.85f + 0.3f * unitHash(key, 7U, 0U));
-        CrowdDot& dot = geometry.crowd.emplace_back();
-        dot.base = RenderMath::lerp(left, right, along);
-        dot.body = shadeColor(clothes, light);
-        dot.head = shadeColor(skin, light);
+        const int endSeat = std::min(firstSeat + C::CLUMP_SEATS, seats);
+        CrowdClump clump;
+        clump.dotBegin = static_cast<std::uint32_t>(geometry.crowd.size());
+        std::array<float, 3> clumpSum{};
+        for (int row = endRow - 1; row >= firstRow; --row)
+        {
+          const ProfilePoint point = rowPoint(row);
+          const Vec3 left = shape.left(point);
+          const Vec3 right = shape.right(point);
+          const float rowT =
+              (point.d - from.d) / std::max(to.d - from.d, 1e-3f);
+          const float rowLight = frontLight + (backLight - frontLight) * rowT;
+          for (int seat = firstSeat; seat < endSeat; ++seat)
+          {
+            const std::uint32_t key =
+                ((sectionCounter * 4U + tier) * 128U +
+                 static_cast<std::uint32_t>(row)) *
+                    1024U +
+                static_cast<std::uint32_t>(seat);
+            if (unitHash(key, 1U, 0U) < C::EMPTY_SEAT_RATIO) continue;
+            const float jitter =
+                (unitHash(key, 2U, 0U) - 0.5f) * C::JITTER * 2.0f;
+            const Vec3 base = RenderMath::lerp(
+                left, right,
+                (static_cast<float>(seat) + 0.5f + jitter) /
+                    static_cast<float>(seats));
+            const float noiseX =
+                (base.x + base.y) / (C::NOISE_SEATS * C::SEAT_SPACING);
+            const float noiseY = (point.d + static_cast<float>(tier) * 50.0f) /
+                                 (C::NOISE_ROWS * C::ROW_DEPTH);
+            const ImU32 clothes =
+                crowdClothes(shape, key, valueNoise(noiseX, noiseY, 11U));
+            const ImU32 skin =
+                SKIN[static_cast<std::size_t>(unitHash(key, 6U, 0U) * 4.0f) %
+                     SKIN.size()];
+            const float light =
+                rowLight *
+                (1.0f + C::LIGHT_SWING *
+                            (valueNoise(noiseX * 0.7f, noiseY, 23U) - 0.5f) *
+                            2.0f +
+                 C::LIGHT_JITTER * (unitHash(key, 7U, 0U) - 0.5f) * 2.0f);
+            CrowdDot& dot = geometry.crowd.emplace_back();
+            dot.base = base;
+            dot.body = shadeColor(clothes, light);
+            dot.head = shadeColor(skin, light);
+            const ImU32 look = mixColor(dot.body, dot.head, 0.25f);
+            accumulate(clumpSum, look);
+            accumulate(rowT < 0.5f ? nearSum : farSum, look);
+            (rowT < 0.5f ? nearCount : farCount) += 1.0f;
+          }
+        }
+        clump.dotEnd = static_cast<std::uint32_t>(geometry.crowd.size());
+        if (clump.dotEnd == clump.dotBegin) continue;
+        const float members =
+            static_cast<float>(endSeat - firstSeat);
+        const float centre =
+            (static_cast<float>(firstSeat) + members * 0.5f) /
+            static_cast<float>(seats);
+        clump.base =
+            RenderMath::lerp(shape.left(front), shape.right(front), centre);
+        const ProfilePoint back = rowPoint(endRow - 1);
+        clump.height = back.z - front.z + C::DOT_HEIGHT;
+        clump.halfWidth = members * C::SEAT_SPACING * 0.5f;
+        clump.color = average(
+            clumpSum, static_cast<float>(clump.dotEnd - clump.dotBegin));
+        geometry.clumps.push_back(clump);
       }
     }
-    face.crowdEnd = static_cast<std::uint32_t>(geometry.crowd.size());
+    face.clumpEnd = static_cast<std::uint32_t>(geometry.clumps.size());
+    const float crowdShare = 1.0f - C::SEAT_SHOW_THROUGH;
+    if (nearCount > 0.0f)
+    {
+      const ImU32 nearColor =
+          mixColor(face.colors[0], average(nearSum, nearCount), crowdShare);
+      face.colors[0] = face.colors[1] = nearColor;
+    }
+    if (farCount > 0.0f)
+    {
+      const ImU32 farColor =
+          mixColor(face.colors[3], average(farSum, farCount), crowdShare);
+      face.colors[2] = face.colors[3] = farColor;
+    }
   }
 
   void buildSection(const SectionShape& shape)
@@ -631,6 +749,7 @@ void Geometry::build(const MatchKits& kits)
   faces.clear();
   sections.clear();
   crowd.clear();
+  clumps.clear();
   boards.clear();
 
   buildGround(*this);

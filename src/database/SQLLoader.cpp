@@ -24,11 +24,14 @@ std::unordered_map<Query, std::string> SQLLoader::queries_{};
 
 void SQLLoader::loadQueriesFromFile()
 {
-  std::string content = readFile(QUERIES_PATH);
+  std::string content = readFile(AssetPaths::queries());
   parseQueries(content);
 }
 
-std::string SQLLoader::loadSchemaFromFile() { return readFile(SCHEMA_PATH); }
+std::string SQLLoader::loadSchemaFromFile()
+{
+  return readFile(AssetPaths::schema());
+}
 
 const std::string& SQLLoader::getQuery(const Query query_id)
 {

@@ -192,7 +192,8 @@ std::size_t replaceIneligible(Lineup& lineup,
 std::vector<std::pair<PlayerID, PlayerID>> replacements(const Lineup& before,
                                                         const Lineup& after);
 
-/** Starts the lineup's players with their persistent condition (0-100). */
+/** Starts the matchday squad (starters and substitutes) with its persistent
+ * condition (0-100). */
 void carryCondition(MatchEngine& engine, const Lineup& lineup);
 
 /** Minutes, end condition (0-100) and injuries of every participant. */

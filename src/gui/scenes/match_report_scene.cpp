@@ -29,6 +29,18 @@ namespace
 {
 constexpr float TWO_COLUMN_MIN_WIDTH = 860.0f;
 constexpr float MARKER_SIZE = 10.0f;
+/** Below this height the report cards stop filling the window and flow. */
+constexpr float REPORT_FILL_MIN_HEIGHT = 480.0f;
+
+/** Fixed-height card when height > 0, otherwise a card sized to content. */
+void beginReportCard(const char* id, const char* title, float width,
+                     float height)
+{
+  if (height > 0.0f)
+    UI::beginCard(id, title, ImVec2(width, height), true);
+  else
+    UI::beginAutoHeightCard(id, title, width);
+}
 
 std::string playerName(const GameData* data, PlayerID id)
 {
@@ -188,8 +200,11 @@ void MatchReportScene::renderContent()
   const bool twoColumns = available >= TWO_COLUMN_MIN_WIDTH * Theme::scale();
   const float half =
       twoColumns ? std::floor((available - gap) * 0.5f) : available;
-  const float height =
-      std::max(ImGui::GetContentRegionAvail().y, 480.0f * Theme::scale());
+  // Side by side and tall enough: fill the window (lists scroll inside).
+  // Otherwise every card takes its natural height and the page scrolls.
+  const float height = ImGui::GetContentRegionAvail().y;
+  const bool fill =
+      twoColumns && height >= REPORT_FILL_MIN_HEIGHT * Theme::scale();
   // Simulated matches carry no timeline or team stats: keep those cards
   // short instead of leaving half the screen empty.
   const bool sparse =
@@ -197,12 +212,13 @@ void MatchReportScene::renderContent()
                                 report->home_stats.passes_attempted ==
                             0;
   const float topHeight =
-      sparse ? ImGui::GetTextLineHeightWithSpacing() * 2.0f +
-                   2.0f * Theme::Space::M * Theme::scale() +
-                   Theme::textSize(Theme::Text::CAPTION) * Theme::scale()
-             : std::floor(height * 0.46f);
+      !fill    ? 0.0f
+      : sparse ? ImGui::GetTextLineHeightWithSpacing() * 2.0f +
+                     2.0f * Theme::Space::M * Theme::scale() +
+                     Theme::textSize(Theme::Text::CAPTION) * Theme::scale()
+               : std::floor(height * 0.46f);
   const float bottomHeight =
-      height - topHeight - ImGui::GetStyle().ItemSpacing.y;
+      fill ? height - topHeight - ImGui::GetStyle().ItemSpacing.y : 0.0f;
   renderEvents(half, topHeight);
   if (twoColumns) ImGui::SameLine();
   renderStats(twoColumns ? available - gap - half : available, topHeight);
@@ -272,8 +288,7 @@ void MatchReportScene::renderScore()
 void MatchReportScene::renderEvents(float width, float height)
 {
   const Theme::Palette& palette = Theme::palette();
-  UI::beginCard("report_events", LOC("REPORT_EVENTS"), ImVec2(width, height),
-                true);
+  beginReportCard("report_events", LOC("REPORT_EVENTS"), width, height);
   if (events.empty())
   {
     ImGui::TextColored(palette.faint, "%s", LOC("REPORT_NO_EVENTS"));
@@ -320,8 +335,7 @@ void MatchReportScene::renderEvents(float width, float height)
 
 void MatchReportScene::renderStats(float width, float height)
 {
-  UI::beginCard("report_stats", LOC("REPORT_STATS"), ImVec2(width, height),
-                true);
+  beginReportCard("report_stats", LOC("REPORT_STATS"), width, height);
   const TeamMatchStats& home = report->home_stats;
   const TeamMatchStats& away = report->away_stats;
   // Simulated (not watched) matches only record the score.
@@ -373,7 +387,7 @@ void MatchReportScene::renderRatings(const char* id, const std::string& club,
                                      float width, float height)
 {
   const Theme::Palette& palette = Theme::palette();
-  UI::beginCard(id, club.c_str(), ImVec2(width, height), true);
+  beginReportCard(id, club.c_str(), width, height);
   if (rows.empty())
   {
     ImGui::TextColored(palette.faint, "%s", LOC("REPORT_NO_PLAYERS"));
@@ -382,8 +396,8 @@ void MatchReportScene::renderRatings(const char* id, const std::string& club,
   }
   if (ImGui::BeginTable(id, 5,
                         ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-                            ImGuiTableFlags_ScrollY |
-                            ImGuiTableFlags_SizingFixedFit))
+                            ImGuiTableFlags_SizingFixedFit |
+                            (height > 0.0f ? ImGuiTableFlags_ScrollY : 0)))
   {
     ImGui::TableSetupScrollFreeze(0, 1);
     ImGui::TableSetupColumn(LOC("ROSTER_COL_NAME"),

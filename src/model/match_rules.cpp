@@ -200,6 +200,40 @@ FoulSanction decideFoulSanction(const FoulContext& context)
                                        : FoulSanction::YELLOW;
 }
 
+float tackleWinChance(const TackleContext& context)
+{
+  using D = MatchTuning::Defending;
+  return std::clamp(
+      D::BASE_WIN_CHANCE + context.defending * D::DEFENDING_WIN_BONUS -
+          context.dribbling * D::DRIBBLING_WIN_PENALTY +
+          (context.defenderPhysicality - context.carrierPhysicality) *
+              D::PHYSICALITY_DUEL_WEIGHT +
+          context.pressing * D::PRESSING_WIN_BONUS +
+          std::clamp(context.exposure, 0.0f, 1.0f) * D::EXPOSURE_WIN_BONUS -
+          (context.shielding
+               ? context.carrierPhysicality * D::SHIELD_PHYSICALITY_PENALTY
+               : 0.0f) -
+          (context.sliding ? D::SLIDE_WIN_PENALTY : 0.0f) -
+          (context.fromBehind ? D::FROM_BEHIND_WIN_PENALTY : 0.0f),
+      D::MIN_WIN_CHANCE, D::MAX_WIN_CHANCE);
+}
+
+float tackleFoulPropensity(const TackleContext& context)
+{
+  using D = MatchTuning::Defending;
+  // Defenders are far more careful inside their own penalty area, a booked
+  // player picks his challenges, and a challenge while the ball is away from
+  // the attacker's foot rarely catches the man.
+  return (D::BASE_FOUL_CHANCE + context.riskTaking * D::RISK_FOUL_BONUS +
+          (1.0f - context.defending) * D::TECHNIQUE_FOUL_BONUS) *
+         (context.defenderBooked ? MatchTuning::Discipline::BOOKED_PLAYER_CAUTION
+                                 : 1.0f) *
+         (context.inPenaltyArea ? D::PENALTY_AREA_FOUL_SCALE : 1.0f) *
+         (context.fromBehind ? D::FROM_BEHIND_FOUL_FACTOR : 1.0f) *
+         (context.sliding ? D::SLIDE_FOUL_FACTOR : 1.0f) *
+         (1.0f - std::clamp(context.exposure, 0.0f, 1.0f) * D::EXPOSED_FOUL_RELIEF);
+}
+
 float staminaDrainPerSecond(float speedRatio, float endurance,
                             float pressingIntensity)
 {

@@ -20,6 +20,7 @@
 
 #include "global/types.h"
 #include "model/gamedate.h"
+#include "model/scout_expertise.h"
 
 class GameData;
 class Inbox;
@@ -78,7 +79,7 @@ constexpr float EXPECTED_WAGE_RAISE = 1.15f;  /*!< [P] Wage a mover asks. */
 constexpr float UNLISTED_FEE_PREMIUM = 1.35f; /*!< [P] Prying a player out. */
 constexpr float EXPIRING_FEE_DISCOUNT = 0.6f;
 constexpr std::size_t MAX_REPORTS = 300;
-constexpr std::size_t MAX_FINISHED_ASSIGNMENTS = 20;
+constexpr std::size_t MAX_FINISHED_ASSIGNMENTS = 40;
 constexpr std::size_t MAX_FOCUSES = 6;
 }  // namespace ScoutingTuning
 
@@ -92,7 +93,7 @@ struct ScoutProfile
   std::string name;
   std::uint8_t judging_ability = 50;   /*!< Reads current ability. */
   std::uint8_t judging_potential = 50; /*!< Reads the ceiling. */
-  std::uint8_t adaptability = 50;      /*!< Works abroad. */
+  Language nationality = Language::EN;
 };
 
 /** @brief What an assignment covers (values are persisted). */
@@ -101,7 +102,8 @@ enum class ScoutTargetKind : std::uint8_t
   Player = 0, /*!< target_id: PlayerID. */
   League,     /*!< target_id: LeagueID. */
   Country,    /*!< target_id: top LeagueID; covers its divisions and cup. */
-  FreeAgents  /*!< target_id unused. */
+  FreeAgents, /*!< target_id unused. */
+  Region      /*!< target_id: Continent; every country on it. */
 };
 
 /** @brief Why an assignment could not be started. */
@@ -158,6 +160,8 @@ struct ScoutReport
   std::uint8_t knowledge = 0;  /*!< 0-100 at the time of the report. */
   std::uint8_t confidence = 0; /*!< Knowledge weighted by judging. */
   float overall = 0.0f;        /*!< Estimated current ability. */
+  float overall_low = 0.0f;    /*!< 80% range of the estimate. */
+  float overall_high = 0.0f;
   float potential_low = 0.0f;
   float potential_high = 0.0f;
   std::int64_t estimated_fee = 0;
@@ -165,6 +169,7 @@ struct ScoutReport
   bool fits_need = false;
   bool affordable = false;
   bool available = false;
+  bool seen = false; /*!< Opened by the manager on the scout's page. */
 };
 
 /**
@@ -260,8 +265,8 @@ struct ScoutedPlayerRow
   PlayerRole role = PlayerRole::UNKNOWN;
   std::uint8_t age = 0;
   std::uint8_t knowledge = 0;
-  float overall = 0.0f; /*!< Centre of the overall range. */
-  float overall_low = 0.0f;  /*!< 80% range of the overall estimate. */
+  float overall = 0.0f;     /*!< Centre of the overall range. */
+  float overall_low = 0.0f; /*!< 80% range of the overall estimate. */
   float overall_high = 0.0f;
   float potential_low = 0.0f;
   float potential_high = 0.0f;
@@ -324,6 +329,30 @@ struct ScoutingState
   std::vector<ScoutReport> reports; /*!< Oldest first. */
   std::vector<RecruitmentFocus> focuses;
   std::vector<ShortlistEntry> shortlist;
+  /** Background and experience of the club's scouts, by scout id. */
+  std::unordered_map<std::uint32_t, ScoutExpertise> expertise;
+};
+
+/** @brief What a scout is doing, which decides his page. */
+enum class ScoutStatus : std::uint8_t
+{
+  OnAssignment,    /*!< Live assignment and the reports filed so far. */
+  IdleWithHistory, /*!< Past assignments and their reports. */
+  IdleNew          /*!< Nothing yet: send him somewhere. */
+};
+
+/**
+ * @struct ScoutSummary
+ * @brief One row of the scouts list.
+ */
+struct ScoutSummary
+{
+  ScoutProfile profile;
+  ScoutStatus status = ScoutStatus::IdleNew;
+  std::uint32_t active_assignment_id = 0; /*!< 0 when idle. */
+  std::size_t unread_reports = 0;
+  std::size_t total_reports = 0;
+  std::size_t finished_assignments = 0;
 };
 
 /**
@@ -339,7 +368,9 @@ struct ScoutingState
  * for the player's position at his club (normal-prior shrinkage), so
  * estimates converge towards the truth, never flicker, and poorly known
  * players do not top rankings through noise alone. Scouts are sent on paid
- * assignments (a player, a league, a country or the free-agent pool); they file
+ * assignments (a player, a league, a country, a continent or the free-agent
+ * pool) and perform according to their regional expertise (home country,
+ * languages, experience; see ScoutExpertiseModel); they file
  * graded reports and prioritise the club's recruitment focuses. Shortlisted
  * players raise alerts when they are listed, enter their final contract year,
  * get injured or move.
@@ -415,6 +446,22 @@ class ScoutingSystem
   /** Active assignment of a scout, if any. */
   const ScoutAssignment* activeAssignment(std::uint32_t scout_id) const;
 
+  /** What a scout is doing (drives the scout page). */
+  ScoutStatus scoutStatus(std::uint32_t scout_id) const;
+
+  /** Every scout with his status and report counters, in roster order. */
+  std::vector<ScoutSummary> scoutSummaries() const;
+
+  /** Background, languages and experience of a scout. */
+  ScoutExpertise expertiseOf(std::uint32_t scout_id) const;
+
+  /** Expected effectiveness of sending a scout to a target (0.6x-1.5x). */
+  ScoutEffectiveness effectiveness(std::uint32_t scout_id, ScoutTargetKind kind,
+                                   std::uint32_t target_id) const;
+
+  /** Top league (country) of a league. */
+  LeagueID countryOf(LeagueID league_id) const;
+
   /** Price of an assignment (0 if the target is invalid). */
   std::int64_t assignmentCost(ScoutTargetKind kind, std::uint32_t target_id,
                               std::uint16_t days) const;
@@ -430,6 +477,13 @@ class ScoutingSystem
   // ---- Reports ----
 
   const std::vector<ScoutReport>& getReports() const { return state.reports; }
+
+  /** Reports not yet opened, of every scout or of one. */
+  std::size_t unreadReports() const;
+  std::size_t unreadReports(std::uint32_t scout_id) const;
+
+  /** Marks a scout's reports as opened; false if none were unread. */
+  bool markReportsSeen(std::uint32_t scout_id);
 
   // ---- Recruitment focus ----
 
@@ -494,7 +548,18 @@ class ScoutingSystem
   std::int64_t estimatedFee(const Player& player,
                             const ScoutedPlayerRow& row) const;
   bool anyFocusMatches(const ScoutedPlayerRow& row) const;
-  LeagueID countryOf(LeagueID league_id) const;
+  std::vector<LeagueID> worldCountries() const;
+  /** Stores the generated background of scouts seen for the first time. */
+  void ensureExpertise();
+  /** Countries of an assignment with their weights, plus its league. */
+  std::vector<TargetCountry> targetCountries(const ScoutExpertise& expertise,
+                                             ScoutTargetKind kind,
+                                             std::uint32_t target_id,
+                                             LeagueID* league) const;
+  /** The scout as he performs with @p multiplier (sharper or blunter). */
+  static ScoutProfile effectiveScout(const ScoutProfile& scout,
+                                     float multiplier);
+  void addExperience(std::uint32_t scout_id, LeagueID league_id);
   bool isForeign(const Player& player) const;
   bool isForeignTarget(ScoutTargetKind kind, std::uint32_t target_id) const;
   const ScoutProfile* findScout(std::uint32_t scout_id) const;
@@ -521,6 +586,8 @@ class ScoutingSystem
   ScoutProvider scout_provider;
   mutable std::vector<ScoutProfile> scouts; /*!< Cache of the provider. */
   mutable std::unordered_map<TeamID, TeamPrior> priors; /*!< Daily cache. */
+  /** Backgrounds of scouts not stored yet (identical once stored). */
+  mutable std::unordered_map<std::uint32_t, ScoutExpertise> generated;
   ScoutingState state;
 };
 

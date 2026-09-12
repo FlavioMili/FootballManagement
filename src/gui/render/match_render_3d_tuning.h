@@ -49,7 +49,8 @@ struct MatchRender3DTuning final
   /** Official pitch markings (Laws of the Game), metres. */
   struct Markings final
   {
-    static constexpr float LINE_WIDTH = 0.15f;
+    /** The Laws cap line width at 12 cm. */
+    static constexpr float LINE_WIDTH = 0.12f;
     static constexpr float PENALTY_AREA_DEPTH = 16.5f;
     static constexpr float PENALTY_AREA_WIDTH = 40.32f;
     static constexpr float GOAL_AREA_DEPTH = 5.5f;
@@ -118,10 +119,20 @@ struct MatchRender3DTuning final
     static constexpr float HEIGHT = 0.9f;
     static constexpr float LENGTH = 8.0f;
     static constexpr float GAP = 0.15f;
-    static constexpr float TEXT_FONT_SIZE = 32.0f;
     static constexpr float TEXT_HEIGHT_RATIO = 0.62f;
     static constexpr float TEXT_WIDTH_RATIO = 0.86f;
-    static constexpr float MIN_TEXT_PIXELS = 4.0f;
+    /**
+     * Lettering is baked at a size close to its projected height (steps of
+     * FONT_STEP from MIN_FONT_SIZE) so glyphs are never heavily minified;
+     * below MIN_TEXT_PIXELS a clean colour-block logo replaces it.
+     */
+    static constexpr float MIN_TEXT_PIXELS = 9.0f;
+    static constexpr float MIN_FONT_SIZE = 9.0f;
+    static constexpr float MAX_FONT_SIZE = 72.0f;
+    static constexpr float FONT_STEP = 1.25f;
+    /** Colour-block logo: bar height and a darker end mark. */
+    static constexpr float LOGO_BAR_HEIGHT = 0.42f;
+    static constexpr float LOGO_MARK_SHARE = 0.18f;
     static constexpr float ROTATE_SECONDS = 14.0f;
     static constexpr ImU32 BACK_COLOR = IM_COL32(34, 36, 42, 255);
   };
@@ -155,22 +166,44 @@ struct MatchRender3DTuning final
     static constexpr float BACK_ROW_LIGHT = 0.5f;
   };
 
+  /**
+   * Spectators at real seat pitch. Seats are grouped into clumps
+   * (CLUMP_SEATS x CLUMP_ROWS) that stand in for their members once a seat
+   * shrinks below CLUMP_PIXELS on screen, and every spectator's colour fades
+   * towards its clump average as it gets smaller (a cheap mip-map), so the
+   * stands read as a crowd instead of pixel noise at any distance.
+   */
   struct Crowd final
   {
-    static constexpr float SEAT_SPACING = 0.9f;
-    static constexpr float ROW_DEPTH = 1.1f;
-    static constexpr float DOT_WIDTH = 0.62f;
-    static constexpr float DOT_HEIGHT = 0.95f;
-    static constexpr float JITTER = 0.18f;
-    static constexpr float EMPTY_SEAT_RATIO = 0.12f;
+    static constexpr float SEAT_SPACING = 0.55f;
+    static constexpr float ROW_DEPTH = 0.85f;
+    static constexpr float DOT_WIDTH = 0.44f;
+    static constexpr float DOT_HEIGHT = 0.82f;
+    static constexpr float JITTER = 0.12f;
+    static constexpr float EMPTY_SEAT_RATIO = 0.08f;
     static constexpr float HOME_SHARE = 0.34f;
     static constexpr float AWAY_END_SHARE = 0.55f;
-    static constexpr float MIN_DOT_PIXELS = 0.8f;
-    /** Dots wider than this get a separate head block. */
+    /** Low-frequency swing of the team share (fan blocks, quieter areas). */
+    static constexpr float SHARE_SWING = 0.3f;
+    static constexpr float NOISE_SEATS = 9.0f;
+    static constexpr float NOISE_ROWS = 5.0f;
+    static constexpr float LIGHT_SWING = 0.14f;
+    static constexpr float LIGHT_JITTER = 0.06f;
+    static constexpr int CLUMP_SEATS = 4;
+    static constexpr int CLUMP_ROWS = 2;
+    /** Seat pitch on screen below which clumps replace spectators. */
+    static constexpr float CLUMP_PIXELS = 3.2f;
+    /** Clump width below which the stand face alone shows the crowd. */
+    static constexpr float MIN_CLUMP_PIXELS = 1.4f;
+    /** Seat pitch at which a spectator shows its own colour fully. */
+    static constexpr float FULL_DETAIL_PIXELS = 8.0f;
+    /** Spectators wider than this get a separate head block. */
     static constexpr float HEAD_DETAIL_PIXELS = 5.0f;
-    static constexpr float BODY_SHARE = 0.68f;
+    static constexpr float BODY_SHARE = 0.66f;
     static constexpr float NECK_GAP = 0.04f;
     static constexpr float HEAD_WIDTH_SHARE = 0.56f;
+    /** Seat colour showing through the crowd on the stand faces. */
+    static constexpr float SEAT_SHOW_THROUGH = 0.25f;
     static constexpr std::uint32_t SEED = 20260927U;
   };
 
@@ -189,43 +222,49 @@ struct MatchRender3DTuning final
     static constexpr ImU32 GLOW_COLOR = IM_COL32(255, 246, 214, 255);
   };
 
-  /** Low-poly footballer proportions (metres at scale 1) and animation. */
+  /**
+   * Low-poly footballer proportions in metres for the 1.80 m reference
+   * (top of the head at 1.80 m, shoulders about 0.5 m across the arms); a
+   * player is scaled by his real height. Animation is driven by ground
+   * speed: stride length grows with speed, the leg phase advances with the
+   * distance actually covered on screen, and slow players idle.
+   */
   struct Player final
   {
-    static constexpr float SCALE = 1.12f;
-    static constexpr float REFERENCE_HEIGHT_CM = 180.0f;
-    static constexpr float MIN_HEIGHT_SCALE = 0.93f;
-    static constexpr float MAX_HEIGHT_SCALE = 1.07f;
-    static constexpr float HIP_HEIGHT = 0.9f;
-    static constexpr float HIP_SPREAD = 0.1f;
-    static constexpr float THIGH_LENGTH = 0.45f;
-    static constexpr float THIGH_HALF_WIDTH = 0.078f;
-    static constexpr float SHIN_LENGTH = 0.43f;
-    static constexpr float SHIN_HALF_WIDTH = 0.062f;
-    static constexpr float BOOT_HALF_LENGTH = 0.12f;
-    static constexpr float BOOT_HALF_WIDTH = 0.055f;
+    static constexpr float SCALE = 1.0f;
+    static constexpr float REFERENCE_HEIGHT_METRES = 1.80f;
+    static constexpr float MIN_HEIGHT_METRES = 1.62f;
+    static constexpr float MAX_HEIGHT_METRES = 2.02f;
+    static constexpr float HIP_HEIGHT = 0.93f;
+    static constexpr float HIP_SPREAD = 0.095f;
+    static constexpr float THIGH_LENGTH = 0.46f;
+    static constexpr float THIGH_HALF_WIDTH = 0.07f;
+    static constexpr float SHIN_LENGTH = 0.42f;
+    static constexpr float SHIN_HALF_WIDTH = 0.055f;
+    static constexpr float BOOT_HALF_LENGTH = 0.13f;
+    static constexpr float BOOT_HALF_WIDTH = 0.05f;
     static constexpr float BOOT_HALF_HEIGHT = 0.045f;
     static constexpr float BOOT_FORWARD = 0.05f;
-    static constexpr float SHORTS_HEIGHT = 0.84f;
-    static constexpr float SHORTS_HALF_DEPTH = 0.125f;
-    static constexpr float SHORTS_HALF_WIDTH = 0.195f;
-    static constexpr float SHORTS_HALF_HEIGHT = 0.135f;
-    static constexpr float TORSO_BASE = 0.96f;
-    static constexpr float TORSO_LENGTH = 0.53f;
-    static constexpr float WAIST_HALF_DEPTH = 0.11f;
-    static constexpr float WAIST_HALF_WIDTH = 0.175f;
-    static constexpr float CHEST_HALF_DEPTH = 0.125f;
-    static constexpr float CHEST_HALF_WIDTH = 0.235f;
-    static constexpr float COLLAR_HALF_SIZE = 0.09f;
-    static constexpr float COLLAR_HALF_HEIGHT = 0.025f;
-    static constexpr float SHOULDER_SPREAD = 0.26f;
-    static constexpr float SHOULDER_DROP = 0.06f;
-    static constexpr float UPPER_ARM_LENGTH = 0.29f;
-    static constexpr float UPPER_ARM_HALF_WIDTH = 0.058f;
-    static constexpr float FOREARM_LENGTH = 0.26f;
-    static constexpr float FOREARM_HALF_WIDTH = 0.046f;
-    static constexpr float NECK_LENGTH = 0.17f;
-    static constexpr float HEAD_RADIUS = 0.118f;
+    static constexpr float SHORTS_HEIGHT = 0.86f;
+    static constexpr float SHORTS_HALF_DEPTH = 0.115f;
+    static constexpr float SHORTS_HALF_WIDTH = 0.17f;
+    static constexpr float SHORTS_HALF_HEIGHT = 0.13f;
+    static constexpr float TORSO_BASE = 0.98f;
+    static constexpr float TORSO_LENGTH = 0.52f;
+    static constexpr float WAIST_HALF_DEPTH = 0.1f;
+    static constexpr float WAIST_HALF_WIDTH = 0.15f;
+    static constexpr float CHEST_HALF_DEPTH = 0.11f;
+    static constexpr float CHEST_HALF_WIDTH = 0.19f;
+    static constexpr float COLLAR_HALF_SIZE = 0.075f;
+    static constexpr float COLLAR_HALF_HEIGHT = 0.022f;
+    static constexpr float SHOULDER_SPREAD = 0.215f;
+    static constexpr float SHOULDER_DROP = 0.05f;
+    static constexpr float UPPER_ARM_LENGTH = 0.3f;
+    static constexpr float UPPER_ARM_HALF_WIDTH = 0.048f;
+    static constexpr float FOREARM_LENGTH = 0.27f;
+    static constexpr float FOREARM_HALF_WIDTH = 0.04f;
+    static constexpr float NECK_LENGTH = 0.19f;
+    static constexpr float HEAD_RADIUS = 0.11f;
     static constexpr float THIGH_SWING = 0.62f;
     static constexpr float KNEE_FLEX = 1.05f;
     static constexpr float ARM_SWING = 0.7f;
@@ -233,27 +272,36 @@ struct MatchRender3DTuning final
     static constexpr float ELBOW_RUN_BEND = 0.9f;
     static constexpr float RUN_LEAN = 0.2f;
     static constexpr float RUN_BOB = 0.05f;
-    /** World metres per full stride cycle; drives the leg phase. */
-    static constexpr float STRIDE_CYCLE_METRES = 7.0f;
-    static constexpr float MAX_CADENCE_HZ = 4.0f;
-    static constexpr float FULL_STRIDE_SPEED = 9.0f;
+    /**
+     * One stride cycle (two steps) covers BASE + PER_SPEED * speed metres:
+     * ~1.8 m walking, ~2.5 m jogging, ~4 m sprinting (0.9-2.3 cycles/s).
+     */
+    static constexpr float STRIDE_BASE_METRES = 1.3f;
+    static constexpr float STRIDE_PER_SPEED = 0.3f;
+    /** Below this ground speed (m/s) the legs settle into an idle stance. */
+    static constexpr float IDLE_SPEED = 0.35f;
+    static constexpr float FULL_STRIDE_SPEED = 8.0f;
     static constexpr float STRIDE_RATE = 7.0f;
+    /** Cap per rendered frame so fast playback never aliases the legs. */
+    static constexpr float MAX_CYCLES_PER_FRAME = 0.3f;
     static constexpr float TELEPORT_METRES = 12.0f;
     static constexpr float CULL_MARGIN_PIXELS = 80.0f;
+    /** Below this projected height a team-coloured disc marks the feet. */
+    static constexpr float MARKER_MAX_PIXELS = 34.0f;
+    static constexpr float MARKER_RADIUS = 0.42f;
+    static constexpr std::uint8_t MARKER_ALPHA = 150;
     static constexpr ImU32 BOOT_COLOR = IM_COL32(26, 26, 30, 255);
   };
 
   struct Ball final
   {
-    /**
-     * Engine ball height is in normalised pitch units. Mapping it with the
-     * pitch width keeps the highest simulated shot (z ~ 0.034) just under
-     * the 2.44 m crossbar and lofted passes around 5 m.
-     */
-    static constexpr float HEIGHT_SCALE = 68.0f;
-    static constexpr float VISUAL_RADIUS = 0.24f;
-    static constexpr float MIN_PIXELS = 2.6f;
-    static constexpr float SHADOW_RADIUS = 0.26f;
+    /** Real radius (0.22 m ball); boosted only when far for readability. */
+    static constexpr float RADIUS = 0.11f;
+    static constexpr float BOOST_START_DEPTH = 30.0f;
+    static constexpr float BOOST_FULL_DEPTH = 110.0f;
+    static constexpr float MAX_BOOST = 1.7f;
+    static constexpr float MIN_PIXELS = 2.2f;
+    static constexpr float SHADOW_RADIUS = 0.16f;
     static constexpr float SHADOW_GROWTH = 0.12f;
     static constexpr float SHADOW_FADE = 0.25f;
     static constexpr ImU32 COLOR = IM_COL32(244, 245, 248, 255);
@@ -263,13 +311,13 @@ struct MatchRender3DTuning final
 
   struct Shadow final
   {
-    static constexpr float CONTACT_RADIUS = 0.42f;
-    static constexpr float BLADE_LENGTH = 1.9f;
-    static constexpr float BLADE_HALF_WIDTH = 0.24f;
+    static constexpr float CONTACT_RADIUS = 0.34f;
+    static constexpr float BLADE_LENGTH = 1.8f;
+    static constexpr float BLADE_HALF_WIDTH = 0.2f;
     static constexpr int SEGMENTS = 10;
     static constexpr ImU32 CONTACT_COLOR = IM_COL32(0, 0, 0, 78);
     static constexpr ImU32 BLADE_COLOR = IM_COL32(0, 0, 0, 34);
-    static constexpr float RING_RADIUS = 0.78f;
+    static constexpr float RING_RADIUS = 0.62f;
     static constexpr int RING_SEGMENTS = 20;
     static constexpr float RING_THICKNESS = 2.2f;
     static constexpr float RING_PULSE = 0.08f;
@@ -346,6 +394,32 @@ struct MatchRender3DTuning final
     static constexpr float PITCH = 0.36f;
     static constexpr float DISTANCE = 40.0f;
     static constexpr float FOV = 0.78f;
+  };
+
+  /** User orbit camera: angles radians, distances metres. */
+  struct Free final
+  {
+    static constexpr float DEFAULT_YAW = 1.5707963f;
+    static constexpr float DEFAULT_PITCH = 0.5f;
+    static constexpr float DEFAULT_DISTANCE = 78.0f;
+    static constexpr float FOV = 0.52f;
+    /** Pitch never dips below ~4 degrees nor goes past ~83 degrees. */
+    static constexpr float MIN_PITCH = 0.07f;
+    static constexpr float MAX_PITCH = 1.45f;
+    static constexpr float MIN_DISTANCE = 6.0f;
+    static constexpr float MAX_DISTANCE = 170.0f;
+    /** The target stays over the pitch and its surrounds. */
+    static constexpr float TARGET_MARGIN = 8.0f;
+    static constexpr float MAX_TARGET_HEIGHT = 3.0f;
+    /** A low eye stays within the stadium (the gantry rows included). */
+    static constexpr float EYE_MIN_X = -34.0f;
+    static constexpr float EYE_MAX_X = 139.0f;
+    static constexpr float EYE_MIN_Y = -34.0f;
+    static constexpr float EYE_MAX_Y = 102.0f;
+    /** Orbit radians per logical pixel dragged. */
+    static constexpr float ORBIT_RADIANS_PER_PIXEL = 0.0065f;
+    /** How quickly the view catches up with the user's input (1/s). */
+    static constexpr float RESPONSE_RATE = 14.0f;
   };
 
   struct Follow final

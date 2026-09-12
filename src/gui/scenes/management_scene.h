@@ -16,6 +16,7 @@
 #include "global/types.h"
 #include "gui/gui_scene.h"
 #include "model/gamedate.h"
+#include "model/next_action.h"
 
 /**
  * @brief Top-level destinations of the management shell.
@@ -35,6 +36,15 @@ enum class NavSection : uint8_t
   SCOUTING,
   TRAINING,
   STAFF,
+  YOUTH,
+  MANAGER,
+  MEDICAL,
+  CALENDAR,
+  SQUAD_PLANNER,
+  COMPARE,
+  DELEGATION,
+  DATA_HUB,
+  OPPOSITION,
   NONE
 };
 
@@ -59,6 +69,9 @@ void openMatchReport(GUIView* view, GameDateValue date, TeamID homeId,
 
 /** @brief Opens another club's squad list. */
 void openClub(GUIView* view, TeamID teamId);
+
+/** @brief Compares players side by side (0 = pick one on the screen). */
+void openCompare(GUIView* view, PlayerID first, PlayerID second = 0);
 
 /** @brief Closes the top screen (back to the previous one or Home). */
 void back(GUIView* view);
@@ -103,7 +116,8 @@ class ManagementScene : public GUIScene
     {
       SECTION,
       CLUB,
-      PLAYER
+      PLAYER,
+      ACTION /*!< A pending next step (id: index into palette_actions). */
     };
     Kind kind;
     uint32_t id;
@@ -133,6 +147,7 @@ class ManagementScene : public GUIScene
   std::string palette_filtered_query;
   std::vector<PaletteEntry> palette_entries;
   std::vector<size_t> palette_matches;
+  std::vector<NextAction> palette_actions;
   int palette_selection = 0;
 
   bool main_menu_confirm_requested = false;

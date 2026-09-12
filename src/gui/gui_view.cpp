@@ -144,7 +144,7 @@ bool GUIView::initialize()
 
   // One TTF serves every typography level: the dynamic atlas bakes glyphs
   // on demand for each size requested through Theme::ScopedText.
-  std::string fontPath = std::string(PROJECT_ROOT) + "assets/fonts/font.ttf";
+  std::string fontPath = AssetPaths::font();
   ImFontConfig fontConfig;
   fontConfig.OversampleH = 2;
   if (io.Fonts->AddFontFromFileTTF(fontPath.c_str(),

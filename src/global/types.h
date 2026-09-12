@@ -40,7 +40,8 @@ enum class MatchType : uint8_t
 {
   LEAGUE = 0,   /*!< A regular league match */
   FRIENDLY = 1, /*!< A non-competitive friendly match */
-  CUP = 2       /*!< A cup tournament match */
+  CUP = 2,      /*!< A cup tournament match */
+  CONTINENTAL = 3 /*!< A continental club competition match */
 };
 
 /**

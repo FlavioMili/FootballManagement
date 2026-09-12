@@ -34,6 +34,26 @@ constexpr std::array<std::string_view, 4> ROUTINE_TITLES = {
 constexpr std::array<std::string_view, 2> DIGEST_TITLES = {
     "INBOX_BID_TITLE", "INBOX_LOAN_OFFER_TITLE"};
 
+struct ActionEntry
+{
+  std::string_view title_key;
+  InboxAction action;
+};
+
+constexpr std::array<ActionEntry, 11> ACTION_TITLES = {{
+    {"INBOX_BID_TITLE", InboxAction::RespondOffer},
+    {"INBOX_LOAN_OFFER_TITLE", InboxAction::RespondOffer},
+    {"TALK_REQUEST_TITLE", InboxAction::ReplyToPlayer},
+    {"TALK_ESCALATED_TITLE", InboxAction::ReplyToPlayer},
+    {"STORY_SAGA_TITLE", InboxAction::ReplyToPlayer},
+    {"STORY_CAPTAIN_TITLE", InboxAction::ReplyToPlayer},
+    {"INBOX_YOUTH_INTAKE_TITLE", InboxAction::YouthTrialists},
+    {"INBOX_YOUTH_REMINDER_TITLE", InboxAction::YouthTrialists},
+    {"SCOUT_MSG_RECOMMEND_TITLE", InboxAction::Shortlist},
+    {"SCOUT_MSG_REPORT_TITLE", InboxAction::Shortlist},
+    {"INBOX_SCOUT_SUGGESTION_TITLE", InboxAction::Shortlist},
+}};
+
 std::string resolveArgument(const std::string& argument)
 {
   if (argument.size() > 1 && argument.front() == '@')
@@ -107,6 +127,26 @@ bool Inbox::isRoutine(const std::string& title_key)
 bool Inbox::isDigested(const std::string& title_key)
 {
   return std::ranges::contains(DIGEST_TITLES, title_key);
+}
+
+InboxAction Inbox::actionFor(const std::string& title_key)
+{
+  const auto found =
+      std::ranges::find(ACTION_TITLES, title_key, &ActionEntry::title_key);
+  return found != ACTION_TITLES.end() ? found->action : InboxAction::None;
+}
+
+bool Inbox::isDecision(InboxAction action)
+{
+  return action == InboxAction::RespondOffer ||
+         action == InboxAction::ReplyToPlayer ||
+         action == InboxAction::YouthTrialists;
+}
+
+bool Inbox::isArchived(const InboxMessage& message, const GameDateValue& today)
+{
+  return message.read && !isDecision(actionFor(message.title_key)) &&
+         dayOrdinal(today) - dayOrdinal(message.date) > ARCHIVE_DAYS;
 }
 
 std::uint32_t Inbox::add(InboxMessage message)

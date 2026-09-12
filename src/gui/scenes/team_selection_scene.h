@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "gui/gui_scene.h"
+#include "gui/scenes/manager_scene.h"
 #include "model/league.h"
 #include "model/team.h"
 
@@ -96,6 +97,8 @@ class TeamSelectionScene : public GUIScene
   void renderClubTable(float height);
   void renderSelectedClub(float width, float height);
   void startCareer(TeamID teamId);
+  /** @brief Starts the career without a club (the Job Centre opens). */
+  void startUnemployed();
 
   std::vector<LeagueEntry> league_entries;
   std::vector<std::reference_wrapper<const Team>> available_teams;
@@ -104,4 +107,5 @@ class TeamSelectionScene : public GUIScene
   std::vector<ClubSummary> club_summaries;
   ImGuiID sort_column = 0;
   bool sort_ascending = false;
+  ManagerSetupPanel manager_panel;
 };

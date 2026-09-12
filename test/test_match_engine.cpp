@@ -77,10 +77,13 @@ Team createDummyTeam(TeamID id, const std::string& name, int rating,
   return team;
 }
 
+/** Plays a match through the live update() path at a fixed frame length. */
 void simulateToFullTime(MatchEngine& engine, float frameDelta = 0.05f)
 {
+  // A match lasts at most ~7,200 simulated seconds.
+  const auto maxFrames = static_cast<int>(8'000.0f / frameDelta);
   for (int frame = 0;
-       frame < 10'000 && engine.getState() != MatchState::FULL_TIME; ++frame)
+       frame < maxFrames && engine.getState() != MatchState::FULL_TIME; ++frame)
   {
     engine.update(frameDelta);
   }
@@ -99,6 +102,9 @@ TEST(MatchEngineTest, CompletesARealisticMatch)
   simulateToFullTime(engine);
 
   EXPECT_EQ(engine.getState(), MatchState::FULL_TIME);
+  // Real match time: two 45-minute halves plus stoppage and added time.
+  EXPECT_GE(engine.getSimulatedSeconds(), 5'400.0);
+  EXPECT_LE(engine.getSimulatedSeconds(), 7'300.0);
   // The match ends once the second-half added time has been played.
   const int addedMinutes = engine.getAddedMinutes(2);
   EXPECT_GE(addedMinutes, MatchTuning::Stoppage::MIN_ADDED_MINUTES);
@@ -112,8 +118,9 @@ TEST(MatchEngineTest, CompletesARealisticMatch)
   ASSERT_FALSE(engine.getEvents().empty());
   EXPECT_EQ(engine.getEvents().back().type, MatchEventType::FULL_TIME);
   const MatchStats& stats = engine.getStats();
-  EXPECT_GE(stats.homeShots + stats.awayShots, 4);
-  EXPECT_LE(stats.homeShots + stats.awayShots, 40);
+  EXPECT_GE(stats.homeShots + stats.awayShots, 8);
+  EXPECT_LE(stats.homeShots + stats.awayShots, 45);
+  EXPECT_GE(stats.homePassesAttempted + stats.awayPassesAttempted, 400);
   // Goals are shots on target, except own goals credited to the other side.
   int homeOwnGoalsFor = 0;
   int awayOwnGoalsFor = 0;
@@ -170,7 +177,7 @@ TEST(MatchEngineTest, InterpolationSnapshotTracksPreviousFixedStep)
   // One fixed step plus a partial frame: previous positions now equal the
   // pre-step positions and the alpha lies strictly inside (0, 1).
   const Vector2F ballBefore = engine.getBall().position;
-  engine.update(1.0f / 60.0f + 0.005f);
+  engine.update(MatchTuning::Timing::FIXED_STEP_SECONDS + 0.005f);
   const auto& previous = engine.getPreviousPlayerPositions();
   ASSERT_EQ(previous.size(), before.size());
   for (std::size_t index = 0; index < before.size(); ++index)
@@ -260,7 +267,7 @@ TEST(MatchEngineTest, LivePlayAlwaysAssignsPressureOrBallRecovery)
     engine.update(TEST_FRAME_SECONDS);
   }
   ASSERT_EQ(engine.getState(), MatchState::PLAYING);
-  engine.update(TEST_FRAME_SECONDS);
+  engine.update(MatchTuning::Timing::FIXED_STEP_SECONDS);
   EXPECT_NE(engine.getLastPassDecision().receiverId, 0u);
   EXPECT_GT(engine.getLastPassDecision().completionProbability, 0.0f);
   EXPECT_LE(engine.getLastPassDecision().completionProbability, 1.0f);
@@ -393,7 +400,7 @@ TEST(MatchEngineTest, TurnoverCreatesTimedTeamTransitions)
                      away.getStrategy(), config, 3344);
 
   constexpr float TEST_FRAME_SECONDS = 0.05f;
-  constexpr int MAX_OBSERVATION_FRAMES = 1'800;
+  constexpr int MAX_OBSERVATION_FRAMES = 12'000;
   bool observedTransition = false;
   for (int frame = 0; frame < MAX_OBSERVATION_FRAMES; ++frame)
   {
@@ -489,7 +496,7 @@ TEST(MatchEngineTest, FinalThirdPossessionKeepsRestDefenseBehindTheBall)
                      away.getStrategy(), config, 7788);
 
   constexpr float TEST_FRAME_SECONDS = 0.05f;
-  constexpr int MAX_OBSERVATION_FRAMES = 1'800;
+  constexpr int MAX_OBSERVATION_FRAMES = 12'000;
   constexpr int MINIMUM_REST_DEFENDERS = 2;
   constexpr float MINIMUM_GOAL_SIDE_GAP = 0.12f;
   bool inspectedFinalThird = false;
@@ -554,9 +561,9 @@ TEST(MatchEngineTest, PossessionCreatesCoordinatedRunsAndSupport)
       continue;
     }
 
-    // Possession can be established after movement resolution. Advance once
-    // so the team has applied its possession-phase assignments.
-    engine.update(TEST_FRAME_SECONDS);
+    // Possession can be established after movement resolution. Advance one
+    // fixed step so the team has applied its possession-phase assignments.
+    engine.update(MatchTuning::Timing::FIXED_STEP_SECONDS);
     if (!engine.getBall().possessedBy) continue;
 
     const auto carrier = std::ranges::find_if(
@@ -791,7 +798,7 @@ TEST(MatchEngineTest, ScoredGoalCelebratesBeforeKickoff)
   int lastTotalScore = engine.getHomeScore() + engine.getAwayScore();
 
   for (int frame = 0;
-       frame < 10'000 && engine.getState() != MatchState::FULL_TIME; ++frame)
+       frame < 200'000 && engine.getState() != MatchState::FULL_TIME; ++frame)
   {
     const bool inGoal = engine.getState() == MatchState::GOAL;
     if (inGoal && !wasInGoal)
@@ -1237,7 +1244,7 @@ TEST(MatchEngineTest, FullHeadlessMatchIsFast)
   {
     MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
                        away.getStrategy(), config, seed);
-    simulateToFullTime(engine, 0.25f);
+    engine.simulateToEnd();
     EXPECT_EQ(engine.getState(), MatchState::FULL_TIME);
   }
   const double milliseconds = std::chrono::duration<double, std::milli>(
@@ -1246,5 +1253,355 @@ TEST(MatchEngineTest, FullHeadlessMatchIsFast)
                               MATCHES;
   RecordProperty("milliseconds_per_match", std::to_string(milliseconds));
   std::printf("[timing] headless match %.2f ms\n", milliseconds);
-  EXPECT_LT(milliseconds, 100.0);
+  EXPECT_LT(milliseconds, 150.0);
+}
+
+TEST(MatchEngineTest, HeadlessSimulationMatchesLivePlayback)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 68, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine headless(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, 31'337);
+  MatchEngine live(home.getLineup(), away.getLineup(), home.getStrategy(),
+                   away.getStrategy(), config, 31'337);
+
+  headless.simulateToEnd();
+  simulateToFullTime(live, 0.35f);
+
+  ASSERT_EQ(headless.getState(), MatchState::FULL_TIME);
+  ASSERT_EQ(live.getState(), MatchState::FULL_TIME);
+  EXPECT_EQ(live.getDroppedSimulationSteps(), 0u);
+  EXPECT_EQ(headless.getHomeScore(), live.getHomeScore());
+  EXPECT_EQ(headless.getAwayScore(), live.getAwayScore());
+  EXPECT_EQ(headless.getStats().homeShots, live.getStats().homeShots);
+  EXPECT_EQ(headless.getStats().awayPassesCompleted,
+            live.getStats().awayPassesCompleted);
+  EXPECT_EQ(headless.getEvents().size(), live.getEvents().size());
+  EXPECT_DOUBLE_EQ(headless.getSimulatedSeconds(), live.getSimulatedSeconds());
+  ASSERT_EQ(headless.getPlayerStats().size(), live.getPlayerStats().size());
+  EXPECT_FLOAT_EQ(headless.getPlayerStats()[3].distanceMetres,
+                  live.getPlayerStats()[3].distanceMetres);
+}
+
+TEST(MatchEngineTest, AdvanceRunsEveryStepWhileUpdateBoundsCatchUp)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createDummyTeam(1, "Home", 65, players);
+  Team away = createDummyTeam(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 4'242);
+
+  const float advanced = engine.advance(600.0f);
+  EXPECT_NEAR(advanced, 600.0f, 0.001f);
+  EXPECT_NEAR(engine.getSimulatedSeconds(), 600.0, 0.001);
+  EXPECT_EQ(engine.getDroppedSimulationSteps(), 0u);
+  // Ten minutes of real match time on the clock, less the few seconds of
+  // kick-off setup that do not run it.
+  EXPECT_LE(engine.getElapsedMatchMinutes(), 10.0f);
+  EXPECT_GE(engine.getElapsedMatchMinutes(), 9.5f);
+
+  engine.update(60.0f);
+  EXPECT_EQ(engine.getLastUpdateStepCount(),
+            MatchTuning::Timing::MAX_FIXED_STEPS_PER_UPDATE);
+  EXPECT_GT(engine.getDroppedSimulationSteps(), 0u);
+}
+
+TEST(MatchEngineTest, PlayersAndBallMoveAtRealisticSpeeds)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 70, players);
+  Team away = createSquadWithBench(2, "Away", 70, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 2'718);
+
+  float fastestPass = 0.0f;
+  float fastestShot = 0.0f;
+  float fastestPlayer = 0.0f;
+  while (engine.getState() != MatchState::FULL_TIME)
+  {
+    engine.advance(MatchTuning::Timing::FIXED_STEP_SECONDS);
+    const MatchBall& ball = engine.getBall();
+    const float ballSpeed = std::hypot(ball.velocity.x, ball.velocity.y);
+    if (ball.isPass) fastestPass = std::max(fastestPass, ballSpeed);
+    if (ball.isShot) fastestShot = std::max(fastestShot, ballSpeed);
+    for (const MatchPlayer& player : engine.getPlayers())
+    {
+      fastestPlayer = std::max(
+          fastestPlayer, std::hypot(player.velocity.x, player.velocity.y));
+    }
+  }
+  // Passes 7-25 m/s, struck shots up to ~33 m/s, sprints below 10.5 m/s.
+  EXPECT_GT(fastestPass, 12.0f);
+  EXPECT_LE(fastestPass, 25.5f);
+  EXPECT_GT(fastestShot, 18.0f);
+  EXPECT_LE(fastestShot, 34.0f);
+  EXPECT_GT(fastestPlayer, 7.0f);
+  EXPECT_LE(fastestPlayer, 10.5f);
+
+  for (const PlayerMatchStats& entry : engine.getPlayerStats())
+  {
+    EXPECT_LE(entry.topSpeed, 10.5f);
+    EXPECT_LE(entry.highIntensityMetres, entry.distanceMetres);
+    EXPECT_LE(entry.sprintMetres, entry.highIntensityMetres);
+    const bool fullMatch = entry.started && !entry.substitutedOff &&
+                           !entry.sentOff && !entry.injured;
+    if (!fullMatch || entry.role == PlayerRole::GK) continue;
+    EXPECT_GE(entry.distanceMetres, 6'000.0f);
+    EXPECT_LE(entry.distanceMetres, 14'000.0f);
+    EXPECT_GT(entry.topSpeed, 6.5f);
+  }
+}
+
+TEST(MatchEngineTest, PredictedHighlightHappensInTheLiveMatch)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 72, players);
+  Team away = createSquadWithBench(2, "Away", 64, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 8'080);
+  engine.advance(120.0f);
+  const double now = engine.getSimulatedSeconds();
+  const std::size_t knownHighlights = engine.getHighlights().size();
+
+  const std::optional<MatchHighlight> predicted = engine.predictNextHighlight();
+  ASSERT_TRUE(predicted.has_value());
+  EXPECT_GE(predicted->startSeconds, now);
+  EXPECT_GT(predicted->triggerSeconds, now);
+  EXPECT_LE(predicted->startSeconds, predicted->triggerSeconds);
+  EXPECT_GT(predicted->endSeconds, predicted->triggerSeconds);
+  // Prediction runs on a copy: the live match has not moved.
+  EXPECT_DOUBLE_EQ(engine.getSimulatedSeconds(), now);
+
+  engine.advance(static_cast<float>(predicted->triggerSeconds - now) + 0.05f);
+  ASSERT_GT(engine.getHighlights().size(), knownHighlights);
+  const MatchHighlight& recorded = engine.getHighlights().back();
+  EXPECT_NEAR(recorded.triggerSeconds, predicted->triggerSeconds, 0.001);
+  EXPECT_EQ(recorded.type, predicted->type);
+}
+
+TEST(MatchEngineTest, HighlightPlaybackSkipsBetweenWindowsAndFinishes)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 70, players);
+  Team away = createSquadWithBench(2, "Away", 70, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 606);
+  engine.setPlaybackMode(MatchPlaybackMode::HIGHLIGHTS);
+  engine.setHighlightPlaybackSpeed(4.0f);
+  EXPECT_FLOAT_EQ(engine.getHighlightPlaybackSpeed(), 4.0f);
+
+  constexpr float FRAME_SECONDS = 1.0f / 30.0f;
+  int skips = 0;
+  double watchedSeconds = 0.0;
+  for (int frame = 0;
+       frame < 400'000 && engine.getState() != MatchState::FULL_TIME; ++frame)
+  {
+    const double before = engine.getSimulatedSeconds();
+    if (engine.advancePlayback(FRAME_SECONDS))
+    {
+      ++skips;
+      continue;
+    }
+    ASSERT_TRUE(engine.getScheduledHighlight().has_value() ||
+                engine.getState() == MatchState::FULL_TIME);
+    watchedSeconds += engine.getSimulatedSeconds() - before;
+  }
+  EXPECT_EQ(engine.getState(), MatchState::FULL_TIME);
+  EXPECT_GE(skips, 5);
+  // Only the highlight windows are shown live.
+  EXPECT_GT(watchedSeconds, 60.0);
+  EXPECT_LT(watchedSeconds, engine.getSimulatedSeconds() * 0.5);
+  EXPECT_FALSE(engine.getHighlights().empty());
+
+  engine.setPlaybackSpeed(1'000.0f);
+  EXPECT_FLOAT_EQ(engine.getPlaybackSpeed(), MatchTuning::Playback::MAX_SPEED);
+}
+
+TEST(MatchEngineTest, BenchConditionAndFamiliarityInputs)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 66, players);
+  Team away = createSquadWithBench(2, "Away", 66, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 77);
+  engine.setAutoSubstitutions(false, false);
+  const Player* substitute = home.getLineup().getReserves()[3];
+  ASSERT_TRUE(engine.setPlayerCondition(substitute->getId(), 0.6f));
+  EXPECT_FALSE(engine.setPlayerCondition(999'999, 0.6f));
+
+  engine.setTacticalFamiliarity(true, 3.0f);
+  EXPECT_FLOAT_EQ(engine.getTacticalFamiliarity(true), 1.0f);
+  engine.setTacticalFamiliarity(false, 0.25f);
+  EXPECT_FLOAT_EQ(engine.getTacticalFamiliarity(false), 0.25f);
+
+  ASSERT_TRUE(engine.substitutePlayer(105, substitute));
+  EXPECT_FLOAT_EQ(engine.getPlayerCondition(substitute->getId()).value_or(1.0f),
+                  0.6f);
+}
+
+namespace
+{
+float metresBetweenPoints(Vector2F first, Vector2F second)
+{
+  return std::hypot((first.x - second.x) * MatchTuning::Pitch::LENGTH_METRES,
+                    (first.y - second.y) * MatchTuning::Pitch::WIDTH_METRES);
+}
+
+/** Metric distance from a point to the segment [start, end]. */
+float metresToSegment(Vector2F point, Vector2F start, Vector2F end)
+{
+  const float sx = (end.x - start.x) * MatchTuning::Pitch::LENGTH_METRES;
+  const float sy = (end.y - start.y) * MatchTuning::Pitch::WIDTH_METRES;
+  const float px = (point.x - start.x) * MatchTuning::Pitch::LENGTH_METRES;
+  const float py = (point.y - start.y) * MatchTuning::Pitch::WIDTH_METRES;
+  const float squared = sx * sx + sy * sy;
+  const float along =
+      squared > 0.0f ? std::clamp((px * sx + py * sy) / squared, 0.0f, 1.0f)
+                     : 0.0f;
+  return std::hypot(px - sx * along, py - sy * along);
+}
+}  // namespace
+
+TEST(MatchEngineTest, PlayersNeverExceedTheirTopSpeed)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 88, players);
+  Team away = createSquadWithBench(2, "Away", 45, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 1'999);
+  while (engine.getState() != MatchState::FULL_TIME)
+  {
+    engine.advance(MatchTuning::Timing::FIXED_STEP_SECONDS);
+    for (const MatchPlayer& player : engine.getPlayers())
+    {
+      if (!player.onPitch) continue;
+      const float pace = player.player->getStats().at("Pace") / 100.0f;
+      const float topSpeed = MatchTuning::Player::TOP_SPEED_BASE +
+                             pace * MatchTuning::Player::TOP_SPEED_PACE;
+      ASSERT_LE(std::hypot(player.velocity.x, player.velocity.y),
+                topSpeed + 0.01f)
+          << "player " << player.player->getId();
+    }
+  }
+}
+
+TEST(MatchEngineTest, PossessionIsOnlyGainedWithinReach)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 70, players);
+  Team away = createSquadWithBench(2, "Away", 70, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 7'007);
+  // The ball is only won by getting a foot, the body or (a keeper) the hands
+  // to it: its path during the step must pass within reach of the player's
+  // body, allowing for his own movement in that step.
+  constexpr float STEP = MatchTuning::Timing::FIXED_STEP_SECONDS;
+  constexpr float SLACK = MatchTuning::Aerial::GOALKEEPER_CLAIM_RADIUS_METRES +
+                          10.0f * STEP + 0.05f;
+  const Player* previousOwner = engine.getBall().possessedBy;
+  int gains = 0;
+  while (engine.getState() != MatchState::FULL_TIME)
+  {
+    const MatchBall before = engine.getBall();
+    const MatchState stateBefore = engine.getState();
+    engine.advance(STEP);
+    const MatchBall& after = engine.getBall();
+    if (after.possessedBy && after.possessedBy != previousOwner &&
+        !before.possessedBy && stateBefore == MatchState::PLAYING &&
+        engine.getState() == MatchState::PLAYING)
+    {
+      const auto owner = std::ranges::find_if(
+          engine.getPlayers(), [&after](const MatchPlayer& player)
+          { return player.player == after.possessedBy; });
+      ASSERT_NE(owner, engine.getPlayers().end());
+      const Vector2F travel{before.velocity.x * STEP /
+                                MatchTuning::Pitch::LENGTH_METRES,
+                            before.velocity.y * STEP /
+                                MatchTuning::Pitch::WIDTH_METRES};
+      const Vector2F end{before.position.x + travel.x,
+                         before.position.y + travel.y};
+      EXPECT_LE(metresToSegment(owner->position, before.position, end), SLACK);
+      ++gains;
+    }
+    previousOwner = after.possessedBy;
+  }
+  EXPECT_GT(gains, 100);
+}
+
+namespace
+{
+/**
+ * Share of scenarios in which a lone dribbler gets past a defender jockeying
+ * 3 m in front of him: after three seconds his side still has the ball, or
+ * he has already used it (shot or pass).
+ */
+double dribblerBeatsTheDefender(int dribblerRating, int defenderRating)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createDummyTeam(1, "Home", dribblerRating, players);
+  Team away = createDummyTeam(2, "Away", defenderRating, players);
+  const StatsConfig config = createStatsConfig();
+  int beaten = 0;
+  int duels = 0;
+  for (std::uint32_t seed = 1; seed <= 160; ++seed)
+  {
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, seed);
+    engine.setAutoSubstitutions(false, false);
+    MatchScenario scenario;
+    for (std::uint32_t index = 0; index < 11; ++index)
+    {
+      // Team-mates are far behind so the carrier has to take the man on.
+      scenario.players.push_back(
+          {100U + index, {0.02f + 0.005f * index, 0.1f + 0.08f * index}, false});
+      scenario.players.push_back(
+          {200U + index, {0.95f, 0.1f + 0.08f * index}, false});
+    }
+    scenario.players[18] = {109U, {0.70f, 0.50f}, false};
+    scenario.players[19] = {209U, {0.73f, 0.50f}, false};
+    scenario.players[1] = {200U, {0.97f, 0.50f}, false};
+    scenario.carrierId = 109U;
+    scenario.ballPosition = {0.70f, 0.50f};
+    if (!engine.applyScenario(scenario)) continue;
+    if (engine.getLastScenarioDecision().action != ScenarioAction::CARRY)
+      continue;
+    ++duels;
+    const int usedBefore =
+        engine.getStats().homePassesAttempted + engine.getStats().homeShots;
+    engine.advance(3.0f);
+    const MatchBall& ball = engine.getBall();
+    const bool used = engine.getStats().homePassesAttempted +
+                          engine.getStats().homeShots !=
+                      usedBefore;
+    const bool homeHasIt =
+        ball.possessedBy ? ball.possessedBy->getTeamId() == 1
+                         : ball.lastPossessor &&
+                               ball.lastPossessor->getTeamId() == 1;
+    if (used || homeHasIt) ++beaten;
+  }
+  return duels > 20 ? static_cast<double>(beaten) / duels : -1.0;
+}
+}  // namespace
+
+TEST(MatchEngineTest, DribblerVersusJockeyingDefenderDependsOnSkill)
+{
+  const double skilled = dribblerBeatsTheDefender(85, 45);
+  const double outclassed = dribblerBeatsTheDefender(45, 85);
+  RecordProperty("skilled_keep_rate", std::to_string(skilled));
+  RecordProperty("outclassed_keep_rate", std::to_string(outclassed));
+  ASSERT_GE(skilled, 0.0) << "too few duels sampled";
+  ASSERT_GE(outclassed, 0.0) << "too few duels sampled";
+  // Neither side always wins, but skill clearly shifts the duel.
+  EXPECT_GT(skilled, outclassed + 0.15);
+  EXPECT_LT(skilled, 0.98);
+  EXPECT_GT(outclassed, 0.02);
 }

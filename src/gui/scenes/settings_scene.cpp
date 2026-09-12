@@ -41,8 +41,7 @@ void SettingsScene::onEnter()
   fpsOptionsStrings.clear();
   for (const auto& [lang, str] : languageToString)
   {
-    std::string filePath =
-        std::string(PROJECT_ROOT) + "assets/lang/" + str + ".json";
+    std::string filePath = AssetPaths::language(str);
     if (std::filesystem::exists(filePath))
     {
       languageOptions.push_back(str);
@@ -223,7 +222,7 @@ void SettingsScene::render()
 
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
   const ImVec2 buttonSize(160.0f * Theme::scale(), 0.0f);
-  if (ImGui::Button(LOC("SETTINGS_CANCEL"), buttonSize)) cancel();
+  if (UI::secondaryButton(LOC("SETTINGS_CANCEL"), buttonSize)) cancel();
   ImGui::SameLine();
   if (UI::primaryButton(LOC("SETTINGS_APPLY"), buttonSize))
     applyAndSaveSettings();
@@ -354,19 +353,12 @@ void SettingsScene::renderData()
   ImGui::PushTextWrapPos(0.0f);
   ImGui::TextColored(palette.muted, "%s", LOC("SETTINGS_WIPE_HELP"));
   ImGui::PopTextWrapPos();
-  ImGui::PushStyleColor(
-      ImGuiCol_Button,
-      ImVec4(palette.negative.x * 0.75f, palette.negative.y * 0.75f,
-             palette.negative.z * 0.75f, 1.0f));
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, palette.negative);
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, palette.negative);
-  if (ImGui::Button(LOC("SETTINGS_WIPE_BUTTON")))
+  if (UI::dangerButton(LOC("SETTINGS_WIPE_BUTTON")))
   {
     showWipeDataOverlay = true;
     wipeDataTimer = 3.0f;
     ImGui::OpenPopup("###WipeDataPopup");
   }
-  ImGui::PopStyleColor(3);
 
   const std::string popupTitle =
       std::string(LOC("SETTINGS_WIPE_TITLE")) + "###WipeDataPopup";
@@ -378,7 +370,7 @@ void SettingsScene::renderData()
     ImGui::PopTextWrapPos();
     ImGui::Separator();
     const ImVec2 buttonSize(150.0f * Theme::scale(), 0.0f);
-    if (ImGui::Button(LOC("SETTINGS_CANCEL"), buttonSize))
+    if (UI::secondaryButton(LOC("SETTINGS_CANCEL"), buttonSize))
     {
       showWipeDataOverlay = false;
       ImGui::CloseCurrentPopup();
@@ -391,10 +383,10 @@ void SettingsScene::renderData()
       const std::string waiting =
           fmt::sprintf(LOC("SETTINGS_WIPE_CONFIRM_WAIT"),
                        static_cast<double>(wipeDataTimer));
-      ImGui::Button(waiting.c_str(), buttonSize);
+      UI::dangerButton(waiting.c_str(), buttonSize);
       ImGui::EndDisabled();
     }
-    else if (ImGui::Button(LOC("SETTINGS_WIPE_CONFIRM"), buttonSize))
+    else if (UI::dangerButton(LOC("SETTINGS_WIPE_CONFIRM"), buttonSize))
     {
       RuntimePaths::removeAllSaves();
       showWipeDataOverlay = false;
