@@ -84,8 +84,11 @@ class Game
   std::vector<PlayerID> ineligibleSelections(TeamID team_id,
                                              MatchType type) const;
   /**
-   * The assistant's matchday selection: ineligible players are replaced by
-   * eligible squad and academy players, then by trialists. When nobody fit
+   * The assistant's matchday selection: regulars fit again take back their
+   * places from the players who stood in for them, then ineligible players
+   * are replaced by the best-fitting eligible squad and academy players,
+   * then by trialists, and the replacements are noted as stand-ins
+   * (Lineup::getStandIns()). When nobody fit
    * is left for a starting place, injured players play through it (the
    * least injured first), so a side always takes the field; players who may
    * not play at all (suspended, on national duty) and cannot be replaced
@@ -275,9 +278,12 @@ class Game
 
   /** Replaces unavailable managed players for the next managed fixture. */
   void keepManagedSelectionEligible();
-  /** fixMatchdaySquad() applied to @p lineup, a selection of @p team_id. */
+  /** fixMatchdaySquad() applied to @p lineup, a selection of @p team_id;
+   * without @p recall_regulars recovered regulars stay where they are (the
+   * selection is only made eligible). */
   std::size_t fillMatchdaySquad(Lineup& lineup, TeamID team_id, MatchType type,
-                                const GameDateValue& date) const;
+                                const GameDateValue& date,
+                                bool recall_regulars) const;
 
   /** Manager market day and the board's verdict on the manager. */
   void runCareerDay();

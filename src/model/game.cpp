@@ -523,7 +523,7 @@ std::size_t Game::fixMatchdaySquad(TeamID team_id, MatchType type,
   const auto team = gamedata->getTeam(team_id);
   if (!team) return 0;
   return fillMatchdaySquad(team->get().getLineup(), team_id, type,
-                           date.value_or(currentDate));
+                           date.value_or(currentDate), true);
 }
 
 std::vector<std::pair<PlayerID, PlayerID>> Game::previewMatchdaySquadFix(
@@ -533,7 +533,7 @@ std::vector<std::pair<PlayerID, PlayerID>> Game::previewMatchdaySquadFix(
   if (!team) return {};
   const Lineup& current = team->get().getLineup();
   Lineup fixed = current;
-  fillMatchdaySquad(fixed, team_id, type, currentDate);
+  fillMatchdaySquad(fixed, team_id, type, currentDate, true);
   return MatchdaySquad::replacements(current, fixed);
 }
 
@@ -542,12 +542,13 @@ bool Game::canKickOff(TeamID team_id, MatchType type) const
   const auto team = gamedata->getTeam(team_id);
   if (!team) return false;
   Lineup fixed = team->get().getLineup();
-  return fillMatchdaySquad(fixed, team_id, type, currentDate) == 0;
+  return fillMatchdaySquad(fixed, team_id, type, currentDate, false) == 0;
 }
 
 std::size_t Game::fillMatchdaySquad(Lineup& lineup, TeamID team_id,
                                     MatchType type,
-                                    const GameDateValue& date) const
+                                    const GameDateValue& date,
+                                    bool recall_regulars) const
 {
   const auto team = gamedata->getTeam(team_id);
   if (!team) return 0;
@@ -588,6 +589,9 @@ std::size_t Game::fillMatchdaySquad(Lineup& lineup, TeamID team_id,
                                { return fit(*player); });
   };
 
+  if (recall_regulars)
+    MatchdaySquad::recallRegulars(lineup, squad, fit, config);
+  const Lineup recalled = lineup;
   MatchdaySquad::replaceIneligible(lineup, squad, fit, config);
   if (!startersFit())
     MatchdaySquad::replaceIneligible(lineup, everyone, fit, config);
@@ -616,6 +620,7 @@ std::size_t Game::fillMatchdaySquad(Lineup& lineup, TeamID team_id,
         barred.push_back(slot.player->getId());
     for (const PlayerID player_id : barred) lineup.removeOutfieldPlayer(player_id);
   }
+  MatchdaySquad::recordStandIns(recalled, lineup);
   return MatchdaySquad::replacements(before, lineup).size();
 }
 

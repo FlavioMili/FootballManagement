@@ -229,8 +229,15 @@ TEST(MedicalDeskTest, TheAssistantLeavesRestedPlayersOut)
                                    [rested](const Player* player)
                                    { return player->getId() == rested; }));
 
-  // Lifting the instruction makes him selectable again.
+  // Lifting the instruction brings him back in place of his stand-in.
   game.getMedical().setFlag(rested, MEDICAL_FLAG_REST, false);
+  const auto recall = controller.previewLineupFix(club, MatchType::LEAGUE);
+  ASSERT_EQ(recall.size(), 1u);
+  EXPECT_EQ(recall.front().first, preview.front().second);
+  EXPECT_EQ(recall.front().second, rested);
+  EXPECT_EQ(controller.autoFixLineup(club, MatchType::LEAGUE), 1u);
+  EXPECT_TRUE(lineup.isStarter(rested));
+  EXPECT_TRUE(lineup.getStandIns().empty());
   EXPECT_TRUE(controller.previewLineupFix(club, MatchType::LEAGUE).empty());
 }
 

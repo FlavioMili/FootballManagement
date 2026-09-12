@@ -615,10 +615,11 @@ TEST(ManagerCareerFlow, PoachingPaysTheFormerClub)
 
   std::vector<TeamID> candidates(clubs.begin(), clubs.begin() + 8);
   std::erase(candidates, first);
-  // Clubs whose transfer window is open first: the new club's board bids
+  // Only clubs whose transfer window is open: the new club's board bids
   // below.
-  std::ranges::stable_partition(candidates, [&](TeamID club)
-                                { return controller->isTransferWindowOpenFor(club); });
+  std::erase_if(candidates, [&](TeamID club)
+                { return !controller->isTransferWindowOpenFor(club); });
+  ASSERT_FALSE(candidates.empty()) << "no candidate club has an open window";
   const std::uint32_t offer_id = earnOffer(game, candidates);
   ASSERT_NE(offer_id, 0u);
   const JobOffer offer = *game.getCareer().findOffer(offer_id);
@@ -644,8 +645,7 @@ TEST(ManagerCareerFlow, PoachingPaysTheFormerClub)
                              1'000'000);
   bidder_money.setTransferBudget(10'000'000);
   controller->listPlayerForTransfer(target, 500'000);
-  if (controller->isTransferWindowOpenFor(offer.team_id))
-    ASSERT_TRUE(controller->submitBid(target, offer.team_id, 600'000));
+  ASSERT_TRUE(controller->submitBid(target, offer.team_id, 600'000));
   ASSERT_TRUE(controller->acceptJobOffer(offer_id));
   for (const auto& [player_id, listing] : controller->getAllListings())
     EXPECT_NE(listing.highest_bidder_id, std::optional<TeamID>(offer.team_id));

@@ -10,6 +10,7 @@
 #include <array>
 #include <span>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "global/global.h"
@@ -211,6 +212,33 @@ class Lineup
   /** @brief Replaces every designation (persistence). */
   void setDesignations(const SetPieceDesignations& designations);
 
+  /**
+   * @brief A starter who was replaced because he could not play, and the
+   * player standing in for him until he can.
+   */
+  struct StandIn
+  {
+    PlayerID regular = 0;
+    PlayerID stand_in = 0;
+    bool operator==(const StandIn&) const = default;
+  };
+
+  /** @brief Stand-ins currently filling a regular's place in the XI. */
+  const std::vector<StandIn>& getStandIns() const { return stand_ins; }
+
+  /** @brief Replaces the stand-ins (persistence, matchday fixes). */
+  void setStandIns(std::vector<StandIn> values)
+  {
+    stand_ins = std::move(values);
+  }
+
+  /**
+   * @brief The position a slot at @p position asks for: x from the own goal
+   * (defence, holding midfield, midfield, attacking midfield, attack), y
+   * from the left touchline (left flank, centre, right flank).
+   */
+  static PlayerRole roleAt(Vector2F position);
+
   /** @brief Goalkeeper and outfield players of the XI (no null entries). */
   std::vector<const Player*> starters() const;
 
@@ -250,6 +278,7 @@ class Lineup
   {
     goalkeeper = nullptr;
     outfield_players.clear();
+    stand_ins.clear();
   }
 
  private:
@@ -258,6 +287,7 @@ class Lineup
   std::vector<const Player*> reserves;
   Strategy strategy;
   SetPieceDesignations designations{};
+  std::vector<StandIn> stand_ins;
 };
 
 /***************************************************************

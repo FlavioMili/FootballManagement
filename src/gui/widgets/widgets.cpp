@@ -370,12 +370,23 @@ void drawClubBadge(ImDrawList* drawList, ImVec2 min, float height,
                        ImDrawFlags_Closed, std::max(1.0f, scaled(1.0f)));
   if (code == nullptr || *code == '\0' || h < scaled(32.0f)) return;
   Theme::ScopedText caption(Theme::Text::CAPTION);
-  const ImVec2 textSize = ImGui::CalcTextSize(code);
+  // The code shrinks to fit inside the shield, or is left out when it would
+  // become unreadable.
+  ImFont* font = ImGui::GetFont();
+  float fontSize = ImGui::GetFontSize();
+  ImVec2 textSize = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, code);
+  const float room = w * 0.78f;
+  if (textSize.x > room)
+  {
+    fontSize *= room / textSize.x;
+    if (fontSize < scaled(8.0f)) return;
+    textSize = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, code);
+  }
   const ImVec2 at(std::round(min.x + (w - textSize.x) * 0.5f),
                   std::round(min.y + h * 0.42f - textSize.y * 0.5f));
-  drawList->AddText(ImVec2(at.x + 1.0f, at.y + 1.0f), IM_COL32(0, 0, 0, 170),
-                    code);
-  drawList->AddText(at, IM_COL32(255, 255, 255, 255), code);
+  drawList->AddText(font, fontSize, ImVec2(at.x + 1.0f, at.y + 1.0f),
+                    IM_COL32(0, 0, 0, 170), code);
+  drawList->AddText(font, fontSize, at, IM_COL32(255, 255, 255, 255), code);
 }
 
 void clubBadge(const char* code, uint32_t primary, uint32_t secondary,

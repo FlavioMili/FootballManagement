@@ -90,6 +90,8 @@ bool Lineup::removePlayer(PlayerID playerID)
                          [&matches](const PositionedPlayer& positioned)
                          { return matches(positioned.player); }) > 0;
   found |= std::erase_if(reserves, matches) > 0;
+  std::erase_if(stand_ins, [playerID](const StandIn& entry)
+                { return entry.regular == playerID || entry.stand_in == playerID; });
   for (PlayerID& designated : designations)
   {
     if (designated != playerID) continue;
@@ -97,6 +99,26 @@ bool Lineup::removePlayer(PlayerID playerID)
     found = true;
   }
   return found;
+}
+
+PlayerRole Lineup::roleAt(Vector2F position)
+{
+  // Bands match the formation presets: back line about 0.20, holding
+  // midfielders 0.37-0.38, midfield 0.43-0.46, number tens and inside
+  // wingers about 0.60, forwards from 0.72.
+  const bool left = position.y < 0.2f;
+  const bool right = position.y > 0.8f;
+  if (position.x < 0.32f)
+    return left ? PlayerRole::LB : right ? PlayerRole::RB : PlayerRole::CB;
+  if (position.x < 0.55f)
+  {
+    if (left) return PlayerRole::LM;
+    if (right) return PlayerRole::RM;
+    return position.x < 0.40f ? PlayerRole::CDM : PlayerRole::CM;
+  }
+  if (left) return PlayerRole::LW;
+  if (right) return PlayerRole::RW;
+  return position.x < 0.68f ? PlayerRole::CAM : PlayerRole::ST;
 }
 
 const std::vector<Lineup::PositionedPlayer>& Lineup::getOutfieldPlayers() const

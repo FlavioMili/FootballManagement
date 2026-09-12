@@ -82,6 +82,10 @@ struct MatchRenderBall
 struct MatchRenderSnapshot
 {
   std::vector<MatchRenderPlayer> players;
+  /** Sides whose strips the views draw (the match screen's own ids, so its
+   * colour swatches match); 0: taken from the players' clubs. */
+  TeamID homeTeam = 0;
+  TeamID awayTeam = 0;
   MatchRenderBall ball;
   MatchState state = MatchState::KICK_OFF;
   TeamPhase homePhase = TeamPhase::SET_PIECE;

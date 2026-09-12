@@ -768,13 +768,10 @@ std::string MatchScene::clockText() const
 
 ImU32 MatchScene::teamColor(bool home) const
 {
-  if (view_mode == MatchViewMode::BROADCAST_3D)
-  {
-    const MatchKits kits = chooseMatchKits(home_team_id, away_team_id);
-    return home ? kits.home.shirt : kits.away.shirt;
-  }
-  return home ? MatchSceneTuning::Marker::HOME_COLOR
-              : MatchSceneTuning::Marker::AWAY_COLOR;
+  // The strips both views draw (clash fallback included), so the swatches
+  // and markers always match the players on the pitch.
+  const MatchKits kits = chooseMatchKits(home_team_id, away_team_id);
+  return home ? kits.home.shirt : kits.away.shirt;
 }
 
 void MatchScene::update(float deltaTime)
@@ -1854,6 +1851,8 @@ void MatchScene::renderPitch(ImVec2 size)
     const auto renderStartedAt = std::chrono::steady_clock::now();
     const ImVec2 viewEnd(viewOrigin.x + size.x, viewOrigin.y + size.y);
     fillMatchRenderSnapshot(*engine, snapshot);
+    snapshot.homeTeam = home_team_id;
+    snapshot.awayTeam = away_team_id;
     ImGui::GetWindowDrawList()->PushClipRect(viewOrigin, viewEnd, true);
     renderer->render(snapshot, renderOptions, viewport);
     renderPlayOverlay(*renderer, viewOrigin, viewEnd);
@@ -2241,7 +2240,16 @@ void MatchScene::renderEvents(ImVec2 size)
   UI::beginCard("##match_events", LOC("MATCH_EVENTS"), size);
   ImGui::Checkbox(LOC("MATCH_EVENTS_SHOW_ALL"), &show_all_events);
   refreshVisibleEvents();
-  ImGui::BeginChild("##match_event_list", ImVec2(0.0f, 0.0f));
+  // A whole number of rows, so the list scrolled to the latest event never
+  // shows half a row at the top (the content ends without the last row's
+  // spacing).
+  const float rowHeight = ImGui::GetTextLineHeightWithSpacing();
+  const float rowGap = ImGui::GetStyle().ItemSpacing.y;
+  const float rows = std::max(
+      1.0f,
+      std::floor((ImGui::GetContentRegionAvail().y + rowGap) / rowHeight));
+  ImGui::BeginChild("##match_event_list",
+                    ImVec2(0.0f, rows * rowHeight - rowGap));
   const bool keepScrolledToLatest =
       ImGui::GetScrollY() >= ImGui::GetScrollMaxY();
   const float minuteWidth =
@@ -2249,7 +2257,7 @@ void MatchScene::renderEvents(ImVec2 size)
   const float iconSize = scaled(MatchSceneTuning::Panel::EVENT_ICON_SIZE);
   const auto& events = engine->getEvents();
   ImGuiListClipper eventClipper;
-  eventClipper.Begin(static_cast<int>(visible_events.size()));
+  eventClipper.Begin(static_cast<int>(visible_events.size()), rowHeight);
   while (eventClipper.Step())
   {
     for (int row = eventClipper.DisplayStart; row < eventClipper.DisplayEnd;

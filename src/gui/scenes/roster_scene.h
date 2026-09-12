@@ -69,8 +69,8 @@ class RosterScene : public ManagementScene
   void loadRoster();
   void renderSummary();
   void renderFilters();
-  void renderTable(float height);
-  void renderDetails(float height);
+  void renderTable();
+  void renderDetails();
   void renderNumberEditor(const Player& player);
   void applyFilter();
   void applySort();

@@ -158,23 +158,25 @@ void RosterScene::renderContent()
   renderFilters();
 
   const float available = ImGui::GetContentRegionAvail().x;
-  const float height = ImGui::GetContentRegionAvail().y;
   show_details = available >= DETAIL_PANEL_MIN_CONTENT * Theme::scale();
   if (!show_details)
   {
-    renderTable(height);
+    renderTable();
     return;
   }
   const float detailWidth = DETAIL_PANEL_WIDTH * Theme::scale();
+  // The table region grows with the table: the page is the only scroll
+  // surface.
   ImGui::BeginChild(
       "roster_table_region",
-      ImVec2(available - detailWidth - ImGui::GetStyle().ItemSpacing.x,
-             height));
-  renderTable(height);
+      ImVec2(available - detailWidth - ImGui::GetStyle().ItemSpacing.x, 0.0f),
+      ImGuiChildFlags_AutoResizeY);
+  renderTable();
   ImGui::EndChild();
   ImGui::SameLine();
-  ImGui::BeginChild("roster_detail_region", ImVec2(detailWidth, height));
-  renderDetails(height);
+  ImGui::BeginChild("roster_detail_region", ImVec2(detailWidth, 0.0f),
+                    ImGuiChildFlags_AutoResizeY);
+  renderDetails();
   ImGui::EndChild();
 }
 
@@ -330,7 +332,7 @@ void RosterScene::applySort()
       });
 }
 
-void RosterScene::renderTable(float height)
+void RosterScene::renderTable()
 {
   const Theme::Palette& palette = Theme::palette();
   if (visible_rows.empty())
@@ -338,8 +340,8 @@ void RosterScene::renderTable(float height)
     UI::emptyState(LOC("ROSTER_EMPTY_TITLE"), LOC("ROSTER_EMPTY_BODY"));
     return;
   }
-  // Fills the page height (vertical scroll only); columns drop by priority
-  // instead of scrolling sideways.
+  // Natural height inside the page scroll (no scrolling of its own);
+  // columns drop by priority instead of scrolling sideways.
   // Columns the user hid in the picker never come back on wide windows.
   std::array<UI::Column, 11> columns = rosterColumns();
   const UI::ColumnMask hidden = UI::hiddenColumns(TABLE_KEY, columns);
@@ -349,10 +351,9 @@ void RosterScene::renderTable(float height)
   table_mask = mask;
   const ImGuiTableFlags flags =
       ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-      ImGuiTableFlags_Sortable | ImGuiTableFlags_ScrollY;
+      ImGuiTableFlags_Sortable;
   if (!UI::beginResponsiveTable("RosterTable", columns, mask, flags,
-                                UI::TableHeader::SORTABLE,
-                                ImVec2(0.0f, height)))
+                                UI::TableHeader::SORTABLE))
     return;
 
   // The table remembers its sort across screen visits while this scene is
@@ -451,16 +452,13 @@ void RosterScene::renderTable(float height)
   ImGui::EndTable();
 }
 
-void RosterScene::renderDetails(float height)
+void RosterScene::renderDetails()
 {
   const Player* player = selectedPlayer();
-  const float button_rows =
-      player == nullptr ? 0.0f : isManagedClub() ? 3.0f : 1.0f;
-  const float buttonsHeight =
-      (UI::buttonHeight() + ImGui::GetStyle().ItemSpacing.y) * button_rows;
+  // The card fits its content; the page scrolls, not the panel.
   PlayerUI::detailPanel("RosterPlayerDetails", player,
                         guiView->getController().getStatsConfig(), nullptr,
-                        height - buttonsHeight);
+                        -1.0f);
   if (player == nullptr) return;
   if (UI::primaryButton(LOC("ROSTER_OPEN_PROFILE"), ImVec2(-FLT_MIN, 0.0f)))
     Navigation::openPlayer(guiView, player->getId());

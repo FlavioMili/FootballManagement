@@ -101,6 +101,11 @@ bool restoreLineup(Team& team, const StoredLineup& stored,
     if (designated != PlayerID{} && !resolvePlayer(designated))
       designated = PlayerID{};
   lineup.setDesignations(designations);
+  std::vector<Lineup::StandIn> standIns;
+  for (const Lineup::StandIn& entry : stored.standIns)
+    if (resolvePlayer(entry.regular) && resolvePlayer(entry.stand_in))
+      standIns.push_back(entry);
+  lineup.setStandIns(std::move(standIns));
   return true;
 }
 }  // namespace

@@ -147,8 +147,6 @@ struct MatchSceneTuning final
     static constexpr float BALL_HEIGHT_SCALE = 0.9f;
     static constexpr float BALL_SHADOW_SCALE = 0.6f;
     static constexpr ImU32 BALL_SHADOW_COLOR = IM_COL32(0, 0, 0, 70);
-    static constexpr ImU32 HOME_COLOR = IM_COL32(50, 50, 200, 255);
-    static constexpr ImU32 AWAY_COLOR = IM_COL32(200, 50, 50, 255);
     static constexpr ImU32 DIRECTION_COLOR = IM_COL32(255, 255, 100, 255);
     static constexpr ImU32 LABEL_COLOR = IM_COL32(255, 255, 255, 255);
     static constexpr ImU32 BALL_COLOR = IM_COL32(255, 255, 255, 255);

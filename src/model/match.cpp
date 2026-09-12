@@ -199,7 +199,77 @@ bool isSelected(const Lineup& lineup, const Player* player)
                              { return slot.player == player; }) ||
          std::ranges::contains(lineup.getReserves(), player);
 }
+
+/** Defence 0, midfield 1 (holding, central and wide), attack 2. */
+int lineOf(PlayerRole role)
+{
+  switch (role)
+  {
+    case PlayerRole::LB:
+    case PlayerRole::CB:
+    case PlayerRole::RB:
+      return 0;
+    case PlayerRole::LW:
+    case PlayerRole::RW:
+    case PlayerRole::ST:
+      return 2;
+    default:
+      return 1;
+  }
+}
+
+/** Left flank -1, centre 0, right flank 1. */
+int flankOf(PlayerRole role)
+{
+  switch (role)
+  {
+    case PlayerRole::LB:
+    case PlayerRole::LM:
+    case PlayerRole::LW:
+      return -1;
+    case PlayerRole::RB:
+    case PlayerRole::RM:
+    case PlayerRole::RW:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+/** How well a player of @p actual fills a slot asking for @p slot (0-1). */
+float slotFit(PlayerRole actual, PlayerRole slot)
+{
+  if (actual == slot) return 1.0f;
+  if (actual == PlayerRole::GK || slot == PlayerRole::GK) return 0.0f;
+  const int actualLine = lineOf(actual);
+  const int slotLine = lineOf(slot);
+  const int flank = flankOf(actual);
+  if (flank != 0 && flank == flankOf(slot))
+  {
+    // A winger in wide midfield and back; a full-back further up less so.
+    if (std::abs(actualLine - slotLine) != 1) return 0.55f;
+    return actualLine == 0 || slotLine == 0 ? 0.75f : 0.85f;
+  }
+  // Forwards swap freely across the front line; a wide player in the
+  // middle or a centre-back out wide less so.
+  if (actualLine == slotLine)
+    return actualLine == 2 || (flank == 0 && flankOf(slot) == 0) ? 0.85f
+                                                                 : 0.75f;
+  const auto pair = [&](PlayerRole a, PlayerRole b)
+  { return (actual == a && slot == b) || (actual == b && slot == a); };
+  if (pair(PlayerRole::CAM, PlayerRole::ST) ||
+      pair(PlayerRole::CDM, PlayerRole::CB))
+    return 0.75f;
+  return 0.55f;
+}
 }  // namespace
+
+float MatchdaySquad::slotScore(const Player& player, PlayerRole slot,
+                               const StatsConfig& config)
+{
+  return static_cast<float>(player.getOverall(config)) *
+         slotFit(player.getRole(), slot);
+}
 
 std::vector<PlayerID> MatchdaySquad::ineligible(const Lineup& lineup,
                                                 const Eligibility& eligible)
@@ -250,42 +320,42 @@ std::size_t MatchdaySquad::replaceIneligible(
   {
     if (eligible(*starter)) continue;
     const bool keeperSlot = starter == lineup.getGoalkeeper();
-    const auto isKeeper = [](const Player* player)
-    { return player->getRole() == PlayerRole::GK; };
-    const std::array<std::function<bool(const Player*)>, 3> preferences = {
-        [&](const Player* player)
-        { return player->getRole() == starter->getRole(); },
-        [&](const Player* player) { return isKeeper(player) == keeperSlot; },
-        // Last resort: an outfield player in goal beats an injured keeper.
-        [&](const Player*) { return keeperSlot; }};
+    PlayerRole slotRole = PlayerRole::GK;
+    if (!keeperSlot)
+      for (const Lineup::PositionedPlayer& slot : lineup.getOutfieldPlayers())
+        if (slot.player == starter) slotRole = Lineup::roleAt(slot.position);
 
+    // The best fit for the slot among the substitutes and the players left
+    // out; substitutes win ties. A keeper slot takes a keeper, and only when
+    // none is left the weakest outfielder; an outfield slot never takes one.
     const Player* replacement = nullptr;
     bool fromPool = false;
-    for (const auto& preferred : preferences)
+    float best = -1.0f;
+    const auto consider = [&](const Player* candidate, bool pooled)
     {
-      const auto& reserves = lineup.getReserves();
-      if (const auto reserve = std::ranges::find_if(
-              reserves, [&](const Player* player)
-              { return player && eligible(*player) && preferred(player); });
-          reserve != reserves.end())
-      {
-        replacement = *reserve;
-        break;
-      }
-      if (const auto candidate = std::ranges::find_if(pool, preferred);
-          candidate != pool.end())
-      {
-        replacement = *candidate;
-        fromPool = true;
-        pool.erase(candidate);
-        break;
-      }
-    }
+      if (candidate == nullptr || !eligible(*candidate)) return;
+      const bool keeper = candidate->getRole() == PlayerRole::GK;
+      if (!keeperSlot && keeper) return;
+      // Emergency keepers rank below every real one, weakest first.
+      const float score =
+          keeperSlot && !keeper
+              ? -1.0f - static_cast<float>(candidate->getOverall(config))
+              : slotScore(*candidate, slotRole, config);
+      if (replacement != nullptr && score <= best) return;
+      replacement = candidate;
+      fromPool = pooled;
+      best = score;
+    };
+    for (const Player* reserve : lineup.getReserves()) consider(reserve, false);
+    for (const Player* candidate : pool) consider(candidate, true);
     if (replacement == nullptr) continue;
     // From outside the matchday squad he takes the starter's place outright
     // (the bench is full); from the bench the two swap.
     if (fromPool)
+    {
+      std::erase(pool, replacement);
       lineup.bringIn(replacement, starter->getId());
+    }
     else
       lineup.swapPlayers(replacement->getId(), starter->getId());
   }
@@ -306,6 +376,115 @@ std::size_t MatchdaySquad::replaceIneligible(
     lineup.setReserves(bench);
   }
   return before - ineligible(lineup, eligible).size();
+}
+
+namespace
+{
+/** A fit player who fills the place of @p standIn clearly better than he
+ * does, or nullptr. */
+const Player* betterStandIn(const Lineup& lineup,
+                            std::span<const Player* const> squad,
+                            const MatchdaySquad::Eligibility& eligible,
+                            PlayerID standIn, const StatsConfig& config)
+{
+  // Small differences do not reshuffle the side.
+  constexpr float UPGRADE_MARGIN = 2.0f;
+  const Player* current = nullptr;
+  PlayerRole slotRole = PlayerRole::GK;
+  if (const Player* keeper = lineup.getGoalkeeper();
+      keeper && keeper->getId() == standIn)
+    current = keeper;
+  for (const Lineup::PositionedPlayer& slot : lineup.getOutfieldPlayers())
+    if (slot.player && slot.player->getId() == standIn)
+    {
+      current = slot.player;
+      slotRole = Lineup::roleAt(slot.position);
+    }
+  if (current == nullptr || !eligible(*current)) return nullptr;
+  const bool keeperSlot = slotRole == PlayerRole::GK;
+  const Player* best = nullptr;
+  float bestScore = MatchdaySquad::slotScore(*current, slotRole, config) +
+                    UPGRADE_MARGIN;
+  const auto consider = [&](const Player* candidate)
+  {
+    if (candidate == nullptr || lineup.isStarter(candidate->getId()) ||
+        (candidate->getRole() == PlayerRole::GK) != keeperSlot ||
+        !eligible(*candidate))
+      return;
+    const float score = MatchdaySquad::slotScore(*candidate, slotRole, config);
+    if (score <= bestScore) return;
+    best = candidate;
+    bestScore = score;
+  };
+  for (const Player* reserve : lineup.getReserves()) consider(reserve);
+  for (const Player* candidate : squad) consider(candidate);
+  return best;
+}
+}  // namespace
+
+std::size_t MatchdaySquad::recallRegulars(Lineup& lineup,
+                                          std::span<const Player* const> squad,
+                                          const Eligibility& eligible,
+                                          const StatsConfig& config)
+{
+  std::size_t recalled = 0;
+  std::vector<Lineup::StandIn> kept;
+  for (const Lineup::StandIn& entry : lineup.getStandIns())
+  {
+    if (lineup.isStarter(entry.regular) || !lineup.isStarter(entry.stand_in))
+      continue;
+    const auto regular = std::ranges::find_if(
+        squad, [&](const Player* player)
+        { return player && player->getId() == entry.regular; });
+    if (regular == squad.end()) continue;
+    if (!eligible(**regular))
+    {
+      // While he is out, a clearly better fit who can play again takes over
+      // from the stand-in.
+      Lineup::StandIn current = entry;
+      if (const Player* better =
+              betterStandIn(lineup, squad, eligible, entry.stand_in, config))
+      {
+        const bool benched =
+            std::ranges::contains(lineup.getReserves(), better);
+        if (benched ? lineup.swapPlayers(better->getId(), entry.stand_in)
+                    : lineup.bringIn(better, entry.stand_in))
+          current.stand_in = better->getId();
+      }
+      kept.push_back(current);
+      continue;
+    }
+    const bool onBench = std::ranges::contains(lineup.getReserves(), *regular);
+    if (onBench ? lineup.swapPlayers(entry.regular, entry.stand_in)
+                : lineup.bringIn(*regular, entry.stand_in))
+      ++recalled;
+  }
+  lineup.setStandIns(std::move(kept));
+  return recalled;
+}
+
+void MatchdaySquad::recordStandIns(const Lineup& before, Lineup& after)
+{
+  std::vector<Lineup::StandIn> entries = after.getStandIns();
+  const auto record = [&](const Player* out, const Player* in)
+  {
+    if (!out || !in || out == in) return;
+    const auto handed = std::ranges::find_if(
+        entries, [out](const Lineup::StandIn& entry)
+        { return entry.stand_in == out->getId(); });
+    if (handed != entries.end())
+      handed->stand_in = in->getId();
+    else
+      entries.push_back({out->getId(), in->getId()});
+  };
+  record(before.getGoalkeeper(), after.getGoalkeeper());
+  // Slots line up only while nobody has left the XI without a replacement.
+  const auto& oldSlots = before.getOutfieldPlayers();
+  const auto& newSlots = after.getOutfieldPlayers();
+  if (oldSlots.size() == newSlots.size())
+    for (std::size_t slot = 0; slot < oldSlots.size(); ++slot)
+      record(oldSlots[slot].player, newSlots[slot].player);
+  after.setStandIns(std::move(entries));
 }
 
 std::vector<std::pair<PlayerID, PlayerID>> MatchdaySquad::replacements(

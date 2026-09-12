@@ -116,7 +116,7 @@ Scene* active(GUIView& view)
 }
 }  // namespace
 
-TEST(MedicalSupportersUiTest, DISABLED_LoadChartInstructionsAndSupportersRender)
+TEST(MedicalSupportersUiTest, LoadChartInstructionsAndSupportersRender)
 {
   SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
   Logger::init();

@@ -170,6 +170,19 @@ std::string serializeLineup(const Lineup& lineup)
     first = false;
     appendInt(text, designated);
   }
+  // Regulars and the players standing in for them; older saves lack it.
+  text += "],\"stand_ins\":[";
+  first = true;
+  for (const Lineup::StandIn& entry : lineup.getStandIns())
+  {
+    if (!first) text.push_back(',');
+    first = false;
+    text.push_back('[');
+    appendInt(text, entry.regular);
+    text.push_back(',');
+    appendInt(text, entry.stand_in);
+    text.push_back(']');
+  }
   text += "],\"version\":";
   appendInt(text, LINEUP_FORMAT_VERSION);
   text.push_back('}');
@@ -213,6 +226,14 @@ StoredLineup deserializeLineup(const unsigned char* lineupText)
            duty < std::min(duties.size(), lineup.designations.size()); ++duty)
         if (duties[duty].is_number_unsigned())
           lineup.designations[duty] = duties[duty].get<PlayerID>();
+    }
+    if (value.contains("stand_ins") && value["stand_ins"].is_array())
+    {
+      for (const auto& entry : value["stand_ins"])
+        if (entry.is_array() && entry.size() == 2 &&
+            entry[0].is_number_unsigned() && entry[1].is_number_unsigned())
+          lineup.standIns.push_back(
+              {entry[0].get<PlayerID>(), entry[1].get<PlayerID>()});
     }
   }
   catch (const nlohmann::json::exception&)

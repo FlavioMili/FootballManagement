@@ -1743,9 +1743,13 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
         EXPECT_FALSE(report->players.empty())
             << "live match report has no player lines";
         const int goals = played->getHomeScore() + played->getAwayScore();
+        // Own goals are reported as their own kind and still count.
         const auto goalEvents = std::ranges::count_if(
             report->events, [](const MatchReportEvent& event)
-            { return event.kind == MatchEventKind::GOAL; });
+            {
+              return event.kind == MatchEventKind::GOAL ||
+                     event.kind == MatchEventKind::OWN_GOAL;
+            });
         EXPECT_EQ(goalEvents, goals)
             << "live match report lacks the scorers of its goals";
       }

@@ -331,8 +331,8 @@ void MatchRenderer2D::State::batchFan(ImVec2 centre, float radiusX,
 
 void MatchRenderer2D::State::prepareMatch(const MatchRenderSnapshot& snapshot)
 {
-  TeamID home = 0;
-  TeamID away = 0;
+  TeamID home = snapshot.homeTeam;
+  TeamID away = snapshot.awayTeam;
   for (const MatchRenderPlayer& player : snapshot.players)
   {
     if (!player.player) continue;
@@ -345,7 +345,7 @@ void MatchRenderer2D::State::prepareMatch(const MatchRenderSnapshot& snapshot)
   homeTeam = home;
   awayTeam = away;
   kitsChosen = true;
-  numbers.reset();
+  numbers.reset(snapshot);
   flights = {};
   trail = {};
   lastPossessor = nullptr;

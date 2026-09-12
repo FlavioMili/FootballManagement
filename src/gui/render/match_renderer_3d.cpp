@@ -701,8 +701,8 @@ struct MatchRenderer3D::State
 
 void MatchRenderer3D::State::prepareMatch(const MatchRenderSnapshot& snapshot)
 {
-  TeamID home = 0;
-  TeamID away = 0;
+  TeamID home = snapshot.homeTeam;
+  TeamID away = snapshot.awayTeam;
   for (const MatchRenderPlayer& player : snapshot.players)
   {
     if (!player.player) continue;
@@ -724,7 +724,7 @@ void MatchRenderer3D::State::prepareMatch(const MatchRenderSnapshot& snapshot)
     numberColors[index] = kitNumberColor(kitList[index]);
     gloveColors[index] = goalkeeperGloveColor(kitList[index]);
   }
-  numbers.reset();
+  numbers.reset(snapshot);
   slots.clear();
   goal = GoalMomentState{};
   // A lockout already running at the first frame is no new strike.

@@ -338,7 +338,8 @@ std::vector<ImVec2> hubTabPoints(GUIView& view)
   const float y = content->Pos.y + content->WindowPadding.y + 18.0f;
   std::vector<ImVec2> points;
   std::vector<ImGuiID> seen;
-  for (float x = content->Pos.x; x < content->Pos.x + content->Size.x;
+  // Inner rect only: a page that scrolls has its scrollbar on this line.
+  for (float x = content->InnerRect.Min.x; x < content->InnerRect.Max.x;
        x += 6.0f)
   {
     ImGui::GetIO().AddMousePosEvent(x, y);

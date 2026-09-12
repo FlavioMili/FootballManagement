@@ -188,15 +188,42 @@ std::vector<PlayerID> ineligible(const Lineup& lineup,
                                  const Eligibility& eligible);
 
 /**
- * Replaces ineligible starters with eligible reserves or unselected squad
- * players (same role first, then any keeper for the goalkeeper slot or any
- * outfield player for an outfield slot) and ineligible reserves with the
- * best remaining squad players. Returns the number of players replaced.
+ * How well @p player fills a slot asking for @p slot: his overall scaled by
+ * the fit of his position (1 for his own, less for neighbouring ones).
+ */
+float slotScore(const Player& player, PlayerRole slot, const StatsConfig& config);
+
+/**
+ * Replaces ineligible starters with the eligible substitute or unselected
+ * squad player who fits the slot best (slotScore; a keeper for the
+ * goalkeeper slot, an outfield player only when no keeper is left) and
+ * ineligible reserves with the best remaining squad players. Returns the
+ * number of players replaced.
  */
 std::size_t replaceIneligible(Lineup& lineup,
                               std::span<const Player* const> squad,
                               const Eligibility& eligible,
                               const StatsConfig& config);
+
+/**
+ * Puts the regulars of Lineup::getStandIns() who may play again back in
+ * place of their stand-ins: from the bench the two swap, from outside the
+ * matchday squad the regular takes the stand-in's place. While a regular
+ * is still out, an eligible player who fills the slot clearly better
+ * (slotScore) replaces his stand-in. Entries whose regular already starts,
+ * whose stand-in no longer does or whose regular is not in @p squad are
+ * dropped. Returns the number of regulars recalled.
+ */
+std::size_t recallRegulars(Lineup& lineup, std::span<const Player* const> squad,
+                           const Eligibility& eligible,
+                           const StatsConfig& config);
+
+/**
+ * Notes in @p after the starters who replaced a starter of @p before, slot
+ * by slot. A stand-in replaced in turn hands his entry on, so the regular
+ * is the one who returns.
+ */
+void recordStandIns(const Lineup& before, Lineup& after);
 
 /**
  * Who replaced whom between two selections of the same team: starters slot

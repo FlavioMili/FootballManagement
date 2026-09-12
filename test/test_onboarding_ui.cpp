@@ -200,7 +200,7 @@ namespace
 void welcomeJourney(GameController& controller);
 }  // namespace
 
-TEST(OnboardingUiTest, DISABLED_WelcomeTourOfANewCareerAndHelpScreen)
+TEST(OnboardingUiTest, WelcomeTourOfANewCareerAndHelpScreen)
 {
   SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
   Logger::init();
@@ -457,7 +457,7 @@ TEST(InputActionsTest, KeyEventsMatchByCharacterOrPhysicalKey)
   EXPECT_FALSE(registry.matches(Input::Ids::MATCH_SUBSTITUTIONS, event));
 }
 
-TEST(OnboardingUiTest, DISABLED_SettingsControlsRebindWithConflictPersistAndReset)
+TEST(OnboardingUiTest, SettingsControlsRebindWithConflictPersistAndReset)
 {
   SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
   Logger::init();

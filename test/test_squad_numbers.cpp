@@ -231,6 +231,26 @@ TEST(SquadNumbers, MatchShirtsShowSquadNumbers)
   EXPECT_EQ(shirt(striker, true), 23);  // stable within the match
   numbers.reset();
   EXPECT_EQ(shirt(youngster, true), 50);
+
+  // An academy keeper called up takes a free back-up keeper number; the
+  // squad numbers of the players in the match are reserved first, so the
+  // teammate who wears 12 keeps it even when asked for later.
+  Player academyKeeper(5, 1, "E", "Academy", PlayerRole::GK, Language::EN, 0,
+                       0, 17, 1, 186, Foot::Right, stats);
+  Player backup(6, 1, "F", "Backup", PlayerRole::GK, Language::EN, 0, 0, 29, 2,
+                188, Foot::Right, stats);
+  backup.setSquadNumber(12);
+  MatchRenderSnapshot snapshot;
+  for (const Player* player : {&keeper, &backup, &academyKeeper})
+  {
+    MatchRenderPlayer& view = snapshot.players.emplace_back();
+    view.player = player;
+    view.isHomeTeam = true;
+  }
+  numbers.reset(snapshot);
+  EXPECT_EQ(shirt(academyKeeper, true), 13);
+  EXPECT_EQ(shirt(backup, true), 12);
+  EXPECT_EQ(shirt(keeper, true), 1);
 }
 
 TEST(SquadNumbers, GeneratedWorldNumbersEveryClub)

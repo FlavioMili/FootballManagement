@@ -56,6 +56,7 @@ add_executable(unit_tests
   test_mentoring.cpp
   test_holiday.cpp
   test_nav_history.cpp
+  test_matchday_selection.cpp
 )
 target_link_libraries(unit_tests PRIVATE GTest::gtest_main fm_ui)
 set_property(TARGET unit_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
