@@ -3168,8 +3168,40 @@ TEST(MatchEngineTest, MedicalMinuteLimitTakesThePlayerOffAroundTheHour)
       limited.getSubstitutions(), [](const MatchSubstitution& substitution)
       { return substitution.outgoingPlayerId == 106; });
   ASSERT_NE(change, limited.getSubstitutions().end());
-  EXPECT_GE(change->timeMinute, 60.0f);
-  EXPECT_LT(change->timeMinute, 72.0f);
+  // At least the hour on the pitch, first-half added time included (so on
+  // the clock it can be a little before 60'), and off at the next stoppage.
+  const PlayerMatchStats* limitedStats = limited.findPlayerStats(106);
+  ASSERT_NE(limitedStats, nullptr);
+  EXPECT_GE(limitedStats->minutesPlayed, 60.0f);
+  EXPECT_LT(limitedStats->minutesPlayed, 72.0f);
+  EXPECT_EQ(change->period, 2);
+  EXPECT_GE(change->timeMinute,
+            60.0f - static_cast<float>(limited.getAddedMinutes(1)) - 1.0f);
+
+  // The limit counts his own minutes: a flagged substitute who comes on
+  // around 50' is not taken off soon after the hour (no wasted change).
+  MatchEngine substitute(home.getLineup(), away.getLineup(),
+                         home.getStrategy(), away.getStrategy(), config, 73);
+  const Player* flaggedSub = home.getLineup().getReserves()[3];
+  substitute.setMedicalFlags(flaggedSub->getId(), 1U << 1);
+  while (substitute.getState() != MatchState::FULL_TIME &&
+         substitute.getMatchTimeMinutes() < 50.0f)
+    substitute.advance(MatchTuning::Timing::FIXED_STEP_SECONDS);
+  ASSERT_TRUE(advanceToNextStoppage(substitute));
+  ASSERT_TRUE(substitute.substitutePlayer(107, flaggedSub));
+  substitute.simulateToEnd();
+  EXPECT_TRUE(std::ranges::none_of(
+      substitute.getSubstitutions(),
+      [&](const MatchSubstitution& substitution)
+      {
+        return substitution.outgoingPlayerId == flaggedSub->getId() &&
+               substitution.timeMinute < 100.0f;
+      }));
+  // He played on to the end of normal time, well short of his hour.
+  const PlayerMatchStats* subStats =
+      substitute.findPlayerStats(flaggedSub->getId());
+  ASSERT_NE(subStats, nullptr);
+  EXPECT_LT(subStats->minutesPlayed, 60.0f);
 
   // Without automatic changes for his side the manager decides.
   MatchEngine manual(home.getLineup(), away.getLineup(), home.getStrategy(),
@@ -3192,4 +3224,38 @@ TEST(MatchEngineTest, MedicalMinuteLimitTakesThePlayerOffAroundTheHour)
   EXPECT_EQ(rested.getEvents().size(), plain.getEvents().size());
   EXPECT_EQ(rested.getHomeScore(), plain.getHomeScore());
   EXPECT_EQ(rested.getAwayScore(), plain.getAwayScore());
+}
+
+TEST(MatchEngineTest, TeamTalksReplayFromTheCommandLog)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", 69, players);
+  Team away = createSquadWithBench(2, "Away", 69, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine live(home.getLineup(), away.getLineup(), home.getStrategy(),
+                   away.getStrategy(), config, 515);
+  // A talk before kick-off, and the away side's at half-time.
+  live.setTeamTalkModifier(true, 1, 0.04f);
+  while (live.getState() != MatchState::HALF_TIME &&
+         live.getState() != MatchState::FULL_TIME)
+    live.advance(MatchTuning::Timing::FIXED_STEP_SECONDS);
+  ASSERT_EQ(live.getState(), MatchState::HALF_TIME);
+  live.setTeamTalkModifier(false, 2, -0.05f);
+  live.simulateToEnd();
+  ASSERT_EQ(std::ranges::count_if(live.getCommandLog(),
+                                  [](const MatchCommandRecord& command)
+                                  { return command.type ==
+                                           MatchCommandType::TEAM_TALK; }),
+            2);
+
+  MatchEngine replay(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 515);
+  replay.loadCommandReplay(live.getCommandLog());
+  replay.simulateToEnd();
+  EXPECT_FLOAT_EQ(replay.getTeamTalkModifier(true, 1), 0.04f);
+  EXPECT_FLOAT_EQ(replay.getTeamTalkModifier(false, 2), -0.05f);
+  EXPECT_EQ(replay.getHomeScore(), live.getHomeScore());
+  EXPECT_EQ(replay.getAwayScore(), live.getAwayScore());
+  EXPECT_EQ(replay.getEvents().size(), live.getEvents().size());
+  EXPECT_EQ(settledSnapshot(replay), settledSnapshot(live));
 }

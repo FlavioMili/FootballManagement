@@ -193,9 +193,33 @@ constexpr std::array SQUAD_NUMBERS = {
                            "INTEGER NOT NULL DEFAULT 0"},
 };
 
+// Boards record whether the cup, finance and youth targets were set for
+// the season. Boards that already announced them (a value differs from the
+// column defaults) keep being judged on them; boards of saves upgraded by
+// 0012 get them at the next season start and are judged on the league
+// until then.
+constexpr std::array BOARD_TARGETS_SET = {
+    Migrations::ColumnSpec{"BoardState", "targets_set",
+                           "INTEGER NOT NULL DEFAULT 0"},
+};
+
+void boardTargetsSet(const Migrations::MigrationContext& context)
+{
+  if (context.fresh) return;
+  char* error = nullptr;
+  const int rc = sqlite3_exec(
+      context.db,
+      "UPDATE BoardState SET targets_set = 1 WHERE cup_objective <> 0 OR "
+      "finance_objective <> 0 OR youth_target <> 0 OR start_balance <> 0;",
+      nullptr, nullptr, &error);
+  const std::string message = error ? error : "";
+  sqlite3_free(error);
+  if (rc != SQLITE_OK) throw DatabaseException("BoardState: " + message);
+}
+
 // Append new migrations at the end with the next number; never renumber,
 // edit or remove a released one (see README.md).
-constexpr std::array<Migrations::Migration, 13> REGISTRY = {{
+constexpr std::array<Migrations::Migration, 14> REGISTRY = {{
     {1, "0001_version_metadata", {}, &versionMetadata},
     {2, "0002_league_tiebreak", LEAGUE_TIEBREAK, nullptr},
     {3, "0003_fixture_competitions", FIXTURE_COMPETITIONS, nullptr},
@@ -209,6 +233,7 @@ constexpr std::array<Migrations::Migration, 13> REGISTRY = {{
     {11, "0011_match_detail", MATCH_DETAIL, nullptr},
     {12, "0012_board_objectives", BOARD_OBJECTIVES, nullptr},
     {13, "0013_squad_numbers", SQUAD_NUMBERS, nullptr},
+    {14, "0014_board_targets_set", BOARD_TARGETS_SET, &boardTargetsSet},
 }};
 
 static_assert(std::ranges::is_sorted(REGISTRY, {}, &Migrations::Migration::number),

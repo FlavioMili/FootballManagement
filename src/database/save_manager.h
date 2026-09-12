@@ -190,7 +190,8 @@ class SaveManager
   static std::shared_ptr<DatabaseConnection> createWorkingCopy();
 
   /**
-   * Writes the provenance of this save into save_meta of @p working.
+   * Writes the provenance of this save into save_meta of @p working,
+   * including the game, engine, RNG and simulation versions of this build.
    */
   static void stampMetadata(DatabaseConnection& working,
                             std::uint64_t world_seed,

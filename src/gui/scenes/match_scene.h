@@ -173,6 +173,9 @@ class MatchScene : public GUIScene
   bool play_confirm = false;
   /** The play-mode pause menu is open. */
   bool play_menu = false;
+  /** The pause control was pressed again with the menu open: it closes
+   * (from inside the popup) and play resumes. */
+  bool play_menu_resume = false;
   /** Matchday dialog to open once the pause menu has closed. */
   enum class PlayMenuNext : std::uint8_t
   {

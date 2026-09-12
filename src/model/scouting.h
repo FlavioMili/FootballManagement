@@ -414,6 +414,9 @@ class ScoutingSystem
 
   /** Assignment progress, knowledge decay and shortlist alerts. */
   void onDayAdvanced(const GameDateValue& date, Inbox& inbox);
+  /** Drops the cached squad priors (squads or attributes changed), so
+   * estimates match what a reloaded save computes. */
+  void invalidatePriors() const { priors.clear(); }
 
   /** The managed club faced @p opponent_id: its players become known. */
   void onManagedMatch(TeamID opponent_id);

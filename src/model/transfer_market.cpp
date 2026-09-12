@@ -1423,7 +1423,8 @@ std::optional<TransferMarket::AiNeed> TransferMarket::assessNeed(
     std::size_t starters; /*!< Slots in a typical XI. */
     std::size_t depth;    /*!< Squad players wanted. */
   };
-  static constexpr std::array<Group, 7> GROUPS = {{{PlayerRole::GK, 1, 3},
+  // Two senior goalkeepers: the third is usually an academy prospect.
+  static constexpr std::array<Group, 7> GROUPS = {{{PlayerRole::GK, 1, 2},
                                                    {PlayerRole::CB, 2, 4},
                                                    {PlayerRole::LB, 1, 2},
                                                    {PlayerRole::RB, 1, 2},
@@ -1532,6 +1533,9 @@ bool TransferMarket::aiShedSurplus(
   }
   if (ranked.size() <= M::AI_TARGET_SQUAD) return false;
   listLoanProspects(ranked);
+  // Listed prospects wait for borrowers; a club only goes out to place them
+  // itself when its squad is clearly too big.
+  if (ranked.size() <= M::LOAN_PLACEMENT_SQUAD) return false;
   // Parent clubs place their prospects where they will play: smaller
   // clubs, often in the division below, whose wages the parent mostly
   // covers. [P]
@@ -2273,6 +2277,40 @@ void TransferMarket::seedReleaseClauses()
     if (clause <= 0.0) continue;
     mutableFlags(player_id).release_clause = static_cast<std::uint32_t>(std::min(
         clause, static_cast<double>(std::numeric_limits<std::uint32_t>::max())));
+  }
+}
+
+void TransferMarket::seedSummerFreeAgents()
+{
+  using M = TransferTuning::Market;
+  constexpr std::uint64_t EXPIRY_KEY = 0xE7B1E5;
+  const std::uint64_t seed = gamedata->getWorldSeed();
+  std::vector<TeamID> clubs;
+  for (const auto& team : gamedata->getTeamsVector())
+    if (team.get().getId() != FREE_AGENTS_TEAM_ID)
+      clubs.push_back(team.get().getId());
+  std::ranges::sort(clubs);
+  for (const TeamID club_id : clubs)
+  {
+    const auto ranked = rankedSquad(*gamedata, gamedata->getTeam(club_id)->get());
+    for (std::size_t rank = M::OPENING_EXPIRY_MIN_RANK; rank < ranked.size();
+         ++rank)
+    {
+      const PlayerID player_id = ranked[rank].second;
+      Player* player = mutablePlayer(player_id);
+      // Goalkeepers stay: a club's keeper cover includes youngsters who
+      // may yet join its academy, and the pool rarely holds keepers.
+      if (!player || player->getAge() < M::OPENING_EXPIRY_MIN_AGE ||
+          player->getRole() == PlayerRole::GK ||
+          WorldRng::hashUniform(seed, RngDomain::Transfers, player_id,
+                                EXPIRY_KEY) >= M::OPENING_EXPIRY_SHARE)
+        continue;
+      // His contract has ended: flags, offers and loan listing go with it.
+      clearOnMove(player_id);
+      player_flags.erase(player_id);
+      movePlayer(player_id, club_id, FREE_AGENTS_TEAM_ID, FREE_AGENTS_TEAM_ID);
+      player->setContractYears(0);
+    }
   }
 }
 

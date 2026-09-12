@@ -224,7 +224,12 @@ TEST(WorldGenerationTest, RolesLeaguesAndReputationShapeTheWorld)
   std::set<Language> nationalities;
   for (const auto& [id, player] : gamedata->getPlayers())
   {
-    ASSERT_GE(player.getContractYears(), 1);
+    // Club players are under contract; the summer's free agents (their
+    // contracts ran out on 30 June) are not.
+    if (player.getTeamId() == FREE_AGENTS_TEAM_ID)
+      ASSERT_EQ(player.getContractYears(), 0);
+    else
+      ASSERT_GE(player.getContractYears(), 1);
     ASSERT_LE(player.getContractYears(), 5);
     ASSERT_GE(player.getAge(), 16);
     ASSERT_LE(player.getAge(), 37);

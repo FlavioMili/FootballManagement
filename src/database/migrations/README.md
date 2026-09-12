@@ -54,8 +54,9 @@ Commit points (`GameController::saveGame()` / autosave):
    are diffed against the stored rows (only new, changed and dropped ones are
    written); every player changes daily, so player rows are rewritten with
    reused statements and allocation-free encoders.
-2. `SaveManager::stampMetadata()` updates `save_meta` (game version, world
-   seed, last saved in-game date, playtime, UTC timestamp).
+2. `SaveManager::stampMetadata()` updates `save_meta` (game, engine, RNG and
+   simulation versions of the build, world seed, last saved in-game date,
+   playtime, UTC timestamp).
 3. `SaveManager::persist()`:
    1. online backup of the working database to `<slot>.tmp`, switched to a
       rollback journal so the file is self-contained (no `-wal` sidecar);

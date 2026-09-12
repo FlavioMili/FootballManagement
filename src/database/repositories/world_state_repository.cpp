@@ -68,7 +68,7 @@ bool WorldStateRepository::loadBoard(BoardState& board) const
       "SELECT team_id, season_year, objective, expected_position, "
       "target_position, confidence, low_reviews, league_matches, dismissed, "
       "recent_deltas, cup_objective, finance_objective, youth_target, "
-      "start_balance FROM BoardState WHERE id = 1;");
+      "start_balance, targets_set FROM BoardState WHERE id = 1;");
   bool found = false;
   if (sqlite3_step(stmt) == SQLITE_ROW)
   {
@@ -106,6 +106,7 @@ bool WorldStateRepository::loadBoard(BoardState& board) const
     loaded.youth_target =
         static_cast<std::uint8_t>(sqlite3_column_int(stmt, 12));
     loaded.start_balance = sqlite3_column_int64(stmt, 13);
+    loaded.targets_set = sqlite3_column_int(stmt, 14) != 0;
     board = loaded;
     found = true;
   }
@@ -124,8 +125,8 @@ void WorldStateRepository::saveBoard(const BoardState& board) const
       "INSERT OR REPLACE INTO BoardState (id, team_id, season_year, "
       "objective, expected_position, target_position, confidence, "
       "low_reviews, league_matches, dismissed, recent_deltas, "
-      "cup_objective, finance_objective, youth_target, start_balance) VALUES "
-      "(1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+      "cup_objective, finance_objective, youth_target, start_balance, "
+      "targets_set) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
   sqlite3_bind_int(stmt, 1, board.team_id);
   sqlite3_bind_int(stmt, 2, board.season_year);
   sqlite3_bind_int(stmt, 3, static_cast<int>(board.objective));
@@ -140,6 +141,7 @@ void WorldStateRepository::saveBoard(const BoardState& board) const
   sqlite3_bind_int(stmt, 12, static_cast<int>(board.finance_objective));
   sqlite3_bind_int(stmt, 13, board.youth_target);
   sqlite3_bind_int64(stmt, 14, board.start_balance);
+  sqlite3_bind_int(stmt, 15, board.targets_set ? 1 : 0);
   db_conn->executeStep(stmt);
   sqlite3_finalize(stmt);
 }

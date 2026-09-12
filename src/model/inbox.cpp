@@ -30,9 +30,10 @@ constexpr std::array<const char*,
                      "INBOX_CAT_CONTRACT", "INBOX_CAT_YOUTH",
                      "INBOX_CAT_BOARD",    "INBOX_CAT_FINANCE"};
 
-constexpr std::array<std::string_view, 4> ROUTINE_TITLES = {
-    "INBOX_TRANSFER_NEWS_TITLE", "INBOX_INSTALMENT_PAID_TITLE",
-    "INBOX_INSTALMENT_RECEIVED_TITLE", "SCOUT_ALERT_MOVED_TITLE"};
+constexpr std::array<std::string_view, 5> ROUTINE_TITLES = {
+    "INBOX_TRANSFER_NEWS_TITLE", "INBOX_DEADLINE_SUMMARY_TITLE",
+    "INBOX_INSTALMENT_PAID_TITLE", "INBOX_INSTALMENT_RECEIVED_TITLE",
+    "SCOUT_ALERT_MOVED_TITLE"};
 
 constexpr std::array<std::string_view, 2> DIGEST_TITLES = {
     "INBOX_BID_TITLE", "INBOX_LOAN_OFFER_TITLE"};

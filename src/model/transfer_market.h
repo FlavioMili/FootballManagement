@@ -374,6 +374,10 @@ class TransferMarket
   /** Gives some ambitious players at modest clubs a release clause in a
    * new world (deterministic from the world seed). */
   void seedReleaseClauses();
+  /** The 30 June expiries of a new world: some players outside each
+   * club's matchday squad start without a club (deterministic from the
+   * world seed; no history, no money). */
+  void seedSummerFreeAgents();
   /** Release clause of a player (0 = none). */
   std::uint32_t releaseClause(PlayerID player_id) const;
   void setReleaseClause(PlayerID player_id, std::uint32_t clause);

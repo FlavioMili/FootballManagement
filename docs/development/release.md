@@ -4,47 +4,61 @@ Three workflows in `.github/workflows/` build the game:
 
 | Workflow      | Trigger                          | What it does                                                        |
 |---------------|----------------------------------|---------------------------------------------------------------------|
-| `ci.yml`      | push to any branch, pull request | Runs `build.yml` (packages kept 3 days) plus a Linux ASan/UBSan job |
+| `ci.yml`      | push to any branch, pull request | Runs `build.yml` (packages kept 3 days) plus a Linux ASan/UBSan job on the core tests |
 | `release.yml` | tag `v*`, manual run             | Runs `build.yml`, then publishes a GitHub Release with checksums    |
 | `build.yml`   | called by the two above          | Release build, headless tests, packaging, package smoke test        |
 
-`deploy_docs.yml` (Doxygen site) is unrelated.
+`deploy_docs.yml` (Doxygen site) is unrelated; it publishes the API docs
+and only README, CHANGELOG, CONTRIBUTING and the code of conduct.
 
 ## Cutting a release
 
 1. Make sure CI is green on the commit you want to ship, and run the full
    test suite locally (CI skips the slow labels, see below).
-2. In `CHANGELOG.md`, replace "(unreleased)" in the heading of the version
-   you are shipping with the release date and commit that change.
-3. Tag it and push the tag:
+2. Check the version: `project(FootballManagement VERSION x.y.z)` in
+   `CMakeLists.txt` is the one place it is set. Raise it there for a new
+   version.
+3. In `CHANGELOG.md`, replace "(unreleased)" in the heading of the version
+   you are shipping with the release date and commit that change. The
+   release notes are taken from that section, so check that it reads well
+   on its own (`packaging/release_notes.sh 1.0.0` prints it).
+4. Tag it and push the tag. The tag's numbers must equal the project
+   version (`v1.0.0` for 1.0.0, or a pre-release such as `v1.0.0-rc1`);
+   otherwise every build job stops at its first step
+   (`packaging/release_version.sh`):
 
    ```sh
-   git tag -a v0.1.0 -m "Football Management 0.1.0"
-   git push origin v0.1.0
+   git tag -a v1.0.0 -m "Football Management 1.0.0"
+   git push origin v1.0.0
    ```
 
-4. `release.yml` builds every platform. When it finishes, the release
-   `v0.1.0` appears on GitHub with:
-   - `FootballManagement-0.1.0-linux-x86_64.tar.gz`
-   - `FootballManagement-0.1.0-linux-x86_64.AppImage`
-   - `FootballManagement-0.1.0-macos-arm64.zip`
-   - `FootballManagement-0.1.0-windows-x86_64.zip` (only if the Windows job
+5. `release.yml` builds every platform. When it finishes, the release
+   `v1.0.0` appears on GitHub with:
+   - `FootballManagement-1.0.0-linux-x86_64.tar.gz`
+   - `FootballManagement-1.0.0-linux-x86_64.AppImage`
+   - `FootballManagement-1.0.0-macos-arm64.zip`
+   - `FootballManagement-1.0.0-windows-x86_64.zip` (only if the Windows job
      passed, see limitations)
    - `SHA256SUMS.txt` (check with `sha256sum -c SHA256SUMS.txt`)
 
-   A tag with a hyphen (`v0.1.0-rc1`) becomes a pre-release. Release notes are
-   generated from the commits and pull requests since the previous tag and can
-   be edited on GitHub afterwards; paste the version's `CHANGELOG.md` section
-   in. Re-running the workflow for an existing release replaces its files.
+   A tag with a hyphen (`v1.0.0-rc1`) becomes a pre-release. The release
+   notes are the version's `CHANGELOG.md` section (a pre-release uses the
+   section of its final version) followed by a line about the checksums;
+   they can be edited on GitHub afterwards. Re-running the workflow for an
+   existing release replaces its files.
 
 To try the pipeline without tagging, run **Release** manually from the Actions
 tab: packages are uploaded as workflow artifacts (kept 30 days). Tick
 *publish* to also create a **draft** release `v<version>` at that commit;
 nothing is public until you publish the draft.
 
-The version comes from the tag (without the `v`) and is passed to CMake as
-`-DFM_VERSION=...`. It ends up in the package names and the macOS
-`Info.plist`. Local builds default to `0.0.0`.
+The version is the project version from `CMakeLists.txt`. A tagged build
+passes the tag (without the `v`, after `release_version.sh` has checked it)
+to CMake as `-DFM_VERSION=...`, so a pre-release suffix such as `-rc1` is
+kept. The version ends up in the game (About screen, crash reports, saves),
+the package names, the macOS `Info.plist` and the Linux desktop entry
+(`X-AppImage-Version`). Local builds report the project version and the
+commit they were built from.
 
 ## What each job does
 
@@ -58,13 +72,19 @@ they carry no library dependencies beyond the OS:
 library.
 
 Tests run headless (`SDL_VIDEO_DRIVER=dummy`, `SDL_AUDIO_DRIVER=dummy`) with
-`ctest -LE "playtest|monkey|slow"`. That also skips the `adversarial` suite,
-which is labelled `slow`. Run the full suite locally before a release.
+`ctest -LE "playtest|monkey|slow"`. That also skips the `adversarial`, `qa`,
+`perf` and `soak` suites, which are labelled `slow`. The sanitizer job in
+`ci.yml` (Debug, ASan and UBSan) runs only the headless core tests and the
+sanitizer probe (`-L "core|sanitizer"`), because the GUI suites are too slow
+under the sanitizers. Run the full suite locally before a release.
 
 **Linux** (`ubuntu-24.04`, GCC 14): links libstdc++ and libgcc statically,
 builds and runs the tests, then runs `cpack` (tar.gz). It installs the
 `game` component into an AppDir and turns it into an AppImage with a pinned
-`linuxdeploy` release.
+`linuxdeploy` release (checked against its SHA-256). Runners have no FUSE,
+so the AppImage is smoke-tested by extracting it (`--appimage-extract`),
+checking the version in its desktop entry and running the smoke test on
+its `AppRun`.
 
 **macOS** (`macos-15`, Apple silicon): AppleClang's libc++ cannot build the
 game. The code uses floating-point `std::from_chars` (player and training
@@ -79,8 +99,10 @@ The job verifies the signature after extracting the zip.
 
 **Windows** (`windows-2022`, Visual Studio generator with the ClangCL
 toolset): builds the game and `fm_lab` with `BUILD_TESTING=OFF`, packs a
-zip. The job is `continue-on-error`, so a failure never blocks CI or a
-release.
+zip. The executable embeds `packaging/windows/footballmanagement.manifest`,
+which sets the UTF-8 code page so that paths and names with non-ASCII
+characters work through the narrow Windows APIs. The job is
+`continue-on-error`, so a failure never blocks CI or a release.
 
 **Smoke test** (all platforms, `packaging/smoke_test.sh`): extracts the
 package to a temporary directory and starts the game headless from another
@@ -108,12 +130,22 @@ never add headers or static libraries.
 | macOS    | `FootballManagement.app/Contents/MacOS/...`  | `FootballManagement.app/Contents/Resources/assets` |
 | Windows  | `FootballManagement.exe`                     | `assets` next to the executable                  |
 
-Linux packages also ship `share/applications/footballmanagement.desktop` and
-a scalable icon. Licenses go to `share/doc/footballmanagement` on Linux and
-to `licenses/` in the macOS and Windows zips: the game's `LICENSE` (GPL-3.0)
-and `third_party/` notices for fmt, spdlog, nlohmann/json, Dear ImGui, SDL3,
-SDL3_ttf, FreeType, HarfBuzz, PlutoSVG/PlutoVG, SQLite (public domain) and the
-Roboto font (Apache-2.0).
+Linux packages also ship `share/applications/footballmanagement.desktop`
+(generated from `packaging/linux/footballmanagement.desktop.in` with the
+version) and a scalable icon. Licence files go to
+`share/doc/footballmanagement` on Linux and to `licenses/` in the macOS and
+Windows zips: the repository's `LICENSE` file and README, and `third_party/`
+notices for fmt, spdlog, nlohmann/json, Dear ImGui, SDL3, SDL3_ttf,
+FreeType, HarfBuzz, PlutoSVG/PlutoVG, SQLite (public domain) and the Roboto
+font (Apache-2.0). The licence of the game itself is still to be announced;
+until it is, check that `LICENSE` says what the release should say before
+tagging.
+
+The game also carries the third-party licence texts as data in
+`assets/licenses/` (one file per component). The *About* screen (from the
+main menu, or the command palette in a career) shows the version, the commit and build details, and lists
+these components with their licences, so they are readable in any build,
+packaged or not.
 
 `RuntimePaths::assetRoot()` finds the game data once per process. It uses
 `FM_ASSET_ROOT` if set. Otherwise it takes the first directory holding
@@ -125,7 +157,7 @@ working from `build/`. Code reads data through `AssetPaths::*()` in the
 generated `global/paths.h`.
 
 Writable files never go next to the executable. Saves, settings, logs,
-`imgui.ini` and captures use `RuntimePaths::root()`, which is
+crash reports, `imgui.ini` and captures use `RuntimePaths::root()`, which is
 `SDL_GetPrefPath("FlavioMili", "FootballManagement")`:
 
 - Linux: `$XDG_DATA_HOME/FlavioMili/FootballManagement` (default
@@ -133,13 +165,25 @@ Writable files never go next to the executable. Saves, settings, logs,
 - macOS: `~/Library/Application Support/FlavioMili/FootballManagement`
 - Windows: `%APPDATA%\FlavioMili\FootballManagement`
 
+### Crash reports and save recovery
+
+If the game dies on a fatal signal, an uncaught exception or
+`std::terminate`, it writes `crash-<date>.txt` to `<user data>/logs` with
+the version, the commit, the platform and the reason, and keeps the log of
+that session next to it (`crash-<date>.log`). At the next start a notice
+offers to open the folder; only the newest reports are kept. Ask testers
+for these two files when they report a crash.
+
+When a save fails to load, the load screen offers to restore the newest
+numbered backup that loads; the damaged file is kept aside, never deleted.
+
 ## Building a package locally (Linux)
 
 Use a separate build tree:
 
 ```sh
 cmake -S . -B /tmp/fm-pkg -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
-  -DFM_VERSION=0.0.0-local -DSDLTTF_VENDORED=ON -DCMAKE_DISABLE_FIND_PACKAGE_SQLite3=ON \
+  -DSDLTTF_VENDORED=ON -DCMAKE_DISABLE_FIND_PACKAGE_SQLite3=ON \
   "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++ -static-libgcc"
 cmake --build /tmp/fm-pkg --parallel 2 --target FootballManagement
 cpack --config /tmp/fm-pkg/CPackConfig.cmake -B /tmp/fm-pkg/dist
@@ -168,13 +212,13 @@ cpack --config /tmp/fm-pkg/CPackConfig.cmake -B /tmp/fm-pkg/dist
   several test files use `unistd.h` and `setenv`/`unsetenv`. No Windows
   build has been checked yet. Possible problems include
   `std::filesystem::path` to `std::string` conversions (implicit only on
-  POSIX), paths with non-ASCII characters, and warning flood: clang-cl
+  POSIX) and warning flood: clang-cl
   treats the GCC-style `-Wall` as `-Weverything`. The GUI runs with the
   Windows subsystem (no console window), so check the log file in
-  `%APPDATA%` for output.
+  `%APPDATA%` (and any crash report there) for output.
 - On macOS, every build (including development builds) produces
   `build/src/FootballManagement.app` instead of a plain executable. Pre-release
-  versions such as `0.1.0-rc1` go into `CFBundleShortVersionString` as-is. That
+  versions such as `1.0.0-rc1` go into `CFBundleShortVersionString` as-is. That
   is not Apple's `x.y.z` format, which only matters for App Store submission.
 - `linuxdeploy` is pinned to the `1-alpha-20251107-1` release. Homebrew
   `llvm` is not pinned, so the macOS compiler follows Homebrew's current LLVM.

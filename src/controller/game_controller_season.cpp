@@ -182,5 +182,13 @@ std::optional<GameController::BoardTargets> GameController::getBoardTargets()
       BoardModel::gradeYouth(board.youth_target, targets.young_regulars);
   if (targets.youth_grade == ObjectiveGrade::Failed)
     targets.youth_grade = ObjectiveGrade::Missed;
+  // A board of an older save sets these targets at the next season start;
+  // until then they are not judged (SeasonVerdictInputs::targets_set).
+  if (!board.targets_set)
+  {
+    targets.cup_grade = ObjectiveGrade::Met;
+    targets.finance_grade = ObjectiveGrade::Met;
+    targets.youth_grade = ObjectiveGrade::Met;
+  }
   return targets;
 }

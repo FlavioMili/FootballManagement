@@ -194,6 +194,9 @@ bool MatchPlayController::handleEvent(const SDL_Event& event)
     case SDL_EVENT_GAMEPAD_REMOVED:
       if (gamepad && event.gdevice.which == SDL_GetGamepadID(gamepad))
       {
+        // Pulling the cable is not a release: a held shot or pass is
+        // dropped, not played.
+        clearPresses();
         closeGamepad();
         openFirstGamepad();
       }

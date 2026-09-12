@@ -249,6 +249,38 @@ TEST(SeasonVerdict, CupFinancesAndYouthMoveTheVerdict)
             static_cast<int>(SeasonVerdict::Warned));
 }
 
+TEST(SeasonVerdict, TargetsTheBoardNeverSetAreNotJudged)
+{
+  // A board upgraded from an older save has only its league objective this
+  // season: broke books, an early cup exit and no young regulars count for
+  // nothing, the league finish alone decides.
+  SeasonVerdictInputs upgraded = midTable();
+  upgraded.cup = ObjectiveGrade::Failed;
+  upgraded.finances = ObjectiveGrade::Failed;
+  upgraded.youth = ObjectiveGrade::Failed;
+  upgraded.targets_set = false;
+  const SeasonVerdictResult league_only = SeasonReviewModel::judge(upgraded);
+  const SeasonVerdictResult fine = SeasonReviewModel::judge(midTable());
+  EXPECT_EQ(league_only.cup, ObjectiveGrade::Met);
+  EXPECT_EQ(league_only.finances, ObjectiveGrade::Met);
+  EXPECT_EQ(league_only.youth, ObjectiveGrade::Met);
+  EXPECT_EQ(league_only.verdict, fine.verdict);
+  EXPECT_FLOAT_EQ(league_only.confidence, fine.confidence);
+  EXPECT_LT(static_cast<int>(league_only.verdict),
+            static_cast<int>(SeasonVerdict::Warned));
+
+  // A missed league target is still judged.
+  upgraded.position = 19;
+  EXPECT_GE(static_cast<int>(SeasonReviewModel::judge(upgraded).verdict),
+            static_cast<int>(SeasonVerdict::Warned));
+
+  // The same season with the targets set warns the manager.
+  upgraded.position = 12;
+  upgraded.targets_set = true;
+  EXPECT_GE(static_cast<int>(SeasonReviewModel::judge(upgraded).verdict),
+            static_cast<int>(SeasonVerdict::Warned));
+}
+
 // ---- Board targets ----------------------------------------------------------------
 
 TEST(BoardTargets, StatureSetsTheTargets)
@@ -427,6 +459,7 @@ TEST(SeasonEndFlow, TheBoardSetsEveryTargetWhenTheJobStarts)
   EXPECT_NE(board.cup_objective, CupObjective::None)
       << "the favourite of a top division is expected to go far in the cup";
   EXPECT_EQ(targets->start_balance, board.start_balance);
+  EXPECT_TRUE(board.targets_set) << "new careers are judged on every target";
   EXPECT_EQ(board.start_balance,
             controller->getTeamById(managed)->get().getFinances().getBalance());
   // The welcome names every target.

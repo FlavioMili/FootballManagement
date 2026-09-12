@@ -117,6 +117,7 @@ void MatchScene::openPlayMenu()
 {
   if (!play.isActive() || match_finished) return;
   play_menu = true;
+  play_menu_resume = false;
   is_paused = true;
   paused_for_dialog = false;
   play.clearPresses();
@@ -125,6 +126,7 @@ void MatchScene::openPlayMenu()
 void MatchScene::closePlayMenu()
 {
   play_menu = false;
+  play_menu_resume = false;
   play.clearPresses();
 }
 
@@ -150,7 +152,16 @@ void MatchScene::updatePlay(float deltaTime)
   }
   const bool dialog = play_menu || play_confirm || show_substitutions ||
                       show_tactics || team_talk.isOpen();
-  if (play.takePauseRequest() && !dialog) openPlayMenu();
+  // The pause control (Esc, P, Start) opens the menu and, pressed again,
+  // closes it: the same press never does both, since the menu itself does
+  // not listen to Esc.
+  if (play.takePauseRequest())
+  {
+    if (play_menu)
+      play_menu_resume = true;
+    else if (!dialog)
+      openPlayMenu();
+  }
   const bool driving = !is_paused && !dialog;
   suspendKeyboardNavigation(driving);
   // Real time while playing (the speed controls are hidden).
@@ -368,8 +379,19 @@ void MatchScene::renderPlayMenu()
       showSubstitutions(true);
     play_menu_next = PlayMenuNext::NONE;
   }
-  if (!play_menu) return;
   constexpr const char* ID = "###play_menu";
+  if (!play_menu)
+  {
+    // Closed from outside the popup (full time, hand-back): close it in
+    // ImGui too, so it does not block the other dialogs.
+    if (ImGui::IsPopupOpen(ID) &&
+        ImGui::BeginPopupModal(ID, nullptr, ImGuiWindowFlags_NoSavedSettings))
+    {
+      ImGui::CloseCurrentPopup();
+      ImGui::EndPopup();
+    }
+    return;
+  }
   if (!ImGui::IsPopupOpen(ID)) ImGui::OpenPopup(ID);
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always,
@@ -386,8 +408,7 @@ void MatchScene::renderPlayMenu()
     ImGui::CloseCurrentPopup();
     closePlayMenu();
   };
-  if (UI::primaryButton(LOC("MATCH_RESUME")) ||
-      ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+  if (UI::primaryButton(LOC("MATCH_RESUME")) || play_menu_resume)
   {
     close();
     is_paused = false;

@@ -49,6 +49,9 @@ struct SeasonVerdictInputs
   ObjectiveGrade cup = ObjectiveGrade::Met;
   ObjectiveGrade finances = ObjectiveGrade::Met;
   ObjectiveGrade youth = ObjectiveGrade::Met;
+  /** False when the board never set the cup, finance and youth targets
+   * this season (a save from before them): the league alone is judged. */
+  bool targets_set = true;
   int league_matches = 38; /*!< League matches in charge this season. */
   float confidence = 60.0f; /*!< Before the verdict. */
   /** The previous season at this club ended with a warning. */
@@ -129,11 +132,12 @@ inline constexpr int SURVIVAL_MARGIN = 3;
 
 /**
  * Judges a season against the board's objectives. The league finish
- * weighs most; cup, finances and youth add or take away. A manager in
- * charge for too few matches is not judged; a failed season (league target
- * missed, or the books failed without a strong league finish) sacks him
- * when confidence is low, when the club went down although it was not
- * expected to fight relegation, or when he had already been warned.
+ * weighs most; cup, finances and youth add or take away (when the board
+ * set them for the season). A manager in charge for too few matches is not
+ * judged; a failed season (league target missed, or the books failed
+ * without a strong league finish) sacks him when confidence is low, when
+ * the club went down although it was not expected to fight relegation, or
+ * when he had already been warned.
  */
 SeasonVerdictResult judge(const SeasonVerdictInputs& inputs);
 

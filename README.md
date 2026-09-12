@@ -6,11 +6,12 @@
 Football Management is an open-source football management game for Linux,
 macOS and Windows, written in C++23 with SDL3, Dear ImGui and SQLite. You
 take over a club in a world of 22 leagues and 440 clubs: pick the squad and
-the tactics, keep the board and the dressing room on your side, trade in the
-transfer market, bring players through the academy and build a career that
-can take you from club to club. Every match is played by a real-time
-simulation that you can watch in a 2D tactical view or a 3D broadcast view,
-and the rest of the world plays on the same engine.
+the tactics, keep the board, the dressing room and the fans on your side,
+trade in the transfer market, bring players through the academy and build a
+career that can take you from club to club and to a national team. Every
+match is played by a real-time simulation that you can watch in a 2D
+tactical view or a 3D broadcast view, or play yourself by taking control of
+your team on the pitch; the rest of the world plays on the same engine.
 
 > **Status:** version 1.0 is being prepared for release. The
 > [changelog](CHANGELOG.md) lists what it contains and its known
@@ -43,13 +44,21 @@ and the rest of the world plays on the same engine.
   tasks; browser-style Back and Forward (touchpad swipe, mouse side
   buttons, Alt+Left/Right).
 - A Home dashboard with the next fixture and a *Next steps* card, and an
-  inbox that separates decisions from information and lets you act inline.
-- Continue advances the calendar on a background worker; holiday mode hands
-  the club to your assistant until a date, a match or a decision.
+  inbox that separates decisions from information, lets you act inline and
+  filters by player or club; decision moments such as a disputed fine or a
+  fans' protest about ticket prices.
+- A world news hub, cup and continental draw ceremonies, and a career
+  timeline you can export as a journal.
+- Continue advances the calendar on a background worker and can be stopped
+  at the end of a day; holiday mode hands the club to your assistant until
+  a date, a match or a decision.
 - Delegation of lineup fixes, substitutions, training, renewals, scouting,
   friendlies and youth contracts to the assistant manager.
-- English and Italian, six themes, interface scaling for HiDPI displays and
-  layouts that adapt from 1280x720 to 4K.
+- A welcome tour, a first-week checklist, and a Help screen (F8) with the
+  shortcuts and a football glossary.
+- English and Italian with locale-aware money, six themes, colour-vision
+  modes, text size and interface scaling for HiDPI displays, layouts that
+  adapt from 1280x720 to 4K, and keyboard shortcuts you can rebind.
 
 **Match day**
 - A real-time engine with player movement and fatigue, ball flight with
@@ -59,7 +68,11 @@ and the rest of the world plays on the same engine.
   free kicks, penalties, corners, throw-ins, goal kicks and added time.
 - 2D and 3D views of the same match, speeds from 1x to 30x, a Highlights
   mode and a Quick result button; six 3D cameras including a TV director,
-  with mouse orbit, pan and zoom.
+  with mouse orbit, pan and zoom, animated players, and a day-lit stadium
+  for afternoon kick-offs.
+- Play mode: take control of your team on the pitch with the keyboard or a
+  gamepad, one footballer at a time, under the same rules, attributes and
+  fatigue as a watched match.
 - Player roles and duties for every position, and a separate shape with
   the ball that you drag into place on the tactics screen.
 - A substitutions board, an in-match tactics panel and eleven touchline
@@ -69,7 +82,8 @@ and the rest of the world plays on the same engine.
   tight marking, closing down, showing a player onto his weaker foot or
   doubling up on him.
 - Cup ties played to a winner through extra time and a live penalty
-  shootout; match reports and half-time and full-time analysis.
+  shootout; match reports with expected goals, shot maps, touch maps and
+  pass networks, and half-time and full-time analysis.
 - Procedural match sound: crowd, whistles and ball contacts.
 
 **Competitions**
@@ -79,23 +93,32 @@ and the rest of the world plays on the same engine.
   knockout rounds, prize money and coefficients.
 - National teams with qualifiers, finals tournaments, friendlies and
   call-ups of your players.
+- League tables with clinch marks, archived seasons, a data hub with
+  league leaders, and an end-of-season review with the board's verdict.
 
 **The club and the world**
 - Finances with TV, merit, gate and commercial income, wage and staff
-  budgets, a ledger and transfer budgets tied to real cash.
-- Board objectives and confidence, warnings, dismissal, transfer embargoes
-  and facility projects.
-- Injuries and a medical centre, fatigue, sharpness, morale and form;
-  player development driven by age, training, minutes and staff.
-- Squad status, captains and set-piece takers, a squad planner and player
-  comparison; player conversations, promises and dressing-room stories.
+  budgets, a ledger, ticket pricing, parachute payments and transfer
+  budgets tied to real cash.
+- Board objectives for the league, the cup, the finances and young
+  players; confidence, warnings, dismissal, transfer embargoes and facility
+  projects. Supporter mood that the board listens to.
+- Injuries and a medical centre with load charts, rest and minute limits;
+  fatigue, sharpness, morale and form; player development driven by age,
+  training, minutes and staff.
+- Squad status, captains, set-piece takers and squad numbers, a squad
+  planner and player comparison; player conversations, promises and
+  dressing-room stories.
 - Coaching, medical, scouting and youth staff; weekly training plans and
   mentoring groups.
 
 **Transfers, scouting and youth**
 - Transfer search with affordability filters and need-based
-  recommendations; negotiations with counter-offers, instalments, loans,
-  pre-contracts and free agents; bids for your own players that you can
+  recommendations, and transfer windows that follow each country's
+  calendar.
+- Negotiations with counter-offers, instalments, add-ons and sell-on
+  clauses, loans in both directions, pre-contracts, free agents and release
+  clauses; agents who talk back; bids for your own players that you can
   negotiate too.
 - Scouts with nationalities, languages and regional experience. Players
   outside your club are shown as estimates whose ranges narrow as your
@@ -112,7 +135,9 @@ and the rest of the world plays on the same engine.
   each international window and qualify for the finals.
 - Monthly and season awards, player honours, and club and league records.
 - Three save slots, autosave and restorable backups. The game plays on an
-  in-memory copy and only replaces a save with a verified snapshot.
+  in-memory copy and only replaces a save with a verified snapshot; a save
+  that does not load can be restored from its newest good backup, and a
+  crash leaves a report on your computer (nothing is sent anywhere).
 
 The [changelog](CHANGELOG.md) has the complete list.
 
@@ -235,8 +260,12 @@ time. The essentials:
 | Where | Keys |
 |-------|------|
 | Anywhere | **F12** screenshot |
-| Management screens | **Ctrl+K** command palette, **F1-F7** sidebar hubs, **Space/Enter** Continue, **Ctrl+S** save, **Alt+Left/Right** back and forward, **Esc** close the screen |
-| Match | **Space** pause, **V** 2D/3D view, **1-6** 3D cameras, **S** substitutions, **T** tactics, **Shift+1...0, Shift+-** touchline shouts, **F** pitch focus, **M** mute |
+| Management screens | **Ctrl+K** command palette, **F1-F7** sidebar hubs, **F8** help, **Space/Enter** Continue, **Ctrl+S** save, **Alt+Left/Right** back and forward, **Esc** close the screen |
+| Match | **Space** pause, **. ,** faster and slower, **V** 2D/3D view, **1-6** 3D cameras, **S** substitutions, **T** tactics, **Shift+1...0, Shift+-** touchline shouts, **F** pitch focus, **M** mute |
+| Play mode | **WASD** or arrows move, **Shift** sprint, **J** pass, **K** shoot, **L** through ball, **I** lofted pass, **E** jockey, **Q** switch player, **Esc/P** pause menu; or a gamepad |
+
+These are the defaults: every shortcut except F12 and sprint can be rebound
+in *Settings > Controls*.
 
 Every shortcut and mouse gesture is listed in
 [docs/user/controls.md](docs/user/controls.md). New to the game? Start with
@@ -254,7 +283,8 @@ next to the executable:
 | Windows | `%APPDATA%\FlavioMili\FootballManagement` |
 
 Saves are SQLite databases in `saves/` (one per slot, with numbered
-backups beside it that the main menu can restore).
+backups beside it that the main menu can restore). The log and any crash
+reports are in `logs/`; attach both when you report a crash.
 
 ## Tests and tools
 
@@ -320,15 +350,19 @@ football management game.
 The next steps come from the known limitations of version 1.0 (see the
 [changelog](CHANGELOG.md)):
 
-- More engine calibration: a wider spread of goalscorers, more goals from
-  set pieces and more possession difference between strong and weak sides.
-- Watching and directing your national team's matches live, and players
-  with more than one nationality.
-- Richer loan talks for your players, and buying clubs that check their
-  wage budget before they bid.
+- Play mode: an accelerated match clock, a practice match and set pieces
+  taken by the player.
+- More realism: shot conversion, the possession gap between strong and
+  weak sides, and offsides closer to real football.
+- Southern-hemisphere and American season calendars for Brazil, Argentina
+  and the United States.
+- Watching and directing your national team's matches live, players with
+  more than one nationality, and appearance clauses in loans for other
+  clubs' players.
+- Whole worlds that stay bit-identical across platforms.
 - Match sound with club chants and a commentary voice; Italian commentary
   with the clubs' articles.
-- Signed and notarised macOS packages, and a fully supported Windows build.
+- Signed and notarised macOS packages, and a validated Windows build.
 
 ## Contributing
 

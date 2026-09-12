@@ -37,9 +37,12 @@ The inbox is waiting for you:
 - **Chief scout's suggestion**: a player who fits your weakest area and your
   budget.
 
-The *Next steps* card on Home and the palette (Ctrl+K with an empty query)
-list what still needs doing. Screen tips explain each screen the first time
-you open it; you can turn them off in Settings.
+A short welcome tour shows you around the first time. The *Next steps*
+card on Home, with its first-week checklist, and the palette (Ctrl+K with
+an empty query) list what still needs doing. Screen tips explain each
+screen the first time you open it; you can turn them off in Settings.
+**Help** (F8) has getting-started notes, the keyboard shortcuts as you have
+bound them and a glossary of football terms.
 
 Board confidence goes up and down with results, finances and how you handle
 the objective. The board warns you before it runs out of patience. If the
@@ -185,8 +188,9 @@ The **Under-21s** screen (Squad hub) holds the club's reserve squad:
   days up to your next match; with no match ahead it moves on one day.
   Other clubs' matches, transfers, injuries and development are simulated
   in the background while a progress overlay shows the days and matches
-  going by. Read the inbox when you get back: bids, offers and the youth
-  intake wait for your answer there.
+  going by. *Stop* ends a long Continue at the end of the current day.
+  Read the inbox when you get back: bids, offers, decision moments and the
+  youth intake wait for your answer there.
 - **Holiday** (the button next to Continue) hands the club to the assistant
   until a date, the next match, the next decision or the end of the transfer
   window. You choose what calls you back early: a big bid, a long injury to
@@ -229,6 +233,11 @@ When your match is due, Continue becomes **Play match**.
 8. **Pitch focus** (F or double-click on the pitch) hides the panels so the
    match fills the window; Alt+Enter makes the window full screen and M
    mutes the sound.
+9. **Play it yourself**: *Play* before kick-off, or *Take control* while
+   you watch, hands you the team on the pitch. You control one footballer
+   at a time with the keyboard or a gamepad; *Hand back to AI* returns to
+   watching at any stoppage. The keys are in
+   [controls.md](controls.md#play-mode).
 
 ### 3D camera controls
 

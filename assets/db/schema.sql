@@ -271,7 +271,8 @@ CREATE TABLE IF NOT EXISTS BoardState (
   cup_objective INTEGER NOT NULL DEFAULT 0,     -- CupObjective
   finance_objective INTEGER NOT NULL DEFAULT 0, -- FinanceObjective
   youth_target INTEGER NOT NULL DEFAULT 0,      -- young regulars expected
-  start_balance INTEGER NOT NULL DEFAULT 0      -- cash when the season began
+  start_balance INTEGER NOT NULL DEFAULT 0,     -- cash when the season began
+  targets_set INTEGER NOT NULL DEFAULT 0        -- cup/finance/youth set this season
 );
 
 -- World simulation state (single row): RNG seed and player and staff id

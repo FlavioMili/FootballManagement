@@ -82,6 +82,9 @@ struct BoardState
   FinanceObjective finance_objective = FinanceObjective::WithinWageBudget;
   std::uint8_t youth_target = 0;  /*!< Young regulars expected (0 = none). */
   std::int64_t start_balance = 0; /*!< Cash when the season (job) began. */
+  /** The cup, finance and youth targets were set for this season (false
+   * for boards of saves from before them, until the next season start). */
+  bool targets_set = false;
   std::uint8_t result_count = 0;
   /** Points minus expected points of recent league matches, newest first. */
   std::array<float, RESULT_WINDOW> recent_deltas{};

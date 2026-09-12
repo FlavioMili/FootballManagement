@@ -84,13 +84,17 @@ SeasonVerdictResult judge(const SeasonVerdictInputs& inputs)
   if (inputs.promoted) league = std::max(league, 1.5f);
   if (inputs.relegated) league = -2.0f;
   result.league = gradeOf(league);
-  result.cup = inputs.cup;
-  result.finances = inputs.finances;
-  result.youth = inputs.youth;
+  // Targets the board never set are neither met nor failed.
+  if (inputs.targets_set)
+  {
+    result.cup = inputs.cup;
+    result.finances = inputs.finances;
+    result.youth = inputs.youth;
+  }
 
-  const float score = league + CUP_WEIGHT * gradeScore(inputs.cup) +
-                      FINANCE_WEIGHT * gradeScore(inputs.finances) +
-                      YOUTH_WEIGHT * gradeScore(inputs.youth);
+  const float score = league + CUP_WEIGHT * gradeScore(result.cup) +
+                      FINANCE_WEIGHT * gradeScore(result.finances) +
+                      YOUTH_WEIGHT * gradeScore(result.youth);
   float delta =
       std::clamp(CONFIDENCE_PER_POINT * score, -MAX_LOSS, MAX_GAIN);
 
@@ -108,7 +112,7 @@ SeasonVerdictResult judge(const SeasonVerdictInputs& inputs)
 
   const bool failed =
       league < 0.0f ||
-      (inputs.finances == ObjectiveGrade::Failed && league < 1.0f);
+      (result.finances == ObjectiveGrade::Failed && league < 1.0f);
   const bool unexpected_drop =
       inputs.relegated && inputs.objective != BoardObjective::AvoidRelegation;
   if (failed && (result.confidence < SACK_CONFIDENCE || unexpected_drop ||

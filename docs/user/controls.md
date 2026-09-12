@@ -4,6 +4,12 @@ Football Management is played with the mouse. Keyboard shortcuts speed up the
 things you do all the time: moving between screens, advancing the calendar and
 driving the match view.
 
+The keys below are the defaults. Every shortcut except F12 (screenshot) and
+Shift (sprint in play mode) can be rebound in *Settings > Controls*, which
+warns you when two actions would share a key and can reset any of them to
+its default. The in-game *Help* screen (F8) lists the keys as you have
+bound them.
+
 ## Anywhere in the game
 
 | Key | Action |
@@ -36,6 +42,7 @@ active or a dialog is open.
 | Enter (in the palette) | Open the selected result |
 | Esc (in the palette) | Close the palette |
 | Ctrl+S | Save the career to its slot |
+| F8 | Open Help: getting started, keyboard shortcuts and a glossary of football terms |
 | Space or Enter | Continue: advance the calendar to your next match, or open the match on match day. Ignored while keyboard navigation has a widget focused, so it never doubles as "press this button". |
 | Alt+Left | Back to the previous screen you were on |
 | Alt+Right | Forward again to the screen Back left |
@@ -84,17 +91,17 @@ appear as tabs above the page.
 | Key | Hub | Screens |
 |-----|-----|----------------|
 | F1 | Home | Home |
-| F2 | Inbox | Inbox |
+| F2 | Inbox | Inbox, News |
 | F3 | Squad | Squad, Lineup, Tactics, Squad planner, Medical, Compare players, Under-21s |
 | F4 | Training | Training, Planning |
 | F5 | Matches | Fixtures & Results, Competitions, Calendar, Opposition, International, Call-ups (head coaches only), Data hub |
 | F6 | Recruitment | Transfers, Scouting, Youth |
-| F7 | Club | Club, Finances, Staff, Delegation, Manager, Awards, Records |
+| F7 | Club | Club, Finances, Staff, Delegation, Manager, Career timeline, Awards, Records |
 
 Every screen can also be opened with Ctrl+K. While you are out of work, only
 the screens that make sense without a club are available (Home, Inbox,
-Competitions, International, Manager, Awards and Records, plus Call-ups if
-you coach a national team), and the F-key of a hub with none of them does
+News, Competitions, International, Manager, Career timeline, Awards and
+Records, plus Call-ups if you coach a national team), and the F-key of a hub with none of them does
 nothing.
 
 ### Mouse on management screens
@@ -119,6 +126,7 @@ field.
 | Key | Action |
 |-----|--------|
 | Space | Pause or resume the match (while the substitutions board and the tactics panel are closed) |
+| . (period) / , (comma) | Next faster / next slower playback speed |
 | V | Switch between the 2D and the 3D view (the same simulation, only the view changes) |
 | S | Open or close the substitutions board |
 | T | Open or close the tactics panel |
@@ -261,3 +269,6 @@ the user data directory:
 | Linux | `$XDG_DATA_HOME/FlavioMili/FootballManagement` (usually `~/.local/share/FlavioMili/FootballManagement`) |
 | macOS | `~/Library/Application Support/FlavioMili/FootballManagement` |
 | Windows | `%APPDATA%\FlavioMili\FootballManagement` |
+
+Saves are in `saves/`, the log and any crash reports in `logs/`, and
+screenshots in `captures/`.

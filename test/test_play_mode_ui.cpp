@@ -271,6 +271,20 @@ TEST(PlayModeUiTest, PlayMovePassSwitchAndHandBack)
   EXPECT_TRUE(MatchBridge::inMenu(*scene));
   EXPECT_TRUE(MatchBridge::paused(*scene));
   capture(view, "play_mode_menu.png");
+  // A second Esc closes it and play goes on; a third opens it again.
+  pushKey(SDL_SCANCODE_ESCAPE, SDLK_ESCAPE, true);
+  frames(view, 1);
+  pushKey(SDL_SCANCODE_ESCAPE, SDLK_ESCAPE, false);
+  frames(view, 2);
+  EXPECT_FALSE(MatchBridge::inMenu(*scene));
+  EXPECT_FALSE(MatchBridge::paused(*scene));
+  EXPECT_FALSE(ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId));
+  pushKey(SDL_SCANCODE_ESCAPE, SDLK_ESCAPE, true);
+  frames(view, 1);
+  pushKey(SDL_SCANCODE_ESCAPE, SDLK_ESCAPE, false);
+  frames(view, 2);
+  EXPECT_TRUE(MatchBridge::inMenu(*scene));
+  EXPECT_TRUE(MatchBridge::paused(*scene));
   ASSERT_TRUE(MatchBridge::canHandBack(*scene));
   MatchBridge::handBack(*scene);
   frames(view, 2);

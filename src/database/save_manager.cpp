@@ -510,19 +510,26 @@ void SaveManager::stampMetadata(DatabaseConnection& working,
                                 const GameDateValue& game_date,
                                 std::int64_t playtime_seconds)
 {
+  // The versions are those of the build writing the save: a save upgraded
+  // from an older build continues under the current engine and RNG.
   sqlite3_stmt* stmt = working.prepareStatement(
-      "UPDATE save_meta SET game_version = ?, world_seed = ?, "
-      "updated_at_utc = ?, last_saved_game_date = ?, playtime_seconds = ? "
-      "WHERE id = 1;");
+      "UPDATE save_meta SET game_version = ?, engine_version = ?, "
+      "rng_version = ?, sim_version = ?, world_seed = ?, updated_at_utc = ?, "
+      "last_saved_game_date = ?, playtime_seconds = ? WHERE id = 1;");
   const std::string updated = utcNow("{:%FT%TZ}");
   const std::string date = game_date.toString();
   sqlite3_bind_text(stmt, 1, SaveFormat::GAME_VERSION.data(),
                     static_cast<int>(SaveFormat::GAME_VERSION.size()),
                     SQLITE_STATIC);
-  sqlite3_bind_int64(stmt, 2, static_cast<sqlite3_int64>(world_seed));
-  sqlite3_bind_text(stmt, 3, updated.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, 4, date.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_int64(stmt, 5, playtime_seconds);
+  sqlite3_bind_text(stmt, 2, SaveFormat::ENGINE_VERSION.data(),
+                    static_cast<int>(SaveFormat::ENGINE_VERSION.size()),
+                    SQLITE_STATIC);
+  sqlite3_bind_int(stmt, 3, SaveFormat::RNG_VERSION);
+  sqlite3_bind_int(stmt, 4, SaveFormat::SIM_VERSION);
+  sqlite3_bind_int64(stmt, 5, static_cast<sqlite3_int64>(world_seed));
+  sqlite3_bind_text(stmt, 6, updated.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, 7, date.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_int64(stmt, 8, playtime_seconds);
   working.executeStep(stmt);
   sqlite3_finalize(stmt);
 }

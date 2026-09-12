@@ -350,7 +350,9 @@ enum class MatchCommandType : std::uint8_t
   SHOUT,
   FORMATION,
   MOVE_TO_SLOT,
-  SUBSTITUTION
+  SUBSTITUTION,
+  /** A team talk's modifier for one half (see setTeamTalkModifier). */
+  TEAM_TALK
 };
 
 /**
@@ -374,6 +376,9 @@ struct MatchCommandRecord
   PlayerID incoming = 0;
   /** Target slot (MOVE_TO_SLOT, optional for SUBSTITUTION). */
   std::optional<std::size_t> slot;
+  /** Half (1 or 2) and modifier of a TEAM_TALK. */
+  int talkHalf = 1;
+  float talkModifier = 0.0f;
 };
 
 /** One-shot action requested by an external controller (play mode). */
@@ -648,6 +653,7 @@ class MatchEngine
    * Team-talk execution modifier for one half (clamped to
    * +-MatchTuning::Touchline::MAX_TEAM_TALK_MODIFIER): positive values make
    * execution and decisions slightly sharper and work rate slightly higher.
+   * Logged in the command log (MatchCommandType::TEAM_TALK).
    */
   void setTeamTalkModifier(bool homeTeam, int half, float modifier);
   float getTeamTalkModifier(bool homeTeam, int half) const;
@@ -726,7 +732,7 @@ class MatchEngine
   }
   /**
    * Every tactical change made from outside (strategy, shout, formation,
-   * slot move, substitution), step-stamped. Replaying it with
+   * slot move, substitution, team talk), step-stamped. Replaying it with
    * loadCommandReplay() on a new engine with the same lineups, tactics and
    * seed reproduces the match. AI touchline decisions are not logged: they
    * replay by themselves.
@@ -781,9 +787,12 @@ class MatchEngine
   /**
    * Medical staff instructions (MedicalFlag bits, see model/medical_centre.h)
    * for a squad player: while his side's substitutions are automatic, a
-   * player limited to about an hour comes off at the first stoppage from
-   * MedicalCentre::MINUTE_LIMIT. Set before kick-off; no flags plays as
-   * before.
+   * player limited to about an hour comes off at the first stoppage once he
+   * has played MedicalCentre::MINUTE_LIMIT minutes on the pitch
+   * (PlayerMatchStats::minutesPlayed: elapsed match-clock minutes, added
+   * time included, so a starter can be due a little before 60' on the
+   * second-half clock; a substitute counts from when he came on). Set
+   * before kick-off; no flags plays as before.
    */
   void setMedicalFlags(PlayerID playerId, std::uint8_t flags);
   const std::vector<MatchSubstitution>& getSubstitutions() const

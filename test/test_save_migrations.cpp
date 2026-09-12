@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
@@ -24,7 +25,9 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "controller/game_controller.h"
@@ -33,14 +36,19 @@
 #include "database/migrations/migrations.h"
 #include "database/repositories/fixture_repository.h"
 #include "database/repositories/player_repository.h"
+#include "database/repositories/world_state_repository.h"
 #include "database/save_manager.h"
 #include "global/global.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
+#include "model/board.h"
 #include "model/calendar.h"
+#include "model/data_hub.h"
+#include "model/guidance.h"
 #include "model/match.h"
 #include "model/player.h"
 #include "model/world_rng.h"
+#include "model/youth_academy.h"
 
 namespace fs = std::filesystem;
 
@@ -204,10 +212,50 @@ fs::path scratchDatabase(const char* name)
   return path;
 }
 
+// Columns added by migrations 10-14 (U21 squads, match detail, board
+// targets, squad numbers): a version 9 save has none of them.
+constexpr std::array<std::pair<std::string_view, std::string_view>, 15>
+    COLUMNS_AFTER_VERSION_NINE = {{
+        {"YouthAcademies", "reserve_played"},
+        {"YouthAcademies", "reserve_won"},
+        {"YouthAcademies", "reserve_drawn"},
+        {"YouthAcademies", "reserve_lost"},
+        {"YouthAcademies", "reserve_goals_for"},
+        {"YouthAcademies", "reserve_goals_against"},
+        {"YouthAcademies", "reserves_ready"},
+        {"YouthResults", "squad"},
+        {"ManagedMatchAnalytics", "detail"},
+        {"BoardState", "cup_objective"},
+        {"BoardState", "finance_objective"},
+        {"BoardState", "youth_target"},
+        {"BoardState", "start_balance"},
+        {"BoardState", "targets_set"},
+        {"Players", "squad_number"},
+    }};
+
+/** Drops the columns of COLUMNS_AFTER_VERSION_NINE (but those of
+ * @p skip_table). */
+void dropColumnsAfterVersionNine(sqlite3* db, std::string_view skip_table = {})
+{
+  for (const auto& [table, column] : COLUMNS_AFTER_VERSION_NINE)
+    if (table != skip_table)
+      execSql(db, std::format("ALTER TABLE {} DROP COLUMN {};", table, column));
+}
+
+/** Turns a current database into the layout of a version 9 save. */
+void downgradeToVersionNine(sqlite3* db)
+{
+  dropColumnsAfterVersionNine(db);
+  execSql(db, "DELETE FROM schema_migrations WHERE number >= 10;");
+  execSql(db, "UPDATE save_meta SET schema_version = 9;");
+}
+
 /** Turns a current save into a save from before versioning ("version 0"). */
 void downgradeToVersionZero(const fs::path& save)
 {
   RawDb db(save);
+  // BoardState is dropped as a whole below.
+  dropColumnsAfterVersionNine(db.get(), "BoardState");
   for (const char* sql :
        {"DROP TABLE schema_migrations;", "DROP TABLE save_meta;",
         "DROP TABLE FinanceLedger;", "DROP TABLE InboxMessages;",
@@ -217,7 +265,6 @@ void downgradeToVersionZero(const fs::path& save)
         "ALTER TABLE Players DROP COLUMN potential;",
         "ALTER TABLE Players DROP COLUMN traits;",
         "ALTER TABLE Players DROP COLUMN dynamics;",
-        "ALTER TABLE Players DROP COLUMN squad_number;",
         "ALTER TABLE Teams DROP COLUMN reputation;",
         "ALTER TABLE Teams DROP COLUMN stadium_capacity;",
         "ALTER TABLE Teams DROP COLUMN recent_form;",
@@ -281,7 +328,12 @@ TEST(SaveMigrations, LegacyVersionZeroLayoutUpgradesIdempotently)
           {"Players", "potential"}, {"Teams", "recent_form"},
           {"WorldState", "next_staff_id"}, {"TransferOffers", "status"},
           {"TransferOffers", "respond_on"},
-          {"PlayerMarketFlags", "not_for_sale_until"}})
+          {"PlayerMarketFlags", "not_for_sale_until"},
+          {"YouthAcademies", "reserve_played"},
+          {"YouthAcademies", "reserves_ready"}, {"YouthResults", "squad"},
+          {"ManagedMatchAnalytics", "detail"},
+          {"BoardState", "finance_objective"}, {"BoardState", "targets_set"},
+          {"Players", "squad_number"}})
       EXPECT_TRUE(Migrations::columnExists(db, table, column))
           << table << "." << column;
     for (const char* table : {"FinanceLedger", "WorldState", "Staff",
@@ -386,6 +438,8 @@ TEST(SaveMigrations, BoardObjectivesUpgradeASaveFromBeforeThem)
   EXPECT_EQ(queryInt(db, "SELECT objective FROM BoardState WHERE id = 1;"), 2);
   EXPECT_EQ(queryInt(db, "SELECT cup_objective FROM BoardState;"), 0);
   EXPECT_EQ(queryInt(db, "SELECT youth_target FROM BoardState;"), 0);
+  EXPECT_EQ(queryInt(db, "SELECT targets_set FROM BoardState;"), 0)
+      << "the board never announced them";
   EXPECT_TRUE(Migrations::tableExists(db, "SeasonTables"));
   EXPECT_TRUE(Migrations::tableExists(db, "SeasonReviews"));
 
@@ -394,6 +448,125 @@ TEST(SaveMigrations, BoardObjectivesUpgradeASaveFromBeforeThem)
   EXPECT_TRUE(again.applied.empty());
   EXPECT_TRUE(again.repaired.empty());
   EXPECT_EQ(databaseDigest(db), upgraded);
+}
+
+TEST(SaveMigrations, VersionNineSaveUpgradesWithDefaults)
+{
+  Logger::init();
+  auto connection = std::make_shared<DatabaseConnection>(":memory:");
+  Migrations::migrate(*connection);
+  sqlite3* db = connection->getRaw();
+  // A version 9 save: an academy with a U18 record and one result, a
+  // managed match without detail, a board with a league objective only
+  // and a player without a squad number.
+  downgradeToVersionNine(db);
+  for (const char* sql :
+       {"INSERT INTO Leagues (id, name) VALUES (1, 'Old League');",
+        "INSERT INTO Teams (id, league_id, name, balance) VALUES (4, 1, "
+        "'Old Town', -250000);",
+        "INSERT INTO Players (id, team_id, first_name, last_name, role, "
+        "nationality, stats) VALUES (1, 4, 'Ada', 'Legacy', 'ST', 'EN', '{}');",
+        "INSERT INTO YouthAcademies (team_id, recruitment, project, "
+        "project_start_day, project_done_day, project_target, "
+        "last_request_day, played, won, drawn, lost, goals_for, goals_against) "
+        "VALUES (4, 60, 0, 0, 0, 0, 0, 3, 2, 1, 0, 7, 2);",
+        "INSERT INTO YouthResults (seq, date, opponent_id, home, goals_for, "
+        "goals_against) VALUES (1, 20250823, 5, 1, 3, 1);",
+        "INSERT INTO BoardState (id, team_id, season_year, objective, "
+        "expected_position, target_position, confidence) VALUES (1, 4, 2025, "
+        "3, 12, 15, 58.0);"})
+    execSql(db, sql);
+  ManagedMatchSnapshot snapshot;
+  snapshot.date = GameDateValue(2025, 8, 23);
+  snapshot.home_id = 4;
+  snapshot.away_id = 5;
+  snapshot.corners = {6, 2};
+  execSql(db, std::format("INSERT INTO ManagedMatchAnalytics (game_date, "
+                          "home_id, away_id, data) VALUES (20250823, 4, 5, "
+                          "'{}');",
+                          snapshot.toJson()));
+
+  const auto report = Migrations::migrate(*connection);
+  EXPECT_EQ(report.from_version, 9);
+  ASSERT_FALSE(report.applied.empty());
+  EXPECT_EQ(report.applied.front(), 10);
+  EXPECT_EQ(static_cast<int>(report.applied.size()),
+            Migrations::currentSchemaVersion() - 9);
+  for (const auto& [table, column] : COLUMNS_AFTER_VERSION_NINE)
+    EXPECT_TRUE(Migrations::columnExists(db, table, column))
+        << table << "." << column;
+  // Old data survives; the new columns hold their defaults.
+  EXPECT_EQ(queryInt(db, "SELECT played FROM YouthAcademies;"), 3);
+  EXPECT_EQ(queryInt(db, "SELECT reserve_played FROM YouthAcademies;"), 0);
+  EXPECT_EQ(queryInt(db, "SELECT reserves_ready FROM YouthAcademies;"), 0);
+  EXPECT_EQ(queryInt(db, "SELECT squad FROM YouthResults;"), 0);
+  EXPECT_EQ(queryInt(db, "SELECT detail IS NULL FROM ManagedMatchAnalytics;"),
+            1);
+  EXPECT_EQ(queryInt(db, "SELECT objective FROM BoardState;"), 3);
+  EXPECT_EQ(queryInt(db, "SELECT finance_objective FROM BoardState;"), 0);
+  EXPECT_EQ(queryInt(db, "SELECT start_balance FROM BoardState;"), 0);
+  EXPECT_EQ(queryInt(db, "SELECT targets_set FROM BoardState;"), 0);
+  EXPECT_EQ(queryInt(db, "SELECT squad_number FROM Players;"), 0);
+  EXPECT_EQ(queryInt(db, "SELECT balance FROM Teams WHERE id = 4;"), -250000);
+
+  const std::string upgraded = databaseDigest(db);
+  const auto again = Migrations::migrate(*connection);
+  EXPECT_TRUE(again.applied.empty());
+  EXPECT_TRUE(again.repaired.empty());
+  EXPECT_EQ(databaseDigest(db), upgraded);
+
+  // The loaders read the upgraded rows.
+  YouthAcademy academy(std::make_shared<GameData>());
+  academy.load(connection);
+  const AcademyClub* club = academy.club(4);
+  ASSERT_NE(club, nullptr);
+  EXPECT_EQ(club->table.played, 3);
+  EXPECT_EQ(club->reserve_table.played, 0);
+  EXPECT_FALSE(club->reserves_ready) << "set up on the next day";
+  ASSERT_EQ(academy.results().size(), 1u) << "old results are U18 results";
+  EXPECT_EQ(academy.results().front().goals_for, 3);
+  EXPECT_TRUE(academy.reserveResults().empty());
+
+  CareerGuidance guidance;
+  guidance.load(connection);
+  ASSERT_EQ(guidance.getSnapshots().size(), 1u);
+  EXPECT_EQ(guidance.getSnapshots().front().corners[0], 6);
+  EXPECT_TRUE(guidance.getSnapshots().front().detail.empty());
+
+  BoardState board;
+  ASSERT_TRUE(WorldStateRepository(connection).loadBoard(board));
+  EXPECT_EQ(board.objective, BoardObjective::MidTable);
+  EXPECT_FALSE(board.targets_set);
+}
+
+TEST(SaveMigrations, BoardTargetsSetKeepsTargetsTheBoardAnnounced)
+{
+  Logger::init();
+  for (const bool announced : {true, false})
+  {
+    SCOPED_TRACE(announced ? "announced" : "upgraded by 0012");
+    DatabaseConnection connection(":memory:");
+    Migrations::migrate(connection);
+    sqlite3* db = connection.getRaw();
+    // A version 13 save whose board did or did not set its targets yet.
+    for (const char* sql :
+         {"ALTER TABLE BoardState DROP COLUMN targets_set;",
+          "DELETE FROM schema_migrations WHERE number >= 14;",
+          "UPDATE save_meta SET schema_version = 13;"})
+      execSql(db, sql);
+    execSql(db, std::format("INSERT INTO BoardState (id, team_id, "
+                            "season_year, objective, expected_position, "
+                            "target_position, confidence, cup_objective, "
+                            "start_balance) VALUES (1, 4, 2025, 1, 3, 4, "
+                            "60.0, {}, {});",
+                            announced ? 2 : 0, announced ? 8'000'000 : 0));
+    const auto report = Migrations::migrate(connection);
+    EXPECT_EQ(report.from_version, 13);
+    ASSERT_FALSE(report.applied.empty());
+    EXPECT_EQ(report.applied.front(), 14);
+    EXPECT_EQ(queryInt(db, "SELECT targets_set FROM BoardState;"),
+              announced ? 1 : 0);
+  }
 }
 
 TEST(SaveMigrations, FailingMigrationLeavesThePreviousVersion)
@@ -584,6 +757,66 @@ TEST(SaveSafety, LegacyCareerUpgradesAndKeepsAPreUpgradeCopy)
   ASSERT_TRUE(reloaded.loadGame(slot.slot));
   EXPECT_EQ(reloaded.getCurrentDate(), controller.getCurrentDate());
   EXPECT_EQ(reloaded.getWorldSeed(), controller.getWorldSeed());
+}
+
+TEST(SaveSafety, VersionNineCareerUpgradesAndRecordsTheCurrentVersions)
+{
+  const SlotCleanup slot{29};
+  const fs::path path = RuntimePaths::savePath(slot.slot);
+  std::string date;
+  TeamID team_id = 0;
+  {
+    auto controller = makeCareer(slot.slot);
+    advance(*controller, 5);
+    ASSERT_TRUE(controller->saveGame());
+    date = controller->getCurrentDate().toString();
+    team_id = controller->getManagedTeam()->get().getId();
+  }
+  {
+    // Written by an older build: older engine and random number streams.
+    RawDb db(path);
+    downgradeToVersionNine(db.get());
+    execSql(db.get(), "UPDATE save_meta SET engine_version = '0.9.0', "
+                      "rng_version = 1, sim_version = 0;");
+  }
+  const SaveInspection legacy = SaveManager::inspect(path);
+  ASSERT_EQ(legacy.status, SaveStatus::Ok) << legacy.detail;
+  EXPECT_EQ(legacy.schema_version, 9);
+  EXPECT_EQ(legacy.metadata.rng_version, 1);
+
+  GameController controller;
+  ASSERT_TRUE(controller.loadGame(slot.slot))
+      << controller.getLastLoadError().value_or(SaveError{}).detail;
+  EXPECT_EQ(controller.getCurrentDate().toString(), date);
+  EXPECT_EQ(controller.getManagedTeam()->get().getId(), team_id);
+  // The board of the old layout announced no cup, finance or youth target:
+  // they are not judged before the next season start.
+  EXPECT_FALSE(controller.getBoardState().targets_set);
+  const auto targets = controller.getBoardTargets();
+  ASSERT_TRUE(targets.has_value());
+  EXPECT_EQ(targets->finance_grade, ObjectiveGrade::Met);
+  // Players are numbered when the save is loaded.
+  bool numbered = false;
+  for (const auto& [id, player] : controller.getGameData()->getPlayers())
+    numbered |= player.getTeamId() == team_id && player.getSquadNumber() != 0;
+  EXPECT_TRUE(numbered);
+
+  advance(controller, 1);
+  ASSERT_TRUE(controller.saveGame());
+  // The save now records the build that wrote it.
+  const SaveInspection upgraded = SaveManager::inspect(path);
+  ASSERT_EQ(upgraded.status, SaveStatus::Ok) << upgraded.detail;
+  EXPECT_EQ(upgraded.schema_version, Migrations::currentSchemaVersion());
+  EXPECT_EQ(upgraded.metadata.game_version, SaveFormat::GAME_VERSION);
+  EXPECT_EQ(upgraded.metadata.engine_version, SaveFormat::ENGINE_VERSION);
+  EXPECT_EQ(upgraded.metadata.rng_version, SaveFormat::RNG_VERSION);
+  EXPECT_EQ(upgraded.metadata.sim_version, SaveFormat::SIM_VERSION);
+  EXPECT_EQ(upgraded.foreign_key_issues, 0);
+
+  GameController reloaded;
+  ASSERT_TRUE(reloaded.loadGame(slot.slot));
+  EXPECT_EQ(reloaded.getCurrentDate(), controller.getCurrentDate());
+  EXPECT_FALSE(reloaded.getBoardState().targets_set);
 }
 
 TEST(SaveSafety, FutureVersionSaveIsRefusedAndLeftUntouched)
@@ -1074,6 +1307,7 @@ TEST(SaveWrites, PlayerRowsRoundTripExactly)
                  {"Shooting", 1e-7f},
                  {"Vision", 99.99999f}});
   player.setPotential(83.25f);
+  player.setSquadNumber(9);
   PlayerDynamics& dynamics = player.mutableDynamics();
   dynamics.condition = 71.234f;
   dynamics.injury_days = 0;
@@ -1093,6 +1327,7 @@ TEST(SaveWrites, PlayerRowsRoundTripExactly)
   EXPECT_EQ(copy.getNationality(), Language::IT);
   EXPECT_EQ(copy.getFoot(), Foot::Left);
   EXPECT_FLOAT_EQ(copy.getPotential(), 83.25f);
+  EXPECT_EQ(copy.getSquadNumber(), 9);
   EXPECT_NEAR(copy.getDynamics().condition, 71.23f, 1e-4f);
   EXPECT_FLOAT_EQ(copy.getDynamics().morale, 12.5f);
   EXPECT_EQ(copy.getDynamics().last_match_day, 20281);
@@ -1196,6 +1431,9 @@ TEST(SaveWrites, CareerStateRoundTripsExactly)
     EXPECT_EQ(sa.compactness, sb.compactness);
     EXPECT_EQ(sa.widthUsage, sb.widthUsage);
   }
+  EXPECT_TRUE(reloaded.getBoardState().targets_set);
+  EXPECT_EQ(reloaded.getBoardState().start_balance,
+            controller->getBoardState().start_balance);
   EXPECT_EQ(copy->getStaff().all().size(), gd->getStaff().all().size());
   for (const auto& [id, member] : gd->getStaff().all())
   {

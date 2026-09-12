@@ -207,6 +207,7 @@ void Game::judgeSeason(std::span<const SeasonHistoryEntry> finished)
           finances.getWageBudget());
   inputs.youth = BoardModel::gradeYouth(review.youth_target,
                                         review.young_regulars);
+  inputs.targets_set = board.targets_set;
   inputs.league_matches = board.league_matches;
   inputs.confidence = board.confidence;
   const SeasonReview* previous = season_archive.review(

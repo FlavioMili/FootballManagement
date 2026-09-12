@@ -71,16 +71,19 @@ void GameController::newGame(int slot, std::optional<std::uint64_t> world_seed)
   transfer_listings.clear();
   transfer_rng.seed(transferSeed(*gamedata, game->getCurrentDate()));
 
-  // Seed the market: some contracts carry a release clause, every club
-  // lists its surplus, bids for its needs and offers prospects for loan.
-  // Deals start once the first day is played.
-  game->getTransfers().seedReleaseClauses();
+  // Seed the market: every club lists its surplus, bids for its needs and
+  // offers prospects for loan; then the 30 June expiries leave some players
+  // without a club and some contracts carry a release clause. Deals,
+  // free-agent signings included, start once the first day is played.
   for (const auto& team : gamedata->getTeamsVector())
   {
     const TeamID team_id = team.get().getId();
     evaluateAndActForTeam(team_id);
     game->getTransfers().listLoanProspects(team_id);
   }
+  game->getTransfers().seedSummerFreeAgents();
+  game->getTransfers().seedReleaseClauses();
+  purgeStaleListings();
   startSession(slot, 0);
   persist(false);
   last_initialization_milliseconds =
@@ -344,6 +347,8 @@ void GameController::simulateDay()
   purgeStaleListings();
   processAITransferActivity();
   runDelegatedDuties();
+  // The day's moves changed squads after the scouts' morning priors.
+  game->getWorld().getScouting().invalidatePriors();
   maybeAutosave();
 }
 

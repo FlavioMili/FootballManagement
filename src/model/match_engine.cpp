@@ -893,6 +893,16 @@ bool MatchEngine::executeCommand(const MatchCommandRecord& command)
   const std::size_t team = command.homeTeam ? 0 : 1;
   switch (command.type)
   {
+    case MatchCommandType::TEAM_TALK:
+      if (command.talkHalf < 1 || command.talkHalf > 2 ||
+          !std::isfinite(command.talkModifier))
+        return false;
+      teamTalks[team][static_cast<std::size_t>(command.talkHalf - 1)] =
+          std::clamp(command.talkModifier,
+                     -MatchTuning::Touchline::MAX_TEAM_TALK_MODIFIER,
+                     MatchTuning::Touchline::MAX_TEAM_TALK_MODIFIER);
+      ++inputRevision;
+      return true;
     case MatchCommandType::STRATEGY:
       (command.homeTeam ? homeStrategy : awayStrategy) = command.strategy;
       resolveTactics(command.homeTeam);
@@ -1205,11 +1215,14 @@ float MatchEngine::shoutShotBias(bool homeTeam) const
 
 void MatchEngine::setTeamTalkModifier(bool homeTeam, int half, float modifier)
 {
-  if (half < 1 || half > 2 || !std::isfinite(modifier)) return;
-  teamTalks[homeTeam ? 0 : 1][static_cast<std::size_t>(half - 1)] =
-      std::clamp(modifier, -MatchTuning::Touchline::MAX_TEAM_TALK_MODIFIER,
-                 MatchTuning::Touchline::MAX_TEAM_TALK_MODIFIER);
-  ++inputRevision;
+  // Logged like every touchline change, so a replay of the command log
+  // reproduces a match a team talk played its part in.
+  MatchCommandRecord command;
+  command.type = MatchCommandType::TEAM_TALK;
+  command.homeTeam = homeTeam;
+  command.talkHalf = half;
+  command.talkModifier = modifier;
+  recordCommand(command);
 }
 
 float MatchEngine::getTeamTalkModifier(bool homeTeam, int half) const
@@ -3990,7 +4003,9 @@ float MatchEngine::passingRoleBias(const MatchPlayer& passer,
     const MatchPlayer& candidate, const MatchPlayer* carrier) const
 {
   if (!carrier || carrier->isHomeTeam == candidate.isHomeTeam) return 0.0f;
-  return roleProfileOf(candidate).pressBias * TacticsTuning::PRESS_BIAS_SECONDS;
+  // A rousing talk sends the side after the ball sooner (a flat one later).
+  return roleProfileOf(candidate).pressBias * TacticsTuning::PRESS_BIAS_SECONDS +
+         talkSwing(candidate.isHomeTeam) * TacticsTuning::TALK_PRESS_SECONDS;
 }
 
 float MatchEngine::engageBoost(const MatchPlayer& defender,
@@ -8819,7 +8834,6 @@ void MatchEngine::runMedicalSubstitutions(bool homeTeam)
   if (!(homeTeam ? homeAutoSubstitutions : awayAutoSubstitutions) ||
       state == MatchState::PENALTY)
     return;
-  const int minute = static_cast<int>(matchTimeMinutes);
   for (auto& player : players)
   {
     if (!active(player) || player.isHomeTeam != homeTeam ||
@@ -8828,8 +8842,11 @@ void MatchEngine::runMedicalSubstitutions(bool homeTeam)
     const PlayerID id = player.player->getId();
     const auto entry = std::ranges::find_if(
         medicalFlags, [id](const auto& flagged) { return flagged.first == id; });
+    // The limit counts his own minutes on the pitch: a flagged substitute
+    // starts from nothing when he comes on.
     if (entry == medicalFlags.end() ||
-        !MedicalCentre::substitutionDue(entry->second, minute))
+        !MedicalCentre::substitutionDue(
+            entry->second, static_cast<int>(statsOf(player).minutesPlayed)))
       continue;
     if (!canSubstitute(homeTeam)) return;
     // Like for like, as for a tired player.

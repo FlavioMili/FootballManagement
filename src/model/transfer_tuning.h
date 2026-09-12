@@ -407,6 +407,10 @@ struct TransferTuning final
      * AI_MAX_SQUAD + 2. [P] */
     static constexpr std::size_t AI_TARGET_SQUAD = 26;
     static constexpr std::size_t AI_MAX_SQUAD = 30;
+    /** Above AI_TARGET_SQUAD a club loan-lists its prospects for borrowers
+     * to find; above this size it places them itself. Loans are a minority
+     * of moves (FIFA: ~15-20%). [S/P] */
+    static constexpr std::size_t LOAN_PLACEMENT_SQUAD = 28;
     /** The managed club registers at most this many senior players
      * (loanees and agreed pre-contracts included, the academy not): a full
      * starting squad of AI_MAX_SQUAD plus room for a few signings. [P] */
@@ -414,6 +418,15 @@ struct TransferTuning final
     /** Computer-managed clubs never sell, loan or release a goalkeeper
      * below this many senior goalkeepers. [P] */
     static constexpr int MIN_AI_SENIOR_KEEPERS = 2;
+    /** A new world starts on 1 July, the day after the summer's contract
+     * expiries: of every club's players outside its matchday squad (rank
+     * OPENING_EXPIRY_MIN_RANK and beyond, aged OPENING_EXPIRY_MIN_AGE or
+     * more, goalkeepers apart) this share has just become a free agent. Most summer moves are
+     * out-of-contract players changing clubs (FIFA: ~2/3 of men's
+     * professional transfers carry no fee). [S/P] */
+    static constexpr std::size_t OPENING_EXPIRY_MIN_RANK = 18;
+    static constexpr int OPENING_EXPIRY_MIN_AGE = 21;
+    static constexpr double OPENING_EXPIRY_SHARE = 0.5;
     static constexpr int MAX_LOAN_LISTED_PER_CLUB = 8;
     /** Clubs sounded out when placing a loan-listed prospect. */
     static constexpr int LOAN_PLACEMENT_TRIES = 8;

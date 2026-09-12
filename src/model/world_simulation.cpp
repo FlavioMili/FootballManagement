@@ -1097,6 +1097,7 @@ void WorldSimulation::ensureBoard(const GameDateValue& date,
       BoardModel::financeObjectiveFor(vision.tight_budget, finances.getBalance());
   board.youth_target = BoardModel::youthTargetFor(vision.youth_focus);
   board.start_balance = finances.getBalance();
+  board.targets_set = true;
   board.league_matches = 0;
   board.result_count = 0;
   board.recent_deltas = {};
@@ -1790,6 +1791,9 @@ void WorldSimulation::onTransferCompleted(const GameDateValue& date,
                           : gamedata->getTeam(team_id);
     return team ? team->get().getName() : std::string(FREE_AGENTS_NAME_ARG);
   };
+  // Before a club is chosen (the new world's opening market) there is
+  // nobody to tell.
+  if (managed_team_id == FREE_AGENTS_TEAM_ID) return;
   if (to_team_id == managed_team_id)
   {
     post(date, InboxCategory::Transfer, "INBOX_SIGNING_TITLE",
