@@ -114,7 +114,6 @@ class ManagementScene : public GUIScene
 
   void renderSidebar(bool collapsed);
   void renderTopBar(float height);
-  void renderBusyState();
   void renderPalette();
   void renderMainMenuConfirm();
   void handleShortcuts();
@@ -137,4 +136,6 @@ class ManagementScene : public GUIScene
   int palette_selection = 0;
 
   bool main_menu_confirm_requested = false;
+  /** Whether the sidebar navigation needed scrolling last frame. */
+  bool sidebar_nav_overflow = false;
 };

@@ -26,6 +26,7 @@
 #include "global/paths.h"
 #include "global/runtime_paths.h"
 #include "gui/gui_scene.h"
+#include "gui/render_scale.h"
 #include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/match_scene.h"
 #include "gui/scenes/team_selection_scene.h"
@@ -52,6 +53,7 @@ GUIView::~GUIView()
   }
   currentScene.reset();
   pendingScene.reset();
+  releaseBackdrop();
 
   if (renderer != nullptr)
   {
@@ -71,6 +73,14 @@ GUIView::~GUIView()
 bool GUIView::initialize()
 {
   // Initialize SDL
+  // Prefer native Wayland over XWayland: XWayland windows are upscaled by the
+  // compositor on fractionally scaled outputs, which makes every glyph blurry.
+  // Only a default: SDL_VIDEO_DRIVER or an explicit hint still wins.
+  if (std::getenv("WAYLAND_DISPLAY") != nullptr &&
+      SDL_GetHint(SDL_HINT_VIDEO_DRIVER) == nullptr)
+    SDL_SetHintWithPriority(SDL_HINT_VIDEO_DRIVER, "wayland,x11",
+                            SDL_HINT_DEFAULT);
+
   if (!SDL_Init(SDL_INIT_VIDEO))
   {
     std::cerr << "Failed to initialize SDL: " << SDL_GetError() << '\n';
@@ -85,7 +95,12 @@ bool GUIView::initialize()
   }
 
   // Create window
-  window = SDL_CreateWindow("Game GUI", 1200, 800, SDL_WINDOW_RESIZABLE);
+  // High pixel density: the swapchain matches the output's real pixels, and
+  // ImGui rasterises glyphs at that density (DisplayFramebufferScale), so
+  // text stays sharp on HiDPI and fractionally scaled displays.
+  window =
+      SDL_CreateWindow("Football Management", 1280, 720,
+                       SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
   if (window == nullptr)
   {
     std::cerr << "Failed to create window: " << SDL_GetError() << '\n';
@@ -261,7 +276,8 @@ void GUIView::handleEvents()
       screenshotPending = true;
     }
 
-    if (event.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED)
+    if (event.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED ||
+        event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
     {
       applyManagementTheme();
     }
@@ -307,6 +323,11 @@ void GUIView::render()
   SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
   SDL_RenderClear(renderer);
 
+  // A frozen frame (see requestBackdropCapture) sits behind the UI; scenes
+  // drawing over it use transparent windows.
+  if (backdropTexture != nullptr && !backdropPending)
+    SDL_RenderTexture(renderer, backdropTexture, nullptr, nullptr);
+
   ImGui_ImplSDLRenderer3_NewFrame();
   ImGui_ImplSDL3_NewFrame();
   ImGui::NewFrame();
@@ -320,7 +341,28 @@ void GUIView::render()
   }
 
   ImGui::Render();
-  ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+  // The SDL_Renderer backend scales only clip rectangles by the framebuffer
+  // scale; vertex positions are in window coordinates. Without this, a
+  // HiDPI output (e.g. Wayland scale 2) shows the UI in the top-left quarter.
+  {
+    const ScopedRenderScale scale(renderer,
+                                  ImGui::GetIO().DisplayFramebufferScale);
+    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+  }
+
+  if (backdropPending)
+  {
+    backdropPending = false;
+    releaseBackdrop();
+    if (SDL_Surface* frame = SDL_RenderReadPixels(renderer, nullptr))
+    {
+      backdropTexture = SDL_CreateTextureFromSurface(renderer, frame);
+      SDL_DestroySurface(frame);
+      // Read-back alpha is undefined on some drivers; the frame is opaque.
+      if (backdropTexture != nullptr)
+        SDL_SetTextureBlendMode(backdropTexture, SDL_BLENDMODE_NONE);
+    }
+  }
 
   bool capturedScreenshot = false;
   if (screenshotPending)
@@ -516,9 +558,16 @@ GUIScene* GUIView::getActiveScene() const
 
 float GUIView::displayScale() const
 {
-  const float scale =
-      window != nullptr ? SDL_GetWindowDisplayScale(window) : 1.0f;
-  return scale > 0.0f ? scale : 1.0f;
+  if (window == nullptr) return 1.0f;
+  // Display scale = pixel density x content scale. Window coordinates (and
+  // therefore ImGui's) already include the pixel density wherever the
+  // platform reports one (Wayland, macOS), so only the remaining content
+  // scale enlarges the layout. On Windows density is 1 and the whole display
+  // scale applies.
+  const float display = SDL_GetWindowDisplayScale(window);
+  const float density = SDL_GetWindowPixelDensity(window);
+  if (display <= 0.0f) return 1.0f;
+  return density > 0.0f ? display / density : display;
 }
 
 void GUIView::applyManagementTheme()
@@ -539,3 +588,11 @@ void GUIView::applyManagementTheme()
 }
 
 void GUIView::refreshTheme() { applyManagementTheme(); }
+
+void GUIView::requestBackdropCapture() { backdropPending = true; }
+
+void GUIView::releaseBackdrop()
+{
+  if (backdropTexture != nullptr) SDL_DestroyTexture(backdropTexture);
+  backdropTexture = nullptr;
+}

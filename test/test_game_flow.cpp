@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include <SDL3/SDL.h>
+#include <fmt/printf.h>
 #include <gtest/gtest.h>
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -14,13 +15,16 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cstdlib>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 
 #if defined(__clang__) || defined(__GNUC__)
 extern "C" const char* __lsan_default_suppressions()
@@ -40,6 +44,7 @@ extern "C" const char* __lsan_default_suppressions()
 #include "gui/scenes/main_game_scene.h"
 #include "gui/scenes/main_menu_scene.h"
 #include "gui/scenes/match_scene.h"
+#include "gui/view_models/match_clock.h"
 #include "gui/scenes/roster_scene.h"
 #include "gui/scenes/settings_scene.h"
 #include "gui/scenes/strategy_scene.h"
@@ -55,6 +60,7 @@ extern "C" const char* __lsan_default_suppressions()
 #include "model/settings_manager.h"
 #include "model/game.h"
 #include "model/player.h"
+#include "model/scouting.h"
 #include "model/team.h"
 
 namespace
@@ -550,6 +556,29 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   EXPECT_NO_THROW(step_frame());
   ASSERT_TRUE(std::filesystem::exists(screenshotPath));
   EXPECT_GT(std::filesystem::file_size(screenshotPath), 1'000u);
+  // The same HUD over the broadcast (3D) view.
+  matchScene->setViewMode(MatchViewMode::BROADCAST_3D);
+  EXPECT_NO_THROW(step_frame());
+  EXPECT_NO_THROW(step_frame());
+  captureScreen("match_hud_3d.bmp");
+  matchScene->setViewMode(MatchViewMode::PITCH_2D);
+  // Responsive HUD: narrow windows (the last one stacks the panels below the
+  // pitch) and 1440p at a 200% interface scale.
+  resizeTo(1024, 700);
+  captureScreen("match_hud_narrow.bmp");
+  resizeTo(900, 640);
+  captureScreen("match_hud_stacked.bmp");
+  {
+    Settings& settings = SettingsManager::instance()->get();
+    const float originalScale = settings.ui_scale;
+    settings.ui_scale = 2.0f;
+    view.refreshTheme();
+    resizeTo(2560, 1440);
+    captureScreen("match_hud_1440p_200.bmp");
+    settings.ui_scale = originalScale;
+    view.refreshTheme();
+  }
+  resizeTo(1280, 720);
 
   // Capture the tactical overlay later in the match. This artifact makes AI
   // target churn, duplicated runs and broken defensive spacing inspectable in
@@ -667,7 +696,14 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
   ASSERT_EQ(view.getActiveScene()->getID(), SceneID::GAME_MENU);
   capture("season_home.bmp");
 
-  const std::array<std::pair<NavSection, const char*>, 9> screens = {{
+  // Every sidebar destination fits at 720p without scrolling.
+  {
+    auto* shell = dynamic_cast<ManagementScene*>(view.getActiveScene());
+    ASSERT_NE(shell, nullptr);
+    EXPECT_FALSE(shell->sidebar_nav_overflow);
+  }
+
+  const std::array<std::pair<NavSection, const char*>, 12> screens = {{
       {NavSection::INBOX, "season_inbox.bmp"},
       {NavSection::SQUAD, "season_squad.bmp"},
       {NavSection::LINEUP, "season_lineup.bmp"},
@@ -677,6 +713,9 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
       {NavSection::FINANCES, "season_finances.bmp"},
       {NavSection::CLUB, "season_club.bmp"},
       {NavSection::TACTICS, "season_tactics.bmp"},
+      {NavSection::SCOUTING, "season_scouting.bmp"},
+      {NavSection::TRAINING, "season_training.bmp"},
+      {NavSection::STAFF, "season_staff.bmp"},
   }};
   for (const auto& [section, fileName] : screens)
   {
@@ -721,6 +760,60 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
   step_frame();
   step_frame();
   capture("season_dialog_menu.bmp");
+  pressEscape();
+  EXPECT_FALSE(ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId));
+
+  // Another club's player is shown through scouting estimates only.
+  const TeamID otherClub = teams.back().get().getId();
+  ASSERT_NE(otherClub, managedId);
+  const PlayerID scoutedId =
+      controller->getPlayersForTeam(otherClub).front().get().getId();
+  const auto scoutedView = controller->getScoutedView(scoutedId);
+  ASSERT_TRUE(scoutedView.has_value());
+  EXPECT_FALSE(scoutedView->own);
+  Navigation::openPlayer(&view, scoutedId);
+  step_frame();
+  step_frame();
+  auto* scoutedProfile =
+      dynamic_cast<PlayerProfileScene*>(view.getActiveScene());
+  ASSERT_NE(scoutedProfile, nullptr);
+  EXPECT_TRUE(scoutedProfile->scouted);
+  EXPECT_FLOAT_EQ(scoutedProfile->row.overall, scoutedView->overall);
+  EXPECT_EQ(scoutedProfile->knowledge, scoutedView->knowledge);
+  EXPECT_TRUE(scoutedProfile->fits.empty()) << "role fits use true stats";
+  size_t rangedLines = 0;
+  for (const auto& section : scoutedProfile->sections)
+  {
+    for (const auto& line : section.lines)
+    {
+      const auto estimate = std::ranges::find_if(
+          scoutedView->attributes, [&](const ScoutedAttribute& attribute)
+          { return attribute.estimate == line.value; });
+      EXPECT_NE(estimate, scoutedView->attributes.end()) << line.name;
+      EXPECT_LE(line.low, line.value);
+      EXPECT_GE(line.high, line.value);
+      ++rangedLines;
+    }
+  }
+  EXPECT_EQ(rangedLines, scoutedView->attributes.size());
+  capture("season_profile_scouted.bmp");
+  // Recruitment actions work from the profile.
+  EXPECT_FALSE(controller->isShortlisted(scoutedId));
+  ASSERT_TRUE(controller->addToShortlist(scoutedId));
+  scoutedProfile->refresh();
+  EXPECT_TRUE(scoutedProfile->shortlisted);
+  scoutedProfile->sendScout();
+  EXPECT_TRUE(scoutedProfile->being_scouted ||
+              controller->getScouts().empty());
+  step_frame();
+  capture("season_profile_scouted_actions.bmp");
+  // "Make an offer" opens the market with the deal dialog for him.
+  view.navigateTo(std::make_unique<TransferMarketScene>(&view, scoutedId));
+  step_frame();
+  step_frame();
+  EXPECT_EQ(view.getActiveScene()->getID(), SceneID::TRANSFER_MARKET);
+  EXPECT_TRUE(ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId));
+  capture("season_offer_from_profile.bmp");
   pressEscape();
   EXPECT_FALSE(ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId));
 
@@ -776,8 +869,126 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
   appearance(static_cast<int>(Theme::Preset::MIDNIGHT_BLUE), false, 1.5f,
              "theme_scaled_home.bmp", "theme_scaled_squad.bmp");
   EXPECT_FLOAT_EQ(Theme::scale(), 1.5f);
+  appearance(static_cast<int>(Theme::Preset::TRUE_DARK), false, 0.0f,
+             "theme_truedark_home.bmp", "theme_truedark_squad.bmp");
   settings = original;
   view.refreshTheme();
+
+  // Window sizes x interface scales: the screens that pack the most text.
+  struct Layout
+  {
+    int width;
+    int height;
+    float scale;
+    const char* tag;
+  };
+  const std::array<Layout, 5> layouts = {{{1366, 768, 1.0f, "1366_100"},
+                                          {1280, 720, 1.25f, "1280_125"},
+                                          {1920, 1080, 1.5f, "1920_150"},
+                                          {2560, 1440, 2.0f, "2560_200"},
+                                          {1280, 720, 2.0f, "1280_200"}}};
+  for (const Layout& layout : layouts)
+  {
+    SDL_SetWindowSize(view.getWindow(), layout.width, layout.height);
+    settings.ui_scale = layout.scale;
+    view.refreshTheme();
+    for (const auto& [section, name] :
+         {std::pair{NavSection::HOME, "home"},
+          std::pair{NavSection::SQUAD, "squad"},
+          std::pair{NavSection::CLUB, "club"}})
+    {
+      Navigation::open(&view, section);
+      step_frame();
+      step_frame();
+      capture(std::format("layout_{}_{}.bmp", layout.tag, name).c_str());
+    }
+    Navigation::openPlayer(&view, star);
+    step_frame();
+    step_frame();
+    capture(std::format("layout_{}_profile.bmp", layout.tag).c_str());
+  }
+  settings = original;
+  SDL_SetWindowSize(view.getWindow(), 1280, 720);
+  view.refreshTheme();
+
+  // Continue: a progress card over the dimmed, frozen screen.
+  Navigation::open(&view, NavSection::HOME);
+  step_frame();
+  auto* hub = dynamic_cast<MainGameScene*>(view.getBaseScene());
+  ASSERT_NE(hub, nullptr);
+  if (hub->continueLabel() != LOC("DASHBOARD_PLAY_MATCH"))
+  {
+    hub->requestContinue();
+    step_frame();
+    EXPECT_NE(view.getBackdrop(), nullptr);
+    step_frame();
+    // The card appears only when Continue lasts longer than a blink.
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    step_frame();
+    step_frame();
+    if (hub->isAdvancing()) capture("season_continue.bmp");
+    for (int frame = 0; frame < 2000 && hub->isAdvancing(); ++frame)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      step_frame();
+    }
+    EXPECT_FALSE(hub->isAdvancing());
+    EXPECT_EQ(view.getBackdrop(), nullptr);
+  }
+
+  // Match day with an injured starter: kick-off is blocked by the lineup
+  // check until the selection is fixed.
+  const auto& matchDay =
+      controller->getGame()->getCalendar().getMatchesForDate(
+          controller->getCurrentDate());
+  const auto managedFixture = std::ranges::find_if(
+      matchDay,
+      [managedId](const Match& match)
+      {
+        return !match.isPlayed() && (match.getHomeTeamId() == managedId ||
+                                     match.getAwayTeamId() == managedId);
+      });
+  ASSERT_NE(managedFixture, matchDay.end());
+  const PlayerID injuredStarter = controller->getManagedTeam()
+                                      ->get()
+                                      .getLineup()
+                                      .getOutfieldPlayers()
+                                      .front()
+                                      .player->getId();
+  controller->getGameData()
+      ->getPlayers()
+      .at(injuredStarter)
+      .mutableDynamics()
+      .injury_days = 5;
+  MatchScene::assistant_fixes_lineup = false;
+  view.overlayScene(std::make_unique<MatchScene>(
+      &view, managedFixture->getHomeTeamId(), managedFixture->getAwayTeamId()));
+  step_frame();
+  step_frame();
+  auto* gate = dynamic_cast<MatchScene*>(view.getActiveScene());
+  ASSERT_NE(gate, nullptr);
+  EXPECT_EQ(gate->engine, nullptr);
+  EXPECT_FALSE(gate->lineup_problems.empty());
+  capture("season_match_lineup_gate.bmp");
+  view.popScene();
+  step_frame();
+  // With the assistant in charge the match starts with a fixed lineup.
+  MatchScene::assistant_fixes_lineup = true;
+  view.overlayScene(std::make_unique<MatchScene>(
+      &view, managedFixture->getHomeTeamId(), managedFixture->getAwayTeamId()));
+  step_frame();
+  for (int frame = 0; frame < 30; ++frame) step_frame();
+  auto* live = dynamic_cast<MatchScene*>(view.getActiveScene());
+  ASSERT_NE(live, nullptr);
+  ASSERT_NE(live->engine, nullptr);
+  EXPECT_FALSE(live->pre_match_note.empty());
+  capture("season_match_assistant_fixed.bmp");
+  // Quick result: the rest is played instantly and the report opens.
+  ASSERT_TRUE(live->quickResult());
+  step_frame();
+  step_frame();
+  EXPECT_EQ(view.getActiveScene()->getID(), SceneID::MATCH_REPORT);
+  capture("season_match_quick_report.bmp");
 }
 
 TEST_F(GameFlowTest, SaveSlotMetadata)
@@ -838,4 +1049,273 @@ TEST_F(GameFlowTest, RuntimeRootDoesNotTouchExternalSentinels)
   std::getline(input, contents);
   EXPECT_EQ(contents, "do not modify");
   std::filesystem::remove(sentinel);
+}
+
+namespace
+{
+/** Plays a live engine to full time (headless fast path when available). */
+template <typename Engine>
+void playToFullTime(Engine& engine)
+{
+  if constexpr (requires { engine.simulateToEnd(); })
+  {
+    engine.simulateToEnd();
+  }
+  else
+  {
+    while (engine.getState() != MatchState::FULL_TIME) engine.update(0.2f);
+  }
+}
+
+/** Advances to the club's next match day and returns that fixture. */
+std::optional<Match> nextFixtureOf(GameController& controller, TeamID club)
+{
+  controller.advanceToNextManagedFixture();
+  for (const Match& match : controller.getGame()->getCalendar().getMatchesForDate(
+           controller.getCurrentDate()))
+  {
+    if (!match.isPlayed() &&
+        (match.getHomeTeamId() == club || match.getAwayTeamId() == club))
+      return match;
+  }
+  return std::nullopt;
+}
+
+Player& worldPlayer(GameController& controller, PlayerID id)
+{
+  return controller.getGameData()->getPlayers().at(id);
+}
+}  // namespace
+
+TEST(MatchClock, MinuteLabelsShowAddedTime)
+{
+  EXPECT_EQ(MatchClock::minuteLabel(0.0f, 1, false), "0'");
+  EXPECT_EQ(MatchClock::minuteLabel(12.3f, 1, false), "13'");
+  EXPECT_EQ(MatchClock::minuteLabel(44.9f, 1, false), "45'");
+  EXPECT_EQ(MatchClock::minuteLabel(45.2f, 1, true), "45+1'");
+  EXPECT_EQ(MatchClock::minuteLabel(47.5f, 1, true), "45+3'");
+  EXPECT_EQ(MatchClock::minuteLabel(45.0f, 2, false), "46'");
+  EXPECT_EQ(MatchClock::minuteLabel(89.99f, 2, false), "90'");
+  EXPECT_EQ(MatchClock::minuteLabel(93.1f, 2, true), "90+4'");
+}
+
+TEST(MatchClock, ReportEventsMatchTheLiveFeed)
+{
+  // The report stores whole minutes; its label equals the live one.
+  const auto reported = [](float timeMinute, float addedMinute)
+  {
+    MatchReportEvent event;
+    event.minute = static_cast<uint8_t>(timeMinute);
+    event.added_minute = static_cast<uint8_t>(addedMinute);
+    return MatchClock::minuteLabel(event);
+  };
+  EXPECT_EQ(reported(69.4f, 0.0f), MatchClock::minuteLabel(69.4f, 2, false));
+  EXPECT_EQ(reported(12.0f, 0.0f), MatchClock::minuteLabel(12.0f, 1, false));
+  EXPECT_EQ(reported(47.3f, 2.3f), MatchClock::minuteLabel(47.3f, 1, true));
+  EXPECT_EQ(reported(94.8f, 4.8f), MatchClock::minuteLabel(94.8f, 2, true));
+}
+
+TEST_F(GameFlowTest, ManagedMatchIntegration)
+{
+  SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+  const TeamID managedId = controller->getTeams().front().get().getId();
+  controller->selectManagedTeam(managedId);
+  const auto fixture = nextFixtureOf(*controller, managedId);
+  ASSERT_TRUE(fixture.has_value());
+  const bool managedHome = fixture->getHomeTeamId() == managedId;
+  const Lineup& lineup = controller->getManagedTeam()->get().getLineup();
+  ASSERT_GE(lineup.getOutfieldPlayers().size(), 2u);
+  const PlayerID injuredId =
+      lineup.getOutfieldPlayers().front().player->getId();
+  const PlayerID tiredId = lineup.getOutfieldPlayers().back().player->getId();
+  worldPlayer(*controller, injuredId).mutableDynamics().injury_days = 12;
+  worldPlayer(*controller, tiredId).mutableDynamics().condition = 70.0f;
+
+  // The scene logic runs headless: no window is needed to play the match.
+  GUIView view(*controller);
+
+  // When the manager decides, an injured starter blocks kick-off; the
+  // check suggests the assistant's replacement.
+  MatchScene::assistant_fixes_lineup = false;
+  {
+    MatchScene blocked(&view, fixture->getHomeTeamId(),
+                       fixture->getAwayTeamId());
+    blocked.onEnter();
+    EXPECT_EQ(blocked.engine, nullptr);
+    const auto problem = std::ranges::find_if(
+        blocked.lineup_problems,
+        [&](const auto& entry) { return entry.id == injuredId; });
+    ASSERT_NE(problem, blocked.lineup_problems.end());
+    EXPECT_FALSE(problem->replacement.empty());
+  }
+  // By default the assistant replaces him and the match starts.
+  MatchScene::assistant_fixes_lineup = true;
+  auto sceneOwner = std::make_unique<MatchScene>(
+      &view, fixture->getHomeTeamId(), fixture->getAwayTeamId());
+  MatchScene* scene = sceneOwner.get();
+  scene->onEnter();
+  ASSERT_NE(scene->engine, nullptr);
+  EXPECT_TRUE(scene->lineup_problems.empty());
+  EXPECT_FALSE(scene->pre_match_note.empty());
+  EXPECT_TRUE(controller
+                  ->getIneligibleSelections(managedId, fixture->getMatchType())
+                  .empty());
+  MatchEngine& engine = *scene->engine;
+  for (const MatchPlayer& player : engine.getPlayers())
+    EXPECT_NE(player.player->getId(), injuredId);
+
+  // Persistent fatigue is carried into the match.
+  const auto tired = engine.getPlayerCondition(tiredId);
+  ASSERT_TRUE(tired.has_value());
+  EXPECT_NEAR(*tired, 0.70f, 1e-4f);
+
+  // The clock shows first-half added time as 45+N.
+  for (int step = 0; step < 200000 && !engine.isInAddedTime() &&
+                     engine.getState() != MatchState::HALF_TIME;
+       ++step)
+    engine.update(0.05f);
+  ASSERT_TRUE(engine.isInAddedTime()) << "every half has added time";
+  EXPECT_TRUE(scene->clockText().starts_with("45+")) << scene->clockText();
+
+  // Manual changes follow the engine's rules and never touch the saved
+  // lineup: five are allowed, the sixth is refused with the reason.
+  const std::vector<const Player*> savedReserves = lineup.getReserves();
+  std::vector<PlayerID> outgoing;
+  for (const MatchPlayer& player : engine.getPlayers())
+    if (player.isHomeTeam == managedHome && player.onPitch &&
+        !player.isGoalkeeper)
+      outgoing.push_back(player.player->getId());
+  std::vector<PlayerID> incoming;
+  for (const Player* reserve : lineup.getReserves())
+    if (reserve->getRole() != PlayerRole::GK)
+      incoming.push_back(reserve->getId());
+  ASSERT_GE(outgoing.size(), 6u);
+  ASSERT_GE(incoming.size(), 5u);
+  scene->is_paused = true;
+  EXPECT_FALSE(scene->substitute(outgoing[0], injuredId));
+  EXPECT_TRUE(scene->substitution_refused);
+  int made = 0;
+  for (size_t index = 0; index < 5; ++index)
+    made += scene->substitute(outgoing[index], incoming[index]) ? 1 : 0;
+  EXPECT_EQ(made, 5);
+  EXPECT_EQ(engine.getSubstitutionsUsed(managedHome), 5);
+  EXPECT_FALSE(scene->substitute(outgoing[5], incoming[0]));
+  EXPECT_EQ(scene->substitution_status,
+            fmt::sprintf(LOC("SUBSTITUTION_REFUSED_LIMIT"),
+                         MatchTuning::Rules::MAX_SUBSTITUTIONS_PER_TEAM));
+  EXPECT_EQ(lineup.getReserves(), savedReserves);
+  scene->is_paused = false;
+
+  // Only the opponent's AI substitutes; the managed side's changes are ours.
+  playToFullTime(engine);
+  scene->update(0.0f);
+  ASSERT_TRUE(scene->match_finished);
+  for (const MatchSubstitution& change : engine.getSubstitutions())
+    if (change.isHomeTeam == managedHome)
+      EXPECT_EQ(change.reason, SubstitutionReason::MANUAL);
+  EXPECT_GT(engine.getSubstitutionsUsed(!managedHome), 0);
+
+  // The managed match is recorded with the full engine report.
+  const GameDateValue date = controller->getCurrentDate();
+  const size_t engineLines = engine.getPlayerStats().size();
+  ASSERT_TRUE(scene->finishMatch());
+  const auto report = controller->getMatchReport(date, fixture->getHomeTeamId(),
+                                                 fixture->getAwayTeamId());
+  ASSERT_TRUE(report.has_value());
+  EXPECT_EQ(report->players.size(), engineLines);
+  EXPECT_GT(report->home_stats.passes_attempted +
+                report->away_stats.passes_attempted,
+            0);
+  EXPECT_TRUE(std::ranges::none_of(report->players,
+                                   [&](const PlayerMatchLine& line)
+                                   { return line.player_id == injuredId; }));
+}
+
+TEST_F(GameFlowTest, LiveMatchConsequencesUseEngineMeasurements)
+{
+  const TeamID managedId = controller->getTeams().front().get().getId();
+  controller->selectManagedTeam(managedId);
+  const auto fixture = nextFixtureOf(*controller, managedId);
+  ASSERT_TRUE(fixture.has_value());
+  controller->autoFixLineup(managedId, fixture->getMatchType());
+  const Team& home = controller->getTeamById(fixture->getHomeTeamId())->get();
+  const Team& away = controller->getTeamById(fixture->getAwayTeamId())->get();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), controller->getStatsConfig(), 77u);
+  MatchdaySquad::carryCondition(engine, home.getLineup());
+  MatchdaySquad::carryCondition(engine, away.getLineup());
+  playToFullTime(engine);
+  const auto consequences = MatchdaySquad::consequences(engine);
+  ASSERT_GE(consequences.size(), 22u);
+
+  ASSERT_TRUE(controller->setMatchResult(controller->getCurrentDate(),
+                                         fixture->getHomeTeamId(),
+                                         fixture->getAwayTeamId(), engine));
+  // Condition and injuries are the engine's, for both sides, exactly as for
+  // simulated matches (not the estimated drain).
+  for (const PlayerMatchConsequence& consequence : consequences)
+  {
+    const Player& player = worldPlayer(*controller, consequence.player_id);
+    EXPECT_NEAR(player.getDynamics().condition, consequence.end_condition,
+                1e-3f)
+        << player.getName();
+    if (consequence.injured) EXPECT_FALSE(player.isAvailable());
+  }
+}
+
+TEST_F(GameFlowTest, MissedManagedFixtureFieldsOnlyEligiblePlayers)
+{
+  const TeamID managedId = controller->getTeams().front().get().getId();
+  controller->selectManagedTeam(managedId);
+  const auto fixture = nextFixtureOf(*controller, managedId);
+  ASSERT_TRUE(fixture.has_value());
+  const Lineup& lineup = controller->getManagedTeam()->get().getLineup();
+  const PlayerID injuredId =
+      lineup.getOutfieldPlayers().front().player->getId();
+  worldPlayer(*controller, injuredId).mutableDynamics().injury_days = 12;
+
+  // Skipping the match day lets the assistant play the fixture.
+  controller->advanceDay();
+  const auto report = controller->getMatchReport(
+      fixture->getDate(), fixture->getHomeTeamId(), fixture->getAwayTeamId());
+  ASSERT_TRUE(report.has_value());
+  EXPECT_FALSE(report->players.empty());
+  for (const PlayerMatchLine& line : report->players)
+    EXPECT_NE(line.player_id, injuredId);
+  // The manager's own selection is kept.
+  EXPECT_EQ(lineup.getOutfieldPlayers().front().player->getId(), injuredId);
+}
+
+TEST_F(GameFlowTest, WatchedMatchSeedIsDeterministic)
+{
+  // Without the test override the seed comes from the world and fixture.
+  const char* configured = std::getenv("FM_MATCH_SEED");
+  const std::optional<std::string> savedSeed =
+      configured ? std::optional<std::string>(configured) : std::nullopt;
+  unsetenv("FM_MATCH_SEED");
+
+  const TeamID managedId = controller->getTeams().front().get().getId();
+  controller->selectManagedTeam(managedId);
+  const auto fixture = nextFixtureOf(*controller, managedId);
+  ASSERT_TRUE(fixture.has_value());
+  controller->autoFixLineup(managedId, fixture->getMatchType());
+  GUIView view(*controller);
+  MatchScene first(&view, fixture->getHomeTeamId(), fixture->getAwayTeamId());
+  MatchScene second(&view, fixture->getHomeTeamId(), fixture->getAwayTeamId());
+  first.onEnter();
+  second.onEnter();
+  ASSERT_NE(first.engine, nullptr);
+  ASSERT_NE(second.engine, nullptr);
+  for (int step = 0; step < 600; ++step)
+  {
+    first.engine->update(0.05f);
+    second.engine->update(0.05f);
+  }
+  EXPECT_EQ(first.engine->getEvents().size(), second.engine->getEvents().size());
+  EXPECT_EQ(first.engine->getBall().position.x,
+            second.engine->getBall().position.x);
+  EXPECT_EQ(first.engine->getBall().position.y,
+            second.engine->getBall().position.y);
+
+  if (savedSeed) setenv("FM_MATCH_SEED", savedSeed->c_str(), 1);
 }

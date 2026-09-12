@@ -121,6 +121,25 @@ class GUIView
    */
   GameController& getController() const;
 
+  /**
+   * @brief Freezes the frame being rendered into a texture at its end.
+   *
+   * Used as a dimmed backdrop while the game state must not be read (e.g.
+   * days simulated in the background), so the screen stays visible without
+   * any scene touching live data. While it exists it is drawn behind the UI
+   * every frame, so scenes shown over it must use transparent windows.
+   */
+  void requestBackdropCapture();
+
+  /** @brief True until the requested frame has been frozen. */
+  bool isBackdropPending() const { return backdropPending; }
+
+  /** @brief Frozen frame from requestBackdropCapture(), or nullptr. */
+  SDL_Texture* getBackdrop() const { return backdropTexture; }
+
+  /** @brief Frees the frozen frame. */
+  void releaseBackdrop();
+
   /** Re-applies appearance settings (theme, scale, density) live. */
   void refreshTheme();
 
@@ -146,6 +165,8 @@ class GUIView
   SDL_Renderer* renderer;
   bool running;
   bool screenshotPending = false;
+  bool backdropPending = false;
+  SDL_Texture* backdropTexture = nullptr;
 
   // Live-match render diagnostics (Priority 0)
   static constexpr int MATCH_FRAME_TIMING_COUNT = 120;

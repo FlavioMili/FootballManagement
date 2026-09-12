@@ -6,6 +6,7 @@
 //  See the LICENSE file in the project root.
 // -----------------------------------------------------------------------------
 
+#include <SDL3/SDL.h>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -15,6 +16,7 @@
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
 #include "global/logger.h"
+#include "gui/render_scale.h"
 #include "gui/view_models/competition_view.h"
 #include "gui/view_models/formation.h"
 #include "gui/view_models/player_view.h"
@@ -243,4 +245,26 @@ TEST(ThemeTest, PackedAccentRoundTripsAndRatingScaleIsMonotonic)
   EXPECT_EQ(Theme::packRgb(Theme::unpackRgb(0x21A663)), 0x21A663U);
   EXPECT_LT(Theme::ratingColor(30.0).y, Theme::ratingColor(80.0).y);
   EXPECT_GT(Theme::ratingColor(30.0).x, Theme::ratingColor(80.0).x);
+}
+
+TEST(RenderScaleTest, ScopedScaleAppliesFramebufferScaleAndRestores)
+{
+  SDL_Surface* surface = SDL_CreateSurface(64, 64, SDL_PIXELFORMAT_RGBA8888);
+  ASSERT_NE(surface, nullptr);
+  SDL_Renderer* renderer = SDL_CreateSoftwareRenderer(surface);
+  ASSERT_NE(renderer, nullptr);
+  float x = 0.0f;
+  float y = 0.0f;
+  {
+    // A Wayland scale-2 output reports DisplayFramebufferScale (2, 2).
+    const ScopedRenderScale scale(renderer, ImVec2(2.0f, 2.0f));
+    SDL_GetRenderScale(renderer, &x, &y);
+    EXPECT_FLOAT_EQ(x, 2.0f);
+    EXPECT_FLOAT_EQ(y, 2.0f);
+  }
+  SDL_GetRenderScale(renderer, &x, &y);
+  EXPECT_FLOAT_EQ(x, 1.0f);
+  EXPECT_FLOAT_EQ(y, 1.0f);
+  SDL_DestroyRenderer(renderer);
+  SDL_DestroySurface(surface);
 }

@@ -65,6 +65,9 @@ constexpr float D_PRIME_SINGLE_SOURCE = 0.78f;
 constexpr float D_PRIME_COACH_EYE = 1.29f;
 constexpr float D_PRIME_COMBINED = 2.09f;
 constexpr float RANGE_Z = 1.2816f; /*!< Ranges cover 80% of outcomes. */
+/** Below this knowledge screens show the overall as a range, not a
+ * number (the estimate is too uncertain for a point value). */
+constexpr std::uint8_t RANGE_DISPLAY_KNOWLEDGE = 50;
 
 constexpr std::int64_t DAILY_COST_DOMESTIC = 900;  /*!< [P] Travel, tickets. */
 constexpr std::int64_t DAILY_COST_FOREIGN = 2'500; /*!< [P] */
@@ -257,7 +260,9 @@ struct ScoutedPlayerRow
   PlayerRole role = PlayerRole::UNKNOWN;
   std::uint8_t age = 0;
   std::uint8_t knowledge = 0;
-  float overall = 0.0f;
+  float overall = 0.0f; /*!< Centre of the overall range. */
+  float overall_low = 0.0f;  /*!< 80% range of the overall estimate. */
+  float overall_high = 0.0f;
   float potential_low = 0.0f;
   float potential_high = 0.0f;
   std::int64_t estimated_value = 0;

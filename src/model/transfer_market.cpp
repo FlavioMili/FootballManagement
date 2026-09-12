@@ -46,27 +46,9 @@ constexpr float PRE_CONTRACT_LEVEL_MARGIN = 3.0f;
 constexpr int PRE_CONTRACT_MAX_AGE = 31;
 constexpr double PRE_CONTRACT_SUCCESS = 0.5;
 constexpr std::uint8_t BIGGER_BORROWER_EXTRA_SHARE = 25;
+constexpr std::uint64_t SELLER_RESOLVE_KEY = 0x5E11E4;
 
 int level(SquadRole role) { return static_cast<int>(role); }
-
-PlayerRole roleGroup(PlayerRole role)
-{
-  using enum PlayerRole;
-  switch (role)
-  {
-    case CDM:
-    case CM:
-    case CAM:
-      return CM;
-    case LM:
-    case RM:
-    case LW:
-    case RW:
-      return LW;
-    default:
-      return role;
-  }
-}
 
 std::int64_t weeklyPayroll(const GameData& gamedata, const Team& team)
 {
@@ -316,6 +298,12 @@ SaleContext TransferMarket::saleContext(PlayerID player_id, TeamID buyer_id,
   const WindowInfo window = windowInfo(date);
   context.winter_window = window.winter;
   context.days_to_deadline = window.open ? window.days_to_deadline : -1;
+  // One draw per player and window: asking again cannot change the answer.
+  const std::uint64_t window_key =
+      static_cast<std::uint64_t>(date.year) * 2U + (window.winter ? 1U : 0U);
+  context.resolve = static_cast<float>(
+      WorldRng::hashUniform(gamedata->getWorldSeed(), RngDomain::Transfers,
+                            player_id, mixHash(window_key, SELLER_RESOLVE_KEY)));
   return context;
 }
 
@@ -1067,7 +1055,7 @@ std::optional<TransferMarket::AiNeed> TransferMarket::assessNeed(
     {
       // Loanees count; players leaving on a pre-contract do not.
       const auto player = gamedata->getPlayer(player_id);
-      if (player && roleGroup(player->get().getRole()) == group.group &&
+      if (player && positionGroup(player->get().getRole()) == group.group &&
           !pre_contracts.contains(player_id))
         overalls.push_back(overall);
     }
@@ -1191,7 +1179,7 @@ bool TransferMarket::aiSignFreeAgent(TeamID club_id, const AiNeed& need,
   {
     const Player& player = reference.get();
     const double overall = player.getOverall(config);
-    if (roleGroup(player.getRole()) == need.group &&
+    if (positionGroup(player.getRole()) == need.group &&
         overall >= static_cast<double>(need.min_overall))
       free_agents.emplace_back(overall, player.getId());
   }
@@ -1236,7 +1224,7 @@ bool TransferMarket::aiTakeLoan(TeamID club_id, const AiNeed& need,
     const TeamID parent = p.getTeamId();
     const double overall = p.getOverall(config);
     if (parent == club_id || parent == FREE_AGENTS_TEAM_ID ||
-        roleGroup(p.getRole()) != need.group || overall < best_overall ||
+        positionGroup(p.getRole()) != need.group || overall < best_overall ||
         (best && overall == best_overall && player_id > *best) ||
         !canBeTraded(player_id))
       continue;
@@ -1315,7 +1303,7 @@ bool TransferMarket::aiBuy(
     const TeamID owner = player.getTeamId();
     return owner != club_id && owner != managed_team_id &&
            owner != FREE_AGENTS_TEAM_ID &&
-           roleGroup(player.getRole()) == need.group &&
+           positionGroup(player.getRole()) == need.group &&
            canBeTraded(player.getId()) &&
            player.getOverall(config) >= static_cast<double>(need.min_overall);
   };
@@ -1488,7 +1476,7 @@ void TransferMarket::runAiApproach(TeamID club_id, const GameDateValue& date,
     const Player& player = reference.get();
     const PlayerID player_id = player.getId();
     const double overall = player.getOverall(config);
-    if (roleGroup(player.getRole()) != need->group || overall < best_overall ||
+    if (positionGroup(player.getRole()) != need->group || overall < best_overall ||
         (best && overall == best_overall && player_id > *best) ||
         player.getTransferStatus() == TransferStatus::Listed ||
         !canBeTraded(player_id) ||

@@ -121,38 +121,14 @@ std::vector<FixtureRow> buildLeagueFixtures(const GameController& controller,
 {
   std::vector<FixtureRow> rows;
   const Game* game = controller.getGame();
-  const auto league = controller.getLeagueById(leagueId);
-  if (!game || !league) return rows;
-  const auto& teamIds = league->get().getTeamIDs();
-  const auto inLeague = [&teamIds](TeamID id)
-  { return std::ranges::find(teamIds, id) != teamIds.end(); };
-
-  // A round ends as soon as a club would play twice, so matchdays spread
-  // over several calendar days still form one round.
-  int round = 0;
-  std::vector<TeamID> roundTeams;
-  roundTeams.reserve(teamIds.size());
+  if (!game) return rows;
   for (const auto& [date, matches] : game->getCalendar().getFullCalendar())
-  {
     for (const Match& match : matches)
-    {
-      const TeamID home = match.getHomeTeamId();
-      const TeamID away = match.getAwayTeamId();
-      if (match.getMatchType() != MatchType::LEAGUE || !inLeague(home) ||
-          !inLeague(away))
-        continue;
-      if (round == 0 ||
-          std::ranges::find(roundTeams, home) != roundTeams.end() ||
-          std::ranges::find(roundTeams, away) != roundTeams.end())
-      {
-        ++round;
-        roundTeams.clear();
-      }
-      roundTeams.push_back(home);
-      roundTeams.push_back(away);
-      rows.push_back(makeRow(controller, date, match, round));
-    }
-  }
+      if (match.getMatchType() == MatchType::LEAGUE &&
+          match.getCompetitionId() == leagueId)
+        rows.push_back(makeRow(controller, date, match, match.getStage()));
+  // Rounds split over a weekend stay together.
+  std::ranges::stable_sort(rows, {}, &FixtureRow::round);
   return rows;
 }
 

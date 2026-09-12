@@ -266,22 +266,21 @@ void InboxScene::renderThreads(float width, float height)
         Theme::toU32(thread.unread > 0 ? palette.text : palette.muted);
     const float right = start.x + ImGui::GetContentRegionAvail().x;
     const float dateWidth = ImGui::CalcTextSize(thread.date_text.c_str()).x;
-    drawList->PushClipRect(
-        start,
-        ImVec2(right - dateWidth - Theme::Space::S * Theme::scale(),
-               start.y + rowHeight),
-        true);
-    drawList->AddText(ImVec2(left, start.y + 2.0f * Theme::scale()), titleColor,
-                      thread.title.c_str());
-    drawList->PopClipRect();
+    bool cut = UI::drawTextFitted(
+        drawList, ImVec2(left, start.y + 2.0f * Theme::scale()), titleColor,
+        thread.title,
+        right - dateWidth - Theme::Space::S * Theme::scale() - left);
     drawList->AddText(
         ImVec2(right - dateWidth, start.y + 2.0f * Theme::scale()),
         Theme::toU32(palette.faint), thread.date_text.c_str());
-    drawList->PushClipRect(start, ImVec2(right, start.y + rowHeight), true);
-    drawList->AddText(ImVec2(left, start.y + ImGui::GetTextLineHeight() +
-                                       3.0f * Theme::scale()),
-                      Theme::toU32(palette.faint), thread.detail.c_str());
-    drawList->PopClipRect();
+    cut |=
+        UI::drawTextFitted(drawList,
+                           ImVec2(left, start.y + ImGui::GetTextLineHeight() +
+                                            3.0f * Theme::scale()),
+                           Theme::toU32(palette.faint), thread.detail,
+                           right - left - Theme::Space::M * Theme::scale());
+    if (cut && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+      ImGui::SetTooltip("%s\n%s", thread.title.c_str(), thread.detail.c_str());
     if (thread.unread > 0)
       drawList->AddCircleFilled(
           ImVec2(right - 4.0f * Theme::scale(),

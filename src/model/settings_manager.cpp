@@ -54,7 +54,7 @@ void SettingsManager::load()
     settings_.fps_limit =
         std::clamp(j.value("fps_limit", settings_.fps_limit), 15, 360);
     settings_.theme_preset =
-        std::clamp(j.value("theme_preset", settings_.theme_preset), 0, 4);
+        std::clamp(j.value("theme_preset", settings_.theme_preset), 0, 5);
     settings_.club_accent = j.value("club_accent", settings_.club_accent);
     settings_.accent_rgb =
         j.value("accent_rgb", settings_.accent_rgb) & 0xFFFFFFU;

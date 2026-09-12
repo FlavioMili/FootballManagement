@@ -13,6 +13,7 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <utility>
 #include <array>
 #include <cmath>
 #include <limits>
@@ -169,6 +170,24 @@ std::string offerTermsText(const TransferNegotiation::OfferTerms& terms)
 TransferMarketScene::TransferMarketScene(GUIView* parent)
     : ManagementScene(parent)
 {
+}
+
+TransferMarketScene::TransferMarketScene(GUIView* parent, PlayerID player)
+    : ManagementScene(parent), pending_deal_player(player)
+{
+}
+
+void TransferMarketScene::openPendingDeal()
+{
+  if (pending_deal_player == 0) return;
+  const PlayerID player_id = std::exchange(pending_deal_player, 0);
+  const auto scouted = guiView->getController().getScoutedRow(player_id);
+  if (!scouted) return;
+  const TargetRow row = makeTargetRow(*scouted);
+  if (row.free_agent)
+    openContractDialog(row.id, row.name);
+  else
+    openOfferDialog(row);
 }
 
 void TransferMarketScene::update(float /*deltaTime*/) {}

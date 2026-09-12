@@ -124,17 +124,18 @@ void FixturesScene::renderContent()
 void FixturesScene::renderClubSummary()
 {
   const Theme::Palette& palette = Theme::palette();
-  const float gap = ImGui::GetStyle().ItemSpacing.x;
-  const float width = (ImGui::GetContentRegionAvail().x - 3.0f * gap) / 4.0f;
+  UI::TileRow tiles(4);
+  const float width = tiles.width();
   const std::string record = fmt::sprintf("%d–%d–%d", wins, draws, losses);
+  tiles.next();
   UI::statTile("record", LOC("FIXTURES_RECORD"), record.c_str(),
                LOC("FIXTURES_RECORD_NOTE"), palette.text, width);
-  ImGui::SameLine();
+  tiles.next();
   const std::string goals = fmt::sprintf("%d : %d", goals_for, goals_against);
   UI::statTile(
       "goals", LOC("FIXTURES_GOALS"), goals.c_str(), LOC("FIXTURES_GOALS_NOTE"),
       goals_for >= goals_against ? palette.positive : palette.negative, width);
-  ImGui::SameLine();
+  tiles.next();
   const int played = wins + draws + losses;
   const std::string ppg =
       played > 0 ? fmt::sprintf("%.2f", static_cast<double>(wins * 3 + draws) /
@@ -142,7 +143,7 @@ void FixturesScene::renderClubSummary()
                  : std::string("–");
   UI::statTile("ppg", LOC("FIXTURES_PPG"), ppg.c_str(),
                LOC("FIXTURES_PPG_NOTE"), palette.text, width);
-  ImGui::SameLine();
+  tiles.next();
   const int remaining = static_cast<int>(std::ranges::count_if(
       club_fixtures, [](const auto& fixture) { return !fixture.played; }));
   const std::string remainingText = std::to_string(remaining);
@@ -172,7 +173,7 @@ void FixturesScene::renderClubFixtures(float height)
                             ImGuiTableColumnFlags_WidthStretch);
     ImGui::TableSetupColumn(LOC("FIXTURES_COL_RESULT"));
     ImGui::TableSetupColumn(LOC("FIXTURES_COL_OUTCOME"));
-    ImGui::TableHeadersRow();
+    UI::staticHeadersRow();
 
     ImGuiListClipper clipper;
     clipper.Begin(static_cast<int>(club_fixtures.size()));

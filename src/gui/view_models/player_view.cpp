@@ -124,6 +124,21 @@ std::vector<RoleFit> roleFits(const Player& player, const StatsConfig& config)
   return fits;
 }
 
+std::unordered_set<PlayerID> unavailablePlayers(
+    const GameController& controller, TeamID teamId, MatchType type)
+{
+  std::unordered_set<PlayerID> unavailable;
+  for (const auto& playerRef : controller.getPlayersForTeam(teamId))
+  {
+    const Player& player = playerRef.get();
+    if (!player.isAvailable() ||
+        (type != MatchType::FRIENDLY &&
+         controller.getSuspensionMatches(player.getId(), type) > 0))
+      unavailable.insert(player.getId());
+  }
+  return unavailable;
+}
+
 std::string statLabel(std::string_view statName)
 {
   const std::string key = "STAT_" + std::string(statName);

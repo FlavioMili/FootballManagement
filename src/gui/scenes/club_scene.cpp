@@ -136,26 +136,28 @@ void ClubScene::renderContent()
   UI::pageHeader(LOC("CLUB_TITLE"), LOC("CLUB_SUBTITLE"));
 
   const float gap = ImGui::GetStyle().ItemSpacing.x;
-  const float tile = (ImGui::GetContentRegionAvail().x - 3.0f * gap) / 4.0f;
+  UI::TileRow tiles(4);
+  const float tile = tiles.width();
   const std::string confidence =
       std::format("{:.0f}%", static_cast<double>(board.confidence));
   const ImVec4 confidenceColor = board.confidence >= 60.0f   ? palette.positive
                                  : board.confidence >= 35.0f ? palette.warning
                                                              : palette.negative;
+  tiles.next();
   UI::statTile("confidence", LOC("CLUB_TILE_CONFIDENCE"), confidence.c_str(),
                LOC(board.dismissed ? "CLUB_DISMISSED" : "CLUB_CONFIDENCE_NOTE"),
                confidenceColor, tile);
-  ImGui::SameLine();
+  tiles.next();
   const std::string target =
       fmt::sprintf(LOC("CLUB_TARGET_POSITION"), board.target_position);
   UI::statTile("objective", LOC("CLUB_TILE_OBJECTIVE"),
                LOC(BoardModel::objectiveKey(board.objective)), target.c_str(),
                palette.text, tile);
-  ImGui::SameLine();
+  tiles.next();
   const std::string reputation = std::format("{} / 100", profile.reputation);
   UI::statTile("reputation", LOC("CLUB_TILE_REPUTATION"), reputation.c_str(),
                LOC("CLUB_REPUTATION_NOTE"), palette.text, tile);
-  ImGui::SameLine();
+  tiles.next();
   const std::string capacity = Format::thousands(profile.stadium_capacity);
   UI::statTile("stadium", LOC("CLUB_TILE_STADIUM"), capacity.c_str(),
                LOC("CLUB_STADIUM_NOTE"), palette.text, tile);
@@ -298,7 +300,7 @@ void ClubScene::renderHistory(float height)
     ImGui::TableSetupColumn(LOC("CLUB_COL_TOP_SCORER"));
     ImGui::TableSetupColumn(LOC("CLUB_COL_MOVEMENTS"),
                             ImGuiTableColumnFlags_WidthStretch);
-    ImGui::TableHeadersRow();
+    UI::staticHeadersRow();
     for (const HistoryRow& line : history)
     {
       ImGui::TableNextRow();
@@ -307,7 +309,7 @@ void ClubScene::renderHistory(float height)
       ImGui::TableNextColumn();
       ImGui::TextUnformatted(line.competition.c_str());
       ImGui::TableNextColumn();
-      ImGui::TextColored(palette.accent, "%s", line.champion.c_str());
+      ImGui::TextColored(palette.text, "%s", line.champion.c_str());
       ImGui::TableNextColumn();
       ImGui::TextUnformatted(line.runner_up.c_str());
       ImGui::TableNextColumn();

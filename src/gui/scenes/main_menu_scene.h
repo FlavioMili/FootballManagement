@@ -54,12 +54,18 @@ class MainMenuScene : public GUIScene
   [[nodiscard]] SceneID getID() const override;
 
  private:
+  friend class GameFlowTest_GUIFlowLifecycle_Test;
   bool is_new_game = false;
   int loading_slot = 0;
   bool is_loading_rendered = false;
   bool loading_operation_started = false;
   std::future<bool> loading_operation;
   std::vector<GameController::SaveSlotMetadata> cached_metadata;
+  int latest_career_slot = 0; /**< Most recently saved career, 0 = none. */
+  int overwrite_slot = 0;     /**< Occupied slot awaiting confirmation. */
 
   void loadCachedMetadata();
+  void renderBackdrop();
+  void renderSlotPicker();
+  void startSlot(int slot, bool newGame);
 };

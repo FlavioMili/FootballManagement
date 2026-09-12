@@ -9,6 +9,8 @@
 #include "model/discipline.h"
 
 #include <algorithm>
+#include <iterator>
+#include <optional>
 #include <unordered_map>
 
 #include "database/gamedata.h"
@@ -34,14 +36,16 @@ void Discipline::processMatch(const MatchReport& report,
 {
   if (report.match_type == MatchType::FRIENDLY) return;
 
-  for (auto& [key, record] : by_player)
+  for (auto key = active_bans.begin(); key != active_bans.end();)
   {
-    if (record.scope != report.match_type || record.ban_matches == 0) continue;
-    const auto player = gamedata.getPlayer(record.player_id);
-    if (!player) continue;
-    const TeamID team = player->get().getTeamId();
-    if (team == report.home_team_id || team == report.away_team_id)
+    DisciplinaryRecord& record = by_player.at(*key);
+    const auto player = record.scope == report.match_type
+                            ? gamedata.getPlayer(record.player_id)
+                            : std::nullopt;
+    if (player && (player->get().getTeamId() == report.home_team_id ||
+                   player->get().getTeamId() == report.away_team_id))
       --record.ban_matches;
+    key = record.ban_matches == 0 ? active_bans.erase(key) : std::next(key);
   }
 
   std::unordered_map<PlayerID, CardCount> cards;
@@ -76,6 +80,7 @@ void Discipline::processMatch(const MatchReport& report,
       it->second.scope = report.match_type;
     }
     book(it->second, count.yellows, count.reds);
+    if (it->second.ban_matches > 0) active_bans.insert(it->first);
   }
 }
 
@@ -122,9 +127,9 @@ std::vector<DisciplinaryRecord> Discipline::suspendedPlayers(
     TeamID team_id, const GameData& gamedata) const
 {
   std::vector<DisciplinaryRecord> suspended;
-  for (const auto& [key, record] : by_player)
+  for (const Key& key : active_bans)
   {
-    if (record.ban_matches == 0) continue;
+    const DisciplinaryRecord& record = by_player.at(key);
     const auto player = gamedata.getPlayer(record.player_id);
     if (player && player->get().getTeamId() == team_id)
       suspended.push_back(record);
@@ -154,6 +159,14 @@ std::vector<DisciplinaryRecord> Discipline::records() const
 void Discipline::restore(const std::vector<DisciplinaryRecord>& stored)
 {
   by_player.clear();
+  active_bans.clear();
   for (const DisciplinaryRecord& record : stored)
-    by_player.insert_or_assign(Key{record.player_id, record.scope}, record);
+  {
+    const Key key{record.player_id, record.scope};
+    by_player.insert_or_assign(key, record);
+    if (record.ban_matches > 0)
+      active_bans.insert(key);
+    else
+      active_bans.erase(key);
+  }
 }

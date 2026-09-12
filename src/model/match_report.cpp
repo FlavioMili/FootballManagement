@@ -106,13 +106,20 @@ void MatchReport::fillFromEngine(const MatchEngine& engine, TeamID home_id,
 
   players.clear();
   players.reserve(engine.getPlayerStats().size());
+  // Minutes are reported on the usual 90-minute scale (a full match is 90
+  // whatever the added time), as a share of the clock time played.
+  const float clockMinutes =
+      std::max(static_cast<float>(REGULATION_MINUTES),
+               engine.getElapsedMatchMinutes());
   for (const PlayerMatchStats& entry : engine.getPlayerStats())
   {
     PlayerMatchLine line;
     line.player_id = entry.playerId;
     line.team_id = entry.isHomeTeam ? home_id : away_id;
     line.started = entry.started;
-    line.minutes = toSmallCount(std::lround(entry.minutesPlayed));
+    line.minutes = toSmallCount(std::lround(
+        entry.minutesPlayed * static_cast<float>(REGULATION_MINUTES) /
+        clockMinutes));
     line.goals = toSmallCount(entry.goals);
     line.assists = toSmallCount(entry.assists);
     line.yellow_cards = toSmallCount(entry.yellowCards);

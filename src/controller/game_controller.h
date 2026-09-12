@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -175,13 +176,48 @@ class GameController
   /** Advances quiet days and stops on the next managed fixture. */
   int advanceToNextManagedFixture(int max_days = 60);
 
+  /** Progress of the running advanceDay() / advanceToNextManagedFixture(). */
+  struct ContinueProgress
+  {
+    /** Days before the one being simulated, out of the days to advance. */
+    int days_done = 0;
+    int days_total = 0;
+    /** Matches simulated / scheduled so far on the day being simulated. */
+    uint32_t matches_done = 0;
+    uint32_t matches_total = 0;
+
+    /** Overall completion in [0, 1]; a day counts once its matches ran. */
+    float fraction() const;
+  };
+  /**
+   * Thread-safe snapshot for a progress bar: poll it from the UI thread while
+   * Continue runs on a worker thread.
+   */
+  ContinueProgress getContinueProgress() const;
+
+  /** Threads simulating a matchday in the current game (1 = sequential). */
+  void setSimulationThreads(unsigned threads);
+
   bool setMatchResult(GameDateValue date, uint16_t home_id, uint16_t away_id,
                       uint8_t home_score, uint8_t away_score);
 
   /** Records a managed match with the structured summary of the live engine
-   * (team stats, starters). Drawn cup ties go to extra time and penalties. */
+   * (team stats, per-player lines and the measured condition and injuries,
+   * applied like for simulated matches). Drawn cup ties go to extra time and
+   * penalties. */
   bool setMatchResult(GameDateValue date, uint16_t home_id, uint16_t away_id,
                       const MatchEngine& engine);
+
+  /** Selected players (XI and reserves) injured or suspended for @p type. */
+  std::vector<PlayerID> getIneligibleSelections(TeamID team_id,
+                                                MatchType type) const;
+  /** Replaces those players with eligible squad members (same role first);
+   * returns how many were replaced. */
+  size_t autoFixLineup(TeamID team_id, MatchType type);
+  /** What autoFixLineup() would change: (replaced, replacement or 0 when
+   * the player just leaves the matchday squad). */
+  std::vector<std::pair<PlayerID, PlayerID>> previewLineupFix(
+      TeamID team_id, MatchType type) const;
 
   // ========== Competitions ==========
   /** Fixture-derived table: points, GD, goals, head-to-head, name, ID. */
@@ -266,7 +302,8 @@ class GameController
    * agreed transfer, free agent or pre-contract (final six months). */
   std::optional<TransferNegotiation::ContractKind> getContractTalkKind(
       PlayerID player_id) const;
-  /** The player's demands for talks of @p kind with the managed club. */
+  /** The player's demands for talks of @p kind with the managed club;
+   * asking_wage is the agent's current ask in these talks. */
   TransferNegotiation::ContractDemand getPlayerDemand(
       PlayerID player_id, TransferNegotiation::ContractKind kind) const;
 
@@ -544,6 +581,10 @@ class GameController
   std::unordered_map<PlayerID, TransferListing> transfer_listings;
   std::mt19937 transfer_rng;
   float last_initialization_milliseconds = 0.0f;
+  std::atomic<int> continue_days_started{0};
+  std::atomic<int> continue_days_total{0};
+  /** One day of simulation plus the AI transfer activity that follows. */
+  void simulateDay();
   bool executeTransfer(PlayerID pid, TeamID buyer_id, TeamID seller_id,
                        uint32_t price,
                        std::optional<ContractTerms> contract = std::nullopt);

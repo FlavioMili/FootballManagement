@@ -222,6 +222,16 @@ const StatsConfig& GameController::getStatsConfig() const
 void GameController::advanceDay()
 {
   if (!game) return;
+  game->resetSimulationProgress();
+  continue_days_started = 0;
+  continue_days_total = 1;
+  simulateDay();
+}
+
+void GameController::simulateDay()
+{
+  // Counted just before Game::advanceDay() resets the match progress.
+  ++continue_days_started;
   game->advanceDay();
   transfer_rng.seed(transferSeed(*gamedata, game->getCurrentDate()));
   purgeStaleListings();
@@ -252,13 +262,48 @@ int GameController::advanceToNextManagedFixture(int max_days)
   }
 
   int advancedDays = 0;
+  game->resetSimulationProgress();
+  continue_days_started = 0;
+  continue_days_total =
+      targetDate ? std::clamp(dayOrdinal(*targetDate) -
+                                  dayOrdinal(game->getCurrentDate()),
+                              0, max_days)
+                 : 0;
   while (targetDate && game->getCurrentDate() < *targetDate &&
          advancedDays < max_days)
   {
-    advanceDay();
+    simulateDay();
     ++advancedDays;
   }
   return advancedDays;
+}
+
+float GameController::ContinueProgress::fraction() const
+{
+  if (days_total <= 0) return 0.0f;
+  float days = static_cast<float>(days_done);
+  if (matches_total > 0)
+    days += static_cast<float>(matches_done) / static_cast<float>(matches_total);
+  return std::clamp(days / static_cast<float>(days_total), 0.0f, 1.0f);
+}
+
+GameController::ContinueProgress GameController::getContinueProgress() const
+{
+  ContinueProgress progress;
+  progress.days_done = std::max(continue_days_started.load() - 1, 0);
+  progress.days_total = continue_days_total.load();
+  if (game)
+  {
+    const SimulationProgress matches = game->getSimulationProgress();
+    progress.matches_done = matches.completed;
+    progress.matches_total = matches.total;
+  }
+  return progress;
+}
+
+void GameController::setSimulationThreads(unsigned threads)
+{
+  if (game) game->setSimulationThreads(threads);
 }
 
 void GameController::purgeStaleListings()
@@ -297,7 +342,27 @@ bool GameController::setMatchResult(GameDateValue date, uint16_t home_id,
   if (!game) return false;
   MatchReport report;
   report.fillFromEngine(engine, home_id, away_id);
-  return game->setMatchResult(date, home_id, away_id, std::move(report));
+  return game->setMatchResult(date, home_id, away_id, std::move(report),
+                              MatchdaySquad::consequences(engine));
+}
+
+std::vector<PlayerID> GameController::getIneligibleSelections(
+    TeamID team_id, MatchType type) const
+{
+  return game ? game->ineligibleSelections(team_id, type)
+              : std::vector<PlayerID>{};
+}
+
+size_t GameController::autoFixLineup(TeamID team_id, MatchType type)
+{
+  return game ? game->fixMatchdaySquad(team_id, type) : 0;
+}
+
+std::vector<std::pair<PlayerID, PlayerID>> GameController::previewLineupFix(
+    TeamID team_id, MatchType type) const
+{
+  return game ? game->previewMatchdaySquadFix(team_id, type)
+              : std::vector<std::pair<PlayerID, PlayerID>>{};
 }
 
 std::vector<StandingRow> GameController::getStandings(LeagueID league_id) const
@@ -1701,8 +1766,16 @@ TransferNegotiation::ContractDemand GameController::getPlayerDemand(
     PlayerID player_id, TransferNegotiation::ContractKind kind) const
 {
   if (!game) return {};
-  return TransferNegotiation::contractDemand(game->getTransfers().playerContext(
-      player_id, game->getManagedTeamId(), kind));
+  const TransferMarket& market = game->getTransfers();
+  const auto context =
+      market.playerContext(player_id, game->getManagedTeamId(), kind);
+  TransferNegotiation::ContractDemand demand =
+      TransferNegotiation::contractDemand(context);
+  // The agent's ask softens with every proposal already turned down.
+  if (const Negotiation* talk = market.findNegotiation(player_id))
+    demand.asking_wage =
+        TransferNegotiation::agentAsk(context, demand, talk->player_rounds);
+  return demand;
 }
 
 std::uint8_t GameController::getContractRoundsLeft(PlayerID player_id) const

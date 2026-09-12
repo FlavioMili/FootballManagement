@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <format>
 #include <numbers>
+#include <unordered_set>
 
 #include "database/gamedata.h"
 #include "global/language_manager.h"
@@ -218,18 +219,20 @@ void LineupScene::renderToolbar()
     total += positioned.player->getOverall(statsConfig);
     ++starters;
   }
-  ImGui::SameLine(0.0f, Theme::Space::XL * Theme::scale());
   const std::string summary =
       fmt::sprintf(LOC("LINEUP_SUMMARY"), starters,
                    starters > 0 ? total / static_cast<double>(starters) : 0.0);
+  UI::sameLineIfFits(ImGui::CalcTextSize(summary.c_str()).x);
+  ImGui::AlignTextToFramePadding();
   ImGui::TextColored(starters == 11 ? palette.muted : palette.warning, "%s",
                      summary.c_str());
   if (const size_t blocked = unavailableStarters(); blocked > 0)
   {
-    ImGui::SameLine(0.0f, Theme::Space::L * Theme::scale());
-    ImGui::TextColored(
-        palette.negative, "%s",
-        fmt::sprintf(LOC("LINEUP_UNAVAILABLE_WARNING"), blocked).c_str());
+    const std::string warning =
+        fmt::sprintf(LOC("LINEUP_UNAVAILABLE_WARNING"), blocked);
+    UI::sameLineIfFits(ImGui::CalcTextSize(warning.c_str()).x);
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored(palette.negative, "%s", warning.c_str());
   }
 }
 
@@ -250,25 +253,16 @@ void LineupScene::autoPickBestEleven()
   GameController& controller = guiView->getController();
   const auto managed = controller.getManagedTeam();
   if (!managed) return;
-  // Injured and suspended players are left out of the XI (they still count
-  // for the bench so the squad list stays complete).
   std::vector<const Player*> squad;
-  std::vector<const Player*> sidelined;
   for (const auto& player :
        controller.getPlayersForTeam(managed->get().getId()))
-  {
-    if (unavailable.contains(player.get().getId()))
-      sidelined.push_back(&player.get());
-    else
-      squad.push_back(&player.get());
-  }
+    squad.push_back(&player.get());
+  std::unordered_set<PlayerID> sidelined;
+  for (const auto& [id, reason] : unavailable) sidelined.insert(id);
   const size_t preset =
       formation_index >= 0 ? static_cast<size_t>(formation_index) : 0U;
-  Formation::autoPick(*current_lineup, Formation::PRESETS[preset], squad,
-                      controller.getStatsConfig());
-  std::vector<const Player*> reserves = current_lineup->getReserves();
-  reserves.insert(reserves.end(), sidelined.begin(), sidelined.end());
-  current_lineup->setReserves(reserves);
+  Formation::autoPickAvailable(*current_lineup, Formation::PRESETS[preset],
+                               squad, sidelined, controller.getStatsConfig());
   formation_index = static_cast<int>(preset);
   selected_pitch_player_id = PlayerID{};
   selected_bench_player_id = PlayerID{};

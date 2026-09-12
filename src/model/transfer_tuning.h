@@ -42,12 +42,25 @@ struct TransferTuning final
   /** Selling club's valuation of its player. */
   struct Valuation final
   {
-    /** Asking premium by playing-time role (key players cost most). [P] */
+    /** Asking premium by playing-time role: nobody sells at market value,
+     * key players cost most (10-40% above value). [P] */
     static constexpr float KEY_PLAYER_PREMIUM = 1.40f;
-    static constexpr float FIRST_TEAM_PREMIUM = 1.18f;
-    static constexpr float ROTATION_PREMIUM = 1.0f;
-    static constexpr float BACKUP_PREMIUM = 0.92f;
-    static constexpr float FRINGE_PREMIUM = 0.85f;
+    static constexpr float FIRST_TEAM_PREMIUM = 1.25f;
+    static constexpr float ROTATION_PREMIUM = 1.15f;
+    static constexpr float BACKUP_PREMIUM = 1.12f;
+    static constexpr float FRINGE_PREMIUM = 1.08f;
+    /** Contract length: each year beyond LONG_CONTRACT_BASE_YEARS adds a
+     * premium (no need to sell); a final-year player is cheaper (CIES:
+     * expiring contracts are the strongest discount). [P] */
+    static constexpr std::uint8_t LONG_CONTRACT_BASE_YEARS = 2;
+    static constexpr float LONG_CONTRACT_PREMIUM_PER_YEAR = 0.05f;
+    static constexpr float EXPIRING_CONTRACT_FACTOR = 0.90f;
+    /** Share of key players on multi-year deals whose club refuses any bid
+     * in a given window (drawn per player and window). [P] */
+    static constexpr float KEY_PLAYER_REFUSAL_SHARE = 0.30f;
+    static constexpr std::uint8_t KEY_PLAYER_REFUSAL_MIN_YEARS = 2;
+    /** A clearly bigger buyer can still prise a key player away. */
+    static constexpr int KEY_PLAYER_REFUSAL_BUYER_GAP = 10;
     /** Richer buyers pay more (CIES; psi ~0.2-0.3): +1% per reputation
      * point above the seller, clamped. [P] */
     static constexpr float BUYER_REPUTATION_SLOPE = 0.01f;
@@ -69,7 +82,9 @@ struct TransferTuning final
   /** Structure of a club-to-club offer and the seller's reading of it. */
   struct Offer final
   {
-    /** Offers worth at least this share of the asking fee are accepted. */
+    /** An opening bid must reach the full valuation; once talks are under
+     * way offers worth this share of it close the deal. */
+    static constexpr float OPENING_ACCEPT_SHARE = 1.0f;
     static constexpr float ACCEPT_SHARE = 0.97f;
     /** Below this share of the asking fee the seller walks away. [P] */
     static constexpr float REJECT_SHARE = 0.60f;
@@ -127,6 +142,18 @@ struct TransferTuning final
     static constexpr float LOYALTY_PREMIUM = 1.10f;
     /** Players unsettled by interest accept a little less. [P] */
     static constexpr float UNSETTLED_DISCOUNT = 0.95f;
+    /** The agent opens above what the player will sign for: a base margin
+     * plus more for ambitious players and for a step down in stature (per
+     * reputation point, capped). The ask falls to the real demand by the
+     * last round. [P] */
+    static constexpr float AGENT_BASE_MARGIN = 0.06f;
+    static constexpr float AGENT_AMBITION_MARGIN = 0.12f;
+    static constexpr float AGENT_STATURE_MARGIN_PER_POINT = 0.005f;
+    static constexpr float AGENT_STATURE_MARGIN_CAP = 0.10f;
+    static constexpr std::uint32_t AGENT_ASK_ROUNDING = 100;
+    /** Wage offers this close below the demand get the agent's pushback
+     * instead of a flat refusal. [P] */
+    static constexpr float AGENT_PUSHBACK_BAND = 0.10f;
     /** Ambitious players moving to a modest club want a release clause of
      * at most this multiple of their market value. [P] */
     static constexpr std::uint8_t RELEASE_CLAUSE_AMBITION = 70;
@@ -210,5 +237,19 @@ struct TransferTuning final
     static constexpr float MANAGED_APPROACH_CHANCE = 0.04f;
     /** Transfer news kept for the feed. */
     static constexpr std::size_t NEWS_DIGEST_LIMIT = 5;
+  };
+
+  /** How well a target fits the managed squad (recruitment screens). [P] */
+  struct Fit final
+  {
+    /** Bonus for a position without enough starters / enough depth. */
+    static constexpr float MISSING_STARTER_BONUS = 40.0f;
+    static constexpr float MISSING_DEPTH_BONUS = 15.0f;
+    /** Score per overall point above the weakest starter, clamped. */
+    static constexpr float UPGRADE_WEIGHT = 2.0f;
+    static constexpr float MIN_GAIN = -10.0f;
+    static constexpr float MAX_GAIN = 15.0f;
+    /** Gain needed to call a target an upgrade. */
+    static constexpr float UPGRADE_MARGIN = 1.0f;
   };
 };

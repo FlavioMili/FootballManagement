@@ -10,6 +10,7 @@
 
 #include <array>
 #include <span>
+#include <unordered_set>
 #include <vector>
 
 #include "global/stats_config.h"
@@ -64,6 +65,19 @@ void applyPreset(Lineup& lineup, const Preset& preset,
  */
 void autoPick(Lineup& lineup, const Preset& preset,
               std::span<const Player* const> squad, const StatsConfig& config);
+
+/**
+ * @brief autoPick() that leaves unavailable players (injured, suspended) out
+ * of the XI; they are kept on the bench so the squad list stays complete.
+ */
+void autoPickAvailable(Lineup& lineup, const Preset& preset,
+                       std::span<const Player* const> squad,
+                       const std::unordered_set<PlayerID>& unavailable,
+                       const StatsConfig& config);
+
+/** @brief Selected starters (goalkeeper and outfield) found in the set. */
+size_t unavailableStarters(const Lineup& lineup,
+                           const std::unordered_set<PlayerID>& unavailable);
 
 /**
  * @brief Index of the preset matching the current positions, or -1 when the

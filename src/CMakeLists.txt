@@ -59,6 +59,8 @@ set(FM_CORE_SOURCES
     global/queries.h
     global/roles.h
     global/stats_config.h
+    global/thread_pool.h
+    global/thread_pool.cpp
     global/types.h
 
     model/board.h
@@ -97,6 +99,8 @@ set(FM_CORE_SOURCES
     model/match_rules.h
     model/match_rules.cpp
     model/match_scenario.h
+    model/match_scheduler.h
+    model/match_scheduler.cpp
     model/match_tuning.h
     model/player.h
     model/player.cpp
@@ -132,6 +136,7 @@ set(FM_CORE_SOURCES
     model/transfer_tuning.h
 )
 
+find_package(Threads REQUIRED)
 add_library(fm_core STATIC ${FM_CORE_SOURCES})
 
 target_include_directories(fm_core PUBLIC
@@ -148,6 +153,7 @@ target_link_libraries(fm_core PUBLIC
   nlohmann_json::nlohmann_json
   SQLite3::SQLite3
   SDL3::SDL3
+  Threads::Threads
 )
 if(DEFINED sdl3_SOURCE_DIR)
   target_include_directories(fm_core SYSTEM PUBLIC ${sdl3_SOURCE_DIR}/include)
@@ -180,6 +186,7 @@ set(FM_UI_SOURCES
     gui/gui_scene.cpp
     gui/gui_view.h
     gui/gui_view.cpp
+    gui/render_scale.h
     gui/player_ui.h
     gui/render/imatch_renderer.h
     gui/render/match_render_snapshot.h
@@ -239,6 +246,8 @@ set(FM_UI_SOURCES
     gui/view_models/competition_view.cpp
     gui/view_models/formation.h
     gui/view_models/formation.cpp
+    gui/view_models/match_clock.h
+    gui/view_models/match_clock.cpp
     gui/view_models/player_view.h
     gui/view_models/player_view.cpp
     gui/widgets/format.h

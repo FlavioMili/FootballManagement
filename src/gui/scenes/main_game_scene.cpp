@@ -19,9 +19,11 @@
 #include "database/gamedata.h"
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
+#include "gui/scenes/lineup_scene.h"
 #include "gui/scenes/match_scene.h"
 #include "gui/scenes/team_selection_scene.h"
 #include "gui/view_models/competition_view.h"
+#include "gui/view_models/formation.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
@@ -37,19 +39,16 @@ constexpr int WEEKS_PER_YEAR = 52;
 constexpr uint8_t SEASON_START_MONTH = 7;
 constexpr size_t MAX_TREND_POINTS = 120;
 constexpr size_t FINANCE_MONTH_DAYS = 30;
+constexpr size_t CONTINUE_LOG_LINES = 4;
+constexpr double CONTINUE_OVERLAY_DELAY = 0.15;
+constexpr double CONTINUE_FADE_SECONDS = 0.12;
+constexpr float CONTINUE_DIM = 120.0f;
 
 std::string ordinalPosition(size_t position)
 {
   return fmt::sprintf(LOC("DASHBOARD_POSITION_VALUE"), position);
 }
 
-float tileWidth(int count)
-{
-  const float gap = ImGui::GetStyle().ItemSpacing.x;
-  return (ImGui::GetContentRegionAvail().x -
-          gap * static_cast<float>(count - 1)) /
-         static_cast<float>(count);
-}
 }  // namespace
 
 SceneID MainGameScene::getID() const { return SceneID::GAME_MENU; }
@@ -74,21 +73,30 @@ void MainGameScene::onEnter()
 
 void MainGameScene::update(float /*deltaTime*/)
 {
-  if (continuation_requested && !continuation_running)
+  // Wait for the frozen backdrop first so it shows the screen, not the card.
+  if (continuation_requested && !continuation_running &&
+      !guiView->isBackdropPending())
   {
     continuation_requested = false;
     startContinuation();
   }
+
+  if (continuation_running) trackContinueProgress();
 
   if (continuation_running &&
       continue_operation.wait_for(std::chrono::seconds::zero()) ==
           std::future_status::ready)
   {
     continuation_running = false;
+    guiView->releaseBackdrop();
+    continue_log.clear();
+    continue_finished_at = continue_overlay_shown ? ImGui::GetTime() : -1.0;
     try
     {
       const int advancedDays = continue_operation.get();
-      showToast(fmt::sprintf(LOC("DASHBOARD_ADVANCED_DAYS"), advancedDays));
+      showToast(
+          fmt::sprintf(Format::plural("DASHBOARD_ADVANCED_DAYS", advancedDays),
+                       advancedDays));
       refreshData();
     }
     catch (const std::exception&)
@@ -111,7 +119,8 @@ std::string MainGameScene::continueLabel() const
   const GameController& controller = guiView->getController();
   if (!controller.hasSelectedTeam()) return {};
   if (cached_next && cached_next->date == controller.getCurrentDate())
-    return LOC("DASHBOARD_PLAY_MATCH");
+    return LOC(cached_unavailable_starters > 0 ? "DASHBOARD_FIX_LINEUP"
+                                               : "DASHBOARD_PLAY_MATCH");
   if (cached_next)
     return fmt::sprintf(LOC("DASHBOARD_CONTINUE_TO"),
                         Format::dayMonth(cached_next->date));
@@ -122,6 +131,12 @@ void MainGameScene::requestContinue()
 {
   const GameController& controller = guiView->getController();
   if (continuation_running || !controller.hasSelectedTeam()) return;
+  if (cached_next && cached_next->date == controller.getCurrentDate() &&
+      cached_unavailable_starters > 0)
+  {
+    guiView->navigateTo(std::make_unique<LineupScene>(guiView));
+    return;
+  }
   if (cached_next && cached_next->date == controller.getCurrentDate())
   {
     guiView->navigateTo(std::make_unique<MatchScene>(
@@ -131,12 +146,20 @@ void MainGameScene::requestContinue()
   // Simulation starts from update() once every screen above the hub has
   // closed, so no screen reads the game state while it changes.
   continuation_requested = true;
+  guiView->requestBackdropCapture();
   if (guiView->getOverlayDepth() > 0) guiView->navigateTo(nullptr);
 }
 
 void MainGameScene::startContinuation()
 {
   continuation_running = true;
+  continue_start_date = guiView->getController().getCurrentDate();
+  continue_progress = {};
+  continue_logged_day = 0;
+  continue_day_matches = 0;
+  continue_log.clear();
+  continue_started_at = ImGui::GetTime();
+  continue_overlay_shown = false;
   GameController* controllerPtr = &guiView->getController();
   continue_operation =
       std::async(std::launch::async,
@@ -147,6 +170,140 @@ void MainGameScene::startContinuation()
                    controllerPtr->advanceDay();
                    return 1;
                  });
+}
+
+void MainGameScene::trackContinueProgress()
+{
+  continue_progress = guiView->getController().getContinueProgress();
+  // A day's match count is only known while it is being simulated; days the
+  // poll never saw with matches are left out rather than guessed.
+  while (continue_logged_day < continue_progress.days_done)
+  {
+    if (continue_day_matches > 0)
+    {
+      continue_log.push_back(fmt::sprintf(
+          LOC("CONTINUE_LOG_MATCHES"),
+          Format::dayMonth(continue_start_date +
+                           static_cast<size_t>(continue_logged_day)),
+          continue_day_matches));
+      if (continue_log.size() > CONTINUE_LOG_LINES)
+        continue_log.erase(continue_log.begin());
+    }
+    continue_day_matches = 0;
+    ++continue_logged_day;
+  }
+  continue_day_matches =
+      std::max(continue_day_matches, continue_progress.matches_total);
+}
+
+void MainGameScene::renderContinueOverlay()
+{
+  const Theme::Palette& palette = Theme::palette();
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  const ImVec2 min = viewport->WorkPos;
+  const ImVec2 max(min.x + viewport->WorkSize.x, min.y + viewport->WorkSize.y);
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  // Short waits (a quiet day) keep showing the frozen screen only; the card
+  // appears once Continue takes longer than a blink, then fades in.
+  const double elapsed = ImGui::GetTime() - continue_started_at;
+  if (elapsed < CONTINUE_OVERLAY_DELAY) return;
+  continue_overlay_shown = true;
+  const float alpha =
+      Theme::reducedMotion()
+          ? 1.0f
+          : std::clamp(static_cast<float>((elapsed - CONTINUE_OVERLAY_DELAY) /
+                                          CONTINUE_FADE_SECONDS),
+                       0.0f, 1.0f);
+  drawList->AddRectFilled(
+      min, max, IM_COL32(0, 0, 0, static_cast<int>(CONTINUE_DIM * alpha)));
+  ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
+
+  const float scale = Theme::scale();
+  const ImVec2 cardSize(460.0f * scale, 0.0f);
+  ImGui::SetCursorScreenPos(
+      ImVec2(min.x + (viewport->WorkSize.x - cardSize.x) * 0.5f,
+             min.y + viewport->WorkSize.y * 0.30f));
+  ImGui::PushStyleColor(ImGuiCol_ChildBg, palette.surface);
+  ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 10.0f * scale);
+  ImGui::PushStyleVar(
+      ImGuiStyleVar_WindowPadding,
+      ImVec2(Theme::Space::XL * scale, Theme::Space::L * scale));
+  ImGui::BeginChild("##continue_card", cardSize,
+                    ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY |
+                        ImGuiChildFlags_AlwaysUseWindowPadding,
+                    ImGuiWindowFlags_NoScrollbar);
+  ImGui::PopStyleVar(2);
+  ImGui::PopStyleColor();
+
+  UI::sectionLabel(LOC("CONTINUE_TITLE"));
+  const GameDateValue shownDate =
+      continue_start_date +
+      static_cast<size_t>(std::max(0, continue_progress.days_done));
+  {
+    Theme::ScopedText heading(Theme::Text::HEADING);
+    ImGui::TextUnformatted(Format::date(shownDate).c_str());
+  }
+  const bool known = continue_progress.days_total > 0;
+  const float fraction = continue_progress.fraction();
+  const float barHeight = 8.0f * scale;
+  if (known)
+    ImGui::ProgressBar(fraction, ImVec2(-FLT_MIN, barHeight), "");
+  else if (!Theme::reducedMotion())
+    ImGui::ProgressBar(-1.0f * static_cast<float>(ImGui::GetTime()),
+                       ImVec2(-FLT_MIN, barHeight), "");
+  if (known)
+  {
+    const std::string days = fmt::sprintf(
+        LOC("CONTINUE_DAYS"),
+        std::min(continue_progress.days_done + 1, continue_progress.days_total),
+        continue_progress.days_total);
+    ImGui::TextColored(palette.muted, "%s", days.c_str());
+    ImGui::SameLine();
+    UI::textRightColored(palette.muted,
+                         std::format("{:.0f}%", fraction * 100.0f).c_str());
+  }
+  if (continue_progress.matches_total > 0)
+    ImGui::TextUnformatted(fmt::sprintf(LOC("CONTINUE_MATCHES_NOW"),
+                                        continue_progress.matches_done,
+                                        continue_progress.matches_total)
+                               .c_str());
+  if (!continue_log.empty())
+  {
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale));
+    for (auto line = continue_log.rbegin(); line != continue_log.rend(); ++line)
+      ImGui::TextColored(palette.faint, "%s", line->c_str());
+  }
+  ImGui::EndChild();
+  ImGui::PopStyleVar();
+}
+
+float MainGameScene::continueFadeOut() const
+{
+  if (continuation_running || continue_finished_at < 0.0 ||
+      Theme::reducedMotion())
+    return 0.0f;
+  const double since = ImGui::GetTime() - continue_finished_at;
+  return std::clamp(1.0f - static_cast<float>(since / CONTINUE_FADE_SECONDS),
+                    0.0f, 1.0f);
+}
+
+void MainGameScene::autoFixLineup()
+{
+  GameController& controller = guiView->getController();
+  const auto managed = controller.getManagedTeam();
+  if (!managed) return;
+  Lineup& lineup = managed->get().getLineup();
+  std::vector<const Player*> squad;
+  for (const auto& player :
+       controller.getPlayersForTeam(managed->get().getId()))
+    squad.push_back(&player.get());
+  const int preset = Formation::detectPreset(lineup);
+  Formation::autoPickAvailable(
+      lineup,
+      Formation::PRESETS[preset >= 0 ? static_cast<size_t>(preset) : 0U], squad,
+      cached_unavailable, controller.getStatsConfig());
+  showToast(LOC("LINEUP_AUTO_PICKED"));
+  refreshData();
 }
 
 void MainGameScene::renderContent()
@@ -175,11 +332,13 @@ void MainGameScene::renderOverview()
   UI::pageHeader(club.getName().c_str(), subtitle.c_str());
 
   // Headline figures.
-  const float width = tileWidth(4);
+  UI::TileRow tiles(4);
+  const float width = tiles.width();
+  tiles.next();
   const auto rank = std::ranges::find_if(
       cached_table, [&club](const CompetitionView::StandingRow& row)
       { return row.team_id == club.getId(); });
-  if (rank != cached_table.end())
+  if (rank != cached_table.end() && rank->played > 0)
   {
     const std::string value = ordinalPosition(
         static_cast<size_t>(std::distance(cached_table.begin(), rank)) + 1);
@@ -193,7 +352,7 @@ void MainGameScene::renderOverview()
     UI::statTile("tile_position", LOC("DASHBOARD_TILE_POSITION"), "–",
                  LOC("DASHBOARD_NO_RESULTS"), palette.muted, width);
   }
-  ImGui::SameLine();
+  tiles.next();
   const int64_t balance = club.getFinances().getBalance();
   const std::string balanceText = Format::money(balance);
   const std::string payrollText = fmt::sprintf(
@@ -201,14 +360,14 @@ void MainGameScene::renderOverview()
   UI::statTile("tile_balance", LOC("FINANCE_CASH"), balanceText.c_str(),
                payrollText.c_str(),
                balance < 0 ? palette.negative : palette.text, width);
-  ImGui::SameLine();
+  tiles.next();
   const std::string squadText = std::to_string(cached_squad.size());
   const std::string averageText =
       fmt::sprintf(LOC("DASHBOARD_AVERAGE_OVR"),
                    static_cast<double>(cached_average_overall));
   UI::statTile("tile_squad", LOC("DASHBOARD_TILE_SQUAD"), squadText.c_str(),
                averageText.c_str(), palette.text, width);
-  ImGui::SameLine();
+  tiles.next();
   const std::string valueText = Format::money(cached_squad_value);
   UI::statTile("tile_value", LOC("DASHBOARD_TILE_VALUE"), valueText.c_str(),
                LOC("DASHBOARD_VALUE_FOOTNOTE"), palette.text, width);
@@ -304,7 +463,7 @@ void MainGameScene::renderNextMatchCard(float width, float height)
   const auto opponentRow = std::ranges::find_if(
       cached_table, [opponentId](const CompetitionView::StandingRow& row)
       { return row.team_id == opponentId; });
-  if (opponentRow != cached_table.end())
+  if (opponentRow != cached_table.end() && opponentRow->played > 0)
   {
     const auto position = static_cast<size_t>(
         std::distance(cached_table.begin(), opponentRow) + 1);
@@ -328,19 +487,37 @@ void MainGameScene::renderNextMatchCard(float width, float height)
   if (ImGui::Button(LOC("DASHBOARD_SCOUT_OPPONENT")))
     Navigation::openClub(guiView, opponentId);
 
-  // Match readiness on the same row, right-aligned.
-  const Lineup& lineup = controller.getManagedTeam()->get().getLineup();
-  const size_t starters = lineup.getOutfieldPlayers().size() +
-                          (lineup.getGoalkeeper() != nullptr ? 1U : 0U);
+  // Match readiness on the same row, right-aligned: players who cannot play
+  // this fixture (injured, suspended) do not count as ready starters.
+  const size_t ready = cached_starters - cached_unavailable_starters;
   const std::string readiness =
-      fmt::sprintf(LOC("DASHBOARD_STARTING_XI"), starters);
-  const float readinessWidth = ImGui::CalcTextSize(readiness.c_str()).x;
-  ImGui::SameLine();
+      cached_unavailable_starters > 0
+          ? fmt::sprintf(LOC("DASHBOARD_XI_UNAVAILABLE"), ready,
+                         cached_unavailable_starters)
+          : fmt::sprintf(LOC("DASHBOARD_STARTING_XI"), cached_starters);
+  const char* fixLabel = LOC("DASHBOARD_AUTO_FIX");
+  const float fixWidth =
+      cached_unavailable_starters > 0
+          ? UI::buttonWidth(fixLabel) + ImGui::GetStyle().ItemSpacing.x
+          : 0.0f;
+  const float readinessWidth =
+      ImGui::CalcTextSize(readiness.c_str()).x + fixWidth;
+  UI::sameLineIfFits(readinessWidth);
   ImGui::SetCursorPosX(
       std::max(ImGui::GetCursorPosX(),
                ImGui::GetWindowContentRegionMax().x - readinessWidth));
-  ImGui::TextColored(starters == 11 ? palette.positive : palette.warning, "%s",
-                     readiness.c_str());
+  ImGui::AlignTextToFramePadding();
+  ImGui::TextColored(cached_unavailable_starters > 0 ? palette.negative
+                     : cached_starters == 11         ? palette.positive
+                                                     : palette.warning,
+                     "%s", readiness.c_str());
+  if (cached_unavailable_starters > 0)
+  {
+    ImGui::SameLine();
+    if (UI::primaryButton(fixLabel)) autoFixLineup();
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+      ImGui::SetTooltip("%s", LOC("DASHBOARD_AUTO_FIX_HELP"));
+  }
   UI::endCard();
 }
 
@@ -364,12 +541,14 @@ void MainGameScene::renderStandingsCard(float width, float height)
     ImGui::TableSetupColumn(LOC("TABLE_COL_GD"));
     ImGui::TableSetupColumn(LOC("MAIN_GAME_PTS"));
     ImGui::TableSetupColumn(LOC("TABLE_COL_FORM"));
-    ImGui::TableHeadersRow();
+    UI::staticHeadersRow();
     for (size_t index = 0; index < cached_table.size(); ++index)
     {
       const CompetitionView::StandingRow& row = cached_table[index];
-      const bool promoted = index < cached_zones.promotion;
+      // Before the first round the order is alphabetical: no zones yet.
+      const bool promoted = row.played > 0 && index < cached_zones.promotion;
       const bool relegated =
+          row.played > 0 &&
           index + cached_zones.relegation >= cached_table.size();
       ImGui::TableNextRow();
       if (row.team_id == clubId)
@@ -493,17 +672,19 @@ void MainGameScene::renderFinances()
 
   UI::pageHeader(LOC("FINANCE_TITLE"), LOC("FINANCE_SUBTITLE"));
 
-  const float width = tileWidth(4);
+  UI::TileRow tiles(4);
+  const float width = tiles.width();
+  tiles.next();
   const std::string cash = Format::money(finances.getBalance());
   const std::string cashFull = Format::moneyFull(finances.getBalance());
   UI::statTile("fin_cash", LOC("FINANCE_CASH"), cash.c_str(), cashFull.c_str(),
                finances.getBalance() < 0 ? palette.negative : palette.text,
                width);
-  ImGui::SameLine();
+  tiles.next();
   const std::string budget = Format::money(finances.getTransferBudget());
   UI::statTile("fin_budget", LOC("FINANCE_TRANSFER_BUDGET"), budget.c_str(),
-               LOC("FINANCE_BUDGET_FOOTNOTE"), palette.accent, width);
-  ImGui::SameLine();
+               LOC("FINANCE_BUDGET_FOOTNOTE"), palette.text, width);
+  tiles.next();
   const int64_t wageBudget = finances.getWageBudget();
   const std::string payroll = Format::money(cached_payroll);
   const std::string payrollNote =
@@ -518,7 +699,7 @@ void MainGameScene::renderFinances()
                wageBudget > 0 && cached_payroll > wageBudget ? palette.negative
                                                              : palette.text,
                width);
-  ImGui::SameLine();
+  tiles.next();
   // The opening balance is a carried-over figure, not this season's result.
   const int64_t seasonNet =
       cached_season_summary.net() -
@@ -617,7 +798,7 @@ void MainGameScene::renderFinances()
     UI::sparkline(
         "fin_trend", cached_balance_trend,
         ImVec2(ImGui::GetContentRegionAvail().x, 46.0f * Theme::scale()),
-        palette.accent);
+        palette.info);
     ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
   }
   if (cached_ledger.empty())
@@ -634,7 +815,7 @@ void MainGameScene::renderFinances()
     ImGui::TableSetupColumn(LOC("FINANCE_COL_CATEGORY"),
                             ImGuiTableColumnFlags_WidthStretch);
     ImGui::TableSetupColumn(LOC("FINANCE_COL_AMOUNT"));
-    ImGui::TableHeadersRow();
+    UI::staticHeadersRow();
     ImGuiListClipper clipper;
     clipper.Begin(static_cast<int>(cached_ledger.size()));
     while (clipper.Step())
@@ -670,6 +851,14 @@ void MainGameScene::refreshData()
   cached_table =
       CompetitionView::buildStandings(controller, club.getLeagueId());
   cached_zones = CompetitionView::zonesFor(controller, club.getLeagueId());
+  cached_unavailable = PlayerView::unavailablePlayers(
+      controller, club.getId(),
+      cached_next ? cached_next->type : MatchType::LEAGUE);
+  const Lineup& lineup = club.getLineup();
+  cached_starters = lineup.getOutfieldPlayers().size() +
+                    (lineup.getGoalkeeper() != nullptr ? 1U : 0U);
+  cached_unavailable_starters =
+      Formation::unavailableStarters(lineup, cached_unavailable);
   cached_next = CompetitionView::nextFixture(controller, club.getId());
 
   cached_recent.clear();

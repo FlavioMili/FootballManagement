@@ -11,6 +11,9 @@ set(CMAKE_POLICY_DEFAULT_CMP0219 NEW)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+# No C++20 modules are used; module scanning only slows builds and adds
+# GCC-only flags to compile_commands.json that clangd cannot parse.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BUILD_SHARED_LIBS OFF)

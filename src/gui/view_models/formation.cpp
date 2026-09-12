@@ -219,6 +219,35 @@ void autoPick(Lineup& lineup, const Preset& preset,
   lineup.setReserves(reserves);
 }
 
+void autoPickAvailable(Lineup& lineup, const Preset& preset,
+                       std::span<const Player* const> squad,
+                       const std::unordered_set<PlayerID>& unavailable,
+                       const StatsConfig& config)
+{
+  std::vector<const Player*> available;
+  std::vector<const Player*> sidelined;
+  for (const Player* player : squad)
+    (unavailable.contains(player->getId()) ? sidelined : available)
+        .push_back(player);
+  autoPick(lineup, preset, available, config);
+  std::vector<const Player*> reserves = lineup.getReserves();
+  reserves.insert(reserves.end(), sidelined.begin(), sidelined.end());
+  lineup.setReserves(reserves);
+}
+
+size_t unavailableStarters(const Lineup& lineup,
+                           const std::unordered_set<PlayerID>& unavailable)
+{
+  size_t count = 0;
+  if (const Player* goalkeeper = lineup.getGoalkeeper();
+      goalkeeper && unavailable.contains(goalkeeper->getId()))
+    ++count;
+  for (const auto& positioned : lineup.getOutfieldPlayers())
+    if (positioned.player && unavailable.contains(positioned.player->getId()))
+      ++count;
+  return count;
+}
+
 int detectPreset(const Lineup& lineup)
 {
   const auto& outfield = lineup.getOutfieldPlayers();

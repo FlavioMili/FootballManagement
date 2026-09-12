@@ -8,20 +8,26 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
+#include <span>
 #include <utility>
+#include <vector>
 
 #include "gamedate.h"
+#include "global/stats_config.h"
 #include "global/types.h"
 
 class GameData;
+class Lineup;
+class MatchEngine;
+class Player;
 struct MatchReport;
-
-namespace Competitions
-{
-struct KnockoutResolution;
-}
+struct MatchSimulationInput;
+struct MatchSimulationResult;
+struct PlayerMatchConsequence;
 
 /**
  * @class Match
@@ -48,10 +54,28 @@ class Match
    *
    * Drawn cup matches are decided by extra time and, if still level, a
    * penalty shootout.
+   * Players start with their persistent condition.
    * @param game_data Reference to the GameData used for simulation.
    * @param report Optional report filled with the structured match summary.
+   * @param consequences Optional physical outcome of every participant
+   * (engine end condition and injuries) for WorldSimulation.
    */
-  void simulate(const GameData& game_data, MatchReport* report = nullptr);
+  void simulate(const GameData& game_data, MatchReport* report = nullptr,
+                std::vector<PlayerMatchConsequence>* consequences = nullptr);
+
+  /**
+   * Captures lineups, strategies, seed and (for cup ties) the extra-time
+   * resolution, so the match can be simulated off this thread with
+   * MatchSimulation::run(). nullopt when played or a team is missing.
+   */
+  std::optional<MatchSimulationInput> prepareSimulation(
+      const GameData& game_data) const;
+
+  /**
+   * Records a simulated result. Returns its report with the identity and
+   * final result filled in.
+   */
+  MatchReport applySimulation(MatchSimulationResult result);
 
   /**
    * @brief Gets the ID of the home team.
@@ -126,9 +150,6 @@ class Match
   TeamID away_team_id;
   GameDateValue match_date;
   MatchType match_type;
-  void applyKnockoutResolution(
-      const Competitions::KnockoutResolution& resolution);
-
   uint8_t home_score;
   uint8_t away_score;
   LeagueID competition_id;
@@ -139,3 +160,41 @@ class Match
   bool penalties = false;
   bool _played = false;
 };
+
+/**
+ * Selection rules shared by live and simulated matches: who may take part,
+ * how an ineligible selection is replaced, and how the players' persistent
+ * physical state enters and leaves the match engine.
+ */
+namespace MatchdaySquad
+{
+using Eligibility = std::function<bool(const Player&)>;
+
+/** Selected players (goalkeeper, outfield, then reserves) who may not play. */
+std::vector<PlayerID> ineligible(const Lineup& lineup,
+                                 const Eligibility& eligible);
+
+/**
+ * Replaces ineligible starters with eligible reserves or unselected squad
+ * players (same role first, then any keeper for the goalkeeper slot or any
+ * outfield player for an outfield slot) and ineligible reserves with the
+ * best remaining squad players. Returns the number of players replaced.
+ */
+std::size_t replaceIneligible(Lineup& lineup,
+                              std::span<const Player* const> squad,
+                              const Eligibility& eligible,
+                              const StatsConfig& config);
+
+/**
+ * Who replaced whom between two selections of the same team: starters slot
+ * by slot, then reserves that left the squad (replacement 0).
+ */
+std::vector<std::pair<PlayerID, PlayerID>> replacements(const Lineup& before,
+                                                        const Lineup& after);
+
+/** Starts the lineup's players with their persistent condition (0-100). */
+void carryCondition(MatchEngine& engine, const Lineup& lineup);
+
+/** Minutes, end condition (0-100) and injuries of every participant. */
+std::vector<PlayerMatchConsequence> consequences(const MatchEngine& engine);
+}  // namespace MatchdaySquad

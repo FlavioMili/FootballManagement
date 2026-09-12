@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <map>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -83,4 +84,6 @@ class Discipline
 
   DisciplineRules rules;
   std::map<Key, DisciplinaryRecord> by_player;
+  /** Records with ban_matches > 0, so serving bans skips everyone else. */
+  std::set<Key> active_bans;
 };

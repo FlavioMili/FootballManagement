@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -19,7 +21,13 @@
 /**
  * @brief Full profile of one player: bio and contract, fitness and form,
  * attributes grouped by category, position suitability, season and career
- * statistics, and context actions (transfer list, lineup, contract).
+ * statistics, transfer history and context actions.
+ *
+ * The managed club's players are shown exactly. Every other player is shown
+ * through the club's scouting knowledge only (GameController::getScoutedView):
+ * estimated attributes with their likely range, an estimated overall and
+ * value, the latest scout report, and recruitment actions (scout, shortlist,
+ * make an offer). Hidden true attributes are never displayed for them.
  */
 class PlayerProfileScene : public ManagementScene
 {
@@ -41,10 +49,13 @@ class PlayerProfileScene : public ManagementScene
   friend class GameFlowTest_GUIFlowLifecycle_Test;
   friend class GameFlowTest_ManagementScreensMidSeason_Test;
 
+  /** @brief An attribute; low == high == value when known exactly. */
   struct AttributeLine
   {
     std::string name;
     float value = 0.0f;
+    float low = 0.0f;
+    float high = 0.0f;
   };
 
   struct AttributeSection
@@ -60,13 +71,39 @@ class PlayerProfileScene : public ManagementScene
     PlayerSeasonStats stats;
   };
 
+  /** @brief One move in the player's transfer history. */
+  struct TransferLine
+  {
+    std::string date;
+    std::string from;
+    std::string to;
+    const char* kind_key = "";
+    std::string fee;
+  };
+
+  /** @brief The latest scout report, formatted for display. */
+  struct ReportSummary
+  {
+    std::string heading; /**< Date and scout. */
+    char grade = 'C';
+    const char* grade_key = "";
+    std::string ability;
+    std::string potential;
+    std::string fee;
+  };
+
   void renderHeader();
+  void renderActions();
   void renderBio(const Player& player, float width, float height);
   void renderStatus(float width, float height);
   void renderAttributes(float width, float height);
   void renderSuitability(float width, float height);
+  void renderScouting(float width, float height);
   void renderStatistics(float width, float height);
+  void renderStatsTable(const std::vector<StatsRow>& rows, bool career);
+  void renderTransfers();
   void renderDialogs();
+  void sendScout();
   [[nodiscard]] const Player* player() const;
   [[nodiscard]] bool isOwnPlayer() const;
 
@@ -78,6 +115,7 @@ class PlayerProfileScene : public ManagementScene
   std::vector<AttributeSection> sections;
   std::vector<StatsRow> season_rows;
   std::vector<StatsRow> career_rows;
+  std::vector<TransferLine> transfers;
 
   // Fitness, availability and outlook, cached on refresh.
   PlayerDynamics dynamics;
@@ -88,7 +126,16 @@ class PlayerProfileScene : public ManagementScene
   float potential_low = 0.0f;
   float potential_high = 0.0f;
 
-  bool show_career = false;
+  // Scouting view of another club's player.
+  bool scouted = false;
+  uint8_t knowledge = 0;
+  std::string overall_range;
+  std::optional<ReportSummary> latest_report;
+  bool shortlisted = false;
+  bool being_scouted = false;
+  int64_t scout_cost = 0;
+  bool window_open = false;
+
   bool list_confirm_requested = false;
   bool renew_requested = false;
   float renew_wage = 0.0f;

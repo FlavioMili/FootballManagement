@@ -8,8 +8,10 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <vector>
 
 #include "database/database_connection.h"
@@ -18,6 +20,7 @@
 #include "model/gamedate.h"
 #include "model/match.h"
 #include "model/match_report.h"
+#include "model/match_scheduler.h"
 #include "model/transfer_market.h"
 #include "model/world_simulation.h"
 
@@ -53,10 +56,25 @@ class Game
   /**
    * Records a managed match with its structured report (e.g. built from the
    * live MatchEngine). A drawn cup tie is settled by extra time and
-   * penalties unless the report already carries them.
+   * penalties unless the report already carries them. @p consequences
+   * (MatchdaySquad::consequences of the engine) apply the measured condition
+   * and injuries exactly as for simulated matches.
    */
-  bool setMatchResult(const GameDateValue& date, TeamID home_id, TeamID away_id,
-                      MatchReport report);
+  bool setMatchResult(
+      const GameDateValue& date, TeamID home_id, TeamID away_id,
+      MatchReport report,
+      std::span<const PlayerMatchConsequence> consequences = {});
+
+  /** Fit (not injured) and, outside friendlies, not suspended for @p type. */
+  bool isEligible(const Player& player, MatchType type) const;
+  /** Selected players of a club who may not play a match of @p type. */
+  std::vector<PlayerID> ineligibleSelections(TeamID team_id,
+                                             MatchType type) const;
+  /** Replaces them with eligible squad players; returns how many left. */
+  std::size_t fixMatchdaySquad(TeamID team_id, MatchType type);
+  /** What fixMatchdaySquad() would change: (replaced, replacement or 0). */
+  std::vector<std::pair<PlayerID, PlayerID>> previewMatchdaySquadFix(
+      TeamID team_id, MatchType type) const;
 
   /** Standings, cups, reports, player season stats and season history. */
   const CompetitionManager& getCompetitions() const { return competitions; }
@@ -68,6 +86,22 @@ class Game
   /** Deals, loans, pre-contracts, scheduled payments and transfer history. */
   TransferMarket& getTransfers() { return transfers; }
   const TransferMarket& getTransfers() const { return transfers; }
+
+  /**
+   * Matches simulated / scheduled so far in the current advanceDay(). Safe to
+   * poll from another thread while advanceDay() runs.
+   */
+  SimulationProgress getSimulationProgress() const
+  {
+    return scheduler.getProgress();
+  }
+  void resetSimulationProgress() { scheduler.resetProgress(); }
+  /** Threads used to simulate a matchday (1 = one match after another). */
+  void setSimulationThreads(unsigned threads)
+  {
+    scheduler.setThreadCount(threads);
+  }
+  unsigned getSimulationThreads() const { return scheduler.getThreadCount(); }
 
   /**
    * @brief Retrieves the current in-game date.
@@ -122,6 +156,7 @@ class Game
   CompetitionManager competitions;
   WorldSimulation world;
   TransferMarket transfers;
+  MatchScheduler scheduler;
   GameDateValue currentDate;
   uint8_t current_season = 1;
   uint16_t managed_team_id;

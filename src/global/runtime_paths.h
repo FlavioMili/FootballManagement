@@ -17,6 +17,8 @@ class RuntimePaths
   /**
    * Returns the writable root. FM_RUNTIME_ROOT is an explicit test/automation
    * override; otherwise SDL's platform-specific preference location is used.
+   * FM_TEST_RUNTIME_ROOT gives each process its own <root>/<pid> directory,
+   * removed at process exit unless FM_KEEP_TEST_ARTIFACTS is set (non-"0").
    */
   static std::filesystem::path root();
   static std::filesystem::path saveDirectory();

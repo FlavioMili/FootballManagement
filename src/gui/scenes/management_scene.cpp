@@ -28,8 +28,8 @@
 #include "gui/scenes/player_profile_scene.h"
 #include "gui/scenes/roster_scene.h"
 #include "gui/scenes/scouting_scene.h"
-#include "gui/scenes/staff_scene.h"
 #include "gui/scenes/settings_scene.h"
+#include "gui/scenes/staff_scene.h"
 #include "gui/scenes/standings_scene.h"
 #include "gui/scenes/strategy_scene.h"
 #include "gui/scenes/training_scene.h"
@@ -49,6 +49,9 @@ constexpr float SIDEBAR_COLLAPSE_BELOW = 1150.0f;
 constexpr float ICON_SIZE = 16.0f;
 constexpr float TOP_BAR_HEIGHT = 60.0f;
 constexpr float NAV_ITEM_HEIGHT = 34.0f;
+/** Items shrink down to this height before the navigation has to scroll. */
+constexpr float NAV_ITEM_MIN_HEIGHT = 24.0f;
+constexpr float CLUB_BADGE_SIZE = 38.0f;
 constexpr float CONTINUE_MIN_WIDTH = 200.0f;
 constexpr float PALETTE_WIDTH = 620.0f;
 constexpr float PALETTE_TOP_OFFSET = 70.0f;
@@ -89,10 +92,9 @@ constexpr NavEntry NAV_STAFF{NavSection::STAFF, "NAV_STAFF", nullptr, ImGuiKey_N
 // clang-format on
 
 constexpr std::array<const NavEntry*, 13> ALL_NAV = {
-    &NAV_HOME,     &NAV_INBOX,     &NAV_SQUAD,     &NAV_LINEUP,
-    &NAV_TACTICS,  &NAV_FIXTURES,  &NAV_STANDINGS, &NAV_TRANSFERS,
-    &NAV_FINANCES, &NAV_CLUB,      &NAV_SCOUTING,  &NAV_TRAINING,
-    &NAV_STAFF};
+    &NAV_HOME,     &NAV_INBOX,     &NAV_SQUAD,     &NAV_LINEUP,   &NAV_TACTICS,
+    &NAV_FIXTURES, &NAV_STANDINGS, &NAV_TRANSFERS, &NAV_FINANCES, &NAV_CLUB,
+    &NAV_SCOUTING, &NAV_TRAINING,  &NAV_STAFF};
 
 constexpr std::array<NavGroup, 4> NAV_GROUPS = {{
     {"NAV_GROUP_CLUB", {&NAV_HOME, &NAV_INBOX, &NAV_FINANCES, &NAV_CLUB}},
@@ -109,12 +111,11 @@ MainGameScene* careerHub(GUIView* view)
 }
 
 bool navItem(const char* label, const char* shortcut, bool selected,
-             UI::Icon icon, bool collapsed, size_t badge = 0)
+             UI::Icon icon, bool collapsed, float height, size_t badge = 0)
 {
   const Theme::Palette& palette = Theme::palette();
   const ImVec2 start = ImGui::GetCursorScreenPos();
-  const ImVec2 size(ImGui::GetContentRegionAvail().x,
-                    NAV_ITEM_HEIGHT * Theme::scale());
+  const ImVec2 size(ImGui::GetContentRegionAvail().x, height);
   ImGui::PushID(label);
   const bool pressed = ImGui::InvisibleButton("##nav", size);
   ImGui::PopID();
@@ -173,19 +174,24 @@ bool navItem(const char* label, const char* shortcut, bool selected,
     return pressed;
   }
   const float textY = start.y + (size.y - ImGui::GetTextLineHeight()) * 0.5f;
-  drawList->AddText(
-      ImVec2(iconX + iconSize * 0.5f + Theme::Space::S * Theme::scale(), textY),
-      color, label);
+  const float textX =
+      iconX + iconSize * 0.5f + Theme::Space::S * Theme::scale();
+  float labelRight = end.x - Theme::Space::S * Theme::scale();
   if (shortcut != nullptr)
   {
     ImGui::PushFont(nullptr, Theme::textSize(Theme::Text::CAPTION));
     const ImVec2 hintSize = ImGui::CalcTextSize(shortcut);
+    labelRight -= hintSize.x + Theme::Space::S * Theme::scale();
     drawList->AddText(
         ImVec2(end.x - hintSize.x - Theme::Space::S * Theme::scale(),
                start.y + (size.y - hintSize.y) * 0.5f),
         Theme::toU32(palette.faint), shortcut);
     ImGui::PopFont();
   }
+  if (UI::drawTextFitted(drawList, ImVec2(textX, textY), color, label,
+                         labelRight - textX) &&
+      hovered)
+    ImGui::SetTooltip("%s", label);
   return pressed;
 }
 
@@ -322,16 +328,22 @@ void ManagementScene::render()
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+  MainGameScene* hub = careerHub(guiView);
+  const bool advancing = hub != nullptr && hub->isAdvancing();
+  // While advancing, the frozen frame drawn by GUIView shows through.
   ImGui::Begin("##management_shell", nullptr,
                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
                    ImGuiWindowFlags_NoBringToFrontOnFocus |
                    ImGuiWindowFlags_NoSavedSettings |
-                   ImGuiWindowFlags_NoScrollWithMouse);
+                   ImGuiWindowFlags_NoScrollWithMouse |
+                   (advancing && guiView->getBackdrop() != nullptr
+                        ? ImGuiWindowFlags_NoBackground
+                        : ImGuiWindowFlags_None));
   ImGui::PopStyleVar(3);
 
-  if (const MainGameScene* hub = careerHub(guiView); hub && hub->isAdvancing())
+  if (advancing)
   {
-    renderBusyState();
+    hub->renderContinueOverlay();
     ImGui::End();
     return;
   }
@@ -359,22 +371,16 @@ void ManagementScene::render()
 
   renderPalette();
   renderMainMenuConfirm();
+  if (hub != nullptr)
+    if (const float fade = hub->continueFadeOut(); fade > 0.0f)
+    {
+      ImGui::GetForegroundDrawList()->AddRectFilled(
+          viewport->WorkPos,
+          ImVec2(viewport->WorkPos.x + viewport->WorkSize.x,
+                 viewport->WorkPos.y + viewport->WorkSize.y),
+          IM_COL32(0, 0, 0, static_cast<int>(120.0f * fade)));
+    }
   ImGui::End();
-}
-
-void ManagementScene::renderBusyState()
-{
-  const ImVec2 available = ImGui::GetContentRegionAvail();
-  const char* message = LOC("DASHBOARD_ADVANCING");
-  Theme::ScopedText title(Theme::Text::TITLE);
-  const float textWidth = ImGui::CalcTextSize(message).x;
-  ImGui::SetCursorPos(ImVec2(std::max(0.0f, (available.x - textWidth) * 0.5f),
-                             available.y * 0.42f));
-  ImGui::TextUnformatted(message);
-  if (Theme::reducedMotion()) return;
-  ImGui::SetCursorPosX(available.x * 0.35f);
-  ImGui::ProgressBar(-1.0f * static_cast<float>(ImGui::GetTime()),
-                     ImVec2(available.x * 0.3f, 6.0f * Theme::scale()), "");
 }
 
 void ManagementScene::renderSidebar(bool collapsed)
@@ -394,24 +400,44 @@ void ManagementScene::renderSidebar(bool collapsed)
                     ImGuiChildFlags_AlwaysUseWindowPadding,
                     ImGuiWindowFlags_NoScrollbar);
 
-  // Navigation scrolls (mouse wheel) when it does not fit, so the footer
+  // Every destination should be visible without scrolling: on short windows
+  // (720p, large UI scales) the items shrink towards a compact height. The
+  // navigation still scrolls (mouse wheel) as a last resort, so the footer
   // actions stay pinned and reachable at any window height and UI scale.
-  const float footerHeight = 3.0f * (NAV_ITEM_HEIGHT * Theme::scale() +
-                                     ImGui::GetStyle().ItemSpacing.y) +
-                             Theme::Space::S * Theme::scale();
+  const float spacing = ImGui::GetStyle().ItemSpacing.y;
+  size_t itemCount = 3;  // Footer actions.
+  for (const NavGroup& group : NAV_GROUPS)
+    itemCount += static_cast<size_t>(std::ranges::count_if(
+        group.entries, [](const NavEntry* entry) { return entry != nullptr; }));
+  const float clubBlock =
+      controller.getManagedTeam()
+          ? (CLUB_BADGE_SIZE + Theme::Space::M) * Theme::scale() + spacing
+          : 0.0f;
+  const float groupOverhead = (Theme::Space::S + 2.0f) * Theme::scale() +
+                              ImGui::GetTextLineHeight() + 3.0f * spacing;
+  const float fixedHeight =
+      clubBlock + static_cast<float>(NAV_GROUPS.size()) * groupOverhead +
+      Theme::Space::S * Theme::scale() + 2.0f * spacing;
+  const float itemHeight = std::clamp(
+      (ImGui::GetContentRegionAvail().y - fixedHeight) /
+              static_cast<float>(itemCount) -
+          spacing,
+      NAV_ITEM_MIN_HEIGHT * Theme::scale(), NAV_ITEM_HEIGHT * Theme::scale());
+  const float footerHeight =
+      3.0f * (itemHeight + spacing) + Theme::Space::S * Theme::scale();
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-  ImGui::BeginChild("##sidebar_nav",
-                    ImVec2(0.0f, std::max(NAV_ITEM_HEIGHT * Theme::scale(),
-                                          ImGui::GetContentRegionAvail().y -
-                                              footerHeight)),
-                    ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar);
+  ImGui::BeginChild(
+      "##sidebar_nav",
+      ImVec2(0.0f, std::max(itemHeight,
+                            ImGui::GetContentRegionAvail().y - footerHeight)),
+      ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar);
   ImGui::PopStyleVar();
 
   // Club identity block.
   if (const auto managed = controller.getManagedTeam())
   {
     const Team& club = managed->get();
-    const float badgeSize = 38.0f * Theme::scale();
+    const float badgeSize = CLUB_BADGE_SIZE * Theme::scale();
     const ImVec2 start = ImGui::GetCursorScreenPos();
     const ImVec2 badgeMin(
         collapsed
@@ -437,21 +463,27 @@ void ManagementScene::renderSidebar(bool collapsed)
                                 ? 0.0f
                                 : start.x + ImGui::GetContentRegionAvail().x -
                                       textX - 2.0f * Theme::scale();
-    drawList->PushClipRect(ImVec2(textX, start.y),
-                           ImVec2(textX + textWidth, start.y + badgeSize),
-                           true);
-    drawList->AddText(ImVec2(textX, start.y + 1.0f * Theme::scale()),
-                      Theme::toU32(palette.text), club.getName().c_str());
-    if (const auto league = controller.getLeagueById(club.getLeagueId()))
+    bool cut = false;
+    if (textWidth > 0.0f)
     {
-      ImGui::PushFont(nullptr, Theme::textSize(Theme::Text::SMALL));
-      drawList->AddText(
-          ImVec2(textX, start.y + badgeSize - ImGui::GetTextLineHeight()),
-          Theme::toU32(palette.muted), league->get().getName().c_str());
-      ImGui::PopFont();
+      cut |= UI::drawTextFitted(
+          drawList, ImVec2(textX, start.y + 1.0f * Theme::scale()),
+          Theme::toU32(palette.text), club.getName(), textWidth);
+      if (const auto league = controller.getLeagueById(club.getLeagueId()))
+      {
+        ImGui::PushFont(nullptr, Theme::textSize(Theme::Text::SMALL));
+        cut |= UI::drawTextFitted(
+            drawList,
+            ImVec2(textX, start.y + badgeSize - ImGui::GetTextLineHeight()),
+            Theme::toU32(palette.muted), league->get().getName(), textWidth);
+        ImGui::PopFont();
+      }
     }
-    drawList->PopClipRect();
-    ImGui::Dummy(ImVec2(0.0f, badgeSize + Theme::Space::M * Theme::scale()));
+    ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x, badgeSize));
+    if ((cut || collapsed) && ImGui::IsItemHovered())
+      ImGui::SetTooltip("%s", club.getName().c_str());
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::M * Theme::scale() -
+                                  ImGui::GetStyle().ItemSpacing.y));
   }
 
   const NavSection current = navSection();
@@ -476,26 +508,28 @@ void ManagementScene::renderSidebar(bool collapsed)
                                ? controller.getUnreadInboxCount()
                                : 0U;
       if (navItem(LOC(entry->label_key), entry->shortcut,
-                  current == entry->section, entry->icon, collapsed, badge))
+                  current == entry->section, entry->icon, collapsed, itemHeight,
+                  badge))
         Navigation::open(guiView, entry->section);
     }
   }
+  sidebar_nav_overflow = ImGui::GetScrollMaxY() > 0.0f;
 
   ImGui::EndChild();
 
   // Footer actions pinned to the bottom of the sidebar.
   ImGui::Separator();
   if (navItem(LOC("MAIN_GAME_SAVE_GAME"), "Ctrl+S", false, UI::Icon::SAVE,
-              collapsed))
+              collapsed, itemHeight))
   {
     controller.saveGame();
     showToast(LOC("DASHBOARD_SAVED"));
   }
   if (navItem(LOC("MENU_SETTINGS"), nullptr, false, UI::Icon::SETTINGS,
-              collapsed))
+              collapsed, itemHeight))
     guiView->navigateTo(std::make_unique<SettingsScene>(guiView, true));
   if (navItem(LOC("MAIN_GAME_MAIN_MENU"), nullptr, false, UI::Icon::EXIT,
-              collapsed))
+              collapsed, itemHeight))
     main_menu_confirm_requested = true;
 
   ImGui::EndChild();
@@ -604,17 +638,17 @@ void ManagementScene::renderTopBar(float height)
   {
     const float alpha =
         Theme::reducedMotion() ? 1.0f : std::min(1.0f, toast_seconds / 0.4f);
-    const float toastRoom = rightEdge - (showDate ? dateWidth + gap : 0.0f) -
-                            balanceBlock - continueBlock -
-                            (ImGui::GetCursorPosX() + searchWidth + gap);
     ImGui::SameLine(0.0f, gap);
     ImGui::SetCursorPosY(textY);
+    const float toastRoom = rightEdge - (showDate ? dateWidth + gap : 0.0f) -
+                            balanceBlock - continueBlock - gap -
+                            ImGui::GetCursorPosX();
     const ImVec4& tone = toast_is_error ? palette.negative : palette.positive;
     const ImVec2 clipMin = ImGui::GetCursorScreenPos();
-    ImGui::PushClipRect(clipMin,
-                        ImVec2(clipMin.x + std::max(0.0f, toastRoom),
-                               clipMin.y + ImGui::GetTextLineHeight()),
-                        true);
+    ImGui::PushClipRect(
+        clipMin,
+        ImVec2(clipMin.x + std::max(0.0f, toastRoom), clipMin.y + frameHeight),
+        true);
     ImGui::TextColored(ImVec4(tone.x, tone.y, tone.z, alpha), "%s",
                        toast_message.c_str());
     ImGui::PopClipRect();
@@ -705,14 +739,14 @@ void ManagementScene::buildPaletteIndex()
   GameController& controller = guiView->getController();
   for (const NavEntry* entry : ALL_NAV)
   {
-    PaletteEntry item{
-        PaletteEntry::Kind::SECTION,
-        static_cast<uint32_t>(entry->section),
-        LOC(entry->label_key),
-        {},
-        entry->shortcut ? std::format("{}  ·  {}", LOC("PALETTE_KIND_SCREEN"),
-                                      entry->shortcut)
-                        : std::string(LOC("PALETTE_KIND_SCREEN"))};
+    PaletteEntry item{PaletteEntry::Kind::SECTION,
+                      static_cast<uint32_t>(entry->section),
+                      LOC(entry->label_key),
+                      {},
+                      entry->shortcut
+                          ? std::format("{}  ·  {}", LOC("PALETTE_KIND_SCREEN"),
+                                        entry->shortcut)
+                          : std::string(LOC("PALETTE_KIND_SCREEN"))};
     item.label_lower = PlayerView::toLower(item.label);
     palette_entries.push_back(std::move(item));
   }

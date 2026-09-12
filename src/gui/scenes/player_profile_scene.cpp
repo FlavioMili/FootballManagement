@@ -12,6 +12,8 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <array>
+#include <cstdio>
 #include <format>
 #include <map>
 
@@ -20,11 +22,15 @@
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/lineup_scene.h"
+#include "gui/scenes/scouting_scene.h"
+#include "gui/scenes/transfer_market_scene.h"
 #include "gui/view_models/competition_view.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
 #include "model/injury.h"
+#include "model/scouting.h"
+#include "model/transfer_market.h"
 #include "model/transfer_tuning.h"
 #include "model/world_simulation.h"
 
@@ -54,6 +60,75 @@ ImVec4 fitnessColor(float value)
   if (value >= 65.0f) return palette.warning;
   return palette.negative;
 }
+
+/// Key width of a key/value list: fixed, but never more than 45% of the card
+/// so values keep room at small windows and large UI scales.
+float keyWidthFor(float baseWidth)
+{
+  return std::min(baseWidth * Theme::scale(),
+                  ImGui::GetContentRegionAvail().x * 0.45f);
+}
+
+/// UI::keyValue whose value wraps inside the card instead of being clipped.
+void keyValueWrapped(const char* key, const char* value, float keyWidth)
+{
+  const float startX = ImGui::GetCursorPosX();
+  ImGui::TextColored(Theme::palette().muted, "%s", key);
+  ImGui::SameLine(std::max(startX + keyWidth,
+                           ImGui::GetItemRectMax().x - ImGui::GetWindowPos().x +
+                               ImGui::GetStyle().ItemSpacing.x * 2.0f));
+  ImGui::PushTextWrapPos(0.0f);
+  ImGui::TextUnformatted(value);
+  ImGui::PopTextWrapPos();
+}
+
+/// Attribute row with the scouts' likely range: a faint band from low to
+/// high and a marker at the estimate, in the attributeBar style.
+void rangeBar(const char* label, float estimate, float low, float high,
+              float labelWidth)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  std::array<char, 24> text{};
+  std::snprintf(text.data(), text.size(), "%.0f  (%.0f-%.0f)",
+                static_cast<double>(estimate), static_cast<double>(low),
+                static_cast<double>(high));
+  const float lineHeight = ImGui::GetTextLineHeight();
+  const ImVec2 start = ImGui::GetCursorScreenPos();
+  const float available = ImGui::GetContentRegionAvail().x;
+  const float textWidth = ImGui::CalcTextSize(text.data()).x;
+  const float barWidth = std::max(24.0f * scale, available - labelWidth -
+                                                     textWidth -
+                                                     Theme::Space::S * scale);
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  drawList->PushClipRect(
+      start, ImVec2(start.x + labelWidth - 4.0f * scale, start.y + lineHeight),
+      true);
+  drawList->AddText(start, Theme::toU32(palette.muted), label);
+  drawList->PopClipRect();
+
+  const float barHeight = 6.0f * scale;
+  const ImVec2 barMin(start.x + labelWidth,
+                      start.y + (lineHeight - barHeight) * 0.5f);
+  const ImVec2 barMax(barMin.x + barWidth, barMin.y + barHeight);
+  const auto at = [&](float value)
+  { return barMin.x + barWidth * std::clamp(value / 100.0f, 0.0f, 1.0f); };
+  const ImVec4 color = Theme::ratingColor(estimate);
+  drawList->AddRectFilled(barMin, barMax, Theme::toU32(palette.raised),
+                          barHeight * 0.5f);
+  drawList->AddRectFilled(ImVec2(at(low), barMin.y), ImVec2(at(high), barMax.y),
+                          Theme::toU32(color, 0.35f), barHeight * 0.5f);
+  const float marker = std::max(2.0f, 3.0f * scale);
+  drawList->AddRectFilled(
+      ImVec2(at(estimate) - marker * 0.5f, barMin.y - 2.0f * scale),
+      ImVec2(at(estimate) + marker * 0.5f, barMax.y + 2.0f * scale),
+      Theme::toU32(color), 1.0f);
+  drawList->AddText(ImVec2(start.x + available - textWidth, start.y),
+                    Theme::toU32(color), text.data());
+  ImGui::Dummy(ImVec2(available, lineHeight));
+}
+
+constexpr uint16_t SCOUT_DAYS = 14;
 }  // namespace
 
 PlayerProfileScene::PlayerProfileScene(GUIView* parent, PlayerID playerId)
@@ -89,6 +164,8 @@ void PlayerProfileScene::refresh()
   fits.clear();
   season_rows.clear();
   career_rows.clear();
+  transfers.clear();
+  latest_report.reset();
   if (current == nullptr) return;
   GameController& controller = guiView->getController();
   row = PlayerView::makeRow(controller, *current);
@@ -97,39 +174,104 @@ void PlayerProfileScene::refresh()
                   ? std::string(LOC("TRANSFER_FREE_AGENT_LABEL"))
                   : club->get().getName();
   nationality = nationalityName(current->getNationality());
-  fits = PlayerView::roleFits(*current, controller.getStatsConfig());
 
   dynamics = current->getDynamics();
   form = current->getForm();
   league_ban = controller.getSuspensionMatches(player_id, MatchType::LEAGUE);
   cup_ban = controller.getSuspensionMatches(player_id, MatchType::CUP);
-  squad_role_key = isOwnPlayer()
-                       ? squadRoleKey(controller.getSquadRole(player_id))
-                       : nullptr;
-  const auto potential = controller.getPotentialEstimate(player_id);
-  potential_low = potential.low;
-  potential_high = potential.high;
+  scouted = !isOwnPlayer();
+  squad_role_key =
+      scouted ? nullptr : squadRoleKey(controller.getSquadRole(player_id));
+  window_open = controller.getTransferWindow().open;
 
-  const auto& stats = current->getStats();
-  std::vector<std::string_view> grouped;
+  // Attribute name -> (estimate, low, high): exact for own players, the
+  // scouts' estimates for everyone else.
+  std::vector<std::pair<std::string, AttributeLine>> attributes;
+  if (scouted)
+  {
+    const auto view = controller.getScoutedView(player_id);
+    knowledge = view ? view->knowledge : 0;
+    row.overall = view ? view->overall : 0.0f;
+    overall_range =
+        view ? std::format("{:.0f} – {:.0f}",
+                           static_cast<double>(view->overall_low),
+                           static_cast<double>(view->overall_high))
+             : std::string();
+    row.market_value = view ? static_cast<uint32_t>(std::clamp<int64_t>(
+                                  view->estimated_value, 0, UINT32_MAX))
+                            : 0;
+    row.value_text = Format::money(row.market_value);
+    potential_low = view ? view->potential_low : 0.0f;
+    potential_high = view ? view->potential_high : 0.0f;
+    if (view)
+    {
+      for (const ScoutedAttribute& attribute : view->attributes)
+        attributes.push_back(
+            {attribute.name,
+             {PlayerView::statLabel(attribute.name), attribute.estimate,
+              attribute.low, attribute.high}});
+      if (view->latest_report_id)
+      {
+        for (const ScoutReport& report : controller.getScoutReports())
+        {
+          if (report.id != *view->latest_report_id) continue;
+          ReportSummary summary;
+          summary.heading = std::format("{}  ·  {}", Format::date(report.date),
+                                        report.scout_name);
+          summary.grade = static_cast<char>('A' + static_cast<int>(report.grade));
+          summary.grade_key = scoutGradeKey(report.grade);
+          summary.ability =
+              std::format("{:.0f}", static_cast<double>(report.overall));
+          summary.potential = std::format(
+              "{:.0f} – {:.0f}", static_cast<double>(report.potential_low),
+              static_cast<double>(report.potential_high));
+          summary.fee = Format::money(report.estimated_fee);
+          latest_report = std::move(summary);
+        }
+      }
+    }
+    shortlisted = controller.isShortlisted(player_id);
+    being_scouted = std::ranges::any_of(
+        controller.getScoutAssignments(),
+        [this](const ScoutAssignment& assignment)
+        {
+          return !assignment.finished &&
+                 assignment.kind == ScoutTargetKind::Player &&
+                 assignment.target_id == player_id;
+        });
+    scout_cost = controller.getScoutAssignmentCost(ScoutTargetKind::Player,
+                                                   player_id, SCOUT_DAYS);
+  }
+  else
+  {
+    fits = PlayerView::roleFits(*current, controller.getStatsConfig());
+    const auto potential = controller.getPotentialEstimate(player_id);
+    potential_low = potential.low;
+    potential_high = potential.high;
+    for (const auto& [name, value] : current->getStats())
+      attributes.push_back(
+          {name, {PlayerView::statLabel(name), value, value, value}});
+  }
+
+  std::vector<bool> grouped(attributes.size(), false);
   for (const PlayerView::AttributeGroup& group : PlayerView::ATTRIBUTE_GROUPS)
   {
     AttributeSection section{group.title_key, {}};
     for (const std::string_view statName : group.stats)
     {
-      grouped.push_back(statName);
-      if (const auto stat = stats.find(std::string(statName));
-          stat != stats.end())
-        section.lines.push_back(
-            {PlayerView::statLabel(stat->first), stat->second});
+      for (size_t index = 0; index < attributes.size(); ++index)
+      {
+        if (attributes[index].first != statName) continue;
+        grouped[index] = true;
+        section.lines.push_back(attributes[index].second);
+      }
     }
     if (!section.lines.empty()) sections.push_back(std::move(section));
   }
   // Attributes added by future systems still show up, in their own group.
   AttributeSection other{"PROFILE_GROUP_OTHER", {}};
-  for (const auto& [name, value] : stats)
-    if (std::ranges::find(grouped, name) == grouped.end())
-      other.lines.push_back({PlayerView::statLabel(name), value});
+  for (size_t index = 0; index < attributes.size(); ++index)
+    if (!grouped[index]) other.lines.push_back(attributes[index].second);
   if (!other.lines.empty()) sections.push_back(std::move(other));
 
   for (const PlayerSeasonStats& season :
@@ -162,6 +304,25 @@ void PlayerProfileScene::refresh()
                       team ? team->get().getName() : std::string()),
          entry->second});
   }
+
+  // Transfer history, latest move first.
+  if (const Game* game = controller.getGame())
+  {
+    const auto teamName = [&controller](TeamID team_id)
+    {
+      const auto team = controller.getTeamById(team_id);
+      return team_id == FREE_AGENTS_TEAM_ID || !team
+                 ? std::string(LOC("TRANSFER_FREE_AGENT_LABEL"))
+                 : team->get().getName();
+    };
+    std::vector<TransferRecord> history =
+        game->getTransfers().historyFor(player_id);
+    for (auto record = history.rbegin(); record != history.rend(); ++record)
+      transfers.push_back(
+          {Format::date(record->date), teamName(record->from_team),
+           teamName(record->to_team), transferKindKey(record->kind),
+           record->fee > 0 ? Format::money(record->fee) : std::string("–")});
+  }
 }
 
 void PlayerProfileScene::renderContent()
@@ -178,10 +339,11 @@ void PlayerProfileScene::renderContent()
   const float gap = ImGui::GetStyle().ItemSpacing.x;
   const float spacing = ImGui::GetStyle().ItemSpacing.y;
   const float availableHeight = ImGui::GetContentRegionAvail().y;
+  // Both rows fit a 720p window at 100%; larger scales scroll the page.
   const float topHeight =
-      std::max(320.0f * Theme::scale(), std::floor(availableHeight * 0.6f));
+      std::max(260.0f * Theme::scale(), std::floor(availableHeight * 0.6f));
   const float bottomHeight =
-      std::max(190.0f * Theme::scale(), availableHeight - topHeight - spacing);
+      std::max(160.0f * Theme::scale(), availableHeight - topHeight - spacing);
   if (available >= THREE_COLUMN_MIN_WIDTH * Theme::scale())
   {
     const float side = std::floor((available - 2.0f * gap) * 0.29f);
@@ -193,7 +355,10 @@ void PlayerProfileScene::renderContent()
     renderStatus(side, topHeight);
     renderStatistics(side + gap + middle, bottomHeight);
     ImGui::SameLine();
-    renderSuitability(side, bottomHeight);
+    if (scouted)
+      renderScouting(side, bottomHeight);
+    else
+      renderSuitability(side, bottomHeight);
   }
   else
   {
@@ -203,7 +368,10 @@ void PlayerProfileScene::renderContent()
     renderAttributes(available - gap - half, topHeight);
     renderStatus(half, bottomHeight);
     ImGui::SameLine();
-    renderSuitability(available - gap - half, bottomHeight);
+    if (scouted)
+      renderScouting(available - gap - half, bottomHeight);
+    else
+      renderSuitability(available - gap - half, bottomHeight);
     renderStatistics(available, bottomHeight);
   }
   renderDialogs();
@@ -212,7 +380,6 @@ void PlayerProfileScene::renderContent()
 void PlayerProfileScene::renderHeader()
 {
   const Theme::Palette& palette = Theme::palette();
-  GameController& controller = guiView->getController();
   UI::beginCard("profile_header", nullptr,
                 ImVec2(0.0f, HEADER_HEIGHT * Theme::scale()));
   const float startX = ImGui::GetCursorPosX();
@@ -231,8 +398,15 @@ void PlayerProfileScene::renderHeader()
     Theme::ScopedText title(Theme::Text::TITLE);
     valueWidth = ImGui::CalcTextSize(row.value_text.c_str()).x;
   }
-  valueWidth =
-      std::max(valueWidth, ImGui::CalcTextSize(LOC("PROFILE_MARKET_VALUE")).x);
+  const char* valueLabel =
+      LOC(scouted ? "PROFILE_ESTIMATED_VALUE_TITLE" : "PROFILE_MARKET_VALUE");
+  const char* overallLabel =
+      LOC(scouted ? "PROFILE_OVERALL_ESTIMATE" : "PROFILE_OVERALL");
+  {
+    Theme::ScopedText caption(Theme::Text::CAPTION);
+    valueWidth = std::max(valueWidth, ImGui::CalcTextSize(valueLabel).x);
+    overallWidth = std::max(overallWidth, ImGui::CalcTextSize(overallLabel).x);
+  }
   const float blockX =
       rightEdge - overallWidth - valueWidth - Theme::Space::XL * Theme::scale();
 
@@ -265,8 +439,48 @@ void PlayerProfileScene::renderHeader()
     UI::badge(LOC("ROSTER_BADGE_LISTED"), palette.warning);
   }
 
-  // Context actions.
-  if (isOwnPlayer())
+  if (scouted)
+  {
+    ImGui::SameLine(0.0f, Theme::Space::L * Theme::scale());
+    UI::badge(fmt::sprintf(LOC("PROFILE_KNOWLEDGE_BADGE"),
+                           static_cast<int>(knowledge))
+                  .c_str(),
+              palette.info);
+  }
+  renderActions();
+  ImGui::EndGroup();
+
+  const float groupRight = ImGui::GetItemRectMax().x - ImGui::GetWindowPos().x;
+  ImGui::SetCursorPos(
+      ImVec2(std::max(blockX, groupRight + Theme::Space::L * Theme::scale()),
+             ImGui::GetStyle().WindowPadding.y));
+  ImGui::BeginGroup();
+  UI::sectionLabel(overallLabel);
+  {
+    Theme::ScopedText display(Theme::Text::DISPLAY);
+    ImGui::TextColored(Theme::ratingColor(row.overall), "%s", overall.c_str());
+  }
+  if (scouted && !overall_range.empty())
+  {
+    Theme::ScopedText small(Theme::Text::SMALL);
+    ImGui::TextColored(palette.muted, "%s", overall_range.c_str());
+  }
+  ImGui::EndGroup();
+  ImGui::SameLine(0.0f, Theme::Space::XL * Theme::scale());
+  ImGui::BeginGroup();
+  UI::sectionLabel(valueLabel);
+  {
+    Theme::ScopedText title(Theme::Text::TITLE);
+    ImGui::TextUnformatted(row.value_text.c_str());
+  }
+  ImGui::EndGroup();
+  UI::endCard();
+}
+
+void PlayerProfileScene::renderActions()
+{
+  GameController& controller = guiView->getController();
+  if (!scouted)
   {
     if (row.listed)
     {
@@ -293,40 +507,77 @@ void PlayerProfileScene::renderHeader()
       renew_status.clear();
       renew_requested = true;
     }
+    return;
   }
-  else
-  {
-    if (row.team_id != FREE_AGENTS_TEAM_ID)
-    {
-      if (ImGui::SmallButton(LOC("PROFILE_VIEW_CLUB")))
-        Navigation::openClub(guiView, row.team_id);
-      ImGui::SameLine();
-    }
-    if (ImGui::SmallButton(LOC("FINANCE_OPEN_MARKET")))
-      Navigation::open(guiView, NavSection::TRANSFERS);
-  }
-  ImGui::EndGroup();
 
-  const float groupRight = ImGui::GetItemRectMax().x - ImGui::GetWindowPos().x;
-  ImGui::SetCursorPos(
-      ImVec2(std::max(blockX, groupRight + Theme::Space::L * Theme::scale()),
-             ImGui::GetStyle().WindowPadding.y));
-  ImGui::BeginGroup();
-  UI::sectionLabel(LOC("PROFILE_OVERALL"));
+  // Recruitment: offer (or contract talks for a free agent), scout, track.
+  const bool freeAgent = row.team_id == FREE_AGENTS_TEAM_ID;
+  const bool canDeal = freeAgent || window_open;
+  ImGui::BeginDisabled(!canDeal);
+  if (ImGui::SmallButton(
+          LOC(freeAgent ? "TRANSFER_ACTION_SIGN" : "TRANSFER_ACTION_OFFER")))
+    guiView->navigateTo(
+        std::make_unique<TransferMarketScene>(guiView, player_id));
+  ImGui::EndDisabled();
+  if (!canDeal && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    ImGui::SetTooltip("%s", LOC("TRANSFER_WINDOW_CLOSED_HINT"));
+
+  const std::string scoutLabel =
+      being_scouted
+          ? std::string(LOC("PROFILE_BEING_SCOUTED"))
+          : fmt::sprintf(LOC("SCOUTING_SCOUT_PLAYER"),
+                         static_cast<int>(SCOUT_DAYS),
+                         Format::money(scout_cost).c_str());
+  UI::sameLineIfFits(UI::buttonWidth(scoutLabel.c_str()));
+  ImGui::BeginDisabled(being_scouted);
+  if (ImGui::SmallButton(scoutLabel.c_str())) sendScout();
+  ImGui::EndDisabled();
+
+  const char* shortlistLabel =
+      LOC(shortlisted ? "SCOUTING_REMOVE_SHORTLIST" : "SCOUTING_ADD_SHORTLIST");
+  UI::sameLineIfFits(UI::buttonWidth(shortlistLabel));
+  if (ImGui::SmallButton(shortlistLabel))
   {
-    Theme::ScopedText display(Theme::Text::DISPLAY);
-    ImGui::TextColored(Theme::ratingColor(row.overall), "%s", overall.c_str());
+    const bool changed = shortlisted ? controller.removeFromShortlist(player_id)
+                                     : controller.addToShortlist(player_id);
+    if (changed)
+      showToast(LOC(shortlisted ? "SCOUTING_SHORTLIST_REMOVED"
+                                : "SCOUTING_SHORTLIST_ADDED"));
+    refresh();
   }
-  ImGui::EndGroup();
-  ImGui::SameLine(0.0f, Theme::Space::XL * Theme::scale());
-  ImGui::BeginGroup();
-  UI::sectionLabel(LOC("PROFILE_MARKET_VALUE"));
+
+  if (!freeAgent)
   {
-    Theme::ScopedText title(Theme::Text::TITLE);
-    ImGui::TextUnformatted(row.value_text.c_str());
+    UI::sameLineIfFits(UI::buttonWidth(LOC("PROFILE_VIEW_CLUB")));
+    if (ImGui::SmallButton(LOC("PROFILE_VIEW_CLUB")))
+      Navigation::openClub(guiView, row.team_id);
   }
-  ImGui::EndGroup();
-  UI::endCard();
+}
+
+void PlayerProfileScene::sendScout()
+{
+  GameController& controller = guiView->getController();
+  const auto& scouts = controller.getScouts();
+  const auto& assignments = controller.getScoutAssignments();
+  const auto idle = std::ranges::find_if(
+      scouts,
+      [&assignments](const ScoutProfile& scout)
+      {
+        return std::ranges::none_of(
+            assignments, [&scout](const ScoutAssignment& assignment)
+            { return !assignment.finished && assignment.scout_id == scout.id; });
+      });
+  if (idle == scouts.end())
+  {
+    showToast(
+        LOC(scouts.empty() ? "SCOUTING_NO_SCOUTS" : "SCOUTING_NO_IDLE_SCOUT"),
+        true);
+    return;
+  }
+  const ScoutAssignError error = controller.startScoutAssignment(
+      idle->id, ScoutTargetKind::Player, player_id, SCOUT_DAYS);
+  showToast(LOC(scoutAssignErrorKey(error)), error != ScoutAssignError::None);
+  refresh();
 }
 
 void PlayerProfileScene::renderBio(const Player& current, float width,
@@ -334,7 +585,7 @@ void PlayerProfileScene::renderBio(const Player& current, float width,
 {
   const Theme::Palette& palette = Theme::palette();
   UI::beginCard("profile_bio", LOC("PROFILE_BIO"), ImVec2(width, height), true);
-  const float keyWidth = BIO_KEY_WIDTH * Theme::scale();
+  const float keyWidth = keyWidthFor(BIO_KEY_WIDTH);
   const std::string age = std::to_string(current.getAge());
   const std::string heightText = std::format("{} cm", current.getHeight());
   const char* foot = current.getFoot() == Foot::Right ? LOC("PLAYER_FOOT_RIGHT")
@@ -355,8 +606,9 @@ void PlayerProfileScene::renderBio(const Player& current, float width,
       ImGuiCol_Text, row.contract_years <= 1 ? palette.negative : palette.text);
   UI::keyValue(LOC("PLAYER_CONTRACT"), contract.c_str(), keyWidth);
   ImGui::PopStyleColor();
-  UI::keyValue(LOC("PROFILE_MARKET_VALUE_LABEL"), row.value_text.c_str(),
-               keyWidth);
+  UI::keyValue(
+      LOC(scouted ? "PROFILE_ESTIMATED_VALUE" : "PROFILE_MARKET_VALUE_LABEL"),
+      row.value_text.c_str(), keyWidth);
   UI::keyValue(
       LOC("PROFILE_TRANSFER_STATUS"),
       LOC(row.listed ? "PROFILE_STATUS_LISTED" : "PROFILE_STATUS_NOT_LISTED"),
@@ -394,27 +646,33 @@ void PlayerProfileScene::renderStatus(float width, float height)
   }
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
 
-  const float labelWidth = ATTRIBUTE_LABEL_WIDTH * Theme::scale();
-  const auto percentMeter = [labelWidth](const char* label, float value)
+  // Condition, sharpness and morale are only known inside the club.
+  if (!scouted)
   {
-    const std::string text = std::format("{:.0f}%", static_cast<double>(value));
-    UI::meter(label, value / 100.0f, labelWidth, fitnessColor(value),
-              text.c_str());
-  };
-  percentMeter(LOC("PROFILE_CONDITION"), dynamics.condition);
-  percentMeter(LOC("PROFILE_SHARPNESS"), dynamics.sharpness);
-  percentMeter(LOC("PROFILE_MORALE"), dynamics.morale);
+    const float labelWidth = keyWidthFor(ATTRIBUTE_LABEL_WIDTH);
+    const auto percentMeter = [labelWidth](const char* label, float value)
+    {
+      const std::string text =
+          std::format("{:.0f}%", static_cast<double>(value));
+      UI::meter(label, value / 100.0f, labelWidth, fitnessColor(value),
+                text.c_str());
+    };
+    percentMeter(LOC("PROFILE_CONDITION"), dynamics.condition);
+    percentMeter(LOC("PROFILE_SHARPNESS"), dynamics.sharpness);
+    percentMeter(LOC("PROFILE_MORALE"), dynamics.morale);
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  }
 
-  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
-  const float keyWidth = BIO_KEY_WIDTH * Theme::scale();
+  const float keyWidth = keyWidthFor(BIO_KEY_WIDTH);
   const std::string formText =
       dynamics.rating_count > 0
-          ? fmt::sprintf(LOC("PROFILE_FORM_VALUE"), static_cast<double>(form),
-                         dynamics.rating_count)
+          ? fmt::sprintf(Format::plural("PROFILE_FORM_VALUE",
+                                        dynamics.rating_count),
+                         static_cast<double>(form), dynamics.rating_count)
           : std::string(LOC("PROFILE_FORM_NONE"));
-  UI::keyValue(LOC("PROFILE_FORM"), formText.c_str(), keyWidth);
+  keyValueWrapped(LOC("PROFILE_FORM"), formText.c_str(), keyWidth);
   if (squad_role_key != nullptr)
-    UI::keyValue(LOC("PROFILE_SQUAD_ROLE"), LOC(squad_role_key), keyWidth);
+    keyValueWrapped(LOC("PROFILE_SQUAD_ROLE"), LOC(squad_role_key), keyWidth);
   if (potential_high > 0.0f)
   {
     const std::string range =
@@ -435,9 +693,17 @@ void PlayerProfileScene::renderStatus(float width, float height)
 
 void PlayerProfileScene::renderAttributes(float width, float height)
 {
-  UI::beginCard("profile_attributes", LOC("PROFILE_ATTRIBUTES"),
+  UI::beginCard("profile_attributes",
+                LOC(scouted ? "PROFILE_ATTRIBUTES_SCOUTED"
+                            : "PROFILE_ATTRIBUTES"),
                 ImVec2(width, height), true);
-  const float labelWidth = ATTRIBUTE_LABEL_WIDTH * Theme::scale();
+  const float labelWidth = keyWidthFor(ATTRIBUTE_LABEL_WIDTH);
+  if (scouted && sections.empty())
+  {
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(Theme::palette().faint, "%s", LOC("PROFILE_NO_REPORT"));
+    ImGui::PopTextWrapPos();
+  }
   for (const AttributeSection& section : sections)
   {
     {
@@ -445,8 +711,21 @@ void PlayerProfileScene::renderAttributes(float width, float height)
       ImGui::TextUnformatted(LOC(section.title_key));
     }
     for (const AttributeLine& line : section.lines)
-      UI::attributeBar(line.name.c_str(), line.value, labelWidth);
+    {
+      if (scouted)
+        rangeBar(line.name.c_str(), line.value, line.low, line.high,
+                 labelWidth);
+      else
+        UI::attributeBar(line.name.c_str(), line.value, labelWidth);
+    }
     ImGui::Dummy(ImVec2(0.0f, 2.0f * Theme::scale()));
+  }
+  if (scouted && !sections.empty())
+  {
+    Theme::ScopedText small(Theme::Text::SMALL);
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(Theme::palette().faint, "%s", LOC("PROFILE_RANGE_HINT"));
+    ImGui::PopTextWrapPos();
   }
   UI::endCard();
 }
@@ -456,86 +735,183 @@ void PlayerProfileScene::renderSuitability(float width, float height)
   const Theme::Palette& palette = Theme::palette();
   UI::beginCard("profile_fit", LOC("PROFILE_ROLE_FIT"), ImVec2(width, height),
                 true);
-  const float labelWidth = ATTRIBUTE_LABEL_WIDTH * Theme::scale();
+  const float labelWidth = keyWidthFor(ATTRIBUTE_LABEL_WIDTH);
   for (const PlayerView::RoleFit& fit : fits)
     UI::attributeBar(LOC(PlayerView::groupKey(fit.group)), fit.rating,
                      labelWidth);
   const std::string natural = fmt::sprintf(
       LOC("PROFILE_NATURAL_POSITION"), LOC(PlayerView::groupKey(row.group)));
+  ImGui::PushTextWrapPos(0.0f);
   ImGui::TextColored(palette.faint, "%s", natural.c_str());
+  ImGui::PopTextWrapPos();
+  UI::endCard();
+}
+
+void PlayerProfileScene::renderScouting(float width, float height)
+{
+  const Theme::Palette& palette = Theme::palette();
+  UI::beginCard("profile_scouting", LOC("PROFILE_SCOUTING"),
+                ImVec2(width, height), true);
+  const float keyWidth = keyWidthFor(BIO_KEY_WIDTH);
+  const std::string knowledgeText =
+      std::format("{}%", static_cast<int>(knowledge));
+  UI::meter(LOC("PROFILE_KNOWLEDGE"), static_cast<float>(knowledge) / 100.0f,
+            keyWidth, palette.info, knowledgeText.c_str());
+  if (being_scouted) UI::badge(LOC("PROFILE_BEING_SCOUTED"), palette.info);
+  ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  if (latest_report)
+  {
+    UI::sectionLabel(LOC("PROFILE_LATEST_REPORT"));
+    {
+      Theme::ScopedText small(Theme::Text::SMALL);
+      ImGui::PushTextWrapPos(0.0f);
+      ImGui::TextColored(palette.muted, "%s", latest_report->heading.c_str());
+      ImGui::PopTextWrapPos();
+    }
+    const std::array<char, 2> grade = {latest_report->grade, '\0'};
+    UI::badge(grade.data(), latest_report->grade == 'A'   ? palette.positive
+                            : latest_report->grade == 'B' ? palette.warning
+                                                          : palette.muted);
+    if (ImGui::IsItemHovered())
+      ImGui::SetTooltip("%s", LOC(latest_report->grade_key));
+    keyValueWrapped(LOC("PROFILE_REPORT_ABILITY"),
+                    latest_report->ability.c_str(), keyWidth);
+    keyValueWrapped(LOC("PROFILE_POTENTIAL"), latest_report->potential.c_str(),
+                    keyWidth);
+    keyValueWrapped(LOC("PROFILE_REPORT_FEE"), latest_report->fee.c_str(),
+                    keyWidth);
+    if (UI::link(LOC("PROFILE_OPEN_REPORTS"), "profile_open_reports"))
+      guiView->navigateTo(std::make_unique<ScoutingScene>(
+          guiView, ScoutingScene::Tab::REPORTS));
+  }
+  else
+  {
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextColored(palette.faint, "%s", LOC("PROFILE_NO_REPORT"));
+    ImGui::PopTextWrapPos();
+  }
   UI::endCard();
 }
 
 void PlayerProfileScene::renderStatistics(float width, float height)
 {
-  const Theme::Palette& palette = Theme::palette();
   UI::beginCard("profile_stats", nullptr, ImVec2(width, height), true);
-  UI::sectionLabel(
-      LOC(show_career ? "PROFILE_CAREER" : "PROFILE_SEASON_STATS"));
-  ImGui::SameLine();
-  const char* toggleLabel =
-      LOC(show_career ? "PROFILE_SHOW_SEASON" : "PROFILE_SHOW_CAREER");
-  const float toggleWidth = ImGui::CalcTextSize(toggleLabel).x +
-                            ImGui::GetStyle().FramePadding.x * 2.0f;
-  ImGui::SetCursorPosX(
-      std::max(ImGui::GetCursorPosX(),
-               ImGui::GetWindowContentRegionMax().x - toggleWidth));
-  if (ImGui::SmallButton(toggleLabel)) show_career = !show_career;
+  if (ImGui::BeginTabBar("profile_stats_tabs"))
+  {
+    if (ImGui::BeginTabItem(LOC("PROFILE_TAB_SEASON")))
+    {
+      renderStatsTable(season_rows, false);
+      ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem(LOC("PROFILE_TAB_CAREER")))
+    {
+      renderStatsTable(career_rows, true);
+      ImGui::EndTabItem();
+    }
+    const std::string transfersLabel =
+        std::format("{} ({})###profile_transfers", LOC("PROFILE_TAB_TRANSFERS"),
+                    transfers.size());
+    if (ImGui::BeginTabItem(transfersLabel.c_str()))
+    {
+      renderTransfers();
+      ImGui::EndTabItem();
+    }
+    ImGui::EndTabBar();
+  }
+  UI::endCard();
+}
 
-  const std::vector<StatsRow>& rows = show_career ? career_rows : season_rows;
+void PlayerProfileScene::renderStatsTable(const std::vector<StatsRow>& rows,
+                                          bool career)
+{
+  const Theme::Palette& palette = Theme::palette();
   if (rows.empty())
   {
     ImGui::TextColored(palette.faint, "%s", LOC("PROFILE_NO_STATS"));
-    UI::endCard();
     return;
   }
-  if (UI::beginDataTable("profile_stats_table", 8,
-                         ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-                             ImGuiTableFlags_ScrollY |
-                             ImGuiTableFlags_SizingFixedFit,
-                         560.0f, ImVec2(0.0f, 0.0f), 1))
+  if (!UI::beginDataTable(
+          "profile_stats_table", 8,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
+              ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit,
+          560.0f, ImVec2(0.0f, 0.0f), 1))
+    return;
+  ImGui::TableSetupColumn(LOC(career ? "CLUB_COL_SEASON" : "CLUB_COL_COMPETITION"),
+                          ImGuiTableColumnFlags_WidthStretch);
+  ImGui::TableSetupColumn(LOC("STATS_COL_APPS"));
+  ImGui::TableSetupColumn(LOC("STATS_COL_MINUTES"));
+  ImGui::TableSetupColumn(LOC("STATS_COL_GOALS"));
+  ImGui::TableSetupColumn(LOC("STATS_COL_ASSISTS"));
+  ImGui::TableSetupColumn(LOC("STATS_COL_YELLOW"));
+  ImGui::TableSetupColumn(LOC("STATS_COL_RED"));
+  ImGui::TableSetupColumn(LOC("STATS_COL_RATING"));
+  ImGui::TableHeadersRow();
+  for (const StatsRow& line : rows)
   {
-    ImGui::TableSetupColumn(
-        LOC(show_career ? "CLUB_COL_SEASON" : "CLUB_COL_COMPETITION"),
-        ImGuiTableColumnFlags_WidthStretch);
-    ImGui::TableSetupColumn(LOC("STATS_COL_APPS"));
-    ImGui::TableSetupColumn(LOC("STATS_COL_MINUTES"));
-    ImGui::TableSetupColumn(LOC("STATS_COL_GOALS"));
-    ImGui::TableSetupColumn(LOC("STATS_COL_ASSISTS"));
-    ImGui::TableSetupColumn(LOC("STATS_COL_YELLOW"));
-    ImGui::TableSetupColumn(LOC("STATS_COL_RED"));
-    ImGui::TableSetupColumn(LOC("STATS_COL_RATING"));
-    ImGui::TableHeadersRow();
-    for (const StatsRow& line : rows)
-    {
-      const PlayerSeasonStats& stats = line.stats;
-      ImGui::TableNextRow();
-      ImGui::TableNextColumn();
-      ImGui::TextUnformatted(line.label.c_str());
-      ImGui::TableNextColumn();
-      ImGui::Text("%u (%u)", stats.appearances, stats.starts);
-      ImGui::TableNextColumn();
-      ImGui::Text("%u", stats.minutes);
-      ImGui::TableNextColumn();
-      ImGui::Text("%u", stats.goals);
-      ImGui::TableNextColumn();
-      ImGui::Text("%u", stats.assists);
-      ImGui::TableNextColumn();
-      ImGui::TextColored(
-          stats.yellow_cards > 0 ? palette.warning : palette.muted, "%u",
-          stats.yellow_cards);
-      ImGui::TableNextColumn();
-      ImGui::TextColored(stats.red_cards > 0 ? palette.negative : palette.muted,
-                         "%u", stats.red_cards);
-      ImGui::TableNextColumn();
-      if (stats.rated_matches > 0)
-        ImGui::Text("%.2f", static_cast<double>(stats.averageRating()));
-      else
-        ImGui::TextColored(palette.faint, "–");
-    }
-    ImGui::EndTable();
+    const PlayerSeasonStats& stats = line.stats;
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::TextUnformatted(line.label.c_str());
+    ImGui::TableNextColumn();
+    ImGui::Text("%u (%u)", stats.appearances, stats.starts);
+    ImGui::TableNextColumn();
+    ImGui::Text("%u", stats.minutes);
+    ImGui::TableNextColumn();
+    ImGui::Text("%u", stats.goals);
+    ImGui::TableNextColumn();
+    ImGui::Text("%u", stats.assists);
+    ImGui::TableNextColumn();
+    ImGui::TextColored(stats.yellow_cards > 0 ? palette.warning : palette.muted,
+                       "%u", stats.yellow_cards);
+    ImGui::TableNextColumn();
+    ImGui::TextColored(stats.red_cards > 0 ? palette.negative : palette.muted,
+                       "%u", stats.red_cards);
+    ImGui::TableNextColumn();
+    if (stats.rated_matches > 0)
+      ImGui::Text("%.2f", static_cast<double>(stats.averageRating()));
+    else
+      ImGui::TextColored(palette.faint, "–");
   }
-  UI::endCard();
+  ImGui::EndTable();
+}
+
+void PlayerProfileScene::renderTransfers()
+{
+  const Theme::Palette& palette = Theme::palette();
+  if (transfers.empty())
+  {
+    ImGui::TextColored(palette.faint, "%s", LOC("PROFILE_NO_TRANSFERS"));
+    return;
+  }
+  if (!UI::beginDataTable(
+          "profile_transfer_table", 5,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
+              ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit,
+          520.0f, ImVec2(0.0f, 0.0f), 1))
+    return;
+  ImGui::TableSetupColumn(LOC("TRANSFER_COL_DATE"));
+  ImGui::TableSetupColumn(LOC("TRANSFER_COL_FROM"),
+                          ImGuiTableColumnFlags_WidthStretch);
+  ImGui::TableSetupColumn(LOC("TRANSFER_COL_TO"),
+                          ImGuiTableColumnFlags_WidthStretch);
+  ImGui::TableSetupColumn(LOC("TRANSFER_COL_TYPE"));
+  ImGui::TableSetupColumn(LOC("TRANSFER_COL_FEE"));
+  ImGui::TableHeadersRow();
+  for (const TransferLine& line : transfers)
+  {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::TextColored(palette.muted, "%s", line.date.c_str());
+    ImGui::TableNextColumn();
+    ImGui::TextUnformatted(line.from.c_str());
+    ImGui::TableNextColumn();
+    ImGui::TextUnformatted(line.to.c_str());
+    ImGui::TableNextColumn();
+    ImGui::TextUnformatted(LOC(line.kind_key));
+    ImGui::TableNextColumn();
+    UI::textRight(line.fee.c_str());
+  }
+  ImGui::EndTable();
 }
 
 void PlayerProfileScene::renderDialogs()

@@ -56,6 +56,7 @@ enum class Preset : uint8_t
   PITCH_GREEN,
   LIGHT,
   HIGH_CONTRAST,
+  TRUE_DARK, /**< Appended so saved preset indices stay valid. */
   COUNT
 };
 

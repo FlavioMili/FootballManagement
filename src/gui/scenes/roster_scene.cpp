@@ -27,8 +27,11 @@
 
 namespace
 {
-constexpr float DETAIL_PANEL_WIDTH = 330.0f;
-constexpr float DETAIL_PANEL_MIN_CONTENT = 980.0f;
+constexpr float DETAIL_PANEL_WIDTH = 310.0f;
+constexpr float TABLE_MIN_WIDTH = 760.0f;
+// The side panel only appears when the full table still fits beside it.
+constexpr float DETAIL_PANEL_MIN_CONTENT =
+    TABLE_MIN_WIDTH + DETAIL_PANEL_WIDTH + 12.0f;
 
 enum class RosterColumn : ImGuiID
 {
@@ -113,9 +116,8 @@ void RosterScene::renderContent()
 
   const float available = ImGui::GetContentRegionAvail().x;
   const float height = ImGui::GetContentRegionAvail().y;
-  const bool showDetails =
-      available >= DETAIL_PANEL_MIN_CONTENT * Theme::scale();
-  if (!showDetails)
+  show_details = available >= DETAIL_PANEL_MIN_CONTENT * Theme::scale();
+  if (!show_details)
   {
     renderTable(height);
     return;
@@ -136,25 +138,26 @@ void RosterScene::renderContent()
 void RosterScene::renderSummary()
 {
   const Theme::Palette& palette = Theme::palette();
-  const float gap = ImGui::GetStyle().ItemSpacing.x;
-  const float width = (ImGui::GetContentRegionAvail().x - gap * 4.0f) / 5.0f;
+  UI::TileRow tiles(5);
+  const float width = tiles.width();
   const std::string squad = std::to_string(rows.size());
   const std::string age = std::format("{:.1f}", average_age);
   const std::string overall = std::format("{:.1f}", average_overall);
   const std::string wages = Format::money(payroll);
   const std::string expiring = std::to_string(expiring_contracts);
+  tiles.next();
   UI::statTile("squad", LOC("ROSTER_SUMMARY_SQUAD"), squad.c_str(), nullptr,
                palette.text, width);
-  ImGui::SameLine();
+  tiles.next();
   UI::statTile("age", LOC("ROSTER_SUMMARY_AVG_AGE"), age.c_str(), nullptr,
                palette.text, width);
-  ImGui::SameLine();
+  tiles.next();
   UI::statTile("overall", LOC("ROSTER_SUMMARY_AVG_OVR"), overall.c_str(),
                nullptr, Theme::ratingColor(average_overall), width);
-  ImGui::SameLine();
+  tiles.next();
   UI::statTile("payroll", LOC("ROSTER_SUMMARY_PAYROLL"), wages.c_str(), nullptr,
                palette.text, width);
-  ImGui::SameLine();
+  tiles.next();
   UI::statTile(
       "contracts", LOC("ROSTER_SUMMARY_EXPIRING"), expiring.c_str(), nullptr,
       expiring_contracts > 0 ? palette.negative : palette.positive, width);
@@ -293,7 +296,7 @@ void RosterScene::renderTable(float height)
       ImGuiTableFlags_Sortable | ImGuiTableFlags_ScrollY |
       ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_Hideable |
       ImGuiTableFlags_Reorderable;
-  if (!UI::beginDataTable("RosterTable", 10, flags, 780.0f,
+  if (!UI::beginDataTable("RosterTable", 10, flags, TABLE_MIN_WIDTH,
                           ImVec2(0.0f, height)))
     return;
   ImGui::TableSetupColumn(LOC("ROSTER_COL_NAME"),
@@ -326,14 +329,20 @@ void RosterScene::renderTable(float height)
                           static_cast<ImGuiID>(RosterColumn::STATUS));
   ImGui::TableHeadersRow();
 
+  // The table remembers its sort across screen visits while this scene is
+  // new, so follow the header state every frame, not only when it changes.
   if (ImGuiTableSortSpecs* sortSpecs = ImGui::TableGetSortSpecs();
-      sortSpecs != nullptr && sortSpecs->SpecsDirty &&
-      sortSpecs->SpecsCount > 0)
+      sortSpecs != nullptr && sortSpecs->SpecsCount > 0)
   {
-    sort_column = sortSpecs->Specs[0].ColumnUserID;
-    sort_ascending =
-        sortSpecs->Specs[0].SortDirection == ImGuiSortDirection_Ascending;
-    applySort();
+    const ImGuiTableColumnSortSpecs& spec = sortSpecs->Specs[0];
+    const bool ascending = spec.SortDirection == ImGuiSortDirection_Ascending;
+    if (sortSpecs->SpecsDirty || spec.ColumnUserID != sort_column ||
+        ascending != sort_ascending)
+    {
+      sort_column = spec.ColumnUserID;
+      sort_ascending = ascending;
+      applySort();
+    }
     sortSpecs->SpecsDirty = false;
   }
 
@@ -355,10 +364,11 @@ void RosterScene::renderTable(float height)
                                 ImGuiSelectableFlags_AllowOverlap))
       {
         selected_player_id = row.id;
-        if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+        // Without the side panel a single click goes straight to the profile.
+        if (!show_details || ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
           Navigation::openPlayer(guiView, row.id);
       }
-      if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+      if (show_details && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
         ImGui::SetTooltip("%s", LOC("ROSTER_OPEN_PROFILE_HINT"));
       ImGui::PopID();
       ImGui::TableNextColumn();

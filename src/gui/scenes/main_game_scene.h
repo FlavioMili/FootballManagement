@@ -11,6 +11,7 @@
 #include <future>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "gui/gui_scene.h"
@@ -77,6 +78,16 @@ class MainGameScene : public ManagementScene
    */
   void requestContinue();
 
+  /**
+   * @brief Draws the Continue progress card over a dimmed snapshot of the
+   * screen. Reads only the controller's thread-safe progress, never game
+   * state, because days are being simulated on a worker thread.
+   */
+  void renderContinueOverlay();
+
+  /** @brief Opacity of the dimming that fades out after Continue ends. */
+  [[nodiscard]] float continueFadeOut() const;
+
   /** @brief Switches the page shown by the hub. */
   void showPage(Page page) { active_page = page; }
 
@@ -95,6 +106,7 @@ class MainGameScene : public ManagementScene
   void renderRecentResultsCard(float width, float height);
   void renderKeyPlayersCard(float width, float height);
   void startContinuation();
+  void autoFixLineup();
 
   void refreshData();
 
@@ -107,9 +119,23 @@ class MainGameScene : public ManagementScene
   bool continuation_running = false;
   bool continuation_requested = false;
 
+  // Continue overlay state (progress snapshots only, see update()).
+  void trackContinueProgress();
+  GameDateValue continue_start_date;
+  GameController::ContinueProgress continue_progress;
+  int continue_logged_day = 0;
+  uint32_t continue_day_matches = 0;
+  std::vector<std::string> continue_log;
+  double continue_started_at = 0.0;
+  double continue_finished_at = -1.0;
+  bool continue_overlay_shown = false;
+
   // Dashboard view models, rebuilt by refreshData().
   std::vector<CompetitionView::StandingRow> cached_table;
   CompetitionView::Zones cached_zones;
+  std::unordered_set<PlayerID> cached_unavailable;
+  size_t cached_starters = 0;
+  size_t cached_unavailable_starters = 0;
   std::vector<CompetitionView::FixtureRow> cached_recent;
   std::optional<CompetitionView::FixtureRow> cached_next;
   std::vector<PlayerView::PlayerRow> cached_squad;

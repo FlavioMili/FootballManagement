@@ -8,9 +8,12 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <span>
+#include <utility>
 #include <vector>
 
 #include "global/types.h"
@@ -47,6 +50,10 @@ enum class Reason : std::uint8_t
   CounterOffer,
   TalksBroken,
   OfferAccepted,
+  LongContract,
+  ExpiringContract,
+  OpeningBidLow,
+  KeyPlayerNotForSale,
   // Player
   WageTooLow,
   ContractTooShort,
@@ -59,6 +66,7 @@ enum class Reason : std::uint8_t
   BiggerClub,
   TermsAccepted,
   TalksEnded,
+  AgentPushback,
   // Loans
   NotForLoan,
   WageShareTooLow,
@@ -69,6 +77,7 @@ enum class Reason : std::uint8_t
   WindowClosed,
   Unavailable,
   OverBudget,
+  Embargo,
   COUNT
 };
 
@@ -122,6 +131,9 @@ struct SaleContext
   std::uint32_t release_clause = 0;
   bool winter_window = false;
   int days_to_deadline = 90;
+  /** Seller's resolve in [0, 1), drawn per player and window: the most
+   * stubborn clubs refuse to sell a key player at all. */
+  float resolve = 0.0f;
 };
 
 /** Seller's asking fee and the reasons behind it. */
@@ -199,10 +211,14 @@ struct PlayerContext
   SquadRole projected_role{}; /*!< Role by ability rank at the new club. */
 };
 
-/** The player's (agent's) demands. */
+/**
+ * The player's demands. weekly_wage is the lowest wage he signs for (never
+ * shown); asking_wage is what his agent currently asks for in public.
+ */
 struct ContractDemand
 {
   std::uint32_t weekly_wage = 0;
+  std::uint32_t asking_wage = 0;
   std::uint8_t min_years = 1;
   std::uint8_t max_years = 5;
   std::uint32_t signing_bonus = 0;
@@ -214,9 +230,19 @@ struct ContractDemand
 /** Longest contract allowed at @p age (RSTP). */
 std::uint8_t maxContractYears(int age);
 
+/** Demands for talks that have not started (asking_wage = opening ask). */
 ContractDemand contractDemand(const PlayerContext& context);
 
-/** Player's answer; accepted only when no refusal reason applies. */
+/**
+ * Wage the agent asks for after @p round rejected proposals: above the real
+ * demand by a margin that grows with ambition and with the step down in
+ * club stature, falling to the demand itself by the last round.
+ */
+std::uint32_t agentAsk(const PlayerContext& context,
+                       const ContractDemand& demand, std::uint8_t round);
+
+/** Player's answer; accepted only when no refusal reason applies. After a
+ * refusal demand.asking_wage is the agent's ask for the next proposal. */
 struct ContractResponse
 {
   bool accepted = false;
@@ -308,5 +334,56 @@ std::int64_t severancePay(std::uint32_t weekly_wage,
 
 /** Playing-time role for a 0-based ability rank (as the world sim). */
 SquadRole roleForRank(std::size_t rank);
+
+// ---------------------------------------------------------------------------
+// Squad needs
+// ---------------------------------------------------------------------------
+
+/** Position group for squad planning: central midfielders (CDM, CM, CAM)
+ * and wide players (LM, RM, LW, RW) are interchangeable. */
+PlayerRole positionGroup(PlayerRole role);
+
+/** One position group of a squad: players, slots in a typical XI, depth
+ * wanted and the weakest of its starters (0 when short of starters). */
+struct PositionNeed
+{
+  PlayerRole group = PlayerRole::UNKNOWN;
+  std::uint8_t count = 0;
+  std::uint8_t starters = 0;
+  std::uint8_t wanted = 0;
+  float weakest_starter = 0.0f;
+};
+
+/** The shape of a squad by position group. */
+struct SquadNeeds
+{
+  static constexpr std::size_t GROUPS = 7;
+  std::array<PositionNeed, GROUPS> positions{};
+  float squad_level = 0.0f; /*!< Mean overall of the best 16. */
+
+  const PositionNeed* find(PlayerRole role) const;
+};
+
+/** Needs of a squad given each player's role and overall. */
+SquadNeeds squadNeeds(std::span<const std::pair<PlayerRole, float>> squad);
+
+enum class FitKind : std::uint8_t
+{
+  None,     /*!< Would not improve the squad. */
+  Starter,  /*!< Fills a missing starting place. */
+  Upgrade,  /*!< Better than the weakest starter. */
+  Depth     /*!< Needed cover. */
+};
+
+/** How a player would fit: score (higher is better), kind and the gain in
+ * overall over the weakest starter (or the level asked of a starter). */
+struct SquadFit
+{
+  float score = 0.0f;
+  FitKind kind = FitKind::None;
+  float gain = 0.0f;
+};
+
+SquadFit squadFit(const SquadNeeds& needs, PlayerRole role, float overall);
 
 }  // namespace TransferNegotiation

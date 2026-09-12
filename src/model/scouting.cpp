@@ -588,6 +588,9 @@ ScoutedPlayerRow ScoutingSystem::makeRow(const Player& player) const
   const Noise noise = noiseFor(player, knowledge);
   float overall_sd = 0.0f;
   row.overall = estimatedOverall(player, noise.attribute_sd, &overall_sd);
+  row.overall_low = std::max(0.0f, row.overall - RANGE_Z * overall_sd);
+  row.overall_high = std::min(static_cast<float>(MAX_STAT_VAL),
+                              row.overall + RANGE_Z * overall_sd);
   // Potential regresses towards the growth typical for his age. [P]
   const float prior =
       row.overall +
@@ -637,13 +640,10 @@ std::optional<ScoutedPlayerView> ScoutingSystem::view(PlayerID player_id) const
   result.potential_low = summary.potential_low;
   result.potential_high = summary.potential_high;
   result.estimated_value = summary.estimated_value;
+  result.overall_low = summary.overall_low;
+  result.overall_high = summary.overall_high;
 
   const Noise noise = noiseFor(player, knowledgeOf(player_id));
-  float overall_sd = 0.0f;
-  estimatedOverall(player, noise.attribute_sd, &overall_sd);
-  result.overall_low = std::max(0.0f, result.overall - RANGE_Z * overall_sd);
-  result.overall_high = std::min(static_cast<float>(MAX_STAT_VAL),
-                                 result.overall + RANGE_Z * overall_sd);
 
   result.attributes.reserve(player.getStats().size());
   for (const auto& [name, value] : player.getStats())

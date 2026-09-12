@@ -56,8 +56,11 @@ PlayerContext transferTarget()
 TEST(TransferNegotiationTest, AskingFeeReflectsRoleRivalryAndTiming)
 {
   SaleContext context = rotationPlayer();
-  const std::uint32_t base = valueForSale(context).asking_fee;
-  EXPECT_EQ(base, 10'000'000u);
+  const Valuation rotation = valueForSale(context);
+  const std::uint32_t base = rotation.asking_fee;
+  EXPECT_GT(base, 11'000'000u) << "nobody sells a squad player at value";
+  EXPECT_LT(base, 14'000'000u);
+  EXPECT_TRUE(has(rotation.reasons, Reason::LongContract));
 
   context.role = SquadRole::KeyPlayer;
   const Valuation key = valueForSale(context);
@@ -140,8 +143,11 @@ TEST(TransferNegotiationTest, StructuredOffersAreValuedAndCountered)
       << "sell-on clauses are worth more for young players";
 
   const SaleContext context = rotationPlayer();
-  EXPECT_EQ(evaluateOffer(context, cash, 0).decision,
-            ClubResponse::Decision::Accept);
+  const ClubResponse opening = evaluateOffer(context, cash, 0);
+  ASSERT_EQ(opening.decision, ClubResponse::Decision::Counter)
+      << "a first bid at market value is countered, not accepted";
+  EXPECT_TRUE(has(opening.reasons, Reason::OpeningBidLow));
+  EXPECT_EQ(opening.counter_fee, valueForSale(context).asking_fee);
 
   OfferTerms low = cash;
   low.fee = 8'000'000;
@@ -152,6 +158,11 @@ TEST(TransferNegotiationTest, StructuredOffersAreValuedAndCountered)
   EXPECT_EQ(evaluateOffer(context, low, 1).decision,
             ClubResponse::Decision::Accept)
       << "meeting the counter closes the deal";
+  OfferTerms asking = cash;
+  asking.fee = valueForSale(context).asking_fee;
+  EXPECT_EQ(evaluateOffer(context, asking, 0).decision,
+            ClubResponse::Decision::Accept)
+      << "an opening bid at the valuation is accepted";
 
   deferred.fee = 10'000'000;
   const ClubResponse deferred_counter = evaluateOffer(context, deferred, 0);
@@ -366,4 +377,166 @@ TEST(TransferNegotiationTest, WindowsDeadlinesAndContractCalendar)
   EXPECT_EQ(severancePay(1'000, 1, GameDateValue(2026, 6, 2)), 4'000);
   EXPECT_EQ(severancePay(1'000, 3, GameDateValue(2026, 6, 2)),
             4'000 + 2 * 52 * 1'000);
+}
+
+TEST(TransferNegotiationTest, OpeningBidsAtValueAreCounteredForEveryRole)
+{
+  for (const SquadRole role :
+       {SquadRole::KeyPlayer, SquadRole::FirstTeam, SquadRole::Rotation,
+        SquadRole::Backup, SquadRole::Fringe})
+  {
+    SaleContext context = rotationPlayer();
+    context.role = role;
+    context.contract_years = 2;
+    OfferTerms at_value;
+    at_value.fee = context.market_value;
+    const ClubResponse response = evaluateOffer(context, at_value, 0);
+    ASSERT_EQ(response.decision, ClubResponse::Decision::Counter)
+        << static_cast<int>(role);
+    const double premium = static_cast<double>(response.counter_fee) /
+                           static_cast<double>(context.market_value);
+    EXPECT_GE(premium, 1.07) << static_cast<int>(role);
+    EXPECT_LE(premium, 1.41) << static_cast<int>(role);
+    EXPECT_FALSE(response.reasons.empty());
+
+    // AI buyers bid the valuation in cash and must still be accepted.
+    context.market_value = 3'000'000;
+    const OfferTerms ai = aiOfferTerms(valueForSale(context).asking_fee);
+    ASSERT_EQ(ai.instalment_years, 0);
+    EXPECT_EQ(evaluateOffer(context, ai, 0).decision,
+              ClubResponse::Decision::Accept)
+        << static_cast<int>(role);
+  }
+}
+
+TEST(TransferNegotiationTest, ContractLengthMovesTheValuation)
+{
+  SaleContext context = rotationPlayer();
+  context.contract_years = 1;
+  const Valuation expiring = valueForSale(context);
+  EXPECT_TRUE(has(expiring.reasons, Reason::ExpiringContract));
+  context.contract_years = 2;
+  const Valuation normal = valueForSale(context);
+  context.contract_years = 4;
+  const Valuation tied = valueForSale(context);
+  EXPECT_TRUE(has(tied.reasons, Reason::LongContract));
+  EXPECT_LT(expiring.asking_fee, normal.asking_fee);
+  EXPECT_LT(normal.asking_fee, tied.asking_fee);
+}
+
+TEST(TransferNegotiationTest, StubbornClubsRefuseToSellKeyPlayers)
+{
+  SaleContext context = rotationPlayer();
+  context.role = SquadRole::KeyPlayer;
+  context.resolve = 0.95f;
+  const Valuation refused = valueForSale(context);
+  EXPECT_TRUE(refused.not_for_sale);
+  EXPECT_TRUE(has(refused.reasons, Reason::KeyPlayerNotForSale));
+  OfferTerms huge;
+  huge.fee = 100'000'000;
+  EXPECT_EQ(evaluateOffer(context, huge, 0).decision,
+            ClubResponse::Decision::Reject);
+
+  SaleContext calm = context;
+  calm.resolve = 0.2f;
+  EXPECT_FALSE(valueForSale(calm).not_for_sale);
+  SaleContext bigger_buyer = context;
+  bigger_buyer.buyer_reputation = 75;
+  EXPECT_FALSE(valueForSale(bigger_buyer).not_for_sale)
+      << "a clearly bigger club can still prise him away";
+  SaleContext expiring = context;
+  expiring.contract_years = 1;
+  EXPECT_FALSE(valueForSale(expiring).not_for_sale);
+  SaleContext squad_player = context;
+  squad_player.role = SquadRole::Rotation;
+  EXPECT_FALSE(valueForSale(squad_player).not_for_sale);
+}
+
+TEST(TransferNegotiationTest, AgentOpensHighAndSoftensEachRound)
+{
+  PlayerContext context = transferTarget();
+  const ContractDemand demand = contractDemand(context);
+  EXPECT_GT(demand.asking_wage, demand.weekly_wage);
+  EXPECT_EQ(demand.asking_wage, agentAsk(context, demand, 0));
+  std::uint32_t previous = demand.asking_wage;
+  for (std::uint8_t round = 1;
+       round < TransferTuning::Negotiation::MAX_PLAYER_ROUNDS; ++round)
+  {
+    const std::uint32_t ask = agentAsk(context, demand, round);
+    EXPECT_LE(ask, previous);
+    previous = ask;
+  }
+  EXPECT_EQ(previous, demand.weekly_wage)
+      << "the last ask is the real demand";
+
+  PlayerContext ambitious = context;
+  ambitious.ambition = 90;
+  const ContractDemand ambitious_demand = contractDemand(ambitious);
+  EXPECT_GT(static_cast<double>(ambitious_demand.asking_wage) /
+                ambitious_demand.weekly_wage,
+            static_cast<double>(demand.asking_wage) / demand.weekly_wage);
+  PlayerContext stepping_down = context;
+  stepping_down.current_club_reputation = 80;
+  stepping_down.new_club_reputation = 60;
+  const ContractDemand down = contractDemand(stepping_down);
+  EXPECT_GT(down.weekly_wage, demand.weekly_wage)
+      << "a step down in stature costs wages";
+  EXPECT_GT(static_cast<double>(down.asking_wage) / down.weekly_wage,
+            static_cast<double>(demand.asking_wage) / demand.weekly_wage);
+}
+
+TEST(TransferNegotiationTest, AgentPushesBackOnNearMisses)
+{
+  const PlayerContext context = transferTarget();
+  const ContractDemand demand = contractDemand(context);
+  ContractOffer offer = demandedOffer(demand);
+  EXPECT_TRUE(evaluateContract(context, offer, 0).accepted)
+      << "the real demand is accepted (AI clubs rely on it)";
+
+  offer.weekly_wage = demand.weekly_wage * 95 / 100;
+  const ContractResponse close = evaluateContract(context, offer, 0);
+  EXPECT_FALSE(close.accepted);
+  EXPECT_TRUE(has(close.reasons, Reason::AgentPushback));
+  EXPECT_FALSE(has(close.reasons, Reason::WageTooLow));
+  EXPECT_EQ(close.demand.asking_wage, agentAsk(context, demand, 1));
+  EXPECT_LT(close.demand.asking_wage, demand.asking_wage);
+  EXPECT_GE(close.demand.asking_wage, demand.weekly_wage);
+
+  offer.weekly_wage = demand.weekly_wage / 2;
+  const ContractResponse far = evaluateContract(context, offer, 0);
+  EXPECT_TRUE(has(far.reasons, Reason::WageTooLow));
+  EXPECT_FALSE(has(far.reasons, Reason::AgentPushback));
+}
+
+TEST(TransferNegotiationTest, SquadFitRanksNeedsAboveMarginalUpgrades)
+{
+  using enum PlayerRole;
+  const std::vector<std::pair<PlayerRole, float>> squad = {
+      {GK, 70.0f},  {GK, 62.0f},  {GK, 50.0f},  {CB, 70.0f},  {CB, 68.0f},
+      {CB, 60.0f},  {CB, 55.0f},  {LB, 66.0f},  {CDM, 72.0f}, {CM, 70.0f},
+      {CAM, 68.0f}, {CM, 60.0f},  {CM, 58.0f},  {LW, 69.0f},  {RW, 67.0f},
+      {LM, 55.0f},  {ST, 71.0f},  {ST, 60.0f},  {ST, 55.0f}};
+  const SquadNeeds needs = squadNeeds(squad);
+  EXPECT_GT(needs.squad_level, 60.0f);
+  ASSERT_NE(needs.find(RB), nullptr);
+  EXPECT_EQ(needs.find(RB)->count, 0);
+  EXPECT_EQ(needs.find(CAM)->group, CM);
+  EXPECT_EQ(needs.find(CM)->count, 5);
+  EXPECT_FLOAT_EQ(needs.find(CB)->weakest_starter, 68.0f);
+  EXPECT_EQ(positionGroup(RW), LW);
+
+  const SquadFit missing = squadFit(needs, RB, 62.0f);
+  EXPECT_EQ(missing.kind, FitKind::Starter);
+  const SquadFit upgrade = squadFit(needs, CB, 72.0f);
+  EXPECT_EQ(upgrade.kind, FitKind::Upgrade);
+  EXPECT_FLOAT_EQ(upgrade.gain, 4.0f);
+  EXPECT_GT(missing.score, upgrade.score)
+      << "an empty starting place outranks a marginal upgrade";
+  const SquadFit cover = squadFit(needs, LB, 63.0f);
+  EXPECT_EQ(cover.kind, FitKind::Depth);
+  EXPECT_GT(cover.score, 0.0f);
+  const SquadFit surplus = squadFit(needs, CB, 60.0f);
+  EXPECT_EQ(surplus.kind, FitKind::None);
+  EXPECT_LT(surplus.score, 0.0f);
+  EXPECT_GT(squadFit(needs, ST, 80.0f).score, squadFit(needs, ST, 74.0f).score);
 }

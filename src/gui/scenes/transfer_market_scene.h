@@ -40,6 +40,9 @@ class TransferMarketScene : public ManagementScene
 {
  public:
   explicit TransferMarketScene(GUIView* parent);
+  /** Opens the market with the deal dialog for @p player already open: a
+   * transfer offer, or contract talks for a free agent. */
+  TransferMarketScene(GUIView* parent, PlayerID player);
   ~TransferMarketScene() override = default;
 
   void update(float deltaTime) override;
@@ -57,6 +60,7 @@ class TransferMarketScene : public ManagementScene
   {
     search_dirty = true;
     refreshData();
+    openPendingDeal();
   }
 
  private:
@@ -252,6 +256,7 @@ class TransferMarketScene : public ManagementScene
   };
 
   void refreshData();
+  void openPendingDeal();
   void refreshTargets();
   void refreshTargetFlags();
   void refreshShortlist();
@@ -321,4 +326,6 @@ class TransferMarketScene : public ManagementScene
   CounterDialog counter_dialog;
   ListingDialog listing_dialog;
   ReleaseDialog release_dialog;
+  /** Player whose deal dialog opens on entry (0 = none). */
+  PlayerID pending_deal_player = 0;
 };

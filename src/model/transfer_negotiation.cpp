@@ -12,6 +12,7 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <numeric>
 #include <ranges>
 
 #include "model/transfer_tuning.h"
@@ -38,6 +39,10 @@ constexpr std::array<const char*, static_cast<std::size_t>(Reason::COUNT)>
         "NEG_REASON_COUNTER",
         "NEG_REASON_TALKS_BROKEN",
         "NEG_REASON_OFFER_ACCEPTED",
+        "NEG_REASON_LONG_CONTRACT",
+        "NEG_REASON_EXPIRING_CONTRACT",
+        "NEG_REASON_OPENING_BID_LOW",
+        "NEG_REASON_KEY_PLAYER_NOT_FOR_SALE",
         "NEG_REASON_WAGE_TOO_LOW",
         "NEG_REASON_CONTRACT_TOO_SHORT",
         "NEG_REASON_CONTRACT_TOO_LONG",
@@ -49,6 +54,7 @@ constexpr std::array<const char*, static_cast<std::size_t>(Reason::COUNT)>
         "NEG_REASON_BIGGER_CLUB",
         "NEG_REASON_TERMS_ACCEPTED",
         "NEG_REASON_TALKS_ENDED",
+        "NEG_REASON_AGENT_PUSHBACK",
         "NEG_REASON_NOT_FOR_LOAN",
         "NEG_REASON_WAGE_SHARE_LOW",
         "NEG_REASON_OPTION_TOO_LOW",
@@ -57,6 +63,7 @@ constexpr std::array<const char*, static_cast<std::size_t>(Reason::COUNT)>
         "NEG_REASON_WINDOW_CLOSED",
         "NEG_REASON_UNAVAILABLE",
         "NEG_REASON_OVER_BUDGET",
+        "NEG_REASON_EMBARGO",
 };
 
 constexpr std::uint32_t FEE_ROUNDING = 10'000;
@@ -103,6 +110,7 @@ bool isRefusal(Reason reason)
     case Reason::PlayingTime:
     case Reason::WantsReleaseClause:
     case Reason::TalksEnded:
+    case Reason::AgentPushback:
       return true;
     default:
       return false;
@@ -198,6 +206,18 @@ Valuation valueForSale(const SaleContext& context)
     else if (context.role == SquadRole::FirstTeam)
       valuation.reasons.push_back(Reason::FirstTeamPlayer);
 
+    if (context.contract_years > V::LONG_CONTRACT_BASE_YEARS)
+    {
+      fee *= 1.0 + static_cast<double>(V::LONG_CONTRACT_PREMIUM_PER_YEAR) *
+                       (context.contract_years - V::LONG_CONTRACT_BASE_YEARS);
+      valuation.reasons.push_back(Reason::LongContract);
+    }
+    else if (context.contract_years <= 1)
+    {
+      fee *= static_cast<double>(V::EXPIRING_CONTRACT_FACTOR);
+      valuation.reasons.push_back(Reason::ExpiringContract);
+    }
+
     const int raw_gap = static_cast<int>(context.buyer_reputation) -
                         static_cast<int>(context.seller_reputation);
     const int gap = std::clamp(raw_gap, V::BUYER_REPUTATION_GAP_MIN,
@@ -229,7 +249,18 @@ Valuation valueForSale(const SaleContext& context)
         context.role == SquadRole::KeyPlayer &&
         context.contract_years >= V::NOT_FOR_SALE_MIN_CONTRACT_YEARS &&
         raw_gap <= -V::NOT_FOR_SALE_REPUTATION_GAP;
-    if (valuation.not_for_sale) valuation.reasons.push_back(Reason::NotForSale);
+    if (valuation.not_for_sale)
+    {
+      valuation.reasons.push_back(Reason::NotForSale);
+    }
+    else if (context.role == SquadRole::KeyPlayer &&
+             context.contract_years >= V::KEY_PLAYER_REFUSAL_MIN_YEARS &&
+             raw_gap < V::KEY_PLAYER_REFUSAL_BUYER_GAP &&
+             context.resolve >= 1.0f - V::KEY_PLAYER_REFUSAL_SHARE)
+    {
+      valuation.not_for_sale = true;
+      valuation.reasons.push_back(Reason::KeyPlayerNotForSale);
+    }
     valuation.asking_fee = std::max(roundFeeUp(fee), FEE_ROUNDING);
   }
   if (context.release_clause > 0)
@@ -289,7 +320,9 @@ ClubResponse evaluateOffer(const SaleContext& context, const OfferTerms& terms,
 
   const auto asking = static_cast<double>(valuation.asking_fee);
   const double value = sellerValue(terms, context.age);
-  if (value >= asking * static_cast<double>(Offer::ACCEPT_SHARE))
+  const float accept_share =
+      round == 0 ? Offer::OPENING_ACCEPT_SHARE : Offer::ACCEPT_SHARE;
+  if (value >= asking * static_cast<double>(accept_share))
   {
     response.decision = ClubResponse::Decision::Accept;
     response.reasons.push_back(Reason::OfferAccepted);
@@ -307,7 +340,8 @@ ClubResponse evaluateOffer(const SaleContext& context, const OfferTerms& terms,
     return response;
   }
   response.decision = ClubResponse::Decision::Counter;
-  response.reasons.push_back(Reason::CounterOffer);
+  response.reasons.push_back(round == 0 ? Reason::OpeningBidLow
+                                        : Reason::CounterOffer);
   return response;
 }
 
@@ -382,7 +416,31 @@ ContractDemand contractDemand(const PlayerContext& context)
     demand.max_release_clause =
         roundFeeUp(static_cast<double>(context.market_value) *
                    static_cast<double>(N::RELEASE_CLAUSE_VALUE_MULTIPLE));
+  demand.asking_wage = agentAsk(context, demand, 0);
   return demand;
+}
+
+std::uint32_t agentAsk(const PlayerContext& context,
+                       const ContractDemand& demand, std::uint8_t round)
+{
+  using N = TransferTuning::Negotiation;
+  double margin = static_cast<double>(N::AGENT_BASE_MARGIN) +
+                  static_cast<double>(N::AGENT_AMBITION_MARGIN) *
+                      (context.ambition / 100.0);
+  if (context.current_club_reputation > context.new_club_reputation &&
+      context.kind != ContractKind::Renewal)
+    margin += std::min(
+        static_cast<double>(N::AGENT_STATURE_MARGIN_CAP),
+        static_cast<double>(N::AGENT_STATURE_MARGIN_PER_POINT) *
+            (context.current_club_reputation - context.new_club_reputation));
+  const int last_round = std::max(1, N::MAX_PLAYER_ROUNDS - 1);
+  const double remaining =
+      1.0 - static_cast<double>(std::min<int>(round, last_round)) / last_round;
+  const double ask =
+      static_cast<double>(demand.weekly_wage) * (1.0 + margin * remaining);
+  const double step = N::AGENT_ASK_ROUNDING;
+  return std::max(demand.weekly_wage,
+                  static_cast<std::uint32_t>(std::ceil(ask / step) * step));
 }
 
 ContractResponse evaluateContract(const PlayerContext& context,
@@ -442,13 +500,23 @@ ContractResponse evaluateContract(const PlayerContext& context,
     const double effective_wage =
         static_cast<double>(offer.weekly_wage) +
         bonus_delta / (TransferTuning::Contract::WEEKS_PER_YEAR * offer.years);
-    if (effective_wage + 0.5 < static_cast<double>(demand.weekly_wage))
-      reasons.push_back(Reason::WageTooLow);
+    const auto wanted = static_cast<double>(demand.weekly_wage);
+    if (effective_wage + 0.5 < wanted)
+      reasons.push_back(
+          effective_wage >=
+                  wanted * (1.0 - static_cast<double>(N::AGENT_PUSHBACK_BAND))
+              ? Reason::AgentPushback
+              : Reason::WageTooLow);
   }
 
   response.accepted = std::ranges::none_of(reasons, isRefusal);
-  if (!response.accepted && round + 1 >= N::MAX_PLAYER_ROUNDS)
-    reasons.push_back(Reason::TalksEnded);
+  if (!response.accepted)
+  {
+    if (round + 1 >= N::MAX_PLAYER_ROUNDS)
+      reasons.push_back(Reason::TalksEnded);
+    response.demand.asking_wage = agentAsk(
+        context, demand, static_cast<std::uint8_t>(std::min(round + 1, 255)));
+  }
   if (response.accepted) reasons.push_back(Reason::TermsAccepted);
   return response;
 }
@@ -637,6 +705,122 @@ SquadRole roleForRank(std::size_t rank)
   if (rank < 16) return SquadRole::Rotation;
   if (rank < 22) return SquadRole::Backup;
   return SquadRole::Fringe;
+}
+
+// ---------------------------------------------------------------------------
+// Squad needs
+// ---------------------------------------------------------------------------
+
+PlayerRole positionGroup(PlayerRole role)
+{
+  using enum PlayerRole;
+  switch (role)
+  {
+    case CDM:
+    case CM:
+    case CAM:
+      return CM;
+    case LM:
+    case RM:
+    case LW:
+    case RW:
+      return LW;
+    default:
+      return role;
+  }
+}
+
+const PositionNeed* SquadNeeds::find(PlayerRole role) const
+{
+  const PlayerRole group = positionGroup(role);
+  const auto found = std::ranges::find(positions, group, &PositionNeed::group);
+  return found == positions.end() ? nullptr : &*found;
+}
+
+SquadNeeds squadNeeds(std::span<const std::pair<PlayerRole, float>> squad)
+{
+  struct Shape
+  {
+    PlayerRole group;
+    std::uint8_t starters;
+    std::uint8_t wanted;
+  };
+  // A typical XI and the depth a club keeps behind it (as the AI clubs).
+  static constexpr std::array<Shape, SquadNeeds::GROUPS> SHAPE = {
+      {{PlayerRole::GK, 1, 3},
+       {PlayerRole::CB, 2, 4},
+       {PlayerRole::LB, 1, 2},
+       {PlayerRole::RB, 1, 2},
+       {PlayerRole::CM, 3, 5},
+       {PlayerRole::LW, 2, 3},
+       {PlayerRole::ST, 1, 3}}};
+  constexpr std::size_t FIRST_TEAM_SIZE = 16;
+
+  std::vector<float> overalls;
+  overalls.reserve(squad.size());
+  for (const auto& [role, overall] : squad) overalls.push_back(overall);
+  std::ranges::sort(overalls, std::greater<>{});
+  SquadNeeds needs;
+  const std::size_t top = std::min(overalls.size(), FIRST_TEAM_SIZE);
+  if (top > 0)
+    needs.squad_level =
+        std::accumulate(overalls.begin(),
+                        overalls.begin() + static_cast<std::ptrdiff_t>(top),
+                        0.0f) /
+        static_cast<float>(top);
+
+  std::vector<float> group_overalls;
+  for (std::size_t index = 0; index < SHAPE.size(); ++index)
+  {
+    const Shape& shape = SHAPE[index];
+    group_overalls.clear();
+    for (const auto& [role, overall] : squad)
+    {
+      if (positionGroup(role) == shape.group) group_overalls.push_back(overall);
+    }
+    std::ranges::sort(group_overalls, std::greater<>{});
+    PositionNeed& need = needs.positions[index];
+    need.group = shape.group;
+    need.count = static_cast<std::uint8_t>(
+        std::min<std::size_t>(group_overalls.size(), UINT8_MAX));
+    need.starters = shape.starters;
+    need.wanted = shape.wanted;
+    if (group_overalls.size() >= shape.starters)
+      need.weakest_starter = group_overalls[shape.starters - 1];
+  }
+  return needs;
+}
+
+SquadFit squadFit(const SquadNeeds& needs, PlayerRole role, float overall)
+{
+  using F = TransferTuning::Fit;
+  SquadFit fit;
+  const PositionNeed* need = needs.find(role);
+  if (need == nullptr) return fit;
+  const bool missing_starter = need->count < need->starters;
+  // Without enough starters the bar is what the AI asks of a shortage
+  // signing: a little below the squad level.
+  const float reference =
+      missing_starter
+          ? needs.squad_level - TransferTuning::Market::SHORTAGE_LEVEL_MARGIN
+          : need->weakest_starter;
+  fit.gain = overall - reference;
+  fit.score = F::UPGRADE_WEIGHT * std::clamp(fit.gain, F::MIN_GAIN, F::MAX_GAIN);
+  if (missing_starter)
+  {
+    fit.score += F::MISSING_STARTER_BONUS;
+    fit.kind = FitKind::Starter;
+  }
+  else if (fit.gain >= F::UPGRADE_MARGIN)
+  {
+    fit.kind = FitKind::Upgrade;
+  }
+  if (!missing_starter && need->count < need->wanted)
+  {
+    fit.score += F::MISSING_DEPTH_BONUS;
+    if (fit.kind == FitKind::None) fit.kind = FitKind::Depth;
+  }
+  return fit;
 }
 
 }  // namespace TransferNegotiation

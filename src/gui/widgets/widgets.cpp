@@ -8,6 +8,8 @@
 
 #include "gui/widgets/widgets.h"
 
+#include <imgui_internal.h>
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -31,6 +33,66 @@ float scaled(float value) { return value * ImGui::GetStyle().FontScaleDpi; }
 
 namespace UI
 {
+
+bool drawTextFitted(ImDrawList* drawList, ImVec2 position, ImU32 color,
+                    std::string_view text, float maxWidth)
+{
+  const char* begin = text.data();
+  const char* end = begin + text.size();
+  if (ImGui::CalcTextSize(begin, end).x <= maxWidth)
+  {
+    drawList->AddText(position, color, begin, end);
+    return false;
+  }
+  constexpr std::string_view ELLIPSIS = "…";
+  const float ellipsisWidth =
+      ImGui::CalcTextSize(ELLIPSIS.data(), ELLIPSIS.data() + ELLIPSIS.size()).x;
+  // Longest prefix (on a UTF-8 boundary) that leaves room for the ellipsis.
+  size_t low = 0;
+  size_t high = text.size();
+  while (low < high)
+  {
+    size_t middle = (low + high + 1) / 2;
+    while (middle > 0 &&
+           (static_cast<unsigned char>(text[middle]) & 0xC0U) == 0x80U)
+      --middle;
+    if (middle <= low)
+    {
+      high = low;
+      break;
+    }
+    if (ImGui::CalcTextSize(begin, begin + middle).x + ellipsisWidth <=
+        maxWidth)
+      low = middle;
+    else
+      high = middle - 1;
+  }
+  while (low > 0 && (static_cast<unsigned char>(text[low]) & 0xC0U) == 0x80U)
+    --low;
+  drawList->AddText(position, color, begin, begin + low);
+  const float prefixWidth = ImGui::CalcTextSize(begin, begin + low).x;
+  drawList->AddText(ImVec2(position.x + prefixWidth, position.y), color,
+                    ELLIPSIS.data(), ELLIPSIS.data() + ELLIPSIS.size());
+  return true;
+}
+
+void textFitted(std::string_view text, float maxWidth, const ImVec4& color)
+{
+  // Honour AlignTextToFramePadding() like ImGui::Text does.
+  const ImVec2 cursor = ImGui::GetCursorScreenPos();
+  const ImVec2 start(
+      cursor.x,
+      cursor.y + ImGui::GetCurrentWindow()->DC.CurrLineTextBaseOffset);
+  const float width = std::max(0.0f, maxWidth);
+  const bool cut = drawTextFitted(ImGui::GetWindowDrawList(), start,
+                                  Theme::toU32(color), text, width);
+  ImGui::Dummy(ImVec2(
+      std::min(width,
+               ImGui::CalcTextSize(text.data(), text.data() + text.size()).x),
+      ImGui::GetTextLineHeight()));
+  if (cut && ImGui::IsItemHovered())
+    ImGui::SetTooltip("%.*s", static_cast<int>(text.size()), text.data());
+}
 
 void pageHeader(const char* title, const char* subtitle)
 {
@@ -95,6 +157,26 @@ void beginAutoHeightCard(const char* id, const char* title)
 
 void endCard() { ImGui::EndChild(); }
 
+TileRow::TileRow(int count, float minimumWidth)
+{
+  const float gap = ImGui::GetStyle().ItemSpacing.x;
+  const float available = ImGui::GetContentRegionAvail().x;
+  const float minimum = scaled(minimumWidth);
+  per_row = std::clamp(static_cast<int>((available + gap) / (minimum + gap)), 1,
+                       std::max(1, count));
+  // Balance wrapped rows (e.g. 3 + 2 instead of 4 + 1).
+  const int rows = (count + per_row - 1) / per_row;
+  per_row = (count + rows - 1) / rows;
+  tile_width = (available - gap * static_cast<float>(per_row - 1)) /
+               static_cast<float>(per_row);
+}
+
+void TileRow::next()
+{
+  if (index % per_row != 0) ImGui::SameLine();
+  ++index;
+}
+
 float statTileHeight()
 {
   const ImGuiStyle& style = ImGui::GetStyle();
@@ -114,7 +196,11 @@ void statTile(const char* id, const char* caption, const char* value,
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,
                       ImVec2(ImGui::GetStyle().ItemSpacing.x,
                              ImGui::GetStyle().ItemSpacing.y * 0.5f));
-  sectionLabel(caption);
+  {
+    Theme::ScopedText captionText(Theme::Text::CAPTION);
+    textFitted(caption, ImGui::GetContentRegionAvail().x,
+               Theme::palette().muted);
+  }
   {
     // Long values (club names, objectives) step down a size instead of
     // overflowing the tile; the line height stays that of DISPLAY.
@@ -134,21 +220,15 @@ void statTile(const char* id, const char* caption, const char* value,
     Theme::ScopedText fitted(level);
     ImGui::SetCursorPosY(lineStart +
                          (displayHeight - ImGui::GetTextLineHeight()) * 0.5f);
-    const ImVec2 clipMin = ImGui::GetCursorScreenPos();
-    ImGui::PushClipRect(
-        clipMin, ImVec2(clipMin.x + available, clipMin.y + displayHeight),
-        true);
-    ImGui::TextColored(valueColor, "%s", value);
-    ImGui::PopClipRect();
+    textFitted(value, available, valueColor);
     ImGui::SetCursorPosY(lineStart + displayHeight);
     ImGui::Dummy(ImVec2(0.0f, 0.0f));
   }
   if (footnote != nullptr && *footnote != '\0')
   {
     Theme::ScopedText small(Theme::Text::SMALL);
-    ImGui::PushStyleColor(ImGuiCol_Text, Theme::palette().muted);
-    ImGui::TextUnformatted(footnote);
-    ImGui::PopStyleColor();
+    textFitted(footnote, ImGui::GetContentRegionAvail().x,
+               Theme::palette().muted);
   }
   ImGui::PopStyleVar();
   endCard();
@@ -171,11 +251,9 @@ void barRow(const char* label, float fraction, float labelWidth,
                available - labelWidth - valueWidth - scaled(Theme::Space::S));
 
   ImDrawList* drawList = ImGui::GetWindowDrawList();
-  drawList->PushClipRect(
-      start, ImVec2(start.x + labelWidth - scaled(4.0f), start.y + lineHeight),
-      true);
-  drawList->AddText(start, Theme::toU32(palette.muted), label);
-  drawList->PopClipRect();
+  const bool labelCut =
+      drawTextFitted(drawList, start, Theme::toU32(palette.muted), label,
+                     labelWidth - scaled(Theme::Space::S));
 
   const float barHeight = scaled(BAR_HEIGHT);
   const ImVec2 barMin(start.x + labelWidth,
@@ -192,6 +270,7 @@ void barRow(const char* label, float fraction, float labelWidth,
   drawList->AddText(ImVec2(start.x + available - textWidth, start.y),
                     Theme::toU32(color), valueText);
   ImGui::Dummy(ImVec2(available, lineHeight));
+  if (labelCut && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", label);
 }
 }  // namespace
 
@@ -267,9 +346,13 @@ void formStrip(std::span<const Outcome> outcomes)
     drawList->AddRectFilled(ImVec2(x, top), ImVec2(x + size, top + size),
                             Theme::toU32(color), scaled(3.0f));
     const ImVec2 letterSize = ImGui::CalcTextSize(letter);
-    drawList->AddText(ImVec2(x + (size - letterSize.x) * 0.5f,
-                             top + (size - letterSize.y) * 0.5f),
-                      IM_COL32(12, 14, 18, 255), letter);
+    drawList->AddText(
+        ImVec2(x + (size - letterSize.x) * 0.5f,
+               top + (size - letterSize.y) * 0.5f),
+        0.2126f * color.x + 0.7152f * color.y + 0.0722f * color.z > 0.42f
+            ? IM_COL32(12, 14, 18, 255)
+            : IM_COL32(255, 255, 255, 255),
+        letter);
     x += size + gap;
   }
   const auto count = static_cast<float>(outcomes.size());
@@ -415,13 +498,9 @@ void barChart(const char* id, std::span<const BarDatum> bars, float width,
   for (const BarDatum& bar : bars)
   {
     const ImVec2 start = ImGui::GetCursorScreenPos();
-    drawList->PushClipRect(
-        start,
-        ImVec2(start.x + labelWidth - scaled(6.0f), start.y + lineHeight),
-        true);
-    drawList->AddText(start, Theme::toU32(palette.muted), bar.label.data(),
-                      bar.label.data() + bar.label.size());
-    drawList->PopClipRect();
+    const bool labelCut =
+        drawTextFitted(drawList, start, Theme::toU32(palette.muted), bar.label,
+                       labelWidth - scaled(Theme::Space::S));
     const ImVec2 barMin(start.x + labelWidth,
                         start.y + (lineHeight - barHeight) * 0.5f);
     drawList->AddRectFilled(barMin,
@@ -438,6 +517,9 @@ void barChart(const char* id, std::span<const BarDatum> bars, float width,
         Theme::toU32(palette.text), bar.valueText.data(),
         bar.valueText.data() + bar.valueText.size());
     ImGui::Dummy(ImVec2(width, lineHeight));
+    if (labelCut && ImGui::IsItemHovered())
+      ImGui::SetTooltip("%.*s", static_cast<int>(bar.label.size()),
+                        bar.label.data());
   }
   ImGui::PopID();
 }
@@ -454,6 +536,18 @@ bool beginDataTable(const char* id, int columns, ImGuiTableFlags flags,
   if ((flags & ImGuiTableFlags_ScrollY) != 0)
     ImGui::TableSetupScrollFreeze(scrollX ? freezeColumns : 0, 1);
   return true;
+}
+
+void staticHeadersRow()
+{
+  ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+  const int columns = ImGui::TableGetColumnCount();
+  for (int column = 0; column < columns; ++column)
+  {
+    if (!ImGui::TableSetColumnIndex(column)) continue;
+    ImGui::TextColored(Theme::palette().muted, "%s",
+                       ImGui::TableGetColumnName(column));
+  }
 }
 
 bool primaryButton(const char* label, ImVec2 size)
@@ -499,14 +593,27 @@ bool link(const char* label, const char* id)
 void keyValue(const char* key, const char* value, float keyWidth)
 {
   const float startX = ImGui::GetCursorPosX();
+  const float available = ImGui::GetContentRegionAvail().x;
+  const float spacing = ImGui::GetStyle().ItemSpacing.x;
+  const float keyTextWidth = ImGui::CalcTextSize(key).x;
   ImGui::PushStyleColor(ImGuiCol_Text, Theme::palette().muted);
   ImGui::TextUnformatted(key);
   ImGui::PopStyleColor();
-  // Long (translated) labels push the value right instead of overlapping.
-  ImGui::SameLine(std::max(startX + keyWidth,
-                           ImGui::GetItemRectMax().x - ImGui::GetWindowPos().x +
-                               ImGui::GetStyle().ItemSpacing.x * 2.0f));
+  // Long (translated) labels push the value right; in narrow cards the value
+  // moves below the label, and it always wraps instead of being clipped.
+  const float valueX = std::max(keyWidth, keyTextWidth + 2.0f * spacing);
+  const float valueWidth = ImGui::CalcTextSize(value).x;
+  if (valueX + std::min(valueWidth, available * 0.35f) <= available)
+  {
+    ImGui::SameLine(startX + valueX);
+  }
+  else
+  {
+    ImGui::SetCursorPosX(startX + spacing * 2.0f);
+  }
+  ImGui::PushTextWrapPos(0.0f);
   ImGui::TextUnformatted(value);
+  ImGui::PopTextWrapPos();
 }
 
 void sameLineIfFits(float nextWidth)

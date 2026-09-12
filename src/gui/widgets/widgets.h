@@ -49,6 +49,19 @@ struct BarDatum
   std::string_view valueText;
 };
 
+/**
+ * @brief Draws text cut to maxWidth with a trailing ellipsis when needed.
+ * @return True when the text had to be shortened.
+ */
+bool drawTextFitted(ImDrawList* drawList, ImVec2 position, ImU32 color,
+                    std::string_view text, float maxWidth);
+
+/**
+ * @brief Text item limited to maxWidth; shows the full text as a tooltip
+ * when it had to be shortened.
+ */
+void textFitted(std::string_view text, float maxWidth, const ImVec4& color);
+
 /** @brief Large page title with an optional muted subtitle. */
 void pageHeader(const char* title, const char* subtitle = nullptr);
 
@@ -74,6 +87,25 @@ void endCard();
 /** @brief Figure tile: caption, big value and an optional footnote. */
 void statTile(const char* id, const char* caption, const char* value,
               const char* footnote, const ImVec4& valueColor, float width);
+
+/**
+ * @brief Lays out a row of equal tiles that wraps onto more lines when the
+ * region is too narrow for them all (small windows, large UI scale).
+ */
+class TileRow
+{
+ public:
+  explicit TileRow(int count, float minimumWidth = 175.0f);
+  /** @brief Width for each tile. */
+  [[nodiscard]] float width() const { return tile_width; }
+  /** @brief Call before each tile; keeps it on the row or wraps. */
+  void next();
+
+ private:
+  int per_row = 1;
+  int index = 0;
+  float tile_width = 0.0f;
+};
 
 /** @brief Height used by statTile(), for layout calculations. */
 float statTileHeight();
@@ -126,6 +158,12 @@ void barChart(const char* id, std::span<const BarDatum> bars, float width,
  */
 bool beginDataTable(const char* id, int columns, ImGuiTableFlags flags,
                     float minWidth, ImVec2 size, int freezeColumns = 1);
+
+/**
+ * @brief Header row of a non-sortable table: plain labels without the hover
+ * highlight that suggests a clickable header.
+ */
+void staticHeadersRow();
 
 /** @brief Accent-filled call-to-action button. */
 bool primaryButton(const char* label, ImVec2 size = ImVec2(0, 0));

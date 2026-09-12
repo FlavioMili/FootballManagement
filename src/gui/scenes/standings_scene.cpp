@@ -163,7 +163,7 @@ void StandingsScene::renderCompetitionSelector()
   }
   if (!showing_cup)
   {
-    ImGui::SameLine();
+    UI::sameLineIfFits(ImGui::CalcTextSize(LOC("STANDINGS_TIEBREAK_HELP")).x);
     ImGui::AlignTextToFramePadding();
     ImGui::TextColored(Theme::palette().faint, "%s",
                        LOC("STANDINGS_TIEBREAK_HELP"));
@@ -185,25 +185,26 @@ void StandingsScene::renderHighlights()
       });
   const auto mostWins =
       std::ranges::max_element(table, {}, &CompetitionView::StandingRow::won);
-  const float gap = ImGui::GetStyle().ItemSpacing.x;
-  const float width = (ImGui::GetContentRegionAvail().x - 3.0f * gap) / 4.0f;
+  UI::TileRow tiles(4);
+  const float width = tiles.width();
 
   const std::string leaderNote =
       fmt::sprintf(LOC("STANDINGS_POINTS_NOTE"), table.front().points);
+  tiles.next();
   UI::statTile("leader", LOC("STANDINGS_LEADER"), table.front().name.c_str(),
-               leaderNote.c_str(), palette.accent, width);
-  ImGui::SameLine();
+               leaderNote.c_str(), palette.text, width);
+  tiles.next();
   const std::string attackNote =
       fmt::sprintf(LOC("STANDINGS_GOALS_SCORED"), bestAttack->goals_for);
   UI::statTile("attack", LOC("STANDINGS_BEST_ATTACK"), bestAttack->name.c_str(),
                attackNote.c_str(), palette.text, width);
-  ImGui::SameLine();
+  tiles.next();
   const std::string defenceNote =
       fmt::sprintf(LOC("STANDINGS_GOALS_CONCEDED"), bestDefence->goals_against);
   UI::statTile("defence", LOC("STANDINGS_BEST_DEFENCE"),
                bestDefence->name.c_str(), defenceNote.c_str(), palette.text,
                width);
-  ImGui::SameLine();
+  tiles.next();
   const std::string winsNote =
       fmt::sprintf(LOC("STANDINGS_WINS_NOTE"), mostWins->won);
   UI::statTile("wins", LOC("STANDINGS_MOST_WINS"), mostWins->name.c_str(),
@@ -233,14 +234,16 @@ void StandingsScene::renderTable(float width, float height)
     ImGui::TableSetupColumn(LOC("TABLE_COL_GD"));
     ImGui::TableSetupColumn(LOC("MAIN_GAME_PTS"));
     ImGui::TableSetupColumn(LOC("TABLE_COL_FORM"));
-    ImGui::TableHeadersRow();
+    UI::staticHeadersRow();
     for (size_t index = 0; index < table.size(); ++index)
     {
       const CompetitionView::StandingRow& row = table[index];
       ImGui::TableNextRow(ImGuiTableRowFlags_None,
                           ImGui::GetTextLineHeight() + 6.0f * Theme::scale());
-      const bool promoted = index < zones.promotion;
-      const bool relegated = index + zones.relegation >= table.size();
+      // Before the first round the order is alphabetical: no zones yet.
+      const bool promoted = row.played > 0 && index < zones.promotion;
+      const bool relegated =
+          row.played > 0 && index + zones.relegation >= table.size();
       if (row.team_id == clubId)
         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1,
                                Theme::toU32(palette.accent, 0.16f));
@@ -349,7 +352,7 @@ void StandingsScene::renderCup()
   if (cup->winner)
   {
     ImGui::TextColored(
-        palette.accent, "%s",
+        palette.text, "%s",
         fmt::sprintf(LOC("CUP_WINNER"),
                      controller.getTeamById(*cup->winner)
                          ? controller.getTeamById(*cup->winner)->get().getName()
@@ -386,7 +389,7 @@ void StandingsScene::renderCup()
       ImGui::TableSetupColumn(label.c_str(), ImGuiTableColumnFlags_WidthFixed,
                               TIE_WIDTH * Theme::scale());
     }
-    ImGui::TableHeadersRow();
+    UI::staticHeadersRow();
     size_t maxTies = 0;
     for (const auto& round : cup->rounds)
       maxTies = std::max(maxTies, round.ties.size());
@@ -413,7 +416,7 @@ void StandingsScene::renderCup()
           if (match.isPlayed())
           {
             ImGui::SameLine();
-            UI::textRightColored(won ? palette.accent : palette.muted,
+            UI::textRightColored(won ? palette.positive : palette.muted,
                                  std::to_string(goals).c_str());
           }
         };

@@ -33,42 +33,42 @@ struct PresetColors
 
 constexpr std::array<PresetColors, static_cast<size_t>(Theme::Preset::COUNT)>
     PRESETS = {{
-        // Dark slate: the default neutral charcoal.
-        {ImVec4(0.045f, 0.055f, 0.066f, 1.0f),
-         ImVec4(0.058f, 0.069f, 0.082f, 1.0f),
-         ImVec4(0.075f, 0.088f, 0.103f, 1.0f),
-         ImVec4(0.112f, 0.128f, 0.147f, 1.0f),
-         ImVec4(0.160f, 0.182f, 0.205f, 1.0f),
-         ImVec4(0.905f, 0.925f, 0.940f, 1.0f),
-         ImVec4(0.575f, 0.625f, 0.665f, 1.0f),
-         ImVec4(0.380f, 0.420f, 0.460f, 1.0f), 0.022f, false},
+        // Slate (default): a soft graphite with clear elevation steps.
+        {ImVec4(0.118f, 0.133f, 0.153f, 1.0f),  // #1E2227
+         ImVec4(0.137f, 0.153f, 0.176f, 1.0f),  // #23272D
+         ImVec4(0.165f, 0.184f, 0.212f, 1.0f),  // #2A2F36
+         ImVec4(0.208f, 0.231f, 0.267f, 1.0f),  // #353B44
+         ImVec4(0.275f, 0.302f, 0.345f, 1.0f),  // #464D58
+         ImVec4(0.940f, 0.950f, 0.965f, 1.0f),
+         ImVec4(0.680f, 0.715f, 0.760f, 1.0f),
+         ImVec4(0.505f, 0.545f, 0.595f, 1.0f), 0.030f, false},
         // Midnight blue.
-        {ImVec4(0.035f, 0.047f, 0.090f, 1.0f),
-         ImVec4(0.047f, 0.063f, 0.118f, 1.0f),
-         ImVec4(0.063f, 0.082f, 0.145f, 1.0f),
-         ImVec4(0.098f, 0.122f, 0.200f, 1.0f),
-         ImVec4(0.150f, 0.180f, 0.275f, 1.0f),
-         ImVec4(0.900f, 0.920f, 0.965f, 1.0f),
-         ImVec4(0.560f, 0.610f, 0.720f, 1.0f),
-         ImVec4(0.360f, 0.400f, 0.500f, 1.0f), 0.025f, false},
+        {ImVec4(0.086f, 0.106f, 0.165f, 1.0f),
+         ImVec4(0.102f, 0.125f, 0.192f, 1.0f),
+         ImVec4(0.125f, 0.153f, 0.231f, 1.0f),
+         ImVec4(0.165f, 0.200f, 0.290f, 1.0f),
+         ImVec4(0.235f, 0.275f, 0.380f, 1.0f),
+         ImVec4(0.930f, 0.945f, 0.980f, 1.0f),
+         ImVec4(0.655f, 0.700f, 0.800f, 1.0f),
+         ImVec4(0.475f, 0.520f, 0.625f, 1.0f), 0.030f, false},
         // Pitch green.
-        {ImVec4(0.035f, 0.062f, 0.050f, 1.0f),
-         ImVec4(0.045f, 0.078f, 0.062f, 1.0f),
-         ImVec4(0.058f, 0.098f, 0.078f, 1.0f),
-         ImVec4(0.090f, 0.140f, 0.112f, 1.0f),
-         ImVec4(0.140f, 0.200f, 0.165f, 1.0f),
-         ImVec4(0.905f, 0.945f, 0.920f, 1.0f),
-         ImVec4(0.560f, 0.660f, 0.610f, 1.0f),
-         ImVec4(0.360f, 0.450f, 0.405f, 1.0f), 0.025f, false},
+        {ImVec4(0.078f, 0.122f, 0.102f, 1.0f),
+         ImVec4(0.094f, 0.145f, 0.122f, 1.0f),
+         ImVec4(0.114f, 0.173f, 0.145f, 1.0f),
+         ImVec4(0.153f, 0.224f, 0.192f, 1.0f),
+         ImVec4(0.216f, 0.298f, 0.259f, 1.0f),
+         ImVec4(0.930f, 0.965f, 0.945f, 1.0f),
+         ImVec4(0.655f, 0.745f, 0.700f, 1.0f),
+         ImVec4(0.470f, 0.560f, 0.515f, 1.0f), 0.030f, false},
         // Light.
-        {ImVec4(0.930f, 0.938f, 0.950f, 1.0f),
-         ImVec4(0.885f, 0.896f, 0.912f, 1.0f),
-         ImVec4(0.985f, 0.988f, 0.992f, 1.0f),
-         ImVec4(0.900f, 0.910f, 0.925f, 1.0f),
-         ImVec4(0.780f, 0.795f, 0.820f, 1.0f),
-         ImVec4(0.090f, 0.105f, 0.125f, 1.0f),
-         ImVec4(0.360f, 0.395f, 0.440f, 1.0f),
-         ImVec4(0.530f, 0.560f, 0.600f, 1.0f), 0.035f, true},
+        {ImVec4(0.925f, 0.933f, 0.945f, 1.0f),
+         ImVec4(0.965f, 0.969f, 0.976f, 1.0f),
+         ImVec4(1.000f, 1.000f, 1.000f, 1.0f),
+         ImVec4(0.906f, 0.914f, 0.929f, 1.0f),
+         ImVec4(0.800f, 0.812f, 0.835f, 1.0f),
+         ImVec4(0.078f, 0.090f, 0.110f, 1.0f),
+         ImVec4(0.330f, 0.360f, 0.405f, 1.0f),
+         ImVec4(0.480f, 0.510f, 0.555f, 1.0f), 0.030f, true},
         // High contrast.
         {ImVec4(0.000f, 0.000f, 0.000f, 1.0f),
          ImVec4(0.030f, 0.030f, 0.030f, 1.0f),
@@ -78,6 +78,15 @@ constexpr std::array<PresetColors, static_cast<size_t>(Theme::Preset::COUNT)>
          ImVec4(1.000f, 1.000f, 1.000f, 1.0f),
          ImVec4(0.850f, 0.850f, 0.850f, 1.0f),
          ImVec4(0.700f, 0.700f, 0.700f, 1.0f), 0.060f, false},
+        // True dark: near-black charcoal for dim rooms and OLED panels.
+        {ImVec4(0.045f, 0.055f, 0.066f, 1.0f),
+         ImVec4(0.058f, 0.069f, 0.082f, 1.0f),
+         ImVec4(0.075f, 0.088f, 0.103f, 1.0f),
+         ImVec4(0.112f, 0.128f, 0.147f, 1.0f),
+         ImVec4(0.160f, 0.182f, 0.205f, 1.0f),
+         ImVec4(0.905f, 0.925f, 0.940f, 1.0f),
+         ImVec4(0.600f, 0.650f, 0.690f, 1.0f),
+         ImVec4(0.420f, 0.460f, 0.500f, 1.0f), 0.022f, false},
     }};
 
 // Club accents are chosen for contrast on the dark surfaces, not to imitate
@@ -309,6 +318,8 @@ const char* presetKey(Preset preset)
       return "THEME_PRESET_LIGHT";
     case Preset::HIGH_CONTRAST:
       return "THEME_PRESET_HIGH_CONTRAST";
+    case Preset::TRUE_DARK:
+      return "THEME_PRESET_TRUE_DARK";
     case Preset::COUNT:
       break;
   }
@@ -323,18 +334,28 @@ ImVec4 clubAccent(TeamID teamId)
 ImVec4 ratingColor(double value)
 {
   const auto rating = static_cast<float>(value);
-  if (rating <= RATING_STOPS.front().value) return RATING_STOPS.front().color;
-  for (size_t index = 1; index < RATING_STOPS.size(); ++index)
+  ImVec4 color = RATING_STOPS.back().color;
+  if (rating <= RATING_STOPS.front().value)
   {
-    const RatingStop& upper = RATING_STOPS[index];
-    if (rating <= upper.value)
+    color = RATING_STOPS.front().color;
+  }
+  else
+  {
+    for (size_t index = 1; index < RATING_STOPS.size(); ++index)
     {
-      const RatingStop& lower = RATING_STOPS[index - 1];
-      return mix(lower.color, upper.color,
-                 (rating - lower.value) / (upper.value - lower.value));
+      const RatingStop& upper = RATING_STOPS[index];
+      if (rating <= upper.value)
+      {
+        const RatingStop& lower = RATING_STOPS[index - 1];
+        color = mix(lower.color, upper.color,
+                    (rating - lower.value) / (upper.value - lower.value));
+        break;
+      }
     }
   }
-  return RATING_STOPS.back().color;
+  // Saturated mid tones (yellow, light green) wash out on white surfaces.
+  if (presetColors().light) color = mix(color, ImVec4(0, 0, 0, 1), 0.28f);
+  return color;
 }
 
 float textSize(Text level)

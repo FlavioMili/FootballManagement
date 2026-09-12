@@ -93,4 +93,5 @@ class RosterScene : public ManagementScene
   double average_overall = 0.0;
   int64_t payroll = 0;
   int expiring_contracts = 0;
+  bool show_details = false;
 };

@@ -13,6 +13,8 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <utility>
 
 #if defined(_WIN32)
 #include <process.h>
@@ -44,6 +46,37 @@ unsigned long processId()
   return static_cast<unsigned long>(getpid());
 #endif
 }
+
+/**
+ * Per-process test root, removed at process exit so test runs never
+ * accumulate files. FM_KEEP_TEST_ARTIFACTS=1 keeps it (captures, saves) for
+ * inspection.
+ */
+class TestRuntimeRoot
+{
+ public:
+  explicit TestRuntimeRoot(std::filesystem::path directory)
+      : path(ensureDirectory(std::move(directory)))
+  {
+  }
+  ~TestRuntimeRoot()
+  {
+    // A forked child (e.g. a death test) must not delete its parent's root.
+    if (processId() != owner) return;
+    const char* keep = std::getenv("FM_KEEP_TEST_ARTIFACTS");
+    if (keep != nullptr && *keep != '\0' && std::string_view(keep) != "0")
+      return;
+    std::error_code error;
+    std::filesystem::remove_all(path, error);
+  }
+  TestRuntimeRoot(const TestRuntimeRoot&) = delete;
+  TestRuntimeRoot& operator=(const TestRuntimeRoot&) = delete;
+
+  const std::filesystem::path path;
+
+ private:
+  const unsigned long owner = processId();
+};
 }  // namespace
 
 std::filesystem::path RuntimePaths::root()
@@ -57,8 +90,11 @@ std::filesystem::path RuntimePaths::root()
   if (const char* testRoot = std::getenv("FM_TEST_RUNTIME_ROOT");
       testRoot != nullptr && *testRoot != '\0')
   {
-    return ensureDirectory(std::filesystem::absolute(testRoot) /
-                           std::to_string(processId()));
+    // Created once per process; later calls only re-create the directory
+    // if a test removed it.
+    static const TestRuntimeRoot processRoot(
+        std::filesystem::absolute(testRoot) / std::to_string(processId()));
+    return ensureDirectory(processRoot.path);
   }
 
   char* prefPath = SDL_GetPrefPath("FlavioMili", "FootballManagement");

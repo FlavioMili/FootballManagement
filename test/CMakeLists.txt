@@ -3,7 +3,7 @@ set(FM_TEST_MATCH_SEED 424242)
 # identical on every test run.
 set(FM_TEST_WORLD_SEED 20250702)
 set(FM_TEST_ENVIRONMENT
-  "SDL_VIDEODRIVER=dummy;FM_TEST_RUNTIME_ROOT=/tmp/football-management-tests;FM_MATCH_SEED=${FM_TEST_MATCH_SEED};FM_WORLD_SEED=${FM_TEST_WORLD_SEED}")
+  "SDL_VIDEODRIVER=dummy;FM_TEST_RUNTIME_ROOT=/tmp/football-management-tests;FM_MATCH_SEED=${FM_TEST_MATCH_SEED};FM_WORLD_SEED=${FM_TEST_WORLD_SEED};FM_SIM_THREADS=2")
 set(FM_TEST_LAUNCHER
   "${CMAKE_COMMAND};-E;env;${FM_TEST_ENVIRONMENT}")
 
@@ -21,6 +21,7 @@ add_executable(unit_tests
   test_view_models.cpp
   test_finances.cpp
   test_world_sim.cpp
+  test_match_scheduler.cpp
   test_scouting.cpp
   test_training.cpp
   test_staff.cpp
@@ -42,6 +43,7 @@ add_executable(core_unit_tests
   test_competitions.cpp
   test_finances.cpp
   test_world_sim.cpp
+  test_match_scheduler.cpp
   test_scouting.cpp
   test_training.cpp
   test_staff.cpp
@@ -69,6 +71,24 @@ gtest_discover_tests(
   PROPERTIES
     ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
     LABELS "unit;core;leak-check"
+)
+
+# Long GUI playtest journey (a season of a career through the real screens).
+# Own executable so it carries its own label: exclude it with `-LE playtest`.
+add_executable(playtest_tests test_playtest_journey.cpp)
+target_link_libraries(playtest_tests PRIVATE GTest::gtest_main fm_ui)
+set_property(TARGET playtest_tests PROPERTY TEST_LAUNCHER "${FM_TEST_LAUNCHER}")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  target_compile_definitions(playtest_tests PRIVATE DEBUG)
+endif()
+gtest_discover_tests(
+  playtest_tests
+  DISCOVERY_MODE PRE_TEST
+  TEST_PREFIX "playtest::"
+  PROPERTIES
+    ENVIRONMENT "${FM_TEST_ENVIRONMENT}"
+    LABELS "playtest;slow"
+    TIMEOUT 400
 )
 
 # A deliberately invalid executable verifies that the sanitizer preset really

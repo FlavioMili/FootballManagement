@@ -19,6 +19,8 @@
 #include "gui/gui_view.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
+#include "model/lineup.h"
+#include "model/team.h"
 
 namespace
 {
@@ -77,11 +79,15 @@ bool sameSliders(const StrategySliders& left, const StrategySliders& right)
       { return std::abs(left.*slider.value - right.*slider.value) < EPSILON; });
 }
 
+constexpr std::array<const char*, 5> LEVEL_KEYS = {
+    "TACTIC_LEVEL_VERY_LOW", "TACTIC_LEVEL_LOW", "TACTIC_LEVEL_MEDIUM",
+    "TACTIC_LEVEL_HIGH", "TACTIC_LEVEL_VERY_HIGH"};
+
 const char* levelKey(float value)
 {
-  if (value < 0.34f) return "TACTIC_LEVEL_LOW";
-  if (value < 0.67f) return "TACTIC_LEVEL_MEDIUM";
-  return "TACTIC_LEVEL_HIGH";
+  const auto level = static_cast<size_t>(std::clamp(value, 0.0f, 0.999f) *
+                                         static_cast<float>(LEVEL_KEYS.size()));
+  return LEVEL_KEYS[level];
 }
 
 bool tacticSlider(const SliderInfo& slider, float& value)
@@ -90,12 +96,69 @@ bool tacticSlider(const SliderInfo& slider, float& value)
   ImGui::TextUnformatted(LOC(slider.key));
   if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", LOC(slider.helpKey));
   ImGui::SameLine(SLIDER_LABEL_WIDTH * Theme::scale());
-  ImGui::SetNextItemWidth(-FLT_MIN);
+  // The level is written beside the slider, never on top of its handle.
+  float levelWidth = 0.0f;
+  for (const char* key : LEVEL_KEYS)
+    levelWidth = std::max(levelWidth, ImGui::CalcTextSize(LOC(key)).x);
+  ImGui::SetNextItemWidth(std::max(
+      60.0f * Theme::scale(), ImGui::GetContentRegionAvail().x - levelWidth -
+                                  ImGui::GetStyle().ItemSpacing.x));
   const std::string label = std::string("###") + slider.id;
   const bool changed =
-      ImGui::SliderFloat(label.c_str(), &value, 0.0f, 1.0f, "%.2f");
-  if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", LOC(slider.helpKey));
+      ImGui::SliderFloat(label.c_str(), &value, 0.0f, 1.0f, "");
+  if (ImGui::IsItemHovered())
+    ImGui::SetTooltip("%s (%.0f%%)", LOC(slider.helpKey),
+                      static_cast<double>(value * 100.0f));
+  ImGui::SameLine();
+  ImGui::TextColored(Theme::palette().muted, "%s", LOC(levelKey(value)));
   return changed;
+}
+
+// Illustrative shape: the current lineup moved by the instructions (pressing
+// and attacking intent push the block up, width spreads it, compactness
+// squeezes the lines together).
+void shapePreview(const Lineup& lineup, const StrategySliders& sliders,
+                  ImVec2 size)
+{
+  const Theme::Palette& palette = Theme::palette();
+  const float scale = Theme::scale();
+  const ImVec2 min = ImGui::GetCursorScreenPos();
+  const ImVec2 max(min.x + size.x, min.y + size.y);
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  drawList->AddRectFilled(min, max, IM_COL32(32, 106, 60, 255), 4.0f * scale);
+  const ImU32 line = IM_COL32(255, 255, 255, 110);
+  drawList->AddRect(min, max, line, 4.0f * scale, 0, 1.2f * scale);
+  const float midX = min.x + size.x * 0.5f;
+  drawList->AddLine(ImVec2(midX, min.y), ImVec2(midX, max.y), line,
+                    1.2f * scale);
+  drawList->AddCircle(ImVec2(midX, min.y + size.y * 0.5f), size.y * 0.16f, line,
+                      32, 1.2f * scale);
+
+  const auto& outfield = lineup.getOutfieldPlayers();
+  float meanX = 0.0f;
+  for (const auto& positioned : outfield) meanX += positioned.position.x;
+  meanX =
+      outfield.empty() ? 0.45f : meanX / static_cast<float>(outfield.size());
+  const float shift = 0.14f * (sliders.pressing - 0.5f) +
+                      0.10f * (sliders.offensiveBias - 0.5f);
+  const float depth = 1.25f - 0.55f * sliders.compactness;
+  const float spread = 0.70f + 0.45f * sliders.widthUsage;
+  const float radius = 4.5f * scale;
+  for (const auto& positioned : outfield)
+  {
+    const float x = std::clamp(
+        meanX + shift + (positioned.position.x - meanX) * depth, 0.04f, 0.96f);
+    const float y = std::clamp(0.5f + (positioned.position.y - 0.5f) * spread,
+                               0.05f, 0.95f);
+    drawList->AddCircleFilled(ImVec2(min.x + x * size.x, min.y + y * size.y),
+                              radius, Theme::toU32(palette.accent));
+    drawList->AddCircle(ImVec2(min.x + x * size.x, min.y + y * size.y), radius,
+                        IM_COL32(255, 255, 255, 200), 0, 1.0f * scale);
+  }
+  drawList->AddCircleFilled(
+      ImVec2(min.x + 0.04f * size.x, min.y + size.y * 0.5f), radius,
+      Theme::toU32(palette.warning));
+  ImGui::Dummy(size);
 }
 }  // namespace
 
@@ -198,6 +261,14 @@ void StrategyScene::renderSummary(float width)
   const float height =
       std::max(ImGui::GetContentRegionAvail().y, 260.0f * Theme::scale());
   UI::beginCard("tactic_summary", LOC("TACTIC_SUMMARY"), ImVec2(width, height));
+  if (const auto managed = guiView->getController().getManagedTeam())
+  {
+    const float previewWidth = ImGui::GetContentRegionAvail().x;
+    shapePreview(managed->get().getLineup(), current_sliders,
+                 ImVec2(previewWidth, previewWidth / 1.55f));
+    ImGui::TextColored(palette.faint, "%s", LOC("TACTIC_SHAPE_PREVIEW"));
+    ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
+  }
   const float labelWidth = 140.0f * Theme::scale();
   for (const SliderInfo& slider : SLIDERS)
   {

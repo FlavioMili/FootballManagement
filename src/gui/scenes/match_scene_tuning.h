@@ -10,6 +10,7 @@
 
 #include <imgui.h>
 
+#include <array>
 #include <cstddef>
 
 /** Named tuning values of the live match scene and its 2D presentation. */
@@ -17,36 +18,51 @@ struct MatchSceneTuning final
 {
   static constexpr float CELEBRATION_RADIANS_PER_PERIOD = 6.2831853f;
 
+  /** Unscaled HUD sizes; multiplied by Theme::scale() at use. */
   struct Scoreboard final
   {
-    static constexpr float EMPHASIZED_FONT_SCALE = 1.5f;
-    static constexpr float NORMAL_FONT_SCALE = 1.0f;
-    static constexpr float TIME_RIGHT_MARGIN = 150.0f;
-    static constexpr float SECONDS_PER_MINUTE = 60.0f;
+    static constexpr float HEIGHT = 100.0f;
+    static constexpr float TRACK_HEIGHT = 4.0f;
+    static constexpr float TIMELINE_MARKER_SIZE = 9.0f;
+    static constexpr float NAME_GAP = 22.0f;
+    static constexpr float KIT_SWATCH_SIZE = 12.0f;
     static constexpr float PERCENT_SCALE = 100.0f;
   };
 
   struct Controls final
   {
-    static constexpr float BUTTON_HEIGHT = 30.0f;
-    static constexpr float PAUSE_BUTTON_WIDTH = 100.0f;
-    static constexpr float SUBSTITUTION_BUTTON_WIDTH = 120.0f;
+    static constexpr float PAUSE_BUTTON_WIDTH = 120.0f;
+    static constexpr float SUBSTITUTION_BUTTON_WIDTH = 170.0f;
     static constexpr float DEBUG_BUTTON_WIDTH = 150.0f;
     static constexpr float AI_DEBUG_BUTTON_WIDTH = 130.0f;
-    static constexpr float SPEED_CONTROL_WIDTH = 150.0f;
-    static constexpr float MINIMUM_MATCH_SPEED = 0.5f;
-    static constexpr float MAXIMUM_MATCH_SPEED = 5.0f;
-    static constexpr float DEFAULT_MATCH_SPEED = 1.0f;
-    static constexpr float FINISH_BUTTON_WIDTH = 150.0f;
-    static constexpr float FINISH_BUTTON_HEIGHT = 40.0f;
+    /** Playback speeds offered as multiples of the engine's real-time
+     * pace (1x); the default comes from the engine tuning when it has one. */
+    static constexpr std::array<float, 5> SPEED_STEPS = {1.0f, 2.0f, 4.0f,
+                                                         8.0f, 16.0f};
+    static constexpr float SPEED_BUTTON_GAP = 2.0f;
+    /** Engine step of a quick result when it has no headless fast path. */
+    static constexpr float HEADLESS_STEP_SECONDS = 0.25f;
     static constexpr float VIEW_BUTTON_WIDTH = 130.0f;
+  };
+
+  struct Panel final
+  {
+    /** Statistics and events sit beside the pitch from this content width. */
+    static constexpr float SIDE_PANEL_MIN_CONTENT_WIDTH = 980.0f;
+    static constexpr float SIDE_PANEL_WIDTH_RATIO = 0.27f;
+    static constexpr float SIDE_PANEL_MIN_WIDTH = 290.0f;
+    static constexpr float SIDE_PANEL_MAX_WIDTH = 460.0f;
+    static constexpr float STATISTICS_HEIGHT_RATIO = 0.5f;
+    static constexpr float MINUTE_COLUMN_WIDTH = 52.0f;
+    static constexpr float EVENT_ICON_SIZE = 14.0f;
+    static constexpr float LINEUP_GATE_WIDTH = 640.0f;
+    static constexpr float LINEUP_GATE_TOP_RATIO = 0.15f;
   };
 
   struct View final
   {
     static constexpr float MIN_HEIGHT = 240.0f;
     static constexpr float RENDER_TIME_SMOOTHING = 0.1f;
-    static constexpr std::size_t TEAM_LABEL_LENGTH = 3;
   };
 
   struct Pitch final
@@ -54,7 +70,8 @@ struct MatchSceneTuning final
     static constexpr float WIDTH = 800.0f;
     static constexpr float HEIGHT = 500.0f;
     static constexpr float MIN_SCALE = 0.5f;
-    static constexpr float MAX_SCALE = 1.5f;
+    /** Lets the pitch fill large (1440p/4K) match views. */
+    static constexpr float MAX_SCALE = 3.0f;
     static constexpr float CENTRE_RATIO = 0.5f;
     static constexpr float LINE_THICKNESS = 2.0f;
     static constexpr float RECTANGLE_ROUNDING = 0.0f;
@@ -147,7 +164,7 @@ struct MatchSceneTuning final
 
   struct Events final
   {
-    static constexpr float PANEL_HEIGHT = 150.0f;
+    static constexpr float PANEL_HEIGHT = 170.0f;
     static constexpr float LATEST_SCROLL_RATIO = 1.0f;
   };
 
@@ -174,7 +191,9 @@ struct MatchSceneTuning final
   {
     static constexpr float MODAL_WIDTH = 820.0f;
     static constexpr float MODAL_HEIGHT = 700.0f;
+    static constexpr float MODAL_VIEWPORT_FRACTION = 0.94f;
+    static constexpr float LIST_HEIGHT = 185.0f;
+    static constexpr float DETAIL_HEIGHT = 250.0f;
     static constexpr float ACTION_BUTTON_WIDTH = 190.0f;
-    static constexpr float ACTION_BUTTON_HEIGHT = 30.0f;
   };
 };

@@ -74,6 +74,16 @@ std::string dayMonth(const GameDateValue& value)
   return std::format("{} {}", value.day, monthName(value.month));
 }
 
+const char* plural(const char* key, int64_t count)
+{
+  if (count != 1) return LOC(key);
+  const std::string singular = std::string(key) + "_ONE";
+  const char* localized = LOC(singular.c_str());
+  // LOC hands back its argument when the key is missing, and that pointer
+  // belongs to the temporary above, so fall back explicitly.
+  return singular == localized ? LOC(key) : localized;
+}
+
 std::string signedInt(int value)
 {
   return value > 0 ? std::format("+{}", value) : std::to_string(value);

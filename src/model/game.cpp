@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <optional>
 
 #include "database/database_connection.h"
 #include "database/gamedata.h"
@@ -142,6 +143,7 @@ void Game::saveGame()
 
 void Game::advanceDay()
 {
+  scheduler.resetProgress();
   currentDate.nextDay();
   Logger::debug("Date changed to: " + currentDate.toString());
   world.onDayAdvanced(currentDate, managed_team_id);
@@ -173,6 +175,36 @@ void Game::advanceDay()
 
 void Game::simulateMatches(std::vector<Match>& matches, bool include_managed)
 {
+  // Inputs are captured in fixture order, simulated in parallel and applied
+  // back in the same order. A club plays once per batch, so this equals
+  // simulating and applying the matches one by one, which is what a single
+  // simulation thread does.
+  std::vector<Match*> batch;
+  std::vector<MatchSimulationInput> inputs;
+  std::vector<TeamID> batch_teams;
+  const auto flush = [&]
+  {
+    if (inputs.empty()) return;
+    std::vector<MatchSimulationResult> results =
+        scheduler.run(inputs, gamedata->getStatsConfig());
+    for (std::size_t i = 0; i < batch.size(); ++i)
+    {
+      Match& match = *batch[i];
+      const std::vector<PlayerMatchConsequence> consequences =
+          std::move(results[i].consequences);
+      MatchReport report = match.applySimulation(std::move(results[i]));
+      for (const PlayerMatchConsequence& consequence : consequences)
+        world.applyMatchConsequences(match.getDate(), consequence,
+                                     managed_team_id);
+      world.onMatchPlayed(match, report, managed_team_id);
+      competitions.recordResult(match, std::move(report));
+    }
+    batch.clear();
+    inputs.clear();
+    batch_teams.clear();
+  };
+  const bool one_by_one = scheduler.getThreadCount() <= 1;
+
   for (auto& match : matches)
   {
     const bool managed = match.getHomeTeamId() == managed_team_id ||
@@ -181,15 +213,36 @@ void Game::simulateMatches(std::vector<Match>& matches, bool include_managed)
     {
       continue;
     }
+    if (std::ranges::contains(batch_teams, match.getHomeTeamId()) ||
+        std::ranges::contains(batch_teams, match.getAwayTeamId()))
+      flush();
 
-    MatchReport report;
+    // A missed managed fixture is played by the assistant with an eligible
+    // squad; the manager's own selection is restored afterwards.
+    std::optional<Lineup> managed_selection;
+    if (managed)
+    {
+      if (auto team = gamedata->getTeam(managed_team_id))
+      {
+        managed_selection = team->get().getLineup();
+        fixMatchdaySquad(managed_team_id, match.getMatchType());
+      }
+    }
     const auto swaps = competitions.benchSuspendedPlayers(match);
-    match.simulate((*gamedata), &report);
+    std::optional<MatchSimulationInput> input =
+        match.prepareSimulation(*gamedata);
     competitions.restoreLineups(swaps);
-    if (!match.isPlayed()) continue;
-    world.onMatchPlayed(match, report, managed_team_id);
-    competitions.recordResult(match, std::move(report));
+    if (managed_selection)
+      gamedata->getTeam(managed_team_id)->get().getLineup() =
+          *managed_selection;
+    if (!input) continue;
+    batch.push_back(&match);
+    inputs.push_back(std::move(*input));
+    batch_teams.push_back(match.getHomeTeamId());
+    batch_teams.push_back(match.getAwayTeamId());
+    if (one_by_one) flush();
   }
+  flush();
 }
 
 bool Game::setMatchResult(const GameDateValue& date, TeamID home_id,
@@ -202,8 +255,9 @@ bool Game::setMatchResult(const GameDateValue& date, TeamID home_id,
   return setMatchResult(date, home_id, away_id, std::move(report));
 }
 
-bool Game::setMatchResult(const GameDateValue& date, TeamID home_id,
-                          TeamID away_id, MatchReport report)
+bool Game::setMatchResult(
+    const GameDateValue& date, TeamID home_id, TeamID away_id,
+    MatchReport report, std::span<const PlayerMatchConsequence> consequences)
 {
   Match* match = calendar.findMatch(date, home_id, away_id);
   if (!match || match->isPlayed())
@@ -244,10 +298,65 @@ bool Game::setMatchResult(const GameDateValue& date, TeamID home_id,
     if (away_team)
       report.addLineupAppearances(away_team->get().getLineup(), away_id);
   }
+  for (const PlayerMatchConsequence& consequence : consequences)
+    world.applyMatchConsequences(date, consequence, managed_team_id);
   world.onMatchPlayed(*match, report, managed_team_id);
   competitions.recordResult(*match, std::move(report));
   competitions.afterMatchday(calendar, currentDate);
   return true;
+}
+
+bool Game::isEligible(const Player& player, MatchType type) const
+{
+  return player.isAvailable() &&
+         (type == MatchType::FRIENDLY ||
+          !competitions.getDiscipline().isSuspended(player.getId(), type));
+}
+
+std::vector<PlayerID> Game::ineligibleSelections(TeamID team_id,
+                                                 MatchType type) const
+{
+  const auto team = gamedata->getTeam(team_id);
+  if (!team) return {};
+  return MatchdaySquad::ineligible(
+      team->get().getLineup(),
+      [this, type](const Player& player) { return isEligible(player, type); });
+}
+
+std::size_t Game::fixMatchdaySquad(TeamID team_id, MatchType type)
+{
+  const auto team = gamedata->getTeam(team_id);
+  if (!team) return 0;
+  std::vector<const Player*> squad;
+  for (const PlayerID player_id : team->get().getPlayerIDs())
+  {
+    if (const auto player = gamedata->getPlayer(player_id))
+      squad.push_back(&player->get());
+  }
+  return MatchdaySquad::replaceIneligible(
+      team->get().getLineup(), squad,
+      [this, type](const Player& player) { return isEligible(player, type); },
+      gamedata->getStatsConfig());
+}
+
+std::vector<std::pair<PlayerID, PlayerID>> Game::previewMatchdaySquadFix(
+    TeamID team_id, MatchType type) const
+{
+  const auto team = gamedata->getTeam(team_id);
+  if (!team) return {};
+  std::vector<const Player*> squad;
+  for (const PlayerID player_id : team->get().getPlayerIDs())
+  {
+    if (const auto player = gamedata->getPlayer(player_id))
+      squad.push_back(&player->get());
+  }
+  const Lineup& current = team->get().getLineup();
+  Lineup fixed = current;
+  MatchdaySquad::replaceIneligible(
+      fixed, squad,
+      [this, type](const Player& player) { return isEligible(player, type); },
+      gamedata->getStatsConfig());
+  return MatchdaySquad::replacements(current, fixed);
 }
 
 void Game::endSeason()

@@ -19,6 +19,7 @@
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
 #include "gui/view_models/competition_view.h"
+#include "gui/view_models/match_clock.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
 #include "gui/widgets/widgets.h"
@@ -148,9 +149,7 @@ void MatchReportScene::refresh()
     // An own goal is listed under the side it counts for.
     row.home =
         event.kind == MatchEventKind::OWN_GOAL ? !event.home : event.home;
-    row.minute = event.added_minute > 0
-                     ? std::format("{}+{}'", event.minute, event.added_minute)
-                     : std::format("{}'", event.minute);
+    row.minute = MatchClock::minuteLabel(event);
     row.text = playerName(data, event.player);
     if (row.text.empty()) row.text = LOC("REPORT_UNKNOWN_PLAYER");
     if (event.kind == MatchEventKind::OWN_GOAL)
@@ -376,7 +375,7 @@ void MatchReportScene::renderRatings(const char* id, const std::string& club,
     ImGui::TableSetupColumn(LOC("STATS_COL_GOALS"));
     ImGui::TableSetupColumn(LOC("STATS_COL_ASSISTS"));
     ImGui::TableSetupColumn(LOC("STATS_COL_RATING"));
-    ImGui::TableHeadersRow();
+    UI::staticHeadersRow();
     for (const PlayerRow& row : rows)
     {
       ImGui::TableNextRow();
