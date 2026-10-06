@@ -148,8 +148,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a60fcb8b8d3e573e703566ca811e088c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf8cf08f6a17b02c21f1d95907a3263c" id="r_aaf8cf08f6a17b02c21f1d95907a3263c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#aaf8cf08f6a17b02c21f1d95907a3263c">ageAllPlayers</a> ()</td></tr>
 <tr class="separator:aaf8cf08f6a17b02c21f1d95907a3263c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a85837121f45469a08519fe9566cd8c18" id="r_a85837121f45469a08519fe9566cd8c18"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a85837121f45469a08519fe9566cd8c18">advanceContractsAndReleasePlayers</a> ()</td></tr>
-<tr class="separator:a85837121f45469a08519fe9566cd8c18"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2cef030aa41284f9b45612b3d779f8cc" id="r_a2cef030aa41284f9b45612b3d779f8cc"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a2cef030aa41284f9b45612b3d779f8cc">advanceContractsAndReleasePlayers</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> keep_selection=<a class="el" href="global_8h.html#ad739458e122087a2668268985c8c993c">FREE_AGENTS_TEAM_ID</a>)</td></tr>
+<tr class="separator:a2cef030aa41284f9b45612b3d779f8cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54d5efeb2ac5ceeb5b6288a096edc079" id="r_a54d5efeb2ac5ceeb5b6288a096edc079"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a54d5efeb2ac5ceeb5b6288a096edc079">addPlayer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> id, const <a class="el" href="classPlayer.html">Player</a> &amp;player)</td></tr>
 <tr class="separator:a54d5efeb2ac5ceeb5b6288a096edc079"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a675aa9f1f3a7580325ac182fe645e957" id="r_a675aa9f1f3a7580325ac182fe645e957"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a675aa9f1f3a7580325ac182fe645e957">getPlayer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> id) const</td></tr>
@@ -162,10 +162,46 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:abf4cc1d8f371cd6f5229d9e977a9b0b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe124849455cfa68a0481368d7c96f43" id="r_afe124849455cfa68a0481368d7c96f43"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#afe124849455cfa68a0481368d7c96f43">getPlayersForTeam</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id) const</td></tr>
 <tr class="separator:afe124849455cfa68a0481368d7c96f43"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a464a363026569f5dc93d43360987c696" id="r_a464a363026569f5dc93d43360987c696"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a464a363026569f5dc93d43360987c696">getAcademyForTeam</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id) const</td></tr>
+<tr class="separator:a464a363026569f5dc93d43360987c696"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f6d10ea2ef41289e695561dcf2ca95c" id="r_a9f6d10ea2ef41289e695561dcf2ca95c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a9f6d10ea2ef41289e695561dcf2ca95c">setAcademyMember</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> id, bool academy)</td></tr>
+<tr class="separator:a9f6d10ea2ef41289e695561dcf2ca95c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9663604d814b640133dce9bcbd7f9798" id="r_a9663604d814b640133dce9bcbd7f9798"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a9663604d814b640133dce9bcbd7f9798">removePlayer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> id)</td></tr>
 <tr class="separator:a9663604d814b640133dce9bcbd7f9798"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa33566325177829cd9c041154fda4971" id="r_aa33566325177829cd9c041154fda4971"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#aa33566325177829cd9c041154fda4971">transferPlayer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> new_team_id)</td></tr>
 <tr class="separator:aa33566325177829cd9c041154fda4971"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1d96426f1dbcdddf9d69f78e5a76710" id="r_ae1d96426f1dbcdddf9d69f78e5a76710"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceSquadNumbers.html#a2e5e5cbc92c0ee1ddc0c267f3b743ae8">SquadNumbers::Change</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#ae1d96426f1dbcdddf9d69f78e5a76710">setSquadNumber</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> id, int number)</td></tr>
+<tr class="separator:ae1d96426f1dbcdddf9d69f78e5a76710"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4166332e31b750053903060e3049973" id="r_ae4166332e31b750053903060e3049973"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#ae4166332e31b750053903060e3049973">assignSquadNumbers</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id, <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> newcomer=0)</td></tr>
+<tr class="separator:ae4166332e31b750053903060e3049973"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adeea33212b468a66045f4379685373ee" id="r_adeea33212b468a66045f4379685373ee"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#adeea33212b468a66045f4379685373ee">setWorldSeed</a> (std::uint64_t seed)</td></tr>
+<tr class="memdesc:adeea33212b468a66045f4379685373ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seeds the generation of a new world (call before loadFromDB).  <br /></td></tr>
+<tr class="separator:adeea33212b468a66045f4379685373ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22f07c9d7db4941e7f47f8cd01c68fff" id="r_a22f07c9d7db4941e7f47f8cd01c68fff"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a22f07c9d7db4941e7f47f8cd01c68fff">getWorldSeed</a> () const</td></tr>
+<tr class="memdesc:a22f07c9d7db4941e7f47f8cd01c68fff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seed of every random stream of the world simulation.  <br /></td></tr>
+<tr class="separator:a22f07c9d7db4941e7f47f8cd01c68fff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0407073ee52b5fb9451ad28eda6ab8f" id="r_aa0407073ee52b5fb9451ad28eda6ab8f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#aa0407073ee52b5fb9451ad28eda6ab8f">allocatePlayerId</a> ()</td></tr>
+<tr class="memdesc:aa0407073ee52b5fb9451ad28eda6ab8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a new, never reused player id.  <br /></td></tr>
+<tr class="separator:aa0407073ee52b5fb9451ad28eda6ab8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aecfbd9f38cc0e36e19cfaacf8c89456f" id="r_aecfbd9f38cc0e36e19cfaacf8c89456f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#aecfbd9f38cc0e36e19cfaacf8c89456f">peekNextPlayerId</a> () const</td></tr>
+<tr class="memdesc:aecfbd9f38cc0e36e19cfaacf8c89456f"><td class="mdescLeft">&#160;</td><td class="mdescRight">The id the next <a class="el" href="classGameData.html#aa0407073ee52b5fb9451ad28eda6ab8f" title="Returns a new, never reused player id.">allocatePlayerId()</a> call will return.  <br /></td></tr>
+<tr class="separator:aecfbd9f38cc0e36e19cfaacf8c89456f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d4b549ce4ca55b3d71dc254d6d4409d" id="r_a8d4b549ce4ca55b3d71dc254d6d4409d"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a8d4b549ce4ca55b3d71dc254d6d4409d">getRemovedPlayerIds</a> () const</td></tr>
+<tr class="memdesc:a8d4b549ce4ca55b3d71dc254d6d4409d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Players removed (retired) since the last save.  <br /></td></tr>
+<tr class="separator:a8d4b549ce4ca55b3d71dc254d6d4409d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e2f2e4a406a0fd0ef40ef215332ea91" id="r_a9e2f2e4a406a0fd0ef40ef215332ea91"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a9e2f2e4a406a0fd0ef40ef215332ea91">clearRemovedPlayerIds</a> ()</td></tr>
+<tr class="memdesc:a9e2f2e4a406a0fd0ef40ef215332ea91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Forgets removed players once their deletion is persisted.  <br /></td></tr>
+<tr class="separator:a9e2f2e4a406a0fd0ef40ef215332ea91"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12e63f317ca759f865c5905e8529e5c7" id="r_a12e63f317ca759f865c5905e8529e5c7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classStaffRoster.html">StaffRoster</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a12e63f317ca759f865c5905e8529e5c7">getStaff</a> ()</td></tr>
+<tr class="memdesc:a12e63f317ca759f865c5905e8529e5c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coaches, medics and scouts of every club plus the staff market.  <br /></td></tr>
+<tr class="separator:a12e63f317ca759f865c5905e8529e5c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af76819fc7c8d035a990cdb96e73120cf" id="r_af76819fc7c8d035a990cdb96e73120cf"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classStaffRoster.html">StaffRoster</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#af76819fc7c8d035a990cdb96e73120cf">getStaff</a> () const</td></tr>
+<tr class="separator:af76819fc7c8d035a990cdb96e73120cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96c4ac29c0f104d57e2561f8377df172" id="r_a96c4ac29c0f104d57e2561f8377df172"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTrainingRegistry.html">TrainingRegistry</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a96c4ac29c0f104d57e2561f8377df172">getTraining</a> ()</td></tr>
+<tr class="memdesc:a96c4ac29c0f104d57e2561f8377df172"><td class="mdescLeft">&#160;</td><td class="mdescRight">Training plans, familiarity and player workloads.  <br /></td></tr>
+<tr class="separator:a96c4ac29c0f104d57e2561f8377df172"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9181c5e8611eb8d27f52b8094b774dd9" id="r_a9181c5e8611eb8d27f52b8094b774dd9"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classTrainingRegistry.html">TrainingRegistry</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a9181c5e8611eb8d27f52b8094b774dd9">getTraining</a> () const</td></tr>
+<tr class="separator:a9181c5e8611eb8d27f52b8094b774dd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae27c9e577abdde2974d8e351e086a510" id="r_ae27c9e577abdde2974d8e351e086a510"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#ae27c9e577abdde2974d8e351e086a510">saveTransferListing</a> (const <a class="el" href="structTransferListing.html">TransferListing</a> &amp;listing) const</td></tr>
 <tr class="memdesc:ae27c9e577abdde2974d8e351e086a510"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves a transfer listing to the database (UPSERT).  <br /></td></tr>
 <tr class="separator:ae27c9e577abdde2974d8e351e086a510"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -184,6 +220,12 @@ Private Member Functions</h2></td></tr>
 <tr class="separator:a123e2a349374cc053a74502c8ca8941c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac4e958180d6268673123f37b35d11a3a" id="r_ac4e958180d6268673123f37b35d11a3a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#ac4e958180d6268673123f37b35d11a3a">loadExistingData</a> ()</td></tr>
 <tr class="separator:ac4e958180d6268673123f37b35d11a3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a8c20edbb8e5c6845648b3e999322e4" id="r_a3a8c20edbb8e5c6845648b3e999322e4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a3a8c20edbb8e5c6845648b3e999322e4">migrateSchema</a> () const</td></tr>
+<tr class="separator:a3a8c20edbb8e5c6845648b3e999322e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b3f180d561d4e8cd7d0dd16cb04d14a" id="r_a8b3f180d561d4e8cd7d0dd16cb04d14a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a8b3f180d561d4e8cd7d0dd16cb04d14a">restoreWorldState</a> ()</td></tr>
+<tr class="separator:a8b3f180d561d4e8cd7d0dd16cb04d14a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a705447c3050a67d2beab37665b2d55da" id="r_a705447c3050a67d2beab37665b2d55da"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a705447c3050a67d2beab37665b2d55da">restoreStaffAndTraining</a> ()</td></tr>
+<tr class="separator:a705447c3050a67d2beab37665b2d55da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -201,10 +243,24 @@ Private Attributes</h2></td></tr>
 <tr class="separator:af35deeda852492036a6be47b94cec5c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d5ff1b5755f26ecb457adffc136e149" id="r_a4d5ff1b5755f26ecb457adffc136e149"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>, std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a4d5ff1b5755f26ecb457adffc136e149">_teamPlayers</a></td></tr>
 <tr class="separator:a4d5ff1b5755f26ecb457adffc136e149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1c839aa473857f19e2d7c81146483f2" id="r_ac1c839aa473857f19e2d7c81146483f2"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>, std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#ac1c839aa473857f19e2d7c81146483f2">_teamAcademies</a></td></tr>
+<tr class="separator:ac1c839aa473857f19e2d7c81146483f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a16a70375e019a0a1e5b3665c8f88201d" id="r_a16a70375e019a0a1e5b3665c8f88201d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structStatsConfig.html">StatsConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a16a70375e019a0a1e5b3665c8f88201d">stats_config</a></td></tr>
 <tr class="separator:a16a70375e019a0a1e5b3665c8f88201d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a420050a66a4182e8bb6c45f04af751" id="r_a3a420050a66a4182e8bb6c45f04af751"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="el" href="classDatabaseConnection.html">DatabaseConnection</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a3a420050a66a4182e8bb6c45f04af751">db_conn</a></td></tr>
 <tr class="separator:a3a420050a66a4182e8bb6c45f04af751"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af3a52bec4dd65da74a0e9e43bb81c2a4" id="r_af3a52bec4dd65da74a0e9e43bb81c2a4"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#af3a52bec4dd65da74a0e9e43bb81c2a4">world_seed</a> = 0</td></tr>
+<tr class="separator:af3a52bec4dd65da74a0e9e43bb81c2a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a20cb974bee9206d156805f317992eeda" id="r_a20cb974bee9206d156805f317992eeda"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a20cb974bee9206d156805f317992eeda">world_seed_set</a> = false</td></tr>
+<tr class="separator:a20cb974bee9206d156805f317992eeda"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a347f6de955771d7630ff2d8ea1c96078" id="r_a347f6de955771d7630ff2d8ea1c96078"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a347f6de955771d7630ff2d8ea1c96078">next_player_id</a> = 1</td></tr>
+<tr class="separator:a347f6de955771d7630ff2d8ea1c96078"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d9e6fe85c00a9ceb292801deef5738d" id="r_a2d9e6fe85c00a9ceb292801deef5738d"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a2d9e6fe85c00a9ceb292801deef5738d">removed_player_ids</a></td></tr>
+<tr class="separator:a2d9e6fe85c00a9ceb292801deef5738d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7fe624bf36262367c002b561d6315ad7" id="r_a7fe624bf36262367c002b561d6315ad7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classStaffRoster.html">StaffRoster</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#a7fe624bf36262367c002b561d6315ad7">staff</a></td></tr>
+<tr class="separator:a7fe624bf36262367c002b561d6315ad7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af65f59d724e08491da49db362c6ea0c1" id="r_af65f59d724e08491da49db362c6ea0c1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTrainingRegistry.html">TrainingRegistry</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGameData.html#af65f59d724e08491da49db362c6ea0c1">training</a></td></tr>
+<tr class="separator:af65f59d724e08491da49db362c6ea0c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Singleton class that acts as an in-memory cache for the database state. </p>
@@ -348,8 +404,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a85837121f45469a08519fe9566cd8c18" name="a85837121f45469a08519fe9566cd8c18"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a85837121f45469a08519fe9566cd8c18">&#9670;&#160;</a></span>advanceContractsAndReleasePlayers()</h2>
+<a id="a2cef030aa41284f9b45612b3d779f8cc" name="a2cef030aa41284f9b45612b3d779f8cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2cef030aa41284f9b45612b3d779f8cc">&#9670;&#160;</a></span>advanceContractsAndReleasePlayers()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -357,12 +413,13 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="memname">std::vector&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt; GameData::advanceContractsAndReleasePlayers </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>keep_selection</em> = <code><a class="el" href="global_8h.html#ad739458e122087a2668268985c8c993c">FREE_AGENTS_TEAM_ID</a></code></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Advances contracts and releases newly out-of-contract players. </p>
+<p>Advances contracts and releases newly out-of-contract players. Clubs that lose a player get a new line-up, except <code>keep_selection</code> (the manager's club), whose gaps the caller fills. </p>
 
 </div>
 </div>
@@ -380,6 +437,73 @@ Private Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa0407073ee52b5fb9451ad28eda6ab8f" name="aa0407073ee52b5fb9451ad28eda6ab8f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa0407073ee52b5fb9451ad28eda6ab8f">&#9670;&#160;</a></span>allocatePlayerId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> GameData::allocatePlayerId </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns a new, never reused player id. </p>
+
+</div>
+</div>
+<a id="ae4166332e31b750053903060e3049973" name="ae4166332e31b750053903060e3049973"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4166332e31b750053903060e3049973">&#9670;&#160;</a></span>assignSquadNumbers()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GameData::assignSquadNumbers </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>newcomer</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Numbers the club's senior players who have none or share one. The number of <code>newcomer</code> (just arrived) only counts as his wish. </p>
+
+</div>
+</div>
+<a id="a9e2f2e4a406a0fd0ef40ef215332ea91" name="a9e2f2e4a406a0fd0ef40ef215332ea91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9e2f2e4a406a0fd0ef40ef215332ea91">&#9670;&#160;</a></span>clearRemovedPlayerIds()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GameData::clearRemovedPlayerIds </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Forgets removed players once their deletion is persisted. </p>
 
 </div>
 </div>
@@ -425,6 +549,25 @@ Private Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a464a363026569f5dc93d43360987c696" name="a464a363026569f5dc93d43360987c696"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a464a363026569f5dc93d43360987c696">&#9670;&#160;</a></span>getAcademyForTeam()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt; &amp; GameData::getAcademyForTeam </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Academy players of a club (still club players for contracts and wages, but not part of the senior squad). </p>
 
 </div>
 </div>
@@ -564,6 +707,7 @@ Private Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Senior squad of a club: academy players (U18 squad and intake trialists) are listed by <a class="el" href="classGameData.html#a464a363026569f5dc93d43360987c696">getAcademyForTeam()</a>. </p>
 
 </div>
 </div>
@@ -580,6 +724,77 @@ Private Attributes</h2></td></tr>
           <td> const</td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8d4b549ce4ca55b3d71dc254d6d4409d" name="a8d4b549ce4ca55b3d71dc254d6d4409d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8d4b549ce4ca55b3d71dc254d6d4409d">&#9670;&#160;</a></span>getRemovedPlayerIds()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt; &amp; GameData::getRemovedPlayerIds </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Players removed (retired) since the last save. </p>
+
+</div>
+</div>
+<a id="a12e63f317ca759f865c5905e8529e5c7" name="a12e63f317ca759f865c5905e8529e5c7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12e63f317ca759f865c5905e8529e5c7">&#9670;&#160;</a></span>getStaff() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classStaffRoster.html">StaffRoster</a> &amp; GameData::getStaff </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Coaches, medics and scouts of every club plus the staff market. </p>
+
+</div>
+</div>
+<a id="af76819fc7c8d035a990cdb96e73120cf" name="af76819fc7c8d035a990cdb96e73120cf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af76819fc7c8d035a990cdb96e73120cf">&#9670;&#160;</a></span>getStaff() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classStaffRoster.html">StaffRoster</a> &amp; GameData::getStaff </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
@@ -688,6 +903,77 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a96c4ac29c0f104d57e2561f8377df172" name="a96c4ac29c0f104d57e2561f8377df172"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96c4ac29c0f104d57e2561f8377df172">&#9670;&#160;</a></span>getTraining() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classTrainingRegistry.html">TrainingRegistry</a> &amp; GameData::getTraining </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Training plans, familiarity and player workloads. </p>
+
+</div>
+</div>
+<a id="a9181c5e8611eb8d27f52b8094b774dd9" name="a9181c5e8611eb8d27f52b8094b774dd9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9181c5e8611eb8d27f52b8094b774dd9">&#9670;&#160;</a></span>getTraining() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classTrainingRegistry.html">TrainingRegistry</a> &amp; GameData::getTraining </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a22f07c9d7db4941e7f47f8cd01c68fff" name="a22f07c9d7db4941e7f47f8cd01c68fff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22f07c9d7db4941e7f47f8cd01c68fff">&#9670;&#160;</a></span>getWorldSeed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t GameData::getWorldSeed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Seed of every random stream of the world simulation. </p>
+
+</div>
+</div>
 <a id="a7ec09782ec319366079c90e1ee437788" name="a7ec09782ec319366079c90e1ee437788"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7ec09782ec319366079c90e1ee437788">&#9670;&#160;</a></span>loadAllTransferListings()</h2>
 
@@ -784,6 +1070,31 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a3a8c20edbb8e5c6845648b3e999322e4" name="a3a8c20edbb8e5c6845648b3e999322e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a8c20edbb8e5c6845648b3e999322e4">&#9670;&#160;</a></span>migrateSchema()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GameData::migrateSchema </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a976075ba17848d8ad927bef2cc584d94" name="a976075ba17848d8ad927bef2cc584d94"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a976075ba17848d8ad927bef2cc584d94">&#9670;&#160;</a></span>operator=()</h2>
 
@@ -810,6 +1121,25 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="aecfbd9f38cc0e36e19cfaacf8c89456f" name="aecfbd9f38cc0e36e19cfaacf8c89456f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aecfbd9f38cc0e36e19cfaacf8c89456f">&#9670;&#160;</a></span>peekNextPlayerId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> GameData::peekNextPlayerId </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The id the next <a class="el" href="classGameData.html#aa0407073ee52b5fb9451ad28eda6ab8f" title="Returns a new, never reused player id.">allocatePlayerId()</a> call will return. </p>
+
+</div>
+</div>
 <a id="a9663604d814b640133dce9bcbd7f9798" name="a9663604d814b640133dce9bcbd7f9798"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9663604d814b640133dce9bcbd7f9798">&#9670;&#160;</a></span>removePlayer()</h2>
 
@@ -824,6 +1154,56 @@ Private Attributes</h2></td></tr>
           <td></td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a705447c3050a67d2beab37665b2d55da" name="a705447c3050a67d2beab37665b2d55da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a705447c3050a67d2beab37665b2d55da">&#9670;&#160;</a></span>restoreStaffAndTraining()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GameData::restoreStaffAndTraining </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8b3f180d561d4e8cd7d0dd16cb04d14a" name="a8b3f180d561d4e8cd7d0dd16cb04d14a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b3f180d561d4e8cd7d0dd16cb04d14a">&#9670;&#160;</a></span>restoreWorldState()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GameData::restoreWorldState </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
@@ -868,6 +1248,85 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a9f6d10ea2ef41289e695561dcf2ca95c" name="a9f6d10ea2ef41289e695561dcf2ca95c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f6d10ea2ef41289e695561dcf2ca95c">&#9670;&#160;</a></span>setAcademyMember()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GameData::setAcademyMember </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>academy</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Moves a player of his club between the senior squad and the academy: sets <a class="el" href="classPlayer.html#ad78afd297ee8ef5b841c8a2d5b7bc564" title="True for U18 players and intake trialists.">Player::isAcademyPlayer()</a> and keeps the club's lists in sync. </p>
+
+</div>
+</div>
+<a id="ae1d96426f1dbcdddf9d69f78e5a76710" name="ae1d96426f1dbcdddf9d69f78e5a76710"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1d96426f1dbcdddf9d69f78e5a76710">&#9670;&#160;</a></span>setSquadNumber()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespaceSquadNumbers.html#a2e5e5cbc92c0ee1ddc0c267f3b743ae8">SquadNumbers::Change</a> GameData::setSquadNumber </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>number</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Gives <code>id</code> squad number <code>number</code> (1-99) at his club; a teammate wearing it takes his old number. </p>
+
+</div>
+</div>
+<a id="adeea33212b468a66045f4379685373ee" name="adeea33212b468a66045f4379685373ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adeea33212b468a66045f4379685373ee">&#9670;&#160;</a></span>setWorldSeed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GameData::setWorldSeed </td>
+          <td>(</td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>seed</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Seeds the generation of a new world (call before loadFromDB). </p>
+<p>Without an explicit seed a new world uses FM_WORLD_SEED from the environment or, failing that, the system clock. Loaded saves use their stored seed. </p>
+
+</div>
+</div>
 <a id="aa33566325177829cd9c041154fda4971" name="aa33566325177829cd9c041154fda4971"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa33566325177829cd9c041154fda4971">&#9670;&#160;</a></span>transferPlayer()</h2>
 
@@ -893,6 +1352,7 @@ Private Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Moves a player to another club's senior squad (academy membership does not travel with him). He keeps his squad number when it is free at the new club, otherwise he gets a free one (<a class="el" href="namespaceSquadNumbers.html">SquadNumbers</a>). </p>
 
 </div>
 </div>
@@ -974,6 +1434,28 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::vector&lt;std::reference_wrapper&lt;const <a class="el" href="classPlayer.html">Player</a>&gt; &gt; GameData::_playersVec</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac1c839aa473857f19e2d7c81146483f2" name="ac1c839aa473857f19e2d7c81146483f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac1c839aa473857f19e2d7c81146483f2">&#9670;&#160;</a></span>_teamAcademies</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unordered_map&lt;<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>, std::vector&lt;std::reference_wrapper&lt;const <a class="el" href="classPlayer.html">Player</a>&gt; &gt; &gt; GameData::_teamAcademies</td>
         </tr>
       </table>
   </td>
@@ -1073,6 +1555,72 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a347f6de955771d7630ff2d8ea1c96078" name="a347f6de955771d7630ff2d8ea1c96078"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a347f6de955771d7630ff2d8ea1c96078">&#9670;&#160;</a></span>next_player_id</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> GameData::next_player_id = 1</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2d9e6fe85c00a9ceb292801deef5738d" name="a2d9e6fe85c00a9ceb292801deef5738d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d9e6fe85c00a9ceb292801deef5738d">&#9670;&#160;</a></span>removed_player_ids</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&gt; GameData::removed_player_ids</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7fe624bf36262367c002b561d6315ad7" name="a7fe624bf36262367c002b561d6315ad7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7fe624bf36262367c002b561d6315ad7">&#9670;&#160;</a></span>staff</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classStaffRoster.html">StaffRoster</a> GameData::staff</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a16a70375e019a0a1e5b3665c8f88201d" name="a16a70375e019a0a1e5b3665c8f88201d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a16a70375e019a0a1e5b3665c8f88201d">&#9670;&#160;</a></span>stats_config</h2>
 
@@ -1084,6 +1632,72 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="structStatsConfig.html">StatsConfig</a> GameData::stats_config</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af65f59d724e08491da49db362c6ea0c1" name="af65f59d724e08491da49db362c6ea0c1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af65f59d724e08491da49db362c6ea0c1">&#9670;&#160;</a></span>training</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classTrainingRegistry.html">TrainingRegistry</a> GameData::training</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af3a52bec4dd65da74a0e9e43bb81c2a4" name="af3a52bec4dd65da74a0e9e43bb81c2a4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af3a52bec4dd65da74a0e9e43bb81c2a4">&#9670;&#160;</a></span>world_seed</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t GameData::world_seed = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a20cb974bee9206d156805f317992eeda" name="a20cb974bee9206d156805f317992eeda"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a20cb974bee9206d156805f317992eeda">&#9670;&#160;</a></span>world_seed_set</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GameData::world_seed_set = false</td>
         </tr>
       </table>
   </td>

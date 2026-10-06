@@ -1,0 +1,27 @@
+var classAwardSystem =
+[
+    [ "ClubTallies", "classAwardSystem.html#aaaa24afe1eee15bb627de6fa620648fb", null ],
+    [ "PlayerTallies", "classAwardSystem.html#a4bf8422cbd679231495c12d778ccd0b8", null ],
+    [ "addRecord", "classAwardSystem.html#a93e505f0e21687b974856ae8231beb80", null ],
+    [ "awardMonth", "classAwardSystem.html#a6fdac53347b676ed530976a9bd9a3655", null ],
+    [ "awardSeason", "classAwardSystem.html#a0cf77a53065032f1eb7f0a5f2207537d", null ],
+    [ "candidates", "classAwardSystem.html#a8d48ad27cee82b170990de5a40208c9f", null ],
+    [ "clear", "classAwardSystem.html#ac0860c0e68bc2bf7e1acf03d186ff3b0", null ],
+    [ "forLeague", "classAwardSystem.html#a1cc48d06fa563709162cfdb32ff01013", null ],
+    [ "history", "classAwardSystem.html#a7c5fa0057e0e15b86413098fc332e62a", null ],
+    [ "honoursFor", "classAwardSystem.html#a3387411c1e891300b9736954810325b5", null ],
+    [ "load", "classAwardSystem.html#ac6d2addb2140331fcd52dd5b87a09d03", null ],
+    [ "monthTallies", "classAwardSystem.html#aabbfd6d2366a7fa00f2c3c51ebab1448", null ],
+    [ "onMatchPlayed", "classAwardSystem.html#ada24b7443fbb2408eeab5818581c1e5a", null ],
+    [ "onMonthStart", "classAwardSystem.html#ad01fe4fc69352eae34d16c6cdc6d8d73", null ],
+    [ "save", "classAwardSystem.html#ae10ca0320258d366a26a267fe9ed7823", null ],
+    [ "seasonHonours", "classAwardSystem.html#af66dfbd3e0890e1a20e02b7a6b7c60b6", null ],
+    [ "seasonTallies", "classAwardSystem.html#a884a93f0bad571d7f150d7f72eea1063", null ],
+    [ "valueMultiplier", "classAwardSystem.html#a6cb4bb66ca3e491e2189ce500123058e", null ],
+    [ "month_clubs", "classAwardSystem.html#a42ca8d61de1053c527edaadfa1dfadfd", null ],
+    [ "month_goals", "classAwardSystem.html#a64ce64f995231fe9793f91d680db797d", null ],
+    [ "month_players", "classAwardSystem.html#af4eb61c16d0e7e988b67887918f4f1da", null ],
+    [ "records", "classAwardSystem.html#a71e8d81bda2558c93d130bb2016e3fa0", null ],
+    [ "season_clubs", "classAwardSystem.html#ab7287360d3abdc0c76d166f29d2010d5", null ],
+    [ "season_players", "classAwardSystem.html#ae028d3aee69ed3277f12e32919a0e2cb", null ]
+];

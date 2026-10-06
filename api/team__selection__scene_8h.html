@@ -98,10 +98,14 @@ $(document).ready(function(){initNavTree('team__selection__scene_8h.html',''); i
   <div class="headertitle"><div class="title">team_selection_scene.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
+<div class="textblock"><code>#include &lt;imgui.h&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;optional&gt;</code><br />
+<code>#include &lt;set&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 <code>#include &quot;<a class="el" href="gui__scene_8h_source.html">gui/gui_scene.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="manager__scene_8h_source.html">gui/scenes/manager_scene.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="league_8h_source.html">model/league.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="team_8h_source.html">model/team.h</a>&quot;</code><br />
 </div>
@@ -111,6 +115,12 @@ $(document).ready(function(){initNavTree('team__selection__scene_8h.html',''); i
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html">TeamSelectionScene</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Scene for selecting a team.  <a href="classTeamSelectionScene.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTeamSelectionScene_1_1ClubSummary.html">TeamSelectionScene::ClubSummary</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cached, display-ready summary of one selectable club.  <a href="structTeamSelectionScene_1_1ClubSummary.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTeamSelectionScene_1_1LeagueEntry.html">TeamSelectionScene::LeagueEntry</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">One entry of the league list, grouped by country.  <a href="structTeamSelectionScene_1_1LeagueEntry.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->

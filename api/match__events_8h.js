@@ -1,0 +1,57 @@
+var match__events_8h =
+[
+    [ "MatchEvent", "structMatchEvent.html", "structMatchEvent" ],
+    [ "PlayerMatchStats", "structPlayerMatchStats.html", "structPlayerMatchStats" ],
+    [ "MatchSubstitution", "structMatchSubstitution.html", "structMatchSubstitution" ],
+    [ "MatchEventDetail", "match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1b", [
+      [ "NONE", "match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1bab50339a10e1de285ac99d4c3990b8693", null ],
+      [ "HEADER", "match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1ba7ad4905b4543ab4a1637dd23c50e36ce", null ],
+      [ "PARRIED", "match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1bad6e210c8ef26ee7ff69a711e14fccdfe", null ],
+      [ "TIPPED_BEHIND", "match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1ba95f12608c6f3bb834b0a5eaf5b64d84e", null ],
+      [ "WALL", "match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1ba48d536b2de1195d0c9f6ea8ab884085e", null ],
+      [ "CONTACT", "match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1bac0241eae411627c19ba9835b6d194b1c", null ],
+      [ "ABANDONED", "match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1baac9c65f69022a1971a4edca7d3bd0b57", null ],
+      [ "SCORED", "match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1ba90ddbfb474234a12e09063a62e100c31", null ],
+      [ "SAVED", "match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1baec09e9e688c30b57cd64c0180da5c34a", null ],
+      [ "MISSED", "match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1ba821f918ccd462650a8a9589be6c98719", null ]
+    ] ],
+    [ "MatchEventType", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fd", [
+      [ "INFO", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda551b723eafd6a31d444fcb2f5920fbd3", null ],
+      [ "KICK_OFF", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda526aadb8564a9c50374ebe55ec7bade0", null ],
+      [ "GOAL", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda007a3c4175ca4f86d9dc49e4f2e9cf8a", null ],
+      [ "OWN_GOAL", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda10268b2175c8478148231e030edc8571", null ],
+      [ "SHOT", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdafe92f0e834026a1c16e620212f2cc9a4", null ],
+      [ "SAVE", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdaf5cf47ab06d0d98b0d16d10c82d87953", null ],
+      [ "SHOT_BLOCKED", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdace19873b8bb840afa7f82f15045cdd88", null ],
+      [ "SHOT_OFF_TARGET", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda6fbfcce6b969afc3daea7823be8f8e1f", null ],
+      [ "WOODWORK", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda888f6da3c14b294ed9255446c37d9705", null ],
+      [ "FOUL", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda4c00b7ec15aad6e470ed5ceb6a7200f0", null ],
+      [ "ADVANTAGE", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda372beb0cc74bbf5dc5b444d7ebf822ca", null ],
+      [ "YELLOW_CARD", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdaf38d556ff22683652461f203fec9e941", null ],
+      [ "SECOND_YELLOW", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda3e41528f77533b82229a08b31609e7ed", null ],
+      [ "RED_CARD", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda48e9f98258ad10d277377436891a59e5", null ],
+      [ "INJURY", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdab3a576f5cc2060ab5c6ffc525bd9b7fd", null ],
+      [ "SUBSTITUTION", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdae637679b66688b9f8c9441147fceb023", null ],
+      [ "OFFSIDE", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdadea091d0a13884025e476130873d90fd", null ],
+      [ "CORNER", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdac411afd31d32cec664d372acc12f404a", null ],
+      [ "FREE_KICK", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdaefda66f5bcbc157a7bbfe70d58456e51", null ],
+      [ "PENALTY", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda0e9bc37ec6da933200c9464b9585415e", null ],
+      [ "PENALTY_MISSED", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdaeaa9576151c80d26a99cf5e55459bfef", null ],
+      [ "THROW_IN", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda4652c1e0327ad75fd82cbc5e7bf322bf", null ],
+      [ "GOAL_KICK", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda0fdbca2289dacdc8f12ccf9b31c3ed08", null ],
+      [ "ADDED_TIME", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda3cc9c7fb4336fb1c040eea722e4b0cd1", null ],
+      [ "HALF_TIME", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdab763f44331074a91fe69ede12eac324b", null ],
+      [ "SECOND_HALF", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda1f3281049d53463c9e5ca32450f86c4d", null ],
+      [ "FULL_TIME", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda2e84354d070a36b67c6c60953de6feaa", null ],
+      [ "PENALTY_SHOOTOUT", "match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda654e91e7d93eb77fc971a217c7811f3f", null ]
+    ] ],
+    [ "SubstitutionReason", "match__events_8h.html#ae257f0d2298bc549b1760ca062ab8c5e", [
+      [ "MANUAL", "match__events_8h.html#ae257f0d2298bc549b1760ca062ab8c5eaa60a6a471c0681e5a49c4f5d00f6bc5a", null ],
+      [ "FATIGUE", "match__events_8h.html#ae257f0d2298bc549b1760ca062ab8c5eaddb233a2836089a3c6a88718f7a91154", null ],
+      [ "INJURY", "match__events_8h.html#ae257f0d2298bc549b1760ca062ab8c5eab3a576f5cc2060ab5c6ffc525bd9b7fd", null ],
+      [ "TACTICAL", "match__events_8h.html#ae257f0d2298bc549b1760ca062ab8c5eacb90b4d795d28958c5940e3aaf6efe73", null ],
+      [ "CARD_RISK", "match__events_8h.html#ae257f0d2298bc549b1760ca062ab8c5ea46d788b8a1f9d923074cd119f026db2a", null ],
+      [ "GOALKEEPER_REPLACEMENT", "match__events_8h.html#ae257f0d2298bc549b1760ca062ab8c5ea6a00d3b8718107f7d24d914f5d902b9b", null ]
+    ] ],
+    [ "matchEventTypeName", "match__events_8h.html#a796041a7ffd065604fbb186ba1aac27e", null ]
+];

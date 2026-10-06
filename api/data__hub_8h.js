@@ -1,0 +1,48 @@
+var data__hub_8h =
+[
+    [ "PlayerMatchSnapshot", "structPlayerMatchSnapshot.html", "structPlayerMatchSnapshot" ],
+    [ "ManagedMatchSnapshot", "structManagedMatchSnapshot.html", "structManagedMatchSnapshot" ],
+    [ "TeamTrendPoint", "structTeamTrendPoint.html", "structTeamTrendPoint" ],
+    [ "MetricComparison", "structMetricComparison.html", "structMetricComparison" ],
+    [ "SetPieceSummary", "structSetPieceSummary.html", "structSetPieceSummary" ],
+    [ "TeamAnalytics", "structTeamAnalytics.html", "structTeamAnalytics" ],
+    [ "PlayerAnalyticsRow", "structPlayerAnalyticsRow.html", "structPlayerAnalyticsRow" ],
+    [ "DataHubInput", "structDataHubInput.html", "structDataHubInput" ],
+    [ "HubMetric", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cf", [
+      [ "GoalsFor", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfa2a95e3d74ab54e49e1c00ce5abbdf58d", null ],
+      [ "GoalsAgainst", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfa5d2b568d9021f1c2f5ccfe35a8abd2c8", null ],
+      [ "XgFor", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfada61904e34ae6710d83ab08b1fdaf669", null ],
+      [ "XgAgainst", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfaef7b54c6a0b30cfb8463055deb4ad4d8", null ],
+      [ "ShotsFor", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfa822c96c54e33c19760cbe8a6703dead3", null ],
+      [ "ShotsAgainst", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfa635c379cb139d365e2cde621297b085d", null ],
+      [ "PassCompletion", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfac7b4461ee22183971ee80c2500d87568", null ],
+      [ "Finishing", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfa242cf0bcf1047835a88da99b6931cc98", null ],
+      [ "GoalsPrevented", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfa508797fcf83803b11db4a4be9d6f3c0a", null ],
+      [ "SetPieceShare", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfa87000b1f78aebac2e2c5318b8f2f3a2a", null ],
+      [ "COUNT", "data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfa4905ac9d6a22bdfc1ae096094ce6248d", null ]
+    ] ],
+    [ "LeaderMetric", "data__hub_8h.html#aed8864a919c0fa90a647acdfcd0171a0", [
+      [ "ExpectedGoals", "data__hub_8h.html#aed8864a919c0fa90a647acdfcd0171a0af62fc486cd229d3ab9217f7f79811a3d", null ],
+      [ "ExpectedAssists", "data__hub_8h.html#aed8864a919c0fa90a647acdfcd0171a0a4c4ea800cc3e755e00f3e3446de54b37", null ],
+      [ "ProgressivePasses", "data__hub_8h.html#aed8864a919c0fa90a647acdfcd0171a0ae28834a5753159554424fc5681d69314", null ],
+      [ "Pressures", "data__hub_8h.html#aed8864a919c0fa90a647acdfcd0171a0a97fd4752883f7b97265bee30aba3f920", null ],
+      [ "COUNT", "data__hub_8h.html#aed8864a919c0fa90a647acdfcd0171a0a4905ac9d6a22bdfc1ae096094ce6248d", null ]
+    ] ],
+    [ "buildPlayerAnalytics", "data__hub_8h.html#a48b30280dd1502ef041eb846785a9306", null ],
+    [ "buildTeamAnalytics", "data__hub_8h.html#a973279f747c3180c8709dbcd3f740aff", null ],
+    [ "captureSnapshot", "data__hub_8h.html#adc768c9710dcdec91158deaef9b8143c", null ],
+    [ "hasStatistics", "data__hub_8h.html#a66ccc27e902e486c67b75e71c8a836fd", null ],
+    [ "hubMetricHelpKey", "data__hub_8h.html#a014977c3618fc5b864b241e1d0f761dd", null ],
+    [ "hubMetricKey", "data__hub_8h.html#af9940d17375b6c979956a13c79eccb5e", null ],
+    [ "leaderMetricKey", "data__hub_8h.html#aa8db503c4b20f9d85a2c4e22b9bfe935", null ],
+    [ "leaderMinutes", "data__hub_8h.html#a12012bc2b11cf8e6024310eafec3b4e5", null ],
+    [ "leaders", "data__hub_8h.html#a264a82a02e9d1734cb3a65b31ca892fa", null ],
+    [ "leaderValue", "data__hub_8h.html#a95829c65da432e1538f1153c89644540", null ],
+    [ "HUB_METRIC_COUNT", "data__hub_8h.html#a3a62b7980a5ca5110c2bb27ba49869f3", null ],
+    [ "LEADER_METRIC_COUNT", "data__hub_8h.html#abf5b44a4fbe79458580537b7999b00d1", null ],
+    [ "LEADER_MIN_MINUTES", "data__hub_8h.html#abdf688d374144a9c89e8867173ec6ac5", null ],
+    [ "LEADERS", "data__hub_8h.html#a9b81b88b2ba451dae0e64a71e8472f55", null ],
+    [ "MIN_MATCHES", "data__hub_8h.html#aab46021be89eb2baa2d7ab9d3253dbe3", null ],
+    [ "RATING_HISTORY", "data__hub_8h.html#a8e77c1422dd14b0dbf058fceec6d8150", null ],
+    [ "ROLLING_WINDOW", "data__hub_8h.html#aaf7b3e49163eb9dc17b8857d4e4d053e", null ]
+];

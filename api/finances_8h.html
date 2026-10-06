@@ -94,20 +94,165 @@ $(document).ready(function(){initNavTree('finances_8h.html',''); initResizable()
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">finances.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
+<div class="textblock"><code>#include &lt;array&gt;</code><br />
+<code>#include &lt;cstddef&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;span&gt;</code><br />
+<code>#include &lt;vector&gt;</code><br />
+<code>#include &quot;<a class="el" href="gamedate_8h_source.html">model/gamedate.h</a>&quot;</code><br />
 </div>
 <p><a href="finances_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html">Finances</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Manages the finances of a club.  <a href="classFinances.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFinanceTransaction.html">FinanceTransaction</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">One dated ledger entry; positive amounts are income.  <a href="structFinanceTransaction.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFinanceSummary.html">FinanceSummary</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Per-category totals of a ledger range.  <a href="structFinanceSummary.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html">Finances</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A club's balance, budgets and dated transaction ledger.  <a href="classFinances.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a2be7febbd8bf2061a2984eba64f5028d" id="r_a2be7febbd8bf2061a2984eba64f5028d"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028d">FinanceCategory</a> : std::uint8_t { <br />
+&#160;&#160;<a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da11b991756dfd74ba7b0cf1b226e54cb4">OpeningBalance</a> = 0
+, <a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028dab7380bf31920c1bb03ff97198a95bde8">Investment</a>
+, <a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da832f8b31be2778fd65977297feba731c">Wages</a>
+, <a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da1c4aaf6b44cf6c4f11120c6bd2ad53d0">TransferFeeIn</a>
+, <br />
+&#160;&#160;<a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da3c35fc58ac24331e0bf537e14cffd550">TransferFeeOut</a>
+, <a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da60a68dfedb68cdafb90f0f68a14cfd5a">Matchday</a>
+, <a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da60ea88ba40c9144465fcd1791d8430d0">Broadcasting</a>
+, <a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da0d6528b0eea5af56a3aa65c226fda5f4">Sponsorship</a>
+, <br />
+&#160;&#160;<a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da71af5f41e84f505432269cfe6d4018b3">PrizeMoney</a>
+, <a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028daa226e46f37e55af902b2f1608a6aca06">Facilities</a>
+, <a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da8f7f93630c366dc55aec88eb8e9640d0">Staff</a>
+, <a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da4227750baa6e4fc274e4c3fad04081b8">Adjustment</a>
+, <br />
+&#160;&#160;<a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da4905ac9d6a22bdfc1ae096094ce6248d">COUNT</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:a2be7febbd8bf2061a2984eba64f5028d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ledger categories (values are persisted).  <a href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028d">More...</a><br /></td></tr>
+<tr class="separator:a2be7febbd8bf2061a2984eba64f5028d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a34b6a97040426be578913709d56a7362" id="r_a34b6a97040426be578913709d56a7362"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="finances_8h.html#a34b6a97040426be578913709d56a7362">financeCategoryKey</a> (<a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028d">FinanceCategory</a> category)</td></tr>
+<tr class="separator:a34b6a97040426be578913709d56a7362"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a58653504f1bf5d921605ab6d41853633" id="r_a58653504f1bf5d921605ab6d41853633"><td class="memItemLeft" align="right" valign="top">constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="finances_8h.html#a58653504f1bf5d921605ab6d41853633">FINANCE_CATEGORY_COUNT</a></td></tr>
+<tr class="separator:a58653504f1bf5d921605ab6d41853633"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a2be7febbd8bf2061a2984eba64f5028d" name="a2be7febbd8bf2061a2984eba64f5028d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2be7febbd8bf2061a2984eba64f5028d">&#9670;&#160;</a></span>FinanceCategory</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028d">FinanceCategory</a> : std::uint8_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Ledger categories (values are persisted). </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028da11b991756dfd74ba7b0cf1b226e54cb4" name="a2be7febbd8bf2061a2984eba64f5028da11b991756dfd74ba7b0cf1b226e54cb4"></a>OpeningBalance&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028dab7380bf31920c1bb03ff97198a95bde8" name="a2be7febbd8bf2061a2984eba64f5028dab7380bf31920c1bb03ff97198a95bde8"></a>Investment&#160;</td><td class="fielddoc"><p>Owner funds injected into the club. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028da832f8b31be2778fd65977297feba731c" name="a2be7febbd8bf2061a2984eba64f5028da832f8b31be2778fd65977297feba731c"></a>Wages&#160;</td><td class="fielddoc"><p>Weekly player payroll. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028da1c4aaf6b44cf6c4f11120c6bd2ad53d0" name="a2be7febbd8bf2061a2984eba64f5028da1c4aaf6b44cf6c4f11120c6bd2ad53d0"></a>TransferFeeIn&#160;</td><td class="fielddoc"><p>Fees received for sold players. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028da3c35fc58ac24331e0bf537e14cffd550" name="a2be7febbd8bf2061a2984eba64f5028da3c35fc58ac24331e0bf537e14cffd550"></a>TransferFeeOut&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028da60a68dfedb68cdafb90f0f68a14cfd5a" name="a2be7febbd8bf2061a2984eba64f5028da60a68dfedb68cdafb90f0f68a14cfd5a"></a>Matchday&#160;</td><td class="fielddoc"><p>Gate receipts of home matches. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028da60ea88ba40c9144465fcd1791d8430d0" name="a2be7febbd8bf2061a2984eba64f5028da60ea88ba40c9144465fcd1791d8430d0"></a>Broadcasting&#160;</td><td class="fielddoc"><p>Monthly equal share of TV money. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028da0d6528b0eea5af56a3aa65c226fda5f4" name="a2be7febbd8bf2061a2984eba64f5028da0d6528b0eea5af56a3aa65c226fda5f4"></a>Sponsorship&#160;</td><td class="fielddoc"><p>Monthly commercial income. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028da71af5f41e84f505432269cfe6d4018b3" name="a2be7febbd8bf2061a2984eba64f5028da71af5f41e84f505432269cfe6d4018b3"></a>PrizeMoney&#160;</td><td class="fielddoc"><p><a class="el" href="namespaceContinental.html" title="Continental club competitions: rules, draws and tables.">Continental</a> and international prize money. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028daa226e46f37e55af902b2f1608a6aca06" name="a2be7febbd8bf2061a2984eba64f5028daa226e46f37e55af902b2f1608a6aca06"></a>Facilities&#160;</td><td class="fielddoc"><p>Stadium, training ground and operations. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028da8f7f93630c366dc55aec88eb8e9640d0" name="a2be7febbd8bf2061a2984eba64f5028da8f7f93630c366dc55aec88eb8e9640d0"></a>Staff&#160;</td><td class="fielddoc"><p>Non-player wages. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028da4227750baa6e4fc274e4c3fad04081b8" name="a2be7febbd8bf2061a2984eba64f5028da4227750baa6e4fc274e4c3fad04081b8"></a>Adjustment&#160;</td><td class="fielddoc"><p>Reconciliation of legacy saves. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2be7febbd8bf2061a2984eba64f5028da4905ac9d6a22bdfc1ae096094ce6248d" name="a2be7febbd8bf2061a2984eba64f5028da4905ac9d6a22bdfc1ae096094ce6248d"></a>COUNT&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a34b6a97040426be578913709d56a7362" name="a34b6a97040426be578913709d56a7362"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a34b6a97040426be578913709d56a7362">&#9670;&#160;</a></span>financeCategoryKey()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * financeCategoryKey </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028d">FinanceCategory</a>&#160;</td>
+          <td class="paramname"><em>category</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Language key naming <code>category</code> (e.g. "FIN_CAT_WAGES"). </p>
+
+</div>
+</div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a id="a58653504f1bf5d921605ab6d41853633" name="a58653504f1bf5d921605ab6d41853633"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58653504f1bf5d921605ab6d41853633">&#9670;&#160;</a></span>FINANCE_CATEGORY_COUNT</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr std::size_t FINANCE_CATEGORY_COUNT</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(<a class="code hl_enumvalue" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da4905ac9d6a22bdfc1ae096094ce6248d">FinanceCategory::COUNT</a>)</div>
+<div class="ttc" id="afinances_8h_html_a2be7febbd8bf2061a2984eba64f5028da4905ac9d6a22bdfc1ae096094ce6248d"><div class="ttname"><a href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028da4905ac9d6a22bdfc1ae096094ce6248d">FinanceCategory::COUNT</a></div><div class="ttdeci">@ COUNT</div></div>
+</div><!-- fragment --><p>Number of ledger categories. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

@@ -102,7 +102,9 @@ $(document).ready(function(){initNavTree('gui__scene_8h.html',''); initResizable
 <div class="textblock"><code>#include &lt;SDL3/SDL.h&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
+<code>#include &lt;optional&gt;</code><br />
 <code>#include &quot;<a class="el" href="gui__view_8h_source.html">gui/gui_view.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="nav__history_8h_source.html">gui/nav_history.h</a>&quot;</code><br />
 </div>
 <p><a href="gui__scene_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -126,6 +128,41 @@ Enumerations</h2></td></tr>
 , <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa19ad6425fe46b3dbd0a4d620204400d8">TRANSFER_MARKET</a>
 , <br />
 &#160;&#160;<a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa6ac3227c311790fb4c3ebbe16920f93a">MATCH</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa497e5c7ebc4ca1fc59ad4cf0cf7ef747">PLAYER_PROFILE</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa6cadb977eb42df1fc6ab3887104fe85e">FIXTURES</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa1ac2894e8fa43e28ed02733ca0b6931a">STANDINGS</a>
+, <br />
+&#160;&#160;<a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa7e33429f656f1e6e9d79b29c3f82c57e">INBOX</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fac54fc2509b0cd290993c32b5cbf26b09">CLUB</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa7657f7f55ca758e35167d1dc9789100e">MATCH_REPORT</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa3e1e73642fbd1f289be5a4f8c6ad7646">SCOUTING</a>
+, <br />
+&#160;&#160;<a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa7c95c63fdc6550e5b33eed35360778c3">TRAINING</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa8e2ef94cad245adb8089356242f49e55">STAFF</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa929a43a844650a2ba236b9a50d1bbd20">MANAGER</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa96c0062a1705d4fb3bb1290c26a3763f">YOUTH</a>
+, <br />
+&#160;&#160;<a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942faea68388b0642cfd18735a4a166494310">MEDICAL</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fabcacee7ad79abe4e25b877c5b6480a8c">CALENDAR</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa9808e5fd4c8d26a53e0e8721f58be09a">SQUAD_PLANNER</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa857964960be86e7c81cb0b8a5317f3ff">PLAYER_COMPARE</a>
+, <br />
+&#160;&#160;<a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa30dfe6d17d4d5c2ea075423c30632b60">DELEGATION</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa81c6e276aa3bbdb46adc904bac7f7886">DATA_HUB</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa2d723f4ce4734614e9a08dc5f66986dd">OPPOSITION</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fabb0555aaf33daee2bcb10127e463348e">INTERNATIONAL</a>
+, <br />
+&#160;&#160;<a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa9a2b747630f6e4d4cd880cc94da43c5d">AWARDS</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fabc203dec0e2f4c9bab2181f4ebe84e1a">RECORDS</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fabf71c229d973f999f1a0db6c0ddd294e">PLANNING</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa4fc963e213bba362778f5c175eb4d5ff">HELP</a>
+, <br />
+&#160;&#160;<a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa6a10ef350c59d8f8c85921c86ad75943">RESERVES</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa9218e68ce5bf055b2cde858ffad51282">CALL_UPS</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa33080c3d870c862a9fee5a861e43be86">ABOUT</a>
+, <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942faff4e2dc4962dc25a1512353299992c8d">NEWS</a>
+, <br />
+&#160;&#160;<a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942fa7970cd1c3f3d736ce0164035d30be1e8">TIMELINE</a>
 <br />
  }</td></tr>
 <tr class="memdesc:aaf4bddc3ff70ab62a07943e024b9942f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifiers for different GUI scenes.  <a href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942f">More...</a><br /></td></tr>
@@ -171,6 +208,62 @@ Enumerations</h2></td></tr>
 <tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa19ad6425fe46b3dbd0a4d620204400d8" name="aaf4bddc3ff70ab62a07943e024b9942fa19ad6425fe46b3dbd0a4d620204400d8"></a>TRANSFER_MARKET&#160;</td><td class="fielddoc"><p>Transfer market scene </p>
 </td></tr>
 <tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa6ac3227c311790fb4c3ebbe16920f93a" name="aaf4bddc3ff70ab62a07943e024b9942fa6ac3227c311790fb4c3ebbe16920f93a"></a>MATCH&#160;</td><td class="fielddoc"><p>Live match scene </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa497e5c7ebc4ca1fc59ad4cf0cf7ef747" name="aaf4bddc3ff70ab62a07943e024b9942fa497e5c7ebc4ca1fc59ad4cf0cf7ef747"></a>PLAYER_PROFILE&#160;</td><td class="fielddoc"><p>Single player profile </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa6cadb977eb42df1fc6ab3887104fe85e" name="aaf4bddc3ff70ab62a07943e024b9942fa6cadb977eb42df1fc6ab3887104fe85e"></a>FIXTURES&#160;</td><td class="fielddoc"><p>Fixtures and results </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa1ac2894e8fa43e28ed02733ca0b6931a" name="aaf4bddc3ff70ab62a07943e024b9942fa1ac2894e8fa43e28ed02733ca0b6931a"></a>STANDINGS&#160;</td><td class="fielddoc"><p><a class="el" href="classLeague.html" title="Represents a football league containing teams and a leaderboard.">League</a> table </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa7e33429f656f1e6e9d79b29c3f82c57e" name="aaf4bddc3ff70ab62a07943e024b9942fa7e33429f656f1e6e9d79b29c3f82c57e"></a>INBOX&#160;</td><td class="fielddoc"><p>Club inbox </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fac54fc2509b0cd290993c32b5cbf26b09" name="aaf4bddc3ff70ab62a07943e024b9942fac54fc2509b0cd290993c32b5cbf26b09"></a>CLUB&#160;</td><td class="fielddoc"><p>Club, board and history </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa7657f7f55ca758e35167d1dc9789100e" name="aaf4bddc3ff70ab62a07943e024b9942fa7657f7f55ca758e35167d1dc9789100e"></a>MATCH_REPORT&#160;</td><td class="fielddoc"><p>Post-match report </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa3e1e73642fbd1f289be5a4f8c6ad7646" name="aaf4bddc3ff70ab62a07943e024b9942fa3e1e73642fbd1f289be5a4f8c6ad7646"></a>SCOUTING&#160;</td><td class="fielddoc"><p>Scouting and recruitment </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa7c95c63fdc6550e5b33eed35360778c3" name="aaf4bddc3ff70ab62a07943e024b9942fa7c95c63fdc6550e5b33eed35360778c3"></a>TRAINING&#160;</td><td class="fielddoc"><p>Training schedule and workload </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa8e2ef94cad245adb8089356242f49e55" name="aaf4bddc3ff70ab62a07943e024b9942fa8e2ef94cad245adb8089356242f49e55"></a>STAFF&#160;</td><td class="fielddoc"><p>Backroom staff and staff market </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa929a43a844650a2ba236b9a50d1bbd20" name="aaf4bddc3ff70ab62a07943e024b9942fa929a43a844650a2ba236b9a50d1bbd20"></a>MANAGER&#160;</td><td class="fielddoc"><p>Manager profile, career and job centre </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa96c0062a1705d4fb3bb1290c26a3763f" name="aaf4bddc3ff70ab62a07943e024b9942fa96c0062a1705d4fb3bb1290c26a3763f"></a>YOUTH&#160;</td><td class="fielddoc"><p>Youth academy and intake </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942faea68388b0642cfd18735a4a166494310" name="aaf4bddc3ff70ab62a07943e024b9942faea68388b0642cfd18735a4a166494310"></a>MEDICAL&#160;</td><td class="fielddoc"><p>Medical centre: injuries, risk, medical staff </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fabcacee7ad79abe4e25b877c5b6480a8c" name="aaf4bddc3ff70ab62a07943e024b9942fabcacee7ad79abe4e25b877c5b6480a8c"></a>CALENDAR&#160;</td><td class="fielddoc"><p>Season calendar and agenda </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa9808e5fd4c8d26a53e0e8721f58be09a" name="aaf4bddc3ff70ab62a07943e024b9942fa9808e5fd4c8d26a53e0e8721f58be09a"></a>SQUAD_PLANNER&#160;</td><td class="fielddoc"><p>Depth chart and squad planning </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa857964960be86e7c81cb0b8a5317f3ff" name="aaf4bddc3ff70ab62a07943e024b9942fa857964960be86e7c81cb0b8a5317f3ff"></a>PLAYER_COMPARE&#160;</td><td class="fielddoc"><p>Side-by-side player comparison </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa30dfe6d17d4d5c2ea075423c30632b60" name="aaf4bddc3ff70ab62a07943e024b9942fa30dfe6d17d4d5c2ea075423c30632b60"></a>DELEGATION&#160;</td><td class="fielddoc"><p>Who handles which duty </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa81c6e276aa3bbdb46adc904bac7f7886" name="aaf4bddc3ff70ab62a07943e024b9942fa81c6e276aa3bbdb46adc904bac7f7886"></a>DATA_HUB&#160;</td><td class="fielddoc"><p><a class="el" href="classTeam.html" title="Represents a football team.">Team</a> and player analytics </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa2d723f4ce4734614e9a08dc5f66986dd" name="aaf4bddc3ff70ab62a07943e024b9942fa2d723f4ce4734614e9a08dc5f66986dd"></a>OPPOSITION&#160;</td><td class="fielddoc"><p>Pre-match opposition report </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fabb0555aaf33daee2bcb10127e463348e" name="aaf4bddc3ff70ab62a07943e024b9942fabb0555aaf33daee2bcb10127e463348e"></a>INTERNATIONAL&#160;</td><td class="fielddoc"><p><a class="el" href="namespaceContinental.html" title="Continental club competitions: rules, draws and tables.">Continental</a> competitions and national teams </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa9a2b747630f6e4d4cd880cc94da43c5d" name="aaf4bddc3ff70ab62a07943e024b9942fa9a2b747630f6e4d4cd880cc94da43c5d"></a>AWARDS&#160;</td><td class="fielddoc"><p><a class="el" href="classLeague.html" title="Represents a football league containing teams and a leaderboard.">League</a> honours </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fabc203dec0e2f4c9bab2181f4ebe84e1a" name="aaf4bddc3ff70ab62a07943e024b9942fabc203dec0e2f4c9bab2181f4ebe84e1a"></a>RECORDS&#160;</td><td class="fielddoc"><p><a class="el" href="namespaceRecords.html" title="Comparison rules of the records book.">Records</a> book and hall of fame </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fabf71c229d973f999f1a0db6c0ddd294e" name="aaf4bddc3ff70ab62a07943e024b9942fabf71c229d973f999f1a0db6c0ddd294e"></a>PLANNING&#160;</td><td class="fielddoc"><p>Pre-season, facility projects and mentoring </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa4fc963e213bba362778f5c175eb4d5ff" name="aaf4bddc3ff70ab62a07943e024b9942fa4fc963e213bba362778f5c175eb4d5ff"></a>HELP&#160;</td><td class="fielddoc"><p>Getting started, shortcuts and glossary </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa6a10ef350c59d8f8c85921c86ad75943" name="aaf4bddc3ff70ab62a07943e024b9942fa6a10ef350c59d8f8c85921c86ad75943"></a>RESERVES&#160;</td><td class="fielddoc"><p>U21 squad and its league </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa9218e68ce5bf055b2cde858ffad51282" name="aaf4bddc3ff70ab62a07943e024b9942fa9218e68ce5bf055b2cde858ffad51282"></a>CALL_UPS&#160;</td><td class="fielddoc"><p>National-team call-ups of the head coach </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa33080c3d870c862a9fee5a861e43be86" name="aaf4bddc3ff70ab62a07943e024b9942fa33080c3d870c862a9fee5a861e43be86"></a>ABOUT&#160;</td><td class="fielddoc"><p>Version, build, licence and third-party credits </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942faff4e2dc4962dc25a1512353299992c8d" name="aaf4bddc3ff70ab62a07943e024b9942faff4e2dc4962dc25a1512353299992c8d"></a>NEWS&#160;</td><td class="fielddoc"><p>World news feed </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaf4bddc3ff70ab62a07943e024b9942fa7970cd1c3f3d736ce0164035d30be1e8" name="aaf4bddc3ff70ab62a07943e024b9942fa7970cd1c3f3d736ce0164035d30be1e8"></a>TIMELINE&#160;</td><td class="fielddoc"><p>Manager's career timeline and journal </p>
 </td></tr>
 </table>
 

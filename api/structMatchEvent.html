@@ -100,7 +100,7 @@ $(document).ready(function(){initNavTree('structMatchEvent.html',''); initResiza
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="match__engine_8h_source.html">match_engine.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="match__events_8h_source.html">match_events.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -108,8 +108,83 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a44e7b3e62d9f489ceab79ac8620fb6f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a543f95df4927b37e8b8a84a0f49da455" id="r_a543f95df4927b37e8b8a84a0f49da455"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a543f95df4927b37e8b8a84a0f49da455">description</a></td></tr>
 <tr class="separator:a543f95df4927b37e8b8a84a0f49da455"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5eed66ca289528b6526842b81417ab3e" id="r_a5eed66ca289528b6526842b81417ab3e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fd">MatchEventType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a5eed66ca289528b6526842b81417ab3e">type</a> = <a class="el" href="match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda551b723eafd6a31d444fcb2f5920fbd3">MatchEventType::INFO</a></td></tr>
+<tr class="separator:a5eed66ca289528b6526842b81417ab3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a795d0cde9b00cf2c4ba6568af7bf5175" id="r_a795d0cde9b00cf2c4ba6568af7bf5175"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a795d0cde9b00cf2c4ba6568af7bf5175">period</a> = 1</td></tr>
+<tr class="separator:a795d0cde9b00cf2c4ba6568af7bf5175"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c2cabb285926a8155b215187dfb1432" id="r_a1c2cabb285926a8155b215187dfb1432"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a1c2cabb285926a8155b215187dfb1432">addedMinute</a> = 0.0f</td></tr>
+<tr class="separator:a1c2cabb285926a8155b215187dfb1432"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd363593d68bc589f096acdd5222b00c" id="r_acd363593d68bc589f096acdd5222b00c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#acd363593d68bc589f096acdd5222b00c">hasTeam</a> = false</td></tr>
+<tr class="separator:acd363593d68bc589f096acdd5222b00c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1fc0885d7c0e253e71c328d2c2cf5efa" id="r_a1fc0885d7c0e253e71c328d2c2cf5efa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a1fc0885d7c0e253e71c328d2c2cf5efa">isHomeTeam</a> = false</td></tr>
+<tr class="separator:a1fc0885d7c0e253e71c328d2c2cf5efa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b4200530fc106d20073b42a017f352d" id="r_a3b4200530fc106d20073b42a017f352d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a3b4200530fc106d20073b42a017f352d">primaryPlayerId</a> = 0</td></tr>
+<tr class="separator:a3b4200530fc106d20073b42a017f352d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11fcd0cd136002d9e0b1f6140133579d" id="r_a11fcd0cd136002d9e0b1f6140133579d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a11fcd0cd136002d9e0b1f6140133579d">secondaryPlayerId</a> = 0</td></tr>
+<tr class="separator:a11fcd0cd136002d9e0b1f6140133579d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2207e3c134c59cb582393de7ea512da7" id="r_a2207e3c134c59cb582393de7ea512da7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structVector2F.html">Vector2F</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a2207e3c134c59cb582393de7ea512da7">position</a> {<a class="el" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>, <a class="el" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>}</td></tr>
+<tr class="separator:a2207e3c134c59cb582393de7ea512da7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18f1315d78afaf6676433cd8bf10ff8f" id="r_a18f1315d78afaf6676433cd8bf10ff8f"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a18f1315d78afaf6676433cd8bf10ff8f">xg</a> = 0.0f</td></tr>
+<tr class="separator:a18f1315d78afaf6676433cd8bf10ff8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f766322ffff2e4b1a6cebbc0092841d" id="r_a6f766322ffff2e4b1a6cebbc0092841d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1b">MatchEventDetail</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a6f766322ffff2e4b1a6cebbc0092841d">detail</a> = <a class="el" href="match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1bab50339a10e1de285ac99d4c3990b8693">MatchEventDetail::NONE</a></td></tr>
+<tr class="separator:a6f766322ffff2e4b1a6cebbc0092841d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b50bff36b014e8a0b7f6fa057520851" id="r_a6b50bff36b014e8a0b7f6fa057520851"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a6b50bff36b014e8a0b7f6fa057520851">homeScore</a> = 0</td></tr>
+<tr class="separator:a6b50bff36b014e8a0b7f6fa057520851"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f5af3870e6860908020891303f40e2c" id="r_a0f5af3870e6860908020891303f40e2c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a0f5af3870e6860908020891303f40e2c">awayScore</a> = 0</td></tr>
+<tr class="separator:a0f5af3870e6860908020891303f40e2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a89b8f190f32bc94ba1e4ed2b198cb290" id="r_a89b8f190f32bc94ba1e4ed2b198cb290"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a89b8f190f32bc94ba1e4ed2b198cb290">minutes</a> = 0</td></tr>
+<tr class="separator:a89b8f190f32bc94ba1e4ed2b198cb290"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d14c67ee90c4f0d8787383feb5743b3" id="r_a7d14c67ee90c4f0d8787383feb5743b3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a7d14c67ee90c4f0d8787383feb5743b3">homeShootout</a> = 0</td></tr>
+<tr class="separator:a7d14c67ee90c4f0d8787383feb5743b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a80d3cf152492326aa9e18828dda5eaeb" id="r_a80d3cf152492326aa9e18828dda5eaeb"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchEvent.html#a80d3cf152492326aa9e18828dda5eaeb">awayShootout</a> = 0</td></tr>
+<tr class="separator:a80d3cf152492326aa9e18828dda5eaeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Member Data Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>One entry of the match log. The structured fields say what happened; <code>description</code> is the localised commentary line (<a class="el" href="namespaceMatchCommentary.html">MatchCommentary</a>) written when the event is logged, so views that know the team names or switch language should call <a class="el" href="namespaceMatchCommentary.html#a3d5874dc4ce8f60a0dd1e69b7e5907e2">MatchCommentary::describe()</a> instead.</p>
+<p><code>timeMinute</code> is the match clock: the first half runs from 0 to 45 plus its added time, the second half restarts at 45. <code>addedMinute</code> is the part of the clock beyond the regulation end of the period (0 when not in added time), so "45+2'" is timeMinute 47 in period 1 with addedMinute 2. <code>hasTeam</code>/<code>isHomeTeam</code> describe the side of the primary player (for an OWN_GOAL that is the defender's side; the goal counts for the other side). For goals the secondary player is the assist provider, for fouls the fouled player, for substitutions the outgoing player and for saves the shooter. </p>
+</div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="a1c2cabb285926a8155b215187dfb1432" name="a1c2cabb285926a8155b215187dfb1432"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1c2cabb285926a8155b215187dfb1432">&#9670;&#160;</a></span>addedMinute</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchEvent::addedMinute = 0.0f</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0f5af3870e6860908020891303f40e2c" name="a0f5af3870e6860908020891303f40e2c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f5af3870e6860908020891303f40e2c">&#9670;&#160;</a></span>awayScore</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MatchEvent::awayScore = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a80d3cf152492326aa9e18828dda5eaeb" name="a80d3cf152492326aa9e18828dda5eaeb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a80d3cf152492326aa9e18828dda5eaeb">&#9670;&#160;</a></span>awayShootout</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MatchEvent::awayShootout = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a543f95df4927b37e8b8a84a0f49da455" name="a543f95df4927b37e8b8a84a0f49da455"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a543f95df4927b37e8b8a84a0f49da455">&#9670;&#160;</a></span>description</h2>
 
@@ -118,6 +193,149 @@ Public Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::string MatchEvent::description</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6f766322ffff2e4b1a6cebbc0092841d" name="a6f766322ffff2e4b1a6cebbc0092841d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f766322ffff2e4b1a6cebbc0092841d">&#9670;&#160;</a></span>detail</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1b">MatchEventDetail</a> MatchEvent::detail = <a class="el" href="match__events_8h.html#a7c25aa006c3b414067b7239b8b60ea1bab50339a10e1de285ac99d4c3990b8693">MatchEventDetail::NONE</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="acd363593d68bc589f096acdd5222b00c" name="acd363593d68bc589f096acdd5222b00c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acd363593d68bc589f096acdd5222b00c">&#9670;&#160;</a></span>hasTeam</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchEvent::hasTeam = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6b50bff36b014e8a0b7f6fa057520851" name="a6b50bff36b014e8a0b7f6fa057520851"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b50bff36b014e8a0b7f6fa057520851">&#9670;&#160;</a></span>homeScore</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MatchEvent::homeScore = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Score once the event happened (after the goal for a goal). </p>
+
+</div>
+</div>
+<a id="a7d14c67ee90c4f0d8787383feb5743b3" name="a7d14c67ee90c4f0d8787383feb5743b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d14c67ee90c4f0d8787383feb5743b3">&#9670;&#160;</a></span>homeShootout</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MatchEvent::homeShootout = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Penalty shootout score once the event happened (0-0 before one). </p>
+
+</div>
+</div>
+<a id="a1fc0885d7c0e253e71c328d2c2cf5efa" name="a1fc0885d7c0e253e71c328d2c2cf5efa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1fc0885d7c0e253e71c328d2c2cf5efa">&#9670;&#160;</a></span>isHomeTeam</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchEvent::isHomeTeam = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a89b8f190f32bc94ba1e4ed2b198cb290" name="a89b8f190f32bc94ba1e4ed2b198cb290"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a89b8f190f32bc94ba1e4ed2b198cb290">&#9670;&#160;</a></span>minutes</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MatchEvent::minutes = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>ADDED_TIME: the announced added minutes. </p>
+
+</div>
+</div>
+<a id="a795d0cde9b00cf2c4ba6568af7bf5175" name="a795d0cde9b00cf2c4ba6568af7bf5175"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a795d0cde9b00cf2c4ba6568af7bf5175">&#9670;&#160;</a></span>period</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MatchEvent::period = 1</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2207e3c134c59cb582393de7ea512da7" name="a2207e3c134c59cb582393de7ea512da7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2207e3c134c59cb582393de7ea512da7">&#9670;&#160;</a></span>position</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structVector2F.html">Vector2F</a> MatchEvent::position {<a class="el" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>, <a class="el" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>}</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3b4200530fc106d20073b42a017f352d" name="a3b4200530fc106d20073b42a017f352d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b4200530fc106d20073b42a017f352d">&#9670;&#160;</a></span>primaryPlayerId</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> MatchEvent::primaryPlayerId = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a11fcd0cd136002d9e0b1f6140133579d" name="a11fcd0cd136002d9e0b1f6140133579d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a11fcd0cd136002d9e0b1f6140133579d">&#9670;&#160;</a></span>secondaryPlayerId</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> MatchEvent::secondaryPlayerId = 0</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -138,8 +356,36 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a5eed66ca289528b6526842b81417ab3e" name="a5eed66ca289528b6526842b81417ab3e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5eed66ca289528b6526842b81417ab3e">&#9670;&#160;</a></span>type</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fd">MatchEventType</a> MatchEvent::type = <a class="el" href="match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda551b723eafd6a31d444fcb2f5920fbd3">MatchEventType::INFO</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a18f1315d78afaf6676433cd8bf10ff8f" name="a18f1315d78afaf6676433cd8bf10ff8f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18f1315d78afaf6676433cd8bf10ff8f">&#9670;&#160;</a></span>xg</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchEvent::xg = 0.0f</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
-<li>src/model/<a class="el" href="match__engine_8h_source.html">match_engine.h</a></li>
+<li>src/model/<a class="el" href="match__events_8h_source.html">match_events.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

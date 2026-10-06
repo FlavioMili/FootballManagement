@@ -94,11 +94,15 @@ $(document).ready(function(){initNavTree('calendar_8h.html',''); initResizable()
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#namespaces">Namespaces</a> &#124;
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">calendar.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;map&gt;</code><br />
+<div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;map&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 <code>#include &quot;<a class="el" href="gamedate_8h_source.html">gamedate.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="match_8h_source.html">match.h</a>&quot;</code><br />
@@ -107,9 +111,95 @@ $(document).ready(function(){initNavTree('calendar_8h.html',''); initResizable()
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structSeasonCalendar_1_1InternationalWindow.html">SeasonCalendar::InternationalWindow</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Days in which clubs release players to their national teams.  <a href="structSeasonCalendar_1_1InternationalWindow.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCalendar.html">Calendar</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Manages the match calendar for a season.  <a href="classCalendar.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
+Namespaces</h2></td></tr>
+<tr class="memitem:namespaceSeasonCalendar" id="r_namespaceSeasonCalendar"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html">SeasonCalendar</a></td></tr>
+<tr class="memdesc:namespaceSeasonCalendar"><td class="mdescLeft">&#160;</td><td class="mdescRight">Season date rules shared by the calendar and the competitions. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:aa4847c7a680daa03cbb6c1b0c9e091f6" id="r_aa4847c7a680daa03cbb6c1b0c9e091f6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#aa4847c7a680daa03cbb6c1b0c9e091f6">SeasonCalendar::restDays</a> (<a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> earlier, <a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> later)</td></tr>
+<tr class="separator:aa4847c7a680daa03cbb6c1b0c9e091f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad26d1728d29b3f435637c5a8386b7fc1" id="r_ad26d1728d29b3f435637c5a8386b7fc1"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#ad26d1728d29b3f435637c5a8386b7fc1">SeasonCalendar::dayOfWeek</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date)</td></tr>
+<tr class="memdesc:ad26d1728d29b3f435637c5a8386b7fc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Weekday of a date, 0 = Monday ... 6 = Sunday.  <br /></td></tr>
+<tr class="separator:ad26d1728d29b3f435637c5a8386b7fc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98a773b797fce72883b7383cd138464d" id="r_a98a773b797fce72883b7383cd138464d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a98a773b797fce72883b7383cd138464d">SeasonCalendar::addDays</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date, int days)</td></tr>
+<tr class="memdesc:a98a773b797fce72883b7383cd138464d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds (or subtracts) days in O(1).  <br /></td></tr>
+<tr class="separator:a98a773b797fce72883b7383cd138464d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a851359294e69bb7a52981f06c2feabdc" id="r_a851359294e69bb7a52981f06c2feabdc"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a851359294e69bb7a52981f06c2feabdc">SeasonCalendar::seasonStartYear</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date)</td></tr>
+<tr class="memdesc:a851359294e69bb7a52981f06c2feabdc"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classCalendar.html" title="Manages the match calendar for a season.">Calendar</a> year in which the season containing <code>date</code> started.  <br /></td></tr>
+<tr class="separator:a851359294e69bb7a52981f06c2feabdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4328d89463d21376a9702b54ee0a06cd" id="r_a4328d89463d21376a9702b54ee0a06cd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a4328d89463d21376a9702b54ee0a06cd">SeasonCalendar::leagueStart</a> (uint16_t season_year)</td></tr>
+<tr class="memdesc:a4328d89463d21376a9702b54ee0a06cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">First league Saturday (first Saturday on or after 15 August).  <br /></td></tr>
+<tr class="separator:a4328d89463d21376a9702b54ee0a06cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12dee0f1d9587c28c446c76ce2af218e" id="r_a12dee0f1d9587c28c446c76ce2af218e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a12dee0f1d9587c28c446c76ce2af218e">SeasonCalendar::leagueEnd</a> (uint16_t season_year)</td></tr>
+<tr class="memdesc:a12dee0f1d9587c28c446c76ce2af218e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Last regular league Saturday (on or before 24 May).  <br /></td></tr>
+<tr class="separator:a12dee0f1d9587c28c446c76ce2af218e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04ab9d119eeb54e1dd2edd314ec9e6d6" id="r_a04ab9d119eeb54e1dd2edd314ec9e6d6"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structSeasonCalendar_1_1InternationalWindow.html">InternationalWindow</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a04ab9d119eeb54e1dd2edd314ec9e6d6">SeasonCalendar::internationalWindows</a> (uint16_t season_year)</td></tr>
+<tr class="memdesc:a04ab9d119eeb54e1dd2edd314ec9e6d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Windows of the season starting in <code>season_year</code>, by date.  <br /></td></tr>
+<tr class="separator:a04ab9d119eeb54e1dd2edd314ec9e6d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bd05cee2251875e9ddbdf5d149fdda4" id="r_a2bd05cee2251875e9ddbdf5d149fdda4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a2bd05cee2251875e9ddbdf5d149fdda4">SeasonCalendar::isInternationalBreak</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date)</td></tr>
+<tr class="separator:a2bd05cee2251875e9ddbdf5d149fdda4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d4a5a41f987c7d90f48934e235f2a5a" id="r_a2d4a5a41f987c7d90f48934e235f2a5a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a2d4a5a41f987c7d90f48934e235f2a5a">SeasonCalendar::isWinterBreak</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date)</td></tr>
+<tr class="separator:a2d4a5a41f987c7d90f48934e235f2a5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a83a6a343637798cc9353f27f238f3581" id="r_a83a6a343637798cc9353f27f238f3581"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structGameDateValue.html">GameDateValue</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a83a6a343637798cc9353f27f238f3581">SeasonCalendar::continentalWeeks</a> (uint16_t season_year)</td></tr>
+<tr class="memdesc:a83a6a343637798cc9353f27f238f3581"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tuesday of every continental club week (see CONTINENTAL_WEEKS). <a class="el" href="namespaceContinental.html" title="Continental club competitions: rules, draws and tables.">Continental</a> matches are played Tuesday to Thursday; domestic midweek rounds and cup ties avoid these weeks.  <br /></td></tr>
+<tr class="separator:a83a6a343637798cc9353f27f238f3581"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a3d0f64fd475032fe12303b7693429c" id="r_a3a3d0f64fd475032fe12303b7693429c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a3a3d0f64fd475032fe12303b7693429c">SeasonCalendar::isContinentalWeek</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date)</td></tr>
+<tr class="memdesc:a3a3d0f64fd475032fe12303b7693429c"><td class="mdescLeft">&#160;</td><td class="mdescRight">True from Tuesday to Thursday of a continental club week.  <br /></td></tr>
+<tr class="separator:a3a3d0f64fd475032fe12303b7693429c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6dbcde33848c9d86a9d6e3833d4f7f1e" id="r_a6dbcde33848c9d86a9d6e3833d4f7f1e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a6dbcde33848c9d86a9d6e3833d4f7f1e">SeasonCalendar::isBlackout</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date)</td></tr>
+<tr class="memdesc:a6dbcde33848c9d86a9d6e3833d4f7f1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">No competitive fixtures may be scheduled on this date.  <br /></td></tr>
+<tr class="separator:a6dbcde33848c9d86a9d6e3833d4f7f1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a63405d8708bf93b7ec042ce7b83e526e" id="r_a63405d8708bf93b7ec042ce7b83e526e"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structGameDateValue.html">GameDateValue</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a63405d8708bf93b7ec042ce7b83e526e">SeasonCalendar::leagueRoundDates</a> (uint16_t season_year, size_t rounds, uint8_t variant=0)</td></tr>
+<tr class="memdesc:a63405d8708bf93b7ec042ce7b83e526e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Anchor date of each league round: a Saturday for weekend rounds (matches spread from Friday to Monday) or a Wednesday for midweek rounds (Tuesday and Wednesday).  <br /></td></tr>
+<tr class="separator:a63405d8708bf93b7ec042ce7b83e526e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaff74f1fdd00391e2c3066252e4b8411" id="r_aaff74f1fdd00391e2c3066252e4b8411"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structGameDateValue.html">GameDateValue</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#aaff74f1fdd00391e2c3066252e4b8411">SeasonCalendar::cupRoundDates</a> (uint16_t season_year, size_t rounds)</td></tr>
+<tr class="memdesc:aaff74f1fdd00391e2c3066252e4b8411"><td class="mdescLeft">&#160;</td><td class="mdescRight">Date of each cup round; the last one (the final) is a Saturday.  <br /></td></tr>
+<tr class="separator:aaff74f1fdd00391e2c3066252e4b8411"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95ff387f228f0d0a4b51f28d31348258" id="r_a95ff387f228f0d0a4b51f28d31348258"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structGameDateValue.html">GameDateValue</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a95ff387f228f0d0a4b51f28d31348258">SeasonCalendar::friendlyDates</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;from, size_t count)</td></tr>
+<tr class="memdesc:a95ff387f228f0d0a4b51f28d31348258"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saturdays of the pre-season friendly weeks after <code>from</code> and before the league; each week's friendlies are spread from Tuesday to Sunday.  <br /></td></tr>
+<tr class="separator:a95ff387f228f0d0a4b51f28d31348258"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a20ccca70ce8eeb0e3a77ed7b7228bb06" id="r_a20ccca70ce8eeb0e3a77ed7b7228bb06"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a20ccca70ce8eeb0e3a77ed7b7228bb06">SeasonCalendar::nextFreeMidweek</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date)</td></tr>
+<tr class="memdesc:a20ccca70ce8eeb0e3a77ed7b7228bb06"><td class="mdescLeft">&#160;</td><td class="mdescRight">First Wednesday after <code>date</code> that is not in a break.  <br /></td></tr>
+<tr class="separator:a20ccca70ce8eeb0e3a77ed7b7228bb06"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:adc14645d046043ee9aac02b55762b970" id="r_adc14645d046043ee9aac02b55762b970"><td class="memItemLeft" align="right" valign="top">constexpr uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#adc14645d046043ee9aac02b55762b970">SeasonCalendar::MONDAY</a> = 0</td></tr>
+<tr class="separator:adc14645d046043ee9aac02b55762b970"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69d7c6847890009c9f26e5aa8895149e" id="r_a69d7c6847890009c9f26e5aa8895149e"><td class="memItemLeft" align="right" valign="top">constexpr uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a69d7c6847890009c9f26e5aa8895149e">SeasonCalendar::TUESDAY</a> = 1</td></tr>
+<tr class="separator:a69d7c6847890009c9f26e5aa8895149e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c8431bdd41b42aa700760cc11c4e6d1" id="r_a5c8431bdd41b42aa700760cc11c4e6d1"><td class="memItemLeft" align="right" valign="top">constexpr uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a5c8431bdd41b42aa700760cc11c4e6d1">SeasonCalendar::WEDNESDAY</a> = 2</td></tr>
+<tr class="separator:a5c8431bdd41b42aa700760cc11c4e6d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6193669c3ab9371716520ffe75f413d1" id="r_a6193669c3ab9371716520ffe75f413d1"><td class="memItemLeft" align="right" valign="top">constexpr uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a6193669c3ab9371716520ffe75f413d1">SeasonCalendar::THURSDAY</a> = 3</td></tr>
+<tr class="separator:a6193669c3ab9371716520ffe75f413d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00c9dae5ff7034214bb4b9fbc34bec79" id="r_a00c9dae5ff7034214bb4b9fbc34bec79"><td class="memItemLeft" align="right" valign="top">constexpr uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a00c9dae5ff7034214bb4b9fbc34bec79">SeasonCalendar::FRIDAY</a> = 4</td></tr>
+<tr class="separator:a00c9dae5ff7034214bb4b9fbc34bec79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a928159c3656c409be590b1fa1aebbf4a" id="r_a928159c3656c409be590b1fa1aebbf4a"><td class="memItemLeft" align="right" valign="top">constexpr uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a928159c3656c409be590b1fa1aebbf4a">SeasonCalendar::SATURDAY</a> = 5</td></tr>
+<tr class="separator:a928159c3656c409be590b1fa1aebbf4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada59543f5fd8dc80a2a2d22ed4dd835d" id="r_ada59543f5fd8dc80a2a2d22ed4dd835d"><td class="memItemLeft" align="right" valign="top">constexpr uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#ada59543f5fd8dc80a2a2d22ed4dd835d">SeasonCalendar::SUNDAY</a> = 6</td></tr>
+<tr class="separator:ada59543f5fd8dc80a2a2d22ed4dd835d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78600eaefaf284eeb2a54136bc514f46" id="r_a78600eaefaf284eeb2a54136bc514f46"><td class="memItemLeft" align="right" valign="top">constexpr int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a78600eaefaf284eeb2a54136bc514f46">SeasonCalendar::MIN_REST_DAYS</a> = 2</td></tr>
+<tr class="separator:a78600eaefaf284eeb2a54136bc514f46"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53dd51c1baccfd9bedc10140a0f56211" id="r_a53dd51c1baccfd9bedc10140a0f56211"><td class="memItemLeft" align="right" valign="top">constexpr int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a53dd51c1baccfd9bedc10140a0f56211">SeasonCalendar::MIN_REST_BEFORE_TIE</a> = 3</td></tr>
+<tr class="separator:a53dd51c1baccfd9bedc10140a0f56211"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91e055aacb375ae37ce0ca904ec45701" id="r_a91e055aacb375ae37ce0ca904ec45701"><td class="memItemLeft" align="right" valign="top">constexpr uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a91e055aacb375ae37ce0ca904ec45701">SeasonCalendar::SEASON_START_MONTH</a> = 7</td></tr>
+<tr class="separator:a91e055aacb375ae37ce0ca904ec45701"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a83ab5741e47b87f209124462ac2c62f7" id="r_a83ab5741e47b87f209124462ac2c62f7"><td class="memItemLeft" align="right" valign="top">constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a83ab5741e47b87f209124462ac2c62f7">SeasonCalendar::MAX_CUP_ROUNDS</a> = 8</td></tr>
+<tr class="separator:a83ab5741e47b87f209124462ac2c62f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d403222af50757f0525d85187d97d36" id="r_a3d403222af50757f0525d85187d97d36"><td class="memItemLeft" align="right" valign="top">constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a3d403222af50757f0525d85187d97d36">SeasonCalendar::PRESEASON_FRIENDLIES</a> = 4</td></tr>
+<tr class="separator:a3d403222af50757f0525d85187d97d36"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26531f6e2af46a59c6bda72742a5b3a5" id="r_a26531f6e2af46a59c6bda72742a5b3a5"><td class="memItemLeft" align="right" valign="top">constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSeasonCalendar.html#a26531f6e2af46a59c6bda72742a5b3a5">SeasonCalendar::CONTINENTAL_WEEKS</a> = 16</td></tr>
+<tr class="separator:a26531f6e2af46a59c6bda72742a5b3a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->

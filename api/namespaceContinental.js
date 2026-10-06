@@ -1,0 +1,36 @@
+var namespaceContinental =
+[
+    [ "CompetitionRules", "structContinental_1_1CompetitionRules.html", "structContinental_1_1CompetitionRules" ],
+    [ "DrawTeam", "structContinental_1_1DrawTeam.html", "structContinental_1_1DrawTeam" ],
+    [ "LeagueFixture", "structContinental_1_1LeagueFixture.html", "structContinental_1_1LeagueFixture" ],
+    [ "Prizes", "structContinental_1_1Prizes.html", "structContinental_1_1Prizes" ],
+    [ "Continent", "namespaceContinental.html#a965b528b82bdd2ba4eef54bdef34471e", [
+      [ "Europe", "namespaceContinental.html#a965b528b82bdd2ba4eef54bdef34471ea912d59cdf1d3f551fae21f6f0062258f", null ],
+      [ "Americas", "namespaceContinental.html#a965b528b82bdd2ba4eef54bdef34471ea9ceed07936bb73f756027dc20e7869e5", null ]
+    ] ],
+    [ "Round", "namespaceContinental.html#afae0a93505fc18e53ae33cd468800da8", [
+      [ "LeaguePhase", "namespaceContinental.html#afae0a93505fc18e53ae33cd468800da8a17904a3e821cca9014251f5b2507c568", null ],
+      [ "Playoff", "namespaceContinental.html#afae0a93505fc18e53ae33cd468800da8a7cc4b85ad731afdbfcada39e93a92b0f", null ],
+      [ "RoundOf16", "namespaceContinental.html#afae0a93505fc18e53ae33cd468800da8ab4c2f8c6cbfa44ba4e3a75794dee23b6", null ],
+      [ "QuarterFinal", "namespaceContinental.html#afae0a93505fc18e53ae33cd468800da8a1bffe83319aa33c19c944e23aae9e4ce", null ],
+      [ "SemiFinal", "namespaceContinental.html#afae0a93505fc18e53ae33cd468800da8a5de9230d17cb4a4dc9b70c61bda7143d", null ],
+      [ "Final", "namespaceContinental.html#afae0a93505fc18e53ae33cd468800da8abeae421a14a34f831c113f61323d1ab3", null ]
+    ] ],
+    [ "allocatePlaces", "namespaceContinental.html#aa2a5ba295ec477690bd19091470d3857", null ],
+    [ "continentOf", "namespaceContinental.html#af72e79aa0d39ab000f9d059b5c55507e", null ],
+    [ "directPlaces", "namespaceContinental.html#a57101414d026d5a5e74c723b54db2074", null ],
+    [ "drawLeaguePhase", "namespaceContinental.html#ab473ef82daf89213f6d840ccc14c01bf", null ],
+    [ "firstKnockoutRound", "namespaceContinental.html#acc7ac9aa64cae1a1749179310eb7c7cc", null ],
+    [ "leaguePhaseTable", "namespaceContinental.html#aabf8d886133f90c000277c0097c487e8", null ],
+    [ "legOf", "namespaceContinental.html#ac2397ff13a3c01f9c0e64168bf816113", null ],
+    [ "playoffPlaces", "namespaceContinental.html#a4fe7707b634faf26adfd018ebae153a2", null ],
+    [ "roundKey", "namespaceContinental.html#ae98f562c7be381b08091f1415436c780", null ],
+    [ "roundOf", "namespaceContinental.html#a7bb4accaa23e3f2aac7ad22253036f33", null ],
+    [ "rules", "namespaceContinental.html#a2ae0359024cffb29ed7c5f35f467d899", null ],
+    [ "stageCode", "namespaceContinental.html#a0119cfd16d5abeec4b3f522b4cf870f2", null ],
+    [ "AMERICAS_CUP_ID", "namespaceContinental.html#a5c37cb9eb5ac4ff4a1a032d666c501cd", null ],
+    [ "CHAMPIONS_CUP_ID", "namespaceContinental.html#aee1b8f64955de58364bf2fcd0390423f", null ],
+    [ "COMPETITIONS", "namespaceContinental.html#a11b97a762c63947641d1010789a8a418", null ],
+    [ "CONTINENTAL_SHIELD_ID", "namespaceContinental.html#af0f1943f744d901517a6db2bb2c5b6b4", null ],
+    [ "KNOCKOUT_STAGE_BASE", "namespaceContinental.html#aff1ccce357d5d7f6c73ffe7c0c56707d", null ]
+];

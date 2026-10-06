@@ -1,0 +1,28 @@
+var structMatchRender3DTuning_1_1Stands =
+[
+    [ "BACK_ROW_LIGHT", "structMatchRender3DTuning_1_1Stands.html#ae58dd094f8a4b7578f33b22fb3f79c50", null ],
+    [ "BACK_WALL_TOP", "structMatchRender3DTuning_1_1Stands.html#a4046a5199cdeed82eea2885e392e0663", null ],
+    [ "CONCOURSE_TOP", "structMatchRender3DTuning_1_1Stands.html#ab715fd10dd2f655012cd2446d3a682bd", null ],
+    [ "CONCRETE_COLOR", "structMatchRender3DTuning_1_1Stands.html#af55c47b1c97e00b79ff874c627cf5570", null ],
+    [ "END_FRONT", "structMatchRender3DTuning_1_1Stands.html#afce0276b9a8c34dd243c650604d4147f", null ],
+    [ "END_SECTIONS", "structMatchRender3DTuning_1_1Stands.html#a8b4b8088b42a56745f30f2341ea7773f", null ],
+    [ "FASCIA_COLOR", "structMatchRender3DTuning_1_1Stands.html#a2361d425116a9b60fd860afec3186cfc", null ],
+    [ "FASCIA_HEIGHT", "structMatchRender3DTuning_1_1Stands.html#af746173163d6592dc176ed1f75632783", null ],
+    [ "FRONT_WALL_HEIGHT", "structMatchRender3DTuning_1_1Stands.html#a7c5814917697d36ec5c635a57c80d02b", null ],
+    [ "LOWER_DEPTH", "structMatchRender3DTuning_1_1Stands.html#a2278ffee5f07898cfa66afdff5d5276a", null ],
+    [ "LOWER_TOP", "structMatchRender3DTuning_1_1Stands.html#a3c93557226636336f5307d0386e246ba", null ],
+    [ "ROOF_BACK_DEPTH", "structMatchRender3DTuning_1_1Stands.html#a34bd79c93edfae01eba88fa91a8affff", null ],
+    [ "ROOF_BACK_HEIGHT", "structMatchRender3DTuning_1_1Stands.html#a14819afca8e89801d5575c98b208fda7", null ],
+    [ "ROOF_FRONT_DEPTH", "structMatchRender3DTuning_1_1Stands.html#a38b06e84d49125fbca62d89f6c663000", null ],
+    [ "ROOF_FRONT_HEIGHT", "structMatchRender3DTuning_1_1Stands.html#a33195f26cd045209f9a23655d7e8b2ab", null ],
+    [ "ROOF_TOP_COLOR", "structMatchRender3DTuning_1_1Stands.html#a09bb8f1526ae03ef049e49ea2f7ee124", null ],
+    [ "ROOF_UNDER_COLOR", "structMatchRender3DTuning_1_1Stands.html#a892dcfbcacf0cfb3572c700afafc810f", null ],
+    [ "SEAT_COLOR", "structMatchRender3DTuning_1_1Stands.html#a093ed2e987535acb42123c47d4637689", null ],
+    [ "SIDE_FRONT", "structMatchRender3DTuning_1_1Stands.html#ae895ead13b46dd9cb12ccf86958957eb", null ],
+    [ "SIDE_SECTIONS", "structMatchRender3DTuning_1_1Stands.html#aaf6cb61129d140562d5cd9c324a99363", null ],
+    [ "UPPER_DEPTH", "structMatchRender3DTuning_1_1Stands.html#a19e82c299122191aef73dade8c680350", null ],
+    [ "UPPER_TOP", "structMatchRender3DTuning_1_1Stands.html#af7716ba51a9c62120c8a76c559a53a56", null ],
+    [ "WALL_COLOR", "structMatchRender3DTuning_1_1Stands.html#a2e1c8eabbb8792ec1242c6edff00bfff", null ],
+    [ "WINDOW_COLOR", "structMatchRender3DTuning_1_1Stands.html#a149da087564b10abbcefadab9cc87a0f", null ],
+    [ "WINDOW_INSET", "structMatchRender3DTuning_1_1Stands.html#af82215af55d062f7437eb3b2a059e105", null ]
+];

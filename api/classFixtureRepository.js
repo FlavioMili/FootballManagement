@@ -4,6 +4,9 @@ var classFixtureRepository =
     [ "insertFixture", "classFixtureRepository.html#abac32ad1afce719a08010cd2a36d1f07", null ],
     [ "loadAllMatches", "classFixtureRepository.html#aea2210ea29f36db7623cf4e835a06189", null ],
     [ "loadCalendar", "classFixtureRepository.html#a347b6a1097ddc2c78d14610e6743c304", null ],
+    [ "loadMatchReport", "classFixtureRepository.html#a22d52b6d27d615fcfdb431325c4e2d6e", null ],
+    [ "loadTeamMatchReports", "classFixtureRepository.html#a82cc21133c063412aae55a96d07d85f4", null ],
     [ "saveCalendar", "classFixtureRepository.html#a1bb6d07de5f0947dd01b368c53c27590", null ],
+    [ "saveMatchReports", "classFixtureRepository.html#a71139464df7776169dda22b89749b6f4", null ],
     [ "db_conn", "classFixtureRepository.html#af8ea27a0c985f18b5a861b5a96f27243", null ]
 ];

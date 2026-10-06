@@ -108,7 +108,7 @@ $(document).ready(function(){initNavTree('classLogger.html',''); initResizable()
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ad9f38f9cc2d75a6207f4972427aa74f1" id="r_ad9f38f9cc2d75a6207f4972427aa74f1"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#ad9f38f9cc2d75a6207f4972427aa74f1">init</a> ()</td></tr>
-<tr class="memdesc:ad9f38f9cc2d75a6207f4972427aa74f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the logging system.  <br /></td></tr>
+<tr class="memdesc:ad9f38f9cc2d75a6207f4972427aa74f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes the logging system. The previous session's log is kept as <a class="el" href="classRuntimePaths.html#afc1af322ab9ca3f58b095afe5d104245">RuntimePaths::previousLogPath()</a>.  <br /></td></tr>
 <tr class="separator:ad9f38f9cc2d75a6207f4972427aa74f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afaac8d8aba7262900267f1e3779bd657" id="r_afaac8d8aba7262900267f1e3779bd657"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#afaac8d8aba7262900267f1e3779bd657">info</a> (const std::string &amp;msg)</td></tr>
 <tr class="memdesc:afaac8d8aba7262900267f1e3779bd657"><td class="mdescLeft">&#160;</td><td class="mdescRight">Logs an informational message.  <br /></td></tr>
@@ -122,6 +122,8 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:adcbe6e560903cbb4257bccf546789e52" id="r_adcbe6e560903cbb4257bccf546789e52"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#adcbe6e560903cbb4257bccf546789e52">warn</a> (const std::string &amp;msg)</td></tr>
 <tr class="memdesc:adcbe6e560903cbb4257bccf546789e52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Logs a warning message.  <br /></td></tr>
 <tr class="separator:adcbe6e560903cbb4257bccf546789e52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5cc08473729523bb4bde48459f2ac468" id="r_a5cc08473729523bb4bde48459f2ac468"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#a5cc08473729523bb4bde48459f2ac468">flush</a> ()</td></tr>
+<tr class="separator:a5cc08473729523bb4bde48459f2ac468"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Provides simple logging utilities. </p>
@@ -194,6 +196,32 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a5cc08473729523bb4bde48459f2ac468" name="a5cc08473729523bb4bde48459f2ac468"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5cc08473729523bb4bde48459f2ac468">&#9670;&#160;</a></span>flush()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Logger::flush </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Writes buffered messages to the log file now. </p>
+
+</div>
+</div>
 <a id="afaac8d8aba7262900267f1e3779bd657" name="afaac8d8aba7262900267f1e3779bd657"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afaac8d8aba7262900267f1e3779bd657">&#9670;&#160;</a></span>info()</h2>
 
@@ -251,7 +279,7 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Initializes the logging system. </p>
+<p>Initializes the logging system. The previous session's log is kept as <a class="el" href="classRuntimePaths.html#afc1af322ab9ca3f58b095afe5d104245">RuntimePaths::previousLogPath()</a>. </p>
 
 </div>
 </div>

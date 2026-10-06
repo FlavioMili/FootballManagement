@@ -94,13 +94,29 @@ $(document).ready(function(){initNavTree('match__scene_8h.html',''); initResizab
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#enum-members">Enumerations</a>  </div>
   <div class="headertitle"><div class="title">match_scene.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;<a class="el" href="gui__scene_8h_source.html">gui/gui_scene.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &lt;imgui.h&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;future&gt;</code><br />
+<code>#include &lt;memory&gt;</code><br />
+<code>#include &lt;optional&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
+<code>#include &lt;vector&gt;</code><br />
+<code>#include &quot;<a class="el" href="match__audio_8h_source.html">audio/match_audio.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="gui__scene_8h_source.html">gui/gui_scene.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="imatch__renderer_8h_source.html">gui/render/imatch_renderer.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="match__play__overlay_8h_source.html">gui/render/match_play_overlay.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="match__analysis__panel_8h_source.html">gui/scenes/match_analysis_panel.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="match__play__controller_8h_source.html">gui/scenes/match_play_controller.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="match__scene__tuning_8h_source.html">gui/scenes/match_scene_tuning.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="match__subs__panel_8h_source.html">gui/scenes/match_subs_panel.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="match__tactics__panel_8h_source.html">gui/scenes/match_tactics_panel.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="match__touchline_8h_source.html">gui/scenes/match_touchline.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="team__talk__dialog_8h_source.html">gui/scenes/team_talk_dialog.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="match__engine_8h_source.html">model/match_engine.h</a>&quot;</code><br />
 </div>
 <p><a href="match__scene_8h_source.html">Go to the source code of this file.</a></p>
@@ -109,7 +125,44 @@ $(document).ready(function(){initNavTree('match__scene_8h.html',''); initResizab
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html">MatchScene</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchScene_1_1LineupProblem.html">MatchScene::LineupProblem</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a7160a0f1f679facea0c8cbe093f6c651" id="r_a7160a0f1f679facea0c8cbe093f6c651"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="match__scene_8h.html#a7160a0f1f679facea0c8cbe093f6c651">MatchViewMode</a> : std::uint8_t { <a class="el" href="match__scene_8h.html#a7160a0f1f679facea0c8cbe093f6c651a30a080ebde1abd8ef2fdc70fabab1181">PITCH_2D</a>
+, <a class="el" href="match__scene_8h.html#a7160a0f1f679facea0c8cbe093f6c651a36be2f714e79de4ae9d794abc912309f">BROADCAST_3D</a>
+ }</td></tr>
+<tr class="separator:a7160a0f1f679facea0c8cbe093f6c651"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a7160a0f1f679facea0c8cbe093f6c651" name="a7160a0f1f679facea0c8cbe093f6c651"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7160a0f1f679facea0c8cbe093f6c651">&#9670;&#160;</a></span>MatchViewMode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="match__scene_8h.html#a7160a0f1f679facea0c8cbe093f6c651">MatchViewMode</a> : std::uint8_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Which renderer presents the live match. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a7160a0f1f679facea0c8cbe093f6c651a30a080ebde1abd8ef2fdc70fabab1181" name="a7160a0f1f679facea0c8cbe093f6c651a30a080ebde1abd8ef2fdc70fabab1181"></a>PITCH_2D&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a7160a0f1f679facea0c8cbe093f6c651a36be2f714e79de4ae9d794abc912309f" name="a7160a0f1f679facea0c8cbe093f6c651a36be2f714e79de4ae9d794abc912309f"></a>BROADCAST_3D&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

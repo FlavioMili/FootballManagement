@@ -94,9 +94,12 @@ $(document).ready(function(){initNavTree('classMatchScene.html',''); initResizab
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pri-types">Private Types</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
+<a href="#pri-static-attribs">Static Private Attributes</a> &#124;
 <a href="#friends">Friends</a> &#124;
 <a href="classMatchScene-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">MatchScene Class Reference</div></div>
@@ -114,6 +117,11 @@ Inheritance diagram for MatchScene:</div>
   </map>
 </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchScene_1_1LineupProblem.html">LineupProblem</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a6ebb2931bf68bcf5e15b3b8eb5446c9d" id="r_a6ebb2931bf68bcf5e15b3b8eb5446c9d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a6ebb2931bf68bcf5e15b3b8eb5446c9d">MatchScene</a> (class <a class="el" href="classGUIView.html">GUIView</a> *guiView_ptr, uint16_t home_id, uint16_t away_id)</td></tr>
@@ -130,6 +138,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a50d79994d90b5b7fa7d24ee61bdc3ade" id="r_a50d79994d90b5b7fa7d24ee61bdc3ade"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a50d79994d90b5b7fa7d24ee61bdc3ade">render</a> () override</td></tr>
 <tr class="memdesc:a50d79994d90b5b7fa7d24ee61bdc3ade"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the scene.  <br /></td></tr>
 <tr class="separator:a50d79994d90b5b7fa7d24ee61bdc3ade"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf3b7a404ecb7ae9d8bda4e6f6555172" id="r_acf3b7a404ecb7ae9d8bda4e6f6555172"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#acf3b7a404ecb7ae9d8bda4e6f6555172">onExit</a> () override</td></tr>
+<tr class="memdesc:acf3b7a404ecb7ae9d8bda4e6f6555172"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the scene is exited/becomes inactive.  <br /></td></tr>
+<tr class="separator:acf3b7a404ecb7ae9d8bda4e6f6555172"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae8f0f72e9f61a0441d245167b888d967" id="r_ae8f0f72e9f61a0441d245167b888d967"><td class="memItemLeft" align="right" valign="top"><a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942f">SceneID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ae8f0f72e9f61a0441d245167b888d967">getID</a> () const override</td></tr>
 <tr class="memdesc:ae8f0f72e9f61a0441d245167b888d967"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the ID of the scene.  <br /></td></tr>
 <tr class="separator:ae8f0f72e9f61a0441d245167b888d967"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -140,17 +151,138 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ada9a23ed72426396b25f46f1ec4ebf97 inherit pub_methods_classGUIScene" id="r_ada9a23ed72426396b25f46f1ec4ebf97"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#ada9a23ed72426396b25f46f1ec4ebf97">~GUIScene</a> ()=default</td></tr>
 <tr class="memdesc:ada9a23ed72426396b25f46f1ec4ebf97 inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys the <a class="el" href="classGUIScene.html" title="Base class for all GUI scenes.">GUIScene</a>.  <br /></td></tr>
 <tr class="separator:ada9a23ed72426396b25f46f1ec4ebf97 inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene" id="r_afcc66fd1ac7245d74c3a139590d14cba"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#afcc66fd1ac7245d74c3a139590d14cba">onExit</a> ()</td></tr>
-<tr class="memdesc:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the scene is exited/becomes inactive.  <br /></td></tr>
-<tr class="separator:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45e279f80470c89da46f5b317a689684 inherit pub_methods_classGUIScene" id="r_a45e279f80470c89da46f5b317a689684"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a45e279f80470c89da46f5b317a689684">onResume</a> ()</td></tr>
+<tr class="memdesc:a45e279f80470c89da46f5b317a689684 inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when an overlay above this scene closes and it becomes the active scene again. Screens use it to refresh cached view models after a match, a transfer or any other state change made elsewhere.  <br /></td></tr>
+<tr class="separator:a45e279f80470c89da46f5b317a689684 inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene" id="r_aa4d608d00d7b5cd52b1456075a04647c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#aa4d608d00d7b5cd52b1456075a04647c">onResize</a> (int width, int height)</td></tr>
 <tr class="memdesc:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the window is resized.  <br /></td></tr>
 <tr class="separator:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95786f5af1e1b868e171f9178892b30b inherit pub_methods_classGUIScene" id="r_a95786f5af1e1b868e171f9178892b30b"><td class="memItemLeft" align="right" valign="top">virtual std::optional&lt; <a class="el" href="structNavEntry.html">NavEntry</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a95786f5af1e1b868e171f9178892b30b">historyEntry</a> () const</td></tr>
+<tr class="memdesc:a95786f5af1e1b868e171f9178892b30b inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">How to open this screen again from the navigation history, or nothing for scenes outside it (menus, team selection, the live match).  <br /></td></tr>
+<tr class="separator:a95786f5af1e1b868e171f9178892b30b inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-types" name="pri-types"></a>
+Private Types</h2></td></tr>
+<tr class="memitem:af33fd3094ce5b985266458c22365d18a" id="r_af33fd3094ce5b985266458c22365d18a"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#af33fd3094ce5b985266458c22365d18a">PlayMenuNext</a> : std::uint8_t { <a class="el" href="classMatchScene.html#af33fd3094ce5b985266458c22365d18aab50339a10e1de285ac99d4c3990b8693">NONE</a>
+, <a class="el" href="classMatchScene.html#af33fd3094ce5b985266458c22365d18aa341cef59ba8a3f96ce3b26a3969eac36">TACTICS</a>
+, <a class="el" href="classMatchScene.html#af33fd3094ce5b985266458c22365d18aa6e3acb7c04e733b966f8e1cec6100676">SUBSTITUTIONS</a>
+ }</td></tr>
+<tr class="separator:af33fd3094ce5b985266458c22365d18a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
+<tr class="memitem:acc7cda34c9020c52f3471c6b20571ffb" id="r_acc7cda34c9020c52f3471c6b20571ffb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#acc7cda34c9020c52f3471c6b20571ffb">refreshLineupProblems</a> ()</td></tr>
+<tr class="separator:acc7cda34c9020c52f3471c6b20571ffb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acab5a89d3999325433e4db2a63fb83b5" id="r_acab5a89d3999325433e4db2a63fb83b5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#acab5a89d3999325433e4db2a63fb83b5">applyLineupFix</a> ()</td></tr>
+<tr class="separator:acab5a89d3999325433e4db2a63fb83b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70e807ff5b19ee79adf111695a1aea90" id="r_a70e807ff5b19ee79adf111695a1aea90"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a70e807ff5b19ee79adf111695a1aea90">startMatch</a> ()</td></tr>
+<tr class="separator:a70e807ff5b19ee79adf111695a1aea90"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba0de092549aa50a7de9661cd4c31dd8" id="r_aba0de092549aa50a7de9661cd4c31dd8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aba0de092549aa50a7de9661cd4c31dd8">applySubstitutionPolicy</a> ()</td></tr>
+<tr class="separator:aba0de092549aa50a7de9661cd4c31dd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aefc7750d2c72b0053777e5da0672c7ea" id="r_aefc7750d2c72b0053777e5da0672c7ea"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aefc7750d2c72b0053777e5da0672c7ea">substitute</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> outgoing, <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> incoming)</td></tr>
+<tr class="separator:aefc7750d2c72b0053777e5da0672c7ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9823f47b74842349ee748a7a4803686" id="r_aa9823f47b74842349ee748a7a4803686"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structTouchlineContext.html">TouchlineContext</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aa9823f47b74842349ee748a7a4803686">touchline</a> ()</td></tr>
+<tr class="separator:aa9823f47b74842349ee748a7a4803686"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01f40ee28ced5e0c9e933f26ea528bf7" id="r_a01f40ee28ced5e0c9e933f26ea528bf7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a01f40ee28ced5e0c9e933f26ea528bf7">showSubstitutions</a> (bool show)</td></tr>
+<tr class="separator:a01f40ee28ced5e0c9e933f26ea528bf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae72ad7c46a5ad80d714ed6c1e48a3286" id="r_ae72ad7c46a5ad80d714ed6c1e48a3286"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ae72ad7c46a5ad80d714ed6c1e48a3286">showTactics</a> (bool show)</td></tr>
+<tr class="separator:ae72ad7c46a5ad80d714ed6c1e48a3286"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97e5034f14dd7e41dff5eb5036fe6ada" id="r_a97e5034f14dd7e41dff5eb5036fe6ada"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a97e5034f14dd7e41dff5eb5036fe6ada">dialogClosed</a> ()</td></tr>
+<tr class="separator:a97e5034f14dd7e41dff5eb5036fe6ada"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a346f502b4b48c05dfa5852715e512ffb" id="r_a346f502b4b48c05dfa5852715e512ffb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a346f502b4b48c05dfa5852715e512ffb">renderPitchArea</a> (ImVec2 size)</td></tr>
+<tr class="separator:a346f502b4b48c05dfa5852715e512ffb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4225393814c7671857bd5b897a571251" id="r_a4225393814c7671857bd5b897a571251"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a4225393814c7671857bd5b897a571251">renderFocusShouts</a> (ImVec2 origin, ImVec2 size)</td></tr>
+<tr class="separator:a4225393814c7671857bd5b897a571251"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c1a62820cf1d66df9e7f38c00f8aca6" id="r_a3c1a62820cf1d66df9e7f38c00f8aca6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a3c1a62820cf1d66df9e7f38c00f8aca6">finishMatch</a> ()</td></tr>
+<tr class="separator:a3c1a62820cf1d66df9e7f38c00f8aca6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a63d2f66b78a76b954e288a389e1f0ab7" id="r_a63d2f66b78a76b954e288a389e1f0ab7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a63d2f66b78a76b954e288a389e1f0ab7">quickResult</a> ()</td></tr>
+<tr class="separator:a63d2f66b78a76b954e288a389e1f0ab7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1e80af4569e1c3c7c44f48b1dd584212" id="r_a1e80af4569e1c3c7c44f48b1dd584212"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a1e80af4569e1c3c7c44f48b1dd584212">clockText</a> () const</td></tr>
+<tr class="separator:a1e80af4569e1c3c7c44f48b1dd584212"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5da1795042a94e24a0ae01a7d0fe6ab" id="r_ac5da1795042a94e24a0ae01a7d0fe6ab"><td class="memItemLeft" align="right" valign="top">ImU32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ac5da1795042a94e24a0ae01a7d0fe6ab">teamColor</a> (bool home) const</td></tr>
+<tr class="separator:ac5da1795042a94e24a0ae01a7d0fe6ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b748ca502a7e79b92560d173edb3a40" id="r_a9b748ca502a7e79b92560d173edb3a40"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a9b748ca502a7e79b92560d173edb3a40">pauseAtBreak</a> ()</td></tr>
+<tr class="separator:a9b748ca502a7e79b92560d173edb3a40"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6914fb566a2056992ab4790049426caa" id="r_a6914fb566a2056992ab4790049426caa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatchPlayController_1_1Options.html">MatchPlayController::Options</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a6914fb566a2056992ab4790049426caa">playOptions</a> () const</td></tr>
+<tr class="separator:a6914fb566a2056992ab4790049426caa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a772636b1e7e3f7e64b26d131af421db2" id="r_a772636b1e7e3f7e64b26d131af421db2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a772636b1e7e3f7e64b26d131af421db2">canTakeControl</a> () const</td></tr>
+<tr class="separator:a772636b1e7e3f7e64b26d131af421db2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af11462f6c386b64864d55c8d9467c62f" id="r_af11462f6c386b64864d55c8d9467c62f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#af11462f6c386b64864d55c8d9467c62f">requestTakeControl</a> ()</td></tr>
+<tr class="separator:af11462f6c386b64864d55c8d9467c62f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc8eb36951fe879a97c08632352414c2" id="r_acc8eb36951fe879a97c08632352414c2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#acc8eb36951fe879a97c08632352414c2">startPlaying</a> ()</td></tr>
+<tr class="separator:acc8eb36951fe879a97c08632352414c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3f4cddae6df390b49098ccb54d864327" id="r_a3f4cddae6df390b49098ccb54d864327"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a3f4cddae6df390b49098ccb54d864327">canHandBack</a> () const</td></tr>
+<tr class="separator:a3f4cddae6df390b49098ccb54d864327"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18f48e398a93e4211c843bde0e23052d" id="r_a18f48e398a93e4211c843bde0e23052d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a18f48e398a93e4211c843bde0e23052d">handBack</a> ()</td></tr>
+<tr class="separator:a18f48e398a93e4211c843bde0e23052d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a077b48b224108e1e8b4ed98e0b0ab976" id="r_a077b48b224108e1e8b4ed98e0b0ab976"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a077b48b224108e1e8b4ed98e0b0ab976">openPlayMenu</a> ()</td></tr>
+<tr class="separator:a077b48b224108e1e8b4ed98e0b0ab976"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97156cb99916023b9ea625b22c76bdc1" id="r_a97156cb99916023b9ea625b22c76bdc1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a97156cb99916023b9ea625b22c76bdc1">closePlayMenu</a> ()</td></tr>
+<tr class="separator:a97156cb99916023b9ea625b22c76bdc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3dfa05b0f4ae2b9961e7d3ee3b6dd315" id="r_a3dfa05b0f4ae2b9961e7d3ee3b6dd315"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a3dfa05b0f4ae2b9961e7d3ee3b6dd315">updatePlay</a> (float deltaTime)</td></tr>
+<tr class="separator:a3dfa05b0f4ae2b9961e7d3ee3b6dd315"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ffede86fe10fc9165695846dae2a77e" id="r_a2ffede86fe10fc9165695846dae2a77e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a2ffede86fe10fc9165695846dae2a77e">suspendKeyboardNavigation</a> (bool suspend)</td></tr>
+<tr class="separator:a2ffede86fe10fc9165695846dae2a77e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e31c2b548f715f25bd2e19ecfd3986d" id="r_a6e31c2b548f715f25bd2e19ecfd3986d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a6e31c2b548f715f25bd2e19ecfd3986d">renderPlayOverlay</a> (const <a class="el" href="classIMatchRenderer.html">IMatchRenderer</a> &amp;renderer, ImVec2 viewMin, ImVec2 viewMax)</td></tr>
+<tr class="separator:a6e31c2b548f715f25bd2e19ecfd3986d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a867fa934e0462d063fa45c3e3793d2c9" id="r_a867fa934e0462d063fa45c3e3793d2c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatchViewport.html">MatchViewport</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a867fa934e0462d063fa45c3e3793d2c9">playViewport2D</a> (const <a class="el" href="structMatchViewport.html">MatchViewport</a> &amp;fitted, ImVec2 viewMin, ImVec2 viewMax)</td></tr>
+<tr class="separator:a867fa934e0462d063fa45c3e3793d2c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79beccc7b64222f9b4d5619f4ef02195" id="r_a79beccc7b64222f9b4d5619f4ef02195"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a79beccc7b64222f9b4d5619f4ef02195">renderPlayButtons</a> ()</td></tr>
+<tr class="separator:a79beccc7b64222f9b4d5619f4ef02195"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66e84bf48539b39ef9c20ff126f4fead" id="r_a66e84bf48539b39ef9c20ff126f4fead"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a66e84bf48539b39ef9c20ff126f4fead">renderPlayConfirm</a> ()</td></tr>
+<tr class="separator:a66e84bf48539b39ef9c20ff126f4fead"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9526c2e61bfc72ca67dfc66e8c48b83e" id="r_a9526c2e61bfc72ca67dfc66e8c48b83e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a9526c2e61bfc72ca67dfc66e8c48b83e">renderPlayMenu</a> ()</td></tr>
+<tr class="separator:a9526c2e61bfc72ca67dfc66e8c48b83e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a67934a3d12175115537ec3f30ef30f9b" id="r_a67934a3d12175115537ec3f30ef30f9b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a67934a3d12175115537ec3f30ef30f9b">renderPlayControlsHelp</a> ()</td></tr>
+<tr class="separator:a67934a3d12175115537ec3f30ef30f9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5bc4bbe14075e4c8ca5095367b2909c" id="r_ac5bc4bbe14075e4c8ca5095367b2909c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ac5bc4bbe14075e4c8ca5095367b2909c">setPlaybackSpeed</a> (float speed)</td></tr>
+<tr class="separator:ac5bc4bbe14075e4c8ca5095367b2909c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af99fc56cd32d41d4eec87471826c7ff9" id="r_af99fc56cd32d41d4eec87471826c7ff9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#af99fc56cd32d41d4eec87471826c7ff9">setHighlightsOnly</a> (bool enabled)</td></tr>
+<tr class="separator:af99fc56cd32d41d4eec87471826c7ff9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d4d1a25fad542b6fb7d4dd952065b16" id="r_a9d4d1a25fad542b6fb7d4dd952065b16"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a9d4d1a25fad542b6fb7d4dd952065b16">setViewMode</a> (<a class="el" href="match__scene_8h.html#a7160a0f1f679facea0c8cbe093f6c651">MatchViewMode</a> mode)</td></tr>
+<tr class="separator:a9d4d1a25fad542b6fb7d4dd952065b16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:affce503fe5f5fe21fa911b8351ed880d" id="r_affce503fe5f5fe21fa911b8351ed880d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#affce503fe5f5fe21fa911b8351ed880d">setCameraMode</a> (<a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9">MatchCameraMode</a> mode)</td></tr>
+<tr class="separator:affce503fe5f5fe21fa911b8351ed880d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7193dd7d728936d2c467e63a8862023" id="r_af7193dd7d728936d2c467e63a8862023"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#af7193dd7d728936d2c467e63a8862023">setPitchFocus</a> (bool enabled)</td></tr>
+<tr class="separator:af7193dd7d728936d2c467e63a8862023"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3a2ed60b1aa07fa6a39c814ab2361d9" id="r_ae3a2ed60b1aa07fa6a39c814ab2361d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ae3a2ed60b1aa07fa6a39c814ab2361d9">setSidePanelsHidden</a> (bool hidden)</td></tr>
+<tr class="separator:ae3a2ed60b1aa07fa6a39c814ab2361d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0438366e3460736c5c9a238b11ba5620" id="r_a0438366e3460736c5c9a238b11ba5620"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a0438366e3460736c5c9a238b11ba5620">takeFreeCamera</a> ()</td></tr>
+<tr class="separator:a0438366e3460736c5c9a238b11ba5620"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada6b3866343d57003d53f0ae6ece0ddf" id="r_ada6b3866343d57003d53f0ae6ece0ddf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ada6b3866343d57003d53f0ae6ece0ddf">setFreeFollowBall</a> (bool follow)</td></tr>
+<tr class="separator:ada6b3866343d57003d53f0ae6ece0ddf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5313d46e5f8edaed37e5c6d7834b789" id="r_ae5313d46e5f8edaed37e5c6d7834b789"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ae5313d46e5f8edaed37e5c6d7834b789">toggleWindowFullscreen</a> ()</td></tr>
+<tr class="separator:ae5313d46e5f8edaed37e5c6d7834b789"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4cd54eebf18dafd7f3c73f6feb7175ce" id="r_a4cd54eebf18dafd7f3c73f6feb7175ce"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a4cd54eebf18dafd7f3c73f6feb7175ce">handleViewInput</a> ()</td></tr>
+<tr class="separator:a4cd54eebf18dafd7f3c73f6feb7175ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a554f92fb1a8dc9a87a85efe33c3cbf99" id="r_a554f92fb1a8dc9a87a85efe33c3cbf99"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a554f92fb1a8dc9a87a85efe33c3cbf99">renderPitchFocus</a> ()</td></tr>
+<tr class="separator:a554f92fb1a8dc9a87a85efe33c3cbf99"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afca80399f66fa165391d53e32d693957" id="r_afca80399f66fa165391d53e32d693957"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#afca80399f66fa165391d53e32d693957">renderFocusHud</a> (ImVec2 origin, ImVec2 size)</td></tr>
+<tr class="separator:afca80399f66fa165391d53e32d693957"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af137b99b21082e85f882e67c76db0068" id="r_af137b99b21082e85f882e67c76db0068"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#af137b99b21082e85f882e67c76db0068">renderLineupGate</a> ()</td></tr>
+<tr class="separator:af137b99b21082e85f882e67c76db0068"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0e98cc82086d64e8eb61f2deb2ea74a3" id="r_a0e98cc82086d64e8eb61f2deb2ea74a3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a0e98cc82086d64e8eb61f2deb2ea74a3">renderQuickResultProgress</a> ()</td></tr>
+<tr class="separator:a0e98cc82086d64e8eb61f2deb2ea74a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a846ca6fd9b39d3445e0dde3356383b52" id="r_a846ca6fd9b39d3445e0dde3356383b52"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a846ca6fd9b39d3445e0dde3356383b52">renderScoreboard</a> ()</td></tr>
+<tr class="separator:a846ca6fd9b39d3445e0dde3356383b52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2840d43ad91585bc8f4fcad44b4e581" id="r_ab2840d43ad91585bc8f4fcad44b4e581"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ab2840d43ad91585bc8f4fcad44b4e581">renderTimeline</a> ()</td></tr>
+<tr class="separator:ab2840d43ad91585bc8f4fcad44b4e581"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a801e9127f13029ca6098c4cdfd988cec" id="r_a801e9127f13029ca6098c4cdfd988cec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a801e9127f13029ca6098c4cdfd988cec">refreshVisibleEvents</a> ()</td></tr>
+<tr class="separator:a801e9127f13029ca6098c4cdfd988cec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a10212a0eeb05dc5779db27c526ecf95f" id="r_a10212a0eeb05dc5779db27c526ecf95f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a10212a0eeb05dc5779db27c526ecf95f">renderControls</a> ()</td></tr>
+<tr class="separator:a10212a0eeb05dc5779db27c526ecf95f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd314c2b0fc43466fdd5db9e64da785e" id="r_abd314c2b0fc43466fdd5db9e64da785e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#abd314c2b0fc43466fdd5db9e64da785e">renderViewControls</a> ()</td></tr>
+<tr class="separator:abd314c2b0fc43466fdd5db9e64da785e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1e970501a1fdd7355806b42684aeaa9b" id="r_a1e970501a1fdd7355806b42684aeaa9b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a1e970501a1fdd7355806b42684aeaa9b">renderPitch</a> (ImVec2 size)</td></tr>
+<tr class="separator:a1e970501a1fdd7355806b42684aeaa9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b4358d5e1a695a982faf54821733feb" id="r_a8b4358d5e1a695a982faf54821733feb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a8b4358d5e1a695a982faf54821733feb">renderStatistics</a> (ImVec2 size)</td></tr>
+<tr class="separator:a8b4358d5e1a695a982faf54821733feb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5cfe3c6a38d4a9a068710b12941173d4" id="r_a5cfe3c6a38d4a9a068710b12941173d4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a5cfe3c6a38d4a9a068710b12941173d4">renderEvents</a> (ImVec2 size)</td></tr>
+<tr class="separator:a5cfe3c6a38d4a9a068710b12941173d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a17270b3aebf325666d9dde0aaf2aceb4" id="r_a17270b3aebf325666d9dde0aaf2aceb4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a17270b3aebf325666d9dde0aaf2aceb4">renderSubstitutionsModal</a> ()</td></tr>
 <tr class="separator:a17270b3aebf325666d9dde0aaf2aceb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad30e4747de53bb742489c0b43ed6613c" id="r_ad30e4747de53bb742489c0b43ed6613c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ad30e4747de53bb742489c0b43ed6613c">renderTacticsModal</a> ()</td></tr>
+<tr class="separator:ad30e4747de53bb742489c0b43ed6613c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -162,22 +294,126 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a4c818095d32feb5e7ba9027d54d6ded7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9eba81443ab208d2222cab655bc7c86" id="r_ae9eba81443ab208d2222cab655bc7c86"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ae9eba81443ab208d2222cab655bc7c86">away_name</a></td></tr>
 <tr class="separator:ae9eba81443ab208d2222cab655bc7c86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeaed106a7d48edcf0f6974a4bbd536e7" id="r_aeaed106a7d48edcf0f6974a4bbd536e7"><td class="memItemLeft" align="right" valign="top">std::optional&lt; bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aeaed106a7d48edcf0f6974a4bbd536e7">managed_is_home</a></td></tr>
+<tr class="separator:aeaed106a7d48edcf0f6974a4bbd536e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3b25e9ac31fc64fe7bddfd3f849d6fc" id="r_aa3b25e9ac31fc64fe7bddfd3f849d6fc"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aa3b25e9ac31fc64fe7bddfd3f849d6fc">fixture_type</a></td></tr>
+<tr class="separator:aa3b25e9ac31fc64fe7bddfd3f849d6fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aceb84973edc4188ac83cbb23966cc745" id="r_aceb84973edc4188ac83cbb23966cc745"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aceb84973edc4188ac83cbb23966cc745">fixture_when</a></td></tr>
+<tr class="separator:aceb84973edc4188ac83cbb23966cc745"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab207ea856116396ad80ad18c1e434aa9" id="r_ab207ea856116396ad80ad18c1e434aa9"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structMatchScene_1_1LineupProblem.html">LineupProblem</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ab207ea856116396ad80ad18c1e434aa9">lineup_problems</a></td></tr>
+<tr class="separator:ab207ea856116396ad80ad18c1e434aa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab903ff196e1d43261a3cb2cd6b1ebff1" id="r_ab903ff196e1d43261a3cb2cd6b1ebff1"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ab903ff196e1d43261a3cb2cd6b1ebff1">lineup_status</a></td></tr>
+<tr class="separator:ab903ff196e1d43261a3cb2cd6b1ebff1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a449bc55926883c46b606a29bfe1bf3cc" id="r_a449bc55926883c46b606a29bfe1bf3cc"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a449bc55926883c46b606a29bfe1bf3cc">pre_match_note</a></td></tr>
+<tr class="separator:a449bc55926883c46b606a29bfe1bf3cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6ea50d899a0eb9d7c38b9784f6c061e" id="r_aa6ea50d899a0eb9d7c38b9784f6c061e"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classMatchEngine.html">MatchEngine</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aa6ea50d899a0eb9d7c38b9784f6c061e">engine</a></td></tr>
 <tr class="separator:aa6ea50d899a0eb9d7c38b9784f6c061e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6331db93014987e4630d24f782bfdb21" id="r_a6331db93014987e4630d24f782bfdb21"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classIMatchRenderer.html">IMatchRenderer</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a6331db93014987e4630d24f782bfdb21">matchRenderer</a></td></tr>
-<tr class="separator:a6331db93014987e4630d24f782bfdb21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e043d9fd9b4cf4307c1e1d67f21eb0e" id="r_a7e043d9fd9b4cf4307c1e1d67f21eb0e"><td class="memItemLeft" align="right" valign="top">std::future&lt; void &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a7e043d9fd9b4cf4307c1e1d67f21eb0e">quick_result</a></td></tr>
+<tr class="separator:a7e043d9fd9b4cf4307c1e1d67f21eb0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9108032cd4e3ff6c3d6dcf10a3447fcc" id="r_a9108032cd4e3ff6c3d6dcf10a3447fcc"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classMatchAudio.html">MatchAudio</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a9108032cd4e3ff6c3d6dcf10a3447fcc">audio</a></td></tr>
+<tr class="separator:a9108032cd4e3ff6c3d6dcf10a3447fcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a326f86b4908b55496a982eac9f98107d" id="r_a326f86b4908b55496a982eac9f98107d"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a326f86b4908b55496a982eac9f98107d">skip_indicator_seconds</a> = 0.0f</td></tr>
+<tr class="separator:a326f86b4908b55496a982eac9f98107d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1e80196dad1d81ebba9dd46fedf1e10c" id="r_a1e80196dad1d81ebba9dd46fedf1e10c"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classIMatchRenderer.html">IMatchRenderer</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a1e80196dad1d81ebba9dd46fedf1e10c">renderer_2d</a></td></tr>
+<tr class="separator:a1e80196dad1d81ebba9dd46fedf1e10c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad41fae8104085e38d017a875a4c8237a" id="r_ad41fae8104085e38d017a875a4c8237a"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classIMatchRenderer.html">IMatchRenderer</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ad41fae8104085e38d017a875a4c8237a">renderer_3d</a></td></tr>
+<tr class="separator:ad41fae8104085e38d017a875a4c8237a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a446a20f7c661579ff01d3476073e5d44" id="r_a446a20f7c661579ff01d3476073e5d44"><td class="memItemLeft" align="right" valign="top"><a class="el" href="match__scene_8h.html#a7160a0f1f679facea0c8cbe093f6c651">MatchViewMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a446a20f7c661579ff01d3476073e5d44">view_mode</a> = <a class="el" href="match__scene_8h.html#a7160a0f1f679facea0c8cbe093f6c651a30a080ebde1abd8ef2fdc70fabab1181">MatchViewMode::PITCH_2D</a></td></tr>
+<tr class="separator:a446a20f7c661579ff01d3476073e5d44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3aa9f98e4acdd1ff1af617e47ce84f0b" id="r_a3aa9f98e4acdd1ff1af617e47ce84f0b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9">MatchCameraMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a3aa9f98e4acdd1ff1af617e47ce84f0b">camera_mode</a> = <a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9a81d741a35dc8a42c885b7cc031afd17f">MatchCameraMode::BROADCAST</a></td></tr>
+<tr class="separator:a3aa9f98e4acdd1ff1af617e47ce84f0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4901104cea0811c84aa2852a3317228f" id="r_a4901104cea0811c84aa2852a3317228f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a4901104cea0811c84aa2852a3317228f">show_player_names</a> = false</td></tr>
+<tr class="separator:a4901104cea0811c84aa2852a3317228f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a64fd3dc37db8696a76767da4b2dd6801" id="r_a64fd3dc37db8696a76767da4b2dd6801"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a64fd3dc37db8696a76767da4b2dd6801">kickoff_minutes</a> = -1</td></tr>
+<tr class="separator:a64fd3dc37db8696a76767da4b2dd6801"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f293a9da4c7d2d94bbe8cc540ea7fc5" id="r_a0f293a9da4c7d2d94bbe8cc540ea7fc5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a0f293a9da4c7d2d94bbe8cc540ea7fc5">day_look</a> = false</td></tr>
+<tr class="separator:a0f293a9da4c7d2d94bbe8cc540ea7fc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c4e3bbd1c94a301b499cb36ad143d63" id="r_a1c4e3bbd1c94a301b499cb36ad143d63"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a1c4e3bbd1c94a301b499cb36ad143d63">pressure_overlay</a> = false</td></tr>
+<tr class="separator:a1c4e3bbd1c94a301b499cb36ad143d63"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e8363a7204b6d871eedf127406ec48a" id="r_a6e8363a7204b6d871eedf127406ec48a"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a6e8363a7204b6d871eedf127406ec48a">pending_zoom_steps</a> = 0.0f</td></tr>
+<tr class="separator:a6e8363a7204b6d871eedf127406ec48a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9365606c0892dcc8244f74e0518e5382" id="r_a9365606c0892dcc8244f74e0518e5382"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatchCameraInput.html">MatchCameraInput</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a9365606c0892dcc8244f74e0518e5382">pending_camera_input</a></td></tr>
+<tr class="separator:a9365606c0892dcc8244f74e0518e5382"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a089f0ad402823f6d0e45e19247e52a2f" id="r_a089f0ad402823f6d0e45e19247e52a2f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a089f0ad402823f6d0e45e19247e52a2f">free_follow_ball</a> = false</td></tr>
+<tr class="separator:a089f0ad402823f6d0e45e19247e52a2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd9c4a18dfa130227284017fad389681" id="r_abd9c4a18dfa130227284017fad389681"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#abd9c4a18dfa130227284017fad389681">pitch_focus</a> = false</td></tr>
+<tr class="separator:abd9c4a18dfa130227284017fad389681"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8bcc5af9bb07259eaea1d68beb9b86a" id="r_ad8bcc5af9bb07259eaea1d68beb9b86a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ad8bcc5af9bb07259eaea1d68beb9b86a">side_panels_hidden</a> = false</td></tr>
+<tr class="separator:ad8bcc5af9bb07259eaea1d68beb9b86a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04f1624bd3c39e05c6f76838be38c2d4" id="r_a04f1624bd3c39e05c6f76838be38c2d4"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a04f1624bd3c39e05c6f76838be38c2d4">focus_controls_width</a> = 0.0f</td></tr>
+<tr class="separator:a04f1624bd3c39e05c6f76838be38c2d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9039ec94dd2aefff5c7870dfc6c6202d" id="r_a9039ec94dd2aefff5c7870dfc6c6202d"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a9039ec94dd2aefff5c7870dfc6c6202d">frame_seconds</a> = 0.0f</td></tr>
+<tr class="separator:a9039ec94dd2aefff5c7870dfc6c6202d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabcf0aab040c0c8d69ac21a17b9d5de8" id="r_aabcf0aab040c0c8d69ac21a17b9d5de8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aabcf0aab040c0c8d69ac21a17b9d5de8">match_finished</a> = false</td></tr>
 <tr class="separator:aabcf0aab040c0c8d69ac21a17b9d5de8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17eb41ed8b1a302ee0baa34aecaeda70" id="r_a17eb41ed8b1a302ee0baa34aecaeda70"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a17eb41ed8b1a302ee0baa34aecaeda70">match_speed</a> = <a class="el" href="structMatchSceneTuning_1_1Controls.html#a64d95e340c0444b6079ad40e6a319587">MatchSceneTuning::Controls::DEFAULT_MATCH_SPEED</a></td></tr>
+<tr class="memitem:aa650446cf4d06fd322fa123536ca642e" id="r_aa650446cf4d06fd322fa123536ca642e"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aa650446cf4d06fd322fa123536ca642e">decided_by</a></td></tr>
+<tr class="separator:aa650446cf4d06fd322fa123536ca642e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af3acbcff1e723ce367bce68c986a2cf0" id="r_af3acbcff1e723ce367bce68c986a2cf0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#af3acbcff1e723ce367bce68c986a2cf0">decided_by_ready</a> = false</td></tr>
+<tr class="separator:af3acbcff1e723ce367bce68c986a2cf0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17eb41ed8b1a302ee0baa34aecaeda70" id="r_a17eb41ed8b1a302ee0baa34aecaeda70"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a17eb41ed8b1a302ee0baa34aecaeda70">match_speed</a> = 1.0f</td></tr>
 <tr class="separator:a17eb41ed8b1a302ee0baa34aecaeda70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a064e900073be9afaf260dbc713f2ef72" id="r_a064e900073be9afaf260dbc713f2ef72"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a064e900073be9afaf260dbc713f2ef72">highlights_only</a> = false</td></tr>
+<tr class="separator:a064e900073be9afaf260dbc713f2ef72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26361a657c95eafd5235ca232441af0d" id="r_a26361a657c95eafd5235ca232441af0d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a26361a657c95eafd5235ca232441af0d">is_paused</a> = false</td></tr>
 <tr class="separator:a26361a657c95eafd5235ca232441af0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b52e29f064b75db858763cb096f7825" id="r_a8b52e29f064b75db858763cb096f7825"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTeamTalkDialog.html">TeamTalkDialog</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a8b52e29f064b75db858763cb096f7825">team_talk</a></td></tr>
+<tr class="separator:a8b52e29f064b75db858763cb096f7825"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40e8670378ca4def9d455d60f1e79b64" id="r_a40e8670378ca4def9d455d60f1e79b64"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMatchAnalysisPanel.html">MatchAnalysisPanel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a40e8670378ca4def9d455d60f1e79b64">analysis_panel</a></td></tr>
+<tr class="separator:a40e8670378ca4def9d455d60f1e79b64"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac6a1b653f0f64ff20bd06fb4e180f45" id="r_aac6a1b653f0f64ff20bd06fb4e180f45"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aac6a1b653f0f64ff20bd06fb4e180f45">show_substitutions</a> = false</td></tr>
 <tr class="separator:aac6a1b653f0f64ff20bd06fb4e180f45"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8efad9e46dd4ecceef563b1ab7435bbe" id="r_a8efad9e46dd4ecceef563b1ab7435bbe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a8efad9e46dd4ecceef563b1ab7435bbe">selected_pitch_player</a> {}</td></tr>
-<tr class="separator:a8efad9e46dd4ecceef563b1ab7435bbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af83747dfefa1a83cbfe6c8cc282af6eb" id="r_af83747dfefa1a83cbfe6c8cc282af6eb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#af83747dfefa1a83cbfe6c8cc282af6eb">selected_bench_player</a> {}</td></tr>
-<tr class="separator:af83747dfefa1a83cbfe6c8cc282af6eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a723132bb48f3d243d50ad0ecee53b9c1" id="r_a723132bb48f3d243d50ad0ecee53b9c1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMatchSubsPanel.html">MatchSubsPanel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a723132bb48f3d243d50ad0ecee53b9c1">subs_panel</a></td></tr>
+<tr class="separator:a723132bb48f3d243d50ad0ecee53b9c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04b911b048bbe5f9efa5557ea16ca17f" id="r_a04b911b048bbe5f9efa5557ea16ca17f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a04b911b048bbe5f9efa5557ea16ca17f">show_tactics</a> = false</td></tr>
+<tr class="separator:a04b911b048bbe5f9efa5557ea16ca17f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09d466c19ce561cdf056d5344d8b673a" id="r_a09d466c19ce561cdf056d5344d8b673a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMatchTacticsPanel.html">MatchTacticsPanel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a09d466c19ce561cdf056d5344d8b673a">tactics_panel</a></td></tr>
+<tr class="separator:a09d466c19ce561cdf056d5344d8b673a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a257d942a8ce811a37db8e7b58325b2be" id="r_a257d942a8ce811a37db8e7b58325b2be"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a257d942a8ce811a37db8e7b58325b2be">paused_for_dialog</a> = false</td></tr>
+<tr class="separator:a257d942a8ce811a37db8e7b58325b2be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac68a392d74563f661ef7376880552779" id="r_ac68a392d74563f661ef7376880552779"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ac68a392d74563f661ef7376880552779">in_break</a> = false</td></tr>
+<tr class="separator:ac68a392d74563f661ef7376880552779"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7520953c8bbea1bbd27517aad634fca2" id="r_a7520953c8bbea1bbd27517aad634fca2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a7520953c8bbea1bbd27517aad634fca2">skipped_last_update</a> = false</td></tr>
+<tr class="separator:a7520953c8bbea1bbd27517aad634fca2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ac56372970f5ff22066a9b6143cea97" id="r_a3ac56372970f5ff22066a9b6143cea97"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMatchPlayController.html">MatchPlayController</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a3ac56372970f5ff22066a9b6143cea97">play</a></td></tr>
+<tr class="separator:a3ac56372970f5ff22066a9b6143cea97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a64f690f01a441cc62e111f644101ce2f" id="r_a64f690f01a441cc62e111f644101ce2f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a64f690f01a441cc62e111f644101ce2f">play_confirm</a> = false</td></tr>
+<tr class="separator:a64f690f01a441cc62e111f644101ce2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae908e9545700ea1638368cf9506ee6b8" id="r_ae908e9545700ea1638368cf9506ee6b8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ae908e9545700ea1638368cf9506ee6b8">play_menu</a> = false</td></tr>
+<tr class="separator:ae908e9545700ea1638368cf9506ee6b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada1c219fa975395fd7fe0483b8c90819" id="r_ada1c219fa975395fd7fe0483b8c90819"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ada1c219fa975395fd7fe0483b8c90819">play_menu_resume</a> = false</td></tr>
+<tr class="separator:ada1c219fa975395fd7fe0483b8c90819"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c8d1a4e9993ef84b374bf65efebbdb8" id="r_a5c8d1a4e9993ef84b374bf65efebbdb8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMatchScene.html#af33fd3094ce5b985266458c22365d18a">PlayMenuNext</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a5c8d1a4e9993ef84b374bf65efebbdb8">play_menu_next</a> = <a class="el" href="classMatchScene.html#af33fd3094ce5b985266458c22365d18aab50339a10e1de285ac99d4c3990b8693">PlayMenuNext::NONE</a></td></tr>
+<tr class="separator:a5c8d1a4e9993ef84b374bf65efebbdb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adeabeba86417b9d70729b403ac26b423" id="r_adeabeba86417b9d70729b403ac26b423"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#adeabeba86417b9d70729b403ac26b423">watch_speed</a> = 1.0f</td></tr>
+<tr class="separator:adeabeba86417b9d70729b403ac26b423"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aafc4c64ab6d6608f28fc8bb86054b38d" id="r_aafc4c64ab6d6608f28fc8bb86054b38d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aafc4c64ab6d6608f28fc8bb86054b38d">watch_highlights</a> = false</td></tr>
+<tr class="separator:aafc4c64ab6d6608f28fc8bb86054b38d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0cd188fa37500e8e7682df8add1a7a3" id="r_ae0cd188fa37500e8e7682df8add1a7a3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9">MatchCameraMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ae0cd188fa37500e8e7682df8add1a7a3">watch_camera</a> = <a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9a81d741a35dc8a42c885b7cc031afd17f">MatchCameraMode::BROADCAST</a></td></tr>
+<tr class="separator:ae0cd188fa37500e8e7682df8add1a7a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a252b30e70519e3ff10f7a37fd66180ad" id="r_a252b30e70519e3ff10f7a37fd66180ad"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a252b30e70519e3ff10f7a37fd66180ad">watch_focus</a> = false</td></tr>
+<tr class="separator:a252b30e70519e3ff10f7a37fd66180ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a568d3edb98075345eb7e63439fe08c2a" id="r_a568d3edb98075345eb7e63439fe08c2a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a568d3edb98075345eb7e63439fe08c2a">nav_keyboard_suspended</a> = false</td></tr>
+<tr class="separator:a568d3edb98075345eb7e63439fe08c2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab78bc6f0a15629f2ae7c444810c4db73" id="r_ab78bc6f0a15629f2ae7c444810c4db73"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structVector2F.html">Vector2F</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ab78bc6f0a15629f2ae7c444810c4db73">play_follow</a> {<a class="el" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>, <a class="el" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>}</td></tr>
+<tr class="separator:ab78bc6f0a15629f2ae7c444810c4db73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4daf706ae06cd8c9d541922f8e124e38" id="r_a4daf706ae06cd8c9d541922f8e124e38"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a4daf706ae06cd8c9d541922f8e124e38">play_follow_ready</a> = false</td></tr>
+<tr class="separator:a4daf706ae06cd8c9d541922f8e124e38"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a975c225ef4519976b8af77d703eebaf7" id="r_a975c225ef4519976b8af77d703eebaf7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structPlayScreenBasis.html">PlayScreenBasis</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a975c225ef4519976b8af77d703eebaf7">play_basis</a></td></tr>
+<tr class="separator:a975c225ef4519976b8af77d703eebaf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a81c68c2bd6677157f96399e78b99253c" id="r_a81c68c2bd6677157f96399e78b99253c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatchRenderSnapshot.html">MatchRenderSnapshot</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a81c68c2bd6677157f96399e78b99253c">snapshot</a></td></tr>
+<tr class="separator:a81c68c2bd6677157f96399e78b99253c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40a60a5671cf031cdfebca97295f0d8c" id="r_a40a60a5671cf031cdfebca97295f0d8c"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a40a60a5671cf031cdfebca97295f0d8c">substitution_status</a></td></tr>
+<tr class="separator:a40a60a5671cf031cdfebca97295f0d8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96d9d8b4333cf888830cc0226eb3c9a7" id="r_a96d9d8b4333cf888830cc0226eb3c9a7"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::size_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a96d9d8b4333cf888830cc0226eb3c9a7">visible_events</a></td></tr>
+<tr class="separator:a96d9d8b4333cf888830cc0226eb3c9a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb069eb7a477380e0ce806ea1ca74a2b" id="r_acb069eb7a477380e0ce806ea1ca74a2b"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#acb069eb7a477380e0ce806ea1ca74a2b">indexed_events</a> = 0</td></tr>
+<tr class="separator:acb069eb7a477380e0ce806ea1ca74a2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a116fc4f0fbef9a1f7db6309ba8bfeb02" id="r_a116fc4f0fbef9a1f7db6309ba8bfeb02"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a116fc4f0fbef9a1f7db6309ba8bfeb02">show_all_events</a> = false</td></tr>
+<tr class="separator:a116fc4f0fbef9a1f7db6309ba8bfeb02"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa116a18854b492abbc25fc721fe5bc8d" id="r_aa116a18854b492abbc25fc721fe5bc8d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aa116a18854b492abbc25fc721fe5bc8d">indexed_show_all</a> = false</td></tr>
+<tr class="separator:aa116a18854b492abbc25fc721fe5bc8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3f32a956df575701093a58e43eb2ff4" id="r_ab3f32a956df575701093a58e43eb2ff4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ab3f32a956df575701093a58e43eb2ff4">substitution_refused</a> = false</td></tr>
+<tr class="separator:ab3f32a956df575701093a58e43eb2ff4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e120dc6adffc3f47513284a25c9a427" id="r_a5e120dc6adffc3f47513284a25c9a427"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a5e120dc6adffc3f47513284a25c9a427">debug_status</a></td></tr>
 <tr class="separator:a5e120dc6adffc3f47513284a25c9a427"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7acb9e27157f90da7fd96ec4ca14ecec" id="r_a7acb9e27157f90da7fd96ec4ca14ecec"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a7acb9e27157f90da7fd96ec4ca14ecec">scene_entry_milliseconds</a> = 0.0f</td></tr>
@@ -188,11 +424,30 @@ Private Attributes</h2></td></tr>
 <tr class="separator:ab405efd5cde1ff68cbb9abf450fc1771"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07c57d0e89102daa45aba4d88fdb4ad8" id="r_a07c57d0e89102daa45aba4d88fdb4ad8"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a07c57d0e89102daa45aba4d88fdb4ad8">slow_update_count</a> = 0</td></tr>
 <tr class="separator:a07c57d0e89102daa45aba4d88fdb4ad8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21b7762b67a32111aba0af6ad55925cf" id="r_a21b7762b67a32111aba0af6ad55925cf"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a21b7762b67a32111aba0af6ad55925cf">last_render_milliseconds</a> = 0.0f</td></tr>
+<tr class="separator:a21b7762b67a32111aba0af6ad55925cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1dd40008c46d15b62460dcdc38729a58" id="r_a1dd40008c46d15b62460dcdc38729a58"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a1dd40008c46d15b62460dcdc38729a58">average_render_milliseconds</a> = 0.0f</td></tr>
+<tr class="separator:a1dd40008c46d15b62460dcdc38729a58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-static-attribs" name="pri-static-attribs"></a>
+Static Private Attributes</h2></td></tr>
+<tr class="memitem:a33679e4ea47cd9db2659a6b05e2003ee" id="r_a33679e4ea47cd9db2659a6b05e2003ee"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a33679e4ea47cd9db2659a6b05e2003ee">assistant_substitutions</a> = false</td></tr>
+<tr class="separator:a33679e4ea47cd9db2659a6b05e2003ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
 <tr class="memitem:af70851c82f5c5d3e1b6b40e55b6d8532" id="r_af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#af70851c82f5c5d3e1b6b40e55b6d8532">GameFlowTest_GUIFlowLifecycle_Test</a></td></tr>
 <tr class="separator:af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98bf11e784661928074005f4dfc26ed2" id="r_a98bf11e784661928074005f4dfc26ed2"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#a98bf11e784661928074005f4dfc26ed2">GameFlowTest_ManagedMatchIntegration_Test</a></td></tr>
+<tr class="separator:a98bf11e784661928074005f4dfc26ed2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab98c28ce1d196409d4f2a22257ad8990" id="r_ab98c28ce1d196409d4f2a22257ad8990"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ab98c28ce1d196409d4f2a22257ad8990">GameFlowTest_ManagementScreensMidSeason_Test</a></td></tr>
+<tr class="separator:ab98c28ce1d196409d4f2a22257ad8990"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2d59925db27d75f393094446dd63871" id="r_ad2d59925db27d75f393094446dd63871"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#ad2d59925db27d75f393094446dd63871">GameFlowTest_WatchedMatchSeedIsDeterministic_Test</a></td></tr>
+<tr class="separator:ad2d59925db27d75f393094446dd63871"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec447946b059bf8741130805a9918842" id="r_aec447946b059bf8741130805a9918842"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#aec447946b059bf8741130805a9918842">GameFlowTest_WatchedCupTieIsPlayedToAWinner_Test</a></td></tr>
+<tr class="separator:aec447946b059bf8741130805a9918842"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe66cfdf51439db2613359047c2bd078" id="r_afe66cfdf51439db2613359047c2bd078"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchScene.html#afe66cfdf51439db2613359047c2bd078">MatchRenderer3DSceneTest_SwitchesViewsAndCapturesFrames_Test</a></td></tr>
+<tr class="separator:afe66cfdf51439db2613359047c2bd078"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -216,6 +471,39 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:af5bdff54b79d3b097e7bdf4df2d5e4c9 inherit pro_attribs_classGUIScene" id="r_af5bdff54b79d3b097e7bdf4df2d5e4c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classGUIView.html">GUIView</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#af5bdff54b79d3b097e7bdf4df2d5e4c9">guiView</a></td></tr>
 <tr class="separator:af5bdff54b79d3b097e7bdf4df2d5e4c9 inherit pro_attribs_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Live match of the managed club (or any two clubs for tooling).</p>
+<p>Before kick-off the managed selection is validated for the fixture: an injured or suspended player blocks the match until the lineup is fixed (auto-fix or the lineup screen). The engine then starts with every player's persistent condition, the AI substitutes only for the opponent unless the manager lets the assistant handle changes, and the finished match is recorded with its full engine report and consequences.</p>
+<p>Play mode: the manager can play his club's match himself (Play, or Take control while watching), driving one footballer at a time on the same simulation (see <a class="el" href="classMatchPlayController.html">MatchPlayController</a>), and hand it back to the AI at a stoppage or from the pause menu. </p>
+</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<a id="af33fd3094ce5b985266458c22365d18a" name="af33fd3094ce5b985266458c22365d18a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af33fd3094ce5b985266458c22365d18a">&#9670;&#160;</a></span>PlayMenuNext</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="classMatchScene.html#af33fd3094ce5b985266458c22365d18a">MatchScene::PlayMenuNext</a> : std::uint8_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Matchday dialog to open once the pause menu has closed. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="af33fd3094ce5b985266458c22365d18aab50339a10e1de285ac99d4c3990b8693" name="af33fd3094ce5b985266458c22365d18aab50339a10e1de285ac99d4c3990b8693"></a>NONE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af33fd3094ce5b985266458c22365d18aa341cef59ba8a3f96ce3b26a3969eac36" name="af33fd3094ce5b985266458c22365d18aa341cef59ba8a3f96ce3b26a3969eac36"></a>TACTICS&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af33fd3094ce5b985266458c22365d18aa6e3acb7c04e733b966f8e1cec6100676" name="af33fd3094ce5b985266458c22365d18aa6e3acb7c04e733b966f8e1cec6100676"></a>SUBSTITUTIONS&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6ebb2931bf68bcf5e15b3b8eb5446c9d" name="a6ebb2931bf68bcf5e15b3b8eb5446c9d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6ebb2931bf68bcf5e15b3b8eb5446c9d">&#9670;&#160;</a></span>MatchScene()</h2>
@@ -252,6 +540,212 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="acab5a89d3999325433e4db2a63fb83b5" name="acab5a89d3999325433e4db2a63fb83b5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acab5a89d3999325433e4db2a63fb83b5">&#9670;&#160;</a></span>applyLineupFix()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::applyLineupFix </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Lets the assistant replace unavailable players (notes the changes). </p>
+
+</div>
+</div>
+<a id="aba0de092549aa50a7de9661cd4c31dd8" name="aba0de092549aa50a7de9661cd4c31dd8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aba0de092549aa50a7de9661cd4c31dd8">&#9670;&#160;</a></span>applySubstitutionPolicy()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::applySubstitutionPolicy </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>AI substitutions: opponent always, managed side only via assistant. </p>
+
+</div>
+</div>
+<a id="a3f4cddae6df390b49098ccb54d864327" name="a3f4cddae6df390b49098ccb54d864327"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3f4cddae6df390b49098ccb54d864327">&#9670;&#160;</a></span>canHandBack()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::canHandBack </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>At a stoppage or while paused the AI can take the team back. </p>
+
+</div>
+</div>
+<a id="a772636b1e7e3f7e64b26d131af421db2" name="a772636b1e7e3f7e64b26d131af421db2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a772636b1e7e3f7e64b26d131af421db2">&#9670;&#160;</a></span>canTakeControl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::canTakeControl </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The managed club's live match can be taken over now. </p>
+
+</div>
+</div>
+<a id="a1e80af4569e1c3c7c44f48b1dd584212" name="a1e80af4569e1c3c7c44f48b1dd584212"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1e80af4569e1c3c7c44f48b1dd584212">&#9670;&#160;</a></span>clockText()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MatchScene::clockText </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a97156cb99916023b9ea625b22c76bdc1" name="a97156cb99916023b9ea625b22c76bdc1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97156cb99916023b9ea625b22c76bdc1">&#9670;&#160;</a></span>closePlayMenu()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::closePlayMenu </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a97e5034f14dd7e41dff5eb5036fe6ada" name="a97e5034f14dd7e41dff5eb5036fe6ada"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97e5034f14dd7e41dff5eb5036fe6ada">&#9670;&#160;</a></span>dialogClosed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::dialogClosed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Resumes play once no matchday dialog is left open. </p>
+
+</div>
+</div>
+<a id="a3c1a62820cf1d66df9e7f38c00f8aca6" name="a3c1a62820cf1d66df9e7f38c00f8aca6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c1a62820cf1d66df9e7f38c00f8aca6">&#9670;&#160;</a></span>finishMatch()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::finishMatch </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p><a class="el" href="namespaceRecords.html" title="Comparison rules of the records book.">Records</a> the result with the full engine report and shows the report. </p>
+
+</div>
+</div>
 <a id="ae8f0f72e9f61a0441d245167b888d967" name="ae8f0f72e9f61a0441d245167b888d967"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae8f0f72e9f61a0441d245167b888d967">&#9670;&#160;</a></span>getID()</h2>
 
@@ -280,6 +774,31 @@ Additional Inherited Members</h2></td></tr>
 <p>This function might be used to check what we are rendering. we would simply do something like this: <a class="el" href="classMainMenuScene.html#ac65f4aa576ae71cb9fac4a1154edca49" title="Gets the ID of this scene.">MainMenuScene::getID()</a> { return <a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942faa16d505f03a4b6f35486f65f6a61317e">SceneID::MAIN_MENU</a>; } TODO : remove or not? </p>
 
 <p>Implements <a class="el" href="classGUIScene.html#adc23f98639a131403f09cc46133fcd04">GUIScene</a>.</p>
+
+</div>
+</div>
+<a id="a18f48e398a93e4211c843bde0e23052d" name="a18f48e398a93e4211c843bde0e23052d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18f48e398a93e4211c843bde0e23052d">&#9670;&#160;</a></span>handBack()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::handBack </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -319,6 +838,32 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a4cd54eebf18dafd7f3c73f6feb7175ce" name="a4cd54eebf18dafd7f3c73f6feb7175ce"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4cd54eebf18dafd7f3c73f6feb7175ce">&#9670;&#160;</a></span>handleViewInput()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::handleViewInput </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Orbit, pan, zoom and double-click over the view (last item). </p>
+
+</div>
+</div>
 <a id="af91b4e9d9e7bd53679073d1dbf472e01" name="af91b4e9d9e7bd53679073d1dbf472e01"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af91b4e9d9e7bd53679073d1dbf472e01">&#9670;&#160;</a></span>onEnter()</h2>
 
@@ -345,6 +890,232 @@ Additional Inherited Members</h2></td></tr>
 <p>Called when the scene is entered/becomes active. </p>
 
 <p>Reimplemented from <a class="el" href="classGUIScene.html#aec503d8701f715aa785b03aa8005f4dc">GUIScene</a>.</p>
+
+</div>
+</div>
+<a id="acf3b7a404ecb7ae9d8bda4e6f6555172" name="acf3b7a404ecb7ae9d8bda4e6f6555172"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acf3b7a404ecb7ae9d8bda4e6f6555172">&#9670;&#160;</a></span>onExit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::onExit </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Called when the scene is exited/becomes inactive. </p>
+
+<p>Reimplemented from <a class="el" href="classGUIScene.html#afcc66fd1ac7245d74c3a139590d14cba">GUIScene</a>.</p>
+
+</div>
+</div>
+<a id="a077b48b224108e1e8b4ed98e0b0ab976" name="a077b48b224108e1e8b4ed98e0b0ab976"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a077b48b224108e1e8b4ed98e0b0ab976">&#9670;&#160;</a></span>openPlayMenu()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::openPlayMenu </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9b748ca502a7e79b92560d173edb3a40" name="a9b748ca502a7e79b92560d173edb3a40"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b748ca502a7e79b92560d173edb3a40">&#9670;&#160;</a></span>pauseAtBreak()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::pauseAtBreak </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Pauses the managed club's match when it has just reached a break. </p>
+
+</div>
+</div>
+<a id="a6914fb566a2056992ab4790049426caa" name="a6914fb566a2056992ab4790049426caa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6914fb566a2056992ab4790049426caa">&#9670;&#160;</a></span>playOptions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structMatchPlayController_1_1Options.html">MatchPlayController::Options</a> MatchScene::playOptions </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a867fa934e0462d063fa45c3e3793d2c9" name="a867fa934e0462d063fa45c3e3793d2c9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a867fa934e0462d063fa45c3e3793d2c9">&#9670;&#160;</a></span>playViewport2D()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structMatchViewport.html">MatchViewport</a> MatchScene::playViewport2D </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structMatchViewport.html">MatchViewport</a> &amp;&#160;</td>
+          <td class="paramname"><em>fitted</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>viewMin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>viewMax</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Zoomed 2D viewport following the ball and the active footballer. </p>
+
+</div>
+</div>
+<a id="a63d2f66b78a76b954e288a389e1f0ab7" name="a63d2f66b78a76b954e288a389e1f0ab7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a63d2f66b78a76b954e288a389e1f0ab7">&#9670;&#160;</a></span>quickResult()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::quickResult </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Plays the rest of the match instantly, then finishes it. </p>
+
+</div>
+</div>
+<a id="acc7cda34c9020c52f3471c6b20571ffb" name="acc7cda34c9020c52f3471c6b20571ffb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acc7cda34c9020c52f3471c6b20571ffb">&#9670;&#160;</a></span>refreshLineupProblems()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::refreshLineupProblems </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Re-checks the managed selection against today's fixture. </p>
+
+</div>
+</div>
+<a id="a801e9127f13029ca6098c4cdfd988cec" name="a801e9127f13029ca6098c4cdfd988cec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a801e9127f13029ca6098c4cdfd988cec">&#9670;&#160;</a></span>refreshVisibleEvents()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::refreshVisibleEvents </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Appends new engine events to the (optionally filtered) feed. </p>
 
 </div>
 </div>
@@ -377,6 +1148,454 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a10212a0eeb05dc5779db27c526ecf95f" name="a10212a0eeb05dc5779db27c526ecf95f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a10212a0eeb05dc5779db27c526ecf95f">&#9670;&#160;</a></span>renderControls()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderControls </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5cfe3c6a38d4a9a068710b12941173d4" name="a5cfe3c6a38d4a9a068710b12941173d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5cfe3c6a38d4a9a068710b12941173d4">&#9670;&#160;</a></span>renderEvents()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderEvents </td>
+          <td>(</td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>size</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="afca80399f66fa165391d53e32d693957" name="afca80399f66fa165391d53e32d693957"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afca80399f66fa165391d53e32d693957">&#9670;&#160;</a></span>renderFocusHud()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderFocusHud </td>
+          <td>(</td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>origin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4225393814c7671857bd5b897a571251" name="a4225393814c7671857bd5b897a571251"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4225393814c7671857bd5b897a571251">&#9670;&#160;</a></span>renderFocusShouts()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderFocusShouts </td>
+          <td>(</td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>origin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Shouts chip in the bottom-right corner of the focus view. </p>
+
+</div>
+</div>
+<a id="af137b99b21082e85f882e67c76db0068" name="af137b99b21082e85f882e67c76db0068"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af137b99b21082e85f882e67c76db0068">&#9670;&#160;</a></span>renderLineupGate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderLineupGate </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1e970501a1fdd7355806b42684aeaa9b" name="a1e970501a1fdd7355806b42684aeaa9b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1e970501a1fdd7355806b42684aeaa9b">&#9670;&#160;</a></span>renderPitch()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderPitch </td>
+          <td>(</td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>size</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a346f502b4b48c05dfa5852715e512ffb" name="a346f502b4b48c05dfa5852715e512ffb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a346f502b4b48c05dfa5852715e512ffb">&#9670;&#160;</a></span>renderPitchArea()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderPitchArea </td>
+          <td>(</td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>size</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The view with the shouts bar under it (managed matches). </p>
+
+</div>
+</div>
+<a id="a554f92fb1a8dc9a87a85efe33c3cbf99" name="a554f92fb1a8dc9a87a85efe33c3cbf99"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a554f92fb1a8dc9a87a85efe33c3cbf99">&#9670;&#160;</a></span>renderPitchFocus()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderPitchFocus </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a79beccc7b64222f9b4d5619f4ef02195" name="a79beccc7b64222f9b4d5619f4ef02195"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a79beccc7b64222f9b4d5619f4ef02195">&#9670;&#160;</a></span>renderPlayButtons()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderPlayButtons </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Play / Take control / Hand back / Menu buttons (one row). </p>
+
+</div>
+</div>
+<a id="a66e84bf48539b39ef9c20ff126f4fead" name="a66e84bf48539b39ef9c20ff126f4fead"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a66e84bf48539b39ef9c20ff126f4fead">&#9670;&#160;</a></span>renderPlayConfirm()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderPlayConfirm </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a67934a3d12175115537ec3f30ef30f9b" name="a67934a3d12175115537ec3f30ef30f9b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a67934a3d12175115537ec3f30ef30f9b">&#9670;&#160;</a></span>renderPlayControlsHelp()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderPlayControlsHelp </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Keyboard and gamepad layout, as text rows. </p>
+
+</div>
+</div>
+<a id="a9526c2e61bfc72ca67dfc66e8c48b83e" name="a9526c2e61bfc72ca67dfc66e8c48b83e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9526c2e61bfc72ca67dfc66e8c48b83e">&#9670;&#160;</a></span>renderPlayMenu()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderPlayMenu </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6e31c2b548f715f25bd2e19ecfd3986d" name="a6e31c2b548f715f25bd2e19ecfd3986d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e31c2b548f715f25bd2e19ecfd3986d">&#9670;&#160;</a></span>renderPlayOverlay()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderPlayOverlay </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classIMatchRenderer.html">IMatchRenderer</a> &amp;&#160;</td>
+          <td class="paramname"><em>renderer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>viewMin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>viewMax</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Marker, labels, power bar and radar over the view; stick mapping. </p>
+
+</div>
+</div>
+<a id="a0e98cc82086d64e8eb61f2deb2ea74a3" name="a0e98cc82086d64e8eb61f2deb2ea74a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0e98cc82086d64e8eb61f2deb2ea74a3">&#9670;&#160;</a></span>renderQuickResultProgress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderQuickResultProgress </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a846ca6fd9b39d3445e0dde3356383b52" name="a846ca6fd9b39d3445e0dde3356383b52"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a846ca6fd9b39d3445e0dde3356383b52">&#9670;&#160;</a></span>renderScoreboard()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderScoreboard </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8b4358d5e1a695a982faf54821733feb" name="a8b4358d5e1a695a982faf54821733feb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b4358d5e1a695a982faf54821733feb">&#9670;&#160;</a></span>renderStatistics()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderStatistics </td>
+          <td>(</td>
+          <td class="paramtype">ImVec2&#160;</td>
+          <td class="paramname"><em>size</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a17270b3aebf325666d9dde0aaf2aceb4" name="a17270b3aebf325666d9dde0aaf2aceb4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a17270b3aebf325666d9dde0aaf2aceb4">&#9670;&#160;</a></span>renderSubstitutionsModal()</h2>
 
@@ -399,6 +1618,563 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad30e4747de53bb742489c0b43ed6613c" name="ad30e4747de53bb742489c0b43ed6613c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad30e4747de53bb742489c0b43ed6613c">&#9670;&#160;</a></span>renderTacticsModal()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderTacticsModal </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab2840d43ad91585bc8f4fcad44b4e581" name="ab2840d43ad91585bc8f4fcad44b4e581"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2840d43ad91585bc8f4fcad44b4e581">&#9670;&#160;</a></span>renderTimeline()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderTimeline </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="abd314c2b0fc43466fdd5db9e64da785e" name="abd314c2b0fc43466fdd5db9e64da785e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd314c2b0fc43466fdd5db9e64da785e">&#9670;&#160;</a></span>renderViewControls()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::renderViewControls </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af11462f6c386b64864d55c8d9467c62f" name="af11462f6c386b64864d55c8d9467c62f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af11462f6c386b64864d55c8d9467c62f">&#9670;&#160;</a></span>requestTakeControl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::requestTakeControl </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Pauses and asks for confirmation before control is taken. </p>
+
+</div>
+</div>
+<a id="affce503fe5f5fe21fa911b8351ed880d" name="affce503fe5f5fe21fa911b8351ed880d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#affce503fe5f5fe21fa911b8351ed880d">&#9670;&#160;</a></span>setCameraMode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::setCameraMode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9">MatchCameraMode</a>&#160;</td>
+          <td class="paramname"><em>mode</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ada6b3866343d57003d53f0ae6ece0ddf" name="ada6b3866343d57003d53f0ae6ece0ddf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada6b3866343d57003d53f0ae6ece0ddf">&#9670;&#160;</a></span>setFreeFollowBall()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::setFreeFollowBall </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>follow</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af99fc56cd32d41d4eec87471826c7ff9" name="af99fc56cd32d41d4eec87471826c7ff9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af99fc56cd32d41d4eec87471826c7ff9">&#9670;&#160;</a></span>setHighlightsOnly()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::setHighlightsOnly </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af7193dd7d728936d2c467e63a8862023" name="af7193dd7d728936d2c467e63a8862023"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af7193dd7d728936d2c467e63a8862023">&#9670;&#160;</a></span>setPitchFocus()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::setPitchFocus </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Enters or leaves pitch focus (full-window view with overlay HUD). </p>
+
+</div>
+</div>
+<a id="ac5bc4bbe14075e4c8ca5095367b2909c" name="ac5bc4bbe14075e4c8ca5095367b2909c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac5bc4bbe14075e4c8ca5095367b2909c">&#9670;&#160;</a></span>setPlaybackSpeed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::setPlaybackSpeed </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>speed</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae3a2ed60b1aa07fa6a39c814ab2361d9" name="ae3a2ed60b1aa07fa6a39c814ab2361d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae3a2ed60b1aa07fa6a39c814ab2361d9">&#9670;&#160;</a></span>setSidePanelsHidden()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::setSidePanelsHidden </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>hidden</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9d4d1a25fad542b6fb7d4dd952065b16" name="a9d4d1a25fad542b6fb7d4dd952065b16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9d4d1a25fad542b6fb7d4dd952065b16">&#9670;&#160;</a></span>setViewMode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::setViewMode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="match__scene_8h.html#a7160a0f1f679facea0c8cbe093f6c651">MatchViewMode</a>&#160;</td>
+          <td class="paramname"><em>mode</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a01f40ee28ced5e0c9e933f26ea528bf7" name="a01f40ee28ced5e0c9e933f26ea528bf7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a01f40ee28ced5e0c9e933f26ea528bf7">&#9670;&#160;</a></span>showSubstitutions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::showSubstitutions </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>show</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Shows or hides a matchday dialog (pausing play if the user wants). </p>
+
+</div>
+</div>
+<a id="ae72ad7c46a5ad80d714ed6c1e48a3286" name="ae72ad7c46a5ad80d714ed6c1e48a3286"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae72ad7c46a5ad80d714ed6c1e48a3286">&#9670;&#160;</a></span>showTactics()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::showTactics </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>show</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a70e807ff5b19ee79adf111695a1aea90" name="a70e807ff5b19ee79adf111695a1aea90"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a70e807ff5b19ee79adf111695a1aea90">&#9670;&#160;</a></span>startMatch()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::startMatch </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Builds the engine once the selection is valid. </p>
+
+</div>
+</div>
+<a id="acc8eb36951fe879a97c08632352414c2" name="acc8eb36951fe879a97c08632352414c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acc8eb36951fe879a97c08632352414c2">&#9670;&#160;</a></span>startPlaying()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::startPlaying </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Hands the managed side's active footballer to the human. </p>
+
+</div>
+</div>
+<a id="aefc7750d2c72b0053777e5da0672c7ea" name="aefc7750d2c72b0053777e5da0672c7ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aefc7750d2c72b0053777e5da0672c7ea">&#9670;&#160;</a></span>substitute()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::substitute </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>outgoing</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
+          <td class="paramname"><em>incoming</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Performs a manual change now; false (with a reason) when refused. </p>
+
+</div>
+</div>
+<a id="a2ffede86fe10fc9165695846dae2a77e" name="a2ffede86fe10fc9165695846dae2a77e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ffede86fe10fc9165695846dae2a77e">&#9670;&#160;</a></span>suspendKeyboardNavigation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::suspendKeyboardNavigation </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>suspend</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>ImGui keyboard navigation off while the keys drive the pitch. </p>
+
+</div>
+</div>
+<a id="a0438366e3460736c5c9a238b11ba5620" name="a0438366e3460736c5c9a238b11ba5620"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0438366e3460736c5c9a238b11ba5620">&#9670;&#160;</a></span>takeFreeCamera()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::takeFreeCamera </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Hands the 3D view to the free camera from the pose on screen. </p>
+
+</div>
+</div>
+<a id="ac5da1795042a94e24a0ae01a7d0fe6ab" name="ac5da1795042a94e24a0ae01a7d0fe6ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac5da1795042a94e24a0ae01a7d0fe6ab">&#9670;&#160;</a></span>teamColor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">ImU32 MatchScene::teamColor </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>home</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae5313d46e5f8edaed37e5c6d7834b789" name="ae5313d46e5f8edaed37e5c6d7834b789"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae5313d46e5f8edaed37e5c6d7834b789">&#9670;&#160;</a></span>toggleWindowFullscreen()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::toggleWindowFullscreen </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Toggles the real window between windowed and full screen. </p>
+
+</div>
+</div>
+<a id="aa9823f47b74842349ee748a7a4803686" name="aa9823f47b74842349ee748a7a4803686"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9823f47b74842349ee748a7a4803686">&#9670;&#160;</a></span>touchline()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt; <a class="el" href="structTouchlineContext.html">TouchlineContext</a> &gt; MatchScene::touchline </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The managed side's touchline (only when the managed club plays). </p>
 
 </div>
 </div>
@@ -438,6 +2214,33 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a3dfa05b0f4ae2b9961e7d3ee3b6dd315" name="a3dfa05b0f4ae2b9961e7d3ee3b6dd315"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3dfa05b0f4ae2b9961e7d3ee3b6dd315">&#9670;&#160;</a></span>updatePlay()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchScene::updatePlay </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>deltaTime</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Device input and switching before the engine advances. </p>
+
+</div>
+</div>
 <h2 class="groupheader">Friends And Related Symbol Documentation</h2>
 <a id="af70851c82f5c5d3e1b6b40e55b6d8532" name="af70851c82f5c5d3e1b6b40e55b6d8532"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af70851c82f5c5d3e1b6b40e55b6d8532">&#9670;&#160;</a></span>GameFlowTest_GUIFlowLifecycle_Test</h2>
@@ -461,7 +2264,207 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a98bf11e784661928074005f4dfc26ed2" name="a98bf11e784661928074005f4dfc26ed2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a98bf11e784661928074005f4dfc26ed2">&#9670;&#160;</a></span>GameFlowTest_ManagedMatchIntegration_Test</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class GameFlowTest_ManagedMatchIntegration_Test</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab98c28ce1d196409d4f2a22257ad8990" name="ab98c28ce1d196409d4f2a22257ad8990"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab98c28ce1d196409d4f2a22257ad8990">&#9670;&#160;</a></span>GameFlowTest_ManagementScreensMidSeason_Test</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class GameFlowTest_ManagementScreensMidSeason_Test</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aec447946b059bf8741130805a9918842" name="aec447946b059bf8741130805a9918842"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aec447946b059bf8741130805a9918842">&#9670;&#160;</a></span>GameFlowTest_WatchedCupTieIsPlayedToAWinner_Test</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class GameFlowTest_WatchedCupTieIsPlayedToAWinner_Test</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad2d59925db27d75f393094446dd63871" name="ad2d59925db27d75f393094446dd63871"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad2d59925db27d75f393094446dd63871">&#9670;&#160;</a></span>GameFlowTest_WatchedMatchSeedIsDeterministic_Test</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class GameFlowTest_WatchedMatchSeedIsDeterministic_Test</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="afe66cfdf51439db2613359047c2bd078" name="afe66cfdf51439db2613359047c2bd078"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe66cfdf51439db2613359047c2bd078">&#9670;&#160;</a></span>MatchRenderer3DSceneTest_SwitchesViewsAndCapturesFrames_Test</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class MatchRenderer3DSceneTest_SwitchesViewsAndCapturesFrames_Test</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a id="a40e8670378ca4def9d455d60f1e79b64" name="a40e8670378ca4def9d455d60f1e79b64"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a40e8670378ca4def9d455d60f1e79b64">&#9670;&#160;</a></span>analysis_panel</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMatchAnalysisPanel.html">MatchAnalysisPanel</a> MatchScene::analysis_panel</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a33679e4ea47cd9db2659a6b05e2003ee" name="a33679e4ea47cd9db2659a6b05e2003ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33679e4ea47cd9db2659a6b05e2003ee">&#9670;&#160;</a></span>assistant_substitutions</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::assistant_substitutions = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Substitutions for the managed side (off: only the manager's). The lineup assistant lives in the game (<a class="el" href="classGameController.html" title="Manages the core game logic, interacting with teams, leagues, and players.">GameController</a>). </p>
+
+</div>
+</div>
+<a id="a9108032cd4e3ff6c3d6dcf10a3447fcc" name="a9108032cd4e3ff6c3d6dcf10a3447fcc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9108032cd4e3ff6c3d6dcf10a3447fcc">&#9670;&#160;</a></span>audio</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unique_ptr&lt;<a class="el" href="classMatchAudio.html">MatchAudio</a>&gt; MatchScene::audio</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Crowd, whistle and ball sounds of the live match. </p>
+
+</div>
+</div>
+<a id="a1dd40008c46d15b62460dcdc38729a58" name="a1dd40008c46d15b62460dcdc38729a58"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1dd40008c46d15b62460dcdc38729a58">&#9670;&#160;</a></span>average_render_milliseconds</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchScene::average_render_milliseconds = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ae9eba81443ab208d2222cab655bc7c86" name="ae9eba81443ab208d2222cab655bc7c86"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae9eba81443ab208d2222cab655bc7c86">&#9670;&#160;</a></span>away_name</h2>
 
@@ -506,6 +2509,51 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a3aa9f98e4acdd1ff1af617e47ce84f0b" name="a3aa9f98e4acdd1ff1af617e47ce84f0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3aa9f98e4acdd1ff1af617e47ce84f0b">&#9670;&#160;</a></span>camera_mode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9">MatchCameraMode</a> MatchScene::camera_mode = <a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9a81d741a35dc8a42c885b7cc031afd17f">MatchCameraMode::BROADCAST</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0f293a9da4c7d2d94bbe8cc540ea7fc5" name="a0f293a9da4c7d2d94bbe8cc540ea7fc5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f293a9da4c7d2d94bbe8cc540ea7fc5">&#9670;&#160;</a></span>day_look</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::day_look = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Daylight 3D presentation (default for day kick-offs). </p>
+
+</div>
+</div>
 <a id="a5e120dc6adffc3f47513284a25c9a427" name="a5e120dc6adffc3f47513284a25c9a427"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5e120dc6adffc3f47513284a25c9a427">&#9670;&#160;</a></span>debug_status</h2>
 
@@ -528,6 +2576,51 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="aa650446cf4d06fd322fa123536ca642e" name="aa650446cf4d06fd322fa123536ca642e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa650446cf4d06fd322fa123536ca642e">&#9670;&#160;</a></span>decided_by</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MatchScene::decided_by</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>"a.e.t." / "4-3 on penalties" under the full-time score (built once). </p>
+
+</div>
+</div>
+<a id="af3acbcff1e723ce367bce68c986a2cf0" name="af3acbcff1e723ce367bce68c986a2cf0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af3acbcff1e723ce367bce68c986a2cf0">&#9670;&#160;</a></span>decided_by_ready</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::decided_by_ready = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="aa6ea50d899a0eb9d7c38b9784f6c061e" name="aa6ea50d899a0eb9d7c38b9784f6c061e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa6ea50d899a0eb9d7c38b9784f6c061e">&#9670;&#160;</a></span>engine</h2>
 
@@ -539,6 +2632,142 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::unique_ptr&lt;<a class="el" href="classMatchEngine.html">MatchEngine</a>&gt; MatchScene::engine</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa3b25e9ac31fc64fe7bddfd3f849d6fc" name="aa3b25e9ac31fc64fe7bddfd3f849d6fc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa3b25e9ac31fc64fe7bddfd3f849d6fc">&#9670;&#160;</a></span>fixture_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;<a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a>&gt; MatchScene::fixture_type</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Type of today's calendar fixture between the teams, if there is one. </p>
+
+</div>
+</div>
+<a id="aceb84973edc4188ac83cbb23966cc745" name="aceb84973edc4188ac83cbb23966cc745"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aceb84973edc4188ac83cbb23966cc745">&#9670;&#160;</a></span>fixture_when</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MatchScene::fixture_when</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Weekday, date and kick-off of that fixture ("Sun 17 Aug 20:45"). </p>
+
+</div>
+</div>
+<a id="a04f1624bd3c39e05c6f76838be38c2d4" name="a04f1624bd3c39e05c6f76838be38c2d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a04f1624bd3c39e05c6f76838be38c2d4">&#9670;&#160;</a></span>focus_controls_width</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchScene::focus_controls_width = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Width of the focus HUD's control strip last frame (right-aligned). </p>
+
+</div>
+</div>
+<a id="a9039ec94dd2aefff5c7870dfc6c6202d" name="a9039ec94dd2aefff5c7870dfc6c6202d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9039ec94dd2aefff5c7870dfc6c6202d">&#9670;&#160;</a></span>frame_seconds</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchScene::frame_seconds = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a089f0ad402823f6d0e45e19247e52a2f" name="a089f0ad402823f6d0e45e19247e52a2f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a089f0ad402823f6d0e45e19247e52a2f">&#9670;&#160;</a></span>free_follow_ball</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::free_follow_ball = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The free camera orbits the moving ball (B). </p>
+
+</div>
+</div>
+<a id="a064e900073be9afaf260dbc713f2ef72" name="a064e900073be9afaf260dbc713f2ef72"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a064e900073be9afaf260dbc713f2ef72">&#9670;&#160;</a></span>highlights_only</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::highlights_only = false</td>
         </tr>
       </table>
   </td>
@@ -594,6 +2823,73 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="ac68a392d74563f661ef7376880552779" name="ac68a392d74563f661ef7376880552779"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac68a392d74563f661ef7376880552779">&#9670;&#160;</a></span>in_break</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::in_break = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The match was in a break (half-time, around extra time, shootout) last frame: entering one pauses the managed club's match. </p>
+
+</div>
+</div>
+<a id="acb069eb7a477380e0ce806ea1ca74a2b" name="acb069eb7a477380e0ce806ea1ca74a2b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb069eb7a477380e0ce806ea1ca74a2b">&#9670;&#160;</a></span>indexed_events</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t MatchScene::indexed_events = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa116a18854b492abbc25fc721fe5bc8d" name="aa116a18854b492abbc25fc721fe5bc8d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa116a18854b492abbc25fc721fe5bc8d">&#9670;&#160;</a></span>indexed_show_all</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::indexed_show_all = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a26361a657c95eafd5235ca232441af0d" name="a26361a657c95eafd5235ca232441af0d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a26361a657c95eafd5235ca232441af0d">&#9670;&#160;</a></span>is_paused</h2>
 
@@ -605,6 +2901,51 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">bool MatchScene::is_paused = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a64fd3dc37db8696a76767da4b2dd6801" name="a64fd3dc37db8696a76767da4b2dd6801"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a64fd3dc37db8696a76767da4b2dd6801">&#9670;&#160;</a></span>kickoff_minutes</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MatchScene::kickoff_minutes = -1</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Kick-off of today's fixture (minutes after midnight, -1 unknown). </p>
+
+</div>
+</div>
+<a id="a21b7762b67a32111aba0af6ad55925cf" name="a21b7762b67a32111aba0af6ad55925cf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a21b7762b67a32111aba0af6ad55925cf">&#9670;&#160;</a></span>last_render_milliseconds</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchScene::last_render_milliseconds = 0.0f</td>
         </tr>
       </table>
   </td>
@@ -635,6 +2976,73 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab207ea856116396ad80ad18c1e434aa9" name="ab207ea856116396ad80ad18c1e434aa9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab207ea856116396ad80ad18c1e434aa9">&#9670;&#160;</a></span>lineup_problems</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="structMatchScene_1_1LineupProblem.html">LineupProblem</a>&gt; MatchScene::lineup_problems</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab903ff196e1d43261a3cb2cd6b1ebff1" name="ab903ff196e1d43261a3cb2cd6b1ebff1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab903ff196e1d43261a3cb2cd6b1ebff1">&#9670;&#160;</a></span>lineup_status</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MatchScene::lineup_status</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aeaed106a7d48edcf0f6974a4bbd536e7" name="aeaed106a7d48edcf0f6974a4bbd536e7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeaed106a7d48edcf0f6974a4bbd536e7">&#9670;&#160;</a></span>managed_is_home</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;bool&gt; MatchScene::managed_is_home</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Side of the managed club, if it plays in this match. </p>
 
 </div>
 </div>
@@ -670,7 +3078,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">float MatchScene::match_speed = <a class="el" href="structMatchSceneTuning_1_1Controls.html#a64d95e340c0444b6079ad40e6a319587">MatchSceneTuning::Controls::DEFAULT_MATCH_SPEED</a></td>
+          <td class="memname">float MatchScene::match_speed = 1.0f</td>
         </tr>
       </table>
   </td>
@@ -679,28 +3087,7 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-
-</div>
-</div>
-<a id="a6331db93014987e4630d24f782bfdb21" name="a6331db93014987e4630d24f782bfdb21"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6331db93014987e4630d24f782bfdb21">&#9670;&#160;</a></span>matchRenderer</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::unique_ptr&lt;<a class="el" href="classIMatchRenderer.html">IMatchRenderer</a>&gt; MatchScene::matchRenderer</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
+<p>Multiplier of the engine's real-time pace (1x = real time). </p>
 
 </div>
 </div>
@@ -715,6 +3102,415 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">float MatchScene::maximum_update_milliseconds = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a568d3edb98075345eb7e63439fe08c2a" name="a568d3edb98075345eb7e63439fe08c2a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a568d3edb98075345eb7e63439fe08c2a">&#9670;&#160;</a></span>nav_keyboard_suspended</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::nav_keyboard_suspended = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>ImGui keyboard navigation is off while the keys drive the pitch. </p>
+
+</div>
+</div>
+<a id="a257d942a8ce811a37db8e7b58325b2be" name="a257d942a8ce811a37db8e7b58325b2be"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a257d942a8ce811a37db8e7b58325b2be">&#9670;&#160;</a></span>paused_for_dialog</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::paused_for_dialog = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Play was paused by opening a matchday dialog (resumes on close). </p>
+
+</div>
+</div>
+<a id="a9365606c0892dcc8244f74e0518e5382" name="a9365606c0892dcc8244f74e0518e5382"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9365606c0892dcc8244f74e0518e5382">&#9670;&#160;</a></span>pending_camera_input</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structMatchCameraInput.html">MatchCameraInput</a> MatchScene::pending_camera_input</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Mouse input over the 3D view waiting for the next rendered frame. </p>
+
+</div>
+</div>
+<a id="a6e8363a7204b6d871eedf127406ec48a" name="a6e8363a7204b6d871eedf127406ec48a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e8363a7204b6d871eedf127406ec48a">&#9670;&#160;</a></span>pending_zoom_steps</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchScene::pending_zoom_steps = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="abd9c4a18dfa130227284017fad389681" name="abd9c4a18dfa130227284017fad389681"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd9c4a18dfa130227284017fad389681">&#9670;&#160;</a></span>pitch_focus</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::pitch_focus = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>"Pitch focus": the view fills the window under a compact HUD (F). </p>
+
+</div>
+</div>
+<a id="a3ac56372970f5ff22066a9b6143cea97" name="a3ac56372970f5ff22066a9b6143cea97"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ac56372970f5ff22066a9b6143cea97">&#9670;&#160;</a></span>play</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMatchPlayController.html">MatchPlayController</a> MatchScene::play</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Devices, buttons and the active footballer of the human's side. </p>
+
+</div>
+</div>
+<a id="a975c225ef4519976b8af77d703eebaf7" name="a975c225ef4519976b8af77d703eebaf7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a975c225ef4519976b8af77d703eebaf7">&#9670;&#160;</a></span>play_basis</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structPlayScreenBasis.html">PlayScreenBasis</a> MatchScene::play_basis</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Stick-to-pitch mapping of the view on screen (last frame). </p>
+
+</div>
+</div>
+<a id="a64f690f01a441cc62e111f644101ce2f" name="a64f690f01a441cc62e111f644101ce2f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a64f690f01a441cc62e111f644101ce2f">&#9670;&#160;</a></span>play_confirm</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::play_confirm = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>"Take control" asked: the paused match waits on the confirmation. </p>
+
+</div>
+</div>
+<a id="ab78bc6f0a15629f2ae7c444810c4db73" name="ab78bc6f0a15629f2ae7c444810c4db73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab78bc6f0a15629f2ae7c444810c4db73">&#9670;&#160;</a></span>play_follow</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structVector2F.html">Vector2F</a> MatchScene::play_follow {<a class="el" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>, <a class="el" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Damped centre of the zoomed 2D play view (normalised pitch). </p>
+
+</div>
+</div>
+<a id="a4daf706ae06cd8c9d541922f8e124e38" name="a4daf706ae06cd8c9d541922f8e124e38"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4daf706ae06cd8c9d541922f8e124e38">&#9670;&#160;</a></span>play_follow_ready</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::play_follow_ready = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae908e9545700ea1638368cf9506ee6b8" name="ae908e9545700ea1638368cf9506ee6b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae908e9545700ea1638368cf9506ee6b8">&#9670;&#160;</a></span>play_menu</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::play_menu = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The play-mode pause menu is open. </p>
+
+</div>
+</div>
+<a id="a5c8d1a4e9993ef84b374bf65efebbdb8" name="a5c8d1a4e9993ef84b374bf65efebbdb8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c8d1a4e9993ef84b374bf65efebbdb8">&#9670;&#160;</a></span>play_menu_next</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMatchScene.html#af33fd3094ce5b985266458c22365d18a">PlayMenuNext</a> MatchScene::play_menu_next = <a class="el" href="classMatchScene.html#af33fd3094ce5b985266458c22365d18aab50339a10e1de285ac99d4c3990b8693">PlayMenuNext::NONE</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ada1c219fa975395fd7fe0483b8c90819" name="ada1c219fa975395fd7fe0483b8c90819"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada1c219fa975395fd7fe0483b8c90819">&#9670;&#160;</a></span>play_menu_resume</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::play_menu_resume = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The pause control was pressed again with the menu open: it closes (from inside the popup) and play resumes. </p>
+
+</div>
+</div>
+<a id="a449bc55926883c46b606a29bfe1bf3cc" name="a449bc55926883c46b606a29bfe1bf3cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a449bc55926883c46b606a29bfe1bf3cc">&#9670;&#160;</a></span>pre_match_note</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MatchScene::pre_match_note</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>What the assistant changed before kick-off, shown in the HUD. </p>
+
+</div>
+</div>
+<a id="a1c4e3bbd1c94a301b499cb36ad143d63" name="a1c4e3bbd1c94a301b499cb36ad143d63"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1c4e3bbd1c94a301b499cb36ad143d63">&#9670;&#160;</a></span>pressure_overlay</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::pressure_overlay = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Pitch-control overlay on the 2D view. </p>
+
+</div>
+</div>
+<a id="a7e043d9fd9b4cf4307c1e1d67f21eb0e" name="a7e043d9fd9b4cf4307c1e1d67f21eb0e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e043d9fd9b4cf4307c1e1d67f21eb0e">&#9670;&#160;</a></span>quick_result</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::future&lt;void&gt; MatchScene::quick_result</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Quick result running on a worker thread (declared after the engine so it is joined before the engine is destroyed). </p>
+
+</div>
+</div>
+<a id="a1e80196dad1d81ebba9dd46fedf1e10c" name="a1e80196dad1d81ebba9dd46fedf1e10c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1e80196dad1d81ebba9dd46fedf1e10c">&#9670;&#160;</a></span>renderer_2d</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unique_ptr&lt;<a class="el" href="classIMatchRenderer.html">IMatchRenderer</a>&gt; MatchScene::renderer_2d</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad41fae8104085e38d017a875a4c8237a" name="ad41fae8104085e38d017a875a4c8237a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad41fae8104085e38d017a875a4c8237a">&#9670;&#160;</a></span>renderer_3d</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unique_ptr&lt;<a class="el" href="classIMatchRenderer.html">IMatchRenderer</a>&gt; MatchScene::renderer_3d</td>
         </tr>
       </table>
   </td>
@@ -748,8 +3544,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="af83747dfefa1a83cbfe6c8cc282af6eb" name="af83747dfefa1a83cbfe6c8cc282af6eb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af83747dfefa1a83cbfe6c8cc282af6eb">&#9670;&#160;</a></span>selected_bench_player</h2>
+<a id="a116fc4f0fbef9a1f7db6309ba8bfeb02" name="a116fc4f0fbef9a1f7db6309ba8bfeb02"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a116fc4f0fbef9a1f7db6309ba8bfeb02">&#9670;&#160;</a></span>show_all_events</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -758,7 +3554,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> MatchScene::selected_bench_player {}</td>
+          <td class="memname">bool MatchScene::show_all_events = false</td>
         </tr>
       </table>
   </td>
@@ -770,8 +3566,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a8efad9e46dd4ecceef563b1ab7435bbe" name="a8efad9e46dd4ecceef563b1ab7435bbe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8efad9e46dd4ecceef563b1ab7435bbe">&#9670;&#160;</a></span>selected_pitch_player</h2>
+<a id="a4901104cea0811c84aa2852a3317228f" name="a4901104cea0811c84aa2852a3317228f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4901104cea0811c84aa2852a3317228f">&#9670;&#160;</a></span>show_player_names</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -780,7 +3576,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> MatchScene::selected_pitch_player {}</td>
+          <td class="memname">bool MatchScene::show_player_names = false</td>
         </tr>
       </table>
   </td>
@@ -814,6 +3610,97 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a04b911b048bbe5f9efa5557ea16ca17f" name="a04b911b048bbe5f9efa5557ea16ca17f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a04b911b048bbe5f9efa5557ea16ca17f">&#9670;&#160;</a></span>show_tactics</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::show_tactics = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad8bcc5af9bb07259eaea1d68beb9b86a" name="ad8bcc5af9bb07259eaea1d68beb9b86a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad8bcc5af9bb07259eaea1d68beb9b86a">&#9670;&#160;</a></span>side_panels_hidden</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::side_panels_hidden = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Statistics and events hidden so the view gets the whole width. </p>
+
+</div>
+</div>
+<a id="a326f86b4908b55496a982eac9f98107d" name="a326f86b4908b55496a982eac9f98107d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a326f86b4908b55496a982eac9f98107d">&#9670;&#160;</a></span>skip_indicator_seconds</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchScene::skip_indicator_seconds = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Seconds the "skipping to the next highlight" note stays visible. </p>
+
+</div>
+</div>
+<a id="a7520953c8bbea1bbd27517aad634fca2" name="a7520953c8bbea1bbd27517aad634fca2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7520953c8bbea1bbd27517aad634fca2">&#9670;&#160;</a></span>skipped_last_update</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::skipped_last_update = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The last update skipped ahead: the next frame's time (which includes the skip's own work) is clamped so play does not jump. </p>
+
+</div>
+</div>
 <a id="a07c57d0e89102daa45aba4d88fdb4ad8" name="a07c57d0e89102daa45aba4d88fdb4ad8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a07c57d0e89102daa45aba4d88fdb4ad8">&#9670;&#160;</a></span>slow_update_count</h2>
 
@@ -836,9 +3723,279 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a81c68c2bd6677157f96399e78b99253c" name="a81c68c2bd6677157f96399e78b99253c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a81c68c2bd6677157f96399e78b99253c">&#9670;&#160;</a></span>snapshot</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structMatchRenderSnapshot.html">MatchRenderSnapshot</a> MatchScene::snapshot</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Render snapshot refilled every frame (no per-frame allocation). </p>
+
+</div>
+</div>
+<a id="a723132bb48f3d243d50ad0ecee53b9c1" name="a723132bb48f3d243d50ad0ecee53b9c1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a723132bb48f3d243d50ad0ecee53b9c1">&#9670;&#160;</a></span>subs_panel</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMatchSubsPanel.html">MatchSubsPanel</a> MatchScene::subs_panel</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Substitutions dialog: planned changes, swaps and the assistant. </p>
+
+</div>
+</div>
+<a id="ab3f32a956df575701093a58e43eb2ff4" name="ab3f32a956df575701093a58e43eb2ff4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3f32a956df575701093a58e43eb2ff4">&#9670;&#160;</a></span>substitution_refused</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::substitution_refused = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a40a60a5671cf031cdfebca97295f0d8c" name="a40a60a5671cf031cdfebca97295f0d8c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a40a60a5671cf031cdfebca97295f0d8c">&#9670;&#160;</a></span>substitution_status</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MatchScene::substitution_status</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a09d466c19ce561cdf056d5344d8b673a" name="a09d466c19ce561cdf056d5344d8b673a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09d466c19ce561cdf056d5344d8b673a">&#9670;&#160;</a></span>tactics_panel</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMatchTacticsPanel.html">MatchTacticsPanel</a> MatchScene::tactics_panel</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p><a class="el" href="namespaceTactics.html" title="Roles, duties, in-possession shapes and their engine profiles. Pure functions; the tactic data itself...">Tactics</a> dialog: style, instructions and formation during play. </p>
+
+</div>
+</div>
+<a id="a8b52e29f064b75db858763cb096f7825" name="a8b52e29f064b75db858763cb096f7825"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b52e29f064b75db858763cb096f7825">&#9670;&#160;</a></span>team_talk</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classTeamTalkDialog.html">TeamTalkDialog</a> MatchScene::team_talk</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a446a20f7c661579ff01d3476073e5d44" name="a446a20f7c661579ff01d3476073e5d44"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a446a20f7c661579ff01d3476073e5d44">&#9670;&#160;</a></span>view_mode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="match__scene_8h.html#a7160a0f1f679facea0c8cbe093f6c651">MatchViewMode</a> MatchScene::view_mode = <a class="el" href="match__scene_8h.html#a7160a0f1f679facea0c8cbe093f6c651a30a080ebde1abd8ef2fdc70fabab1181">MatchViewMode::PITCH_2D</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a96d9d8b4333cf888830cc0226eb3c9a7" name="a96d9d8b4333cf888830cc0226eb3c9a7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96d9d8b4333cf888830cc0226eb3c9a7">&#9670;&#160;</a></span>visible_events</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;std::size_t&gt; MatchScene::visible_events</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Feed rows: indices into the engine's events (key moments by default). </p>
+
+</div>
+</div>
+<a id="ae0cd188fa37500e8e7682df8add1a7a3" name="ae0cd188fa37500e8e7682df8add1a7a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae0cd188fa37500e8e7682df8add1a7a3">&#9670;&#160;</a></span>watch_camera</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9">MatchCameraMode</a> MatchScene::watch_camera = <a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9a81d741a35dc8a42c885b7cc031afd17f">MatchCameraMode::BROADCAST</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a252b30e70519e3ff10f7a37fd66180ad" name="a252b30e70519e3ff10f7a37fd66180ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a252b30e70519e3ff10f7a37fd66180ad">&#9670;&#160;</a></span>watch_focus</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::watch_focus = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aafc4c64ab6d6608f28fc8bb86054b38d" name="aafc4c64ab6d6608f28fc8bb86054b38d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aafc4c64ab6d6608f28fc8bb86054b38d">&#9670;&#160;</a></span>watch_highlights</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchScene::watch_highlights = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="adeabeba86417b9d70729b403ac26b423" name="adeabeba86417b9d70729b403ac26b423"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adeabeba86417b9d70729b403ac26b423">&#9670;&#160;</a></span>watch_speed</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchScene::watch_speed = 1.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>How the match was being watched, restored on hand-back. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>src/gui/scenes/<a class="el" href="match__scene_8h_source.html">match_scene.h</a></li>
 <li>src/gui/scenes/<a class="el" href="match__scene_8cpp.html">match_scene.cpp</a></li>
+<li>src/gui/scenes/<a class="el" href="match__scene__play_8cpp.html">match_scene_play.cpp</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

@@ -95,8 +95,6 @@ $(document).ready(function(){initNavTree('classDataGenerator.html',''); initResi
 <div class="header">
   <div class="summary">
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="#pri-static-methods">Static Private Member Functions</a> &#124;
-<a href="#pri-static-attribs">Static Private Attributes</a> &#124;
 <a href="classDataGenerator-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">DataGenerator Class Reference</div></div>
 </div><!--header-->
@@ -115,23 +113,15 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ace95058ce7ae4945cebad4688cea7788" id="r_ace95058ce7ae4945cebad4688cea7788"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; <a class="el" href="classTeam.html">Team</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataGenerator.html#ace95058ce7ae4945cebad4688cea7788">generateTeams</a> ()</td></tr>
 <tr class="memdesc:ace95058ce7ae4945cebad4688cea7788"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a collection of teams.  <br /></td></tr>
 <tr class="separator:ace95058ce7ae4945cebad4688cea7788"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a72ec8baf898051b4e343003e026ef9e2" id="r_a72ec8baf898051b4e343003e026ef9e2"><td class="memItemLeft" align="right" valign="top">static std::unordered_map&lt; <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>, <a class="el" href="structClubIdentity.html">ClubIdentity</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataGenerator.html#a72ec8baf898051b4e343003e026ef9e2">loadClubIdentities</a> ()</td></tr>
+<tr class="memdesc:a72ec8baf898051b4e343003e026ef9e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads short name, kit colours, stadium, founding year and nickname of every club in the data pack. Missing fields keep the <a class="el" href="structClubIdentity.html" title="Descriptive club data read from the team files of the data pack.">ClubIdentity</a> defaults, so minimal packs still load.  <br /></td></tr>
+<tr class="separator:a72ec8baf898051b4e343003e026ef9e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd6cc11c777d31d1e68a79273ada61c4" id="r_abd6cc11c777d31d1e68a79273ada61c4"><td class="memItemLeft" align="right" valign="top">static std::unordered_map&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataGenerator.html#abd6cc11c777d31d1e68a79273ada61c4">loadClubArticles</a> ()</td></tr>
+<tr class="memdesc:abd6cc11c777d31d1e68a79273ada61c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads the optional Italian article ("article_it": "la", "il", "lo" or "l'") of the clubs that set one, for <a class="el" href="namespaceClubArticle.html" title="Italian definite articles for club names (&quot;il Lecce&quot;, &quot;la Roma&quot;, &quot;l&#39;Acaya&quot;, &quot;lo Stoke City&quot;).">ClubArticle</a>.  <br /></td></tr>
+<tr class="separator:abd6cc11c777d31d1e68a79273ada61c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c3829f9f1a76c784edee8af94b94fca" id="r_a7c3829f9f1a76c784edee8af94b94fca"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; <a class="el" href="classPlayer.html">Player</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataGenerator.html#a7c3829f9f1a76c784edee8af94b94fca">generatePlayers</a> (const class <a class="el" href="classGameData.html">GameData</a> &amp;gamedata)</td></tr>
-<tr class="memdesc:a7c3829f9f1a76c784edee8af94b94fca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a collection of players.  <br /></td></tr>
+<tr class="memdesc:a7c3829f9f1a76c784edee8af94b94fca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads the predefined players and completes every club's squad with generated players (see <a class="el" href="namespaceWorldGeneration.html" title="Creation of clubs and players with realistic structure.">WorldGeneration</a>). Club profiles must be assigned first; generation is deterministic for the world seed.  <br /></td></tr>
 <tr class="separator:a7c3829f9f1a76c784edee8af94b94fca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-static-methods" name="pri-static-methods"></a>
-Static Private Member Functions</h2></td></tr>
-<tr class="memitem:ae2888b6c90890830350a362e74931e84" id="r_ae2888b6c90890830350a362e74931e84"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataGenerator.html#ae2888b6c90890830350a362e74931e84">loadNames</a> ()</td></tr>
-<tr class="separator:ae2888b6c90890830350a362e74931e84"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d10f290714bf20e903f9b3bcc42e01d" id="r_a3d10f290714bf20e903f9b3bcc42e01d"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classPlayer.html">Player</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataGenerator.html#a3d10f290714bf20e903f9b3bcc42e01d">generateRandomPlayer</a> (const class <a class="el" href="classGameData.html">GameData</a> &amp;gamedata, <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> player_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id, <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a> role)</td></tr>
-<tr class="separator:a3d10f290714bf20e903f9b3bcc42e01d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-static-attribs" name="pri-static-attribs"></a>
-Static Private Attributes</h2></td></tr>
-<tr class="memitem:a6db3feb42f31c9b27a4ee00d321eec21" id="r_a6db3feb42f31c9b27a4ee00d321eec21"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataGenerator.html#a6db3feb42f31c9b27a4ee00d321eec21">first_names</a></td></tr>
-<tr class="separator:a6db3feb42f31c9b27a4ee00d321eec21"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a717560a67cc0db67c47d8fadfb8b64a8" id="r_a717560a67cc0db67c47d8fadfb8b64a8"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataGenerator.html#a717560a67cc0db67c47d8fadfb8b64a8">last_names</a></td></tr>
-<tr class="separator:a717560a67cc0db67c47d8fadfb8b64a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Class responsible for generating initial data for leagues, teams, and players. </p>
@@ -188,56 +178,8 @@ Static Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Generate a collection of players. </p>
+<p>Loads the predefined players and completes every club's squad with generated players (see <a class="el" href="namespaceWorldGeneration.html" title="Creation of clubs and players with realistic structure.">WorldGeneration</a>). Club profiles must be assigned first; generation is deterministic for the world seed. </p>
 <dl class="section return"><dt>Returns</dt><dd>A vector of generated <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> objects. </dd></dl>
-
-</div>
-</div>
-<a id="a3d10f290714bf20e903f9b3bcc42e01d" name="a3d10f290714bf20e903f9b3bcc42e01d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3d10f290714bf20e903f9b3bcc42e01d">&#9670;&#160;</a></span>generateRandomPlayer()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classPlayer.html">Player</a> DataGenerator::generateRandomPlayer </td>
-          <td>(</td>
-          <td class="paramtype">const class <a class="el" href="classGameData.html">GameData</a> &amp;&#160;</td>
-          <td class="paramname"><em>gamedata</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td>
-          <td class="paramname"><em>player_id</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
-          <td class="paramname"><em>team_id</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a>&#160;</td>
-          <td class="paramname"><em>role</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
 
 </div>
 </div>
@@ -269,8 +211,8 @@ Static Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ae2888b6c90890830350a362e74931e84" name="ae2888b6c90890830350a362e74931e84"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae2888b6c90890830350a362e74931e84">&#9670;&#160;</a></span>loadNames()</h2>
+<a id="abd6cc11c777d31d1e68a79273ada61c4" name="abd6cc11c777d31d1e68a79273ada61c4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd6cc11c777d31d1e68a79273ada61c4">&#9670;&#160;</a></span>loadClubArticles()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -279,7 +221,7 @@ Static Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void DataGenerator::loadNames </td>
+          <td class="memname">std::unordered_map&lt; std::string, std::string &gt; DataGenerator::loadClubArticles </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -287,16 +229,18 @@ Static Private Attributes</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
+<p>Reads the optional Italian article ("article_it": "la", "il", "lo" or "l'") of the clubs that set one, for <a class="el" href="namespaceClubArticle.html" title="Italian definite articles for club names (&quot;il Lecce&quot;, &quot;la Roma&quot;, &quot;l&#39;Acaya&quot;, &quot;lo Stoke City&quot;).">ClubArticle</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>Articles keyed by club name. </dd></dl>
+
 </div>
 </div>
-<h2 class="groupheader">Member Data Documentation</h2>
-<a id="a6db3feb42f31c9b27a4ee00d321eec21" name="a6db3feb42f31c9b27a4ee00d321eec21"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6db3feb42f31c9b27a4ee00d321eec21">&#9670;&#160;</a></span>first_names</h2>
+<a id="a72ec8baf898051b4e343003e026ef9e2" name="a72ec8baf898051b4e343003e026ef9e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a72ec8baf898051b4e343003e026ef9e2">&#9670;&#160;</a></span>loadClubIdentities()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -305,37 +249,21 @@ Static Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt; std::string &gt; DataGenerator::first_names</td>
+          <td class="memname">std::unordered_map&lt; <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>, <a class="el" href="structClubIdentity.html">ClubIdentity</a> &gt; DataGenerator::loadClubIdentities </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-</div>
-</div>
-<a id="a717560a67cc0db67c47d8fadfb8b64a8" name="a717560a67cc0db67c47d8fadfb8b64a8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a717560a67cc0db67c47d8fadfb8b64a8">&#9670;&#160;</a></span>last_names</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt; std::string &gt; DataGenerator::last_names</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
+<p>Reads short name, kit colours, stadium, founding year and nickname of every club in the data pack. Missing fields keep the <a class="el" href="structClubIdentity.html" title="Descriptive club data read from the team files of the data pack.">ClubIdentity</a> defaults, so minimal packs still load. </p>
+<dl class="section return"><dt>Returns</dt><dd>Identities keyed by team id. </dd></dl>
 
 </div>
 </div>

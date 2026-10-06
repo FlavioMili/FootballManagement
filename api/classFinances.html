@@ -101,88 +101,85 @@ $(document).ready(function(){initNavTree('classFinances.html',''); initResizable
 </div><!--header-->
 <div class="contents">
 
-<p>Manages the finances of a club.  
+<p>A club's balance, budgets and dated transaction ledger.  
  <a href="classFinances.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="finances_8h_source.html">finances.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:abc8e83033194f90323cb7dc476f95e68" id="r_abc8e83033194f90323cb7dc476f95e68"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#abc8e83033194f90323cb7dc476f95e68">Finances</a> (std::int64_t startingBalance, <a class="el" href="classTeam.html">Team</a> &amp;team_ref)</td></tr>
-<tr class="memdesc:abc8e83033194f90323cb7dc476f95e68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor for the <a class="el" href="classFinances.html" title="Manages the finances of a club.">Finances</a> class.  <br /></td></tr>
-<tr class="separator:abc8e83033194f90323cb7dc476f95e68"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aece96cfad039769570f00eb0c33d04e9" id="r_aece96cfad039769570f00eb0c33d04e9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#aece96cfad039769570f00eb0c33d04e9">~Finances</a> ()=default</td></tr>
-<tr class="memdesc:aece96cfad039769570f00eb0c33d04e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default destructor.  <br /></td></tr>
-<tr class="separator:aece96cfad039769570f00eb0c33d04e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a00fe954af3535996d6066df634975959" id="r_a00fe954af3535996d6066df634975959"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a00fe954af3535996d6066df634975959">setTransferToWagesRatio</a> (float ratio)</td></tr>
-<tr class="memdesc:a00fe954af3535996d6066df634975959"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the ratio of the budget allocated to transfers vs wages.  <br /></td></tr>
-<tr class="separator:a00fe954af3535996d6066df634975959"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ed7b50e41446c80fc5eca3bfb221d48" id="r_a0ed7b50e41446c80fc5eca3bfb221d48"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a0ed7b50e41446c80fc5eca3bfb221d48">Finances</a> (std::int64_t opening_balance, <a class="el" href="structGameDateValue.html">GameDateValue</a> opening_date=<a class="el" href="structGameDateValue.html">GameDateValue</a>(2025, 7, 2))</td></tr>
+<tr class="memdesc:a0ed7b50e41446c80fc5eca3bfb221d48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates the finances with an opening-balance transaction.  <br /></td></tr>
+<tr class="separator:a0ed7b50e41446c80fc5eca3bfb221d48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1f1e101421e6adca396e00aada2b338" id="r_ae1f1e101421e6adca396e00aada2b338"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#ae1f1e101421e6adca396e00aada2b338">record</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date, <a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028d">FinanceCategory</a> category, std::int64_t amount)</td></tr>
+<tr class="memdesc:ae1f1e101421e6adca396e00aada2b338"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="namespaceRecords.html" title="Comparison rules of the records book.">Records</a> a dated transaction and updates the balance.  <br /></td></tr>
+<tr class="separator:ae1f1e101421e6adca396e00aada2b338"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac12182ccfaeafce60f8f8617f5dd04f6" id="r_ac12182ccfaeafce60f8f8617f5dd04f6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#ac12182ccfaeafce60f8f8617f5dd04f6">revertLastTransaction</a> ()</td></tr>
+<tr class="separator:ac12182ccfaeafce60f8f8617f5dd04f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abab825e85627bc6d6fa030fb0f1077ee" id="r_abab825e85627bc6d6fa030fb0f1077ee"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#abab825e85627bc6d6fa030fb0f1077ee">addBalance</a> (std::int64_t amount)</td></tr>
-<tr class="memdesc:abab825e85627bc6d6fa030fb0f1077ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a specified amount to the balance.  <br /></td></tr>
+<tr class="memdesc:abab825e85627bc6d6fa030fb0f1077ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Owner investment dated at the newest transaction.  <br /></td></tr>
 <tr class="separator:abab825e85627bc6d6fa030fb0f1077ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2fb52ac0fe964304f6bd59e564f28db" id="r_ae2fb52ac0fe964304f6bd59e564f28db"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#ae2fb52ac0fe964304f6bd59e564f28db">subtractBalance</a> (std::int64_t amount)</td></tr>
-<tr class="memdesc:ae2fb52ac0fe964304f6bd59e564f28db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Subtracts a specified amount from the balance.  <br /></td></tr>
-<tr class="separator:ae2fb52ac0fe964304f6bd59e564f28db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a820c6b37cf7f6531b48e81ae7b434081" id="r_a820c6b37cf7f6531b48e81ae7b434081"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a820c6b37cf7f6531b48e81ae7b434081">getBalance</a> () const noexcept</td></tr>
-<tr class="memdesc:a820c6b37cf7f6531b48e81ae7b434081"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the current balance.  <br /></td></tr>
+<tr class="memdesc:a820c6b37cf7f6531b48e81ae7b434081"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current cash.  <br /></td></tr>
 <tr class="separator:a820c6b37cf7f6531b48e81ae7b434081"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ab100ef7f80127bee1f9d00a6c6c1b9" id="r_a6ab100ef7f80127bee1f9d00a6c6c1b9"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a6ab100ef7f80127bee1f9d00a6c6c1b9">getTransferToWagesRatio</a> () const noexcept</td></tr>
-<tr class="memdesc:a6ab100ef7f80127bee1f9d00a6c6c1b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the current transfer to wages ratio.  <br /></td></tr>
-<tr class="separator:a6ab100ef7f80127bee1f9d00a6c6c1b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6bac4d9513806eb4c60897be2b46c4ab" id="r_a6bac4d9513806eb4c60897be2b46c4ab"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a6bac4d9513806eb4c60897be2b46c4ab">getCurrentWageSpending</a> (const class <a class="el" href="classGameData.html">GameData</a> &amp;gamedata, const <a class="el" href="classTeam.html">Team</a> &amp;team) const</td></tr>
-<tr class="memdesc:a6bac4d9513806eb4c60897be2b46c4ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the current total wage spending of the team.  <br /></td></tr>
-<tr class="separator:a6bac4d9513806eb4c60897be2b46c4ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86ecceb54364ba18acddd6206373017e" id="r_a86ecceb54364ba18acddd6206373017e"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a86ecceb54364ba18acddd6206373017e">getTransferBudget</a> () const noexcept</td></tr>
+<tr class="memdesc:a86ecceb54364ba18acddd6206373017e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remaining transfer allowance for this season.  <br /></td></tr>
+<tr class="separator:a86ecceb54364ba18acddd6206373017e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f04467862f346751f23b756ae435c5e" id="r_a1f04467862f346751f23b756ae435c5e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a1f04467862f346751f23b756ae435c5e">setTransferBudget</a> (std::int64_t budget)</td></tr>
+<tr class="memdesc:a1f04467862f346751f23b756ae435c5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the transfer allowance.  <br /></td></tr>
+<tr class="separator:a1f04467862f346751f23b756ae435c5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3ac12f86a1e6b805d066cfd20a18836" id="r_ac3ac12f86a1e6b805d066cfd20a18836"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#ac3ac12f86a1e6b805d066cfd20a18836">getWageBudget</a> () const noexcept</td></tr>
+<tr class="memdesc:ac3ac12f86a1e6b805d066cfd20a18836"><td class="mdescLeft">&#160;</td><td class="mdescRight">Weekly wage allowance (cap on the total weekly payroll).  <br /></td></tr>
+<tr class="separator:ac3ac12f86a1e6b805d066cfd20a18836"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9dc370bebcceb7b598fdfd24b27ed12" id="r_ab9dc370bebcceb7b598fdfd24b27ed12"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#ab9dc370bebcceb7b598fdfd24b27ed12">setWageBudget</a> (std::int64_t weekly_budget)</td></tr>
+<tr class="memdesc:ab9dc370bebcceb7b598fdfd24b27ed12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the weekly wage allowance.  <br /></td></tr>
+<tr class="separator:ab9dc370bebcceb7b598fdfd24b27ed12"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab167ae6317bcf2d7d166c26c248e46c8" id="r_ab167ae6317bcf2d7d166c26c248e46c8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#ab167ae6317bcf2d7d166c26c248e46c8">moveTransferToWageBudget</a> (std::int64_t transfer_amount, std::int64_t current_weekly_wages)</td></tr>
+<tr class="memdesc:ab167ae6317bcf2d7d166c26c248e46c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Moves money between the two budgets at 52 weeks per season.  <br /></td></tr>
+<tr class="separator:ab167ae6317bcf2d7d166c26c248e46c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaab7865888fc411716b2eb0b1a0adb95" id="r_aaab7865888fc411716b2eb0b1a0adb95"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="structFinanceTransaction.html">FinanceTransaction</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#aaab7865888fc411716b2eb0b1a0adb95">getLedger</a> () const noexcept</td></tr>
+<tr class="memdesc:aaab7865888fc411716b2eb0b1a0adb95"><td class="mdescLeft">&#160;</td><td class="mdescRight">All transactions in recording order (chronological).  <br /></td></tr>
+<tr class="separator:aaab7865888fc411716b2eb0b1a0adb95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f5aab63f5c4b44efadf22227cc6d308" id="r_a8f5aab63f5c4b44efadf22227cc6d308"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a8f5aab63f5c4b44efadf22227cc6d308">ledgerTotal</a> () const</td></tr>
+<tr class="memdesc:a8f5aab63f5c4b44efadf22227cc6d308"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sum of all ledger amounts (equals the balance).  <br /></td></tr>
+<tr class="separator:a8f5aab63f5c4b44efadf22227cc6d308"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b7dbafb3f22a7274cc3705e728149c3" id="r_a8b7dbafb3f22a7274cc3705e728149c3"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a8b7dbafb3f22a7274cc3705e728149c3">balanceAt</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date) const</td></tr>
+<tr class="memdesc:a8b7dbafb3f22a7274cc3705e728149c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Balance from the transactions dated on or before <code>date</code>.  <br /></td></tr>
+<tr class="separator:a8b7dbafb3f22a7274cc3705e728149c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c1b7ab5ce945af881cb0e8e6cf5c7cb" id="r_a9c1b7ab5ce945af881cb0e8e6cf5c7cb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structFinanceSummary.html">FinanceSummary</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a9c1b7ab5ce945af881cb0e8e6cf5c7cb">summarize</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;from, const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;to) const</td></tr>
+<tr class="memdesc:a9c1b7ab5ce945af881cb0e8e6cf5c7cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Totals of the transactions dated in [from, to].  <br /></td></tr>
+<tr class="separator:a9c1b7ab5ce945af881cb0e8e6cf5c7cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48cfde9ebd307b9c43b7f634fca6b9ce" id="r_a48cfde9ebd307b9c43b7f634fca6b9ce"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a48cfde9ebd307b9c43b7f634fca6b9ce">getCurrentWageSpending</a> (const <a class="el" href="classGameData.html">GameData</a> &amp;gamedata, const <a class="el" href="classTeam.html">Team</a> &amp;team) const</td></tr>
+<tr class="memdesc:a48cfde9ebd307b9c43b7f634fca6b9ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the current total wage spending of the team.  <br /></td></tr>
+<tr class="separator:a48cfde9ebd307b9c43b7f634fca6b9ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeeaca3b54bc1773e7d02a7d3cb224ecd" id="r_aeeaca3b54bc1773e7d02a7d3cb224ecd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#aeeaca3b54bc1773e7d02a7d3cb224ecd">restoreLedger</a> (std::vector&lt; <a class="el" href="structFinanceTransaction.html">FinanceTransaction</a> &gt; <a class="el" href="classFinances.html#a7ea30e328a772cb38a5a74224f0163ef">ledger</a>)</td></tr>
+<tr class="separator:aeeaca3b54bc1773e7d02a7d3cb224ecd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ad9bfdf5ad5ef52130276cfbbaf1c50" id="r_a5ad9bfdf5ad5ef52130276cfbbaf1c50"><td class="memItemLeft" align="right" valign="top">std::span&lt; const <a class="el" href="structFinanceTransaction.html">FinanceTransaction</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a5ad9bfdf5ad5ef52130276cfbbaf1c50">pendingTransactions</a> () const</td></tr>
+<tr class="separator:a5ad9bfdf5ad5ef52130276cfbbaf1c50"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a800b6c33dbc2555fc56152519193e71f" id="r_a800b6c33dbc2555fc56152519193e71f"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a800b6c33dbc2555fc56152519193e71f">persistedCount</a> () const noexcept</td></tr>
+<tr class="separator:a800b6c33dbc2555fc56152519193e71f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bd10b9208e26d058f4f31edd464d17b" id="r_a2bd10b9208e26d058f4f31edd464d17b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a2bd10b9208e26d058f4f31edd464d17b">markPersisted</a> () noexcept</td></tr>
+<tr class="separator:a2bd10b9208e26d058f4f31edd464d17b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
-<tr class="memitem:a2614c7877a732fcc20aa1776b04b93ff" id="r_a2614c7877a732fcc20aa1776b04b93ff"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a2614c7877a732fcc20aa1776b04b93ff">balance</a></td></tr>
+<tr class="memitem:a2614c7877a732fcc20aa1776b04b93ff" id="r_a2614c7877a732fcc20aa1776b04b93ff"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a2614c7877a732fcc20aa1776b04b93ff">balance</a> = 0</td></tr>
 <tr class="separator:a2614c7877a732fcc20aa1776b04b93ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac8f92a39da4eb2b954c88b023c51720e" id="r_ac8f92a39da4eb2b954c88b023c51720e"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#ac8f92a39da4eb2b954c88b023c51720e">transfer_to_wages_ratio</a></td></tr>
-<tr class="separator:ac8f92a39da4eb2b954c88b023c51720e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae882488d23c3315eebce93a770a90714" id="r_ae882488d23c3315eebce93a770a90714"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#ae882488d23c3315eebce93a770a90714">transfer_budget</a> = 0</td></tr>
+<tr class="separator:ae882488d23c3315eebce93a770a90714"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6362facc240e8720d0ef626b07e5c06e" id="r_a6362facc240e8720d0ef626b07e5c06e"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a6362facc240e8720d0ef626b07e5c06e">wage_budget</a> = 0</td></tr>
+<tr class="separator:a6362facc240e8720d0ef626b07e5c06e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ea30e328a772cb38a5a74224f0163ef" id="r_a7ea30e328a772cb38a5a74224f0163ef"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structFinanceTransaction.html">FinanceTransaction</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a7ea30e328a772cb38a5a74224f0163ef">ledger</a></td></tr>
+<tr class="separator:a7ea30e328a772cb38a5a74224f0163ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96860895b674c0bcabbd0d20222f7fb7" id="r_a96860895b674c0bcabbd0d20222f7fb7"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFinances.html#a96860895b674c0bcabbd0d20222f7fb7">persisted</a> = 0</td></tr>
+<tr class="separator:a96860895b674c0bcabbd0d20222f7fb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Manages the finances of a club. </p>
-<p>This class handles the balance, wages, contracts, and other financial aspects of a team. </p>
+<div class="textblock"><p>A club's balance, budgets and dated transaction ledger. </p>
+<p>Every balance change is recorded as a transaction, so the balance always equals the sum of the ledger. The transfer budget and the weekly wage budget are separate allowances set by the board each season. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="abc8e83033194f90323cb7dc476f95e68" name="abc8e83033194f90323cb7dc476f95e68"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abc8e83033194f90323cb7dc476f95e68">&#9670;&#160;</a></span>Finances()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">Finances::Finances </td>
-          <td>(</td>
-          <td class="paramtype">std::int64_t&#160;</td>
-          <td class="paramname"><em>startingBalance</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classTeam.html">Team</a> &amp;&#160;</td>
-          <td class="paramname"><em>team_ref</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Constructor for the <a class="el" href="classFinances.html" title="Manages the finances of a club.">Finances</a> class. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">startingBalance</td><td>The initial balance of the team. </td></tr>
-    <tr><td class="paramname">team_ref</td><td>A reference to the <a class="el" href="classTeam.html" title="Represents a football team.">Team</a> object. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="aece96cfad039769570f00eb0c33d04e9" name="aece96cfad039769570f00eb0c33d04e9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aece96cfad039769570f00eb0c33d04e9">&#9670;&#160;</a></span>~Finances()</h2>
+<a id="a0ed7b50e41446c80fc5eca3bfb221d48" name="a0ed7b50e41446c80fc5eca3bfb221d48"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0ed7b50e41446c80fc5eca3bfb221d48">&#9670;&#160;</a></span>Finances()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -191,20 +188,38 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">Finances::~Finances </td>
+          <td class="memname">Finances::Finances </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">std::int64_t&#160;</td>
+          <td class="paramname"><em>opening_balance</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td>
+          <td class="paramname"><em>opening_date</em> = <code><a class="el" href="structGameDateValue.html">GameDateValue</a>(2025,&#160;7,&#160;2)</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">default</span></span>  </td>
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Default destructor. </p>
+<p>Creates the finances with an opening-balance transaction. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">opening_balance</td><td>Initial cash. </td></tr>
+    <tr><td class="paramname">opening_date</td><td>Date of the opening transaction. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -225,13 +240,28 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Adds a specified amount to the balance. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">amount</td><td>The amount to add. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Owner investment dated at the newest transaction. </p>
+<p>The funds are unrestricted: they raise the transfer budget by the full amount and the weekly wage budget by one season's worth (amount / 52). </p>
+
+</div>
+</div>
+<a id="a8b7dbafb3f22a7274cc3705e728149c3" name="a8b7dbafb3f22a7274cc3705e728149c3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b7dbafb3f22a7274cc3705e728149c3">&#9670;&#160;</a></span>balanceAt()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::int64_t Finances::balanceAt </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;&#160;</td>
+          <td class="paramname"><em>date</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Balance from the transactions dated on or before <code>date</code>. </p>
 
 </div>
 </div>
@@ -258,13 +288,12 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Gets the current balance. </p>
-<dl class="section return"><dt>Returns</dt><dd>The current balance. </dd></dl>
+<p>Current cash. </p>
 
 </div>
 </div>
-<a id="a6bac4d9513806eb4c60897be2b46c4ab" name="a6bac4d9513806eb4c60897be2b46c4ab"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6bac4d9513806eb4c60897be2b46c4ab">&#9670;&#160;</a></span>getCurrentWageSpending()</h2>
+<a id="a48cfde9ebd307b9c43b7f634fca6b9ce" name="a48cfde9ebd307b9c43b7f634fca6b9ce"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48cfde9ebd307b9c43b7f634fca6b9ce">&#9670;&#160;</a></span>getCurrentWageSpending()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -272,7 +301,7 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="memname">int64_t Finances::getCurrentWageSpending </td>
           <td>(</td>
-          <td class="paramtype">const class <a class="el" href="classGameData.html">GameData</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="classGameData.html">GameData</a> &amp;&#160;</td>
           <td class="paramname"><em>gamedata</em>, </td>
         </tr>
         <tr>
@@ -290,12 +319,12 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets the current total wage spending of the team. </p>
-<dl class="section return"><dt>Returns</dt><dd>The current wage spending. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The current weekly wage spending. </dd></dl>
 
 </div>
 </div>
-<a id="a6ab100ef7f80127bee1f9d00a6c6c1b9" name="a6ab100ef7f80127bee1f9d00a6c6c1b9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6ab100ef7f80127bee1f9d00a6c6c1b9">&#9670;&#160;</a></span>getTransferToWagesRatio()</h2>
+<a id="aaab7865888fc411716b2eb0b1a0adb95" name="aaab7865888fc411716b2eb0b1a0adb95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaab7865888fc411716b2eb0b1a0adb95">&#9670;&#160;</a></span>getLedger()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -304,7 +333,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">float Finances::getTransferToWagesRatio </td>
+          <td class="memname">const std::vector&lt; <a class="el" href="structFinanceTransaction.html">FinanceTransaction</a> &gt; &amp; Finances::getLedger </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -317,60 +346,332 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Gets the current transfer to wages ratio. </p>
-<dl class="section return"><dt>Returns</dt><dd>The transfer to wages ratio. </dd></dl>
+<p>All transactions in recording order (chronological). </p>
 
 </div>
 </div>
-<a id="a00fe954af3535996d6066df634975959" name="a00fe954af3535996d6066df634975959"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a00fe954af3535996d6066df634975959">&#9670;&#160;</a></span>setTransferToWagesRatio()</h2>
+<a id="a86ecceb54364ba18acddd6206373017e" name="a86ecceb54364ba18acddd6206373017e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86ecceb54364ba18acddd6206373017e">&#9670;&#160;</a></span>getTransferBudget()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::int64_t Finances::getTransferBudget </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Remaining transfer allowance for this season. </p>
+
+</div>
+</div>
+<a id="ac3ac12f86a1e6b805d066cfd20a18836" name="ac3ac12f86a1e6b805d066cfd20a18836"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3ac12f86a1e6b805d066cfd20a18836">&#9670;&#160;</a></span>getWageBudget()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::int64_t Finances::getWageBudget </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Weekly wage allowance (cap on the total weekly payroll). </p>
+
+</div>
+</div>
+<a id="a8f5aab63f5c4b44efadf22227cc6d308" name="a8f5aab63f5c4b44efadf22227cc6d308"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f5aab63f5c4b44efadf22227cc6d308">&#9670;&#160;</a></span>ledgerTotal()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void Finances::setTransferToWagesRatio </td>
+          <td class="memname">std::int64_t Finances::ledgerTotal </td>
           <td>(</td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>ratio</em></td><td>)</td>
-          <td></td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Sets the ratio of the budget allocated to transfers vs wages. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">ratio</td><td>The ratio to set, clamped between 0.0 and 1.0. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Sum of all ledger amounts (equals the balance). </p>
 
 </div>
 </div>
-<a id="ae2fb52ac0fe964304f6bd59e564f28db" name="ae2fb52ac0fe964304f6bd59e564f28db"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae2fb52ac0fe964304f6bd59e564f28db">&#9670;&#160;</a></span>subtractBalance()</h2>
+<a id="a2bd10b9208e26d058f4f31edd464d17b" name="a2bd10b9208e26d058f4f31edd464d17b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2bd10b9208e26d058f4f31edd464d17b">&#9670;&#160;</a></span>markPersisted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Finances::markPersisted </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Marks every transaction as written. </p>
+
+</div>
+</div>
+<a id="ab167ae6317bcf2d7d166c26c248e46c8" name="ab167ae6317bcf2d7d166c26c248e46c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab167ae6317bcf2d7d166c26c248e46c8">&#9670;&#160;</a></span>moveTransferToWageBudget()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void Finances::subtractBalance </td>
+          <td class="memname">bool Finances::moveTransferToWageBudget </td>
           <td>(</td>
           <td class="paramtype">std::int64_t&#160;</td>
-          <td class="paramname"><em>amount</em></td><td>)</td>
+          <td class="paramname"><em>transfer_amount</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::int64_t&#160;</td>
+          <td class="paramname"><em>current_weekly_wages</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Moves money between the two budgets at 52 weeks per season. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">transfer_amount</td><td>Positive moves transfer budget into weekly wages, negative moves unused weekly wage room back into the transfer budget. </td></tr>
+    <tr><td class="paramname">current_weekly_wages</td><td>Payroll that the wage budget must cover. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>False when a budget would drop below its floor. </dd></dl>
+
+</div>
+</div>
+<a id="a5ad9bfdf5ad5ef52130276cfbbaf1c50" name="a5ad9bfdf5ad5ef52130276cfbbaf1c50"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5ad9bfdf5ad5ef52130276cfbbaf1c50">&#9670;&#160;</a></span>pendingTransactions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::span&lt; const <a class="el" href="structFinanceTransaction.html">FinanceTransaction</a> &gt; Finances::pendingTransactions </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Transactions not yet written to the database. </p>
+
+</div>
+</div>
+<a id="a800b6c33dbc2555fc56152519193e71f" name="a800b6c33dbc2555fc56152519193e71f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a800b6c33dbc2555fc56152519193e71f">&#9670;&#160;</a></span>persistedCount()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t Finances::persistedCount </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Index of the first pending transaction. </p>
+
+</div>
+</div>
+<a id="ae1f1e101421e6adca396e00aada2b338" name="ae1f1e101421e6adca396e00aada2b338"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1f1e101421e6adca396e00aada2b338">&#9670;&#160;</a></span>record()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Finances::record </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;&#160;</td>
+          <td class="paramname"><em>date</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="finances_8h.html#a2be7febbd8bf2061a2984eba64f5028d">FinanceCategory</a>&#160;</td>
+          <td class="paramname"><em>category</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::int64_t&#160;</td>
+          <td class="paramname"><em>amount</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="namespaceRecords.html" title="Comparison rules of the records book.">Records</a> a dated transaction and updates the balance. </p>
+<p>Fees paid reduce the transfer budget; a share of fees received is returned to it. </p>
+
+</div>
+</div>
+<a id="aeeaca3b54bc1773e7d02a7d3cb224ecd" name="aeeaca3b54bc1773e7d02a7d3cb224ecd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeeaca3b54bc1773e7d02a7d3cb224ecd">&#9670;&#160;</a></span>restoreLedger()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Finances::restoreLedger </td>
+          <td>(</td>
+          <td class="paramtype">std::vector&lt; <a class="el" href="structFinanceTransaction.html">FinanceTransaction</a> &gt;&#160;</td>
+          <td class="paramname"><em>ledger</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Replaces the ledger with persisted rows; the balance follows it. </p>
+
+</div>
+</div>
+<a id="ac12182ccfaeafce60f8f8617f5dd04f6" name="ac12182ccfaeafce60f8f8617f5dd04f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac12182ccfaeafce60f8f8617f5dd04f6">&#9670;&#160;</a></span>revertLastTransaction()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Finances::revertLastTransaction </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Removes the newest transaction and undoes its effects. </p>
+
+</div>
+</div>
+<a id="a1f04467862f346751f23b756ae435c5e" name="a1f04467862f346751f23b756ae435c5e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1f04467862f346751f23b756ae435c5e">&#9670;&#160;</a></span>setTransferBudget()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Finances::setTransferBudget </td>
+          <td>(</td>
+          <td class="paramtype">std::int64_t&#160;</td>
+          <td class="paramname"><em>budget</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Subtracts a specified amount from the balance. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">amount</td><td>The amount to subtract. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Sets the transfer allowance. </p>
+
+</div>
+</div>
+<a id="ab9dc370bebcceb7b598fdfd24b27ed12" name="ab9dc370bebcceb7b598fdfd24b27ed12"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab9dc370bebcceb7b598fdfd24b27ed12">&#9670;&#160;</a></span>setWageBudget()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Finances::setWageBudget </td>
+          <td>(</td>
+          <td class="paramtype">std::int64_t&#160;</td>
+          <td class="paramname"><em>weekly_budget</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets the weekly wage allowance. </p>
+
+</div>
+</div>
+<a id="a9c1b7ab5ce945af881cb0e8e6cf5c7cb" name="a9c1b7ab5ce945af881cb0e8e6cf5c7cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c1b7ab5ce945af881cb0e8e6cf5c7cb">&#9670;&#160;</a></span>summarize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structFinanceSummary.html">FinanceSummary</a> Finances::summarize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;&#160;</td>
+          <td class="paramname"><em>from</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;&#160;</td>
+          <td class="paramname"><em>to</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Totals of the transactions dated in [from, to]. </p>
 
 </div>
 </div>
@@ -385,7 +686,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::int64_t Finances::balance</td>
+          <td class="memname">std::int64_t Finances::balance = 0</td>
         </tr>
       </table>
   </td>
@@ -397,8 +698,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ac8f92a39da4eb2b954c88b023c51720e" name="ac8f92a39da4eb2b954c88b023c51720e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac8f92a39da4eb2b954c88b023c51720e">&#9670;&#160;</a></span>transfer_to_wages_ratio</h2>
+<a id="a7ea30e328a772cb38a5a74224f0163ef" name="a7ea30e328a772cb38a5a74224f0163ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ea30e328a772cb38a5a74224f0163ef">&#9670;&#160;</a></span>ledger</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -407,7 +708,73 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">float Finances::transfer_to_wages_ratio</td>
+          <td class="memname">std::vector&lt;<a class="el" href="structFinanceTransaction.html">FinanceTransaction</a>&gt; Finances::ledger</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a96860895b674c0bcabbd0d20222f7fb7" name="a96860895b674c0bcabbd0d20222f7fb7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96860895b674c0bcabbd0d20222f7fb7">&#9670;&#160;</a></span>persisted</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t Finances::persisted = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae882488d23c3315eebce93a770a90714" name="ae882488d23c3315eebce93a770a90714"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae882488d23c3315eebce93a770a90714">&#9670;&#160;</a></span>transfer_budget</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::int64_t Finances::transfer_budget = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6362facc240e8720d0ef626b07e5c06e" name="a6362facc240e8720d0ef626b07e5c06e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6362facc240e8720d0ef626b07e5c06e">&#9670;&#160;</a></span>wage_budget</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::int64_t Finances::wage_budget = 0</td>
         </tr>
       </table>
   </td>

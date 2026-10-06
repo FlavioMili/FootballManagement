@@ -1,0 +1,26 @@
+var structMatchRender3DTuning_1_1Shadow =
+[
+    [ "BLADE_ALPHA", "structMatchRender3DTuning_1_1Shadow.html#abf178c2ba2edd9183fd7e9e0f070aa11", null ],
+    [ "BLADE_HALF_WIDTH", "structMatchRender3DTuning_1_1Shadow.html#ad9ecf8ab4aaba0489cd9ad54e522eac7", null ],
+    [ "CLOSE_FADE_FULL_PIXELS", "structMatchRender3DTuning_1_1Shadow.html#abbfb2b8d5ef7ae73db723be035c8b85a", null ],
+    [ "CLOSE_FADE_START_PIXELS", "structMatchRender3DTuning_1_1Shadow.html#a04bd31c74190e46aa8ebab4dd075a61b", null ],
+    [ "CLOSE_SHARE", "structMatchRender3DTuning_1_1Shadow.html#a911908524310db52d4fbfbb6169e0311", null ],
+    [ "CONTACT_COLOR", "structMatchRender3DTuning_1_1Shadow.html#adae183c91f0c61cafb277d3371df8d71", null ],
+    [ "CONTACT_RADIUS", "structMatchRender3DTuning_1_1Shadow.html#a0b7c90961e1ef0cec273171ec5a33744", null ],
+    [ "CORE_ALPHA_SHARE", "structMatchRender3DTuning_1_1Shadow.html#ab143ed66824b2881c14b4b5e380ead5c", null ],
+    [ "CORE_RADIUS_SHARE", "structMatchRender3DTuning_1_1Shadow.html#ab75bfd29ffcab9d8fe87c70f20d5624d", null ],
+    [ "MAX_BLADE", "structMatchRender3DTuning_1_1Shadow.html#af414561f0669bf011af0ba20adf5b060", null ],
+    [ "MAX_LAMP_SHARE", "structMatchRender3DTuning_1_1Shadow.html#ab5626bd5a040574e48a1a9a4b7672d5a", null ],
+    [ "MIN_BLADE", "structMatchRender3DTuning_1_1Shadow.html#a4ea5cab8eae85583281c042560b70ef2", null ],
+    [ "MIN_LAMP_SHARE", "structMatchRender3DTuning_1_1Shadow.html#aaa3c4251d9a68116aeb439db5b3e31af", null ],
+    [ "PENUMBRA", "structMatchRender3DTuning_1_1Shadow.html#a191f265960e4602e5aa6ac328ca7ed0a", null ],
+    [ "RING_COLOR", "structMatchRender3DTuning_1_1Shadow.html#a1bd2a7cb89e9bb68f3d37e647d02f034", null ],
+    [ "RING_PULSE", "structMatchRender3DTuning_1_1Shadow.html#a404d7f83e1660d2c8a087ae5eae1ea09", null ],
+    [ "RING_PULSE_SPEED", "structMatchRender3DTuning_1_1Shadow.html#adfef001e71d345a477ce4429f81c1593", null ],
+    [ "RING_RADIUS", "structMatchRender3DTuning_1_1Shadow.html#a972c6336949f46685f4e5956f1bacb2b", null ],
+    [ "RING_SEGMENTS", "structMatchRender3DTuning_1_1Shadow.html#ad45445669632ab946d140b1f24aa5c5a", null ],
+    [ "RING_THICKNESS", "structMatchRender3DTuning_1_1Shadow.html#a7ce265d4d7e5eff5f5214760078e77f1", null ],
+    [ "SEGMENTS", "structMatchRender3DTuning_1_1Shadow.html#ad15995a5c901c6e586aa54864d655509", null ],
+    [ "SUN_ALPHA", "structMatchRender3DTuning_1_1Shadow.html#af1bc611ec5324b3f444b91a4b946d184", null ],
+    [ "SUN_LENGTH_SHARE", "structMatchRender3DTuning_1_1Shadow.html#a07ab79863fd2706e131b0a6c70dbf49e", null ]
+];

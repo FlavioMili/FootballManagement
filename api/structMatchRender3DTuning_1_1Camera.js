@@ -1,0 +1,25 @@
+var structMatchRender3DTuning_1_1Camera =
+[
+    [ "ANGLE_RATE", "structMatchRender3DTuning_1_1Camera.html#ac233ecb60f7f9c37797b0093a85df359", null ],
+    [ "ATTACK_SWITCH_SECONDS", "structMatchRender3DTuning_1_1Camera.html#a5a6be2f177c93e233dc6fdb91ac56463", null ],
+    [ "DISTANCE_RATE", "structMatchRender3DTuning_1_1Camera.html#ac1b5b66e33f74df43e8a4ac870b82990", null ],
+    [ "EYE_MAX_X", "structMatchRender3DTuning_1_1Camera.html#a6adeb650acf9e98fd2729fab18cb7108", null ],
+    [ "EYE_MAX_Y", "structMatchRender3DTuning_1_1Camera.html#a4430ef424437e7c8f91b04b8ab7419f1", null ],
+    [ "EYE_MIN_X", "structMatchRender3DTuning_1_1Camera.html#adf875a57a6ad9b9c0d6e128fe1036f3c", null ],
+    [ "EYE_MIN_Y", "structMatchRender3DTuning_1_1Camera.html#a35cba57c92aadb043a57f87ebbb59438", null ],
+    [ "FAR_PLANE", "structMatchRender3DTuning_1_1Camera.html#a51b415ee8027f39322210b42e05be10c", null ],
+    [ "FOV_RATE", "structMatchRender3DTuning_1_1Camera.html#ab498ba913abffccac9aa6c8becd289b7", null ],
+    [ "JUMP_METRES", "structMatchRender3DTuning_1_1Camera.html#a489415dda2cc758649be0b68ba06bc8f", null ],
+    [ "JUMP_SIM_SECONDS", "structMatchRender3DTuning_1_1Camera.html#a50f55224eb9c01ae3f57512eb54ff941", null ],
+    [ "LOOKAHEAD_SECONDS", "structMatchRender3DTuning_1_1Camera.html#a776c289dbc9bc39fd9d2060e19091d5c", null ],
+    [ "MAX_CLAMP_PITCH", "structMatchRender3DTuning_1_1Camera.html#abe9b3c49316a15a308d1c49a48eaba3e", null ],
+    [ "MAX_FRAME_SECONDS", "structMatchRender3DTuning_1_1Camera.html#a7f4ffa20c103711b461013c23b87f996", null ],
+    [ "MAX_LOOKAHEAD", "structMatchRender3DTuning_1_1Camera.html#ac6f8a2b5f2b2a496d6d6418cb297c9f3", null ],
+    [ "MAX_ZOOM", "structMatchRender3DTuning_1_1Camera.html#a45f3c6c338554e904b1e89772339f6c5", null ],
+    [ "MIN_EYE_HEIGHT", "structMatchRender3DTuning_1_1Camera.html#ad793aba61cbec8cbe4cfe2fc8b26b773", null ],
+    [ "MIN_ZOOM", "structMatchRender3DTuning_1_1Camera.html#a13cbf0edee59c7726d35c678cb93957a", null ],
+    [ "NEAR_PLANE", "structMatchRender3DTuning_1_1Camera.html#af3773e8bdafcdb894b46608212541cec", null ],
+    [ "STAND_CLEAR_HEIGHT", "structMatchRender3DTuning_1_1Camera.html#a86adead9a482c6fac6781666cd0042a5", null ],
+    [ "TARGET_RATE", "structMatchRender3DTuning_1_1Camera.html#aadf8c2609666debe4fcc4e0a759be179", null ],
+    [ "ZOOM_STEP", "structMatchRender3DTuning_1_1Camera.html#a4d2104b9c0e3f111b7e98ce99a9060d7", null ]
+];

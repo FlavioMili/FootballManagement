@@ -1,0 +1,24 @@
+var classStaffRoster =
+[
+    [ "add", "classStaffRoster.html#aec1935a88e0aedd8bd9ede4d17afeb6d", null ],
+    [ "all", "classStaffRoster.html#a62f256ba0c1cfbc14b28db42e43180a0", null ],
+    [ "allocateId", "classStaffRoster.html#abcdffe757c7e4b392a64184d6312f4f7", null ],
+    [ "clear", "classStaffRoster.html#a3a3126f56ab31712f70979fdcc412868", null ],
+    [ "clubStaff", "classStaffRoster.html#aef58a6a72238a604860d21a4e3f6d5d7", null ],
+    [ "effects", "classStaffRoster.html#a829310b573809014306f86ecd7fa082f", null ],
+    [ "empty", "classStaffRoster.html#a3d44f933b6bfee81b06a367781e213ea", null ],
+    [ "find", "classStaffRoster.html#a01efce71a840431dcdc2967588fac0be", null ],
+    [ "find", "classStaffRoster.html#ae428614116da4cba60ad099718dac3fb", null ],
+    [ "invalidate", "classStaffRoster.html#a7bbbfd2cd39a890130cd8b761abba81c", null ],
+    [ "market", "classStaffRoster.html#a951946bf24fdc4f2d299552067a5c33e", null ],
+    [ "peekNextId", "classStaffRoster.html#af965b2ed0d347a2cc43cd88f02fe1cef", null ],
+    [ "rebuildCache", "classStaffRoster.html#ace0c5edef740a6f6115a4958a73164fb", null ],
+    [ "remove", "classStaffRoster.html#a6e66868b25d475991d59f1221f038dd7", null ],
+    [ "restore", "classStaffRoster.html#a6e6344b7843f6a608b77dda5c7dbf002", null ],
+    [ "restoreNextId", "classStaffRoster.html#a1ebcb37c877e62db6e275abd9f33ad63", null ],
+    [ "roleCount", "classStaffRoster.html#a1b35e656c220d02486f2d8b803a9cabe", null ],
+    [ "cache_valid", "classStaffRoster.html#a41ac6df2fb556372bf882a31022b1748", null ],
+    [ "effects_cache", "classStaffRoster.html#a2156bb3eba01c8c5569da84a802773f4", null ],
+    [ "members", "classStaffRoster.html#ada036275dfc984ef35eba2f4f339efdd", null ],
+    [ "next_id", "classStaffRoster.html#aa41a7c8f1d3106616a74310792e07de5", null ]
+];

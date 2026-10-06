@@ -1,6 +1,28 @@
 var searchData=
 [
-  ['kickoff_5fdelay_5fseconds_0',['KICKOFF_DELAY_SECONDS',['../structMatchTuning_1_1Timing.html#aefc6161db0b7babe9e765962442a39b0',1,'MatchTuning::Timing']]],
-  ['kickoff_5fformation_5finset_1',['KICKOFF_FORMATION_INSET',['../structMatchTuning_1_1Pitch.html#a332278a33340912e4f7d40ce26fa6bcc',1,'MatchTuning::Pitch']]],
-  ['kickoff_5fformation_5fscale_2',['KICKOFF_FORMATION_SCALE',['../structMatchTuning_1_1Pitch.html#a5973ae6fa4b41532ec2a89047c831012',1,'MatchTuning::Pitch']]]
+  ['jitter_0',['JITTER',['../structMatchRender3DTuning_1_1Crowd.html#af1c65098f5e67832027df86f249f808b',1,'MatchRender3DTuning::Crowd']]],
+  ['job_1',['job',['../classNationalManagement.html#ad777168d7275a84d647b423b65ebe6e2',1,'NationalManagement']]],
+  ['job_5fended_2',['job_ended',['../structNationalDayEvents.html#a3cd3084b4e794310966fa6ad8c80b00e',1,'NationalDayEvents']]],
+  ['jobs_3',['jobs',['../classThreadPool.html#a4e4fec6f69a42f1d9f9c3764f4f1d728',1,'ThreadPool']]],
+  ['jockey_4',['jockey',['../structMatchPlayerInput.html#a66e69cbdfa214f353433527870266389',1,'MatchPlayerInput']]],
+  ['jockey_5fcontain_5fmetres_5',['JOCKEY_CONTAIN_METRES',['../structMatchTuning_1_1Control.html#adcd92042d3514b0dddbb0dc74aa0bc29',1,'MatchTuning::Control']]],
+  ['jockey_5fspeed_5fshare_6',['JOCKEY_SPEED_SHARE',['../structMatchTuning_1_1Control.html#aa251fdd1e16f246d361e3d7f6d51b7c7',1,'MatchTuning::Control']]],
+  ['jockey_5ftake_5fon_5fpenalty_7',['JOCKEY_TAKE_ON_PENALTY',['../structMatchTuning_1_1Control.html#afee063ec9a037a5b150db55ef9e3dc22',1,'MatchTuning::Control']]],
+  ['jog_8',['jog',['../structPlayerRig_1_1GaitBands.html#af597ac997fecf21f335f2e93c6b34474',1,'PlayerRig::GaitBands::jog'],['../structMatchRender3DTuning_1_1Gait.html#a31e9722cf467c12e37f19ea758c2b1ff',1,'MatchRender3DTuning::Gait::JOG']]],
+  ['jog_5fspeed_5fshare_9',['JOG_SPEED_SHARE',['../structMatchTuning_1_1Control.html#a7ff57845fd710fc4164174e604db9b7a',1,'MatchTuning::Control']]],
+  ['joined_5fage_10',['joined_age',['../structYouthRecord.html#a8829dc9abadce11838b9635dc196e27c',1,'YouthRecord']]],
+  ['joined_5fday_11',['joined_day',['../structPlayerRelation.html#a44dd5e3cddfbfcc7663b9c04ad2bcce9',1,'PlayerRelation']]],
+  ['judging_12',['judging',['../structScoutingScene_1_1ScoutLine.html#a9f6e540fdaf040d8fcb9633f797c4bd7',1,'ScoutingScene::ScoutLine::judging'],['../structHeadOfYouth.html#a1f340c8b8495b4692c0c971446e50aa9',1,'HeadOfYouth::judging']]],
+  ['judging_5fability_13',['judging_ability',['../structScoutProfile.html#ab4ea60c77c32080b46ec079708e2bdd2',1,'ScoutProfile::judging_ability'],['../structScoutKnowledge.html#a4c0b6587b98427a075b502a972ccc70c',1,'ScoutKnowledge::judging_ability']]],
+  ['judging_5fper_5fpoint_14',['JUDGING_PER_POINT',['../namespaceScoutExpertiseModel.html#adbc009cbf6fd6adf7f84d4459983f364',1,'ScoutExpertiseModel']]],
+  ['judging_5fpotential_15',['judging_potential',['../structScoutProfile.html#a92054921b8b497ae469d632fbf93cfbc',1,'ScoutProfile::judging_potential'],['../structScoutKnowledge.html#a988925b14bb521c557619df024402687',1,'ScoutKnowledge::judging_potential']]],
+  ['july_5ffree_5fagent_5fweight_16',['JULY_FREE_AGENT_WEIGHT',['../structTransferTuning_1_1Market.html#a32c968d58c8c65e1742c85728790dbc4',1,'TransferTuning::Market']]],
+  ['jump_5fgather_17',['JUMP_GATHER',['../structMatchRender3DTuning_1_1Rig.html#a68bf3adbdf25cb76e5a4a5b950fbf538',1,'MatchRender3DTuning::Rig']]],
+  ['jump_5fmetres_18',['jump_metres',['../structMatchRender2DTuning_1_1Ball.html#ae7a43c8edee02979243c7671b7b27d8d',1,'MatchRender2DTuning::Ball::JUMP_METRES'],['../structMatchRender3DTuning_1_1Camera.html#a489415dda2cc758649be0b68ba06bc8f',1,'MatchRender3DTuning::Camera::JUMP_METRES']]],
+  ['jump_5frate_19',['JUMP_RATE',['../structMatchRender3DTuning_1_1Rig.html#a10928e054b26b4833b0f201bc71043c6',1,'MatchRender3DTuning::Rig']]],
+  ['jump_5freach_20',['JUMP_REACH',['../structMatchRender3DTuning_1_1Rig.html#a04d1c0be364d752567c95a9c9524fd38',1,'MatchRender3DTuning::Rig']]],
+  ['jump_5fsim_5fseconds_21',['JUMP_SIM_SECONDS',['../structMatchRender3DTuning_1_1Camera.html#a50f55224eb9c01ae3f57512eb54ff941',1,'MatchRender3DTuning::Camera']]],
+  ['jump_5ftuck_22',['JUMP_TUCK',['../structMatchRender3DTuning_1_1Rig.html#a09deb85bc0fb619febc396ab40a5e123',1,'MatchRender3DTuning::Rig']]],
+  ['jumped_23',['jumped',['../structMatchRenderer3D_1_1State.html#a009390a5a9fd75ee2a5e4fac3d40bfbd',1,'MatchRenderer3D::State']]],
+  ['junior_5fcoaching_24',['junior_coaching',['../structIntakeInputs.html#aa6adf9f7e2bf30697c433b1153bcfbbd',1,'IntakeInputs::junior_coaching'],['../structAcademyRatings.html#aafef8a544972c9f87954c15f96102c0c',1,'AcademyRatings::junior_coaching']]]
 ];

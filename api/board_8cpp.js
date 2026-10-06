@@ -1,0 +1,27 @@
+var board_8cpp =
+[
+    [ "adjustConfidence", "board_8cpp.html#afb9b93936ffcf50dfc2d4080b0418131", null ],
+    [ "cupObjectiveFor", "board_8cpp.html#ae03ec9a8b143f2b190defc3c5bb7121e", null ],
+    [ "cupObjectiveKey", "board_8cpp.html#a734102dc27899449a1693b5a62ee034a", null ],
+    [ "expectedPoints", "board_8cpp.html#a737471ca99afca9b37c76355d5761aa6", null ],
+    [ "financeObjectiveFor", "board_8cpp.html#ae55ccde02f678dae9b610b619c0ec763", null ],
+    [ "financeObjectiveKey", "board_8cpp.html#aed31c52c47133f1584ea62dd1f368be0", null ],
+    [ "gradeCup", "board_8cpp.html#a351df97d9e79a598857811bbcf8ef925", null ],
+    [ "gradeFinances", "board_8cpp.html#afe34415b8c073a530a80eb67d7567ae7", null ],
+    [ "gradeLeague", "board_8cpp.html#aae9e8f3d609f2ea4d08a4e04182c4e0a", null ],
+    [ "gradeYouth", "board_8cpp.html#a29d89e48fdf0a496de5f03fcd59f7693", null ],
+    [ "medicalLayoffMultiplier", "board_8cpp.html#a37285c4f92e09e2a7443e7d53ea4fec6", null ],
+    [ "monthlyReview", "board_8cpp.html#aec083def92c5504906839bd54349fad6", null ],
+    [ "objectiveFor", "board_8cpp.html#acc909f35ac39ebcd06cd9a0d0ae24434", null ],
+    [ "objectiveKey", "board_8cpp.html#a60dce86feefd975c902323649b5d0dd4", null ],
+    [ "projectTypeKey", "board_8cpp.html#a80b91ae88fbeac1ed2acc5e730cb9cd2", null ],
+    [ "projectVerdictKey", "board_8cpp.html#a3792093cd6284181fd727983944c2c84", null ],
+    [ "quoteProject", "board_8cpp.html#a6499e0da2c5e06c13a0672e25e9aca01", null ],
+    [ "recordMatch", "board_8cpp.html#a5909713b6f8aeb33722084181cd9abbf", null ],
+    [ "reviewProject", "board_8cpp.html#a324ce84af6b6f526b43b422d12011894", null ],
+    [ "seasonReview", "board_8cpp.html#af99bea3b4cdeec774acf49745772b5f1", null ],
+    [ "targetPosition", "board_8cpp.html#a76a7b00dc0386396fc89345c66c9ff19", null ],
+    [ "targetStatusKey", "board_8cpp.html#a195a9e007065cd75d22a456a17dd102a", null ],
+    [ "youthTargetFor", "board_8cpp.html#a9814be6a444eb394439a3593f79a4c05", null ],
+    [ "youthTargetKey", "board_8cpp.html#aa3935e402e83b09159ce888fb479f9a6", null ]
+];

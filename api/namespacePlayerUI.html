@@ -101,11 +101,8 @@ $(document).ready(function(){initNavTree('namespacePlayerUI.html',''); initResiz
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:aa032777fbcb8d87c1c1d43522377f8ba" id="r_aa032777fbcb8d87c1c1d43522377f8ba"><td class="memItemLeft" align="right" valign="top">ImVec4&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacePlayerUI.html#aa032777fbcb8d87c1c1d43522377f8ba">ratingColor</a> (double rating)</td></tr>
-<tr class="separator:aa032777fbcb8d87c1c1d43522377f8ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a92e62edeba31855eb293914ef486c7df" id="r_a92e62edeba31855eb293914ef486c7df"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacePlayerUI.html#a92e62edeba31855eb293914ef486c7df">metricCard</a> (const char *id, const char *label, const std::string &amp;value, const ImVec4 &amp;accent, float width)</td></tr>
-<tr class="separator:a92e62edeba31855eb293914ef486c7df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4220e51c1fd5d974d14eb549f2acac6b" id="r_a4220e51c1fd5d974d14eb549f2acac6b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacePlayerUI.html#a4220e51c1fd5d974d14eb549f2acac6b">detailPanel</a> (const char *id, const <a class="el" href="classPlayer.html">Player</a> *player, const <a class="el" href="structStatsConfig.html">StatsConfig</a> &amp;statsConfig, const <a class="el" href="classPlayer.html">Player</a> *comparison=nullptr, float height=0.0f)</td></tr>
+<tr class="memdesc:a4220e51c1fd5d974d14eb549f2acac6b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compact player card used beside tables (squad, lineup, subs).  <br /></td></tr>
 <tr class="separator:a4220e51c1fd5d974d14eb549f2acac6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
@@ -161,85 +158,17 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-</div>
-</div>
-<a id="a92e62edeba31855eb293914ef486c7df" name="a92e62edeba31855eb293914ef486c7df"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a92e62edeba31855eb293914ef486c7df">&#9670;&#160;</a></span>metricCard()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void PlayerUI::metricCard </td>
-          <td>(</td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>id</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>label</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>value</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const ImVec4 &amp;&#160;</td>
-          <td class="paramname"><em>accent</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>width</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="aa032777fbcb8d87c1c1d43522377f8ba" name="aa032777fbcb8d87c1c1d43522377f8ba"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa032777fbcb8d87c1c1d43522377f8ba">&#9670;&#160;</a></span>ratingColor()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">ImVec4 PlayerUI::ratingColor </td>
-          <td>(</td>
-          <td class="paramtype">double&#160;</td>
-          <td class="paramname"><em>rating</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
+<p>Compact player card used beside tables (squad, lineup, subs). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">id</td><td>Stable ImGui id. </td></tr>
+    <tr><td class="paramname">player</td><td><a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> to show, or nullptr for a prompt. </td></tr>
+    <tr><td class="paramname">statsConfig</td><td>Rating weights. </td></tr>
+    <tr><td class="paramname">comparison</td><td>Optional player to compare against (shows deltas). </td></tr>
+    <tr><td class="paramname">height</td><td>Card height (0 = fill, negative = fit the content). </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

@@ -1,0 +1,25 @@
+var structNextActionFacts =
+[
+    [ "Offer", "structNextActionFacts_1_1Offer.html", "structNextActionFacts_1_1Offer" ],
+    [ "Person", "structNextActionFacts_1_1Person.html", "structNextActionFacts_1_1Person" ],
+    [ "Report", "structNextActionFacts_1_1Report.html", "structNextActionFacts_1_1Report" ],
+    [ "assistant_fixes_lineup", "structNextActionFacts.html#ad5cc5e00aa75728a230bddc1f435c2df", null ],
+    [ "assistant_runs_training", "structNextActionFacts.html#ae78f2bab2881bb042e0b6c3385a18255", null ],
+    [ "average_condition", "structNextActionFacts.html#a3f5b7522478108942e6386162e9a348b", null ],
+    [ "board_confidence", "structNextActionFacts.html#a3170bee40be7f3261dfa90d32acafd71", null ],
+    [ "days_to_match", "structNextActionFacts.html#a3a2165baf5e06a9f18b59b40014271f3", null ],
+    [ "expiring_contracts", "structNextActionFacts.html#ae58fb0b1334ba5f44536c28b5b8354a2", null ],
+    [ "matches_next_week", "structNextActionFacts.html#adaa53e865ede2df8c4412fa9722d1915", null ],
+    [ "next_opponent", "structNextActionFacts.html#aa0a1f123f8ea0cb590f054b0672b6f9f", null ],
+    [ "no_fit_replacements", "structNextActionFacts.html#a4735f6568833437f9ac9c06af2e9a594", null ],
+    [ "offers", "structNextActionFacts.html#a8ac09f554fb2e3fd35051bea7ad56403", null ],
+    [ "opposition_viewed", "structNextActionFacts.html#af13a84cf36b6a58c09f4ee6d4a356431", null ],
+    [ "pending_talks", "structNextActionFacts.html#ab8c3f172e39a3ed1de391abbfe04cc57", null ],
+    [ "pre_contract_period", "structNextActionFacts.html#a62901e32437c6afc340880b41e83a144", null ],
+    [ "squad_holes", "structNextActionFacts.html#a740cbd9279bc541eee87c9a24c64b915", null ],
+    [ "tired_players", "structNextActionFacts.html#a666a70b04360e24b99870eeda0589ff2", null ],
+    [ "unavailable_selected", "structNextActionFacts.html#a08056490b3511b605aba887d51dbf9ef", null ],
+    [ "unseen_grade_a", "structNextActionFacts.html#a40245669ef0b172e20ec143fe46d48a4", null ],
+    [ "window_days_left", "structNextActionFacts.html#a9d3e8f9ab2ba2bf7c3d41fb92cc810e3", null ],
+    [ "window_open", "structNextActionFacts.html#a508d66cf8d89e2ee5331e79612a33ab2", null ]
+];

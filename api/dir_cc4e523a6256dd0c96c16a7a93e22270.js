@@ -1,13 +1,30 @@
 var dir_cc4e523a6256dd0c96c16a7a93e22270 =
 [
+    [ "competition_repository.cpp", "competition__repository_8cpp.html", null ],
+    [ "competition_repository.h", "competition__repository_8h.html", "competition__repository_8h" ],
+    [ "finance_repository.cpp", "finance__repository_8cpp.html", null ],
+    [ "finance_repository.h", "finance__repository_8h.html", "finance__repository_8h" ],
     [ "fixture_repository.cpp", "fixture__repository_8cpp.html", null ],
     [ "fixture_repository.h", "fixture__repository_8h.html", "fixture__repository_8h" ],
     [ "game_state_repository.cpp", "game__state__repository_8cpp.html", null ],
     [ "game_state_repository.h", "game__state__repository_8h.html", "game__state__repository_8h" ],
+    [ "inbox_repository.cpp", "inbox__repository_8cpp.html", null ],
+    [ "inbox_repository.h", "inbox__repository_8h.html", "inbox__repository_8h" ],
     [ "league_repository.cpp", "league__repository_8cpp.html", null ],
     [ "league_repository.h", "league__repository_8h.html", "league__repository_8h" ],
     [ "player_repository.cpp", "player__repository_8cpp.html", null ],
     [ "player_repository.h", "player__repository_8h.html", "player__repository_8h" ],
+    [ "scouting_repository.cpp", "scouting__repository_8cpp.html", null ],
+    [ "scouting_repository.h", "scouting__repository_8h.html", "scouting__repository_8h" ],
+    [ "staff_repository.cpp", "staff__repository_8cpp.html", null ],
+    [ "staff_repository.h", "staff__repository_8h.html", "staff__repository_8h" ],
     [ "team_repository.cpp", "team__repository_8cpp.html", null ],
-    [ "team_repository.h", "team__repository_8h.html", "team__repository_8h" ]
+    [ "team_repository.h", "team__repository_8h.html", "team__repository_8h" ],
+    [ "text_encoding.h", "text__encoding_8h.html", "text__encoding_8h" ],
+    [ "training_repository.cpp", "training__repository_8cpp.html", null ],
+    [ "training_repository.h", "training__repository_8h.html", "training__repository_8h" ],
+    [ "transfer_repository.cpp", "transfer__repository_8cpp.html", null ],
+    [ "transfer_repository.h", "transfer__repository_8h.html", "transfer__repository_8h" ],
+    [ "world_state_repository.cpp", "world__state__repository_8cpp.html", null ],
+    [ "world_state_repository.h", "world__state__repository_8h.html", "world__state__repository_8h" ]
 ];

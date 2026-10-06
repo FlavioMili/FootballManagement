@@ -1,0 +1,28 @@
+var classNewsScene =
+[
+    [ "CompetitionOption", "structNewsScene_1_1CompetitionOption.html", "structNewsScene_1_1CompetitionOption" ],
+    [ "Row", "structNewsScene_1_1Row.html", "structNewsScene_1_1Row" ],
+    [ "NewsScene", "classNewsScene.html#a5b6478d7a4c5788f6d0e3a340efe34aa", null ],
+    [ "applyFilter", "classNewsScene.html#a0afdcf3fdfd09eb1b6c7576949761f74", null ],
+    [ "filterCountry", "classNewsScene.html#a5782678bce141f31cf048347280b96b1", null ],
+    [ "filterKind", "classNewsScene.html#a8bd3f2a142dee849cffd3aade36df8ec", null ],
+    [ "getID", "classNewsScene.html#a40c5b9d856b6fd7a6d95f2f830ce7111", null ],
+    [ "navSection", "classNewsScene.html#ad09247830d8190e16c30b21f31b5a1f4", null ],
+    [ "rebuildCompetitions", "classNewsScene.html#a979d875f4e6ab7eefbcdbaa8670f9867", null ],
+    [ "refresh", "classNewsScene.html#aaffa0990a47f49b219a79e5f70bdbc46", null ],
+    [ "renderContent", "classNewsScene.html#adcf2bc93f9ca6820e7998125d03264c5", null ],
+    [ "renderFilters", "classNewsScene.html#a7ac55949b091807a6105b994f3ea3bcf", null ],
+    [ "renderStory", "classNewsScene.html#aaefe140fb0bc18cab6f70601dbf4fa9b", null ],
+    [ "shownCount", "classNewsScene.html#a9bc81bc80e1484e024a165091a6384ab", null ],
+    [ "storyCount", "classNewsScene.html#a2529c6dc9247ed5dddab993041cc4dc1", null ],
+    [ "update", "classNewsScene.html#a22c42b732df71692bbd4e50eec9ba93f", null ],
+    [ "competition_label", "classNewsScene.html#a392b3ea968dcf3558fbfb467b6c4c52b", null ],
+    [ "competitions", "classNewsScene.html#acf14197fd538c8f44d3b51b4fa58fdb4", null ],
+    [ "countries", "classNewsScene.html#a4c1c8d92e29c52c6e916a31fe0e06ab6", null ],
+    [ "country_label", "classNewsScene.html#ab006aa2fb446fb41ce8309da03e1de0f", null ],
+    [ "filter", "classNewsScene.html#acdbf7019eedaf688aa5d74fdae6c3665", null ],
+    [ "items", "classNewsScene.html#a5272387350a879e95c08ddb83e8f7804", null ],
+    [ "kept", "classNewsScene.html#aced57fc89d3faa6dbfb04233dcbe8f09", null ],
+    [ "rows", "classNewsScene.html#ae6f31cf1cbaf48d4703779268cd3583c", null ],
+    [ "visible", "classNewsScene.html#ae7bd30079197d72683a8147aac5e0ff4", null ]
+];

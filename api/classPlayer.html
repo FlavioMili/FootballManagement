@@ -95,6 +95,7 @@ $(document).ready(function(){initNavTree('classPlayer.html',''); initResizable()
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classPlayer-members.html">List of all members</a>  </div>
@@ -173,14 +174,38 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:abdce766cedfc66499b204310a27b6533"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the player's stats map.  <br /></td></tr>
 <tr class="separator:abdce766cedfc66499b204310a27b6533"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6e12b3575e64a3fb25b7bd6c8f1a0624" id="r_a6e12b3575e64a3fb25b7bd6c8f1a0624"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a6e12b3575e64a3fb25b7bd6c8f1a0624">agePlayer</a> ()</td></tr>
-<tr class="memdesc:a6e12b3575e64a3fb25b7bd6c8f1a0624"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increases the player's age by 1.  <br /></td></tr>
+<tr class="memdesc:a6e12b3575e64a3fb25b7bd6c8f1a0624"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increases the player's age by 1 and applies yearly ageing.  <br /></td></tr>
 <tr class="separator:a6e12b3575e64a3fb25b7bd6c8f1a0624"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a878ae112a4f5d0d1787788ea1442f3e0" id="r_a878ae112a4f5d0d1787788ea1442f3e0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a878ae112a4f5d0d1787788ea1442f3e0">checkRetirement</a> () const</td></tr>
-<tr class="memdesc:a878ae112a4f5d0d1787788ea1442f3e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the player is ready for retirement.  <br /></td></tr>
-<tr class="separator:a878ae112a4f5d0d1787788ea1442f3e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad8c099401363cad9166b08a29b6a50f5" id="r_ad8c099401363cad9166b08a29b6a50f5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#ad8c099401363cad9166b08a29b6a50f5">train</a> (const std::vector&lt; std::string &gt; &amp;focus_stats)</td></tr>
-<tr class="memdesc:ad8c099401363cad9166b08a29b6a50f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Trains the player, improving specific focus stats.  <br /></td></tr>
-<tr class="separator:ad8c099401363cad9166b08a29b6a50f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6495b9b58366a9bfff6ae0c1174a8fe" id="r_aa6495b9b58366a9bfff6ae0c1174a8fe"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#aa6495b9b58366a9bfff6ae0c1174a8fe">train</a> (const std::vector&lt; std::string &gt; &amp;focus_stats, float amount=<a class="el" href="global_8h.html#a33494472c76f6b6a7522074b0c36163a">PLAYER_STAT_INCREASE_BASE</a>)</td></tr>
+<tr class="memdesc:aa6495b9b58366a9bfff6ae0c1174a8fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Improves every listed stat by <code>amount</code> (clamped to the maximum).  <br /></td></tr>
+<tr class="separator:aa6495b9b58366a9bfff6ae0c1174a8fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e377405f77abc6fbd18e687d9b8d634" id="r_a8e377405f77abc6fbd18e687d9b8d634"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a8e377405f77abc6fbd18e687d9b8d634">getPotential</a> () const</td></tr>
+<tr class="memdesc:a8e377405f77abc6fbd18e687d9b8d634"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hidden potential on the overall-rating scale (never shown raw).  <br /></td></tr>
+<tr class="separator:a8e377405f77abc6fbd18e687d9b8d634"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97b58b883083bfbdfecc09354fc576c4" id="r_a97b58b883083bfbdfecc09354fc576c4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a97b58b883083bfbdfecc09354fc576c4">setPotential</a> (float potential)</td></tr>
+<tr class="memdesc:a97b58b883083bfbdfecc09354fc576c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the hidden potential.  <br /></td></tr>
+<tr class="separator:a97b58b883083bfbdfecc09354fc576c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a616990663fe38a2478c0dc6eeadbc748" id="r_a616990663fe38a2478c0dc6eeadbc748"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structPlayerTraits.html">PlayerTraits</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a616990663fe38a2478c0dc6eeadbc748">getTraits</a> () const</td></tr>
+<tr class="memdesc:a616990663fe38a2478c0dc6eeadbc748"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hidden personality traits.  <br /></td></tr>
+<tr class="separator:a616990663fe38a2478c0dc6eeadbc748"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1eb78a29d3f4e3f4394c78a684b82409" id="r_a1eb78a29d3f4e3f4394c78a684b82409"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a1eb78a29d3f4e3f4394c78a684b82409">setTraits</a> (const <a class="el" href="structPlayerTraits.html">PlayerTraits</a> &amp;traits)</td></tr>
+<tr class="memdesc:a1eb78a29d3f4e3f4394c78a684b82409"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the hidden personality traits.  <br /></td></tr>
+<tr class="separator:a1eb78a29d3f4e3f4394c78a684b82409"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc3b257c20992fe39eee660634877e1a" id="r_abc3b257c20992fe39eee660634877e1a"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structPlayerDynamics.html">PlayerDynamics</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#abc3b257c20992fe39eee660634877e1a">getDynamics</a> () const</td></tr>
+<tr class="memdesc:abc3b257c20992fe39eee660634877e1a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Condition, sharpness, morale, injury and form state.  <br /></td></tr>
+<tr class="separator:abc3b257c20992fe39eee660634877e1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a932c93636e52c29fdfc38e0eb0e72520" id="r_a932c93636e52c29fdfc38e0eb0e72520"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structPlayerDynamics.html">PlayerDynamics</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a932c93636e52c29fdfc38e0eb0e72520">mutableDynamics</a> ()</td></tr>
+<tr class="memdesc:a932c93636e52c29fdfc38e0eb0e72520"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mutable dynamic state for the world simulation.  <br /></td></tr>
+<tr class="separator:a932c93636e52c29fdfc38e0eb0e72520"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af24fccfed489e06626b83c7d7f25c9de" id="r_af24fccfed489e06626b83c7d7f25c9de"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#af24fccfed489e06626b83c7d7f25c9de">isAvailable</a> () const</td></tr>
+<tr class="memdesc:af24fccfed489e06626b83c7d7f25c9de"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when the player is fit enough to be selected.  <br /></td></tr>
+<tr class="separator:af24fccfed489e06626b83c7d7f25c9de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09a03d642e2aaba8413178eb5a4503ac" id="r_a09a03d642e2aaba8413178eb5a4503ac"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a09a03d642e2aaba8413178eb5a4503ac">getForm</a> () const</td></tr>
+<tr class="memdesc:a09a03d642e2aaba8413178eb5a4503ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Average of the recent match ratings, 0 when none.  <br /></td></tr>
+<tr class="separator:a09a03d642e2aaba8413178eb5a4503ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae38277599e24a0e1fb3bccf52baed5b1" id="r_ae38277599e24a0e1fb3bccf52baed5b1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#ae38277599e24a0e1fb3bccf52baed5b1">pushMatchRating</a> (float rating)</td></tr>
+<tr class="memdesc:ae38277599e24a0e1fb3bccf52baed5b1"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="namespaceRecords.html" title="Comparison rules of the records book.">Records</a> a match rating (1-10) in the recent form window.  <br /></td></tr>
+<tr class="separator:ae38277599e24a0e1fb3bccf52baed5b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39f39b621f8388581faa4b2d8f1224ef" id="r_a39f39b621f8388581faa4b2d8f1224ef"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a39f39b621f8388581faa4b2d8f1224ef">getMarketValue</a> () const</td></tr>
 <tr class="memdesc:a39f39b621f8388581faa4b2d8f1224ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the player's market value.  <br /></td></tr>
 <tr class="separator:a39f39b621f8388581faa4b2d8f1224ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -193,12 +218,33 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3956b93f70218e337127b7be2b06cb7e" id="r_a3956b93f70218e337127b7be2b06cb7e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="player_8h.html#a76784bf32657f20ab9496532d0d50158">TransferStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a3956b93f70218e337127b7be2b06cb7e">getTransferStatus</a> () const</td></tr>
 <tr class="memdesc:a3956b93f70218e337127b7be2b06cb7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the player's transfer status.  <br /></td></tr>
 <tr class="separator:a3956b93f70218e337127b7be2b06cb7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a81b97b0101fc2f3654fc3fd48a2d8826" id="r_a81b97b0101fc2f3654fc3fd48a2d8826"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a81b97b0101fc2f3654fc3fd48a2d8826">setAcademyPlayer</a> (bool academy)</td></tr>
+<tr class="memdesc:a81b97b0101fc2f3654fc3fd48a2d8826"><td class="mdescLeft">&#160;</td><td class="mdescRight">Marks the player as part of his club's academy: he is not a first-team player (squad counts, automatic line-ups).  <br /></td></tr>
+<tr class="separator:a81b97b0101fc2f3654fc3fd48a2d8826"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad78afd297ee8ef5b841c8a2d5b7bc564" id="r_ad78afd297ee8ef5b841c8a2d5b7bc564"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#ad78afd297ee8ef5b841c8a2d5b7bc564">isAcademyPlayer</a> () const</td></tr>
+<tr class="memdesc:ad78afd297ee8ef5b841c8a2d5b7bc564"><td class="mdescLeft">&#160;</td><td class="mdescRight">True for U18 players and intake trialists.  <br /></td></tr>
+<tr class="separator:ad78afd297ee8ef5b841c8a2d5b7bc564"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9bae9316384512fbfb69f8d86eb5b60" id="r_ac9bae9316384512fbfb69f8d86eb5b60"><td class="memItemLeft" align="right" valign="top">std::uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#ac9bae9316384512fbfb69f8d86eb5b60">getSquadNumber</a> () const</td></tr>
+<tr class="memdesc:ac9bae9316384512fbfb69f8d86eb5b60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Squad number (1-99), 0 when he has none (academy players).  <br /></td></tr>
+<tr class="separator:ac9bae9316384512fbfb69f8d86eb5b60"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a549a0e5ea232bb9fc23b46f989632a43" id="r_a549a0e5ea232bb9fc23b46f989632a43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a549a0e5ea232bb9fc23b46f989632a43">setSquadNumber</a> (std::uint8_t number)</td></tr>
+<tr class="memdesc:a549a0e5ea232bb9fc23b46f989632a43"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the squad number; uniqueness is kept by <a class="el" href="classGameData.html" title="Singleton class that acts as an in-memory cache for the database state.">GameData</a>.  <br /></td></tr>
+<tr class="separator:a549a0e5ea232bb9fc23b46f989632a43"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a8cf9a2b5a4234117cb7b24fb19ae3d31" id="r_a8cf9a2b5a4234117cb7b24fb19ae3d31"><td class="memItemLeft" align="right" valign="top">static double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a8cf9a2b5a4234117cb7b24fb19ae3d31">valueFor</a> (double overall, double potential, int age, double contract_years)</td></tr>
+<tr class="memdesc:a8cf9a2b5a4234117cb7b24fb19ae3d31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Market value model shared by own players and scouting estimates: ability, an inverted-U age curve, a potential premium that fades out between 22 and 25, and the remaining contract length.  <br /></td></tr>
+<tr class="separator:a8cf9a2b5a4234117cb7b24fb19ae3d31"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a6a03feb2828425b51680d0ca5cf52816" id="r_a6a03feb2828425b51680d0ca5cf52816"><td class="memItemLeft" align="right" valign="top">static constexpr uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a6a03feb2828425b51680d0ca5cf52816">TRANSFER_LISTED_BIT</a> = 0x01U</td></tr>
 <tr class="memdesc:a6a03feb2828425b51680d0ca5cf52816"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bitmask bit for transfer-listed status.  <br /></td></tr>
 <tr class="separator:a6a03feb2828425b51680d0ca5cf52816"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6483b0ca78577d71f631d3f1fde974d" id="r_af6483b0ca78577d71f631d3f1fde974d"><td class="memItemLeft" align="right" valign="top">static constexpr uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#af6483b0ca78577d71f631d3f1fde974d">ACADEMY_BIT</a> = 0x02U</td></tr>
+<tr class="memdesc:af6483b0ca78577d71f631d3f1fde974d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bitmask bit for players of a youth academy (U18 or trialist).  <br /></td></tr>
+<tr class="separator:af6483b0ca78577d71f631d3f1fde974d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -230,6 +276,14 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a5a3725cbecb4dd6b67aa94cd2a557481"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f57f0b7dadaebd55cd7a99807a6da4f" id="r_a8f57f0b7dadaebd55cd7a99807a6da4f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="player_8h.html#a29a274bfa86b6e9dbfae8cddbae6e606">Foot</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a8f57f0b7dadaebd55cd7a99807a6da4f">_foot</a></td></tr>
 <tr class="separator:a8f57f0b7dadaebd55cd7a99807a6da4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a316d6ee058b871f93b862d0c86ca70eb" id="r_a316d6ee058b871f93b862d0c86ca70eb"><td class="memItemLeft" align="right" valign="top">std::uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a316d6ee058b871f93b862d0c86ca70eb">_squad_number</a> = 0</td></tr>
+<tr class="separator:a316d6ee058b871f93b862d0c86ca70eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad003c854ac8bac29fc704e5c1cc010d4" id="r_ad003c854ac8bac29fc704e5c1cc010d4"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#ad003c854ac8bac29fc704e5c1cc010d4">_potential</a> = 0.0f</td></tr>
+<tr class="separator:ad003c854ac8bac29fc704e5c1cc010d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3768bb3c96f87b3ae8cfaf1c1dc161f9" id="r_a3768bb3c96f87b3ae8cfaf1c1dc161f9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structPlayerTraits.html">PlayerTraits</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a3768bb3c96f87b3ae8cfaf1c1dc161f9">_traits</a></td></tr>
+<tr class="separator:a3768bb3c96f87b3ae8cfaf1c1dc161f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ce21ee2a123447ccaafc359d771284e" id="r_a8ce21ee2a123447ccaafc359d771284e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structPlayerDynamics.html">PlayerDynamics</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#a8ce21ee2a123447ccaafc359d771284e">_dynamics</a></td></tr>
+<tr class="separator:a8ce21ee2a123447ccaafc359d771284e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac330e12ffd6ae63e89dc8ca5e7167e05" id="r_ac330e12ffd6ae63e89dc8ca5e7167e05"><td class="memItemLeft" align="right" valign="top">std::map&lt; std::string, float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayer.html#ac330e12ffd6ae63e89dc8ca5e7167e05">_stats</a></td></tr>
 <tr class="separator:ac330e12ffd6ae63e89dc8ca5e7167e05"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -384,27 +438,8 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Increases the player's age by 1. </p>
-
-</div>
-</div>
-<a id="a878ae112a4f5d0d1787788ea1442f3e0" name="a878ae112a4f5d0d1787788ea1442f3e0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a878ae112a4f5d0d1787788ea1442f3e0">&#9670;&#160;</a></span>checkRetirement()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool Player::checkRetirement </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Checks if the player is ready for retirement. </p>
-<dl class="section return"><dt>Returns</dt><dd>True if the player retires, false otherwise. </dd></dl>
+<p>Increases the player's age by 1 and applies yearly ageing. </p>
+<p>Physical attributes decline first (-1%/year at 30-32, -3%/year after 32, stamina at half rate), technical attributes from 32 and vision from 35. Professional players decline more slowly. </p>
 
 </div>
 </div>
@@ -446,6 +481,25 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="abc3b257c20992fe39eee660634877e1a" name="abc3b257c20992fe39eee660634877e1a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc3b257c20992fe39eee660634877e1a">&#9670;&#160;</a></span>getDynamics()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="structPlayerDynamics.html">PlayerDynamics</a> &amp; Player::getDynamics </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Condition, sharpness, morale, injury and form state. </p>
+
+</div>
+</div>
 <a id="ad5034353ad92d4056fa0280c10599be5" name="ad5034353ad92d4056fa0280c10599be5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad5034353ad92d4056fa0280c10599be5">&#9670;&#160;</a></span>getFirstName()</h2>
 
@@ -481,6 +535,25 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets the player's preferred foot. </p>
+
+</div>
+</div>
+<a id="a09a03d642e2aaba8413178eb5a4503ac" name="a09a03d642e2aaba8413178eb5a4503ac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09a03d642e2aaba8413178eb5a4503ac">&#9670;&#160;</a></span>getForm()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float Player::getForm </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Average of the recent match ratings, 0 when none. </p>
 
 </div>
 </div>
@@ -625,6 +698,25 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a8e377405f77abc6fbd18e687d9b8d634" name="a8e377405f77abc6fbd18e687d9b8d634"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8e377405f77abc6fbd18e687d9b8d634">&#9670;&#160;</a></span>getPotential()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float Player::getPotential </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Hidden potential on the overall-rating scale (never shown raw). </p>
+
+</div>
+</div>
 <a id="a51b3860176598be09491d5968130884a" name="a51b3860176598be09491d5968130884a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a51b3860176598be09491d5968130884a">&#9670;&#160;</a></span>getRole()</h2>
 
@@ -641,6 +733,33 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets the player's role. </p>
+
+</div>
+</div>
+<a id="ac9bae9316384512fbfb69f8d86eb5b60" name="ac9bae9316384512fbfb69f8d86eb5b60"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac9bae9316384512fbfb69f8d86eb5b60">&#9670;&#160;</a></span>getSquadNumber()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint8_t Player::getSquadNumber </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Squad number (1-99), 0 when he has none (academy players). </p>
 
 </div>
 </div>
@@ -701,6 +820,25 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a616990663fe38a2478c0dc6eeadbc748" name="a616990663fe38a2478c0dc6eeadbc748"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a616990663fe38a2478c0dc6eeadbc748">&#9670;&#160;</a></span>getTraits()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="structPlayerTraits.html">PlayerTraits</a> &amp; Player::getTraits </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Hidden personality traits. </p>
+
+</div>
+</div>
 <a id="a3956b93f70218e337127b7be2b06cb7e" name="a3956b93f70218e337127b7be2b06cb7e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3956b93f70218e337127b7be2b06cb7e">&#9670;&#160;</a></span>getTransferStatus()</h2>
 
@@ -736,6 +874,103 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets the player's wage. </p>
+
+</div>
+</div>
+<a id="ad78afd297ee8ef5b841c8a2d5b7bc564" name="ad78afd297ee8ef5b841c8a2d5b7bc564"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad78afd297ee8ef5b841c8a2d5b7bc564">&#9670;&#160;</a></span>isAcademyPlayer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Player::isAcademyPlayer </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>True for U18 players and intake trialists. </p>
+
+</div>
+</div>
+<a id="af24fccfed489e06626b83c7d7f25c9de" name="af24fccfed489e06626b83c7d7f25c9de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af24fccfed489e06626b83c7d7f25c9de">&#9670;&#160;</a></span>isAvailable()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Player::isAvailable </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>True when the player is fit enough to be selected. </p>
+
+</div>
+</div>
+<a id="a932c93636e52c29fdfc38e0eb0e72520" name="a932c93636e52c29fdfc38e0eb0e72520"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a932c93636e52c29fdfc38e0eb0e72520">&#9670;&#160;</a></span>mutableDynamics()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structPlayerDynamics.html">PlayerDynamics</a> &amp; Player::mutableDynamics </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Mutable dynamic state for the world simulation. </p>
+
+</div>
+</div>
+<a id="ae38277599e24a0e1fb3bccf52baed5b1" name="ae38277599e24a0e1fb3bccf52baed5b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae38277599e24a0e1fb3bccf52baed5b1">&#9670;&#160;</a></span>pushMatchRating()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Player::pushMatchRating </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>rating</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="namespaceRecords.html" title="Comparison rules of the records book.">Records</a> a match rating (1-10) in the recent form window. </p>
+
+</div>
+</div>
+<a id="a81b97b0101fc2f3654fc3fd48a2d8826" name="a81b97b0101fc2f3654fc3fd48a2d8826"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a81b97b0101fc2f3654fc3fd48a2d8826">&#9670;&#160;</a></span>setAcademyPlayer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Player::setAcademyPlayer </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>academy</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Marks the player as part of his club's academy: he is not a first-team player (squad counts, automatic line-ups). </p>
 
 </div>
 </div>
@@ -775,6 +1010,54 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Updates the remaining contract duration. </p>
+
+</div>
+</div>
+<a id="a97b58b883083bfbdfecc09354fc576c4" name="a97b58b883083bfbdfecc09354fc576c4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97b58b883083bfbdfecc09354fc576c4">&#9670;&#160;</a></span>setPotential()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Player::setPotential </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>potential</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets the hidden potential. </p>
+
+</div>
+</div>
+<a id="a549a0e5ea232bb9fc23b46f989632a43" name="a549a0e5ea232bb9fc23b46f989632a43"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a549a0e5ea232bb9fc23b46f989632a43">&#9670;&#160;</a></span>setSquadNumber()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Player::setSquadNumber </td>
+          <td>(</td>
+          <td class="paramtype">std::uint8_t&#160;</td>
+          <td class="paramname"><em>number</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the squad number; uniqueness is kept by <a class="el" href="classGameData.html" title="Singleton class that acts as an in-memory cache for the database state.">GameData</a>. </p>
 
 </div>
 </div>
@@ -818,6 +1101,26 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a1eb78a29d3f4e3f4394c78a684b82409" name="a1eb78a29d3f4e3f4394c78a684b82409"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1eb78a29d3f4e3f4394c78a684b82409">&#9670;&#160;</a></span>setTraits()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Player::setTraits </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structPlayerTraits.html">PlayerTraits</a> &amp;&#160;</td>
+          <td class="paramname"><em>traits</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Replaces the hidden personality traits. </p>
+
+</div>
+</div>
 <a id="a31d71f88cf364f92e150dfbc9ce53a08" name="a31d71f88cf364f92e150dfbc9ce53a08"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a31d71f88cf364f92e150dfbc9ce53a08">&#9670;&#160;</a></span>setTransferStatus()</h2>
 
@@ -857,8 +1160,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ad8c099401363cad9166b08a29b6a50f5" name="ad8c099401363cad9166b08a29b6a50f5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad8c099401363cad9166b08a29b6a50f5">&#9670;&#160;</a></span>train()</h2>
+<a id="aa6495b9b58366a9bfff6ae0c1174a8fe" name="aa6495b9b58366a9bfff6ae0c1174a8fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa6495b9b58366a9bfff6ae0c1174a8fe">&#9670;&#160;</a></span>train()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -867,19 +1170,24 @@ Private Attributes</h2></td></tr>
           <td class="memname">void Player::train </td>
           <td>(</td>
           <td class="paramtype">const std::vector&lt; std::string &gt; &amp;&#160;</td>
-          <td class="paramname"><em>focus_stats</em></td><td>)</td>
+          <td class="paramname"><em>focus_stats</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>amount</em> = <code><a class="el" href="global_8h.html#a33494472c76f6b6a7522074b0c36163a">PLAYER_STAT_INCREASE_BASE</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Trains the player, improving specific focus stats. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">focus_stats</td><td>The stats to focus on during training. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Improves every listed stat by <code>amount</code> (clamped to the maximum). </p>
+<p>Because role weights sum to one, training all of a role's focus stats by x raises the overall rating by x. </p>
 
 </div>
 </div>
@@ -906,6 +1214,57 @@ Private Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a8cf9a2b5a4234117cb7b24fb19ae3d31" name="a8cf9a2b5a4234117cb7b24fb19ae3d31"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8cf9a2b5a4234117cb7b24fb19ae3d31">&#9670;&#160;</a></span>valueFor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double Player::valueFor </td>
+          <td>(</td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>overall</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>potential</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>age</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>contract_years</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Market value model shared by own players and scouting estimates: ability, an inverted-U age curve, a potential premium that fades out between 22 and 25, and the remaining contract length. </p>
+<dl class="section return"><dt>Returns</dt><dd>Value in euros, within EUR 10K - 250M. </dd></dl>
 
 </div>
 </div>
@@ -965,6 +1324,28 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">uint8_t Player::_contract_years</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8ce21ee2a123447ccaafc359d771284e" name="a8ce21ee2a123447ccaafc359d771284e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ce21ee2a123447ccaafc359d771284e">&#9670;&#160;</a></span>_dynamics</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structPlayerDynamics.html">PlayerDynamics</a> Player::_dynamics</td>
         </tr>
       </table>
   </td>
@@ -1108,6 +1489,28 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="ad003c854ac8bac29fc704e5c1cc010d4" name="ad003c854ac8bac29fc704e5c1cc010d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad003c854ac8bac29fc704e5c1cc010d4">&#9670;&#160;</a></span>_potential</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float Player::_potential = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a4a46e03d9e9a78e1e0b37553a5212723" name="a4a46e03d9e9a78e1e0b37553a5212723"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4a46e03d9e9a78e1e0b37553a5212723">&#9670;&#160;</a></span>_role</h2>
 
@@ -1119,6 +1522,28 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a> Player::_role</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a316d6ee058b871f93b862d0c86ca70eb" name="a316d6ee058b871f93b862d0c86ca70eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a316d6ee058b871f93b862d0c86ca70eb">&#9670;&#160;</a></span>_squad_number</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint8_t Player::_squad_number = 0</td>
         </tr>
       </table>
   </td>
@@ -1196,6 +1621,28 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a3768bb3c96f87b3ae8cfaf1c1dc161f9" name="a3768bb3c96f87b3ae8cfaf1c1dc161f9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3768bb3c96f87b3ae8cfaf1c1dc161f9">&#9670;&#160;</a></span>_traits</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structPlayerTraits.html">PlayerTraits</a> Player::_traits</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a1d21f3f93d72c942bd35324ebbdf9b4e" name="a1d21f3f93d72c942bd35324ebbdf9b4e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1d21f3f93d72c942bd35324ebbdf9b4e">&#9670;&#160;</a></span>_transfer_status</h2>
 
@@ -1237,6 +1684,30 @@ Private Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="af6483b0ca78577d71f631d3f1fde974d" name="af6483b0ca78577d71f631d3f1fde974d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af6483b0ca78577d71f631d3f1fde974d">&#9670;&#160;</a></span>ACADEMY_BIT</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr uint32_t Player::ACADEMY_BIT = 0x02U</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Bitmask bit for players of a youth academy (U18 or trialist). </p>
 
 </div>
 </div>

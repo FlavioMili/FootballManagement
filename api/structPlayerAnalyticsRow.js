@@ -1,0 +1,25 @@
+var structPlayerAnalyticsRow =
+[
+    [ "per90", "structPlayerAnalyticsRow.html#ace5bcc23ffb35c2bf6bb8937fdc98b50", null ],
+    [ "appearances", "structPlayerAnalyticsRow.html#a81a0821ac41e2b1912c36cf32be7ee38", null ],
+    [ "assists", "structPlayerAnalyticsRow.html#a0d81830e8cbd23d347628644c11b1e64", null ],
+    [ "average_rating", "structPlayerAnalyticsRow.html#a74c57f11eb3531f907c062a3930f6018", null ],
+    [ "detail_minutes", "structPlayerAnalyticsRow.html#a2f2be2ea0646dfb75b82e43151e81fb3", null ],
+    [ "goals", "structPlayerAnalyticsRow.html#a93a4645d9512e25e4103227bcfa79f53", null ],
+    [ "key_passes", "structPlayerAnalyticsRow.html#a3192d1d2df4c918d42ad7a8ed7a9a281", null ],
+    [ "minutes", "structPlayerAnalyticsRow.html#a62053e8bc7b489f232cc2ecefcd72ccb", null ],
+    [ "pass_share", "structPlayerAnalyticsRow.html#a9ebc713133276b7b29cd06bf9f2f7d38", null ],
+    [ "passes_attempted", "structPlayerAnalyticsRow.html#a34e0a22ec92574ed1a4f575bb5d5cfb4", null ],
+    [ "passes_completed", "structPlayerAnalyticsRow.html#a988e7380316740e1479ab7d921ccb82d", null ],
+    [ "player", "structPlayerAnalyticsRow.html#af1de960219ca60b348fd082b91ef9ec8", null ],
+    [ "pressures", "structPlayerAnalyticsRow.html#a348ea5bb073f64578ff0b4706734f9f3", null ],
+    [ "progressive_passes", "structPlayerAnalyticsRow.html#ac68370ae17ab3de3abc465f9d3630f73", null ],
+    [ "rated_matches", "structPlayerAnalyticsRow.html#a72f4574c00d140440b3927b6653975eb", null ],
+    [ "rating_trend", "structPlayerAnalyticsRow.html#a3a5d7c66f550fffadb620e224e533ddd", null ],
+    [ "ratings", "structPlayerAnalyticsRow.html#aaa58746abb8b5daa92358c345014f103", null ],
+    [ "shots", "structPlayerAnalyticsRow.html#a6d6a48c4fafadbc9810cac75128942e2", null ],
+    [ "touches", "structPlayerAnalyticsRow.html#ac2b197ee20d2c37ee4eaea31a00b2a8d", null ],
+    [ "tracked_minutes", "structPlayerAnalyticsRow.html#ac7487887632d6eff3e0f4437c98798b7", null ],
+    [ "xa", "structPlayerAnalyticsRow.html#a415f0c2a13e147a403e1737a1f77f9a4", null ],
+    [ "xg", "structPlayerAnalyticsRow.html#a53af605fa6303114a20e9ba0b8e84474", null ]
+];

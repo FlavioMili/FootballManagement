@@ -124,10 +124,27 @@ Public Attributes</h2></td></tr>
 <tr class="separator:ae05add59366c9d6354443ad927e1dc79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa5d6444604169fba3a487097302203c0" id="r_aa5d6444604169fba3a487097302203c0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchRenderPlayer.html#aa5d6444604169fba3a487097302203c0">possessesBall</a> = false</td></tr>
 <tr class="separator:aa5d6444604169fba3a487097302203c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4dbec529d4948ee74ddddb4a63c433fd" id="r_a4dbec529d4948ee74ddddb4a63c433fd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchRenderPlayer.html#a4dbec529d4948ee74ddddb4a63c433fd">onPitch</a> = true</td></tr>
+<tr class="separator:a4dbec529d4948ee74ddddb4a63c433fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf4279223eee43f37aa81bd0641a351a" id="r_abf4279223eee43f37aa81bd0641a351a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchRenderPlayer.html#abf4279223eee43f37aa81bd0641a351a">isGoalkeeper</a> = false</td></tr>
+<tr class="separator:abf4279223eee43f37aa81bd0641a351a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87e01fb3b27ca134861c84f2757f1331" id="r_a87e01fb3b27ca134861c84f2757f1331"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchRenderPlayer.html#a87e01fb3b27ca134861c84f2757f1331">isDiving</a> = false</td></tr>
+<tr class="separator:a87e01fb3b27ca134861c84f2757f1331"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aedb55537f45615d9d086eb75b8db1336" id="r_aedb55537f45615d9d086eb75b8db1336"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchRenderPlayer.html#aedb55537f45615d9d086eb75b8db1336">isInjured</a> = false</td></tr>
+<tr class="separator:aedb55537f45615d9d086eb75b8db1336"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acccf117c550b4463fcb783ef788c94b1" id="r_acccf117c550b4463fcb783ef788c94b1"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchRenderPlayer.html#acccf117c550b4463fcb783ef788c94b1">yellowCards</a> = 0</td></tr>
+<tr class="separator:acccf117c550b4463fcb783ef788c94b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91ebae82aa29e2b3842eed7fc0da23a3" id="r_a91ebae82aa29e2b3842eed7fc0da23a3"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchRenderPlayer.html#a91ebae82aa29e2b3842eed7fc0da23a3">heightMetres</a> = <a class="el" href="structMatchTuning_1_1Units.html#a95d050cb3576aa01304bf703865b240a">MatchTuning::Units::DEFAULT_PLAYER_HEIGHT_METRES</a></td></tr>
+<tr class="separator:a91ebae82aa29e2b3842eed7fc0da23a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b88541837d2418f15ad44d7f51d6912" id="r_a9b88541837d2418f15ad44d7f51d6912"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchRenderPlayer.html#a9b88541837d2418f15ad44d7f51d6912">speedMetresPerSecond</a> = 0.0f</td></tr>
+<tr class="separator:a9b88541837d2418f15ad44d7f51d6912"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a558574dbbc70263f546b1db55fd6f57f" id="r_a558574dbbc70263f546b1db55fd6f57f"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchRenderPlayer.html#a558574dbbc70263f546b1db55fd6f57f">tackleCooldown</a> = 0.0f</td></tr>
+<tr class="separator:a558574dbbc70263f546b1db55fd6f57f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Read-only normalized world state consumed by renderers.</p>
-<p>The snapshot is rebuilt every frame from a <code><a class="el" href="classMatchEngine.html">MatchEngine</a></code> and carries the previous and current fixed-step positions plus the interpolation fraction, so 2D and future 3D renderers can interpolate without touching the simulation. Renderers must never mutate this data or the engine. </p>
+<p>The snapshot is rebuilt every frame from a <code><a class="el" href="classMatchEngine.html">MatchEngine</a></code> and carries the previous and current fixed-step positions plus the interpolation fraction, so 2D and future 3D renderers can interpolate without touching the simulation. Renderers must never mutate this data or the engine.</p>
+<p>Units: positions are normalised pitch coordinates (x along the 105 m length, home attacking +x; y across the 68 m width). Ball <code>currentZ</code> and <code>previousZ</code> are in length units (metres = z * 105); the <code>*HeightMetres</code> fields carry the same value already converted to metres. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="a3bc50cb60c4d80e1cad88a0a962f23d8" name="a3bc50cb60c4d80e1cad88a0a962f23d8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3bc50cb60c4d80e1cad88a0a962f23d8">&#9670;&#160;</a></span>currentFacingAngle</h2>
@@ -156,8 +173,22 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">{<a class="code hl_variable" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>,</div>
 <div class="line">                           <a class="code hl_variable" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>}</div>
-<div class="ttc" id="astructMatchTuning_1_1Pitch_html_a92587d6c3e1234472f369e2041eee489"><div class="ttname"><a href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a></div><div class="ttdeci">static constexpr float CENTRE</div><div class="ttdef"><b>Definition</b> match_tuning.h:31</div></div>
+<div class="ttc" id="astructMatchTuning_1_1Pitch_html_a92587d6c3e1234472f369e2041eee489"><div class="ttname"><a href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a></div><div class="ttdeci">static constexpr float CENTRE</div><div class="ttdef"><b>Definition</b> match_tuning.h:37</div></div>
 </div><!-- fragment -->
+</div>
+</div>
+<a id="a91ebae82aa29e2b3842eed7fc0da23a3" name="a91ebae82aa29e2b3842eed7fc0da23a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a91ebae82aa29e2b3842eed7fc0da23a3">&#9670;&#160;</a></span>heightMetres</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchRenderPlayer::heightMetres = <a class="el" href="structMatchTuning_1_1Units.html#a95d050cb3576aa01304bf703865b240a">MatchTuning::Units::DEFAULT_PLAYER_HEIGHT_METRES</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
 </div>
 </div>
 <a id="a770c5ef3f88dc56d62c2e5a1d7713c6d" name="a770c5ef3f88dc56d62c2e5a1d7713c6d"></a>
@@ -168,6 +199,34 @@ Public Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5">PlayerIntent</a> MatchRenderPlayer::intent = <a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5a0add921fe4a3799dff66c02c152397f1">PlayerIntent::HOLD_SHAPE</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a87e01fb3b27ca134861c84f2757f1331" name="a87e01fb3b27ca134861c84f2757f1331"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a87e01fb3b27ca134861c84f2757f1331">&#9670;&#160;</a></span>isDiving</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchRenderPlayer::isDiving = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="abf4279223eee43f37aa81bd0641a351a" name="abf4279223eee43f37aa81bd0641a351a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf4279223eee43f37aa81bd0641a351a">&#9670;&#160;</a></span>isGoalkeeper</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchRenderPlayer::isGoalkeeper = false</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -188,6 +247,20 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="aedb55537f45615d9d086eb75b8db1336" name="aedb55537f45615d9d086eb75b8db1336"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aedb55537f45615d9d086eb75b8db1336">&#9670;&#160;</a></span>isInjured</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchRenderPlayer::isInjured = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a7d35304ba0e504c94d4358b511040d16" name="a7d35304ba0e504c94d4358b511040d16"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7d35304ba0e504c94d4358b511040d16">&#9670;&#160;</a></span>movementTarget</h2>
 
@@ -202,6 +275,21 @@ Public Attributes</h2></td></tr>
 <b>Initial value:</b><div class="fragment"><div class="line">{<a class="code hl_variable" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>,</div>
 <div class="line">                          <a class="code hl_variable" href="structMatchTuning_1_1Pitch.html#a92587d6c3e1234472f369e2041eee489">MatchTuning::Pitch::CENTRE</a>}</div>
 </div><!-- fragment -->
+</div>
+</div>
+<a id="a4dbec529d4948ee74ddddb4a63c433fd" name="a4dbec529d4948ee74ddddb4a63c433fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4dbec529d4948ee74ddddb4a63c433fd">&#9670;&#160;</a></span>onPitch</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchRenderPlayer::onPitch = true</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>False once sent off or forced off; such players wait by the bench. </p>
+
 </div>
 </div>
 <a id="a9c84704622c268336a56af4f79460a08" name="a9c84704622c268336a56af4f79460a08"></a>
@@ -262,6 +350,21 @@ Public Attributes</h2></td></tr>
 </div><!-- fragment -->
 </div>
 </div>
+<a id="a9b88541837d2418f15ad44d7f51d6912" name="a9b88541837d2418f15ad44d7f51d6912"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b88541837d2418f15ad44d7f51d6912">&#9670;&#160;</a></span>speedMetresPerSecond</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchRenderPlayer::speedMetresPerSecond = 0.0f</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Running speed in metres per simulated second (drives the stride). </p>
+
+</div>
+</div>
 <a id="ae05add59366c9d6354443ad927e1dc79" name="ae05add59366c9d6354443ad927e1dc79"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae05add59366c9d6354443ad927e1dc79">&#9670;&#160;</a></span>stamina</h2>
 
@@ -270,6 +373,35 @@ Public Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">float MatchRenderPlayer::stamina = 1.0f</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a558574dbbc70263f546b1db55fd6f57f" name="a558574dbbc70263f546b1db55fd6f57f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a558574dbbc70263f546b1db55fd6f57f">&#9670;&#160;</a></span>tackleCooldown</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchRenderPlayer::tackleCooldown = 0.0f</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Seconds before this player may challenge again; it jumps up when he goes into a tackle (renderers start the tackle pose on the rise). </p>
+
+</div>
+</div>
+<a id="acccf117c550b4463fcb783ef788c94b1" name="acccf117c550b4463fcb783ef788c94b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acccf117c550b4463fcb783ef788c94b1">&#9670;&#160;</a></span>yellowCards</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MatchRenderPlayer::yellowCards = 0</td>
         </tr>
       </table>
 </div><div class="memdoc">

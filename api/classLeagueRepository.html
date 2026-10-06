@@ -127,6 +127,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a31e2062a376dd395b25158c3cc5b75d4" id="r_a31e2062a376dd395b25158c3cc5b75d4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLeagueRepository.html#a31e2062a376dd395b25158c3cc5b75d4">loadLeaguePoints</a> (<a class="el" href="classLeague.html">League</a> &amp;league) const</td></tr>
 <tr class="memdesc:a31e2062a376dd395b25158c3cc5b75d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load the points of teams for a specific league from the database.  <br /></td></tr>
 <tr class="separator:a31e2062a376dd395b25158c3cc5b75d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a550aeb9cdc47d2907581c4cdf97b81ab" id="r_a550aeb9cdc47d2907581c4cdf97b81ab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLeagueRepository.html#a550aeb9cdc47d2907581c4cdf97b81ab">saveTeamMemberships</a> (const <a class="el" href="classLeague.html">League</a> &amp;league) const</td></tr>
+<tr class="memdesc:a550aeb9cdc47d2907581c4cdf97b81ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Persists the league membership (Teams.league_id) of its teams.  <br /></td></tr>
+<tr class="separator:a550aeb9cdc47d2907581c4cdf97b81ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0f31d80211c02a7a77c723e9ecb4f61e" id="r_a0f31d80211c02a7a77c723e9ecb4f61e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLeagueRepository.html#a0f31d80211c02a7a77c723e9ecb4f61e">resetAllLeaguePoints</a> () const</td></tr>
 <tr class="memdesc:a0f31d80211c02a7a77c723e9ecb4f61e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset points for all leagues in the database.  <br /></td></tr>
 <tr class="separator:a0f31d80211c02a7a77c723e9ecb4f61e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -342,6 +345,32 @@ Private Attributes</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">league</td><td>The <a class="el" href="classLeague.html" title="Represents a football league containing teams and a leaderboard.">League</a> object whose points are to be saved. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a550aeb9cdc47d2907581c4cdf97b81ab" name="a550aeb9cdc47d2907581c4cdf97b81ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a550aeb9cdc47d2907581c4cdf97b81ab">&#9670;&#160;</a></span>saveTeamMemberships()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void LeagueRepository::saveTeamMemberships </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classLeague.html">League</a> &amp;&#160;</td>
+          <td class="paramname"><em>league</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Persists the league membership (Teams.league_id) of its teams. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">league</td><td>The <a class="el" href="classLeague.html" title="Represents a football league containing teams and a leaderboard.">League</a> whose teams are stored. </td></tr>
   </table>
   </dd>
 </dl>

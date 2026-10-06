@@ -97,6 +97,7 @@ $(document).ready(function(){initNavTree('classMainMenuScene.html',''); initResi
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classMainMenuScene-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">MainMenuScene Class Reference</div></div>
 </div><!--header-->
@@ -149,19 +150,49 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene" id="r_afcc66fd1ac7245d74c3a139590d14cba"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#afcc66fd1ac7245d74c3a139590d14cba">onExit</a> ()</td></tr>
 <tr class="memdesc:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the scene is exited/becomes inactive.  <br /></td></tr>
 <tr class="separator:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45e279f80470c89da46f5b317a689684 inherit pub_methods_classGUIScene" id="r_a45e279f80470c89da46f5b317a689684"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a45e279f80470c89da46f5b317a689684">onResume</a> ()</td></tr>
+<tr class="memdesc:a45e279f80470c89da46f5b317a689684 inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when an overlay above this scene closes and it becomes the active scene again. Screens use it to refresh cached view models after a match, a transfer or any other state change made elsewhere.  <br /></td></tr>
+<tr class="separator:a45e279f80470c89da46f5b317a689684 inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene" id="r_aa4d608d00d7b5cd52b1456075a04647c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#aa4d608d00d7b5cd52b1456075a04647c">onResize</a> (int width, int height)</td></tr>
 <tr class="memdesc:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the window is resized.  <br /></td></tr>
 <tr class="separator:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95786f5af1e1b868e171f9178892b30b inherit pub_methods_classGUIScene" id="r_a95786f5af1e1b868e171f9178892b30b"><td class="memItemLeft" align="right" valign="top">virtual std::optional&lt; <a class="el" href="structNavEntry.html">NavEntry</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a95786f5af1e1b868e171f9178892b30b">historyEntry</a> () const</td></tr>
+<tr class="memdesc:a95786f5af1e1b868e171f9178892b30b inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">How to open this screen again from the navigation history, or nothing for scenes outside it (menus, team selection, the live match).  <br /></td></tr>
+<tr class="separator:a95786f5af1e1b868e171f9178892b30b inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
 <tr class="memitem:a82f65d6ccb644e67c2f31f23523de589" id="r_a82f65d6ccb644e67c2f31f23523de589"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a82f65d6ccb644e67c2f31f23523de589">loadCachedMetadata</a> ()</td></tr>
 <tr class="separator:a82f65d6ccb644e67c2f31f23523de589"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab336b4fd2b5689eaa0b9ae620936f9cb" id="r_ab336b4fd2b5689eaa0b9ae620936f9cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#ab336b4fd2b5689eaa0b9ae620936f9cb">renderBackdrop</a> ()</td></tr>
+<tr class="separator:ab336b4fd2b5689eaa0b9ae620936f9cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af5057f606ad50382a5d26903b3234afd" id="r_af5057f606ad50382a5d26903b3234afd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#af5057f606ad50382a5d26903b3234afd">renderSlotPicker</a> ()</td></tr>
+<tr class="separator:af5057f606ad50382a5d26903b3234afd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6ac562548603ddd1e6d57d743a006ee" id="r_ac6ac562548603ddd1e6d57d743a006ee"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#ac6ac562548603ddd1e6d57d743a006ee">renderSlotActions</a> (int slot, const <a class="el" href="structGameController_1_1SaveSlotMetadata.html">GameController::SaveSlotMetadata</a> &amp;metadata)</td></tr>
+<tr class="separator:ac6ac562548603ddd1e6d57d743a006ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a141e034f0f2d72d6286d61a97d535f80" id="r_a141e034f0f2d72d6286d61a97d535f80"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a141e034f0f2d72d6286d61a97d535f80">renderBackups</a> ()</td></tr>
+<tr class="separator:a141e034f0f2d72d6286d61a97d535f80"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a737ed9bba99ce4043755da5d05536577" id="r_a737ed9bba99ce4043755da5d05536577"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a737ed9bba99ce4043755da5d05536577">renderLoadError</a> ()</td></tr>
+<tr class="separator:a737ed9bba99ce4043755da5d05536577"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaac383f3a2aef91b6e9bae08d96cb152" id="r_aaac383f3a2aef91b6e9bae08d96cb152"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#aaac383f3a2aef91b6e9bae08d96cb152">renderCrashNotice</a> ()</td></tr>
+<tr class="separator:aaac383f3a2aef91b6e9bae08d96cb152"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6663c5109e60872a28ea9007a38a447" id="r_ac6663c5109e60872a28ea9007a38a447"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#ac6663c5109e60872a28ea9007a38a447">renderVersion</a> ()</td></tr>
+<tr class="separator:ac6663c5109e60872a28ea9007a38a447"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03d7c1d5cb7937ef86f8fcf62666419a" id="r_a03d7c1d5cb7937ef86f8fcf62666419a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a03d7c1d5cb7937ef86f8fcf62666419a">renderLanguageNotice</a> ()</td></tr>
+<tr class="separator:a03d7c1d5cb7937ef86f8fcf62666419a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa3b516cb9ddefbcdc7742bfe8be0613" id="r_afa3b516cb9ddefbcdc7742bfe8be0613"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#afa3b516cb9ddefbcdc7742bfe8be0613">openBackups</a> (int slot)</td></tr>
+<tr class="separator:afa3b516cb9ddefbcdc7742bfe8be0613"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d0c4aa1333b2b738b4125a3b2246674" id="r_a5d0c4aa1333b2b738b4125a3b2246674"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a5d0c4aa1333b2b738b4125a3b2246674">showLoadError</a> (int slot, std::string text)</td></tr>
+<tr class="separator:a5d0c4aa1333b2b738b4125a3b2246674"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add604044587d56be02387368f8610614" id="r_add604044587d56be02387368f8610614"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#add604044587d56be02387368f8610614">startSlot</a> (int slot, bool newGame)</td></tr>
+<tr class="separator:add604044587d56be02387368f8610614"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
 <tr class="memitem:a35aeb52ce00f58d80034b08cdaf3c724" id="r_a35aeb52ce00f58d80034b08cdaf3c724"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a35aeb52ce00f58d80034b08cdaf3c724">is_new_game</a> = false</td></tr>
 <tr class="separator:a35aeb52ce00f58d80034b08cdaf3c724"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90c33b7413417ef191d74da08a900b65" id="r_a90c33b7413417ef191d74da08a900b65"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a90c33b7413417ef191d74da08a900b65">slot_picker_requested</a> = false</td></tr>
+<tr class="separator:a90c33b7413417ef191d74da08a900b65"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a31e54e2a52f0380e1eeb80913dd40bed" id="r_a31e54e2a52f0380e1eeb80913dd40bed"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a31e54e2a52f0380e1eeb80913dd40bed">loading_slot</a> = 0</td></tr>
 <tr class="separator:a31e54e2a52f0380e1eeb80913dd40bed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab3910b44918a74b4241a99f3c8d6fdcf" id="r_ab3910b44918a74b4241a99f3c8d6fdcf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#ab3910b44918a74b4241a99f3c8d6fdcf">is_loading_rendered</a> = false</td></tr>
@@ -172,6 +203,49 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a86eb159784afbfa36601150b33becc60"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3705375d7970c287728a99aab4580a7f" id="r_a3705375d7970c287728a99aab4580a7f"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structGameController_1_1SaveSlotMetadata.html">GameController::SaveSlotMetadata</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a3705375d7970c287728a99aab4580a7f">cached_metadata</a></td></tr>
 <tr class="separator:a3705375d7970c287728a99aab4580a7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e029e809d805cda5809135fb9ec2c25" id="r_a2e029e809d805cda5809135fb9ec2c25"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a2e029e809d805cda5809135fb9ec2c25">latest_career_slot</a> = 0</td></tr>
+<tr class="separator:a2e029e809d805cda5809135fb9ec2c25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d6af52746c40e3b9e8c34642b720cc7" id="r_a3d6af52746c40e3b9e8c34642b720cc7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a3d6af52746c40e3b9e8c34642b720cc7">overwrite_slot</a> = 0</td></tr>
+<tr class="separator:a3d6af52746c40e3b9e8c34642b720cc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7823b4c1b2c0e9d08771e8968689ffb" id="r_ad7823b4c1b2c0e9d08771e8968689ffb"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#ad7823b4c1b2c0e9d08771e8968689ffb">backups_slot</a> = 0</td></tr>
+<tr class="separator:ad7823b4c1b2c0e9d08771e8968689ffb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a172c9dc4ec7c182a3591f6226a8f0551" id="r_a172c9dc4ec7c182a3591f6226a8f0551"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a172c9dc4ec7c182a3591f6226a8f0551">backups_requested</a> = false</td></tr>
+<tr class="separator:a172c9dc4ec7c182a3591f6226a8f0551"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18136979377a61f0609bf007bdc97e98" id="r_a18136979377a61f0609bf007bdc97e98"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structSaveBackup.html">SaveBackup</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a18136979377a61f0609bf007bdc97e98">backups</a></td></tr>
+<tr class="separator:a18136979377a61f0609bf007bdc97e98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae45fbd40d32cb013023d2c4b46563aae" id="r_ae45fbd40d32cb013023d2c4b46563aae"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#ae45fbd40d32cb013023d2c4b46563aae">backup_labels</a></td></tr>
+<tr class="separator:ae45fbd40d32cb013023d2c4b46563aae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c3aeba421759db6b617b5e6ff39582f" id="r_a0c3aeba421759db6b617b5e6ff39582f"><td class="memItemLeft" align="right" valign="top">std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a0c3aeba421759db6b617b5e6ff39582f">restore_candidate</a></td></tr>
+<tr class="separator:a0c3aeba421759db6b617b5e6ff39582f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ad6a1c3f647cc647eb708b43428b96f" id="r_a8ad6a1c3f647cc647eb708b43428b96f"><td class="memItemLeft" align="right" valign="top">std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a8ad6a1c3f647cc647eb708b43428b96f">pending_restore</a></td></tr>
+<tr class="separator:a8ad6a1c3f647cc647eb708b43428b96f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91f7e1693e549031b48a2a0d76640dcc" id="r_a91f7e1693e549031b48a2a0d76640dcc"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a91f7e1693e549031b48a2a0d76640dcc">delete_slot</a> = 0</td></tr>
+<tr class="separator:a91f7e1693e549031b48a2a0d76640dcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a63b3f5c0592a1215da10760f2ca87355" id="r_a63b3f5c0592a1215da10760f2ca87355"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a63b3f5c0592a1215da10760f2ca87355">delete_text</a></td></tr>
+<tr class="separator:a63b3f5c0592a1215da10760f2ca87355"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1762c4606b2d6f1c525bc73ef22006d" id="r_ac1762c4606b2d6f1c525bc73ef22006d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#ac1762c4606b2d6f1c525bc73ef22006d">load_error_slot</a> = 0</td></tr>
+<tr class="separator:ac1762c4606b2d6f1c525bc73ef22006d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeda7f2b2ad10d8776f960806fe86b8b1" id="r_aeda7f2b2ad10d8776f960806fe86b8b1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#aeda7f2b2ad10d8776f960806fe86b8b1">load_error_requested</a> = false</td></tr>
+<tr class="separator:aeda7f2b2ad10d8776f960806fe86b8b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a115861ce441bdac1f6be2232ef5c119c" id="r_a115861ce441bdac1f6be2232ef5c119c"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a115861ce441bdac1f6be2232ef5c119c">load_error_text</a></td></tr>
+<tr class="separator:a115861ce441bdac1f6be2232ef5c119c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b8fa77117fd87c6d11f117214fa8534" id="r_a1b8fa77117fd87c6d11f117214fa8534"><td class="memItemLeft" align="right" valign="top">std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a1b8fa77117fd87c6d11f117214fa8534">recovery_backup</a></td></tr>
+<tr class="separator:a1b8fa77117fd87c6d11f117214fa8534"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1bd48bbbedfe0b66ce1f0c6d964cc137" id="r_a1bd48bbbedfe0b66ce1f0c6d964cc137"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a1bd48bbbedfe0b66ce1f0c6d964cc137">recovery_text</a></td></tr>
+<tr class="separator:a1bd48bbbedfe0b66ce1f0c6d964cc137"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0763380992cf6de22bc2ef65f0c4ff1" id="r_ab0763380992cf6de22bc2ef65f0c4ff1"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structCrashReport_1_1Pending.html">CrashReport::Pending</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#ab0763380992cf6de22bc2ef65f0c4ff1">crash_notice</a></td></tr>
+<tr class="separator:ab0763380992cf6de22bc2ef65f0c4ff1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab580e8b2799fbe50181ed2300a611f5e" id="r_ab580e8b2799fbe50181ed2300a611f5e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#ab580e8b2799fbe50181ed2300a611f5e">crash_notice_requested</a> = false</td></tr>
+<tr class="separator:ab580e8b2799fbe50181ed2300a611f5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c1b1657252944c46873b9c4dd07f6e4" id="r_a9c1b1657252944c46873b9c4dd07f6e4"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a9c1b1657252944c46873b9c4dd07f6e4">crash_notice_text</a></td></tr>
+<tr class="separator:a9c1b1657252944c46873b9c4dd07f6e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55711e5955a166a2ed57b73d2100a238" id="r_a55711e5955a166a2ed57b73d2100a238"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#a55711e5955a166a2ed57b73d2100a238">language_notice</a></td></tr>
+<tr class="separator:a55711e5955a166a2ed57b73d2100a238"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:af70851c82f5c5d3e1b6b40e55b6d8532" id="r_af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainMenuScene.html#af70851c82f5c5d3e1b6b40e55b6d8532">GameFlowTest_GUIFlowLifecycle_Test</a></td></tr>
+<tr class="separator:af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -344,6 +418,32 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="afa3b516cb9ddefbcdc7742bfe8be0613" name="afa3b516cb9ddefbcdc7742bfe8be0613"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afa3b516cb9ddefbcdc7742bfe8be0613">&#9670;&#160;</a></span>openBackups()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::openBackups </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>slot</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a878e85454a37b0d10912e22f22d30415" name="a878e85454a37b0d10912e22f22d30415"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a878e85454a37b0d10912e22f22d30415">&#9670;&#160;</a></span>render()</h2>
 
@@ -370,6 +470,290 @@ Additional Inherited Members</h2></td></tr>
 <p>Renders the scene. </p>
 
 <p>Implements <a class="el" href="classGUIScene.html#a756a4847362ceea0561ac060b9ab824b">GUIScene</a>.</p>
+
+</div>
+</div>
+<a id="ab336b4fd2b5689eaa0b9ae620936f9cb" name="ab336b4fd2b5689eaa0b9ae620936f9cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab336b4fd2b5689eaa0b9ae620936f9cb">&#9670;&#160;</a></span>renderBackdrop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::renderBackdrop </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a141e034f0f2d72d6286d61a97d535f80" name="a141e034f0f2d72d6286d61a97d535f80"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a141e034f0f2d72d6286d61a97d535f80">&#9670;&#160;</a></span>renderBackups()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::renderBackups </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aaac383f3a2aef91b6e9bae08d96cb152" name="aaac383f3a2aef91b6e9bae08d96cb152"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaac383f3a2aef91b6e9bae08d96cb152">&#9670;&#160;</a></span>renderCrashNotice()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::renderCrashNotice </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a03d7c1d5cb7937ef86f8fcf62666419a" name="a03d7c1d5cb7937ef86f8fcf62666419a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a03d7c1d5cb7937ef86f8fcf62666419a">&#9670;&#160;</a></span>renderLanguageNotice()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::renderLanguageNotice </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a737ed9bba99ce4043755da5d05536577" name="a737ed9bba99ce4043755da5d05536577"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a737ed9bba99ce4043755da5d05536577">&#9670;&#160;</a></span>renderLoadError()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::renderLoadError </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac6ac562548603ddd1e6d57d743a006ee" name="ac6ac562548603ddd1e6d57d743a006ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6ac562548603ddd1e6d57d743a006ee">&#9670;&#160;</a></span>renderSlotActions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::renderSlotActions </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>slot</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structGameController_1_1SaveSlotMetadata.html">GameController::SaveSlotMetadata</a> &amp;&#160;</td>
+          <td class="paramname"><em>metadata</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af5057f606ad50382a5d26903b3234afd" name="af5057f606ad50382a5d26903b3234afd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af5057f606ad50382a5d26903b3234afd">&#9670;&#160;</a></span>renderSlotPicker()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::renderSlotPicker </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac6663c5109e60872a28ea9007a38a447" name="ac6663c5109e60872a28ea9007a38a447"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6663c5109e60872a28ea9007a38a447">&#9670;&#160;</a></span>renderVersion()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::renderVersion </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5d0c4aa1333b2b738b4125a3b2246674" name="a5d0c4aa1333b2b738b4125a3b2246674"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d0c4aa1333b2b738b4125a3b2246674">&#9670;&#160;</a></span>showLoadError()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::showLoadError </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>slot</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>text</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Opens the load error dialog for <code>slot</code> with its recovery offer. </p>
+
+</div>
+</div>
+<a id="add604044587d56be02387368f8610614" name="add604044587d56be02387368f8610614"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#add604044587d56be02387368f8610614">&#9670;&#160;</a></span>startSlot()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainMenuScene::startSlot </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>slot</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>newGame</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -409,7 +793,120 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<h2 class="groupheader">Friends And Related Symbol Documentation</h2>
+<a id="af70851c82f5c5d3e1b6b40e55b6d8532" name="af70851c82f5c5d3e1b6b40e55b6d8532"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af70851c82f5c5d3e1b6b40e55b6d8532">&#9670;&#160;</a></span>GameFlowTest_GUIFlowLifecycle_Test</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class GameFlowTest_GUIFlowLifecycle_Test</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a id="ae45fbd40d32cb013023d2c4b46563aae" name="ae45fbd40d32cb013023d2c4b46563aae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae45fbd40d32cb013023d2c4b46563aae">&#9670;&#160;</a></span>backup_labels</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;std::string&gt; MainMenuScene::backup_labels</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a18136979377a61f0609bf007bdc97e98" name="a18136979377a61f0609bf007bdc97e98"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18136979377a61f0609bf007bdc97e98">&#9670;&#160;</a></span>backups</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="structSaveBackup.html">SaveBackup</a>&gt; MainMenuScene::backups</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Read when the dialog opens. </p>
+
+</div>
+</div>
+<a id="a172c9dc4ec7c182a3591f6226a8f0551" name="a172c9dc4ec7c182a3591f6226a8f0551"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a172c9dc4ec7c182a3591f6226a8f0551">&#9670;&#160;</a></span>backups_requested</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainMenuScene::backups_requested = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad7823b4c1b2c0e9d08771e8968689ffb" name="ad7823b4c1b2c0e9d08771e8968689ffb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad7823b4c1b2c0e9d08771e8968689ffb">&#9670;&#160;</a></span>backups_slot</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MainMenuScene::backups_slot = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Slot whose backups dialog is open. </p>
+
+</div>
+</div>
 <a id="a3705375d7970c287728a99aab4580a7f" name="a3705375d7970c287728a99aab4580a7f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3705375d7970c287728a99aab4580a7f">&#9670;&#160;</a></span>cached_metadata</h2>
 
@@ -421,6 +918,117 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::vector&lt;<a class="el" href="structGameController_1_1SaveSlotMetadata.html">GameController::SaveSlotMetadata</a>&gt; MainMenuScene::cached_metadata</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab0763380992cf6de22bc2ef65f0c4ff1" name="ab0763380992cf6de22bc2ef65f0c4ff1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab0763380992cf6de22bc2ef65f0c4ff1">&#9670;&#160;</a></span>crash_notice</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;<a class="el" href="structCrashReport_1_1Pending.html">CrashReport::Pending</a>&gt; MainMenuScene::crash_notice</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab580e8b2799fbe50181ed2300a611f5e" name="ab580e8b2799fbe50181ed2300a611f5e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab580e8b2799fbe50181ed2300a611f5e">&#9670;&#160;</a></span>crash_notice_requested</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainMenuScene::crash_notice_requested = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9c1b1657252944c46873b9c4dd07f6e4" name="a9c1b1657252944c46873b9c4dd07f6e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c1b1657252944c46873b9c4dd07f6e4">&#9670;&#160;</a></span>crash_notice_text</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MainMenuScene::crash_notice_text</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a91f7e1693e549031b48a2a0d76640dcc" name="a91f7e1693e549031b48a2a0d76640dcc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a91f7e1693e549031b48a2a0d76640dcc">&#9670;&#160;</a></span>delete_slot</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MainMenuScene::delete_slot = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Slot awaiting delete confirmation. </p>
+
+</div>
+</div>
+<a id="a63b3f5c0592a1215da10760f2ca87355" name="a63b3f5c0592a1215da10760f2ca87355"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a63b3f5c0592a1215da10760f2ca87355">&#9670;&#160;</a></span>delete_text</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MainMenuScene::delete_text</td>
         </tr>
       </table>
   </td>
@@ -465,6 +1073,119 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">bool MainMenuScene::is_new_game = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a55711e5955a166a2ed57b73d2100a238" name="a55711e5955a166a2ed57b73d2100a238"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a55711e5955a166a2ed57b73d2100a238">&#9670;&#160;</a></span>language_notice</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MainMenuScene::language_notice</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Why some or all texts are English, empty when nothing fell back. </p>
+
+</div>
+</div>
+<a id="a2e029e809d805cda5809135fb9ec2c25" name="a2e029e809d805cda5809135fb9ec2c25"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e029e809d805cda5809135fb9ec2c25">&#9670;&#160;</a></span>latest_career_slot</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MainMenuScene::latest_career_slot = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Most recently saved career, 0 = none. </p>
+
+</div>
+</div>
+<a id="aeda7f2b2ad10d8776f960806fe86b8b1" name="aeda7f2b2ad10d8776f960806fe86b8b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeda7f2b2ad10d8776f960806fe86b8b1">&#9670;&#160;</a></span>load_error_requested</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainMenuScene::load_error_requested = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac1762c4606b2d6f1c525bc73ef22006d" name="ac1762c4606b2d6f1c525bc73ef22006d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac1762c4606b2d6f1c525bc73ef22006d">&#9670;&#160;</a></span>load_error_slot</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MainMenuScene::load_error_slot = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Slot whose load just failed. </p>
+
+</div>
+</div>
+<a id="a115861ce441bdac1f6be2232ef5c119c" name="a115861ce441bdac1f6be2232ef5c119c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a115861ce441bdac1f6be2232ef5c119c">&#9670;&#160;</a></span>load_error_text</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MainMenuScene::load_error_text</td>
         </tr>
       </table>
   </td>
@@ -539,6 +1260,143 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3d6af52746c40e3b9e8c34642b720cc7" name="a3d6af52746c40e3b9e8c34642b720cc7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3d6af52746c40e3b9e8c34642b720cc7">&#9670;&#160;</a></span>overwrite_slot</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MainMenuScene::overwrite_slot = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Occupied slot awaiting confirmation. </p>
+
+</div>
+</div>
+<a id="a8ad6a1c3f647cc647eb708b43428b96f" name="a8ad6a1c3f647cc647eb708b43428b96f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ad6a1c3f647cc647eb708b43428b96f">&#9670;&#160;</a></span>pending_restore</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::filesystem::path MainMenuScene::pending_restore</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Restored by the loader. </p>
+
+</div>
+</div>
+<a id="a1b8fa77117fd87c6d11f117214fa8534" name="a1b8fa77117fd87c6d11f117214fa8534"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b8fa77117fd87c6d11f117214fa8534">&#9670;&#160;</a></span>recovery_backup</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::filesystem::path MainMenuScene::recovery_backup</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Newest usable backup, offered. </p>
+
+</div>
+</div>
+<a id="a1bd48bbbedfe0b66ce1f0c6d964cc137" name="a1bd48bbbedfe0b66ce1f0c6d964cc137"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1bd48bbbedfe0b66ce1f0c6d964cc137">&#9670;&#160;</a></span>recovery_text</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MainMenuScene::recovery_text</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0c3aeba421759db6b617b5e6ff39582f" name="a0c3aeba421759db6b617b5e6ff39582f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c3aeba421759db6b617b5e6ff39582f">&#9670;&#160;</a></span>restore_candidate</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::filesystem::path MainMenuScene::restore_candidate</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Awaiting confirmation. </p>
+
+</div>
+</div>
+<a id="a90c33b7413417ef191d74da08a900b65" name="a90c33b7413417ef191d74da08a900b65"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a90c33b7413417ef191d74da08a900b65">&#9670;&#160;</a></span>slot_picker_requested</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainMenuScene::slot_picker_requested = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Opens on the next frame. </p>
 
 </div>
 </div>

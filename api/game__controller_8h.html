@@ -94,22 +94,43 @@ $(document).ready(function(){initNavTree('game__controller_8h.html',''); initRes
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#enum-members">Enumerations</a>  </div>
   <div class="headertitle"><div class="title">game_controller.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;functional&gt;</code><br />
+<div class="textblock"><code>#include &lt;atomic&gt;</code><br />
+<code>#include &lt;chrono&gt;</code><br />
+<code>#include &lt;filesystem&gt;</code><br />
+<code>#include &lt;functional&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
+<code>#include &lt;mutex&gt;</code><br />
 <code>#include &lt;optional&gt;</code><br />
 <code>#include &lt;random&gt;</code><br />
 <code>#include &lt;unordered_map&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
+<code>#include &quot;<a class="el" href="datagenerator_8h_source.html">database/datagenerator.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="save__manager_8h_source.html">database/save_manager.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="stats__config_8h_source.html">global/stats_config.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="competition_8h_source.html">model/competition.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="game_8h_source.html">model/game.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="guidance_8h_source.html">model/guidance.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="league_8h_source.html">model/league.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="manager__career_8h_source.html">model/manager_career.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="medical__centre_8h_source.html">model/medical_centre.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="next__action_8h_source.html">model/next_action.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="player_8h_source.html">model/player.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="player__agent_8h_source.html">model/player_agent.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="season__agenda_8h_source.html">model/season_agenda.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="squad__numbers_8h_source.html">model/squad_numbers.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="squad__planner_8h_source.html">model/squad_planner.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="squad__status_8h_source.html">model/squad_status.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="staff_8h_source.html">model/staff.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="team_8h_source.html">model/team.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="training_8h_source.html">model/training.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="transfer__listing_8h_source.html">model/transfer_listing.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="world__rng_8h_source.html">model/world_rng.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="youth__academy_8h_source.html">model/youth_academy.h</a>&quot;</code><br />
 </div>
 <p><a href="game__controller_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -122,9 +143,108 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1SaveSlotMetadata.html">GameController::SaveSlotMetadata</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1SaveStatusInfo.html">GameController::SaveStatusInfo</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1ContinueProgress.html">GameController::ContinueProgress</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1ContractTalkResult.html">GameController::ContractTalkResult</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1IncomingOfferView.html">GameController::IncomingOfferView</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1SquadNeeds.html">GameController::SquadNeeds</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1BoardTargets.html">GameController::BoardTargets</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The board's targets this season and how they are going.  <a href="structGameController_1_1BoardTargets.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1PotentialEstimate.html">GameController::PotentialEstimate</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1PlayerWorkload.html">GameController::PlayerWorkload</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1TrainingDayPreview.html">GameController::TrainingDayPreview</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1YouthPlayerView.html">GameController::YouthPlayerView</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1AcademyOverview.html">GameController::AcademyOverview</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1ReserveOverview.html">GameController::ReserveOverview</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1VacancyView.html">GameController::VacancyView</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1NationalVacancyView.html">GameController::NationalVacancyView</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1CallUpCandidate.html">GameController::CallUpCandidate</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1CallUpView.html">GameController::CallUpView</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1NextFixture.html">GameController::NextFixture</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGameController_1_1DataHubView.html">GameController::DataHubView</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:ad15177988324ea1c00c33b595ab4c1d9" id="r_ad15177988324ea1c00c33b595ab4c1d9"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9">ContinueStop</a> : uint8_t { <br />
+&#160;&#160;<a class="el" href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9a6adf97f83acf6453d4a6a4b1070f3754">None</a> = 0
+, <a class="el" href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9abfc1041d408b88953eacd86820332d8c">Fixture</a>
+, <a class="el" href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9a4c2a8fe7eaf24721cc7a9f0175115bd4">Message</a>
+, <a class="el" href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9a5d30f54fc5f12894fd1afbf4d41c5969">Decision</a>
+, <br />
+&#160;&#160;<a class="el" href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9aa827fe8c0bf6bd9440137a36cf0b04f0">WindowOpened</a>
+, <a class="el" href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9aa3ca913e59c456cb47e2d813045ce445">NewSeason</a>
+, <a class="el" href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9ae1a8390507a98cf64e5c4bf0f0a4fe8f">LostJob</a>
+, <a class="el" href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9afcdf8a82eba24e303b63b2e49a507ecb">Requested</a>
+, <br />
+&#160;&#160;<a class="el" href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9a61fc1dc2ec5081ac7e7c56cbcbbcd879">DayLimit</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:ad15177988324ea1c00c33b595ab4c1d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Why the latest Continue, holiday or off-season jump stopped.  <a href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9">More...</a><br /></td></tr>
+<tr class="separator:ad15177988324ea1c00c33b595ab4c1d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="ad15177988324ea1c00c33b595ab4c1d9" name="ad15177988324ea1c00c33b595ab4c1d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad15177988324ea1c00c33b595ab4c1d9">&#9670;&#160;</a></span>ContinueStop</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="game__controller_8h.html#ad15177988324ea1c00c33b595ab4c1d9">ContinueStop</a> : uint8_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Why the latest Continue, holiday or off-season jump stopped. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ad15177988324ea1c00c33b595ab4c1d9a6adf97f83acf6453d4a6a4b1070f3754" name="ad15177988324ea1c00c33b595ab4c1d9a6adf97f83acf6453d4a6a4b1070f3754"></a>None&#160;</td><td class="fielddoc"><p>Nothing ran. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad15177988324ea1c00c33b595ab4c1d9abfc1041d408b88953eacd86820332d8c" name="ad15177988324ea1c00c33b595ab4c1d9abfc1041d408b88953eacd86820332d8c"></a>Fixture&#160;</td><td class="fielddoc"><p>A managed fixture is due (or now on the calendar). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad15177988324ea1c00c33b595ab4c1d9a4c2a8fe7eaf24721cc7a9f0175115bd4" name="ad15177988324ea1c00c33b595ab4c1d9a4c2a8fe7eaf24721cc7a9f0175115bd4"></a>Message&#160;</td><td class="fielddoc"><p>News that needs the manager arrived. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad15177988324ea1c00c33b595ab4c1d9a5d30f54fc5f12894fd1afbf4d41c5969" name="ad15177988324ea1c00c33b595ab4c1d9a5d30f54fc5f12894fd1afbf4d41c5969"></a>Decision&#160;</td><td class="fielddoc"><p>A bid, request or job offer waits for an answer. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad15177988324ea1c00c33b595ab4c1d9aa827fe8c0bf6bd9440137a36cf0b04f0" name="ad15177988324ea1c00c33b595ab4c1d9aa827fe8c0bf6bd9440137a36cf0b04f0"></a>WindowOpened&#160;</td><td class="fielddoc"><p>A transfer window opened. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad15177988324ea1c00c33b595ab4c1d9aa3ca913e59c456cb47e2d813045ce445" name="ad15177988324ea1c00c33b595ab4c1d9aa3ca913e59c456cb47e2d813045ce445"></a>NewSeason&#160;</td><td class="fielddoc"><p>The new season (and pre-season) began. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad15177988324ea1c00c33b595ab4c1d9ae1a8390507a98cf64e5c4bf0f0a4fe8f" name="ad15177988324ea1c00c33b595ab4c1d9ae1a8390507a98cf64e5c4bf0f0a4fe8f"></a>LostJob&#160;</td><td class="fielddoc"><p>The manager was sacked or his contract ran out. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad15177988324ea1c00c33b595ab4c1d9afcdf8a82eba24e303b63b2e49a507ecb" name="ad15177988324ea1c00c33b595ab4c1d9afcdf8a82eba24e303b63b2e49a507ecb"></a>Requested&#160;</td><td class="fielddoc"><p>The manager pressed Stop (or closed the game). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad15177988324ea1c00c33b595ab4c1d9a61fc1dc2ec5081ac7e7c56cbcbbcd879" name="ad15177988324ea1c00c33b595ab4c1d9a61fc1dc2ec5081ac7e7c56cbcbbcd879"></a>DayLimit&#160;</td><td class="fielddoc"><p>The longest stretch simulated in one go. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

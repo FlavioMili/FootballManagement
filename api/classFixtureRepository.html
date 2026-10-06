@@ -101,7 +101,7 @@ $(document).ready(function(){initNavTree('classFixtureRepository.html',''); init
 </div><!--header-->
 <div class="contents">
 
-<p>Repository class for managing <a class="el" href="classMatch.html" title="Represents a football match between two teams.">Match</a> and <a class="el" href="classCalendar.html" title="Manages the match calendar for a season.">Calendar</a> entities in the database.  
+<p>Repository class for managing <a class="el" href="classMatch.html" title="Represents a football match between two teams.">Match</a> and <a class="el" href="classCalendar.html" title="Manages the match calendar for a season.">Calendar</a> entities in the database, plus the per-fixture match reports.  
  <a href="classFixtureRepository.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="fixture__repository_8h_source.html">fixture_repository.h</a>&gt;</code></p>
@@ -123,6 +123,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a347b6a1097ddc2c78d14610e6743c304" id="r_a347b6a1097ddc2c78d14610e6743c304"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFixtureRepository.html#a347b6a1097ddc2c78d14610e6743c304">loadCalendar</a> (<a class="el" href="classCalendar.html">Calendar</a> &amp;calendar) const</td></tr>
 <tr class="memdesc:a347b6a1097ddc2c78d14610e6743c304"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load the calendar from the database.  <br /></td></tr>
 <tr class="separator:a347b6a1097ddc2c78d14610e6743c304"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71139464df7776169dda22b89749b6f4" id="r_a71139464df7776169dda22b89749b6f4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFixtureRepository.html#a71139464df7776169dda22b89749b6f4">saveMatchReports</a> (const std::vector&lt; <a class="el" href="structMatchReport.html">MatchReport</a> &gt; &amp;reports) const</td></tr>
+<tr class="memdesc:a71139464df7776169dda22b89749b6f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inserts or replaces match reports (keyed by date and teams).  <br /></td></tr>
+<tr class="separator:a71139464df7776169dda22b89749b6f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22d52b6d27d615fcfdb431325c4e2d6e" id="r_a22d52b6d27d615fcfdb431325c4e2d6e"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structMatchReport.html">MatchReport</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFixtureRepository.html#a22d52b6d27d615fcfdb431325c4e2d6e">loadMatchReport</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> home_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> away_id) const</td></tr>
+<tr class="memdesc:a22d52b6d27d615fcfdb431325c4e2d6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads the report of one fixture, if it was stored.  <br /></td></tr>
+<tr class="separator:a22d52b6d27d615fcfdb431325c4e2d6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a82cc21133c063412aae55a96d07d85f4" id="r_a82cc21133c063412aae55a96d07d85f4"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structMatchReport.html">MatchReport</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFixtureRepository.html#a82cc21133c063412aae55a96d07d85f4">loadTeamMatchReports</a> (uint16_t season, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id) const</td></tr>
+<tr class="memdesc:a82cc21133c063412aae55a96d07d85f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads all stored reports of a team in a season, by date.  <br /></td></tr>
+<tr class="separator:a82cc21133c063412aae55a96d07d85f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -130,7 +139,7 @@ Private Attributes</h2></td></tr>
 <tr class="separator:af8ea27a0c985f18b5a861b5a96f27243"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Repository class for managing <a class="el" href="classMatch.html" title="Represents a football match between two teams.">Match</a> and <a class="el" href="classCalendar.html" title="Manages the match calendar for a season.">Calendar</a> entities in the database. </p>
+<div class="textblock"><p>Repository class for managing <a class="el" href="classMatch.html" title="Represents a football match between two teams.">Match</a> and <a class="el" href="classCalendar.html" title="Manages the match calendar for a season.">Calendar</a> entities in the database, plus the per-fixture match reports. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a7187a8a40816d40498e299e418ccb094" name="a7187a8a40816d40498e299e418ccb094"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7187a8a40816d40498e299e418ccb094">&#9670;&#160;</a></span>FixtureRepository()</h2>
@@ -239,6 +248,72 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a22d52b6d27d615fcfdb431325c4e2d6e" name="a22d52b6d27d615fcfdb431325c4e2d6e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22d52b6d27d615fcfdb431325c4e2d6e">&#9670;&#160;</a></span>loadMatchReport()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt; <a class="el" href="structMatchReport.html">MatchReport</a> &gt; FixtureRepository::loadMatchReport </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;&#160;</td>
+          <td class="paramname"><em>date</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>home_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>away_id</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Loads the report of one fixture, if it was stored. </p>
+
+</div>
+</div>
+<a id="a82cc21133c063412aae55a96d07d85f4" name="a82cc21133c063412aae55a96d07d85f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a82cc21133c063412aae55a96d07d85f4">&#9670;&#160;</a></span>loadTeamMatchReports()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="structMatchReport.html">MatchReport</a> &gt; FixtureRepository::loadTeamMatchReports </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>season</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Loads all stored reports of a team in a season, by date. </p>
+
+</div>
+</div>
 <a id="a1bb6d07de5f0947dd01b368c53c27590" name="a1bb6d07de5f0947dd01b368c53c27590"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1bb6d07de5f0947dd01b368c53c27590">&#9670;&#160;</a></span>saveCalendar()</h2>
 
@@ -262,6 +337,26 @@ Private Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a71139464df7776169dda22b89749b6f4" name="a71139464df7776169dda22b89749b6f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a71139464df7776169dda22b89749b6f4">&#9670;&#160;</a></span>saveMatchReports()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void FixtureRepository::saveMatchReports </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="structMatchReport.html">MatchReport</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>reports</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Inserts or replaces match reports (keyed by date and teams). </p>
 
 </div>
 </div>

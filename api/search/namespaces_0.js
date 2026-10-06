@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['guiconstants_0',['GUIConstants',['../namespaceGUIConstants.html',1,'']]]
+  ['audio_0',['Audio',['../namespaceAudio.html',1,'']]],
+  ['awards_1',['Awards',['../namespaceAwards.html',1,'']]]
 ];

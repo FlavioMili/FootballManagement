@@ -1,0 +1,25 @@
+var classRecordBook =
+[
+    [ "SeasonTeam", "structRecordBook_1_1SeasonTeam.html", "structRecordBook_1_1SeasonTeam" ],
+    [ "RecordKey", "classRecordBook.html#a40b4ad53784dc57d74564dd83ad6b172", null ],
+    [ "allTimeTable", "classRecordBook.html#a60f35c975abd2f852600c918c7c6db3b", null ],
+    [ "clear", "classRecordBook.html#a8900b5236c9e28c6505126b8e2d9219f", null ],
+    [ "closeSeason", "classRecordBook.html#a0028549cb3e29e4acc0755a279ca9c10", null ],
+    [ "clubRecords", "classRecordBook.html#a8b619c9ecf80bb6ea000a4ddb06d055b", null ],
+    [ "hallOfFame", "classRecordBook.html#a51a22bcd1f0819d6440268c27e090107", null ],
+    [ "leagueRecords", "classRecordBook.html#a28898bbd8cbba5412a922228555634af", null ],
+    [ "load", "classRecordBook.html#aca303797e64d86f5c496498ea97ec3a8", null ],
+    [ "mostAppearances", "classRecordBook.html#afc1c29cd4cb7004c7199f2d04bdacaea", null ],
+    [ "offer", "classRecordBook.html#ad9c467395316b69063f2c47f64acb90c", null ],
+    [ "onMatchPlayed", "classRecordBook.html#a89e5cdf89f66fb0a4826650419901b4b", null ],
+    [ "onTransfer", "classRecordBook.html#a8a35af0f587459a4518f67c8fe0626bb", null ],
+    [ "rebuild", "classRecordBook.html#a7f9081cf953b3502810ac1d3fd1b4f00", null ],
+    [ "save", "classRecordBook.html#affc495e30c66926d0edc3504c6d1fd16", null ],
+    [ "topScorers", "classRecordBook.html#a64fafb40df101053a0e878c3092a6d6d", null ],
+    [ "all_time", "classRecordBook.html#abd2ec812c6e0bdb86d5a058a4b68c53c", null ],
+    [ "club_players", "classRecordBook.html#a61de4a93e791e165d3ab948079a2002b", null ],
+    [ "records", "classRecordBook.html#a3d81d02f7c7b80b7472113932da27648", null ],
+    [ "season_scorers", "classRecordBook.html#a4fbd6fac1a0cfff57f9b67bb90e6d592", null ],
+    [ "season_teams", "classRecordBook.html#a0a8aa4e3a07da714224a959c9068a065", null ],
+    [ "season_year", "classRecordBook.html#a5ca1d01f69b26a63ecdc0cacd98572d3", null ]
+];

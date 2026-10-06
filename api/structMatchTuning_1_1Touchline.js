@@ -1,0 +1,27 @@
+var structMatchTuning_1_1Touchline =
+[
+    [ "AI_CHASE_MINUTE", "structMatchTuning_1_1Touchline.html#a01d761a35978d5d8e3fbaf76ebb396d0", null ],
+    [ "AI_PROTECT_MINUTE", "structMatchTuning_1_1Touchline.html#ab0ca04ed9e46cc5591a547bafee6e844", null ],
+    [ "AI_SHOOT_ON_SIGHT_MINUTE", "structMatchTuning_1_1Touchline.html#acc47c8748ae4bd947684e2a8321f540c", null ],
+    [ "ENCOURAGE_WORK_RATE", "structMatchTuning_1_1Touchline.html#a7367802878a9ecc118185a97b53b5f91", null ],
+    [ "GAME_MANAGEMENT_OFFENSIVE", "structMatchTuning_1_1Touchline.html#a910179adf1d666e5c069d3a35b6d637f", null ],
+    [ "MAX_RESHAPE_FAMILIARITY_COST", "structMatchTuning_1_1Touchline.html#ad1df36df449a7fa231c1ec69034dbe51", null ],
+    [ "MAX_TEAM_TALK_MODIFIER", "structMatchTuning_1_1Touchline.html#afce3a11531074e362fbe2aab48918494", null ],
+    [ "RESHAPE_FAMILIARITY_PER_METRE", "structMatchTuning_1_1Touchline.html#a67ce302b5068efb234abb078aa9dc212", null ],
+    [ "RESHAPE_RECOVERY_SECONDS", "structMatchTuning_1_1Touchline.html#a5af811b03aa7282c08a6e7890a18a5f9", null ],
+    [ "SCORE_EFFECT_BASE", "structMatchTuning_1_1Touchline.html#adf2e823df36a5663d9fb7475b14367ef", null ],
+    [ "SCORE_EFFECT_COMPACTNESS", "structMatchTuning_1_1Touchline.html#a4a922424bc341adc51366bd80486e16f", null ],
+    [ "SCORE_EFFECT_MAX_GOALS", "structMatchTuning_1_1Touchline.html#a89e351c10e2fe3e84200dcfd67dd24f1", null ],
+    [ "SCORE_EFFECT_OFFENSIVE", "structMatchTuning_1_1Touchline.html#ab0fe12c4206bcd9fb58a969c249d56fc", null ],
+    [ "SCORE_EFFECT_PRESSING", "structMatchTuning_1_1Touchline.html#ac935e31f981013fc069abc197397c033", null ],
+    [ "SCORE_EFFECT_RISK", "structMatchTuning_1_1Touchline.html#abfe910855af3e2b8d48513a89cd75a75", null ],
+    [ "SHOUT_DURATION_SECONDS", "structMatchTuning_1_1Touchline.html#a78edaebfcda607d9a6aa519147212080", null ],
+    [ "SHOUT_REPEAT_FADE_SECONDS", "structMatchTuning_1_1Touchline.html#a242279c945f18ef5924b6162b113b8fa", null ],
+    [ "SHOUT_SHOT_BIAS", "structMatchTuning_1_1Touchline.html#aeb6dfddc7f99553ebf8ecbc5a45a461a", null ],
+    [ "SHOUT_SLIDER_STEP", "structMatchTuning_1_1Touchline.html#ae6d599d26340b4acb2c46c5a107c424a", null ],
+    [ "UNDERDOG_COMPACTNESS", "structMatchTuning_1_1Touchline.html#ad591861e1398d93b1d6d7541844f6c1d", null ],
+    [ "UNDERDOG_GAP_RANGE", "structMatchTuning_1_1Touchline.html#a5e96edd389c8f82f20e6604d0276e724", null ],
+    [ "UNDERDOG_GAP_START", "structMatchTuning_1_1Touchline.html#a57cbe5480eb267e53a7fd48b83483feb", null ],
+    [ "UNDERDOG_OFFENSIVE", "structMatchTuning_1_1Touchline.html#abe5e0f4183d906bc91f16979f2b609dc", null ],
+    [ "UNDERDOG_PRESSING", "structMatchTuning_1_1Touchline.html#a51bb703917aa916d15125973ad817242", null ]
+];

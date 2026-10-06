@@ -94,6 +94,7 @@ $(document).ready(function(){initNavTree('classGame.html',''); initResizable(); 
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
@@ -107,6 +108,11 @@ $(document).ready(function(){initNavTree('classGame.html',''); initResizable(); 
 
 <p><code>#include &lt;<a class="el" href="game_8h_source.html">game.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structGame_1_1CupRun.html">CupRun</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a8acdee0bf96a2711911fde329c40b4e0" id="r_a8acdee0bf96a2711911fde329c40b4e0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a8acdee0bf96a2711911fde329c40b4e0">Game</a> (std::shared_ptr&lt; class <a class="el" href="classGameData.html">GameData</a> &gt; gd, std::shared_ptr&lt; <a class="el" href="classDatabaseConnection.html">DatabaseConnection</a> &gt; conn)</td></tr>
@@ -117,6 +123,78 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a3a07e7c96e055f2ac28ce7a05d2573ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3fbd9b84e4d3699eb60020c56edef6bd" id="r_a3fbd9b84e4d3699eb60020c56edef6bd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a3fbd9b84e4d3699eb60020c56edef6bd">setMatchResult</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> home_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> away_id, uint8_t home_score, uint8_t away_score)</td></tr>
 <tr class="separator:a3fbd9b84e4d3699eb60020c56edef6bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6dc45dfa677cc4592befa6e41fbf013c" id="r_a6dc45dfa677cc4592befa6e41fbf013c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a6dc45dfa677cc4592befa6e41fbf013c">setMatchResult</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> home_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> away_id, <a class="el" href="structMatchReport.html">MatchReport</a> report, std::span&lt; const <a class="el" href="structPlayerMatchConsequence.html">PlayerMatchConsequence</a> &gt; consequences={})</td></tr>
+<tr class="separator:a6dc45dfa677cc4592befa6e41fbf013c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa264df2c11a271a8765e1bb3d670ee37" id="r_aa264df2c11a271a8765e1bb3d670ee37"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#aa264df2c11a271a8765e1bb3d670ee37">isEligible</a> (const <a class="el" href="classPlayer.html">Player</a> &amp;player, <a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> type, std::optional&lt; <a class="el" href="structGameDateValue.html">GameDateValue</a> &gt; date=std::nullopt) const</td></tr>
+<tr class="separator:aa264df2c11a271a8765e1bb3d670ee37"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d3c6c600ed43133c508606a00ade436" id="r_a6d3c6c600ed43133c508606a00ade436"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a6d3c6c600ed43133c508606a00ade436">ineligibleSelections</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id, <a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> type) const</td></tr>
+<tr class="separator:a6d3c6c600ed43133c508606a00ade436"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a242902f2cd3f4334e4338f6c83323615" id="r_a242902f2cd3f4334e4338f6c83323615"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a242902f2cd3f4334e4338f6c83323615">fixMatchdaySquad</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id, <a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> type, std::optional&lt; <a class="el" href="structGameDateValue.html">GameDateValue</a> &gt; date=std::nullopt)</td></tr>
+<tr class="separator:a242902f2cd3f4334e4338f6c83323615"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a112bd51e0e4ccce6b91bb0ce254a721a" id="r_a112bd51e0e4ccce6b91bb0ce254a721a"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>, <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a112bd51e0e4ccce6b91bb0ce254a721a">previewMatchdaySquadFix</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id, <a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> type) const</td></tr>
+<tr class="separator:a112bd51e0e4ccce6b91bb0ce254a721a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a039d9835f0841d95d79cf4b11a16945e" id="r_a039d9835f0841d95d79cf4b11a16945e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a039d9835f0841d95d79cf4b11a16945e">canKickOff</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id, <a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> type) const</td></tr>
+<tr class="separator:a039d9835f0841d95d79cf4b11a16945e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9656e23e45363e1be5a2c55b5de3a4a3" id="r_a9656e23e45363e1be5a2c55b5de3a4a3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a9656e23e45363e1be5a2c55b5de3a4a3">setAssistantFixesLineup</a> (bool enabled)</td></tr>
+<tr class="separator:a9656e23e45363e1be5a2c55b5de3a4a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00b6e96361a950e2e368e6aba7402a46" id="r_a00b6e96361a950e2e368e6aba7402a46"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a00b6e96361a950e2e368e6aba7402a46">getAssistantFixesLineup</a> () const</td></tr>
+<tr class="separator:a00b6e96361a950e2e368e6aba7402a46"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af643462df48344f887a3a29f5065f073" id="r_af643462df48344f887a3a29f5065f073"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classCareerGuidance.html">CareerGuidance</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#af643462df48344f887a3a29f5065f073">getGuidance</a> ()</td></tr>
+<tr class="separator:af643462df48344f887a3a29f5065f073"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a92c1eedc97e863989c9690782fa9e814" id="r_a92c1eedc97e863989c9690782fa9e814"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classCareerGuidance.html">CareerGuidance</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a92c1eedc97e863989c9690782fa9e814">getGuidance</a> () const</td></tr>
+<tr class="separator:a92c1eedc97e863989c9690782fa9e814"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aadbbc63026885c9288bc08977fb9c3f4" id="r_aadbbc63026885c9288bc08977fb9c3f4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMedicalDesk.html">MedicalDesk</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#aadbbc63026885c9288bc08977fb9c3f4">getMedical</a> ()</td></tr>
+<tr class="separator:aadbbc63026885c9288bc08977fb9c3f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb23a7165d9a303f6c646448af3a1a29" id="r_abb23a7165d9a303f6c646448af3a1a29"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classMedicalDesk.html">MedicalDesk</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#abb23a7165d9a303f6c646448af3a1a29">getMedical</a> () const</td></tr>
+<tr class="separator:abb23a7165d9a303f6c646448af3a1a29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ec1a0c487f1eab79cff524d5e3ce6a9" id="r_a7ec1a0c487f1eab79cff524d5e3ce6a9"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classSupporters.html">Supporters</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a7ec1a0c487f1eab79cff524d5e3ce6a9">getSupporters</a> () const</td></tr>
+<tr class="separator:a7ec1a0c487f1eab79cff524d5e3ce6a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad4954fd2f1e4ede5c06937805e9ef50b" id="r_ad4954fd2f1e4ede5c06937805e9ef50b"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classCompetitionManager.html">CompetitionManager</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#ad4954fd2f1e4ede5c06937805e9ef50b">getCompetitions</a> () const</td></tr>
+<tr class="separator:ad4954fd2f1e4ede5c06937805e9ef50b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7841fd91c9e2a64a9fe705880ebdafc4" id="r_a7841fd91c9e2a64a9fe705880ebdafc4"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classSeasonArchive.html">SeasonArchive</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a7841fd91c9e2a64a9fe705880ebdafc4">getSeasonArchive</a> () const</td></tr>
+<tr class="separator:a7841fd91c9e2a64a9fe705880ebdafc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42d83745dd32304645e3185713fc3e1b" id="r_a42d83745dd32304645e3185713fc3e1b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSeasonArchive.html">SeasonArchive</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a42d83745dd32304645e3185713fc3e1b">getSeasonArchive</a> ()</td></tr>
+<tr class="separator:a42d83745dd32304645e3185713fc3e1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e0d426dfaf26bac9331db04a9ddaa06" id="r_a3e0d426dfaf26bac9331db04a9ddaa06"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a3e0d426dfaf26bac9331db04a9ddaa06">youngRegulars</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id) const</td></tr>
+<tr class="separator:a3e0d426dfaf26bac9331db04a9ddaa06"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0923c81dcdb7cc55f61ef5895fcdf81" id="r_ad0923c81dcdb7cc55f61ef5895fcdf81"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGame_1_1CupRun.html">CupRun</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#ad0923c81dcdb7cc55f61ef5895fcdf81">cupRun</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id) const</td></tr>
+<tr class="separator:ad0923c81dcdb7cc55f61ef5895fcdf81"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a74e231d5d473299c900f1b959bcc0b" id="r_a3a74e231d5d473299c900f1b959bcc0b"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classNationalTeams.html">NationalTeams</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a3a74e231d5d473299c900f1b959bcc0b">getNationalTeams</a> () const</td></tr>
+<tr class="separator:a3a74e231d5d473299c900f1b959bcc0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef38ae4060124bc0378ba73f4d638141" id="r_aef38ae4060124bc0378ba73f4d638141"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classNationalTeams.html">NationalTeams</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#aef38ae4060124bc0378ba73f4d638141">getNationalTeams</a> ()</td></tr>
+<tr class="separator:aef38ae4060124bc0378ba73f4d638141"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e511ce7a8225d6cb64ca5c10c34aa96" id="r_a4e511ce7a8225d6cb64ca5c10c34aa96"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classNationalManagement.html">NationalManagement</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a4e511ce7a8225d6cb64ca5c10c34aa96">getNationalJob</a> ()</td></tr>
+<tr class="separator:a4e511ce7a8225d6cb64ca5c10c34aa96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2bc3bafc1d13a5784dbbd7af0e96f8c" id="r_ab2bc3bafc1d13a5784dbbd7af0e96f8c"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classNationalManagement.html">NationalManagement</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#ab2bc3bafc1d13a5784dbbd7af0e96f8c">getNationalJob</a> () const</td></tr>
+<tr class="separator:ab2bc3bafc1d13a5784dbbd7af0e96f8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4503e85152a74c38a07e727cb873405" id="r_ac4503e85152a74c38a07e727cb873405"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structNationalDayEvents.html">NationalDayEvents</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#ac4503e85152a74c38a07e727cb873405">getLastNationalEvents</a> () const</td></tr>
+<tr class="separator:ac4503e85152a74c38a07e727cb873405"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad12699525de607deeae9505a42ce1ce8" id="r_ad12699525de607deeae9505a42ce1ce8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classWorldSimulation.html">WorldSimulation</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#ad12699525de607deeae9505a42ce1ce8">getWorld</a> ()</td></tr>
+<tr class="separator:ad12699525de607deeae9505a42ce1ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86224f4a197358ad660deb11e4afd141" id="r_a86224f4a197358ad660deb11e4afd141"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classWorldSimulation.html">WorldSimulation</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a86224f4a197358ad660deb11e4afd141">getWorld</a> () const</td></tr>
+<tr class="separator:a86224f4a197358ad660deb11e4afd141"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31b914cfc0998be0fcff01793c569612" id="r_a31b914cfc0998be0fcff01793c569612"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTransferMarket.html">TransferMarket</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a31b914cfc0998be0fcff01793c569612">getTransfers</a> ()</td></tr>
+<tr class="separator:a31b914cfc0998be0fcff01793c569612"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc975c835671f4d8c2c20ff386403d9b" id="r_adc975c835671f4d8c2c20ff386403d9b"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classTransferMarket.html">TransferMarket</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#adc975c835671f4d8c2c20ff386403d9b">getTransfers</a> () const</td></tr>
+<tr class="separator:adc975c835671f4d8c2c20ff386403d9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03c3df1114a8a199ae91d9a17aa6ae1d" id="r_a03c3df1114a8a199ae91d9a17aa6ae1d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classManagerCareer.html">ManagerCareer</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a03c3df1114a8a199ae91d9a17aa6ae1d">getCareer</a> ()</td></tr>
+<tr class="separator:a03c3df1114a8a199ae91d9a17aa6ae1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc0d3f8588883df5d26dc9cb271d3903" id="r_adc0d3f8588883df5d26dc9cb271d3903"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classManagerCareer.html">ManagerCareer</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#adc0d3f8588883df5d26dc9cb271d3903">getCareer</a> () const</td></tr>
+<tr class="separator:adc0d3f8588883df5d26dc9cb271d3903"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a668d36e8c93f086e48ae06838be407" id="r_a1a668d36e8c93f086e48ae06838be407"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structCareerDayEvents.html">CareerDayEvents</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a1a668d36e8c93f086e48ae06838be407">getLastCareerEvents</a> () const</td></tr>
+<tr class="separator:a1a668d36e8c93f086e48ae06838be407"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9405c4c212a9f5f3389f46435d989184" id="r_a9405c4c212a9f5f3389f46435d989184"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a9405c4c212a9f5f3389f46435d989184">leaveManagedTeam</a> (<a class="el" href="manager__career_8h.html#a4c72aaa98b6dec8cb28a2faf31fe6c0e">DepartureReason</a> reason)</td></tr>
+<tr class="separator:a9405c4c212a9f5f3389f46435d989184"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41181341ebf83a401791ed12cede84f7" id="r_a41181341ebf83a401791ed12cede84f7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a41181341ebf83a401791ed12cede84f7">takeJob</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id, const <a class="el" href="structManagerContract.html">ManagerContract</a> &amp;contract)</td></tr>
+<tr class="separator:a41181341ebf83a401791ed12cede84f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3f70042d65d58142f74536dd6364885" id="r_ad3f70042d65d58142f74536dd6364885"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structSimulationProgress.html">SimulationProgress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#ad3f70042d65d58142f74536dd6364885">getSimulationProgress</a> () const</td></tr>
+<tr class="separator:ad3f70042d65d58142f74536dd6364885"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a930480ff57d392cd8297f929dc8aeb4e" id="r_a930480ff57d392cd8297f929dc8aeb4e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a930480ff57d392cd8297f929dc8aeb4e">resetSimulationProgress</a> ()</td></tr>
+<tr class="separator:a930480ff57d392cd8297f929dc8aeb4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5360af8803a4821770ddea4262a712e4" id="r_a5360af8803a4821770ddea4262a712e4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a5360af8803a4821770ddea4262a712e4">setSimulationThreads</a> (unsigned threads)</td></tr>
+<tr class="separator:a5360af8803a4821770ddea4262a712e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa09d3150924b48a59befa11ac832a973" id="r_aa09d3150924b48a59befa11ac832a973"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#aa09d3150924b48a59befa11ac832a973">getSimulationThreads</a> () const</td></tr>
+<tr class="separator:aa09d3150924b48a59befa11ac832a973"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70674da80f5f875018c666dfcb92fe51" id="r_a70674da80f5f875018c666dfcb92fe51"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a70674da80f5f875018c666dfcb92fe51">getCurrentDate</a> () const</td></tr>
 <tr class="memdesc:a70674da80f5f875018c666dfcb92fe51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the current in-game date.  <br /></td></tr>
 <tr class="separator:a70674da80f5f875018c666dfcb92fe51"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -148,12 +226,30 @@ Private Member Functions</h2></td></tr>
 <tr class="separator:ab324eb1227850dbd1e171f7c77c8f35a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ed87a80cc050ed526df1d8b8d975b9a" id="r_a2ed87a80cc050ed526df1d8b8d975b9a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a2ed87a80cc050ed526df1d8b8d975b9a">startNewSeason</a> ()</td></tr>
 <tr class="separator:a2ed87a80cc050ed526df1d8b8d975b9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0cc750b8b0f4f7049d8f8965fe569f5f" id="r_a0cc750b8b0f4f7049d8f8965fe569f5f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a0cc750b8b0f4f7049d8f8965fe569f5f">trainPlayers</a> (const std::vector&lt; uint32_t &gt; &amp;player_ids)</td></tr>
-<tr class="separator:a0cc750b8b0f4f7049d8f8965fe569f5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4a8d73d38ad782fcd6126b04424c82b" id="r_af4a8d73d38ad782fcd6126b04424c82b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#af4a8d73d38ad782fcd6126b04424c82b">simulateMatches</a> (std::vector&lt; <a class="el" href="classMatch.html">Match</a> &gt; &amp;matches)</td></tr>
-<tr class="separator:af4a8d73d38ad782fcd6126b04424c82b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a63785cd9928154bff4863f55a0cfac73" id="r_a63785cd9928154bff4863f55a0cfac73"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a63785cd9928154bff4863f55a0cfac73">updateStandings</a> (const <a class="el" href="classMatch.html">Match</a> &amp;match)</td></tr>
-<tr class="separator:a63785cd9928154bff4863f55a0cfac73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf4a2bb1d3d3dd2953056d45004b517c" id="r_adf4a2bb1d3d3dd2953056d45004b517c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#adf4a2bb1d3d3dd2953056d45004b517c">beginSeasonReview</a> (const std::map&lt; <a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a>, std::vector&lt; <a class="el" href="structStandingRow.html">StandingRow</a> &gt; &gt; &amp;final_tables, std::uint16_t start_year)</td></tr>
+<tr class="separator:adf4a2bb1d3d3dd2953056d45004b517c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af72b1ef663e90dbd08984fc1334b0337" id="r_af72b1ef663e90dbd08984fc1334b0337"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#af72b1ef663e90dbd08984fc1334b0337">judgeSeason</a> (std::span&lt; const <a class="el" href="structSeasonHistoryEntry.html">SeasonHistoryEntry</a> &gt; finished)</td></tr>
+<tr class="separator:af72b1ef663e90dbd08984fc1334b0337"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c633685db02c5b3005fb60725b4e810" id="r_a5c633685db02c5b3005fb60725b4e810"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a5c633685db02c5b3005fb60725b4e810">finishSeasonReview</a> ()</td></tr>
+<tr class="separator:a5c633685db02c5b3005fb60725b4e810"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf1b982dca4d3b65b0ff11986ff666f0" id="r_aaf1b982dca4d3b65b0ff11986ff666f0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#aaf1b982dca4d3b65b0ff11986ff666f0">fillLineupGap</a> (<a class="el" href="classTeam.html">Team</a> &amp;team, const <a class="el" href="classPlayer.html">Player</a> &amp;departed)</td></tr>
+<tr class="separator:aaf1b982dca4d3b65b0ff11986ff666f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a9e0e93590ed29fd847f066c9da72d1" id="r_a6a9e0e93590ed29fd847f066c9da72d1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a6a9e0e93590ed29fd847f066c9da72d1">postLineupRepairs</a> ()</td></tr>
+<tr class="separator:a6a9e0e93590ed29fd847f066c9da72d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe83a5a333c166a7ae0ae579e49fdbcf" id="r_abe83a5a333c166a7ae0ae579e49fdbcf"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structUpcomingFixture.html">UpcomingFixture</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#abe83a5a333c166a7ae0ae579e49fdbcf">upcomingFixtures</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id) const</td></tr>
+<tr class="separator:abe83a5a333c166a7ae0ae579e49fdbcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd15647b71957ba9a20d41130c304be1" id="r_afd15647b71957ba9a20d41130c304be1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#afd15647b71957ba9a20d41130c304be1">keepManagedSelectionEligible</a> ()</td></tr>
+<tr class="separator:afd15647b71957ba9a20d41130c304be1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8a80b068401f633d916f79b9e6f1ded" id="r_ad8a80b068401f633d916f79b9e6f1ded"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#ad8a80b068401f633d916f79b9e6f1ded">fillMatchdaySquad</a> (<a class="el" href="classLineup.html">Lineup</a> &amp;lineup, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> team_id, <a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> type, const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date, bool recall_regulars) const</td></tr>
+<tr class="separator:ad8a80b068401f633d916f79b9e6f1ded"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af32b97b4603603992187aa02542174b1" id="r_af32b97b4603603992187aa02542174b1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#af32b97b4603603992187aa02542174b1">runCareerDay</a> ()</td></tr>
+<tr class="separator:af32b97b4603603992187aa02542174b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe42a8f74401dc8e6d9439d26bb06a1a" id="r_afe42a8f74401dc8e6d9439d26bb06a1a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#afe42a8f74401dc8e6d9439d26bb06a1a">recordCareerMatch</a> (const <a class="el" href="classMatch.html">Match</a> &amp;match)</td></tr>
+<tr class="separator:afe42a8f74401dc8e6d9439d26bb06a1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf6fb0042bd90d27f09818bd99ee5c61" id="r_acf6fb0042bd90d27f09818bd99ee5c61"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#acf6fb0042bd90d27f09818bd99ee5c61">simulateMatches</a> (std::vector&lt; <a class="el" href="classMatch.html">Match</a> &gt; &amp;matches, bool include_managed=false)</td></tr>
+<tr class="separator:acf6fb0042bd90d27f09818bd99ee5c61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adee26e0b59d3b7426708cce545dc746d" id="r_adee26e0b59d3b7426708cce545dc746d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#adee26e0b59d3b7426708cce545dc746d">settleLevelTie</a> (<a class="el" href="classMatch.html">Match</a> &amp;match, <a class="el" href="structMatchReport.html">MatchReport</a> &amp;report)</td></tr>
+<tr class="separator:adee26e0b59d3b7426708cce545dc746d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -163,12 +259,42 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a5c365b0fe4711a702d2205c3affecce3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0fe387393f94569a97aa49524680e8d6" id="r_a0fe387393f94569a97aa49524680e8d6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classCalendar.html">Calendar</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a0fe387393f94569a97aa49524680e8d6">calendar</a></td></tr>
 <tr class="separator:a0fe387393f94569a97aa49524680e8d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50971a8ddbdedd759b315678d71a9d34" id="r_a50971a8ddbdedd759b315678d71a9d34"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classCompetitionManager.html">CompetitionManager</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a50971a8ddbdedd759b315678d71a9d34">competitions</a></td></tr>
+<tr class="separator:a50971a8ddbdedd759b315678d71a9d34"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ff26309f1755b3344163967b05cf5cb" id="r_a2ff26309f1755b3344163967b05cf5cb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classWorldSimulation.html">WorldSimulation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a2ff26309f1755b3344163967b05cf5cb">world</a></td></tr>
+<tr class="separator:a2ff26309f1755b3344163967b05cf5cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa74faab88d0ea462f54181c479f24112" id="r_aa74faab88d0ea462f54181c479f24112"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTransferMarket.html">TransferMarket</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#aa74faab88d0ea462f54181c479f24112">transfers</a></td></tr>
+<tr class="separator:aa74faab88d0ea462f54181c479f24112"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4335ade299b0222f839e489ce232a9af" id="r_a4335ade299b0222f839e489ce232a9af"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classManagerCareer.html">ManagerCareer</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a4335ade299b0222f839e489ce232a9af">career</a></td></tr>
+<tr class="separator:a4335ade299b0222f839e489ce232a9af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac94b87cf8884ba00de159d86a85c78f9" id="r_ac94b87cf8884ba00de159d86a85c78f9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structCareerDayEvents.html">CareerDayEvents</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#ac94b87cf8884ba00de159d86a85c78f9">last_career_events</a></td></tr>
+<tr class="separator:ac94b87cf8884ba00de159d86a85c78f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b13fbbe3016cc6b2cc47dec3cbe1211" id="r_a6b13fbbe3016cc6b2cc47dec3cbe1211"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classNationalTeams.html">NationalTeams</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a6b13fbbe3016cc6b2cc47dec3cbe1211">international</a></td></tr>
+<tr class="separator:a6b13fbbe3016cc6b2cc47dec3cbe1211"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d53e57fa489ebc8795cdb586f061ce2" id="r_a5d53e57fa489ebc8795cdb586f061ce2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classNationalManagement.html">NationalManagement</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a5d53e57fa489ebc8795cdb586f061ce2">national_job</a></td></tr>
+<tr class="separator:a5d53e57fa489ebc8795cdb586f061ce2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1bdc7fc2a6f06329c6da9e3ba5059c9a" id="r_a1bdc7fc2a6f06329c6da9e3ba5059c9a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structNationalDayEvents.html">NationalDayEvents</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a1bdc7fc2a6f06329c6da9e3ba5059c9a">last_national_events</a></td></tr>
+<tr class="separator:a1bdc7fc2a6f06329c6da9e3ba5059c9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d2261f87f6947d59b708fbfbfbe1549" id="r_a5d2261f87f6947d59b708fbfbfbe1549"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMatchScheduler.html">MatchScheduler</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a5d2261f87f6947d59b708fbfbfbe1549">scheduler</a></td></tr>
+<tr class="separator:a5d2261f87f6947d59b708fbfbfbe1549"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0026df59a6f7aad9a951c38a954423f" id="r_af0026df59a6f7aad9a951c38a954423f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#af0026df59a6f7aad9a951c38a954423f">currentDate</a></td></tr>
 <tr class="separator:af0026df59a6f7aad9a951c38a954423f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ca1939e337596720afc9bb6f81b2383" id="r_a9ca1939e337596720afc9bb6f81b2383"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a9ca1939e337596720afc9bb6f81b2383">current_season</a> = 1</td></tr>
 <tr class="separator:a9ca1939e337596720afc9bb6f81b2383"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9544cd311f81852f10c48bda21c75a9d" id="r_a9544cd311f81852f10c48bda21c75a9d"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a9544cd311f81852f10c48bda21c75a9d">managed_team_id</a></td></tr>
 <tr class="separator:a9544cd311f81852f10c48bda21c75a9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc15d4d0cf8b6325798cd157dadf4a9c" id="r_acc15d4d0cf8b6325798cd157dadf4a9c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classCareerGuidance.html">CareerGuidance</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#acc15d4d0cf8b6325798cd157dadf4a9c">guidance</a></td></tr>
+<tr class="separator:acc15d4d0cf8b6325798cd157dadf4a9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe781e5d9e607729dec178843ec42606" id="r_afe781e5d9e607729dec178843ec42606"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMedicalDesk.html">MedicalDesk</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#afe781e5d9e607729dec178843ec42606">medical</a></td></tr>
+<tr class="separator:afe781e5d9e607729dec178843ec42606"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e142e7ff5b1386828cc218e3a7ad06d" id="r_a4e142e7ff5b1386828cc218e3a7ad06d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSupporters.html">Supporters</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a4e142e7ff5b1386828cc218e3a7ad06d">supporters</a></td></tr>
+<tr class="separator:a4e142e7ff5b1386828cc218e3a7ad06d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a394e6195ac2c5a9e1ae9b5f8a7d2d42d" id="r_a394e6195ac2c5a9e1ae9b5f8a7d2d42d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSeasonArchive.html">SeasonArchive</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a394e6195ac2c5a9e1ae9b5f8a7d2d42d">season_archive</a></td></tr>
+<tr class="separator:a394e6195ac2c5a9e1ae9b5f8a7d2d42d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d014f6dac94f3f17ef20c74d4d38e0b" id="r_a3d014f6dac94f3f17ef20c74d4d38e0b"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structSeasonReview.html">SeasonReview</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#a3d014f6dac94f3f17ef20c74d4d38e0b">closing_review</a></td></tr>
+<tr class="separator:a3d014f6dac94f3f17ef20c74d4d38e0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3343e89e7978ec3a115fe4070829a7c" id="r_ac3343e89e7978ec3a115fe4070829a7c"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGame.html#ac3343e89e7978ec3a115fe4070829a7c">lineup_repairs</a></td></tr>
+<tr class="separator:ac3343e89e7978ec3a115fe4070829a7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Represents the core game state and logic. </p>
@@ -239,6 +365,90 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="adf4a2bb1d3d3dd2953056d45004b517c" name="adf4a2bb1d3d3dd2953056d45004b517c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adf4a2bb1d3d3dd2953056d45004b517c">&#9670;&#160;</a></span>beginSeasonReview()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::beginSeasonReview </td>
+          <td>(</td>
+          <td class="paramtype">const std::map&lt; <a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a>, std::vector&lt; <a class="el" href="structStandingRow.html">StandingRow</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>final_tables</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint16_t&#160;</td>
+          <td class="paramname"><em>start_year</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The managed club's season numbers, read from the final tables before promotion and relegation move the clubs. </p>
+
+</div>
+</div>
+<a id="a039d9835f0841d95d79cf4b11a16945e" name="a039d9835f0841d95d79cf4b11a16945e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a039d9835f0841d95d79cf4b11a16945e">&#9670;&#160;</a></span>canKickOff()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Game::canKickOff </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a>&#160;</td>
+          <td class="paramname"><em>type</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Whether the club's selection may kick off as it is: it is exactly what <a class="el" href="classGame.html#a242902f2cd3f4334e4338f6c83323615">fixMatchdaySquad()</a> would pick, so players still listed by <a class="el" href="classGame.html#a6d3c6c600ed43133c508606a00ade436">ineligibleSelections()</a> are injured players nobody fit can replace. </p>
+
+</div>
+</div>
+<a id="ad0923c81dcdb7cc55f61ef5895fcdf81" name="ad0923c81dcdb7cc55f61ef5895fcdf81"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0923c81dcdb7cc55f61ef5895fcdf81">&#9670;&#160;</a></span>cupRun()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structGame_1_1CupRun.html">Game::CupRun</a> Game::cupRun </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="abe55c7e8223c3be5e495c215d4841170" name="abe55c7e8223c3be5e495c215d4841170"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abe55c7e8223c3be5e495c215d4841170">&#9670;&#160;</a></span>endSeason()</h2>
 
@@ -258,6 +468,184 @@ Private Attributes</h2></td></tr>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aaf1b982dca4d3b65b0ff11986ff666f0" name="aaf1b982dca4d3b65b0ff11986ff666f0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaf1b982dca4d3b65b0ff11986ff666f0">&#9670;&#160;</a></span>fillLineupGap()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::fillLineupGap </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classTeam.html">Team</a> &amp;&#160;</td>
+          <td class="paramname"><em>team</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classPlayer.html">Player</a> &amp;&#160;</td>
+          <td class="paramname"><em>departed</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Takes a departing managed player out of the line-up, filling only his place, and notes the change for <a class="el" href="classGame.html#a6a9e0e93590ed29fd847f066c9da72d1">postLineupRepairs()</a>. </p>
+
+</div>
+</div>
+<a id="ad8a80b068401f633d916f79b9e6f1ded" name="ad8a80b068401f633d916f79b9e6f1ded"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad8a80b068401f633d916f79b9e6f1ded">&#9670;&#160;</a></span>fillMatchdaySquad()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t Game::fillMatchdaySquad </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classLineup.html">Lineup</a> &amp;&#160;</td>
+          <td class="paramname"><em>lineup</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a>&#160;</td>
+          <td class="paramname"><em>type</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;&#160;</td>
+          <td class="paramname"><em>date</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>recall_regulars</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p><a class="el" href="classGame.html#a242902f2cd3f4334e4338f6c83323615">fixMatchdaySquad()</a> applied to <code>lineup</code>, a selection of <code>team_id</code>; without <code>recall_regulars</code> recovered regulars stay where they are (the selection is only made eligible). </p>
+
+</div>
+</div>
+<a id="a5c633685db02c5b3005fb60725b4e810" name="a5c633685db02c5b3005fb60725b4e810"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c633685db02c5b3005fb60725b4e810">&#9670;&#160;</a></span>finishSeasonReview()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::finishSeasonReview </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Archives the review with next season's objectives. </p>
+
+</div>
+</div>
+<a id="a242902f2cd3f4334e4338f6c83323615" name="a242902f2cd3f4334e4338f6c83323615"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a242902f2cd3f4334e4338f6c83323615">&#9670;&#160;</a></span>fixMatchdaySquad()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t Game::fixMatchdaySquad </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a>&#160;</td>
+          <td class="paramname"><em>type</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; <a class="el" href="structGameDateValue.html">GameDateValue</a> &gt;&#160;</td>
+          <td class="paramname"><em>date</em> = <code>std::nullopt</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>The assistant's matchday selection: regulars fit again take back their places from the players who stood in for them, then ineligible players are replaced by the best-fitting eligible squad and academy players, then by trialists, and the replacements are noted as stand-ins (<a class="el" href="classLineup.html#a75ff68562a1c3cac59deb3a382580140" title="Stand-ins currently filling a regular&#39;s place in the XI.">Lineup::getStandIns()</a>). When nobody fit is left for a starting place, injured players play through it (the least injured first), so a side always takes the field; players who may not play at all (suspended, on national duty) and cannot be replaced leave the XI and the side plays with the players it has. Availability is judged on <code>date</code> (default: today). Returns how many selections changed. </p>
+
+</div>
+</div>
+<a id="a00b6e96361a950e2e368e6aba7402a46" name="a00b6e96361a950e2e368e6aba7402a46"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a00b6e96361a950e2e368e6aba7402a46">&#9670;&#160;</a></span>getAssistantFixesLineup()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Game::getAssistantFixesLineup </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -301,6 +689,83 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a03c3df1114a8a199ae91d9a17aa6ae1d" name="a03c3df1114a8a199ae91d9a17aa6ae1d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a03c3df1114a8a199ae91d9a17aa6ae1d">&#9670;&#160;</a></span>getCareer() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classManagerCareer.html">ManagerCareer</a> &amp; Game::getCareer </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The human manager's career and the market for managers. </p>
+
+</div>
+</div>
+<a id="adc0d3f8588883df5d26dc9cb271d3903" name="adc0d3f8588883df5d26dc9cb271d3903"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adc0d3f8588883df5d26dc9cb271d3903">&#9670;&#160;</a></span>getCareer() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classManagerCareer.html">ManagerCareer</a> &amp; Game::getCareer </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad4954fd2f1e4ede5c06937805e9ef50b" name="ad4954fd2f1e4ede5c06937805e9ef50b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad4954fd2f1e4ede5c06937805e9ef50b">&#9670;&#160;</a></span>getCompetitions()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classCompetitionManager.html">CompetitionManager</a> &amp; Game::getCompetitions </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p><a class="el" href="namespaceStandings.html" title="Run-in maths of a league table: which outcomes are mathematically decided (title, promotion,...">Standings</a>, cups, reports, player season stats and season history. </p>
+
+</div>
+</div>
 <a id="a70674da80f5f875018c666dfcb92fe51" name="a70674da80f5f875018c666dfcb92fe51"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a70674da80f5f875018c666dfcb92fe51">&#9670;&#160;</a></span>getCurrentDate()</h2>
 
@@ -341,6 +806,109 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="af643462df48344f887a3a29f5065f073" name="af643462df48344f887a3a29f5065f073"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af643462df48344f887a3a29f5065f073">&#9670;&#160;</a></span>getGuidance() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classCareerGuidance.html">CareerGuidance</a> &amp; Game::getGuidance </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Checklist, delegation, opposition instructions, match analytics. </p>
+
+</div>
+</div>
+<a id="a92c1eedc97e863989c9690782fa9e814" name="a92c1eedc97e863989c9690782fa9e814"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a92c1eedc97e863989c9690782fa9e814">&#9670;&#160;</a></span>getGuidance() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classCareerGuidance.html">CareerGuidance</a> &amp; Game::getGuidance </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1a668d36e8c93f086e48ae06838be407" name="a1a668d36e8c93f086e48ae06838be407"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a668d36e8c93f086e48ae06838be407">&#9670;&#160;</a></span>getLastCareerEvents()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="structCareerDayEvents.html">CareerDayEvents</a> &amp; Game::getLastCareerEvents </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>What the manager market did on the latest simulated day. </p>
+
+</div>
+</div>
+<a id="ac4503e85152a74c38a07e727cb873405" name="ac4503e85152a74c38a07e727cb873405"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac4503e85152a74c38a07e727cb873405">&#9670;&#160;</a></span>getLastNationalEvents()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="structNationalDayEvents.html">NationalDayEvents</a> &amp; Game::getLastNationalEvents </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>What the national-job market did on the latest simulated day. </p>
+
+</div>
+</div>
 <a id="a2312ceabce92bb2abf8b8f7732ab115c" name="a2312ceabce92bb2abf8b8f7732ab115c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2312ceabce92bb2abf8b8f7732ab115c">&#9670;&#160;</a></span>getManagedTeamId()</h2>
 
@@ -358,6 +926,389 @@ Private Attributes</h2></td></tr>
 
 <p>Retrieves the ID of the team currently managed by the user. </p>
 <dl class="section return"><dt>Returns</dt><dd>The managed team's ID. </dd></dl>
+
+</div>
+</div>
+<a id="aadbbc63026885c9288bc08977fb9c3f4" name="aadbbc63026885c9288bc08977fb9c3f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aadbbc63026885c9288bc08977fb9c3f4">&#9670;&#160;</a></span>getMedical() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMedicalDesk.html">MedicalDesk</a> &amp; Game::getMedical </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Rest and minute-limit flags, load log and warnings of the physios. </p>
+
+</div>
+</div>
+<a id="abb23a7165d9a303f6c646448af3a1a29" name="abb23a7165d9a303f6c646448af3a1a29"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abb23a7165d9a303f6c646448af3a1a29">&#9670;&#160;</a></span>getMedical() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classMedicalDesk.html">MedicalDesk</a> &amp; Game::getMedical </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4e511ce7a8225d6cb64ca5c10c34aa96" name="a4e511ce7a8225d6cb64ca5c10c34aa96"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4e511ce7a8225d6cb64ca5c10c34aa96">&#9670;&#160;</a></span>getNationalJob() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classNationalManagement.html">NationalManagement</a> &amp; Game::getNationalJob </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The manager's national-team job and the market for national jobs. </p>
+
+</div>
+</div>
+<a id="ab2bc3bafc1d13a5784dbbd7af0e96f8c" name="ab2bc3bafc1d13a5784dbbd7af0e96f8c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2bc3bafc1d13a5784dbbd7af0e96f8c">&#9670;&#160;</a></span>getNationalJob() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classNationalManagement.html">NationalManagement</a> &amp; Game::getNationalJob </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aef38ae4060124bc0378ba73f4d638141" name="aef38ae4060124bc0378ba73f4d638141"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef38ae4060124bc0378ba73f4d638141">&#9670;&#160;</a></span>getNationalTeams() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classNationalTeams.html">NationalTeams</a> &amp; Game::getNationalTeams </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3a74e231d5d473299c900f1b959bcc0b" name="a3a74e231d5d473299c900f1b959bcc0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a74e231d5d473299c900f1b959bcc0b">&#9670;&#160;</a></span>getNationalTeams() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classNationalTeams.html">NationalTeams</a> &amp; Game::getNationalTeams </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>National teams: calendar, call-ups, finals, caps. </p>
+
+</div>
+</div>
+<a id="a42d83745dd32304645e3185713fc3e1b" name="a42d83745dd32304645e3185713fc3e1b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a42d83745dd32304645e3185713fc3e1b">&#9670;&#160;</a></span>getSeasonArchive() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSeasonArchive.html">SeasonArchive</a> &amp; Game::getSeasonArchive </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7841fd91c9e2a64a9fe705880ebdafc4" name="a7841fd91c9e2a64a9fe705880ebdafc4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7841fd91c9e2a64a9fe705880ebdafc4">&#9670;&#160;</a></span>getSeasonArchive() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classSeasonArchive.html">SeasonArchive</a> &amp; Game::getSeasonArchive </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Final tables of past seasons and the managed club's season reviews. </p>
+
+</div>
+</div>
+<a id="ad3f70042d65d58142f74536dd6364885" name="ad3f70042d65d58142f74536dd6364885"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad3f70042d65d58142f74536dd6364885">&#9670;&#160;</a></span>getSimulationProgress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structSimulationProgress.html">SimulationProgress</a> Game::getSimulationProgress </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Matches simulated / scheduled so far in the current <a class="el" href="classGame.html#a3a07e7c96e055f2ac28ce7a05d2573ce" title="Advances the game time by one day, simulating any matches or events scheduled for the current date.">advanceDay()</a>. Safe to poll from another thread while <a class="el" href="classGame.html#a3a07e7c96e055f2ac28ce7a05d2573ce" title="Advances the game time by one day, simulating any matches or events scheduled for the current date.">advanceDay()</a> runs. </p>
+
+</div>
+</div>
+<a id="aa09d3150924b48a59befa11ac832a973" name="aa09d3150924b48a59befa11ac832a973"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa09d3150924b48a59befa11ac832a973">&#9670;&#160;</a></span>getSimulationThreads()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned Game::getSimulationThreads </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7ec1a0c487f1eab79cff524d5e3ce6a9" name="a7ec1a0c487f1eab79cff524d5e3ce6a9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ec1a0c487f1eab79cff524d5e3ce6a9">&#9670;&#160;</a></span>getSupporters()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classSupporters.html">Supporters</a> &amp; Game::getSupporters </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The managed club's supporters and their weekly mood. </p>
+
+</div>
+</div>
+<a id="a31b914cfc0998be0fcff01793c569612" name="a31b914cfc0998be0fcff01793c569612"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a31b914cfc0998be0fcff01793c569612">&#9670;&#160;</a></span>getTransfers() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classTransferMarket.html">TransferMarket</a> &amp; Game::getTransfers </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Deals, loans, pre-contracts, scheduled payments and transfer history. </p>
+
+</div>
+</div>
+<a id="adc975c835671f4d8c2c20ff386403d9b" name="adc975c835671f4d8c2c20ff386403d9b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adc975c835671f4d8c2c20ff386403d9b">&#9670;&#160;</a></span>getTransfers() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classTransferMarket.html">TransferMarket</a> &amp; Game::getTransfers </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad12699525de607deeae9505a42ce1ce8" name="ad12699525de607deeae9505a42ce1ce8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad12699525de607deeae9505a42ce1ce8">&#9670;&#160;</a></span>getWorld() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classWorldSimulation.html">WorldSimulation</a> &amp; Game::getWorld </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p><a class="el" href="classInbox.html" title="Chronological list of messages with read tracking.">Inbox</a>, board, injuries, finances and development between matches. </p>
+
+</div>
+</div>
+<a id="a86224f4a197358ad660deb11e4afd141" name="a86224f4a197358ad660deb11e4afd141"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86224f4a197358ad660deb11e4afd141">&#9670;&#160;</a></span>getWorld() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classWorldSimulation.html">WorldSimulation</a> &amp; Game::getWorld </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -386,6 +1337,142 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a6d3c6c600ed43133c508606a00ade436" name="a6d3c6c600ed43133c508606a00ade436"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d3c6c600ed43133c508606a00ade436">&#9670;&#160;</a></span>ineligibleSelections()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt; Game::ineligibleSelections </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a>&#160;</td>
+          <td class="paramname"><em>type</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Selected players of a club who may not play a match of <code>type</code>. </p>
+
+</div>
+</div>
+<a id="aa264df2c11a271a8765e1bb3d670ee37" name="aa264df2c11a271a8765e1bb3d670ee37"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa264df2c11a271a8765e1bb3d670ee37">&#9670;&#160;</a></span>isEligible()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Game::isEligible </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classPlayer.html">Player</a> &amp;&#160;</td>
+          <td class="paramname"><em>player</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a>&#160;</td>
+          <td class="paramname"><em>type</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; <a class="el" href="structGameDateValue.html">GameDateValue</a> &gt;&#160;</td>
+          <td class="paramname"><em>date</em> = <code>std::nullopt</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Fit (not injured), outside friendlies not suspended for <code>type</code>, and not away with his national team on <code>date</code> (default: today). </p>
+
+</div>
+</div>
+<a id="af72b1ef663e90dbd08984fc1334b0337" name="af72b1ef663e90dbd08984fc1334b0337"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af72b1ef663e90dbd08984fc1334b0337">&#9670;&#160;</a></span>judgeSeason()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::judgeSeason </td>
+          <td>(</td>
+          <td class="paramtype">std::span&lt; const <a class="el" href="structSeasonHistoryEntry.html">SeasonHistoryEntry</a> &gt;&#160;</td>
+          <td class="paramname"><em>finished</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Outcome, board verdict and season news once the clubs have moved. </p>
+
+</div>
+</div>
+<a id="afd15647b71957ba9a20d41130c304be1" name="afd15647b71957ba9a20d41130c304be1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afd15647b71957ba9a20d41130c304be1">&#9670;&#160;</a></span>keepManagedSelectionEligible()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::keepManagedSelectionEligible </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Replaces unavailable managed players for the next managed fixture. </p>
+
+</div>
+</div>
+<a id="a9405c4c212a9f5f3389f46435d989184" name="a9405c4c212a9f5f3389f46435d989184"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9405c4c212a9f5f3389f46435d989184">&#9670;&#160;</a></span>leaveManagedTeam()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::leaveManagedTeam </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="manager__career_8h.html#a4c72aaa98b6dec8cb28a2faf31fe6c0e">DepartureReason</a>&#160;</td>
+          <td class="paramname"><em>reason</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>The manager leaves the managed club (sacked, resigned, contract expired, or moving on): the club gets a vacancy and an AI manager in due course, its board, shortlist, transfer talks and offers are dropped and no command reaches it any more. The inbox stays. </p>
+
+</div>
+</div>
 <a id="aa574d129f713c4b0ed4114c5d5224be3" name="aa574d129f713c4b0ed4114c5d5224be3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa574d129f713c4b0ed4114c5d5224be3">&#9670;&#160;</a></span>loadGame()</h2>
 
@@ -411,6 +1498,139 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a6a9e0e93590ed29fd847f066c9da72d1" name="a6a9e0e93590ed29fd847f066c9da72d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a9e0e93590ed29fd847f066c9da72d1">&#9670;&#160;</a></span>postLineupRepairs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::postLineupRepairs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Tells the manager which starting places were filled. </p>
+
+</div>
+</div>
+<a id="a112bd51e0e4ccce6b91bb0ce254a721a" name="a112bd51e0e4ccce6b91bb0ce254a721a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a112bd51e0e4ccce6b91bb0ce254a721a">&#9670;&#160;</a></span>previewMatchdaySquadFix()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; std::pair&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>, <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt; &gt; Game::previewMatchdaySquadFix </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a>&#160;</td>
+          <td class="paramname"><em>type</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>What <a class="el" href="classGame.html#a242902f2cd3f4334e4338f6c83323615">fixMatchdaySquad()</a> would change: (replaced, replacement or 0). </p>
+
+</div>
+</div>
+<a id="afe42a8f74401dc8e6d9439d26bb06a1a" name="afe42a8f74401dc8e6d9439d26bb06a1a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe42a8f74401dc8e6d9439d26bb06a1a">&#9670;&#160;</a></span>recordCareerMatch()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::recordCareerMatch </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classMatch.html">Match</a> &amp;&#160;</td>
+          <td class="paramname"><em>match</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Job security of AI managers and the human's record. </p>
+
+</div>
+</div>
+<a id="a930480ff57d392cd8297f929dc8aeb4e" name="a930480ff57d392cd8297f929dc8aeb4e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a930480ff57d392cd8297f929dc8aeb4e">&#9670;&#160;</a></span>resetSimulationProgress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::resetSimulationProgress </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af32b97b4603603992187aa02542174b1" name="af32b97b4603603992187aa02542174b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af32b97b4603603992187aa02542174b1">&#9670;&#160;</a></span>runCareerDay()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::runCareerDay </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Manager market day and the board's verdict on the manager. </p>
+
+</div>
+</div>
 <a id="a9f7ad0384767e46fa072891c123b7d9c" name="a9f7ad0384767e46fa072891c123b7d9c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9f7ad0384767e46fa072891c123b7d9c">&#9670;&#160;</a></span>saveGame()</h2>
 
@@ -427,6 +1647,33 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Saves the current game state, including calendar and game variables, to the database. </p>
+
+</div>
+</div>
+<a id="a9656e23e45363e1be5a2c55b5de3a4a3" name="a9656e23e45363e1be5a2c55b5de3a4a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9656e23e45363e1be5a2c55b5de3a4a3">&#9670;&#160;</a></span>setAssistantFixesLineup()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::setAssistantFixesLineup </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Whether the assistant keeps the managed selection eligible: after each day, and at kick-off, injured or suspended players are replaced. </p>
 
 </div>
 </div>
@@ -447,7 +1694,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Sets the team managed by the user. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Taking charge of a new club sets the board's objective and budgets immediately and posts the day-one inbox (welcome, squad report, pre-season schedule, scouting suggestion). </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">id</td><td>The ID of the team to manage. </td></tr>
   </table>
@@ -456,8 +1703,55 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a6dc45dfa677cc4592befa6e41fbf013c" name="a6dc45dfa677cc4592befa6e41fbf013c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6dc45dfa677cc4592befa6e41fbf013c">&#9670;&#160;</a></span>setMatchResult() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Game::setMatchResult </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;&#160;</td>
+          <td class="paramname"><em>date</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>home_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>away_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structMatchReport.html">MatchReport</a>&#160;</td>
+          <td class="paramname"><em>report</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::span&lt; const <a class="el" href="structPlayerMatchConsequence.html">PlayerMatchConsequence</a> &gt;&#160;</td>
+          <td class="paramname"><em>consequences</em> = <code>{}</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p><a class="el" href="namespaceRecords.html" title="Comparison rules of the records book.">Records</a> a managed match with its structured report (e.g. built from the live <a class="el" href="classMatchEngine.html">MatchEngine</a>). A drawn cup tie is settled by extra time and penalties unless the report already carries them. <code>consequences</code> (<a class="el" href="namespaceMatchdaySquad.html#ab8046761573c7327542ded53f73d53f8">MatchdaySquad::consequences</a> of the engine) apply the measured condition and injuries exactly as for simulated matches. </p>
+
+</div>
+</div>
 <a id="a3fbd9b84e4d3699eb60020c56edef6bd" name="a3fbd9b84e4d3699eb60020c56edef6bd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3fbd9b84e4d3699eb60020c56edef6bd">&#9670;&#160;</a></span>setMatchResult()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a3fbd9b84e4d3699eb60020c56edef6bd">&#9670;&#160;</a></span>setMatchResult() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -499,12 +1793,76 @@ Private Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Records a managed match exactly once and applies its consequences. </p>
+<p><a class="el" href="namespaceRecords.html" title="Comparison rules of the records book.">Records</a> a managed match exactly once and applies its consequences. </p>
 
 </div>
 </div>
-<a id="af4a8d73d38ad782fcd6126b04424c82b" name="af4a8d73d38ad782fcd6126b04424c82b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af4a8d73d38ad782fcd6126b04424c82b">&#9670;&#160;</a></span>simulateMatches()</h2>
+<a id="a5360af8803a4821770ddea4262a712e4" name="a5360af8803a4821770ddea4262a712e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5360af8803a4821770ddea4262a712e4">&#9670;&#160;</a></span>setSimulationThreads()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::setSimulationThreads </td>
+          <td>(</td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>threads</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Threads used to simulate a matchday (1 = one match after another). </p>
+
+</div>
+</div>
+<a id="adee26e0b59d3b7426708cce545dc746d" name="adee26e0b59d3b7426708cce545dc746d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adee26e0b59d3b7426708cce545dc746d">&#9670;&#160;</a></span>settleLevelTie()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::settleLevelTie </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMatch.html">Match</a> &amp;&#160;</td>
+          <td class="paramname"><em>match</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structMatchReport.html">MatchReport</a> &amp;&#160;</td>
+          <td class="paramname"><em>report</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Fallback for a knockout tie recorded level without extra time (a score-only result, or a match abandoned before the engine could settle it): extra time and penalties are resolved from the squads and the extra-time goals credited to players who finished the match. </p>
+
+</div>
+</div>
+<a id="acf6fb0042bd90d27f09818bd99ee5c61" name="acf6fb0042bd90d27f09818bd99ee5c61"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acf6fb0042bd90d27f09818bd99ee5c61">&#9670;&#160;</a></span>simulateMatches()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -516,8 +1874,18 @@ Private Attributes</h2></td></tr>
           <td class="memname">void Game::simulateMatches </td>
           <td>(</td>
           <td class="paramtype">std::vector&lt; <a class="el" href="classMatch.html">Match</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>matches</em></td><td>)</td>
+          <td class="paramname"><em>matches</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>include_managed</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -554,8 +1922,37 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a0cc750b8b0f4f7049d8f8965fe569f5f" name="a0cc750b8b0f4f7049d8f8965fe569f5f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0cc750b8b0f4f7049d8f8965fe569f5f">&#9670;&#160;</a></span>trainPlayers()</h2>
+<a id="a41181341ebf83a401791ed12cede84f7" name="a41181341ebf83a401791ed12cede84f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41181341ebf83a401791ed12cede84f7">&#9670;&#160;</a></span>takeJob()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Game::takeJob </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structManagerContract.html">ManagerContract</a> &amp;&#160;</td>
+          <td class="paramname"><em>contract</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>The manager takes charge of <code>team_id</code> under <code>contract</code> (leaving the current club first): the board sets objectives and budgets for the new club, scouting starts afresh and the club's squad, line-up, tactics and training plan become the manager's. </p>
+
+</div>
+</div>
+<a id="abe83a5a333c166a7ae0ae579e49fdbcf" name="abe83a5a333c166a7ae0ae579e49fdbcf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abe83a5a333c166a7ae0ae579e49fdbcf">&#9670;&#160;</a></span>upcomingFixtures()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -564,11 +1961,11 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void Game::trainPlayers </td>
+          <td class="memname">std::vector&lt; <a class="el" href="structUpcomingFixture.html">UpcomingFixture</a> &gt; Game::upcomingFixtures </td>
           <td>(</td>
-          <td class="paramtype">const std::vector&lt; uint32_t &gt; &amp;&#160;</td>
-          <td class="paramname"><em>player_ids</em></td><td>)</td>
-          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
   </td>
@@ -577,32 +1974,26 @@ Private Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>The club's fixtures from today up to its first competitive match. </p>
 
 </div>
 </div>
-<a id="a63785cd9928154bff4863f55a0cfac73" name="a63785cd9928154bff4863f55a0cfac73"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a63785cd9928154bff4863f55a0cfac73">&#9670;&#160;</a></span>updateStandings()</h2>
+<a id="a3e0d426dfaf26bac9331db04a9ddaa06" name="a3e0d426dfaf26bac9331db04a9ddaa06"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e0d426dfaf26bac9331db04a9ddaa06">&#9670;&#160;</a></span>youngRegulars()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void Game::updateStandings </td>
+          <td class="memname">int Game::youngRegulars </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="classMatch.html">Match</a> &amp;&#160;</td>
-          <td class="paramname"><em>match</em></td><td>)</td>
-          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>team_id</em></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
+<p>Squad players aged 21 or under with ten or more appearances. </p>
 
 </div>
 </div>
@@ -618,6 +2009,72 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classCalendar.html">Calendar</a> Game::calendar</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4335ade299b0222f839e489ce232a9af" name="a4335ade299b0222f839e489ce232a9af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4335ade299b0222f839e489ce232a9af">&#9670;&#160;</a></span>career</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classManagerCareer.html">ManagerCareer</a> Game::career</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3d014f6dac94f3f17ef20c74d4d38e0b" name="a3d014f6dac94f3f17ef20c74d4d38e0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3d014f6dac94f3f17ef20c74d4d38e0b">&#9670;&#160;</a></span>closing_review</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;<a class="el" href="structSeasonReview.html">SeasonReview</a>&gt; Game::closing_review</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a50971a8ddbdedd759b315678d71a9d34" name="a50971a8ddbdedd759b315678d71a9d34"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50971a8ddbdedd759b315678d71a9d34">&#9670;&#160;</a></span>competitions</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classCompetitionManager.html">CompetitionManager</a> Game::competitions</td>
         </tr>
       </table>
   </td>
@@ -717,6 +2174,117 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="acc15d4d0cf8b6325798cd157dadf4a9c" name="acc15d4d0cf8b6325798cd157dadf4a9c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acc15d4d0cf8b6325798cd157dadf4a9c">&#9670;&#160;</a></span>guidance</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classCareerGuidance.html">CareerGuidance</a> Game::guidance</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6b13fbbe3016cc6b2cc47dec3cbe1211" name="a6b13fbbe3016cc6b2cc47dec3cbe1211"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b13fbbe3016cc6b2cc47dec3cbe1211">&#9670;&#160;</a></span>international</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classNationalTeams.html">NationalTeams</a> Game::international</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac94b87cf8884ba00de159d86a85c78f9" name="ac94b87cf8884ba00de159d86a85c78f9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac94b87cf8884ba00de159d86a85c78f9">&#9670;&#160;</a></span>last_career_events</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structCareerDayEvents.html">CareerDayEvents</a> Game::last_career_events</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1bdc7fc2a6f06329c6da9e3ba5059c9a" name="a1bdc7fc2a6f06329c6da9e3ba5059c9a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1bdc7fc2a6f06329c6da9e3ba5059c9a">&#9670;&#160;</a></span>last_national_events</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structNationalDayEvents.html">NationalDayEvents</a> Game::last_national_events</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac3343e89e7978ec3a115fe4070829a7c" name="ac3343e89e7978ec3a115fe4070829a7c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3343e89e7978ec3a115fe4070829a7c">&#9670;&#160;</a></span>lineup_repairs</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;std::pair&lt;std::string, std::string&gt; &gt; Game::lineup_repairs</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Starting places filled at the season end: (departed, replacement). </p>
+
+</div>
+</div>
 <a id="a9544cd311f81852f10c48bda21c75a9d" name="a9544cd311f81852f10c48bda21c75a9d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9544cd311f81852f10c48bda21c75a9d">&#9670;&#160;</a></span>managed_team_id</h2>
 
@@ -739,9 +2307,164 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="afe781e5d9e607729dec178843ec42606" name="afe781e5d9e607729dec178843ec42606"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe781e5d9e607729dec178843ec42606">&#9670;&#160;</a></span>medical</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMedicalDesk.html">MedicalDesk</a> Game::medical</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5d53e57fa489ebc8795cdb586f061ce2" name="a5d53e57fa489ebc8795cdb586f061ce2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d53e57fa489ebc8795cdb586f061ce2">&#9670;&#160;</a></span>national_job</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classNationalManagement.html">NationalManagement</a> Game::national_job</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5d2261f87f6947d59b708fbfbfbe1549" name="a5d2261f87f6947d59b708fbfbfbe1549"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d2261f87f6947d59b708fbfbfbe1549">&#9670;&#160;</a></span>scheduler</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMatchScheduler.html">MatchScheduler</a> Game::scheduler</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a394e6195ac2c5a9e1ae9b5f8a7d2d42d" name="a394e6195ac2c5a9e1ae9b5f8a7d2d42d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a394e6195ac2c5a9e1ae9b5f8a7d2d42d">&#9670;&#160;</a></span>season_archive</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSeasonArchive.html">SeasonArchive</a> Game::season_archive</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4e142e7ff5b1386828cc218e3a7ad06d" name="a4e142e7ff5b1386828cc218e3a7ad06d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4e142e7ff5b1386828cc218e3a7ad06d">&#9670;&#160;</a></span>supporters</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSupporters.html">Supporters</a> Game::supporters</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa74faab88d0ea462f54181c479f24112" name="aa74faab88d0ea462f54181c479f24112"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa74faab88d0ea462f54181c479f24112">&#9670;&#160;</a></span>transfers</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classTransferMarket.html">TransferMarket</a> Game::transfers</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2ff26309f1755b3344163967b05cf5cb" name="a2ff26309f1755b3344163967b05cf5cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ff26309f1755b3344163967b05cf5cb">&#9670;&#160;</a></span>world</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classWorldSimulation.html">WorldSimulation</a> Game::world</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>src/model/<a class="el" href="game_8h_source.html">game.h</a></li>
 <li>src/model/<a class="el" href="game_8cpp.html">game.cpp</a></li>
+<li>src/model/<a class="el" href="game__season_8cpp.html">game_season.cpp</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

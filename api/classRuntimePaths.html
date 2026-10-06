@@ -114,10 +114,14 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:a19dbdb7de2b6c73a6d2e4712d89d97b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6bce838eb41cd90ebdb3ef5a552a9722" id="r_a6bce838eb41cd90ebdb3ef5a552a9722"><td class="memItemLeft" align="right" valign="top">static std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRuntimePaths.html#a6bce838eb41cd90ebdb3ef5a552a9722">logPath</a> ()</td></tr>
 <tr class="separator:a6bce838eb41cd90ebdb3ef5a552a9722"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc1af322ab9ca3f58b095afe5d104245" id="r_afc1af322ab9ca3f58b095afe5d104245"><td class="memItemLeft" align="right" valign="top">static std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRuntimePaths.html#afc1af322ab9ca3f58b095afe5d104245">previousLogPath</a> ()</td></tr>
+<tr class="separator:afc1af322ab9ca3f58b095afe5d104245"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60ff34f56a7c83b832c4c99ea6f2e84f" id="r_a60ff34f56a7c83b832c4c99ea6f2e84f"><td class="memItemLeft" align="right" valign="top">static std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRuntimePaths.html#a60ff34f56a7c83b832c4c99ea6f2e84f">capturePath</a> (const char *filename)</td></tr>
 <tr class="separator:a60ff34f56a7c83b832c4c99ea6f2e84f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aedd34fb245f047edd3057d21d0a400ab" id="r_aedd34fb245f047edd3057d21d0a400ab"><td class="memItemLeft" align="right" valign="top">static std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRuntimePaths.html#aedd34fb245f047edd3057d21d0a400ab">imguiIniPath</a> ()</td></tr>
 <tr class="separator:aedd34fb245f047edd3057d21d0a400ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8087b4aea691e947e08a38fd7520164" id="r_ad8087b4aea691e947e08a38fd7520164"><td class="memItemLeft" align="right" valign="top">static const std::filesystem::path &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRuntimePaths.html#ad8087b4aea691e947e08a38fd7520164">assetRoot</a> ()</td></tr>
+<tr class="separator:ad8087b4aea691e947e08a38fd7520164"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8fdac0a4128f13c512194ac09580d36f" id="r_a8fdac0a4128f13c512194ac09580d36f"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRuntimePaths.html#a8fdac0a4128f13c512194ac09580d36f">removeSave</a> (int slot)</td></tr>
 <tr class="separator:a8fdac0a4128f13c512194ac09580d36f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1b2f9ceb66f5140be5bfd5146ba51ce" id="r_ae1b2f9ceb66f5140be5bfd5146ba51ce"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRuntimePaths.html#ae1b2f9ceb66f5140be5bfd5146ba51ce">removeAllSaves</a> ()</td></tr>
@@ -126,6 +130,32 @@ Static Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Runtime locations for files that must never be written into game assets. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="ad8087b4aea691e947e08a38fd7520164" name="ad8087b4aea691e947e08a38fd7520164"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad8087b4aea691e947e08a38fd7520164">&#9670;&#160;</a></span>assetRoot()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::filesystem::path &amp; RuntimePaths::assetRoot </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Read-only data root: the directory that contains assets/. FM_ASSET_ROOT overrides; otherwise the first of &lt;exe&gt;/../share/footballmanagement (Linux install), &lt;exe&gt;/../Resources (macOS bundle) or &lt;exe&gt; (Windows, portable) holding the assets, falling back to the source checkout. Resolved once per process. </p>
+
+</div>
+</div>
 <a id="a60ff34f56a7c83b832c4c99ea6f2e84f" name="a60ff34f56a7c83b832c4c99ea6f2e84f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a60ff34f56a7c83b832c4c99ea6f2e84f">&#9670;&#160;</a></span>capturePath()</h2>
 
@@ -199,6 +229,32 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="afc1af322ab9ca3f58b095afe5d104245" name="afc1af322ab9ca3f58b095afe5d104245"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc1af322ab9ca3f58b095afe5d104245">&#9670;&#160;</a></span>previousLogPath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::filesystem::path RuntimePaths::previousLogPath </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The log of the previous session, kept by <a class="el" href="classLogger.html#ad9f38f9cc2d75a6207f4972427aa74f1" title="Initializes the logging system. The previous session&#39;s log is kept as RuntimePaths::previousLogPath()...">Logger::init()</a>. </p>
 
 </div>
 </div>
@@ -276,7 +332,7 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Returns the writable root. FM_RUNTIME_ROOT is an explicit test/automation override; otherwise SDL's platform-specific preference location is used. </p>
+<p>Returns the writable root. FM_RUNTIME_ROOT is an explicit test/automation override; otherwise SDL's platform-specific preference location is used. FM_TEST_RUNTIME_ROOT gives each process its own &lt;root&gt;/&lt;pid&gt; directory, removed at process exit unless FM_KEEP_TEST_ARTIFACTS is set (non-"0"). </p>
 
 </div>
 </div>

@@ -94,7 +94,8 @@ $(document).ready(function(){initNavTree('league_8h.html',''); initResizable(); 
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#enum-members">Enumerations</a>  </div>
   <div class="headertitle"><div class="title">league.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -112,7 +113,46 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLeague.html">League</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a football league containing teams and a leaderboard.  <a href="classLeague.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:ad4815893a8aec88147e932316d3607fe" id="r_ad4815893a8aec88147e932316d3607fe"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="league_8h.html#ad4815893a8aec88147e932316d3607fe">TieBreakRule</a> : uint8_t { <a class="el" href="league_8h.html#ad4815893a8aec88147e932316d3607fea7042688e405bb1f4ee551ac8cf4a350b">GOAL_DIFFERENCE</a> = 0
+, <a class="el" href="league_8h.html#ad4815893a8aec88147e932316d3607feac354f788fcfe2aff13d830582674fc79">HEAD_TO_HEAD</a> = 1
+ }</td></tr>
+<tr class="memdesc:ad4815893a8aec88147e932316d3607fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">How teams level on points are ordered (varies by country).  <a href="league_8h.html#ad4815893a8aec88147e932316d3607fe">More...</a><br /></td></tr>
+<tr class="separator:ad4815893a8aec88147e932316d3607fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="ad4815893a8aec88147e932316d3607fe" name="ad4815893a8aec88147e932316d3607fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad4815893a8aec88147e932316d3607fe">&#9670;&#160;</a></span>TieBreakRule</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="league_8h.html#ad4815893a8aec88147e932316d3607fe">TieBreakRule</a> : uint8_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>How teams level on points are ordered (varies by country). </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ad4815893a8aec88147e932316d3607fea7042688e405bb1f4ee551ac8cf4a350b" name="ad4815893a8aec88147e932316d3607fea7042688e405bb1f4ee551ac8cf4a350b"></a>GOAL_DIFFERENCE&#160;</td><td class="fielddoc"><p>Points, goal difference, goals scored, then head-to-head. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad4815893a8aec88147e932316d3607feac354f788fcfe2aff13d830582674fc79" name="ad4815893a8aec88147e932316d3607feac354f788fcfe2aff13d830582674fc79"></a>HEAD_TO_HEAD&#160;</td><td class="fielddoc"><p>Points, head-to-head points and goal difference, then overall goal difference and goals scored. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

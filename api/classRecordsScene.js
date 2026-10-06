@@ -1,0 +1,35 @@
+var classRecordsScene =
+[
+    [ "PlayerLine", "structRecordsScene_1_1PlayerLine.html", "structRecordsScene_1_1PlayerLine" ],
+    [ "RecordLine", "structRecordsScene_1_1RecordLine.html", "structRecordsScene_1_1RecordLine" ],
+    [ "TableLine", "structRecordsScene_1_1TableLine.html", "structRecordsScene_1_1TableLine" ],
+    [ "Tab", "classRecordsScene.html#a431ff8121b25163caebd2b3268c260b8", [
+      [ "CLUB", "classRecordsScene.html#a431ff8121b25163caebd2b3268c260b8ac54fc2509b0cd290993c32b5cbf26b09", null ],
+      [ "LEAGUE", "classRecordsScene.html#a431ff8121b25163caebd2b3268c260b8aff502410f9b7dd4769a021b91e8da59a", null ],
+      [ "ALL_TIME", "classRecordsScene.html#a431ff8121b25163caebd2b3268c260b8a919af16dc4f99f63940cfda1b9567410", null ],
+      [ "HALL_OF_FAME", "classRecordsScene.html#a431ff8121b25163caebd2b3268c260b8a667baaa4d95ffbbe7f4573ad3634bfe6", null ]
+    ] ],
+    [ "RecordsScene", "classRecordsScene.html#a001719b32825c2ef24b528373db5bd84", null ],
+    [ "getID", "classRecordsScene.html#af552a7a05515b56038647ed2820697a0", null ],
+    [ "navSection", "classRecordsScene.html#a9ec419fb6d60a409a235d5ccae23225d", null ],
+    [ "refresh", "classRecordsScene.html#a9ef93cfcc29e5dac4e28269b968dcce5", null ],
+    [ "renderAllTime", "classRecordsScene.html#ab7d8ee13ffc4a02cb0f996ee944b57cf", null ],
+    [ "renderClubSelector", "classRecordsScene.html#a2db1d6254710fdde8adf1e6bcf7e500b", null ],
+    [ "renderContent", "classRecordsScene.html#ab20025e4a413fd963a08191640e7b25f", null ],
+    [ "renderHallOfFame", "classRecordsScene.html#adafe9ca63de60cdafa570f37b414f210", null ],
+    [ "renderLeagueSelector", "classRecordsScene.html#a6be802d63bc36a7d971b5459e1ce47f0", null ],
+    [ "renderPlayers", "classRecordsScene.html#a1bbb5f7e76afb5e8c172de704540fc18", null ],
+    [ "renderRecords", "classRecordsScene.html#a22d352e0698685cf5bb9974f699805ea", null ],
+    [ "showTab", "classRecordsScene.html#a7801126746c290efdf9155cd1a38d791", null ],
+    [ "update", "classRecordsScene.html#a3d643a1715537a85aa56c3afdcf4e332", null ],
+    [ "GameFlowTest_GUIFlowLifecycle_Test", "classRecordsScene.html#af70851c82f5c5d3e1b6b40e55b6d8532", null ],
+    [ "active_tab", "classRecordsScene.html#ae00ba50bc8a595098ad91ad84e83d7cc", null ],
+    [ "all_time", "classRecordsScene.html#ae360bc24ff6d9f7bfabbed09cd452e4a", null ],
+    [ "appearances", "classRecordsScene.html#a917e319c839dd1be57f85c1390d4c919", null ],
+    [ "club_id", "classRecordsScene.html#afdba046ff9b64ba82b88ae5c892aee0b", null ],
+    [ "club_records", "classRecordsScene.html#a79af6c8aefedd80b6d6fb174a6a75817", null ],
+    [ "league_id", "classRecordsScene.html#a325897899feb163a5bdf5eee0466fc44", null ],
+    [ "league_records", "classRecordsScene.html#a49351279f324019a936b95047dc720f9", null ],
+    [ "legends", "classRecordsScene.html#aa9ec0330f0c779cc6d971ac963803c4f", null ],
+    [ "scorers", "classRecordsScene.html#a4bd10e561104cfcbb6ab20f14d6a9755", null ]
+];

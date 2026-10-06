@@ -1,20 +1,31 @@
 var classStrategy =
 [
     [ "Strategy", "classStrategy.html#a2021a15bbc4f0d13f7b92f8933db2235", null ],
+    [ "findSlot", "classStrategy.html#a39d0731c86e0c421a530bbb90c8cd609", null ],
     [ "getAttackWeight", "classStrategy.html#a647ad0d1167ad1b6e3d672901b079909", null ],
     [ "getDefenseWeight", "classStrategy.html#ac75469fa9d8a5aab2dc8497dab39aaa8", null ],
+    [ "getKeeperRole", "classStrategy.html#a6c6991835dd83ac86d8cf4d42fe4f17e", null ],
+    [ "getOppositionOrders", "classStrategy.html#af0037273d88741f140b42345a531093c", null ],
     [ "getRole", "classStrategy.html#a64c03130a3692fea74ee5bf2eba3502d", null ],
     [ "getRole", "classStrategy.html#a8d79174d892e40af254001a7e5855cb0", null ],
     [ "getSliders", "classStrategy.html#a3ac205875274b2ce32035d9c80499ad1", null ],
+    [ "getSlotInstructions", "classStrategy.html#a907e8658d258cb708fbe2b898dda5094", null ],
     [ "setAllOutfieldWeights", "classStrategy.html#a2d81d6388176d8b65e9ca8d5516fd8d1", null ],
     [ "setAllSliders", "classStrategy.html#a6e0542dd2eb55c5cbed40f6dc2ed8faa", null ],
     [ "setCompactness", "classStrategy.html#ab42ad6ab510ff57dc94b34bdf0f146af", null ],
+    [ "setKeeperRole", "classStrategy.html#ab6c4792558003b5ccfe0f3699aea5d87", null ],
     [ "setOffensiveBias", "classStrategy.html#aacc782f81bc02f90610d7db3136c8c4d", null ],
+    [ "setOppositionOrders", "classStrategy.html#a2b9fcffa2abbc5e78a8251810c637dba", null ],
     [ "setOutfieldWeights", "classStrategy.html#a55281d240e1d2871eda8cc77a06c982c", null ],
     [ "setPressing", "classStrategy.html#a2259d10cc516a366bb43999014a5ce19", null ],
     [ "setRiskTaking", "classStrategy.html#ad3ae5574d7307feb015f0656dcc219b1", null ],
+    [ "setSlot", "classStrategy.html#afb9f90855f7830e411d0d3b89c206d68", null ],
+    [ "setSlotInstructions", "classStrategy.html#a341e33f2f53045276a4d664761e14672", null ],
     [ "setWidthUsage", "classStrategy.html#ae7bed3114f720128884a1991993004c8", null ],
     [ "goalkeeper", "classStrategy.html#a2773d90551bb30e59c0f681ce4faf30b", null ],
+    [ "keeper_role", "classStrategy.html#a21e792ee935fd254428deef454c88b5b", null ],
+    [ "opposition_orders", "classStrategy.html#a68de47cb6ef6dedff4a68ff7910799b9", null ],
     [ "outfield", "classStrategy.html#aa4083f7ef292d6078637698df290799d", null ],
-    [ "sliders", "classStrategy.html#ad3b1cb86285ac93d86850d3a9736107a", null ]
+    [ "sliders", "classStrategy.html#ad3b1cb86285ac93d86850d3a9736107a", null ],
+    [ "slots", "classStrategy.html#a77406747e0a41166bcece1b0aec0f71a", null ]
 ];

@@ -1,7 +1,6 @@
 var classPlayerRepository =
 [
     [ "PlayerRepository", "classPlayerRepository.html#a3ea2cedc26c4852f0185060eb455a324", null ],
-    [ "bindPlayerParams", "classPlayerRepository.html#ae78a06bc169d3c021bc796e14d60bf48", null ],
     [ "deletePlayer", "classPlayerRepository.html#a062bd7268d91204bf609fe6dad6278d4", null ],
     [ "insertPlayer", "classPlayerRepository.html#a84d0c5a54d9bf1b7b616c2c82c15e03b", null ],
     [ "insertPlayers", "classPlayerRepository.html#abb79f8632413156c2e4280d2a2920be1", null ],

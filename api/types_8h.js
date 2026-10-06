@@ -8,7 +8,8 @@ var types_8h =
     [ "MatchType", "types_8h.html#a06be3d3918a8700cf086896e9f03e885", [
       [ "LEAGUE", "types_8h.html#a06be3d3918a8700cf086896e9f03e885aff502410f9b7dd4769a021b91e8da59a", null ],
       [ "FRIENDLY", "types_8h.html#a06be3d3918a8700cf086896e9f03e885af6a34a956d1ce0a552bf4731b9f9d9c0", null ],
-      [ "CUP", "types_8h.html#a06be3d3918a8700cf086896e9f03e885a5b11962dcbe85de55770d22d3e5fb85a", null ]
+      [ "CUP", "types_8h.html#a06be3d3918a8700cf086896e9f03e885a5b11962dcbe85de55770d22d3e5fb85a", null ],
+      [ "CONTINENTAL", "types_8h.html#a06be3d3918a8700cf086896e9f03e885a6da7303be1f764b9ee9509a3b515dd63", null ]
     ] ],
     [ "PlayerRole", "types_8h.html#ae1e198be4ce1cfce8be42795524c8900", [
       [ "GK", "types_8h.html#ae1e198be4ce1cfce8be42795524c8900a7555b4f0c30ff860f6d579c79e3fa8e1", null ],

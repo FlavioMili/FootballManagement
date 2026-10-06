@@ -94,9 +94,12 @@ $(document).ready(function(){initNavTree('classTeamSelectionScene.html',''); ini
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
+<a href="#pri-static-methods">Static Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classTeamSelectionScene-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">TeamSelectionScene Class Reference</div></div>
 </div><!--header-->
@@ -116,6 +119,15 @@ Inheritance diagram for TeamSelectionScene:</div>
   </map>
 </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTeamSelectionScene_1_1ClubSummary.html">ClubSummary</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cached, display-ready summary of one selectable club.  <a href="structTeamSelectionScene_1_1ClubSummary.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTeamSelectionScene_1_1LeagueEntry.html">LeagueEntry</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">One entry of the league list, grouped by country.  <a href="structTeamSelectionScene_1_1LeagueEntry.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:adbe8ce0b591683e636d4b08ce11f5f8d" id="r_adbe8ce0b591683e636d4b08ce11f5f8d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#adbe8ce0b591683e636d4b08ce11f5f8d">TeamSelectionScene</a> (<a class="el" href="classGUIView.html">GUIView</a> *parent)</td></tr>
@@ -149,9 +161,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene" id="r_afcc66fd1ac7245d74c3a139590d14cba"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#afcc66fd1ac7245d74c3a139590d14cba">onExit</a> ()</td></tr>
 <tr class="memdesc:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the scene is exited/becomes inactive.  <br /></td></tr>
 <tr class="separator:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45e279f80470c89da46f5b317a689684 inherit pub_methods_classGUIScene" id="r_a45e279f80470c89da46f5b317a689684"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a45e279f80470c89da46f5b317a689684">onResume</a> ()</td></tr>
+<tr class="memdesc:a45e279f80470c89da46f5b317a689684 inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when an overlay above this scene closes and it becomes the active scene again. Screens use it to refresh cached view models after a match, a transfer or any other state change made elsewhere.  <br /></td></tr>
+<tr class="separator:a45e279f80470c89da46f5b317a689684 inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene" id="r_aa4d608d00d7b5cd52b1456075a04647c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#aa4d608d00d7b5cd52b1456075a04647c">onResize</a> (int width, int height)</td></tr>
 <tr class="memdesc:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the window is resized.  <br /></td></tr>
 <tr class="separator:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95786f5af1e1b868e171f9178892b30b inherit pub_methods_classGUIScene" id="r_a95786f5af1e1b868e171f9178892b30b"><td class="memItemLeft" align="right" valign="top">virtual std::optional&lt; <a class="el" href="structNavEntry.html">NavEntry</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a95786f5af1e1b868e171f9178892b30b">historyEntry</a> () const</td></tr>
+<tr class="memdesc:a95786f5af1e1b868e171f9178892b30b inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">How to open this screen again from the navigation history, or nothing for scenes outside it (menus, team selection, the live match).  <br /></td></tr>
+<tr class="separator:a95786f5af1e1b868e171f9178892b30b inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
@@ -159,15 +177,69 @@ Private Member Functions</h2></td></tr>
 <tr class="separator:ac596a64530017e3bd4e9cfd5a9a92d66"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afbee19aeaa788ddbb5727eccdf0026a6" id="r_afbee19aeaa788ddbb5727eccdf0026a6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#afbee19aeaa788ddbb5727eccdf0026a6">loadAvailableTeams</a> ()</td></tr>
 <tr class="separator:afbee19aeaa788ddbb5727eccdf0026a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77ba89e894bc57188bee48d552cdc8cb" id="r_a77ba89e894bc57188bee48d552cdc8cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#a77ba89e894bc57188bee48d552cdc8cb">sortClubs</a> ()</td></tr>
+<tr class="separator:a77ba89e894bc57188bee48d552cdc8cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a8dc2f886aeadfb04510c9d476fcc6e" id="r_a3a8dc2f886aeadfb04510c9d476fcc6e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#a3a8dc2f886aeadfb04510c9d476fcc6e">renderStackedBrowser</a> (float width)</td></tr>
+<tr class="memdesc:a3a8dc2f886aeadfb04510c9d476fcc6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Short windows: natural-height cards, only the page scrolls.  <br /></td></tr>
+<tr class="separator:a3a8dc2f886aeadfb04510c9d476fcc6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2470ff3cf3d208cf746e3b4265fecf6b" id="r_a2470ff3cf3d208cf746e3b4265fecf6b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#a2470ff3cf3d208cf746e3b4265fecf6b">renderLeagueList</a> (float width, float height)</td></tr>
+<tr class="memdesc:a2470ff3cf3d208cf746e3b4265fecf6b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Height 0 = natural height (no inner scrolling).  <br /></td></tr>
+<tr class="separator:a2470ff3cf3d208cf746e3b4265fecf6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9457a8ad4e3713cb22bfe59b8032d02" id="r_ac9457a8ad4e3713cb22bfe59b8032d02"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#ac9457a8ad4e3713cb22bfe59b8032d02">renderClubTable</a> (float height)</td></tr>
+<tr class="memdesc:ac9457a8ad4e3713cb22bfe59b8032d02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Height 0 = every row at natural height (no inner scrolling).  <br /></td></tr>
+<tr class="separator:ac9457a8ad4e3713cb22bfe59b8032d02"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7f8765aae47f4324843fe8b1ab78d58" id="r_aa7f8765aae47f4324843fe8b1ab78d58"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#aa7f8765aae47f4324843fe8b1ab78d58">renderSelectedClub</a> (float width, float height)</td></tr>
+<tr class="memdesc:aa7f8765aae47f4324843fe8b1ab78d58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Club card beside the table; the start button sits at its top.  <br /></td></tr>
+<tr class="separator:aa7f8765aae47f4324843fe8b1ab78d58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a857c00972ed96c1cc96a1b26ce60f1b1" id="r_a857c00972ed96c1cc96a1b26ce60f1b1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#a857c00972ed96c1cc96a1b26ce60f1b1">renderSelectedClubStrip</a> ()</td></tr>
+<tr class="memdesc:a857c00972ed96c1cc96a1b26ce60f1b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">One-row club card above the table for narrow windows.  <br /></td></tr>
+<tr class="separator:a857c00972ed96c1cc96a1b26ce60f1b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb7742ba0f6852eefa196c106692462b" id="r_acb7742ba0f6852eefa196c106692462b"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structTeamSelectionScene_1_1ClubSummary.html">ClubSummary</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#acb7742ba0f6852eefa196c106692462b">selectedClub</a> () const</td></tr>
+<tr class="separator:acb7742ba0f6852eefa196c106692462b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17bda55b320d51766535060c48dceaf5" id="r_a17bda55b320d51766535060c48dceaf5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#a17bda55b320d51766535060c48dceaf5">selectLeague</a> (const <a class="el" href="structTeamSelectionScene_1_1LeagueEntry.html">LeagueEntry</a> &amp;entry)</td></tr>
+<tr class="separator:a17bda55b320d51766535060c48dceaf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca67b7903a55a1212cb27c311c07eea5" id="r_aca67b7903a55a1212cb27c311c07eea5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#aca67b7903a55a1212cb27c311c07eea5">startCareer</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> teamId)</td></tr>
+<tr class="separator:aca67b7903a55a1212cb27c311c07eea5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a3155b09a508def04b854d544c5a510" id="r_a2a3155b09a508def04b854d544c5a510"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#a2a3155b09a508def04b854d544c5a510">startUnemployed</a> ()</td></tr>
+<tr class="memdesc:a2a3155b09a508def04b854d544c5a510"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starts the career without a club (the Job Centre opens).  <br /></td></tr>
+<tr class="separator:a2a3155b09a508def04b854d544c5a510"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d3277029efe0f182f70d41982617bdc" id="r_a3d3277029efe0f182f70d41982617bdc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#a3d3277029efe0f182f70d41982617bdc">backToMenu</a> ()</td></tr>
+<tr class="memdesc:a3d3277029efe0f182f70d41982617bdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Leaves for the main menu (Back button, Escape).  <br /></td></tr>
+<tr class="separator:a3d3277029efe0f182f70d41982617bdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-static-methods" name="pri-static-methods"></a>
+Static Private Member Functions</h2></td></tr>
+<tr class="memitem:ac1ee79143d621d4f6e3292f07c5851f4" id="r_ac1ee79143d621d4f6e3292f07c5851f4"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#ac1ee79143d621d4f6e3292f07c5851f4">renderClubIdentity</a> (const <a class="el" href="structTeamSelectionScene_1_1ClubSummary.html">ClubSummary</a> &amp;club, float badgeHeight, float width)</td></tr>
+<tr class="memdesc:ac1ee79143d621d4f6e3292f07c5851f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Badge, name, nickname and reputation of a club in <code>width</code>.  <br /></td></tr>
+<tr class="separator:ac1ee79143d621d4f6e3292f07c5851f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
-<tr class="memitem:aeef17bfda3f9039435758159df30d85e" id="r_aeef17bfda3f9039435758159df30d85e"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classLeague.html">League</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#aeef17bfda3f9039435758159df30d85e">available_leagues</a></td></tr>
-<tr class="separator:aeef17bfda3f9039435758159df30d85e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad4e63fcb4ebd9f3d2ea2d058f5b573ee" id="r_ad4e63fcb4ebd9f3d2ea2d058f5b573ee"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structTeamSelectionScene_1_1LeagueEntry.html">LeagueEntry</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#ad4e63fcb4ebd9f3d2ea2d058f5b573ee">league_entries</a></td></tr>
+<tr class="separator:ad4e63fcb4ebd9f3d2ea2d058f5b573ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9137b15e58c36d78bbb082317821d969" id="r_a9137b15e58c36d78bbb082317821d969"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classTeam.html">Team</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#a9137b15e58c36d78bbb082317821d969">available_teams</a></td></tr>
 <tr class="separator:a9137b15e58c36d78bbb082317821d969"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab9d9ca1d66bd7a8f787130d7a5ed1c98" id="r_ab9d9ca1d66bd7a8f787130d7a5ed1c98"><td class="memItemLeft" align="right" valign="top">std::optional&lt; uint8_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#ab9d9ca1d66bd7a8f787130d7a5ed1c98">selected_league_id</a></td></tr>
 <tr class="separator:ab9d9ca1d66bd7a8f787130d7a5ed1c98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1b9cfe6870fa21b09c6d8e15c0cd8da" id="r_ae1b9cfe6870fa21b09c6d8e15c0cd8da"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#ae1b9cfe6870fa21b09c6d8e15c0cd8da">selected_team_id</a></td></tr>
+<tr class="separator:ae1b9cfe6870fa21b09c6d8e15c0cd8da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9382fbce748a920738fbb80a7f6b6bcb" id="r_a9382fbce748a920738fbb80a7f6b6bcb"><td class="memItemLeft" align="right" valign="top">std::set&lt; <a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#a9382fbce748a920738fbb80a7f6b6bcb">expanded_countries</a></td></tr>
+<tr class="separator:a9382fbce748a920738fbb80a7f6b6bcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc28d95e58b94fa4dd1b74495e0a3f1c" id="r_afc28d95e58b94fa4dd1b74495e0a3f1c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#afc28d95e58b94fa4dd1b74495e0a3f1c">laid_out</a> = false</td></tr>
+<tr class="separator:afc28d95e58b94fa4dd1b74495e0a3f1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af1d02bd5a020b9317946a18dd8eed6e1" id="r_af1d02bd5a020b9317946a18dd8eed6e1"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structTeamSelectionScene_1_1ClubSummary.html">ClubSummary</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#af1d02bd5a020b9317946a18dd8eed6e1">club_summaries</a></td></tr>
+<tr class="separator:af1d02bd5a020b9317946a18dd8eed6e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b5857496e1a15c3f2dec9c619587080" id="r_a5b5857496e1a15c3f2dec9c619587080"><td class="memItemLeft" align="right" valign="top">ImGuiID&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#a5b5857496e1a15c3f2dec9c619587080">sort_column</a> = 0</td></tr>
+<tr class="separator:a5b5857496e1a15c3f2dec9c619587080"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39bd3b030cd9859f157a531dc5b8e341" id="r_a39bd3b030cd9859f157a531dc5b8e341"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#a39bd3b030cd9859f157a531dc5b8e341">sort_ascending</a> = false</td></tr>
+<tr class="separator:a39bd3b030cd9859f157a531dc5b8e341"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af681a9d3edeba1f28cdad7e0cb76e69b" id="r_af681a9d3edeba1f28cdad7e0cb76e69b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classManagerSetupPanel.html">ManagerSetupPanel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#af681a9d3edeba1f28cdad7e0cb76e69b">manager_panel</a></td></tr>
+<tr class="separator:af681a9d3edeba1f28cdad7e0cb76e69b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:af70851c82f5c5d3e1b6b40e55b6d8532" id="r_af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTeamSelectionScene.html#af70851c82f5c5d3e1b6b40e55b6d8532">GameFlowTest_GUIFlowLifecycle_Test</a></td></tr>
+<tr class="separator:af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -256,6 +328,33 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a3d3277029efe0f182f70d41982617bdc" name="a3d3277029efe0f182f70d41982617bdc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3d3277029efe0f182f70d41982617bdc">&#9670;&#160;</a></span>backToMenu()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TeamSelectionScene::backToMenu </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Leaves for the main menu (Back button, Escape). </p>
+
+</div>
+</div>
 <a id="a1f17cf244cce89632ff06827465129a0" name="a1f17cf244cce89632ff06827465129a0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1f17cf244cce89632ff06827465129a0">&#9670;&#160;</a></span>getID()</h2>
 
@@ -394,6 +493,338 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="ac1ee79143d621d4f6e3292f07c5851f4" name="ac1ee79143d621d4f6e3292f07c5851f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac1ee79143d621d4f6e3292f07c5851f4">&#9670;&#160;</a></span>renderClubIdentity()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TeamSelectionScene::renderClubIdentity </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structTeamSelectionScene_1_1ClubSummary.html">ClubSummary</a> &amp;&#160;</td>
+          <td class="paramname"><em>club</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>badgeHeight</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>width</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Badge, name, nickname and reputation of a club in <code>width</code>. </p>
+
+</div>
+</div>
+<a id="ac9457a8ad4e3713cb22bfe59b8032d02" name="ac9457a8ad4e3713cb22bfe59b8032d02"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac9457a8ad4e3713cb22bfe59b8032d02">&#9670;&#160;</a></span>renderClubTable()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TeamSelectionScene::renderClubTable </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>height</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Height 0 = every row at natural height (no inner scrolling). </p>
+
+</div>
+</div>
+<a id="a2470ff3cf3d208cf746e3b4265fecf6b" name="a2470ff3cf3d208cf746e3b4265fecf6b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2470ff3cf3d208cf746e3b4265fecf6b">&#9670;&#160;</a></span>renderLeagueList()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TeamSelectionScene::renderLeagueList </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>width</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>height</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Height 0 = natural height (no inner scrolling). </p>
+
+</div>
+</div>
+<a id="aa7f8765aae47f4324843fe8b1ab78d58" name="aa7f8765aae47f4324843fe8b1ab78d58"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa7f8765aae47f4324843fe8b1ab78d58">&#9670;&#160;</a></span>renderSelectedClub()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TeamSelectionScene::renderSelectedClub </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>width</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>height</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Club card beside the table; the start button sits at its top. </p>
+
+</div>
+</div>
+<a id="a857c00972ed96c1cc96a1b26ce60f1b1" name="a857c00972ed96c1cc96a1b26ce60f1b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a857c00972ed96c1cc96a1b26ce60f1b1">&#9670;&#160;</a></span>renderSelectedClubStrip()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TeamSelectionScene::renderSelectedClubStrip </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>One-row club card above the table for narrow windows. </p>
+
+</div>
+</div>
+<a id="a3a8dc2f886aeadfb04510c9d476fcc6e" name="a3a8dc2f886aeadfb04510c9d476fcc6e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a8dc2f886aeadfb04510c9d476fcc6e">&#9670;&#160;</a></span>renderStackedBrowser()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TeamSelectionScene::renderStackedBrowser </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>width</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Short windows: natural-height cards, only the page scrolls. </p>
+
+</div>
+</div>
+<a id="acb7742ba0f6852eefa196c106692462b" name="acb7742ba0f6852eefa196c106692462b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb7742ba0f6852eefa196c106692462b">&#9670;&#160;</a></span>selectedClub()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="structTeamSelectionScene_1_1ClubSummary.html">TeamSelectionScene::ClubSummary</a> * TeamSelectionScene::selectedClub </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a17bda55b320d51766535060c48dceaf5" name="a17bda55b320d51766535060c48dceaf5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17bda55b320d51766535060c48dceaf5">&#9670;&#160;</a></span>selectLeague()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TeamSelectionScene::selectLeague </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structTeamSelectionScene_1_1LeagueEntry.html">LeagueEntry</a> &amp;&#160;</td>
+          <td class="paramname"><em>entry</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a77ba89e894bc57188bee48d552cdc8cb" name="a77ba89e894bc57188bee48d552cdc8cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a77ba89e894bc57188bee48d552cdc8cb">&#9670;&#160;</a></span>sortClubs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TeamSelectionScene::sortClubs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aca67b7903a55a1212cb27c311c07eea5" name="aca67b7903a55a1212cb27c311c07eea5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca67b7903a55a1212cb27c311c07eea5">&#9670;&#160;</a></span>startCareer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TeamSelectionScene::startCareer </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>teamId</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2a3155b09a508def04b854d544c5a510" name="a2a3155b09a508def04b854d544c5a510"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a3155b09a508def04b854d544c5a510">&#9670;&#160;</a></span>startUnemployed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void TeamSelectionScene::startUnemployed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Starts the career without a club (the Job Centre opens). </p>
+
+</div>
+</div>
 <a id="ae27b545cc138384acecd9636055d4fde" name="ae27b545cc138384acecd9636055d4fde"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae27b545cc138384acecd9636055d4fde">&#9670;&#160;</a></span>update()</h2>
 
@@ -430,9 +861,9 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<h2 class="groupheader">Member Data Documentation</h2>
-<a id="aeef17bfda3f9039435758159df30d85e" name="aeef17bfda3f9039435758159df30d85e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeef17bfda3f9039435758159df30d85e">&#9670;&#160;</a></span>available_leagues</h2>
+<h2 class="groupheader">Friends And Related Symbol Documentation</h2>
+<a id="af70851c82f5c5d3e1b6b40e55b6d8532" name="af70851c82f5c5d3e1b6b40e55b6d8532"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af70851c82f5c5d3e1b6b40e55b6d8532">&#9670;&#160;</a></span>GameFlowTest_GUIFlowLifecycle_Test</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -441,18 +872,19 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;std::reference_wrapper&lt;const <a class="el" href="classLeague.html">League</a>&gt; &gt; TeamSelectionScene::available_leagues</td>
+          <td class="memname">friend class GameFlowTest_GUIFlowLifecycle_Test</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 </div>
 </div>
+<h2 class="groupheader">Member Data Documentation</h2>
 <a id="a9137b15e58c36d78bbb082317821d969" name="a9137b15e58c36d78bbb082317821d969"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9137b15e58c36d78bbb082317821d969">&#9670;&#160;</a></span>available_teams</h2>
 
@@ -475,6 +907,118 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="af1d02bd5a020b9317946a18dd8eed6e1" name="af1d02bd5a020b9317946a18dd8eed6e1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af1d02bd5a020b9317946a18dd8eed6e1">&#9670;&#160;</a></span>club_summaries</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="structTeamSelectionScene_1_1ClubSummary.html">ClubSummary</a>&gt; TeamSelectionScene::club_summaries</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9382fbce748a920738fbb80a7f6b6bcb" name="a9382fbce748a920738fbb80a7f6b6bcb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9382fbce748a920738fbb80a7f6b6bcb">&#9670;&#160;</a></span>expanded_countries</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::set&lt;<a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a>&gt; TeamSelectionScene::expanded_countries</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Countries (top division IDs) whose lower divisions are listed. </p>
+
+</div>
+</div>
+<a id="afc28d95e58b94fa4dd1b74495e0a3f1c" name="afc28d95e58b94fa4dd1b74495e0a3f1c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc28d95e58b94fa4dd1b74495e0a3f1c">&#9670;&#160;</a></span>laid_out</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool TeamSelectionScene::laid_out = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>False until the first frame has been drawn. </p>
+
+</div>
+</div>
+<a id="ad4e63fcb4ebd9f3d2ea2d058f5b573ee" name="ad4e63fcb4ebd9f3d2ea2d058f5b573ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad4e63fcb4ebd9f3d2ea2d058f5b573ee">&#9670;&#160;</a></span>league_entries</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="structTeamSelectionScene_1_1LeagueEntry.html">LeagueEntry</a>&gt; TeamSelectionScene::league_entries</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af681a9d3edeba1f28cdad7e0cb76e69b" name="af681a9d3edeba1f28cdad7e0cb76e69b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af681a9d3edeba1f28cdad7e0cb76e69b">&#9670;&#160;</a></span>manager_panel</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classManagerSetupPanel.html">ManagerSetupPanel</a> TeamSelectionScene::manager_panel</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ab9d9ca1d66bd7a8f787130d7a5ed1c98" name="ab9d9ca1d66bd7a8f787130d7a5ed1c98"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab9d9ca1d66bd7a8f787130d7a5ed1c98">&#9670;&#160;</a></span>selected_league_id</h2>
 
@@ -486,6 +1030,72 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::optional&lt;uint8_t&gt; TeamSelectionScene::selected_league_id</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae1b9cfe6870fa21b09c6d8e15c0cd8da" name="ae1b9cfe6870fa21b09c6d8e15c0cd8da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1b9cfe6870fa21b09c6d8e15c0cd8da">&#9670;&#160;</a></span>selected_team_id</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&gt; TeamSelectionScene::selected_team_id</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a39bd3b030cd9859f157a531dc5b8e341" name="a39bd3b030cd9859f157a531dc5b8e341"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a39bd3b030cd9859f157a531dc5b8e341">&#9670;&#160;</a></span>sort_ascending</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool TeamSelectionScene::sort_ascending = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5b5857496e1a15c3f2dec9c619587080" name="a5b5857496e1a15c3f2dec9c619587080"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b5857496e1a15c3f2dec9c619587080">&#9670;&#160;</a></span>sort_column</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">ImGuiID TeamSelectionScene::sort_column = 0</td>
         </tr>
       </table>
   </td>

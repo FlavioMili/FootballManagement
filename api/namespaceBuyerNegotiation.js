@@ -1,0 +1,67 @@
+var namespaceBuyerNegotiation =
+[
+    [ "BuyerContext", "structBuyerNegotiation_1_1BuyerContext.html", "structBuyerNegotiation_1_1BuyerContext" ],
+    [ "BuyerReply", "structBuyerNegotiation_1_1BuyerReply.html", "structBuyerNegotiation_1_1BuyerReply" ],
+    [ "RejectionEffect", "structBuyerNegotiation_1_1RejectionEffect.html", "structBuyerNegotiation_1_1RejectionEffect" ],
+    [ "StanceFacts", "structBuyerNegotiation_1_1StanceFacts.html", "structBuyerNegotiation_1_1StanceFacts" ],
+    [ "Decision", "namespaceBuyerNegotiation.html#a1bb3ce5fc0dca9ef8bd80e679c23cf48", [
+      [ "Accept", "namespaceBuyerNegotiation.html#a1bb3ce5fc0dca9ef8bd80e679c23cf48ac4408d335012a56ff58937d78050efad", null ],
+      [ "Counter", "namespaceBuyerNegotiation.html#a1bb3ce5fc0dca9ef8bd80e679c23cf48a64d129224a5377b63e9727479ec987d9", null ],
+      [ "WalkAway", "namespaceBuyerNegotiation.html#a1bb3ce5fc0dca9ef8bd80e679c23cf48a009d482d7a7f2c31a448769637079f4c", null ]
+    ] ],
+    [ "Move", "namespaceBuyerNegotiation.html#adcfa219ffeb419f93b6ca37c3b7c0d6a", [
+      [ "Bid", "namespaceBuyerNegotiation.html#adcfa219ffeb419f93b6ca37c3b7c0d6aae36ba1e187ae2b3ebcfd0a4c68367caf", null ],
+      [ "Improved", "namespaceBuyerNegotiation.html#adcfa219ffeb419f93b6ca37c3b7c0d6aae17310830c72d17857bf7df1ddf80dfe", null ],
+      [ "FinalOffer", "namespaceBuyerNegotiation.html#adcfa219ffeb419f93b6ca37c3b7c0d6aa9b3c8be5ae2f2b965694bdd387896463", null ],
+      [ "Restated", "namespaceBuyerNegotiation.html#adcfa219ffeb419f93b6ca37c3b7c0d6aafe44ca8c56b1c2ef63141feeb23791a4", null ],
+      [ "Counter", "namespaceBuyerNegotiation.html#adcfa219ffeb419f93b6ca37c3b7c0d6aa64d129224a5377b63e9727479ec987d9", null ],
+      [ "AskingPrice", "namespaceBuyerNegotiation.html#adcfa219ffeb419f93b6ca37c3b7c0d6aa8e387905276ab62e9354d31dbeb5869b", null ],
+      [ "Accepted", "namespaceBuyerNegotiation.html#adcfa219ffeb419f93b6ca37c3b7c0d6aa382ab522931673c11e398ead1b7b1678", null ],
+      [ "WalkedAway", "namespaceBuyerNegotiation.html#adcfa219ffeb419f93b6ca37c3b7c0d6aa2e3819a2f2f0730b3942c6b17f9d481e", null ],
+      [ "COUNT", "namespaceBuyerNegotiation.html#adcfa219ffeb419f93b6ca37c3b7c0d6aa4905ac9d6a22bdfc1ae096094ce6248d", null ]
+    ] ],
+    [ "PlayerStance", "namespaceBuyerNegotiation.html#a61f7b578ea28b9023402df30eddde742", [
+      [ "AskedToLeave", "namespaceBuyerNegotiation.html#a61f7b578ea28b9023402df30eddde742a3502751f656d01d7661c3d15d4bf7d1b", null ],
+      [ "WantsBiggerClub", "namespaceBuyerNegotiation.html#a61f7b578ea28b9023402df30eddde742a74a0e704e6b475908ae202523d267053", null ],
+      [ "Open", "namespaceBuyerNegotiation.html#a61f7b578ea28b9023402df30eddde742ac3bf447eabe632720a3aa1a7ce401274", null ],
+      [ "HappyHere", "namespaceBuyerNegotiation.html#a61f7b578ea28b9023402df30eddde742a531ce92a89121f6b3b159b70d49c5679", null ],
+      [ "Reluctant", "namespaceBuyerNegotiation.html#a61f7b578ea28b9023402df30eddde742a1b1cf9d72c49dbdd81fda1c2f1961981", null ]
+    ] ],
+    [ "Why", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048", [
+      [ "WithinBudget", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048a13727661cffa8b83aef4332c92dfad1e", null ],
+      [ "Improved", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048ae17310830c72d17857bf7df1ddf80dfe", null ],
+      [ "MoreInstalments", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048a060eb85f81e85263c11830b30a6482c3", null ],
+      [ "AddOnsInsteadOfCash", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048ab91e0ac54268ee3f021a13ce67702f49", null ],
+      [ "AddOnsTrimmed", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048a6404ef84cdf7bff3f7b220431d531d5f", null ],
+      [ "SellOnCut", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048a78636a1e62b1777ef81e9a1eed7dbead", null ],
+      [ "CashLimited", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048a7b2dc9d9e9aee18ba79de52f39da8257", null ],
+      [ "FinalOffer", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048a9b3c8be5ae2f2b965694bdd387896463", null ],
+      [ "Unrealistic", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048a5920b8b2d70312e78179a8190cb359ff", null ],
+      [ "Insulted", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048a34348f756fae8037b07de6cb3edca118", null ],
+      [ "OutOfPatience", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048aab6b5a70f211f3420bed4ff96b5921aa", null ],
+      [ "RivalBids", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048aa7bee0c0f136e8245e7d0dff5f3d6699", null ],
+      [ "DeadlineDay", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048a6368d7d836db315ac570454ac01cbb0d", null ],
+      [ "WageBudget", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048a557619f6c75cd826b21ab775b0061d10", null ],
+      [ "COUNT", "namespaceBuyerNegotiation.html#ae14b96fbe35e926af0b1222a9aeab048a4905ac9d6a22bdfc1ae096094ce6248d", null ]
+    ] ],
+    [ "agentFee", "namespaceBuyerNegotiation.html#a041f7044e00618b744ee3df7931c137a", null ],
+    [ "appearanceOdds", "namespaceBuyerNegotiation.html#a42e1f8a9cc41c633e8198dac54ef7eba", null ],
+    [ "buyerCost", "namespaceBuyerNegotiation.html#a1e6598fb7b530579d1fa3a387f21d44e", null ],
+    [ "byBuyer", "namespaceBuyerNegotiation.html#addc3888f5ea8dc22b1e8dd29978f25af", null ],
+    [ "deadlinePressure", "namespaceBuyerNegotiation.html#a21c3d875da40f75303fc35f17f6ea0f0", null ],
+    [ "drawPatience", "namespaceBuyerNegotiation.html#a268b0e303bfe3b781e5f5d04b5bad40a", null ],
+    [ "effectiveCeiling", "namespaceBuyerNegotiation.html#a540d7f18110cce3903e054533937005c", null ],
+    [ "goalOdds", "namespaceBuyerNegotiation.html#a189aa1c8fb32cfe3868bd946b988a7f2", null ],
+    [ "isBigBid", "namespaceBuyerNegotiation.html#a8f5a2ef518471d8958be855ab708423a", null ],
+    [ "moveKey", "namespaceBuyerNegotiation.html#af3f7f181b8ba5874129ebb8c6c8d0efb", null ],
+    [ "openingBid", "namespaceBuyerNegotiation.html#a26268a4eb436ef95c54cf09f1f0482cc", null ],
+    [ "rejectionEffect", "namespaceBuyerNegotiation.html#a85c7b5263975e5d0198e1b1c3a02084e", null ],
+    [ "replyDelay", "namespaceBuyerNegotiation.html#a221c89b2982c462a93e57e713e9cb8cd", null ],
+    [ "respond", "namespaceBuyerNegotiation.html#aa90c50028e5967c7d75d43f5f16007f3", null ],
+    [ "sellOnCostPerPercent", "namespaceBuyerNegotiation.html#a182402d89a7ebda94551b34b5634aed4", null ],
+    [ "signingCash", "namespaceBuyerNegotiation.html#a899f400b56a7ba791fd8e5fa6c57601e", null ],
+    [ "stanceFor", "namespaceBuyerNegotiation.html#a5604ee2364508954db43470fa1b2311e", null ],
+    [ "stanceKey", "namespaceBuyerNegotiation.html#a45fad473b7c32dd9b31020c8df2c031c", null ],
+    [ "termsRefusalChance", "namespaceBuyerNegotiation.html#afac44364da6200d5517669b7f7d7f451", null ],
+    [ "whyKey", "namespaceBuyerNegotiation.html#a357a5638ecafd4bc3ee6576c122a111d", null ]
+];

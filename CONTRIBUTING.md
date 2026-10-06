@@ -10,16 +10,31 @@ First off, thank you for considering contributing to Football Management! It's p
    git clone https://github.com/YOUR_USERNAME/FootballManagement.git
    cd FootballManagement
    ```
-3. **Build the project** using CMake:
+3. **Build the project** with CMake (3.29 or newer) and Ninja. The first
+   configure fetches the pinned dependencies; see the
+   [README](README.md#building) for the system packages SDL needs.
    ```bash
-   mkdir build && cd build
-   cmake -DCMAKE_BUILD_TYPE=Debug ..
-   make -j $(nproc)
+   cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+   cmake --build build --parallel 2
    ```
+   The presets in `CMakePresets.json` (`release`, `release-tests`,
+   `debug-sanitized`, `profile`, `clang-tidy`) are described in
+   [docs/development/builds.md](docs/development/builds.md).
 4. **Run the tests**:
    ```bash
-   ctest --test-dir build -V
+   # Fast suites (what CI runs)
+   ctest --test-dir build --output-on-failure -LE "playtest|monkey|slow"
+
+   # One area, e.g. the headless core tests or a single suite
+   ctest --test-dir build --output-on-failure -L core
+   ctest --test-dir build --output-on-failure -R "TransferMarket"
+
+   # Everything, including the long playtest, monkey and adversarial suites
+   ctest --test-dir build --output-on-failure
    ```
+   Labels: `unit`, `core`, `gui`, `lab`, `playtest`, `monkey`, `adversarial`
+   and `slow`. Tests run headless with fixed seeds and a scratch data
+   directory, so they never touch your saves.
 
 ## Performance Benchmarks
 
@@ -48,13 +63,19 @@ Please include the benchmark output in your Pull Request description.
 ## Code Style
 
 This project uses `clang-format` and `clang-tidy` to enforce coding standards.
-- We use **Allman bracing style** and a 100-character line limit.
-- Before committing, ensure your code matches the format:
+- The style is in `.clang-format`: Google-based, **Allman braces**, 2-space
+  indentation and an 80-column limit.
+- Before committing, format the files you changed:
   ```bash
-  # Inside build directory
-  make format
+  clang-format -i src/path/to/file.cpp src/path/to/file.h
   ```
-- Always check that your changes don't introduce new `clang-tidy` warnings.
+  or format all of `src/` and `test/` through the build (the `format` target
+  exists when CMake finds `clang-format`):
+  ```bash
+  cmake --build build --target format
+  ```
+- Always check that your changes don't introduce new `clang-tidy` warnings
+  (`cmake --preset clang-tidy && cmake --build --preset clang-tidy`).
 
 ## AI Guidelines
 

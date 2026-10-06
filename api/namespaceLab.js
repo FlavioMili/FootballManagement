@@ -1,0 +1,89 @@
+var namespaceLab =
+[
+    [ "ExitCode", "namespaceLab_1_1ExitCode.html", [
+      [ "GATE_FAILED", "namespaceLab_1_1ExitCode.html#ac53283a13f4f65a88266bb381e3ddfd8", null ],
+      [ "INVALID_ARGUMENTS", "namespaceLab_1_1ExitCode.html#a7e3c5463daae808484c1ca40c03fe30c", null ],
+      [ "MONITOR_BELOW_THRESHOLD", "namespaceLab_1_1ExitCode.html#ad8e1fae1697052af3fde73181bbb6f88", null ],
+      [ "OK", "namespaceLab_1_1ExitCode.html#ac25f54be410da15bb2f982b53ebe674d", null ],
+      [ "SIMULATION_ERROR", "namespaceLab_1_1ExitCode.html#a83214d3e9d4481c57c9f3036ab2a1d30", null ]
+    ] ],
+    [ "Band", "structLab_1_1Band.html", "structLab_1_1Band" ],
+    [ "Estimate", "structLab_1_1Estimate.html", "structLab_1_1Estimate" ],
+    [ "LabReport", "structLab_1_1LabReport.html", "structLab_1_1LabReport" ],
+    [ "MatchJob", "structLab_1_1MatchJob.html", "structLab_1_1MatchJob" ],
+    [ "MatchSample", "structLab_1_1MatchSample.html", "structLab_1_1MatchSample" ],
+    [ "ReportRow", "structLab_1_1ReportRow.html", "structLab_1_1ReportRow" ],
+    [ "SeasonOptions", "structLab_1_1SeasonOptions.html", "structLab_1_1SeasonOptions" ],
+    [ "SeasonVitals", "structLab_1_1SeasonVitals.html", "structLab_1_1SeasonVitals" ],
+    [ "SimulationError", "classLab_1_1SimulationError.html", "classLab_1_1SimulationError" ],
+    [ "Summary", "structLab_1_1Summary.html", "structLab_1_1Summary" ],
+    [ "TacticPreset", "structLab_1_1TacticPreset.html", "structLab_1_1TacticPreset" ],
+    [ "TargetSpec", "structLab_1_1TargetSpec.html", "structLab_1_1TargetSpec" ],
+    [ "TeamSetup", "structLab_1_1TeamSetup.html", "structLab_1_1TeamSetup" ],
+    [ "TextTable", "structLab_1_1TextTable.html", "structLab_1_1TextTable" ],
+    [ "TierVitals", "structLab_1_1TierVitals.html", "structLab_1_1TierVitals" ],
+    [ "GameStateIndex", "namespaceLab.html#aa4670de7a4e3b6b325866db20fc346fc", [
+      [ "LEAD_BY_ONE", "namespaceLab.html#aa4670de7a4e3b6b325866db20fc346fca4912a737b0fb3d77c86d74267c58958e", null ],
+      [ "LEVEL", "namespaceLab.html#aa4670de7a4e3b6b325866db20fc346fca81642e93a2976a93922ea3e89bfb8902", null ],
+      [ "TRAIL_BY_ONE", "namespaceLab.html#aa4670de7a4e3b6b325866db20fc346fca826917be6e0aa18cbb179b982258582c", null ]
+    ] ],
+    [ "Scope", "namespaceLab.html#a2affe0b945622097dde54c8ee92df54f", [
+      [ "Match", "namespaceLab.html#a2affe0b945622097dde54c8ee92df54fa6da89265a9a8b0b28eb4946bb2ec0c6d", null ],
+      [ "Engine", "namespaceLab.html#a2affe0b945622097dde54c8ee92df54fa7bfa30721c5e726ff17e3f972237a82c", null ],
+      [ "World", "namespaceLab.html#a2affe0b945622097dde54c8ee92df54faf5a7924e621e84c9280a9a27e1bcb7f6", null ],
+      [ "Tactics", "namespaceLab.html#a2affe0b945622097dde54c8ee92df54fa09e66c45bd28f44dbb0b13f9984e163e", null ]
+    ] ],
+    [ "StrengthIndex", "namespaceLab.html#a5d8168eea5b561c6175abcee0ff1b66f", [
+      [ "MAN_DOWN", "namespaceLab.html#a5d8168eea5b561c6175abcee0ff1b66fa7677bbb9b3d8108d30e53e408c72336f", null ],
+      [ "EVEN", "namespaceLab.html#a5d8168eea5b561c6175abcee0ff1b66fa19068398198e6fea7c4907d8c36a63c5", null ],
+      [ "MAN_UP", "namespaceLab.html#a5d8168eea5b561c6175abcee0ff1b66fa30ab46b3d7cf65d0b7d9b9fc4bb2fe2b", null ]
+    ] ],
+    [ "Tier", "namespaceLab.html#a6df902b9b851f2074a00121f34cd0806", [
+      [ "Gate", "namespaceLab.html#a6df902b9b851f2074a00121f34cd0806ad25b4bd4c72aa2c07ee87adb10b59f16", null ],
+      [ "Monitor", "namespaceLab.html#a6df902b9b851f2074a00121f34cd0806ad2986ac8cb6bd55892099c1ffd6b1f6f", null ],
+      [ "Info", "namespaceLab.html#a6df902b9b851f2074a00121f34cd0806a4059b0251f66a18cb56f544728796875", null ]
+    ] ],
+    [ "Unit", "namespaceLab.html#a3bfac8a8a018979a6662ef12e642d4ae", [
+      [ "Number", "namespaceLab.html#a3bfac8a8a018979a6662ef12e642d4aeab2ee912b91d69b435159c7c3f6df7f5f", null ],
+      [ "Percent", "namespaceLab.html#a3bfac8a8a018979a6662ef12e642d4aeaadaaee4b22041c27198d410c68d952c9", null ]
+    ] ],
+    [ "Verdict", "namespaceLab.html#a0630ae14998d5a31bba3c8f90a4347cd", [
+      [ "Pass", "namespaceLab.html#a0630ae14998d5a31bba3c8f90a4347cdab9b57aae83585e17ede4570dcede353c", null ],
+      [ "Warn", "namespaceLab.html#a0630ae14998d5a31bba3c8f90a4347cda56525ae64d370c0b448ac0d60710ef17", null ],
+      [ "Fail", "namespaceLab.html#a0630ae14998d5a31bba3c8f90a4347cdaceaa0734f0b3c738120c67344d8f3ec1", null ],
+      [ "Info", "namespaceLab.html#a0630ae14998d5a31bba3c8f90a4347cda4059b0251f66a18cb56f544728796875", null ],
+      [ "NotMeasured", "namespaceLab.html#a0630ae14998d5a31bba3c8f90a4347cda7a86c759c50630583bb127814b9a78db", null ]
+    ] ],
+    [ "bootstrapEstimate", "namespaceLab.html#a51901315efabbcc3f1e29d2ae7607664", null ],
+    [ "buildLabLineup", "namespaceLab.html#af10cacbab4feeb1ae5097b9389650a88", null ],
+    [ "classify", "namespaceLab.html#a6a28ca2a93f796f29ed6d3a780525071", null ],
+    [ "evaluateTargets", "namespaceLab.html#affca39dda71a3e982137351b35e25374", null ],
+    [ "formatValue", "namespaceLab.html#a6fe8da3fede8707a0ae6d05165473d98", null ],
+    [ "lineupRating", "namespaceLab.html#a9f09fd72e54a33d144b3e9d06dc625f2", null ],
+    [ "loadStatsConfig", "namespaceLab.html#aaad8c23c2544c3d430623784f834b87f", null ],
+    [ "matchMetrics", "namespaceLab.html#ab53f9d52b78415d721a80ae0a0cd0280", null ],
+    [ "matchSeed", "namespaceLab.html#a86a562a2a72ef00853b3e05b9adfcc91", null ],
+    [ "matchTables", "namespaceLab.html#ab021b19469c2dd2522a234b6f98444b8", null ],
+    [ "meanEstimate", "namespaceLab.html#a834569cff10372fb0fee0154bd910599", null ],
+    [ "medianEstimate", "namespaceLab.html#a41dd56fb4f528baf0b688db7f592440d", null ],
+    [ "proportionEstimate", "namespaceLab.html#a5df32b00701d83efe310cf329ea06e64", null ],
+    [ "ratingGapTable", "namespaceLab.html#acc133556fd97848c76d6a5870a3dbbed", null ],
+    [ "ratioEstimate", "namespaceLab.html#a31cb50dc9742822bfce5e518aa69c974", null ],
+    [ "reportFromJson", "namespaceLab.html#ab71edfe499e20b3e633e7404b0f7f3db", null ],
+    [ "runSeasons", "namespaceLab.html#a542cd10e472f4914f32ad4a7763abbad", null ],
+    [ "sampleFromReport", "namespaceLab.html#aa9e615f65f18f339638d02553fd63ef4", null ],
+    [ "simulateMatch", "namespaceLab.html#a670909cb31df942cfe3fc76e21318cf9", null ],
+    [ "simulateMatches", "namespaceLab.html#adb609db3ca64d81cfed0e162bb760f1d", null ],
+    [ "tacticJobs", "namespaceLab.html#a2e486e364ba2356240c6c8a01c0687fe", null ],
+    [ "tacticMetrics", "namespaceLab.html#a39ba8f8a809da1c5433a20b8a1ab58d2", null ],
+    [ "tacticPresetsOf", "namespaceLab.html#ae1715685f817cf60f35ae33dcc542d3b", null ],
+    [ "targetTable", "namespaceLab.html#a7e9ed7436f0572aa8191b0c5f1472811", null ],
+    [ "tierName", "namespaceLab.html#ae4e69e417a61d4af6658f2b6145aaac5", null ],
+    [ "toJson", "namespaceLab.html#a39e577b3daedcf5a68c3f0f9ef3c0c85", null ],
+    [ "toMarkdown", "namespaceLab.html#a6bc3e181cd284a875bfc30bd9714526d", null ],
+    [ "tQuantile975", "namespaceLab.html#a6fad31e96727cded38e20fd491a0849b", null ],
+    [ "verdictName", "namespaceLab.html#a1f6b3c1cb80a8459a757e43a76245cb0", null ],
+    [ "GOAL_TIME_BINS", "namespaceLab.html#a0cf0e7a3c9b662f7265be9ed835003d1", null ],
+    [ "MONITOR_PASS_THRESHOLD", "namespaceLab.html#a5793647ff23e5ce3e49262c5039cc9cd", null ],
+    [ "TACTIC_PRESETS", "namespaceLab.html#a458d92f0a2aaeb1112bee50989488e43", null ]
+];

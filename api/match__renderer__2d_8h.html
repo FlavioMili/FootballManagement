@@ -99,7 +99,10 @@ $(document).ready(function(){initNavTree('match__renderer__2d_8h.html',''); init
   <div class="headertitle"><div class="title">match_renderer_2d.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;<a class="el" href="imatch__renderer_8h_source.html">gui/render/imatch_renderer.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &lt;imgui.h&gt;</code><br />
+<code>#include &lt;memory&gt;</code><br />
+<code>#include &quot;<a class="el" href="imatch__renderer_8h_source.html">gui/render/imatch_renderer.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="match__kit__colors_8h_source.html">gui/render/match_kit_colors.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="match__scene__tuning_8h_source.html">gui/scenes/match_scene_tuning.h</a>&quot;</code><br />
 </div>
 <p><a href="match__renderer__2d_8h_source.html">Go to the source code of this file.</a></p>
@@ -113,6 +116,10 @@ Classes</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:a407a74c5cffaabce6f544828337498e4" id="r_a407a74c5cffaabce6f544828337498e4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatchViewport.html">MatchViewport</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="match__renderer__2d_8h.html#a407a74c5cffaabce6f544828337498e4">computeMatchViewport</a> (float topLeftX, float topLeftY, float availableWidth, float availableHeight)</td></tr>
 <tr class="separator:a407a74c5cffaabce6f544828337498e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c435061133820f3699ce412632bba55" id="r_a7c435061133820f3699ce412632bba55"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="match__renderer__2d_8h.html#a7c435061133820f3699ce412632bba55">playerIntentLabel</a> (<a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5">PlayerIntent</a> intent)</td></tr>
+<tr class="separator:a7c435061133820f3699ce412632bba55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a160d8c1964b703c9956469641bf4bad2" id="r_a160d8c1964b703c9956469641bf4bad2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="match__renderer__2d_8h.html#a160d8c1964b703c9956469641bf4bad2">drawGoalCelebration</a> (ImDrawList &amp;drawList, const <a class="el" href="structMatchViewport.html">MatchViewport</a> &amp;viewport, int homeScore, int awayScore, float celebrationRemaining)</td></tr>
+<tr class="separator:a160d8c1964b703c9956469641bf4bad2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a407a74c5cffaabce6f544828337498e4" name="a407a74c5cffaabce6f544828337498e4"></a>
@@ -152,7 +159,73 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Fits the pitch into the available screen space while preserving its aspect ratio and applying the tuning scale limits. </p>
+<p>Fits the pitch into the available screen space at its real 105 x 68 m proportions (never stretched); the caller centres the result. </p>
+
+</div>
+</div>
+<a id="a160d8c1964b703c9956469641bf4bad2" name="a160d8c1964b703c9956469641bf4bad2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a160d8c1964b703c9956469641bf4bad2">&#9670;&#160;</a></span>drawGoalCelebration()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void drawGoalCelebration </td>
+          <td>(</td>
+          <td class="paramtype">ImDrawList &amp;&#160;</td>
+          <td class="paramname"><em>drawList</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structMatchViewport.html">MatchViewport</a> &amp;&#160;</td>
+          <td class="paramname"><em>viewport</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>homeScore</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>awayScore</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>celebrationRemaining</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Goal flash and banner centred on the viewport; shared by both views. </p>
+
+</div>
+</div>
+<a id="a7c435061133820f3699ce412632bba55" name="a7c435061133820f3699ce412632bba55"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c435061133820f3699ce412632bba55">&#9670;&#160;</a></span>playerIntentLabel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * playerIntentLabel </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5">PlayerIntent</a>&#160;</td>
+          <td class="paramname"><em>intent</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Short English description of a player's current intent (tooltips). </p>
 
 </div>
 </div>

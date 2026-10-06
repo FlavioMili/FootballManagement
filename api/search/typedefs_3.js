@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['teamid_0',['TeamID',['../types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31',1,'types.h']]]
+  ['eligibility_0',['Eligibility',['../namespaceMatchdaySquad.html#a8546a982e752f092ebb42f3b93d32c4e',1,'MatchdaySquad']]]
 ];

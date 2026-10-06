@@ -94,11 +94,13 @@ $(document).ready(function(){initNavTree('imatch__renderer_8h.html',''); initRes
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#enum-members">Enumerations</a>  </div>
   <div class="headertitle"><div class="title">imatch_renderer.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;<a class="el" href="match__render__snapshot_8h_source.html">gui/render/match_render_snapshot.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
+<code>#include &quot;<a class="el" href="match__render__snapshot_8h_source.html">gui/render/match_render_snapshot.h</a>&quot;</code><br />
 </div>
 <p><a href="imatch__renderer_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -106,11 +108,68 @@ $(document).ready(function(){initNavTree('imatch__renderer_8h.html',''); initRes
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchViewport.html">MatchViewport</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchCameraInput.html">MatchCameraInput</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchRenderOptions.html">MatchRenderOptions</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIMatchRenderer.html">IMatchRenderer</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a7ef1462adbeeecaab32e4dc3c927d8c9" id="r_a7ef1462adbeeecaab32e4dc3c927d8c9"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9">MatchCameraMode</a> : std::uint8_t { <br />
+&#160;&#160;<a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9a81d741a35dc8a42c885b7cc031afd17f">BROADCAST</a>
+, <a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9acb90b4d795d28958c5940e3aaf6efe73">TACTICAL</a>
+, <a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9ab1a326c06d88bf042f73d70f50197905">END</a>
+, <a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9ad9f185e493e74d14923958d9f25e2210">PLAYER_FOLLOW</a>
+, <br />
+&#160;&#160;<a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9a88c189a42c87aa49d667fc8ab76bc323">FREE</a>
+, <a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9a551191f395c53dc0ea80741af1205bea">DIRECTOR</a>
+, <a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9a6a216efc529825c60a4a4c0bc99ad77f">PLAY</a>
+<br />
+ }</td></tr>
+<tr class="separator:a7ef1462adbeeecaab32e4dc3c927d8c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a7ef1462adbeeecaab32e4dc3c927d8c9" name="a7ef1462adbeeecaab32e4dc3c927d8c9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ef1462adbeeecaab32e4dc3c927d8c9">&#9670;&#160;</a></span>MatchCameraMode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9">MatchCameraMode</a> : std::uint8_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Camera presets offered by the 3D broadcast renderer. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a7ef1462adbeeecaab32e4dc3c927d8c9a81d741a35dc8a42c885b7cc031afd17f" name="a7ef1462adbeeecaab32e4dc3c927d8c9a81d741a35dc8a42c885b7cc031afd17f"></a>BROADCAST&#160;</td><td class="fielddoc"><p>Elevated side-on TV camera tracking the ball. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7ef1462adbeeecaab32e4dc3c927d8c9acb90b4d795d28958c5940e3aaf6efe73" name="a7ef1462adbeeecaab32e4dc3c927d8c9acb90b4d795d28958c5940e3aaf6efe73"></a>TACTICAL&#160;</td><td class="fielddoc"><p>High, near top-down view of the whole pitch. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7ef1462adbeeecaab32e4dc3c927d8c9ab1a326c06d88bf042f73d70f50197905" name="a7ef1462adbeeecaab32e4dc3c927d8c9ab1a326c06d88bf042f73d70f50197905"></a>END&#160;</td><td class="fielddoc"><p>Behind the play, looking along the attack. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7ef1462adbeeecaab32e4dc3c927d8c9ad9f185e493e74d14923958d9f25e2210" name="a7ef1462adbeeecaab32e4dc3c927d8c9ad9f185e493e74d14923958d9f25e2210"></a>PLAYER_FOLLOW&#160;</td><td class="fielddoc"><p>Low chase camera behind the ball carrier. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7ef1462adbeeecaab32e4dc3c927d8c9a88c189a42c87aa49d667fc8ab76bc323" name="a7ef1462adbeeecaab32e4dc3c927d8c9a88c189a42c87aa49d667fc8ab76bc323"></a>FREE&#160;</td><td class="fielddoc"><p>User-driven orbit camera (drag, pan, zoom). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7ef1462adbeeecaab32e4dc3c927d8c9a551191f395c53dc0ea80741af1205bea" name="a7ef1462adbeeecaab32e4dc3c927d8c9a551191f395c53dc0ea80741af1205bea"></a>DIRECTOR&#160;</td><td class="fielddoc"><p>TV director cutting between broadcast shots. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7ef1462adbeeecaab32e4dc3c927d8c9a6a216efc529825c60a4a4c0bc99ad77f" name="a7ef1462adbeeecaab32e4dc3c927d8c9a6a216efc529825c60a4a4c0bc99ad77f"></a>PLAY&#160;</td><td class="fielddoc"><p>Play mode: follows the ball and the active player. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

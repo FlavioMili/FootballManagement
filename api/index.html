@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Football Management: Project Football Management</title>
+<title>Football Management: Save migrations and save protocol</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -93,89 +93,57 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </div>
 
 <div><div class="header">
-  <div class="headertitle"><div class="title">Project Football Management </div></div>
+  <div class="headertitle"><div class="title">Save migrations and save protocol </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="md_README"></a> <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" style="pointer-events: none;" class="inline"/> <img src="https://img.shields.io/badge/C++-23-blue.svg" alt="C++" style="pointer-events: none;" class="inline"/> <img src="https://img.shields.io/badge/build-passing-brightgreen.svg" alt="Build" style="pointer-events: none;" class="inline"/></p>
-<p>Welcome to <b>Football Management</b>, a fast-paced, data-driven football management simulator built from the ground up in C++23 using SDL3, Dear ImGui, and SQLite3.</p>
-<p>Whether you're looking to manage your favorite club to glory, simulate years of football history, or contribute to an open-source C++ game engine, you're in the right place!</p>
-<hr  />
+<div class="textblock"><p><a class="anchor" id="md_src_2database_2migrations_2README"></a> </p>
+<h1><a class="anchor" id="autotoc_md1"></a>
+Schema versions</h1>
+<ul>
+<li>Every save records the migrations applied to it in <code>schema_migrations</code> (number, name, game version, checksum) and its schema version in the single-row <code>save_meta</code> table (contracts/save-format.md).</li>
+<li><code><a class="el" href="namespaceMigrations.html#a53d303531a97a1e882b21e67f2c32b82">Migrations::currentSchemaVersion()</a></code> is the highest number in <code><a class="el" href="registry_8cpp.html">registry.cpp</a></code>. A save with a higher version is refused before anything is written (<code>FutureVersionError</code>, lang key <code>SAVE_ERROR_FUTURE_VERSION</code>).</li>
+<li>Saves from before versioning have no <code>save_meta</code> and count as version 0. All migrations check for existence explicitly, so every intermediate layout (tables and columns added over time) upgrades from version 0.</li>
+</ul>
+<p><code><a class="el" href="namespaceMigrations.html#af9fab9e020d020285a4cac619644616b">Migrations::migrate()</a></code> (called by <code><a class="el" href="classGameData.html" title="Singleton class that acts as an in-memory cache for the database state.">GameData</a></code> for new and loaded worlds):</p>
+<ol type="1">
+<li>reads the version (read-only) and rejects future versions;</li>
+<li>runs <code>assets/db/schema.sql</code> (<code>CREATE TABLE IF NOT EXISTS</code>, outside a transaction because it sets the journal mode): tables that did not exist when the save was written are created with their full definition;</li>
+<li>applies every pending migration in number order, each in one <code>BEGIN IMMEDIATE ... COMMIT</code> together with its <code>schema_migrations</code> row and <code>save_meta.schema_version</code>; a failure rolls back and leaves the save at the previous version;</li>
+<li>re-adds missing columns of already recorded migrations (hand-edited or partially copied saves) and logs the repair.</li>
+</ol>
 <h1><a class="anchor" id="autotoc_md2"></a>
-🤝 Community &amp; Contributing</h1>
-<p>We welcome contributions from humans and AI alike! Before you start, please check out our community guidelines:</p>
+Adding a migration</h1>
 <ul>
-<li><b>Contributing Guide</b>: Start here if you want to set up the project locally, learn our branching strategy, and open a Pull Request.</li>
-<li><b>AI Guidelines</b>: We are proudly <b>pro-AI</b>. However, all AI-assisted code must be explicitly declared and heavily human-reviewed. Read this file to understand our philosophy.</li>
-<li><b>Code of Conduct</b>: We are committed to fostering a welcoming and inclusive environment.</li>
-<li><b>Agent Context</b>: If you are an autonomous AI Agent, read this file for specific architectural constraints and tooling requirements.</li>
-<li><b>Implementation Plan</b>: Ordered implementation work, acceptance criteria, and release scope.</li>
-<li><b>Development Handoff</b>: Verified current state, safety constraints, and the next bounded task.</li>
+<li>New table: add <code>CREATE TABLE IF NOT EXISTS</code> to <code>assets/db/schema.sql</code>. No migration is needed unless existing rows must be back-filled.</li>
+<li>New column on an existing table, or a data change: add a <code>ColumnSpec</code> array and/or an idempotent <code>apply</code> function to <code><a class="el" href="registry_8cpp.html">registry.cpp</a></code>, append one line to <code>REGISTRY</code> with the next number (<code>NNNN_snake_name</code>), and update the table in <code>schema.sql</code> so new saves get the column directly.</li>
+<li>Never renumber, edit or remove a released migration; fix mistakes with a new one. Back-fills that need randomness use the <code>Migration</code> RNG stream keyed by entity id, never the clock.</li>
+<li>Test it: upgrade a save built in-test without the column (see <code>test/test_save_migrations.cpp</code>), check values, run the upgrade twice.</li>
 </ul>
-<hr  />
-<h1><a class="anchor" id="autotoc_md4"></a>
-Installation &amp; Usage</h1>
-<h2><a class="anchor" id="autotoc_md5"></a>
-Prerequisites</h2>
-<p>Make sure your system has a <b>C++23 compiler</b> and the required libraries installed.</p>
-<h3><a class="anchor" id="autotoc_md6"></a>
-Ubuntu / Debian</h3>
-<div class="fragment"><div class="line">sudo apt update</div>
-<div class="line">sudo apt install g++ make libsdl3-dev libsdl3-ttf-dev libsqlite3-dev libspdlog-dev libfmt-dev</div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md7"></a>
-Arch</h3>
-<div class="fragment"><div class="line">sudo pacman -Syu</div>
-<div class="line">sudo pacman -S gcc make sdl3 sdl3_ttf sqlite spdlog fmt</div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md8"></a>
-MacOS</h3>
-<div class="fragment"><div class="line">brew update</div>
-<div class="line">brew install gcc make sdl3 sdl3_ttf sqlite spdlog fmt</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md9"></a>
-Installing and Compiling</h2>
-<div class="fragment"><div class="line">git clone https://github.com/FlavioMili/FootballManagement</div>
-<div class="line">cd FootballManagement</div>
-<div class="line">cmake --preset release</div>
-<div class="line">cmake --build --preset release --parallel 2</div>
-</div><!-- fragment --><p>For sanitizer, test, profiling, and clang-tidy presets, see Reproducible builds.</p>
-<h2><a class="anchor" id="autotoc_md10"></a>
-Have fun (and report issues :D)</h2>
-<div class="fragment"><div class="line">./out/build/release/src/FootballManagement</div>
-</div><!-- fragment --><hr  />
-<h1><a class="anchor" id="autotoc_md12"></a>
-Architectural Principles</h1>
-<p>The primary goal is to build a <b>modular, scalable, and data-driven</b> game. Adherence to these principles is crucial for long-term development success.</p>
-<h2><a class="anchor" id="autotoc_md13"></a>
-0. Use Modern C++</h2>
-<ul>
-<li>We rely on C++23 features. Keep it modern, safe, and self-explanatory.</li>
-</ul>
-<h2><a class="anchor" id="autotoc_md14"></a>
-1. Data-Driven Design</h2>
-<ul>
-<li><b>Core Principle:</b> <a class="el" href="classGame.html" title="Represents the core game state and logic.">Game</a> logic should be driven by configuration files (<code>.json</code>) and database state, not hard-coded in C++.<ul>
-<li><em>Example:</em> <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> stats, roles, and rating calculations are defined in <code>assets/stats_config.json</code>. To edit a stat, only the JSON file and the data generator should need changes, not the core <code><a class="el" href="classPlayer.html" title="Represents a football player.">Player</a></code> class.</li>
-</ul>
+<h1><a class="anchor" id="autotoc_md3"></a>
+Save protocol</h1>
+<p>A career is played on an in-memory working database. Nothing reaches the slot file (<code>saves/save_&lt;slot&gt;.db</code>) until the player saves or an autosave runs, so a crash mid-session loses only the progress since the last save and can never leave a half-written or logically inconsistent slot.</p>
+<p>Commit points (<code><a class="el" href="classGameController.html#aa9be158f421cbd91b8958b68ca544414" title="Saves the current state of the game to its slot.">GameController::saveGame()</a></code> / autosave):</p>
+<ol type="1">
+<li><code><a class="el" href="classGame.html#a9f7ad0384767e46fa072891c123b7d9c" title="Saves the current game state, including calendar and game variables, to the database.">Game::saveGame()</a></code> flushes the in-memory aggregates (game state, calendar, competitions, world, transfers, players, teams) to the working database in one transaction; dirty flags are cleared only after the commit. Fixtures are diffed against the stored rows (only new, changed and dropped ones are written); every player changes daily, so player rows are rewritten with reused statements and allocation-free encoders.</li>
+<li><code><a class="el" href="classSaveManager.html#ad496b022b22d7bd65beec688807c58a3">SaveManager::stampMetadata()</a></code> updates <code>save_meta</code> (game, engine, RNG and simulation versions of the build, world seed, last saved in-game date, playtime, UTC timestamp).</li>
+<li><code><a class="el" href="classSaveManager.html#ad9a6a999a1620286e469aece8975f6ed">SaveManager::persist()</a></code>:<ol type="a">
+<li>online backup of the working database to <code>&lt;slot&gt;.tmp</code>, switched to a rollback journal so the file is self-contained (no <code>-wal</code> sidecar);</li>
+<li><code>PRAGMA quick_check</code> on the temporary file, then <code>fsync</code>;</li>
+<li>rotation: <code>.bak.N-1</code> -&gt; <code>.bak.N</code> ... and the current slot file is hard-linked (copied if links are unsupported) to <code>.bak.1</code>;</li>
+<li>atomic <code>rename(&lt;slot&gt;.tmp, &lt;slot&gt;)</code>, then <code>fsync</code> of the directory.</li>
+</ol>
 </li>
-<li><b>Benefit:</b> Allows for rapid iteration, balancing, and feature expansion without recompiling the core engine. (Also cheating and modding :D )</li>
-</ul>
-<h2><a class="anchor" id="autotoc_md15"></a>
-2. Separation of Concerns</h2>
+</ol>
+<p>A failure at any step (disk full, read-only folder, I/O error, crash) leaves the previous slot file intact; a crash can only leave a stale <code>.tmp</code>, which the next save removes. A slot file is never copied by hand while a <code>-wal</code> exists: legacy files that still have one are checkpointed first.</p>
+<p>Loading: <code><a class="el" href="classSaveManager.html#adcace3316da7dcf28c0752a228e2b50b">SaveManager::inspect()</a></code> opens the file read-only and runs <code>PRAGMA integrity_check</code> (refuses damaged, unfinished or newer saves without touching them; <code>foreign_key_check</code> findings are logged, not fatal, until the free-agent sentinel is repaired), keeps a <code>&lt;slot&gt;.pre-v&lt;N&gt;.bak</code> copy once when the save needs an upgrade, then copies it into the working database where the migrations run. Restoring a backup never deletes the replaced file: it is kept as <code>&lt;slot&gt;.corrupt-&lt;utc&gt;</code> or <code>&lt;slot&gt;.replaced-&lt;utc&gt;</code>.</p>
+<p>Autosave (<code><a class="el" href="structAutosavePolicy.html">AutosavePolicy</a></code>, default weekly with 3 backups) runs at the end of each simulated day, on the Continue worker thread, never on the <a class="el" href="namespaceUI.html" title="Small vector icons drawn with ImDrawList (no icon font needed).">UI</a> thread.</p>
+<h1><a class="anchor" id="autotoc_md4"></a>
+Compatibility policy</h1>
 <ul>
-<li>**Data Layer (<code>Database</code> class):** The <em>only</em> module that interacts directly with the SQLite database.</li>
-<li>**Logic Layer (<code><a class="el" href="classGame.html" title="Represents the core game state and logic.">Game</a></code>, <code><a class="el" href="classPlayer.html" title="Represents a football player.">Player</a></code>, <code><a class="el" href="classTeam.html" title="Represents a football team.">Team</a></code>, <code><a class="el" href="classLeague.html" title="Represents a football league containing teams and a leaderboard.">League</a></code>, <code><a class="el" href="classMatch.html" title="Represents a football match between two teams.">Match</a></code>):** Represents the game's rules and state, operates on data objects, and is decoupled from storage.</li>
-<li>**Controller Layer (<code><a class="el" href="classGameController.html" title="Manages the core game logic, interacting with teams, leagues, and players.">GameController</a></code> class):** Receives user input and manipulates the logic layer accordingly.</li>
-<li>**Presentation Layer (<code>GuiView</code> class):** Displays information to the user using Dear ImGui. It is completely decoupled from the game logic.</li>
+<li>Every public release loads saves from all previous public releases.</li>
+<li>Saves from older releases stay loadable for at least two releases after the one that introduced a replacement format; removing a migration path is announced one release earlier and requires a standalone converter.</li>
+<li>Upgrading the rules edition, RNG version or engine version of an existing career requires the player's confirmation; otherwise the career keeps the versions recorded in <code>save_meta</code>. </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md16"></a>
-3. State Management</h2>
-<ul>
-<li>The <b>database is the single source of truth</b> for persistent game state (e.g., season, week, team balance).</li>
-<li>C++ objects represent the <em>in-memory state</em> required for simulation, loaded on demand.</li>
-</ul>
-<hr  />
-<h1><a class="anchor" id="autotoc_md18"></a>
-Development roadmap</h1>
-<p>The authoritative ordered roadmap and completion criteria are in TODO.md. It supersedes the former phase checklist, which had become stale—for example, the source already has a daily <code><a class="el" href="classGame.html#a3a07e7c96e055f2ac28ce7a05d2573ce" title="Advances the game time by one day, simulating any matches or events scheduled for the current date.">Game::advanceDay()</a></code> clock, and contracts/transfers have more functionality than the old labels implied.</p>
-<p>The verified current baseline and safe continuation point are in DEVELOPMENT_HANDOFF.md. The isolated suite is safe to run; use an explicit fixture/runtime root for profiling rather than a personal save. </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->

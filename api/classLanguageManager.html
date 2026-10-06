@@ -94,8 +94,10 @@ $(document).ready(function(){initNavTree('classLanguageManager.html',''); initRe
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
+<a href="#pri-types">Private Types</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classLanguageManager-members.html">List of all members</a>  </div>
@@ -108,14 +110,34 @@ $(document).ready(function(){initNavTree('classLanguageManager.html',''); initRe
 
 <p><code>#include &lt;<a class="el" href="language__manager_8h_source.html">language_manager.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structLanguageManager_1_1Status.html">Status</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">What the last load left in place.  <a href="structLanguageManager_1_1Status.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structLanguageManager_1_1StringHash.html">StringHash</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a0085a0ae7759efe1e04e76f0673851c0" id="r_a0085a0ae7759efe1e04e76f0673851c0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a0085a0ae7759efe1e04e76f0673851c0">loadLanguage</a> (<a class="el" href="languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0c">Language</a> lang)</td></tr>
 <tr class="memdesc:a0085a0ae7759efe1e04e76f0673851c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads the JSON file for the specific language into memory.  <br /></td></tr>
 <tr class="separator:a0085a0ae7759efe1e04e76f0673851c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a620e5ce6c2de6de3e08f5fc752d12f5b" id="r_a620e5ce6c2de6de3e08f5fc752d12f5b"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a620e5ce6c2de6de3e08f5fc752d12f5b">get</a> (const char *key) const</td></tr>
-<tr class="memdesc:a620e5ce6c2de6de3e08f5fc752d12f5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the localized string. Returns the key itself if not found.  <br /></td></tr>
+<tr class="memitem:ad1159afe60448b69c944dc1fbf0d58a6" id="r_ad1159afe60448b69c944dc1fbf0d58a6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#ad1159afe60448b69c944dc1fbf0d58a6">loadFromFile</a> (const std::string &amp;path, <a class="el" href="languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0c">Language</a> lang)</td></tr>
+<tr class="memdesc:ad1159afe60448b69c944dc1fbf0d58a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads <code>path</code> as the texts of <code>lang</code>, with the same English fallback as <a class="el" href="classLanguageManager.html#a0085a0ae7759efe1e04e76f0673851c0" title="Loads the JSON file for the specific language into memory.">loadLanguage()</a> (which calls it with the packaged file).  <br /></td></tr>
+<tr class="separator:ad1159afe60448b69c944dc1fbf0d58a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a620e5ce6c2de6de3e08f5fc752d12f5b" id="r_a620e5ce6c2de6de3e08f5fc752d12f5b"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a620e5ce6c2de6de3e08f5fc752d12f5b">get</a> (const char *<a class="el" href="input__actions_8cpp.html#a59ed576a7d4010e7379ae448eb087594">key</a>) const</td></tr>
+<tr class="memdesc:a620e5ce6c2de6de3e08f5fc752d12f5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the localized string: the current language's, else the English one, else the key itself (the same pointer).  <br /></td></tr>
 <tr class="separator:a620e5ce6c2de6de3e08f5fc752d12f5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8287eae831a6b30de39ac7c435ed1fc9" id="r_a8287eae831a6b30de39ac7c435ed1fc9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0c">Language</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a8287eae831a6b30de39ac7c435ed1fc9">current</a> () const</td></tr>
+<tr class="memdesc:a8287eae831a6b30de39ac7c435ed1fc9"><td class="mdescLeft">&#160;</td><td class="mdescRight">The language last requested (even if it fell back).  <br /></td></tr>
+<tr class="separator:a8287eae831a6b30de39ac7c435ed1fc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab041272637ff94d1785da3ee567bbab1" id="r_ab041272637ff94d1785da3ee567bbab1"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structLanguageManager_1_1Status.html">Status</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#ab041272637ff94d1785da3ee567bbab1">status</a> () const</td></tr>
+<tr class="memdesc:ab041272637ff94d1785da3ee567bbab1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Outcome of the last load, for a notice in the <a class="el" href="namespaceUI.html" title="Small vector icons drawn with ImDrawList (no icon font needed).">UI</a>.  <br /></td></tr>
+<tr class="separator:ab041272637ff94d1785da3ee567bbab1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35ec9a5c38b028a2a931f15568d45fb1" id="r_a35ec9a5c38b028a2a931f15568d45fb1"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structNumberFormat_1_1Locale.html">NumberFormat::Locale</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a35ec9a5c38b028a2a931f15568d45fb1">numberLocale</a> () const</td></tr>
+<tr class="memdesc:a35ec9a5c38b028a2a931f15568d45fb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number and money conventions of the loaded texts.  <br /></td></tr>
+<tr class="separator:a35ec9a5c38b028a2a931f15568d45fb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -123,20 +145,60 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memdesc:acce7f57b957ccf759cdbf65628a6b983"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the singleton instance of the <a class="el" href="classLanguageManager.html" title="Singleton class that manages localization and translations.">LanguageManager</a>.  <br /></td></tr>
 <tr class="separator:acce7f57b957ccf759cdbf65628a6b983"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-types" name="pri-types"></a>
+Private Types</h2></td></tr>
+<tr class="memitem:a1ccee4ae7f5915172fe356a6510bc04e" id="r_a1ccee4ae7f5915172fe356a6510bc04e"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a1ccee4ae7f5915172fe356a6510bc04e">Table</a> = std::unordered_map&lt; std::string, std::string, <a class="el" href="structLanguageManager_1_1StringHash.html">StringHash</a>, std::equal_to&lt;&gt; &gt;</td></tr>
+<tr class="separator:a1ccee4ae7f5915172fe356a6510bc04e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
 <tr class="memitem:a8437f4a4ac296771084b7d5104e06216" id="r_a8437f4a4ac296771084b7d5104e06216"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a8437f4a4ac296771084b7d5104e06216">LanguageManager</a> ()=default</td></tr>
 <tr class="separator:a8437f4a4ac296771084b7d5104e06216"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa1fa0c3832d96eadddaee54ac6268d0a" id="r_aa1fa0c3832d96eadddaee54ac6268d0a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#aa1fa0c3832d96eadddaee54ac6268d0a">ensureEnglish</a> ()</td></tr>
+<tr class="separator:aa1fa0c3832d96eadddaee54ac6268d0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a896bfd9913bb385f54973431d749b188" id="r_a896bfd9913bb385f54973431d749b188"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a896bfd9913bb385f54973431d749b188">refreshNumberLocale</a> ()</td></tr>
+<tr class="separator:a896bfd9913bb385f54973431d749b188"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
-<tr class="memitem:a963c8837d9bcad6e461632dc9824fadd" id="r_a963c8837d9bcad6e461632dc9824fadd"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; std::string, std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a963c8837d9bcad6e461632dc9824fadd">translations</a></td></tr>
-<tr class="separator:a963c8837d9bcad6e461632dc9824fadd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e68f773ee62bedaee960261345636e2" id="r_a6e68f773ee62bedaee960261345636e2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classLanguageManager.html#a1ccee4ae7f5915172fe356a6510bc04e">Table</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a6e68f773ee62bedaee960261345636e2">translations</a></td></tr>
+<tr class="separator:a6e68f773ee62bedaee960261345636e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad500660e052f2f9eb6b829c8b722be9a" id="r_ad500660e052f2f9eb6b829c8b722be9a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classLanguageManager.html#a1ccee4ae7f5915172fe356a6510bc04e">Table</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#ad500660e052f2f9eb6b829c8b722be9a">english</a></td></tr>
+<tr class="separator:ad500660e052f2f9eb6b829c8b722be9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12b8865d50421c979417452deab53fe4" id="r_a12b8865d50421c979417452deab53fe4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a12b8865d50421c979417452deab53fe4">english_loaded</a> = false</td></tr>
+<tr class="separator:a12b8865d50421c979417452deab53fe4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06e01b658d86bc0d2bee3e6cc1937248" id="r_a06e01b658d86bc0d2bee3e6cc1937248"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structLanguageManager_1_1Status.html">Status</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#a06e01b658d86bc0d2bee3e6cc1937248">status_</a></td></tr>
+<tr class="separator:a06e01b658d86bc0d2bee3e6cc1937248"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaed921ea7eecca0271059e999bb794b7" id="r_aaed921ea7eecca0271059e999bb794b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structNumberFormat_1_1Locale.html">NumberFormat::Locale</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html#aaed921ea7eecca0271059e999bb794b7">number_locale</a></td></tr>
+<tr class="separator:aaed921ea7eecca0271059e999bb794b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Singleton class that manages localization and translations. </p>
-<p>This class handles loading language files and providing translated strings based on a key. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<p>English is always kept loaded as the fallback: a key missing from the current language, or a language file that cannot be read at all, shows the English text instead of the raw key. <a class="el" href="classLanguageManager.html#ab041272637ff94d1785da3ee567bbab1" title="Outcome of the last load, for a notice in the UI.">status()</a> tells the <a class="el" href="namespaceUI.html" title="Small vector icons drawn with ImDrawList (no icon font needed).">UI</a> when that happened so it can say so. </p>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a1ccee4ae7f5915172fe356a6510bc04e" name="a1ccee4ae7f5915172fe356a6510bc04e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ccee4ae7f5915172fe356a6510bc04e">&#9670;&#160;</a></span>Table</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classLanguageManager.html#a1ccee4ae7f5915172fe356a6510bc04e">LanguageManager::Table</a> =  std::unordered_map&lt;std::string, std::string, <a class="el" href="structLanguageManager_1_1StringHash.html">StringHash</a>, std::equal_to&lt;&gt; &gt;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a8437f4a4ac296771084b7d5104e06216" name="a8437f4a4ac296771084b7d5104e06216"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8437f4a4ac296771084b7d5104e06216">&#9670;&#160;</a></span>LanguageManager()</h2>
 
@@ -163,6 +225,59 @@ Private Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a8287eae831a6b30de39ac7c435ed1fc9" name="a8287eae831a6b30de39ac7c435ed1fc9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8287eae831a6b30de39ac7c435ed1fc9">&#9670;&#160;</a></span>current()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0c">Language</a> LanguageManager::current </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>The language last requested (even if it fell back). </p>
+
+</div>
+</div>
+<a id="aa1fa0c3832d96eadddaee54ac6268d0a" name="aa1fa0c3832d96eadddaee54ac6268d0a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa1fa0c3832d96eadddaee54ac6268d0a">&#9670;&#160;</a></span>ensureEnglish()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool LanguageManager::ensureEnglish </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Reads the English table once; false when it cannot be read. </p>
+
+</div>
+</div>
 <a id="a620e5ce6c2de6de3e08f5fc752d12f5b" name="a620e5ce6c2de6de3e08f5fc752d12f5b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a620e5ce6c2de6de3e08f5fc752d12f5b">&#9670;&#160;</a></span>get()</h2>
 
@@ -179,14 +294,13 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Retrieves the localized string. Returns the key itself if not found. </p>
+<p>Retrieves the localized string: the current language's, else the English one, else the key itself (the same pointer). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">key</td><td>The key to look up the translation for. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The localized string, or the key if no translation exists. </dd></dl>
 
 </div>
 </div>
@@ -218,6 +332,36 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="ad1159afe60448b69c944dc1fbf0d58a6" name="ad1159afe60448b69c944dc1fbf0d58a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1159afe60448b69c944dc1fbf0d58a6">&#9670;&#160;</a></span>loadFromFile()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool LanguageManager::loadFromFile </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0c">Language</a>&#160;</td>
+          <td class="paramname"><em>lang</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Loads <code>path</code> as the texts of <code>lang</code>, with the same English fallback as <a class="el" href="classLanguageManager.html#a0085a0ae7759efe1e04e76f0673851c0" title="Loads the JSON file for the specific language into memory.">loadLanguage()</a> (which calls it with the packaged file). </p>
+
+</div>
+</div>
 <a id="a0085a0ae7759efe1e04e76f0673851c0" name="a0085a0ae7759efe1e04e76f0673851c0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0085a0ae7759efe1e04e76f0673851c0">&#9670;&#160;</a></span>loadLanguage()</h2>
 
@@ -241,13 +385,12 @@ Private Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>True if the language was successfully loaded, false otherwise. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the language was loaded; false when it fell back to English for the whole file (English itself failing as well leaves the raw keys). </dd></dl>
 
 </div>
 </div>
-<h2 class="groupheader">Member Data Documentation</h2>
-<a id="a963c8837d9bcad6e461632dc9824fadd" name="a963c8837d9bcad6e461632dc9824fadd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a963c8837d9bcad6e461632dc9824fadd">&#9670;&#160;</a></span>translations</h2>
+<a id="a35ec9a5c38b028a2a931f15568d45fb1" name="a35ec9a5c38b028a2a931f15568d45fb1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a35ec9a5c38b028a2a931f15568d45fb1">&#9670;&#160;</a></span>numberLocale()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -256,7 +399,37 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::unordered_map&lt;std::string, std::string&gt; LanguageManager::translations</td>
+          <td class="memname">const <a class="el" href="structNumberFormat_1_1Locale.html">NumberFormat::Locale</a> &amp; LanguageManager::numberLocale </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Number and money conventions of the loaded texts. </p>
+
+</div>
+</div>
+<a id="a896bfd9913bb385f54973431d749b188" name="a896bfd9913bb385f54973431d749b188"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a896bfd9913bb385f54973431d749b188">&#9670;&#160;</a></span>refreshNumberLocale()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void LanguageManager::refreshNumberLocale </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
         </tr>
       </table>
   </td>
@@ -265,6 +438,145 @@ Private Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab041272637ff94d1785da3ee567bbab1" name="ab041272637ff94d1785da3ee567bbab1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab041272637ff94d1785da3ee567bbab1">&#9670;&#160;</a></span>status()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="structLanguageManager_1_1Status.html">Status</a> &amp; LanguageManager::status </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Outcome of the last load, for a notice in the <a class="el" href="namespaceUI.html" title="Small vector icons drawn with ImDrawList (no icon font needed).">UI</a>. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="ad500660e052f2f9eb6b829c8b722be9a" name="ad500660e052f2f9eb6b829c8b722be9a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad500660e052f2f9eb6b829c8b722be9a">&#9670;&#160;</a></span>english</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classLanguageManager.html#a1ccee4ae7f5915172fe356a6510bc04e">Table</a> LanguageManager::english</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a12b8865d50421c979417452deab53fe4" name="a12b8865d50421c979417452deab53fe4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12b8865d50421c979417452deab53fe4">&#9670;&#160;</a></span>english_loaded</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool LanguageManager::english_loaded = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aaed921ea7eecca0271059e999bb794b7" name="aaed921ea7eecca0271059e999bb794b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaed921ea7eecca0271059e999bb794b7">&#9670;&#160;</a></span>number_locale</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structNumberFormat_1_1Locale.html">NumberFormat::Locale</a> LanguageManager::number_locale</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a06e01b658d86bc0d2bee3e6cc1937248" name="a06e01b658d86bc0d2bee3e6cc1937248"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a06e01b658d86bc0d2bee3e6cc1937248">&#9670;&#160;</a></span>status_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structLanguageManager_1_1Status.html">Status</a> LanguageManager::status_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6e68f773ee62bedaee960261345636e2" name="a6e68f773ee62bedaee960261345636e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e68f773ee62bedaee960261345636e2">&#9670;&#160;</a></span>translations</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classLanguageManager.html#a1ccee4ae7f5915172fe356a6510bc04e">Table</a> LanguageManager::translations</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Texts of the current language; empty while English is current. </p>
 
 </div>
 </div>

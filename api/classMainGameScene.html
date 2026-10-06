@@ -94,15 +94,19 @@ $(document).ready(function(){initNavTree('classMainGameScene.html',''); initResi
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classMainGameScene-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">MainGameScene Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Scene for the main game dashboard.  
+<p>Club hub: the base scene of a career.  
  <a href="classMainGameScene.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="main__game__scene_8h_source.html">main_game_scene.h</a>&gt;</code></p>
@@ -112,30 +116,103 @@ Inheritance diagram for MainGameScene:</div>
  <div class="center">
   <img src="classMainGameScene.png" usemap="#MainGameScene_map" alt=""/>
   <map id="MainGameScene_map" name="MainGameScene_map">
-<area href="classGUIScene.html" title="Base class for all GUI scenes." alt="GUIScene" shape="rect" coords="0,0,108,24"/>
+<area href="classManagementScene.html" title="Base class for every in-career screen." alt="ManagementScene" shape="rect" coords="0,56,120,80"/>
+<area href="classGUIScene.html" title="Base class for all GUI scenes." alt="GUIScene" shape="rect" coords="0,0,120,24"/>
   </map>
 </div></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMainGameScene_1_1FinanceBar.html">FinanceBar</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMainGameScene_1_1LedgerRow.html">LedgerRow</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMainGameScene_1_1PlayedMatch.html">PlayedMatch</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2" id="r_a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2">Page</a> { <a class="el" href="classMainGameScene.html#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2a3b9ae4ee5ef6dced299692fd7b1ffc24">OVERVIEW</a>
+, <a class="el" href="classMainGameScene.html#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2a156253748c473e922440d93397271317">FINANCES</a>
+ }</td></tr>
+<tr class="memdesc:a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pages hosted directly by the club hub.  <a href="classMainGameScene.html#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2">More...</a><br /></td></tr>
+<tr class="separator:a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a07ca378b094f7615f11bbae986e95a48" id="r_a07ca378b094f7615f11bbae986e95a48"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a07ca378b094f7615f11bbae986e95a48">MainGameScene</a> (<a class="el" href="classGUIView.html">GUIView</a> *guiView_ptr)</td></tr>
-<tr class="memdesc:a07ca378b094f7615f11bbae986e95a48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classMainGameScene.html" title="Scene for the main game dashboard.">MainGameScene</a>.  <br /></td></tr>
+<tr class="memdesc:a07ca378b094f7615f11bbae986e95a48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classMainGameScene.html" title="Club hub: the base scene of a career.">MainGameScene</a>.  <br /></td></tr>
 <tr class="separator:a07ca378b094f7615f11bbae986e95a48"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e74413c42acb008ab95aba21d1c249e" id="r_a7e74413c42acb008ab95aba21d1c249e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a7e74413c42acb008ab95aba21d1c249e">~MainGameScene</a> () override=default</td></tr>
-<tr class="memdesc:a7e74413c42acb008ab95aba21d1c249e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys the <a class="el" href="classMainGameScene.html" title="Scene for the main game dashboard.">MainGameScene</a>.  <br /></td></tr>
-<tr class="separator:a7e74413c42acb008ab95aba21d1c249e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0bbc976e8bb22a663eb79a3cc6d4dd7a" id="r_a0bbc976e8bb22a663eb79a3cc6d4dd7a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a0bbc976e8bb22a663eb79a3cc6d4dd7a">~MainGameScene</a> () override</td></tr>
+<tr class="memdesc:a0bbc976e8bb22a663eb79a3cc6d4dd7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys the <a class="el" href="classMainGameScene.html" title="Club hub: the base scene of a career.">MainGameScene</a>. A holiday or off-season run still simulating stops at the end of its current day; a Continue to the next fixture finishes its days first.  <br /></td></tr>
+<tr class="separator:a0bbc976e8bb22a663eb79a3cc6d4dd7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a14ad2dc972424aeac5429fdf4b8b0c24" id="r_a14ad2dc972424aeac5429fdf4b8b0c24"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a14ad2dc972424aeac5429fdf4b8b0c24">onEnter</a> () override</td></tr>
 <tr class="memdesc:a14ad2dc972424aeac5429fdf4b8b0c24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when entering the scene.  <br /></td></tr>
 <tr class="separator:a14ad2dc972424aeac5429fdf4b8b0c24"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6b06c97485383fbd6a5e833fd55aa039" id="r_a6b06c97485383fbd6a5e833fd55aa039"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a6b06c97485383fbd6a5e833fd55aa039">update</a> (float deltaTime) override</td></tr>
 <tr class="memdesc:a6b06c97485383fbd6a5e833fd55aa039"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates scene logic.  <br /></td></tr>
 <tr class="separator:a6b06c97485383fbd6a5e833fd55aa039"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa867613f41457c7d8f0a1bc68456a535" id="r_aa867613f41457c7d8f0a1bc68456a535"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#aa867613f41457c7d8f0a1bc68456a535">render</a> () override</td></tr>
-<tr class="memdesc:aa867613f41457c7d8f0a1bc68456a535"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the scene.  <br /></td></tr>
-<tr class="separator:aa867613f41457c7d8f0a1bc68456a535"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8d9498d24dc90d11bd48a5b74dc10853" id="r_a8d9498d24dc90d11bd48a5b74dc10853"><td class="memItemLeft" align="right" valign="top"><a class="el" href="gui__scene_8h.html#aaf4bddc3ff70ab62a07943e024b9942f">SceneID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a8d9498d24dc90d11bd48a5b74dc10853">getID</a> () const override</td></tr>
 <tr class="memdesc:a8d9498d24dc90d11bd48a5b74dc10853"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the ID of this scene.  <br /></td></tr>
 <tr class="separator:a8d9498d24dc90d11bd48a5b74dc10853"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8358e6f954c3a05a60db00c1b1877f1" id="r_aa8358e6f954c3a05a60db00c1b1877f1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#aa8358e6f954c3a05a60db00c1b1877f1">isAdvancing</a> () const</td></tr>
+<tr class="memdesc:aa8358e6f954c3a05a60db00c1b1877f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">True while days are being simulated in the background.  <br /></td></tr>
+<tr class="separator:aa8358e6f954c3a05a60db00c1b1877f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab32c89a4a05825322a8b125ee3a0e470" id="r_ab32c89a4a05825322a8b125ee3a0e470"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ab32c89a4a05825322a8b125ee3a0e470">isContinuing</a> () const</td></tr>
+<tr class="memdesc:ab32c89a4a05825322a8b125ee3a0e470"><td class="mdescLeft">&#160;</td><td class="mdescRight">True from the Continue request until the days are simulated, including the frames spent closing the screens above the hub first.  <br /></td></tr>
+<tr class="separator:ab32c89a4a05825322a8b125ee3a0e470"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79fce57c9513cfa239d9680566972a76" id="r_a79fce57c9513cfa239d9680566972a76"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a79fce57c9513cfa239d9680566972a76">continueLabel</a> () const</td></tr>
+<tr class="memdesc:a79fce57c9513cfa239d9680566972a76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Label of the context-aware Continue / Play <a class="el" href="classMatch.html" title="Represents a football match between two teams.">Match</a> button.  <br /></td></tr>
+<tr class="separator:a79fce57c9513cfa239d9680566972a76"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef930ceac54d5fa6202ca95ece8d8d7e" id="r_aef930ceac54d5fa6202ca95ece8d8d7e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#aef930ceac54d5fa6202ca95ece8d8d7e">requestContinue</a> ()</td></tr>
+<tr class="memdesc:aef930ceac54d5fa6202ca95ece8d8d7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Plays today's match, or returns to the hub and simulates days up to the next managed fixture.  <br /></td></tr>
+<tr class="separator:aef930ceac54d5fa6202ca95ece8d8d7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45682d2c40f37a7fe48fc159ce37ee62" id="r_a45682d2c40f37a7fe48fc159ce37ee62"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a45682d2c40f37a7fe48fc159ce37ee62">requestHoliday</a> (const <a class="el" href="structHolidayPlan.html">HolidayPlan</a> &amp;plan)</td></tr>
+<tr class="memdesc:a45682d2c40f37a7fe48fc159ce37ee62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns to the hub and simulates days with the assistant in charge until the plan ends; the report opens when it is done.  <br /></td></tr>
+<tr class="separator:a45682d2c40f37a7fe48fc159ce37ee62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9846e57dcbc1e0fc594b749993026d40" id="r_a9846e57dcbc1e0fc594b749993026d40"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a9846e57dcbc1e0fc594b749993026d40">requestPostMatchAdvance</a> (const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;date, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> home_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> away_id)</td></tr>
+<tr class="memdesc:a9846e57dcbc1e0fc594b749993026d40"><td class="mdescLeft">&#160;</td><td class="mdescRight">After a managed match has been recorded: returns to the hub and simulates the rest of the day on the Continue worker, then opens the match's report.  <br /></td></tr>
+<tr class="separator:a9846e57dcbc1e0fc594b749993026d40"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ca617109f479f90e22fea0a40cf0898" id="r_a0ca617109f479f90e22fea0a40cf0898"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a0ca617109f479f90e22fea0a40cf0898">renderContinueOverlay</a> ()</td></tr>
+<tr class="memdesc:a0ca617109f479f90e22fea0a40cf0898"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws the Continue progress card over a dimmed snapshot of the screen. Reads only the controller's thread-safe progress, never game state, because days are being simulated on a worker thread.  <br /></td></tr>
+<tr class="separator:a0ca617109f479f90e22fea0a40cf0898"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a63e331d6c3b6ca7a1e23efebef263c35" id="r_a63e331d6c3b6ca7a1e23efebef263c35"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a63e331d6c3b6ca7a1e23efebef263c35">continueFadeOut</a> () const</td></tr>
+<tr class="memdesc:a63e331d6c3b6ca7a1e23efebef263c35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opacity of the dimming that fades out after Continue ends.  <br /></td></tr>
+<tr class="separator:a63e331d6c3b6ca7a1e23efebef263c35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb946d504f22c6b897b22a5c17b77b1f" id="r_aeb946d504f22c6b897b22a5c17b77b1f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#aeb946d504f22c6b897b22a5c17b77b1f">refreshIfStale</a> ()</td></tr>
+<tr class="memdesc:aeb946d504f22c6b897b22a5c17b77b1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rebuilds the cached career data when the date moved on or the cached next fixture has been played elsewhere (e.g. a quick result).  <br /></td></tr>
+<tr class="separator:aeb946d504f22c6b897b22a5c17b77b1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6122c3d7706ac4d8960b917db3d0fdad" id="r_a6122c3d7706ac4d8960b917db3d0fdad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a6122c3d7706ac4d8960b917db3d0fdad">showPage</a> (<a class="el" href="classMainGameScene.html#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2">Page</a> page)</td></tr>
+<tr class="memdesc:a6122c3d7706ac4d8960b917db3d0fdad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Switches the page shown by the hub.  <br /></td></tr>
+<tr class="separator:a6122c3d7706ac4d8960b917db3d0fdad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7dd3828982543910262a59a6d9cc98b" id="r_ad7dd3828982543910262a59a6d9cc98b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ad7dd3828982543910262a59a6d9cc98b">offerWelcome</a> ()</td></tr>
+<tr class="memdesc:ad7dd3828982543910262a59a6d9cc98b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shows the welcome tour over Home next frame (a career just started from the club choice, or a replay asked for on Help).  <br /></td></tr>
+<tr class="separator:ad7dd3828982543910262a59a6d9cc98b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afacb18899b401e9cb88d60f4d7926195" id="r_afacb18899b401e9cb88d60f4d7926195"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#afacb18899b401e9cb88d60f4d7926195">requestStop</a> ()</td></tr>
+<tr class="memdesc:afacb18899b401e9cb88d60f4d7926195"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asks the running Continue or holiday to stop at the end of the day being simulated (the Stop button of the progress card).  <br /></td></tr>
+<tr class="separator:afacb18899b401e9cb88d60f4d7926195"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac76b2c9100f1fbefc4fe1f491e312e4b" id="r_ac76b2c9100f1fbefc4fe1f491e312e4b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ac76b2c9100f1fbefc4fe1f491e312e4b">isShowingSeasonReview</a> () const</td></tr>
+<tr class="memdesc:ac76b2c9100f1fbefc4fe1f491e312e4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">True while the end-of-season summary is open.  <br /></td></tr>
+<tr class="separator:ac76b2c9100f1fbefc4fe1f491e312e4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0c433dc307c2106616cced254883470" id="r_ae0c433dc307c2106616cced254883470"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classWelcomeTour.html">WelcomeTour</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ae0c433dc307c2106616cced254883470">welcomeTour</a> () const</td></tr>
+<tr class="memdesc:ae0c433dc307c2106616cced254883470"><td class="mdescLeft">&#160;</td><td class="mdescRight">The welcome tour (open while it is shown).  <br /></td></tr>
+<tr class="separator:ae0c433dc307c2106616cced254883470"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_classManagementScene"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classManagementScene')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classManagementScene.html">ManagementScene</a></td></tr>
+<tr class="memitem:a002354c4cc06868e4fe31e6d06526296 inherit pub_methods_classManagementScene" id="r_a002354c4cc06868e4fe31e6d06526296"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classManagementScene.html#a002354c4cc06868e4fe31e6d06526296">ManagementScene</a> (<a class="el" href="classGUIView.html">GUIView</a> *guiViewPtr)</td></tr>
+<tr class="separator:a002354c4cc06868e4fe31e6d06526296 inherit pub_methods_classManagementScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c3b16a7fecdbcabf438b20d2efb5299 inherit pub_methods_classManagementScene" id="r_a6c3b16a7fecdbcabf438b20d2efb5299"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classManagementScene.html#a6c3b16a7fecdbcabf438b20d2efb5299">render</a> () final</td></tr>
+<tr class="memdesc:a6c3b16a7fecdbcabf438b20d2efb5299 inherit pub_methods_classManagementScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the scene.  <br /></td></tr>
+<tr class="separator:a6c3b16a7fecdbcabf438b20d2efb5299 inherit pub_methods_classManagementScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3f493b90fe2462bf8bfd9ba562c3254d inherit pub_methods_classManagementScene" id="r_a3f493b90fe2462bf8bfd9ba562c3254d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classManagementScene.html#a3f493b90fe2462bf8bfd9ba562c3254d">onEnter</a> () override</td></tr>
+<tr class="memdesc:a3f493b90fe2462bf8bfd9ba562c3254d inherit pub_methods_classManagementScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the scene is entered/becomes active.  <br /></td></tr>
+<tr class="separator:a3f493b90fe2462bf8bfd9ba562c3254d inherit pub_methods_classManagementScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65fc31d78141601d12db68fcfb133362 inherit pub_methods_classManagementScene" id="r_a65fc31d78141601d12db68fcfb133362"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classManagementScene.html#a65fc31d78141601d12db68fcfb133362">onResume</a> () override</td></tr>
+<tr class="memdesc:a65fc31d78141601d12db68fcfb133362 inherit pub_methods_classManagementScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when an overlay above this scene closes and it becomes the active scene again. Screens use it to refresh cached view models after a match, a transfer or any other state change made elsewhere.  <br /></td></tr>
+<tr class="separator:a65fc31d78141601d12db68fcfb133362 inherit pub_methods_classManagementScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1a144db5815e153495cafeb1182328b inherit pub_methods_classManagementScene" id="r_ac1a144db5815e153495cafeb1182328b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classManagementScene.html#ac1a144db5815e153495cafeb1182328b">handleEvent</a> (const SDL_Event &amp;event) override</td></tr>
+<tr class="separator:ac1a144db5815e153495cafeb1182328b inherit pub_methods_classManagementScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a681f04573707e0ff942161479ea746bb inherit pub_methods_classManagementScene" id="r_a681f04573707e0ff942161479ea746bb"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structNavEntry.html">NavEntry</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classManagementScene.html#a681f04573707e0ff942161479ea746bb">historyEntry</a> () const override</td></tr>
+<tr class="separator:a681f04573707e0ff942161479ea746bb inherit pub_methods_classManagementScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classGUIScene"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classGUIScene')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classGUIScene.html">GUIScene</a></td></tr>
 <tr class="memitem:a081a8cd71983dc6f1dc8fb86c626cd11 inherit pub_methods_classGUIScene" id="r_a081a8cd71983dc6f1dc8fb86c626cd11"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a081a8cd71983dc6f1dc8fb86c626cd11">GUIScene</a> (<a class="el" href="classGUIView.html">GUIView</a> *guiView_ptr)</td></tr>
 <tr class="memdesc:a081a8cd71983dc6f1dc8fb86c626cd11 inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classGUIScene.html" title="Base class for all GUI scenes.">GUIScene</a>.  <br /></td></tr>
@@ -143,9 +220,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ada9a23ed72426396b25f46f1ec4ebf97 inherit pub_methods_classGUIScene" id="r_ada9a23ed72426396b25f46f1ec4ebf97"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#ada9a23ed72426396b25f46f1ec4ebf97">~GUIScene</a> ()=default</td></tr>
 <tr class="memdesc:ada9a23ed72426396b25f46f1ec4ebf97 inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroys the <a class="el" href="classGUIScene.html" title="Base class for all GUI scenes.">GUIScene</a>.  <br /></td></tr>
 <tr class="separator:ada9a23ed72426396b25f46f1ec4ebf97 inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a234a16aa00d64053c910e99c07a1122a inherit pub_methods_classGUIScene" id="r_a234a16aa00d64053c910e99c07a1122a"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a234a16aa00d64053c910e99c07a1122a">handleEvent</a> (const SDL_Event &amp;event)</td></tr>
-<tr class="memdesc:a234a16aa00d64053c910e99c07a1122a inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handles SDL events for the scene.  <br /></td></tr>
-<tr class="separator:a234a16aa00d64053c910e99c07a1122a inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene" id="r_afcc66fd1ac7245d74c3a139590d14cba"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#afcc66fd1ac7245d74c3a139590d14cba">onExit</a> ()</td></tr>
 <tr class="memdesc:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the scene is exited/becomes inactive.  <br /></td></tr>
 <tr class="separator:afcc66fd1ac7245d74c3a139590d14cba inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -153,30 +227,24 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the window is resized.  <br /></td></tr>
 <tr class="separator:aa4d608d00d7b5cd52b1456075a04647c inherit pub_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
-Private Member Functions</h2></td></tr>
-<tr class="memitem:ab00e61578adfd392fac13d0bae877deb" id="r_ab00e61578adfd392fac13d0bae877deb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ab00e61578adfd392fac13d0bae877deb">renderSidebar</a> ()</td></tr>
-<tr class="separator:ab00e61578adfd392fac13d0bae877deb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeaf88f6e9781eb6ce13b331f7631b3ed" id="r_aeaf88f6e9781eb6ce13b331f7631b3ed"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#aeaf88f6e9781eb6ce13b331f7631b3ed">renderMainArea</a> ()</td></tr>
-<tr class="separator:aeaf88f6e9781eb6ce13b331f7631b3ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a169c047d9f148ae83e10a5be892ba713" id="r_a169c047d9f148ae83e10a5be892ba713"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a169c047d9f148ae83e10a5be892ba713">renderTopBar</a> ()</td></tr>
-<tr class="separator:a169c047d9f148ae83e10a5be892ba713"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8a7bd1db9f842878c2c3122a71347062" id="r_a8a7bd1db9f842878c2c3122a71347062"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a8a7bd1db9f842878c2c3122a71347062">refreshData</a> ()</td></tr>
-<tr class="separator:a8a7bd1db9f842878c2c3122a71347062"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
-Private Attributes</h2></td></tr>
-<tr class="memitem:ad21ad4d9b247a93c1b494c6046dbb9c3" id="r_ad21ad4d9b247a93c1b494c6046dbb9c3"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; int, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ad21ad4d9b247a93c1b494c6046dbb9c3">cached_standings</a></td></tr>
-<tr class="separator:ad21ad4d9b247a93c1b494c6046dbb9c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a793f068be978bdcfedc3c6b15a29de0b" id="r_a793f068be978bdcfedc3c6b15a29de0b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a793f068be978bdcfedc3c6b15a29de0b">cached_top_players</a></td></tr>
-<tr class="separator:a793f068be978bdcfedc3c6b15a29de0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a21894e8216dc117865d35d1bb94d5051" id="r_a21894e8216dc117865d35d1bb94d5051"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a21894e8216dc117865d35d1bb94d5051">cached_season</a> = -1</td></tr>
-<tr class="separator:a21894e8216dc117865d35d1bb94d5051"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afda9685db8b1181693410bb4eb99ca06" id="r_afda9685db8b1181693410bb4eb99ca06"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#afda9685db8b1181693410bb4eb99ca06">cached_date</a></td></tr>
-<tr class="separator:afda9685db8b1181693410bb4eb99ca06"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:ae0817cc090fabe289025506127ec48cc" id="r_ae0817cc090fabe289025506127ec48cc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ae0817cc090fabe289025506127ec48cc">renderContent</a> () override</td></tr>
+<tr class="memdesc:ae0817cc090fabe289025506127ec48cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws the page body inside the content region.  <br /></td></tr>
+<tr class="separator:ae0817cc090fabe289025506127ec48cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9e7773f7f487a5a93aea640420a9693" id="r_ac9e7773f7f487a5a93aea640420a9693"><td class="memItemLeft" align="right" valign="top"><a class="el" href="nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875d">NavSection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ac9e7773f7f487a5a93aea640420a9693">navSection</a> () const override</td></tr>
+<tr class="memdesc:ac9e7773f7f487a5a93aea640420a9693"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sidebar entry highlighted for this screen.  <br /></td></tr>
+<tr class="separator:ac9e7773f7f487a5a93aea640420a9693"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa36d9f68f52b6754b5d84de0e15da77e" id="r_aa36d9f68f52b6754b5d84de0e15da77e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#aa36d9f68f52b6754b5d84de0e15da77e">refresh</a> () override</td></tr>
+<tr class="memdesc:aa36d9f68f52b6754b5d84de0e15da77e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rebuilds cached view models from the game state.  <br /></td></tr>
+<tr class="separator:aa36d9f68f52b6754b5d84de0e15da77e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_methods_classManagementScene"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classManagementScene')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classManagementScene.html">ManagementScene</a></td></tr>
+<tr class="memitem:a2f8e03d579276bee8760a49d393e7364 inherit pro_methods_classManagementScene" id="r_a2f8e03d579276bee8760a49d393e7364"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classManagementScene.html#a2f8e03d579276bee8760a49d393e7364">showToast</a> (std::string message, bool isError=false)</td></tr>
+<tr class="memdesc:a2f8e03d579276bee8760a49d393e7364 inherit pro_methods_classManagementScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shows a short confirmation message in the top bar.  <br /></td></tr>
+<tr class="separator:a2f8e03d579276bee8760a49d393e7364 inherit pro_methods_classManagementScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd59da40e5238cc8f69fe1d806a4a0ea inherit pro_methods_classManagementScene" id="r_abd59da40e5238cc8f69fe1d806a4a0ea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classHolidayDialog.html">HolidayDialog</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classManagementScene.html#abd59da40e5238cc8f69fe1d806a4a0ea">holidayDialog</a> ()</td></tr>
+<tr class="memdesc:abd59da40e5238cc8f69fe1d806a4a0ea inherit pro_methods_classManagementScene"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="namespaceHoliday.html" title="Targets and stop rules of &quot;continue until&quot;.">Holiday</a> planner and return report of this screen.  <br /></td></tr>
+<tr class="separator:abd59da40e5238cc8f69fe1d806a4a0ea inherit pro_methods_classManagementScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classGUIScene"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classGUIScene')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classGUIScene.html">GUIScene</a></td></tr>
 <tr class="memitem:a234f0775352d56c2e1a5d8ca2049970d inherit pro_methods_classGUIScene" id="r_a234f0775352d56c2e1a5d8ca2049970d"><td class="memItemLeft" align="right" valign="top">SDL_Renderer *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a234f0775352d56c2e1a5d8ca2049970d">getRenderer</a> () const</td></tr>
 <tr class="memdesc:a234f0775352d56c2e1a5d8ca2049970d inherit pro_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the SDL renderer.  <br /></td></tr>
@@ -193,13 +261,179 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:a87d222a9ff6abbfcd0d2879a114a8424 inherit pro_methods_classGUIScene" id="r_a87d222a9ff6abbfcd0d2879a114a8424"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#a87d222a9ff6abbfcd0d2879a114a8424">quit</a> ()</td></tr>
 <tr class="memdesc:a87d222a9ff6abbfcd0d2879a114a8424 inherit pro_methods_classGUIScene"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the application to quit.  <br /></td></tr>
 <tr class="separator:a87d222a9ff6abbfcd0d2879a114a8424 inherit pro_methods_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private Member Functions</h2></td></tr>
+<tr class="memitem:a70fdf4eb55c7d9ad216e43310586c466" id="r_a70fdf4eb55c7d9ad216e43310586c466"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a70fdf4eb55c7d9ad216e43310586c466">renderOverview</a> ()</td></tr>
+<tr class="separator:a70fdf4eb55c7d9ad216e43310586c466"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a954e8224ef1344c7fd90740ed3ade209" id="r_a954e8224ef1344c7fd90740ed3ade209"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a954e8224ef1344c7fd90740ed3ade209">renderFinances</a> ()</td></tr>
+<tr class="separator:a954e8224ef1344c7fd90740ed3ade209"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58249d7fdccc6a7694aa4d6c640dbec7" id="r_a58249d7fdccc6a7694aa4d6c640dbec7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a58249d7fdccc6a7694aa4d6c640dbec7">renderNextMatchCard</a> (float width, float height)</td></tr>
+<tr class="separator:a58249d7fdccc6a7694aa4d6c640dbec7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0523e6e3670e5f82f54efe3530f4505" id="r_ac0523e6e3670e5f82f54efe3530f4505"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ac0523e6e3670e5f82f54efe3530f4505">renderStandingsCard</a> (float width, float height)</td></tr>
+<tr class="separator:ac0523e6e3670e5f82f54efe3530f4505"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61a4a648d50f7866d97dbfc08b01235d" id="r_a61a4a648d50f7866d97dbfc08b01235d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a61a4a648d50f7866d97dbfc08b01235d">renderRecentResultsCard</a> (float width, float height)</td></tr>
+<tr class="separator:a61a4a648d50f7866d97dbfc08b01235d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a675704b22bc0fa1cf51e030ea5e51bd5" id="r_a675704b22bc0fa1cf51e030ea5e51bd5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a675704b22bc0fa1cf51e030ea5e51bd5">renderKeyPlayersCard</a> (float width, float height)</td></tr>
+<tr class="separator:a675704b22bc0fa1cf51e030ea5e51bd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9cb52cfb875217360fa9298d85d0f456" id="r_a9cb52cfb875217360fa9298d85d0f456"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a9cb52cfb875217360fa9298d85d0f456">startContinuation</a> ()</td></tr>
+<tr class="separator:a9cb52cfb875217360fa9298d85d0f456"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5160010ea6b8097ab71a42daee6e810f" id="r_a5160010ea6b8097ab71a42daee6e810f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a5160010ea6b8097ab71a42daee6e810f">autoFixLineup</a> ()</td></tr>
+<tr class="separator:a5160010ea6b8097ab71a42daee6e810f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abbd582c2386edb9403b23c7bb0b6c3b5" id="r_abbd582c2386edb9403b23c7bb0b6c3b5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#abbd582c2386edb9403b23c7bb0b6c3b5">lineupBlocked</a> () const</td></tr>
+<tr class="separator:abbd582c2386edb9403b23c7bb0b6c3b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a7bd1db9f842878c2c3122a71347062" id="r_a8a7bd1db9f842878c2c3122a71347062"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a8a7bd1db9f842878c2c3122a71347062">refreshData</a> ()</td></tr>
+<tr class="separator:a8a7bd1db9f842878c2c3122a71347062"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad27553ac64cba585405c417fa2fc7315" id="r_ad27553ac64cba585405c417fa2fc7315"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ad27553ac64cba585405c417fa2fc7315">showPendingSeasonReview</a> ()</td></tr>
+<tr class="separator:ad27553ac64cba585405c417fa2fc7315"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8fb2be8dda9d501f14c5f3f9e9a38bcb" id="r_a8fb2be8dda9d501f14c5f3f9e9a38bcb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a8fb2be8dda9d501f14c5f3f9e9a38bcb">renderSeasonReview</a> ()</td></tr>
+<tr class="separator:a8fb2be8dda9d501f14c5f3f9e9a38bcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2238cebf0dfb81b6469d380f936bbf54" id="r_a2238cebf0dfb81b6469d380f936bbf54"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a2238cebf0dfb81b6469d380f936bbf54">trackContinueProgress</a> ()</td></tr>
+<tr class="separator:a2238cebf0dfb81b6469d380f936bbf54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
+Private Attributes</h2></td></tr>
+<tr class="memitem:a1f949a3b6d96b29943de583a842c5f01" id="r_a1f949a3b6d96b29943de583a842c5f01"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMainGameScene.html#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2">Page</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a1f949a3b6d96b29943de583a842c5f01">active_page</a> = <a class="el" href="classMainGameScene.html#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2a3b9ae4ee5ef6dced299692fd7b1ffc24">Page::OVERVIEW</a></td></tr>
+<tr class="separator:a1f949a3b6d96b29943de583a842c5f01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79f3d573b49b9941c55431d883d4b995" id="r_a79f3d573b49b9941c55431d883d4b995"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classWelcomeTour.html">WelcomeTour</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a79f3d573b49b9941c55431d883d4b995">welcome_tour</a></td></tr>
+<tr class="separator:a79f3d573b49b9941c55431d883d4b995"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a93786593b0bd901f65ffb300db470957" id="r_a93786593b0bd901f65ffb300db470957"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a93786593b0bd901f65ffb300db470957">welcome_requested</a> = false</td></tr>
+<tr class="separator:a93786593b0bd901f65ffb300db470957"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00e862aba03288f2f84c7824d7dbd9f9" id="r_a00e862aba03288f2f84c7824d7dbd9f9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSeasonReviewDialog.html">SeasonReviewDialog</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a00e862aba03288f2f84c7824d7dbd9f9">season_review_dialog</a></td></tr>
+<tr class="separator:a00e862aba03288f2f84c7824d7dbd9f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad21ad4d9b247a93c1b494c6046dbb9c3" id="r_ad21ad4d9b247a93c1b494c6046dbb9c3"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; int, int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ad21ad4d9b247a93c1b494c6046dbb9c3">cached_standings</a></td></tr>
+<tr class="separator:ad21ad4d9b247a93c1b494c6046dbb9c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a793f068be978bdcfedc3c6b15a29de0b" id="r_a793f068be978bdcfedc3c6b15a29de0b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="classPlayer.html">Player</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a793f068be978bdcfedc3c6b15a29de0b">cached_top_players</a></td></tr>
+<tr class="separator:a793f068be978bdcfedc3c6b15a29de0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21894e8216dc117865d35d1bb94d5051" id="r_a21894e8216dc117865d35d1bb94d5051"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a21894e8216dc117865d35d1bb94d5051">cached_season</a> = -1</td></tr>
+<tr class="separator:a21894e8216dc117865d35d1bb94d5051"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afda9685db8b1181693410bb4eb99ca06" id="r_afda9685db8b1181693410bb4eb99ca06"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#afda9685db8b1181693410bb4eb99ca06">cached_date</a></td></tr>
+<tr class="separator:afda9685db8b1181693410bb4eb99ca06"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a776fe42d502428a64cc4791e477aa1c2" id="r_a776fe42d502428a64cc4791e477aa1c2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a776fe42d502428a64cc4791e477aa1c2">cached_club</a> = 0</td></tr>
+<tr class="separator:a776fe42d502428a64cc4791e477aa1c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06c058bd47f79dbb5fed0f0c6a0552ee" id="r_a06c058bd47f79dbb5fed0f0c6a0552ee"><td class="memItemLeft" align="right" valign="top">std::future&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a06c058bd47f79dbb5fed0f0c6a0552ee">continue_operation</a></td></tr>
+<tr class="separator:a06c058bd47f79dbb5fed0f0c6a0552ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c7950249b831ff92997f70f4e862820" id="r_a9c7950249b831ff92997f70f4e862820"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a9c7950249b831ff92997f70f4e862820">continuation_running</a> = false</td></tr>
+<tr class="separator:a9c7950249b831ff92997f70f4e862820"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef61ce98d808c40a6146b70cab480bba" id="r_aef61ce98d808c40a6146b70cab480bba"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#aef61ce98d808c40a6146b70cab480bba">continuation_requested</a> = false</td></tr>
+<tr class="separator:aef61ce98d808c40a6146b70cab480bba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52dd10ebe6c2a93371522a9f78a4d721" id="r_a52dd10ebe6c2a93371522a9f78a4d721"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structHolidayPlan.html">HolidayPlan</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a52dd10ebe6c2a93371522a9f78a4d721">pending_holiday</a></td></tr>
+<tr class="separator:a52dd10ebe6c2a93371522a9f78a4d721"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a617d92b7639e9be0e83b5655be53e60d" id="r_a617d92b7639e9be0e83b5655be53e60d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a617d92b7639e9be0e83b5655be53e60d">holiday_running</a> = false</td></tr>
+<tr class="separator:a617d92b7639e9be0e83b5655be53e60d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51f942ba83904fb407976a18ea70d251" id="r_a51f942ba83904fb407976a18ea70d251"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a51f942ba83904fb407976a18ea70d251">stop_on_close</a> = false</td></tr>
+<tr class="separator:a51f942ba83904fb407976a18ea70d251"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d8b37adfb7f577246126d22e112a01a" id="r_a0d8b37adfb7f577246126d22e112a01a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a0d8b37adfb7f577246126d22e112a01a">stop_requested</a> = false</td></tr>
+<tr class="separator:a0d8b37adfb7f577246126d22e112a01a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a93dba32fd8bb54691f259a2cde95f1" id="r_a3a93dba32fd8bb54691f259a2cde95f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classGameController.html">GameController</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a3a93dba32fd8bb54691f259a2cde95f1">continue_controller</a> = nullptr</td></tr>
+<tr class="separator:a3a93dba32fd8bb54691f259a2cde95f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4eb2619943415f8232d906f1a85c6c21" id="r_a4eb2619943415f8232d906f1a85c6c21"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structMainGameScene_1_1PlayedMatch.html">PlayedMatch</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a4eb2619943415f8232d906f1a85c6c21">match_report</a></td></tr>
+<tr class="separator:a4eb2619943415f8232d906f1a85c6c21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a337d0f2cdc93ad6ae66ca3f6ded0c7a6" id="r_a337d0f2cdc93ad6ae66ca3f6ded0c7a6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameDateValue.html">GameDateValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a337d0f2cdc93ad6ae66ca3f6ded0c7a6">continue_start_date</a></td></tr>
+<tr class="separator:a337d0f2cdc93ad6ae66ca3f6ded0c7a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a682261dcc56b94f34a831a1c5abb2f75" id="r_a682261dcc56b94f34a831a1c5abb2f75"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structGameController_1_1ContinueProgress.html">GameController::ContinueProgress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a682261dcc56b94f34a831a1c5abb2f75">continue_progress</a></td></tr>
+<tr class="separator:a682261dcc56b94f34a831a1c5abb2f75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1570e3b399bf02990a522223daee9dcb" id="r_a1570e3b399bf02990a522223daee9dcb"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a1570e3b399bf02990a522223daee9dcb">continue_logged_day</a> = 0</td></tr>
+<tr class="separator:a1570e3b399bf02990a522223daee9dcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1bdb526720d8a377b73525736f884ea3" id="r_a1bdb526720d8a377b73525736f884ea3"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a1bdb526720d8a377b73525736f884ea3">continue_day_matches</a> = 0</td></tr>
+<tr class="separator:a1bdb526720d8a377b73525736f884ea3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2dea8e7dc24655cfa538948bde6769c" id="r_ab2dea8e7dc24655cfa538948bde6769c"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ab2dea8e7dc24655cfa538948bde6769c">continue_log</a></td></tr>
+<tr class="separator:ab2dea8e7dc24655cfa538948bde6769c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17842146176b4d1089b12ac53d197ebf" id="r_a17842146176b4d1089b12ac53d197ebf"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a17842146176b4d1089b12ac53d197ebf">continue_started_at</a> = 0.0</td></tr>
+<tr class="separator:a17842146176b4d1089b12ac53d197ebf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3821b1d39de65dc50bd10668a42baa95" id="r_a3821b1d39de65dc50bd10668a42baa95"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a3821b1d39de65dc50bd10668a42baa95">continue_finished_at</a> = -1.0</td></tr>
+<tr class="separator:a3821b1d39de65dc50bd10668a42baa95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1abaf90c3d095ea172d3be4a6dd0486c" id="r_a1abaf90c3d095ea172d3be4a6dd0486c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a1abaf90c3d095ea172d3be4a6dd0486c">continue_overlay_shown</a> = false</td></tr>
+<tr class="separator:a1abaf90c3d095ea172d3be4a6dd0486c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af036c0d8dd2eb7e964ac648a613a8638" id="r_af036c0d8dd2eb7e964ac648a613a8638"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structCompetitionView_1_1StandingRow.html">CompetitionView::StandingRow</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#af036c0d8dd2eb7e964ac648a613a8638">cached_table</a></td></tr>
+<tr class="separator:af036c0d8dd2eb7e964ac648a613a8638"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f14d936ed15a758a1286588ab520d39" id="r_a8f14d936ed15a758a1286588ab520d39"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structCompetitionView_1_1Zones.html">CompetitionView::Zones</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a8f14d936ed15a758a1286588ab520d39">cached_zones</a></td></tr>
+<tr class="separator:a8f14d936ed15a758a1286588ab520d39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44aed87eec3ee7e844b6e9e8ebbe6b29" id="r_a44aed87eec3ee7e844b6e9e8ebbe6b29"><td class="memItemLeft" align="right" valign="top">std::unordered_set&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a44aed87eec3ee7e844b6e9e8ebbe6b29">cached_unavailable</a></td></tr>
+<tr class="separator:a44aed87eec3ee7e844b6e9e8ebbe6b29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af92f7011157e762ff0af091f0af1afd9" id="r_af92f7011157e762ff0af091f0af1afd9"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#af92f7011157e762ff0af091f0af1afd9">cached_starters</a> = 0</td></tr>
+<tr class="separator:af92f7011157e762ff0af091f0af1afd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31127a75495db48189d48092ac96b85b" id="r_a31127a75495db48189d48092ac96b85b"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a31127a75495db48189d48092ac96b85b">cached_unavailable_starters</a> = 0</td></tr>
+<tr class="separator:a31127a75495db48189d48092ac96b85b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c222cfd2746d7c79ca68b03737d2f8d" id="r_a3c222cfd2746d7c79ca68b03737d2f8d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a3c222cfd2746d7c79ca68b03737d2f8d">cached_can_kick_off</a> = true</td></tr>
+<tr class="separator:a3c222cfd2746d7c79ca68b03737d2f8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af83f9e6e4aed0ad6ba634da80b952e28" id="r_af83f9e6e4aed0ad6ba634da80b952e28"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structCompetitionView_1_1FixtureRow.html">CompetitionView::FixtureRow</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#af83f9e6e4aed0ad6ba634da80b952e28">cached_recent</a></td></tr>
+<tr class="separator:af83f9e6e4aed0ad6ba634da80b952e28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abfd8c854fcf84bf74acec18f28025131" id="r_abfd8c854fcf84bf74acec18f28025131"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structCompetitionView_1_1FixtureRow.html">CompetitionView::FixtureRow</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#abfd8c854fcf84bf74acec18f28025131">cached_next</a></td></tr>
+<tr class="separator:abfd8c854fcf84bf74acec18f28025131"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab03572c4766155faffb0afc7bc0c2445" id="r_ab03572c4766155faffb0afc7bc0c2445"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structPlayerView_1_1PlayerRow.html">PlayerView::PlayerRow</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ab03572c4766155faffb0afc7bc0c2445">cached_squad</a></td></tr>
+<tr class="separator:ab03572c4766155faffb0afc7bc0c2445"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf54e3142e9ba217c1c3dfd3074d6435" id="r_adf54e3142e9ba217c1c3dfd3074d6435"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#adf54e3142e9ba217c1c3dfd3074d6435">cached_payroll</a> = 0</td></tr>
+<tr class="separator:adf54e3142e9ba217c1c3dfd3074d6435"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af80154873f24f0e5d7d808d420fe3379" id="r_af80154873f24f0e5d7d808d420fe3379"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#af80154873f24f0e5d7d808d420fe3379">cached_squad_value</a> = 0</td></tr>
+<tr class="separator:af80154873f24f0e5d7d808d420fe3379"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0f47c829fc78b9f592907ace1c06c75" id="r_ad0f47c829fc78b9f592907ace1c06c75"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ad0f47c829fc78b9f592907ace1c06c75">cached_transfer_budget</a> = 0</td></tr>
+<tr class="separator:ad0f47c829fc78b9f592907ace1c06c75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad4bdc0c40b0d6094b8232ca60c76add" id="r_aad4bdc0c40b0d6094b8232ca60c76add"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#aad4bdc0c40b0d6094b8232ca60c76add">cached_embargo</a> = false</td></tr>
+<tr class="separator:aad4bdc0c40b0d6094b8232ca60c76add"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e55595bc68ccbdf856bbdfd3f0634c8" id="r_a7e55595bc68ccbdf856bbdfd3f0634c8"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a7e55595bc68ccbdf856bbdfd3f0634c8">cached_average_overall</a> = 0.0f</td></tr>
+<tr class="separator:a7e55595bc68ccbdf856bbdfd3f0634c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adec8cbb48093d347e9778aae46e5b500" id="r_adec8cbb48093d347e9778aae46e5b500"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structFinanceSummary.html">FinanceSummary</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#adec8cbb48093d347e9778aae46e5b500">cached_season_summary</a></td></tr>
+<tr class="separator:adec8cbb48093d347e9778aae46e5b500"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac11b0a9e91c6355510017861014c176e" id="r_ac11b0a9e91c6355510017861014c176e"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structMainGameScene_1_1FinanceBar.html">FinanceBar</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ac11b0a9e91c6355510017861014c176e">cached_finance_bars</a></td></tr>
+<tr class="separator:ac11b0a9e91c6355510017861014c176e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac95cc9b88ade7dc70f5943feef3e3a3f" id="r_ac95cc9b88ade7dc70f5943feef3e3a3f"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structMainGameScene_1_1FinanceBar.html">FinanceBar</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ac95cc9b88ade7dc70f5943feef3e3a3f">cached_month_bars</a></td></tr>
+<tr class="separator:ac95cc9b88ade7dc70f5943feef3e3a3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4513858f23a4dc035f88ca8c5669294" id="r_ac4513858f23a4dc035f88ca8c5669294"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#ac4513858f23a4dc035f88ca8c5669294">finance_show_month</a> = false</td></tr>
+<tr class="separator:ac4513858f23a4dc035f88ca8c5669294"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71e555d5cdbc6683faa6bf3265dbb150" id="r_a71e555d5cdbc6683faa6bf3265dbb150"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structMainGameScene_1_1LedgerRow.html">LedgerRow</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a71e555d5cdbc6683faa6bf3265dbb150">cached_ledger</a></td></tr>
+<tr class="separator:a71e555d5cdbc6683faa6bf3265dbb150"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ffd73e6f24a79035b1545eb820b33b4" id="r_a3ffd73e6f24a79035b1545eb820b33b4"><td class="memItemLeft" align="right" valign="top">std::vector&lt; float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a3ffd73e6f24a79035b1545eb820b33b4">cached_balance_trend</a></td></tr>
+<tr class="separator:a3ffd73e6f24a79035b1545eb820b33b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a46d0fe1231388d5691766c5b3c50d822" id="r_a46d0fe1231388d5691766c5b3c50d822"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a46d0fe1231388d5691766c5b3c50d822">budget_shift</a> = 0.0f</td></tr>
+<tr class="separator:a46d0fe1231388d5691766c5b3c50d822"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a068383f8ec2fc85bab2053c7f9ab3136" id="r_a068383f8ec2fc85bab2053c7f9ab3136"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classNextStepsCard.html">NextStepsCard</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#a068383f8ec2fc85bab2053c7f9ab3136">next_steps</a></td></tr>
+<tr class="separator:a068383f8ec2fc85bab2053c7f9ab3136"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:af70851c82f5c5d3e1b6b40e55b6d8532" id="r_af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMainGameScene.html#af70851c82f5c5d3e1b6b40e55b6d8532">GameFlowTest_GUIFlowLifecycle_Test</a></td></tr>
+<tr class="separator:af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_attribs_classGUIScene"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classGUIScene')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classGUIScene.html">GUIScene</a></td></tr>
 <tr class="memitem:af5bdff54b79d3b097e7bdf4df2d5e4c9 inherit pro_attribs_classGUIScene" id="r_af5bdff54b79d3b097e7bdf4df2d5e4c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classGUIView.html">GUIView</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIScene.html#af5bdff54b79d3b097e7bdf4df2d5e4c9">guiView</a></td></tr>
 <tr class="separator:af5bdff54b79d3b097e7bdf4df2d5e4c9 inherit pro_attribs_classGUIScene"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Scene for the main game dashboard. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<div class="textblock"><p>Club hub: the base scene of a career. </p>
+<p>Hosts the Home dashboard and the <a class="el" href="classFinances.html" title="A club&#39;s balance, budgets and dated transaction ledger.">Finances</a> page, and owns the career clock (Continue / Play <a class="el" href="classMatch.html" title="Represents a football match between two teams.">Match</a>). Other management screens are opened above it and drive the clock through <a class="el" href="classMainGameScene.html#aef930ceac54d5fa6202ca95ece8d8d7e" title="Plays today&#39;s match, or returns to the hub and simulates days up to the next managed fixture.">requestContinue()</a>. </p>
+</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<a id="a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2" name="a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2">&#9670;&#160;</a></span>Page</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="classMainGameScene.html#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2">MainGameScene::Page</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Pages hosted directly by the club hub. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2a3b9ae4ee5ef6dced299692fd7b1ffc24" name="a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2a3b9ae4ee5ef6dced299692fd7b1ffc24"></a>OVERVIEW&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2a156253748c473e922440d93397271317" name="a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2a156253748c473e922440d93397271317"></a>FINANCES&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a07ca378b094f7615f11bbae986e95a48" name="a07ca378b094f7615f11bbae986e95a48"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a07ca378b094f7615f11bbae986e95a48">&#9670;&#160;</a></span>MainGameScene()</h2>
 
@@ -224,7 +458,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Constructs a new <a class="el" href="classMainGameScene.html" title="Scene for the main game dashboard.">MainGameScene</a>. </p>
+<p>Constructs a new <a class="el" href="classMainGameScene.html" title="Club hub: the base scene of a career.">MainGameScene</a>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">guiView_ptr</td><td>Pointer to the <a class="el" href="classGUIView.html" title="Main view manager for the GUI. Handles scenes and overlays.">GUIView</a>. </td></tr>
@@ -234,8 +468,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a7e74413c42acb008ab95aba21d1c249e" name="a7e74413c42acb008ab95aba21d1c249e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7e74413c42acb008ab95aba21d1c249e">&#9670;&#160;</a></span>~MainGameScene()</h2>
+<a id="a0bbc976e8bb22a663eb79a3cc6d4dd7a" name="a0bbc976e8bb22a663eb79a3cc6d4dd7a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0bbc976e8bb22a663eb79a3cc6d4dd7a">&#9670;&#160;</a></span>~MainGameScene()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -252,16 +486,79 @@ Additional Inherited Members</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">default</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Destroys the <a class="el" href="classMainGameScene.html" title="Scene for the main game dashboard.">MainGameScene</a>. </p>
+<p>Destroys the <a class="el" href="classMainGameScene.html" title="Club hub: the base scene of a career.">MainGameScene</a>. A holiday or off-season run still simulating stops at the end of its current day; a Continue to the next fixture finishes its days first. </p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a5160010ea6b8097ab71a42daee6e810f" name="a5160010ea6b8097ab71a42daee6e810f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5160010ea6b8097ab71a42daee6e810f">&#9670;&#160;</a></span>autoFixLineup()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::autoFixLineup </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a63e331d6c3b6ca7a1e23efebef263c35" name="a63e331d6c3b6ca7a1e23efebef263c35"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a63e331d6c3b6ca7a1e23efebef263c35">&#9670;&#160;</a></span>continueFadeOut()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MainGameScene::continueFadeOut </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Opacity of the dimming that fades out after Continue ends. </p>
+
+</div>
+</div>
+<a id="a79fce57c9513cfa239d9680566972a76" name="a79fce57c9513cfa239d9680566972a76"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a79fce57c9513cfa239d9680566972a76">&#9670;&#160;</a></span>continueLabel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string MainGameScene::continueLabel </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Label of the context-aware Continue / Play <a class="el" href="classMatch.html" title="Represents a football match between two teams.">Match</a> button. </p>
+
+</div>
+</div>
 <a id="a8d9498d24dc90d11bd48a5b74dc10853" name="a8d9498d24dc90d11bd48a5b74dc10853"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8d9498d24dc90d11bd48a5b74dc10853">&#9670;&#160;</a></span>getID()</h2>
 
@@ -289,6 +586,169 @@ Additional Inherited Members</h2></td></tr>
 <dl class="section return"><dt>Returns</dt><dd>The SceneID (GAME_MENU). </dd></dl>
 
 <p>Implements <a class="el" href="classGUIScene.html#adc23f98639a131403f09cc46133fcd04">GUIScene</a>.</p>
+
+</div>
+</div>
+<a id="aa8358e6f954c3a05a60db00c1b1877f1" name="aa8358e6f954c3a05a60db00c1b1877f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa8358e6f954c3a05a60db00c1b1877f1">&#9670;&#160;</a></span>isAdvancing()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::isAdvancing </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>True while days are being simulated in the background. </p>
+
+</div>
+</div>
+<a id="ab32c89a4a05825322a8b125ee3a0e470" name="ab32c89a4a05825322a8b125ee3a0e470"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab32c89a4a05825322a8b125ee3a0e470">&#9670;&#160;</a></span>isContinuing()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::isContinuing </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>True from the Continue request until the days are simulated, including the frames spent closing the screens above the hub first. </p>
+
+</div>
+</div>
+<a id="ac76b2c9100f1fbefc4fe1f491e312e4b" name="ac76b2c9100f1fbefc4fe1f491e312e4b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac76b2c9100f1fbefc4fe1f491e312e4b">&#9670;&#160;</a></span>isShowingSeasonReview()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::isShowingSeasonReview </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>True while the end-of-season summary is open. </p>
+
+</div>
+</div>
+<a id="abbd582c2386edb9403b23c7bb0b6c3b5" name="abbd582c2386edb9403b23c7bb0b6c3b5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abbd582c2386edb9403b23c7bb0b6c3b5">&#9670;&#160;</a></span>lineupBlocked()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::lineupBlocked </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The next fixture's selection has unavailable players the assistant could still replace (players nobody fit can replace play through it). </p>
+
+</div>
+</div>
+<a id="ac9e7773f7f487a5a93aea640420a9693" name="ac9e7773f7f487a5a93aea640420a9693"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac9e7773f7f487a5a93aea640420a9693">&#9670;&#160;</a></span>navSection()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875d">NavSection</a> MainGameScene::navSection </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sidebar entry highlighted for this screen. </p>
+
+<p>Implements <a class="el" href="classManagementScene.html#a52ea92759f258e9018822eb548ed0962">ManagementScene</a>.</p>
+
+</div>
+</div>
+<a id="ad7dd3828982543910262a59a6d9cc98b" name="ad7dd3828982543910262a59a6d9cc98b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad7dd3828982543910262a59a6d9cc98b">&#9670;&#160;</a></span>offerWelcome()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::offerWelcome </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Shows the welcome tour over Home next frame (a career just started from the club choice, or a replay asked for on Help). </p>
 
 </div>
 </div>
@@ -321,6 +781,35 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="aa36d9f68f52b6754b5d84de0e15da77e" name="aa36d9f68f52b6754b5d84de0e15da77e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa36d9f68f52b6754b5d84de0e15da77e">&#9670;&#160;</a></span>refresh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::refresh </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Rebuilds cached view models from the game state. </p>
+
+<p>Reimplemented from <a class="el" href="classManagementScene.html#af886eddb1a9a30d31d59a1b7dd4818ec">ManagementScene</a>.</p>
+
+</div>
+</div>
 <a id="a8a7bd1db9f842878c2c3122a71347062" name="a8a7bd1db9f842878c2c3122a71347062"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8a7bd1db9f842878c2c3122a71347062">&#9670;&#160;</a></span>refreshData()</h2>
 
@@ -346,8 +835,27 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="aa867613f41457c7d8f0a1bc68456a535" name="aa867613f41457c7d8f0a1bc68456a535"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa867613f41457c7d8f0a1bc68456a535">&#9670;&#160;</a></span>render()</h2>
+<a id="aeb946d504f22c6b897b22a5c17b77b1f" name="aeb946d504f22c6b897b22a5c17b77b1f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeb946d504f22c6b897b22a5c17b77b1f">&#9670;&#160;</a></span>refreshIfStale()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::refreshIfStale </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Rebuilds the cached career data when the date moved on or the cached next fixture has been played elsewhere (e.g. a quick result). </p>
+
+</div>
+</div>
+<a id="ae0817cc090fabe289025506127ec48cc" name="ae0817cc090fabe289025506127ec48cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae0817cc090fabe289025506127ec48cc">&#9670;&#160;</a></span>renderContent()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -356,7 +864,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void MainGameScene::render </td>
+          <td class="memname">void MainGameScene::renderContent </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -364,19 +872,38 @@ Additional Inherited Members</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Renders the scene. </p>
+<p>Draws the page body inside the content region. </p>
 
-<p>Implements <a class="el" href="classGUIScene.html#a756a4847362ceea0561ac060b9ab824b">GUIScene</a>.</p>
+<p>Implements <a class="el" href="classManagementScene.html#a3218678facfd72cbd4a6213f7101e515">ManagementScene</a>.</p>
 
 </div>
 </div>
-<a id="aeaf88f6e9781eb6ce13b331f7631b3ed" name="aeaf88f6e9781eb6ce13b331f7631b3ed"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeaf88f6e9781eb6ce13b331f7631b3ed">&#9670;&#160;</a></span>renderMainArea()</h2>
+<a id="a0ca617109f479f90e22fea0a40cf0898" name="a0ca617109f479f90e22fea0a40cf0898"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0ca617109f479f90e22fea0a40cf0898">&#9670;&#160;</a></span>renderContinueOverlay()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::renderContinueOverlay </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Draws the Continue progress card over a dimmed snapshot of the screen. Reads only the controller's thread-safe progress, never game state, because days are being simulated on a worker thread. </p>
+
+</div>
+</div>
+<a id="a954e8224ef1344c7fd90740ed3ade209" name="a954e8224ef1344c7fd90740ed3ade209"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a954e8224ef1344c7fd90740ed3ade209">&#9670;&#160;</a></span>renderFinances()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -385,7 +912,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void MainGameScene::renderMainArea </td>
+          <td class="memname">void MainGameScene::renderFinances </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -400,8 +927,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="ab00e61578adfd392fac13d0bae877deb" name="ab00e61578adfd392fac13d0bae877deb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab00e61578adfd392fac13d0bae877deb">&#9670;&#160;</a></span>renderSidebar()</h2>
+<a id="a675704b22bc0fa1cf51e030ea5e51bd5" name="a675704b22bc0fa1cf51e030ea5e51bd5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a675704b22bc0fa1cf51e030ea5e51bd5">&#9670;&#160;</a></span>renderKeyPlayersCard()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -410,7 +937,79 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void MainGameScene::renderSidebar </td>
+          <td class="memname">void MainGameScene::renderKeyPlayersCard </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>width</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>height</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a58249d7fdccc6a7694aa4d6c640dbec7" name="a58249d7fdccc6a7694aa4d6c640dbec7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58249d7fdccc6a7694aa4d6c640dbec7">&#9670;&#160;</a></span>renderNextMatchCard()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::renderNextMatchCard </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>width</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>height</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a70fdf4eb55c7d9ad216e43310586c466" name="a70fdf4eb55c7d9ad216e43310586c466"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a70fdf4eb55c7d9ad216e43310586c466">&#9670;&#160;</a></span>renderOverview()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::renderOverview </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -425,8 +1024,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a169c047d9f148ae83e10a5be892ba713" name="a169c047d9f148ae83e10a5be892ba713"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a169c047d9f148ae83e10a5be892ba713">&#9670;&#160;</a></span>renderTopBar()</h2>
+<a id="a61a4a648d50f7866d97dbfc08b01235d" name="a61a4a648d50f7866d97dbfc08b01235d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a61a4a648d50f7866d97dbfc08b01235d">&#9670;&#160;</a></span>renderRecentResultsCard()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -435,7 +1034,277 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void MainGameScene::renderTopBar </td>
+          <td class="memname">void MainGameScene::renderRecentResultsCard </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>width</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>height</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8fb2be8dda9d501f14c5f3f9e9a38bcb" name="a8fb2be8dda9d501f14c5f3f9e9a38bcb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8fb2be8dda9d501f14c5f3f9e9a38bcb">&#9670;&#160;</a></span>renderSeasonReview()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::renderSeasonReview </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac0523e6e3670e5f82f54efe3530f4505" name="ac0523e6e3670e5f82f54efe3530f4505"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0523e6e3670e5f82f54efe3530f4505">&#9670;&#160;</a></span>renderStandingsCard()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::renderStandingsCard </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>width</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>height</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aef930ceac54d5fa6202ca95ece8d8d7e" name="aef930ceac54d5fa6202ca95ece8d8d7e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef930ceac54d5fa6202ca95ece8d8d7e">&#9670;&#160;</a></span>requestContinue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::requestContinue </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Plays today's match, or returns to the hub and simulates days up to the next managed fixture. </p>
+
+</div>
+</div>
+<a id="a45682d2c40f37a7fe48fc159ce37ee62" name="a45682d2c40f37a7fe48fc159ce37ee62"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45682d2c40f37a7fe48fc159ce37ee62">&#9670;&#160;</a></span>requestHoliday()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::requestHoliday </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structHolidayPlan.html">HolidayPlan</a> &amp;&#160;</td>
+          <td class="paramname"><em>plan</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns to the hub and simulates days with the assistant in charge until the plan ends; the report opens when it is done. </p>
+
+</div>
+</div>
+<a id="a9846e57dcbc1e0fc594b749993026d40" name="a9846e57dcbc1e0fc594b749993026d40"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9846e57dcbc1e0fc594b749993026d40">&#9670;&#160;</a></span>requestPostMatchAdvance()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::requestPostMatchAdvance </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structGameDateValue.html">GameDateValue</a> &amp;&#160;</td>
+          <td class="paramname"><em>date</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>home_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td>
+          <td class="paramname"><em>away_id</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>After a managed match has been recorded: returns to the hub and simulates the rest of the day on the Continue worker, then opens the match's report. </p>
+
+</div>
+</div>
+<a id="afacb18899b401e9cb88d60f4d7926195" name="afacb18899b401e9cb88d60f4d7926195"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afacb18899b401e9cb88d60f4d7926195">&#9670;&#160;</a></span>requestStop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::requestStop </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Asks the running Continue or holiday to stop at the end of the day being simulated (the Stop button of the progress card). </p>
+
+</div>
+</div>
+<a id="a6122c3d7706ac4d8960b917db3d0fdad" name="a6122c3d7706ac4d8960b917db3d0fdad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6122c3d7706ac4d8960b917db3d0fdad">&#9670;&#160;</a></span>showPage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::showPage </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMainGameScene.html#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2">Page</a>&#160;</td>
+          <td class="paramname"><em>page</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Switches the page shown by the hub. </p>
+
+</div>
+</div>
+<a id="ad27553ac64cba585405c417fa2fc7315" name="ad27553ac64cba585405c417fa2fc7315"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad27553ac64cba585405c417fa2fc7315">&#9670;&#160;</a></span>showPendingSeasonReview()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::showPendingSeasonReview </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Opens the season summary once nothing else is in the way. </p>
+
+</div>
+</div>
+<a id="a9cb52cfb875217360fa9298d85d0f456" name="a9cb52cfb875217360fa9298d85d0f456"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9cb52cfb875217360fa9298d85d0f456">&#9670;&#160;</a></span>startContinuation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::startContinuation </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2238cebf0dfb81b6469d380f936bbf54" name="a2238cebf0dfb81b6469d380f936bbf54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2238cebf0dfb81b6469d380f936bbf54">&#9670;&#160;</a></span>trackContinueProgress()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MainGameScene::trackContinueProgress </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -486,7 +1355,191 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="ae0c433dc307c2106616cced254883470" name="ae0c433dc307c2106616cced254883470"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae0c433dc307c2106616cced254883470">&#9670;&#160;</a></span>welcomeTour()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classWelcomeTour.html">WelcomeTour</a> &amp; MainGameScene::welcomeTour </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>The welcome tour (open while it is shown). </p>
+
+</div>
+</div>
+<h2 class="groupheader">Friends And Related Symbol Documentation</h2>
+<a id="af70851c82f5c5d3e1b6b40e55b6d8532" name="af70851c82f5c5d3e1b6b40e55b6d8532"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af70851c82f5c5d3e1b6b40e55b6d8532">&#9670;&#160;</a></span>GameFlowTest_GUIFlowLifecycle_Test</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class GameFlowTest_GUIFlowLifecycle_Test</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a id="a1f949a3b6d96b29943de583a842c5f01" name="a1f949a3b6d96b29943de583a842c5f01"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1f949a3b6d96b29943de583a842c5f01">&#9670;&#160;</a></span>active_page</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMainGameScene.html#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2">Page</a> MainGameScene::active_page = <a class="el" href="classMainGameScene.html#a28f2bab0cb4b6dfa5ae9ddb3bd1fecf2a3b9ae4ee5ef6dced299692fd7b1ffc24">Page::OVERVIEW</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a46d0fe1231388d5691766c5b3c50d822" name="a46d0fe1231388d5691766c5b3c50d822"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a46d0fe1231388d5691766c5b3c50d822">&#9670;&#160;</a></span>budget_shift</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MainGameScene::budget_shift = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7e55595bc68ccbdf856bbdfd3f0634c8" name="a7e55595bc68ccbdf856bbdfd3f0634c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e55595bc68ccbdf856bbdfd3f0634c8">&#9670;&#160;</a></span>cached_average_overall</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MainGameScene::cached_average_overall = 0.0f</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3ffd73e6f24a79035b1545eb820b33b4" name="a3ffd73e6f24a79035b1545eb820b33b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ffd73e6f24a79035b1545eb820b33b4">&#9670;&#160;</a></span>cached_balance_trend</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;float&gt; MainGameScene::cached_balance_trend</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3c222cfd2746d7c79ca68b03737d2f8d" name="a3c222cfd2746d7c79ca68b03737d2f8d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c222cfd2746d7c79ca68b03737d2f8d">&#9670;&#160;</a></span>cached_can_kick_off</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::cached_can_kick_off = true</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Auto-fix would change nothing (see <a class="el" href="classGameController.html#a4e5fda9d04bace6ec76adb09d18d7c62">GameController::canKickOff</a>). </p>
+
+</div>
+</div>
+<a id="a776fe42d502428a64cc4791e477aa1c2" name="a776fe42d502428a64cc4791e477aa1c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a776fe42d502428a64cc4791e477aa1c2">&#9670;&#160;</a></span>cached_club</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> MainGameScene::cached_club = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Club the cached page shows (0: none). </p>
+
+</div>
+</div>
 <a id="afda9685db8b1181693410bb4eb99ca06" name="afda9685db8b1181693410bb4eb99ca06"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afda9685db8b1181693410bb4eb99ca06">&#9670;&#160;</a></span>cached_date</h2>
 
@@ -498,6 +1551,161 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="structGameDateValue.html">GameDateValue</a> MainGameScene::cached_date</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aad4bdc0c40b0d6094b8232ca60c76add" name="aad4bdc0c40b0d6094b8232ca60c76add"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aad4bdc0c40b0d6094b8232ca60c76add">&#9670;&#160;</a></span>cached_embargo</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::cached_embargo = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac11b0a9e91c6355510017861014c176e" name="ac11b0a9e91c6355510017861014c176e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac11b0a9e91c6355510017861014c176e">&#9670;&#160;</a></span>cached_finance_bars</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="structMainGameScene_1_1FinanceBar.html">FinanceBar</a>&gt; MainGameScene::cached_finance_bars</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a71e555d5cdbc6683faa6bf3265dbb150" name="a71e555d5cdbc6683faa6bf3265dbb150"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a71e555d5cdbc6683faa6bf3265dbb150">&#9670;&#160;</a></span>cached_ledger</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="structMainGameScene_1_1LedgerRow.html">LedgerRow</a>&gt; MainGameScene::cached_ledger</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Newest first. </p>
+
+</div>
+</div>
+<a id="ac95cc9b88ade7dc70f5943feef3e3a3f" name="ac95cc9b88ade7dc70f5943feef3e3a3f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac95cc9b88ade7dc70f5943feef3e3a3f">&#9670;&#160;</a></span>cached_month_bars</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="structMainGameScene_1_1FinanceBar.html">FinanceBar</a>&gt; MainGameScene::cached_month_bars</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="abfd8c854fcf84bf74acec18f28025131" name="abfd8c854fcf84bf74acec18f28025131"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abfd8c854fcf84bf74acec18f28025131">&#9670;&#160;</a></span>cached_next</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;<a class="el" href="structCompetitionView_1_1FixtureRow.html">CompetitionView::FixtureRow</a>&gt; MainGameScene::cached_next</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="adf54e3142e9ba217c1c3dfd3074d6435" name="adf54e3142e9ba217c1c3dfd3074d6435"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adf54e3142e9ba217c1c3dfd3074d6435">&#9670;&#160;</a></span>cached_payroll</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int64_t MainGameScene::cached_payroll = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af83f9e6e4aed0ad6ba634da80b952e28" name="af83f9e6e4aed0ad6ba634da80b952e28"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af83f9e6e4aed0ad6ba634da80b952e28">&#9670;&#160;</a></span>cached_recent</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="structCompetitionView_1_1FixtureRow.html">CompetitionView::FixtureRow</a>&gt; MainGameScene::cached_recent</td>
         </tr>
       </table>
   </td>
@@ -531,6 +1739,72 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="adec8cbb48093d347e9778aae46e5b500" name="adec8cbb48093d347e9778aae46e5b500"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adec8cbb48093d347e9778aae46e5b500">&#9670;&#160;</a></span>cached_season_summary</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structFinanceSummary.html">FinanceSummary</a> MainGameScene::cached_season_summary</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab03572c4766155faffb0afc7bc0c2445" name="ab03572c4766155faffb0afc7bc0c2445"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab03572c4766155faffb0afc7bc0c2445">&#9670;&#160;</a></span>cached_squad</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="structPlayerView_1_1PlayerRow.html">PlayerView::PlayerRow</a>&gt; MainGameScene::cached_squad</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af80154873f24f0e5d7d808d420fe3379" name="af80154873f24f0e5d7d808d420fe3379"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af80154873f24f0e5d7d808d420fe3379">&#9670;&#160;</a></span>cached_squad_value</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int64_t MainGameScene::cached_squad_value = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ad21ad4d9b247a93c1b494c6046dbb9c3" name="ad21ad4d9b247a93c1b494c6046dbb9c3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad21ad4d9b247a93c1b494c6046dbb9c3">&#9670;&#160;</a></span>cached_standings</h2>
 
@@ -553,6 +1827,50 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="af92f7011157e762ff0af091f0af1afd9" name="af92f7011157e762ff0af091f0af1afd9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af92f7011157e762ff0af091f0af1afd9">&#9670;&#160;</a></span>cached_starters</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t MainGameScene::cached_starters = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af036c0d8dd2eb7e964ac648a613a8638" name="af036c0d8dd2eb7e964ac648a613a8638"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af036c0d8dd2eb7e964ac648a613a8638">&#9670;&#160;</a></span>cached_table</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="structCompetitionView_1_1StandingRow.html">CompetitionView::StandingRow</a>&gt; MainGameScene::cached_table</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a793f068be978bdcfedc3c6b15a29de0b" name="a793f068be978bdcfedc3c6b15a29de0b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a793f068be978bdcfedc3c6b15a29de0b">&#9670;&#160;</a></span>cached_top_players</h2>
 
@@ -564,6 +1882,582 @@ Additional Inherited Members</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::vector&lt;std::reference_wrapper&lt;const <a class="el" href="classPlayer.html">Player</a>&gt; &gt; MainGameScene::cached_top_players</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad0f47c829fc78b9f592907ace1c06c75" name="ad0f47c829fc78b9f592907ace1c06c75"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0f47c829fc78b9f592907ace1c06c75">&#9670;&#160;</a></span>cached_transfer_budget</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int64_t MainGameScene::cached_transfer_budget = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Transfer money available today and the board's embargo. </p>
+
+</div>
+</div>
+<a id="a44aed87eec3ee7e844b6e9e8ebbe6b29" name="a44aed87eec3ee7e844b6e9e8ebbe6b29"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a44aed87eec3ee7e844b6e9e8ebbe6b29">&#9670;&#160;</a></span>cached_unavailable</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unordered_set&lt;<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&gt; MainGameScene::cached_unavailable</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a31127a75495db48189d48092ac96b85b" name="a31127a75495db48189d48092ac96b85b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a31127a75495db48189d48092ac96b85b">&#9670;&#160;</a></span>cached_unavailable_starters</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t MainGameScene::cached_unavailable_starters = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8f14d936ed15a758a1286588ab520d39" name="a8f14d936ed15a758a1286588ab520d39"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f14d936ed15a758a1286588ab520d39">&#9670;&#160;</a></span>cached_zones</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structCompetitionView_1_1Zones.html">CompetitionView::Zones</a> MainGameScene::cached_zones</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aef61ce98d808c40a6146b70cab480bba" name="aef61ce98d808c40a6146b70cab480bba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef61ce98d808c40a6146b70cab480bba">&#9670;&#160;</a></span>continuation_requested</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::continuation_requested = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9c7950249b831ff92997f70f4e862820" name="a9c7950249b831ff92997f70f4e862820"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c7950249b831ff92997f70f4e862820">&#9670;&#160;</a></span>continuation_running</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::continuation_running = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3a93dba32fd8bb54691f259a2cde95f1" name="a3a93dba32fd8bb54691f259a2cde95f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a93dba32fd8bb54691f259a2cde95f1">&#9670;&#160;</a></span>continue_controller</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classGameController.html">GameController</a>* MainGameScene::continue_controller = nullptr</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Controller of the running worker (stopped from the destructor). </p>
+
+</div>
+</div>
+<a id="a1bdb526720d8a377b73525736f884ea3" name="a1bdb526720d8a377b73525736f884ea3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1bdb526720d8a377b73525736f884ea3">&#9670;&#160;</a></span>continue_day_matches</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t MainGameScene::continue_day_matches = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3821b1d39de65dc50bd10668a42baa95" name="a3821b1d39de65dc50bd10668a42baa95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3821b1d39de65dc50bd10668a42baa95">&#9670;&#160;</a></span>continue_finished_at</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double MainGameScene::continue_finished_at = -1.0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab2dea8e7dc24655cfa538948bde6769c" name="ab2dea8e7dc24655cfa538948bde6769c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2dea8e7dc24655cfa538948bde6769c">&#9670;&#160;</a></span>continue_log</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;std::string&gt; MainGameScene::continue_log</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1570e3b399bf02990a522223daee9dcb" name="a1570e3b399bf02990a522223daee9dcb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1570e3b399bf02990a522223daee9dcb">&#9670;&#160;</a></span>continue_logged_day</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MainGameScene::continue_logged_day = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a06c058bd47f79dbb5fed0f0c6a0552ee" name="a06c058bd47f79dbb5fed0f0c6a0552ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a06c058bd47f79dbb5fed0f0c6a0552ee">&#9670;&#160;</a></span>continue_operation</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::future&lt;int&gt; MainGameScene::continue_operation</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1abaf90c3d095ea172d3be4a6dd0486c" name="a1abaf90c3d095ea172d3be4a6dd0486c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1abaf90c3d095ea172d3be4a6dd0486c">&#9670;&#160;</a></span>continue_overlay_shown</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::continue_overlay_shown = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a682261dcc56b94f34a831a1c5abb2f75" name="a682261dcc56b94f34a831a1c5abb2f75"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a682261dcc56b94f34a831a1c5abb2f75">&#9670;&#160;</a></span>continue_progress</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structGameController_1_1ContinueProgress.html">GameController::ContinueProgress</a> MainGameScene::continue_progress</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a337d0f2cdc93ad6ae66ca3f6ded0c7a6" name="a337d0f2cdc93ad6ae66ca3f6ded0c7a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a337d0f2cdc93ad6ae66ca3f6ded0c7a6">&#9670;&#160;</a></span>continue_start_date</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structGameDateValue.html">GameDateValue</a> MainGameScene::continue_start_date</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a17842146176b4d1089b12ac53d197ebf" name="a17842146176b4d1089b12ac53d197ebf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17842146176b4d1089b12ac53d197ebf">&#9670;&#160;</a></span>continue_started_at</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double MainGameScene::continue_started_at = 0.0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac4513858f23a4dc035f88ca8c5669294" name="ac4513858f23a4dc035f88ca8c5669294"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac4513858f23a4dc035f88ca8c5669294">&#9670;&#160;</a></span>finance_show_month</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::finance_show_month = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a617d92b7639e9be0e83b5655be53e60d" name="a617d92b7639e9be0e83b5655be53e60d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a617d92b7639e9be0e83b5655be53e60d">&#9670;&#160;</a></span>holiday_running</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::holiday_running = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4eb2619943415f8232d906f1a85c6c21" name="a4eb2619943415f8232d906f1a85c6c21"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4eb2619943415f8232d906f1a85c6c21">&#9670;&#160;</a></span>match_report</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;<a class="el" href="structMainGameScene_1_1PlayedMatch.html">PlayedMatch</a>&gt; MainGameScene::match_report</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a068383f8ec2fc85bab2053c7f9ab3136" name="a068383f8ec2fc85bab2053c7f9ab3136"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a068383f8ec2fc85bab2053c7f9ab3136">&#9670;&#160;</a></span>next_steps</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classNextStepsCard.html">NextStepsCard</a> MainGameScene::next_steps</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Checklist and next steps card on Home. </p>
+
+</div>
+</div>
+<a id="a52dd10ebe6c2a93371522a9f78a4d721" name="a52dd10ebe6c2a93371522a9f78a4d721"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52dd10ebe6c2a93371522a9f78a4d721">&#9670;&#160;</a></span>pending_holiday</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;<a class="el" href="structHolidayPlan.html">HolidayPlan</a>&gt; MainGameScene::pending_holiday</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a00e862aba03288f2f84c7824d7dbd9f9" name="a00e862aba03288f2f84c7824d7dbd9f9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a00e862aba03288f2f84c7824d7dbd9f9">&#9670;&#160;</a></span>season_review_dialog</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSeasonReviewDialog.html">SeasonReviewDialog</a> MainGameScene::season_review_dialog</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a51f942ba83904fb407976a18ea70d251" name="a51f942ba83904fb407976a18ea70d251"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a51f942ba83904fb407976a18ea70d251">&#9670;&#160;</a></span>stop_on_close</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::stop_on_close = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Runs that closing the game interrupts (holiday, off-season, out of work); a Continue to the next fixture completes its days. </p>
+
+</div>
+</div>
+<a id="a0d8b37adfb7f577246126d22e112a01a" name="a0d8b37adfb7f577246126d22e112a01a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0d8b37adfb7f577246126d22e112a01a">&#9670;&#160;</a></span>stop_requested</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::stop_requested = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a93786593b0bd901f65ffb300db470957" name="a93786593b0bd901f65ffb300db470957"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a93786593b0bd901f65ffb300db470957">&#9670;&#160;</a></span>welcome_requested</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MainGameScene::welcome_requested = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a79f3d573b49b9941c55431d883d4b995" name="a79f3d573b49b9941c55431d883d4b995"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a79f3d573b49b9941c55431d883d4b995">&#9670;&#160;</a></span>welcome_tour</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classWelcomeTour.html">WelcomeTour</a> MainGameScene::welcome_tour</td>
         </tr>
       </table>
   </td>

@@ -1,19 +1,37 @@
 var classLineupScene =
 [
+    [ "Unavailability", "classLineupScene.html#a6a91317aee8a382171e4dcd7f36bdfa4", [
+      [ "INJURED", "classLineupScene.html#a6a91317aee8a382171e4dcd7f36bdfa4a1dc91ead2a9ffbac6963fed5cdd65e44", null ],
+      [ "SUSPENDED", "classLineupScene.html#a6a91317aee8a382171e4dcd7f36bdfa4a0cb707127aebaa0023eb38363993843a", null ]
+    ] ],
     [ "LineupScene", "classLineupScene.html#a3059349b24961731aad77834cb92f9ab", null ],
+    [ "LineupScene", "classLineupScene.html#a36a3456ebf11b3c8f57dc0654e019e37", null ],
+    [ "autoPickBestEleven", "classLineupScene.html#ad5b036c0ed42d4179f86013b1372b1b9", null ],
     [ "getID", "classLineupScene.html#a03e1dcc4648cf1dcff2e7aae07d8d93f", null ],
     [ "loadLineup", "classLineupScene.html#a20a306042aeb627724ad6d02647e7854", null ],
-    [ "onEnter", "classLineupScene.html#a86be5e333a2125d7f4bfc1dbf68ae9e3", null ],
-    [ "render", "classLineupScene.html#a953d763c5b011ddfd6a050fa76dd3cc8", null ],
-    [ "renderBench", "classLineupScene.html#acf0af2388106b870138570c6e71b8cec", null ],
+    [ "navSection", "classLineupScene.html#a88694aff6a6616636240aa8c4fb15420", null ],
+    [ "refresh", "classLineupScene.html#af9003758c296408c8fcc28e4e6ce14ad", null ],
+    [ "renderBench", "classLineupScene.html#a0df5632d90f87a4134363bc201b2b553", null ],
+    [ "renderContent", "classLineupScene.html#a33436e16ba4a305e1074dff7f154ac55", null ],
+    [ "renderLeadership", "classLineupScene.html#a47af4b22598fde97089f7d00f462a1d6", null ],
+    [ "renderOutsiders", "classLineupScene.html#a4c109c6d7516cffafd8154f09a21618d", null ],
     [ "renderPitch", "classLineupScene.html#a0dc8844856690506f4ce1fcb46a487a4", null ],
+    [ "renderPlayerToken", "classLineupScene.html#a1215ee6102e2e148fa0c9edb4e8a34f7", null ],
+    [ "renderToolbar", "classLineupScene.html#a7a3caa3580fdd51e53cbcb88efc70901", null ],
     [ "selectedBenchPlayer", "classLineupScene.html#a244d98711358616cf2b0d7d89ea7eaa3", null ],
+    [ "selectedOutsider", "classLineupScene.html#af78f8201c2eddce0e593ce21b52ed5b0", null ],
     [ "selectedPitchPlayer", "classLineupScene.html#afa3002b49c888b8b4a39760323bbc172", null ],
+    [ "unavailableStarters", "classLineupScene.html#afda49272e4a09d37c7fa166c54b85586", null ],
     [ "update", "classLineupScene.html#a3a3999dba0b62e91ba7daf02dd9b22bd", null ],
     [ "GameFlowTest_GUIFlowLifecycle_Test", "classLineupScene.html#af70851c82f5c5d3e1b6b40e55b6d8532", null ],
+    [ "captain_summary", "classLineupScene.html#a2dc856cea914374e4bd5f8fbb1ed6c70", null ],
     [ "current_lineup", "classLineupScene.html#aa27dfc400edf49a5f6fa8e3936eade57", null ],
-    [ "dragging_player_id", "classLineupScene.html#afd9696702d6d1155a764a5b77747160a", null ],
-    [ "is_dragging", "classLineupScene.html#a03192b623fcb02dc8bd5ae93062796ae", null ],
+    [ "focus_player_id", "classLineupScene.html#aad99b7489bf6867554a7218a47d76ba9", null ],
+    [ "formation_index", "classLineupScene.html#ae34044a754ff05cddde7bacd6091a2fc", null ],
+    [ "outsiders", "classLineupScene.html#ae2acb0edc3217adfada7a77e5d13fb4a", null ],
     [ "selected_bench_player_id", "classLineupScene.html#a717be572075faad8ef3a5ad6c2381f5f", null ],
-    [ "selected_pitch_player_id", "classLineupScene.html#a018d35e173e4d2c91dff2ded129efefe", null ]
+    [ "selected_outsider_id", "classLineupScene.html#a8d1a5cf9fea46d6eb9d7f51e14e6a429", null ],
+    [ "selected_pitch_player_id", "classLineupScene.html#a018d35e173e4d2c91dff2ded129efefe", null ],
+    [ "set_pieces", "classLineupScene.html#ad22c363e36e37fa83791ad33877911b1", null ],
+    [ "unavailable", "classLineupScene.html#a8af217046da783a9477aaffd22a91479", null ]
 ];

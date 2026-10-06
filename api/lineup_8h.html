@@ -94,12 +94,19 @@ $(document).ready(function(){initNavTree('lineup_8h.html',''); initResizable(); 
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#namespaces">Namespaces</a> &#124;
+<a href="#typedef-members">Typedefs</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">lineup.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;array&gt;</code><br />
+<code>#include &lt;span&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
+<code>#include &lt;utility&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 <code>#include &quot;<a class="el" href="global_8h_source.html">global/global.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="types_8h_source.html">global/types.h</a>&quot;</code><br />
@@ -115,7 +122,134 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structLineup_1_1PositionedPlayer.html">Lineup::PositionedPlayer</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structLineup_1_1StandIn.html">Lineup::StandIn</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A starter who was replaced because he could not play, and the player standing in for him until he can.  <a href="structLineup_1_1StandIn.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
+Namespaces</h2></td></tr>
+<tr class="memitem:namespaceSetPieces" id="r_namespaceSetPieces"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSetPieces.html">SetPieces</a></td></tr>
+<tr class="memdesc:namespaceSetPieces"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attribute-based suitability of players for set-piece duties. <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:a188827ac9650313a502d676162671ec2" id="r_a188827ac9650313a502d676162671ec2"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lineup_8h.html#a188827ac9650313a502d676162671ec2">SetPieceDesignations</a> = std::array&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>, <a class="el" href="lineup_8h.html#a9498e84d4e8259182b6608add421b39f">SET_PIECE_DUTY_COUNT</a> &gt;</td></tr>
+<tr class="memdesc:a188827ac9650313a502d676162671ec2"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> designated for each duty; 0 = chosen automatically.  <br /></td></tr>
+<tr class="separator:a188827ac9650313a502d676162671ec2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a291a2e4766aa959684b2153d628f6471" id="r_a291a2e4766aa959684b2153d628f6471"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471">SetPieceDuty</a> : uint8_t { <br />
+&#160;&#160;<a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471abc9d8ff48a9f3679ea9e4b2ca69b535b">Captain</a>
+, <a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471aaba39cc702d0ce7b462a42e720f72a22">ViceCaptain</a>
+, <a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471a6bf4bf1a56e0ed59d2236b3d38d03e41">Penalties</a>
+, <a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471aaadb0056ae8ed5077e3721ef906028d5">FreeKicks</a>
+, <br />
+&#160;&#160;<a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471a9c55ff3afdec215af158eb343b4dcb15">CornersLeft</a>
+, <a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471a85cacd1bd0d59613d40a4a6ed5e60b4e">CornersRight</a>
+, <a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471a40b767f4076cf70e3c9c099a08b2de91">LongThrows</a>
+, <a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471a4905ac9d6a22bdfc1ae096094ce6248d">COUNT</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:a291a2e4766aa959684b2153d628f6471"><td class="mdescLeft">&#160;</td><td class="mdescRight">Leadership and dead-ball duties the manager can hand out (values are persisted in the lineup).  <a href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471">More...</a><br /></td></tr>
+<tr class="separator:a291a2e4766aa959684b2153d628f6471"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ad7fb6b860603db9eed9a3f661eda28fc" id="r_ad7fb6b860603db9eed9a3f661eda28fc"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSetPieces.html#ad7fb6b860603db9eed9a3f661eda28fc">SetPieces::dutyKey</a> (<a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471">SetPieceDuty</a> duty)</td></tr>
+<tr class="separator:ad7fb6b860603db9eed9a3f661eda28fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f9854d9d2b080c500aa361b5ed71b12" id="r_a6f9854d9d2b080c500aa361b5ed71b12"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSetPieces.html#a6f9854d9d2b080c500aa361b5ed71b12">SetPieces::isLeadership</a> (<a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471">SetPieceDuty</a> duty)</td></tr>
+<tr class="separator:a6f9854d9d2b080c500aa361b5ed71b12"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b2d5a3ef7a4a1b4c33f8a9c8db40e93" id="r_a4b2d5a3ef7a4a1b4c33f8a9c8db40e93"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSetPieces.html#a4b2d5a3ef7a4a1b4c33f8a9c8db40e93">SetPieces::score</a> (<a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471">SetPieceDuty</a> duty, const <a class="el" href="classPlayer.html">Player</a> &amp;player)</td></tr>
+<tr class="separator:a4b2d5a3ef7a4a1b4c33f8a9c8db40e93"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a942630daa7cf6b8b011c4ac4a79f8d2e" id="r_a942630daa7cf6b8b011c4ac4a79f8d2e"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classPlayer.html">Player</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceSetPieces.html#a942630daa7cf6b8b011c4ac4a79f8d2e">SetPieces::best</a> (<a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471">SetPieceDuty</a> duty, const std::vector&lt; const <a class="el" href="classPlayer.html">Player</a> * &gt; &amp;candidates)</td></tr>
+<tr class="separator:a942630daa7cf6b8b011c4ac4a79f8d2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a9498e84d4e8259182b6608add421b39f" id="r_a9498e84d4e8259182b6608add421b39f"><td class="memItemLeft" align="right" valign="top">constexpr size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lineup_8h.html#a9498e84d4e8259182b6608add421b39f">SET_PIECE_DUTY_COUNT</a></td></tr>
+<tr class="separator:a9498e84d4e8259182b6608add421b39f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Typedef Documentation</h2>
+<a id="a188827ac9650313a502d676162671ec2" name="a188827ac9650313a502d676162671ec2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a188827ac9650313a502d676162671ec2">&#9670;&#160;</a></span>SetPieceDesignations</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="lineup_8h.html#a188827ac9650313a502d676162671ec2">SetPieceDesignations</a> =  std::array&lt;<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>, <a class="el" href="lineup_8h.html#a9498e84d4e8259182b6608add421b39f">SET_PIECE_DUTY_COUNT</a>&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> designated for each duty; 0 = chosen automatically. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a291a2e4766aa959684b2153d628f6471" name="a291a2e4766aa959684b2153d628f6471"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a291a2e4766aa959684b2153d628f6471">&#9670;&#160;</a></span>SetPieceDuty</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471">SetPieceDuty</a> : uint8_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Leadership and dead-ball duties the manager can hand out (values are persisted in the lineup). </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a291a2e4766aa959684b2153d628f6471abc9d8ff48a9f3679ea9e4b2ca69b535b" name="a291a2e4766aa959684b2153d628f6471abc9d8ff48a9f3679ea9e4b2ca69b535b"></a>Captain&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a291a2e4766aa959684b2153d628f6471aaba39cc702d0ce7b462a42e720f72a22" name="a291a2e4766aa959684b2153d628f6471aaba39cc702d0ce7b462a42e720f72a22"></a>ViceCaptain&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a291a2e4766aa959684b2153d628f6471a6bf4bf1a56e0ed59d2236b3d38d03e41" name="a291a2e4766aa959684b2153d628f6471a6bf4bf1a56e0ed59d2236b3d38d03e41"></a>Penalties&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a291a2e4766aa959684b2153d628f6471aaadb0056ae8ed5077e3721ef906028d5" name="a291a2e4766aa959684b2153d628f6471aaadb0056ae8ed5077e3721ef906028d5"></a>FreeKicks&#160;</td><td class="fielddoc"><p>Direct free kicks in shooting range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a291a2e4766aa959684b2153d628f6471a9c55ff3afdec215af158eb343b4dcb15" name="a291a2e4766aa959684b2153d628f6471a9c55ff3afdec215af158eb343b4dcb15"></a>CornersLeft&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a291a2e4766aa959684b2153d628f6471a85cacd1bd0d59613d40a4a6ed5e60b4e" name="a291a2e4766aa959684b2153d628f6471a85cacd1bd0d59613d40a4a6ed5e60b4e"></a>CornersRight&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a291a2e4766aa959684b2153d628f6471a40b767f4076cf70e3c9c099a08b2de91" name="a291a2e4766aa959684b2153d628f6471a40b767f4076cf70e3c9c099a08b2de91"></a>LongThrows&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a291a2e4766aa959684b2153d628f6471a4905ac9d6a22bdfc1ae096094ce6248d" name="a291a2e4766aa959684b2153d628f6471a4905ac9d6a22bdfc1ae096094ce6248d"></a>COUNT&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a id="a9498e84d4e8259182b6608add421b39f" name="a9498e84d4e8259182b6608add421b39f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9498e84d4e8259182b6608add421b39f">&#9670;&#160;</a></span>SET_PIECE_DUTY_COUNT</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr size_t SET_PIECE_DUTY_COUNT</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">    <span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(<a class="code hl_enumvalue" href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471a4905ac9d6a22bdfc1ae096094ce6248d">SetPieceDuty::COUNT</a>)</div>
+<div class="ttc" id="alineup_8h_html_a291a2e4766aa959684b2153d628f6471a4905ac9d6a22bdfc1ae096094ce6248d"><div class="ttname"><a href="lineup_8h.html#a291a2e4766aa959684b2153d628f6471a4905ac9d6a22bdfc1ae096094ce6248d">SetPieceDuty::COUNT</a></div><div class="ttdeci">@ COUNT</div></div>
+</div><!-- fragment -->
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

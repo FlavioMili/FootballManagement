@@ -1,0 +1,25 @@
+var structMatchRender2DTuning_1_1Token =
+[
+    [ "CARD_COLOR", "structMatchRender2DTuning_1_1Token.html#a4f5415e0cbbc5b43b91c07485d9b4e3d", null ],
+    [ "CARRIER_COLOR", "structMatchRender2DTuning_1_1Token.html#af4c4e87bc0203de866bc7a343ebba8fd", null ],
+    [ "CARRIER_RING_SHARE", "structMatchRender2DTuning_1_1Token.html#a4c715f34d046bcdbfb562afab855da84", null ],
+    [ "HOVER_COLOR", "structMatchRender2DTuning_1_1Token.html#a71d1dbd9746381a7b1559855c0c4af0a", null ],
+    [ "HOVER_RING_SHARE", "structMatchRender2DTuning_1_1Token.html#aedb49e5d4a805ca3130c71b334b683da", null ],
+    [ "LABEL_BACK_COLOR", "structMatchRender2DTuning_1_1Token.html#a24035e8f233322562b35beeea3d7f605", null ],
+    [ "LABEL_TEXT_COLOR", "structMatchRender2DTuning_1_1Token.html#a9893536ea0d99a804ec470100165dc06", null ],
+    [ "LIGHT_OUTLINE_COLOR", "structMatchRender2DTuning_1_1Token.html#ab113ef861322da758af33d50d85d4b0b", null ],
+    [ "MIN_NUMBER_PIXELS", "structMatchRender2DTuning_1_1Token.html#a8210ba38cb32e52647ffd9ef27359878", null ],
+    [ "MIN_RADIUS_FONT_SHARE", "structMatchRender2DTuning_1_1Token.html#a9570dfc29ee1da259eb7f3fb3677ea5e", null ],
+    [ "NUMBER_SHARE", "structMatchRender2DTuning_1_1Token.html#a652ef83d56c07b7e1525904f241870c4", null ],
+    [ "OFF_PITCH_ALPHA", "structMatchRender2DTuning_1_1Token.html#a5c1272b273fde0fc551b814d138a0ebb", null ],
+    [ "OUTLINE_COLOR", "structMatchRender2DTuning_1_1Token.html#a6ad875a85f824b9bfa133a7a63d42387", null ],
+    [ "OUTLINE_SHARE", "structMatchRender2DTuning_1_1Token.html#a7c2a2fe15f9a13d89647360319c954c9", null ],
+    [ "PULSE_SPEED", "structMatchRender2DTuning_1_1Token.html#aea740395dc61ad9351ebeea6cac18f27", null ],
+    [ "RADIUS_METRES", "structMatchRender2DTuning_1_1Token.html#a2b3799216e855fd57dc0f121721f7f6b", null ],
+    [ "SHADOW_COLOR", "structMatchRender2DTuning_1_1Token.html#a23c1fc6591f37e5ef49745ec93a79bf7", null ],
+    [ "SHADOW_OFFSET_SHARE", "structMatchRender2DTuning_1_1Token.html#a63e55650374fec0748c033a8aeb1f828", null ],
+    [ "SHIRT_SHARE", "structMatchRender2DTuning_1_1Token.html#a2ad7ffc0771e2e864dfca47d32e8144c", null ],
+    [ "WEDGE_COLOR", "structMatchRender2DTuning_1_1Token.html#af86b0f00d63750643800ccb4aeb2c327", null ],
+    [ "WEDGE_HALF_ANGLE", "structMatchRender2DTuning_1_1Token.html#a655881341280adb2b925b81906b02531", null ],
+    [ "WEDGE_REACH", "structMatchRender2DTuning_1_1Token.html#afcc892d1c2d74c4107c1c371211e825d", null ]
+];

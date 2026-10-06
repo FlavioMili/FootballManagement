@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['overview_0',['Architectural Overview',['../md_docs_2ARCHITECTURE.html',1,'']]]
+  ['save_20migrations_20and_20save_20protocol_0',['Save migrations and save protocol',['../index.html',1,'']]]
 ];

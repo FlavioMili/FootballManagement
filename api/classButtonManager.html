@@ -102,7 +102,7 @@ $(document).ready(function(){initNavTree('classButtonManager.html',''); initResi
 </div><!--header-->
 <div class="contents">
 
-<p>Manages a collection of UI buttons.  
+<p>Manages a collection of <a class="el" href="namespaceUI.html" title="Small vector icons drawn with ImDrawList (no icon font needed).">UI</a> buttons.  
  <a href="classButtonManager.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="button__manager_8h_source.html">button_manager.h</a>&gt;</code></p>
@@ -118,16 +118,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad90b0f2c8152d6835c85690088fc78f9" id="r_ad90b0f2c8152d6835c85690088fc78f9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classButtonManager.html#ad90b0f2c8152d6835c85690088fc78f9">getButtonCount</a> ()</td></tr>
 <tr class="memdesc:ad90b0f2c8152d6835c85690088fc78f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the total number of buttons managed.  <br /></td></tr>
 <tr class="separator:ad90b0f2c8152d6835c85690088fc78f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a207cb07216d204bd0bbcc2d5465b9252" id="r_a207cb07216d204bd0bbcc2d5465b9252"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classButtonManager.html#a207cb07216d204bd0bbcc2d5465b9252">addButton</a> (const SDL_FRect &amp;rect, const std::string &amp;label, std::function&lt; void()&gt; callback)</td></tr>
+<tr class="memitem:a207cb07216d204bd0bbcc2d5465b9252" id="r_a207cb07216d204bd0bbcc2d5465b9252"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classButtonManager.html#a207cb07216d204bd0bbcc2d5465b9252">addButton</a> (const SDL_FRect &amp;rect, const std::string &amp;<a class="el" href="input__actions_8cpp.html#ab5fbdb5052858ca8d2538566229fbe64">label</a>, std::function&lt; void()&gt; callback)</td></tr>
 <tr class="memdesc:a207cb07216d204bd0bbcc2d5465b9252"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a new button.  <br /></td></tr>
 <tr class="separator:a207cb07216d204bd0bbcc2d5465b9252"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab785921a44a068e23d3f851942137cc0" id="r_ab785921a44a068e23d3f851942137cc0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classButtonManager.html#ab785921a44a068e23d3f851942137cc0">addButton</a> (const SDL_FRect &amp;rect, const std::string &amp;label, <a class="el" href="structButtonStyle.html">ButtonStyle</a> style, std::function&lt; void()&gt; callback)</td></tr>
+<tr class="memitem:ab785921a44a068e23d3f851942137cc0" id="r_ab785921a44a068e23d3f851942137cc0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classButtonManager.html#ab785921a44a068e23d3f851942137cc0">addButton</a> (const SDL_FRect &amp;rect, const std::string &amp;<a class="el" href="input__actions_8cpp.html#ab5fbdb5052858ca8d2538566229fbe64">label</a>, <a class="el" href="structButtonStyle.html">ButtonStyle</a> style, std::function&lt; void()&gt; callback)</td></tr>
 <tr class="memdesc:ab785921a44a068e23d3f851942137cc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a new button with a specific style.  <br /></td></tr>
 <tr class="separator:ab785921a44a068e23d3f851942137cc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a01414e58a05a2e4e7724e694785c454c" id="r_a01414e58a05a2e4e7724e694785c454c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classButtonManager.html#a01414e58a05a2e4e7724e694785c454c">addButton</a> (float x, float y, float w, float h, const std::string &amp;label, std::function&lt; void()&gt; callback)</td></tr>
+<tr class="memitem:a01414e58a05a2e4e7724e694785c454c" id="r_a01414e58a05a2e4e7724e694785c454c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classButtonManager.html#a01414e58a05a2e4e7724e694785c454c">addButton</a> (float x, float y, float w, float h, const std::string &amp;<a class="el" href="input__actions_8cpp.html#ab5fbdb5052858ca8d2538566229fbe64">label</a>, std::function&lt; void()&gt; callback)</td></tr>
 <tr class="memdesc:a01414e58a05a2e4e7724e694785c454c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a new button using individual coordinates.  <br /></td></tr>
 <tr class="separator:a01414e58a05a2e4e7724e694785c454c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28df1323ddfb7fe62d560db7b32e4850" id="r_a28df1323ddfb7fe62d560db7b32e4850"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classButtonManager.html#a28df1323ddfb7fe62d560db7b32e4850">addButton</a> (float x, float y, float w, float h, const std::string &amp;label, <a class="el" href="structButtonStyle.html">ButtonStyle</a> style, std::function&lt; void()&gt; callback)</td></tr>
+<tr class="memitem:a28df1323ddfb7fe62d560db7b32e4850" id="r_a28df1323ddfb7fe62d560db7b32e4850"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classButtonManager.html#a28df1323ddfb7fe62d560db7b32e4850">addButton</a> (float x, float y, float w, float h, const std::string &amp;<a class="el" href="input__actions_8cpp.html#ab5fbdb5052858ca8d2538566229fbe64">label</a>, <a class="el" href="structButtonStyle.html">ButtonStyle</a> style, std::function&lt; void()&gt; callback)</td></tr>
 <tr class="memdesc:a28df1323ddfb7fe62d560db7b32e4850"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a new button with a specific style using individual coordinates.  <br /></td></tr>
 <tr class="separator:a28df1323ddfb7fe62d560db7b32e4850"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ccdef654778fd019757c3a8daf53af0" id="r_a6ccdef654778fd019757c3a8daf53af0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classButtonManager.html#a6ccdef654778fd019757c3a8daf53af0">removeButton</a> (int buttonId)</td></tr>
@@ -205,7 +205,7 @@ Private Attributes</h2></td></tr>
 <tr class="separator:aec21260a6733a65a74666ff4d6ee4e6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Manages a collection of UI buttons. </p>
+<div class="textblock"><p>Manages a collection of <a class="el" href="namespaceUI.html" title="Small vector icons drawn with ImDrawList (no icon font needed).">UI</a> buttons. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a067bf3dc2332911ccc2758d1f09a4e65" name="a067bf3dc2332911ccc2758d1f09a4e65"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a067bf3dc2332911ccc2758d1f09a4e65">&#9670;&#160;</a></span>ButtonManager()</h2>

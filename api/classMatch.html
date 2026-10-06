@@ -108,12 +108,16 @@ $(document).ready(function(){initNavTree('classMatch.html',''); initResizable();
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad09e481925b47225020a02ded8132820" id="r_ad09e481925b47225020a02ded8132820"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#ad09e481925b47225020a02ded8132820">Match</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> home_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> away_id, <a class="el" href="structGameDateValue.html">GameDateValue</a> date, <a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> type)</td></tr>
-<tr class="memdesc:ad09e481925b47225020a02ded8132820"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classMatch.html" title="Represents a football match between two teams.">Match</a> object.  <br /></td></tr>
-<tr class="separator:ad09e481925b47225020a02ded8132820"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad7877015ac961f579eaf30e26d00dc0d" id="r_ad7877015ac961f579eaf30e26d00dc0d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#ad7877015ac961f579eaf30e26d00dc0d">simulate</a> (const <a class="el" href="classGameData.html">GameData</a> &amp;game_data)</td></tr>
-<tr class="memdesc:ad7877015ac961f579eaf30e26d00dc0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simulates the match using the provided game data.  <br /></td></tr>
-<tr class="separator:ad7877015ac961f579eaf30e26d00dc0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b2f808e2bcef12a85315d39fb75e2c9" id="r_a9b2f808e2bcef12a85315d39fb75e2c9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a9b2f808e2bcef12a85315d39fb75e2c9">Match</a> (<a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> home_id, <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> away_id, <a class="el" href="structGameDateValue.html">GameDateValue</a> date, <a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> type, <a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a> competition=0, uint8_t <a class="el" href="classMatch.html#a541c2c94680a09f0b19b03d9d28afc16">stage</a>=0)</td></tr>
+<tr class="memdesc:a9b2f808e2bcef12a85315d39fb75e2c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classMatch.html" title="Represents a football match between two teams.">Match</a> object.  <br /></td></tr>
+<tr class="separator:a9b2f808e2bcef12a85315d39fb75e2c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad6280485c9e895695dbe1f6b18c3bcf5" id="r_ad6280485c9e895695dbe1f6b18c3bcf5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#ad6280485c9e895695dbe1f6b18c3bcf5">simulate</a> (const <a class="el" href="classGameData.html">GameData</a> &amp;game_data, <a class="el" href="structMatchReport.html">MatchReport</a> *report=nullptr, std::vector&lt; <a class="el" href="structPlayerMatchConsequence.html">PlayerMatchConsequence</a> &gt; *consequences=nullptr)</td></tr>
+<tr class="memdesc:ad6280485c9e895695dbe1f6b18c3bcf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simulates the match using the provided game data.  <br /></td></tr>
+<tr class="separator:ad6280485c9e895695dbe1f6b18c3bcf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a59f5229ed7c39f905a78ad619ece05" id="r_a8a59f5229ed7c39f905a78ad619ece05"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structMatchSimulationInput.html">MatchSimulationInput</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a8a59f5229ed7c39f905a78ad619ece05">prepareSimulation</a> (const <a class="el" href="classGameData.html">GameData</a> &amp;game_data) const</td></tr>
+<tr class="separator:a8a59f5229ed7c39f905a78ad619ece05"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18b8bfeb0444d4e48a7fc3322222fea7" id="r_a18b8bfeb0444d4e48a7fc3322222fea7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatchReport.html">MatchReport</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a18b8bfeb0444d4e48a7fc3322222fea7">applySimulation</a> (<a class="el" href="structMatchSimulationResult.html">MatchSimulationResult</a> result)</td></tr>
+<tr class="separator:a18b8bfeb0444d4e48a7fc3322222fea7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac8a41dfcb9e48143285cddaadfa78450" id="r_ac8a41dfcb9e48143285cddaadfa78450"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#ac8a41dfcb9e48143285cddaadfa78450">getHomeTeamId</a> () const</td></tr>
 <tr class="memdesc:ac8a41dfcb9e48143285cddaadfa78450"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the ID of the home team.  <br /></td></tr>
 <tr class="separator:ac8a41dfcb9e48143285cddaadfa78450"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -137,6 +141,36 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a2d950a4f7fbf7319f10365d457ef1f5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7facb883f963418971786baf8a53cf27" id="r_a7facb883f963418971786baf8a53cf27"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a7facb883f963418971786baf8a53cf27">setPlayedResult</a> (uint8_t h, uint8_t a)</td></tr>
 <tr class="separator:a7facb883f963418971786baf8a53cf27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1907dc14b1bbaff12cdeca7a96115ad" id="r_ae1907dc14b1bbaff12cdeca7a96115ad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#ae1907dc14b1bbaff12cdeca7a96115ad">setKnockoutResult</a> (uint8_t h, uint8_t a, bool <a class="el" href="classMatch.html#adad43437419706698710b53557457bb3">extra_time</a>, std::optional&lt; std::pair&lt; uint8_t, uint8_t &gt; &gt; <a class="el" href="classMatch.html#a8b9ef81cd187704be3535b47add42ac1">penalties</a>)</td></tr>
+<tr class="separator:ae1907dc14b1bbaff12cdeca7a96115ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22fcb60ad285582fc2c5e071c98ec32e" id="r_a22fcb60ad285582fc2c5e071c98ec32e"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a22fcb60ad285582fc2c5e071c98ec32e">getKickoff</a> () const</td></tr>
+<tr class="separator:a22fcb60ad285582fc2c5e071c98ec32e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a406a492ed62cae4c1d1b09d704f6b694" id="r_a406a492ed62cae4c1d1b09d704f6b694"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a406a492ed62cae4c1d1b09d704f6b694">setKickoff</a> (uint16_t minutes)</td></tr>
+<tr class="separator:a406a492ed62cae4c1d1b09d704f6b694"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94c2a641df71c2d1a3eb05358da54ab9" id="r_a94c2a641df71c2d1a3eb05358da54ab9"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a94c2a641df71c2d1a3eb05358da54ab9">getScheduledKickoff</a> () const</td></tr>
+<tr class="separator:a94c2a641df71c2d1a3eb05358da54ab9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fec1cbe85491e44a8635d653ad94e2d" id="r_a6fec1cbe85491e44a8635d653ad94e2d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a6fec1cbe85491e44a8635d653ad94e2d">getCompetitionId</a> () const</td></tr>
+<tr class="separator:a6fec1cbe85491e44a8635d653ad94e2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a069dd7a7573feb0fe768a4795e0e24ca" id="r_a069dd7a7573feb0fe768a4795e0e24ca"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a069dd7a7573feb0fe768a4795e0e24ca">setCompetitionId</a> (<a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a> id)</td></tr>
+<tr class="separator:a069dd7a7573feb0fe768a4795e0e24ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65f9f9a79d8e0a8ecd16eef9bb238eb2" id="r_a65f9f9a79d8e0a8ecd16eef9bb238eb2"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a65f9f9a79d8e0a8ecd16eef9bb238eb2">getStage</a> () const</td></tr>
+<tr class="separator:a65f9f9a79d8e0a8ecd16eef9bb238eb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4a89c464929714044bf6b107fb86f26" id="r_aa4a89c464929714044bf6b107fb86f26"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#aa4a89c464929714044bf6b107fb86f26">isKnockout</a> () const</td></tr>
+<tr class="separator:aa4a89c464929714044bf6b107fb86f26"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfbc33934b327cb24bd9051c8e9e5ad7" id="r_adfbc33934b327cb24bd9051c8e9e5ad7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#adfbc33934b327cb24bd9051c8e9e5ad7">wentToExtraTime</a> () const</td></tr>
+<tr class="separator:adfbc33934b327cb24bd9051c8e9e5ad7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef9153357b070968e88c2cd4cff8b19a" id="r_aef9153357b070968e88c2cd4cff8b19a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#aef9153357b070968e88c2cd4cff8b19a">wentToPenalties</a> () const</td></tr>
+<tr class="separator:aef9153357b070968e88c2cd4cff8b19a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a673a1159a5d517172a515b438c4c0556" id="r_a673a1159a5d517172a515b438c4c0556"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a673a1159a5d517172a515b438c4c0556">getHomePenalties</a> () const</td></tr>
+<tr class="separator:a673a1159a5d517172a515b438c4c0556"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afed7509c7b737137ce3e7d9a0612eb9d" id="r_afed7509c7b737137ce3e7d9a0612eb9d"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#afed7509c7b737137ce3e7d9a0612eb9d">getAwayPenalties</a> () const</td></tr>
+<tr class="separator:afed7509c7b737137ce3e7d9a0612eb9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a359697b7d07cbccb3c431c4cbb78bba3" id="r_a359697b7d07cbccb3c431c4cbb78bba3"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a359697b7d07cbccb3c431c4cbb78bba3">getWinnerId</a> () const</td></tr>
+<tr class="separator:a359697b7d07cbccb3c431c4cbb78bba3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7308316092f440b0a2c921e22c2d5d60" id="r_a7308316092f440b0a2c921e22c2d5d60"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a7308316092f440b0a2c921e22c2d5d60">getSeed</a> () const</td></tr>
+<tr class="separator:a7308316092f440b0a2c921e22c2d5d60"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a499d12032942c4c2cbe70ea5cd21d62f" id="r_a499d12032942c4c2cbe70ea5cd21d62f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a499d12032942c4c2cbe70ea5cd21d62f">writeResultTo</a> (<a class="el" href="structMatchReport.html">MatchReport</a> &amp;report) const</td></tr>
+<tr class="separator:a499d12032942c4c2cbe70ea5cd21d62f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -152,14 +186,28 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a6d3f770a4fd7aa7229d4b864db217b2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1d2600f0025cf8ce8cb74d931b5cff4" id="r_ac1d2600f0025cf8ce8cb74d931b5cff4"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#ac1d2600f0025cf8ce8cb74d931b5cff4">away_score</a></td></tr>
 <tr class="separator:ac1d2600f0025cf8ce8cb74d931b5cff4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e56c385b75fd2f226ed38bdbeda9d58" id="r_a5e56c385b75fd2f226ed38bdbeda9d58"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a5e56c385b75fd2f226ed38bdbeda9d58">competition_id</a></td></tr>
+<tr class="separator:a5e56c385b75fd2f226ed38bdbeda9d58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a541c2c94680a09f0b19b03d9d28afc16" id="r_a541c2c94680a09f0b19b03d9d28afc16"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a541c2c94680a09f0b19b03d9d28afc16">stage</a></td></tr>
+<tr class="separator:a541c2c94680a09f0b19b03d9d28afc16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa1447adf2bfb095114eb4578abcc1da" id="r_aaa1447adf2bfb095114eb4578abcc1da"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#aaa1447adf2bfb095114eb4578abcc1da">kickoff</a> = 0</td></tr>
+<tr class="separator:aaa1447adf2bfb095114eb4578abcc1da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5a5226fc2d4ce656f67ab229fe393f8" id="r_ae5a5226fc2d4ce656f67ab229fe393f8"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#ae5a5226fc2d4ce656f67ab229fe393f8">home_penalties</a> = 0</td></tr>
+<tr class="separator:ae5a5226fc2d4ce656f67ab229fe393f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4579a2d0577633240bc074456a8671d8" id="r_a4579a2d0577633240bc074456a8671d8"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a4579a2d0577633240bc074456a8671d8">away_penalties</a> = 0</td></tr>
+<tr class="separator:a4579a2d0577633240bc074456a8671d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adad43437419706698710b53557457bb3" id="r_adad43437419706698710b53557457bb3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#adad43437419706698710b53557457bb3">extra_time</a> = false</td></tr>
+<tr class="separator:adad43437419706698710b53557457bb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b9ef81cd187704be3535b47add42ac1" id="r_a8b9ef81cd187704be3535b47add42ac1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#a8b9ef81cd187704be3535b47add42ac1">penalties</a> = false</td></tr>
+<tr class="separator:a8b9ef81cd187704be3535b47add42ac1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:affd399eb06a3ef7308645fbb59b3306d" id="r_affd399eb06a3ef7308645fbb59b3306d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html#affd399eb06a3ef7308645fbb59b3306d">_played</a> = false</td></tr>
 <tr class="separator:affd399eb06a3ef7308645fbb59b3306d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Represents a football match between two teams. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="ad09e481925b47225020a02ded8132820" name="ad09e481925b47225020a02ded8132820"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad09e481925b47225020a02ded8132820">&#9670;&#160;</a></span>Match()</h2>
+<a id="a9b2f808e2bcef12a85315d39fb75e2c9" name="a9b2f808e2bcef12a85315d39fb75e2c9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b2f808e2bcef12a85315d39fb75e2c9">&#9670;&#160;</a></span>Match()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -186,7 +234,19 @@ Private Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a>&#160;</td>
-          <td class="paramname"><em>type</em>&#160;</td>
+          <td class="paramname"><em>type</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a>&#160;</td>
+          <td class="paramname"><em>competition</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>stage</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -203,6 +263,8 @@ Private Attributes</h2></td></tr>
     <tr><td class="paramname">away_id</td><td>The ID of the away team. </td></tr>
     <tr><td class="paramname">date</td><td>The date of the match. </td></tr>
     <tr><td class="paramname">type</td><td>The type of the match (e.g., league, friendly). </td></tr>
+    <tr><td class="paramname">competition</td><td><a class="el" href="classLeague.html" title="Represents a football league containing teams and a leaderboard.">League</a> ID (league matches) or country root league ID (cup matches); 0 for friendlies. </td></tr>
+    <tr><td class="paramname">stage</td><td><a class="el" href="classLeague.html" title="Represents a football league containing teams and a leaderboard.">League</a> round or cup round, 1-based; 0 when unknown. </td></tr>
   </table>
   </dd>
 </dl>
@@ -210,6 +272,50 @@ Private Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a18b8bfeb0444d4e48a7fc3322222fea7" name="a18b8bfeb0444d4e48a7fc3322222fea7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18b8bfeb0444d4e48a7fc3322222fea7">&#9670;&#160;</a></span>applySimulation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structMatchReport.html">MatchReport</a> Match::applySimulation </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structMatchSimulationResult.html">MatchSimulationResult</a>&#160;</td>
+          <td class="paramname"><em>result</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p><a class="el" href="namespaceRecords.html" title="Comparison rules of the records book.">Records</a> a simulated result. Returns its report with the identity and final result filled in. </p>
+
+</div>
+</div>
+<a id="afed7509c7b737137ce3e7d9a0612eb9d" name="afed7509c7b737137ce3e7d9a0612eb9d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afed7509c7b737137ce3e7d9a0612eb9d">&#9670;&#160;</a></span>getAwayPenalties()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t Match::getAwayPenalties </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a503b4c17068e6b1480c28d178047943d" name="a503b4c17068e6b1480c28d178047943d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a503b4c17068e6b1480c28d178047943d">&#9670;&#160;</a></span>getAwayScore()</h2>
 
@@ -250,6 +356,31 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a6fec1cbe85491e44a8635d653ad94e2d" name="a6fec1cbe85491e44a8635d653ad94e2d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6fec1cbe85491e44a8635d653ad94e2d">&#9670;&#160;</a></span>getCompetitionId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a> Match::getCompetitionId </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a3190481fec7788ff03d83d0c46dfabf2" name="a3190481fec7788ff03d83d0c46dfabf2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3190481fec7788ff03d83d0c46dfabf2">&#9670;&#160;</a></span>getDate()</h2>
 
@@ -267,6 +398,31 @@ Private Attributes</h2></td></tr>
 
 <p>Gets the date of the match. </p>
 <dl class="section return"><dt>Returns</dt><dd>The date value. </dd></dl>
+
+</div>
+</div>
+<a id="a673a1159a5d517172a515b438c4c0556" name="a673a1159a5d517172a515b438c4c0556"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a673a1159a5d517172a515b438c4c0556">&#9670;&#160;</a></span>getHomePenalties()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t Match::getHomePenalties </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -310,6 +466,24 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a22fcb60ad285582fc2c5e071c98ec32e" name="a22fcb60ad285582fc2c5e071c98ec32e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22fcb60ad285582fc2c5e071c98ec32e">&#9670;&#160;</a></span>getKickoff()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t Match::getKickoff </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Kick-off time in minutes after midnight (local time at the venue). Fixtures scheduled without one (cup ties, continental matches, fixtures of older saves) report the usual time for their competition and weekday. </p>
+
+</div>
+</div>
 <a id="aafa0219aa2c3d62e92e6a588b43aaef9" name="aafa0219aa2c3d62e92e6a588b43aaef9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aafa0219aa2c3d62e92e6a588b43aaef9">&#9670;&#160;</a></span>getMatchType()</h2>
 
@@ -330,6 +504,119 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a94c2a641df71c2d1a3eb05358da54ab9" name="a94c2a641df71c2d1a3eb05358da54ab9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a94c2a641df71c2d1a3eb05358da54ab9">&#9670;&#160;</a></span>getScheduledKickoff()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t Match::getScheduledKickoff </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Kick-off chosen when the fixture was scheduled; 0 when defaulted. </p>
+
+</div>
+</div>
+<a id="a7308316092f440b0a2c921e22c2d5d60" name="a7308316092f440b0a2c921e22c2d5d60"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7308316092f440b0a2c921e22c2d5d60">&#9670;&#160;</a></span>getSeed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t Match::getSeed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Deterministic per-fixture seed (teams and date). </p>
+
+</div>
+</div>
+<a id="a65f9f9a79d8e0a8ecd16eef9bb238eb2" name="a65f9f9a79d8e0a8ecd16eef9bb238eb2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a65f9f9a79d8e0a8ecd16eef9bb238eb2">&#9670;&#160;</a></span>getStage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t Match::getStage </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a359697b7d07cbccb3c431c4cbb78bba3" name="a359697b7d07cbccb3c431c4cbb78bba3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a359697b7d07cbccb3c431c4cbb78bba3">&#9670;&#160;</a></span>getWinnerId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt; <a class="el" href="types_8h.html#a57143f6ccbdf5a5d9724b986cbdafb31">TeamID</a> &gt; Match::getWinnerId </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Winner of a played match; nullopt for unplayed matches and draws. </p>
+
+</div>
+</div>
+<a id="aa4a89c464929714044bf6b107fb86f26" name="aa4a89c464929714044bf6b107fb86f26"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa4a89c464929714044bf6b107fb86f26">&#9670;&#160;</a></span>isKnockout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Match::isKnockout </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>True for knockout ties that cannot end in a draw. </p>
+
+</div>
+</div>
 <a id="a2d950a4f7fbf7319f10365d457ef1f5b" name="a2d950a4f7fbf7319f10365d457ef1f5b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2d950a4f7fbf7319f10365d457ef1f5b">&#9670;&#160;</a></span>isPlayed()</h2>
 
@@ -347,6 +634,119 @@ Private Attributes</h2></td></tr>
 
 <p>Checks if the match has been played. </p>
 <dl class="section return"><dt>Returns</dt><dd>True if the match has been played, false otherwise. </dd></dl>
+
+</div>
+</div>
+<a id="a8a59f5229ed7c39f905a78ad619ece05" name="a8a59f5229ed7c39f905a78ad619ece05"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8a59f5229ed7c39f905a78ad619ece05">&#9670;&#160;</a></span>prepareSimulation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt; <a class="el" href="structMatchSimulationInput.html">MatchSimulationInput</a> &gt; Match::prepareSimulation </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classGameData.html">GameData</a> &amp;&#160;</td>
+          <td class="paramname"><em>game_data</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Captures lineups, strategies, seed and (for cup ties) the extra-time resolution, so the match can be simulated off this thread with <a class="el" href="namespaceMatchSimulation.html#a8d8ae3e530f28b80c30998b6a26b6d7d">MatchSimulation::run()</a>. nullopt when played or a team is missing. </p>
+
+</div>
+</div>
+<a id="a069dd7a7573feb0fe768a4795e0e24ca" name="a069dd7a7573feb0fe768a4795e0e24ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a069dd7a7573feb0fe768a4795e0e24ca">&#9670;&#160;</a></span>setCompetitionId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Match::setCompetitionId </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a>&#160;</td>
+          <td class="paramname"><em>id</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a406a492ed62cae4c1d1b09d704f6b694" name="a406a492ed62cae4c1d1b09d704f6b694"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a406a492ed62cae4c1d1b09d704f6b694">&#9670;&#160;</a></span>setKickoff()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Match::setKickoff </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>minutes</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Scheduled kick-off in minutes after midnight; 0 restores the default. </p>
+
+</div>
+</div>
+<a id="ae1907dc14b1bbaff12cdeca7a96115ad" name="ae1907dc14b1bbaff12cdeca7a96115ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1907dc14b1bbaff12cdeca7a96115ad">&#9670;&#160;</a></span>setKnockoutResult()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Match::setKnockoutResult </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>h</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>a</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>extra_time</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; std::pair&lt; uint8_t, uint8_t &gt; &gt;&#160;</td>
+          <td class="paramname"><em>penalties</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p><a class="el" href="namespaceRecords.html" title="Comparison rules of the records book.">Records</a> the final score after extra time plus an optional shootout. </p>
 
 </div>
 </div>
@@ -378,8 +778,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ad7877015ac961f579eaf30e26d00dc0d" name="ad7877015ac961f579eaf30e26d00dc0d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad7877015ac961f579eaf30e26d00dc0d">&#9670;&#160;</a></span>simulate()</h2>
+<a id="ad6280485c9e895695dbe1f6b18c3bcf5" name="ad6280485c9e895695dbe1f6b18c3bcf5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad6280485c9e895695dbe1f6b18c3bcf5">&#9670;&#160;</a></span>simulate()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -388,19 +788,106 @@ Private Attributes</h2></td></tr>
           <td class="memname">void Match::simulate </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="classGameData.html">GameData</a> &amp;&#160;</td>
-          <td class="paramname"><em>game_data</em></td><td>)</td>
+          <td class="paramname"><em>game_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="structMatchReport.html">MatchReport</a> *&#160;</td>
+          <td class="paramname"><em>report</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::vector&lt; <a class="el" href="structPlayerMatchConsequence.html">PlayerMatchConsequence</a> &gt; *&#160;</td>
+          <td class="paramname"><em>consequences</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Simulates the match using the provided game data. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Drawn cup matches are decided by extra time and, if still level, a penalty shootout. Players start with their persistent condition. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">game_data</td><td>Reference to the <a class="el" href="classGameData.html" title="Singleton class that acts as an in-memory cache for the database state.">GameData</a> used for simulation. </td></tr>
+    <tr><td class="paramname">report</td><td>Optional report filled with the structured match summary. </td></tr>
+    <tr><td class="paramname">consequences</td><td>Optional physical outcome of every participant (engine end condition and injuries) for <a class="el" href="classWorldSimulation.html" title="Everything that happens between matches.">WorldSimulation</a>. </td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="adfbc33934b327cb24bd9051c8e9e5ad7" name="adfbc33934b327cb24bd9051c8e9e5ad7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adfbc33934b327cb24bd9051c8e9e5ad7">&#9670;&#160;</a></span>wentToExtraTime()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Match::wentToExtraTime </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aef9153357b070968e88c2cd4cff8b19a" name="aef9153357b070968e88c2cd4cff8b19a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef9153357b070968e88c2cd4cff8b19a">&#9670;&#160;</a></span>wentToPenalties()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Match::wentToPenalties </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a499d12032942c4c2cbe70ea5cd21d62f" name="a499d12032942c4c2cbe70ea5cd21d62f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a499d12032942c4c2cbe70ea5cd21d62f">&#9670;&#160;</a></span>writeResultTo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Match::writeResultTo </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structMatchReport.html">MatchReport</a> &amp;&#160;</td>
+          <td class="paramname"><em>report</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Copies identity and final result (incl. extra time) into a report. </p>
 
 </div>
 </div>
@@ -416,6 +903,28 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">bool Match::_played = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4579a2d0577633240bc074456a8671d8" name="a4579a2d0577633240bc074456a8671d8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4579a2d0577633240bc074456a8671d8">&#9670;&#160;</a></span>away_penalties</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t Match::away_penalties = 0</td>
         </tr>
       </table>
   </td>
@@ -471,6 +980,72 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a5e56c385b75fd2f226ed38bdbeda9d58" name="a5e56c385b75fd2f226ed38bdbeda9d58"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e56c385b75fd2f226ed38bdbeda9d58">&#9670;&#160;</a></span>competition_id</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="types_8h.html#a23de5420c0b18be78144797767703d6f">LeagueID</a> Match::competition_id</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="adad43437419706698710b53557457bb3" name="adad43437419706698710b53557457bb3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adad43437419706698710b53557457bb3">&#9670;&#160;</a></span>extra_time</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Match::extra_time = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae5a5226fc2d4ce656f67ab229fe393f8" name="ae5a5226fc2d4ce656f67ab229fe393f8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae5a5226fc2d4ce656f67ab229fe393f8">&#9670;&#160;</a></span>home_penalties</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t Match::home_penalties = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a6d3f770a4fd7aa7229d4b864db217b2d" name="a6d3f770a4fd7aa7229d4b864db217b2d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6d3f770a4fd7aa7229d4b864db217b2d">&#9670;&#160;</a></span>home_score</h2>
 
@@ -515,6 +1090,28 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="aaa1447adf2bfb095114eb4578abcc1da" name="aaa1447adf2bfb095114eb4578abcc1da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa1447adf2bfb095114eb4578abcc1da">&#9670;&#160;</a></span>kickoff</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t Match::kickoff = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="afce02896036e9eb5deb166d29c7f46fe" name="afce02896036e9eb5deb166d29c7f46fe"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afce02896036e9eb5deb166d29c7f46fe">&#9670;&#160;</a></span>match_date</h2>
 
@@ -548,6 +1145,50 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="types_8h.html#a06be3d3918a8700cf086896e9f03e885">MatchType</a> Match::match_type</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8b9ef81cd187704be3535b47add42ac1" name="a8b9ef81cd187704be3535b47add42ac1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b9ef81cd187704be3535b47add42ac1">&#9670;&#160;</a></span>penalties</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Match::penalties = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a541c2c94680a09f0b19b03d9d28afc16" name="a541c2c94680a09f0b19b03d9d28afc16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a541c2c94680a09f0b19b03d9d28afc16">&#9670;&#160;</a></span>stage</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t Match::stage</td>
         </tr>
       </table>
   </td>

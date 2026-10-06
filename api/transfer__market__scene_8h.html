@@ -98,24 +98,50 @@ $(document).ready(function(){initNavTree('transfer__market__scene_8h.html',''); 
   <div class="headertitle"><div class="title">transfer_market_scene.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;optional&gt;</code><br />
+<div class="textblock"><code>#include &lt;imgui.h&gt;</code><br />
+<code>#include &lt;array&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;functional&gt;</code><br />
+<code>#include &lt;optional&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
-<code>#include &quot;<a class="el" href="gui__scene_8h_source.html">gui/gui_scene.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="contract__talks__dialog_8h_source.html">gui/scenes/contract_talks_dialog.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="management__scene_8h_source.html">gui/scenes/management_scene.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="offer__negotiation__dialog_8h_source.html">gui/scenes/offer_negotiation_dialog.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="transfer__market__scene__tuning_8h_source.html">gui/scenes/transfer_market_scene_tuning.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="player_8h_source.html">model/player.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="transfer__listing_8h_source.html">model/transfer_listing.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="player__view_8h_source.html">gui/view_models/player_view.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="transfer__negotiation_8h_source.html">model/transfer_negotiation.h</a>&quot;</code><br />
 </div>
 <p><a href="transfer__market__scene_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTransferMarketScene.html">TransferMarketScene</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Full-screen ImGui scene for the transfer market.  <a href="classTransferMarketScene.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transfer market inside the management shell.  <a href="classTransferMarketScene.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1ConfirmState.html">TransferMarketScene::ConfirmState</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1TargetRow.html">TransferMarketScene::TargetRow</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1CounterState.html">TransferMarketScene::CounterState</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1SquadRow.html">TransferMarketScene::SquadRow</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1OfferRow.html">TransferMarketScene::OfferRow</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1TalkRow.html">TransferMarketScene::TalkRow</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1LoanRow.html">TransferMarketScene::LoanRow</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1HistoryRow.html">TransferMarketScene::HistoryRow</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1SortState.html">TransferMarketScene::SortState</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1Filters.html">TransferMarketScene::Filters</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1OfferDialog.html">TransferMarketScene::OfferDialog</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1LoanDialog.html">TransferMarketScene::LoanDialog</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1ListingDialog.html">TransferMarketScene::ListingDialog</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structTransferMarketScene_1_1ReleaseDialog.html">TransferMarketScene::ReleaseDialog</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->

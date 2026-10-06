@@ -1,8 +1,9 @@
 var structMatchSceneTuning_1_1Scoreboard =
 [
-    [ "EMPHASIZED_FONT_SCALE", "structMatchSceneTuning_1_1Scoreboard.html#ab41c4befcc23a57eeafa120510d9f7e7", null ],
-    [ "NORMAL_FONT_SCALE", "structMatchSceneTuning_1_1Scoreboard.html#a63854d7a5e8076bd5155018ce393b7e0", null ],
+    [ "HEIGHT", "structMatchSceneTuning_1_1Scoreboard.html#a4a100d6198e405dee9c0cc6d9593bf63", null ],
+    [ "KIT_SWATCH_SIZE", "structMatchSceneTuning_1_1Scoreboard.html#a39595b3afb9d8e211c89390edc62de33", null ],
+    [ "NAME_GAP", "structMatchSceneTuning_1_1Scoreboard.html#a13a554982ddd418e050549c0640dfee6", null ],
     [ "PERCENT_SCALE", "structMatchSceneTuning_1_1Scoreboard.html#ac22631c73d5af29204054ec3feffb3b1", null ],
-    [ "SECONDS_PER_MINUTE", "structMatchSceneTuning_1_1Scoreboard.html#ae77f633fdd902e0e89bbc42171970e6c", null ],
-    [ "TIME_RIGHT_MARGIN", "structMatchSceneTuning_1_1Scoreboard.html#a3248832fe09ced2ca3c77356c93d53d0", null ]
+    [ "TIMELINE_MARKER_SIZE", "structMatchSceneTuning_1_1Scoreboard.html#a64e103a597837231f64b2d4298ced083", null ],
+    [ "TRACK_HEIGHT", "structMatchSceneTuning_1_1Scoreboard.html#a590bb38813cc12a225a1812c1050ea31", null ]
 ];

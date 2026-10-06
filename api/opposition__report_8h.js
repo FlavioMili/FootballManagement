@@ -1,0 +1,26 @@
+var opposition__report_8h =
+[
+    [ "OppositionOrder", "structOppositionOrder.html", "structOppositionOrder" ],
+    [ "OppositionPlan", "classOppositionPlan.html", "classOppositionPlan" ],
+    [ "OppositionPlayer", "structOppositionPlayer.html", "structOppositionPlayer" ],
+    [ "KeyOpponent", "structKeyOpponent.html", "structKeyOpponent" ],
+    [ "CounterTactic", "structCounterTactic.html", "structCounterTactic" ],
+    [ "OppositionInput", "structOppositionInput.html", "structOppositionInput" ],
+    [ "OppositionAverages", "structOppositionAverages.html", "structOppositionAverages" ],
+    [ "OppositionReport", "structOppositionReport.html", "structOppositionReport" ],
+    [ "applyCounter", "opposition__report_8h.html#a5c9fbf51d02e1a2eb2155f132340f6e1", null ],
+    [ "buildOppositionReport", "opposition__report_8h.html#aaa1f8b9e33c52c508244c96023bef7d7", null ],
+    [ "formationLabel", "opposition__report_8h.html#a11d5cbe3c92eb74d12c022aea28470bb", null ],
+    [ "oppositionInstructionKey", "opposition__report_8h.html#ae74ab3d185fe46e3e6a28f96137a497a", null ],
+    [ "HIGH_POSSESSION", "opposition__report_8h.html#a30c45877971573855b4e77d3d4eb9e49", null ],
+    [ "HIGH_RATIO", "opposition__report_8h.html#af125c4e38043b6ecfd5d872badd9b291", null ],
+    [ "KEY_PLAYERS", "opposition__report_8h.html#a3a385d33d15429805bb5b415f4b14e4c", null ],
+    [ "LOW_POSSESSION", "opposition__report_8h.html#aadd58f2e16d3899a417da4db6e5e25fb", null ],
+    [ "LOW_RATIO", "opposition__report_8h.html#ac3fcf603270b519e95e35433d1a0c617", null ],
+    [ "MAIN_THREAT_MIN_GOALS", "opposition__report_8h.html#a2413ca0622ec51722000caadb9eb9cad", null ],
+    [ "MAIN_THREAT_SHARE", "opposition__report_8h.html#a5ef1c6622323fa4d9274fd203e12e444", null ],
+    [ "MAX_COUNTERS", "opposition__report_8h.html#afdbd7b371ebceb0a60ab000389716fb0", null ],
+    [ "MIN_MATCHES", "opposition__report_8h.html#ab1c12d8ff77fba38afd3a22a73ddf7d8", null ],
+    [ "PASSING_MARGIN", "opposition__report_8h.html#a03f83fdd775b3790e79b1685d1604dcd", null ],
+    [ "RECENT_MATCHES", "opposition__report_8h.html#ae3aeff7d3fcdc2f1aaf83b9cce94423e", null ]
+];

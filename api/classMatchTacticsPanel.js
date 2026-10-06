@@ -1,0 +1,26 @@
+var classMatchTacticsPanel =
+[
+    [ "Snapshot", "structMatchTacticsPanel_1_1Snapshot.html", "structMatchTacticsPanel_1_1Snapshot" ],
+    [ "apply", "classMatchTacticsPanel.html#aa06448f9a442645dd2282213842b6769", null ],
+    [ "canUndo", "classMatchTacticsPanel.html#a3afd2cca44d6ad529779fb30839aa30d", null ],
+    [ "getApplied", "classMatchTacticsPanel.html#a888c851f2358b825842ad37c7498952d", null ],
+    [ "hasChanges", "classMatchTacticsPanel.html#aac519672449b533b076b07f06c9c0c22", null ],
+    [ "render", "classMatchTacticsPanel.html#a8a35db01458dd06285081b8984a4898a", null ],
+    [ "renderFamiliarity", "classMatchTacticsPanel.html#aae57c541986e62ac0b209d929517c069", null ],
+    [ "renderFooter", "classMatchTacticsPanel.html#af636ba280b242eb2df230932743d6f98", null ],
+    [ "renderFormation", "classMatchTacticsPanel.html#a6b3f401cd5ece2214baf2f60bfd50e3e", null ],
+    [ "renderInstructions", "classMatchTacticsPanel.html#a3117875474fa316f3c4a86a7477f05d2", null ],
+    [ "renderStyle", "classMatchTacticsPanel.html#a85700b6b4a93d798ee9fed50f05cf989", null ],
+    [ "requestClose", "classMatchTacticsPanel.html#ae380e02d6e88c5ef3a161853343c6d47", null ],
+    [ "reset", "classMatchTacticsPanel.html#a72fc6cb1191f1b91972dd17c54198cff", null ],
+    [ "resetPopup", "classMatchTacticsPanel.html#a39612c72bee6beeb6d20c4fad1c24f3c", null ],
+    [ "syncDraft", "classMatchTacticsPanel.html#a6f1de2cb5014d6e09ec7b5d787c6df6b", null ],
+    [ "undo", "classMatchTacticsPanel.html#a72f3de5d73e6cb351f077ee63d088dbf", null ],
+    [ "applied", "classMatchTacticsPanel.html#add9a6575ea9276d44ab13ae7a301f50d", null ],
+    [ "close_requested", "classMatchTacticsPanel.html#a2bec3c32e63992599078960d2284be2d", null ],
+    [ "draft_shape", "classMatchTacticsPanel.html#a4fff0e1118618e6124e6566abeaa5f39", null ],
+    [ "draft_sliders", "classMatchTacticsPanel.html#a8feb40997741e9799c6b18187794d99f", null ],
+    [ "history", "classMatchTacticsPanel.html#a7fb3e544b1ca652d7d2715c69bd409a2", null ],
+    [ "popup_opened", "classMatchTacticsPanel.html#a917f4cb171ce7bc41f4de04c33b31803", null ],
+    [ "WINDOW_ID", "classMatchTacticsPanel.html#aa9c6b9a272351c004539315b2d42cc9b", null ]
+];

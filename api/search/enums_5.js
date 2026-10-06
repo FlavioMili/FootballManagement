@@ -1,4 +1,11 @@
 var searchData=
 [
-  ['query_0',['Query',['../queries_8h.html#a9eb5191b99123f36e7ee07068f87be85',1,'queries.h']]]
+  ['facilityprojecttype_0',['FacilityProjectType',['../board_8h.html#a25d88e997793544bddf03259b0934df1',1,'board.h']]],
+  ['faultpoint_1',['FaultPoint',['../classSaveManager.html#ab9d56cbc655250a88ede0d4c2f0bc694',1,'SaveManager']]],
+  ['financecategory_2',['FinanceCategory',['../finances_8h.html#a2be7febbd8bf2061a2984eba64f5028d',1,'finances.h']]],
+  ['financeobjective_3',['FinanceObjective',['../board_8h.html#a8dfc6fb129a5eb4fc70dcf976aa3fd5e',1,'board.h']]],
+  ['fitkind_4',['FitKind',['../namespaceTransferNegotiation.html#ae57dd911ea66a593cdaf297aed3eaa68',1,'TransferNegotiation']]],
+  ['flank_5',['Flank',['../match__analysis_8h.html#aedc38eac1d75b937608bf4acd003b2c4',1,'match_analysis.h']]],
+  ['foot_6',['Foot',['../player_8h.html#a29a274bfa86b6e9dbfae8cddbae6e606',1,'player.h']]],
+  ['foulsanction_7',['FoulSanction',['../namespaceMatchRules.html#afc4bdb59c2614b6698982acc7263b2e0',1,'MatchRules']]]
 ];

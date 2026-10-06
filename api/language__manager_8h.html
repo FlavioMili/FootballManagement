@@ -99,9 +99,13 @@ $(document).ready(function(){initNavTree('language__manager_8h.html',''); initRe
   <div class="headertitle"><div class="title">language_manager.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;string&gt;</code><br />
+<div class="textblock"><code>#include &lt;cstddef&gt;</code><br />
+<code>#include &lt;functional&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
+<code>#include &lt;string_view&gt;</code><br />
 <code>#include &lt;unordered_map&gt;</code><br />
 <code>#include &quot;<a class="el" href="languages_8h_source.html">global/languages.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="number__format_8h_source.html">global/number_format.h</a>&quot;</code><br />
 </div>
 <p><a href="language__manager_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -110,11 +114,16 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLanguageManager.html">LanguageManager</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Singleton class that manages localization and translations.  <a href="classLanguageManager.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structLanguageManager_1_1Status.html">LanguageManager::Status</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">What the last load left in place.  <a href="structLanguageManager_1_1Status.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structLanguageManager_1_1StringHash.html">LanguageManager::StringHash</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:a1730d76d0c4fbfec35eb1b48790c5a3c" id="r_a1730d76d0c4fbfec35eb1b48790c5a3c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="language__manager_8h.html#a1730d76d0c4fbfec35eb1b48790c5a3c">LOC</a>(key)&#160;&#160;&#160;<a class="el" href="classLanguageManager.html#acce7f57b957ccf759cdbf65628a6b983">LanguageManager::instance</a>().get(key)</td></tr>
-<tr class="memdesc:a1730d76d0c4fbfec35eb1b48790c5a3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global helper macro for concise UI code localization.  <br /></td></tr>
+<tr class="memitem:a1730d76d0c4fbfec35eb1b48790c5a3c" id="r_a1730d76d0c4fbfec35eb1b48790c5a3c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="language__manager_8h.html#a1730d76d0c4fbfec35eb1b48790c5a3c">LOC</a>(<a class="el" href="input__actions_8cpp.html#a59ed576a7d4010e7379ae448eb087594">key</a>)&#160;&#160;&#160;<a class="el" href="classLanguageManager.html#acce7f57b957ccf759cdbf65628a6b983">LanguageManager::instance</a>().get(<a class="el" href="input__actions_8cpp.html#a59ed576a7d4010e7379ae448eb087594">key</a>)</td></tr>
+<tr class="memdesc:a1730d76d0c4fbfec35eb1b48790c5a3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global helper macro for concise <a class="el" href="namespaceUI.html" title="Small vector icons drawn with ImDrawList (no icon font needed).">UI</a> code localization.  <br /></td></tr>
 <tr class="separator:a1730d76d0c4fbfec35eb1b48790c5a3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
@@ -128,13 +137,13 @@ Macros</h2></td></tr>
           <td class="memname">#define LOC</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">key</td><td>)</td>
-          <td>&#160;&#160;&#160;<a class="el" href="classLanguageManager.html#acce7f57b957ccf759cdbf65628a6b983">LanguageManager::instance</a>().get(key)</td>
+          <td class="paramname"><a class="el" href="input__actions_8cpp.html#a59ed576a7d4010e7379ae448eb087594">key</a></td><td>)</td>
+          <td>&#160;&#160;&#160;<a class="el" href="classLanguageManager.html#acce7f57b957ccf759cdbf65628a6b983">LanguageManager::instance</a>().get(<a class="el" href="input__actions_8cpp.html#a59ed576a7d4010e7379ae448eb087594">key</a>)</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Global helper macro for concise UI code localization. </p>
+<p>Global helper macro for concise <a class="el" href="namespaceUI.html" title="Small vector icons drawn with ImDrawList (no icon font needed).">UI</a> code localization. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">key</td><td>The key to translate. </td></tr>

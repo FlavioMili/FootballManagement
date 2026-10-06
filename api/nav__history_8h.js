@@ -1,0 +1,38 @@
+var nav__history_8h =
+[
+    [ "NavEntry", "structNavEntry.html", "structNavEntry" ],
+    [ "NavHistory", "classNavHistory.html", "classNavHistory" ],
+    [ "NavSection", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875d", [
+      [ "HOME", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da710533dd879dd1202e5c73b27705bf02", null ],
+      [ "INBOX", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da7e33429f656f1e6e9d79b29c3f82c57e", null ],
+      [ "CLUB", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875dac54fc2509b0cd290993c32b5cbf26b09", null ],
+      [ "SQUAD", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875dad067467de1ab6162ba06731ac4f7de7b", null ],
+      [ "LINEUP", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875dabb51e5cf1f3cdf49fcd5d029c4641838", null ],
+      [ "TACTICS", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da341cef59ba8a3f96ce3b26a3969eac36", null ],
+      [ "FIXTURES", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da6cadb977eb42df1fc6ab3887104fe85e", null ],
+      [ "STANDINGS", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da1ac2894e8fa43e28ed02733ca0b6931a", null ],
+      [ "TRANSFERS", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875dadbc4ed87294daee8794846e7dedeec27", null ],
+      [ "FINANCES", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da156253748c473e922440d93397271317", null ],
+      [ "SCOUTING", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da3e1e73642fbd1f289be5a4f8c6ad7646", null ],
+      [ "TRAINING", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da7c95c63fdc6550e5b33eed35360778c3", null ],
+      [ "STAFF", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da8e2ef94cad245adb8089356242f49e55", null ],
+      [ "YOUTH", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da96c0062a1705d4fb3bb1290c26a3763f", null ],
+      [ "MANAGER", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da929a43a844650a2ba236b9a50d1bbd20", null ],
+      [ "MEDICAL", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875daea68388b0642cfd18735a4a166494310", null ],
+      [ "CALENDAR", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875dabcacee7ad79abe4e25b877c5b6480a8c", null ],
+      [ "SQUAD_PLANNER", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da9808e5fd4c8d26a53e0e8721f58be09a", null ],
+      [ "COMPARE", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875dafee1f202df8193b3ba65f00ad61efcef", null ],
+      [ "DELEGATION", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da30dfe6d17d4d5c2ea075423c30632b60", null ],
+      [ "DATA_HUB", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da81c6e276aa3bbdb46adc904bac7f7886", null ],
+      [ "OPPOSITION", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da2d723f4ce4734614e9a08dc5f66986dd", null ],
+      [ "INTERNATIONAL", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875dabb0555aaf33daee2bcb10127e463348e", null ],
+      [ "AWARDS", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da9a2b747630f6e4d4cd880cc94da43c5d", null ],
+      [ "RECORDS", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875dabc203dec0e2f4c9bab2181f4ebe84e1a", null ],
+      [ "PLANNING", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875dabf71c229d973f999f1a0db6c0ddd294e", null ],
+      [ "RESERVES", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da6a10ef350c59d8f8c85921c86ad75943", null ],
+      [ "CALL_UPS", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da9218e68ce5bf055b2cde858ffad51282", null ],
+      [ "NEWS", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875daff4e2dc4962dc25a1512353299992c8d", null ],
+      [ "TIMELINE", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875da7970cd1c3f3d736ce0164035d30be1e8", null ],
+      [ "NONE", "nav__history_8h.html#a0b03b54aa57b04c56e6486b1dcaa875dab50339a10e1de285ac99d4c3990b8693", null ]
+    ] ]
+];

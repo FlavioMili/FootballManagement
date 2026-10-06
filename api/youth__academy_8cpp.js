@@ -1,0 +1,25 @@
+var youth__academy_8cpp =
+[
+    [ "academyGrade", "youth__academy_8cpp.html#afc622906245ecf0e0c0132cb312c7edb", null ],
+    [ "actionResultKey", "youth__academy_8cpp.html#ac21a927f24f15ff2447b14c80d731bcf", null ],
+    [ "computerSignings", "youth__academy_8cpp.html#a3e4fd2c4a1c1ed75cae1ea3c0d5cc722", null ],
+    [ "contractKey", "youth__academy_8cpp.html#a2e9271aaec58be8bf3fbe78ae195ee55", null ],
+    [ "firstProfessionalAge", "youth__academy_8cpp.html#af6a90776d11e8d83a0e3eb4eba13b65e", null ],
+    [ "isHomegrown", "youth__academy_8cpp.html#a7c3b29cb79873dcbeca84853ff0026cf", null ],
+    [ "personalityKey", "youth__academy_8cpp.html#a589246b6c256e117b87fb99f7fd98c4b", null ],
+    [ "planIntake", "youth__academy_8cpp.html#a3949eb060d9e7530a794f34fdff4e20b", null ],
+    [ "qualityKey", "youth__academy_8cpp.html#a49b7a7cd39a4e812bdcbf582cc76701b", null ],
+    [ "regionTalent", "youth__academy_8cpp.html#aecc76c1a00b3abebb5f0012c03e59707", null ],
+    [ "requestResultKey", "youth__academy_8cpp.html#abdfe5dce7a55d3e1c999f855ee3df434", null ],
+    [ "reserveEligibility", "youth__academy_8cpp.html#a2c0ab4484cddc774e853987fae5cfe0a", null ],
+    [ "scholarshipWage", "youth__academy_8cpp.html#a1c284b2baa8f8647a5e7a29a5d4f8b21", null ],
+    [ "simulateMatch", "youth__academy_8cpp.html#acccc99bab789698260d4b3ac5ffe40f0", null ],
+    [ "staffProfessionalism", "youth__academy_8cpp.html#a652063a7a026cd025f686c64f67fd210", null ],
+    [ "staffStyleKey", "youth__academy_8cpp.html#ad22bbe9c63fee45d6aa6b287d9ffadd2", null ],
+    [ "summarize", "youth__academy_8cpp.html#aec36927d7064c9f8a379a3fb4c991275", null ],
+    [ "u18SquadLimit", "youth__academy_8cpp.html#af75b7f442583f69443dfdc71ed2083a1", null ],
+    [ "upgradeCost", "youth__academy_8cpp.html#a5739b7c26139daafcac5ec62ad49ed00", null ],
+    [ "upgradeDays", "youth__academy_8cpp.html#acc9245eaebbe94c88454c801cde6d0e2", null ],
+    [ "upgradeTarget", "youth__academy_8cpp.html#a83274e466ee3b53e21dba7768f9843d0", null ],
+    [ "youthContractYears", "youth__academy_8cpp.html#a16fbf8289fa51019fc3b78fc62198638", null ]
+];

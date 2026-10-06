@@ -94,12 +94,22 @@ $(document).ready(function(){initNavTree('match_8h.html',''); initResizable(); }
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#namespaces">Namespaces</a> &#124;
+<a href="#typedef-members">Typedefs</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">match.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
+<div class="textblock"><code>#include &lt;cstddef&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;functional&gt;</code><br />
+<code>#include &lt;optional&gt;</code><br />
+<code>#include &lt;span&gt;</code><br />
+<code>#include &lt;utility&gt;</code><br />
+<code>#include &lt;vector&gt;</code><br />
 <code>#include &quot;<a class="el" href="gamedate_8h_source.html">gamedate.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="stats__config_8h_source.html">global/stats_config.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="types_8h_source.html">global/types.h</a>&quot;</code><br />
 </div>
 <p><a href="match_8h_source.html">Go to the source code of this file.</a></p>
@@ -109,6 +119,37 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatch.html">Match</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents a football match between two teams.  <a href="classMatch.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
+Namespaces</h2></td></tr>
+<tr class="memitem:namespaceMatchdaySquad" id="r_namespaceMatchdaySquad"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceMatchdaySquad.html">MatchdaySquad</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:a8546a982e752f092ebb42f3b93d32c4e" id="r_a8546a982e752f092ebb42f3b93d32c4e"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceMatchdaySquad.html#a8546a982e752f092ebb42f3b93d32c4e">MatchdaySquad::Eligibility</a> = std::function&lt; bool(const <a class="el" href="classPlayer.html">Player</a> &amp;)&gt;</td></tr>
+<tr class="separator:a8546a982e752f092ebb42f3b93d32c4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a857d8f5fcdd160bacb8028ca71fbdeab" id="r_a857d8f5fcdd160bacb8028ca71fbdeab"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceMatchdaySquad.html#a857d8f5fcdd160bacb8028ca71fbdeab">MatchdaySquad::ineligible</a> (const <a class="el" href="classLineup.html">Lineup</a> &amp;lineup, const <a class="el" href="namespaceMatchdaySquad.html#a8546a982e752f092ebb42f3b93d32c4e">Eligibility</a> &amp;eligible)</td></tr>
+<tr class="separator:a857d8f5fcdd160bacb8028ca71fbdeab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af87d89d39f9a047ea437d272ddc5d883" id="r_af87d89d39f9a047ea437d272ddc5d883"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceMatchdaySquad.html#af87d89d39f9a047ea437d272ddc5d883">MatchdaySquad::slotScore</a> (const <a class="el" href="classPlayer.html">Player</a> &amp;player, <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a> slot, const <a class="el" href="structStatsConfig.html">StatsConfig</a> &amp;config)</td></tr>
+<tr class="separator:af87d89d39f9a047ea437d272ddc5d883"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae87adde326d9cc6632f322f76922ca21" id="r_ae87adde326d9cc6632f322f76922ca21"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceMatchdaySquad.html#ae87adde326d9cc6632f322f76922ca21">MatchdaySquad::replaceIneligible</a> (<a class="el" href="classLineup.html">Lineup</a> &amp;lineup, std::span&lt; const <a class="el" href="classPlayer.html">Player</a> *const &gt; squad, const <a class="el" href="namespaceMatchdaySquad.html#a8546a982e752f092ebb42f3b93d32c4e">Eligibility</a> &amp;eligible, const <a class="el" href="structStatsConfig.html">StatsConfig</a> &amp;config)</td></tr>
+<tr class="separator:ae87adde326d9cc6632f322f76922ca21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09dceebf0fc88431f8f8a4cb4846cbe6" id="r_a09dceebf0fc88431f8f8a4cb4846cbe6"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceMatchdaySquad.html#a09dceebf0fc88431f8f8a4cb4846cbe6">MatchdaySquad::recallRegulars</a> (<a class="el" href="classLineup.html">Lineup</a> &amp;lineup, std::span&lt; const <a class="el" href="classPlayer.html">Player</a> *const &gt; squad, const <a class="el" href="namespaceMatchdaySquad.html#a8546a982e752f092ebb42f3b93d32c4e">Eligibility</a> &amp;eligible, const <a class="el" href="structStatsConfig.html">StatsConfig</a> &amp;config)</td></tr>
+<tr class="separator:a09dceebf0fc88431f8f8a4cb4846cbe6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37cfab1848cc6216423134c394a3e86c" id="r_a37cfab1848cc6216423134c394a3e86c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceMatchdaySquad.html#a37cfab1848cc6216423134c394a3e86c">MatchdaySquad::recordStandIns</a> (const <a class="el" href="classLineup.html">Lineup</a> &amp;before, <a class="el" href="classLineup.html">Lineup</a> &amp;after)</td></tr>
+<tr class="separator:a37cfab1848cc6216423134c394a3e86c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2bceebd02986eaaa2c51fd37f039084" id="r_aa2bceebd02986eaaa2c51fd37f039084"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>, <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceMatchdaySquad.html#aa2bceebd02986eaaa2c51fd37f039084">MatchdaySquad::replacements</a> (const <a class="el" href="classLineup.html">Lineup</a> &amp;before, const <a class="el" href="classLineup.html">Lineup</a> &amp;after)</td></tr>
+<tr class="separator:aa2bceebd02986eaaa2c51fd37f039084"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae19734edef8127710e584df49300f83a" id="r_ae19734edef8127710e584df49300f83a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceMatchdaySquad.html#ae19734edef8127710e584df49300f83a">MatchdaySquad::carryCondition</a> (<a class="el" href="classMatchEngine.html">MatchEngine</a> &amp;engine, const <a class="el" href="classLineup.html">Lineup</a> &amp;lineup)</td></tr>
+<tr class="separator:ae19734edef8127710e584df49300f83a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8046761573c7327542ded53f73d53f8" id="r_ab8046761573c7327542ded53f73d53f8"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structPlayerMatchConsequence.html">PlayerMatchConsequence</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceMatchdaySquad.html#ab8046761573c7327542ded53f73d53f8">MatchdaySquad::consequences</a> (const <a class="el" href="classMatchEngine.html">MatchEngine</a> &amp;engine)</td></tr>
+<tr class="separator:ab8046761573c7327542ded53f73d53f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae388ed84e57e1469256faa689224c8d0" id="r_ae388ed84e57e1469256faa689224c8d0"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>, std::uint8_t &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceMatchdaySquad.html#ae388ed84e57e1469256faa689224c8d0">MatchdaySquad::medicalFlags</a> (const <a class="el" href="classMedicalDesk.html">MedicalDesk</a> &amp;medical, const <a class="el" href="classLineup.html">Lineup</a> &amp;lineup)</td></tr>
+<tr class="separator:ae388ed84e57e1469256faa689224c8d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->

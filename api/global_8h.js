@@ -5,6 +5,7 @@ var global_8h =
     [ "toIndex", "global_8h.html#a86adb4127ea3102da2758787b2eda92c", null ],
     [ "toRowCol", "global_8h.html#a386520616d21ce8efb04305ab25834be", null ],
     [ "DAYS_PER_MONTH", "global_8h.html#a3eff294c745f828bf470bbc2a105c76b", null ],
+    [ "FREE_AGENTS_NAME_ARG", "global_8h.html#ae29a32dd2def5003ea2a46f11ae8ad41", null ],
     [ "FREE_AGENTS_TEAM_ID", "global_8h.html#ad739458e122087a2668268985c8c993c", null ],
     [ "FREE_AGENTS_TEAM_NAME", "global_8h.html#ab55c8d4cd4b54165e255b81c69f2a1a8", null ],
     [ "LINEUP_GRID_COLS", "global_8h.html#a22ad9e4a9c0282a6f6a197e55d57db7e", null ],

@@ -110,6 +110,15 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a298d9313803003abea603d56d5cb00a0" id="r_a298d9313803003abea603d56d5cb00a0"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRoleUtils.html#a298d9313803003abea603d56d5cb00a0">toString</a> (<a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a> role)</td></tr>
 <tr class="memdesc:a298d9313803003abea603d56d5cb00a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a PlayerRole enum to its string representation.  <br /></td></tr>
 <tr class="separator:a298d9313803003abea603d56d5cb00a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1972fde1f029deb0e94d02132e3dd3a3" id="r_a1972fde1f029deb0e94d02132e3dd3a3"><td class="memItemLeft" align="right" valign="top">static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRoleUtils.html#a1972fde1f029deb0e94d02132e3dd3a3">shortName</a> (<a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a> role)</td></tr>
+<tr class="memdesc:a1972fde1f029deb0e94d02132e3dd3a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Localised short position name for display ("GK", "POR"). The codes of <a class="el" href="classRoleUtils.html#a298d9313803003abea603d56d5cb00a0" title="Converts a PlayerRole enum to its string representation.">toString()</a> are for persistence and parsing only.  <br /></td></tr>
+<tr class="separator:a1972fde1f029deb0e94d02132e3dd3a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfa8612e7a95c17e08478d2f89e6fca8" id="r_adfa8612e7a95c17e08478d2f89e6fca8"><td class="memItemLeft" align="right" valign="top">static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRoleUtils.html#adfa8612e7a95c17e08478d2f89e6fca8">longName</a> (<a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a> role)</td></tr>
+<tr class="memdesc:adfa8612e7a95c17e08478d2f89e6fca8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Localised full position name ("Goalkeeper", "Portiere").  <br /></td></tr>
+<tr class="separator:adfa8612e7a95c17e08478d2f89e6fca8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f9bf50c868b8effb0735c9962661c0c" id="r_a9f9bf50c868b8effb0735c9962661c0c"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRoleUtils.html#a9f9bf50c868b8effb0735c9962661c0c">shortNameArg</a> (<a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a> role)</td></tr>
+<tr class="memdesc:a9f9bf50c868b8effb0735c9962661c0c"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classInbox.html" title="Chronological list of messages with read tracking.">Inbox</a> argument for the short name ("@ROLE_SHORT_GK"), so saved messages follow the current language.  <br /></td></tr>
+<tr class="separator:a9f9bf50c868b8effb0735c9962661c0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a48cfb853cab50086a17c1819f2ccccd3" id="r_a48cfb853cab50086a17c1819f2ccccd3"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRoleUtils.html#a48cfb853cab50086a17c1819f2ccccd3">fromString</a> (std::string_view role_str)</td></tr>
 <tr class="memdesc:a48cfb853cab50086a17c1819f2ccccd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a string to a PlayerRole enum.  <br /></td></tr>
 <tr class="separator:a48cfb853cab50086a17c1819f2ccccd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -204,6 +213,90 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets the broad category of the role (e.g. "Striker", "Defender"). Used for backward compatibility with older stats logic. </p>
+
+</div>
+</div>
+<a id="adfa8612e7a95c17e08478d2f89e6fca8" name="adfa8612e7a95c17e08478d2f89e6fca8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adfa8612e7a95c17e08478d2f89e6fca8">&#9670;&#160;</a></span>longName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * RoleUtils::longName </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a>&#160;</td>
+          <td class="paramname"><em>role</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Localised full position name ("Goalkeeper", "Portiere"). </p>
+
+</div>
+</div>
+<a id="a1972fde1f029deb0e94d02132e3dd3a3" name="a1972fde1f029deb0e94d02132e3dd3a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1972fde1f029deb0e94d02132e3dd3a3">&#9670;&#160;</a></span>shortName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * RoleUtils::shortName </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a>&#160;</td>
+          <td class="paramname"><em>role</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Localised short position name for display ("GK", "POR"). The codes of <a class="el" href="classRoleUtils.html#a298d9313803003abea603d56d5cb00a0" title="Converts a PlayerRole enum to its string representation.">toString()</a> are for persistence and parsing only. </p>
+
+</div>
+</div>
+<a id="a9f9bf50c868b8effb0735c9962661c0c" name="a9f9bf50c868b8effb0735c9962661c0c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f9bf50c868b8effb0735c9962661c0c">&#9670;&#160;</a></span>shortNameArg()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string RoleUtils::shortNameArg </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="types_8h.html#ae1e198be4ce1cfce8be42795524c8900">PlayerRole</a>&#160;</td>
+          <td class="paramname"><em>role</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classInbox.html" title="Chronological list of messages with read tracking.">Inbox</a> argument for the short name ("@ROLE_SHORT_GK"), so saved messages follow the current language. </p>
 
 </div>
 </div>

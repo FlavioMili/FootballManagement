@@ -1,0 +1,26 @@
+var transfer__terms__editor_8h =
+[
+    [ "alignActions", "transfer__terms__editor_8h.html#a10b1c218430ce38e65c281a20164920e", null ],
+    [ "beginPanel", "transfer__terms__editor_8h.html#ac5c3d72861e5bc48cbe417465cc77570", null ],
+    [ "edit", "transfer__terms__editor_8h.html#a4cdbffd31fc43671b54b831c424a547c", null ],
+    [ "editLoan", "transfer__terms__editor_8h.html#a26f1fbeb8ff07a92c6a5eaaec8812737", null ],
+    [ "endPanel", "transfer__terms__editor_8h.html#a19e170fce7a14af18509724de20e0a6d", null ],
+    [ "formLabel", "transfer__terms__editor_8h.html#af8d77bb4aa36818e920cff3d1cd1ae43", null ],
+    [ "loanTermsLine", "transfer__terms__editor_8h.html#aca5bb1f4a1e6608bd4a46df02c339eca", null ],
+    [ "optionIndex", "transfer__terms__editor_8h.html#ab1d6bd85c8d4c409eac7de70537dd4d1", null ],
+    [ "optionIndex", "transfer__terms__editor_8h.html#a44ccd752ef3221301ef33327020fc66c", null ],
+    [ "snapLoanToOptions", "transfer__terms__editor_8h.html#ad7746bfb38e7d92cf9db58c48fb5d661", null ],
+    [ "snapToOptions", "transfer__terms__editor_8h.html#a3c316579e9fda7f40c02164bfa63e5f8", null ],
+    [ "structureText", "transfer__terms__editor_8h.html#ab40e725cef13aa427c34f9fdd6b323eb", null ],
+    [ "APPEARANCE_TARGETS", "transfer__terms__editor_8h.html#a61a9f800d4dcb58025bd153d777b366f", null ],
+    [ "DEFAULT_INSTALMENT_YEARS", "transfer__terms__editor_8h.html#a922fe5393d432e9c4b5c18231f1d2f35", null ],
+    [ "FEE_STEP", "transfer__terms__editor_8h.html#a2ee50fa806b9b0137457c93b8eb96204", null ],
+    [ "GOAL_TARGETS", "transfer__terms__editor_8h.html#aa5a5c95f348189f6c8886a5e5bb68e08", null ],
+    [ "LOAN_WAGE_SHARE_STEP", "transfer__terms__editor_8h.html#adac627157cc27186745d34d2e7afc766", null ],
+    [ "MIN_APPEARANCE_OPTIONS", "transfer__terms__editor_8h.html#a0010e32aeda26451614da41c2e2fa16b", null ],
+    [ "SELL_ON_LABELS", "transfer__terms__editor_8h.html#a701825cdfff87d5ba8ad6e46e52e347a", null ],
+    [ "SELL_ON_OPTIONS", "transfer__terms__editor_8h.html#acd06f6129386a59d19c59b242cb2ce64", null ],
+    [ "UPFRONT_LABELS", "transfer__terms__editor_8h.html#ad226126f05dbaf3cb89d011705370ac5", null ],
+    [ "UPFRONT_OPTIONS", "transfer__terms__editor_8h.html#aafc64df45d6d108db1576d49f1f36a07", null ],
+    [ "YEAR_LABELS", "transfer__terms__editor_8h.html#a959e53c0696cc7785dbc46c348b5da9f", null ]
+];

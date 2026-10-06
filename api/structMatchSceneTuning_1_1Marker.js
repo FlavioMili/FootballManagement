@@ -1,6 +1,5 @@
 var structMatchSceneTuning_1_1Marker =
 [
-    [ "AWAY_COLOR", "structMatchSceneTuning_1_1Marker.html#aa16ec0a97a9e9bee757a71321ae47132", null ],
     [ "BALL_COLOR", "structMatchSceneTuning_1_1Marker.html#af728030344385e4e707164c806a193d4", null ],
     [ "BALL_HEIGHT_SCALE", "structMatchSceneTuning_1_1Marker.html#af46f53bb26af90064afe0a251d294706", null ],
     [ "BALL_RADIUS", "structMatchSceneTuning_1_1Marker.html#af6132697c09a1c166c6fc09762b3431f", null ],
@@ -15,7 +14,6 @@ var structMatchSceneTuning_1_1Marker =
     [ "DIRECTION_COLOR", "structMatchSceneTuning_1_1Marker.html#a991606c836996d93f17e5e5f2e0a31ea", null ],
     [ "DIRECTION_LENGTH", "structMatchSceneTuning_1_1Marker.html#aff56c7e95e48ccccbe5b0945d1381487", null ],
     [ "DIRECTION_THICKNESS", "structMatchSceneTuning_1_1Marker.html#a6e72ae03d09ce360b7b1af27620242cb", null ],
-    [ "HOME_COLOR", "structMatchSceneTuning_1_1Marker.html#a895c22811f38b1630f24e9e8db65209b", null ],
     [ "HOVER_RADIUS", "structMatchSceneTuning_1_1Marker.html#aa19b5d91b69c590c6a15ad38894f2428", null ],
     [ "LABEL_COLOR", "structMatchSceneTuning_1_1Marker.html#a0774d0c058612c21db1b54f347f36915", null ],
     [ "LABEL_X_OFFSET", "structMatchSceneTuning_1_1Marker.html#a4bfe10753479d245da2be3f8174d53f2", null ],

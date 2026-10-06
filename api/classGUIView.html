@@ -133,6 +133,32 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9a2b8f8ce4199c06cddce663094622a9" id="r_a9a2b8f8ce4199c06cddce663094622a9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a9a2b8f8ce4199c06cddce663094622a9">popScene</a> ()</td></tr>
 <tr class="memdesc:a9a2b8f8ce4199c06cddce663094622a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pops the top overlaid scene.  <br /></td></tr>
 <tr class="separator:a9a2b8f8ce4199c06cddce663094622a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18cfa74d852078ab223f420445ad92cc" id="r_a18cfa74d852078ab223f420445ad92cc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a18cfa74d852078ab223f420445ad92cc">navigateTo</a> (std::unique_ptr&lt; <a class="el" href="classGUIScene.html">GUIScene</a> &gt; scene)</td></tr>
+<tr class="memdesc:a18cfa74d852078ab223f420445ad92cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Routine navigation: removes every overlay and shows a new screen.  <br /></td></tr>
+<tr class="separator:a18cfa74d852078ab223f420445ad92cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c1e65a4fabb7a291f05ec9e27d1d1f1" id="r_a5c1e65a4fabb7a291f05ec9e27d1d1f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classGUIScene.html">GUIScene</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a5c1e65a4fabb7a291f05ec9e27d1d1f1">getBaseScene</a> () const</td></tr>
+<tr class="memdesc:a5c1e65a4fabb7a291f05ec9e27d1d1f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">The scene underneath all overlays (e.g. the club dashboard).  <br /></td></tr>
+<tr class="separator:a5c1e65a4fabb7a291f05ec9e27d1d1f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b87cc2ca79c5f6bd26008378d83fdf6" id="r_a0b87cc2ca79c5f6bd26008378d83fdf6"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a0b87cc2ca79c5f6bd26008378d83fdf6">getOverlayDepth</a> () const</td></tr>
+<tr class="memdesc:a0b87cc2ca79c5f6bd26008378d83fdf6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of overlays currently stacked above the base scene.  <br /></td></tr>
+<tr class="separator:a0b87cc2ca79c5f6bd26008378d83fdf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2eb365783a3197ad70cab933f330a162" id="r_a2eb365783a3197ad70cab933f330a162"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classGUIScene.html">GUIScene</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a2eb365783a3197ad70cab933f330a162">getTopScene</a> () const</td></tr>
+<tr class="memdesc:a2eb365783a3197ad70cab933f330a162"><td class="mdescLeft">&#160;</td><td class="mdescRight">The scene shown now (the top overlay, else the base scene).  <br /></td></tr>
+<tr class="separator:a2eb365783a3197ad70cab933f330a162"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af2056425655c73fecf249b0467b76145" id="r_af2056425655c73fecf249b0467b76145"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classGUIScene.html">GUIScene</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#af2056425655c73fecf249b0467b76145">getSceneBelowTop</a> () const</td></tr>
+<tr class="memdesc:af2056425655c73fecf249b0467b76145"><td class="mdescLeft">&#160;</td><td class="mdescRight">The scene <a class="el" href="classGUIView.html#a9a2b8f8ce4199c06cddce663094622a9" title="Pops the top overlaid scene.">popScene()</a> would reveal (nullptr without overlays).  <br /></td></tr>
+<tr class="separator:af2056425655c73fecf249b0467b76145"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0cc4ba48b4b03b90c803103e55181a5b" id="r_a0cc4ba48b4b03b90c803103e55181a5b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classNavHistory.html">NavHistory</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a0cc4ba48b4b03b90c803103e55181a5b">navHistory</a> ()</td></tr>
+<tr class="memdesc:a0cc4ba48b4b03b90c803103e55181a5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Screens visited in this career, recorded whenever the shown screen changes; cleared whenever the base scene changes (a career is started, loaded or left).  <br /></td></tr>
+<tr class="separator:a0cc4ba48b4b03b90c803103e55181a5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af623e15ef379b818d3222fb0b499df49" id="r_af623e15ef379b818d3222fb0b499df49"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classNavHistory.html">NavHistory</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#af623e15ef379b818d3222fb0b499df49">navHistory</a> () const</td></tr>
+<tr class="separator:af623e15ef379b818d3222fb0b499df49"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4f5b2d718d1a0f9a2a677d9ae8b3b7a" id="r_af4f5b2d718d1a0f9a2a677d9ae8b3b7a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#af4f5b2d718d1a0f9a2a677d9ae8b3b7a">markHistoryStep</a> ()</td></tr>
+<tr class="memdesc:af4f5b2d718d1a0f9a2a677d9ae8b3b7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Marks the scene change just requested as a step through the history (Back / Forward), so it is not recorded as a new visit. Any scene request made after it cancels the mark.  <br /></td></tr>
+<tr class="separator:af4f5b2d718d1a0f9a2a677d9ae8b3b7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f5f90dd70632bf4f22bec5f259b0a79" id="r_a5f5f90dd70632bf4f22bec5f259b0a79"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSwipeGesture.html">SwipeGesture</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a5f5f90dd70632bf4f22bec5f259b0a79">swipeGesture</a> ()</td></tr>
+<tr class="memdesc:a5f5f90dd70632bf4f22bec5f259b0a79"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sideways touchpad swipe, shared by every career screen.  <br /></td></tr>
+<tr class="separator:a5f5f90dd70632bf4f22bec5f259b0a79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1cd3cf476bcf47adf7ec8e8fdb18e8d7" id="r_a1cd3cf476bcf47adf7ec8e8fdb18e8d7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a1cd3cf476bcf47adf7ec8e8fdb18e8d7">quit</a> ()</td></tr>
 <tr class="memdesc:a1cd3cf476bcf47adf7ec8e8fdb18e8d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops the run loop and quits.  <br /></td></tr>
 <tr class="separator:a1cd3cf476bcf47adf7ec8e8fdb18e8d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -145,15 +171,37 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac5bea47bc5df7db30835588a13255e2d" id="r_ac5bea47bc5df7db30835588a13255e2d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classGameController.html">GameController</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ac5bea47bc5df7db30835588a13255e2d">getController</a> () const</td></tr>
 <tr class="memdesc:ac5bea47bc5df7db30835588a13255e2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the game controller.  <br /></td></tr>
 <tr class="separator:ac5bea47bc5df7db30835588a13255e2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35d1fa4165ea4c99fa753a629e1874ea" id="r_a35d1fa4165ea4c99fa753a629e1874ea"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a35d1fa4165ea4c99fa753a629e1874ea">requestBackdropCapture</a> ()</td></tr>
+<tr class="memdesc:a35d1fa4165ea4c99fa753a629e1874ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Freezes the frame being rendered into a texture at its end.  <br /></td></tr>
+<tr class="separator:a35d1fa4165ea4c99fa753a629e1874ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d649bc0a3201d4884348eb900e50017" id="r_a4d649bc0a3201d4884348eb900e50017"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a4d649bc0a3201d4884348eb900e50017">isBackdropPending</a> () const</td></tr>
+<tr class="memdesc:a4d649bc0a3201d4884348eb900e50017"><td class="mdescLeft">&#160;</td><td class="mdescRight">True until the requested frame has been frozen.  <br /></td></tr>
+<tr class="separator:a4d649bc0a3201d4884348eb900e50017"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a116373e78f91c60f2fcb7df43d95000b" id="r_a116373e78f91c60f2fcb7df43d95000b"><td class="memItemLeft" align="right" valign="top">SDL_Texture *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a116373e78f91c60f2fcb7df43d95000b">getBackdrop</a> () const</td></tr>
+<tr class="memdesc:a116373e78f91c60f2fcb7df43d95000b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frozen frame from <a class="el" href="classGUIView.html#a35d1fa4165ea4c99fa753a629e1874ea" title="Freezes the frame being rendered into a texture at its end.">requestBackdropCapture()</a>, or nullptr.  <br /></td></tr>
+<tr class="separator:a116373e78f91c60f2fcb7df43d95000b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf16493c43fbd8620f31b3d49897daba" id="r_aaf16493c43fbd8620f31b3d49897daba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#aaf16493c43fbd8620f31b3d49897daba">releaseBackdrop</a> ()</td></tr>
+<tr class="memdesc:aaf16493c43fbd8620f31b3d49897daba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frees the frozen frame.  <br /></td></tr>
+<tr class="separator:aaf16493c43fbd8620f31b3d49897daba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afaa5bb5d0063e4c9e003fbc1ef256daf" id="r_afaa5bb5d0063e4c9e003fbc1ef256daf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#afaa5bb5d0063e4c9e003fbc1ef256daf">refreshTheme</a> ()</td></tr>
+<tr class="separator:afaa5bb5d0063e4c9e003fbc1ef256daf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad842d40286e073a935b83ede66bf6b2a" id="r_ad842d40286e073a935b83ede66bf6b2a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ad842d40286e073a935b83ede66bf6b2a">applySavePolicy</a> ()</td></tr>
+<tr class="separator:ad842d40286e073a935b83ede66bf6b2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5875a192bd0f8c7147931e9484a4810" id="r_ac5875a192bd0f8c7147931e9484a4810"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ac5875a192bd0f8c7147931e9484a4810">applyWindowSettings</a> (bool resize=true)</td></tr>
+<tr class="separator:ac5875a192bd0f8c7147931e9484a4810"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef8b9291f46a97b275a2d9f05ebd6831" id="r_aef8b9291f46a97b275a2d9f05ebd6831"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#aef8b9291f46a97b275a2d9f05ebd6831">captureScreenshot</a> (std::string_view path) const</td></tr>
 <tr class="separator:aef8b9291f46a97b275a2d9f05ebd6831"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-types" name="pri-types"></a>
 Private Types</h2></td></tr>
-<tr class="memitem:a5599174075b54d4caad80c213daedad0" id="r_a5599174075b54d4caad80c213daedad0"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a5599174075b54d4caad80c213daedad0">PendingAction</a> { <a class="el" href="classGUIView.html#a5599174075b54d4caad80c213daedad0ab50339a10e1de285ac99d4c3990b8693">NONE</a>
+<tr class="memitem:a5599174075b54d4caad80c213daedad0" id="r_a5599174075b54d4caad80c213daedad0"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a5599174075b54d4caad80c213daedad0">PendingAction</a> { <br />
+&#160;&#160;<a class="el" href="classGUIView.html#a5599174075b54d4caad80c213daedad0ab50339a10e1de285ac99d4c3990b8693">NONE</a>
 , <a class="el" href="classGUIView.html#a5599174075b54d4caad80c213daedad0a421cfd143e450c3f5814a0495409e073">CHANGE</a>
 , <a class="el" href="classGUIView.html#a5599174075b54d4caad80c213daedad0a0395ef37aaf2724781e56e74c9cca583">OVERLAY</a>
 , <a class="el" href="classGUIView.html#a5599174075b54d4caad80c213daedad0aefdb39a4c7286afcecf0e8a7435fce6a">POP</a>
+, <br />
+&#160;&#160;<a class="el" href="classGUIView.html#a5599174075b54d4caad80c213daedad0ab51e586836039ac4aa10e0a78922291a">NAVIGATE</a>
+<br />
  }</td></tr>
 <tr class="separator:a5599174075b54d4caad80c213daedad0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -161,8 +209,10 @@ Private Types</h2></td></tr>
 Private Member Functions</h2></td></tr>
 <tr class="memitem:a09b6c8cab5626c113d27dbbfa882b6ad" id="r_a09b6c8cab5626c113d27dbbfa882b6ad"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a09b6c8cab5626c113d27dbbfa882b6ad">initialize</a> ()</td></tr>
 <tr class="separator:a09b6c8cab5626c113d27dbbfa882b6ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5aae1d5de2be5b50378d51fcfb2ec38b" id="r_a5aae1d5de2be5b50378d51fcfb2ec38b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a5aae1d5de2be5b50378d51fcfb2ec38b">applyCatppuccinLatteTheme</a> ()</td></tr>
-<tr class="separator:a5aae1d5de2be5b50378d51fcfb2ec38b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aabab23c9efe047fb1350f7cb5a121c13" id="r_aabab23c9efe047fb1350f7cb5a121c13"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#aabab23c9efe047fb1350f7cb5a121c13">applyManagementTheme</a> ()</td></tr>
+<tr class="separator:aabab23c9efe047fb1350f7cb5a121c13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2af903949c3574b334b5ae3d349cad9" id="r_ab2af903949c3574b334b5ae3d349cad9"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ab2af903949c3574b334b5ae3d349cad9">displayScale</a> () const</td></tr>
+<tr class="separator:ab2af903949c3574b334b5ae3d349cad9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af9726402be6b2677c160c7213be0868a" id="r_af9726402be6b2677c160c7213be0868a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#af9726402be6b2677c160c7213be0868a">handleEvents</a> ()</td></tr>
 <tr class="separator:af9726402be6b2677c160c7213be0868a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a2fde03bd86fcbc98049eddd976b2e5" id="r_a8a2fde03bd86fcbc98049eddd976b2e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a8a2fde03bd86fcbc98049eddd976b2e5">update</a> (float deltaTime)</td></tr>
@@ -175,6 +225,8 @@ Private Member Functions</h2></td></tr>
 <tr class="separator:a7aa38ef6fc86ca5795acbfe197f53ccb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf4afae32b601d8f4f9df3368b9001ee" id="r_acf4afae32b601d8f4f9df3368b9001ee"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#acf4afae32b601d8f4f9df3368b9001ee">reportMatchRenderTimings</a> ()</td></tr>
 <tr class="separator:acf4afae32b601d8f4f9df3368b9001ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1e016229cb81f9ac2fef0a811b8f058" id="r_ae1e016229cb81f9ac2fef0a811b8f058"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ae1e016229cb81f9ac2fef0a811b8f058">recordHistory</a> ()</td></tr>
+<tr class="separator:ae1e016229cb81f9ac2fef0a811b8f058"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e525473cca5a2272288c71e65d703bb" id="r_a7e525473cca5a2272288c71e65d703bb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a7e525473cca5a2272288c71e65d703bb">applyPendingSceneChanges</a> ()</td></tr>
 <tr class="separator:a7e525473cca5a2272288c71e65d703bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -190,6 +242,10 @@ Private Attributes</h2></td></tr>
 <tr class="separator:adb591d44135de010b50b2c2068803f50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8592805a6ad9454cbfabcde9d1da7d13" id="r_a8592805a6ad9454cbfabcde9d1da7d13"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a8592805a6ad9454cbfabcde9d1da7d13">screenshotPending</a> = false</td></tr>
 <tr class="separator:a8592805a6ad9454cbfabcde9d1da7d13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab939db4c340bcc8db53faa47bedc3fc6" id="r_ab939db4c340bcc8db53faa47bedc3fc6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ab939db4c340bcc8db53faa47bedc3fc6">backdropPending</a> = false</td></tr>
+<tr class="separator:ab939db4c340bcc8db53faa47bedc3fc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d1e8d0591c83f9afcac9688e78e179c" id="r_a2d1e8d0591c83f9afcac9688e78e179c"><td class="memItemLeft" align="right" valign="top">SDL_Texture *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a2d1e8d0591c83f9afcac9688e78e179c">backdropTexture</a> = nullptr</td></tr>
+<tr class="separator:a2d1e8d0591c83f9afcac9688e78e179c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeba6e4d5c303ecb6f7257a512503fe5b" id="r_aeba6e4d5c303ecb6f7257a512503fe5b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#aeba6e4d5c303ecb6f7257a512503fe5b">rendererIsSoftware</a> = false</td></tr>
 <tr class="separator:aeba6e4d5c303ecb6f7257a512503fe5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a74d787c3912c2deeef90e00fd49b5c" id="r_a3a74d787c3912c2deeef90e00fd49b5c"><td class="memItemLeft" align="right" valign="top">std::array&lt; float, <a class="el" href="classGUIView.html#a3fe69de1b1020c07363b531b1b35003a">MATCH_FRAME_TIMING_COUNT</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a3a74d787c3912c2deeef90e00fd49b5c">matchFrameTimes</a> {}</td></tr>
@@ -198,8 +254,14 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a523cad57affe805a1a425d03b17b016a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a088b9d0eb634232916dae175698c7b10" id="r_a088b9d0eb634232916dae175698c7b10"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classGUIScene.html">GUIScene</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a088b9d0eb634232916dae175698c7b10">currentScene</a></td></tr>
 <tr class="separator:a088b9d0eb634232916dae175698c7b10"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab98bc5a6f48ee51be2f5d60f1e8e7693" id="r_ab98bc5a6f48ee51be2f5d60f1e8e7693"><td class="memItemLeft" align="right" valign="top">std::stack&lt; std::unique_ptr&lt; <a class="el" href="classGUIScene.html">GUIScene</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ab98bc5a6f48ee51be2f5d60f1e8e7693">sceneStack</a></td></tr>
-<tr class="separator:ab98bc5a6f48ee51be2f5d60f1e8e7693"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bb31637a000759e2cb701f2d8988d3d" id="r_a2bb31637a000759e2cb701f2d8988d3d"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::unique_ptr&lt; <a class="el" href="classGUIScene.html">GUIScene</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a2bb31637a000759e2cb701f2d8988d3d">sceneStack</a></td></tr>
+<tr class="separator:a2bb31637a000759e2cb701f2d8988d3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3c232ef2245a6743cc92dfc19d6b5e5" id="r_aa3c232ef2245a6743cc92dfc19d6b5e5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classNavHistory.html">NavHistory</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#aa3c232ef2245a6743cc92dfc19d6b5e5">nav_history</a></td></tr>
+<tr class="separator:aa3c232ef2245a6743cc92dfc19d6b5e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5f7cc14bacf0f00c030017f64e9da15" id="r_ac5f7cc14bacf0f00c030017f64e9da15"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ac5f7cc14bacf0f00c030017f64e9da15">history_step</a> = false</td></tr>
+<tr class="separator:ac5f7cc14bacf0f00c030017f64e9da15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7705639d8c89a9cadf594f6f6439e7ad" id="r_a7705639d8c89a9cadf594f6f6439e7ad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSwipeGesture.html">SwipeGesture</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a7705639d8c89a9cadf594f6f6439e7ad">swipe_gesture</a></td></tr>
+<tr class="separator:a7705639d8c89a9cadf594f6f6439e7ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a295b0d82742d1e6d5a332459c7cc9ee0" id="r_a295b0d82742d1e6d5a332459c7cc9ee0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classGUIView.html#a5599174075b54d4caad80c213daedad0">PendingAction</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#a295b0d82742d1e6d5a332459c7cc9ee0">pendingAction</a> = <a class="el" href="classGUIView.html#a5599174075b54d4caad80c213daedad0ab50339a10e1de285ac99d4c3990b8693">PendingAction::NONE</a></td></tr>
 <tr class="separator:a295b0d82742d1e6d5a332459c7cc9ee0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aad7c197e9593027bfa285e436e222690" id="r_aad7c197e9593027bfa285e436e222690"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classGUIScene.html">GUIScene</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#aad7c197e9593027bfa285e436e222690">pendingScene</a></td></tr>
@@ -216,6 +278,10 @@ Static Private Attributes</h2></td></tr>
 Friends</h2></td></tr>
 <tr class="memitem:af70851c82f5c5d3e1b6b40e55b6d8532" id="r_af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#af70851c82f5c5d3e1b6b40e55b6d8532">GameFlowTest_GUIFlowLifecycle_Test</a></td></tr>
 <tr class="separator:af70851c82f5c5d3e1b6b40e55b6d8532"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab98c28ce1d196409d4f2a22257ad8990" id="r_ab98c28ce1d196409d4f2a22257ad8990"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#ab98c28ce1d196409d4f2a22257ad8990">GameFlowTest_ManagementScreensMidSeason_Test</a></td></tr>
+<tr class="separator:ab98c28ce1d196409d4f2a22257ad8990"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa47a295b3ad8febd903a6cdc4f2360b1" id="r_aa47a295b3ad8febd903a6cdc4f2360b1"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classGUIView.html#aa47a295b3ad8febd903a6cdc4f2360b1">GameFlowTest</a></td></tr>
+<tr class="separator:aa47a295b3ad8febd903a6cdc4f2360b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Main view manager for the GUI. Handles scenes and overlays. </p>
@@ -244,6 +310,7 @@ Friends</h2></td></tr>
 <tr><td class="fieldname"><a id="a5599174075b54d4caad80c213daedad0a421cfd143e450c3f5814a0495409e073" name="a5599174075b54d4caad80c213daedad0a421cfd143e450c3f5814a0495409e073"></a>CHANGE&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a5599174075b54d4caad80c213daedad0a0395ef37aaf2724781e56e74c9cca583" name="a5599174075b54d4caad80c213daedad0a0395ef37aaf2724781e56e74c9cca583"></a>OVERLAY&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a5599174075b54d4caad80c213daedad0aefdb39a4c7286afcecf0e8a7435fce6a" name="a5599174075b54d4caad80c213daedad0aefdb39a4c7286afcecf0e8a7435fce6a"></a>POP&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a5599174075b54d4caad80c213daedad0ab51e586836039ac4aa10e0a78922291a" name="a5599174075b54d4caad80c213daedad0ab51e586836039ac4aa10e0a78922291a"></a>NAVIGATE&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -303,8 +370,8 @@ Friends</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a5aae1d5de2be5b50378d51fcfb2ec38b" name="a5aae1d5de2be5b50378d51fcfb2ec38b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5aae1d5de2be5b50378d51fcfb2ec38b">&#9670;&#160;</a></span>applyCatppuccinLatteTheme()</h2>
+<a id="aabab23c9efe047fb1350f7cb5a121c13" name="aabab23c9efe047fb1350f7cb5a121c13"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aabab23c9efe047fb1350f7cb5a121c13">&#9670;&#160;</a></span>applyManagementTheme()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -313,7 +380,7 @@ Friends</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void GUIView::applyCatppuccinLatteTheme </td>
+          <td class="memname">void GUIView::applyManagementTheme </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -350,6 +417,43 @@ Friends</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad842d40286e073a935b83ede66bf6b2a" name="ad842d40286e073a935b83ede66bf6b2a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad842d40286e073a935b83ede66bf6b2a">&#9670;&#160;</a></span>applySavePolicy()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GUIView::applySavePolicy </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Hands the saved autosave frequency and backup count to the controller. </p>
+
+</div>
+</div>
+<a id="ac5875a192bd0f8c7147931e9484a4810" name="ac5875a192bd0f8c7147931e9484a4810"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac5875a192bd0f8c7147931e9484a4810">&#9670;&#160;</a></span>applyWindowSettings()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GUIView::applyWindowSettings </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>resize</em> = <code>true</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Applies the saved window mode and size. The size is in logical units: where window coordinates are physical pixels (Windows, scaled X11) it is multiplied by the display scale, so 1280x720 at 200% opens a 2560x1440-pixel window instead of a 640x360 layout, always kept within the display's usable area. With <code>resize</code> false only the mode, VSync and language are applied (a maximised window stays maximised). </p>
 
 </div>
 </div>
@@ -424,6 +528,31 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="ab2af903949c3574b334b5ae3d349cad9" name="ab2af903949c3574b334b5ae3d349cad9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2af903949c3574b334b5ae3d349cad9">&#9670;&#160;</a></span>displayScale()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float GUIView::displayScale </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a3e3aa698f5e4cc219cca1a7e1f43f127" name="a3e3aa698f5e4cc219cca1a7e1f43f127"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3e3aa698f5e4cc219cca1a7e1f43f127">&#9670;&#160;</a></span>getActiveScene()</h2>
 
@@ -449,6 +578,52 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="a116373e78f91c60f2fcb7df43d95000b" name="a116373e78f91c60f2fcb7df43d95000b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a116373e78f91c60f2fcb7df43d95000b">&#9670;&#160;</a></span>getBackdrop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">SDL_Texture * GUIView::getBackdrop </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Frozen frame from <a class="el" href="classGUIView.html#a35d1fa4165ea4c99fa753a629e1874ea" title="Freezes the frame being rendered into a texture at its end.">requestBackdropCapture()</a>, or nullptr. </p>
+
+</div>
+</div>
+<a id="a5c1e65a4fabb7a291f05ec9e27d1d1f1" name="a5c1e65a4fabb7a291f05ec9e27d1d1f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c1e65a4fabb7a291f05ec9e27d1d1f1">&#9670;&#160;</a></span>getBaseScene()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classGUIScene.html">GUIScene</a> * GUIView::getBaseScene </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The scene underneath all overlays (e.g. the club dashboard). </p>
+
+</div>
+</div>
 <a id="ac5bea47bc5df7db30835588a13255e2d" name="ac5bea47bc5df7db30835588a13255e2d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac5bea47bc5df7db30835588a13255e2d">&#9670;&#160;</a></span>getController()</h2>
 
@@ -469,6 +644,25 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="a0b87cc2ca79c5f6bd26008378d83fdf6" name="a0b87cc2ca79c5f6bd26008378d83fdf6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b87cc2ca79c5f6bd26008378d83fdf6">&#9670;&#160;</a></span>getOverlayDepth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t GUIView::getOverlayDepth </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Number of overlays currently stacked above the base scene. </p>
+
+</div>
+</div>
 <a id="a880b1fa86042a2994e21e8cdacb846d9" name="a880b1fa86042a2994e21e8cdacb846d9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a880b1fa86042a2994e21e8cdacb846d9">&#9670;&#160;</a></span>getRenderer()</h2>
 
@@ -486,6 +680,52 @@ Friends</h2></td></tr>
 
 <p>Gets the SDL renderer. </p>
 <dl class="section return"><dt>Returns</dt><dd>The SDL_Renderer pointer. </dd></dl>
+
+</div>
+</div>
+<a id="af2056425655c73fecf249b0467b76145" name="af2056425655c73fecf249b0467b76145"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af2056425655c73fecf249b0467b76145">&#9670;&#160;</a></span>getSceneBelowTop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classGUIScene.html">GUIScene</a> * GUIView::getSceneBelowTop </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The scene <a class="el" href="classGUIView.html#a9a2b8f8ce4199c06cddce663094622a9" title="Pops the top overlaid scene.">popScene()</a> would reveal (nullptr without overlays). </p>
+
+</div>
+</div>
+<a id="a2eb365783a3197ad70cab933f330a162" name="a2eb365783a3197ad70cab933f330a162"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2eb365783a3197ad70cab933f330a162">&#9670;&#160;</a></span>getTopScene()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classGUIScene.html">GUIScene</a> * GUIView::getTopScene </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>The scene shown now (the top overlay, else the base scene). </p>
 
 </div>
 </div>
@@ -559,6 +799,139 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="a4d649bc0a3201d4884348eb900e50017" name="a4d649bc0a3201d4884348eb900e50017"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4d649bc0a3201d4884348eb900e50017">&#9670;&#160;</a></span>isBackdropPending()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GUIView::isBackdropPending </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>True until the requested frame has been frozen. </p>
+
+</div>
+</div>
+<a id="af4f5b2d718d1a0f9a2a677d9ae8b3b7a" name="af4f5b2d718d1a0f9a2a677d9ae8b3b7a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af4f5b2d718d1a0f9a2a677d9ae8b3b7a">&#9670;&#160;</a></span>markHistoryStep()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GUIView::markHistoryStep </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Marks the scene change just requested as a step through the history (Back / Forward), so it is not recorded as a new visit. Any scene request made after it cancels the mark. </p>
+
+</div>
+</div>
+<a id="a0cc4ba48b4b03b90c803103e55181a5b" name="a0cc4ba48b4b03b90c803103e55181a5b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0cc4ba48b4b03b90c803103e55181a5b">&#9670;&#160;</a></span>navHistory() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classNavHistory.html">NavHistory</a> &amp; GUIView::navHistory </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Screens visited in this career, recorded whenever the shown screen changes; cleared whenever the base scene changes (a career is started, loaded or left). </p>
+
+</div>
+</div>
+<a id="af623e15ef379b818d3222fb0b499df49" name="af623e15ef379b818d3222fb0b499df49"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af623e15ef379b818d3222fb0b499df49">&#9670;&#160;</a></span>navHistory() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classNavHistory.html">NavHistory</a> &amp; GUIView::navHistory </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a18cfa74d852078ab223f420445ad92cc" name="a18cfa74d852078ab223f420445ad92cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18cfa74d852078ab223f420445ad92cc">&#9670;&#160;</a></span>navigateTo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GUIView::navigateTo </td>
+          <td>(</td>
+          <td class="paramtype">std::unique_ptr&lt; <a class="el" href="classGUIScene.html">GUIScene</a> &gt;&#160;</td>
+          <td class="paramname"><em>scene</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Routine navigation: removes every overlay and shows a new screen. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">scene</td><td>Screen to show above the base scene, or nullptr to return to the base scene itself.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Unlike <a class="el" href="classGUIView.html#a9a2b8f8ce4199c06cddce663094622a9" title="Pops the top overlaid scene.">popScene()</a> followed by <a class="el" href="classGUIView.html#a0b59705de676f49769060d1fc8962abc" title="Overlays a new scene on top of the current one.">overlayScene()</a>, this is a single deferred action, so it can safely be requested from inside a scene's <a class="el" href="classGUIView.html#aab2105ec50a97925112d97cdd5456a15">render()</a>. </p>
+
+</div>
+</div>
 <a id="a0b59705de676f49769060d1fc8962abc" name="a0b59705de676f49769060d1fc8962abc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0b59705de676f49769060d1fc8962abc">&#9670;&#160;</a></span>overlayScene()</h2>
 
@@ -625,6 +998,69 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="ae1e016229cb81f9ac2fef0a811b8f058" name="ae1e016229cb81f9ac2fef0a811b8f058"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1e016229cb81f9ac2fef0a811b8f058">&#9670;&#160;</a></span>recordHistory()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GUIView::recordHistory </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p><a class="el" href="namespaceRecords.html" title="Comparison rules of the records book.">Records</a> the screen shown after a scene change. </p>
+
+</div>
+</div>
+<a id="afaa5bb5d0063e4c9e003fbc1ef256daf" name="afaa5bb5d0063e4c9e003fbc1ef256daf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afaa5bb5d0063e4c9e003fbc1ef256daf">&#9670;&#160;</a></span>refreshTheme()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GUIView::refreshTheme </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Re-applies appearance settings (theme, scale, density) live. </p>
+
+</div>
+</div>
+<a id="aaf16493c43fbd8620f31b3d49897daba" name="aaf16493c43fbd8620f31b3d49897daba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaf16493c43fbd8620f31b3d49897daba">&#9670;&#160;</a></span>releaseBackdrop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GUIView::releaseBackdrop </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Frees the frozen frame. </p>
+
+</div>
+</div>
 <a id="aab2105ec50a97925112d97cdd5456a15" name="aab2105ec50a97925112d97cdd5456a15"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aab2105ec50a97925112d97cdd5456a15">&#9670;&#160;</a></span>render()</h2>
 
@@ -675,6 +1111,26 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="a35d1fa4165ea4c99fa753a629e1874ea" name="a35d1fa4165ea4c99fa753a629e1874ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a35d1fa4165ea4c99fa753a629e1874ea">&#9670;&#160;</a></span>requestBackdropCapture()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void GUIView::requestBackdropCapture </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Freezes the frame being rendered into a texture at its end. </p>
+<p>Used as a dimmed backdrop while the game state must not be read (e.g. days simulated in the background), so the screen stays visible without any scene touching live data. While it exists it is drawn behind the <a class="el" href="namespaceUI.html" title="Small vector icons drawn with ImDrawList (no icon font needed).">UI</a> every frame, so scenes shown over it must use transparent windows. </p>
+
+</div>
+</div>
 <a id="a0fef49a04f8ef5111d45273bc21ceb44" name="a0fef49a04f8ef5111d45273bc21ceb44"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0fef49a04f8ef5111d45273bc21ceb44">&#9670;&#160;</a></span>run()</h2>
 
@@ -714,6 +1170,33 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="a5f5f90dd70632bf4f22bec5f259b0a79" name="a5f5f90dd70632bf4f22bec5f259b0a79"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f5f90dd70632bf4f22bec5f259b0a79">&#9670;&#160;</a></span>swipeGesture()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSwipeGesture.html">SwipeGesture</a> &amp; GUIView::swipeGesture </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sideways touchpad swipe, shared by every career screen. </p>
+
+</div>
+</div>
 <a id="a8a2fde03bd86fcbc98049eddd976b2e5" name="a8a2fde03bd86fcbc98049eddd976b2e5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8a2fde03bd86fcbc98049eddd976b2e5">&#9670;&#160;</a></span>update()</h2>
 
@@ -741,6 +1224,28 @@ Friends</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Friends And Related Symbol Documentation</h2>
+<a id="aa47a295b3ad8febd903a6cdc4f2360b1" name="aa47a295b3ad8febd903a6cdc4f2360b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa47a295b3ad8febd903a6cdc4f2360b1">&#9670;&#160;</a></span>GameFlowTest</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class GameFlowTest</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="af70851c82f5c5d3e1b6b40e55b6d8532" name="af70851c82f5c5d3e1b6b40e55b6d8532"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af70851c82f5c5d3e1b6b40e55b6d8532">&#9670;&#160;</a></span>GameFlowTest_GUIFlowLifecycle_Test</h2>
 
@@ -763,7 +1268,73 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="ab98c28ce1d196409d4f2a22257ad8990" name="ab98c28ce1d196409d4f2a22257ad8990"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab98c28ce1d196409d4f2a22257ad8990">&#9670;&#160;</a></span>GameFlowTest_ManagementScreensMidSeason_Test</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class GameFlowTest_ManagementScreensMidSeason_Test</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a id="ab939db4c340bcc8db53faa47bedc3fc6" name="ab939db4c340bcc8db53faa47bedc3fc6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab939db4c340bcc8db53faa47bedc3fc6">&#9670;&#160;</a></span>backdropPending</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GUIView::backdropPending = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2d1e8d0591c83f9afcac9688e78e179c" name="a2d1e8d0591c83f9afcac9688e78e179c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d1e8d0591c83f9afcac9688e78e179c">&#9670;&#160;</a></span>backdropTexture</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">SDL_Texture* GUIView::backdropTexture = nullptr</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ad92f0d45a39f78d897c97f22c68a0e12" name="ad92f0d45a39f78d897c97f22c68a0e12"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad92f0d45a39f78d897c97f22c68a0e12">&#9670;&#160;</a></span>controller</h2>
 
@@ -797,6 +1368,28 @@ Friends</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::unique_ptr&lt;<a class="el" href="classGUIScene.html">GUIScene</a>&gt; GUIView::currentScene</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac5f7cc14bacf0f00c030017f64e9da15" name="ac5f7cc14bacf0f00c030017f64e9da15"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac5f7cc14bacf0f00c030017f64e9da15">&#9670;&#160;</a></span>history_step</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool GUIView::history_step = false</td>
         </tr>
       </table>
   </td>
@@ -885,6 +1478,28 @@ Friends</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::array&lt;float, <a class="el" href="classGUIView.html#a3fe69de1b1020c07363b531b1b35003a">MATCH_FRAME_TIMING_COUNT</a>&gt; GUIView::matchFrameTimes {}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa3c232ef2245a6743cc92dfc19d6b5e5" name="aa3c232ef2245a6743cc92dfc19d6b5e5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa3c232ef2245a6743cc92dfc19d6b5e5">&#9670;&#160;</a></span>nav_history</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classNavHistory.html">NavHistory</a> GUIView::nav_history</td>
         </tr>
       </table>
   </td>
@@ -1006,8 +1621,8 @@ Friends</h2></td></tr>
 
 </div>
 </div>
-<a id="ab98bc5a6f48ee51be2f5d60f1e8e7693" name="ab98bc5a6f48ee51be2f5d60f1e8e7693"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab98bc5a6f48ee51be2f5d60f1e8e7693">&#9670;&#160;</a></span>sceneStack</h2>
+<a id="a2bb31637a000759e2cb701f2d8988d3d" name="a2bb31637a000759e2cb701f2d8988d3d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2bb31637a000759e2cb701f2d8988d3d">&#9670;&#160;</a></span>sceneStack</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1016,7 +1631,7 @@ Friends</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::stack&lt;std::unique_ptr&lt;<a class="el" href="classGUIScene.html">GUIScene</a>&gt; &gt; GUIView::sceneStack</td>
+          <td class="memname">std::vector&lt;std::unique_ptr&lt;<a class="el" href="classGUIScene.html">GUIScene</a>&gt; &gt; GUIView::sceneStack</td>
         </tr>
       </table>
   </td>
@@ -1039,6 +1654,28 @@ Friends</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">bool GUIView::screenshotPending = false</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7705639d8c89a9cadf594f6f6439e7ad" name="a7705639d8c89a9cadf594f6f6439e7ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7705639d8c89a9cadf594f6f6439e7ad">&#9670;&#160;</a></span>swipe_gesture</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSwipeGesture.html">SwipeGesture</a> GUIView::swipe_gesture</td>
         </tr>
       </table>
   </td>
