@@ -79,7 +79,8 @@ sanitizer probe (`-L "core|sanitizer"`), because the GUI suites are too slow
 under the sanitizers. Run the full suite locally before a release.
 
 **Linux** (`ubuntu-24.04`, GCC 14): links libstdc++ and libgcc statically,
-builds and runs the tests, then runs `cpack` (tar.gz). It installs the
+builds and runs the tests, smoke-tests a normal install (without selecting a
+component), then runs `cpack` (tar.gz). It installs the
 `game` component into an AppDir and turns it into an AppImage with a pinned
 `linuxdeploy` release (checked against its SHA-256). Runners have no FUSE,
 so the AppImage is smoke-tested by extracting it (`--appimage-extract`),

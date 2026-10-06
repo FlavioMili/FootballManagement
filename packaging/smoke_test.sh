@@ -15,7 +15,7 @@
 #  <user-data-dir> is where the platform puts SDL_GetPrefPath, e.g.
 #  $XDG_DATA_HOME/FlavioMili/FootballManagement on Linux.
 # -----------------------------------------------------------------------------
-set -uo pipefail
+set -euo pipefail
 
 if [[ $# -ne 3 ]]; then
   echo "usage: $0 <package-dir> <executable> <user-data-dir>" >&2
@@ -27,7 +27,15 @@ executable="$(cd "$(dirname "$2")" && pwd -P)/$(basename "$2")"
 user_data_dir=$3
 seconds=${FM_SMOKE_SECONDS:-10}
 work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
+pid=
+cleanup() {
+  if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+    kill -KILL "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+  fi
+  rm -rf "$work"
+}
+trap cleanup EXIT
 
 fail() {
   echo "SMOKE FAIL: $*" >&2
@@ -45,7 +53,18 @@ export SDL_VIDEO_DRIVER=dummy SDL_VIDEODRIVER=dummy
 export SDL_AUDIO_DRIVER=dummy SDL_AUDIODRIVER=dummy
 unset FM_ASSET_ROOT FM_RUNTIME_ROOT FM_TEST_RUNTIME_ROOT
 
-(cd "$package_dir" && find . | LC_ALL=C sort) > "$work/before.txt"
+snapshot() {
+  (
+    cd "$package_dir"
+    find . | LC_ALL=C sort
+    if command -v sha256sum > /dev/null; then
+      find . -type f -exec sha256sum {} + | LC_ALL=C sort
+    else
+      find . -type f -exec shasum -a 256 {} + | LC_ALL=C sort
+    fi
+  )
+}
+snapshot > "$work/before.txt"
 
 # Start from an unrelated directory so relative paths cannot hide a bug.
 (cd "$work" && exec "$executable") > "$work/output.txt" 2>&1 &
@@ -56,13 +75,15 @@ for ((i = 0; i < seconds; ++i)); do
   kill -0 "$pid" 2>/dev/null || break
 done
 if ! kill -0 "$pid" 2>/dev/null; then
-  wait "$pid"
-  fail "game exited early with status $?"
+  status=0
+  wait "$pid" || status=$?
+  pid=
+  fail "game exited early with status $status"
 fi
 
 if [[ $windows == 1 ]]; then
-  kill "$pid" 2>/dev/null
-  wait "$pid" 2>/dev/null
+  kill "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
   sleep 2 # let Windows release the executable and log file
 else
   # SDL turns SIGTERM into a quit event: the game must exit on its own.
@@ -75,8 +96,8 @@ else
     kill -KILL "$pid"
     fail "game did not quit within 30 s of SIGTERM"
   fi
-  wait "$pid"
-  status=$?
+  status=0
+  wait "$pid" || status=$?
   [[ $status == 0 ]] || fail "game exited with status $status after SIGTERM"
 
   root_line=$(grep -m1 "Game data root: " "$work/output.txt") ||
@@ -88,10 +109,12 @@ else
   echo "$root_line"
 fi
 
+pid=
+
 [[ -s "$user_data_dir/logs/log.txt" || $windows == 1 && -e "$user_data_dir/logs/log.txt" ]] ||
   fail "no log at $user_data_dir/logs/log.txt"
 
-(cd "$package_dir" && find . | LC_ALL=C sort) > "$work/after.txt"
+snapshot > "$work/after.txt"
 if ! diff -u "$work/before.txt" "$work/after.txt" > "$work/diff.txt"; then
   cat "$work/diff.txt" >&2
   fail "the game wrote files inside the package directory"

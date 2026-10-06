@@ -1,6 +1,6 @@
 # AI Guidelines
 
-Football Management is a **pro-AI** project. We believe that AI tools (like GitHub Copilot, ChatGPT, Claude, Antigravity, and others) are incredible multipliers for developer productivity.
+Football Management is a **pro-AI** project. We believe that AI tools (like GitHub Copilot, ChatGPT, Antigravity, and others) are incredible multipliers for developer productivity.
 
 However, we only accept AI-assisted contributions if they are **heavily reviewed** and **explicitly declared**.
 

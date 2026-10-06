@@ -249,6 +249,20 @@ development build reads the game data from the source checkout, so it runs
 from any working directory; `FM_ASSET_ROOT` points it at another data
 directory. Installed packages use the data next to the executable.
 
+To install a Linux build for your user (including all game assets):
+
+```sh
+cmake --preset release
+cmake --build --preset release --parallel 2
+cmake --install out/build/release --component game --prefix "$HOME/.local"
+"$HOME/.local/bin/FootballManagement"
+```
+
+For a Makefiles build, `make -C build install` also installs the game and
+assets, using the prefix chosen with `-DCMAKE_INSTALL_PREFIX=...` when
+configuring. Saves and settings go to your user data directory, so the
+installation directory does not need to be writable during play.
+
 `FM_WORLD_SEED` fixes the seed of a new world, which helps when you report a
 bug.
 

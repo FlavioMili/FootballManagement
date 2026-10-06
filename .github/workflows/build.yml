@@ -102,6 +102,15 @@ jobs:
           ctest --test-dir build --output-on-failure --parallel 2
           --timeout 900 -LE "$CTEST_LABEL_EXCLUDE"
 
+      - name: Smoke test normal install
+        env:
+          XDG_DATA_HOME: ${{ runner.temp }}/xdg-data-install
+        run: |
+          cmake --install build --prefix "$RUNNER_TEMP/install"
+          packaging/smoke_test.sh "$RUNNER_TEMP/install" \
+            "$RUNNER_TEMP/install/bin/FootballManagement" \
+            "$XDG_DATA_HOME/FlavioMili/FootballManagement"
+
       - name: Package (tar.gz)
         run: cpack --config build/CPackConfig.cmake -B dist
 
