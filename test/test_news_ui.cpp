@@ -180,7 +180,8 @@ TEST(NewsUiTest, NewsTimelineAndDrawCeremonies)
   EXPECT_LE(news->shownCount(), news->storyCount());
   capture(view, "news_transfers.png");
   const LeagueID country = Competitions::rootLeague(
-      *controller.getGameData(), controller.getManagedTeam()->get().getLeagueId());
+      *controller.getGameData(),
+      controller.getManagedTeam()->get().getLeagueId());
   news->filterKind(std::nullopt);
   news->filterCountry(country);
   frames(view, 2);

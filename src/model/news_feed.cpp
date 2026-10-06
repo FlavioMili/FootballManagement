@@ -55,8 +55,8 @@ constexpr std::array<std::string_view, 2> APPOINTED_KEYS = {
     "NEWS_MANAGER_APPOINTED_0", "NEWS_MANAGER_APPOINTED_1"};
 constexpr std::array<std::string_view, 2> SACKED_KEYS = {
     "NEWS_MANAGER_SACKED_0", "NEWS_MANAGER_SACKED_1"};
-constexpr std::array<std::string_view, 2> LEADER_KEYS = {
-    "NEWS_RACE_LEADER_0", "NEWS_RACE_LEADER_1"};
+constexpr std::array<std::string_view, 2> LEADER_KEYS = {"NEWS_RACE_LEADER_0",
+                                                         "NEWS_RACE_LEADER_1"};
 constexpr std::array<std::string_view, 2> UPSET_KEYS = {"NEWS_UPSET_0",
                                                         "NEWS_UPSET_1"};
 constexpr std::array<std::string_view, 2> AWARD_KEYS = {"NEWS_AWARD_0",
@@ -148,8 +148,7 @@ class World
 
   std::uint32_t tierWeight(std::uint32_t base, LeagueID league_id) const
   {
-    const std::uint32_t penalty =
-        TIER_PENALTY * (tier(league_id) - 1U);
+    const std::uint32_t penalty = TIER_PENALTY * (tier(league_id) - 1U);
     return base > penalty ? base - penalty : 1U;
   }
 
@@ -178,9 +177,9 @@ void addTransfers(const NewsSources& sources, const World& world,
   for (const TransferRecord& record : sources.transfers)
   {
     if (!inWindow(record.date, from, to)) continue;
-    const bool ours = sources.managed_team != 0 &&
-                      (record.to_team == sources.managed_team ||
-                       record.from_team == sources.managed_team);
+    const bool ours =
+        sources.managed_team != 0 && (record.to_team == sources.managed_team ||
+                                      record.from_team == sources.managed_team);
     const bool fee_move = record.kind == TransferKind::Permanent ||
                           record.kind == TransferKind::PreContract;
     std::string key;
@@ -248,18 +247,18 @@ void addManagers(const NewsSources& sources, const World& world,
       addManagerStory(world, NewsKind::Manager, stint.start,
                       pick(APPOINTED_KEYS, NewsKind::Manager, stint.team_id, 1,
                            stint.start),
-                      sources.manager_name, stint.team_id,
-                      WEIGHT_APPOINTMENT, out);
+                      sources.manager_name, stint.team_id, WEIGHT_APPOINTMENT,
+                      out);
     if (stint.reason == DepartureReason::Current ||
         stint.reason == DepartureReason::Moved ||
         !inWindow(stint.end, from, to))
       continue;
-    std::string key = stint.reason == DepartureReason::Sacked
-                          ? pick(SACKED_KEYS, NewsKind::Manager, stint.team_id,
-                                 2, stint.end)
-                      : stint.reason == DepartureReason::Resigned
-                          ? std::string("NEWS_MANAGER_RESIGNED")
-                          : std::string("NEWS_MANAGER_LEFT");
+    std::string key =
+        stint.reason == DepartureReason::Sacked
+            ? pick(SACKED_KEYS, NewsKind::Manager, stint.team_id, 2, stint.end)
+        : stint.reason == DepartureReason::Resigned
+            ? std::string("NEWS_MANAGER_RESIGNED")
+            : std::string("NEWS_MANAGER_LEFT");
     addManagerStory(world, NewsKind::Manager, stint.end, std::move(key),
                     sources.manager_name, stint.team_id, WEIGHT_SACKING, out);
   }
@@ -272,10 +271,10 @@ void addManagers(const NewsSources& sources, const World& world,
         message.args.empty() || !inWindow(message.date, from, to))
       continue;
     reported.emplace_back(*message.team_id, message.date);
-    addManagerStory(world, NewsKind::Manager, message.date,
-                    pick(SACKED_KEYS, NewsKind::Manager, *message.team_id, 3,
-                         message.date),
-                    message.args[0], *message.team_id, WEIGHT_SACKING, out);
+    addManagerStory(
+        world, NewsKind::Manager, message.date,
+        pick(SACKED_KEYS, NewsKind::Manager, *message.team_id, 3, message.date),
+        message.args[0], *message.team_id, WEIGHT_SACKING, out);
   }
 
   // Open jobs the inbox did not report: the club is looking for someone.
@@ -288,8 +287,8 @@ void addManagers(const NewsSources& sources, const World& world,
       continue;
     const std::string club = world.teamName(vacancy.team_id);
     if (club.empty()) continue;
-    NewsItem item =
-        story(NewsKind::Manager, vacancy.opened, "NEWS_MANAGER_VACANCY", {club});
+    NewsItem item = story(NewsKind::Manager, vacancy.opened,
+                          "NEWS_MANAGER_VACANCY", {club});
     item.team_id = vacancy.team_id;
     const LeagueID league = world.leagueOf(vacancy.team_id);
     item.country = world.countryOfLeague(league);
@@ -348,20 +347,23 @@ void addUpsets(const NewsSources& sources, const World& world,
     const Match& match = *entry.second;
     const TeamID winner = *match.getWinnerId();
     const bool home_won = winner == match.getHomeTeamId();
-    const TeamID loser = home_won ? match.getAwayTeamId() : match.getHomeTeamId();
+    const TeamID loser =
+        home_won ? match.getAwayTeamId() : match.getHomeTeamId();
     const NewsCompetition competition{match.getMatchType(),
                                       match.getCompetitionId()};
-    const int winner_goals = home_won ? match.getHomeScore() : match.getAwayScore();
-    const int loser_goals = home_won ? match.getAwayScore() : match.getHomeScore();
+    const int winner_goals =
+        home_won ? match.getHomeScore() : match.getAwayScore();
+    const int loser_goals =
+        home_won ? match.getAwayScore() : match.getHomeScore();
     std::string headline_key =
         match.getMatchType() == MatchType::CUP && match.isKnockout()
             ? std::string("NEWS_UPSET_CUP")
             : pick(UPSET_KEYS, NewsKind::Upset, winner, loser, match.getDate());
-    NewsItem item = story(NewsKind::Upset, match.getDate(),
-                          std::move(headline_key),
-                          {world.teamName(winner), world.teamName(loser),
-                           scoreline(winner_goals, loser_goals),
-                           world.competitionArg(competition)});
+    NewsItem item =
+        story(NewsKind::Upset, match.getDate(), std::move(headline_key),
+              {world.teamName(winner), world.teamName(loser),
+               scoreline(winner_goals, loser_goals),
+               world.competitionArg(competition)});
     item.team_id = winner;
     item.other_team_id = loser;
     item.competition = competition;
@@ -450,7 +452,8 @@ void addRaces(const NewsSources& sources, const World& world,
       if (!day_done) continue;
       const auto [first, second] = topTwo(table);
       const bool strict =
-          first != 0 && (second == 0 || table[first].points > table[second].points);
+          first != 0 &&
+          (second == 0 || table[first].points > table[second].points);
       if (!strict) continue;
       if (last_leader != 0 && first != last_leader &&
           table[first].played >= NewsFeed::LEADER_MIN_PLAYED &&
@@ -458,7 +461,8 @@ void addRaces(const NewsSources& sources, const World& world,
       {
         NewsItem item = story(
             NewsKind::Race, match.getDate(),
-            pick(LEADER_KEYS, NewsKind::Race, first, league_id, match.getDate()),
+            pick(LEADER_KEYS, NewsKind::Race, first, league_id,
+                 match.getDate()),
             {world.teamName(first), league_arg, world.teamName(last_leader)});
         item.team_id = first;
         item.other_team_id = last_leader;
@@ -482,11 +486,11 @@ void addRaces(const NewsSources& sources, const World& world,
       continue;
     // Level teams are named in ID order so the story never depends on
     // the order of the table's map.
-    NewsItem item = story(
-        NewsKind::Race, matches.back()->getDate(),
-        gap == 0 ? "NEWS_RACE_LEVEL" : "NEWS_RACE_TIGHT",
-        {world.teamName(first), world.teamName(second), std::to_string(gap),
-         std::to_string(games_left), league_arg});
+    NewsItem item =
+        story(NewsKind::Race, matches.back()->getDate(),
+              gap == 0 ? "NEWS_RACE_LEVEL" : "NEWS_RACE_TIGHT",
+              {world.teamName(first), world.teamName(second),
+               std::to_string(gap), std::to_string(games_left), league_arg});
     item.team_id = first;
     item.other_team_id = second;
     item.country = country;
@@ -511,10 +515,9 @@ void addVerdicts(const NewsSources& sources, const World& world,
                                       entry.competition_id};
     std::string name = world.competitionArg(competition);
     if (name.empty()) name = entry.competition_name;
-    const LeagueID country =
-        entry.competition_type == MatchType::CONTINENTAL
-            ? LeagueID{0}
-            : world.countryOfLeague(entry.competition_id);
+    const LeagueID country = entry.competition_type == MatchType::CONTINENTAL
+                                 ? LeagueID{0}
+                                 : world.countryOfLeague(entry.competition_id);
     const bool league = entry.competition_type == MatchType::LEAGUE;
     const auto add = [&](const char* key, TeamID team, std::uint32_t weight)
     {
@@ -524,8 +527,8 @@ void addVerdicts(const NewsSources& sources, const World& world,
       item.team_id = team;
       item.country = country;
       item.competition = competition;
-      item.weight = league ? world.tierWeight(weight, entry.competition_id)
-                           : weight;
+      item.weight =
+          league ? world.tierWeight(weight, entry.competition_id) : weight;
       out.push_back(std::move(item));
     };
     if (entry.champion_id != 0)
@@ -572,10 +575,10 @@ void addRecords(const NewsSources& sources, const World& world,
                 std::vector<NewsItem>& out)
 {
   // In a save's first season every record is a first: none is news.
-  const std::uint16_t first_season = sources.world_start.month >= 7
-                                         ? sources.world_start.year
-                                         : static_cast<std::uint16_t>(
-                                               sources.world_start.year - 1U);
+  const std::uint16_t first_season =
+      sources.world_start.month >= 7
+          ? sources.world_start.year
+          : static_cast<std::uint16_t>(sources.world_start.year - 1U);
   for (const RecordEntry& record : sources.records)
   {
     const char* key = recordKey(record.kind);
@@ -587,12 +590,10 @@ void addRecords(const NewsSources& sources, const World& world,
       continue;
     const bool league_scope = record.scope == RecordScope::League;
     const NewsCompetition competition{
-        MatchType::LEAGUE,
-        league_scope ? static_cast<LeagueID>(record.scope_id)
-                     : world.leagueOf(record.team_id)};
-    const std::string holder = league_scope
-                                   ? world.competitionArg(competition)
-                                   : world.teamName(record.team_id);
+        MatchType::LEAGUE, league_scope ? static_cast<LeagueID>(record.scope_id)
+                                        : world.leagueOf(record.team_id)};
+    const std::string holder = league_scope ? world.competitionArg(competition)
+                                            : world.teamName(record.team_id);
     std::string figure;
     switch (record.kind)
     {
@@ -671,13 +672,12 @@ void addAwards(const NewsSources& sources, const World& world,
     const GameDateValue date = awardDate(record);
     if (!inWindow(date, from, to)) continue;
     const NewsCompetition competition{MatchType::LEAGUE, record.league_id};
-    NewsItem item = story(
-        NewsKind::Award, date,
-        pick(AWARD_KEYS, NewsKind::Award, record.player_id,
-             static_cast<std::uint32_t>(record.type), date),
-        {record.name, world.competitionArg(competition),
-         std::string("@") + awardTypeKey(record.type),
-         world.teamName(record.team_id)});
+    NewsItem item = story(NewsKind::Award, date,
+                          pick(AWARD_KEYS, NewsKind::Award, record.player_id,
+                               static_cast<std::uint32_t>(record.type), date),
+                          {record.name, world.competitionArg(competition),
+                           std::string("@") + awardTypeKey(record.type),
+                           world.teamName(record.team_id)});
     item.player_id = record.player_id;
     item.team_id = record.team_id;
     item.country = world.countryOfLeague(record.league_id);
@@ -765,12 +765,14 @@ std::vector<NewsItem> NewsFeed::build(const NewsSources& sources,
                     {
                       if (!(left.date == right.date))
                         return right.date < left.date;
-                      return std::tuple{right.weight, left.kind, left.team_id,
-                                        left.player_id, left.other_team_id,
-                                        left.headline_key, left.args} <
-                             std::tuple{left.weight, right.kind, right.team_id,
-                                        right.player_id, right.other_team_id,
-                                        right.headline_key, right.args};
+                      return std::tuple{right.weight,       left.kind,
+                                        left.team_id,       left.player_id,
+                                        left.other_team_id, left.headline_key,
+                                        left.args} <
+                             std::tuple{left.weight,         right.kind,
+                                        right.team_id,       right.player_id,
+                                        right.other_team_id, right.headline_key,
+                                        right.args};
                     });
   return items;
 }
@@ -811,9 +813,9 @@ std::vector<NewsItem> NewsFeed::forGame(const Game& game,
   sources.managed_team = managed;
   sources.world_start = GameDateValue(
       static_cast<std::uint16_t>(season_year - (seasons_played - 1)), 7, 1);
-  return build(sources,
-               GameDateValue(static_cast<std::uint16_t>(season_year - 1U), 7, 1),
-               today);
+  return build(
+      sources,
+      GameDateValue(static_cast<std::uint16_t>(season_year - 1U), 7, 1), today);
 }
 
 std::vector<std::size_t> NewsFeed::filter(std::span<const NewsItem> items,

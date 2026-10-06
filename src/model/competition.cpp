@@ -67,19 +67,17 @@ double teamStrength(const Team& team, const StatsConfig& stats_config)
   const auto players = starters(team.getLineup());
   if (players.empty()) return DEFAULT_STRENGTH;
   double total = 0.0;
-  for (const Player* player : players) total += player->getOverall(stats_config);
+  for (const Player* player : players)
+    total += player->getOverall(stats_config);
   return std::max(1.0, total / static_cast<double>(players.size()));
 }
 
 std::vector<float> penaltyTakers(const Team& shooters, const Team& keepers)
 {
   std::vector<const Player*> order = starters(shooters.getLineup());
-  std::ranges::stable_sort(order,
-                           [](const Player* left, const Player* right)
-                           {
-                             return statOf(*left, "Shooting") >
-                                    statOf(*right, "Shooting");
-                           });
+  std::ranges::stable_sort(
+      order, [](const Player* left, const Player* right)
+      { return statOf(*left, "Shooting") > statOf(*right, "Shooting"); });
   const Player* goalkeeper = keepers.getLineup().getGoalkeeper();
   const float keeping =
       goalkeeper ? statOf(*goalkeeper, "Goalkeeping") : PENALTY_AVERAGE_SKILL;
@@ -116,9 +114,8 @@ std::vector<TieOption> tieOptions(const Calendar& calendar, TeamID home_id,
   {
     if (!midweek && offset != 0) continue;
     const GameDateValue day = SeasonCalendar::addDays(date, offset);
-    if (offset != 0 &&
-        (!(after < day) || SeasonCalendar::isBlackout(day) ||
-         SeasonCalendar::isContinentalWeek(day)))
+    if (offset != 0 && (!(after < day) || SeasonCalendar::isBlackout(day) ||
+                        SeasonCalendar::isContinentalWeek(day)))
       continue;
     TieOption option{day, 0, offset};
     for (int near = -SeasonCalendar::MIN_REST_BEFORE_TIE;
@@ -127,19 +124,18 @@ std::vector<TieOption> tieOptions(const Calendar& calendar, TeamID home_id,
       for (const Match& match :
            calendar.getMatchesForDate(SeasonCalendar::addDays(day, near)))
       {
-        const bool involved =
-            match.getHomeTeamId() == home_id || match.getAwayTeamId() == home_id ||
-            match.getHomeTeamId() == away_id || match.getAwayTeamId() == away_id;
+        const bool involved = match.getHomeTeamId() == home_id ||
+                              match.getAwayTeamId() == home_id ||
+                              match.getHomeTeamId() == away_id ||
+                              match.getAwayTeamId() == away_id;
         if (!involved) continue;
         if (near == 0)
           option.clashes += 10;
-        else if (near < 0 &&
-                 -near < SeasonCalendar::restDays(match.getMatchType(),
-                                                  MatchType::CUP))
+        else if (near < 0 && -near < SeasonCalendar::restDays(
+                                         match.getMatchType(), MatchType::CUP))
           ++option.clashes;
-        else if (near > 0 &&
-                 near < SeasonCalendar::restDays(MatchType::CUP,
-                                                 match.getMatchType()))
+        else if (near > 0 && near < SeasonCalendar::restDays(
+                                        MatchType::CUP, match.getMatchType()))
           ++option.clashes;
       }
     }
@@ -181,9 +177,10 @@ void addTies(Calendar& calendar, const GameData& gamedata,
       std::swap(home_id, away_id);
     Tie tie{home_id, away_id,
             tieOptions(calendar, home_id, away_id, date, after), 0};
-    const int fewest = std::ranges::min(tie.options, {}, &TieOption::clashes).clashes;
-    tie.clean = static_cast<size_t>(std::ranges::count(
-        tie.options, fewest, &TieOption::clashes));
+    const int fewest =
+        std::ranges::min(tie.options, {}, &TieOption::clashes).clashes;
+    tie.clean = static_cast<size_t>(
+        std::ranges::count(tie.options, fewest, &TieOption::clashes));
     ties.push_back(std::move(tie));
   }
   std::ranges::stable_sort(ties, {}, &Tie::clean);
@@ -196,8 +193,8 @@ void addTies(Calendar& calendar, const GameData& gamedata,
                         std::abs(option.offset)};
     };
     const TieOption& best = std::ranges::min(tie.options, {}, key);
-    calendar.addMatch(
-        Match(tie.home_id, tie.away_id, best.day, MatchType::CUP, cup_id, stage));
+    calendar.addMatch(Match(tie.home_id, tie.away_id, best.day, MatchType::CUP,
+                            cup_id, stage));
   }
 }
 
@@ -279,7 +276,8 @@ std::vector<LeagueID> Competitions::countryLeagues(const GameData& gamedata,
                     {
                       const uint8_t left_tier = leagueTier(gamedata, left);
                       const uint8_t right_tier = leagueTier(gamedata, right);
-                      if (left_tier != right_tier) return left_tier < right_tier;
+                      if (left_tier != right_tier)
+                        return left_tier < right_tier;
                       return left < right;
                     });
   return leagues;
@@ -293,7 +291,8 @@ std::vector<TeamID> Competitions::cupEntrants(const GameData& gamedata,
   std::vector<TeamID> entrants;
   for (const LeagueID league_id : countryLeagues(gamedata, root))
   {
-    std::vector<TeamID> teams = gamedata.getLeagues().at(league_id).getTeamIDs();
+    std::vector<TeamID> teams =
+        gamedata.getLeagues().at(league_id).getTeamIDs();
     std::ranges::sort(teams);
     entrants.insert(entrants.end(), teams.begin(), teams.end());
   }
@@ -309,8 +308,8 @@ std::string nameKey(std::string_view prefix, const std::string& name)
   for (const char c : name)
   {
     const auto byte = static_cast<unsigned char>(c);
-    key += std::isalnum(byte) != 0 ? static_cast<char>(std::toupper(byte))
-                                   : '_';
+    key +=
+        std::isalnum(byte) != 0 ? static_cast<char>(std::toupper(byte)) : '_';
   }
   return key;
 }
@@ -429,15 +428,15 @@ void Competitions::scheduleCupFirstRounds(Calendar& calendar,
     if (rounds == 0) continue;
 
     // Preliminary round for the lowest-tier clubs; the rest get a bye.
-    const size_t first_round_ties =
-        entrant_count - (size_t{1} << (rounds - 1));
+    const size_t first_round_ties = entrant_count - (size_t{1} << (rounds - 1));
     std::mt19937 rng(mixSeed(season_year, root, CUP_DRAW_SALT));
     std::vector<TeamID> participants;
     for (auto league = leagues.rbegin();
          league != leagues.rend() && participants.size() < first_round_ties * 2;
          ++league)
     {
-      std::vector<TeamID> teams = gamedata.getLeagues().at(*league).getTeamIDs();
+      std::vector<TeamID> teams =
+          gamedata.getLeagues().at(*league).getTeamIDs();
       std::ranges::sort(teams);
       std::ranges::shuffle(teams, rng);
       const size_t wanted = first_round_ties * 2 - participants.size();
@@ -463,11 +462,13 @@ size_t Competitions::drawPendingCupRounds(Calendar& calendar,
         !status.rounds.back().complete || status.remaining.size() < 2)
       continue;
 
-    const auto next_stage = static_cast<uint8_t>(status.rounds.back().stage + 1);
+    const auto next_stage =
+        static_cast<uint8_t>(status.rounds.back().stage + 1);
     const auto dates =
         SeasonCalendar::cupRoundDates(season_year, status.total_rounds);
-    GameDateValue date = next_stage <= dates.size() ? dates[next_stage - 1]
-                                                    : SeasonCalendar::nextFreeMidweek(today);
+    GameDateValue date = next_stage <= dates.size()
+                             ? dates[next_stage - 1]
+                             : SeasonCalendar::nextFreeMidweek(today);
     if (!(today < date)) date = SeasonCalendar::nextFreeMidweek(today);
     while (hasFixtureOn(calendar, date, status.remaining))
       date = SeasonCalendar::nextFreeMidweek(date);
@@ -515,8 +516,9 @@ std::optional<Competitions::CupDraw> Competitions::cupDraw(
   draw.drawn_on =
       previous_last
           ? *previous_last
-          : GameDateValue(SeasonCalendar::seasonStartYear(draw.ties.front().getDate()),
-                          7, 1);
+          : GameDateValue(
+                SeasonCalendar::seasonStartYear(draw.ties.front().getDate()), 7,
+                1);
   return draw;
 }
 
@@ -525,9 +527,10 @@ std::optional<Competitions::CupDraw> Competitions::cupDraw(
 float Competitions::penaltyConversionProbability(float shooting,
                                                  float goalkeeping)
 {
-  const float chance = BASE_PENALTY_CONVERSION +
-                       PENALTY_SKILL_WEIGHT * (shooting - PENALTY_AVERAGE_SKILL) -
-                       PENALTY_SKILL_WEIGHT * (goalkeeping - PENALTY_AVERAGE_SKILL);
+  const float chance =
+      BASE_PENALTY_CONVERSION +
+      PENALTY_SKILL_WEIGHT * (shooting - PENALTY_AVERAGE_SKILL) -
+      PENALTY_SKILL_WEIGHT * (goalkeeping - PENALTY_AVERAGE_SKILL);
   return std::clamp(chance, MIN_PENALTY_CONVERSION, MAX_PENALTY_CONVERSION);
 }
 
@@ -606,7 +609,8 @@ std::vector<Competitions::LeagueMovement> Competitions::computeLeagueMovements(
   for (const auto& [id, league] : gamedata.getLeagues())
   {
     const auto parent = league.getParentLeagueID();
-    if (parent && gamedata.getLeague(*parent)) children_of[*parent].push_back(id);
+    if (parent && gamedata.getLeague(*parent))
+      children_of[*parent].push_back(id);
   }
 
   std::vector<LeagueMovement> movements;

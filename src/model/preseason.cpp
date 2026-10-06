@@ -49,8 +49,7 @@ double seasonIncome(const GameData& gamedata, const Team& team)
       if (const auto other = gamedata.getTeam(team_id))
         reputations.push_back(other->get().getReputation());
   return ClubEconomy::expectedIncome(
-      makeLeagueEconomy(team.getLeagueId(), reputations),
-      team.getReputation());
+      makeLeagueEconomy(team.getLeagueId(), reputations), team.getReputation());
 }
 
 bool involves(const Match& match, TeamID team_id)
@@ -65,7 +64,8 @@ std::array<GameDateValue, 7> weekOf(const GameDateValue& date)
       SeasonCalendar::addDays(date, -SeasonCalendar::dayOfWeek(date));
   std::array<GameDateValue, 7> days;
   for (int offset = 0; offset < 7; ++offset)
-    days[static_cast<std::size_t>(offset)] = SeasonCalendar::addDays(monday, offset);
+    days[static_cast<std::size_t>(offset)] =
+        SeasonCalendar::addDays(monday, offset);
   return days;
 }
 
@@ -104,13 +104,15 @@ CampQuote campQuote(TrainingCamp camp, double season_income,
   switch (camp)
   {
     case TrainingCamp::Domestic:
-      quote.cost = static_cast<std::int64_t>(std::llround(season_income * 0.004));
+      quote.cost =
+          static_cast<std::int64_t>(std::llround(season_income * 0.004));
       quote.sharpness = 6.0f;
       quote.familiarity = 4.0f;
       quote.morale = 1.0f;
       break;
     case TrainingCamp::Abroad:
-      quote.cost = static_cast<std::int64_t>(std::llround(season_income * 0.012));
+      quote.cost =
+          static_cast<std::int64_t>(std::llround(season_income * 0.012));
       quote.sharpness = 9.0f;
       quote.familiarity = 6.0f;
       quote.morale = 3.0f;
@@ -177,9 +179,8 @@ std::optional<GameDateValue> PreseasonPlanner::firstFriendly(
   for (const auto& [date, matches] : calendar.getFullCalendar())
     for (const Match& match : matches)
       if (involves(match, managed_team_id))
-        return match.getMatchType() == MatchType::FRIENDLY
-                   ? std::optional(date)
-                   : std::nullopt;
+        return match.getMatchType() == MatchType::FRIENDLY ? std::optional(date)
+                                                           : std::nullopt;
   return std::nullopt;
 }
 
@@ -198,9 +199,10 @@ std::vector<OpponentOption> PreseasonPlanner::opponents(
   for (const GameDateValue& day : weekOf(date))
     for (const Match& match : calendar.getMatchesForDate(day))
     {
-      const bool free = match.getMatchType() == MatchType::FRIENDLY &&
-                        !match.isPlayed();
-      for (const TeamID team_id : {match.getHomeTeamId(), match.getAwayTeamId()})
+      const bool free =
+          match.getMatchType() == MatchType::FRIENDLY && !match.isPlayed();
+      for (const TeamID team_id :
+           {match.getHomeTeamId(), match.getAwayTeamId()})
       {
         const auto [entry, added] = movable.try_emplace(team_id, free);
         if (!added) entry->second = false;  // Two matches that week.
@@ -228,7 +230,8 @@ std::vector<OpponentOption> PreseasonPlanner::opponents(
                       const int db = std::abs(b.reputation - target);
                       return da != db ? da < db : a.team_id < b.team_id;
                     });
-  if (options.size() > MAX_OPPONENT_OPTIONS) options.resize(MAX_OPPONENT_OPTIONS);
+  if (options.size() > MAX_OPPONENT_OPTIONS)
+    options.resize(MAX_OPPONENT_OPTIONS);
   return options;
 }
 
@@ -244,8 +247,9 @@ bool PreseasonPlanner::setFriendly(Calendar& calendar, const GameData& gamedata,
   const auto day_it = calendar.getFullCalendar().find(date);
   if (day_it == calendar.getFullCalendar().end()) return false;
   std::vector<Match>& day = calendar.getMatchesForDateMutable(date);
-  const auto managed_it = std::ranges::find_if(
-      day, [&](const Match& match) { return involves(match, managed_team_id); });
+  const auto managed_it =
+      std::ranges::find_if(day, [&](const Match& match)
+                           { return involves(match, managed_team_id); });
   if (managed_it == day.end()) return false;
   Match& current = *managed_it;
   if (current.getMatchType() != MatchType::FRIENDLY || current.isPlayed())
@@ -265,10 +269,10 @@ bool PreseasonPlanner::setFriendly(Calendar& calendar, const GameData& gamedata,
       opponent_slot.emplace(other_day, index);
     }
   }
-  Match* opponent_match =
-      opponent_slot ? &calendar.getMatchesForDateMutable(
-                          opponent_slot->first)[opponent_slot->second]
-                    : nullptr;
+  Match* opponent_match = opponent_slot
+                              ? &calendar.getMatchesForDateMutable(
+                                    opponent_slot->first)[opponent_slot->second]
+                              : nullptr;
   // Only competitive-free weeks: the date must still be pre-season.
   const auto slots = friendlies(calendar, managed_team_id, today);
   if (!std::ranges::contains(slots, date, &FriendlySlot::date)) return false;
@@ -280,8 +284,7 @@ bool PreseasonPlanner::setFriendly(Calendar& calendar, const GameData& gamedata,
       Competitions::rootLeague(gamedata, opponent->get().getLeagueId());
   const TeamID previous = otherSide(current, managed_team_id);
   Match chosen(home ? managed_team_id : opponent_id,
-               home ? opponent_id : managed_team_id, date,
-               MatchType::FRIENDLY);
+               home ? opponent_id : managed_team_id, date, MatchType::FRIENDLY);
   chosen.setKickoff(current.getScheduledKickoff());
   if (opponent_id != previous && opponent_match)
   {
@@ -370,7 +373,8 @@ TrainingCamp PreseasonPlanner::suggestCamp(const GameData& gamedata,
       club.getFinances().getCurrentWageSpending(gamedata, club);
   const auto affordable = [&](TrainingCamp camp, int weeks)
   {
-    const CampQuote quote = campQuote(gamedata, calendar, managed_team_id, camp);
+    const CampQuote quote =
+        campQuote(gamedata, calendar, managed_team_id, camp);
     return quote.available && today < quote.start &&
            balance - quote.cost >= weeks * payroll;
   };
@@ -451,7 +455,8 @@ void PreseasonPlanner::onMatchPlayed(GameData& gamedata,
   Team& club = managed->get();
   const std::int64_t fee = Preseason::tourFee(seasonIncome(gamedata, club),
                                               opponent->get().getReputation());
-  if (fee > 0) club.getFinances().record(report.date, FinanceCategory::Matchday, fee);
+  if (fee > 0)
+    club.getFinances().record(report.date, FinanceCategory::Matchday, fee);
   ++state.tour_matches;
   if (state.tour_matches >= Preseason::TOUR_MATCHES_FOR_REPUTATION &&
       !state.tour_reputation)
@@ -518,13 +523,13 @@ void PreseasonPlanner::save(
   sqlite3_bind_int(stmt, 4, state.camp_applied ? 1 : 0);
   sqlite3_bind_int(stmt, 5, state.tour_matches);
   sqlite3_bind_int(stmt, 6, state.tour_reputation ? 1 : 0);
-  const std::string camp_end =
-      state.camp == TrainingCamp::None ? std::string() : state.camp_end.toString();
+  const std::string camp_end = state.camp == TrainingCamp::None
+                                   ? std::string()
+                                   : state.camp_end.toString();
   bindText(stmt, 7, camp_end);
   db.executeStep(stmt);
   sqlite3_finalize(stmt);
   insertAll(db, "INSERT INTO PreseasonTours (match_date) VALUES (?);",
-            state.tour_dates,
-            [](sqlite3_stmt* row, const GameDateValue& date)
+            state.tour_dates, [](sqlite3_stmt* row, const GameDateValue& date)
             { bindText(row, 1, date.toString()); });
 }

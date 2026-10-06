@@ -24,7 +24,7 @@ enum class MentoringError : std::uint8_t
 {
   None = 0,
   UnknownPlayer,
-  NotSameClub,   /*!< Mentor and mentee must play for the managed club. */
+  NotSameClub, /*!< Mentor and mentee must play for the managed club. */
   MentorTooYoung,
   MenteeTooOld,
   SamePlayer,

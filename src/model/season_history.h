@@ -69,8 +69,9 @@ struct PlayerSeasonStats
   /** Average match rating; 0 when no rated match was played. */
   float averageRating() const
   {
-    return rated_matches == 0 ? 0.0f
-                              : rating_total / static_cast<float>(rated_matches);
+    return rated_matches == 0
+               ? 0.0f
+               : rating_total / static_cast<float>(rated_matches);
   }
 };
 

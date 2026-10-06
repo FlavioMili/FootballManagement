@@ -175,9 +175,9 @@ void SquadPlannerScene::build(View& view, int season_offset)
     switch (need.kind)
     {
       case NeedKind::Missing:
-        line.text = formatLocalized(
-            Format::plural("PLANNER_NEED_MISSING", need.count),
-            {std::to_string(need.count), group});
+        line.text =
+            formatLocalized(Format::plural("PLANNER_NEED_MISSING", need.count),
+                            {std::to_string(need.count), group});
         line.min_ability = depth.first_choice_average - 6.0f;
         break;
       case NeedKind::Upgrade:
@@ -186,22 +186,19 @@ void SquadPlannerScene::build(View& view, int season_offset)
         break;
       case NeedKind::Succession:
       {
-        const auto found = std::ranges::find_if(
-            depth.players, [&](const DepthEntry& entry)
-            { return entry.player.id == need.player_id; });
-        const bool contract =
-            found != depth.players.end() && found->expiring;
+        const auto found =
+            std::ranges::find_if(depth.players, [&](const DepthEntry& entry)
+                                 { return entry.player.id == need.player_id; });
+        const bool contract = found != depth.players.end() && found->expiring;
         line.text =
-            contract
-                ? formatLocalized("PLANNER_NEED_SUCCESSION_CONTRACT",
-                                  {nameOf(need.player_id), group})
-                : formatLocalized(
-                      "PLANNER_NEED_SUCCESSION_AGE",
-                      {nameOf(need.player_id),
-                       found != depth.players.end()
-                           ? std::to_string(found->player.age)
-                           : std::string(),
-                       group});
+            contract ? formatLocalized("PLANNER_NEED_SUCCESSION_CONTRACT",
+                                       {nameOf(need.player_id), group})
+                     : formatLocalized("PLANNER_NEED_SUCCESSION_AGE",
+                                       {nameOf(need.player_id),
+                                        found != depth.players.end()
+                                            ? std::to_string(found->player.age)
+                                            : std::string(),
+                                        group});
         break;
       }
       case NeedKind::Surplus:
@@ -310,9 +307,9 @@ void SquadPlannerScene::renderGroup(const Group& group)
   if (group.missing > 0)
   {
     ImGui::SameLine();
-    const std::string missing = formatLocalized(
-        Format::plural("PLANNER_MISSING_BADGE", group.missing),
-        {std::to_string(group.missing)});
+    const std::string missing =
+        formatLocalized(Format::plural("PLANNER_MISSING_BADGE", group.missing),
+                        {std::to_string(group.missing)});
     UI::badge(missing.c_str(), palette.warning);
   }
   if (group.rows.empty())
@@ -350,9 +347,9 @@ void SquadPlannerScene::renderGroup(const Group& group)
         ImGui::SetTooltip("%s  ·  %s", row.role.c_str(),
                           LOC("PLANNER_ROW_HINT"));
       if (UI::cell(mask, 1))
-        ImGui::TextColored(row.tier == DepthTier::FirstChoice ? palette.text
-                                                              : palette.muted,
-                           "%s", LOC(tierKey(row.tier)));
+        ImGui::TextColored(
+            row.tier == DepthTier::FirstChoice ? palette.text : palette.muted,
+            "%s", LOC(tierKey(row.tier)));
       if (UI::cell(mask, 2))
         ImGui::TextColored(row.ageing ? palette.warning : palette.text, "%s",
                            row.age.c_str());
@@ -391,9 +388,8 @@ void SquadPlannerScene::renderDetail(const Row& row)
         std::min(220.0f * scale, ImGui::GetContentRegionAvail().x));
     const std::string none = formatLocalized(
         "PLANNER_STATUS_NONE", {LOC(SquadStatusModel::nameKey(row.deserved))});
-    const char* preview = row.given
-                              ? LOC(SquadStatusModel::nameKey(*row.given))
-                              : none.c_str();
+    const char* preview =
+        row.given ? LOC(SquadStatusModel::nameKey(*row.given)) : none.c_str();
     std::optional<std::optional<SquadStatus>> chosen;
     if (ImGui::BeginCombo("##status", preview))
     {
@@ -412,7 +408,8 @@ void SquadPlannerScene::renderDetail(const Row& row)
         ImGui::EndDisabled();
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort |
                                  ImGuiHoveredFlags_AllowWhenDisabled))
-          ImGui::SetTooltip("%s", LOC(SquadStatusModel::expectationKey(status)));
+          ImGui::SetTooltip("%s",
+                            LOC(SquadStatusModel::expectationKey(status)));
       }
       ImGui::EndCombo();
     }
@@ -425,8 +422,8 @@ void SquadPlannerScene::renderDetail(const Row& row)
     ImGui::PushTextWrapPos(0.0f);
     ImGui::TextColored(palette.faint, "%s",
                        LOC(SquadStatusModel::expectationKey(shown)));
-    if (row.given && static_cast<int>(*row.given) >
-                         static_cast<int>(row.deserved) + 1 &&
+    if (row.given &&
+        static_cast<int>(*row.given) > static_cast<int>(row.deserved) + 1 &&
         *row.given != SquadStatus::Prospect)
       ImGui::TextColored(palette.warning, "%s", LOC("PLANNER_STATUS_DEMOTION"));
     ImGui::PopTextWrapPos();
@@ -453,9 +450,9 @@ void SquadPlannerScene::renderNeeds(float width)
   {
     const Need& need = view.needs[index];
     ImGui::PushID(static_cast<int>(index));
-    const ImVec4 color = need.kind == NeedKind::Surplus ? palette.muted
+    const ImVec4 color = need.kind == NeedKind::Surplus   ? palette.muted
                          : need.kind == NeedKind::Missing ? palette.warning
-                                                           : palette.text;
+                                                          : palette.text;
     const bool recruit = need.kind != NeedKind::Surplus;
     const char* action = LOC("PLANNER_ADD_FOCUS");
     const float buttonWidth =
@@ -468,9 +465,9 @@ void SquadPlannerScene::renderNeeds(float width)
     {
       ImGui::SameLine(ImGui::GetContentRegionMax().x - buttonWidth);
       const PlayerRole role = focusRole(need.group);
-      const bool exists = std::ranges::any_of(
-          focuses, [role](const RecruitmentFocus& focus)
-          { return focus.role == role; });
+      const bool exists =
+          std::ranges::any_of(focuses, [role](const RecruitmentFocus& focus)
+                              { return focus.role == role; });
       ImGui::BeginDisabled(exists);
       if (UI::secondaryButton(action, {}, UI::ButtonSize::COMPACT))
         addFocus(need);
@@ -511,8 +508,8 @@ void SquadPlannerScene::renderProfile(float width)
   UI::endCard();
 
   UI::beginAutoHeightCard("planner_contracts", LOC("PLANNER_CONTRACTS"), width);
-  const float yearWidth = ImGui::CalcTextSize("0000").x +
-                          Theme::Space::M * Theme::scale();
+  const float yearWidth =
+      ImGui::CalcTextSize("0000").x + Theme::Space::M * Theme::scale();
   for (const auto& [year, names] : view.expiries)
   {
     ImGui::TextColored(palette.muted, "%s", year.c_str());

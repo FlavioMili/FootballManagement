@@ -256,14 +256,13 @@ void GameController::runDelegatedDuties()
                          TransferNegotiation::ContractKind::Renewal)
         continue;
       const std::uint8_t before = player->get().getContractYears();
-      const TransferNegotiation::ContractDemand demand =
-          getPlayerDemand(player_id, TransferNegotiation::ContractKind::Renewal);
+      const TransferNegotiation::ContractDemand demand = getPlayerDemand(
+          player_id, TransferNegotiation::ContractKind::Renewal);
       TransferNegotiation::ContractOffer offer =
           TransferNegotiation::demandedOffer(demand);
-      offer.years = static_cast<std::uint8_t>(
-          std::min<int>(before + std::max<int>(demand.min_years, 1),
-                        TransferNegotiation::maxContractYears(
-                            player->get().getAge())));
+      offer.years = static_cast<std::uint8_t>(std::min<int>(
+          before + std::max<int>(demand.min_years, 1),
+          TransferNegotiation::maxContractYears(player->get().getAge())));
       if (offer.years <= before || !proposeContract(player_id, offer).completed)
         continue;
       inbox.add(assistantNote(
@@ -610,14 +609,13 @@ bool GameController::isInboxDecisionPending(const InboxMessage& message) const
     case InboxAction::RespondOffer:
       // While a buyer considers the club's counter there is nothing to do.
       return message.player_id &&
-             std::ranges::any_of(getIncomingOffers(),
-                                 [&message](const IncomingOffer& offer)
-                                 {
-                                   return offer.player_id ==
-                                              *message.player_id &&
-                                          offer.status ==
-                                              OfferStatus::AwaitingClub;
-                                 });
+             std::ranges::any_of(
+                 getIncomingOffers(),
+                 [&message](const IncomingOffer& offer)
+                 {
+                   return offer.player_id == *message.player_id &&
+                          offer.status == OfferStatus::AwaitingClub;
+                 });
     case InboxAction::ReplyToPlayer:
       return message.player_id && hasPendingTalk(*message.player_id);
     case InboxAction::YouthTrialists:
@@ -665,8 +663,7 @@ std::vector<PlayerID> GameController::getFollowedPlayers() const
 {
   std::vector<PlayerID> followed;
   if (!game) return followed;
-  for (const FollowedPlayer& entry :
-       game->getWorld().getStories().getFollows())
+  for (const FollowedPlayer& entry : game->getWorld().getStories().getFollows())
     followed.push_back(entry.player_id);
   return followed;
 }
@@ -682,8 +679,8 @@ std::optional<DilemmaEffects> GameController::getDilemmaEffects(
     int option) const
 {
   if (!game || !hasSelectedTeam()) return std::nullopt;
-  return game->getWorld().getStories().previewDilemma(
-      option, game->getManagedTeamId());
+  return game->getWorld().getStories().previewDilemma(option,
+                                                      game->getManagedTeamId());
 }
 
 bool GameController::resolveDilemma(int option)

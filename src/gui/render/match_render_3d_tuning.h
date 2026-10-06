@@ -411,12 +411,10 @@ struct MatchRender3DTuning final
       float lean;
       float bob;
     };
-    static constexpr Shape WALK{1.4f, 0.34f, 0.42f, 0.28f, 0.2f, 0.03f,
-                                0.018f};
-    static constexpr Shape JOG{4.0f, 0.52f, 0.95f, 0.55f, 0.95f, 0.1f,
-                               0.042f};
-    static constexpr Shape SPRINT{7.5f, 0.78f, 1.45f, 0.95f, 1.3f, 0.26f,
-                                  0.06f};
+    static constexpr Shape WALK{1.4f, 0.34f, 0.42f, 0.28f, 0.2f, 0.03f, 0.018f};
+    static constexpr Shape JOG{4.0f, 0.52f, 0.95f, 0.55f, 0.95f, 0.1f, 0.042f};
+    static constexpr Shape SPRINT{7.5f, 0.78f, 1.45f, 0.95f,
+                                  1.3f, 0.26f, 0.06f};
     /** Speed (m/s) is smoothed at this rate before choosing the blend. */
     static constexpr float SPEED_RATE = 5.0f;
   };

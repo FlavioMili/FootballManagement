@@ -58,7 +58,10 @@ std::size_t ageBand(int age)
   return band;
 }
 
-std::size_t index(PlannerGroup group) { return static_cast<std::size_t>(group); }
+std::size_t index(PlannerGroup group)
+{
+  return static_cast<std::size_t>(group);
+}
 }  // namespace
 
 PlannerGroup SquadPlanner::groupOf(PlayerRole role)
@@ -137,13 +140,14 @@ PlannerPlayer SquadPlanner::project(const PlannerPlayer& player, int seasons)
   return projected;
 }
 
-SquadPlan SquadPlanner::build(const std::vector<PlannerPlayer>& squad,
-                              int season_offset,
-                              const std::array<int, PLANNER_GROUP_COUNT>& starters)
+SquadPlan SquadPlanner::build(
+    const std::vector<PlannerPlayer>& squad, int season_offset,
+    const std::array<int, PLANNER_GROUP_COUNT>& starters)
 {
   SquadPlan plan;
   plan.season_offset = std::max(0, season_offset);
-  const bool from_xi = std::ranges::any_of(starters, [](int n) { return n > 0; });
+  const bool from_xi =
+      std::ranges::any_of(starters, [](int n) { return n > 0; });
   for (std::size_t group = 0; group < PLANNER_GROUP_COUNT; ++group)
   {
     plan.groups[group].group = static_cast<PlannerGroup>(group);
@@ -169,19 +173,19 @@ SquadPlan SquadPlanner::build(const std::vector<PlannerPlayer>& squad,
     age_total += entry.player.age;
     ++plan.squad_size;
     const auto years = std::max(1, entry.player.contract_years);
-    auto expiry = std::ranges::find(plan.expiries, years,
-                                    &ContractExpiry::years_left);
+    auto expiry =
+        std::ranges::find(plan.expiries, years, &ContractExpiry::years_left);
     if (expiry == plan.expiries.end())
-      expiry = plan.expiries.insert(plan.expiries.end(),
-                                    ContractExpiry{years, {}});
+      expiry =
+          plan.expiries.insert(plan.expiries.end(), ContractExpiry{years, {}});
     expiry->players.push_back(player.id);
     plan.groups[index(groupOf(player.role))].players.push_back(
         std::move(entry));
   }
-  plan.average_age = plan.squad_size > 0
-                         ? static_cast<float>(age_total) /
-                               static_cast<float>(plan.squad_size)
-                         : 0.0f;
+  plan.average_age =
+      plan.squad_size > 0
+          ? static_cast<float>(age_total) / static_cast<float>(plan.squad_size)
+          : 0.0f;
   std::ranges::sort(plan.expiries, {}, &ContractExpiry::years_left);
 
   float xi_total = 0.0f;
@@ -189,14 +193,13 @@ SquadPlan SquadPlanner::build(const std::vector<PlannerPlayer>& squad,
   for (GroupDepth& depth : plan.groups)
   {
     // Selected players first (the manager's choice), then by ability.
-    std::ranges::sort(depth.players,
-                      [](const DepthEntry& a, const DepthEntry& b)
-                      {
-                        return std::tuple(!a.player.in_xi, -a.player.overall,
-                                          a.player.id) <
-                               std::tuple(!b.player.in_xi, -b.player.overall,
-                                          b.player.id);
-                      });
+    std::ranges::sort(
+        depth.players,
+        [](const DepthEntry& a, const DepthEntry& b)
+        {
+          return std::tuple(!a.player.in_xi, -a.player.overall, a.player.id) <
+                 std::tuple(!b.player.in_xi, -b.player.overall, b.player.id);
+        });
     int counted = 0;
     float first_total = 0.0f;
     int first_count = 0;
@@ -212,8 +215,8 @@ SquadPlan SquadPlanner::build(const std::vector<PlannerPlayer>& squad,
       }
       else
       {
-        entry.tier = entry.player.age <= 21 ? DepthTier::Prospect
-                                            : DepthTier::Backup;
+        entry.tier =
+            entry.player.age <= 21 ? DepthTier::Prospect : DepthTier::Backup;
       }
     }
     depth.missing = std::max(0, depth.target - counted);

@@ -30,17 +30,17 @@ namespace TransferTermsEditor
 // Every value the buyer AI can propose is a segment (aiOfferTerms pays 50%
 // upfront, a spread goes down to 30% and 20%, a sell-on cut ends on 5% or
 // 25%): the highlighted segment is always the value that will be sent.
-inline constexpr std::array<std::uint8_t, 7> UPFRONT_OPTIONS = {
-    100, 80, 60, 50, 40, 30, 20};
+inline constexpr std::array<std::uint8_t, 7> UPFRONT_OPTIONS = {100, 80, 60, 50,
+                                                                40,  30, 20};
 inline constexpr std::array<const char*, 7> UPFRONT_LABELS = {
     "100%", "80%", "60%", "50%", "40%", "30%", "20%"};
 inline constexpr std::array<const char*, 5> YEAR_LABELS = {"1", "2", "3", "4",
                                                            "5"};
 inline constexpr std::array<std::uint16_t, 4> APPEARANCE_TARGETS = {10, 20, 30,
-                                                                   50};
+                                                                    50};
 inline constexpr std::array<std::uint16_t, 4> GOAL_TARGETS = {5, 10, 15, 20};
-inline constexpr std::array<std::uint8_t, 7> SELL_ON_OPTIONS = {
-    0, 5, 10, 15, 20, 25, 30};
+inline constexpr std::array<std::uint8_t, 7> SELL_ON_OPTIONS = {0,  5,  10, 15,
+                                                                20, 25, 30};
 inline constexpr std::array<const char*, 7> SELL_ON_LABELS = {
     "0%", "5%", "10%", "15%", "20%", "25%", "30%"};
 inline constexpr std::uint8_t DEFAULT_INSTALMENT_YEARS = 2;

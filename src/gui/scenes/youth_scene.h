@@ -130,8 +130,7 @@ class YouthScene : public ManagementScene
   void renderHeadCard(float width);
   void renderBoardCard(float width);
   void renderLeagueCard(float width);
-  void renderTable(const char* id, const std::vector<Row>& rows,
-                   ListKind kind);
+  void renderTable(const char* id, const std::vector<Row>& rows, ListKind kind);
   void renderDetail(const Row& row, ListKind kind);
   void renderChart(const Row& row, float width);
   void renderConfirm();

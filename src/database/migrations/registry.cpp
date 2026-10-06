@@ -20,9 +20,8 @@ namespace
 {
 std::string utcNow()
 {
-  return std::format(
-      "{:%FT%TZ}", std::chrono::floor<std::chrono::seconds>(
-                       std::chrono::system_clock::now()));
+  return std::format("{:%FT%TZ}", std::chrono::floor<std::chrono::seconds>(
+                                      std::chrono::system_clock::now()));
 }
 
 // 0001: save_meta gets the provenance of the save. Saves from before
@@ -117,7 +116,8 @@ constexpr std::array SCOUT_REPORT_DETAILS = {
                            "REAL NOT NULL DEFAULT 0"},
     Migrations::ColumnSpec{"ScoutReports", "overall_high",
                            "REAL NOT NULL DEFAULT 0"},
-    Migrations::ColumnSpec{"ScoutReports", "seen", "INTEGER NOT NULL DEFAULT 1"},
+    Migrations::ColumnSpec{"ScoutReports", "seen",
+                           "INTEGER NOT NULL DEFAULT 1"},
 };
 
 // Staff ids are never reused: older saves derive the counter from the
@@ -236,7 +236,8 @@ constexpr std::array<Migrations::Migration, 14> REGISTRY = {{
     {14, "0014_board_targets_set", BOARD_TARGETS_SET, &boardTargetsSet},
 }};
 
-static_assert(std::ranges::is_sorted(REGISTRY, {}, &Migrations::Migration::number),
+static_assert(std::ranges::is_sorted(REGISTRY, {},
+                                     &Migrations::Migration::number),
               "migrations must be ordered by number");
 }  // namespace
 

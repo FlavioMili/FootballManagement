@@ -111,8 +111,8 @@ class MatchTracker
     return shot_kinds;
   }
   /** Final-third touches per bucket, index 0 home. */
-  [[nodiscard]] const std::array<std::array<std::uint16_t, MatchTracking::BUCKETS>,
-                                 2>&
+  [[nodiscard]] const std::array<
+      std::array<std::uint16_t, MatchTracking::BUCKETS>, 2>&
   finalThirdTouches() const
   {
     return final_third;
@@ -126,7 +126,8 @@ class MatchTracker
   /** Dense MAX_PLAYERS x MAX_PLAYERS matrix, allocated on the first pass. */
   std::vector<std::uint16_t> pass_matrix;
   std::vector<TrackedShot> shot_kinds;
-  std::array<std::array<std::uint16_t, MatchTracking::BUCKETS>, 2> final_third{};
+  std::array<std::array<std::uint16_t, MatchTracking::BUCKETS>, 2>
+      final_third{};
   Vector2F pass_origin{0.5f, 0.5f};
   bool pass_open_play = false;
 };

@@ -257,10 +257,14 @@ void downgradeToVersionZero(const fs::path& save)
   // BoardState is dropped as a whole below.
   dropColumnsAfterVersionNine(db.get(), "BoardState");
   for (const char* sql :
-       {"DROP TABLE schema_migrations;", "DROP TABLE save_meta;",
-        "DROP TABLE FinanceLedger;", "DROP TABLE InboxMessages;",
-        "DROP TABLE BoardState;", "DROP TABLE WorldState;",
-        "DROP TABLE Staff;", "DROP TABLE TeamTraining;",
+       {"DROP TABLE schema_migrations;",
+        "DROP TABLE save_meta;",
+        "DROP TABLE FinanceLedger;",
+        "DROP TABLE InboxMessages;",
+        "DROP TABLE BoardState;",
+        "DROP TABLE WorldState;",
+        "DROP TABLE Staff;",
+        "DROP TABLE TeamTraining;",
         "DROP TABLE PlayerTraining;",
         "ALTER TABLE Players DROP COLUMN potential;",
         "ALTER TABLE Players DROP COLUMN traits;",
@@ -277,7 +281,8 @@ void downgradeToVersionZero(const fs::path& save)
 }
 }  // namespace
 
-// ---- Migration runner --------------------------------------------------------
+// ---- Migration runner
+// --------------------------------------------------------
 
 TEST(SaveMigrations, FreshDatabaseAppliesEveryMigrationOnce)
 {
@@ -323,16 +328,22 @@ TEST(SaveMigrations, LegacyVersionZeroLayoutUpgradesIdempotently)
     EXPECT_EQ(report.applied.size(), Migrations::registry().size());
     sqlite3* db = connection.getRaw();
     for (const auto& [table, column] :
-         {std::pair{"Leagues", "tiebreak"}, {"Fixtures", "stage"},
-          {"Fixtures", "home_penalties"}, {"TransferList", "highest_bid"},
-          {"Players", "potential"}, {"Teams", "recent_form"},
-          {"WorldState", "next_staff_id"}, {"TransferOffers", "status"},
+         {std::pair{"Leagues", "tiebreak"},
+          {"Fixtures", "stage"},
+          {"Fixtures", "home_penalties"},
+          {"TransferList", "highest_bid"},
+          {"Players", "potential"},
+          {"Teams", "recent_form"},
+          {"WorldState", "next_staff_id"},
+          {"TransferOffers", "status"},
           {"TransferOffers", "respond_on"},
           {"PlayerMarketFlags", "not_for_sale_until"},
           {"YouthAcademies", "reserve_played"},
-          {"YouthAcademies", "reserves_ready"}, {"YouthResults", "squad"},
+          {"YouthAcademies", "reserves_ready"},
+          {"YouthResults", "squad"},
           {"ManagedMatchAnalytics", "detail"},
-          {"BoardState", "finance_objective"}, {"BoardState", "targets_set"},
+          {"BoardState", "finance_objective"},
+          {"BoardState", "targets_set"},
           {"Players", "squad_number"}})
       EXPECT_TRUE(Migrations::columnExists(db, table, column))
           << table << "." << column;
@@ -346,8 +357,9 @@ TEST(SaveMigrations, LegacyVersionZeroLayoutUpgradesIdempotently)
     EXPECT_EQ(queryInt(db, "SELECT seed_unknown FROM save_meta;"), 1);
     EXPECT_EQ(queryInt(db, "SELECT length(created_at_utc) FROM save_meta;"), 0);
     EXPECT_EQ(Migrations::foreignKeyIssues(db), 0);
-    EXPECT_EQ(queryInt(db, "SELECT COUNT(*) FROM pragma_integrity_check "
-                           "WHERE integrity_check <> 'ok';"),
+    EXPECT_EQ(queryInt(db,
+                       "SELECT COUNT(*) FROM pragma_integrity_check "
+                       "WHERE integrity_check <> 'ok';"),
               0);
 
     const std::string upgraded = databaseDigest(db);
@@ -377,7 +389,8 @@ TEST(SaveMigrations, OfferNegotiationsUpgradeASaveFromBeforeThem)
         "INSERT INTO TransferOffers (id, kind, player_id, club_id, created, "
         "expires, rounds, terms) VALUES (7, 0, 1, 2, 20250710, 20250715, 0, "
         "'{\"offer\":{\"fee\":1000000},\"max_fee\":1200000}');",
-        "INSERT INTO PlayerMarketFlags (player_id, loan_listed) VALUES (1, 1);"})
+        "INSERT INTO PlayerMarketFlags (player_id, loan_listed) VALUES (1, "
+        "1);"})
     execSql(db, sql);
 
   const auto report = Migrations::migrate(connection);
@@ -386,7 +399,8 @@ TEST(SaveMigrations, OfferNegotiationsUpgradeASaveFromBeforeThem)
   ASSERT_FALSE(report.applied.empty());
   EXPECT_EQ(report.applied.front(), 9);
   for (const auto& [table, column] :
-       {std::pair{"TransferOffers", "status"}, {"TransferOffers", "respond_on"},
+       {std::pair{"TransferOffers", "status"},
+        {"TransferOffers", "respond_on"},
         {"PlayerMarketFlags", "not_for_sale_until"}})
     EXPECT_TRUE(Migrations::columnExists(db, table, column))
         << table << "." << column;
@@ -395,8 +409,9 @@ TEST(SaveMigrations, OfferNegotiationsUpgradeASaveFromBeforeThem)
   EXPECT_EQ(queryInt(db, "SELECT status FROM TransferOffers WHERE id = 7;"), 0);
   EXPECT_EQ(queryInt(db, "SELECT respond_on FROM TransferOffers WHERE id = 7;"),
             0);
-  EXPECT_EQ(queryInt(db, "SELECT not_for_sale_until FROM PlayerMarketFlags "
-                         "WHERE player_id = 1;"),
+  EXPECT_EQ(queryInt(db,
+                     "SELECT not_for_sale_until FROM PlayerMarketFlags "
+                     "WHERE player_id = 1;"),
             0);
   EXPECT_EQ(queryInt(db, "SELECT loan_listed FROM PlayerMarketFlags;"), 1);
 
@@ -549,10 +564,9 @@ TEST(SaveMigrations, BoardTargetsSetKeepsTargetsTheBoardAnnounced)
     Migrations::migrate(connection);
     sqlite3* db = connection.getRaw();
     // A version 13 save whose board did or did not set its targets yet.
-    for (const char* sql :
-         {"ALTER TABLE BoardState DROP COLUMN targets_set;",
-          "DELETE FROM schema_migrations WHERE number >= 14;",
-          "UPDATE save_meta SET schema_version = 13;"})
+    for (const char* sql : {"ALTER TABLE BoardState DROP COLUMN targets_set;",
+                            "DELETE FROM schema_migrations WHERE number >= 14;",
+                            "UPDATE save_meta SET schema_version = 13;"})
       execSql(db, sql);
     execSql(db, std::format("INSERT INTO BoardState (id, team_id, "
                             "season_year, objective, expected_position, "
@@ -580,10 +594,9 @@ TEST(SaveMigrations, FailingMigrationLeavesThePreviousVersion)
       {"Players", "doomed_column", "INTEGER NOT NULL DEFAULT 7"}};
   std::vector<Migrations::Migration> migrations(Migrations::registry().begin(),
                                                 Migrations::registry().end());
-  migrations.push_back(
-      {version + 1, "9999_throws", NEW_COLUMN,
-       [](const Migrations::MigrationContext&)
-       { throw std::runtime_error("injected failure"); }});
+  migrations.push_back({version + 1, "9999_throws", NEW_COLUMN,
+                        [](const Migrations::MigrationContext&)
+                        { throw std::runtime_error("injected failure"); }});
 
   EXPECT_THROW(Migrations::migrate(connection, migrations), DatabaseException);
   sqlite3* db = connection.getRaw();
@@ -632,7 +645,8 @@ TEST(SaveMigrations, FutureVersionIsRefusedBeforeAnyWrite)
   EXPECT_EQ(databaseDigest(connection.getRaw()), before);
 }
 
-// ---- Careers: save, load, metadata --------------------------------------------
+// ---- Careers: save, load, metadata
+// --------------------------------------------
 
 TEST(SaveSafety, SaveIsSelfContainedWithMetadata)
 {
@@ -776,8 +790,9 @@ TEST(SaveSafety, VersionNineCareerUpgradesAndRecordsTheCurrentVersions)
     // Written by an older build: older engine and random number streams.
     RawDb db(path);
     downgradeToVersionNine(db.get());
-    execSql(db.get(), "UPDATE save_meta SET engine_version = '0.9.0', "
-                      "rng_version = 1, sim_version = 0;");
+    execSql(db.get(),
+            "UPDATE save_meta SET engine_version = '0.9.0', "
+            "rng_version = 1, sim_version = 0;");
   }
   const SaveInspection legacy = SaveManager::inspect(path);
   ASSERT_EQ(legacy.status, SaveStatus::Ok) << legacy.detail;
@@ -832,8 +847,8 @@ TEST(SaveSafety, FutureVersionSaveIsRefusedAndLeftUntouched)
   const int future = Migrations::currentSchemaVersion() + 3;
   {
     RawDb db(path);
-    execSql(db.get(), std::format("UPDATE save_meta SET schema_version = {};",
-                                  future));
+    execSql(db.get(),
+            std::format("UPDATE save_meta SET schema_version = {};", future));
   }
   const std::string before = fileBytes(path);
 
@@ -873,7 +888,8 @@ TEST(SaveSafety, IncompleteSaveIsReported)
   EXPECT_EQ(controller.getLastLoadError()->kind, SaveErrorKind::Incomplete);
 }
 
-// ---- Fault injection -----------------------------------------------------------
+// ---- Fault injection
+// -----------------------------------------------------------
 
 TEST(SaveSafety, InterruptedSaveKeepsThePreviousSave)
 {
@@ -1065,7 +1081,8 @@ TEST(SaveSafety, CorruptSaveIsDetectedAndABackupRestores)
   EXPECT_GE(kept_aside, 1) << "a damaged save is never deleted";
 }
 
-// ---- Backups and autosave -------------------------------------------------------
+// ---- Backups and autosave
+// -------------------------------------------------------
 
 TEST(SaveSafety, BackupsRotateAndKeepN)
 {
@@ -1228,7 +1245,10 @@ TEST(SaveSafety, AutosaveFrequencies)
   const GameDateValue monday(2025, 8, 4);
   const auto due = [&](AutosaveFrequency frequency, GameDateValue today,
                        int season = 1, bool matchday = false)
-  { return SaveManager::isAutosaveDue(frequency, monday, 1, today, season, matchday); };
+  {
+    return SaveManager::isAutosaveDue(frequency, monday, 1, today, season,
+                                      matchday);
+  };
   EXPECT_FALSE(due(AutosaveFrequency::Off, GameDateValue(2026, 1, 1), 2, true));
   EXPECT_FALSE(due(AutosaveFrequency::Daily, monday));
   EXPECT_TRUE(due(AutosaveFrequency::Daily, GameDateValue(2025, 8, 5)));
@@ -1237,8 +1257,8 @@ TEST(SaveSafety, AutosaveFrequencies)
   EXPECT_FALSE(due(AutosaveFrequency::Monthly, GameDateValue(2025, 8, 31)));
   EXPECT_TRUE(due(AutosaveFrequency::Monthly, GameDateValue(2025, 9, 1)));
   EXPECT_FALSE(due(AutosaveFrequency::Matchday, GameDateValue(2025, 8, 5)));
-  EXPECT_TRUE(due(AutosaveFrequency::Matchday, GameDateValue(2025, 8, 5), 1,
-                  true));
+  EXPECT_TRUE(
+      due(AutosaveFrequency::Matchday, GameDateValue(2025, 8, 5), 1, true));
   EXPECT_FALSE(due(AutosaveFrequency::SeasonEnd, GameDateValue(2026, 6, 30)));
   EXPECT_TRUE(due(AutosaveFrequency::SeasonEnd, GameDateValue(2026, 7, 1), 2));
 
@@ -1256,11 +1276,12 @@ TEST(SaveSafety, AutosaveFrequencies)
   EXPECT_EQ(status.successful_saves, baseline + 1);
   EXPECT_EQ(SaveManager::inspect(path).game_date,
             controller->getCurrentDate().toString());
-  std::cout << std::format("[ SAVE     ] autosave {:.1f} ms (flush {:.1f}, "
-                           "snapshot {:.1f}, verify {:.1f}, sync {:.1f})\n",
-                           status.timings.total_ms, status.timings.flush_ms,
-                           status.timings.snapshot_ms,
-                           status.timings.verify_ms, status.timings.sync_ms);
+  std::cout << std::format(
+      "[ SAVE     ] autosave {:.1f} ms (flush {:.1f}, "
+      "snapshot {:.1f}, verify {:.1f}, sync {:.1f})\n",
+      status.timings.total_ms, status.timings.flush_ms,
+      status.timings.snapshot_ms, status.timings.verify_ms,
+      status.timings.sync_ms);
 }
 
 TEST(SaveSafety, SaveAndLoadTimesAtStandardWorldSize)
@@ -1273,7 +1294,8 @@ TEST(SaveSafety, SaveAndLoadTimesAtStandardWorldSize)
   for (int round = 0; round < 3; ++round)
   {
     ASSERT_TRUE(controller->saveGame());
-    best_save = std::min(best_save, controller->getSaveStatus().timings.total_ms);
+    best_save =
+        std::min(best_save, controller->getSaveStatus().timings.total_ms);
   }
   const auto timings = controller->getSaveStatus().timings;
   GameController reloaded;
@@ -1293,8 +1315,8 @@ TEST(SaveSafety, SaveAndLoadTimesAtStandardWorldSize)
   EXPECT_LT(best_save, 2000.0);
 }
 
-
-// ---- Incremental writes ---------------------------------------------------------
+// ---- Incremental writes
+// ---------------------------------------------------------
 
 TEST(SaveWrites, PlayerRowsRoundTripExactly)
 {
@@ -1344,7 +1366,8 @@ TEST(SaveWrites, CalendarWritesOnlyChangedFixtures)
   Calendar calendar;
   calendar.addMatch(Match(1, 2, day, MatchType::LEAGUE, 1, 1));
   calendar.addMatch(Match(3, 4, day, MatchType::LEAGUE, 1, 1));
-  calendar.addMatch(Match(5, 6, GameDateValue(2025, 9, 13), MatchType::CUP, 9, 1));
+  calendar.addMatch(
+      Match(5, 6, GameDateValue(2025, 9, 13), MatchType::CUP, 9, 1));
   repository.saveCalendar(calendar);
   sqlite3* db = connection->getRaw();
   const int first_id =
@@ -1354,10 +1377,12 @@ TEST(SaveWrites, CalendarWritesOnlyChangedFixtures)
   calendar.findMatch(day, 1, 2)->setPlayedResult(2, 1);
   calendar.findMatch(GameDateValue(2025, 9, 13), 5, 6)
       ->setKnockoutResult(1, 1, true, std::make_pair(uint8_t{4}, uint8_t{3}));
-  calendar.addMatch(Match(7, 8, GameDateValue(2025, 9, 20), MatchType::LEAGUE, 1, 2));
-  sqlite3_exec(db, "CREATE TEMP TABLE writes (n INTEGER);"
-                   "CREATE TEMP TRIGGER count_updates AFTER UPDATE ON Fixtures "
-                   "BEGIN INSERT INTO writes VALUES (1); END;",
+  calendar.addMatch(
+      Match(7, 8, GameDateValue(2025, 9, 20), MatchType::LEAGUE, 1, 2));
+  sqlite3_exec(db,
+               "CREATE TEMP TABLE writes (n INTEGER);"
+               "CREATE TEMP TRIGGER count_updates AFTER UPDATE ON Fixtures "
+               "BEGIN INSERT INTO writes VALUES (1); END;",
                nullptr, nullptr, nullptr);
   repository.saveCalendar(calendar);
   EXPECT_EQ(queryInt(db, "SELECT COUNT(*) FROM writes;"), 2);
@@ -1387,8 +1412,8 @@ TEST(SaveWrites, CareerStateRoundTripsExactly)
   controller->setAutosavePolicy({AutosaveFrequency::Off, 3});
   advance(*controller, 9);
   const TeamID managed = controller->getManagedTeam()->get().getId();
-  ASSERT_TRUE(controller->setDutyOwner(Duty::TrainingSchedule,
-                                       DutyOwner::Manager));
+  ASSERT_TRUE(
+      controller->setDutyOwner(Duty::TrainingSchedule, DutyOwner::Manager));
   ASSERT_TRUE(controller->setTrainingIntensity(TrainingIntensity::High));
   ASSERT_TRUE(controller->saveGame());
   // A second save with (almost) nothing changed writes only differences.

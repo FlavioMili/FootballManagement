@@ -118,8 +118,8 @@ TEST(Awards, YoungPlayerRespectsAgeAndTiesGoToLowerId)
       candidate(9, PlayerRole::CM, 22, 360, 8.0f),
       candidate(7, PlayerRole::CM, 21, 360, 7.0f),
       candidate(5, PlayerRole::CM, 20, 360, 7.0f)};
-  const auto young =
-      Awards::bestPlayer(pool, Awards::MONTH_MIN_MINUTES, Awards::YOUNG_MAX_AGE);
+  const auto young = Awards::bestPlayer(pool, Awards::MONTH_MIN_MINUTES,
+                                        Awards::YOUNG_MAX_AGE);
   ASSERT_TRUE(young.has_value());
   EXPECT_EQ(pool[*young].tally.player_id, 5u);
   EXPECT_EQ(pool[*Awards::bestPlayer(pool, 0)].tally.player_id, 9u);
@@ -131,14 +131,14 @@ TEST(Awards, GoldenBootAndGloveTieBreaks)
       candidate(1, PlayerRole::ST, 25, 2700, 7.0f, 20),
       candidate(2, PlayerRole::ST, 25, 2400, 7.0f, 20),  // fewer minutes
       candidate(3, PlayerRole::GK, 25, 3000, 6.8f, 0, 12),
-      candidate(4, PlayerRole::GK, 25, 900, 6.8f, 0, 14),  // too few minutes
+      candidate(4, PlayerRole::GK, 25, 900, 6.8f, 0, 14),    // too few minutes
       candidate(5, PlayerRole::CB, 25, 3000, 6.8f, 0, 15)};  // not a keeper
   EXPECT_EQ(pool[*Awards::goldenBoot(pool)].tally.player_id, 2u);
   const auto glove = Awards::goldenGlove(pool, Awards::seasonMinMinutes(pool));
   ASSERT_TRUE(glove.has_value());
   EXPECT_EQ(pool[*glove].tally.player_id, 3u);
-  EXPECT_FALSE(Awards::goldenBoot(std::vector<AwardCandidate>{
-                                      candidate(8, PlayerRole::ST, 25, 900, 7.0f)})
+  EXPECT_FALSE(Awards::goldenBoot(std::vector<AwardCandidate>{candidate(
+                                      8, PlayerRole::ST, 25, 900, 7.0f)})
                    .has_value());
 }
 
@@ -163,8 +163,8 @@ TEST(Awards, TeamOfSeasonFillsTheFormationWithFallbacks)
   EXPECT_EQ(std::ranges::unique(picked).begin(), picked.end());
   // Below the minimum nobody makes it.
   const auto empty = Awards::teamOfSeason(pool, 5000);
-  EXPECT_TRUE(std::ranges::none_of(empty, [](const auto& slot)
-                                   { return slot.has_value(); }));
+  EXPECT_TRUE(std::ranges::none_of(
+      empty, [](const auto& slot) { return slot.has_value(); }));
 }
 
 TEST(Awards, ManagerAwardComparesPointsWithExpectation)
@@ -223,12 +223,14 @@ TEST(Awards, MonthlyAwardsFromMatchReports)
   ASSERT_GE(clubs.size(), 2u);
   const TeamID a = clubs[0];
   const TeamID b = clubs[1];
-  const PlayerID star = findPlayer(*controller, a, [](const Player& p)
-                                   { return p.getAge() > 23 && p.getRole() != PlayerRole::GK; });
-  const PlayerID cameo = findPlayer(*controller, b, [](const Player& p)
-                                    { return p.getAge() > 23 && p.getRole() != PlayerRole::GK; });
-  const PlayerID youngster = findPlayer(*controller, b, [](const Player& p)
-                                        { return p.getAge() <= 21; });
+  const PlayerID star =
+      findPlayer(*controller, a, [](const Player& p)
+                 { return p.getAge() > 23 && p.getRole() != PlayerRole::GK; });
+  const PlayerID cameo =
+      findPlayer(*controller, b, [](const Player& p)
+                 { return p.getAge() > 23 && p.getRole() != PlayerRole::GK; });
+  const PlayerID youngster = findPlayer(
+      *controller, b, [](const Player& p) { return p.getAge() <= 21; });
   const PlayerID keeper = findPlayer(*controller, a, [](const Player& p)
                                      { return p.getRole() == PlayerRole::GK; });
   ASSERT_NE(star, 0u);
@@ -240,10 +242,9 @@ TEST(Awards, MonthlyAwardsFromMatchReports)
   for (int round = 0; round < 4; ++round)
   {
     const bool a_home = round % 2 == 0;
-    MatchReport report =
-        leagueMatch(GameDateValue(2025, 8, static_cast<std::uint8_t>(9 + 7 * round)),
-                    a_home ? a : b, a_home ? b : a, league, a_home ? 2 : 0,
-                    a_home ? 0 : 2);
+    MatchReport report = leagueMatch(
+        GameDateValue(2025, 8, static_cast<std::uint8_t>(9 + 7 * round)),
+        a_home ? a : b, a_home ? b : a, league, a_home ? 2 : 0, a_home ? 0 : 2);
     report.players.push_back(line(star, a, 90, 7.6f, 1));
     report.players.push_back(line(keeper, a, 90, 7.0f));
     report.players.push_back(line(youngster, b, 90, 7.4f));
@@ -280,13 +281,13 @@ TEST(Awards, MonthlyAwardsFromMatchReports)
   EXPECT_EQ(season.at({league, keeper}).clean_sheets, 4u);
 
   const std::vector<AwardRecord> end = awards.awardSeason(*gamedata, 2025);
-  const auto boot = std::ranges::find(end, AwardType::GoldenBoot,
-                                      &AwardRecord::type);
+  const auto boot =
+      std::ranges::find(end, AwardType::GoldenBoot, &AwardRecord::type);
   ASSERT_NE(boot, end.end());
   EXPECT_EQ(boot->player_id, star);
   EXPECT_EQ(boot->value, 4.0f);
-  const auto glove = std::ranges::find(end, AwardType::GoldenGlove,
-                                       &AwardRecord::type);
+  const auto glove =
+      std::ranges::find(end, AwardType::GoldenGlove, &AwardRecord::type);
   ASSERT_NE(glove, end.end());
   EXPECT_EQ(glove->player_id, keeper);
   EXPECT_TRUE(std::ranges::contains(awards.honoursFor(star),

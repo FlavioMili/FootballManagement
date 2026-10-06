@@ -109,9 +109,9 @@ void rangeBar(const char* label, float estimate, float low, float high,
   const ImVec2 start = ImGui::GetCursorScreenPos();
   const float available = ImGui::GetContentRegionAvail().x;
   const float textWidth = ImGui::CalcTextSize(text.data()).x;
-  const float barWidth = std::max(24.0f * scale, available - labelWidth -
-                                                     textWidth -
-                                                     Theme::Space::S * scale);
+  const float barWidth =
+      std::max(24.0f * scale,
+               available - labelWidth - textWidth - Theme::Space::S * scale);
   ImDrawList* drawList = ImGui::GetWindowDrawList();
   drawList->PushClipRect(
       start, ImVec2(start.x + labelWidth - 4.0f * scale, start.y + lineHeight),
@@ -206,11 +206,10 @@ void PlayerProfileScene::refresh()
     const auto view = controller.getScoutedView(player_id);
     knowledge = view ? view->knowledge : 0;
     row.overall = view ? view->overall : 0.0f;
-    overall_range =
-        view ? std::format("{:.0f} – {:.0f}",
-                           static_cast<double>(view->overall_low),
-                           static_cast<double>(view->overall_high))
-             : std::string();
+    overall_range = view ? std::format("{:.0f} – {:.0f}",
+                                       static_cast<double>(view->overall_low),
+                                       static_cast<double>(view->overall_high))
+                         : std::string();
     row.market_value = view ? static_cast<uint32_t>(std::clamp<int64_t>(
                                   view->estimated_value, 0, UINT32_MAX))
                             : 0;
@@ -232,7 +231,8 @@ void PlayerProfileScene::refresh()
           ReportSummary summary;
           summary.heading = std::format("{}  ·  {}", Format::date(report.date),
                                         report.scout_name);
-          summary.grade = static_cast<char>('A' + static_cast<int>(report.grade));
+          summary.grade =
+              static_cast<char>('A' + static_cast<int>(report.grade));
           summary.grade_key = scoutGradeKey(report.grade);
           summary.ability =
               std::format("{:.0f}", static_cast<double>(report.overall));
@@ -516,7 +516,8 @@ void PlayerProfileScene::renderActions()
       ImGui::EndDisabled();
       if (block != GameController::PlayerActionBlock::None &&
           ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-        ImGui::SetTooltip("%s", LOC(GameController::playerActionBlockKey(block)));
+        ImGui::SetTooltip("%s",
+                          LOC(GameController::playerActionBlockKey(block)));
     }
     ImGui::SameLine();
     if (ImGui::SmallButton(LOC("PROFILE_OPEN_LINEUP")))
@@ -529,7 +530,8 @@ void PlayerProfileScene::renderActions()
     ImGui::EndDisabled();
     if (renewal != GameController::PlayerActionBlock::None &&
         ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-      ImGui::SetTooltip("%s", LOC(GameController::playerActionBlockKey(renewal)));
+      ImGui::SetTooltip("%s",
+                        LOC(GameController::playerActionBlockKey(renewal)));
     UI::sameLineIfFits(UI::buttonWidth(LOC("TALK_ACTION")));
     if (ImGui::SmallButton(LOC("TALK_ACTION")))
       talk_dialog.open(controller, player_id);
@@ -549,11 +551,10 @@ void PlayerProfileScene::renderActions()
     ImGui::SetTooltip("%s", LOC("TRANSFER_WINDOW_CLOSED_HINT"));
 
   const std::string scoutLabel =
-      being_scouted
-          ? std::string(LOC("PROFILE_BEING_SCOUTED"))
-          : fmt::sprintf(LOC("SCOUTING_SCOUT_PLAYER"),
-                         static_cast<int>(SCOUT_DAYS),
-                         Format::money(scout_cost).c_str());
+      being_scouted ? std::string(LOC("PROFILE_BEING_SCOUTED"))
+                    : fmt::sprintf(LOC("SCOUTING_SCOUT_PLAYER"),
+                                   static_cast<int>(SCOUT_DAYS),
+                                   Format::money(scout_cost).c_str());
   UI::sameLineIfFits(UI::buttonWidth(scoutLabel.c_str()));
   ImGui::BeginDisabled(being_scouted);
   if (ImGui::SmallButton(scoutLabel.c_str())) sendScout();
@@ -581,9 +582,8 @@ void PlayerProfileScene::renderActions()
   {
     if (following ? controller.unfollowPlayer(player_id)
                   : controller.followPlayer(player_id))
-      showToast(fmt::sprintf(LOC(following ? "INBOX_UNFOLLOWED"
-                                           : "INBOX_FOLLOWING"),
-                             row.name));
+      showToast(fmt::sprintf(
+          LOC(following ? "INBOX_UNFOLLOWED" : "INBOX_FOLLOWING"), row.name));
     else
       showToast(fmt::sprintf(LOC("INBOX_FOLLOW_LIMIT"),
                              static_cast<int>(Stories::MAX_FOLLOWS)),
@@ -609,9 +609,12 @@ void PlayerProfileScene::sendScout()
       scouts,
       [&assignments](const ScoutProfile& scout)
       {
-        return std::ranges::none_of(
-            assignments, [&scout](const ScoutAssignment& assignment)
-            { return !assignment.finished && assignment.scout_id == scout.id; });
+        return std::ranges::none_of(assignments,
+                                    [&scout](const ScoutAssignment& assignment)
+                                    {
+                                      return !assignment.finished &&
+                                             assignment.scout_id == scout.id;
+                                    });
       });
   if (idle == scouts.end())
   {
@@ -720,9 +723,9 @@ void PlayerProfileScene::renderStatus(float width, float height)
   const float keyWidth = keyWidthFor(BIO_KEY_WIDTH);
   const std::string formText =
       dynamics.rating_count > 0
-          ? fmt::sprintf(Format::plural("PROFILE_FORM_VALUE",
-                                        dynamics.rating_count),
-                         static_cast<double>(form), dynamics.rating_count)
+          ? fmt::sprintf(
+                Format::plural("PROFILE_FORM_VALUE", dynamics.rating_count),
+                static_cast<double>(form), dynamics.rating_count)
           : std::string(LOC("PROFILE_FORM_NONE"));
   keyValueWrapped(LOC("PROFILE_FORM"), formText.c_str(), keyWidth);
   if (squad_role_key != nullptr)
@@ -747,10 +750,10 @@ void PlayerProfileScene::renderStatus(float width, float height)
 
 void PlayerProfileScene::renderAttributes(float width, float height)
 {
-  UI::beginCard("profile_attributes",
-                LOC(scouted ? "PROFILE_ATTRIBUTES_SCOUTED"
-                            : "PROFILE_ATTRIBUTES"),
-                ImVec2(width, height), true);
+  UI::beginCard(
+      "profile_attributes",
+      LOC(scouted ? "PROFILE_ATTRIBUTES_SCOUTED" : "PROFILE_ATTRIBUTES"),
+      ImVec2(width, height), true);
   const float labelWidth = keyWidthFor(ATTRIBUTE_LABEL_WIDTH);
   if (scouted && sections.empty())
   {
@@ -890,8 +893,9 @@ void PlayerProfileScene::renderStatsTable(const std::vector<StatsRow>& rows,
               ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit,
           560.0f, ImVec2(0.0f, 0.0f), 1))
     return;
-  ImGui::TableSetupColumn(LOC(career ? "CLUB_COL_SEASON" : "CLUB_COL_COMPETITION"),
-                          ImGuiTableColumnFlags_WidthStretch);
+  ImGui::TableSetupColumn(
+      LOC(career ? "CLUB_COL_SEASON" : "CLUB_COL_COMPETITION"),
+      ImGuiTableColumnFlags_WidthStretch);
   ImGui::TableSetupColumn(LOC("STATS_COL_APPS"));
   ImGui::TableSetupColumn(LOC("STATS_COL_MINUTES"));
   ImGui::TableSetupColumn(LOC("STATS_COL_GOALS"));

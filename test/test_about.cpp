@@ -75,8 +75,9 @@ TEST(About, MainMenuShowsTheCrashNoticeAndOpensAbout)
   const auto frame = [&view] { GameFlowTest::frame(view); };
   frame();
   frame();
-  EXPECT_TRUE(ImGui::IsPopupOpen("##crash_notice", ImGuiPopupFlags_AnyPopupId |
-                                                       ImGuiPopupFlags_AnyPopupLevel));
+  EXPECT_TRUE(ImGui::IsPopupOpen(
+      "##crash_notice",
+      ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel));
   EXPECT_TRUE(view.captureScreenshot(
       RuntimePaths::capturePath("main_menu_crash_notice.bmp").string()));
   CrashReport::acknowledge();
@@ -88,6 +89,6 @@ TEST(About, MainMenuShowsTheCrashNoticeAndOpensAbout)
   frame();
   ASSERT_NE(view.getTopScene(), nullptr);
   EXPECT_EQ(view.getTopScene()->getID(), SceneID::ABOUT);
-  EXPECT_TRUE(view.captureScreenshot(
-      RuntimePaths::capturePath("about.bmp").string()));
+  EXPECT_TRUE(
+      view.captureScreenshot(RuntimePaths::capturePath("about.bmp").string()));
 }

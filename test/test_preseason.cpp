@@ -62,8 +62,7 @@ bool oncePerClub(const GameController& controller, const GameDateValue& date)
 }
 
 std::vector<OpponentOption> anyOpponents(const GameController& controller,
-                                         const GameDateValue& date,
-                                         bool abroad)
+                                         const GameDateValue& date, bool abroad)
 {
   std::vector<OpponentOption> all;
   for (const OpponentLevel level :
@@ -126,8 +125,8 @@ TEST(Preseason, ChoosingAnOpponentSwapsFixturesSafely)
       controller->setPreseasonFriendly(date, choice->team_id, false, false));
   EXPECT_FALSE(controller->getPreseasonFriendlies().front().home);
   // Past dates and the managed club itself are refused.
-  EXPECT_FALSE(controller->setPreseasonFriendly(
-      controller->getCurrentDate(), choice->team_id, true, false));
+  EXPECT_FALSE(controller->setPreseasonFriendly(controller->getCurrentDate(),
+                                                choice->team_id, true, false));
   EXPECT_FALSE(controller->setPreseasonFriendly(date, managed, true, false));
 
   // The assistant's plan fills the editable dates without repeats.
@@ -140,8 +139,8 @@ TEST(Preseason, ChoosingAnOpponentSwapsFixturesSafely)
   EXPECT_EQ(std::ranges::unique(opponents).begin(), opponents.end());
   const auto own = controller->getManagedTeam()->get().getReputation();
   const auto weaker = controller->getTeamById(plan[0].opponent_id);
-  if (!controller->getFriendlyOpponents(plan[0].date, OpponentLevel::Weaker,
-                                        false)
+  if (!controller
+           ->getFriendlyOpponents(plan[0].date, OpponentLevel::Weaker, false)
            .empty())
     EXPECT_LE(weaker->get().getReputation() + Preseason::LEVEL_GAP, own);
   EXPECT_EQ(controller->applyPreseasonSuggestion(), 4u);
@@ -176,17 +175,19 @@ TEST(Preseason, OpponentsFromAnotherDayOfTheWeekSwapCleanly)
     return std::nullopt;
   };
   const auto options = anyOpponents(*controller, date, false);
-  const auto choice =
-      std::ranges::find_if(options, [&](const OpponentOption& option)
-                           {
-                             const auto day = dayOf(option.team_id);
-                             return day && !(*day == date);
-                           });
+  const auto choice = std::ranges::find_if(options,
+                                           [&](const OpponentOption& option)
+                                           {
+                                             const auto day =
+                                                 dayOf(option.team_id);
+                                             return day && !(*day == date);
+                                           });
   ASSERT_NE(choice, options.end());
   const GameDateValue other_day = *dayOf(choice->team_id);
   std::map<int, size_t> before;
   for (size_t index = 0; index < week.size(); ++index)
-    before[static_cast<int>(index)] = calendar.getMatchesForDate(week[index]).size();
+    before[static_cast<int>(index)] =
+        calendar.getMatchesForDate(week[index]).size();
 
   ASSERT_TRUE(
       controller->setPreseasonFriendly(date, choice->team_id, true, false));
@@ -225,8 +226,8 @@ TEST(Preseason, TourFeeCampAndRoundTrip)
   EXPECT_TRUE(controller->getPreseasonFriendlies()[1].tour);
   // A tour needs an away match.
   const TeamID visitor = abroad[abroad.size() > 1 ? 1 : 0].team_id;
-  ASSERT_TRUE(controller->setPreseasonFriendly(slots[2].date, visitor, true,
-                                               true));
+  ASSERT_TRUE(
+      controller->setPreseasonFriendly(slots[2].date, visitor, true, true));
   EXPECT_FALSE(controller->getPreseasonFriendlies()[2].tour);
 
   // Camp: booking pays, cancelling refunds, booking again pays again.
@@ -258,18 +259,18 @@ TEST(Preseason, TourFeeCampAndRoundTrip)
   while (!(tour_date < controller->getCurrentDate())) controller->advanceDay();
   controller->advanceDay();
   EXPECT_TRUE(controller->getPreseasonState().camp_applied);
-  EXPECT_TRUE(std::ranges::any_of(controller->getInbox(),
-                                  [](const InboxMessage& message)
-                                  { return message.title_key ==
-                                           "INBOX_CAMP_DONE_TITLE"; }));
-  const auto& ledger = controller->getFinanceLedger(managed);
   EXPECT_TRUE(std::ranges::any_of(
-      ledger, [&](const FinanceTransaction& transaction)
-      {
-        return transaction.date == tour_date &&
-               transaction.category == FinanceCategory::Matchday &&
-               transaction.amount == expected_fee;
-      }));
+      controller->getInbox(), [](const InboxMessage& message)
+      { return message.title_key == "INBOX_CAMP_DONE_TITLE"; }));
+  const auto& ledger = controller->getFinanceLedger(managed);
+  EXPECT_TRUE(std::ranges::any_of(ledger,
+                                  [&](const FinanceTransaction& transaction)
+                                  {
+                                    return transaction.date == tour_date &&
+                                           transaction.category ==
+                                               FinanceCategory::Matchday &&
+                                           transaction.amount == expected_fee;
+                                  }));
   EXPECT_EQ(controller->getPreseasonState().tour_matches, 1u);
 }
 
@@ -310,7 +311,8 @@ TEST(Preseason, ANewClubStartsWithoutTheOldCamp)
   // He moves on before the camp: the new club has booked nothing.
   TeamID second = 0;
   for (const auto& team : controller->getTeams())
-    if (team.get().getId() != first && team.get().getId() != FREE_AGENTS_TEAM_ID)
+    if (team.get().getId() != first &&
+        team.get().getId() != FREE_AGENTS_TEAM_ID)
     {
       second = team.get().getId();
       break;

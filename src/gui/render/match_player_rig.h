@@ -74,17 +74,16 @@ inline TwoBone solveTwoBone(Vec3 root, Vec3 target, float upper, float lower,
   if (bendLength < 1e-4f)
   {
     // Pole along the limb: any perpendicular will do.
-    bend = RenderMath::cross(direction, std::abs(direction.z) < 0.9f
-                                            ? UP
-                                            : Vec3{1.0f, 0.0f, 0.0f});
+    bend = RenderMath::cross(
+        direction, std::abs(direction.z) < 0.9f ? UP : Vec3{1.0f, 0.0f, 0.0f});
     bend = RenderMath::normalize(bend);
   }
   else
   {
     bend = bend * (1.0f / bendLength);
   }
-  return {root + direction * along + bend * height,
-          root + direction * distance, reached};
+  return {root + direction * along + bend * height, root + direction * distance,
+          reached};
 }
 
 /**
@@ -254,11 +253,11 @@ inline Vec3 stepFoot(FootState& foot, const StrideInput& input)
   else
   {
     if (foot.inStance) foot.liftOff = foot.planted;
-    const float swing = (share - input.duty) / std::max(1.0f - input.duty, 1e-3f);
+    const float swing =
+        (share - input.duty) / std::max(1.0f - input.duty, 1e-3f);
     const Vec3 landing = stanceSpot(input, 0.0f);
-    foot.position =
-        RenderMath::lerp(foot.liftOff, landing, smoothStep(swing)) +
-        UP * (input.liftHeight * std::sin(PI * swing));
+    foot.position = RenderMath::lerp(foot.liftOff, landing, smoothStep(swing)) +
+                    UP * (input.liftHeight * std::sin(PI * swing));
     foot.yaw = input.yaw;
   }
   foot.inStance = stance;
@@ -463,8 +462,8 @@ inline Vec3 kickAnkle(Event event, float seconds, Vec3 contact, Vec3 direction,
     const float eased = 1.0f - (1.0f - through) * (1.0f - through);
     return RenderMath::lerp(contact, finish, eased);
   }
-  const float back = (seconds - timing.contactHold - timing.followThrough) /
-                     timing.recover;
+  const float back =
+      (seconds - timing.contactHold - timing.followThrough) / timing.recover;
   weight = 1.0f - smoothStep(back);
   return finish;
 }

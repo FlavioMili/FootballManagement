@@ -159,9 +159,9 @@ inline constexpr float MAX_VALUE_PREMIUM = 0.25f;
 float playerScore(const AwardPlayerTally& tally, bool goalkeeper);
 
 /** Best candidate with enough minutes and at most @p max_age (0 = any). */
-std::optional<std::size_t> bestPlayer(std::span<const AwardCandidate> candidates,
-                                      std::uint16_t min_minutes,
-                                      int max_age = 0);
+std::optional<std::size_t> bestPlayer(
+    std::span<const AwardCandidate> candidates, std::uint16_t min_minutes,
+    int max_age = 0);
 
 /** Most goals; ties: fewer minutes, more assists, lower id. */
 std::optional<std::size_t> goldenBoot(
@@ -277,7 +277,8 @@ class AwardSystem
   void save(const std::shared_ptr<DatabaseConnection>& db_conn) const;
 
  private:
-  using PlayerTallies = std::map<std::pair<LeagueID, PlayerID>, AwardPlayerTally>;
+  using PlayerTallies =
+      std::map<std::pair<LeagueID, PlayerID>, AwardPlayerTally>;
   using ClubTallies = std::map<TeamID, AwardClubTally>;
 
   std::vector<AwardCandidate> candidates(const GameData& gamedata,

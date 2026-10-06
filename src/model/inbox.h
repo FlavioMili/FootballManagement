@@ -64,7 +64,7 @@ struct InboxView
   std::int8_t tab = -1;      /*!< 0 decisions, 1 information, -1 pick. */
   std::int8_t category = -1; /*!< InboxCategory, -1 all. */
   bool unread_only = false;
-  bool followed_only = false; /*!< Messages about followed players. */
+  bool followed_only = false;        /*!< Messages about followed players. */
   std::optional<PlayerID> player_id; /*!< Only this player's messages. */
   std::optional<TeamID> team_id;     /*!< Only this club's messages. */
 

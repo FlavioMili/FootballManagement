@@ -41,15 +41,15 @@ namespace
 std::string backupLabel(const SaveBackup& backup)
 {
   const SaveInspection& info = backup.inspection;
-  const std::string club =
-      info.club_name.empty() ? std::string(LOC("MENU_SAVE_SLOT_NOT_STARTED"))
-                             : info.club_name;
+  const std::string club = info.club_name.empty()
+                               ? std::string(LOC("MENU_SAVE_SLOT_NOT_STARTED"))
+                               : info.club_name;
   return backup.kind == SaveBackup::Kind::PreMigration
              ? formatLocalized("SAVE_BACKUP_PRE_UPGRADE",
                                {std::to_string(backup.index)})
-             : formatLocalized("SAVE_BACKUP_ENTRY",
-                               {std::to_string(backup.index), club,
-                                info.game_date});
+             : formatLocalized(
+                   "SAVE_BACKUP_ENTRY",
+                   {std::to_string(backup.index), club, info.game_date});
 }
 
 /** file:// URL of a local folder, for the system file manager. */
@@ -75,13 +75,14 @@ void MainMenuScene::onEnter()
   crash_notice = CrashReport::pending();
   if (crash_notice)
   {
-    crash_notice_text = formatLocalized("CRASH_NOTICE_BODY",
-                                        {crash_notice->report.string()});
+    crash_notice_text =
+        formatLocalized("CRASH_NOTICE_BODY", {crash_notice->report.string()});
     crash_notice_requested = true;
   }
   // A language file that could not be read (or lacks texts) falls back to
   // English; say so instead of leaving the player to guess.
-  const LanguageManager::Status& language = LanguageManager::instance().status();
+  const LanguageManager::Status& language =
+      LanguageManager::instance().status();
   language_notice.clear();
   if (language.file_failed)
   {
@@ -187,11 +188,12 @@ void MainMenuScene::update(float deltaTime)
           std::format("Failed to load game from slot {}", loading_slot));
       // Explain why and offer the slot's backups.
       const auto& error = guiView->getController().getLastLoadError();
-      showLoadError(loading_slot,
-                    formatLocalized(
-                        error ? error->langKey() : "SAVE_ERROR_IO",
-                        {std::to_string(error ? error->found_version : 0),
-                         std::to_string(error ? error->supported_version : 0)}));
+      showLoadError(
+          loading_slot,
+          formatLocalized(
+              error ? error->langKey() : "SAVE_ERROR_IO",
+              {std::to_string(error ? error->found_version : 0),
+               std::to_string(error ? error->supported_version : 0)}));
       loading_slot = 0;
       loadCachedMetadata();
     }
@@ -332,11 +334,11 @@ void MainMenuScene::render()
                           ImVec2(buttonSize.x, buttonSize.y * 1.35f)))
       startSlot(latest_career_slot, false);
     Theme::ScopedText small(Theme::Text::SMALL);
-    ImGui::TextColored(palette.muted, "%s",
-                       fmt::sprintf(LOC("MENU_CONTINUE_DETAIL"),
-                                    latest.team_name,
-                                    localizedDate(latest.game_date))
-                           .c_str());
+    ImGui::TextColored(
+        palette.muted, "%s",
+        fmt::sprintf(LOC("MENU_CONTINUE_DETAIL"), latest.team_name,
+                     localizedDate(latest.game_date))
+            .c_str());
     ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * scale));
   }
   const bool firstRun = latest_career_slot == 0;
@@ -525,9 +527,8 @@ void MainMenuScene::renderLoadError()
       load_error_slot > 0 &&
       static_cast<size_t>(load_error_slot) <= cached_metadata.size() &&
       cached_metadata[static_cast<size_t>(load_error_slot - 1)].backups > 0;
-  if (hasBackups &&
-      (canRecover ? UI::secondaryButton(LOC("SAVE_BACKUPS_TITLE"))
-                  : UI::primaryButton(LOC("SAVE_BACKUPS_TITLE"))))
+  if (hasBackups && (canRecover ? UI::secondaryButton(LOC("SAVE_BACKUPS_TITLE"))
+                                : UI::primaryButton(LOC("SAVE_BACKUPS_TITLE"))))
   {
     openBackups(load_error_slot);
     ImGui::CloseCurrentPopup();
@@ -680,7 +681,7 @@ void MainMenuScene::renderSlotPicker()
           showLoadError(
               i, formatLocalized(
                      metadata.status_key[0] != '\0' ? metadata.status_key
-                                                     : "SAVE_ERROR_CORRUPT",
+                                                    : "SAVE_ERROR_CORRUPT",
                      {std::to_string(metadata.schema_version),
                       std::to_string(metadata.supported_schema_version)}));
           ImGui::CloseCurrentPopup();
@@ -709,11 +710,11 @@ void MainMenuScene::renderSlotPicker()
         // Status badge in the slot's top-right corner.
         Theme::ScopedText caption(Theme::Text::CAPTION);
         // A short label; the full explanation belongs to the load dialog.
-        const char* status =
-            LOC(metadata.status == SaveStatus::FutureVersion ? "SAVE_STATUS_NEWER"
-                : metadata.status == SaveStatus::Incomplete
-                    ? "SAVE_STATUS_INCOMPLETE"
-                    : "SAVE_STATUS_DAMAGED");
+        const char* status = LOC(metadata.status == SaveStatus::FutureVersion
+                                     ? "SAVE_STATUS_NEWER"
+                                 : metadata.status == SaveStatus::Incomplete
+                                     ? "SAVE_STATUS_INCOMPLETE"
+                                     : "SAVE_STATUS_DAMAGED");
         const ImVec2 textSize = ImGui::CalcTextSize(status);
         const ImVec2 pad(6.0f * scale, 2.0f * scale);
         const ImVec2 badgeMin(slotStart.x + slotSize.x - textSize.x -
@@ -746,8 +747,7 @@ void MainMenuScene::renderSlotPicker()
     const bool escape = ImGui::IsKeyPressed(ImGuiKey_Escape, false) &&
                         overwrite_slot == 0 && delete_slot == 0 &&
                         !ImGui::IsPopupOpen("##save_backups");
-    if (UI::secondaryButton(LOC("SETTINGS_CANCEL"),
-                            ImVec2(slotSize.x, 0.0f)) ||
+    if (UI::secondaryButton(LOC("SETTINGS_CANCEL"), ImVec2(slotSize.x, 0.0f)) ||
         escape)
       ImGui::CloseCurrentPopup();
 

@@ -137,7 +137,8 @@ std::vector<StandingRow> Standings::compute(const League& league,
   for (size_t begin = 0; begin < rows.size();)
   {
     size_t end = begin + 1;
-    while (end < rows.size() && primaryKey(rows[end]) == primaryKey(rows[begin]))
+    while (end < rows.size() &&
+           primaryKey(rows[end]) == primaryKey(rows[begin]))
       ++end;
     if (end - begin > 1)
     {

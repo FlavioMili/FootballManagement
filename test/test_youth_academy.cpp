@@ -62,7 +62,8 @@ std::unique_ptr<GameController> makeWorld(int slot)
 TeamID topClub(const GameController& controller, LeagueID league_id)
 {
   TeamID best = 0;
-  for (const TeamID id : controller.getLeagueById(league_id)->get().getTeamIDs())
+  for (const TeamID id :
+       controller.getLeagueById(league_id)->get().getTeamIDs())
   {
     if (best == 0 || controller.getTeamById(id)->get().getReputation() >
                          controller.getTeamById(best)->get().getReputation())
@@ -181,7 +182,7 @@ TEST(YouthIntakeTest, AcademyGradeScalesComputerSigningsAndSquads)
   EXPECT_GT(top_grade, 0.8f);
   EXPECT_LT(small_grade, 0.25f);
   // Each part of the academy counts.
-  for (float IntakeInputs::*part :
+  for (float IntakeInputs::* part :
        {&IntakeInputs::facilities, &IntakeInputs::recruitment,
         &IntakeInputs::junior_coaching, &IntakeInputs::head_ability})
   {
@@ -349,11 +350,12 @@ TEST(YouthIntakeTest, PreviewDescribesTheGroup)
   const IntakePreview preview = YouthModel::summarize(intake);
   EXPECT_EQ(preview.size, intake.candidates.size());
   EXPECT_EQ(preview.quality, intake.quality);
-  const auto best = std::ranges::max_element(
-      intake.candidates, {}, &CandidateProfile::potential);
+  const auto best = std::ranges::max_element(intake.candidates, {},
+                                             &CandidateProfile::potential);
   EXPECT_EQ(preview.standout[0], best->role);
   EXPECT_NE(preview.standout[1], preview.standout[0]);
-  EXPECT_STREQ(preview.personality_key, YouthModel::personalityKey(best->traits));
+  EXPECT_STREQ(preview.personality_key,
+               YouthModel::personalityKey(best->traits));
 }
 
 TEST(YouthRulesTest, ContractsAgesHomegrownAndUpgrades)
@@ -457,17 +459,19 @@ TEST(YouthAcademyTest, IntakeCycleForManagedAndOtherClubs)
     const TeamID team_id = team.get().getId();
     if (team_id == managed) continue;
     EXPECT_TRUE(academy.members(team_id, YouthStatus::Candidate).empty());
-    for (const YouthRecord* youth : academy.members(team_id, YouthStatus::Squad))
+    for (const YouthRecord* youth :
+         academy.members(team_id, YouthStatus::Squad))
     {
       if (youth->player_id < first_new) continue;
       const Player& player = gamedata->getPlayer(youth->player_id)->get();
       ++signed_elsewhere;
       EXPECT_GT(player.getWage(), 0u);
       EXPECT_NE(youth->contract, YouthContract::None);
-      local += player.getNationality() ==
-                       leagueProfile(team.get().getLeagueId()).domestic_nationality
-                   ? 1
-                   : 0;
+      local +=
+          player.getNationality() ==
+                  leagueProfile(team.get().getLeagueId()).domestic_nationality
+              ? 1
+              : 0;
     }
   }
   EXPECT_GE(signed_elsewhere, 3u * (controller->getTeams().size() - 1) / 2);
@@ -687,13 +691,14 @@ TEST(YouthAcademyTest, PromotionDemotionAndProfessionalContracts)
     break;
   }
   // Another club's player is not ours to move.
-  const TeamID other = controller->getLeagueById(3)->get().getTeamIDs().front() ==
-                               managed
-                           ? controller->getLeagueById(3)->get().getTeamIDs()[1]
-                           : controller->getLeagueById(3)->get().getTeamIDs()[0];
-  EXPECT_EQ(academy.demote(managed,
-                           controller->getPlayersForTeam(other).front().get().getId()),
-            YouthActionResult::NotAllowed);
+  const TeamID other =
+      controller->getLeagueById(3)->get().getTeamIDs().front() == managed
+          ? controller->getLeagueById(3)->get().getTeamIDs()[1]
+          : controller->getLeagueById(3)->get().getTeamIDs()[0];
+  EXPECT_EQ(
+      academy.demote(
+          managed, controller->getPlayersForTeam(other).front().get().getId()),
+      YouthActionResult::NotAllowed);
 
   // Next season: the scholar is a year older, an 18-year-old moves up.
   academy.onSeasonEnd(GameDateValue(2026, 7, 1), managed);
@@ -725,17 +730,16 @@ TEST(YouthAcademyTest, BoardFundsAcademyProjectsWithinReason)
   const std::uint8_t facilities = team.getProfile().youth_facilities;
   UpgradeQuote offer =
       academy.quote(managed, AcademyUpgrade::Facilities, today, 60.0f, false);
-  ASSERT_EQ(offer.verdict, facilities >= 100
-                               ? UpgradeRequestResult::AtMaximum
-                               : UpgradeRequestResult::Approved);
-  EXPECT_EQ(academy.quote(managed, AcademyUpgrade::Facilities, today, 20.0f,
-                          false)
-                .verdict,
-            UpgradeRequestResult::NoConfidence);
-  EXPECT_EQ(academy.quote(managed, AcademyUpgrade::Facilities, today, 60.0f,
-                          true)
-                .verdict,
-            UpgradeRequestResult::CannotAfford);
+  ASSERT_EQ(offer.verdict, facilities >= 100 ? UpgradeRequestResult::AtMaximum
+                                             : UpgradeRequestResult::Approved);
+  EXPECT_EQ(
+      academy.quote(managed, AcademyUpgrade::Facilities, today, 20.0f, false)
+          .verdict,
+      UpgradeRequestResult::NoConfidence);
+  EXPECT_EQ(
+      academy.quote(managed, AcademyUpgrade::Facilities, today, 60.0f, true)
+          .verdict,
+      UpgradeRequestResult::CannotAfford);
 
   const std::int64_t balance = team.getFinances().getBalance();
   ASSERT_EQ(academy.requestUpgrade(today, managed, AcademyUpgrade::Facilities,
@@ -747,14 +751,14 @@ TEST(YouthAcademyTest, BoardFundsAcademyProjectsWithinReason)
   EXPECT_EQ(academy.requestUpgrade(today, managed, AcademyUpgrade::Recruitment,
                                    60.0f, false, inbox),
             UpgradeRequestResult::InProgress);
-  offer = academy.quote(managed, AcademyUpgrade::Facilities, today, 60.0f,
-                        false);
+  offer =
+      academy.quote(managed, AcademyUpgrade::Facilities, today, 60.0f, false);
   EXPECT_GT(offer.running_done_day, dayOrdinal(today));
 
   // Built after the announced time.
   runDays(academy, today,
-          SeasonCalendar::addDays(today, offer.running_done_day -
-                                             dayOrdinal(today)),
+          SeasonCalendar::addDays(today,
+                                  offer.running_done_day - dayOrdinal(today)),
           managed, inbox);
   EXPECT_EQ(team.getProfile().youth_facilities, offer.target);
   EXPECT_TRUE(hasMessage(inbox, "INBOX_ACADEMY_DONE_TITLE"));
@@ -779,14 +783,14 @@ TEST(YouthAcademyTest, BoardFundsAcademyProjectsWithinReason)
   }
   Team& small = gamedata->getTeams().at(smallest);
   ClubProfile profile = small.getProfile();
-  profile.youth_facilities = static_cast<std::uint8_t>(
-      std::min(95, profile.reputation + 20));
+  profile.youth_facilities =
+      static_cast<std::uint8_t>(std::min(95, profile.reputation + 20));
   small.setProfile(profile);
   small.getFinances().record(today, FinanceCategory::Investment, 900'000'000);
-  EXPECT_EQ(academy.quote(smallest, AcademyUpgrade::Facilities, today, 90.0f,
-                          false)
-                .verdict,
-            UpgradeRequestResult::BeyondStature);
+  EXPECT_EQ(
+      academy.quote(smallest, AcademyUpgrade::Facilities, today, 90.0f, false)
+          .verdict,
+      UpgradeRequestResult::BeyondStature);
 }
 
 TEST(YouthAcademyTest, TwoSeasonsKeepSeniorSquadsAndU18sApart)
@@ -829,9 +833,8 @@ TEST(YouthAcademyTest, TwoSeasonsKeepSeniorSquadsAndU18sApart)
     u18_total += static_cast<double>(u18.size());
     largest = std::max(largest, seniors);
     in_band += seniors >= 23 && seniors <= 32 ? 1 : 0;
-    EXPECT_LE(u18.size(),
-              YouthModel::u18SquadLimit(
-                  YouthModel::academyGrade(academy.intakeInputs(team.getId()))))
+    EXPECT_LE(u18.size(), YouthModel::u18SquadLimit(YouthModel::academyGrade(
+                              academy.intakeInputs(team.getId()))))
         << team.getName();
     for (const YouthRecord* youth : u18)
     {
@@ -891,9 +894,9 @@ TEST(YouthAcademyTest, MostU18sAreScholarsAndOnlyTheBestTurnProfessional)
   {
     const TeamID team_id = team.get().getId();
     if (team_id == managed) continue;
-    const float level =
-        WorldGeneration::teamLevel(team.get().getReputation());
-    for (const YouthRecord* youth : academy.members(team_id, YouthStatus::Squad))
+    const float level = WorldGeneration::teamLevel(team.get().getReputation());
+    for (const YouthRecord* youth :
+         academy.members(team_id, YouthStatus::Squad))
     {
       const Player& player = gamedata->getPlayer(youth->player_id)->get();
       ++u18;
@@ -921,7 +924,8 @@ TEST(YouthAcademyTest, MostU18sAreScholarsAndOnlyTheBestTurnProfessional)
   }
   ASSERT_GT(u18, 1000u);
   ASSERT_GT(professional, 0u);
-  const double share = static_cast<double>(professional) / static_cast<double>(u18);
+  const double share =
+      static_cast<double>(professional) / static_cast<double>(u18);
   std::cout << "[youth] U18 professional share " << share << " of " << u18
             << "\n";
   // Most U18s are scholars; the best prospects sign first professional
@@ -1004,10 +1008,10 @@ TEST(YouthAcademyTest, AcademyPlayersAreListedApartFromTheSeniorSquad)
                                   { return player.getId() == oldest; }));
 
   // A sold academy player joins the buyer's senior squad.
-  const TeamID buyer = controller->getLeagueById(1)->get().getTeamIDs().front() ==
-                               managed
-                           ? controller->getLeagueById(1)->get().getTeamIDs()[1]
-                           : controller->getLeagueById(1)->get().getTeamIDs()[0];
+  const TeamID buyer =
+      controller->getLeagueById(1)->get().getTeamIDs().front() == managed
+          ? controller->getLeagueById(1)->get().getTeamIDs()[1]
+          : controller->getLeagueById(1)->get().getTeamIDs()[0];
   gamedata->getTeam(managed)->get().removePlayerID(oldest);
   gamedata->getTeam(buyer)->get().addPlayerID(oldest);
   gamedata->transferPlayer(oldest, buyer);
@@ -1032,8 +1036,9 @@ TEST(YouthSelectionTest, ExperiencedPlayersStartAtSimilarAbility)
   for (const auto& candidate : controller->getTeams())
   {
     if (candidate.get().getId() == FREE_AGENTS_TEAM_ID) continue;
-    if (modest == 0 || candidate.get().getReputation() <
-                           controller->getTeamById(modest)->get().getReputation())
+    if (modest == 0 ||
+        candidate.get().getReputation() <
+            controller->getTeamById(modest)->get().getReputation())
       modest = candidate.get().getId();
   }
   Team& team = gamedata->getTeam(modest)->get();
@@ -1073,7 +1078,8 @@ TEST(YouthSelectionTest, ExperiencedPlayersStartAtSimilarAbility)
   team.generateStartingXI(*gamedata, config);
   EXPECT_TRUE(team.getLineup().isStarter(veteran_id));
   EXPECT_FALSE(team.getLineup().isStarter(double_id));
-  EXPECT_TRUE(std::ranges::contains(team.getLineup().getReserves(), &youngster));
+  EXPECT_TRUE(
+      std::ranges::contains(team.getLineup().getReserves(), &youngster));
 
   // Clearly better: the teenager starts.
   std::map<std::string, float> better = senior.getStats();
@@ -1194,7 +1200,8 @@ TEST(YouthPersistenceTest, ControllerActionsSurviveSaveAndLoad)
   // The academy stays apart from the senior squad after loading.
   EXPECT_EQ(controller->getPlayersForTeam(managed).size(), seniors);
   EXPECT_FALSE(listed(controller->getPlayersForTeam(managed), moved));
-  EXPECT_TRUE(listed(controller->getGameData()->getAcademyForTeam(managed), moved));
+  EXPECT_TRUE(
+      listed(controller->getGameData()->getAcademyForTeam(managed), moved));
   EXPECT_EQ(controller->getGameData()->getAcademyForTeam(managed).size(),
             squad.size());
 }

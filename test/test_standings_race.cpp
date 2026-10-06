@@ -50,7 +50,7 @@ struct Table
   Standings::RaceInput input;
 
   explicit Table(size_t clubs,
-                  TieBreakRule rule = TieBreakRule::GOAL_DIFFERENCE)
+                 TieBreakRule rule = TieBreakRule::GOAL_DIFFERENCE)
   {
     static const char* const NAMES[] = {"Alpha", "Bravo", "Charlie",
                                         "Delta", "Echo",  "Foxtrot"};
@@ -83,8 +83,7 @@ struct Table
         .races[static_cast<size_t>(which)];
   }
 
-  [[nodiscard]] Clinch status(TeamID team,
-                              const RacePlaces& places = {}) const
+  [[nodiscard]] Clinch status(TeamID team, const RacePlaces& places = {}) const
   {
     return Standings::clinchStatus(input, places, team);
   }
@@ -233,8 +232,7 @@ TEST(StandingsRaceTest, SafeAndRelegatedMirrorEachOther)
     EXPECT_EQ(league.status(A, places), h2h ? Clinch::CHAMPION : Clinch::SAFE);
     EXPECT_EQ(league.status(B, places), Clinch::SAFE);
     EXPECT_EQ(league.status(C, places), h2h ? Clinch::SAFE : Clinch::OPEN);
-    EXPECT_EQ(league.status(D, places),
-              h2h ? Clinch::RELEGATED : Clinch::OPEN);
+    EXPECT_EQ(league.status(D, places), h2h ? Clinch::RELEGATED : Clinch::OPEN);
   }
 }
 
@@ -451,9 +449,9 @@ TEST(StandingsRaceTest, NeverContradictsTheRealTableOverAllSmallScores)
       gamedata.addTeam(league.input.teams[index],
                        Team(league.input.teams[index], LEAGUE_ID,
                             league.input.names[index], 0));
-    gamedata.addLeague(LEAGUE_ID, ::League(LEAGUE_ID, "Test",
-                                           league.input.teams, std::nullopt,
-                                           rule));
+    gamedata.addLeague(
+        LEAGUE_ID,
+        ::League(LEAGUE_ID, "Test", league.input.teams, std::nullopt, rule));
 
     std::vector<PositionSpan> spans(clubs + 1);
     std::vector<uint8_t> goals(open * 2, 0);
@@ -462,10 +460,10 @@ TEST(StandingsRaceTest, NeverContradictsTheRealTableOverAllSmallScores)
       const auto rows = realTable(gamedata, league.input, goals);
       for (const StandingRow& row : rows)
       {
-        spans[row.team_id].best = std::min<int>(spans[row.team_id].best,
-                                                row.position);
-        spans[row.team_id].worst = std::max<int>(spans[row.team_id].worst,
-                                                 row.position);
+        spans[row.team_id].best =
+            std::min<int>(spans[row.team_id].best, row.position);
+        spans[row.team_id].worst =
+            std::max<int>(spans[row.team_id].worst, row.position);
       }
       size_t digit = 0;
       while (digit < goals.size() && goals[digit] == 2) goals[digit++] = 0;
@@ -482,8 +480,7 @@ TEST(StandingsRaceTest, NeverContradictsTheRealTableOverAllSmallScores)
       fixtures += std::to_string(fixture.home_id) + "-" +
                   std::to_string(fixture.away_id) +
                   (fixture.played ? " " + std::to_string(fixture.home_goals) +
-                                        ":" +
-                                        std::to_string(fixture.away_goals)
+                                        ":" + std::to_string(fixture.away_goals)
                                   : std::string(" open")) +
                   "; ";
     for (const Standings::ClinchReport& report : reports)
@@ -509,8 +506,8 @@ TEST(StandingsRaceTest, NeverContradictsTheRealTableOverAllSmallScores)
         if (open == 0)
         {
           ++finished_checks;
-          EXPECT_EQ(state, span.worst <= cutoff ? RaceState::SECURED
-                                                : RaceState::LOST)
+          EXPECT_EQ(state,
+                    span.worst <= cutoff ? RaceState::SECURED : RaceState::LOST)
               << "finished season, round " << round << " club "
               << report.team_id;
         }
@@ -569,8 +566,7 @@ TEST(StandingsRaceTest, FullSizeLeagueRunInStaysFast)
     {
       // Stronger clubs (low ids) score a little more.
       const auto [home, away] = rounds[index];
-      const int home_goals =
-          std::min(9, goals(rng) + (home < 6 ? 1 : 0));
+      const int home_goals = std::min(9, goals(rng) + (home < 6 ? 1 : 0));
       const int away_goals = std::min(9, goals(rng) + (away < 6 ? 1 : 0));
       input.fixtures.push_back({home, away, index < open_from,
                                 static_cast<uint8_t>(home_goals),
@@ -593,9 +589,8 @@ TEST(StandingsRaceTest, FullSizeLeagueRunInStaysFast)
     std::cout << left << " rounds left ("
               << (rule == TieBreakRule::HEAD_TO_HEAD ? "head-to-head"
                                                      : "goal difference")
-              << "): " << decided << " decided races, "
-              << needs.size() << " needs for club 10, " << elapsed.count()
-              << " ms\n";
+              << "): " << decided << " decided races, " << needs.size()
+              << " needs for club 10, " << elapsed.count() << " ms\n";
     EXPECT_LT(elapsed.count(), 4000) << left << " rounds left";
     if (left <= 2) EXPECT_GT(decided, 0) << left << " rounds left";
   }

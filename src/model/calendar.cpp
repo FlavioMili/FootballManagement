@@ -41,10 +41,10 @@ int toDayNumber(int year, int month, int day)
   year -= month <= 2 ? 1 : 0;
   const int era = (year >= 0 ? year : year - 399) / 400;
   const int year_of_era = year - era * 400;
-  const int day_of_year = (153 * (month > 2 ? month - 3 : month + 9) + 2) / 5 +
-                          day - 1;
-  const int day_of_era = year_of_era * 365 + year_of_era / 4 -
-                         year_of_era / 100 + day_of_year;
+  const int day_of_year =
+      (153 * (month > 2 ? month - 3 : month + 9) + 2) / 5 + day - 1;
+  const int day_of_era =
+      year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
   return era * 146'097 + day_of_era - 719'468;
 }
 
@@ -68,8 +68,8 @@ GameDateValue fromDayNumber(int day_number)
   const int day = day_of_year - (153 * month_index + 2) / 5 + 1;
   const int month = month_index < 10 ? month_index + 3 : month_index - 9;
   const int year = year_of_era + era * 400 + (month <= 2 ? 1 : 0);
-  return GameDateValue(static_cast<uint16_t>(year),
-                       static_cast<uint8_t>(month), static_cast<uint8_t>(day));
+  return GameDateValue(static_cast<uint16_t>(year), static_cast<uint8_t>(month),
+                       static_cast<uint8_t>(day));
 }
 
 int weekdayOf(int day_number)
@@ -135,9 +135,23 @@ constexpr std::array<WindowRule, 7> INTERNATIONAL_WINDOWS = {{
     {9, 2, 0, 3, {-1, 2, 0, 0}, 2, false, 0, DOUBLE_WINDOW_SEASON - 1},
     {10, 2, 0, 3, {-1, 2, 0, 0}, 2, false, 0, DOUBLE_WINDOW_SEASON - 1},
     {11, 3, 0, 3, {-1, 2, 0, 0}, 2, false, 0, DOUBLE_WINDOW_SEASON - 1},
-    {9, 4, 0, 10, {-1, 2, 6, 9}, 4, false, DOUBLE_WINDOW_SEASON,
+    {9,
+     4,
+     0,
+     10,
+     {-1, 2, 6, 9},
+     4,
+     false,
+     DOUBLE_WINDOW_SEASON,
      NO_LAST_SEASON},
-    {11, 2, 0, 3, {-1, 2, 0, 0}, 2, false, DOUBLE_WINDOW_SEASON,
+    {11,
+     2,
+     0,
+     3,
+     {-1, 2, 0, 0},
+     2,
+     false,
+     DOUBLE_WINDOW_SEASON,
      NO_LAST_SEASON},
     {3, 4, 1, 3, {-1, 2, 0, 0}, 2, false, 0, NO_LAST_SEASON},
     // Always three weeks after the last league Saturday (24 May at the
@@ -147,23 +161,23 @@ constexpr std::array<WindowRule, 7> INTERNATIONAL_WINDOWS = {{
 
 // Continental club weeks (Tuesday targets): eight league-phase matchdays,
 // then two legs each of the play-off, round of 16, quarter- and semi-finals.
-constexpr std::array<MonthDay, SeasonCalendar::CONTINENTAL_WEEKS> CONTINENTAL_TARGETS = {
-    {{9, 16, 0},
-     {9, 30, 0},
-     {10, 21, 0},
-     {11, 4, 0},
-     {11, 25, 0},
-     {12, 9, 0},
-     {1, 20, 1},
-     {1, 27, 1},
-     {2, 10, 1},
-     {2, 17, 1},
-     {3, 3, 1},
-     {3, 10, 1},
-     {4, 7, 1},
-     {4, 14, 1},
-     {4, 28, 1},
-     {5, 5, 1}}};
+constexpr std::array<MonthDay, SeasonCalendar::CONTINENTAL_WEEKS>
+    CONTINENTAL_TARGETS = {{{9, 16, 0},
+                            {9, 30, 0},
+                            {10, 21, 0},
+                            {11, 4, 0},
+                            {11, 25, 0},
+                            {12, 9, 0},
+                            {1, 20, 1},
+                            {1, 27, 1},
+                            {2, 10, 1},
+                            {2, 17, 1},
+                            {3, 3, 1},
+                            {3, 10, 1},
+                            {4, 7, 1},
+                            {4, 14, 1},
+                            {4, 28, 1},
+                            {5, 5, 1}}};
 constexpr int CONTINENTAL_DAYS_PER_WEEK = 3;  // Tuesday to Thursday.
 
 std::vector<int> continentalWeekDays(uint16_t season_year)
@@ -190,13 +204,11 @@ std::vector<int> continentalWeekDays(uint16_t season_year)
 
 bool inContinentalWeek(int day)
 {
-  const std::vector<int> weeks = continentalWeekDays(
-      SeasonCalendar::seasonStartYear(fromDayNumber(day)));
-  return std::ranges::any_of(weeks, [day](int tuesday)
-                             {
-                               return day >= tuesday &&
-                                      day < tuesday + CONTINENTAL_DAYS_PER_WEEK;
-                             });
+  const std::vector<int> weeks =
+      continentalWeekDays(SeasonCalendar::seasonStartYear(fromDayNumber(day)));
+  return std::ranges::any_of(
+      weeks, [day](int tuesday)
+      { return day >= tuesday && day < tuesday + CONTINENTAL_DAYS_PER_WEEK; });
 }
 
 std::vector<int> cupMidweekCandidates(uint16_t season_year)
@@ -245,8 +257,9 @@ GameDateValue SeasonCalendar::addDays(const GameDateValue& date, int days)
 
 uint16_t SeasonCalendar::seasonStartYear(const GameDateValue& date)
 {
-  return date.month >= SEASON_START_MONTH ? date.year
-                                          : static_cast<uint16_t>(date.year - 1);
+  return date.month >= SEASON_START_MONTH
+             ? date.year
+             : static_cast<uint16_t>(date.year - 1);
 }
 
 GameDateValue SeasonCalendar::leagueStart(uint16_t season_year)
@@ -269,8 +282,8 @@ SeasonCalendar::internationalWindows(uint16_t season_year)
   {
     if (season_year < rule.first_season || season_year > rule.last_season)
       continue;
-    const int saturday =
-        nthSaturday(season_year + rule.year_offset, rule.month, rule.nth_saturday);
+    const int saturday = nthSaturday(season_year + rule.year_offset, rule.month,
+                                     rule.nth_saturday);
     InternationalWindow window;
     window.start = fromDayNumber(saturday - WINDOW_DAYS_BEFORE_SATURDAY);
     window.end = fromDayNumber(saturday + rule.days_after);
@@ -280,9 +293,10 @@ SeasonCalendar::internationalWindows(uint16_t season_year)
           fromDayNumber(saturday + rule.match_offsets[match]));
     windows.push_back(std::move(window));
   }
-  std::sort(windows.begin(), windows.end(),
-            [](const InternationalWindow& left, const InternationalWindow& right)
-            { return left.start < right.start; });
+  std::sort(
+      windows.begin(), windows.end(),
+      [](const InternationalWindow& left, const InternationalWindow& right)
+      { return left.start < right.start; });
   return windows;
 }
 
@@ -687,8 +701,8 @@ std::vector<RoundDay> roundDays(int anchor, const RoundPattern& pattern,
     if (!target) continue;
     target->weight = static_cast<uint16_t>(target->weight + dropped.weight);
   }
-  if (std::ranges::all_of(kept, [](const RoundDay& day)
-                          { return day.weight == 0; }))
+  if (std::ranges::all_of(kept,
+                          [](const RoundDay& day) { return day.weight == 0; }))
     for (RoundDay& day : kept) day.weight = 1;
   for (RoundDay& day : kept) day.reserve = day.weight == 0;
   return kept;
@@ -771,9 +785,8 @@ void balanceRounds(std::vector<PlannedRound*>& window,
               (quiet.reserve && load[busy.day] <= comfortable))
             continue;
           const size_t gap = load[busy.day] - load[quiet.day];
-          if (gap > best_gap ||
-              (gap == best_gap && mover && mover->top_flight &&
-               !round->top_flight))
+          if (gap > best_gap || (gap == best_gap && mover &&
+                                 mover->top_flight && !round->top_flight))
           {
             best_gap = gap;
             mover = round;
@@ -865,12 +878,13 @@ const Match* Calendar::findMatch(const GameDateValue& date, TeamID home_id,
 {
   const auto it = schedule.find(date);
   if (it == schedule.end()) return nullptr;
-  const auto match = std::ranges::find_if(
-      it->second, [&](const Match& candidate)
-      {
-        return candidate.getHomeTeamId() == home_id &&
-               candidate.getAwayTeamId() == away_id;
-      });
+  const auto match =
+      std::ranges::find_if(it->second,
+                           [&](const Match& candidate)
+                           {
+                             return candidate.getHomeTeamId() == home_id &&
+                                    candidate.getAwayTeamId() == away_id;
+                           });
   return match == it->second.end() ? nullptr : &*match;
 }
 
@@ -993,9 +1007,9 @@ void Calendar::generateSeasonFixtures(const class GameData& gamedata,
         if (weekend && day < anchor - 1 && tier <= 1) return false;
         if (weekend && next_start - day < SeasonCalendar::MIN_REST_DAYS)
           return false;
-        return tier > 1 ||
-               std::ranges::none_of(continental_days, [day](int continental)
-                                    { return std::abs(continental - day) <= 1; });
+        return tier > 1 || std::ranges::none_of(
+                               continental_days, [day](int continental)
+                               { return std::abs(continental - day) <= 1; });
       };
       PlannedRound& planned = plan.rounds[round];
       planned.league = plans.size();
@@ -1014,7 +1028,8 @@ void Calendar::generateSeasonFixtures(const class GameData& gamedata,
   size_t round_matches = 0;  // One round of every league.
   for (PlannedLeague& plan : plans)
   {
-    if (!plan.first_half.empty()) round_matches += plan.first_half.front().size();
+    if (!plan.first_half.empty())
+      round_matches += plan.first_half.front().size();
     for (PlannedRound& round : plan.rounds)
     {
       for (const RoundDay& day : round.days) load[day.day] += day.quota;
@@ -1075,12 +1090,13 @@ void Calendar::generateSeasonFixtures(const class GameData& gamedata,
       for (size_t pair = 0; pair < pairs.size(); ++pair)
         for (const RoundDay& day : days)
           if (fits(pair, day.day)) ++options[pair];
-      std::ranges::stable_sort(order, {},
-                               [&options](size_t pair) { return options[pair]; });
+      std::ranges::stable_sort(
+          order, {}, [&options](size_t pair) { return options[pair]; });
 
       const auto left = [](const RoundDay& day)
       {
-        return static_cast<long>(day.quota) - static_cast<long>(day.matches.size());
+        return static_cast<long>(day.quota) -
+               static_cast<long>(day.matches.size());
       };
       for (const size_t pair : order)
       {
@@ -1121,11 +1137,10 @@ void Calendar::generateSeasonFixtures(const class GameData& gamedata,
         for (size_t index = 0; index < day.matches.size(); ++index)
         {
           const auto [home_id, away_id] = pairs[day.matches[index]];
-          Match match = second_half
-                            ? Match(away_id, home_id, date, MatchType::LEAGUE,
-                                    plan.id, stage)
-                            : Match(home_id, away_id, date, MatchType::LEAGUE,
-                                    plan.id, stage);
+          Match match = second_half ? Match(away_id, home_id, date,
+                                            MatchType::LEAGUE, plan.id, stage)
+                                    : Match(home_id, away_id, date,
+                                            MatchType::LEAGUE, plan.id, stage);
           match.setKickoff(kickoffOf(day, index, day.matches.size()));
           addMatch(match);
         }
@@ -1185,10 +1200,12 @@ size_t Calendar::protectRest(const GameDateValue& after)
       }
       if (other.day == day) return false;
       if (other.day < day &&
-          day - other.day < SeasonCalendar::restDays(other.type, MatchType::LEAGUE))
+          day - other.day <
+              SeasonCalendar::restDays(other.type, MatchType::LEAGUE))
         return false;
       if (other.day > day &&
-          other.day - day < SeasonCalendar::restDays(MatchType::LEAGUE, other.type))
+          other.day - day <
+              SeasonCalendar::restDays(MatchType::LEAGUE, other.type))
         return false;
     }
     return true;
@@ -1203,7 +1220,8 @@ size_t Calendar::protectRest(const GameDateValue& after)
       for (const Match& match :
            getMatchesForDate(SeasonCalendar::addDays(thursday, ahead)))
         if (match.getMatchType() == MatchType::LEAGUE &&
-            match.getCompetitionId() == competition && match.getStage() == stage)
+            match.getCompetitionId() == competition &&
+            match.getStage() == stage)
           return true;
     return false;
   };
@@ -1259,24 +1277,24 @@ size_t Calendar::protectRest(const GameDateValue& after)
         const auto found = schedule.find(fromDayNumber(candidate_day));
         return found == schedule.end() ? size_t{0} : found->second.size();
       };
-      if (!target ||
-          std::pair{load(candidate), std::abs(candidate - day)} <
-              std::pair{load(*target), std::abs(*target - day)})
+      if (!target || std::pair{load(candidate), std::abs(candidate - day)} <
+                         std::pair{load(*target), std::abs(*target - day)})
         target = candidate;
     }
     if (!target) continue;
 
     std::vector<Match>& from_day = schedule[date];
-    const auto it = std::ranges::find_if(
-        from_day, [&](const Match& match)
-        {
-          return match.getHomeTeamId() == home_id &&
-                 match.getAwayTeamId() == away_id;
-        });
+    const auto it =
+        std::ranges::find_if(from_day,
+                             [&](const Match& match)
+                             {
+                               return match.getHomeTeamId() == home_id &&
+                                      match.getAwayTeamId() == away_id;
+                             });
     if (it == from_day.end()) continue;
     const GameDateValue to = fromDayNumber(*target);
-    Match match(home_id, away_id, to, MatchType::LEAGUE,
-                it->getCompetitionId(), it->getStage());
+    Match match(home_id, away_id, to, MatchType::LEAGUE, it->getCompetitionId(),
+                it->getStage());
     match.setKickoff(it->getScheduledKickoff());
     from_day.erase(it);
     if (from_day.empty()) schedule.erase(date);
@@ -1319,25 +1337,27 @@ void Calendar::generateFriendlies(const class GameData& gamedata,
     int offset;  // From the week's Saturday.
     uint16_t kickoff;
   };
-  constexpr std::array<FriendlyDay, 6> FRIENDLY_DAYS = {{{-4, minutesOf(19, 30)},
-                                                         {-3, minutesOf(20, 0)},
-                                                         {-2, minutesOf(19, 0)},
-                                                         {-1, minutesOf(20, 0)},
-                                                         {0, minutesOf(17, 0)},
-                                                         {1, minutesOf(18, 0)}}};
+  constexpr std::array<FriendlyDay, 6> FRIENDLY_DAYS = {
+      {{-4, minutesOf(19, 30)},
+       {-3, minutesOf(20, 0)},
+       {-2, minutesOf(19, 0)},
+       {-1, minutesOf(20, 0)},
+       {0, minutesOf(17, 0)},
+       {1, minutesOf(18, 0)}}};
   const uint16_t season_year = SeasonCalendar::seasonStartYear(startDate);
   const std::vector<GameDateValue> dates =
       SeasonCalendar::friendlyDates(startDate, numFriendlies);
   for (size_t round = 0; round < dates.size(); ++round)
   {
-    std::mt19937 rng(Competitions::mixSeed(
-        season_year, static_cast<uint32_t>(round), 2));
+    std::mt19937 rng(
+        Competitions::mixSeed(season_year, static_cast<uint32_t>(round), 2));
     size_t pair_index = round;
     const auto add = [&](TeamID home_id, TeamID away_id)
     {
       const FriendlyDay& day =
           FRIENDLY_DAYS[pair_index++ % FRIENDLY_DAYS.size()];
-      Match match(home_id, away_id, SeasonCalendar::addDays(dates[round], day.offset),
+      Match match(home_id, away_id,
+                  SeasonCalendar::addDays(dates[round], day.offset),
                   MatchType::FRIENDLY);
       match.setKickoff(day.kickoff);
       addMatch(match);

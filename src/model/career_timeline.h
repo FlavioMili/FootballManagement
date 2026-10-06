@@ -39,9 +39,9 @@ enum class TimelineKind : std::uint8_t
   Award,         /*!< Manager of the Month / Season. */
   Promotion,
   Relegation,
-  Season,        /*!< League finish against the board's expectation. */
-  Record,        /*!< A club record set on his watch. */
-  Signing,       /*!< One of the biggest signings of a spell. */
+  Season,  /*!< League finish against the board's expectation. */
+  Record,  /*!< A club record set on his watch. */
+  Signing, /*!< One of the biggest signings of a spell. */
   COUNT
 };
 

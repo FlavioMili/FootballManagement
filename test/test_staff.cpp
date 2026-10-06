@@ -401,11 +401,13 @@ TEST(StaffPersistenceTest, DepartedStaffIdsAreNotReusedAfterReload)
   for (const auto& [id, member] : legacy.getGameData()->getStaff().all())
     highest = std::max(highest, id);
   EXPECT_EQ(legacy.getGameData()->getStaff().peekNextId(), highest + 1);
-  EXPECT_EQ(SaveManager::inspect(RuntimePaths::savePath(slot.slot)).schema_version,
-            6);
+  EXPECT_EQ(
+      SaveManager::inspect(RuntimePaths::savePath(slot.slot)).schema_version,
+      6);
   ASSERT_TRUE(legacy.saveGame());
-  EXPECT_EQ(SaveManager::inspect(RuntimePaths::savePath(slot.slot)).schema_version,
-            Migrations::currentSchemaVersion());
+  EXPECT_EQ(
+      SaveManager::inspect(RuntimePaths::savePath(slot.slot)).schema_version,
+      Migrations::currentSchemaVersion());
   // Also drops the pre-upgrade copy the load kept.
   SaveManager::deleteSave(RuntimePaths::savePath(slot.slot));
 }

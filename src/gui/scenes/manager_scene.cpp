@@ -793,7 +793,7 @@ void ManagerScene::renderOffers()
                          offer.club});
           if (ends_national)
             accept_text += "\n\n" + formatLocalized("JOB_ACCEPT_ENDS_NATIONAL",
-                                                     {national_value});
+                                                    {national_value});
           accept_requested = true;
         }
       }
@@ -1043,7 +1043,8 @@ void ManagerScene::renderInterviewDialog()
   ImGui::SameLine();
   if (interview_step > 0)
   {
-    if (UI::secondaryButton(LOC("JOB_INTERVIEW_BACK"), ImVec2(buttonWidth, 0.0f)))
+    if (UI::secondaryButton(LOC("JOB_INTERVIEW_BACK"),
+                            ImVec2(buttonWidth, 0.0f)))
       --interview_step;
     ImGui::SameLine();
   }
@@ -1320,10 +1321,10 @@ void ManagerScene::refreshNational()
     row.name = nation(offer.nation);
     row.wage =
         formatLocalized("MANAGER_PER_WEEK", {Format::money(offer.weekly_wage)});
-    row.terms = formatLocalized(
-        "NT_OFFER_TERMS",
-        {Format::date(NationalJobModel::contractEnd(controller.getCurrentDate())),
-         Format::date(offer.expires)});
+    row.terms = formatLocalized("NT_OFFER_TERMS",
+                                {Format::date(NationalJobModel::contractEnd(
+                                     controller.getCurrentDate())),
+                                 Format::date(offer.expires)});
     row.unsolicited = offer.unsolicited;
     national_offers.push_back(std::move(row));
   }
@@ -1404,9 +1405,9 @@ void ManagerScene::renderNationalVacancies()
   const Theme::Palette& palette = Theme::palette();
   UI::beginAutoHeightCard("national_vacancies", LOC("NT_VACANCIES"));
   ImGui::PushTextWrapPos(0.0f);
-  ImGui::TextColored(palette.faint, "%s",
-                     LOC(national_blocked ? "NT_CLUB_CONFLICT_HINT"
-                                          : "NT_VACANCIES_HINT"));
+  ImGui::TextColored(
+      palette.faint, "%s",
+      LOC(national_blocked ? "NT_CLUB_CONFLICT_HINT" : "NT_VACANCIES_HINT"));
   ImGui::PopTextWrapPos();
   if (national_vacancies.empty())
   {
@@ -1466,18 +1467,18 @@ void ManagerScene::renderNationalVacancies()
       ImGui::PushID(static_cast<int>(opened->nation));
       Strip strip;
       if (opened->licence_missing)
-        ImGui::TextColored(palette.warning, "%s",
-                           formatLocalized("JOB_DETAIL_LICENCE",
-                                           {LOC(opened->licence_key)})
-                               .c_str());
+        ImGui::TextColored(
+            palette.warning, "%s",
+            formatLocalized("JOB_DETAIL_LICENCE", {LOC(opened->licence_key)})
+                .c_str());
       if (opened->stage)
       {
-        ImGui::TextUnformatted(LOC(
-            *opened->stage == NationalApplicationStage::Pending
-                ? "JOB_STAGE_PENDING"
-                : (*opened->stage == NationalApplicationStage::Offered
-                       ? "JOB_STAGE_OFFERED"
-                       : "JOB_STAGE_REJECTED")));
+        ImGui::TextUnformatted(
+            LOC(*opened->stage == NationalApplicationStage::Pending
+                    ? "JOB_STAGE_PENDING"
+                    : (*opened->stage == NationalApplicationStage::Offered
+                           ? "JOB_STAGE_OFFERED"
+                           : "JOB_STAGE_REJECTED")));
       }
       else
       {

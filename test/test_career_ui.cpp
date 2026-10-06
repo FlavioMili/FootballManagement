@@ -71,7 +71,10 @@ class GameFlowTest_GUIFlowLifecycle_Test
   {
     return scene.holiday_dialog;
   }
-  static size_t monthRows(const AwardsScene& scene) { return scene.months.size(); }
+  static size_t monthRows(const AwardsScene& scene)
+  {
+    return scene.months.size();
+  }
   static size_t raceRows(const AwardsScene& scene) { return scene.race.size(); }
   static size_t clubRecords(const RecordsScene& scene)
   {
@@ -258,7 +261,8 @@ TEST(CareerUiTest, PlanningHolidayAwardsAndRecords)
     {
       Navigation::open(&view, section);
       frames(view, 4);
-      const std::string file = std::string("career_") + name + "_" + suffix + ".bmp";
+      const std::string file =
+          std::string("career_") + name + "_" + suffix + ".bmp";
       capture(view, file.c_str());
     }
   }

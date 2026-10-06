@@ -128,8 +128,8 @@ bool levelMatches(OpponentLevel level, std::uint8_t own, std::uint8_t other);
  * from Tuesday to Sunday). Choosing an opponent swaps fixtures within that
  * week (the managed club's old opponent meets the new opponent's old one on
  * the day the new opponent was to play), so nobody plays twice a week or
- * loses a match. Away friendlies against clubs from another country can be booked
- * as tour dates.
+ * loses a match. Away friendlies against clubs from another country can be
+ * booked as tour dates.
  */
 class PreseasonPlanner
 {
@@ -145,8 +145,7 @@ class PreseasonPlanner
                                         const Calendar& calendar,
                                         TeamID managed_team_id,
                                         const GameDateValue& date,
-                                        OpponentLevel level,
-                                        bool abroad) const;
+                                        OpponentLevel level, bool abroad) const;
 
   /**
    * Sets the opponent and venue of the friendly on @p date; @p tour books it

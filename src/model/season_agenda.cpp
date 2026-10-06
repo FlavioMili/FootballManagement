@@ -90,10 +90,11 @@ std::vector<AgendaEvent> SeasonAgenda::build(std::uint16_t season_start_year,
   std::vector<AgendaEvent> events;
   const GameDateValue first(season_start_year,
                             SeasonCalendar::SEASON_START_MONTH, 1);
-  const GameDateValue next_season(static_cast<std::uint16_t>(season_start_year + 1),
-                                  SeasonCalendar::SEASON_START_MONTH, 1);
-  const auto add = [&events](const GameDateValue& date, AgendaKind kind,
-                             int span = 1)
+  const GameDateValue next_season(
+      static_cast<std::uint16_t>(season_start_year + 1),
+      SeasonCalendar::SEASON_START_MONTH, 1);
+  const auto add =
+      [&events](const GameDateValue& date, AgendaKind kind, int span = 1)
   {
     AgendaEvent event;
     event.date = date;

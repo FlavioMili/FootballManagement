@@ -217,12 +217,9 @@ void autoPick(Lineup& lineup, const Preset& preset,
     if (!starting) reserves.push_back(player);
   }
   // The matchday bench is picked from the rest, best first.
-  std::ranges::stable_sort(reserves,
-                           [&config](const Player* left, const Player* right)
-                           {
-                             return left->getOverall(config) >
-                                    right->getOverall(config);
-                           });
+  std::ranges::stable_sort(
+      reserves, [&config](const Player* left, const Player* right)
+      { return left->getOverall(config) > right->getOverall(config); });
   lineup.setReserves(reserves);
 }
 

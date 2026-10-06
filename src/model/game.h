@@ -96,8 +96,9 @@ class Game
    * is judged on @p date (default: today). Returns how many selections
    * changed.
    */
-  std::size_t fixMatchdaySquad(TeamID team_id, MatchType type,
-                               std::optional<GameDateValue> date = std::nullopt);
+  std::size_t fixMatchdaySquad(
+      TeamID team_id, MatchType type,
+      std::optional<GameDateValue> date = std::nullopt);
   /** What fixMatchdaySquad() would change: (replaced, replacement or 0). */
   std::vector<std::pair<PlayerID, PlayerID>> previewMatchdaySquadFix(
       TeamID team_id, MatchType type) const;
@@ -113,8 +114,8 @@ class Game
    */
   void setAssistantFixesLineup(bool enabled)
   {
-    guidance.delegation.set(Duty::LineupFixes,
-                            enabled ? DutyOwner::Assistant : DutyOwner::Manager);
+    guidance.delegation.set(
+        Duty::LineupFixes, enabled ? DutyOwner::Assistant : DutyOwner::Manager);
   }
   bool getAssistantFixesLineup() const
   {

@@ -128,7 +128,10 @@ void writeAll(int fd, const char* data, std::size_t size)
   }
 }
 
-void writeText(int fd, const char* text) { writeAll(fd, text, std::strlen(text)); }
+void writeText(int fd, const char* text)
+{
+  writeAll(fd, text, std::strlen(text));
+}
 
 void closeFile(int fd)
 {
@@ -279,8 +282,8 @@ fs::path write(std::string_view reason)
   if (!written.test_and_set())
   {
     writeReport(reason.data(), reason.size());
-    Logger::error(std::format("Fatal error: {} (report: {})", reason,
-                              report.string()));
+    Logger::error(
+        std::format("Fatal error: {} (report: {})", reason, report.string()));
     Logger::flush();
   }
   return report;

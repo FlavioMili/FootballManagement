@@ -113,8 +113,9 @@ void HelpScene::render()
   ImGui::SetNextWindowSize(viewport->WorkSize);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,
-                      ImVec2(Theme::Space::XL * scale, Theme::Space::XL * scale));
+  ImGui::PushStyleVar(
+      ImGuiStyleVar_WindowPadding,
+      ImVec2(Theme::Space::XL * scale, Theme::Space::XL * scale));
   ImGui::Begin("##help", nullptr,
                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
                    ImGuiWindowFlags_NoSavedSettings |
@@ -131,8 +132,9 @@ void HelpScene::render()
                                 (ImGui::GetWindowWidth() - width) * 0.5f));
   ImGui::BeginGroup();
   UI::pageHeader(LOC("HELP_TITLE"), LOC("HELP_SUBTITLE"));
-  ImGui::BeginChild("##help_body",
-                    ImVec2(width, ImGui::GetContentRegionAvail().y - footerHeight));
+  ImGui::BeginChild(
+      "##help_body",
+      ImVec2(width, ImGui::GetContentRegionAvail().y - footerHeight));
   renderStart();
   renderShortcuts();
   renderGlossary();
@@ -215,15 +217,15 @@ void HelpScene::rebuildShortcuts()
         {
           if (!heading)
           {
-            shortcut_rows.push_back({Input::categoryKey(category), {}, true,
-                                     true});
+            shortcut_rows.push_back(
+                {Input::categoryKey(category), {}, true, true});
             heading = true;
           }
           std::string keys = Input::chordLabel(action.chords[0]);
           if (action.chords[1] != ImGuiKey_None)
             keys += "  /  " + Input::chordLabel(action.chords[1]);
-          shortcut_rows.push_back({action.def.label_key, std::move(keys),
-                                   false, registry.isDefault(id)});
+          shortcut_rows.push_back({action.def.label_key, std::move(keys), false,
+                                   registry.isDefault(id)});
         });
   }
 }

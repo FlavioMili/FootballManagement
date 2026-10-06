@@ -66,18 +66,18 @@ void expectUnique(const std::vector<Entry>& squad)
 /** A usual senior squad: 25 players, best first within each position. */
 std::vector<Entry> typicalSquad()
 {
-  return {entry(1, PlayerRole::GK, 75),  entry(2, PlayerRole::GK, 68),
-          entry(3, PlayerRole::GK, 55, 19), entry(4, PlayerRole::RB, 72),
-          entry(5, PlayerRole::RB, 64),  entry(6, PlayerRole::LB, 71),
-          entry(7, PlayerRole::LB, 60),  entry(8, PlayerRole::CB, 78),
-          entry(9, PlayerRole::CB, 74),  entry(10, PlayerRole::CB, 66),
+  return {entry(1, PlayerRole::GK, 75),      entry(2, PlayerRole::GK, 68),
+          entry(3, PlayerRole::GK, 55, 19),  entry(4, PlayerRole::RB, 72),
+          entry(5, PlayerRole::RB, 64),      entry(6, PlayerRole::LB, 71),
+          entry(7, PlayerRole::LB, 60),      entry(8, PlayerRole::CB, 78),
+          entry(9, PlayerRole::CB, 74),      entry(10, PlayerRole::CB, 66),
           entry(11, PlayerRole::CB, 58, 18), entry(12, PlayerRole::CDM, 73),
-          entry(13, PlayerRole::CDM, 63), entry(14, PlayerRole::CM, 76),
-          entry(15, PlayerRole::CM, 69), entry(16, PlayerRole::CM, 57, 19),
-          entry(17, PlayerRole::CAM, 79), entry(18, PlayerRole::CAM, 65),
-          entry(19, PlayerRole::RW, 77), entry(20, PlayerRole::RM, 62),
-          entry(21, PlayerRole::LW, 74), entry(22, PlayerRole::LM, 61),
-          entry(23, PlayerRole::ST, 81), entry(24, PlayerRole::ST, 70),
+          entry(13, PlayerRole::CDM, 63),    entry(14, PlayerRole::CM, 76),
+          entry(15, PlayerRole::CM, 69),     entry(16, PlayerRole::CM, 57, 19),
+          entry(17, PlayerRole::CAM, 79),    entry(18, PlayerRole::CAM, 65),
+          entry(19, PlayerRole::RW, 77),     entry(20, PlayerRole::RM, 62),
+          entry(21, PlayerRole::LW, 74),     entry(22, PlayerRole::LM, 61),
+          entry(23, PlayerRole::ST, 81),     entry(24, PlayerRole::ST, 70),
           entry(25, PlayerRole::ST, 59, 17)};
 }
 
@@ -138,18 +138,18 @@ TEST(SquadNumbers, NewSquadIsNumberedTheTraditionalWay)
   std::vector<Entry> squad = typicalSquad();
   SquadNumbers::assign(squad);
   expectUnique(squad);
-  EXPECT_EQ(numberOf(squad, 1), 1);   // first goalkeeper
-  EXPECT_EQ(numberOf(squad, 4), 2);   // right back
-  EXPECT_EQ(numberOf(squad, 6), 3);   // left back
-  EXPECT_EQ(numberOf(squad, 8), 4);   // centre backs
+  EXPECT_EQ(numberOf(squad, 1), 1);  // first goalkeeper
+  EXPECT_EQ(numberOf(squad, 4), 2);  // right back
+  EXPECT_EQ(numberOf(squad, 6), 3);  // left back
+  EXPECT_EQ(numberOf(squad, 8), 4);  // centre backs
   EXPECT_EQ(numberOf(squad, 9), 5);
-  EXPECT_EQ(numberOf(squad, 12), 6);  // holding midfielder
-  EXPECT_EQ(numberOf(squad, 19), 7);  // right wing
-  EXPECT_EQ(numberOf(squad, 14), 8);  // centre midfielder
-  EXPECT_EQ(numberOf(squad, 23), 9);  // striker
-  EXPECT_EQ(numberOf(squad, 17), 10); // playmaker
-  EXPECT_EQ(numberOf(squad, 21), 11); // left wing
-  EXPECT_EQ(numberOf(squad, 2), 12);  // back-up goalkeepers
+  EXPECT_EQ(numberOf(squad, 12), 6);   // holding midfielder
+  EXPECT_EQ(numberOf(squad, 19), 7);   // right wing
+  EXPECT_EQ(numberOf(squad, 14), 8);   // centre midfielder
+  EXPECT_EQ(numberOf(squad, 23), 9);   // striker
+  EXPECT_EQ(numberOf(squad, 17), 10);  // playmaker
+  EXPECT_EQ(numberOf(squad, 21), 11);  // left wing
+  EXPECT_EQ(numberOf(squad, 2), 12);   // back-up goalkeepers
   EXPECT_EQ(numberOf(squad, 3), 13);
   for (const Entry& player : squad)
   {
@@ -235,8 +235,8 @@ TEST(SquadNumbers, MatchShirtsShowSquadNumbers)
   // An academy keeper called up takes a free back-up keeper number; the
   // squad numbers of the players in the match are reserved first, so the
   // teammate who wears 12 keeps it even when asked for later.
-  Player academyKeeper(5, 1, "E", "Academy", PlayerRole::GK, Language::EN, 0,
-                       0, 17, 1, 186, Foot::Right, stats);
+  Player academyKeeper(5, 1, "E", "Academy", PlayerRole::GK, Language::EN, 0, 0,
+                       17, 1, 186, Foot::Right, stats);
   Player backup(6, 1, "F", "Backup", PlayerRole::GK, Language::EN, 0, 0, 29, 2,
                 188, Foot::Right, stats);
   backup.setSquadNumber(12);
@@ -283,10 +283,13 @@ TEST(SquadNumbers, TransfersAndManagerChangesKeepNumbersUnique)
   GameData& data = *controller->getGameData();
   const TeamID managed = controller->getManagedTeam()->get().getId();
   const auto& teams = data.getTeamsVector();
-  const auto other = std::ranges::find_if(
-      teams, [managed](const auto& team)
-      { return team.get().getId() != managed &&
-               team.get().getId() != FREE_AGENTS_TEAM_ID; });
+  const auto other =
+      std::ranges::find_if(teams,
+                           [managed](const auto& team)
+                           {
+                             return team.get().getId() != managed &&
+                                    team.get().getId() != FREE_AGENTS_TEAM_ID;
+                           });
   ASSERT_NE(other, teams.end());
   const TeamID seller = other->get().getId();
 
@@ -329,7 +332,8 @@ TEST(SquadNumbers, TransfersAndManagerChangesKeepNumbersUnique)
   EXPECT_EQ(data.getPlayer(second)->get().getSquadNumber(), spare);
   expectUnique(clubNumbers(data, managed));
   // Out of range, or another club's player: refused.
-  EXPECT_EQ(controller->setSquadNumber(first, 0), SquadNumbers::Change::Invalid);
+  EXPECT_EQ(controller->setSquadNumber(first, 0),
+            SquadNumbers::Change::Invalid);
   EXPECT_EQ(controller->setSquadNumber(first, 100),
             SquadNumbers::Change::Invalid);
   const PlayerID foreign = data.getPlayersForTeam(seller).front().get().getId();
@@ -367,10 +371,9 @@ TEST(SquadNumbers, MigrationAddsTheColumnOnce)
   Migrations::migrate(connection);
   sqlite3* db = connection.getRaw();
   // A version 12 save: players without squad numbers.
-  for (const char* sql :
-       {"ALTER TABLE Players DROP COLUMN squad_number;",
-        "DELETE FROM schema_migrations WHERE number >= 13;",
-        "UPDATE save_meta SET schema_version = 12;"})
+  for (const char* sql : {"ALTER TABLE Players DROP COLUMN squad_number;",
+                          "DELETE FROM schema_migrations WHERE number >= 13;",
+                          "UPDATE save_meta SET schema_version = 12;"})
     ASSERT_EQ(sqlite3_exec(db, sql, nullptr, nullptr, nullptr), SQLITE_OK)
         << sql << ": " << sqlite3_errmsg(db);
   ASSERT_FALSE(Migrations::columnExists(db, "Players", "squad_number"));
@@ -394,13 +397,12 @@ TEST(SquadNumbers, SaveFromBeforeSquadNumbersLoadsNumbered)
   // Turn it into a version 12 save: no squad_number column.
   {
     sqlite3* db = nullptr;
-    ASSERT_EQ(sqlite3_open(RuntimePaths::savePath(slot.slot).string().c_str(),
-                           &db),
-              SQLITE_OK);
-    for (const char* sql :
-         {"ALTER TABLE Players DROP COLUMN squad_number;",
-          "DELETE FROM schema_migrations WHERE number >= 13;",
-          "UPDATE save_meta SET schema_version = 12;"})
+    ASSERT_EQ(
+        sqlite3_open(RuntimePaths::savePath(slot.slot).string().c_str(), &db),
+        SQLITE_OK);
+    for (const char* sql : {"ALTER TABLE Players DROP COLUMN squad_number;",
+                            "DELETE FROM schema_migrations WHERE number >= 13;",
+                            "UPDATE save_meta SET schema_version = 12;"})
       EXPECT_EQ(sqlite3_exec(db, sql, nullptr, nullptr, nullptr), SQLITE_OK)
           << sql << ": " << sqlite3_errmsg(db);
     sqlite3_close(db);

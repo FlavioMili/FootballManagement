@@ -82,7 +82,9 @@ SupporterMood SupporterModel::evaluate(const SupporterFacts& facts)
   for (std::size_t index = 0; index < facts.derby_points.size(); ++index)
   {
     const int points = facts.derby_points[index];
-    const float swing = points >= 3 ? DERBY_WIN : points == 0 ? -DERBY_WIN : 0.0f;
+    const float swing = points >= 3   ? DERBY_WIN
+                        : points == 0 ? -DERBY_WIN
+                                      : 0.0f;
     derby += index == 0 ? swing : swing * DERBY_OLDER_WEIGHT;
   }
   add(SupporterFactor::Derby, std::clamp(derby, -DERBY_CAP, DERBY_CAP));
@@ -95,9 +97,8 @@ SupporterMood SupporterModel::evaluate(const SupporterFacts& facts)
       -std::min(STAR_SALE_CAP,
                 STAR_SALE * static_cast<float>(std::max(0, facts.star_sales))));
   add(SupporterFactor::StarSigning,
-      std::min(STAR_SIGNING_CAP,
-               STAR_SIGNING *
-                   static_cast<float>(std::max(0, facts.star_signings))));
+      std::min(STAR_SIGNING_CAP, STAR_SIGNING * static_cast<float>(std::max(
+                                                    0, facts.star_signings))));
 
   float index = NEUTRAL;
   for (const SupporterReason& reason : mood.reasons) index += reason.points;
@@ -138,7 +139,8 @@ const char* SupporterModel::reasonKey(const SupporterReason& reason)
   switch (reason.factor)
   {
     case SupporterFactor::Derby:
-      return good ? "SUPPORTERS_REASON_DERBY_WON" : "SUPPORTERS_REASON_DERBY_LOST";
+      return good ? "SUPPORTERS_REASON_DERBY_WON"
+                  : "SUPPORTERS_REASON_DERBY_LOST";
     case SupporterFactor::TicketPrice:
       return good ? "SUPPORTERS_REASON_TICKETS_CHEAP"
                   : "SUPPORTERS_REASON_TICKETS_DEAR";
@@ -163,7 +165,8 @@ float Supporters::update(TeamID new_team_id, std::int32_t day,
 {
   SupporterMood target = SupporterModel::evaluate(facts);
   const bool new_club = new_team_id != team_id;
-  if (!new_club) target.index = SupporterModel::settle(current.index, target.index);
+  if (!new_club)
+    target.index = SupporterModel::settle(current.index, target.index);
   current = std::move(target);
   team_id = new_team_id;
   updated_day = day;
@@ -200,10 +203,10 @@ SupporterFacts Supporters::gather(const GameData& gamedata,
       {
         if (!match.isPlayed() || match.getMatchType() == MatchType::FRIENDLY)
           continue;
-        const bool home = match.getHomeTeamId() == team_id &&
-                          match.getAwayTeamId() == *rival;
-        const bool away = match.getAwayTeamId() == team_id &&
-                          match.getHomeTeamId() == *rival;
+        const bool home =
+            match.getHomeTeamId() == team_id && match.getAwayTeamId() == *rival;
+        const bool away =
+            match.getAwayTeamId() == team_id && match.getHomeTeamId() == *rival;
         if (!home && !away) continue;
         const std::optional<TeamID> winner = match.getWinnerId();
         const int points = !winner ? 1 : *winner == team_id ? 3 : 0;
@@ -230,10 +233,8 @@ SupporterFacts Supporters::gather(const GameData& gamedata,
     overalls.push_back(player.get().getOverall(config));
   std::ranges::sort(overalls, std::greater<>());
   if (overalls.empty()) return facts;
-  const double star_level =
-      overalls[std::min<std::size_t>(SupporterModel::STAR_RANK,
-                                     overalls.size()) -
-               1];
+  const double star_level = overalls
+      [std::min<std::size_t>(SupporterModel::STAR_RANK, overalls.size()) - 1];
   const std::int32_t today = dayOrdinal(date);
   for (const TransferRecord& record : transfers.history())
   {
@@ -296,8 +297,7 @@ void Supporters::load(const std::shared_ptr<DatabaseConnection>& db_conn)
         char separator = 0;
         while (reasons >> factor >> separator >> points)
         {
-          if (factor < 0 ||
-              factor >= static_cast<int>(SupporterFactor::COUNT))
+          if (factor < 0 || factor >= static_cast<int>(SupporterFactor::COUNT))
             continue;  // Written by a newer version.
           current.reasons.push_back(
               {static_cast<SupporterFactor>(factor), points});

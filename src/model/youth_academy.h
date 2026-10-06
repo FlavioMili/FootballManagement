@@ -111,7 +111,7 @@ struct YouthRecord
   TeamID team_id = 0;
   YouthStatus status = YouthStatus::Squad;
   YouthContract contract = YouthContract::None;
-  std::uint8_t joined_age = 15; /*!< Age when he joined the academy. */
+  std::uint8_t joined_age = 15;  /*!< Age when he joined the academy. */
   std::uint16_t appearances = 0; /*!< U18 matches this season. */
   std::uint16_t minutes = 0;
   std::uint16_t goals = 0;
@@ -182,9 +182,9 @@ struct IntakeInputs
   float facilities = 0.5f;
   float recruitment = 0.5f;
   float junior_coaching = 0.25f;
-  float head_ability = 0.0f;  /*!< 0 without a head of youth development. */
+  float head_ability = 0.0f; /*!< 0 without a head of youth development. */
   float head_professionalism = 0.5f;
-  float staff_bonus = 0.0f;   /*!< StaffEffects::youth_potential_bonus. */
+  float staff_bonus = 0.0f; /*!< StaffEffects::youth_potential_bonus. */
   std::uint8_t reputation = 50;
   Language country = Language::EN;
 };
@@ -491,8 +491,8 @@ class YouthAcademy
   YouthActionResult promoteReserve(TeamID team_id, PlayerID player_id);
   /** A U21 player young enough for the U18s goes back to them. */
   YouthActionResult reserveToU18(TeamID team_id, PlayerID player_id);
-  UpgradeRequestResult requestUpgrade(const GameDateValue& date,
-                                      TeamID team_id, AcademyUpgrade kind,
+  UpgradeRequestResult requestUpgrade(const GameDateValue& date, TeamID team_id,
+                                      AcademyUpgrade kind,
                                       float board_confidence, bool embargoed,
                                       Inbox& inbox);
 

@@ -99,7 +99,8 @@ TEST(TransferWindows, EveryCountryOpensAndShutsOnItsOwnDays)
 
   // On 2 September only the late countries still sign players.
   const GameDateValue late = day(2025, 9, 2);
-  for (const LeagueID shut : {ENGLAND, ITALY, SPAIN, GERMANY, FRANCE, ARGENTINA})
+  for (const LeagueID shut :
+       {ENGLAND, ITALY, SPAIN, GERMANY, FRANCE, ARGENTINA})
     EXPECT_FALSE(TransferWindows::isOpen(shut, late)) << int{shut};
   for (const LeagueID open : {PORTUGAL, BRAZIL, USA, MEXICO, RUSSIA})
     EXPECT_TRUE(TransferWindows::isOpen(open, late)) << int{open};
@@ -122,7 +123,8 @@ TEST(TransferWindows, SecondDivisionsAndUnknownLeagues)
   expectWindow(UNKNOWN, day(2025, 7, 1), day(2025, 9, 1));
   expectWindow(UNKNOWN, day(2026, 1, 1), day(2026, 2, 2));
   // Every country of the table is distinct and lists both divisions.
-  for (const TransferWindows::CountryRules& rules : TransferWindows::countries())
+  for (const TransferWindows::CountryRules& rules :
+       TransferWindows::countries())
     for (const LeagueID league : rules.leagues)
       EXPECT_EQ(&TransferWindows::rulesFor(league), &rules) << int{league};
 }
@@ -138,7 +140,8 @@ TEST(TransferWindows, WindowInfoCountsToTheCountrysDeadline)
   EXPECT_FALSE(windowInfo(ARGENTINA, date).open);
   EXPECT_EQ(windowInfo(ARGENTINA, date).days_to_deadline, -1);
   // Deadline day weighs most, in each country on its own day.
-  EXPECT_GT(TransferNegotiation::activityWeight(windowInfo(PORTUGAL, day(2025, 9, 4))),
+  EXPECT_GT(TransferNegotiation::activityWeight(
+                windowInfo(PORTUGAL, day(2025, 9, 4))),
             TransferNegotiation::activityWeight(windowInfo(PORTUGAL, date)));
   // The start-of-year window is the "winter" one everywhere.
   EXPECT_TRUE(windowInfo(USA, day(2026, 3, 1)).winter);

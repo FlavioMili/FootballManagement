@@ -62,8 +62,8 @@ std::int64_t scaledWage(std::int64_t wage, double factor)
 
 std::uint32_t toMoney(std::int64_t value)
 {
-  return static_cast<std::uint32_t>(
-      std::clamp<std::int64_t>(value, 0, std::numeric_limits<std::uint32_t>::max()));
+  return static_cast<std::uint32_t>(std::clamp<std::int64_t>(
+      value, 0, std::numeric_limits<std::uint32_t>::max()));
 }
 
 const char* kindKey(ContractKind kind)
@@ -111,7 +111,8 @@ bool ContractTalksDialog::open(GameController& controller, PlayerID id)
                    : 0;
   if (renewal) wage_room += p.getWage();
   if (kind == ContractKind::PreContract)
-    wage_room = controller.getGame()->getTransfers().nextSeasonWageRoom(managed);
+    wage_room =
+        controller.getGame()->getTransfers().nextSeasonWageRoom(managed);
   budget = controller.transferBudgetForTeam(managed);
 
   response.reset();
@@ -124,23 +125,26 @@ bool ContractTalksDialog::open(GameController& controller, PlayerID id)
   agent_lines.push_back(
       fmt::sprintf(LOC(controller.getAgentOpeningLine(id, kind)), player));
   title = fmt::sprintf(
-      LOC(renewal ? "CONTRACT_RENEW_TITLE" : "TRANSFER_CONTRACT_TITLE"), player);
+      LOC(renewal ? "CONTRACT_RENEW_TITLE" : "TRANSFER_CONTRACT_TITLE"),
+      player);
   kind_text = LOC(kindKey(kind));
   if (renewal)
     kind_text += fmt::sprintf(LOC("CONTRACT_CURRENT_END"),
                               first_season_end + current_years - 1);
 
   demand = controller.getPlayerDemand(id, kind);
-  const int wanted = renewal ? current_years + std::max<int>(demand.min_years, 1)
-                             : demand.min_years;
-  offer.years = static_cast<std::uint8_t>(
-      std::clamp<int>(wanted, first_year, last_year));
+  const int wanted = renewal
+                         ? current_years + std::max<int>(demand.min_years, 1)
+                         : demand.min_years;
+  offer.years =
+      static_cast<std::uint8_t>(std::clamp<int>(wanted, first_year, last_year));
   refreshDemands(controller);
   offer = PlayerAgent::askedOffer(agent, offer.years);
   offer.release_clause = 0;
   agent_fee = agent.agent_fee;
   offer.agent_fee = agent.agent_fee;
-  rise_index = TransferTermsEditor::optionIndex(RISE_OPTIONS, offer.yearly_rise);
+  rise_index =
+      TransferTermsEditor::optionIndex(RISE_OPTIONS, offer.yearly_rise);
   offer.yearly_rise = RISE_OPTIONS[static_cast<std::size_t>(rise_index)];
   rounds_left = controller.getContractRoundsLeft(id);
   refreshYearLabels(controller);
@@ -152,18 +156,19 @@ bool ContractTalksDialog::open(GameController& controller, PlayerID id)
 void ContractTalksDialog::refreshDemands(GameController& controller)
 {
   demand = controller.getPlayerDemand(player_id, kind);
-  agent = controller.getAgentDemands(player_id, kind, std::max<std::uint8_t>(offer.years, 1));
+  agent = controller.getAgentDemands(player_id, kind,
+                                     std::max<std::uint8_t>(offer.years, 1));
   projected = controller.getGame()->getTransfers().projectedRole(
       player_id, controller.getGame()->getManagedTeamId());
   demand_lines.clear();
-  demand_lines.push_back(
-      {LOC("TRANSFER_FIELD_AGENT_ASK"),
-       fmt::sprintf(LOC("TRANSFER_PER_WEEK"), Format::moneyFull(agent.flat_wage))});
-  demand_lines.push_back(
-      {LOC("AGENT_FIELD_PACKAGE"),
-       fmt::sprintf(LOC("AGENT_PACKAGE_VALUE"), Format::money(agent.asking_wage),
-                    static_cast<int>(agent.yearly_rise),
-                    Format::money(agent.appearance_bonus))});
+  demand_lines.push_back({LOC("TRANSFER_FIELD_AGENT_ASK"),
+                          fmt::sprintf(LOC("TRANSFER_PER_WEEK"),
+                                       Format::moneyFull(agent.flat_wage))});
+  demand_lines.push_back({LOC("AGENT_FIELD_PACKAGE"),
+                          fmt::sprintf(LOC("AGENT_PACKAGE_VALUE"),
+                                       Format::money(agent.asking_wage),
+                                       static_cast<int>(agent.yearly_rise),
+                                       Format::money(agent.appearance_bonus))});
   if (agent.signing_bonus > 0)
     demand_lines.push_back({LOC("TRANSFER_FIELD_SIGNING_BONUS"),
                             Format::moneyFull(agent.signing_bonus)});
@@ -172,9 +177,10 @@ void ContractTalksDialog::refreshDemands(GameController& controller)
        fmt::sprintf(LOC("AGENT_FEE_VALUE"), Format::money(agent.agent_fee),
                     Format::money(agent.standard_agent_fee))});
   if (agent.wants_release_clause)
-    demand_lines.push_back({LOC("TRANSFER_FIELD_RELEASE_CLAUSE"),
-                            fmt::sprintf(LOC("TRANSFER_CLAUSE_AT_MOST"),
-                                         Format::money(agent.max_release_clause))});
+    demand_lines.push_back(
+        {LOC("TRANSFER_FIELD_RELEASE_CLAUSE"),
+         fmt::sprintf(LOC("TRANSFER_CLAUSE_AT_MOST"),
+                      Format::money(agent.max_release_clause))});
   std::string role = LOC(squadRoleKey(agent.desired_role));
   if (agent.wants_promise) role += LOC("AGENT_WANTS_PROMISE");
   demand_lines.push_back({LOC("TRANSFER_FIELD_DESIRED_ROLE"), role});
@@ -182,13 +188,15 @@ void ContractTalksDialog::refreshDemands(GameController& controller)
       {LOC("TRANSFER_FIELD_PROJECTED_ROLE"), LOC(squadRoleKey(projected))});
 }
 
-void ContractTalksDialog::refreshYearLabels(const GameController& /*controller*/)
+void ContractTalksDialog::refreshYearLabels(
+    const GameController& /*controller*/)
 {
   year_texts.clear();
   year_labels.clear();
   for (int years = first_year; years <= last_year; ++years)
     year_texts.push_back(std::to_string(first_season_end + years - 1));
-  for (const std::string& text : year_texts) year_labels.push_back(text.c_str());
+  for (const std::string& text : year_texts)
+    year_labels.push_back(text.c_str());
 }
 
 void ContractTalksDialog::refreshSummary()
@@ -196,12 +204,13 @@ void ContractTalksDialog::refreshSummary()
   const std::int64_t yearly =
       static_cast<std::int64_t>(offer.weekly_wage) * WEEKS_PER_YEAR;
   yearly_text = Format::moneyFull(yearly);
-  total_text = Format::moneyFull(yearly * offer.years +
-                                 static_cast<std::int64_t>(offer.signing_bonus));
+  total_text = Format::moneyFull(
+      yearly * offer.years + static_cast<std::int64_t>(offer.signing_bonus));
   rounds_text = fmt::sprintf(LOC("TRANSFER_ROUNDS_LEFT"), rounds_left);
 }
 
-ContractTalksDialog::Event ContractTalksDialog::render(GameController& controller)
+ContractTalksDialog::Event ContractTalksDialog::render(
+    GameController& controller)
 {
   if (open_requested)
   {
@@ -212,18 +221,17 @@ ContractTalksDialog::Event ContractTalksDialog::render(GameController& controlle
   if (!visible) return Event::None;
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   const bool wide = viewport->WorkSize.x >= scaled(TWO_COLUMN_MIN_VIEWPORT);
-  const float width =
-      std::min(scaled(wide ? WIDE_DIALOG_WIDTH : DIALOG_WIDTH),
-               viewport->WorkSize.x * VIEWPORT_WIDTH_SHARE);
+  const float width = std::min(scaled(wide ? WIDE_DIALOG_WIDTH : DIALOG_WIDTH),
+                               viewport->WorkSize.x * VIEWPORT_WIDTH_SHARE);
   ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always,
                           ImVec2(0.5f, 0.5f));
   ImGui::SetNextWindowSizeConstraints(
       ImVec2(width, 0.0f),
       ImVec2(width, viewport->WorkSize.y * VIEWPORT_HEIGHT_SHARE));
   const std::string label = title + POPUP_ID;
-  if (!ImGui::BeginPopupModal(label.c_str(), nullptr,
-                              ImGuiWindowFlags_AlwaysAutoResize |
-                                  ImGuiWindowFlags_NoSavedSettings))
+  if (!ImGui::BeginPopupModal(
+          label.c_str(), nullptr,
+          ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
   {
     visible = false;
     return Event::None;
@@ -266,7 +274,8 @@ ContractTalksDialog::Event ContractTalksDialog::render(GameController& controlle
     offer = PlayerAgent::askedOffer(agent, offer.years);
     offer.promised_role = promise;
     agent_fee = agent.agent_fee;
-    rise_index = TransferTermsEditor::optionIndex(RISE_OPTIONS, offer.yearly_rise);
+    rise_index =
+        TransferTermsEditor::optionIndex(RISE_OPTIONS, offer.yearly_rise);
     offer.yearly_rise = RISE_OPTIONS[static_cast<std::size_t>(rise_index)];
     refreshSummary();
   }
@@ -319,7 +328,8 @@ void ContractTalksDialog::renderTerms()
   std::int64_t bonus = offer.signing_bonus;
   std::vector<UI::MoneyChip> bonus_chips = {{LOC("TRANSFER_CHIP_NONE"), 0}};
   if (agent.signing_bonus > 0)
-    bonus_chips.push_back({LOC("TRANSFER_CHIP_ASKED_BONUS"), agent.signing_bonus});
+    bonus_chips.push_back(
+        {LOC("TRANSFER_CHIP_ASKED_BONUS"), agent.signing_bonus});
   if (UI::moneyInput("##contract_bonus", bonus,
                      {.maximum = std::numeric_limits<std::uint32_t>::max(),
                       .chips = bonus_chips}))
@@ -352,7 +362,8 @@ void ContractTalksDialog::renderTerms()
   std::int64_t clause = offer.release_clause;
   std::vector<UI::MoneyChip> clause_chips = {{LOC("TRANSFER_CHIP_NONE"), 0}};
   if (agent.wants_release_clause)
-    clause_chips.push_back({LOC("TRANSFER_CHIP_MAX_CLAUSE"), agent.max_release_clause});
+    clause_chips.push_back(
+        {LOC("TRANSFER_CHIP_MAX_CLAUSE"), agent.max_release_clause});
   if (UI::moneyInput("##contract_clause", clause,
                      {.maximum = std::numeric_limits<std::uint32_t>::max(),
                       .chips = clause_chips}))
@@ -376,7 +387,8 @@ void ContractTalksDialog::renderTerms()
   const char* preview =
       promise_index == 0
           ? LOC("TRANSFER_PROMISE_NONE")
-          : LOC(squadRoleKey(PROMISE_ROLES[static_cast<std::size_t>(promise_index - 1)]));
+          : LOC(squadRoleKey(
+                PROMISE_ROLES[static_cast<std::size_t>(promise_index - 1)]));
   if (ImGui::BeginCombo("##contract_promise", preview))
   {
     if (ImGui::Selectable(LOC("TRANSFER_PROMISE_NONE"), promise_index == 0))
@@ -409,9 +421,9 @@ void ContractTalksDialog::renderSummary() const
   {
     ImGui::PushTextWrapPos(0.0f);
     for (std::size_t index = 0; index < agent_lines.size(); ++index)
-      ImGui::TextColored(index + 1 == agent_lines.size() ? palette.text
-                                                         : palette.faint,
-                         "%s", agent_lines[index].c_str());
+      ImGui::TextColored(
+          index + 1 == agent_lines.size() ? palette.text : palette.faint, "%s",
+          agent_lines[index].c_str());
     ImGui::PopTextWrapPos();
     endPanel();
   }
@@ -440,9 +452,9 @@ void ContractTalksDialog::renderSummary() const
   ImGui::Dummy(ImVec2(0.0f, scaled(Theme::Space::S)));
   {
     Theme::ScopedText heading(Theme::Text::TITLE);
-    ImGui::TextColored(agreed ? palette.positive : palette.negative, "%s",
-                       LOC(agreed ? "TRANSFER_PLAYER_AGREES"
-                                  : "TRANSFER_PLAYER_REFUSES"));
+    ImGui::TextColored(
+        agreed ? palette.positive : palette.negative, "%s",
+        LOC(agreed ? "TRANSFER_PLAYER_AGREES" : "TRANSFER_PLAYER_REFUSES"));
   }
   ImGui::PushTextWrapPos(0.0f);
   for (const TransferNegotiation::Reason reason : response->reasons)
@@ -452,7 +464,8 @@ void ContractTalksDialog::renderSummary() const
                        LOC(TransferNegotiation::reasonKey(reason)));
   }
   if (over_budget)
-    ImGui::TextColored(palette.negative, "%s", LOC("TRANSFER_NOT_ENOUGH_BUDGET"));
+    ImGui::TextColored(palette.negative, "%s",
+                       LOC("TRANSFER_NOT_ENOUGH_BUDGET"));
   ImGui::PopTextWrapPos();
 }
 

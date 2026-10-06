@@ -46,8 +46,8 @@ struct InjuryRiskInputs
   int days_since_injury = -1; /*!< Since the last injury began; -1 = none. */
   int days_since_match = -1;  /*!< -1 = no match played yet. */
   float condition = 100.0f;
-  float workload_ratio = 1.0f;     /*!< Acute:chronic load. */
-  float staff_prevention = 1.0f;   /*!< StaffEffects::injury_prevention. */
+  float workload_ratio = 1.0f;   /*!< Acute:chronic load. */
+  float staff_prevention = 1.0f; /*!< StaffEffects::injury_prevention. */
 };
 
 /** @brief Why a risk is raised (bit flags). */

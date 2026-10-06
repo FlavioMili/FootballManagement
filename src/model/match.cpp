@@ -18,9 +18,9 @@
 #include "model/calendar.h"
 #include "model/competition.h"
 #include "model/match_engine.h"
-#include "model/medical_centre.h"
 #include "model/match_report.h"
 #include "model/match_scheduler.h"
+#include "model/medical_centre.h"
 #include "model/world_simulation.h"
 #include "player.h"
 
@@ -52,8 +52,8 @@ uint16_t Match::getKickoff() const
   { return static_cast<uint16_t>(hour * 60 + minute); };
   constexpr uint8_t THURSDAY = 3;
   const uint8_t weekday = SeasonCalendar::dayOfWeek(match_date);
-  const bool weekend = weekday == SeasonCalendar::SATURDAY ||
-                       weekday == SeasonCalendar::SUNDAY;
+  const bool weekend =
+      weekday == SeasonCalendar::SATURDAY || weekday == SeasonCalendar::SUNDAY;
   switch (match_type)
   {
     case MatchType::FRIENDLY:
@@ -166,9 +166,9 @@ void Match::writeResultTo(MatchReport& report) const
   // Lines still on the 90-minute scale (score-only results, extra time
   // settled without the engine) stretch to the extra half hour; an engine
   // that played extra time already reported 120-minute lines.
-  const bool regulation_lines = std::ranges::none_of(
-      report.players, [](const PlayerMatchLine& line)
-      { return line.minutes > REGULATION_MINUTES; });
+  const bool regulation_lines =
+      std::ranges::none_of(report.players, [](const PlayerMatchLine& line)
+                           { return line.minutes > REGULATION_MINUTES; });
   if (extra_time && regulation_lines)
   {
     for (PlayerMatchLine& line : report.players)
@@ -403,8 +403,8 @@ const Player* betterStandIn(const Lineup& lineup,
   if (current == nullptr || !eligible(*current)) return nullptr;
   const bool keeperSlot = slotRole == PlayerRole::GK;
   const Player* best = nullptr;
-  float bestScore = MatchdaySquad::slotScore(*current, slotRole, config) +
-                    UPGRADE_MARGIN;
+  float bestScore =
+      MatchdaySquad::slotScore(*current, slotRole, config) + UPGRADE_MARGIN;
   const auto consider = [&](const Player* candidate)
   {
     if (candidate == nullptr || lineup.isStarter(candidate->getId()) ||
@@ -469,9 +469,9 @@ void MatchdaySquad::recordStandIns(const Lineup& before, Lineup& after)
   const auto record = [&](const Player* out, const Player* in)
   {
     if (!out || !in || out == in) return;
-    const auto handed = std::ranges::find_if(
-        entries, [out](const Lineup::StandIn& entry)
-        { return entry.stand_in == out->getId(); });
+    const auto handed =
+        std::ranges::find_if(entries, [out](const Lineup::StandIn& entry)
+                             { return entry.stand_in == out->getId(); });
     if (handed != entries.end())
       handed->stand_in = in->getId();
     else
@@ -553,10 +553,9 @@ std::vector<PlayerMatchConsequence> MatchdaySquad::consequences(
   {
     const long minutes = std::lround(stats.minutesPlayed);
     if (minutes <= 0) continue;
-    result.push_back({stats.playerId,
-                      static_cast<std::uint8_t>(std::min(minutes, 255L)),
-                      std::clamp(stats.condition, 0.0f, 1.0f) * 100.0f,
-                      stats.injured});
+    result.push_back(
+        {stats.playerId, static_cast<std::uint8_t>(std::min(minutes, 255L)),
+         std::clamp(stats.condition, 0.0f, 1.0f) * 100.0f, stats.injured});
   }
   return result;
 }

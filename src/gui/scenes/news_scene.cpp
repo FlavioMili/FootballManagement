@@ -87,7 +87,8 @@ void NewsScene::refresh()
     Row row;
     row.headline = item.headline();
     row.date = Format::date(item.date);
-    const std::string competition = competitionName(controller, item.competition);
+    const std::string competition =
+        competitionName(controller, item.competition);
     row.meta = std::string(LOC(newsKindKey(item.kind))) +
                (competition.empty() ? std::string() : "  ·  " + competition);
     if (item.player_id != 0 && gamedata->getPlayer(item.player_id))
@@ -134,7 +135,8 @@ void NewsScene::rebuildCompetitions()
   {
     if (item.competition.id == 0) continue;
     if (filter.country && item.country != *filter.country) continue;
-    if (!seen.insert({static_cast<int>(item.competition.type), item.competition.id})
+    if (!seen.insert(
+                 {static_cast<int>(item.competition.type), item.competition.id})
              .second)
       continue;
     competitions.push_back(
@@ -151,9 +153,10 @@ void NewsScene::rebuildCompetitions()
           const int type = option.competition.type == MatchType::LEAGUE ? 0
                            : option.competition.type == MatchType::CUP  ? 1
                                                                         : 2;
-          const int tier = type == 0 && data && data->getLeague(option.competition.id)
-                               ? Competitions::leagueTier(*data, option.competition.id)
-                               : 0;
+          const int tier =
+              type == 0 && data && data->getLeague(option.competition.id)
+                  ? Competitions::leagueTier(*data, option.competition.id)
+                  : 0;
           return std::tuple{type, tier, option.name};
         };
         return rank(left) < rank(right);
@@ -170,8 +173,9 @@ void NewsScene::applyFilter()
   visible = std::min(PAGE_SIZE, kept.size());
   country_label = LOC("NEWS_ALL_COUNTRIES");
   if (filter.country)
-    if (const auto found = std::ranges::find(
-            countries, *filter.country, &std::pair<LeagueID, std::string>::first);
+    if (const auto found =
+            std::ranges::find(countries, *filter.country,
+                              &std::pair<LeagueID, std::string>::first);
         found != countries.end())
       country_label = found->second;
   competition_label = LOC("NEWS_ALL_COMPETITIONS");
@@ -209,7 +213,8 @@ void NewsScene::renderFilters()
     for (const auto& [id, name] : countries)
     {
       ImGui::PushID(static_cast<int>(id));
-      if (ImGui::Selectable(name.c_str(), filter.country && *filter.country == id))
+      if (ImGui::Selectable(name.c_str(),
+                            filter.country && *filter.country == id))
         filterCountry(id);
       ImGui::PopID();
     }
@@ -229,9 +234,9 @@ void NewsScene::renderFilters()
     {
       const CompetitionOption& option = competitions[index];
       ImGui::PushID(static_cast<int>(index));
-      if (ImGui::Selectable(option.name.c_str(),
-                            filter.competition &&
-                                *filter.competition == option.competition))
+      if (ImGui::Selectable(
+              option.name.c_str(),
+              filter.competition && *filter.competition == option.competition))
       {
         filter.competition = option.competition;
         applyFilter();
@@ -243,7 +248,8 @@ void NewsScene::renderFilters()
 
   // Kinds as toggles that wrap onto more lines on narrow windows.
   const char* all = LOC("NEWS_KIND_ALL");
-  if (UI::toggleButton(all, !filter.kind, ImVec2(0, 0), UI::ButtonSize::COMPACT))
+  if (UI::toggleButton(all, !filter.kind, ImVec2(0, 0),
+                       UI::ButtonSize::COMPACT))
     filterKind(std::nullopt);
   for (const NewsKind kind : KINDS)
   {
@@ -291,8 +297,8 @@ void NewsScene::renderStory(std::size_t index)
   {
     Theme::ScopedText small(Theme::Text::SMALL);
     ImGui::TextColored(palette.faint, "%s", row.meta.c_str());
-    const auto linkTo = [&](const std::string& label, const char* id,
-                            bool leading)
+    const auto linkTo =
+        [&](const std::string& label, const char* id, bool leading)
     {
       if (label.empty()) return false;
       if (!leading)
@@ -344,8 +350,9 @@ void NewsScene::renderContent()
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
   if (kept.empty())
   {
-    UI::emptyState(LOC("NEWS_EMPTY_TITLE"),
-                   LOC(items.empty() ? "NEWS_EMPTY_BODY" : "NEWS_EMPTY_FILTERED"));
+    UI::emptyState(
+        LOC("NEWS_EMPTY_TITLE"),
+        LOC(items.empty() ? "NEWS_EMPTY_BODY" : "NEWS_EMPTY_FILTERED"));
     return;
   }
   UI::beginAutoHeightCard("news_feed", nullptr);

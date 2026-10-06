@@ -37,9 +37,9 @@ std::vector<League> LeagueRepository::loadAllLeagues() const
     std::optional<LeagueID> parent;
     if (sqlite3_column_type(stmt, 2) != SQLITE_NULL)
       parent = static_cast<LeagueID>(sqlite3_column_int(stmt, 2));
-    leagues.emplace_back(static_cast<LeagueID>(id), name,
-                         std::vector<TeamID>{}, parent,
-                         static_cast<TieBreakRule>(sqlite3_column_int(stmt, 3)));
+    leagues.emplace_back(
+        static_cast<LeagueID>(id), name, std::vector<TeamID>{}, parent,
+        static_cast<TieBreakRule>(sqlite3_column_int(stmt, 3)));
   }
 
   sqlite3_finalize(stmt);
@@ -112,8 +112,8 @@ void LeagueRepository::insertLeagueWithId(const League& league) const
 void LeagueRepository::saveLeaguePoints(const League& league) const
 {
   // Teams move between leagues at season end: drop rows of former members.
-  sqlite3_stmt* stmt_delete =
-      db_conn->prepareStatement("DELETE FROM LeaguePoints WHERE league_id = ?;");
+  sqlite3_stmt* stmt_delete = db_conn->prepareStatement(
+      "DELETE FROM LeaguePoints WHERE league_id = ?;");
   sqlite3_bind_int(stmt_delete, 1, league.getId());
   db_conn->executeStep(stmt_delete);
   sqlite3_finalize(stmt_delete);

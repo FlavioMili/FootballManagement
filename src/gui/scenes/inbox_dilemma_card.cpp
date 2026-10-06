@@ -95,9 +95,9 @@ std::optional<int> render(GameController& controller)
   const bool stacked =
       ImGui::GetContentRegionAvail().x < SIDE_BY_SIDE_WIDTH * Theme::scale();
   std::optional<int> taken;
-  if (!ImGui::BeginTable("##dilemma_answers", stacked ? 1 : 2,
-                         ImGuiTableFlags_SizingStretchSame |
-                             ImGuiTableFlags_PadOuterX))
+  if (!ImGui::BeginTable(
+          "##dilemma_answers", stacked ? 1 : 2,
+          ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_PadOuterX))
     return std::nullopt;
   for (const int option : {0, 1})
   {

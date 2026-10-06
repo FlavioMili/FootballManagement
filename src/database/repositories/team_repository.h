@@ -30,7 +30,7 @@ struct StoredLineup
   std::optional<PlayerID> goalkeeperId;
   std::vector<StoredPositionedPlayer> outfield;
   std::vector<PlayerID> reserves;
-  SetPieceDesignations designations{}; /*!< Captain and takers, 0 = auto. */
+  SetPieceDesignations designations{};   /*!< Captain and takers, 0 = auto. */
   std::vector<Lineup::StandIn> standIns; /*!< Regulars and their stand-ins. */
 };
 

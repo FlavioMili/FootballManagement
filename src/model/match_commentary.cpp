@@ -41,9 +41,8 @@ const char* MatchCommentary::key(const MatchEvent& event)
     case MatchEventType::OWN_GOAL:
       return "MATCH_COMMENT_OWN_GOAL";
     case MatchEventType::SHOT:
-      return event.detail == MatchEventDetail::HEADER
-                 ? "MATCH_COMMENT_HEADER"
-                 : "MATCH_COMMENT_SHOT";
+      return event.detail == MatchEventDetail::HEADER ? "MATCH_COMMENT_HEADER"
+                                                      : "MATCH_COMMENT_SHOT";
     case MatchEventType::SAVE:
       if (event.detail == MatchEventDetail::PARRIED)
         return "MATCH_COMMENT_SAVE_PARRY";

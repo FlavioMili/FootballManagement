@@ -214,9 +214,10 @@ TEST(ClubEconomyTest, ContinentalPrizeMoneyIsPaidOnlyByTheCompetitions)
     const auto economy = economies.find(league_id);
     ASSERT_NE(economy, economies.end());
     const auto prizes = ClubEconomy::prizeMoney(
-        economy->second, gamedata->getLeagues().at(league_id).getTeamIDs().size());
-    EXPECT_EQ(paid, std::accumulate(prizes.begin(), prizes.end(),
-                                    std::int64_t{0}));
+        economy->second,
+        gamedata->getLeagues().at(league_id).getTeamIDs().size());
+    EXPECT_EQ(paid,
+              std::accumulate(prizes.begin(), prizes.end(), std::int64_t{0}));
   }
   controller.reset();
   RuntimePaths::removeSave(slot);
@@ -257,8 +258,8 @@ TEST(ClubEconomyTest, AttendanceFollowsSuccessPriceAndCapacity)
     ClubProfile priced = profile;
     priced.ticket_price = static_cast<std::uint32_t>(
         std::lround(ratio * static_cast<double>(profile.ticket_price)));
-    return static_cast<double>(ClubEconomy::attendance(
-               economy, priced, 0.0, 80, MatchType::LEAGUE)) *
+    return static_cast<double>(ClubEconomy::attendance(economy, priced, 0.0, 80,
+                                                       MatchType::LEAGUE)) *
            static_cast<double>(priced.ticket_price);
   };
   double best_ratio = 0.0;
@@ -393,8 +394,7 @@ TEST_F(FinanceWorldTest, AiOwnersRescueClubsDeepInTheRed)
     const OwnerType owner =
         ManagerMarketModel::clubVision(gamedata->getWorldSeed(), team.getId(),
                                        team.getReputation(),
-                                       team.getProfile().youth_facilities, 0,
-                                       0)
+                                       team.getProfile().youth_facilities, 0, 0)
             .owner;
     if (owner == OwnerType::ImpatientBenefactor &&
         benefactor == FREE_AGENTS_TEAM_ID)
@@ -550,9 +550,9 @@ double median(std::vector<double> values)
 }  // namespace
 
 // UEFA ECFIL: wages 57-73% of revenue by league (lower tiers overshoot),
-// about half of the clubs make a profit, insolvency is rare. Without transfer activity a median club
-// should roughly break even, rich clubs can profit and few clubs run out of
-// cash within a season.
+// about half of the clubs make a profit, insolvency is rare. Without transfer
+// activity a median club should roughly break even, rich clubs can profit and
+// few clubs run out of cash within a season.
 TEST(EconomyCalibrationTest, MedianClubsBreakEvenInEveryLeague)
 {
   Logger::init();
@@ -600,13 +600,12 @@ TEST(EconomyCalibrationTest, MedianClubsBreakEvenInEveryLeague)
     const double median_net = median(result.net_ratio);
     std::cout << "[economy] league " << static_cast<int>(league_id)
               << " median revenue " << median(result.revenue) / 1e6
-              << "M median net " << 100.0 * median_net
-              << "% best net "
+              << "M median net " << 100.0 * median_net << "% best net "
               << 100.0 * std::ranges::max(result.net_ratio) << "% worst net "
               << 100.0 * std::ranges::min(result.net_ratio)
-              << "% median player wages "
-              << 100.0 * median(result.wage_ratio) << "% negative cash "
-              << result.negative_cash << "/" << clubs << "\n";
+              << "% median player wages " << 100.0 * median(result.wage_ratio)
+              << "% negative cash " << result.negative_cash << "/" << clubs
+              << "\n";
     EXPECT_LT(std::abs(median_net), 0.15) << "league " << league_id;
     EXPECT_GE(median(result.wage_ratio), 0.45) << "league " << league_id;
     EXPECT_LE(median(result.wage_ratio), 0.78) << "league " << league_id;

@@ -689,8 +689,8 @@ void ScoutingScene::renderPlayerTable(const char* id,
   std::array<UI::Column, 9> columns = playerColumns();
   const UI::ColumnMask hidden = UI::hiddenColumns(PLAYER_TABLE_KEY, columns);
   for (UI::Column& column : columns) column.label = LOC(column.label);
-  const UI::ColumnMask mask = UI::fitColumns(
-      columns, ImGui::GetContentRegionAvail().x, 160.0f, hidden);
+  const UI::ColumnMask mask =
+      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 160.0f, hidden);
   player_table_mask = mask;
   ImGuiTableFlags flags = ImGuiTableFlags_RowBg |
                           ImGuiTableFlags_BordersInnerH |

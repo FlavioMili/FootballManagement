@@ -43,8 +43,8 @@ void renderPlayerTooltip(const Player& player, const StatsConfig& statsConfig)
   ImGui::BeginTooltip();
   ImGui::TextUnformatted(player.getName().c_str());
   ImGui::TextColored(Theme::palette().muted, "%s  ·  %s %d  ·  %s %.0f",
-                     RoleUtils::shortName(player.getRole()),
-                     LOC("PLAYER_AGE"), player.getAge(), LOC("MAIN_GAME_OVR"),
+                     RoleUtils::shortName(player.getRole()), LOC("PLAYER_AGE"),
+                     player.getAge(), LOC("MAIN_GAME_OVR"),
                      player.getOverall(statsConfig));
   ImGui::TextColored(Theme::palette().faint, "%s", LOC("LINEUP_TOKEN_HINT"));
   ImGui::EndTooltip();
@@ -122,7 +122,8 @@ void LineupScene::loadLineup()
   unavailable.clear();
   // Bans count for the competition of the next match (league by default).
   const auto nextFixture = controller.getNextManagedFixture();
-  const MatchType nextType = nextFixture ? nextFixture->type : MatchType::LEAGUE;
+  const MatchType nextType =
+      nextFixture ? nextFixture->type : MatchType::LEAGUE;
   for (const auto& record : controller.getSuspendedPlayers(team.getId()))
     if (record.scope == nextType && record.ban_matches > 0)
       unavailable[record.player_id] = Unavailability::SUSPENDED;
@@ -523,8 +524,7 @@ void LineupScene::renderBench(float height)
       current_lineup->getReserves().size() < Lineup::MAX_SUBSTITUTES;
   if (outsider && benchRoom)
   {
-    if (UI::secondaryButton(LOC("LINEUP_ADD_TO_BENCH"),
-                            ImVec2(-FLT_MIN, 0.0f)))
+    if (UI::secondaryButton(LOC("LINEUP_ADD_TO_BENCH"), ImVec2(-FLT_MIN, 0.0f)))
     {
       std::vector<const Player*> bench = current_lineup->getReserves();
       bench.push_back(outsider);
@@ -573,7 +573,8 @@ void LineupScene::renderOutsiders(float height)
   outsiders.clear();
   if (managed)
   {
-    for (const auto& player : controller.getPlayersForTeam(managed->get().getId()))
+    for (const auto& player :
+         controller.getPlayersForTeam(managed->get().getId()))
     {
       const Player* candidate = &player.get();
       if (!current_lineup->isStarter(candidate->getId()) &&
@@ -582,9 +583,9 @@ void LineupScene::renderOutsiders(float height)
     }
   }
   if (outsiders.empty()) return;
-  UI::sectionLabel(std::format("{}  ({})", LOC("LINEUP_NOT_IN_SQUAD"),
-                               outsiders.size())
-                       .c_str());
+  UI::sectionLabel(
+      std::format("{}  ({})", LOC("LINEUP_NOT_IN_SQUAD"), outsiders.size())
+          .c_str());
   const float listHeight = std::max(120.0f * Theme::scale(), height * 0.28f);
   UI::beginCard("outsiders_card", nullptr, ImVec2(0.0f, listHeight), true);
   if (ImGui::BeginTable("outsiders", 3,
@@ -629,9 +630,9 @@ void LineupScene::renderOutsiders(float height)
 const Player* LineupScene::selectedOutsider() const
 {
   if (selected_outsider_id == PlayerID{}) return nullptr;
-  const auto found = std::ranges::find_if(
-      outsiders, [this](const Player* player)
-      { return player->getId() == selected_outsider_id; });
+  const auto found =
+      std::ranges::find_if(outsiders, [this](const Player* player)
+                           { return player->getId() == selected_outsider_id; });
   return found == outsiders.end() ? nullptr : *found;
 }
 

@@ -56,7 +56,7 @@ class CalendarScene : public ManagementScene
   /** @brief What happens on one day of the shown month. */
   struct Day
   {
-    int fixture = -1;  /*!< Index into entries, -1 without a match. */
+    int fixture = -1;        /*!< Index into entries, -1 without a match. */
     std::uint16_t kinds = 0; /*!< Bit per AgendaKind (non-fixtures). */
     bool international = false;
     bool winter = false;
@@ -69,14 +69,14 @@ class CalendarScene : public ManagementScene
   void renderDay(float width);
   [[nodiscard]] bool isToday(int day) const;
 
-  std::vector<Entry> entries;       /*!< Whole season, by date. */
-  GameDateValue season_first;       /*!< 1 July of the season. */
+  std::vector<Entry> entries; /*!< Whole season, by date. */
+  GameDateValue season_first; /*!< 1 July of the season. */
   GameDateValue today;
   int shown_year = 0;
   int shown_month = 0;
   int days_in_month = 0;
-  int first_weekday = 0;            /*!< 0 = Monday. */
-  std::array<Day, 32> days{};       /*!< Index 1..31. */
+  int first_weekday = 0;                  /*!< 0 = Monday. */
+  std::array<Day, 32> days{};             /*!< Index 1..31. */
   std::vector<std::size_t> month_entries; /*!< Indices into entries. */
   int selected_day = 0;
   std::string month_title;

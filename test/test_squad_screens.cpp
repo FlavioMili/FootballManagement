@@ -171,12 +171,13 @@ TEST(SquadScreensTest, ScreensRenderAtEverySizeAndScale)
   players.at(hamstring).mutableDynamics().injury_days = 18;
   players.at(knee).mutableDynamics().injury = InjuryType::KneeMcl;
   players.at(knee).mutableDynamics().injury_days = 45;
-  const PlayerID youngest = std::ranges::min_element(
-      squad, {}, [](const auto& player) { return player.get().getAge(); })
-                                ->get()
-                                .getId();
-  ASSERT_TRUE(controller.setSquadStatus(squad[0].get().getId(),
-                                        SquadStatus::Star));
+  const PlayerID youngest =
+      std::ranges::min_element(
+          squad, {}, [](const auto& player) { return player.get().getAge(); })
+          ->get()
+          .getId();
+  ASSERT_TRUE(
+      controller.setSquadStatus(squad[0].get().getId(), SquadStatus::Star));
 
   GUIView view(controller);
   ASSERT_TRUE(Bridge::initialize(view));
@@ -290,7 +291,8 @@ TEST(SquadScreensTest, ComparisonShowsScoutedEstimatesForOtherClubs)
   for (std::size_t index = 0; index < shown.size(); ++index)
   {
     EXPECT_EQ(shown[index].name, estimate->attributes[index].name);
-    EXPECT_FLOAT_EQ(shown[index].estimate, estimate->attributes[index].estimate);
+    EXPECT_FLOAT_EQ(shown[index].estimate,
+                    estimate->attributes[index].estimate);
     const auto truth = stranger.getStats().find(shown[index].name);
     ASSERT_NE(truth, stranger.getStats().end());
     differs |= std::abs(truth->second - shown[index].estimate) > 0.5f;

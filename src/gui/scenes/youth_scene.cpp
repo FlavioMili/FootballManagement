@@ -15,8 +15,8 @@
 #include <cstdio>
 #include <format>
 
-#include "global/language_manager.h"
 #include "database/gamedata.h"
+#include "global/language_manager.h"
 #include "gui/gui_view.h"
 #include "gui/widgets/format.h"
 #include "gui/widgets/theme.h"
@@ -177,17 +177,16 @@ YouthScene::Row YouthScene::makeRow(
   if (view.status == YouthStatus::Candidate)
     row.contract = LOC("YOUTH_CONTRACT_TRIAL");
   else
-    row.contract = formatLocalized(
-        "YOUTH_CONTRACT_CELL", {LOC(YouthModel::contractKey(view.contract)),
-                                std::to_string(view.contract_years)});
+    row.contract = formatLocalized("YOUTH_CONTRACT_CELL",
+                                   {LOC(YouthModel::contractKey(view.contract)),
+                                    std::to_string(view.contract_years)});
   if (view.offer != YouthContract::None)
-    row.offer_label = formatLocalized(
-        view.offer == YouthContract::Scholarship ? "YOUTH_OFFER_SCHOLARSHIP"
-                                                 : "YOUTH_OFFER_PROFESSIONAL",
-        {Format::money(view.offer_wage)});
-  row.rating = view.appearances > 0
-                   ? std::format("{:.1f}", view.average_rating)
-                   : std::string("–");
+    row.offer_label = formatLocalized(view.offer == YouthContract::Scholarship
+                                          ? "YOUTH_OFFER_SCHOLARSHIP"
+                                          : "YOUTH_OFFER_PROFESSIONAL",
+                                      {Format::money(view.offer_wage)});
+  row.rating = view.appearances > 0 ? std::format("{:.1f}", view.average_rating)
+                                    : std::string("–");
   if (view.progress.size() >= 2)
     row.growth = view.progress.back().overall - view.progress.front().overall;
   row.growth_text = std::format("{:+.1f}", row.growth);
@@ -230,11 +229,12 @@ void YouthScene::refresh()
   development_rows = squad_rows;
   for (const auto& view : controller.getYouthPlayers(YouthStatus::Graduated))
     development_rows.push_back(makeRow(view));
-  const bool known = std::ranges::any_of(
-      development_rows, [this](const Row& row)
-      { return row.view.id == chart_player; });
+  const bool known =
+      std::ranges::any_of(development_rows, [this](const Row& row)
+                          { return row.view.id == chart_player; });
   if (!known)
-    chart_player = development_rows.empty() ? 0 : development_rows.front().view.id;
+    chart_player =
+        development_rows.empty() ? 0 : development_rows.front().view.id;
 
   // Biggest improvers since their first monthly snapshot.
   std::vector<const Row*> ranked;
@@ -243,8 +243,8 @@ void YouthScene::refresh()
     if (row.view.progress.size() >= 2 && row.growth > 0.05f)
       ranked.push_back(&row);
   }
-  std::ranges::sort(ranked, [](const Row* a, const Row* b)
-                    { return a->growth > b->growth; });
+  std::ranges::sort(
+      ranked, [](const Row* a, const Row* b) { return a->growth > b->growth; });
   if (ranked.size() > IMPROVERS) ranked.resize(IMPROVERS);
   improver_values.reserve(ranked.size());
   for (const Row* row : ranked) improver_values.push_back(row->growth_text);
@@ -258,19 +258,18 @@ void YouthScene::refresh()
                                       : std::string("–");
   const int days_to_intake =
       dayOrdinal(overview.intake_date) - dayOrdinal(cached_date);
-  intake_line =
-      days_to_intake > 0
-          ? formatLocalized("YOUTH_NEXT_INTAKE",
-                            {Format::date(overview.intake_date),
-                             std::to_string(days_to_intake)})
-          : formatLocalized("YOUTH_INTAKE_ARRIVED",
-                            {Format::date(overview.intake_date)});
+  intake_line = days_to_intake > 0
+                    ? formatLocalized("YOUTH_NEXT_INTAKE",
+                                      {Format::date(overview.intake_date),
+                                       std::to_string(days_to_intake)})
+                    : formatLocalized("YOUTH_INTAKE_ARRIVED",
+                                      {Format::date(overview.intake_date)});
   const int days_left =
       dayOrdinal(overview.decision_deadline) - dayOrdinal(cached_date);
-  deadline_line = formatLocalized(
-      "YOUTH_DEADLINE", {std::to_string(overview.candidates),
-                         Format::date(overview.decision_deadline),
-                         std::to_string(std::max(0, days_left))});
+  deadline_line = formatLocalized("YOUTH_DEADLINE",
+                                  {std::to_string(overview.candidates),
+                                   Format::date(overview.decision_deadline),
+                                   std::to_string(std::max(0, days_left))});
   const std::string head_name = overview.head.id != 0
                                     ? overview.head.name
                                     : std::string(LOC("YOUTH_ACADEMY_STAFF"));
@@ -287,9 +286,9 @@ void YouthScene::refresh()
   }
   else
   {
-    preview_line = formatLocalized(
-        "YOUTH_PREVIEW_PENDING",
-        {head_name, Format::date(overview.preview_date)});
+    preview_line =
+        formatLocalized("YOUTH_PREVIEW_PENDING",
+                        {head_name, Format::date(overview.preview_date)});
   }
   squad_title =
       formatLocalized("YOUTH_CARD_SQUAD", {std::to_string(squad_rows.size())});
@@ -304,13 +303,12 @@ void YouthScene::refresh()
 
   // U18 league.
   const YouthTableRow& table = overview.table;
-  league_line =
-      overview.league_position > 0 && table.played > 0
-          ? formatLocalized("YOUTH_LEAGUE_POSITION",
-                            {std::to_string(overview.league_position),
-                             std::to_string(overview.league_size),
-                             std::to_string(table.points())})
-          : std::string(LOC("YOUTH_LEAGUE_NOT_STARTED"));
+  league_line = overview.league_position > 0 && table.played > 0
+                    ? formatLocalized("YOUTH_LEAGUE_POSITION",
+                                      {std::to_string(overview.league_position),
+                                       std::to_string(overview.league_size),
+                                       std::to_string(table.points())})
+                    : std::string(LOC("YOUTH_LEAGUE_NOT_STARTED"));
   league_record = std::format("{}  ·  {}-{}-{}", table.played, table.won,
                               table.drawn, table.lost);
   league_goals = std::format("{}:{}", table.goals_for, table.goals_against);
@@ -327,11 +325,11 @@ void YouthScene::refresh()
         "{} ({})", opponent ? opponent->get().getName() : std::string("?"),
         LOC(result.home ? "YOUTH_HOME" : "YOUTH_AWAY"));
     line.score = std::format("{}-{}", result.goals_for, result.goals_against);
-    line.outcome = result.goals_for > result.goals_against
-                       ? UI::Outcome::WIN
-                       : (result.goals_for == result.goals_against
-                              ? UI::Outcome::DRAW
-                              : UI::Outcome::LOSS);
+    line.outcome =
+        result.goals_for > result.goals_against
+            ? UI::Outcome::WIN
+            : (result.goals_for == result.goals_against ? UI::Outcome::DRAW
+                                                        : UI::Outcome::LOSS);
     form.push_back(line.outcome);
     results.push_back(std::move(line));
   }
@@ -345,7 +343,8 @@ void YouthScene::refresh()
     line.quote = controller.getAcademyUpgradeQuote(KINDS[i]);
     line.level = std::to_string(line.quote.current);
     line.cost = Format::money(line.quote.cost);
-    line.time = formatLocalized("YOUTH_DAYS", {std::to_string(line.quote.days)});
+    line.time =
+        formatLocalized("YOUTH_DAYS", {std::to_string(line.quote.days)});
     line.target = std::to_string(line.quote.target);
     line.ready.clear();
     line.progress = 0.0f;
@@ -355,8 +354,8 @@ void YouthScene::refresh()
       const auto total = static_cast<float>(std::max(
           1, line.quote.running_done_day - line.quote.running_start_day));
       line.progress = std::clamp(
-          static_cast<float>(today - line.quote.running_start_day) / total, 0.0f,
-          1.0f);
+          static_cast<float>(today - line.quote.running_start_day) / total,
+          0.0f, 1.0f);
       line.ready = formatLocalized(
           "YOUTH_PROJECT_READY",
           {Format::date(dateOfDay(cached_date, line.quote.running_done_day))});
@@ -438,7 +437,8 @@ void YouthScene::renderOverview()
   const float available = ImGui::GetContentRegionAvail().x;
   const float gap = ImGui::GetStyle().ItemSpacing.x;
   const bool twoColumns = available >= TWO_COLUMN_MIN_WIDTH * Theme::scale();
-  const float left = twoColumns ? std::floor((available - gap) * 0.5f) : available;
+  const float left =
+      twoColumns ? std::floor((available - gap) * 0.5f) : available;
   const float right = twoColumns ? available - gap - left : available;
   ImGui::BeginGroup();
   renderIntakeCard(left);
@@ -518,9 +518,9 @@ void YouthScene::renderBoardCard(float width)
     const UpgradeLine& line = upgrades[i];
     ImGui::PushID(static_cast<int>(i));
     UI::sectionLabel(LOC(LABELS[i]));
-    UI::meter(LOC("YOUTH_LEVEL"), static_cast<float>(line.quote.current) / 100.0f,
-              keyWidth, Theme::ratingColor(line.quote.current),
-              line.level.c_str());
+    UI::meter(LOC("YOUTH_LEVEL"),
+              static_cast<float>(line.quote.current) / 100.0f, keyWidth,
+              Theme::ratingColor(line.quote.current), line.level.c_str());
     if (!line.ready.empty())
     {
       UI::meter(LOC("YOUTH_PROJECT_PROGRESS"), line.progress, keyWidth,
@@ -607,7 +607,8 @@ void YouthScene::renderSquad()
 void YouthScene::renderIntake()
 {
   const Theme::Palette& palette = Theme::palette();
-  UI::beginAutoHeightCard("youth_candidates_card", LOC("YOUTH_CARD_CANDIDATES"));
+  UI::beginAutoHeightCard("youth_candidates_card",
+                          LOC("YOUTH_CARD_CANDIDATES"));
   if (intake_rows.empty())
   {
     UI::emptyState(LOC("YOUTH_INTAKE_EMPTY_TITLE"), intake_line.c_str());
@@ -804,7 +805,8 @@ void YouthScene::renderDetail(const Row& row, ListKind kind)
         pending = {PendingAction::Kind::PROMOTE, view.id};
       if (button(LOC("YOUTH_TO_U21"), false))
         pending = {PendingAction::Kind::TO_U21, view.id};
-      if (button(LOC(view.loan_listed ? "YOUTH_LOAN_WITHDRAW" : "YOUTH_LOAN_OFFER"),
+      if (button(LOC(view.loan_listed ? "YOUTH_LOAN_WITHDRAW"
+                                      : "YOUTH_LOAN_OFFER"),
                  false))
         pending = {PendingAction::Kind::LOAN, view.id};
       UI::sameLineIfFits(UI::buttonWidth(LOC("YOUTH_RELEASE")));
@@ -854,13 +856,15 @@ void YouthScene::renderDevelopment()
   const float available = ImGui::GetContentRegionAvail().x;
   const float gap = ImGui::GetStyle().ItemSpacing.x;
   const bool twoColumns = available >= TWO_COLUMN_MIN_WIDTH * Theme::scale();
-  const float left = twoColumns ? std::floor((available - gap) * 0.5f) : available;
+  const float left =
+      twoColumns ? std::floor((available - gap) * 0.5f) : available;
   const float right = twoColumns ? available - gap - left : available;
 
   UI::beginAutoHeightCard("youth_development_list", LOC("YOUTH_CARD_PROGRESS"),
                           left);
   if (development_rows.empty())
-    UI::emptyState(LOC("YOUTH_SQUAD_EMPTY_TITLE"), LOC("YOUTH_SQUAD_EMPTY_BODY"));
+    UI::emptyState(LOC("YOUTH_SQUAD_EMPTY_TITLE"),
+                   LOC("YOUTH_SQUAD_EMPTY_BODY"));
   else
     renderTable("development", development_rows, ListKind::DEVELOPMENT);
   UI::endCard();
@@ -870,20 +874,23 @@ void YouthScene::renderDevelopment()
   const auto chosen =
       std::ranges::find(development_rows, chart_player,
                         [](const Row& row) { return row.view.id; });
-  UI::beginAutoHeightCard(
-      "youth_development_chart",
-      chosen != development_rows.end() ? chosen->view.name.c_str()
-                                       : LOC("YOUTH_CARD_CHART"),
-      right);
+  UI::beginAutoHeightCard("youth_development_chart",
+                          chosen != development_rows.end()
+                              ? chosen->view.name.c_str()
+                              : LOC("YOUTH_CARD_CHART"),
+                          right);
   if (chosen == development_rows.end())
-    UI::emptyState(LOC("YOUTH_CHART_EMPTY_TITLE"), LOC("YOUTH_CHART_EMPTY_BODY"));
+    UI::emptyState(LOC("YOUTH_CHART_EMPTY_TITLE"),
+                   LOC("YOUTH_CHART_EMPTY_BODY"));
   else
     renderChart(*chosen, ImGui::GetContentRegionAvail().x);
   UI::endCard();
 
-  UI::beginAutoHeightCard("youth_improvers", LOC("YOUTH_CARD_IMPROVERS"), right);
+  UI::beginAutoHeightCard("youth_improvers", LOC("YOUTH_CARD_IMPROVERS"),
+                          right);
   if (improvers.empty())
-    UI::emptyState(LOC("YOUTH_CHART_EMPTY_TITLE"), LOC("YOUTH_CHART_EMPTY_BODY"));
+    UI::emptyState(LOC("YOUTH_CHART_EMPTY_TITLE"),
+                   LOC("YOUTH_CHART_EMPTY_BODY"));
   else
     UI::barChart("improvers", improvers, ImGui::GetContentRegionAvail().x,
                  KEY_WIDTH * Theme::scale());
@@ -899,7 +906,8 @@ void YouthScene::renderChart(const Row& row, float width)
   ImGui::TextColored(palette.muted, "%s", row.chart_caption.c_str());
   if (points.size() < 2)
   {
-    UI::emptyState(LOC("YOUTH_CHART_EMPTY_TITLE"), LOC("YOUTH_CHART_EMPTY_BODY"));
+    UI::emptyState(LOC("YOUTH_CHART_EMPTY_TITLE"),
+                   LOC("YOUTH_CHART_EMPTY_BODY"));
     return;
   }
   const float height = CHART_HEIGHT * scale;
@@ -909,8 +917,9 @@ void YouthScene::renderChart(const Row& row, float width)
   const float axis = ImGui::CalcTextSize("99").x + Theme::Space::S * scale;
   const float line_height = ImGui::GetTextLineHeight();
   const ImVec2 plot_min(origin.x + axis, origin.y + Theme::Space::XS * scale);
-  const ImVec2 plot_max(origin.x + width - Theme::Space::XS * scale,
-                        origin.y + height - line_height - Theme::Space::XS * scale);
+  const ImVec2 plot_max(
+      origin.x + width - Theme::Space::XS * scale,
+      origin.y + height - line_height - Theme::Space::XS * scale);
 
   // Scale: the ability line and the scouted potential range.
   float low = row.view.estimate.potential_low;
@@ -924,15 +933,16 @@ void YouthScene::renderChart(const Row& row, float width)
   high = std::ceil(high / 5.0f) * 5.0f + 5.0f;
   const auto y_of = [&](float value)
   {
-    return plot_max.y - (value - low) / (high - low) * (plot_max.y - plot_min.y);
+    return plot_max.y -
+           (value - low) / (high - low) * (plot_max.y - plot_min.y);
   };
   const std::int32_t first_day = points.front().day;
   const auto span_days =
       static_cast<float>(std::max(1, points.back().day - first_day));
   const auto x_of = [&](std::int32_t day)
   {
-    return plot_min.x +
-           static_cast<float>(day - first_day) / span_days * (plot_max.x - plot_min.x);
+    return plot_min.x + static_cast<float>(day - first_day) / span_days *
+                            (plot_max.x - plot_min.x);
   };
 
   drawList->AddRectFilled(
@@ -951,9 +961,10 @@ void YouthScene::renderChart(const Row& row, float width)
                       Theme::toU32(palette.faint), label);
   }
   for (std::size_t i = 1; i < points.size(); ++i)
-    drawList->AddLine(ImVec2(x_of(points[i - 1].day), y_of(points[i - 1].overall)),
-                      ImVec2(x_of(points[i].day), y_of(points[i].overall)),
-                      Theme::toU32(palette.text), 2.0f * scale);
+    drawList->AddLine(
+        ImVec2(x_of(points[i - 1].day), y_of(points[i - 1].overall)),
+        ImVec2(x_of(points[i].day), y_of(points[i].overall)),
+        Theme::toU32(palette.text), 2.0f * scale);
   for (const YouthProgressPoint& point : points)
     drawList->AddCircleFilled(ImVec2(x_of(point.day), y_of(point.overall)),
                               3.0f * scale, Theme::toU32(palette.text));

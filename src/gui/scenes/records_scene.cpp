@@ -74,12 +74,12 @@ void RecordsScene::refresh()
       case RecordKind::BiggestDefeat:
       case RecordKind::HighestScoringMatch:
         line.value = score;
-        line.holder =
-            league ? fmt::sprintf(LOC("RECORDS_MATCH_LEAGUE"), club.c_str(),
-                                  opponent.c_str())
-                   : fmt::sprintf(LOC(entry.home ? "RECORDS_MATCH_HOME"
-                                                 : "RECORDS_MATCH_AWAY"),
-                                  opponent.c_str());
+        line.holder = league
+                          ? fmt::sprintf(LOC("RECORDS_MATCH_LEAGUE"),
+                                         club.c_str(), opponent.c_str())
+                          : fmt::sprintf(LOC(entry.home ? "RECORDS_MATCH_HOME"
+                                                        : "RECORDS_MATCH_AWAY"),
+                                         opponent.c_str());
         line.when = Format::date(entry.date);
         break;
       case RecordKind::HighestAttendance:
@@ -103,8 +103,8 @@ void RecordsScene::refresh()
       case RecordKind::TopScorerSeason:
         line.value = fmt::sprintf(LOC("RECORDS_VALUE_GOALS"),
                                   static_cast<int>(entry.value));
-        line.holder = league ? std::format("{} ({})", entry.name, club)
-                             : entry.name;
+        line.holder =
+            league ? std::format("{} ({})", entry.name, club) : entry.name;
         line.player_id = known(entry.player_id);
         line.when = seasonLabel(entry.season_year);
         break;
@@ -138,7 +138,8 @@ void RecordsScene::refresh()
     line.player_id = known(totals.player_id);
     line.name = totals.name;
     line.span = yearSpan(totals.first_year, totals.last_year);
-    line.figure = std::to_string(goals_first ? totals.goals : totals.appearances);
+    line.figure =
+        std::to_string(goals_first ? totals.goals : totals.appearances);
     const int count = goals_first ? totals.appearances : totals.goals;
     line.detail = fmt::sprintf(
         Format::plural(goals_first ? "RECORDS_IN_APPS" : "RECORDS_WITH_GOALS",
@@ -159,15 +160,15 @@ void RecordsScene::refresh()
   {
     PlayerLine line = playerLine(legend.totals, false);
     line.figure = std::to_string(legend.totals.appearances);
-    line.detail = fmt::sprintf(LOC("RECORDS_LEGEND_LINE"),
-                               legend.totals.goals, legend.honours);
+    line.detail = fmt::sprintf(LOC("RECORDS_LEGEND_LINE"), legend.totals.goals,
+                               legend.honours);
     legends.push_back(std::move(line));
   }
   all_time.clear();
   for (const AllTimeRow& row : controller.getAllTimeTable(league_id))
     all_time.push_back({row.team_id, teamName(controller, row.team_id),
-                        row.played, row.won, row.drawn, row.lost,
-                        row.goals_for, row.goals_against, row.points});
+                        row.played, row.won, row.drawn, row.lost, row.goals_for,
+                        row.goals_against, row.points});
 }
 
 void RecordsScene::renderContent()
@@ -177,13 +178,14 @@ void RecordsScene::renderContent()
                         LOC("RECORDS_TAB_ALL_TIME"),
                         LOC("RECORDS_TAB_HALL_OF_FAME")};
   int tab = static_cast<int>(active_tab);
-  if (UI::segmented("##records_tab", tab, tabs,
-                    std::min(620.0f * Theme::scale(),
-                             ImGui::GetContentRegionAvail().x)))
+  if (UI::segmented(
+          "##records_tab", tab, tabs,
+          std::min(620.0f * Theme::scale(), ImGui::GetContentRegionAvail().x)))
     active_tab = static_cast<Tab>(tab);
   const char* awards = LOC("RECORDS_OPEN_AWARDS");
   UI::sameLineIfFits(UI::buttonWidth(awards));
-  if (UI::secondaryButton(awards)) Navigation::open(guiView, NavSection::AWARDS);
+  if (UI::secondaryButton(awards))
+    Navigation::open(guiView, NavSection::AWARDS);
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
 
   const float available = ImGui::GetContentRegionAvail().x;
@@ -287,7 +289,8 @@ void RecordsScene::renderRecords(const char* id, const char* title,
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 140.0f);
   if (UI::beginResponsiveTable(
-          id, columns, mask, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
+          id, columns, mask,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
   {
     for (size_t index = 0; index < lines.size(); ++index)
     {
@@ -343,7 +346,8 @@ void RecordsScene::renderPlayers(const char* id, const char* title,
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 130.0f);
   if (UI::beginResponsiveTable(
-          id, columns, mask, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
+          id, columns, mask,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
   {
     for (size_t index = 0; index < lines.size(); ++index)
     {

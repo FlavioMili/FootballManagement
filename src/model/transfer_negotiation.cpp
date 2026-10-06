@@ -452,9 +452,9 @@ std::uint32_t agentAsk(const PlayerContext& context,
   const double ask =
       static_cast<double>(demand.weekly_wage) * (1.0 + margin * remaining);
   // Small wages round to tens, so every softer ask is visibly lower.
-  const double step =
-      demand.weekly_wage < 100 * N::AGENT_ASK_ROUNDING ? N::AGENT_ASK_ROUNDING / 10.0
-                                                       : N::AGENT_ASK_ROUNDING;
+  const double step = demand.weekly_wage < 100 * N::AGENT_ASK_ROUNDING
+                          ? N::AGENT_ASK_ROUNDING / 10.0
+                          : N::AGENT_ASK_ROUNDING;
   return std::max(demand.weekly_wage,
                   static_cast<std::uint32_t>(std::ceil(ask / step) * step));
 }
@@ -725,9 +725,8 @@ GameDateValue contractEndDate(const GameDateValue& date,
 {
   const GameDateValue end = seasonEndDate(date);
   return GameDateValue(
-      static_cast<std::uint16_t>(end.year +
-                                 std::max(1, static_cast<int>(contract_years)) -
-                                 1),
+      static_cast<std::uint16_t>(
+          end.year + std::max(1, static_cast<int>(contract_years)) - 1),
       MONTH_JUNE, SEASON_END_DAY);
 }
 
@@ -869,7 +868,8 @@ SquadFit squadFit(const SquadNeeds& needs, PlayerRole role, float overall)
           ? needs.squad_level - TransferTuning::Market::SHORTAGE_LEVEL_MARGIN
           : need->weakest_starter;
   fit.gain = overall - reference;
-  fit.score = F::UPGRADE_WEIGHT * std::clamp(fit.gain, F::MIN_GAIN, F::MAX_GAIN);
+  fit.score =
+      F::UPGRADE_WEIGHT * std::clamp(fit.gain, F::MIN_GAIN, F::MAX_GAIN);
   if (missing_starter)
   {
     fit.score += F::MISSING_STARTER_BONUS;

@@ -57,7 +57,10 @@ class GameFlowTest_GUIFlowLifecycle_Test
     return view.getActiveScene();
   }
   static PlayerID selected(const MedicalScene& scene) { return scene.selected; }
-  static bool chartEmpty(const MedicalScene& scene) { return scene.chart_empty; }
+  static bool chartEmpty(const MedicalScene& scene)
+  {
+    return scene.chart_empty;
+  }
   static void select(MedicalScene& scene, PlayerID id) { scene.select(id); }
   static void setFlag(MedicalScene& scene, std::uint8_t flag)
   {

@@ -37,8 +37,8 @@ GameController::getReserveCandidates() const
   if (!team || !game) return views;
   const TeamID team_id = team->get().getId();
   const YouthAcademy& academy = game->getWorld().getYouth();
-  const auto addView = [&](const Player& player, YouthStatus status,
-                           YouthContract contract)
+  const auto addView =
+      [&](const Player& player, YouthStatus status, YouthContract contract)
   {
     YouthPlayerView view;
     view.id = player.getId();
@@ -185,12 +185,9 @@ GameController::getNationalVacancies() const
       view.stage = application->stage;
     views.push_back(view);
   }
-  std::ranges::sort(views,
-                    [](const NationalVacancyView& a, const NationalVacancyView& b)
-                    {
-                      return a.chance != b.chance ? a.chance > b.chance
-                                                  : a.rank < b.rank;
-                    });
+  std::ranges::sort(
+      views, [](const NationalVacancyView& a, const NationalVacancyView& b)
+      { return a.chance != b.chance ? a.chance > b.chance : a.rank < b.rank; });
   return views;
 }
 
@@ -202,7 +199,8 @@ NationalApplyResult GameController::applyForNationalJob(Language nation)
                                       hasSelectedTeam());
 }
 
-const std::vector<NationalJobOffer>& GameController::getNationalJobOffers() const
+const std::vector<NationalJobOffer>& GameController::getNationalJobOffers()
+    const
 {
   static const std::vector<NationalJobOffer> NONE;
   return game ? game->getNationalJob().getOffers() : NONE;
@@ -259,7 +257,8 @@ GameController::CallUpView GameController::getCallUpView() const
   {
     // The next window's squad is announced a week before it starts.
     const std::uint16_t season = SeasonCalendar::seasonStartYear(today);
-    for (const std::uint16_t year : {season, static_cast<std::uint16_t>(season + 1)})
+    for (const std::uint16_t year :
+         {season, static_cast<std::uint16_t>(season + 1)})
     {
       for (const SeasonCalendar::InternationalWindow& window :
            SeasonCalendar::internationalWindows(year))

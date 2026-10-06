@@ -8,10 +8,9 @@
 
 #pragma once
 
-#include <nlohmann/json.hpp>
-
 #include <cstdint>
 #include <map>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <span>
 #include <string>

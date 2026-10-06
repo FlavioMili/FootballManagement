@@ -618,9 +618,10 @@ class MatchEngine
   void setStrategy(bool homeTeam, const Strategy& strategy);
   /**
    * A touchline shout: a temporary nudge to the side's sliders or shot
-   * appetite that fades out over MatchTuning::Touchline::SHOUT_DURATION_SECONDS.
-   * A new shout replaces the previous one; shouts in quick succession have
-   * less effect (see MatchTuning::Touchline::SHOUT_REPEAT_FADE_SECONDS).
+   * appetite that fades out over
+   * MatchTuning::Touchline::SHOUT_DURATION_SECONDS. A new shout replaces the
+   * previous one; shouts in quick succession have less effect (see
+   * MatchTuning::Touchline::SHOUT_REPEAT_FADE_SECONDS).
    */
   void applyShout(bool homeTeam, MatchShout shout);
   /** Remaining strength of the side's shout in [0, 1] (0 when none). */
@@ -1297,8 +1298,8 @@ class MatchEngine
   /** The man this player marks when he is under a tight-marking order. */
   const MatchPlayer* tightMarkTarget(const MatchPlayer& marker) const;
   /** Moves a marker's target tight and goal-side of his man. */
-  Vector2F tightMarkPoint(const MatchPlayer& marker,
-                          const MatchPlayer& target, Vector2F current) const;
+  Vector2F tightMarkPoint(const MatchPlayer& marker, const MatchPlayer& target,
+                          Vector2F current) const;
   /** Pass utility lost to a tight marker standing next to the receiver. */
   float tightMarkPenalty(const MatchPlayer& receiver) const;
   /** Pass utility added by the passer's and the receiver's roles. */
@@ -1370,7 +1371,8 @@ class MatchEngine
   void integrateBall(float dt);
   void updateBallInNet(float dt);
   void resolvePossessionAndActions(float dt);
-  /** Moves the dribbled ball with its carrier; false if a heavy touch lost it. */
+  /** Moves the dribbled ball with its carrier; false if a heavy touch lost it.
+   */
   bool updateDribble(MatchPlayer& carrier, float dt);
   /** Share of the current touch the ball is still away from the foot. */
   float dribbleExposureShare() const;
@@ -1378,8 +1380,7 @@ class MatchEngine
   bool attemptTakeOn(MatchPlayer& carrier, MatchPlayer& defender);
   /** Swept first-touch resolution over the last ball sub-step. */
   void resolveLooseBall();
-  void attemptTackle(MatchPlayer& carrier, MatchPlayer& defender,
-                     bool sliding);
+  void attemptTackle(MatchPlayer& carrier, MatchPlayer& defender, bool sliding);
   void decideAction(MatchPlayer& carrier);
   /** Applies input records due at the current step. */
   void applyDueInputs();
@@ -1416,15 +1417,14 @@ class MatchEngine
                            float& spread) const;
   /** Movement target of the controlled player with the stick idle (meeting
    * a pass to him, or the goal-side spot while jockeying); nullopt to stand. */
-  std::optional<Vector2F> controlledAssistTarget(const MatchPlayer& player)
-      const;
+  std::optional<Vector2F> controlledAssistTarget(
+      const MatchPlayer& player) const;
   /** Seconds a team-mate needs to get to the ball (see
    * suggestActivePlayer). */
   float switchSeconds(const MatchPlayer& candidate) const;
   /** Acceleration, braking, lateral limit, position and facing update. */
-  void stepKinematics(MatchPlayer& player, Vector2F desired,
-                      float desiredSpeed, float topSpeed, float fatigue,
-                      float dt);
+  void stepKinematics(MatchPlayer& player, Vector2F desired, float desiredSpeed,
+                      float topSpeed, float fatigue, float dt);
   void passBall(MatchPlayer& passer, const PassOption& option,
                 bool forceLofted = false);
   void takeShot(MatchPlayer& shooter, float forcedXG = -1.0f,

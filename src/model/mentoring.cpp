@@ -76,10 +76,9 @@ float influence(int mentor_age)
 float weeklyShift(float mentor_value, float mentee_value, float receptiveness,
                   float influence, float already_shifted)
 {
-  const float raw =
-      std::clamp(WEEKLY_RATE * receptiveness * influence *
-                     (mentor_value - mentee_value),
-                 -MAX_WEEKLY_STEP, MAX_WEEKLY_STEP);
+  const float raw = std::clamp(
+      WEEKLY_RATE * receptiveness * influence * (mentor_value - mentee_value),
+      -MAX_WEEKLY_STEP, MAX_WEEKLY_STEP);
   const float total =
       std::clamp(already_shifted + raw, -MAX_TOTAL_SHIFT, MAX_TOTAL_SHIFT);
   return total - already_shifted;

@@ -66,8 +66,7 @@ const ClubIdentity* findClubIdentity(TeamID team);
 /** Converts a 0xRRGGBB colour to an opaque `IM_COL32`. */
 constexpr ImU32 kitColorFromRgb(std::uint32_t rgb)
 {
-  return IM_COL32((rgb >> 16U) & 0xFFU, (rgb >> 8U) & 0xFFU, rgb & 0xFFU,
-                  255);
+  return IM_COL32((rgb >> 16U) & 0xFFU, (rgb >> 8U) & 0xFFU, rgb & 0xFFU, 255);
 }
 
 /** Perceptual ("redmean") RGB distance between two packed colours. */
@@ -127,11 +126,10 @@ constexpr ImU32 mixColor256(ImU32 first, ImU32 second, std::uint32_t t256)
   const std::uint32_t evenChannels =
       (((first & 0x00FF00FFU) * keep + (second & 0x00FF00FFU) * t256) >> 8U) &
       0x00FF00FFU;
-  const std::uint32_t oddChannels =
-      ((((first >> 8U) & 0x00FF00FFU) * keep +
-        ((second >> 8U) & 0x00FF00FFU) * t256) >>
-       8U) &
-      0x00FF00FFU;
+  const std::uint32_t oddChannels = ((((first >> 8U) & 0x00FF00FFU) * keep +
+                                      ((second >> 8U) & 0x00FF00FFU) * t256) >>
+                                     8U) &
+                                    0x00FF00FFU;
   return evenChannels | (oddChannels << 8U);
 }
 
@@ -139,8 +137,7 @@ constexpr ImU32 shadeColor256(ImU32 color, std::uint32_t factor256)
 {
   const auto channel = [&](int shift)
   {
-    const std::uint32_t value =
-        (((color >> shift) & 0xFFU) * factor256) >> 8U;
+    const std::uint32_t value = (((color >> shift) & 0xFFU) * factor256) >> 8U;
     return (value > 255U ? 255U : value) << shift;
   };
   return channel(IM_COL32_R_SHIFT) | channel(IM_COL32_G_SHIFT) |

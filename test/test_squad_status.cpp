@@ -78,8 +78,8 @@ TEST(SquadStatusTest, StatusesMapOntoPlayingTimeExpectations)
   EXPECT_EQ(toSquadRole(SquadStatus::Prospect), SquadRole::Fringe);
   for (std::size_t status = 0; status < SQUAD_STATUS_COUNT; ++status)
   {
-    EXPECT_NE(std::string(SquadStatusModel::nameKey(
-                  static_cast<SquadStatus>(status))),
+    EXPECT_NE(std::string(
+                  SquadStatusModel::nameKey(static_cast<SquadStatus>(status))),
               "");
   }
 }
@@ -173,9 +173,9 @@ TEST(SquadStatusTest, ControllerValidatesAndStatusesSurviveSaveAndLoad)
   const PlayerID foreign =
       controller->getPlayersForTeam(other).front().get().getId();
   EXPECT_FALSE(controller->setSquadStatus(foreign, SquadStatus::Star));
-  const auto veteran = std::ranges::find_if(
-      squad, [&](PlayerID id)
-      { return playerOf(*controller, id).getAge() > 21; });
+  const auto veteran =
+      std::ranges::find_if(squad, [&](PlayerID id)
+                           { return playerOf(*controller, id).getAge() > 21; });
   ASSERT_NE(veteran, squad.end());
   EXPECT_FALSE(controller->setSquadStatus(*veteran, SquadStatus::Prospect));
 
@@ -203,18 +203,23 @@ TEST(SquadStatusTest, DemotingTheBestPlayerLowersHisMorale)
   const PlayerID best = squadByOverall(*baseline).front();
   ASSERT_EQ(best, squadByOverall(*demoted).front());
   // He has been playing like a key player so far in both careers.
-  baseline->getGameData()->getPlayers().at(best).mutableDynamics().playing_share =
-      0.85f;
-  demoted->getGameData()->getPlayers().at(best).mutableDynamics().playing_share =
-      0.85f;
+  baseline->getGameData()
+      ->getPlayers()
+      .at(best)
+      .mutableDynamics()
+      .playing_share = 0.85f;
+  demoted->getGameData()
+      ->getPlayers()
+      .at(best)
+      .mutableDynamics()
+      .playing_share = 0.85f;
   ASSERT_TRUE(demoted->setSquadStatus(best, SquadStatus::Backup));
   for (int day = 0; day < 28; ++day)
   {
     baseline->advanceDay();
     demoted->advanceDay();
   }
-  const float kept =
-      playerOf(*baseline, best).getDynamics().morale;
+  const float kept = playerOf(*baseline, best).getDynamics().morale;
   const float hurt = playerOf(*demoted, best).getDynamics().morale;
   EXPECT_LT(hurt, kept - 1.0f);
 }

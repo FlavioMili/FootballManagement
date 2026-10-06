@@ -103,7 +103,8 @@ void SeasonReviewDialog::open(const GameController& controller,
   tiles.emplace_back(LOC("SEASON_REVIEW_POSITION"),
                      fmt::sprintf(LOC("SEASON_REVIEW_POSITION_VALUE"),
                                   review.position, review.league_size));
-  tiles.emplace_back(LOC("SEASON_REVIEW_POINTS"), std::to_string(review.points));
+  tiles.emplace_back(LOC("SEASON_REVIEW_POINTS"),
+                     std::to_string(review.points));
   tiles.emplace_back(LOC("SEASON_REVIEW_RECORD"),
                      fmt::sprintf(LOC("SEASON_REVIEW_RECORD_VALUE"), review.won,
                                   review.drawn, review.lost));
@@ -112,11 +113,11 @@ void SeasonReviewDialog::open(const GameController& controller,
                                   review.goals_for, review.goals_against));
 
   highlights.clear();
-  highlights.push_back(
-      review.top_scorer.empty()
-          ? std::string(LOC("SEASON_REVIEW_NO_SCORER"))
-          : fmt::sprintf(LOC("SEASON_REVIEW_TOP_SCORER"),
-                         review.top_scorer.c_str(), review.top_scorer_goals));
+  highlights.push_back(review.top_scorer.empty()
+                           ? std::string(LOC("SEASON_REVIEW_NO_SCORER"))
+                           : fmt::sprintf(LOC("SEASON_REVIEW_TOP_SCORER"),
+                                          review.top_scorer.c_str(),
+                                          review.top_scorer_goals));
   if (review.promoted || review.relegated)
     highlights.push_back(
         fmt::sprintf(LOC(review.promoted ? "SEASON_REVIEW_PROMOTED_TO"
@@ -130,14 +131,15 @@ void SeasonReviewDialog::open(const GameController& controller,
         fmt::sprintf(LOC("SEASON_REVIEW_CONTINENTAL"), LOC(rules->name_key)));
 
   verdict = LOC(SeasonReviewModel::verdictKey(outcome));
-  verdict_color = outcome == SeasonVerdict::Sacked || outcome == SeasonVerdict::Warned
-                      ? palette.negative
-                  : outcome == SeasonVerdict::Satisfied ? palette.text
-                                                        : palette.positive;
-  confidence = fmt::sprintf(
-      LOC("SEASON_REVIEW_CONFIDENCE"),
-      static_cast<int>(std::lround(review.result.confidence)),
-      static_cast<int>(std::lround(review.confidence_before)));
+  verdict_color =
+      outcome == SeasonVerdict::Sacked || outcome == SeasonVerdict::Warned
+          ? palette.negative
+      : outcome == SeasonVerdict::Satisfied ? palette.text
+                                            : palette.positive;
+  confidence =
+      fmt::sprintf(LOC("SEASON_REVIEW_CONFIDENCE"),
+                   static_cast<int>(std::lround(review.result.confidence)),
+                   static_cast<int>(std::lround(review.confidence_before)));
 
   const auto graded = [](const std::string& target, ObjectiveGrade grade)
   {
@@ -145,11 +147,10 @@ void SeasonReviewDialog::open(const GameController& controller,
                         LOC(SeasonReviewModel::gradeKey(grade)));
   };
   grades.clear();
-  grades.push_back(
-      {LOC("SEASON_REVIEW_OBJ_LEAGUE"),
-       graded(LOC(BoardModel::objectiveKey(review.objective)),
-              review.result.league),
-       gradeColor(review.result.league)});
+  grades.push_back({LOC("SEASON_REVIEW_OBJ_LEAGUE"),
+                    graded(LOC(BoardModel::objectiveKey(review.objective)),
+                           review.result.league),
+                    gradeColor(review.result.league)});
   grades.push_back(
       {LOC("SEASON_REVIEW_OBJ_CUP"),
        graded(LOC(BoardModel::cupObjectiveKey(review.cup_objective)),
@@ -160,18 +161,18 @@ void SeasonReviewDialog::open(const GameController& controller,
        graded(LOC(BoardModel::financeObjectiveKey(review.finance_objective)),
               review.result.finances),
        gradeColor(review.result.finances)});
-  grades.push_back(
-      {LOC("SEASON_REVIEW_OBJ_YOUTH"),
-       graded(fmt::sprintf(LOC("SEASON_REVIEW_YOUTH_VALUE"),
-                           youthTarget(review.youth_target),
-                           review.young_regulars),
-              review.result.youth),
-       gradeColor(review.result.youth)});
+  grades.push_back({LOC("SEASON_REVIEW_OBJ_YOUTH"),
+                    graded(fmt::sprintf(LOC("SEASON_REVIEW_YOUTH_VALUE"),
+                                        youthTarget(review.youth_target),
+                                        review.young_regulars),
+                           review.result.youth),
+                    gradeColor(review.result.youth)});
 
   money.clear();
   money.emplace_back(LOC("SEASON_REVIEW_PRIZE"),
                      Format::money(review.prize_money));
-  money.emplace_back(LOC("SEASON_REVIEW_BALANCE"), Format::money(review.balance));
+  money.emplace_back(LOC("SEASON_REVIEW_BALANCE"),
+                     Format::money(review.balance));
 
   next_objectives.clear();
   farewell.clear();
@@ -182,8 +183,9 @@ void SeasonReviewDialog::open(const GameController& controller,
         fmt::sprintf(LOC("SEASON_REVIEW_NEXT_LEAGUE"),
                      LOC(BoardModel::objectiveKey(*review.next_objective)),
                      review.next_target));
-    next_objectives.emplace_back(LOC("SEASON_REVIEW_OBJ_CUP"),
-                                 LOC(BoardModel::cupObjectiveKey(review.next_cup)));
+    next_objectives.emplace_back(
+        LOC("SEASON_REVIEW_OBJ_CUP"),
+        LOC(BoardModel::cupObjectiveKey(review.next_cup)));
     next_objectives.emplace_back(
         LOC("SEASON_REVIEW_OBJ_FINANCES"),
         LOC(BoardModel::financeObjectiveKey(review.next_finances)));

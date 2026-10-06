@@ -67,22 +67,23 @@ class SyntheticWorld : public ::testing::Test
     ASSERT_TRUE(LanguageManager::instance().loadLanguage(Language::EN));
     gamedata.addLeague(1, League(1, "Top League", {1, 2, 3, 4}));
     gamedata.addLeague(2, League(2, "Second League", {5, 6, 7, 8}, 1));
-    const std::array<const char*, 8> names = {"Acaya",   "Foggia", "Lecce",
-                                              "Bari",    "Taranto", "Brindisi",
-                                              "Cerignola", "Monopoli"};
+    const std::array<const char*, 8> names = {
+        "Acaya",   "Foggia",   "Lecce",     "Bari",
+        "Taranto", "Brindisi", "Cerignola", "Monopoli"};
     for (TeamID id = 1; id <= 8; ++id)
     {
       Team team(id, id <= 4 ? 1 : 2, names[id - 1U], 1'000'000);
       ClubProfile profile;
-      profile.reputation = static_cast<std::uint8_t>(id <= 4 ? 100 - id * 15 : 40);
+      profile.reputation =
+          static_cast<std::uint8_t>(id <= 4 ? 100 - id * 15 : 40);
       team.setProfile(profile);
       gamedata.addTeam(id, team);
     }
     for (PlayerID id = 1; id <= 4; ++id)
       gamedata.addPlayer(
-          id, Player(id, static_cast<TeamID>(id), "Nico", "Player" + std::to_string(id),
-                     PlayerRole::ST, Language::IT, 10'000, 0, 24, 3, 180,
-                     Foot::Right, {}));
+          id, Player(id, static_cast<TeamID>(id), "Nico",
+                     "Player" + std::to_string(id), PlayerRole::ST,
+                     Language::IT, 10'000, 0, 24, 3, 180, Foot::Right, {}));
   }
 
   GameData gamedata;
@@ -98,12 +99,14 @@ std::string describe(const std::vector<NewsItem>& items)
 }
 }  // namespace
 
-// ---- News feed ---------------------------------------------------------------
+// ---- News feed
+// ---------------------------------------------------------------
 
 TEST_F(SyntheticWorld, HeadlinesComeFromSavedFactsAndCiteTheirEntities)
 {
   std::vector<TransferRecord> transfers = {
-      {1, GameDateValue(2025, 8, 10), 2, 1, 20'000'000, TransferKind::Permanent},
+      {1, GameDateValue(2025, 8, 10), 2, 1, 20'000'000,
+       TransferKind::Permanent},
       // A small deal between two other clubs is not news...
       {2, GameDateValue(2025, 8, 11), 2, 4, 900'000, TransferKind::Permanent},
       // ...but every signing of the managed club is.
@@ -127,7 +130,8 @@ TEST_F(SyntheticWorld, HeadlinesComeFromSavedFactsAndCiteTheirEntities)
   veteran.team_id = 4;
   veteran.appointed = GameDateValue(2019, 7, 1);  // Before the save began.
   std::vector<AiManager> managers = {appointed, veteran};
-  std::vector<Vacancy> vacancies = {{6, GameDateValue(2025, 12, 1), GameDateValue(2026, 1, 1)}};
+  std::vector<Vacancy> vacancies = {
+      {6, GameDateValue(2025, 12, 1), GameDateValue(2026, 1, 1)}};
   InboxMessage dismissal;
   dismissal.date = GameDateValue(2025, 11, 2);
   dismissal.title_key = "INBOX_MANAGER_NEWS_TITLE";
@@ -176,8 +180,8 @@ TEST_F(SyntheticWorld, HeadlinesComeFromSavedFactsAndCiteTheirEntities)
   sources.managed_team = 3;
   sources.world_start = GameDateValue(2024, 7, 1);
 
-  const auto items =
-      NewsFeed::build(sources, GameDateValue(2025, 7, 1), GameDateValue(2026, 6, 30));
+  const auto items = NewsFeed::build(sources, GameDateValue(2025, 7, 1),
+                                     GameDateValue(2026, 6, 30));
   ASSERT_EQ(items.size(), 10U) << describe(items);
   for (const NewsItem& item : items)
   {
@@ -214,8 +218,8 @@ TEST_F(SyntheticWorld, HeadlinesComeFromSavedFactsAndCiteTheirEntities)
   EXPECT_NE(sacked, items.end());
 
   // Same facts, same stories in the same order.
-  const auto again =
-      NewsFeed::build(sources, GameDateValue(2025, 7, 1), GameDateValue(2026, 6, 30));
+  const auto again = NewsFeed::build(sources, GameDateValue(2025, 7, 1),
+                                     GameDateValue(2026, 6, 30));
   EXPECT_EQ(describe(items), describe(again));
 
   // Filters: everything here belongs to the country of the top league.
@@ -233,8 +237,8 @@ TEST_F(SyntheticWorld, HeadlinesComeFromSavedFactsAndCiteTheirEntities)
     EXPECT_EQ(items[index].kind, NewsKind::Manager);
 
   // A narrower window keeps only what happened inside it.
-  const auto autumn =
-      NewsFeed::build(sources, GameDateValue(2025, 10, 1), GameDateValue(2025, 11, 30));
+  const auto autumn = NewsFeed::build(sources, GameDateValue(2025, 10, 1),
+                                      GameDateValue(2025, 11, 30));
   for (const NewsItem& item : autumn)
   {
     EXPECT_FALSE(item.date < GameDateValue(2025, 10, 1));
@@ -249,7 +253,8 @@ TEST_F(SyntheticWorld, ResultsGiveUpsetsAndTheTitleRace)
   // Acaya (85) lose at home to Bari (40); Foggia lead Lecce by a point with
   // four games to go.
   const auto play = [&calendar](TeamID home, TeamID away, std::uint8_t day,
-                                std::uint8_t home_goals, std::uint8_t away_goals)
+                                std::uint8_t home_goals,
+                                std::uint8_t away_goals)
   {
     Match match(home, away, GameDateValue(2025, 8, day), MatchType::LEAGUE, 1,
                 static_cast<std::uint8_t>(day / 7));
@@ -265,8 +270,8 @@ TEST_F(SyntheticWorld, ResultsGiveUpsetsAndTheTitleRace)
   sources.gamedata = &gamedata;
   sources.calendar = &calendar;
   sources.world_start = GameDateValue(2025, 7, 1);
-  const auto items =
-      NewsFeed::build(sources, GameDateValue(2025, 7, 1), GameDateValue(2025, 8, 31));
+  const auto items = NewsFeed::build(sources, GameDateValue(2025, 7, 1),
+                                     GameDateValue(2025, 8, 31));
   const auto upset = std::ranges::find(items, NewsKind::Upset, &NewsItem::kind);
   ASSERT_NE(upset, items.end()) << describe(items);
   EXPECT_EQ(upset->team_id, 4U);
@@ -290,7 +295,8 @@ TEST_F(SyntheticWorld, ResultsGiveUpsetsAndTheTitleRace)
 TEST(NewsFeedTest, HeadlineVariantDependsOnlyOnTheFacts)
 {
   const GameDateValue date(2025, 9, 14);
-  const std::size_t first = NewsFeed::variant(NewsKind::Transfer, 11, 4, date, 3);
+  const std::size_t first =
+      NewsFeed::variant(NewsKind::Transfer, 11, 4, date, 3);
   EXPECT_EQ(first, NewsFeed::variant(NewsKind::Transfer, 11, 4, date, 3));
   EXPECT_LT(first, 3U);
   EXPECT_EQ(NewsFeed::variant(NewsKind::Award, 1, 2, date, 1), 0U);
@@ -301,7 +307,8 @@ TEST(NewsFeedTest, HeadlineVariantDependsOnlyOnTheFacts)
   EXPECT_EQ(used.size(), 3U);
 }
 
-// ---- Draw ceremonies ---------------------------------------------------------
+// ---- Draw ceremonies
+// ---------------------------------------------------------
 
 TEST(DrawCeremonyTest, RevealTimingAndReducedMotion)
 {
@@ -317,7 +324,8 @@ TEST(DrawCeremonyTest, RevealTimingAndReducedMotion)
   EXPECT_EQ(DrawCeremonies::shownAt(0.0f, 1.0f, 0, false), 0U);
 }
 
-// ---- Career timeline ---------------------------------------------------------
+// ---- Career timeline
+// ---------------------------------------------------------
 
 TEST_F(SyntheticWorld, TimelineOfTwoClubsAndASacking)
 {
@@ -349,7 +357,8 @@ TEST_F(SyntheticWorld, TimelineOfTwoClubsAndASacking)
   // A signing at the first club, and one by another club (not his).
   std::vector<TransferRecord> transfers = {
       {2, GameDateValue(2025, 8, 20), 2, 4, 3'000'000, TransferKind::Permanent},
-      {3, GameDateValue(2025, 8, 21), 3, 1, 9'000'000, TransferKind::Permanent}};
+      {3, GameDateValue(2025, 8, 21), 3, 1, 9'000'000,
+       TransferKind::Permanent}};
 
   TimelineSources sources;
   sources.gamedata = &gamedata;
@@ -383,12 +392,14 @@ TEST_F(SyntheticWorld, TimelineOfTwoClubsAndASacking)
   // The journal: a club table and one section per season.
   const std::string markdown =
       CareerTimeline::toMarkdown(sources, entries, GameDateValue(2026, 4, 1));
-  EXPECT_NE(markdown.find("# Career journal of Flavio Coach"), std::string::npos);
+  EXPECT_NE(markdown.find("# Career journal of Flavio Coach"),
+            std::string::npos);
   EXPECT_NE(markdown.find("| Bari |"), std::string::npos);
   EXPECT_NE(markdown.find("| Taranto |"), std::string::npos);
   EXPECT_NE(markdown.find("## Season 2025/26"), std::string::npos);
   EXPECT_EQ(std::ranges::count(markdown, '\n') > 10, true);
-  EXPECT_EQ(CareerTimeline::journalFileName("Flàvio  O'Coach", GameDateValue(2026, 4, 1)),
+  EXPECT_EQ(CareerTimeline::journalFileName("Flàvio  O'Coach",
+                                            GameDateValue(2026, 4, 1)),
             "career-fl-vio-o-coach-2026-04-01.md");
 
   const auto folder = std::filesystem::temp_directory_path() /
@@ -402,7 +413,8 @@ TEST_F(SyntheticWorld, TimelineOfTwoClubsAndASacking)
   std::filesystem::remove_all(folder);
 }
 
-// ---- A seeded world ----------------------------------------------------------
+// ---- A seeded world
+// ----------------------------------------------------------
 
 TEST(NewsWorldTest, SeededSeasonFeedDrawsAndTimelineSurviveAReload)
 {
@@ -417,12 +429,12 @@ TEST(NewsWorldTest, SeededSeasonFeedDrawsAndTimelineSurviveAReload)
 
   // The cup's first round is drawn with the season's fixtures.
   const LeagueID root = Competitions::countryRoots(*gamedata).front();
-  const auto cup = DrawCeremonies::cupRound(game.getCalendar(), *gamedata, root,
-                                            1, 0);
+  const auto cup =
+      DrawCeremonies::cupRound(game.getCalendar(), *gamedata, root, 1, 0);
   ASSERT_TRUE(cup.has_value());
   EXPECT_EQ(cup->drawn_on, GameDateValue(2025, 7, 1));
-  const auto scheduled = Competitions::cupDraw(game.getCalendar(), *gamedata,
-                                               root, 1);
+  const auto scheduled =
+      Competitions::cupDraw(game.getCalendar(), *gamedata, root, 1);
   ASSERT_TRUE(scheduled.has_value());
   using Pair = std::tuple<TeamID, TeamID, GameDateValue>;
   std::vector<Pair> revealed;
@@ -439,21 +451,20 @@ TEST(NewsWorldTest, SeededSeasonFeedDrawsAndTimelineSurviveAReload)
   std::ranges::sort(fixtures);
   EXPECT_EQ(sorted, fixtures) << "every scheduled tie is revealed once";
   // Same draw, same order; a later round has not been drawn yet.
-  const auto replay = DrawCeremonies::cupRound(game.getCalendar(), *gamedata,
-                                               root, 1, 0);
+  const auto replay =
+      DrawCeremonies::cupRound(game.getCalendar(), *gamedata, root, 1, 0);
   ASSERT_TRUE(replay.has_value());
   for (std::size_t index = 0; index < cup->reveals.size(); ++index)
     EXPECT_EQ(replay->reveals[index].home_id, cup->reveals[index].home_id);
-  EXPECT_FALSE(DrawCeremonies::cupRound(game.getCalendar(), *gamedata, root,
-                                        2, 0)
-                   .has_value());
+  EXPECT_FALSE(
+      DrawCeremonies::cupRound(game.getCalendar(), *gamedata, root, 2, 0)
+          .has_value());
 
   // Six weeks: the transfer window, the league start and the continental
   // league-phase draw.
   for (int day = 0; day < 64; ++day) controller.advanceDay();
   const GameDateValue today = controller.getCurrentDate();
-  const std::size_t fixtures_before =
-      [&game]
+  const std::size_t fixtures_before = [&game]
   {
     std::size_t total = 0;
     for (const auto& [date, matches] : game.getCalendar().getFullCalendar())
@@ -467,8 +478,8 @@ TEST(NewsWorldTest, SeededSeasonFeedDrawsAndTimelineSurviveAReload)
   ASSERT_TRUE(continental.has_value());
   EXPECT_EQ(continental->kind, DrawCeremony::Kind::ContinentalLeaguePhase);
   EXPECT_NE(continental->focus_team, 0U);
-  const auto* season = controller.getContinental()->getSeason(
-      Continental::CHAMPIONS_CUP_ID);
+  const auto* season =
+      controller.getContinental()->getSeason(Continental::CHAMPIONS_CUP_ID);
   ASSERT_NE(season, nullptr);
   EXPECT_EQ(continental->reveals.size(), season->matches);
   for (std::size_t index = 1; index < continental->reveals.size(); ++index)
@@ -488,9 +499,9 @@ TEST(NewsWorldTest, SeededSeasonFeedDrawsAndTimelineSurviveAReload)
   message.title_key = "INBOX_CONT_DRAW_TITLE";
   message.args = {"@CONT_CHAMPIONS_CUP"};
   ASSERT_TRUE(DrawCeremonies::announcesDraw(message));
-  const auto from_message = DrawCeremonies::forMessage(
-      message, *controller.getContinental(), game.getCalendar(),
-      continental->focus_team);
+  const auto from_message =
+      DrawCeremonies::forMessage(message, *controller.getContinental(),
+                                 game.getCalendar(), continental->focus_team);
   ASSERT_TRUE(from_message.has_value());
   EXPECT_EQ(from_message->reveals.size(), continental->reveals.size());
   message.date = SeasonCalendar::addDays(message.date, 1);
@@ -539,8 +550,9 @@ TEST(NewsWorldTest, SeededSeasonFeedDrawsAndTimelineSurviveAReload)
       NewsFeed::forGame(*reloaded.getGame(), *reloaded.getGameData());
   EXPECT_EQ(describe(reloaded_feed), describe(feed));
   std::vector<RecordEntry> records;
-  const auto reloaded_timeline = CareerTimeline::build(CareerTimeline::sourcesFor(
-      *reloaded.getGame(), *reloaded.getGameData(), records));
+  const auto reloaded_timeline =
+      CareerTimeline::build(CareerTimeline::sourcesFor(
+          *reloaded.getGame(), *reloaded.getGameData(), records));
   ASSERT_EQ(reloaded_timeline.size(), timeline.size());
   for (std::size_t index = 0; index < timeline.size(); ++index)
     EXPECT_EQ(reloaded_timeline[index].text(), timeline[index].text());

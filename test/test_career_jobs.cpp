@@ -72,7 +72,8 @@ std::unique_ptr<GameController> makeNationsWorld(int slot)
 TeamID topClub(const GameController& controller, LeagueID league_id)
 {
   TeamID best = 0;
-  for (const TeamID id : controller.getLeagueById(league_id)->get().getTeamIDs())
+  for (const TeamID id :
+       controller.getLeagueById(league_id)->get().getTeamIDs())
   {
     if (best == 0 || controller.getTeamById(id)->get().getReputation() >
                          controller.getTeamById(best)->get().getReputation())
@@ -121,7 +122,8 @@ std::vector<PlayerID> seniorsAged(const GameData& gamedata, TeamID team,
 }
 
 /** A manager out of work with a national reputation. */
-void createInternationalManager(GameController& controller, Language nationality)
+void createInternationalManager(GameController& controller,
+                                Language nationality)
 {
   ManagerSetup setup;
   setup.first_name = "Livio";
@@ -159,7 +161,8 @@ std::uint32_t obtainNationalOffer(GameController& controller)
                 result == NationalApplyResult::AlreadyApplied)
         << NationalJobModel::applyResultKey(result);
   }
-  for (int day = 0; day < 12 && controller.getNationalJobOffers().empty(); ++day)
+  for (int day = 0; day < 12 && controller.getNationalJobOffers().empty();
+       ++day)
     controller.advanceDay();
   return controller.getNationalJobOffers().empty()
              ? 0
@@ -216,7 +219,8 @@ TEST(ReserveSquadTest, PlayersMoveBetweenFirstTeamU21AndU18)
   EXPECT_TRUE(controller->isAcademyPlayer(prospect));
   EXPECT_FALSE(listed(gamedata->getPlayersForTeam(managed), prospect));
   EXPECT_TRUE(listed(gamedata->getAcademyForTeam(managed), prospect));
-  EXPECT_EQ(controller->moveToReserves(prospect), YouthActionResult::NotAllowed);
+  EXPECT_EQ(controller->moveToReserves(prospect),
+            YouthActionResult::NotAllowed);
   ASSERT_EQ(controller->getYouthPlayers(YouthStatus::Reserve).size(), 1u);
 
   // Over-age places: three outfield players and one goalkeeper.
@@ -225,8 +229,9 @@ TEST(ReserveSquadTest, PlayersMoveBetweenFirstTeamU21AndU18)
   ASSERT_GE(outfield.size(), YouthModel::U21_OVERAGE_OUTFIELD + 1);
   for (std::size_t i = 0; i < YouthModel::U21_OVERAGE_OUTFIELD; ++i)
     EXPECT_EQ(controller->moveToReserves(outfield[i]), YouthActionResult::Ok);
-  EXPECT_EQ(controller->moveToReserves(outfield[YouthModel::U21_OVERAGE_OUTFIELD]),
-            YouthActionResult::OverageFull);
+  EXPECT_EQ(
+      controller->moveToReserves(outfield[YouthModel::U21_OVERAGE_OUTFIELD]),
+      YouthActionResult::OverageFull);
   const std::vector<PlayerID> keepers =
       seniorsAged(*gamedata, managed, YouthModel::U21_MAX_AGE + 1, 40, true);
   if (keepers.size() >= 2)
@@ -241,11 +246,13 @@ TEST(ReserveSquadTest, PlayersMoveBetweenFirstTeamU21AndU18)
   EXPECT_GT(overview.league_size, 20) << "one U21 league per country";
 
   // Back to the first team: the over-age place is free again.
-  ASSERT_EQ(controller->promoteReservePlayer(outfield[0]), YouthActionResult::Ok);
+  ASSERT_EQ(controller->promoteReservePlayer(outfield[0]),
+            YouthActionResult::Ok);
   EXPECT_TRUE(listed(gamedata->getPlayersForTeam(managed), outfield[0]));
   EXPECT_FALSE(controller->isAcademyPlayer(outfield[0]));
-  EXPECT_EQ(controller->moveToReserves(outfield[YouthModel::U21_OVERAGE_OUTFIELD]),
-            YouthActionResult::Ok);
+  EXPECT_EQ(
+      controller->moveToReserves(outfield[YouthModel::U21_OVERAGE_OUTFIELD]),
+      YouthActionResult::Ok);
 
   // U18 and U21: up from 17, back down only while young enough.
   const auto u18 = academy.members(managed, YouthStatus::Squad);
@@ -256,13 +263,14 @@ TEST(ReserveSquadTest, PlayersMoveBetweenFirstTeamU21AndU18)
   EXPECT_EQ(controller->moveReserveToU18(junior), YouthActionResult::Ok);
   EXPECT_EQ(academy.record(junior)->status, YouthStatus::Squad);
   if (gamedata->getPlayer(prospect)->get().getAge() > YouthModel::U18_MAX_AGE)
-    EXPECT_EQ(controller->moveReserveToU18(prospect), YouthActionResult::TooOld);
+    EXPECT_EQ(controller->moveReserveToU18(prospect),
+              YouthActionResult::TooOld);
 
   // Another club's players are not ours to move.
-  const TeamID other = controller->getLeagueById(1)->get().getTeamIDs().front() ==
-                               managed
-                           ? controller->getLeagueById(1)->get().getTeamIDs()[1]
-                           : controller->getLeagueById(1)->get().getTeamIDs()[0];
+  const TeamID other =
+      controller->getLeagueById(1)->get().getTeamIDs().front() == managed
+          ? controller->getLeagueById(1)->get().getTeamIDs()[1]
+          : controller->getLeagueById(1)->get().getTeamIDs()[0];
   EXPECT_EQ(controller->moveToReserves(
                 gamedata->getPlayersForTeam(other).front().get().getId()),
             YouthActionResult::NotAllowed);
@@ -308,7 +316,8 @@ TEST(ReserveSquadTest, U21LeaguesArePlayedWeeklyAndMinutesSpeedUpGrowth)
   // Minutes are recorded and lift development above a senior who does not
   // play.
   float best = 0.0f;
-  for (const YouthRecord* youth : academy.members(managed, YouthStatus::Reserve))
+  for (const YouthRecord* youth :
+       academy.members(managed, YouthStatus::Reserve))
   {
     EXPECT_GT(youth->minutes, 0u);
     best = std::max(best, academy.developmentMultiplier(
@@ -350,9 +359,11 @@ TEST(ReserveSquadTest, ComputerClubsRunTheirU21sAndAgeRulesHoldAtSeasonStart)
     if (quota.squad > 0)
     {
       ++clubs_with_u21;
-      EXPECT_GE(academy.firstTeamSize(team_id), 26u) << team_ref.get().getName();
+      EXPECT_GE(academy.firstTeamSize(team_id), 26u)
+          << team_ref.get().getName();
     }
-    for (const YouthRecord* youth : academy.members(team_id, YouthStatus::Reserve))
+    for (const YouthRecord* youth :
+         academy.members(team_id, YouthStatus::Reserve))
       EXPECT_LE(gamedata->getPlayer(youth->player_id)->get().getAge(),
                 YouthModel::U21_MAX_AGE);
   }
@@ -370,7 +381,8 @@ TEST(ReserveSquadTest, ComputerClubsRunTheirU21sAndAgeRulesHoldAtSeasonStart)
   for (const auto& team_ref : controller->getTeams())
   {
     const TeamID team_id = team_ref.get().getId();
-    for (const YouthRecord* youth : academy.members(team_id, YouthStatus::Squad))
+    for (const YouthRecord* youth :
+         academy.members(team_id, YouthStatus::Squad))
       EXPECT_LE(gamedata->getPlayer(youth->player_id)->get().getAge(),
                 YouthModel::U18_MAX_AGE);
     const ReserveQuota quota = academy.reserveQuota(team_id);
@@ -445,7 +457,8 @@ TEST(ReservePersistenceTest, U21StateRoundTripsAndOlderSavesSetItUp)
   const std::vector<PlayerID> young =
       seniorsAged(*gamedata, managed, 18, YouthModel::U21_MAX_AGE, false);
   ASSERT_FALSE(young.empty());
-  ASSERT_EQ(academy.moveToReserves(managed, young.front()), YouthActionResult::Ok);
+  ASSERT_EQ(academy.moveToReserves(managed, young.front()),
+            YouthActionResult::Ok);
   Inbox inbox;
   runDays(academy, GameDateValue(2025, 8, 1), GameDateValue(2025, 9, 15),
           managed, inbox);
@@ -518,7 +531,8 @@ TEST(ReserveSaveMigration, YouthTablesOfOlderSavesGetTheU21Columns)
         "INSERT INTO YouthResults VALUES (0, 20251004, 9, 1, 3, 1);",
         "DELETE FROM schema_migrations WHERE number >= 10;",
         "UPDATE save_meta SET schema_version = 9;"})
-    ASSERT_EQ(sqlite3_exec(db, sql, nullptr, nullptr, nullptr), SQLITE_OK) << sql;
+    ASSERT_EQ(sqlite3_exec(db, sql, nullptr, nullptr, nullptr), SQLITE_OK)
+        << sql;
 
   const auto report = Migrations::migrate(connection);
   EXPECT_EQ(report.from_version, 9);
@@ -527,7 +541,8 @@ TEST(ReserveSaveMigration, YouthTablesOfOlderSavesGetTheU21Columns)
   for (const char* column :
        {"reserve_played", "reserve_won", "reserve_drawn", "reserve_lost",
         "reserve_goals_for", "reserve_goals_against", "reserves_ready"})
-    EXPECT_TRUE(Migrations::columnExists(db, "YouthAcademies", column)) << column;
+    EXPECT_TRUE(Migrations::columnExists(db, "YouthAcademies", column))
+        << column;
   EXPECT_TRUE(Migrations::columnExists(db, "YouthResults", "squad"));
   // Existing rows keep their values; the U21 columns start empty.
   sqlite3_stmt* stmt = nullptr;
@@ -548,9 +563,9 @@ TEST(ReserveSaveMigration, YouthTablesOfOlderSavesGetTheU21Columns)
   EXPECT_EQ(sqlite3_column_int(stmt, 0), 0) << "old results are U18 results";
   sqlite3_finalize(stmt);
   // National-job tables exist (created by the schema).
-  for (const char* table : {"NationalJobState", "NationalJobHistory",
-                            "NationalVacancies", "NationalApplications",
-                            "NationalJobOffers"})
+  for (const char* table :
+       {"NationalJobState", "NationalJobHistory", "NationalVacancies",
+        "NationalApplications", "NationalJobOffers"})
     EXPECT_TRUE(Migrations::tableExists(db, table)) << table;
   // Running it again changes nothing.
   const auto again = Migrations::migrate(connection);
@@ -566,7 +581,8 @@ TEST(NationalJobModelTest, StatureChanceWageAndContract)
 {
   EXPECT_FLOAT_EQ(NationalJobModel::stature(0, 31), 92.0f);
   EXPECT_FLOAT_EQ(NationalJobModel::stature(30, 31), 42.0f);
-  EXPECT_GT(NationalJobModel::stature(3, 31), NationalJobModel::stature(10, 31));
+  EXPECT_GT(NationalJobModel::stature(3, 31),
+            NationalJobModel::stature(10, 31));
   EXPECT_EQ(NationalJobModel::requiredLicence(90.0f), CoachingLicence::Pro);
   EXPECT_EQ(NationalJobModel::requiredLicence(50.0f), CoachingLicence::A);
 
@@ -603,13 +619,14 @@ TEST(NationalJobModelTest, StatureChanceWageAndContract)
 
   // Results against expectation move the reputation, finals weigh most.
   using International::Competition;
-  EXPECT_GT(NationalJobModel::resultReputation(Competition::WorldQualifier, 0.3,
-                                               1.0),
-            0.0f);
+  EXPECT_GT(
+      NationalJobModel::resultReputation(Competition::WorldQualifier, 0.3, 1.0),
+      0.0f);
   EXPECT_LT(NationalJobModel::resultReputation(Competition::Friendly, 0.7, 0.0),
             0.0f);
-  EXPECT_GT(NationalJobModel::resultReputation(Competition::WorldFinals, 0.5, 1.0),
-            NationalJobModel::resultReputation(Competition::Friendly, 0.5, 1.0));
+  EXPECT_GT(
+      NationalJobModel::resultReputation(Competition::WorldFinals, 0.5, 1.0),
+      NationalJobModel::resultReputation(Competition::Friendly, 0.5, 1.0));
 }
 
 TEST(NationalJobTest, OfferAcceptanceCallUpsAndResults)
@@ -631,16 +648,18 @@ TEST(NationalJobTest, OfferAcceptanceCallUpsAndResults)
   game->getNationalJob().openVacancy(home_nation, controller->getCurrentDate());
   const auto vacancies = controller->getNationalVacancies();
   ASSERT_FALSE(vacancies.empty());
-  EXPECT_TRUE(std::ranges::any_of(vacancies, [&](const auto& view)
-                                  { return view.nation == home_nation &&
-                                           view.compatriot; }));
-  EXPECT_EQ(controller->applyForNationalJob(home_nation), NationalApplyResult::Ok);
+  EXPECT_TRUE(std::ranges::any_of(
+      vacancies, [&](const auto& view)
+      { return view.nation == home_nation && view.compatriot; }));
+  EXPECT_EQ(controller->applyForNationalJob(home_nation),
+            NationalApplyResult::Ok);
   EXPECT_EQ(controller->applyForNationalJob(home_nation),
             NationalApplyResult::AlreadyApplied);
   const std::uint32_t offer_id = obtainNationalOffer(*controller);
   ASSERT_NE(offer_id, 0u) << "a well-known compatriot gets an offer";
   const Language nation = controller->getNationalJobOffers().front().nation;
-  ASSERT_EQ(controller->acceptNationalJobOffer(offer_id), NationalApplyResult::Ok);
+  ASSERT_EQ(controller->acceptNationalJobOffer(offer_id),
+            NationalApplyResult::Ok);
   ASSERT_TRUE(controller->hasNationalJob());
   EXPECT_EQ(controller->getNationalJob()->nation, nation);
   EXPECT_TRUE(controller->getNationalJobOffers().empty());
@@ -664,8 +683,9 @@ TEST(NationalJobTest, OfferAcceptanceCallUpsAndResults)
   GameController::CallUpView view = controller->getCallUpView();
   ASSERT_TRUE(view.announced);
   EXPECT_FALSE(view.locked);
-  const auto selected = std::ranges::count_if(
-      view.candidates, [](const auto& candidate) { return candidate.selected; });
+  const auto selected =
+      std::ranges::count_if(view.candidates, [](const auto& candidate)
+                            { return candidate.selected; });
   EXPECT_GE(static_cast<std::size_t>(selected), International::MIN_CALL_UPS);
   EXPECT_LE(static_cast<std::size_t>(selected), view.limit);
 
@@ -708,7 +728,8 @@ TEST(NationalJobTest, OfferAcceptanceCallUpsAndResults)
   wrong.back() = foreigner;
   EXPECT_EQ(controller->setNationalSquad(wrong),
             International::CallUpResult::Ineligible);
-  ASSERT_EQ(controller->setNationalSquad(squad), International::CallUpResult::Ok);
+  ASSERT_EQ(controller->setNationalSquad(squad),
+            International::CallUpResult::Ok);
   view = controller->getCallUpView();
   EXPECT_EQ(static_cast<std::size_t>(std::ranges::count_if(
                 view.candidates, [](const auto& c) { return c.selected; })),
@@ -756,7 +777,8 @@ TEST(NationalJobTest, ClubManagersNeedAContinentalNameForBothJobs)
   ASSERT_LT(controller->getManagerProfile()->reputation,
             NationalJobModel::DUAL_ROLE_REPUTATION);
   EXPECT_FALSE(controller->canCombineClubAndNation());
-  game->getNationalJob().openVacancy(small.front(), controller->getCurrentDate());
+  game->getNationalJob().openVacancy(small.front(),
+                                     controller->getCurrentDate());
   EXPECT_EQ(controller->applyForNationalJob(small.front()),
             NationalApplyResult::ClubConflict);
 
@@ -765,14 +787,16 @@ TEST(NationalJobTest, ClubManagersNeedAContinentalNameForBothJobs)
   ASSERT_TRUE(controller->canCombineClubAndNation());
   const std::uint32_t offer_id = obtainNationalOffer(*controller);
   ASSERT_NE(offer_id, 0u);
-  ASSERT_EQ(controller->acceptNationalJobOffer(offer_id), NationalApplyResult::Ok);
+  ASSERT_EQ(controller->acceptNationalJobOffer(offer_id),
+            NationalApplyResult::Ok);
   EXPECT_TRUE(controller->hasNationalJob());
   EXPECT_FALSE(controller->isUnemployed());
 
   // Without the name, a new club ends the national job.
   game->getCareer().adjustReputation(-30.0f);
   ASSERT_TRUE(controller->resignFromClub());
-  EXPECT_TRUE(controller->hasNationalJob()) << "leaving the club keeps the nation";
+  EXPECT_TRUE(controller->hasNationalJob())
+      << "leaving the club keeps the nation";
   ManagerContract contract;
   contract.weekly_wage = 5'000;
   contract.start = controller->getCurrentDate();
@@ -795,9 +819,11 @@ TEST(NationalJobPersistenceTest, JobMarketAndCallUpsSurviveSaveAndLoad)
   createInternationalManager(*controller, small.front());
   const std::uint32_t offer_id = obtainNationalOffer(*controller);
   ASSERT_NE(offer_id, 0u);
-  ASSERT_EQ(controller->acceptNationalJobOffer(offer_id), NationalApplyResult::Ok);
+  ASSERT_EQ(controller->acceptNationalJobOffer(offer_id),
+            NationalApplyResult::Ok);
   const NationalJob job = *controller->getNationalJob();
-  game->getNationalJob().openVacancy(ranking.front(), controller->getCurrentDate());
+  game->getNationalJob().openVacancy(ranking.front(),
+                                     controller->getCurrentDate());
   const std::size_t vacancies = game->getNationalJob().getVacancies().size();
   ASSERT_GE(vacancies, 1u);
   ASSERT_TRUE(controller->saveGame());
@@ -879,9 +905,10 @@ TEST(ReservePerformanceTest, BusyDayWithU21MatchesStaysCheap)
     date = SeasonCalendar::addDays(date, 1);
     const auto started = std::chrono::steady_clock::now();
     alone.onDayAdvanced(date, managed, inbox);
-    round_ms = std::max(round_ms, std::chrono::duration<double, std::milli>(
-                                      std::chrono::steady_clock::now() - started)
-                                      .count());
+    round_ms =
+        std::max(round_ms, std::chrono::duration<double, std::milli>(
+                               std::chrono::steady_clock::now() - started)
+                               .count());
   }
   std::cout << "[u21] week of days: " << total << " ms total, busiest day "
             << busiest << " ms, U21 matchday " << reserve_day

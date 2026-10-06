@@ -211,8 +211,8 @@ TEST(NextActionTest, NothingToFixWhenNobodyFitCanReplaceThem)
   facts.next_opponent = "Rivals";
   facts.unavailable_selected = {"A", "B"};
   facts.no_fit_replacements = true;
-  EXPECT_FALSE(hasKind(rankNextActions(facts),
-                       NextActionKind::UnavailableInLineup));
+  EXPECT_FALSE(
+      hasKind(rankNextActions(facts), NextActionKind::UnavailableInLineup));
 }
 
 TEST(NextActionTest, ControllerReportsUnavailableStarters)

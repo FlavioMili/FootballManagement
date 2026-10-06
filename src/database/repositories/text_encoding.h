@@ -36,8 +36,9 @@ inline void appendInt(std::string& out, T value)
 inline void appendShortest(std::string& out, float value)
 {
   std::array<char, 32> buffer{};
-  const auto written = std::to_chars(buffer.data(), buffer.data() + buffer.size(),
-                                     std::isfinite(value) ? value : 0.0f);
+  const auto written =
+      std::to_chars(buffer.data(), buffer.data() + buffer.size(),
+                    std::isfinite(value) ? value : 0.0f);
   out.append(buffer.data(), written.ptr);
 }
 
@@ -51,9 +52,9 @@ inline void appendFixed(std::string& out, float value, int decimals)
   const std::int64_t scale = SCALES[static_cast<std::size_t>(decimals)];
   // float * 10^k is exact in double; round() is half away from zero.
   const double scaled =
-      std::isfinite(value) ? std::round(static_cast<double>(value) *
-                                        static_cast<double>(scale))
-                           : 0.0;
+      std::isfinite(value)
+          ? std::round(static_cast<double>(value) * static_cast<double>(scale))
+          : 0.0;
   const auto units = static_cast<std::int64_t>(std::fabs(scaled));
   if (scaled < 0.0) out.push_back('-');
   appendInt(out, units / scale);
@@ -63,7 +64,8 @@ inline void appendFixed(std::string& out, float value, int decimals)
   std::array<char, 4> digits{};
   for (int i = decimals - 1; i >= 0; --i)
   {
-    digits[static_cast<std::size_t>(i)] = static_cast<char>('0' + fraction % 10);
+    digits[static_cast<std::size_t>(i)] =
+        static_cast<char>('0' + fraction % 10);
     fraction /= 10;
   }
   out.append(digits.data(), static_cast<std::size_t>(decimals));

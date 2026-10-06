@@ -84,7 +84,8 @@ constexpr std::array<std::array<int, 2>, static_cast<std::size_t>(Slot::COUNT)>
 
 bool claim(Taken& taken, int number)
 {
-  if (!SquadNumbers::isValid(number) || taken.test(static_cast<std::size_t>(number)))
+  if (!SquadNumbers::isValid(number) ||
+      taken.test(static_cast<std::size_t>(number)))
     return false;
   taken.set(static_cast<std::size_t>(number));
   return true;
@@ -136,8 +137,8 @@ void SquadNumbers::assign(std::span<Entry> squad)
   std::vector<Entry*> order;
   order.reserve(squad.size());
   for (Entry& entry : squad) order.push_back(&entry);
-  std::ranges::sort(order, [](const Entry* a, const Entry* b)
-                    { return better(*a, *b); });
+  std::ranges::sort(
+      order, [](const Entry* a, const Entry* b) { return better(*a, *b); });
 
   // Valid numbers stay; on a clash the better player keeps his.
   Taken taken;

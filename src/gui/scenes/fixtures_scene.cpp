@@ -211,10 +211,9 @@ void FixturesScene::renderClubFixtures(float height)
           }
         }
         if (UI::cell(mask, 0))
-          ImGui::TextColored(fixture.played ? palette.muted : palette.text,
-                             "%s",
-                             Format::matchDay(fixture.date, fixture.kickoff)
-                                 .c_str());
+          ImGui::TextColored(
+              fixture.played ? palette.muted : palette.text, "%s",
+              Format::matchDay(fixture.date, fixture.kickoff).c_str());
         if (UI::cell(mask, 1))
         {
           UI::badge(LOC(CompetitionView::matchTypeKey(fixture.type)),
@@ -308,10 +307,10 @@ void FixturesScene::renderLeagueRound()
          fixture != league_fixtures.end() && fixture->round == selected_round;
          ++fixture)
       if (lastDay < fixture->date) lastDay = fixture->date;
-    const std::string days =
-        lastDay == firstInRound->date
-            ? Format::date(lastDay)
-            : Format::dayMonth(firstInRound->date) + " – " + Format::date(lastDay);
+    const std::string days = lastDay == firstInRound->date
+                                 ? Format::date(lastDay)
+                                 : Format::dayMonth(firstInRound->date) +
+                                       " – " + Format::date(lastDay);
     ImGui::SameLine(0.0f, Theme::Space::L * Theme::scale());
     ImGui::TextColored(palette.muted, "%s", days.c_str());
   }
@@ -349,11 +348,10 @@ void FixturesScene::renderLeagueRound()
       ImGui::TableNextColumn();
       // Upcoming matches show when they kick off.
       const std::string score =
-          fixture->played
-              ? fmt::sprintf("%u – %u", fixture->home_score,
-                             fixture->away_score)
-              : std::string(Format::weekday(fixture->date)) + " " +
-                    Format::kickoff(fixture->kickoff);
+          fixture->played ? fmt::sprintf("%u – %u", fixture->home_score,
+                                         fixture->away_score)
+                          : std::string(Format::weekday(fixture->date)) + " " +
+                                Format::kickoff(fixture->kickoff);
       const float scoreWidth = ImGui::CalcTextSize(score.c_str()).x;
       ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
                            (ImGui::GetContentRegionAvail().x - scoreWidth) *

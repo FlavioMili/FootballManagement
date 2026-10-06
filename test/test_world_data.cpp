@@ -47,7 +47,8 @@ struct SlotCleanup
   ~SlotCleanup() { RuntimePaths::removeSave(slot); }
 };
 
-/** The data pack's leagues filled with its clubs, without generating players. */
+/** The data pack's leagues filled with its clubs, without generating players.
+ */
 void fillPackWorld(GameData& gamedata)
 {
   std::map<LeagueID, std::vector<TeamID>> members;
@@ -58,11 +59,10 @@ void fillPackWorld(GameData& gamedata)
   }
   for (const League& league : DataGenerator::generateLeagues())
   {
-    gamedata.addLeague(league.getId(),
-                       League(league.getId(), league.getName(),
-                              members[league.getId()],
-                              league.getParentLeagueID(),
-                              league.getTieBreakRule()));
+    gamedata.addLeague(
+        league.getId(),
+        League(league.getId(), league.getName(), members[league.getId()],
+               league.getParentLeagueID(), league.getTieBreakRule()));
   }
 }
 }  // namespace
@@ -93,7 +93,8 @@ TEST(WorldDataTest, EveryCountryHasATwoTierPyramid)
     EXPECT_EQ(tiers[0], root);
     EXPECT_EQ(Competitions::leagueTier(gamedata, tiers[1]), 2);
     EXPECT_EQ(lower.getParentLeagueID(), std::optional<LeagueID>{root});
-    EXPECT_EQ(lower.getTieBreakRule(), top.getTieBreakRule()) << lower.getName();
+    EXPECT_EQ(lower.getTieBreakRule(), top.getTieBreakRule())
+        << lower.getName();
     EXPECT_EQ(top.getTeamIDs().size(), CLUBS_PER_LEAGUE) << top.getName();
     EXPECT_EQ(lower.getTeamIDs().size(), CLUBS_PER_LEAGUE) << lower.getName();
     EXPECT_EQ(Competitions::cupEntrants(gamedata, root).size(),
@@ -158,9 +159,9 @@ TEST(WorldDataTest, SeasonRolloverSwapsThreeClubsInEveryCountry)
     }
     const auto& lower_table = tables.at(lower);
     const auto& top_table = tables.at(root);
-    EXPECT_EQ(promoted, (std::set<TeamID>{lower_table[0].team_id,
-                                          lower_table[1].team_id,
-                                          lower_table[2].team_id}))
+    EXPECT_EQ(promoted,
+              (std::set<TeamID>{lower_table[0].team_id, lower_table[1].team_id,
+                                lower_table[2].team_id}))
         << int(root);
     EXPECT_EQ(relegated,
               (std::set<TeamID>{top_table[CLUBS_PER_LEAGUE - 1].team_id,
@@ -197,8 +198,8 @@ TEST(WorldDataTest, EveryClubHasACompleteIdentity)
     ASSERT_NE(found, identities.end()) << team.getName();
     const ClubIdentity& identity = found->second;
     EXPECT_EQ(identity.short_name.size(), 3u) << team.getName();
-    EXPECT_TRUE(std::ranges::all_of(identity.short_name, [](char c)
-                                    { return c >= 'A' && c <= 'Z'; }))
+    EXPECT_TRUE(std::ranges::all_of(
+        identity.short_name, [](char c) { return c >= 'A' && c <= 'Z'; }))
         << identity.short_name;
     EXPECT_TRUE(codes.insert(identity.short_name).second)
         << identity.short_name;
@@ -241,7 +242,8 @@ TEST(WorldDataTest, NewGameLoadsNamesAndIdentities)
       lower_names.insert(team.getName());
   }
   EXPECT_EQ(lower_names.size(), 20u);
-  for (const char* town : {"Acaya", "Foggia", "Cerignola", "Taranto", "Otranto"})
+  for (const char* town :
+       {"Acaya", "Foggia", "Cerignola", "Taranto", "Otranto"})
     EXPECT_TRUE(lower_names.contains(town)) << town;
 
   // Every country's second division is generated below its top division,
@@ -254,7 +256,8 @@ TEST(WorldDataTest, NewGameLoadsNamesAndIdentities)
     {
       const auto& ids = data.getLeague(league_id)->get().getTeamIDs();
       double total = 0.0;
-      for (const TeamID id : ids) total += data.getTeam(id)->get().getReputation();
+      for (const TeamID id : ids)
+        total += data.getTeam(id)->get().getReputation();
       return ids.empty() ? 0.0 : total / static_cast<double>(ids.size());
     };
     EXPECT_LT(mean_reputation(tiers[1]) + 10.0, mean_reputation(tiers[0]))

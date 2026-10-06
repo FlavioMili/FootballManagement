@@ -111,28 +111,29 @@ void CareerGuidance::load(const std::shared_ptr<DatabaseConnection>& db_conn)
                           static_cast<OppositionInstruction>(instruction)});
       });
   opposition.restore(std::move(orders));
-  forEachRow(*db_conn,
-             "SELECT data, detail FROM ManagedMatchAnalytics ORDER BY "
-             "game_date, home_id, away_id;",
-             [this](sqlite3_stmt* stmt)
-             {
-               const unsigned char* text = sqlite3_column_text(stmt, 0);
-               if (text == nullptr) return;
-               auto snapshot = ManagedMatchSnapshot::fromJson(
-                   reinterpret_cast<const char*>(text));
-               if (!snapshot) return;
-               const auto* blob =
-                   static_cast<const std::uint8_t*>(sqlite3_column_blob(stmt, 1));
-               const int bytes = sqlite3_column_bytes(stmt, 1);
-               if (blob != nullptr && bytes > 0)
-               {
-                 // A damaged blob only loses the detail, not the snapshot.
-                 if (auto detail = MatchDetail::decode(std::span(
-                         blob, static_cast<std::size_t>(bytes))))
-                   snapshot->detail = std::move(*detail);
-               }
-               snapshots.push_back(std::move(*snapshot));
-             });
+  forEachRow(
+      *db_conn,
+      "SELECT data, detail FROM ManagedMatchAnalytics ORDER BY "
+      "game_date, home_id, away_id;",
+      [this](sqlite3_stmt* stmt)
+      {
+        const unsigned char* text = sqlite3_column_text(stmt, 0);
+        if (text == nullptr) return;
+        auto snapshot =
+            ManagedMatchSnapshot::fromJson(reinterpret_cast<const char*>(text));
+        if (!snapshot) return;
+        const auto* blob =
+            static_cast<const std::uint8_t*>(sqlite3_column_blob(stmt, 1));
+        const int bytes = sqlite3_column_bytes(stmt, 1);
+        if (blob != nullptr && bytes > 0)
+        {
+          // A damaged blob only loses the detail, not the snapshot.
+          if (auto detail = MatchDetail::decode(
+                  std::span(blob, static_cast<std::size_t>(bytes))))
+            snapshot->detail = std::move(*detail);
+        }
+        snapshots.push_back(std::move(*snapshot));
+      });
   if (snapshots.size() > MAX_SNAPSHOTS)
   {
     snapshots.erase(

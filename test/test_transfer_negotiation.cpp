@@ -469,8 +469,7 @@ TEST(TransferNegotiationTest, AgentOpensHighAndSoftensEachRound)
     EXPECT_LE(ask, previous);
     previous = ask;
   }
-  EXPECT_EQ(previous, demand.weekly_wage)
-      << "the last ask is the real demand";
+  EXPECT_EQ(previous, demand.weekly_wage) << "the last ask is the real demand";
 
   PlayerContext ambitious = context;
   ambitious.ambition = 90;
@@ -515,10 +514,10 @@ TEST(TransferNegotiationTest, SquadFitRanksNeedsAboveMarginalUpgrades)
 {
   using enum PlayerRole;
   const std::vector<std::pair<PlayerRole, float>> squad = {
-      {GK, 70.0f},  {GK, 62.0f},  {GK, 50.0f},  {CB, 70.0f},  {CB, 68.0f},
-      {CB, 60.0f},  {CB, 55.0f},  {LB, 66.0f},  {CDM, 72.0f}, {CM, 70.0f},
-      {CAM, 68.0f}, {CM, 60.0f},  {CM, 58.0f},  {LW, 69.0f},  {RW, 67.0f},
-      {LM, 55.0f},  {ST, 71.0f},  {ST, 60.0f},  {ST, 55.0f}};
+      {GK, 70.0f},  {GK, 62.0f}, {GK, 50.0f}, {CB, 70.0f},  {CB, 68.0f},
+      {CB, 60.0f},  {CB, 55.0f}, {LB, 66.0f}, {CDM, 72.0f}, {CM, 70.0f},
+      {CAM, 68.0f}, {CM, 60.0f}, {CM, 58.0f}, {LW, 69.0f},  {RW, 67.0f},
+      {LM, 55.0f},  {ST, 71.0f}, {ST, 60.0f}, {ST, 55.0f}};
   const SquadNeeds needs = squadNeeds(squad);
   EXPECT_GT(needs.squad_level, 60.0f);
   ASSERT_NE(needs.find(RB), nullptr);

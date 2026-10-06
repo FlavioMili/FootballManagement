@@ -97,8 +97,8 @@ TEST(PortableRng, PortableMathIsAccurate)
         std::max(worst_log, ulpDistance(PortableMath::log(x), std::log(x)));
     const double power = (unit - 0.5) * 1400.0;
     if (std::exp(power) > 1e-300)
-      worst_exp = std::max(worst_exp,
-                           ulpDistance(PortableMath::exp(power), std::exp(power)));
+      worst_exp = std::max(
+          worst_exp, ulpDistance(PortableMath::exp(power), std::exp(power)));
     worst_cos = std::max(
         worst_cos, std::abs(PortableMath::cosTwoPi(unit) -
                             std::cos(2.0 * 3.14159265358979323846 * unit)));

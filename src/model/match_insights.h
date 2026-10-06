@@ -67,8 +67,7 @@ struct MatchDetail
   std::vector<DetailPlayer> players;
   std::vector<PassLink> links;
   /** Final-third touches per five-minute bucket, index 0 home. */
-  std::array<std::array<std::uint8_t, MatchTracking::BUCKETS>, 2>
-      final_third{};
+  std::array<std::array<std::uint8_t, MatchTracking::BUCKETS>, 2> final_third{};
   std::vector<DetailSubstitution> substitutions;
 
   [[nodiscard]] bool empty() const { return players.empty(); }

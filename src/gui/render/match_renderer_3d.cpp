@@ -266,16 +266,14 @@ constexpr auto NUMBER_TEXT = []
   std::array<std::array<char, 3>, 100> table{};
   for (int number = 0; number < 100; ++number)
   {
-    const auto digit = [](int value)
-    { return static_cast<char>('0' + value); };
+    const auto digit = [](int value) { return static_cast<char>('0' + value); };
     table[static_cast<std::size_t>(number)] =
-        number < 10 ? std::array<char, 3>{digit(number), '\0', '\0'}
-                    : std::array<char, 3>{digit(number / 10),
-                                          digit(number % 10), '\0'};
+        number < 10
+            ? std::array<char, 3>{digit(number), '\0', '\0'}
+            : std::array<char, 3>{digit(number / 10), digit(number % 10), '\0'};
   }
   return table;
 }();
-
 
 /** Where a player landed on screen, for labels and hover tooltips. */
 struct PlayerOnScreen
@@ -293,8 +291,8 @@ constexpr std::array<ImU32, 8> SKIN_TONES{
     IM_COL32(160, 110, 74, 255),  IM_COL32(128, 86, 58, 255),
     IM_COL32(100, 66, 44, 255),   IM_COL32(74, 50, 36, 255)};
 constexpr std::array<ImU32, 6> HAIR_COLORS{
-    IM_COL32(22, 17, 14, 255),  IM_COL32(40, 40, 44, 255),
-    IM_COL32(64, 40, 24, 255),  IM_COL32(110, 72, 38, 255),
+    IM_COL32(22, 17, 14, 255),   IM_COL32(40, 40, 44, 255),
+    IM_COL32(64, 40, 24, 255),   IM_COL32(110, 72, 38, 255),
     IM_COL32(196, 154, 92, 255), IM_COL32(150, 70, 36, 255)};
 
 float signedArea(std::span<const ImVec2> points)
@@ -321,9 +319,9 @@ struct LightRig
 LightRig nightLight()
 {
   using L = Tuning::Light;
-  return {RenderMath::normalize(
-              {L::DIRECTION_X, L::DIRECTION_Y, L::DIRECTION_Z}),
-          L::AMBIENT, L::DIFFUSE, L::SKY};
+  return {
+      RenderMath::normalize({L::DIRECTION_X, L::DIRECTION_Y, L::DIRECTION_Z}),
+      L::AMBIENT, L::DIFFUSE, L::SKY};
 }
 
 LightRig dayLight()
@@ -350,9 +348,8 @@ constexpr std::array<ImU32, 9> BOOT_COLORS{
     IM_COL32(60, 200, 150, 255)};
 
 constexpr std::array<HairStyle, 8> HAIR_STYLES{
-    HairStyle::SHORT,  HairStyle::SHORT, HairStyle::BUZZ,
-    HairStyle::VOLUME, HairStyle::LONG,  HairStyle::SHORT,
-    HairStyle::SHAVED, HairStyle::BUZZ};
+    HairStyle::SHORT, HairStyle::SHORT, HairStyle::BUZZ,   HairStyle::VOLUME,
+    HairStyle::LONG,  HairStyle::SHORT, HairStyle::SHAVED, HairStyle::BUZZ};
 
 /** Blends the walk, jog and sprint shapes for a ground speed. */
 Tuning::Gait::Shape gaitShape(float speed)
@@ -500,10 +497,9 @@ ImVec2 toImVec(const ScreenPoint& point) { return {point.x, point.y}; }
 /// Interpolated ball height above the grass in metres.
 float ballHeightMetres(const MatchRenderBall& ball, float alpha)
 {
-  return std::max(0.0f, ball.previousHeightMetres +
-                            (ball.currentHeightMetres -
-                             ball.previousHeightMetres) *
-                                alpha);
+  return std::max(
+      0.0f, ball.previousHeightMetres +
+                (ball.currentHeightMetres - ball.previousHeightMetres) * alpha);
 }
 
 /// The player's standing height in metres (engine value, else his data).
@@ -658,12 +654,12 @@ struct MatchRenderer3D::State
   void addPrism(std::span<const Vec3> bottom, std::span<const Vec3> top,
                 ImU32 color, float objectDepth, bool capBottom, bool capTop);
   /** Oriented box from its centre and three half axes. */
-  void orientedBox(Vec3 centre, Vec3 axisA, Vec3 axisB, Vec3 axisC,
-                   ImU32 color, float objectDepth);
+  void orientedBox(Vec3 centre, Vec3 axisA, Vec3 axisB, Vec3 axisC, ImU32 color,
+                   float objectDepth);
   /** Limb segment between two joints, tapering from `fromHalf` to `toHalf`
    * (a prism up close, a box further out, a stroke far away). */
-  void addSegment(Vec3 from, Vec3 to, float fromHalf, float toHalf,
-                  ImU32 color, Vec3 hint, float objectDepth, PlayerLod lod);
+  void addSegment(Vec3 from, Vec3 to, float fromHalf, float toHalf, ImU32 color,
+                  Vec3 hint, float objectDepth, PlayerLod lod);
   /** Advances a player's gait, planted feet, actions and keeper stances. */
   void updateMotion(const MatchRenderPlayer& player, AnimationSlot& slot,
                     float alpha, float deltaSeconds);
@@ -673,9 +669,9 @@ struct MatchRenderer3D::State
   GoalMood goalMoodFor(const MatchRenderPlayer& player) const;
   void addPlayer(const MatchRenderPlayer& player, AnimationSlot& slot,
                  float alpha);
-  void addBackPrint(const AnimationSlot& slot, std::size_t kitIndex,
-                    Vec3 waist, Vec3 torsoUp, Vec3 torsoForward,
-                    Vec3 bodySide, float scale, float objectDepth);
+  void addBackPrint(const AnimationSlot& slot, std::size_t kitIndex, Vec3 waist,
+                    Vec3 torsoUp, Vec3 torsoForward, Vec3 bodySide, float scale,
+                    float objectDepth);
   void drawBackText(const Primitive& primitive);
   /** Starts kick, header and tackle poses from the engine's touches. */
   void detectTouches(const MatchRenderSnapshot& snapshot);
@@ -827,10 +823,9 @@ MatchCameraControl MatchRenderer3D::State::cameraControl(
           RenderMath::normalize({projection.side.x, projection.side.y, 0.0f});
       const Vec3 flatForward = RenderMath::normalize(
           {projection.forward.x, projection.forward.y, 0.0f});
-      control.pan = flatSide * ((input.panFromX - input.panToX) *
-                                metresPerPixel) +
-                    flatForward *
-                        ((input.panToY - input.panFromY) * metresPerPixel);
+      control.pan =
+          flatSide * ((input.panFromX - input.panToX) * metresPerPixel) +
+          flatForward * ((input.panToY - input.panFromY) * metresPerPixel);
     }
     control.pan.z = 0.0f;
   }
@@ -975,13 +970,13 @@ void MatchRenderer3D::State::drawSoftEllipse(Vec3 centre, Vec3 axisA,
   using Sh = Tuning::Shadow;
   constexpr std::size_t RIM = Sh::SEGMENTS;
   const float alpha = static_cast<float>((color >> IM_COL32_A_SHIFT) & 0xFFU);
-  const ImU32 core = withAlpha(
-      color, static_cast<std::uint8_t>(alpha * Sh::CORE_ALPHA_SHARE));
+  const ImU32 core =
+      withAlpha(color, static_cast<std::uint8_t>(alpha * Sh::CORE_ALPHA_SHARE));
   const ImU32 clear = withAlpha(color, 0);
   const auto rim = [&](std::size_t index, float share)
   {
-    const float angle = TWO_PI * static_cast<float>(index % RIM) /
-                        static_cast<float>(RIM);
+    const float angle =
+        TWO_PI * static_cast<float>(index % RIM) / static_cast<float>(RIM);
     return centre + (axisA * std::cos(angle) + axisB * std::sin(angle)) * share;
   };
   std::array<ClipVertex, RIM> outer{};
@@ -1062,8 +1057,8 @@ void MatchRenderer3D::State::drawPitch()
   if (grid.points.empty()) return;
   // Blades leaning away from the eye catch more light: the stripe pattern
   // follows the view along the mowing direction (across the pitch).
-  const float flat = std::max(
-      std::hypot(projection.forward.x, projection.forward.y), 1e-3f);
+  const float flat =
+      std::max(std::hypot(projection.forward.x, projection.forward.y), 1e-3f);
   const float across = projection.forward.y / flat;
   const float contrast =
       G::STRIPE_CONTRAST *
@@ -1164,10 +1159,9 @@ void MatchRenderer3D::State::drawShadows(const MatchRenderSnapshot& snapshot,
       Vec3{LENGTH + F::CORNER_OFFSET_X, WIDTH + F::CORNER_OFFSET_Y, 0.0f}};
   const Vec3 sunAway =
       RenderMath::normalize({-light.direction.x, -light.direction.y, 0.0f});
-  const float sunLength =
-      Sh::SUN_LENGTH_SHARE *
-      std::hypot(light.direction.x, light.direction.y) /
-      std::max(light.direction.z, 0.2f);
+  const float sunLength = Sh::SUN_LENGTH_SHARE *
+                          std::hypot(light.direction.x, light.direction.y) /
+                          std::max(light.direction.z, 0.2f);
   for (const MatchRenderPlayer& player : snapshot.players)
   {
     const Vec3 root = RenderMath::worldFromPitch(lerpRenderPosition(
@@ -1175,8 +1169,8 @@ void MatchRenderer3D::State::drawShadows(const MatchRenderSnapshot& snapshot,
     ScreenPoint screen;
     if (!projection.project(root, screen)) continue;
     // Far away, a soft disc in the shirt colour keeps the teams readable.
-    const float pixelHeight = playerHeightMetres(player) *
-                              projection.focalPixels / screen.depth;
+    const float pixelHeight =
+        playerHeightMetres(player) * projection.focalPixels / screen.depth;
     if (pixelHeight < Tuning::Player::MARKER_MAX_PIXELS)
     {
       releaseBatch();
@@ -1184,10 +1178,10 @@ void MatchRenderer3D::State::drawShadows(const MatchRenderSnapshot& snapshot,
           player.isHomeTeam
               ? (player.isGoalkeeper ? kits.homeGoalkeeper : kits.home)
               : (player.isGoalkeeper ? kits.awayGoalkeeper : kits.away);
-      const float fade = std::clamp(
-          (Tuning::Player::MARKER_MAX_PIXELS - pixelHeight) /
-              (Tuning::Player::MARKER_MAX_PIXELS * 0.5f),
-          0.0f, 1.0f);
+      const float fade =
+          std::clamp((Tuning::Player::MARKER_MAX_PIXELS - pixelHeight) /
+                         (Tuning::Player::MARKER_MAX_PIXELS * 0.5f),
+                     0.0f, 1.0f);
       const float radius = Tuning::Player::MARKER_RADIUS;
       // A shirt close to the grass colour would vanish: use the trim.
       const ImU32 marker =
@@ -1197,10 +1191,10 @@ void MatchRenderer3D::State::drawShadows(const MatchRenderSnapshot& snapshot,
               : kit.shirt;
       drawGroundEllipse(
           root, {radius, 0.0f, 0.0f}, {0.0f, radius, 0.0f},
-          withAlpha(marker,
-                    static_cast<std::uint8_t>(
-                        static_cast<float>(Tuning::Player::MARKER_ALPHA) *
-                        fade)));
+          withAlpha(
+              marker,
+              static_cast<std::uint8_t>(
+                  static_cast<float>(Tuning::Player::MARKER_ALPHA) * fade)));
     }
     const float standing = playerHeightMetres(player);
     if (day && geometry.inStandShadow(root))
@@ -1240,8 +1234,8 @@ void MatchRenderer3D::State::drawShadows(const MatchRenderSnapshot& snapshot,
         const float reach = std::hypot(away.x, away.y);
         away = RenderMath::normalize(away);
         const Vec3 across{-away.y, away.x, 0.0f};
-        const float bladeLength = std::clamp(
-            standing * reach / F::MAST_HEIGHT, Sh::MIN_BLADE, Sh::MAX_BLADE);
+        const float bladeLength = std::clamp(standing * reach / F::MAST_HEIGHT,
+                                             Sh::MIN_BLADE, Sh::MAX_BLADE);
         const float share = std::clamp(
             weight[index] / weightSum * static_cast<float>(lights.size()),
             Sh::MIN_LAMP_SHARE, Sh::MAX_LAMP_SHARE);
@@ -1260,10 +1254,10 @@ void MatchRenderer3D::State::drawShadows(const MatchRenderSnapshot& snapshot,
       releaseBatch();
       const float radius =
           Sh::RING_RADIUS *
-          (1.0f + (reducedMotion ? 0.0f
-                                 : Sh::RING_PULSE *
-                                       std::sin(elapsedSeconds *
-                                                Sh::RING_PULSE_SPEED)));
+          (1.0f + (reducedMotion
+                       ? 0.0f
+                       : Sh::RING_PULSE *
+                             std::sin(elapsedSeconds * Sh::RING_PULSE_SPEED)));
       std::array<ImVec2, Sh::RING_SEGMENTS> ring{};
       bool visible = true;
       for (std::size_t index = 0; index < ring.size() && visible; ++index)
@@ -1279,10 +1273,10 @@ void MatchRenderer3D::State::drawShadows(const MatchRenderSnapshot& snapshot,
       }
       if (visible)
       {
-        drawList->AddPolyline(ring.data(), static_cast<int>(ring.size()),
-                              Sh::RING_COLOR, ImDrawFlags_Closed,
-                              Sh::RING_THICKNESS *
-                                  ImGui::GetStyle().FontScaleDpi);
+        drawList->AddPolyline(
+            ring.data(), static_cast<int>(ring.size()), Sh::RING_COLOR,
+            ImDrawFlags_Closed,
+            Sh::RING_THICKNESS * ImGui::GetStyle().FontScaleDpi);
       }
     }
   }
@@ -1362,27 +1356,26 @@ void MatchRenderer3D::State::updateCrowdMotion()
   {
     const float offset = TWO_PI * static_cast<float>(phase) /
                          static_cast<float>(Stadium3D::CROWD_PHASES);
-    const float rate = 0.75f + 0.5f * static_cast<float>((phase * 7U) % 16U) /
-                                   16.0f;
+    const float rate =
+        0.75f + 0.5f * static_cast<float>((phase * 7U) % 16U) / 16.0f;
     crowdSway[phase] =
         reducedMotion
             ? 0.0f
-            : C::SWAY * std::sin(elapsedSeconds * C::SWAY_SPEED * rate +
-                                 offset);
+            : C::SWAY *
+                  std::sin(elapsedSeconds * C::SWAY_SPEED * rate + offset);
     // Everyone half rises out of the seat while a shot is on its way.
     crowdRise[phase] =
-        reducedMotion ? 0.0f
-                      : C::RISE * crowdTension *
-                            (0.7f + 0.3f * static_cast<float>(
-                                               (phase * 5U) % 16U) /
-                                        16.0f);
-    crowdHop[phase] =
         reducedMotion
             ? 0.0f
-            : C::HOP * crowdCelebration *
-                  std::abs(std::sin(elapsedSeconds * C::HOP_SPEED *
-                                        (0.85f + 0.3f * rate) +
-                                    offset * 3.0f));
+            : C::RISE * crowdTension *
+                  (0.7f +
+                   0.3f * static_cast<float>((phase * 5U) % 16U) / 16.0f);
+    crowdHop[phase] =
+        reducedMotion ? 0.0f
+                      : C::HOP * crowdCelebration *
+                            std::abs(std::sin(elapsedSeconds * C::HOP_SPEED *
+                                                  (0.85f + 0.3f * rate) +
+                                              offset * 3.0f));
   }
   cheeringMask = 0;
   if (goal.active && crowdCelebration > 0.0f)
@@ -1435,8 +1428,8 @@ void MatchRenderer3D::State::drawCrowd(const Stadium3D::Face& face)
   const float seatFocal = C::SEAT_SPACING * projection.focalPixels;
   const float halfDotFocal = C::DOT_WIDTH * 0.5f * projection.focalPixels;
   const bool cheering = cheeringMask != 0U;
-  const auto point = [&](float x, float y, float across, float up, float dx,
-                         float dy)
+  const auto point =
+      [&](float x, float y, float across, float up, float dx, float dy)
   {
     return ImVec2{x + acrossX * across + dx * up,
                   y + acrossY * across + dy * up};
@@ -1464,14 +1457,13 @@ void MatchRenderer3D::State::drawCrowd(const Stadium3D::Face& face)
           clump.halfWidth * projection.focalPixels / topClip.w;
       if (std::max(base.x, upper.x) + halfWidth < left ||
           std::min(base.x, upper.x) - halfWidth > right ||
-          std::min(base.y, upper.y) > bottom ||
-          std::max(base.y, upper.y) < top)
+          std::min(base.y, upper.y) > bottom || std::max(base.y, upper.y) < top)
         continue;
       {
         const bool hopping = cheering && (clump.flags & cheeringMask) != 0U;
-        const float hop =
-            (crowdRise[clump.phase] + (hopping ? crowdHop[clump.phase] : 0.0f)) *
-            C::DOT_HEIGHT * clumpInverse;
+        const float hop = (crowdRise[clump.phase] +
+                           (hopping ? crowdHop[clump.phase] : 0.0f)) *
+                          C::DOT_HEIGHT * clumpInverse;
         upper.x += upX * hop;
         upper.y += upY * hop;
       }
@@ -1485,10 +1477,9 @@ void MatchRenderer3D::State::drawCrowd(const Stadium3D::Face& face)
       const ScreenPoint base = projection.clipToScreen(clumpClip);
       const float reach = (clump.halfWidth + C::DOT_WIDTH) *
                           projection.focalPixels * clumpInverse;
-      const float rise =
-          (C::DOT_HEIGHT * 2.0f +
-           C::ROW_DEPTH * static_cast<float>(C::CLUMP_ROWS)) *
-          projection.focalPixels * clumpInverse;
+      const float rise = (C::DOT_HEIGHT * 2.0f +
+                          C::ROW_DEPTH * static_cast<float>(C::CLUMP_ROWS)) *
+                         projection.focalPixels * clumpInverse;
       if (base.x + reach < left || base.x - reach > right ||
           base.y - rise > bottom || base.y + rise < top)
         continue;
@@ -1580,13 +1571,13 @@ void MatchRenderer3D::State::drawCrowd(const Stadium3D::Face& face)
           for (const float sideSign : {-1.0f, 1.0f})
           {
             const ImU32 color = sideSign < 0.0f ? kit.shirt : kit.trim;
-            batchQuad(point(base.x, base.y, 0.0f, scarfBottom, dx, dy),
-                      point(base.x, base.y, sideSign * scarfHalf, scarfBottom,
-                            dx, dy),
-                      point(base.x, base.y, sideSign * scarfHalf, reach, dx,
-                            dy),
-                      point(base.x, base.y, 0.0f, reach, dx, dy),
-                      shadeColor(color, 0.85f), color);
+            batchQuad(
+                point(base.x, base.y, 0.0f, scarfBottom, dx, dy),
+                point(base.x, base.y, sideSign * scarfHalf, scarfBottom, dx,
+                      dy),
+                point(base.x, base.y, sideSign * scarfHalf, reach, dx, dy),
+                point(base.x, base.y, 0.0f, reach, dx, dy),
+                shadeColor(color, 0.85f), color);
           }
         }
       }
@@ -1597,10 +1588,9 @@ void MatchRenderer3D::State::drawCrowd(const Stadium3D::Face& face)
       std::array<ImU32, HEAD_SIDES> headColors{};
       for (std::size_t corner = 0; corner < HEAD_SIDES; ++corner)
       {
-        outline[corner] = point(base.x, base.y,
-                                headHalf * HEAD_SHAPE[corner][0],
-                                headMiddle + headRadius * HEAD_SHAPE[corner][1],
-                                dx, dy);
+        outline[corner] =
+            point(base.x, base.y, headHalf * HEAD_SHAPE[corner][0],
+                  headMiddle + headRadius * HEAD_SHAPE[corner][1], dx, dy);
         headColors[corner] =
             HEAD_SHAPE[corner][1] < 0.0f ? shadeColor256(head, 210U) : head;
       }
@@ -1627,11 +1617,12 @@ void MatchRenderer3D::State::drawCrowdFlags(const Stadium3D::Face& face,
       continue;
     const bool celebrating = cheering && (flag.flags & cheeringMask) != 0U;
     const float energy = celebrating ? 1.0f + crowdCelebration : 1.0f;
-    const float lift = celebrating ? crowdHop[flag.phase] * C::DOT_HEIGHT : 0.0f;
-    const float wavePhase =
-        reducedMotion ? static_cast<float>(flag.phase)
-                      : elapsedSeconds * C::FLAG_WAVE_SPEED * energy +
-                            static_cast<float>(flag.phase);
+    const float lift =
+        celebrating ? crowdHop[flag.phase] * C::DOT_HEIGHT : 0.0f;
+    const float wavePhase = reducedMotion
+                                ? static_cast<float>(flag.phase)
+                                : elapsedSeconds * C::FLAG_WAVE_SPEED * energy +
+                                      static_cast<float>(flag.phase);
     const Vec3 poleBottom = flag.base + UP * lift;
     const Vec3 poleTop = poleBottom + UP * C::POLE_HEIGHT;
     // Two cloth panels (one per colour) rippling away from the pole.
@@ -1639,10 +1630,10 @@ void MatchRenderer3D::State::drawCrowdFlags(const Stadium3D::Face& face,
     for (std::size_t column = 0; column < 3; ++column)
     {
       const float share = static_cast<float>(column) * 0.5f;
-      const float wave = C::FLAG_WAVE * energy * share *
-                         std::sin(wavePhase + share * 2.8f);
-      const Vec3 edge = poleTop + flag.along * (C::FLAG_LENGTH * share) +
-                        UP * wave;
+      const float wave =
+          C::FLAG_WAVE * energy * share * std::sin(wavePhase + share * 2.8f);
+      const Vec3 edge =
+          poleTop + flag.along * (C::FLAG_LENGTH * share) + UP * wave;
       cloth[column] = edge;
       cloth[column + 3] = edge - UP * C::FLAG_HEIGHT;
     }
@@ -1656,17 +1647,16 @@ void MatchRenderer3D::State::drawCrowdFlags(const Stadium3D::Face& face,
     }
     ScreenPoint bottomScreen;
     if (!visible || !projection.project(poleBottom, bottomScreen)) continue;
-    const float poleHalf =
-        std::max(0.5f, C::DOT_WIDTH * 0.08f * projection.focalPixels *
-                           inverseDepth);
+    const float poleHalf = std::max(
+        0.5f, C::DOT_WIDTH * 0.08f * projection.focalPixels * inverseDepth);
     const float normal = std::max(std::hypot(upX, upY), 1e-3f);
     const float offsetX = -upY / normal * poleHalf;
     const float offsetY = upX / normal * poleHalf;
     batchQuad({bottomScreen.x - offsetX, bottomScreen.y - offsetY},
               {bottomScreen.x + offsetX, bottomScreen.y + offsetY},
               {screen[0].x + offsetX, screen[0].y + offsetY},
-              {screen[0].x - offsetX, screen[0].y - offsetY},
-              C::POLE_COLOR, C::POLE_COLOR);
+              {screen[0].x - offsetX, screen[0].y - offsetY}, C::POLE_COLOR,
+              C::POLE_COLOR);
     for (std::size_t panel = 0; panel < 2; ++panel)
     {
       const ImU32 color = panel == 0 ? flag.primary : flag.secondary;
@@ -1786,9 +1776,9 @@ void MatchRenderer3D::State::addBox(const std::array<Vec3, 8>& corners,
                                           screen[face[2]], screen[face[3]]};
     const float localDepth =
         (quad[0].depth + quad[1].depth + quad[2].depth + quad[3].depth) * 0.25f;
-    addPolygon(quad,
-               shadeColor(color, lighting(RenderMath::normalize(normal), light)),
-               objectDepth, localDepth);
+    addPolygon(
+        quad, shadeColor(color, lighting(RenderMath::normalize(normal), light)),
+        objectDepth, localDepth);
   }
 }
 
@@ -1828,11 +1818,11 @@ void MatchRenderer3D::State::addPrism(std::span<const Vec3> bottom,
     if (RenderMath::dot(normal, projection.eye - faceCentre) <= 0.0f) continue;
     const std::array<ScreenPoint, 4> quad{low[index], low[next], high[next],
                                           high[index]};
-    addPolygon(quad,
-               shadeColor(color, lighting(RenderMath::normalize(normal), light)),
-               objectDepth,
-               (quad[0].depth + quad[1].depth + quad[2].depth + quad[3].depth) *
-                   0.25f);
+    addPolygon(
+        quad, shadeColor(color, lighting(RenderMath::normalize(normal), light)),
+        objectDepth,
+        (quad[0].depth + quad[1].depth + quad[2].depth + quad[3].depth) *
+            0.25f);
   }
   const auto cap = [&](const std::array<ScreenPoint, MAX_SIDES>& ring,
                        Vec3 centre, Vec3 outward)
@@ -1841,18 +1831,18 @@ void MatchRenderer3D::State::addPrism(std::span<const Vec3> bottom,
     float depth = 0.0f;
     for (std::size_t index = 0; index < sides; ++index)
       depth += ring[index].depth;
-    addPolygon(std::span<const ScreenPoint>(ring.data(), sides),
-               shadeColor(color,
-                          lighting(RenderMath::normalize(outward), light)),
-               objectDepth, depth * inverse);
+    addPolygon(
+        std::span<const ScreenPoint>(ring.data(), sides),
+        shadeColor(color, lighting(RenderMath::normalize(outward), light)),
+        objectDepth, depth * inverse);
   };
   if (capTop) cap(high, highCentre, highCentre - lowCentre);
   if (capBottom) cap(low, lowCentre, lowCentre - highCentre);
 }
 
 void MatchRenderer3D::State::orientedBox(Vec3 centre, Vec3 axisA, Vec3 axisB,
-                                        Vec3 axisC, ImU32 color,
-                                        float objectDepth)
+                                         Vec3 axisC, ImU32 color,
+                                         float objectDepth)
 {
   std::array<Vec3, 8> corners{};
   for (std::size_t corner = 0; corner < 8; ++corner)
@@ -1865,7 +1855,7 @@ void MatchRenderer3D::State::orientedBox(Vec3 centre, Vec3 axisA, Vec3 axisB,
 }
 
 void MatchRenderer3D::State::findBallHolder(const MatchRenderSnapshot& snapshot,
-                                           float alpha)
+                                            float alpha)
 {
   heldBy = nullptr;
   for (const MatchRenderPlayer& player : snapshot.players)
@@ -1892,8 +1882,8 @@ void MatchRenderer3D::State::findBallHolder(const MatchRenderSnapshot& snapshot,
 }
 
 void MatchRenderer3D::State::updateMotion(const MatchRenderPlayer& player,
-                                         AnimationSlot& slot, float alpha,
-                                         float deltaSeconds)
+                                          AnimationSlot& slot, float alpha,
+                                          float deltaSeconds)
 {
   using P = Tuning::Player;
   using Q = Tuning::Pose;
@@ -1954,17 +1944,16 @@ void MatchRenderer3D::State::updateMotion(const MatchRenderPlayer& player,
       RenderMath::dampingFactor(Tuning::Gait::SPEED_RATE, deltaSeconds);
   const float cycleMetres =
       (P::STRIDE_BASE_METRES + P::STRIDE_PER_SPEED * groundSpeed) * scale;
-  slot.phase = std::fmod(
-      slot.phase + TWO_PI * std::min(distance / cycleMetres,
-                                     P::MAX_CYCLES_PER_FRAME),
-      TWO_PI);
+  slot.phase =
+      std::fmod(slot.phase + TWO_PI * std::min(distance / cycleMetres,
+                                               P::MAX_CYCLES_PER_FRAME),
+                TWO_PI);
   if (distance > 1e-4f && groundSpeed >= P::IDLE_SPEED)
   {
     const Vec3 heading = moved * (1.0f / distance);
-    slot.moveDirection = RenderMath::normalize(
-        RenderMath::lerp(slot.moveDirection, heading,
-                         RenderMath::dampingFactor(R::DIRECTION_RATE,
-                                                   deltaSeconds)));
+    slot.moveDirection = RenderMath::normalize(RenderMath::lerp(
+        slot.moveDirection, heading,
+        RenderMath::dampingFactor(R::DIRECTION_RATE, deltaSeconds)));
   }
 
   // Acceleration and turn rate per simulated second, so a paused match
@@ -1977,10 +1966,10 @@ void MatchRenderer3D::State::updateMotion(const MatchRenderPlayer& player,
         (rawAcceleration - slot.acceleration) *
         RenderMath::dampingFactor(Q::ACCEL_SMOOTHING, simSeconds);
     const float rawTurn =
-        slot.hasYaw ? std::clamp(RenderMath::wrapAngle(yaw - slot.lastYaw) /
-                                     simSeconds,
-                                 -Q::MAX_TURN_RATE, Q::MAX_TURN_RATE)
-                    : 0.0f;
+        slot.hasYaw
+            ? std::clamp(RenderMath::wrapAngle(yaw - slot.lastYaw) / simSeconds,
+                         -Q::MAX_TURN_RATE, Q::MAX_TURN_RATE)
+            : 0.0f;
     slot.turnRate += (rawTurn - slot.turnRate) *
                      RenderMath::dampingFactor(Q::TURN_SMOOTHING, simSeconds);
     if (slot.event != PlayerRig::Event::NONE)
@@ -2018,9 +2007,8 @@ void MatchRenderer3D::State::updateMotion(const MatchRenderPlayer& player,
   float diveTarget = 0.0f;
   if (player.isGoalkeeper && player.onPitch)
   {
-    const GoalkeeperState keeperState = player.isHomeTeam
-                                            ? homeKeeperState
-                                            : awayKeeperState;
+    const GoalkeeperState keeperState =
+        player.isHomeTeam ? homeKeeperState : awayKeeperState;
     const Vec3 toBall = ballWorld - root;
     const float ballDistance = std::hypot(toBall.x, toBall.y);
     if (player.isDiving || keeperState == GoalkeeperState::DIVE)
@@ -2053,18 +2041,17 @@ void MatchRenderer3D::State::updateMotion(const MatchRenderPlayer& player,
   const float duty = PlayerRig::dutyFactor(slot.gaitSpeed);
   const bool idle =
       groundSpeed < P::IDLE_SPEED && slot.gaitSpeed < R::IDLE_GAIT_SPEED;
-  const float stance =
-      R::STANCE_WIDTH + slot.setBlend * K::SET_FOOT_SPREAD;
+  const float stance = R::STANCE_WIDTH + slot.setBlend * K::SET_FOOT_SPREAD;
   for (std::size_t leg = 0; leg < 2; ++leg)
   {
     PlayerRig::StrideInput stride;
-    stride.rest = root + flatSide * ((leg == 0 ? 1.0f : -1.0f) * stance * scale);
+    stride.rest =
+        root + flatSide * ((leg == 0 ? 1.0f : -1.0f) * stance * scale);
     stride.rest.z = 0.0f;
     stride.forward = slot.moveDirection;
     stride.yaw = yaw;
-    stride.legPhase =
-        std::fmod(slot.phase + (leg == 0 ? 0.0f : std::numbers::pi_v<float>),
-                  TWO_PI);
+    stride.legPhase = std::fmod(
+        slot.phase + (leg == 0 ? 0.0f : std::numbers::pi_v<float>), TWO_PI);
     stride.duty = duty;
     stride.stanceLength = duty * cycleMetres;
     stride.frontReach = R::FRONT_REACH * scale;
@@ -2099,8 +2086,8 @@ GoalMood MatchRenderer3D::State::goalMoodFor(
 }
 
 void MatchRenderer3D::State::addSegment(Vec3 from, Vec3 to, float fromHalf,
-                                       float toHalf, ImU32 color, Vec3 hint,
-                                       float objectDepth, PlayerLod lod)
+                                        float toHalf, ImU32 color, Vec3 hint,
+                                        float objectDepth, PlayerLod lod)
 {
   using P = Tuning::Player;
   const Vec3 span = to - from;
@@ -2140,10 +2127,9 @@ void MatchRenderer3D::State::addSegment(Vec3 from, Vec3 to, float fromHalf,
   {
     const bool far = (corner & 4U) != 0U;
     const float half = far ? toHalf : fromHalf;
-    corners[corner] =
-        (far ? to : from) +
-        acrossA * (((corner & 1U) != 0U ? 1.0f : -1.0f) * half) +
-        acrossB * (((corner & 2U) != 0U ? 1.0f : -1.0f) * half);
+    corners[corner] = (far ? to : from) +
+                      acrossA * (((corner & 1U) != 0U ? 1.0f : -1.0f) * half) +
+                      acrossB * (((corner & 2U) != 0U ? 1.0f : -1.0f) * half);
   }
   addBox(corners, color, objectDepth);
 }
@@ -2184,7 +2170,7 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
   const float scale = P::SCALE * heightMetres / P::REFERENCE_HEIGHT_METRES;
   const float pixelHeight =
       heightMetres * projection.focalPixels / anchor.depth;
-  const PlayerLod lod = pixelHeight < R::FAR_PIXELS        ? PlayerLod::FAR
+  const PlayerLod lod = pixelHeight < R::FAR_PIXELS         ? PlayerLod::FAR
                         : pixelHeight < P::ROUND_MIN_PIXELS ? PlayerLod::MID
                                                             : PlayerLod::NEAR;
   const bool detailed = pixelHeight >= P::HAND_MIN_PIXELS;
@@ -2209,10 +2195,9 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
   actionInput.holding = slot.holdBlend > 0.5f;
   actionInput.keeperSet = slot.setBlend > 0.5f;
   actionInput.throwIn = heldBy == &player && !keeper;
-  actionInput.mood = !celebrating ? PlayerRig::Mood::NONE
-                     : mood == GoalMood::DEJECTED
-                         ? PlayerRig::Mood::DEJECTED
-                         : PlayerRig::Mood::CELEBRATE;
+  actionInput.mood = !celebrating                 ? PlayerRig::Mood::NONE
+                     : mood == GoalMood::DEJECTED ? PlayerRig::Mood::DEJECTED
+                                                  : PlayerRig::Mood::CELEBRATE;
   const PlayerRig::Action action = PlayerRig::selectAction(actionInput);
 
   // --- upper-body pose ------------------------------------------------------
@@ -2227,8 +2212,7 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
   {
     const float outward = index == 0 ? 1.0f : -1.0f;
     const float legForward = std::clamp(
-        RenderMath::dot(slot.feet[index].position - root, forward) /
-            halfStance,
+        RenderMath::dot(slot.feet[index].position - root, forward) / halfStance,
         -1.0f, 1.0f);
     pose.armSwing[index] = -motion * gait.arm * legForward;
     pose.armSpread[index] = outward * 0.08f;
@@ -2242,8 +2226,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
       std::clamp(slot.turnRate * player.speedMetresPerSecond * Q::TURN_LEAN,
                  -Q::MAX_TURN_LEAN, Q::MAX_TURN_LEAN);
   // Sharp turns lead with the shoulders.
-  pose.twist = std::clamp(slot.turnRate * Q::TWIST_PER_TURN_RATE,
-                          -Q::MAX_TWIST, Q::MAX_TWIST);
+  pose.twist = std::clamp(slot.turnRate * Q::TWIST_PER_TURN_RATE, -Q::MAX_TWIST,
+                          Q::MAX_TWIST);
   const float stop = std::clamp(
       (-slot.acceleration - Q::STOP_DECELERATION) / Q::STOP_DECELERATION, 0.0f,
       1.0f);
@@ -2278,8 +2262,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
       using Kk = Tuning::Kick;
       Pose header = pose;
       // Snap the head through the ball, then recover.
-      const float nod = std::clamp(eventTime / Kk::HEADER_NOD_SECONDS, 0.0f,
-                                   1.0f);
+      const float nod =
+          std::clamp(eventTime / Kk::HEADER_NOD_SECONDS, 0.0f, 1.0f);
       header.lean = -0.25f + (Kk::HEADER_NOD + 0.25f) * nod;
       for (std::size_t index = 0; index < 2; ++index)
       {
@@ -2439,8 +2423,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
     {
       const PlayerRig::FootState& foot = slot.feet[index];
       if (!foot.inStance) continue;
-      const Vec3 hip =
-          root + flatSide * ((index == 0 ? 1.0f : -1.0f) * P::HIP_SPREAD * scale);
+      const Vec3 hip = root + flatSide * ((index == 0 ? 1.0f : -1.0f) *
+                                          P::HIP_SPREAD * scale);
       const float ahead = RenderMath::dot(foot.position - hip, forward);
       if (ahead <= 0.0f) continue;
       const float flat = PlayerRig::flatDistance(foot.position, hip);
@@ -2466,8 +2450,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
                            eventWeight / away);
     }
   }
-  const Vec3 pelvis = root + lunge + UP * pelvisHeight +
-                      (UP - hipUp) * (P::HIP_HEIGHT * scale);
+  const Vec3 pelvis =
+      root + lunge + UP * pelvisHeight + (UP - hipUp) * (P::HIP_HEIGHT * scale);
   const float objectDepth = anchor.depth;
 
   // Leg targets: the planted (or swinging) feet, lifted with the body when
@@ -2489,15 +2473,17 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
     {
       // Feet tuck under the body in the air.
       target = target + UP * (pose.lift * scale * R::JUMP_TUCK) +
-               (root - foot.position) * (R::JUMP_GATHER * std::min(pose.lift * 4.0f, 1.0f));
+               (root - foot.position) *
+                   (R::JUMP_GATHER * std::min(pose.lift * 4.0f, 1.0f));
       target.z = std::max(target.z, foot.position.z + ankleHeight);
     }
     if (slot.diveBlend > 0.01f)
     {
       const Vec3 thighDirection =
           limbDirection(legFrame, pose.thigh[index], pose.legSpread[index]);
-      const Vec3 shinDirection = limbDirection(
-          legFrame, pose.thigh[index] + pose.knee[index], pose.legSpread[index]);
+      const Vec3 shinDirection =
+          limbDirection(legFrame, pose.thigh[index] + pose.knee[index],
+                        pose.legSpread[index]);
       const Vec3 fk = hipJoint[index] +
                       thighDirection * (P::THIGH_LENGTH * scale) +
                       shinDirection * (P::SHIN_LENGTH * scale);
@@ -2521,13 +2507,12 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
       {
         using Kk = Tuning::Kick;
         // The instep meets the ball: the ankle just behind and above it.
-        const Vec3 contact = slot.contact -
-                             slot.eventDirection * (Kk::CONTACT_BEHIND * scale) +
-                             UP * (Kk::CONTACT_ABOVE * scale);
+        const Vec3 contact =
+            slot.contact - slot.eventDirection * (Kk::CONTACT_BEHIND * scale) +
+            UP * (Kk::CONTACT_ABOVE * scale);
         target = PlayerRig::kickAnkle(slot.event, eventTime, contact,
-                                      slot.eventDirection,
-                                      eventSide * -outward, kickTiming(),
-                                      weight);
+                                      slot.eventDirection, eventSide * -outward,
+                                      kickTiming(), weight);
         break;
       }
       case Event::TACKLE:
@@ -2540,10 +2525,9 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
         target = ground + slot.eventDirection * (R::SLIDE_LEG_REACH * scale) +
                  UP * ankleHeight;
         const std::size_t other = 1 - leg;
-        const Vec3 tucked = ground +
-                            slot.eventDirection * (R::SLIDE_TUCK_REACH * scale) +
-                            eventSide * (outward * -0.18f * scale) +
-                            UP * ankleHeight;
+        const Vec3 tucked =
+            ground + slot.eventDirection * (R::SLIDE_TUCK_REACH * scale) +
+            eventSide * (outward * -0.18f * scale) + UP * ankleHeight;
         ankleTarget[other] =
             RenderMath::lerp(ankleTarget[other], tucked, eventWeight);
         planted[other] = false;
@@ -2573,14 +2557,13 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
     const Vec3 footForward{std::cos(footYaw), std::sin(footYaw), 0.0f};
     if (planted[index])
     {
-      heel[index] = PlayerRig::rollOntoToes(
-          target, hipJoint[index], footForward, R::TOE_LENGTH * scale, reach,
-          R::MAX_HEEL_ANGLE);
+      heel[index] = PlayerRig::rollOntoToes(target, hipJoint[index],
+                                            footForward, R::TOE_LENGTH * scale,
+                                            reach, R::MAX_HEEL_ANGLE);
     }
-    const PlayerRig::TwoBone leg =
-        PlayerRig::solveTwoBone(hipJoint[index], target,
-                                P::THIGH_LENGTH * scale,
-                                P::SHIN_LENGTH * scale, kneePole);
+    const PlayerRig::TwoBone leg = PlayerRig::solveTwoBone(
+        hipJoint[index], target, P::THIGH_LENGTH * scale,
+        P::SHIN_LENGTH * scale, kneePole);
     knee[index] = leg.middle;
     ankle[index] = leg.end;
   }
@@ -2616,8 +2599,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
     addSegment(hipJoint[index], hem, P::SHORTS_LEG_TOP * bulk,
                P::SHORTS_LEG_HEM * bulk, kit.shorts, shinHint, objectDepth,
                lod);
-    addSegment(hem, knee[index], P::THIGH_MIDDLE * bulk,
-               P::THIGH_BOTTOM * bulk, skin, shinHint, objectDepth, lod);
+    addSegment(hem, knee[index], P::THIGH_MIDDLE * bulk, P::THIGH_BOTTOM * bulk,
+               skin, shinHint, objectDepth, lod);
     // Socks pulled up to the knee with a turned-down band.
     const Vec3 band =
         RenderMath::lerp(knee[index], ankle[index], P::SOCK_BAND_SHARE);
@@ -2637,9 +2620,11 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
                  lod);
     }
     // Boot from heel to toe, the sole underneath.
-    const Vec3 footSide = RenderMath::normalize(RenderMath::cross(UP, footForward));
+    const Vec3 footSide =
+        RenderMath::normalize(RenderMath::cross(UP, footForward));
     const Vec3 footUp = RenderMath::cross(footForward, footSide);
-    const Vec3 bootCentre = ankle[index] + footForward * (P::BOOT_FORWARD * scale) -
+    const Vec3 bootCentre = ankle[index] +
+                            footForward * (P::BOOT_FORWARD * scale) -
                             footUp * ((R::ANKLE_HEIGHT - P::BOOT_HALF_HEIGHT -
                                        P::SOLE_HALF_HEIGHT * 2.0f) *
                                       scale);
@@ -2648,16 +2633,17 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
     {
       const bool toe = (corner & 1U) != 0U;
       // The toe box narrows and drops a little.
-      const float width = (toe ? P::BOOT_TOE_WIDTH : P::BOOT_HALF_WIDTH) * scale;
-      const float height =
-          ((corner & 4U) != 0U ? (toe ? P::BOOT_TOE_HEIGHT : P::BOOT_HALF_HEIGHT)
-                               : -P::BOOT_HALF_HEIGHT) *
-          scale;
-      boot[corner] = bootCentre +
-                     footForward * ((toe ? 1.0f : -1.0f) * P::BOOT_HALF_LENGTH *
-                                    scale) +
-                     footSide * (((corner & 2U) != 0U ? 1.0f : -1.0f) * width) +
-                     footUp * height;
+      const float width =
+          (toe ? P::BOOT_TOE_WIDTH : P::BOOT_HALF_WIDTH) * scale;
+      const float height = ((corner & 4U) != 0U ? (toe ? P::BOOT_TOE_HEIGHT
+                                                       : P::BOOT_HALF_HEIGHT)
+                                                : -P::BOOT_HALF_HEIGHT) *
+                           scale;
+      boot[corner] =
+          bootCentre +
+          footForward * ((toe ? 1.0f : -1.0f) * P::BOOT_HALF_LENGTH * scale) +
+          footSide * (((corner & 2U) != 0U ? 1.0f : -1.0f) * width) +
+          footUp * height;
     }
     addBox(boot, look.boots, objectDepth);
     if (lod == PlayerLod::NEAR)
@@ -2665,16 +2651,17 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
       std::array<Vec3, 8> sole{};
       for (std::size_t corner = 0; corner < 8; ++corner)
       {
-        sole[corner] = boot[corner & 3U] -
-                       footUp * ((corner & 4U) != 0U ? 0.0f
-                                                     : P::SOLE_HALF_HEIGHT *
-                                                           2.0f * scale);
+        sole[corner] =
+            boot[corner & 3U] -
+            footUp * ((corner & 4U) != 0U ? 0.0f
+                                          : P::SOLE_HALF_HEIGHT * 2.0f * scale);
       }
       addBox(sole, P::SOLE_COLOR, objectDepth);
     }
   }
 
-  // --- pelvis and torso -------------------------------------------------------
+  // --- pelvis and torso
+  // -------------------------------------------------------
   const Vec3 twistedForward =
       forward * std::cos(pose.twist) + bodySide * std::sin(pose.twist);
   const Vec3 twistedSide =
@@ -2684,7 +2671,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
   const Vec3 torsoForward =
       twistedForward * std::cos(pose.lean) - bodyUp * std::sin(pose.lean);
   const Vec3 torsoSide = RenderMath::normalize(twistedSide);
-  const Vec3 hips = pelvis + bodyUp * ((P::SHORTS_HEIGHT - P::HIP_HEIGHT) * scale);
+  const Vec3 hips =
+      pelvis + bodyUp * ((P::SHORTS_HEIGHT - P::HIP_HEIGHT) * scale);
   const Vec3 waist =
       pelvis + bodyUp * ((P::TORSO_BASE - P::HIP_HEIGHT) * scale);
   const Vec3 chest = waist + torsoUp * (P::TORSO_LENGTH * scale);
@@ -2717,7 +2705,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
     std::array<Vec3, P::TORSO_SIDES> lower{};
     std::array<Vec3, P::TORSO_SIDES> middle{};
     std::array<Vec3, P::TORSO_SIDES> upper{};
-    const Vec3 ribs = waist + torsoUp * (P::TORSO_LENGTH * P::RIB_SHARE * scale);
+    const Vec3 ribs =
+        waist + torsoUp * (P::TORSO_LENGTH * P::RIB_SHARE * scale);
     for (std::size_t corner = 0; corner < SECTION.size(); ++corner)
     {
       const auto ring = [&](Vec3 centre, float width, float depth)
@@ -2727,7 +2716,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
       };
       lower[corner] = ring(waist, P::WAIST_HALF_WIDTH, P::WAIST_HALF_DEPTH);
       middle[corner] = ring(ribs, P::RIB_HALF_WIDTH, P::CHEST_HALF_DEPTH);
-      upper[corner] = ring(chest, P::CHEST_HALF_WIDTH, P::CHEST_HALF_DEPTH * 0.9f);
+      upper[corner] =
+          ring(chest, P::CHEST_HALF_WIDTH, P::CHEST_HALF_DEPTH * 0.9f);
     }
     addPrism(lower, middle, kit.shirt, objectDepth, false, false);
     addPrism(middle, upper, kit.shirt, objectDepth, false, true);
@@ -2757,8 +2747,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
   }
   if (lod != PlayerLod::FAR)
   {
-    addBackPrint(slot, kitIndex, waist, torsoUp, torsoForward, torsoSide,
-                 scale, objectDepth);
+    addBackPrint(slot, kitIndex, waist, torsoUp, torsoForward, torsoSide, scale,
+                 objectDepth);
   }
 
   // --- arms -----------------------------------------------------------------
@@ -2773,12 +2763,12 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
         slot.event == Event::THROW
             ? std::clamp(eventTime / R::THROW_WHIP_SECONDS, 0.0f, 1.0f)
             : 0.0f;
-    const Vec3 grip = headCentre + torsoUp * (R::THROW_GRIP_UP * scale) +
-                      torsoForward * ((R::THROW_GRIP_BACK +
-                                       (R::THROW_RELEASE_FORWARD -
-                                        R::THROW_GRIP_BACK) *
-                                           PlayerRig::smoothStep(throwShare)) *
-                                      scale);
+    const Vec3 grip =
+        headCentre + torsoUp * (R::THROW_GRIP_UP * scale) +
+        torsoForward * ((R::THROW_GRIP_BACK +
+                         (R::THROW_RELEASE_FORWARD - R::THROW_GRIP_BACK) *
+                             PlayerRig::smoothStep(throwShare)) *
+                        scale);
     handTarget = {grip + torsoSide * (R::HAND_GRIP_HALF * scale),
                   grip - torsoSide * (R::HAND_GRIP_HALF * scale)};
     handWeight = slot.event == Event::THROW ? eventWeight : 1.0f;
@@ -2825,7 +2815,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
                              forearm;
     if (handWeight > 0.0f)
     {
-      const Vec3 target = RenderMath::lerp(wrist, handTarget[index], handWeight);
+      const Vec3 target =
+          RenderMath::lerp(wrist, handTarget[index], handWeight);
       const PlayerRig::TwoBone arm = PlayerRig::solveTwoBone(
           shoulder, target, upperArm, forearm,
           torsoSide * (sideSign * 0.6f) - torsoForward * 0.4f - torsoUp * 0.3f);
@@ -2841,8 +2832,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
                  P::ELBOW_HALF_WIDTH * bulk, kit.shirt, armHint, objectDepth,
                  lod);
       addSegment(elbow, wrist, P::ELBOW_HALF_WIDTH * bulk,
-                 P::WRIST_HALF_WIDTH * bulk, keeper ? kit.shirt : skin,
-                 armHint, objectDepth, lod);
+                 P::WRIST_HALF_WIDTH * bulk, keeper ? kit.shirt : skin, armHint,
+                 objectDepth, lod);
       continue;
     }
     if (keeper)
@@ -2896,9 +2887,8 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
     primitive.reference =
         static_cast<std::uint32_t>(look.hairStyle) |
         (look.beard ? HEAD_BEARD_BIT : 0U) |
-        (static_cast<std::uint32_t>(std::clamp(facing * 0.5f + 0.5f, 0.0f,
-                                               1.0f) *
-                                    255.0f)
+        (static_cast<std::uint32_t>(
+             std::clamp(facing * 0.5f + 0.5f, 0.0f, 1.0f) * 255.0f)
          << HEAD_FACING_SHIFT);
     primitive.size =
         P::HEAD_RADIUS * scale * projection.focalPixels / head.depth;
@@ -2934,15 +2924,15 @@ void MatchRenderer3D::State::addBackPrint(const AnimationSlot& slot,
   if (slot.number <= 0) return;
   const float backDepth =
       (P::WAIST_HALF_DEPTH + P::CHEST_HALF_DEPTH) * 0.5f * scale + 0.004f;
-  const Vec3 centre = waist + torsoUp * (N::CENTRE_UP * scale) -
-                      torsoForward * backDepth;
+  const Vec3 centre =
+      waist + torsoUp * (N::CENTRE_UP * scale) - torsoForward * backDepth;
   const Vec3 toEye = RenderMath::normalize(projection.eye - centre);
   if (RenderMath::dot(torsoForward * -1.0f, toEye) < N::MIN_FACING) return;
   // Seen from behind, the player's right is the viewer's right.
   const Vec3 across = bodySide * -1.0f;
   const Vec3 down = torsoUp * -1.0f;
-  const auto print = [&](Vec3 middle, float glyphHeight, float minimumPixels,
-                         const char* text)
+  const auto print =
+      [&](Vec3 middle, float glyphHeight, float minimumPixels, const char* text)
   {
     // Digits and capitals fill ~72% of the font's line height.
     const float lineHeight = glyphHeight / 0.72f;
@@ -2956,9 +2946,9 @@ void MatchRenderer3D::State::addBackPrint(const AnimationSlot& slot,
     if (linePixels * 0.72f < minimumPixels) return;
     const float step = std::round(std::log(linePixels / N::MIN_FONT_SIZE) /
                                   std::log(N::FONT_STEP));
-    const float fontSize = std::clamp(
-        N::MIN_FONT_SIZE * std::pow(N::FONT_STEP, step), N::MIN_FONT_SIZE,
-        N::MAX_FONT_SIZE);
+    const float fontSize =
+        std::clamp(N::MIN_FONT_SIZE * std::pow(N::FONT_STEP, step),
+                   N::MIN_FONT_SIZE, N::MAX_FONT_SIZE);
     const ImVec2 size =
         ImGui::GetFont()->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, text);
     if (size.x <= 0.0f || size.y <= 0.0f) return;
@@ -2999,8 +2989,7 @@ void MatchRenderer3D::State::drawBackText(const Primitive& primitive)
   const ImVec2* frame = points.data() + primitive.firstPoint;
   const char* text = texts[primitive.reference];
   ImFont* font = ImGui::GetFont();
-  const ImVec2 size =
-      font->CalcTextSizeA(primitive.size, FLT_MAX, 0.0f, text);
+  const ImVec2 size = font->CalcTextSizeA(primitive.size, FLT_MAX, 0.0f, text);
   if (size.x <= 0.0f || size.y <= 0.0f) return;
   const ImVec2 canonical{projection.rect.x, projection.rect.y};
   const ImVec4 unclipped{-1e6f, -1e6f, 1e6f, 1e6f};
@@ -3036,9 +3025,8 @@ void MatchRenderer3D::State::detectTouches(const MatchRenderSnapshot& snapshot)
   {
     const MatchRenderPlayer& player = snapshot.players[index];
     AnimationSlot& slot = slots[index];
-    const bool challenged =
-        player.tackleCooldown >
-        slot.lastTackleCooldown + R::TACKLE_COOLDOWN_RISE;
+    const bool challenged = player.tackleCooldown >
+                            slot.lastTackleCooldown + R::TACKLE_COOLDOWN_RISE;
     slot.lastTackleCooldown = player.tackleCooldown;
     if (!challenged || !livePlay || !player.onPitch) continue;
     if (slot.event != PlayerRig::Event::NONE &&
@@ -3096,9 +3084,8 @@ void MatchRenderer3D::State::detectTouches(const MatchRenderSnapshot& snapshot)
     slot.event = event;
     slot.eventSeconds = 0.0f;
     slot.contact = from;
-    slot.eventDirection = flightLength > 1e-3f
-                              ? flight * (1.0f / flightLength)
-                              : slot.moveDirection;
+    slot.eventDirection = flightLength > 1e-3f ? flight * (1.0f / flightLength)
+                                               : slot.moveDirection;
     // The preferred foot, unless the ball sits well over on the other side.
     const Vec3 root = RenderMath::worldFromPitch(lerpRenderPosition(
         player.previousPosition, player.currentPosition, alpha));
@@ -3108,8 +3095,8 @@ void MatchRenderer3D::State::detectTouches(const MatchRenderSnapshot& snapshot)
     const float offset = RenderMath::dot(from - root, left);
     slot.eventLeg = offset > Kk::WRONG_FOOT_METRES    ? 0U
                     : offset < -Kk::WRONG_FOOT_METRES ? 1U
-                    : slot.leftFooted                  ? 0U
-                                                       : 1U;
+                    : slot.leftFooted                 ? 0U
+                                                      : 1U;
     return;
   }
 }
@@ -3133,12 +3120,12 @@ void MatchRenderer3D::State::updateGoalMoment(
     goal.byHome = snapshot.goalScoredByHome;
     // The goal the ball is nearest to took it, whichever way teams play.
     goal.goalIndex = ballWorld.x < LENGTH * 0.5f ? 0U : 1U;
-    goal.impact = {goal.goalIndex == 0 ? -Tuning::Goal::BASE_DEPTH * 0.7f
-                                       : LENGTH + Tuning::Goal::BASE_DEPTH * 0.7f,
-                   std::clamp(ballWorld.y,
-                              WIDTH * 0.5f - Tuning::Goal::WIDTH * 0.5f,
-                              WIDTH * 0.5f + Tuning::Goal::WIDTH * 0.5f),
-                   std::clamp(ballWorld.z, 0.3f, Tuning::Goal::HEIGHT - 0.3f)};
+    goal.impact = {
+        goal.goalIndex == 0 ? -Tuning::Goal::BASE_DEPTH * 0.7f
+                            : LENGTH + Tuning::Goal::BASE_DEPTH * 0.7f,
+        std::clamp(ballWorld.y, WIDTH * 0.5f - Tuning::Goal::WIDTH * 0.5f,
+                   WIDTH * 0.5f + Tuning::Goal::WIDTH * 0.5f),
+        std::clamp(ballWorld.z, 0.3f, Tuning::Goal::HEIGHT - 0.3f)};
     if (snapshot.events)
     {
       const std::vector<MatchEvent>& events = *snapshot.events;
@@ -3164,14 +3151,14 @@ void MatchRenderer3D::State::updateGoalMoment(
     }
   }
   goal.shownSeconds += frameSeconds;
-  goal.celebrationSeconds = std::max(
-      0.0f, MatchTuning::Timing::GOAL_CELEBRATION_SECONDS -
-                snapshot.goalCelebrationRemaining);
+  goal.celebrationSeconds =
+      std::max(0.0f, MatchTuning::Timing::GOAL_CELEBRATION_SECONDS -
+                         snapshot.goalCelebrationRemaining);
   const auto envelope = [](float seconds, float hold)
   {
     const float in = std::clamp(seconds / 0.6f, 0.0f, 1.0f);
-    const float out = std::clamp(
-        1.0f - (seconds - hold) / C::FADE_SECONDS, 0.0f, 1.0f);
+    const float out =
+        std::clamp(1.0f - (seconds - hold) / C::FADE_SECONDS, 0.0f, 1.0f);
     return std::min(in, out);
   };
   celebrationWeight = envelope(goal.celebrationSeconds, C::PLAYER_SECONDS);
@@ -3203,35 +3190,32 @@ void MatchRenderer3D::State::drawGoalSting(const MatchRenderSnapshot& snapshot)
                 snapshot.awayScore);
   // Scorer and minute in a fixed buffer: no allocation per frame.
   std::array<char, 96> detail{};
-  std::snprintf(detail.data(), detail.size(), "%s%s%s",
-                goal.scorerName.c_str(),
+  std::snprintf(detail.data(), detail.size(), "%s%s%s", goal.scorerName.c_str(),
                 goal.scorerName.empty() || goal.minute.empty() ? "" : "  ",
                 goal.minute.c_str());
   const bool hasDetail = detail[0] != '\0';
-  const ImVec2 callSize =
-      font->CalcTextSizeA(titleSize, FLT_MAX, 0.0f, call);
+  const ImVec2 callSize = font->CalcTextSizeA(titleSize, FLT_MAX, 0.0f, call);
   const ImVec2 scoreSize = font->CalcTextSizeA(titleSize, FLT_MAX, 0.0f, score);
   const ImVec2 detailSize =
       font->CalcTextSizeA(em, FLT_MAX, 0.0f, detail.data());
   const float bar = em * S::BAR_EM;
   const float titleWidth = callSize.x + padding * 2.0f + scoreSize.x;
-  const float width =
-      bar + padding * 2.0f + std::max(titleWidth, detailSize.x);
-  const float height = callSize.y + (hasDetail ? detailSize.y : 0.0f) +
-                       padding * 1.5f;
+  const float width = bar + padding * 2.0f + std::max(titleWidth, detailSize.x);
+  const float height =
+      callSize.y + (hasDetail ? detailSize.y : 0.0f) + padding * 1.5f;
   const float x = projection.rect.x +
                   std::max(padding, (projection.rect.width - width) * 0.5f) -
                   slide * em;
-  const float y = projection.rect.y + projection.rect.height -
-                  height - projection.rect.height * S::BOTTOM_SHARE;
+  const float y = projection.rect.y + projection.rect.height - height -
+                  projection.rect.height * S::BOTTOM_SHARE;
   const auto fade = [opacity](ImU32 color)
   {
     const auto alpha = static_cast<float>((color >> IM_COL32_A_SHIFT) & 0xFFU);
     return withAlpha(color, static_cast<std::uint8_t>(alpha * opacity));
   };
   const float rounding = em * S::ROUNDING_EM;
-  drawList->AddRectFilled({x, y}, {x + width, y + height},
-                          fade(S::PANEL_COLOR), rounding);
+  drawList->AddRectFilled({x, y}, {x + width, y + height}, fade(S::PANEL_COLOR),
+                          rounding);
   const KitColors& kit = goal.byHome ? kits.home : kits.away;
   drawList->AddRectFilled({x, y}, {x + bar, y + height}, fade(kit.shirt),
                           rounding, ImDrawFlags_RoundCornersLeft);
@@ -3239,8 +3223,7 @@ void MatchRenderer3D::State::drawGoalSting(const MatchRenderSnapshot& snapshot)
                           fade(kit.trim));
   const float textX = x + bar + padding;
   const float textY = y + padding * 0.75f;
-  drawList->AddText(font, titleSize, {textX, textY}, fade(S::CALL_COLOR),
-                    call);
+  drawList->AddText(font, titleSize, {textX, textY}, fade(S::CALL_COLOR), call);
   drawList->AddText(font, titleSize,
                     {textX + callSize.x + padding * 2.0f, textY},
                     fade(S::TEXT_COLOR), score);
@@ -3287,19 +3270,18 @@ void MatchRenderer3D::State::addGoals()
         const Vec3 top = RenderMath::lerp(net.corners[3], net.corners[2], u);
         return RenderMath::lerp(bottom, top, v);
       };
-      Vec3 outward = RenderMath::normalize(
-          RenderMath::cross(net.corners[1] - net.corners[0],
-                            net.corners[3] - net.corners[0]));
+      Vec3 outward = RenderMath::normalize(RenderMath::cross(
+          net.corners[1] - net.corners[0], net.corners[3] - net.corners[0]));
       const Vec3 panelCentre = (net.corners[0] + net.corners[2]) * 0.5f;
       if (RenderMath::dot(outward, panelCentre - mouth) < 0.0f)
         outward = outward * -1.0f;
       const auto displaced = [&](Vec3 point)
       {
         const float distance = RenderMath::length(point - goal.impact);
-        const float push = R::AMPLITUDE * std::exp(-R::DECAY * age) *
-                           std::exp(-distance / R::REACH) *
-                           std::cos(R::WAVE_NUMBER * distance -
-                                    R::WAVE_SPEED * age);
+        const float push =
+            R::AMPLITUDE * std::exp(-R::DECAY * age) *
+            std::exp(-distance / R::REACH) *
+            std::cos(R::WAVE_NUMBER * distance - R::WAVE_SPEED * age);
         return point + outward * push;
       };
       const auto strand = [&](Vec3 from, Vec3 to)
@@ -3449,9 +3431,8 @@ void MatchRenderer3D::State::addBall(const MatchRenderSnapshot& snapshot,
   primitive.firstPoint = static_cast<std::uint32_t>(points.size());
   primitive.pointCount = 1;
   primitive.kind = PrimitiveKind::BALL;
-  primitive.size =
-      std::max(B::MIN_PIXELS,
-               B::RADIUS * boost * projection.focalPixels / screen.depth);
+  primitive.size = std::max(
+      B::MIN_PIXELS, B::RADIUS * boost * projection.focalPixels / screen.depth);
   // The panels roll with the ground the ball covers, in its on-screen
   // direction of travel.
   const Vec3 moved = world - lastBallWorld;
@@ -3567,8 +3548,8 @@ void MatchRenderer3D::State::drawBoardLogo(const Stadium3D::AdBoard& board,
     const std::array<ImU32, 4> colors{color, color, color, color};
     drawWorldPolygon(corners, colors, false);
   };
-  bar(0.0f, markWidth * 0.8f, mixColor(style.foreground, style.background,
-                                       0.35f));
+  bar(0.0f, markWidth * 0.8f,
+      mixColor(style.foreground, style.background, 0.35f));
   bar(markWidth, width, style.foreground);
 }
 
@@ -3678,19 +3659,17 @@ void MatchRenderer3D::State::drawHead(const Primitive& primitive)
   { return ImVec2{centre.x + x * radius, centre.y + y * radius}; };
   drawList->AddCircleFilled(centre, radius, shadeColor(skin, 0.74f));
   drawList->AddCircleFilled(at(-0.16f, -0.12f), radius * 0.76f, skin);
-  const ImU32 hairColor = style == HairStyle::BUZZ
-                              ? mixColor(hair, skin, 0.4f)
-                              : style == HairStyle::SHAVED
-                                    ? mixColor(skin, hair, 0.18f)
-                                    : hair;
+  const ImU32 hairColor = style == HairStyle::BUZZ ? mixColor(hair, skin, 0.4f)
+                          : style == HairStyle::SHAVED
+                              ? mixColor(skin, hair, 0.18f)
+                              : hair;
   const bool fromBehind = facing < -0.35f;
   if (fromBehind)
   {
     // The back of the head: hair down to the nape.
-    drawList->AddCircleFilled(at(0.0f, -0.08f),
-                              radius * (style == HairStyle::VOLUME ? 1.0f
-                                                                   : 0.93f),
-                              hairColor);
+    drawList->AddCircleFilled(
+        at(0.0f, -0.08f), radius * (style == HairStyle::VOLUME ? 1.0f : 0.93f),
+        hairColor);
     if (style == HairStyle::LONG)
       drawList->AddCircleFilled(at(0.0f, 0.42f), radius * 0.62f, hairColor);
     return;
@@ -3900,8 +3879,7 @@ void MatchRenderer3D::render(const MatchRenderSnapshot& snapshot,
       s.lastMatchMinutes >= 0.0f
           ? (snapshot.matchTimeMinutes - s.lastMatchMinutes) * 60.0f
           : 0.0f;
-  s.simSeconds =
-      std::clamp(rawSimSeconds, 0.0f, Tuning::Pose::MAX_SIM_SECONDS);
+  s.simSeconds = std::clamp(rawSimSeconds, 0.0f, Tuning::Pose::MAX_SIM_SECONDS);
   const bool firstFrame = s.lastMatchMinutes < 0.0f;
   s.lastMatchMinutes = snapshot.matchTimeMinutes;
   s.livePlay = snapshot.state == MatchState::PLAYING;

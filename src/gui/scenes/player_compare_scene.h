@@ -64,7 +64,7 @@ class PlayerCompareScene : public ManagementScene
     std::string knowledge; /*!< "Knowledge 62%" or "Your player". */
     std::vector<ScoutedAttribute> attributes;
     std::vector<std::string> attribute_texts; /*!< "72" or "65-78". */
-    std::vector<std::string> facts; /*!< One per FACT_KEYS row. */
+    std::vector<std::string> facts;           /*!< One per FACT_KEYS row. */
   };
 
   /** @brief A player the picker offers. */

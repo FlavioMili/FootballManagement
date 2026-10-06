@@ -125,8 +125,7 @@ std::string_view stripCurrency(std::string_view text)
 }
 
 /** Multiplier of a unit word ("k", "mln", "mila"...), 0 when unknown. */
-double unitMultiplier(std::string_view word,
-                      const NumberFormat::Locale& locale)
+double unitMultiplier(std::string_view word, const NumberFormat::Locale& locale)
 {
   struct Unit
   {
@@ -134,12 +133,23 @@ double unitMultiplier(std::string_view word,
     double multiplier;
   };
   static constexpr std::array<Unit, 17> UNITS = {{
-      {"k", 1e3},          {"mila", 1e3},     {"thousand", 1e3},
-      {"m", 1e6},          {"mln", 1e6},      {"mio", 1e6},
-      {"milione", 1e6},    {"milioni", 1e6},  {"million", 1e6},
-      {"millions", 1e6},   {"b", 1e9},        {"bn", 1e9},
-      {"mld", 1e9},        {"miliardo", 1e9}, {"miliardi", 1e9},
-      {"billion", 1e9},    {"billions", 1e9},
+      {"k", 1e3},
+      {"mila", 1e3},
+      {"thousand", 1e3},
+      {"m", 1e6},
+      {"mln", 1e6},
+      {"mio", 1e6},
+      {"milione", 1e6},
+      {"milioni", 1e6},
+      {"million", 1e6},
+      {"millions", 1e6},
+      {"b", 1e9},
+      {"bn", 1e9},
+      {"mld", 1e9},
+      {"miliardo", 1e9},
+      {"miliardi", 1e9},
+      {"billion", 1e9},
+      {"billions", 1e9},
   }};
   for (const Unit& unit : UNITS)
     if (equalsIgnoreCase(word, unit.word)) return unit.multiplier;
@@ -185,7 +195,8 @@ const Locale& current() { return LanguageManager::instance().numberLocale(); }
 
 std::string grouped(int64_t value, const Locale& locale)
 {
-  const std::string digits = groupedMagnitude(magnitude(value), locale.group_mark);
+  const std::string digits =
+      groupedMagnitude(magnitude(value), locale.group_mark);
   return value < 0 ? "-" + digits : digits;
 }
 

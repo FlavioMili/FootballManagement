@@ -257,7 +257,8 @@ void MatchReportScene::renderScore()
 {
   const Theme::Palette& palette = Theme::palette();
   UI::beginAutoHeightCard("report_score", nullptr);
-  const char* typeLabel = LOC(CompetitionView::matchTypeKey(report->match_type));
+  const char* typeLabel =
+      LOC(CompetitionView::matchTypeKey(report->match_type));
   std::string stage;
   if (report->match_type == MatchType::CUP && report->stage > 0)
     if (const auto cup =
@@ -304,8 +305,8 @@ void MatchReportScene::renderScore()
     factsWidth = ImGui::CalcTextSize(typeLabel).x + 12.0f * Theme::scale();
   }
   if (!stage.empty())
-    factsWidth += ImGui::GetStyle().ItemSpacing.x +
-                  ImGui::CalcTextSize(stage.c_str()).x;
+    factsWidth +=
+        ImGui::GetStyle().ItemSpacing.x + ImGui::CalcTextSize(stage.c_str()).x;
   const float attendanceWidth = ImGui::CalcTextSize(attendance.c_str()).x;
   const float side = (width - scoreWidth) * 0.5f - gap;
   const bool oneRow = homeWidth + factsWidth + gap <= side &&
@@ -340,8 +341,7 @@ void MatchReportScene::renderScore()
     drawFacts();
     if (!attendance.empty())
     {
-      ImGui::SetCursorPos(
-          ImVec2(startX + width - attendanceWidth, factsY));
+      ImGui::SetCursorPos(ImVec2(startX + width - attendanceWidth, factsY));
       ImGui::TextColored(palette.muted, "%s", attendance.c_str());
     }
     ImGui::SetCursorPos(ImVec2(startX, afterScoreY));

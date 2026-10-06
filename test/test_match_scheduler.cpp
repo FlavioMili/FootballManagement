@@ -309,7 +309,9 @@ TEST(ThreadPoolTest, DestroyingAPoolJoinsItsWorkersPromptly)
   const ShutdownWatchdog watchdog(SHUTDOWN_LIMIT, "destroying thread pools");
   for (int round = 0; round < 50; ++round)
   {
-    { ThreadPool idle(ThreadPool::MAX_THREADS); }
+    {
+      ThreadPool idle(ThreadPool::MAX_THREADS);
+    }
     ThreadPool pool(3);
     std::atomic<int> calls{0};
     pool.parallelFor(64, [&](std::size_t) { ++calls; });
@@ -583,12 +585,12 @@ TEST(MatchSchedulerTest, MatchdayTiming)
   // matters is the busiest day of a round, not the whole round.
   const auto leagueMatches = [](const std::vector<Match>& matches)
   {
-    return std::ranges::count_if(matches, [](const Match& match)
-                                 { return match.getMatchType() == MatchType::LEAGUE; });
+    return std::ranges::count_if(
+        matches, [](const Match& match)
+        { return match.getMatchType() == MatchType::LEAGUE; });
   };
-  const GameDateValue first_round =
-      SeasonCalendar::leagueStart(SeasonCalendar::seasonStartYear(
-          controller->getCurrentDate()));
+  const GameDateValue first_round = SeasonCalendar::leagueStart(
+      SeasonCalendar::seasonStartYear(controller->getCurrentDate()));
   std::optional<GameDateValue> matchday;
   for (int offset = -1; offset <= 2; ++offset)
   {
@@ -596,7 +598,8 @@ TEST(MatchSchedulerTest, MatchdayTiming)
     const auto& matches = calendar.getMatchesForDate(day);
     std::cout << "[matchday] first round " << day.toString() << ": "
               << matches.size() << " matches\n";
-    if (!matchday || matches.size() > calendar.getMatchesForDate(*matchday).size())
+    if (!matchday ||
+        matches.size() > calendar.getMatchesForDate(*matchday).size())
       matchday = day;
   }
   ASSERT_TRUE(matchday);

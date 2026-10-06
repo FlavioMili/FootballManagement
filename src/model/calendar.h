@@ -105,8 +105,8 @@ bool isBlackout(const GameDateValue& date);
  * rounds they need in other weeks (or on up to two weekends after the top
  * flight has finished), so the midweek days of the two tiers do not pile up.
  */
-std::vector<GameDateValue> leagueRoundDates(uint16_t season_year,
-                                            size_t rounds, uint8_t variant = 0);
+std::vector<GameDateValue> leagueRoundDates(uint16_t season_year, size_t rounds,
+                                            uint8_t variant = 0);
 
 /** @brief Date of each cup round; the last one (the final) is a Saturday. */
 std::vector<GameDateValue> cupRoundDates(uint16_t season_year, size_t rounds);
@@ -193,8 +193,7 @@ class Calendar
                               uint16_t season_year);
 
   void generateFriendlies(const class GameData& gamedata,
-                          const GameDateValue& startDate,
-                          size_t numFriendlies);
+                          const GameDateValue& startDate, size_t numFriendlies);
 
   std::map<GameDateValue, std::vector<Match>> schedule;
   bool rest_check_pending = false;

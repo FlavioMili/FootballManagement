@@ -69,8 +69,7 @@ class MatchShirtNumbers
     int number = player.player->getSquadNumber();
     if (number <= 0 || number >= NUMBERS ||
         worn.test(static_cast<std::size_t>(number)))
-      number = spareNumber(worn,
-                           player.player->getRole() == PlayerRole::GK);
+      number = spareNumber(worn, player.player->getRole() == PlayerRole::GK);
     if (number > 0) worn.set(static_cast<std::size_t>(number));
     owners.emplace_back(player.player, number);
     return number;

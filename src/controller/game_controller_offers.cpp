@@ -43,8 +43,8 @@ constexpr std::uint64_t LOAN_REPLY_DELAY_KEY = 0x0FFE05;
 constexpr std::uint64_t LOAN_REPLY_PLAN_KEY = 0x0FFE06;
 
 void notify(WorldSimulation& world, const GameDateValue& date,
-            const char* title, const char* body,
-            std::vector<std::string> args, PlayerID player_id, TeamID club)
+            const char* title, const char* body, std::vector<std::string> args,
+            PlayerID player_id, TeamID club)
 {
   InboxMessage message;
   message.date = date;
@@ -145,19 +145,19 @@ GameController::getIncomingOfferView(std::uint32_t offer_id) const
   view.asked_loan = offer->asked_loan;
   view.weekly_wage = player->get().getWage();
   view.release_clause = market.releaseClause(offer->player_id);
-  view.season_weeks = std::max(
-      1, TransferNegotiation::weeksBetween(
-             game->getCurrentDate(),
-             TransferNegotiation::loanEndDate(
-                 game->getCurrentDate(),
-                 TransferNegotiation::LoanDuration::SeasonEnd)));
+  view.season_weeks =
+      std::max(1, TransferNegotiation::weeksBetween(
+                      game->getCurrentDate(),
+                      TransferNegotiation::loanEndDate(
+                          game->getCurrentDate(),
+                          TransferNegotiation::LoanDuration::SeasonEnd)));
   view.history = offer->history;
   view.sale_block = getSaleBlock(offer->player_id);
   if (view.sale_block != PlayerActionBlock::SquadFloor &&
       view.sale_block != PlayerActionBlock::LastGoalkeeper)
     view.sale_block = PlayerActionBlock::None;
-  view.final_offer = !offer->history.empty() &&
-                     offer->history.back().move == Move::FinalOffer;
+  view.final_offer =
+      !offer->history.empty() && offer->history.back().move == Move::FinalOffer;
   // The buyer's window decides whether the deal can still go through.
   const TransferNegotiation::WindowInfo window =
       getTransferWindowFor(offer->buyer);
@@ -200,11 +200,10 @@ GameController::OfferOutcome GameController::settleIncomingOffer(
     const auto share = static_cast<std::uint32_t>(
         static_cast<std::uint64_t>(player->get().getWage()) *
         offer.loan_terms.wage_share / 100U);
-    completed =
-        TransferMarket::affordsWage(buyer->get(), share,
-                                    market.wageRoom(offer.buyer)) &&
-        market.startLoan(offer.player_id, offer.buyer, offer.loan_terms, today,
-                         managed);
+    completed = TransferMarket::affordsWage(buyer->get(), share,
+                                            market.wageRoom(offer.buyer)) &&
+                market.startLoan(offer.player_id, offer.buyer, offer.loan_terms,
+                                 today, managed);
   }
   else
   {
@@ -220,8 +219,8 @@ GameController::OfferOutcome GameController::settleIncomingOffer(
       market.closeTalks(offer.player_id, offer.buyer, today);
       notify(game->getWorld(), today, "INBOX_OFFER_TERMS_REFUSED_TITLE",
              "INBOX_OFFER_TERMS_REFUSED_BODY",
-             {player->get().getName(), buyer->get().getName()},
-             offer.player_id, offer.buyer);
+             {player->get().getName(), buyer->get().getName()}, offer.player_id,
+             offer.buyer);
       return OfferOutcome::TermsRefused;
     }
     const auto context =
@@ -293,8 +292,7 @@ GameController::OfferOutcome GameController::nameAskingPrice(
     std::uint32_t offer_id, uint32_t price)
 {
   if (!game || price == 0) return OfferOutcome::Failed;
-  const IncomingOffer* found =
-      game->getTransfers().findIncomingOffer(offer_id);
+  const IncomingOffer* found = game->getTransfers().findIncomingOffer(offer_id);
   if (found == nullptr || found->loan ||
       found->status != OfferStatus::AwaitingClub)
     return OfferOutcome::Failed;
@@ -444,8 +442,8 @@ GameController::OfferOutcome GameController::answerCounter(
       // After its final offer the next counter ends the talks.
       if (reply.move == Move::FinalOffer) offer.patience = offer.round;
       offer.history.push_back({today, reply.move, reply.terms, {}});
-      offer.expires = market.answerDeadline(
-          offer.buyer, today, TransferTuning::Buyer::ANSWER_DAYS);
+      offer.expires = market.answerDeadline(offer.buyer, today,
+                                            TransferTuning::Buyer::ANSWER_DAYS);
       market.updateIncomingOffer(offer);
       // The body names what shaped the answer (e.g. more instalments).
       const BuyerNegotiation::Why why =
@@ -464,8 +462,8 @@ GameController::OfferOutcome GameController::answerCounter(
   }
   market.removeIncomingOffer(offer_id);
   market.closeTalks(offer.player_id, offer.buyer, today);
-  const bool wages = std::ranges::contains(reply.reasons,
-                                           BuyerNegotiation::Why::WageBudget);
+  const bool wages =
+      std::ranges::contains(reply.reasons, BuyerNegotiation::Why::WageBudget);
   notify(game->getWorld(), today, "INBOX_OFFER_WITHDRAWN_TITLE",
          reply.insulted ? "INBOX_OFFER_WITHDRAWN_INSULT_BODY"
          : wages        ? "INBOX_OFFER_WITHDRAWN_WAGES_BODY"
@@ -562,8 +560,8 @@ GameController::OfferOutcome GameController::answerLoanCounter(
       offer.loan_terms = reply.terms;
       if (reply.move == Move::FinalOffer) offer.patience = offer.round;
       offer.history.push_back({today, reply.move, {}, reply.terms});
-      offer.expires = market.answerDeadline(
-          offer.buyer, today, TransferTuning::Buyer::ANSWER_DAYS);
+      offer.expires = market.answerDeadline(offer.buyer, today,
+                                            TransferTuning::Buyer::ANSWER_DAYS);
       market.updateIncomingOffer(offer);
       const LoanNegotiation::Why why =
           reply.reasons.size() > 1 ? reply.reasons[1]
@@ -582,8 +580,8 @@ GameController::OfferOutcome GameController::answerLoanCounter(
   }
   market.removeIncomingOffer(offer_id);
   market.closeTalks(offer.player_id, offer.buyer, today);
-  const bool wages = std::ranges::contains(reply.reasons,
-                                           LoanNegotiation::Why::NoWageRoom);
+  const bool wages =
+      std::ranges::contains(reply.reasons, LoanNegotiation::Why::NoWageRoom);
   notify(game->getWorld(), today, "INBOX_LOAN_WITHDRAWN_TITLE",
          reply.insulted ? "INBOX_LOAN_WITHDRAWN_INSULT_BODY"
          : wages        ? "INBOX_LOAN_WITHDRAWN_WAGES_BODY"
@@ -664,12 +662,9 @@ bool GameController::routeListingBid(PlayerID pid, TeamID bidder_id,
   const auto player = gamedata->getPlayer(pid);
   if (!player || market.isNotForSale(pid, today) ||
       market.talksClosed(pid, bidder_id, today) ||
-      std::ranges::any_of(market.incomingOffers(),
-                          [&](const IncomingOffer& offer)
-                          {
-                            return offer.player_id == pid &&
-                                   offer.buyer == bidder_id;
-                          }))
+      std::ranges::any_of(
+          market.incomingOffers(), [&](const IncomingOffer& offer)
+          { return offer.player_id == pid && offer.buyer == bidder_id; }))
     return false;
   // A club that could not pay his wage does not turn its bid into talks.
   const auto bidder = gamedata->getTeam(bidder_id);
@@ -689,14 +684,14 @@ bool GameController::routeListingBid(PlayerID pid, TeamID bidder_id,
   // The most the club would pay for him, never below its own bid.
   const double opening =
       BuyerNegotiation::buyerCost(offer.terms, player->get().getAge());
-  offer.max_fee = static_cast<std::uint32_t>(std::max(
-      opening, static_cast<double>(calculateMaxPrice(
-                   pid, bidder_id, evaluateSquadNeeds(bidder_id)))));
+  offer.max_fee = static_cast<std::uint32_t>(
+      std::max(opening, static_cast<double>(calculateMaxPrice(
+                            pid, bidder_id, evaluateSquadNeeds(bidder_id)))));
   const TransferNegotiation::WindowInfo window =
       getTransferWindowFor(bidder_id);
   offer.patience = BuyerNegotiation::drawPatience(
-      WorldRng::hashUniform(gamedata->getWorldSeed(), RngDomain::Transfers,
-                            pid, mixHash(bidder_id, LISTING_BID_KEY)),
+      WorldRng::hashUniform(gamedata->getWorldSeed(), RngDomain::Transfers, pid,
+                            mixHash(bidder_id, LISTING_BID_KEY)),
       window.days_to_deadline);
   offer.created = today;
   offer.expires = market.answerDeadline(

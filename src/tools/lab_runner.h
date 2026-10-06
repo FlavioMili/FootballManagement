@@ -146,8 +146,7 @@ MatchSample simulateMatch(const MatchJob& job, const StatsConfig& config);
  * calling thread with the number of finished jobs.
  */
 std::vector<MatchSample> simulateMatches(
-    std::span<const MatchJob> jobs, const StatsConfig& config,
-    unsigned threads,
+    std::span<const MatchJob> jobs, const StatsConfig& config, unsigned threads,
     const std::function<void(std::size_t)>& progress = nullptr);
 
 /** Summary of a structured world match report (not `detailed`). */

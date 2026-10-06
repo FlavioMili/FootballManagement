@@ -54,7 +54,7 @@ class SquadPlannerScene : public ManagementScene
     std::string age;
     std::string overall;
     std::string contract;
-    std::string status;  /*!< Given status, or the expected one in muted. */
+    std::string status; /*!< Given status, or the expected one in muted. */
     DepthTier tier = DepthTier::Backup;
     float overall_value = 0.0f;
     int age_value = 0;
@@ -90,7 +90,8 @@ class SquadPlannerScene : public ManagementScene
     std::vector<Need> needs;
     std::array<int, AGE_BAND_COUNT> age_bands{};
     std::array<std::string, AGE_BAND_COUNT> age_counts;
-    std::vector<std::pair<std::string, std::string>> expiries; /*!< Year, names. */
+    std::vector<std::pair<std::string, std::string>>
+        expiries;           /*!< Year, names. */
     std::string departures; /*!< Names of the players who leave. */
     std::string squad_size;
     std::string average_age;

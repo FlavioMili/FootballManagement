@@ -39,7 +39,8 @@ class RuntimePaths
    */
   static const std::filesystem::path& assetRoot();
 
-  /** Removes only save files owned by this runtime root, including WAL files. */
+  /** Removes only save files owned by this runtime root, including WAL files.
+   */
   static void removeSave(int slot);
   static void removeAllSaves();
 };

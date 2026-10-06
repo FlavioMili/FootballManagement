@@ -19,18 +19,18 @@
 #include <iomanip>
 #include <limits>
 #include <span>
-#include <unordered_set>
 #include <sstream>
+#include <unordered_set>
 
 #include "database/gamedata.h"
 #include "database/migrations/migrations.h"
-#include "model/club_economy.h"
-#include "model/injury.h"
 #include "database/repositories/player_repository.h"
 #include "database/repositories/team_repository.h"
 #include "global/global.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
+#include "model/club_economy.h"
+#include "model/injury.h"
 #include "model/transfer_tuning.h"
 #include "model/transfer_windows.h"
 #include "model/world_rng.h"
@@ -169,8 +169,8 @@ bool GameController::loadGame(int slot)
     {
       error = failure->error;
     }
-    Logger::error(std::format("Save slot {} failed to load: {}", slot,
-                              error.detail));
+    Logger::error(
+        std::format("Save slot {} failed to load: {}", slot, error.detail));
     last_load_error = std::move(error);
     return false;
   }
@@ -380,11 +380,11 @@ int GameController::advanceToNextManagedFixture(int max_days)
   int advancedDays = 0;
   game->resetSimulationProgress();
   continue_days_started = 0;
-  continue_days_total =
-      targetDate ? std::clamp(dayOrdinal(*targetDate) -
-                                  dayOrdinal(game->getCurrentDate()),
-                              0, max_days)
-                 : 0;
+  continue_days_total = targetDate
+                            ? std::clamp(dayOrdinal(*targetDate) -
+                                             dayOrdinal(game->getCurrentDate()),
+                                         0, max_days)
+                            : 0;
   ContinueStop stop = ContinueStop::Fixture;
   while (targetDate && game->getCurrentDate() < *targetDate)
   {
@@ -423,7 +423,8 @@ float GameController::ContinueProgress::fraction() const
   if (days_total <= 0) return 0.0f;
   float days = static_cast<float>(days_done);
   if (matches_total > 0)
-    days += static_cast<float>(matches_done) / static_cast<float>(matches_total);
+    days +=
+        static_cast<float>(matches_done) / static_cast<float>(matches_total);
   return std::clamp(days / static_cast<float>(days_total), 0.0f, 1.0f);
 }
 
@@ -595,8 +596,8 @@ std::vector<PlayerSeasonStats> GameController::getTopScorers(
     MatchType competition_type, LeagueID competition_id, size_t limit) const
 {
   if (!game) return {};
-  return game->getCompetitions().getTopScorers(competition_type,
-                                               competition_id, limit);
+  return game->getCompetitions().getTopScorers(competition_type, competition_id,
+                                               limit);
 }
 
 std::vector<PlayerSeasonStats> GameController::getPlayerSeasonStats(
@@ -704,8 +705,9 @@ bool GameController::persist(bool autosave)
     SaveManager::stampMetadata(*db_conn, gamedata->getWorldSeed(),
                                game->getCurrentDate(),
                                playtime_before_session + playtime.count());
-    const SaveTimings file = SaveManager::persist(
-        *db_conn, RuntimePaths::savePath(current_slot), autosave_policy.backups);
+    const SaveTimings file =
+        SaveManager::persist(*db_conn, RuntimePaths::savePath(current_slot),
+                             autosave_policy.backups);
     status.timings.snapshot_ms = file.snapshot_ms;
     status.timings.verify_ms = file.verify_ms;
     status.timings.sync_ms = file.sync_ms;
@@ -783,10 +785,9 @@ void GameController::maybeAutosave()
           });
     }
   }
-  if (SaveManager::isAutosaveDue(autosave_policy.frequency, last_autosave_date,
-                                 last_autosave_season, today,
-                                 game->getCurrentSeason(),
-                                 managed_match_yesterday))
+  if (SaveManager::isAutosaveDue(
+          autosave_policy.frequency, last_autosave_date, last_autosave_season,
+          today, game->getCurrentSeason(), managed_match_yesterday))
     persist(true);
 }
 
@@ -840,7 +841,8 @@ GameController::SaveSlotMetadata GameController::getSaveSlotMetadata(
 {
   SaveSlotMetadata metadata;
   const std::filesystem::path path = RuntimePaths::savePath(slot);
-  const SaveInspection inspection = SaveManager::inspect(path, SaveCheck::Quick);
+  const SaveInspection inspection =
+      SaveManager::inspect(path, SaveCheck::Quick);
   metadata.status = inspection.status;
   metadata.supported_schema_version = inspection.supported_version;
   if (inspection.status == SaveStatus::Missing) return metadata;
@@ -1900,8 +1902,8 @@ uint32_t GameController::transferBudgetForTeam(TeamID team_id) const
            : ClubEconomy::availableTransferBudget(
                  finances.getTransferBudget(), finances.getBalance(),
                  getWeeklyWageBill(team_id), 0);
-  return static_cast<uint32_t>(std::clamp<int64_t>(
-      budget, 0, std::numeric_limits<uint32_t>::max()));
+  return static_cast<uint32_t>(
+      std::clamp<int64_t>(budget, 0, std::numeric_limits<uint32_t>::max()));
 }
 
 void GameController::evaluateIncomingAIBids()
@@ -2110,13 +2112,14 @@ void GameController::processAITransferActivity()
   const float free_weight =
       today.month == JULY ? Market::JULY_FREE_AGENT_WEIGHT : 1.0f;
   int free_visits =
-      free_clubs > 0 ? Market::perDay(free_clubs, Market::DAILY_EVALUATION_SHARE,
-                                      free_weight)
-                     : 0;
+      free_clubs > 0
+          ? Market::perDay(free_clubs, Market::DAILY_EVALUATION_SHARE,
+                           free_weight)
+          : 0;
   int free_signings =
-      free_clubs > 0 ? Market::perDay(free_clubs, Market::DAILY_DEAL_SHARE,
-                                      free_weight)
-                     : 0;
+      free_clubs > 0
+          ? Market::perDay(free_clubs, Market::DAILY_DEAL_SHARE, free_weight)
+          : 0;
   int shut_visits =
       shut > 0 ? Market::perDay(shut, Market::DAILY_EVALUATION_SHARE) : 0;
   int shut_signings =
@@ -2366,8 +2369,8 @@ GameController::ContractTalkResult GameController::proposeContract(
     result.rounds_left = getContractRoundsLeft(player_id);
     return result;
   }
-  if (renewal &&
-      offer.years > TransferNegotiation::maxContractYears(player->get().getAge()))
+  if (renewal && offer.years > TransferNegotiation::maxContractYears(
+                                   player->get().getAge()))
   {
     result.block = PlayerActionBlock::TooLong;
     result.rounds_left = getContractRoundsLeft(player_id);
@@ -2376,9 +2379,9 @@ GameController::ContractTalkResult GameController::proposeContract(
 
   const std::uint32_t fee =
       *kind == ContractKind::Transfer ? talk.agreed.fee : 0;
-  const PlayerAgent::Reply reply = PlayerAgent::respond(
-      market.playerContext(player_id, managed, *kind), offer,
-      talk.player_rounds, fee);
+  const PlayerAgent::Reply reply =
+      PlayerAgent::respond(market.playerContext(player_id, managed, *kind),
+                           offer, talk.player_rounds, fee);
   result.response = reply.response;
   result.agent_line = reply.line_key;
   if (!result.response.accepted)
@@ -2401,11 +2404,10 @@ GameController::ContractTalkResult GameController::proposeContract(
     const int64_t payroll = getWeeklyWageBill(managed) -
                             static_cast<int64_t>(player->get().getWage()) +
                             static_cast<int64_t>(offer.weekly_wage);
-    const int64_t cash =
-        static_cast<int64_t>(offer.signing_bonus) +
-        static_cast<int64_t>(offer.agent_fee.value_or(
-            PlayerAgent::standardAgentFee(ContractKind::Renewal, 0,
-                                          offer.weekly_wage)));
+    const int64_t cash = static_cast<int64_t>(offer.signing_bonus) +
+                         static_cast<int64_t>(offer.agent_fee.value_or(
+                             PlayerAgent::standardAgentFee(
+                                 ContractKind::Renewal, 0, offer.weekly_wage)));
     if (payroll > finances.getWageBudget() || cash > finances.getBalance())
     {
       result.over_budget = true;
@@ -2577,8 +2579,9 @@ bool GameController::recallLoan(PlayerID player_id)
 
 bool GameController::hasSquadRoom() const
 {
-  return game && game->getTransfers().seniorSquadSize(game->getManagedTeamId()) <
-                     TransferTuning::Market::MANAGED_MAX_SQUAD;
+  return game &&
+         game->getTransfers().seniorSquadSize(game->getManagedTeamId()) <
+             TransferTuning::Market::MANAGED_MAX_SQUAD;
 }
 
 bool GameController::exerciseLoanOption(PlayerID player_id)
@@ -2600,7 +2603,8 @@ bool GameController::exerciseLoanOption(PlayerID player_id)
   const auto player = gamedata->getPlayer(player_id);
   const auto club = gamedata->getTeam(managed);
   if (!player || !club ||
-      getWeeklyWageBill(managed) - static_cast<int64_t>(player->get().getWage()) +
+      getWeeklyWageBill(managed) -
+              static_cast<int64_t>(player->get().getWage()) +
               static_cast<int64_t>(loan->full_wage) >
           club->get().getFinances().getWageBudget())
     return false;
@@ -2870,8 +2874,8 @@ GameController::PlayerActionBlock GameController::getReleaseBlock(
       block != PlayerActionBlock::None)
     return block;
   bool goalkeeper = false;
-  if (!game->getTransfers().keepsSquadFloor(game->getManagedTeamId(),
-                                            player_id, &goalkeeper))
+  if (!game->getTransfers().keepsSquadFloor(game->getManagedTeamId(), player_id,
+                                            &goalkeeper))
     return goalkeeper ? PlayerActionBlock::LastGoalkeeper
                       : PlayerActionBlock::SquadFloor;
   return PlayerActionBlock::None;
@@ -2960,8 +2964,7 @@ const PlayerRelation* GameController::getPlayerRelation(
               : nullptr;
 }
 
-std::vector<Promise> GameController::getPlayerPromises(
-    PlayerID player_id) const
+std::vector<Promise> GameController::getPlayerPromises(PlayerID player_id) const
 {
   if (!game) return {};
   return game->getWorld().getInteractions().promisesFor(player_id);
@@ -2973,7 +2976,8 @@ std::vector<Promise> GameController::getActivePromises() const
   std::vector<Promise> active;
   for (const Promise& promise : game->getWorld().getInteractions().promises())
     if (promise.state == PromiseState::Active) active.push_back(promise);
-  std::ranges::sort(active, [](const Promise& a, const Promise& b)
+  std::ranges::sort(active,
+                    [](const Promise& a, const Promise& b)
                     {
                       return a.deadline_day < b.deadline_day ||
                              (a.deadline_day == b.deadline_day && a.id < b.id);
@@ -3020,8 +3024,8 @@ TeamTalkContext GameController::getTeamTalkContext(TeamTalkMoment moment,
     if (context.cup)
     {
       const auto cup = getCupStatus(match.getCompetitionId());
-      context.final = cup && cup->total_rounds > 0 &&
-                      match.getStage() == cup->total_rounds;
+      context.final =
+          cup && cup->total_rounds > 0 && match.getStage() == cup->total_rounds;
     }
     break;
   }
@@ -3288,9 +3292,8 @@ std::vector<GameController::VacancyView> GameController::getVacancies() const
     view.opened = vacancy.opened;
     // The board's expectation follows the wage-bill rank, as for the
     // managed club's objective.
-    const int64_t own_wages =
-        team->get().getFinances().getCurrentWageSpending(*gamedata,
-                                                         team->get());
+    const int64_t own_wages = team->get().getFinances().getCurrentWageSpending(
+        *gamedata, team->get());
     int league_size = 0;
     int richer = 0;
     const auto league = gamedata->getLeague(view.league_id);
@@ -3313,7 +3316,8 @@ std::vector<GameController::VacancyView> GameController::getVacancies() const
       view.stage = application->stage;
     views.push_back(view);
   }
-  std::ranges::sort(views, [](const VacancyView& a, const VacancyView& b)
+  std::ranges::sort(views,
+                    [](const VacancyView& a, const VacancyView& b)
                     {
                       return a.chance != b.chance ? a.chance > b.chance
                                                   : a.team_id < b.team_id;
@@ -3365,8 +3369,7 @@ bool GameController::acceptJobOffer(std::uint32_t offer_id)
   if (!offer) return false;
   const TeamID former = game->getManagedTeamId();
   if (former != FREE_AGENTS_TEAM_ID)
-    career.payCompensation(former, offer->team_id, offer->compensation,
-                           today);
+    career.payCompensation(former, offer->team_id, offer->compensation, today);
   game->takeJob(offer->team_id, career.contractFor(*offer, today));
   if (game->getManagedTeamId() != offer->team_id) return false;
   clearBidsBy(offer->team_id);
@@ -3406,8 +3409,8 @@ int GameController::advanceWhileUnemployed(int max_days)
     ++days;
     const CareerDayEvents& events = game->getLastCareerEvents();
     const NationalDayEvents& national = game->getLastNationalEvents();
-    if (events.new_offer || events.interview_invitation ||
-        national.new_offer || national.squad_to_pick)
+    if (events.new_offer || events.interview_invitation || national.new_offer ||
+        national.squad_to_pick)
     {
       stop = ContinueStop::Decision;
       break;
@@ -3497,8 +3500,7 @@ bool GameController::setPlayerTrainingFocus(PlayerID player_id,
   const auto team = managedClub();
   if (!team || !gamedata || focus == TrainingFocus::COUNT) return false;
   const auto player = gamedata->getPlayer(player_id);
-  if (!player || player->get().getTeamId() != team->get().getId())
-    return false;
+  if (!player || player->get().getTeamId() != team->get().getId()) return false;
   gamedata->getTraining().player(player_id).focus = focus;
   return true;
 }
@@ -3663,8 +3665,7 @@ GameController::StaffActionResult GameController::hireStaff(StaffID staff_id,
   return StaffActionResult::Ok;
 }
 
-GameController::StaffActionResult GameController::releaseStaff(
-    StaffID staff_id)
+GameController::StaffActionResult GameController::releaseStaff(StaffID staff_id)
 {
   const auto team = managedClub();
   if (!team || !gamedata || !game) return StaffActionResult::NoClub;
@@ -3754,7 +3755,8 @@ std::vector<GameController::YouthPlayerView> GameController::getYouthPlayers(
     views.push_back(std::move(view));
   }
   std::ranges::stable_sort(
-      views, [](const YouthPlayerView& a, const YouthPlayerView& b)
+      views,
+      [](const YouthPlayerView& a, const YouthPlayerView& b)
       {
         return a.estimate.potential_low + a.estimate.potential_high >
                b.estimate.potential_low + b.estimate.potential_high;
@@ -3769,7 +3771,8 @@ GameController::getYouthEligibleFirstTeam() const
   const auto team = managedClub();
   if (!team || !game) return views;
   const YouthAcademy& academy = game->getWorld().getYouth();
-  for (const auto& player_ref : gamedata->getPlayersForTeam(team->get().getId()))
+  for (const auto& player_ref :
+       gamedata->getPlayersForTeam(team->get().getId()))
   {
     const Player& player = player_ref.get();
     if (player.getAge() > YouthModel::U18_MAX_AGE ||
@@ -3948,8 +3951,8 @@ std::vector<AwardPlayerTally> GameController::getAwardRace(LeagueID league_id,
     if (!player || it->second.rated == 0 ||
         (young && player->get().getAge() > Awards::YOUNG_MAX_AGE))
       continue;
-    pool.push_back({player->get().getRole(), player->get().getAge(),
-                    it->second});
+    pool.push_back(
+        {player->get().getRole(), player->get().getAge(), it->second});
   }
   const std::uint16_t min_minutes = Awards::seasonMinMinutes(pool);
   const auto score = [](const AwardCandidate& candidate)
@@ -4034,9 +4037,9 @@ ProjectVerdict GameController::requestFacilityProject(FacilityProjectType type,
   const auto team = managedClub();
   if (!team || !game) return ProjectVerdict::AtMaximum;
   WorldSimulation& world = game->getWorld();
-  return world.getFacilityProjects().request(
-      *gamedata, world.getBoardState(), team->get().getId(), type, seats,
-      game->getCurrentDate());
+  return world.getFacilityProjects().request(*gamedata, world.getBoardState(),
+                                             team->get().getId(), type, seats,
+                                             game->getCurrentDate());
 }
 
 std::vector<FacilityProject> GameController::getFacilityProjects() const
@@ -4078,8 +4081,7 @@ std::vector<OpponentOption> GameController::getFriendlyOpponents(
   const auto team = managedClub();
   if (!team || !game) return {};
   return game->getWorld().getPreseason().opponents(
-      *gamedata, game->getCalendar(), team->get().getId(), date, level,
-      abroad);
+      *gamedata, game->getCalendar(), team->get().getId(), date, level, abroad);
 }
 
 bool GameController::setPreseasonFriendly(GameDateValue date,
@@ -4100,17 +4102,17 @@ std::vector<FriendlySuggestion> GameController::getPreseasonSuggestion() const
 {
   const auto team = managedClub();
   if (!team || !game) return {};
-  return game->getWorld().getPreseason().suggest(
-      *gamedata, game->getCalendar(), team->get().getId(),
-      game->getCurrentDate());
+  return game->getWorld().getPreseason().suggest(*gamedata, game->getCalendar(),
+                                                 team->get().getId(),
+                                                 game->getCurrentDate());
 }
 
 size_t GameController::applyPreseasonSuggestion()
 {
   size_t applied = 0;
   for (const FriendlySuggestion& friendly : getPreseasonSuggestion())
-    if (setPreseasonFriendly(friendly.date, friendly.opponent_id,
-                             friendly.home, false))
+    if (setPreseasonFriendly(friendly.date, friendly.opponent_id, friendly.home,
+                             false))
       ++applied;
   return applied;
 }
@@ -4181,8 +4183,7 @@ MentoringError GameController::createMentoringGroup(PlayerID mentor_id,
       *gamedata, team->get().getId(), mentor_id, group_id);
 }
 
-MentoringError GameController::addMentee(uint32_t group_id,
-                                         PlayerID mentee_id)
+MentoringError GameController::addMentee(uint32_t group_id, PlayerID mentee_id)
 {
   if (!game) return MentoringError::UnknownGroup;
   return game->getWorld().getMentoring().addMentee(*gamedata, group_id,
@@ -4213,8 +4214,7 @@ float GameController::getMentoringMultiplier(PlayerID player_id) const
 
 HolidayPreferences GameController::getHolidayPreferences() const
 {
-  return game ? game->getWorld().getHolidayPreferences()
-              : HolidayPreferences{};
+  return game ? game->getWorld().getHolidayPreferences() : HolidayPreferences{};
 }
 
 void GameController::setHolidayPreferences(
@@ -4259,9 +4259,9 @@ int GameController::goOnHoliday(const HolidayPlan& plan)
   const std::optional<GameDateValue> target = getHolidayTarget(plan);
   // Open-ended holidays wait at most three months for a decision.
   constexpr int OPEN_ENDED_DAYS = 90;
-  const int limit =
-      std::clamp(target ? plan.max_days : std::min(plan.max_days, OPEN_ENDED_DAYS),
-                 0, 366);
+  const int limit = std::clamp(
+      target ? plan.max_days : std::min(plan.max_days, OPEN_ENDED_DAYS), 0,
+      366);
   if (!target && plan.mode != HolidayMode::NextDecision) return 0;
 
   HolidaySummary summary;
@@ -4316,10 +4316,10 @@ int GameController::goOnHoliday(const HolidayPlan& plan)
   game->resetSimulationProgress();
   continue_days_started = 0;
   continue_days_total =
-      target ? std::clamp(dayOrdinal(*target) -
-                              dayOrdinal(game->getCurrentDate()),
-                          0, limit)
-             : 0;
+      target
+          ? std::clamp(dayOrdinal(*target) - dayOrdinal(game->getCurrentDate()),
+                       0, limit)
+          : 0;
   int advanced = 0;
   while (!target || game->getCurrentDate() < *target)
   {
@@ -4344,12 +4344,12 @@ int GameController::goOnHoliday(const HolidayPlan& plan)
     for (const InboxMessage& message : world.getInbox().getMessages())
     {
       if (message.id < next_message) continue;
-      day.board_warning = day.board_warning ||
-                          message.title_key == "INBOX_BOARD_WARNING_TITLE";
+      day.board_warning =
+          day.board_warning || message.title_key == "INBOX_BOARD_WARNING_TITLE";
       day.new_decision =
-          day.new_decision || (!message.read &&
-                               (message.category == InboxCategory::Board ||
-                                message.category == InboxCategory::Contract));
+          day.new_decision ||
+          (!message.read && (message.category == InboxCategory::Board ||
+                             message.category == InboxCategory::Contract));
     }
     if (!world.getInbox().getMessages().empty())
       next_message = world.getInbox().getMessages().back().id + 1;
@@ -4358,8 +4358,8 @@ int GameController::goOnHoliday(const HolidayPlan& plan)
       if (!known_offers.insert(offer.id).second) continue;
       day.new_offers.push_back(
           {offer.player_id,
-           offer.loan ? offer.loan_terms.loan_fee : offer.terms.fee,
-           offer.loan, getSquadRole(offer.player_id) == SquadRole::KeyPlayer});
+           offer.loan ? offer.loan_terms.loan_fee : offer.terms.fee, offer.loan,
+           getSquadRole(offer.player_id) == SquadRole::KeyPlayer});
       day.new_decision = true;
     }
     std::unordered_map<PlayerID, uint16_t> injured_now;
@@ -4372,10 +4372,9 @@ int GameController::goOnHoliday(const HolidayPlan& plan)
         injured_now.emplace(id, dynamics.injury_days);
         if (!injured.contains(id))
         {
-          HolidayInjury injury{id, player.get().getName(),
-                               InjuryModel::nameKey(dynamics.injury),
-                               dynamics.injury_days,
-                               getSquadRole(id) == SquadRole::KeyPlayer};
+          HolidayInjury injury{
+              id, player.get().getName(), InjuryModel::nameKey(dynamics.injury),
+              dynamics.injury_days, getSquadRole(id) == SquadRole::KeyPlayer};
           day.new_injuries.push_back(injury);
           summary.injuries.push_back(std::move(injury));
         }

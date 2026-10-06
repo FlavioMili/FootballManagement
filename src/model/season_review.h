@@ -25,7 +25,8 @@
 class DatabaseConnection;
 class Inbox;
 
-/** @brief The board's verdict on the manager's season (values are persisted). */
+/** @brief The board's verdict on the manager's season (values are persisted).
+ */
 enum class SeasonVerdict : std::uint8_t
 {
   Delighted = 0, /*!< Well beyond what the board asked for. */
@@ -52,7 +53,7 @@ struct SeasonVerdictInputs
   /** False when the board never set the cup, finance and youth targets
    * this season (a save from before them): the league alone is judged. */
   bool targets_set = true;
-  int league_matches = 38; /*!< League matches in charge this season. */
+  int league_matches = 38;  /*!< League matches in charge this season. */
   float confidence = 60.0f; /*!< Before the verdict. */
   /** The previous season at this club ended with a warning. */
   bool warned_last_season = false;

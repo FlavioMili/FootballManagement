@@ -190,7 +190,8 @@ void playLeagueUntil(GameController& controller, LeagueID league, int left)
   std::map<TeamID, int> strength;
   int rank = 0;
   for (const auto& team : controller.getTeams())
-    if (team.get().getLeagueId() == league) strength[team.get().getId()] = rank++;
+    if (team.get().getLeagueId() == league)
+      strength[team.get().getId()] = rank++;
   for (const auto& [date, matches] : calendar.getFullCalendar())
   {
     for (Match& match : calendar.getMatchesForDateMutable(date))
@@ -310,8 +311,7 @@ TEST(TablesUiTest, StandingsRunInRendersAtEverySize)
   controller.newGame(slot.slot, WORLD_SEED);
   const TeamID club = controller.getTeams().front().get().getId();
   controller.selectManagedTeam(club);
-  const LeagueID league =
-      controller.getManagedTeam()->get().getLeagueId();
+  const LeagueID league = controller.getManagedTeam()->get().getLeagueId();
   playLeagueUntil(controller, league, 3);
 
   GUIView view(controller);
@@ -330,9 +330,9 @@ TEST(TablesUiTest, StandingsRunInRendersAtEverySize)
     auto* standings = active<StandingsScene>(view);
     ASSERT_NE(standings, nullptr);
     const auto& clinch = Bridge::clinch(*standings);
-    const auto decided = std::ranges::count_if(
-        clinch, [](Standings::Clinch status)
-        { return status != Standings::Clinch::OPEN; });
+    const auto decided =
+        std::ranges::count_if(clinch, [](Standings::Clinch status)
+                              { return status != Standings::Clinch::OPEN; });
     std::cout << tag << ": " << decided << " decided clubs, "
               << Bridge::needs(*standings).size() << " need lines\n";
     for (const std::string& line : Bridge::needs(*standings))

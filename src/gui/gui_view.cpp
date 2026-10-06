@@ -573,7 +573,8 @@ bool GUIView::captureScreenshot(std::string_view path) const
   if (!renderer || path.empty()) return false;
   // A bare file name has no folder to create; a failure to create one is
   // reported by the save below instead of throwing out of the frame.
-  if (const std::filesystem::path folder = std::filesystem::path(path).parent_path();
+  if (const std::filesystem::path folder =
+          std::filesystem::path(path).parent_path();
       !folder.empty())
   {
     std::error_code error;
@@ -639,15 +640,14 @@ void GUIView::applyWindowSettings(bool resize)
   SettingsManager* settings = SettingsManager::instance();
   settings->apply(window);
   if (renderer != nullptr)
-    SDL_SetRenderVSync(renderer, settings->get().vsync
-                                     ? 1
-                                     : SDL_RENDERER_VSYNC_DISABLED);
+    SDL_SetRenderVSync(renderer,
+                       settings->get().vsync ? 1 : SDL_RENDERER_VSYNC_DISABLED);
   if (window == nullptr || settings->get().fullscreen || !resize) return;
   // Wayland and macOS report the scale as pixel density (displayScale() is 1
   // there); elsewhere the logical size is scaled up, within the display.
   const float scale = std::max(1.0f, displayScale());
-  int width = static_cast<int>(
-      std::lround(static_cast<float>(settings->get().resolution_width) * scale));
+  int width = static_cast<int>(std::lround(
+      static_cast<float>(settings->get().resolution_width) * scale));
   int height = static_cast<int>(std::lround(
       static_cast<float>(settings->get().resolution_height) * scale));
   SDL_Rect usable{};

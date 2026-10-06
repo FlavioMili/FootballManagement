@@ -64,8 +64,9 @@ class GameFlowTest_GUIFlowLifecycle_Test
   }
   static bool hasDilemma(const InboxScene& scene)
   {
-    return std::ranges::any_of(scene.decisions, [](const auto& decision)
-                               { return decision.action == InboxAction::Dilemma; });
+    return std::ranges::any_of(
+        scene.decisions, [](const auto& decision)
+        { return decision.action == InboxAction::Dilemma; });
   }
   static std::size_t threadCount(const InboxScene& scene)
   {
@@ -247,8 +248,10 @@ TEST(InboxUiTest, FiltersSurviveASceneChangeAndAReload)
     if (team.get().getId() != club &&
         !controller->getPlayersForTeam(team.get().getId()).empty())
     {
-      followed =
-          controller->getPlayersForTeam(team.get().getId()).front().get().getId();
+      followed = controller->getPlayersForTeam(team.get().getId())
+                     .front()
+                     .get()
+                     .getId();
       break;
     }
   ASSERT_NE(followed, 0u);
@@ -303,7 +306,8 @@ TEST(InboxUiTest, FiltersSurviveASceneChangeAndAReload)
   InboxScene* scene = openInbox(view);
   ASSERT_NE(scene, nullptr);
   EXPECT_EQ(Bridge::tab(*scene), 1);
-  EXPECT_EQ(Bridge::category(*scene), static_cast<int>(InboxCategory::Transfer));
+  EXPECT_EQ(Bridge::category(*scene),
+            static_cast<int>(InboxCategory::Transfer));
   EXPECT_FALSE(Bridge::followedOnly(*scene));
   EXPECT_TRUE(reloaded->isFollowingPlayer(followed));
   frames(view, 2);

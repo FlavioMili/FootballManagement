@@ -82,7 +82,8 @@ TEST(Mentoring, WeeklyShiftIsSlowAndBounded)
   float largest_step = 0.0f;
   for (int week = 0; week < 52 * 5; ++week)
   {
-    const float step = Mentoring::weeklyShift(95.0f, mentee, 1.0f, 1.0f, shifted);
+    const float step =
+        Mentoring::weeklyShift(95.0f, mentee, 1.0f, 1.0f, shifted);
     largest_step = std::max(largest_step, std::abs(step));
     shifted += step;
     mentee += step;
@@ -150,7 +151,8 @@ TEST(Mentoring, GroupRulesAndWeeklyEffect)
 
   MentoringSystem& system =
       const_cast<Game*>(controller->getGame())->getWorld().getMentoring();
-  for (int week = 0; week < 26; ++week) system.onWeek(*controller->getGameData());
+  for (int week = 0; week < 26; ++week)
+    system.onWeek(*controller->getGameData());
   const int after_half = mentee.getTraits().professionalism;
   EXPECT_GT(after_half, 30);
   EXPECT_LE(after_half, 30 + static_cast<int>(Mentoring::MAX_TOTAL_SHIFT));
@@ -165,15 +167,17 @@ TEST(Mentoring, GroupRulesAndWeeklyEffect)
     ASSERT_EQ(groups.size(), 1u);
     EXPECT_EQ(groups[0].mentor_id, pair.mentor);
     ASSERT_EQ(groups[0].mentees.size(), 1u);
-    EXPECT_NEAR(groups[0].mentees[0].professionalism_shift,
-                controller->getMentoringGroups()[0].mentees[0].professionalism_shift,
-                1e-4f);
+    EXPECT_NEAR(
+        groups[0].mentees[0].professionalism_shift,
+        controller->getMentoringGroups()[0].mentees[0].professionalism_shift,
+        1e-4f);
   }
 
   // Leaving the group stops the effect.
   ASSERT_EQ(controller->removeMentee(group, pair.mentee), MentoringError::None);
   const int frozen = mentee.getTraits().professionalism;
-  for (int week = 0; week < 26; ++week) system.onWeek(*controller->getGameData());
+  for (int week = 0; week < 26; ++week)
+    system.onWeek(*controller->getGameData());
   EXPECT_EQ(mentee.getTraits().professionalism, frozen);
 
   // An unhappy mentor spreads his mood.

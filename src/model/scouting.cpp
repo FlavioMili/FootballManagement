@@ -1086,11 +1086,11 @@ const ScoutReport& ScoutingSystem::fileReport(const GameDateValue& date,
     const std::int64_t payroll =
         finances.getCurrentWageSpending(*gamedata, team->get());
     const std::int64_t wage_room = finances.getWageBudget() - payroll;
-    const std::int64_t budget =
-        budget_provider ? budget_provider(state.team_id)
-                        : ClubEconomy::availableTransferBudget(
-                              finances.getTransferBudget(),
-                              finances.getBalance(), payroll, 0);
+    const std::int64_t budget = budget_provider
+                                    ? budget_provider(state.team_id)
+                                    : ClubEconomy::availableTransferBudget(
+                                          finances.getTransferBudget(),
+                                          finances.getBalance(), payroll, 0);
     const auto expected_wage = static_cast<std::int64_t>(
         static_cast<float>(estimate.wage) * EXPECTED_WAGE_RAISE);
     report.affordable =
@@ -1179,22 +1179,21 @@ void ScoutingSystem::finishAssignment(ScoutAssignment& assignment,
     const ScoutReport& report =
         fileReport(date, player, effective, dayOrdinal(date), assignment.id);
     assignment.reports_filed = 1;
-    post(
-        inbox, date, InboxCategory::Transfer, "SCOUT_MSG_REPORT_TITLE",
-        "SCOUT_MSG_REPORT_BODY",
-        {player.getName(), gradeLetter(report.grade), scout->name,
-         RoleUtils::shortNameArg(player.getRole()),
-         std::to_string(player.getAge()),
-         std::format("{:.0f}", static_cast<double>(report.overall)),
-         rangeText(report.potential_low, report.potential_high),
-         formatMoney(report.estimated_fee), std::to_string(report.confidence),
-         std::string("@") + scoutGradeKey(report.grade),
-         report.fits_need ? "@SCOUT_REASON_FITS" : "@SCOUT_REASON_NO_FIT",
-         report.affordable ? "@SCOUT_REASON_AFFORDABLE"
-                           : "@SCOUT_REASON_EXPENSIVE",
-         report.available ? "@SCOUT_REASON_AVAILABLE"
-                          : "@SCOUT_REASON_UNAVAILABLE"},
-        player.getId(), player.getTeamId());
+    post(inbox, date, InboxCategory::Transfer, "SCOUT_MSG_REPORT_TITLE",
+         "SCOUT_MSG_REPORT_BODY",
+         {player.getName(), gradeLetter(report.grade), scout->name,
+          RoleUtils::shortNameArg(player.getRole()),
+          std::to_string(player.getAge()),
+          std::format("{:.0f}", static_cast<double>(report.overall)),
+          rangeText(report.potential_low, report.potential_high),
+          formatMoney(report.estimated_fee), std::to_string(report.confidence),
+          std::string("@") + scoutGradeKey(report.grade),
+          report.fits_need ? "@SCOUT_REASON_FITS" : "@SCOUT_REASON_NO_FIT",
+          report.affordable ? "@SCOUT_REASON_AFFORDABLE"
+                            : "@SCOUT_REASON_EXPENSIVE",
+          report.available ? "@SCOUT_REASON_AVAILABLE"
+                           : "@SCOUT_REASON_UNAVAILABLE"},
+         player.getId(), player.getTeamId());
     return;
   }
 

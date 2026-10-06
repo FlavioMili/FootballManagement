@@ -1105,8 +1105,8 @@ LiveMatchResult playLiveMatch(Tester& player, MatchPlay mode,
       EXPECT_FALSE(Bridge::paused(*match))
           << "Resume did not restart play (state "
           << static_cast<int>(engine->getState()) << ", minute "
-          << engine->getMatchTimeMinutes() << ", popup open "
-          << anyPopupOpen() << ")";
+          << engine->getMatchTimeMinutes() << ", popup open " << anyPopupOpen()
+          << ")";
       return !Bridge::paused(*match);
     };
     const auto runUntil = [&](float minute)
@@ -1202,8 +1202,8 @@ LiveMatchResult playLiveMatch(Tester& player, MatchPlay mode,
   if (showcase) player.shot("j39_match_report_after_finish");
   if (mode == MatchPlay::QUICK)
   {
-    const Match* played =
-        controller.getGame()->getCalendar().findMatch(matchDate, homeId, awayId);
+    const Match* played = controller.getGame()->getCalendar().findMatch(
+        matchDate, homeId, awayId);
     EXPECT_TRUE(played != nullptr && played->isPlayed())
         << "Quick result did not record the match";
     if (played != nullptr)
@@ -1745,7 +1745,8 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
         const int goals = played->getHomeScore() + played->getAwayScore();
         // Own goals are reported as their own kind and still count.
         const auto goalEvents = std::ranges::count_if(
-            report->events, [](const MatchReportEvent& event)
+            report->events,
+            [](const MatchReportEvent& event)
             {
               return event.kind == MatchEventKind::GOAL ||
                      event.kind == MatchEventKind::OWN_GOAL;
@@ -1842,7 +1843,8 @@ TEST_F(PlaytestJourney, NewCareerThroughTheGui)
   // ---- 11. Headless days (auto-simulated matches) --------------------------
   player.step = "season";
   const char* fullSeasonFlag = std::getenv("FM_PLAYTEST_FULL_SEASON");
-  const bool wholeSeason = fullSeasonFlag != nullptr && *fullSeasonFlag != '\0' &&
+  const bool wholeSeason = fullSeasonFlag != nullptr &&
+                           *fullSeasonFlag != '\0' &&
                            std::string_view(fullSeasonFlag) != "0";
   const int season = controller.getCurrentSeason();
   const auto seasonStart = Clock::now();

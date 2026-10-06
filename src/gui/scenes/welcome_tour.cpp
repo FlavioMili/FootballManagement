@@ -87,7 +87,8 @@ void WelcomeTour::open(const GameController& controller)
        std::to_string(std::max(board.target_position, board.expected_position)),
        std::to_string(static_cast<int>(std::lround(board.confidence)))});
 
-  if (const auto fixture = CompetitionView::nextFixture(controller, club.getId()))
+  if (const auto fixture =
+          CompetitionView::nextFixture(controller, club.getId()))
   {
     const bool home = fixture->home_id == club.getId();
     bodies[2] = formatLocalized(
@@ -112,11 +113,10 @@ void WelcomeTour::open(const GameController& controller)
                                          actions.front().reason.args);
   }
 
-  bodies[3] = formatLocalized(
-      "WELCOME_CONTINUE_BODY",
-      {shortcutLabel(Input::Ids::CAREER_CONTINUE),
-       shortcutLabel(Input::Ids::NAV_PALETTE),
-       shortcutLabel(Input::Ids::CAREER_HELP)});
+  bodies[3] = formatLocalized("WELCOME_CONTINUE_BODY",
+                              {shortcutLabel(Input::Ids::CAREER_CONTINUE),
+                               shortcutLabel(Input::Ids::NAV_PALETTE),
+                               shortcutLabel(Input::Ids::CAREER_HELP)});
 
   current_page = 0;
   visible = true;
@@ -148,8 +148,9 @@ void WelcomeTour::render()
   }
   const float scale = Theme::scale();
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
-  const float width = std::min(DIALOG_WIDTH * scale,
-                               viewport->WorkSize.x - 2.0f * Theme::Space::L * scale);
+  const float width =
+      std::min(DIALOG_WIDTH * scale,
+               viewport->WorkSize.x - 2.0f * Theme::Space::L * scale);
   ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always,
                           ImVec2(0.5f, 0.5f));
   // Fixed width, height fitted to the page every frame (setting the size
@@ -157,8 +158,9 @@ void WelcomeTour::render()
   // page).
   ImGui::SetNextWindowSizeConstraints(ImVec2(width, 0.0f),
                                       ImVec2(width, FLT_MAX));
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,
-                      ImVec2(Theme::Space::XL * scale, Theme::Space::L * scale));
+  ImGui::PushStyleVar(
+      ImGuiStyleVar_WindowPadding,
+      ImVec2(Theme::Space::XL * scale, Theme::Space::L * scale));
   const std::string title =
       formatLocalized("WELCOME_TITLE", {club_name}) + POPUP_ID;
   const bool shown = ImGui::BeginPopupModal(

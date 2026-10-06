@@ -101,23 +101,37 @@ struct StatusColors
 // Status colours per colour-vision mode, for the dark presets and for the
 // light one. Each keeps at least 4.5:1 against the page background and 3:1
 // against cards and raised controls of every preset (see the contrast test).
-constexpr std::array<StatusColors, static_cast<size_t>(Theme::ColorVision::COUNT)>
+constexpr std::array<StatusColors,
+                     static_cast<size_t>(Theme::ColorVision::COUNT)>
     STATUS_DARK = {{
-        {ImVec4(0.235f, 0.770f, 0.486f, 1.0f), ImVec4(0.945f, 0.706f, 0.255f, 1.0f),
-         ImVec4(0.937f, 0.416f, 0.396f, 1.0f), ImVec4(0.400f, 0.660f, 0.965f, 1.0f)},
-        {ImVec4(0.380f, 0.650f, 1.000f, 1.0f), ImVec4(0.950f, 0.830f, 0.300f, 1.0f),
-         ImVec4(0.960f, 0.520f, 0.180f, 1.0f), ImVec4(0.760f, 0.640f, 0.980f, 1.0f)},
-        {ImVec4(0.200f, 0.780f, 0.740f, 1.0f), ImVec4(0.980f, 0.640f, 0.400f, 1.0f),
-         ImVec4(0.960f, 0.420f, 0.520f, 1.0f), ImVec4(0.640f, 0.660f, 0.980f, 1.0f)},
+        {ImVec4(0.235f, 0.770f, 0.486f, 1.0f),
+         ImVec4(0.945f, 0.706f, 0.255f, 1.0f),
+         ImVec4(0.937f, 0.416f, 0.396f, 1.0f),
+         ImVec4(0.400f, 0.660f, 0.965f, 1.0f)},
+        {ImVec4(0.380f, 0.650f, 1.000f, 1.0f),
+         ImVec4(0.950f, 0.830f, 0.300f, 1.0f),
+         ImVec4(0.960f, 0.520f, 0.180f, 1.0f),
+         ImVec4(0.760f, 0.640f, 0.980f, 1.0f)},
+        {ImVec4(0.200f, 0.780f, 0.740f, 1.0f),
+         ImVec4(0.980f, 0.640f, 0.400f, 1.0f),
+         ImVec4(0.960f, 0.420f, 0.520f, 1.0f),
+         ImVec4(0.640f, 0.660f, 0.980f, 1.0f)},
     }};
-constexpr std::array<StatusColors, static_cast<size_t>(Theme::ColorVision::COUNT)>
+constexpr std::array<StatusColors,
+                     static_cast<size_t>(Theme::ColorVision::COUNT)>
     STATUS_LIGHT = {{
-        {ImVec4(0.090f, 0.470f, 0.250f, 1.0f), ImVec4(0.560f, 0.360f, 0.000f, 1.0f),
-         ImVec4(0.700f, 0.150f, 0.140f, 1.0f), ImVec4(0.120f, 0.360f, 0.720f, 1.0f)},
-        {ImVec4(0.100f, 0.350f, 0.750f, 1.0f), ImVec4(0.500f, 0.400f, 0.000f, 1.0f),
-         ImVec4(0.650f, 0.270f, 0.000f, 1.0f), ImVec4(0.420f, 0.250f, 0.650f, 1.0f)},
-        {ImVec4(0.000f, 0.430f, 0.400f, 1.0f), ImVec4(0.620f, 0.300f, 0.050f, 1.0f),
-         ImVec4(0.700f, 0.120f, 0.300f, 1.0f), ImVec4(0.330f, 0.300f, 0.700f, 1.0f)},
+        {ImVec4(0.090f, 0.470f, 0.250f, 1.0f),
+         ImVec4(0.560f, 0.360f, 0.000f, 1.0f),
+         ImVec4(0.700f, 0.150f, 0.140f, 1.0f),
+         ImVec4(0.120f, 0.360f, 0.720f, 1.0f)},
+        {ImVec4(0.100f, 0.350f, 0.750f, 1.0f),
+         ImVec4(0.500f, 0.400f, 0.000f, 1.0f),
+         ImVec4(0.650f, 0.270f, 0.000f, 1.0f),
+         ImVec4(0.420f, 0.250f, 0.650f, 1.0f)},
+        {ImVec4(0.000f, 0.430f, 0.400f, 1.0f),
+         ImVec4(0.620f, 0.300f, 0.050f, 1.0f),
+         ImVec4(0.700f, 0.120f, 0.300f, 1.0f),
+         ImVec4(0.330f, 0.300f, 0.700f, 1.0f)},
     }};
 
 // Club accents are chosen for contrast on the dark surfaces, not to imitate
@@ -140,7 +154,8 @@ using RatingScale = std::array<RatingStop, 5>;
 
 // Weak to strong: red to green, or diverging scales that avoid the
 // red-green (orange to blue) and blue-yellow (magenta to teal) confusions.
-constexpr std::array<RatingScale, static_cast<size_t>(Theme::ColorVision::COUNT)>
+constexpr std::array<RatingScale,
+                     static_cast<size_t>(Theme::ColorVision::COUNT)>
     RATING_SCALES = {{
         {{{35.0f, ImVec4(0.898f, 0.337f, 0.318f, 1.0f)},
           {50.0f, ImVec4(0.945f, 0.560f, 0.255f, 1.0f)},

@@ -59,19 +59,19 @@ TEST(Holiday, TargetsPerMode)
   const GameDateValue today(2025, 7, 2);
   HolidayPlan until = plan(HolidayMode::UntilDate);
   until.until = GameDateValue(2025, 8, 20);
-  EXPECT_EQ(Holiday::targetDate(until, today, std::nullopt, ITALY), until.until);
+  EXPECT_EQ(Holiday::targetDate(until, today, std::nullopt, ITALY),
+            until.until);
   until.until = today;
-  EXPECT_FALSE(Holiday::targetDate(until, today, std::nullopt, ITALY).has_value());
+  EXPECT_FALSE(
+      Holiday::targetDate(until, today, std::nullopt, ITALY).has_value());
   const GameDateValue match(2025, 7, 12);
-  EXPECT_EQ(Holiday::targetDate(plan(HolidayMode::NextMatch), today, match,
-                                ITALY),
-            match);
-  EXPECT_FALSE(
-      Holiday::targetDate(plan(HolidayMode::NextMatch), today, std::nullopt,
-                          ITALY));
-  EXPECT_FALSE(
-      Holiday::targetDate(plan(HolidayMode::NextDecision), today, match,
-                          ITALY));
+  EXPECT_EQ(
+      Holiday::targetDate(plan(HolidayMode::NextMatch), today, match, ITALY),
+      match);
+  EXPECT_FALSE(Holiday::targetDate(plan(HolidayMode::NextMatch), today,
+                                   std::nullopt, ITALY));
+  EXPECT_FALSE(Holiday::targetDate(plan(HolidayMode::NextDecision), today,
+                                   match, ITALY));
   // The day after the summer deadline, in the open window...
   const GameDateValue end = Holiday::windowEndDate(ITALY, today);
   const auto window = TransferNegotiation::windowInfo(ITALY, today);
@@ -179,9 +179,9 @@ TEST(Holiday, AssistantRunsTheClubUntilADate)
   EXPECT_EQ(summary.days, days);
   // Friendlies and the first league rounds were played by the assistant.
   EXPECT_GE(summary.results.size(), 5u);
-  EXPECT_TRUE(std::ranges::any_of(summary.results,
-                                  [](const HolidayResult& result)
-                                  { return result.type == MatchType::LEAGUE; }));
+  EXPECT_TRUE(
+      std::ranges::any_of(summary.results, [](const HolidayResult& result)
+                          { return result.type == MatchType::LEAGUE; }));
   EXPECT_GT(summary.position_after, 0);
   EXPECT_GT(summary.points_after + summary.results.size(), 0u);
   EXPECT_GT(summary.income, 0);
@@ -240,9 +240,8 @@ TEST(Holiday, SackingEndsTheHoliday)
       SQLITE_OK);
   const std::string update =
       "UPDATE BoardState SET confidence = 0, low_reviews = " +
-      std::to_string(Tuning::DISMISSAL_REVIEWS - 1) +
-      ", league_matches = " + std::to_string(Tuning::MIN_MATCHES_FOR_DISMISSAL) +
-      ";";
+      std::to_string(Tuning::DISMISSAL_REVIEWS - 1) + ", league_matches = " +
+      std::to_string(Tuning::MIN_MATCHES_FOR_DISMISSAL) + ";";
   ASSERT_EQ(sqlite3_exec(db, update.c_str(), nullptr, nullptr, nullptr),
             SQLITE_OK);
   sqlite3_close(db);

@@ -48,29 +48,29 @@ extern "C" const char* __lsan_default_suppressions()
 #include "global/paths.h"
 #include "global/runtime_paths.h"
 #include "gui/gui_view.h"
+#include "gui/scenes/fixtures_scene.h"
 #include "gui/scenes/lineup_scene.h"
 #include "gui/scenes/main_game_scene.h"
 #include "gui/scenes/main_menu_scene.h"
+#include "gui/scenes/management_scene.h"
 #include "gui/scenes/match_scene.h"
-#include "gui/view_models/match_clock.h"
+#include "gui/scenes/player_profile_scene.h"
 #include "gui/scenes/roster_scene.h"
 #include "gui/scenes/settings_scene.h"
-#include "gui/scenes/strategy_scene.h"
-#include "gui/scenes/team_selection_scene.h"
-#include "gui/scenes/fixtures_scene.h"
-#include "gui/scenes/management_scene.h"
-#include "gui/scenes/player_profile_scene.h"
 #include "gui/scenes/staff_scene.h"
 #include "gui/scenes/standings_scene.h"
+#include "gui/scenes/strategy_scene.h"
+#include "gui/scenes/team_selection_scene.h"
 #include "gui/scenes/training_scene.h"
 #include "gui/scenes/transfer_market_scene.h"
+#include "gui/view_models/match_clock.h"
 #include "gui/widgets/theme.h"
-#include "model/settings_manager.h"
 #include "model/game.h"
 #include "model/holiday.h"
 #include "model/player.h"
-#include "model/season_review.h"
 #include "model/scouting.h"
+#include "model/season_review.h"
+#include "model/settings_manager.h"
 #include "model/team.h"
 
 namespace
@@ -258,7 +258,8 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   // 1. Initial frame (Main Menu)
   EXPECT_NO_THROW(step_frame());
   EXPECT_NO_THROW(step_frame());
-  const auto mainMenuScreenshotPath = RuntimePaths::capturePath("main_menu.bmp");
+  const auto mainMenuScreenshotPath =
+      RuntimePaths::capturePath("main_menu.bmp");
   std::filesystem::remove(mainMenuScreenshotPath);
   EXPECT_TRUE(view.captureScreenshot(mainMenuScreenshotPath.string()));
 
@@ -444,12 +445,13 @@ TEST_F(GameFlowTest, GUIFlowLifecycle)
   openSection(NavSection::STANDINGS, SceneID::STANDINGS);
   auto* standingsScene = dynamic_cast<StandingsScene*>(view.getActiveScene());
   ASSERT_NE(standingsScene, nullptr);
-  EXPECT_EQ(standingsScene->table.size(),
-            controller->getLeagueById(
-                          controller->getManagedTeam()->get().getLeagueId())
-                ->get()
-                .getTeamIDs()
-                .size());
+  EXPECT_EQ(
+      standingsScene->table.size(),
+      controller
+          ->getLeagueById(controller->getManagedTeam()->get().getLeagueId())
+          ->get()
+          .getTeamIDs()
+          .size());
   captureScreen("shell_standings.bmp");
   openSection(NavSection::TRANSFERS, SceneID::TRANSFER_MARKET);
   captureScreen("shell_transfers.bmp");
@@ -827,9 +829,8 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
         continue;
       const auto home = static_cast<uint8_t>(2 + matchday % 2);
       const auto away = static_cast<uint8_t>(matchday % 3);
-      ASSERT_TRUE(controller->setMatchResult(today, match.getHomeTeamId(),
-                                             match.getAwayTeamId(), home,
-                                             away));
+      ASSERT_TRUE(controller->setMatchResult(
+          today, match.getHomeTeamId(), match.getAwayTeamId(), home, away));
       break;
     }
     controller->advanceDay();
@@ -994,8 +995,7 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
   scoutedProfile->refresh();
   EXPECT_TRUE(scoutedProfile->shortlisted);
   scoutedProfile->sendScout();
-  EXPECT_TRUE(scoutedProfile->being_scouted ||
-              controller->getScouts().empty());
+  EXPECT_TRUE(scoutedProfile->being_scouted || controller->getScouts().empty());
   step_frame();
   capture("season_profile_scouted_actions.bmp");
   // "Make an offer" opens the market with the deal dialog for him.
@@ -1010,9 +1010,9 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
 
   // Report of the latest managed result, then the national cup draw.
   const auto fixtures = controller->getTeamFixtures(managedId);
-  const auto lastPlayed = std::ranges::find_if(
-      fixtures.rbegin(), fixtures.rend(),
-      [](const Match& match) { return match.isPlayed(); });
+  const auto lastPlayed =
+      std::ranges::find_if(fixtures.rbegin(), fixtures.rend(),
+                           [](const Match& match) { return match.isPlayed(); });
   ASSERT_NE(lastPlayed, fixtures.rend());
   Navigation::openMatchReport(&view, lastPlayed->getDate(),
                               lastPlayed->getHomeTeamId(),
@@ -1131,9 +1131,8 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
 
   // Match day with an injured starter: kick-off is blocked by the lineup
   // check until the selection is fixed.
-  const auto& matchDay =
-      controller->getGame()->getCalendar().getMatchesForDate(
-          controller->getCurrentDate());
+  const auto& matchDay = controller->getGame()->getCalendar().getMatchesForDate(
+      controller->getCurrentDate());
   const auto managedFixture = std::ranges::find_if(
       matchDay,
       [managedId](const Match& match)
@@ -1184,9 +1183,9 @@ TEST_F(GameFlowTest, ManagementScreensMidSeason)
   capture("season_match_quick_progress.bmp");
   // Once the match is over the hub simulates the rest of the day on its
   // Continue worker, then opens the report.
-  for (int frame = 0;
-       frame < 6000 && (view.getActiveScene()->getID() != SceneID::MATCH_REPORT ||
-                        hub->isAdvancing());
+  for (int frame = 0; frame < 6000 && (view.getActiveScene()->getID() !=
+                                           SceneID::MATCH_REPORT ||
+                                       hub->isAdvancing());
        ++frame)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -1280,7 +1279,8 @@ void playToFullTime(Engine& engine)
 std::optional<Match> nextFixtureOf(GameController& controller, TeamID club)
 {
   controller.advanceToNextManagedFixture();
-  for (const Match& match : controller.getGame()->getCalendar().getMatchesForDate(
+  for (const Match& match :
+       controller.getGame()->getCalendar().getMatchesForDate(
            controller.getCurrentDate()))
   {
     if (!match.isPlayed() &&
@@ -1361,9 +1361,9 @@ TEST_F(GameFlowTest, ManagedMatchIntegration)
                        fixture->getAwayTeamId());
     blocked.onEnter();
     EXPECT_EQ(blocked.engine, nullptr);
-    const auto problem = std::ranges::find_if(
-        blocked.lineup_problems,
-        [&](const auto& entry) { return entry.id == injuredId; });
+    const auto problem =
+        std::ranges::find_if(blocked.lineup_problems, [&](const auto& entry)
+                             { return entry.id == injuredId; });
     ASSERT_NE(problem, blocked.lineup_problems.end());
     EXPECT_FALSE(problem->replacement.empty());
   }
@@ -1376,9 +1376,9 @@ TEST_F(GameFlowTest, ManagedMatchIntegration)
   ASSERT_NE(scene->engine, nullptr);
   EXPECT_TRUE(scene->lineup_problems.empty());
   EXPECT_FALSE(scene->pre_match_note.empty());
-  EXPECT_TRUE(controller
-                  ->getIneligibleSelections(managedId, fixture->getMatchType())
-                  .empty());
+  EXPECT_TRUE(
+      controller->getIneligibleSelections(managedId, fixture->getMatchType())
+          .empty());
   MatchEngine& engine = *scene->engine;
   for (const MatchPlayer& player : engine.getPlayers())
     EXPECT_NE(player.player->getId(), injuredId);
@@ -1442,9 +1442,9 @@ TEST_F(GameFlowTest, ManagedMatchIntegration)
                                                  fixture->getAwayTeamId());
   ASSERT_TRUE(report.has_value());
   EXPECT_EQ(report->players.size(), engineLines);
-  EXPECT_GT(report->home_stats.passes_attempted +
-                report->away_stats.passes_attempted,
-            0);
+  EXPECT_GT(
+      report->home_stats.passes_attempted + report->away_stats.passes_attempted,
+      0);
   EXPECT_TRUE(std::ranges::none_of(report->players,
                                    [&](const PlayerMatchLine& line)
                                    { return line.player_id == injuredId; }));
@@ -1542,8 +1542,9 @@ TEST_F(GameFlowTest, WatchedCupTieIsPlayedToAWinner)
     ASSERT_NE(scene.engine, nullptr);
     MatchEngine& engine = *scene.engine;
     ASSERT_TRUE(engine.getKnockout().required);
-    for (int step = 0; step < 400000 && engine.getState() != MatchState::FULL_TIME &&
-                       engine.getPeriod() < 3;
+    for (int step = 0;
+         step < 400000 && engine.getState() != MatchState::FULL_TIME &&
+         engine.getPeriod() < 3;
          ++step)
       engine.update(0.05f);
     // Commentary names the clubs, not "home side".
@@ -1556,8 +1557,9 @@ TEST_F(GameFlowTest, WatchedCupTieIsPlayedToAWinner)
     EXPECT_TRUE(engine.wentToExtraTime());
     const std::string clock = scene.clockText();
     EXPECT_TRUE(clock.starts_with("9") || clock.starts_with("10")) << clock;
-    for (int step = 0; step < 400000 && engine.getState() != MatchState::FULL_TIME &&
-                       !engine.hasShootout();
+    for (int step = 0;
+         step < 400000 && engine.getState() != MatchState::FULL_TIME &&
+         !engine.hasShootout();
          ++step)
       engine.update(0.05f);
     if (engine.hasShootout())
@@ -1600,7 +1602,8 @@ TEST_F(GameFlowTest, WatchedMatchSeedIsDeterministic)
     first.engine->update(0.05f);
     second.engine->update(0.05f);
   }
-  EXPECT_EQ(first.engine->getEvents().size(), second.engine->getEvents().size());
+  EXPECT_EQ(first.engine->getEvents().size(),
+            second.engine->getEvents().size());
   EXPECT_EQ(first.engine->getBall().position.x,
             second.engine->getBall().position.x);
   EXPECT_EQ(first.engine->getBall().position.y,
@@ -1643,12 +1646,11 @@ TEST_F(GameFlowTest, PlaybackModeAndSpeedNeverChangeTheResult)
   MatchEngine reference = makeEngine();
   const auto startedAt = std::chrono::steady_clock::now();
   reference.simulateToEnd();
-  RecordProperty("simulate_to_end_milliseconds",
-                 static_cast<int>(std::chrono::duration_cast<
-                                      std::chrono::milliseconds>(
-                                      std::chrono::steady_clock::now() -
-                                      startedAt)
-                                      .count()));
+  RecordProperty(
+      "simulate_to_end_milliseconds",
+      static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                           std::chrono::steady_clock::now() - startedAt)
+                           .count()));
 
   // Highlights only, and the full match with the speed changed repeatedly.
   MatchEngine highlights = makeEngine();
@@ -1657,13 +1659,14 @@ TEST_F(GameFlowTest, PlaybackModeAndSpeedNeverChangeTheResult)
   MatchEngine full = makeEngine();
   full.setPlaybackMode(MatchPlaybackMode::FULL_MATCH);
   constexpr std::array<float, 4> SPEEDS = {30.0f, 7.0f, 16.0f, 1.0f};
-  for (int frame = 0; frame < 2'000'000 &&
-                      (highlights.getState() != MatchState::FULL_TIME ||
-                       full.getState() != MatchState::FULL_TIME);
+  for (int frame = 0;
+       frame < 2'000'000 && (highlights.getState() != MatchState::FULL_TIME ||
+                             full.getState() != MatchState::FULL_TIME);
        ++frame)
   {
     highlights.advancePlayback(1.0f / 60.0f);
-    full.setPlaybackSpeed(SPEEDS[static_cast<size_t>(frame / 500) % SPEEDS.size()]);
+    full.setPlaybackSpeed(
+        SPEEDS[static_cast<size_t>(frame / 500) % SPEEDS.size()]);
     full.advancePlayback(1.0f / 60.0f);
   }
   for (const MatchEngine* played : {&highlights, &full})

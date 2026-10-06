@@ -113,8 +113,8 @@ Game::Game(std::shared_ptr<GameData> gd,
         for (auto day = fixtures.lower_bound(date);
              day != fixtures.end() && !(horizon < day->first); ++day)
         {
-          const auto days = static_cast<std::uint8_t>(
-              dayOrdinal(day->first) - dayOrdinal(date));
+          const auto days = static_cast<std::uint8_t>(dayOrdinal(day->first) -
+                                                      dayOrdinal(date));
           for (const Match& match : day->second)
           {
             if (match.isPlayed()) continue;
@@ -259,10 +259,9 @@ void Game::advanceDay()
   // National-team matches run through the same batch scheduler; windows
   // never overlap competitive club fixtures.
   international.onDay(currentDate, scheduler, world, managed_team_id);
-  last_national_events =
-      national_job.onDay(currentDate, international, career,
-                         managed_team_id != FREE_AGENTS_TEAM_ID,
-                         world.getInbox());
+  last_national_events = national_job.onDay(
+      currentDate, international, career,
+      managed_team_id != FREE_AGENTS_TEAM_ID, world.getInbox());
 
   // A managed fixture left unplayed on its day is simulated so that the
   // competitions (tables, cup draws) never stall. On 1 July this happens
@@ -455,9 +454,9 @@ bool Game::setMatchResult(const GameDateValue& date, TeamID home_id,
   return setMatchResult(date, home_id, away_id, std::move(report));
 }
 
-bool Game::setMatchResult(
-    const GameDateValue& date, TeamID home_id, TeamID away_id,
-    MatchReport report, std::span<const PlayerMatchConsequence> consequences)
+bool Game::setMatchResult(const GameDateValue& date, TeamID home_id,
+                          TeamID away_id, MatchReport report,
+                          std::span<const PlayerMatchConsequence> consequences)
 {
   Match* match = calendar.findMatch(date, home_id, away_id);
   if (!match || match->isPlayed())
@@ -512,9 +511,9 @@ std::vector<PlayerID> Game::ineligibleSelections(TeamID team_id,
 {
   const auto team = gamedata->getTeam(team_id);
   if (!team) return {};
-  return MatchdaySquad::ineligible(
-      team->get().getLineup(),
-      [this, type](const Player& player) { return isEligible(player, type); });
+  return MatchdaySquad::ineligible(team->get().getLineup(),
+                                   [this, type](const Player& player)
+                                   { return isEligible(player, type); });
 }
 
 std::size_t Game::fixMatchdaySquad(TeamID team_id, MatchType type,
@@ -546,8 +545,7 @@ bool Game::canKickOff(TeamID team_id, MatchType type) const
 }
 
 std::size_t Game::fillMatchdaySquad(Lineup& lineup, TeamID team_id,
-                                    MatchType type,
-                                    const GameDateValue& date,
+                                    MatchType type, const GameDateValue& date,
                                     bool recall_regulars) const
 {
   const auto team = gamedata->getTeam(team_id);
@@ -585,8 +583,8 @@ std::size_t Game::fillMatchdaySquad(Lineup& lineup, TeamID team_id,
   };
   const auto startersFit = [&]
   {
-    return std::ranges::all_of(lineup.starters(), [&](const Player* player)
-                               { return fit(*player); });
+    return std::ranges::all_of(
+        lineup.starters(), [&](const Player* player) { return fit(*player); });
   };
 
   if (recall_regulars)
@@ -618,7 +616,8 @@ std::size_t Game::fillMatchdaySquad(Lineup& lineup, TeamID team_id,
     for (const Lineup::PositionedPlayer& slot : lineup.getOutfieldPlayers())
       if (slot.player && !allowed(*slot.player))
         barred.push_back(slot.player->getId());
-    for (const PlayerID player_id : barred) lineup.removeOutfieldPlayer(player_id);
+    for (const PlayerID player_id : barred)
+      lineup.removeOutfieldPlayer(player_id);
   }
   MatchdaySquad::recordStandIns(recalled, lineup);
   return MatchdaySquad::replacements(before, lineup).size();
@@ -642,7 +641,8 @@ void Game::endSeason()
     const auto& rows = final_tables[league_id] =
         competitions.getStandings(calendar, league_id);
     int position = 0;
-    for (const StandingRow& row : rows) final_positions[row.team_id] = ++position;
+    for (const StandingRow& row : rows)
+      final_positions[row.team_id] = ++position;
   }
   season_archive.recordTables(current_season, start_year, final_tables);
   beginSeasonReview(final_tables, start_year);
@@ -764,9 +764,8 @@ void Game::runCareerDay()
                         board.team_id == managed_team_id;
   last_career_events = career.onDayAdvanced(
       currentDate, managed_team_id, managing ? board.confidence : 50.0f,
-      managing ? board.expected_position : 0,
-      [this](TeamID team_id) { return world.leaguePosition(team_id); },
-      world.getInbox());
+      managing ? board.expected_position : 0, [this](TeamID team_id)
+      { return world.leaguePosition(team_id); }, world.getInbox());
   if (managing && board.dismissed) leaveManagedTeam(DepartureReason::Sacked);
 }
 
@@ -797,10 +796,9 @@ std::vector<UpcomingFixture> Game::upcomingFixtures(TeamID team_id) const
       const bool home = match.getHomeTeamId() == team_id;
       if (match.isPlayed() || (!home && match.getAwayTeamId() != team_id))
         continue;
-      fixtures.push_back(
-          {day->first,
-           home ? match.getAwayTeamId() : match.getHomeTeamId(), home,
-           match.getMatchType()});
+      fixtures.push_back({day->first,
+                          home ? match.getAwayTeamId() : match.getHomeTeamId(),
+                          home, match.getMatchType()});
       if (match.getMatchType() != MatchType::FRIENDLY) return fixtures;
     }
   }

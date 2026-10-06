@@ -138,8 +138,9 @@ void legendSwatch(const char* label, const ImVec4& color, bool line)
         ImVec2(start.x + size, start.y + size * 0.45f + scaled(2.0f)),
         Theme::toU32(color));
   else
-    drawList->AddCircleFilled(ImVec2(start.x + size * 0.5f, start.y + size * 0.5f),
-                              size * 0.3f, Theme::toU32(color));
+    drawList->AddCircleFilled(
+        ImVec2(start.x + size * 0.5f, start.y + size * 0.5f), size * 0.3f,
+        Theme::toU32(color));
   ImGui::Dummy(ImVec2(size, size));
   ImGui::SameLine();
   ImGui::TextUnformatted(label);
@@ -199,13 +200,13 @@ float segmentDistance(ImVec2 point, ImVec2 a, ImVec2 b)
 }
 }  // namespace
 
-// ---- View model --------------------------------------------------------------
+// ---- View model
+// --------------------------------------------------------------
 
-void MatchInsightsView::build(GameController& controller,
-                              const MatchReport& report,
-                              const std::optional<ManagedMatchSnapshot>& snapshot,
-                              const std::string& home_name,
-                              const std::string& away_name)
+void MatchInsightsView::build(
+    GameController& controller, const MatchReport& report,
+    const std::optional<ManagedMatchSnapshot>& snapshot,
+    const std::string& home_name, const std::string& away_name)
 {
   *this = MatchInsightsView();
   if (!snapshot || (snapshot->shots.empty() && snapshot->detail.empty()))
@@ -239,7 +240,8 @@ void MatchInsightsView::build(GameController& controller,
   // ---- xG race and final-third pressure
   axis_end = report.extra_time ? 120.0f : 90.0f;
   std::array<float, 2> totals{};
-  for (std::size_t side = 0; side < 2; ++side) xg_steps[side].push_back({0.0f, 0.0f});
+  for (std::size_t side = 0; side < 2; ++side)
+    xg_steps[side].push_back({0.0f, 0.0f});
   for (const ShotRecord& shot : snapshot->shots)
   {
     const std::size_t side = shot.home ? 0 : 1;
@@ -253,8 +255,8 @@ void MatchInsightsView::build(GameController& controller,
     xg_steps[side].push_back({axis_end, totals[side]});
     xg_totals[side] = std::format("{:.2f}", totals[side]);
   }
-  xg_top = std::max(0.5f, std::ceil(std::max(totals[0], totals[1]) * 2.0f) /
-                              2.0f);
+  xg_top =
+      std::max(0.5f, std::ceil(std::max(totals[0], totals[1]) * 2.0f) / 2.0f);
   const auto buckets = static_cast<std::size_t>(axis_end) / T::BUCKET_MINUTES;
   for (std::size_t side = 0; side < 2; ++side)
   {
@@ -274,10 +276,10 @@ void MatchInsightsView::build(GameController& controller,
     for (const ShotRecord& shot : snapshot->shots)
       if (axisMinute(shot.minute, shot.period) < static_cast<float>(end))
         sofar[shot.home ? 0 : 1] += shot.xg;
-    std::string text =
-        fmt::sprintf(LOC("INSIGHT_BUCKET_TOOLTIP"), start, end,
-                     home_name.c_str(), std::format("{:.2f}", sofar[0]).c_str(),
-                     away_name.c_str(), std::format("{:.2f}", sofar[1]).c_str());
+    std::string text = fmt::sprintf(
+        LOC("INSIGHT_BUCKET_TOOLTIP"), start, end, home_name.c_str(),
+        std::format("{:.2f}", sofar[0]).c_str(), away_name.c_str(),
+        std::format("{:.2f}", sofar[1]).c_str());
     if (has_detail)
       text += "\n" + fmt::sprintf(LOC("INSIGHT_BUCKET_PRESSURE"),
                                   home_name.c_str(), pressure[0][bucket],
@@ -306,14 +308,15 @@ void MatchInsightsView::build(GameController& controller,
     else if (shot.set_piece)
       kind = LOC("INSIGHT_SHOT_SET_PIECE");
     if (shot.header)
-      kind += (kind.empty() ? "" : ", ") + std::string(LOC("INSIGHT_SHOT_HEADER"));
+      kind +=
+          (kind.empty() ? "" : ", ") + std::string(LOC("INSIGHT_SHOT_HEADER"));
     const std::string minute = MatchClock::minuteLabel(
         shot.minute, shot.period,
         shot.minute >= static_cast<float>(regulationEnd(shot.period)));
-    mark.tooltip = fmt::sprintf(
-        LOC("INSIGHT_SHOT_TOOLTIP"), minute.c_str(),
-        nameOrUnknown(shot.player).c_str(), std::format("{:.2f}", shot.xg).c_str(),
-        LOC(outcomeKey(shot.outcome)));
+    mark.tooltip = fmt::sprintf(LOC("INSIGHT_SHOT_TOOLTIP"), minute.c_str(),
+                                nameOrUnknown(shot.player).c_str(),
+                                std::format("{:.2f}", shot.xg).c_str(),
+                                LOC(outcomeKey(shot.outcome)));
     if (!kind.empty()) mark.tooltip += "\n" + kind;
     shots.push_back(std::move(mark));
   }
@@ -330,8 +333,8 @@ void MatchInsightsView::build(GameController& controller,
     clock.minute = moment.minute;
     clock.added_minute = moment.added;
     row.minute = MatchClock::minuteLabel(clock);
-    row.axis = std::min(
-        static_cast<float>(moment.minute - moment.added) + 0.5f, axis_end);
+    row.axis = std::min(static_cast<float>(moment.minute - moment.added) + 0.5f,
+                        axis_end);
     row.text = fmt::sprintf(LOC(momentKey(moment.kind)),
                             nameOrUnknown(moment.player).c_str());
     if (moment.kind == KeyMoment::Kind::Substitution)
@@ -342,8 +345,8 @@ void MatchInsightsView::build(GameController& controller,
                                 nameOrUnknown(moment.other).c_str());
     if (moment.shot >= 0)
     {
-      const std::string xg = fmt::sprintf(LOC("INSIGHT_MOMENT_XG"),
-                                          std::format("{:.2f}", moment.xg).c_str());
+      const std::string xg = fmt::sprintf(
+          LOC("INSIGHT_MOMENT_XG"), std::format("{:.2f}", moment.xg).c_str());
       row.detail += row.detail.empty() ? xg : " · " + xg;
     }
     moments.push_back(std::move(row));
@@ -373,8 +376,8 @@ void MatchInsightsView::build(GameController& controller,
       NetworkNode node;
       node.x = line.avg_x;
       node.y = line.avg_y;
-      node.weight = static_cast<float>(line.touches) /
-                    static_cast<float>(most_touches);
+      node.weight =
+          static_cast<float>(line.touches) / static_cast<float>(most_touches);
       node.detail_index = index;
       const std::string name = nameOrUnknown(line.player);
       node.label = lastName(name);
@@ -386,15 +389,16 @@ void MatchInsightsView::build(GameController& controller,
         passes += link.count;
         if (partner == nullptr || link.count > partner->count) partner = &link;
       }
-      node.tooltip = fmt::sprintf(LOC("INSIGHT_NODE_TOOLTIP"), name.c_str(),
-                                  line.touches, passes, line.progressive_passes,
-                                  line.pressures);
+      node.tooltip =
+          fmt::sprintf(LOC("INSIGHT_NODE_TOOLTIP"), name.c_str(), line.touches,
+                       passes, line.progressive_passes, line.pressures);
       if (partner != nullptr)
         node.tooltip +=
-            "\n" + fmt::sprintf(LOC("INSIGHT_NODE_PARTNER"),
-                                nameOrUnknown(detail.players[partner->to].player)
-                                    .c_str(),
-                                partner->count);
+            "\n" +
+            fmt::sprintf(
+                LOC("INSIGHT_NODE_PARTNER"),
+                nameOrUnknown(detail.players[partner->to].player).c_str(),
+                partner->count);
       network.nodes.push_back(std::move(node));
     }
     // Both directions of a pair make one line.
@@ -405,9 +409,9 @@ void MatchInsightsView::build(GameController& controller,
       if (a < 0 || b < 0 || a == b) continue;
       const auto low = static_cast<std::size_t>(std::min(a, b));
       const auto high = static_cast<std::size_t>(std::max(a, b));
-      auto found = std::ranges::find_if(
-          network.edges, [&](const NetworkEdge& edge)
-          { return edge.a == low && edge.b == high; });
+      auto found =
+          std::ranges::find_if(network.edges, [&](const NetworkEdge& edge)
+                               { return edge.a == low && edge.b == high; });
       if (found == network.edges.end())
       {
         network.edges.push_back({low, high, 0, {}});
@@ -429,11 +433,11 @@ void MatchInsightsView::build(GameController& controller,
         if (link.from == a && link.to == b) forward = link.count;
         if (link.from == b && link.to == a) back = link.count;
       }
-      edge.tooltip = fmt::sprintf(
-          LOC("INSIGHT_EDGE_TOOLTIP"),
-          nameOrUnknown(detail.players[a].player).c_str(),
-          nameOrUnknown(detail.players[b].player).c_str(), edge.total, forward,
-          back);
+      edge.tooltip =
+          fmt::sprintf(LOC("INSIGHT_EDGE_TOOLTIP"),
+                       nameOrUnknown(detail.players[a].player).c_str(),
+                       nameOrUnknown(detail.players[b].player).c_str(),
+                       edge.total, forward, back);
     }
     // Strong links on top.
     std::ranges::sort(network.edges, {}, &NetworkEdge::total);
@@ -463,9 +467,9 @@ void MatchInsightsView::build(GameController& controller,
     {
       const DetailPlayer& line = detail.players[index];
       HeatChoice choice;
-      choice.label = fmt::sprintf(LOC("INSIGHT_HEAT_PLAYER"),
-                                  nameOrUnknown(line.player).c_str(),
-                                  line.touches);
+      choice.label =
+          fmt::sprintf(LOC("INSIGHT_HEAT_PLAYER"),
+                       nameOrUnknown(line.player).c_str(), line.touches);
       for (std::size_t cell = 0; cell < T::CELLS; ++cell)
         choice.cells[cell] = line.cells[cell];
       heat[side].push_back(std::move(choice));
@@ -487,7 +491,8 @@ void MatchInsightsView::build(GameController& controller,
 void MatchInsightsView::selectHeat(std::size_t side, std::size_t choice)
 {
   heat_side = static_cast<int>(side);
-  heat_choice = std::min(choice, heat[side].empty() ? 0 : heat[side].size() - 1);
+  heat_choice =
+      std::min(choice, heat[side].empty() ? 0 : heat[side].size() - 1);
   buildCellTooltips();
 }
 
@@ -495,7 +500,8 @@ void MatchInsightsView::buildCellTooltips()
 {
   cell_tooltip_side = heat_side;
   cell_tooltip_choice = heat_choice;
-  const std::vector<HeatChoice>& choices = heat[static_cast<std::size_t>(heat_side)];
+  const std::vector<HeatChoice>& choices =
+      heat[static_cast<std::size_t>(heat_side)];
   if (heat_choice >= choices.size()) return;
   const HeatChoice& choice = choices[heat_choice];
   for (std::size_t cell = 0; cell < T::CELLS; ++cell)
@@ -504,13 +510,13 @@ void MatchInsightsView::buildCellTooltips()
     const float share = choice.total > 0 ? 100.0f * static_cast<float>(value) /
                                                static_cast<float>(choice.total)
                                          : 0.0f;
-    cell_tooltips[cell] =
-        fmt::sprintf(LOC("INSIGHT_HEAT_TOOLTIP"), value,
-                     std::format("{:.0f}%", share).c_str());
+    cell_tooltips[cell] = fmt::sprintf(LOC("INSIGHT_HEAT_TOOLTIP"), value,
+                                       std::format("{:.0f}%", share).c_str());
   }
 }
 
-// ---- Layout ------------------------------------------------------------------
+// ---- Layout
+// ------------------------------------------------------------------
 
 void MatchInsightsView::render(GUIView* view)
 {
@@ -533,8 +539,8 @@ void MatchInsightsView::render(GUIView* view)
       renderHeatmap(width);
     else
     {
-      UI::beginAutoHeightCard("insight_no_detail",
-                              LOC("INSIGHT_NETWORK_TITLE"), width);
+      UI::beginAutoHeightCard("insight_no_detail", LOC("INSIGHT_NETWORK_TITLE"),
+                              width);
       footnote(LOC("INSIGHT_NO_DETAIL"));
       UI::endCard();
     }
@@ -660,7 +666,8 @@ void MatchInsightsView::renderTimeline(float width)
   }
   drawList->AddLine(ImVec2(xOf(45.0f), top), ImVec2(xOf(45.0f), bottom), grid,
                     1.0f);
-  drawList->AddLine(ImVec2(left, pressMid), ImVec2(right, pressMid), grid, 1.0f);
+  drawList->AddLine(ImVec2(left, pressMid), ImVec2(right, pressMid), grid,
+                    1.0f);
   for (std::size_t index = 0; index < axis_labels.size(); ++index)
   {
     const float x = xOf(static_cast<float>(index * 15));
@@ -703,9 +710,10 @@ void MatchInsightsView::renderTimeline(float width)
     const auto& steps = xg_steps[side];
     const ImU32 color = Theme::toU32(sideColor(side));
     for (std::size_t index = 1; index < steps.size(); ++index)
-      drawList->AddLine(ImVec2(xOf(steps[index - 1].axis), yOf(steps[index - 1].total)),
-                        ImVec2(xOf(steps[index].axis), yOf(steps[index].total)),
-                        color, scaled(2.0f));
+      drawList->AddLine(
+          ImVec2(xOf(steps[index - 1].axis), yOf(steps[index - 1].total)),
+          ImVec2(xOf(steps[index].axis), yOf(steps[index].total)), color,
+          scaled(2.0f));
   }
   {
     std::array<float, 2> totals{};
@@ -715,7 +723,8 @@ void MatchInsightsView::renderTimeline(float width)
       totals[side] += shot.xg;
       if (!shot.goal) continue;
       const ImVec2 at(xOf(shot.axis), yOf(totals[side]));
-      drawList->AddCircleFilled(at, scaled(4.5f), Theme::toU32(sideColor(side)));
+      drawList->AddCircleFilled(at, scaled(4.5f),
+                                Theme::toU32(sideColor(side)));
       drawList->AddCircle(at, scaled(4.5f), Theme::toU32(palette.surface), 0,
                           scaled(1.5f));
     }
@@ -729,16 +738,17 @@ void MatchInsightsView::renderTimeline(float width)
   if (hovered && buckets > 0)
   {
     const float mouse = ImGui::GetIO().MousePos.x;
-    const auto bucket = static_cast<std::size_t>(std::clamp(
-        (mouse - left) / std::max(bucketWidth, 1.0f), 0.0f,
-        static_cast<float>(buckets - 1)));
+    const auto bucket = static_cast<std::size_t>(
+        std::clamp((mouse - left) / std::max(bucketWidth, 1.0f), 0.0f,
+                   static_cast<float>(buckets - 1)));
     const float x0 = left + bucketWidth * static_cast<float>(bucket);
     drawList->AddRectFilled(ImVec2(x0, top), ImVec2(x0 + bucketWidth, bottom),
                             Theme::toU32(palette.text, 0.06f));
     ImGui::SetTooltip("%s", bucket_tooltips[bucket].c_str());
   }
   small.reset();
-  footnote(LOC(has_detail ? "INSIGHT_TIMELINE_NOTE" : "INSIGHT_TIMELINE_NOTE_XG"));
+  footnote(
+      LOC(has_detail ? "INSIGHT_TIMELINE_NOTE" : "INSIGHT_TIMELINE_NOTE_XG"));
   UI::endCard();
 }
 
@@ -782,8 +792,8 @@ void MatchInsightsView::renderShotMap(float width)
                           scaled(1.5f));
     }
     if (static_cast<int>(index) == focusShot)
-      drawList->AddCircle(at, radius + scaled(4.0f),
-                          Theme::toU32(palette.text), 0, scaled(2.0f));
+      drawList->AddCircle(at, radius + scaled(4.0f), Theme::toU32(palette.text),
+                          0, scaled(2.0f));
     const float distance = std::hypot(at.x - mouse.x, at.y - mouse.y);
     if (hovered && distance < std::max(nearestDistance, radius))
     {
@@ -793,7 +803,8 @@ void MatchInsightsView::renderShotMap(float width)
   }
   if (nearest >= 0)
   {
-    ImGui::SetTooltip("%s", shots[static_cast<std::size_t>(nearest)].tooltip.c_str());
+    ImGui::SetTooltip("%s",
+                      shots[static_cast<std::size_t>(nearest)].tooltip.c_str());
     if (clicked)
     {
       const auto moment = std::ranges::find(moments, nearest, &MomentRow::shot);
@@ -829,15 +840,16 @@ void MatchInsightsView::renderMoments(float width)
     const MomentRow& row = moments[index];
     ImGui::PushID(static_cast<int>(index));
     const float rowWidth = ImGui::GetContentRegionAvail().x;
-    const float rowHeight =
-        lineHeight + (row.detail.empty() ? 0.0f : smallHeight) +
-        scaled(Theme::Space::XS);
+    const float rowHeight = lineHeight +
+                            (row.detail.empty() ? 0.0f : smallHeight) +
+                            scaled(Theme::Space::XS);
     const ImVec2 start = ImGui::GetCursorScreenPos();
     if (ImGui::Selectable("##moment", picked_moment == static_cast<int>(index),
                           ImGuiSelectableFlags_None,
                           ImVec2(rowWidth, rowHeight)))
-      picked_moment =
-          picked_moment == static_cast<int>(index) ? -1 : static_cast<int>(index);
+      picked_moment = picked_moment == static_cast<int>(index)
+                          ? -1
+                          : static_cast<int>(index);
     if (ImGui::IsItemHovered())
     {
       hovered = static_cast<int>(index);
@@ -1029,8 +1041,8 @@ void MatchInsightsView::renderHeatmap(float width)
     ImGui::EndCombo();
   }
   const HeatChoice& choice = choices[heat_choice];
-  const float mapWidth = std::min(ImGui::GetContentRegionAvail().x,
-                                  scaled(720.0f));
+  const float mapWidth =
+      std::min(ImGui::GetContentRegionAvail().x, scaled(720.0f));
   const ImVec2 size(mapWidth, std::floor(mapWidth * PITCH_ASPECT));
   const ImVec2 origin = ImGui::GetCursorScreenPos();
   ImGui::InvisibleButton("##insight_heat_map", size);
@@ -1055,10 +1067,9 @@ void MatchInsightsView::renderHeatmap(float width)
       {
         const float share =
             static_cast<float>(value) / static_cast<float>(choice.most);
-        drawList->AddRectFilled(ImVec2(a.x + 1.0f, a.y + 1.0f),
-                                ImVec2(b.x - 1.0f, b.y - 1.0f),
-                                Theme::toU32(color, 0.1f + 0.75f * share),
-                                scaled(2.0f));
+        drawList->AddRectFilled(
+            ImVec2(a.x + 1.0f, a.y + 1.0f), ImVec2(b.x - 1.0f, b.y - 1.0f),
+            Theme::toU32(color, 0.1f + 0.75f * share), scaled(2.0f));
       }
       if (hovered && mouse.x >= a.x && mouse.x < b.x && mouse.y >= a.y &&
           mouse.y < b.y)
@@ -1077,8 +1088,9 @@ void MatchInsightsView::renderHeatmap(float width)
   if (hoveredCell >= 0)
   {
     const auto cell = static_cast<std::size_t>(hoveredCell);
-    const ImVec2 a(origin.x + cellWidth * static_cast<float>(cell % T::GRID_COLUMNS),
-                   origin.y + cellHeight * static_cast<float>(cell / T::GRID_COLUMNS));
+    const ImVec2 a(
+        origin.x + cellWidth * static_cast<float>(cell % T::GRID_COLUMNS),
+        origin.y + cellHeight * static_cast<float>(cell / T::GRID_COLUMNS));
     drawList->AddRect(a, ImVec2(a.x + cellWidth, a.y + cellHeight),
                       Theme::toU32(palette.text), 0.0f, 0, scaled(1.5f));
     ImGui::SetTooltip("%s", cell_tooltips[cell].c_str());

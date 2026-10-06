@@ -45,5 +45,6 @@ std::string fill(std::string_view pattern, const MatchEvent& event,
                  const MatchCommentaryNames& names);
 
 /** The localised line for `event`: fill() of its key's translation. */
-std::string describe(const MatchEvent& event, const MatchCommentaryNames& names);
+std::string describe(const MatchEvent& event,
+                     const MatchCommentaryNames& names);
 }  // namespace MatchCommentary

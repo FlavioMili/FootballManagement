@@ -35,8 +35,8 @@
 #include "model/game.h"
 #include "model/inbox.h"
 #include "model/match_engine.h"
-#include "model/world_simulation.h"
 #include "model/settings_manager.h"
+#include "model/world_simulation.h"
 
 /** GUI classes grant their internals to this name (see test_game_flow). */
 class GameFlowTest_GUIFlowLifecycle_Test
@@ -494,13 +494,14 @@ TEST(GuidanceUiTest, OpeningAnUnreadDigestRebuildsTheListSafely)
   // Click the digest row (the first row of the thread list).
   const ImGuiWindow* list = nullptr;
   for (const ImGuiWindow* window : GImGui->Windows)
-    if (window->Active && std::string_view(window->Name).find(
-                              "/inbox_threads") != std::string_view::npos)
+    if (window->Active &&
+        std::string_view(window->Name).find("/inbox_threads") !=
+            std::string_view::npos)
       list = window;
   ASSERT_NE(list, nullptr);
-  const ImVec2 row(list->Pos.x + list->Size.x * 0.5f,
-                   list->Pos.y + list->WindowPadding.y +
-                       ImGui::GetTextLineHeight());
+  const ImVec2 row(
+      list->Pos.x + list->Size.x * 0.5f,
+      list->Pos.y + list->WindowPadding.y + ImGui::GetTextLineHeight());
   ImGui::GetIO().AddMousePosEvent(row.x, row.y);
   Bridge::frame(view);
   ImGui::GetIO().AddMouseButtonEvent(0, true);

@@ -101,12 +101,11 @@ ReservesScene::Row ReservesScene::makeRow(
   row.ability = range(view.estimate.current_low, view.estimate.current_high);
   row.potential =
       range(view.estimate.potential_low, view.estimate.potential_high);
-  row.contract = formatLocalized(
-      "YOUTH_CONTRACT_CELL", {LOC(YouthModel::contractKey(view.contract)),
-                              std::to_string(view.contract_years)});
-  row.rating = view.appearances > 0
-                   ? std::format("{:.1f}", view.average_rating)
-                   : std::string("–");
+  row.contract = formatLocalized("YOUTH_CONTRACT_CELL",
+                                 {LOC(YouthModel::contractKey(view.contract)),
+                                  std::to_string(view.contract_years)});
+  row.rating = view.appearances > 0 ? std::format("{:.1f}", view.average_rating)
+                                    : std::string("–");
   row.origin = LOC(view.status == YouthStatus::Squad ? "U21_FROM_U18"
                                                      : "U21_FROM_FIRST_TEAM");
   row.terms = std::format(
@@ -131,8 +130,8 @@ void ReservesScene::refresh()
     squad_rows.push_back(makeRow(view));
   for (const auto& view : controller.getReserveCandidates())
     candidate_rows.push_back(makeRow(view));
-  const bool known = std::ranges::any_of(
-      squad_rows, [this](const Row& row) { return row.view.id == selected; }) ||
+  const bool known = std::ranges::any_of(squad_rows, [this](const Row& row)
+                                         { return row.view.id == selected; }) ||
                      std::ranges::any_of(candidate_rows, [this](const Row& row)
                                          { return row.view.id == selected; });
   if (!known) selected = 0;
@@ -144,13 +143,12 @@ void ReservesScene::refresh()
   squad_title =
       formatLocalized("U21_CARD_SQUAD", {std::to_string(squad_rows.size())});
   const YouthTableRow& own = overview.table;
-  league_line =
-      overview.league_position > 0 && own.played > 0
-          ? formatLocalized("YOUTH_LEAGUE_POSITION",
-                            {std::to_string(overview.league_position),
-                             std::to_string(overview.league_size),
-                             std::to_string(own.points())})
-          : std::string(LOC("YOUTH_LEAGUE_NOT_STARTED"));
+  league_line = overview.league_position > 0 && own.played > 0
+                    ? formatLocalized("YOUTH_LEAGUE_POSITION",
+                                      {std::to_string(overview.league_position),
+                                       std::to_string(overview.league_size),
+                                       std::to_string(own.points())})
+                    : std::string(LOC("YOUTH_LEAGUE_NOT_STARTED"));
   quota_outfield = std::format("{}/{}", overview.quota.overage_outfield,
                                YouthModel::U21_OVERAGE_OUTFIELD);
   quota_keepers = std::format("{}/{}", overview.quota.overage_goalkeepers,
@@ -166,8 +164,8 @@ void ReservesScene::refresh()
     line.position = ++position;
     const auto club = controller.getTeamById(row.team_id);
     line.club = club ? club->get().getName() : std::string("?");
-    line.record = std::format("{}  ·  {}-{}-{}", row.played, row.won,
-                              row.drawn, row.lost);
+    line.record = std::format("{}  ·  {}-{}-{}", row.played, row.won, row.drawn,
+                              row.lost);
     line.goals = std::format("{}:{}", row.goals_for, row.goals_against);
     line.points = row.points();
     line.own = row.team_id == own_id;
@@ -187,11 +185,11 @@ void ReservesScene::refresh()
         "{} ({})", opponent ? opponent->get().getName() : std::string("?"),
         LOC(result.home ? "YOUTH_HOME" : "YOUTH_AWAY"));
     line.score = std::format("{}-{}", result.goals_for, result.goals_against);
-    line.outcome = result.goals_for > result.goals_against
-                       ? UI::Outcome::WIN
-                       : (result.goals_for == result.goals_against
-                              ? UI::Outcome::DRAW
-                              : UI::Outcome::LOSS);
+    line.outcome =
+        result.goals_for > result.goals_against
+            ? UI::Outcome::WIN
+            : (result.goals_for == result.goals_against ? UI::Outcome::DRAW
+                                                        : UI::Outcome::LOSS);
     form.push_back(line.outcome);
     results.push_back(std::move(line));
   }
@@ -211,20 +209,21 @@ void ReservesScene::renderContent()
   UI::statTile("u21_squad", LOC("U21_TILE_SQUAD"), squad_size.c_str(),
                LOC("U21_TILE_SQUAD_NOTE"), palette.text, tile);
   tiles.next();
-  UI::statTile("u21_outfield", LOC("U21_TILE_OVERAGE"), quota_outfield.c_str(),
-               LOC("U21_TILE_OVERAGE_NOTE"),
-               overview.quota.overage_outfield >= YouthModel::U21_OVERAGE_OUTFIELD
-                   ? palette.warning
-                   : palette.text,
-               tile);
+  UI::statTile(
+      "u21_outfield", LOC("U21_TILE_OVERAGE"), quota_outfield.c_str(),
+      LOC("U21_TILE_OVERAGE_NOTE"),
+      overview.quota.overage_outfield >= YouthModel::U21_OVERAGE_OUTFIELD
+          ? palette.warning
+          : palette.text,
+      tile);
   tiles.next();
-  UI::statTile("u21_keepers", LOC("U21_TILE_OVERAGE_GK"), quota_keepers.c_str(),
-               LOC("U21_TILE_OVERAGE_GK_NOTE"),
-               overview.quota.overage_goalkeepers >=
-                       YouthModel::U21_OVERAGE_GOALKEEPERS
-                   ? palette.warning
-                   : palette.text,
-               tile);
+  UI::statTile(
+      "u21_keepers", LOC("U21_TILE_OVERAGE_GK"), quota_keepers.c_str(),
+      LOC("U21_TILE_OVERAGE_GK_NOTE"),
+      overview.quota.overage_goalkeepers >= YouthModel::U21_OVERAGE_GOALKEEPERS
+          ? palette.warning
+          : palette.text,
+      tile);
   const std::string position =
       overview.league_position > 0 && overview.table.played > 0
           ? std::format("{}/{}", overview.league_position, overview.league_size)
@@ -319,9 +318,9 @@ void ReservesScene::renderLeague()
     const std::span<const UI::Column> columns(localized);
     const UI::ColumnMask mask =
         UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
-    if (UI::beginResponsiveTable("u21_table", columns, mask,
-                                 ImGuiTableFlags_RowBg |
-                                     ImGuiTableFlags_BordersInnerH))
+    if (UI::beginResponsiveTable(
+            "u21_table", columns, mask,
+            ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
     {
       for (const TableLine& line : table)
       {
@@ -332,7 +331,8 @@ void ReservesScene::renderLeague()
           UI::textFitted(line.club, ImGui::GetContentRegionAvail().x, color);
         if (UI::cell(mask, 2))
           ImGui::TextColored(color, "%s", line.record.c_str());
-        if (UI::cell(mask, 3)) ImGui::TextColored(color, "%s", line.goals.c_str());
+        if (UI::cell(mask, 3))
+          ImGui::TextColored(color, "%s", line.goals.c_str());
         if (UI::cell(mask, 4)) ImGui::TextColored(color, "%d", line.points);
       }
       ImGui::EndTable();

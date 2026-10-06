@@ -113,8 +113,10 @@ DrawCheck checkDraw(const std::vector<Continental::DrawTeam>& teams,
     if (++by_association[a.team_id][h.association] > 2) check.over_two = true;
     EXPECT_GE(fixture.matchday, 1);
     EXPECT_LE(fixture.matchday, matches);
-    const int home_count = ++per_matchday[std::pair{h.team_id, fixture.matchday}];
-    const int away_count = ++per_matchday[std::pair{a.team_id, fixture.matchday}];
+    const int home_count =
+        ++per_matchday[std::pair{h.team_id, fixture.matchday}];
+    const int away_count =
+        ++per_matchday[std::pair{a.team_id, fixture.matchday}];
     EXPECT_EQ(home_count, 1);
     EXPECT_EQ(away_count, 1);
   }
@@ -187,7 +189,8 @@ TEST(ContinentalTest, AccessListFollowsAssociationRank)
 {
   const auto& top = *Continental::rules(Continental::CHAMPIONS_CUP_ID);
   const std::vector<uint8_t> capacity(7, 20);
-  const std::vector<uint8_t> places = Continental::allocatePlaces(top, 7, capacity);
+  const std::vector<uint8_t> places =
+      Continental::allocatePlaces(top, 7, capacity);
   EXPECT_EQ(std::accumulate(places.begin(), places.end(), 0), 36);
   EXPECT_TRUE(std::ranges::is_sorted(places, std::greater<>{}));
   EXPECT_EQ(places.front(), 6);
@@ -195,7 +198,8 @@ TEST(ContinentalTest, AccessListFollowsAssociationRank)
 
   // An association with fewer free clubs passes its places on.
   const std::vector<uint8_t> tight = {20, 2, 20, 20, 20, 20, 20};
-  const std::vector<uint8_t> limited = Continental::allocatePlaces(top, 7, tight);
+  const std::vector<uint8_t> limited =
+      Continental::allocatePlaces(top, 7, tight);
   EXPECT_EQ(limited[1], 2);
   EXPECT_EQ(std::accumulate(limited.begin(), limited.end(), 0), 36);
 }
@@ -221,8 +225,9 @@ TEST(ContinentalTest, SmallerFormatsDrawToo)
   const auto americas = drawTeams({6, 6, 6, 6}, 3);
   for (uint32_t seed = 1; seed <= 100; ++seed)
   {
-    EXPECT_FALSE(checkDraw(shield, Continental::drawLeaguePhase(shield, 3, seed), 3)
-                     .own_association);
+    EXPECT_FALSE(
+        checkDraw(shield, Continental::drawLeaguePhase(shield, 3, seed), 3)
+            .own_association);
     EXPECT_FALSE(
         checkDraw(americas, Continental::drawLeaguePhase(americas, 3, seed), 3)
             .own_association);
@@ -272,7 +277,8 @@ TEST(ContinentalTest, CalendarKeepsContinentalWeeksFree)
   {
     EXPECT_EQ(SeasonCalendar::dayOfWeek(weeks[i]), 1);  // Tuesday
     for (int offset = 0; offset < 3; ++offset)
-      EXPECT_FALSE(SeasonCalendar::isBlackout(SeasonCalendar::addDays(weeks[i], offset)));
+      EXPECT_FALSE(SeasonCalendar::isBlackout(
+          SeasonCalendar::addDays(weeks[i], offset)));
     if (i > 0) EXPECT_TRUE(weeks[i - 1] < weeks[i]);
   }
   // Domestic midweek rounds and cup ties avoid those weeks.
@@ -314,18 +320,20 @@ TEST(ContinentalTest, FullCompetitionRunsToAWinnerAndPays)
   Calendar calendar;
   ContinentalCompetitions continental(gamedata);
   std::vector<std::pair<std::vector<TeamID>, bool>> news;
-  continental.setNewsSink([&news](InboxMessage, const std::vector<TeamID>& clubs,
-                                  bool headline)
-                          { news.emplace_back(clubs, headline); });
+  continental.setNewsSink(
+      [&news](InboxMessage, const std::vector<TeamID>& clubs, bool headline)
+      { news.emplace_back(clubs, headline); });
   continental.startSeason(2025, GameDateValue(2025, 7, 2));
   ASSERT_EQ(continental.getSeasons().size(), 3u);
   const auto* top = continental.getSeason(Continental::CHAMPIONS_CUP_ID);
   ASSERT_NE(top, nullptr);
   EXPECT_EQ(top->entrants.size(), 36u);
-  EXPECT_EQ(continental.getSeason(Continental::CONTINENTAL_SHIELD_ID)->entrants.size(),
+  EXPECT_EQ(continental.getSeason(Continental::CONTINENTAL_SHIELD_ID)
+                ->entrants.size(),
             24u);
-  EXPECT_EQ(continental.getSeason(Continental::AMERICAS_CUP_ID)->entrants.size(),
-            24u);
+  EXPECT_EQ(
+      continental.getSeason(Continental::AMERICAS_CUP_ID)->entrants.size(),
+      24u);
   // No club enters two competitions; pots follow the club coefficient.
   std::set<TeamID> seen;
   for (const auto& season : continental.getSeasons())
@@ -365,12 +373,13 @@ TEST(ContinentalTest, FullCompetitionRunsToAWinnerAndPays)
   // Never a club of the same association in the league phase.
   for (const auto& [date, matches] : calendar.getFullCalendar())
     for (const Match& match : matches)
-      EXPECT_NE(Competitions::rootLeague(
-                    *gamedata,
-                    gamedata->getTeam(match.getHomeTeamId())->get().getLeagueId()),
-                Competitions::rootLeague(
-                    *gamedata,
-                    gamedata->getTeam(match.getAwayTeamId())->get().getLeagueId()));
+      EXPECT_NE(
+          Competitions::rootLeague(
+              *gamedata,
+              gamedata->getTeam(match.getHomeTeamId())->get().getLeagueId()),
+          Competitions::rootLeague(
+              *gamedata,
+              gamedata->getTeam(match.getAwayTeamId())->get().getLeagueId()));
   EXPECT_GT(gamedata->getTeam(champion_club)->get().getFinances().getBalance(),
             balance_before);
   EXPECT_FALSE(news.empty());
@@ -405,12 +414,14 @@ TEST(ContinentalTest, FullCompetitionRunsToAWinnerAndPays)
     }
   }
   const auto* finished = continental.getSeason(Continental::CHAMPIONS_CUP_ID);
-  EXPECT_EQ(std::ranges::count(finished->ties, Round::Playoff, &ContinentalCompetitions::Tie::round),
+  EXPECT_EQ(std::ranges::count(finished->ties, Round::Playoff,
+                               &ContinentalCompetitions::Tie::round),
             8);
   EXPECT_EQ(std::ranges::count(finished->ties, Round::RoundOf16,
                                &ContinentalCompetitions::Tie::round),
             8);
-  EXPECT_TRUE(std::ranges::any_of(news, [](const auto& item) { return item.second; }));
+  EXPECT_TRUE(
+      std::ranges::any_of(news, [](const auto& item) { return item.second; }));
 
   // Season end: coefficients move and next season's clubs are qualified.
   std::unordered_map<LeagueID, std::vector<StandingRow>> tables;
@@ -429,16 +440,19 @@ TEST(ContinentalTest, FullCompetitionRunsToAWinnerAndPays)
   const TeamID cup_winner = tables[england].back().team_id;
   const double before = continental.clubCoefficient(finished->winner_id);
   continental.closeSeason(calendar, 2025, tables, {{england, cup_winner}});
-  continental.closeSeason(calendar, 2025, tables, {{england, cup_winner}});  // no-op
+  continental.closeSeason(calendar, 2025, tables,
+                          {{england, cup_winner}});  // no-op
   EXPECT_NE(continental.clubCoefficient(finished->winner_id), before);
   const auto& qualified = continental.getQualified();
   ASSERT_EQ(qualified.size(), 3u);
   EXPECT_EQ(qualified.at(Continental::CHAMPIONS_CUP_ID).size(), 36u);
   // The cup winner (last in its table) takes a place in the second tier.
   const auto& shield = qualified.at(Continental::CONTINENTAL_SHIELD_ID);
-  EXPECT_TRUE(std::ranges::any_of(shield, [&](const auto& entrant)
-                                  { return entrant.team_id == cup_winner && entrant.cup_winner; }));
-  const auto ranking = continental.associationRanking(Continental::Continent::Europe);
+  EXPECT_TRUE(std::ranges::any_of(
+      shield, [&](const auto& entrant)
+      { return entrant.team_id == cup_winner && entrant.cup_winner; }));
+  const auto ranking =
+      continental.associationRanking(Continental::Continent::Europe);
   EXPECT_EQ(ranking.size(), 7u);
 
   // The next season starts from that qualification.
@@ -459,15 +473,18 @@ TEST(ContinentalTest, LevelAggregateGoesToExtraTime)
   Calendar calendar;
   ContinentalCompetitions continental(gamedata);
   const LeagueID id = Continental::CHAMPIONS_CUP_ID;
-  Match first(unseeded, seeded, GameDateValue(2026, 3, 3), MatchType::CONTINENTAL,
-              id, Continental::stageCode(Round::RoundOf16, 1));
+  Match first(unseeded, seeded, GameDateValue(2026, 3, 3),
+              MatchType::CONTINENTAL, id,
+              Continental::stageCode(Round::RoundOf16, 1));
   first.setPlayedResult(2, 1);
   calendar.addMatch(first);
-  Match second(seeded, unseeded, GameDateValue(2026, 3, 10), MatchType::CONTINENTAL,
-               id, Continental::stageCode(Round::RoundOf16, 2));
+  Match second(seeded, unseeded, GameDateValue(2026, 3, 10),
+               MatchType::CONTINENTAL, id,
+               Continental::stageCode(Round::RoundOf16, 2));
   second.setPlayedResult(1, 0);  // Not level on the day, level on aggregate.
   calendar.addMatch(second);
-  Match* stored = calendar.findMatch(GameDateValue(2026, 3, 10), seeded, unseeded);
+  Match* stored =
+      calendar.findMatch(GameDateValue(2026, 3, 10), seeded, unseeded);
   ASSERT_NE(stored, nullptr);
   EXPECT_TRUE(continental.needsExtraTime(calendar, *stored));
   EXPECT_TRUE(continental.resolveDecider(calendar, *stored));
@@ -735,8 +752,8 @@ TEST(ContinentalTest, UnevenPotsFallBackToCoefficientPots)
   DatabaseConnection db(":memory:");
   Migrations::migrate(db);
   original.save(db);
-  sqlite3_stmt* select = db.prepareStatement(
-      "SELECT data FROM ContinentalState WHERE id = 1;");
+  sqlite3_stmt* select =
+      db.prepareStatement("SELECT data FROM ContinentalState WHERE id = 1;");
   ASSERT_EQ(sqlite3_step(select), SQLITE_ROW);
   auto state = nlohmann::json::parse(
       reinterpret_cast<const char*>(sqlite3_column_text(select, 0)));
@@ -744,8 +761,8 @@ TEST(ContinentalTest, UnevenPotsFallBackToCoefficientPots)
   for (auto& season : state["seasons"])
     if (season["competition"] == Continental::CHAMPIONS_CUP_ID)
       for (auto& entrant : season["entrants"]) entrant["pot"] = 0;
-  sqlite3_stmt* update = db.prepareStatement(
-      "UPDATE ContinentalState SET data = ? WHERE id = 1;");
+  sqlite3_stmt* update =
+      db.prepareStatement("UPDATE ContinentalState SET data = ? WHERE id = 1;");
   const std::string text = state.dump();
   sqlite3_bind_text(update, 1, text.c_str(), -1, SQLITE_TRANSIENT);
   db.executeStep(update);
@@ -834,7 +851,8 @@ TEST(KnockoutPipelineTest, CupTiesArePlayedToAWinnerByTheEngine)
   int shootouts = 0;
   for (const auto& [home, away] : ties)
   {
-    const Match* tie = controller->getGame()->getCalendar().findMatch(day, home, away);
+    const Match* tie =
+        controller->getGame()->getCalendar().findMatch(day, home, away);
     ASSERT_NE(tie, nullptr);
     ASSERT_TRUE(tie->isPlayed());
     EXPECT_TRUE(tie->getWinnerId().has_value());
@@ -882,7 +900,8 @@ TEST(KnockoutPipelineTest, LiveCupTieKeepsTheEnginesExtraTimeAndShootout)
   const GameDateValue today = controller->getCurrentDate();
   for (const Match& match : controller->getTeamFixtures(managed))
     ASSERT_FALSE(match.getDate() == today) << "the managed club is busy today";
-  const LeagueID own_league = controller->getTeamById(managed)->get().getLeagueId();
+  const LeagueID own_league =
+      controller->getTeamById(managed)->get().getLeagueId();
   const StatsConfig& config = controller->getStatsConfig();
 
   // The first opponent whose tie is level after 90 minutes.

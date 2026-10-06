@@ -32,9 +32,11 @@ Player makePlayer(PlayerID id, PlayerRole role, float shooting, float passing,
                   uint8_t height = 180)
 {
   const std::map<std::string, float> stats = {
-      {"Pace", 60.0f},        {"Shooting", shooting}, {"Passing", passing},
-      {"Dribbling", 60.0f},   {"Defending", 60.0f},   {"Physicality", physicality},
-      {"Stamina", 60.0f},     {"Vision", passing},    {"Goalkeeping", 20.0f}};
+      {"Pace", 60.0f},       {"Shooting", shooting},
+      {"Passing", passing},  {"Dribbling", 60.0f},
+      {"Defending", 60.0f},  {"Physicality", physicality},
+      {"Stamina", 60.0f},    {"Vision", passing},
+      {"Goalkeeping", 20.0f}};
   return Player(id, 1, "Test", std::to_string(id), role, Language::EN, 1000, 0,
                 25, 3, height, foot, stats);
 }
@@ -56,7 +58,8 @@ TEST(SetPiecesTest, ScoresFollowTheRelevantAttributes)
   const Player striker = makePlayer(1, PlayerRole::ST, 85, 60, 60);
   const Player playmaker = makePlayer(2, PlayerRole::CM, 60, 88, 55);
   const Player keeper = makePlayer(3, PlayerRole::GK, 90, 90, 90);
-  const Player tall = makePlayer(4, PlayerRole::CB, 40, 50, 85, Foot::Right, 194);
+  const Player tall =
+      makePlayer(4, PlayerRole::CB, 40, 50, 85, Foot::Right, 194);
   const Player lefty = makePlayer(5, PlayerRole::LM, 60, 80, 55, Foot::Left);
   const Player righty = makePlayer(6, PlayerRole::RM, 60, 80, 55, Foot::Right);
 
@@ -128,8 +131,8 @@ TEST(SetPiecesTest, ControllerDesignationsAutoPickAndSaveRoundTrip)
   {
     const PlayerID taker =
         controller.getEffectiveSetPieceTaker(static_cast<SetPieceDuty>(duty));
-    EXPECT_TRUE(lineup.isStarter(taker)) << SetPieces::dutyKey(
-        static_cast<SetPieceDuty>(duty));
+    EXPECT_TRUE(lineup.isStarter(taker))
+        << SetPieces::dutyKey(static_cast<SetPieceDuty>(duty));
   }
   EXPECT_NE(controller.getEffectiveSetPieceTaker(SetPieceDuty::Captain),
             controller.getEffectiveSetPieceTaker(SetPieceDuty::ViceCaptain));
@@ -148,7 +151,8 @@ TEST(SetPiecesTest, ControllerDesignationsAutoPickAndSaveRoundTrip)
   for (const PlayerID id : picked) EXPECT_NE(id, PlayerID{});
   // The manager overrides the penalty taker with another starter.
   const PlayerID chosen = lineup.starters().back()->getId();
-  ASSERT_TRUE(controller.setSetPieceDesignation(SetPieceDuty::Penalties, chosen));
+  ASSERT_TRUE(
+      controller.setSetPieceDesignation(SetPieceDuty::Penalties, chosen));
   picked[static_cast<std::size_t>(SetPieceDuty::Penalties)] = chosen;
   EXPECT_EQ(controller.getEffectiveSetPieceTaker(SetPieceDuty::Penalties),
             chosen);
@@ -158,5 +162,6 @@ TEST(SetPiecesTest, ControllerDesignationsAutoPickAndSaveRoundTrip)
   ASSERT_TRUE(reloaded.loadGame(slot.slot));
   EXPECT_EQ(reloaded.getManagedTeam()->get().getLineup().getDesignations(),
             picked);
-  EXPECT_EQ(reloaded.getEffectiveSetPieceTaker(SetPieceDuty::Penalties), chosen);
+  EXPECT_EQ(reloaded.getEffectiveSetPieceTaker(SetPieceDuty::Penalties),
+            chosen);
 }

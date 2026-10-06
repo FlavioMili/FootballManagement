@@ -21,12 +21,11 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <nlohmann/json.hpp>
 
 #include "controller/game_controller.h"
 #include "database/gamedata.h"
@@ -345,11 +344,9 @@ TEST(WorldGenerationTest, NamesFollowNationalityAndAreUnique)
     EXPECT_NEAR(share, leagueProfile(league_id).domestic_share, 0.08)
         << "league " << league_id;
   }
-  EXPECT_LT(static_cast<double>(domestic[3].first) / domestic[3].second,
-            0.55)
+  EXPECT_LT(static_cast<double>(domestic[3].first) / domestic[3].second, 0.55)
       << "most Premier League players are foreign";
-  EXPECT_GT(static_cast<double>(domestic[11].first) / domestic[11].second,
-            0.8)
+  EXPECT_GT(static_cast<double>(domestic[11].first) / domestic[11].second, 0.8)
       << "Brazil's top flight is mostly Brazilian";
 
   // At most one surname appears twice in a squad, none three times.
@@ -383,7 +380,8 @@ TEST(WorldGenerationTest, LeagueShapesStratifyTopDivisions)
     for (const float offset : offsets) mean += offset;
     mean /= 20.0;
     double squares = 0.0;
-    for (const float offset : offsets) squares += (offset - mean) * (offset - mean);
+    for (const float offset : offsets)
+      squares += (offset - mean) * (offset - mean);
     EXPECT_NEAR(mean, 0.0, 1e-3) << int(profile.league_id);
     EXPECT_NEAR(std::sqrt(squares / 20.0), profile.shape.level_sd, 1e-3)
         << int(profile.league_id);
@@ -419,7 +417,8 @@ TEST(WorldGenerationTest, LeagueShapesStratifyTopDivisions)
     for (const double value : values) mean += value;
     mean /= static_cast<double>(values.size());
     double squares = 0.0;
-    for (const double value : values) squares += (value - mean) * (value - mean);
+    for (const double value : values)
+      squares += (value - mean) * (value - mean);
     return std::sqrt(squares / static_cast<double>(values.size()));
   };
   // Every country with its second tier; the first six (England, Spain,
@@ -444,10 +443,11 @@ TEST(WorldGenerationTest, LeagueShapesStratifyTopDivisions)
     ASSERT_EQ(upper.size(), 20u);
     ASSERT_EQ(lower.size(), 20u);
     const double promoted = (lower[0] + lower[1] + lower[2]) / 3.0;
-    std::printf("[shape] league %d strength SD %.2f (1st %.1f, 11th %.1f, "
-                "16th %.1f, 20th %.1f); league %d SD %.2f (top three %.1f)\n",
-                int(top), sd(upper), upper[0], upper[10], upper[15], upper[19],
-                int(second), sd(lower), promoted);
+    std::printf(
+        "[shape] league %d strength SD %.2f (1st %.1f, 11th %.1f, "
+        "16th %.1f, 20th %.1f); league %d SD %.2f (top three %.1f)\n",
+        int(top), sd(upper), upper[0], upper[10], upper[15], upper[19],
+        int(second), sd(lower), promoted);
     if (country < 6)
     {
       EXPECT_GT(sd(upper), 1.4 * sd(lower)) << "league " << int(top);
@@ -558,7 +558,7 @@ TEST(PlayerAgeingTest, AttributeGroupsAgeAtDifferentRates)
     return player.getOverall(config) - before;
   };
   constexpr std::array<PlayerRole, 6> OUTFIELD = {
-      PlayerRole::CB, PlayerRole::LB, PlayerRole::CM,
+      PlayerRole::CB,  PlayerRole::LB, PlayerRole::CM,
       PlayerRole::CAM, PlayerRole::LW, PlayerRole::ST};
   const auto outfield = [&](int age)
   {
@@ -598,12 +598,10 @@ TEST(WorldGenerationTest, PreseasonFriendliesStayInTheRegion)
     {
       if (match.getMatchType() != MatchType::FRIENDLY) continue;
       ++friendlies;
-      const LeagueID home = gamedata->getTeam(match.getHomeTeamId())
-                                ->get()
-                                .getLeagueId();
-      const LeagueID away = gamedata->getTeam(match.getAwayTeamId())
-                                ->get()
-                                .getLeagueId();
+      const LeagueID home =
+          gamedata->getTeam(match.getHomeTeamId())->get().getLeagueId();
+      const LeagueID away =
+          gamedata->getTeam(match.getAwayTeamId())->get().getLeagueId();
       EXPECT_EQ(leagueProfile(home).region, leagueProfile(away).region)
           << static_cast<int>(home) << " vs " << static_cast<int>(away);
     }
@@ -805,7 +803,8 @@ void printLeagueFinances(const GameController& controller)
               << " revenue/club=" << totals.income / totals.clubs / 1e6
               << "M wages/revenue=" << totals.wages / totals.income
               << " operating net/club=" << totals.net / totals.clubs / 1e6
-              << "M median net=" << totals.net_ratios[totals.net_ratios.size() / 2]
+              << "M median net="
+              << totals.net_ratios[totals.net_ratios.size() / 2]
               << " transfers/club=" << totals.transfers / totals.clubs / 1e6
               << "M negative cash=" << totals.negative_cash << "/"
               << totals.clubs
@@ -1076,8 +1075,9 @@ TEST(WorldSimulationTest, NegativeCashWarnsThenFreezesTransfers)
   EXPECT_GT(controller->transferBudgetForTeam(managed), 0u);
   // The spendable budget keeps twelve weeks of payroll in the bank.
   const std::int64_t payroll = controller->getWeeklyWageBill(managed);
-  EXPECT_LE(static_cast<std::int64_t>(controller->transferBudgetForTeam(managed)),
-            finances.getBalance() - 12 * payroll);
+  EXPECT_LE(
+      static_cast<std::int64_t>(controller->transferBudgetForTeam(managed)),
+      finances.getBalance() - 12 * payroll);
 
   const float confidence = controller->getBoardState().confidence;
   finances.addBalance(-finances.getBalance() - 300'000'000);
@@ -1089,8 +1089,7 @@ TEST(WorldSimulationTest, NegativeCashWarnsThenFreezesTransfers)
     return std::ranges::count(controller->getInbox(), std::string(title),
                               &InboxMessage::title_key);
   };
-  while (count("INBOX_BOARD_CASH_WARNING_TITLE") == 0)
-    controller->advanceDay();
+  while (count("INBOX_BOARD_CASH_WARNING_TITLE") == 0) controller->advanceDay();
   EXPECT_FALSE(controller->isTransferEmbargoed());
   EXPECT_LT(controller->getBoardState().confidence, confidence);
   while (!controller->isTransferEmbargoed()) controller->advanceDay();
@@ -1121,15 +1120,16 @@ TEST(WorldSimulationTest, AiClubsTrimSurplusPlayersAtTheSeasonEnd)
   Team& team = gamedata->getTeams().at(ai_club);
 
   // Six weak extra players, one of them on loan from another club.
-  auto stats = gamedata->getPlayer(team.getPlayerIDs().front())->get().getStats();
+  auto stats =
+      gamedata->getPlayer(team.getPlayerIDs().front())->get().getStats();
   for (auto& [name, value] : stats) value *= 0.4f;
   std::vector<PlayerID> extras;
   for (int i = 0; i < 6; ++i)
   {
     const PlayerID id = gamedata->allocatePlayerId();
-    gamedata->addPlayer(id, Player(id, ai_club, "Extra", std::to_string(i),
-                                   PlayerRole::CM, Language::EN, 1000, 0, 25, 3,
-                                   180, Foot::Right, stats));
+    gamedata->addPlayer(
+        id, Player(id, ai_club, "Extra", std::to_string(i), PlayerRole::CM,
+                   Language::EN, 1000, 0, 25, 3, 180, Foot::Right, stats));
     team.addPlayerID(id);
     extras.push_back(id);
   }

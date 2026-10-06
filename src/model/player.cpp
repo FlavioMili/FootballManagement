@@ -152,9 +152,8 @@ StatGroup statGroup(std::string_view stat)
 float yearlyChange(StatGroup group, int age, PlayerRole role)
 {
   using Tuning = WorldTuning::Development;
-  const bool late_peak =
-      (role == PlayerRole::GK || role == PlayerRole::CB) &&
-      age < Tuning::LATE_PEAK_ROLE_UNTIL;
+  const bool late_peak = (role == PlayerRole::GK || role == PlayerRole::CB) &&
+                         age < Tuning::LATE_PEAK_ROLE_UNTIL;
   const float role_factor = late_peak ? Tuning::LATE_PEAK_ROLE_FACTOR : 1.0f;
   switch (group)
   {
@@ -186,8 +185,9 @@ void Player::agePlayer()
   {
     float change = yearlyChange(statGroup(stat_name), _age, _role);
     if (change < 0.0f) change *= care;
-    value = std::clamp(value * (1.0f + change), static_cast<float>(MIN_STAT_VAL),
-                       static_cast<float>(MAX_STAT_VAL));
+    value =
+        std::clamp(value * (1.0f + change), static_cast<float>(MIN_STAT_VAL),
+                   static_cast<float>(MAX_STAT_VAL));
   }
 }
 

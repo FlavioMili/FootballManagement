@@ -138,8 +138,8 @@ bool canCombineWithClub(float reputation);
 GameDateValue contractEnd(const GameDateValue& start);
 /** Reputation change after a match: weight by competition times the
  * difference between the result (1, 0.5, 0) and the expected score. */
-float resultReputation(International::Competition competition,
-                       double expected, double actual);
+float resultReputation(International::Competition competition, double expected,
+                       double actual);
 const char* applyResultKey(NationalApplyResult result);
 }  // namespace NationalJobModel
 
@@ -164,10 +164,7 @@ class NationalManagement
   bool hasJob() const { return job.active; }
   const NationalJob& getJob() const { return job; }
   const std::vector<NationalStint>& getHistory() const { return history; }
-  const std::vector<NationalVacancy>& getVacancies() const
-  {
-    return vacancies;
-  }
+  const std::vector<NationalVacancy>& getVacancies() const { return vacancies; }
   const std::vector<NationalApplication>& getApplications() const
   {
     return applications;
@@ -180,8 +177,7 @@ class NationalManagement
   float stature(const NationalTeams& teams, Language nation) const;
   /** Chance that @p nation's federation offers him the job. */
   float applicationChance(const NationalTeams& teams,
-                          const ManagerProfile& profile,
-                          Language nation) const;
+                          const ManagerProfile& profile, Language nation) const;
 
   NationalApplyResult apply(Language nation, const GameDateValue& date,
                             const ManagerProfile& profile, bool club_job);
@@ -199,8 +195,7 @@ class NationalManagement
   void openVacancy(Language nation, const GameDateValue& date);
 
   /** NationalTeams' sinks: queued and handled by onDay(). */
-  void queueResult(const International::Fixture& fixture,
-                   double home_expected);
+  void queueResult(const International::Fixture& fixture, double home_expected);
   void queueFinals(const NationalTeams::Finals& finals, bool decided);
 
   /** After the national teams' day: results, finals, call-up notices,

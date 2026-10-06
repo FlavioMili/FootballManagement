@@ -201,11 +201,11 @@ struct WorldTotals
   std::vector<double> scorer_per_game;
   std::vector<double> points_sd;
   std::vector<double> goal_diff_sd;
-  TextTable leagues{"League seasons",
-                    {"Season", "League", "Tier", "Clubs", "Games",
-                     "Champion pts", "Best relegated pts", "Top scorer goals",
-                     "Points SD"},
-                    {}};
+  TextTable leagues{
+      "League seasons",
+      {"Season", "League", "Tier", "Clubs", "Games", "Champion pts",
+       "Best relegated pts", "Top scorer goals", "Points SD"},
+      {}};
   // Club-seasons.
   std::vector<double> revenue;
   std::vector<double> net;
@@ -270,8 +270,7 @@ std::size_t academyGrade(const AcademyRatings& ratings)
 class SeasonRunner
 {
  public:
-  explicit SeasonRunner(const SeasonOptions& run_options)
-      : options(run_options)
+  explicit SeasonRunner(const SeasonOptions& run_options) : options(run_options)
   {
   }
 
@@ -387,9 +386,9 @@ class SeasonRunner
       pollInjuries(true);
       pollManagers(true);
       if (++days > options.max_days_per_season)
-        throw std::runtime_error(std::format(
-            "season {} did not reach 30 June within {} days", seasonNumber,
-            options.max_days_per_season));
+        throw std::runtime_error(
+            std::format("season {} did not reach 30 June within {} days",
+                        seasonNumber, options.max_days_per_season));
       if (options.progress && days % PROGRESS_EVERY_DAYS == 0)
         *options.progress << std::format(
             "[fm_lab] season {}/{} day {} ({})\n", seasonNumber,
@@ -414,10 +413,10 @@ class SeasonRunner
     captureFinances(seasonStart, rollover);
     captureTransfers(seasonStart, rollover);
     capturePopulation(startPlayers, startSquads);
-    totals.season_seconds.push_back(std::chrono::duration<double>(
-                                        std::chrono::steady_clock::now() -
-                                        started)
-                                        .count());
+    totals.season_seconds.push_back(
+        std::chrono::duration<double>(std::chrono::steady_clock::now() -
+                                      started)
+            .count());
     captureVitalsAfterRollover(seasonNumber, seasonStart, rollover,
                                startPlayers);
   }
@@ -438,10 +437,10 @@ class SeasonRunner
     }
     for (std::size_t tier = 0; tier < clubs.size(); ++tier)
       if (clubs[tier] > 0)
-        vitals.tiers[tier].peak_negative_share = std::max(
-            vitals.tiers[tier].peak_negative_share,
-            static_cast<double>(negative[tier]) /
-                static_cast<double>(clubs[tier]));
+        vitals.tiers[tier].peak_negative_share =
+            std::max(vitals.tiers[tier].peak_negative_share,
+                     static_cast<double>(negative[tier]) /
+                         static_cast<double>(clubs[tier]));
   }
 
   /** Population, ability, cash and reputation on 30 June. */
@@ -552,10 +551,11 @@ class SeasonRunner
           controller.getFinanceSummary(team_id, from, to);
       const auto club_revenue = static_cast<double>(revenueOf(summary));
       wages[slot] += static_cast<double>(std::abs(
-          summary.by_category[static_cast<std::size_t>(FinanceCategory::Wages)]));
+          summary
+              .by_category[static_cast<std::size_t>(FinanceCategory::Wages)]));
       revenue[slot] += club_revenue;
-      vitals.tiers[slot].owner_investment += static_cast<double>(
-          summary.by_category[static_cast<std::size_t>(
+      vitals.tiers[slot].owner_investment +=
+          static_cast<double>(summary.by_category[static_cast<std::size_t>(
               FinanceCategory::Investment)]);
       if (static_cast<double>(balance) <
           -INSOLVENT_REVENUE_SHARE * club_revenue)
@@ -564,7 +564,8 @@ class SeasonRunner
     for (std::size_t slot = 0; slot < wages.size(); ++slot)
     {
       TierVitals& row = vitals.tiers[slot];
-      row.wage_revenue = revenue[slot] > 0.0 ? wages[slot] / revenue[slot] : 0.0;
+      row.wage_revenue =
+          revenue[slot] > 0.0 ? wages[slot] / revenue[slot] : 0.0;
       if (row.clubs > 0)
       {
         row.insolvent_share = static_cast<double>(insolvent[slot]) /
@@ -648,8 +649,8 @@ class SeasonRunner
     {
       const auto started = std::chrono::steady_clock::now();
       if (!controller.loadGame(LAB_SAVE_SLOT))
-        throw std::runtime_error(std::format(
-            "the save after season {} did not load", seasonNumber));
+        throw std::runtime_error(
+            std::format("the save after season {} did not load", seasonNumber));
       vitals.load_ms = std::chrono::duration<double, std::milli>(
                            std::chrono::steady_clock::now() - started)
                            .count();
@@ -716,10 +717,11 @@ class SeasonRunner
 
   TextTable trendTable() const
   {
-    TextTable table{"Soak trend (one column per season; population and cash "
-                    "on 30 June, flows from 1 July to the rollover)",
-                    {"Measure"},
-                    {}};
+    TextTable table{
+        "Soak trend (one column per season; population and cash "
+        "on 30 June, flows from 1 July to the rollover)",
+        {"Measure"},
+        {}};
     for (const SeasonVitals& season : trend)
       table.header.push_back(std::format("S{}", season.season));
     const auto row = [&](const char* name, auto&& value)
@@ -734,58 +736,106 @@ class SeasonRunner
     { return std::format("{:.1f}%", 100.0 * value); };
     const auto millions = [](double value)
     { return std::format("{:.1f}", value / 1e6); };
-    row("Players (all)", [](const SeasonVitals& v) { return std::to_string(v.players); });
-    row("Senior club players", [](const SeasonVitals& v) { return std::to_string(v.club_seniors); });
-    row("Academy players", [](const SeasonVitals& v) { return std::to_string(v.academy); });
-    row("Free agents", [](const SeasonVitals& v) { return std::to_string(v.free_agents); });
-    row("Free-agent mean age", [&](const SeasonVitals& v) { return number(v.free_agent_mean_age, 1); });
+    row("Players (all)",
+        [](const SeasonVitals& v) { return std::to_string(v.players); });
+    row("Senior club players",
+        [](const SeasonVitals& v) { return std::to_string(v.club_seniors); });
+    row("Academy players",
+        [](const SeasonVitals& v) { return std::to_string(v.academy); });
+    row("Free agents",
+        [](const SeasonVitals& v) { return std::to_string(v.free_agents); });
+    row("Free-agent mean age", [&](const SeasonVitals& v)
+        { return number(v.free_agent_mean_age, 1); });
     static constexpr std::array<const char*, 5> BANDS = {
         "Club players <= 18", "Club players 19-23", "Club players 24-29",
         "Club players 30-33", "Club players 34+"};
     for (std::size_t band = 0; band < BANDS.size(); ++band)
       row(BANDS[band], [band](const SeasonVitals& v)
           { return std::to_string(v.age_bands[band]); });
-    row("New players (intake)", [](const SeasonVitals& v) { return std::to_string(v.intake); });
-    row("Removed players (left the world)", [](const SeasonVitals& v) { return std::to_string(v.removed); });
-    row("Mean overall, senior club players", [&](const SeasonVitals& v) { return number(v.mean_overall, 2); });
-    row("P90 overall", [&](const SeasonVitals& v) { return number(v.p90_overall, 2); });
-    row("Top-100 mean overall", [&](const SeasonVitals& v) { return number(v.top100_overall, 2); });
-    row("Mean potential", [&](const SeasonVitals& v) { return number(v.mean_potential, 2); });
+    row("New players (intake)",
+        [](const SeasonVitals& v) { return std::to_string(v.intake); });
+    row("Removed players (left the world)",
+        [](const SeasonVitals& v) { return std::to_string(v.removed); });
+    row("Mean overall, senior club players",
+        [&](const SeasonVitals& v) { return number(v.mean_overall, 2); });
+    row("P90 overall",
+        [&](const SeasonVitals& v) { return number(v.p90_overall, 2); });
+    row("Top-100 mean overall",
+        [&](const SeasonVitals& v) { return number(v.top100_overall, 2); });
+    row("Mean potential",
+        [&](const SeasonVitals& v) { return number(v.mean_potential, 2); });
     static constexpr std::array<const char*, 2> TIERS = {"tier 1", "tier 2"};
     for (std::size_t tier = 0; tier < TIERS.size(); ++tier)
     {
       const auto label = [&](const char* what)
       { return std::format("{}, {}", what, TIERS[tier]); };
-      row(label("Mean overall").c_str(), [&, tier](const SeasonVitals& v) { return number(v.tiers[tier].mean_overall, 2); });
-      row(label("Mean revenue (M)").c_str(), [&, tier](const SeasonVitals& v) { return millions(v.tiers[tier].mean_revenue); });
-      row(label("Wages / revenue").c_str(), [&, tier](const SeasonVitals& v) { return percent(v.tiers[tier].wage_revenue); });
-      row(label("Median cash (M)").c_str(), [&, tier](const SeasonVitals& v) { return millions(v.tiers[tier].median_cash); });
-      row(label("Negative cash, 30 June").c_str(), [&, tier](const SeasonVitals& v) { return percent(v.tiers[tier].negative_share); });
-      row(label("Negative cash, worst month").c_str(), [&, tier](const SeasonVitals& v) { return percent(v.tiers[tier].peak_negative_share); });
-      row(label("Insolvent (cash < -25% revenue)").c_str(), [&, tier](const SeasonVitals& v) { return percent(v.tiers[tier].insolvent_share); });
-      row(label("Owner investment (M)").c_str(), [&, tier](const SeasonVitals& v) { return millions(v.tiers[tier].owner_investment); });
-      row(label("Mean reputation").c_str(), [&, tier](const SeasonVitals& v) { return number(v.tiers[tier].mean_reputation, 1); });
-      row(label("Reputation SD").c_str(), [&, tier](const SeasonVitals& v) { return number(v.tiers[tier].reputation_sd, 1); });
+      row(label("Mean overall").c_str(), [&, tier](const SeasonVitals& v)
+          { return number(v.tiers[tier].mean_overall, 2); });
+      row(label("Mean revenue (M)").c_str(), [&, tier](const SeasonVitals& v)
+          { return millions(v.tiers[tier].mean_revenue); });
+      row(label("Wages / revenue").c_str(), [&, tier](const SeasonVitals& v)
+          { return percent(v.tiers[tier].wage_revenue); });
+      row(label("Median cash (M)").c_str(), [&, tier](const SeasonVitals& v)
+          { return millions(v.tiers[tier].median_cash); });
+      row(label("Negative cash, 30 June").c_str(),
+          [&, tier](const SeasonVitals& v)
+          { return percent(v.tiers[tier].negative_share); });
+      row(label("Negative cash, worst month").c_str(),
+          [&, tier](const SeasonVitals& v)
+          { return percent(v.tiers[tier].peak_negative_share); });
+      row(label("Insolvent (cash < -25% revenue)").c_str(),
+          [&, tier](const SeasonVitals& v)
+          { return percent(v.tiers[tier].insolvent_share); });
+      row(label("Owner investment (M)").c_str(),
+          [&, tier](const SeasonVitals& v)
+          { return millions(v.tiers[tier].owner_investment); });
+      row(label("Mean reputation").c_str(), [&, tier](const SeasonVitals& v)
+          { return number(v.tiers[tier].mean_reputation, 1); });
+      row(label("Reputation SD").c_str(), [&, tier](const SeasonVitals& v)
+          { return number(v.tiers[tier].reputation_sd, 1); });
     }
-    row("Wage-position R2", [&](const SeasonVitals& v) { return number(v.wage_position_r2, 3); });
-    row("Wage-position R2, tier 1", [&](const SeasonVitals& v) { return number(v.wage_position_r2_top, 3); });
-    row("Moves (excl. releases, loan returns)", [](const SeasonVitals& v) { return std::to_string(v.moves); });
-    row("Fee transfers", [](const SeasonVitals& v) { return std::to_string(v.fee_moves); });
-    row("Median fee (M)", [&](const SeasonVitals& v) { return number(v.median_fee / 1e6, 2); });
-    row("Mean fee (M)", [&](const SeasonVitals& v) { return number(v.mean_fee / 1e6, 2); });
-    row("Top fee (M)", [&](const SeasonVitals& v) { return number(v.max_fee / 1e6, 1); });
-    row("Leagues completed", [](const SeasonVitals& v) { return std::to_string(v.leagues_completed); });
-    row("Clubs promoted / relegated", [](const SeasonVitals& v) { return std::format("{} / {}", v.promoted, v.relegated); });
-    row("Cups completed", [](const SeasonVitals& v) { return std::to_string(v.cups_completed); });
-    row("Continental competitions won / held", [](const SeasonVitals& v) { return std::format("{} / {}", v.continental_completed, v.continental_competitions); });
-    row("National-team honours", [](const SeasonVitals& v) { return std::to_string(v.national_honours); });
-    row("Save size (MB)", [&](const SeasonVitals& v) { return number(v.save_mb, 1); });
-    row("Save time (ms)", [&](const SeasonVitals& v) { return number(v.save_ms, 0); });
-    row("Load time (ms)", [&](const SeasonVitals& v) { return number(v.load_ms, 0); });
-    row("Continue day mean (ms)", [&](const SeasonVitals& v) { return number(v.day_ms_mean, 0); });
-    row("Continue day P95 (ms)", [&](const SeasonVitals& v) { return number(v.day_ms_p95, 0); });
-    row("Continue day max (ms)", [&](const SeasonVitals& v) { return number(v.day_ms_max, 0); });
-    row("Season wall time (s)", [&](const SeasonVitals& v) { return number(v.season_seconds, 0); });
+    row("Wage-position R2",
+        [&](const SeasonVitals& v) { return number(v.wage_position_r2, 3); });
+    row("Wage-position R2, tier 1", [&](const SeasonVitals& v)
+        { return number(v.wage_position_r2_top, 3); });
+    row("Moves (excl. releases, loan returns)",
+        [](const SeasonVitals& v) { return std::to_string(v.moves); });
+    row("Fee transfers",
+        [](const SeasonVitals& v) { return std::to_string(v.fee_moves); });
+    row("Median fee (M)",
+        [&](const SeasonVitals& v) { return number(v.median_fee / 1e6, 2); });
+    row("Mean fee (M)",
+        [&](const SeasonVitals& v) { return number(v.mean_fee / 1e6, 2); });
+    row("Top fee (M)",
+        [&](const SeasonVitals& v) { return number(v.max_fee / 1e6, 1); });
+    row("Leagues completed", [](const SeasonVitals& v)
+        { return std::to_string(v.leagues_completed); });
+    row("Clubs promoted / relegated", [](const SeasonVitals& v)
+        { return std::format("{} / {}", v.promoted, v.relegated); });
+    row("Cups completed",
+        [](const SeasonVitals& v) { return std::to_string(v.cups_completed); });
+    row("Continental competitions won / held",
+        [](const SeasonVitals& v)
+        {
+          return std::format("{} / {}", v.continental_completed,
+                             v.continental_competitions);
+        });
+    row("National-team honours", [](const SeasonVitals& v)
+        { return std::to_string(v.national_honours); });
+    row("Save size (MB)",
+        [&](const SeasonVitals& v) { return number(v.save_mb, 1); });
+    row("Save time (ms)",
+        [&](const SeasonVitals& v) { return number(v.save_ms, 0); });
+    row("Load time (ms)",
+        [&](const SeasonVitals& v) { return number(v.load_ms, 0); });
+    row("Continue day mean (ms)",
+        [&](const SeasonVitals& v) { return number(v.day_ms_mean, 0); });
+    row("Continue day P95 (ms)",
+        [&](const SeasonVitals& v) { return number(v.day_ms_p95, 0); });
+    row("Continue day max (ms)",
+        [&](const SeasonVitals& v) { return number(v.day_ms_max, 0); });
+    row("Season wall time (s)",
+        [&](const SeasonVitals& v) { return number(v.season_seconds, 0); });
     return table;
   }
 
@@ -840,9 +890,8 @@ class SeasonRunner
       // Wage-to-position inputs: ln(wage / league mean), -ln(p/(N+1-p)).
       std::vector<double> wages;
       for (const StandingRow& row : rows)
-        wages.push_back(static_cast<double>(
-            std::max<std::int64_t>(controller.getWeeklyWageBill(row.team_id),
-                                   1)));
+        wages.push_back(static_cast<double>(std::max<std::int64_t>(
+            controller.getWeeklyWageBill(row.team_id), 1)));
       double meanWage = 0.0;
       for (const double wage : wages) meanWage += wage;
       meanWage /= static_cast<double>(wages.size());
@@ -867,8 +916,9 @@ class SeasonRunner
       const Team& club = team.get();
       if (!selected(club.getLeagueId())) continue;
       const auto& squad = controller.getPlayersForTeam(club.getId());
-      totals.squad_sizes.push_back(static_cast<double>(std::ranges::count_if(
-          squad, [](const Player& player) { return !player.isAcademyPlayer(); })));
+      totals.squad_sizes.push_back(static_cast<double>(
+          std::ranges::count_if(squad, [](const Player& player)
+                                { return !player.isAcademyPlayer(); })));
       double ageSum = 0.0;
       std::size_t seniors = 0;
       for (const auto& player : squad)
@@ -926,7 +976,8 @@ class SeasonRunner
     const auto gamedata = controller.getGameData();
     const YouthAcademy& academy = controller.getGame()->getWorld().getYouth();
     const StatsConfig& config = controller.getStatsConfig();
-    const auto year = static_cast<std::uint16_t>(controller.getCurrentDate().year);
+    const auto year =
+        static_cast<std::uint16_t>(controller.getCurrentDate().year);
     for (const auto& team : controller.getTeams())
     {
       const Team& club = team.get();
@@ -944,8 +995,8 @@ class SeasonRunner
       const auto seniors = std::ranges::count_if(
           controller.getPlayersForTeam(club.getId()),
           [](const Player& player) { return !player.isAcademyPlayer(); });
-      totals.rosters_with_academy.push_back(
-          static_cast<double>(seniors) + static_cast<double>(squad.size()));
+      totals.rosters_with_academy.push_back(static_cast<double>(seniors) +
+                                            static_cast<double>(squad.size()));
       const std::size_t grade = academyGrade(academy.ratings(club.getId()));
       totals.intake_signed_by_grade[grade].push_back(
           static_cast<double>(signed_now));
@@ -1044,8 +1095,9 @@ class SeasonRunner
     relegated_last = std::move(relegated_now);
   }
 
-  void captureHistory(int seasonNumber,
-                      const std::map<LeagueID, std::vector<StandingRow>>& tables)
+  void captureHistory(
+      int seasonNumber,
+      const std::map<LeagueID, std::vector<StandingRow>>& tables)
   {
     for (const SeasonHistoryEntry& entry : controller.getSeasonHistory())
     {
@@ -1073,14 +1125,14 @@ class SeasonRunner
            std::to_string(rows.front().points),
            bestRelegated ? std::to_string(bestRelegated->points) : "-",
            std::to_string(entry.top_scorer_goals),
-           std::format("{:.1f}", populationSd([&]
-                                              {
-                                                std::vector<double> points;
-                                                for (const StandingRow& row :
-                                                     rows)
-                                                  points.push_back(row.points);
-                                                return points;
-                                              }()))});
+           std::format("{:.1f}", populationSd(
+                                     [&]
+                                     {
+                                       std::vector<double> points;
+                                       for (const StandingRow& row : rows)
+                                         points.push_back(row.points);
+                                       return points;
+                                     }()))});
     }
   }
 
@@ -1273,11 +1325,10 @@ class SeasonRunner
     report.samples = static_cast<std::size_t>(options.seasons);
     report.threads = options.threads;
     report.wall_seconds = totals.wall_seconds;
-    report.ms_per_match =
-        totals.world_matches == 0
-            ? 0.0
-            : 1000.0 * totals.wall_seconds /
-                  static_cast<double>(totals.world_matches);
+    report.ms_per_match = totals.world_matches == 0
+                              ? 0.0
+                              : 1000.0 * totals.wall_seconds /
+                                    static_cast<double>(totals.world_matches);
     report.seconds_per_season =
         totals.wall_seconds / std::max(options.seasons, 1);
     report.parameters["leagues"] = options.leagues;
@@ -1321,8 +1372,8 @@ class SeasonRunner
         "season end)",
         {"League", "Tier", "Matches", "Goals/m", "H/D/A %", "Yellows/m",
          "Reds/m", "Champion ppg", "Points SD/g", "Promoted down",
-         "Relegated back up", "Manager changes/club-season",
-         "Wages/revenue", "Median net (M)"},
+         "Relegated back up", "Manager changes/club-season", "Wages/revenue",
+         "Median net (M)"},
         {}};
     const auto mean = [](const std::vector<double>& values)
     {
@@ -1377,17 +1428,19 @@ class SeasonRunner
 
   TextTable revenueMixTable() const
   {
-    TextTable table{"Top-division revenue mix (CT-W22 reference: TV 46 / gate "
-                    "14 / commercial 32 / prize+other 8%)",
-                    {"Category", "Share of revenue"},
-                    {}};
+    TextTable table{
+        "Top-division revenue mix (CT-W22 reference: TV 46 / gate "
+        "14 / commercial 32 / prize+other 8%)",
+        {"Category", "Share of revenue"},
+        {}};
     const auto amount = [&](FinanceCategory c)
-    { return static_cast<double>(totals.top_mix[static_cast<std::size_t>(c)]); };
-    const double revenue =
-        amount(FinanceCategory::Matchday) +
-        amount(FinanceCategory::Broadcasting) +
-        amount(FinanceCategory::Sponsorship) +
-        amount(FinanceCategory::PrizeMoney);
+    {
+      return static_cast<double>(totals.top_mix[static_cast<std::size_t>(c)]);
+    };
+    const double revenue = amount(FinanceCategory::Matchday) +
+                           amount(FinanceCategory::Broadcasting) +
+                           amount(FinanceCategory::Sponsorship) +
+                           amount(FinanceCategory::PrizeMoney);
     const auto row = [&](const char* name, FinanceCategory c)
     {
       table.rows.push_back(
@@ -1404,10 +1457,10 @@ class SeasonRunner
 
   TextTable populationTable() const
   {
-    TextTable table{"Player population (selected leagues, season end)",
-                    {"Measure", "P10", "P25", "P50", "P75", "P90",
-                     ">= 70", ">= 80"},
-                    {}};
+    TextTable table{
+        "Player population (selected leagues, season end)",
+        {"Measure", "P10", "P25", "P50", "P75", "P90", ">= 70", ">= 80"},
+        {}};
     const auto row = [&](const char* name, const std::vector<double>& values)
     {
       const auto atLeast = [&](double threshold)
@@ -1418,7 +1471,8 @@ class SeasonRunner
         return std::format("{:.1f}%", 100.0 * static_cast<double>(count) /
                                           static_cast<double>(values.size()));
       };
-      table.rows.push_back({name, std::format("{:.1f}", percentile(values, 0.1)),
+      table.rows.push_back({name,
+                            std::format("{:.1f}", percentile(values, 0.1)),
                             std::format("{:.1f}", percentile(values, 0.25)),
                             std::format("{:.1f}", percentile(values, 0.5)),
                             std::format("{:.1f}", percentile(values, 0.75)),
@@ -1433,10 +1487,11 @@ class SeasonRunner
 
   TextTable youthTable() const
   {
-    TextTable table{"Senior squads, academies and young players (selected "
-                    "leagues, season end)",
-                    {"Measure", "Value", "n"},
-                    {}};
+    TextTable table{
+        "Senior squads, academies and young players (selected "
+        "leagues, season end)",
+        {"Measure", "Value", "n"},
+        {}};
     const auto mean = [&](const char* name, const std::vector<double>& values)
     {
       const Estimate estimate = meanEstimate(values);
@@ -1451,7 +1506,8 @@ class SeasonRunner
     const auto share = [&](const char* name, double part, double whole)
     {
       table.rows.push_back(
-          {name, whole > 0.0 ? std::format("{:.1f}%", 100.0 * part / whole) : "-",
+          {name,
+           whole > 0.0 ? std::format("{:.1f}%", 100.0 * part / whole) : "-",
            std::format("{:.0f}", whole)});
     };
     mean("Senior squad size", totals.squad_sizes);
@@ -1482,7 +1538,8 @@ class SeasonRunner
           totals.league_minutes[0]);
     share("League minutes to players aged 21", totals.minutes_21,
           totals.league_minutes[0]);
-    share("League starts by U21 players", static_cast<double>(totals.u21_starts),
+    share("League starts by U21 players",
+          static_cast<double>(totals.u21_starts),
           static_cast<double>(totals.starts));
     mean("Overall change over the season, age 16-18",
          totals.development_by_age[0]);
@@ -1495,9 +1552,8 @@ class SeasonRunner
 
   TextTable transferTable() const
   {
-    TextTable table{"Transfer records by kind (all clubs)",
-                    {"Kind", "Moves"},
-                    {}};
+    TextTable table{
+        "Transfer records by kind (all clubs)", {"Kind", "Moves"}, {}};
     static constexpr std::array<std::pair<TransferKind, const char*>, 6> KINDS =
         {{{TransferKind::Permanent, "Permanent"},
           {TransferKind::Free, "Free"},
@@ -1526,9 +1582,9 @@ class SeasonRunner
     {
       table.rows.push_back(
           {InjuryModel::nameKey(type), std::to_string(days.size()),
-           std::format("{:.1f}%", 100.0 * static_cast<double>(days.size()) /
-                                      static_cast<double>(
-                                          totals.injuries.size())),
+           std::format("{:.1f}%",
+                       100.0 * static_cast<double>(days.size()) /
+                           static_cast<double>(totals.injuries.size())),
            std::format("{:.0f}", medianEstimate(days).value)});
     }
     return table;

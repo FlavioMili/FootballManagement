@@ -27,7 +27,7 @@
  */
 struct ClubIdentity
 {
-  std::string short_name;                   /*!< Three-letter code. */
+  std::string short_name;                    /*!< Three-letter code. */
   std::uint32_t primary_colour = 0xFFFFFF;   /*!< Kit colour, 0xRRGGBB. */
   std::uint32_t secondary_colour = 0x1A1A1A; /*!< Kit colour, 0xRRGGBB. */
   std::string stadium_name;

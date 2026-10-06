@@ -83,9 +83,9 @@ void HolidayDialog::showSummary(GameController& controller,
   const Theme::Palette& palette = Theme::palette();
   showing_summary = true;
   open_requested = true;
-  summary_title = fmt::sprintf(Format::plural("HOLIDAY_SUMMARY_DAYS", summary.days),
-                               summary.days, Format::date(summary.start).c_str(),
-                               Format::date(summary.end).c_str());
+  summary_title = fmt::sprintf(
+      Format::plural("HOLIDAY_SUMMARY_DAYS", summary.days), summary.days,
+      Format::date(summary.start).c_str(), Format::date(summary.end).c_str());
   const std::string amount =
       summary.stop_amount > 0 ? Format::money(summary.stop_amount) : "";
   summary_reason = fmt::sprintf(LOC(Holiday::stopKey(summary.reason)),
@@ -101,14 +101,16 @@ void HolidayDialog::showSummary(GameController& controller,
   for (size_t index = first; index < summary.results.size(); ++index)
   {
     const HolidayResult& result = summary.results[index];
-    const ImVec4 color = result.goals_for > result.goals_against   ? palette.positive
-                         : result.goals_for < result.goals_against ? palette.negative
-                                                                   : palette.muted;
+    const ImVec4 color =
+        result.goals_for > result.goals_against   ? palette.positive
+        : result.goals_for < result.goals_against ? palette.negative
+                                                  : palette.muted;
     results.push_back(
-        {fmt::sprintf(LOC(result.home ? "HOLIDAY_RESULT_HOME" : "HOLIDAY_RESULT_AWAY"),
-                      Format::dayMonth(result.date).c_str(),
-                      teamName(controller, result.opponent_id).c_str(),
-                      result.goals_for, result.goals_against),
+        {fmt::sprintf(
+             LOC(result.home ? "HOLIDAY_RESULT_HOME" : "HOLIDAY_RESULT_AWAY"),
+             Format::dayMonth(result.date).c_str(),
+             teamName(controller, result.opponent_id).c_str(), result.goals_for,
+             result.goals_against),
          color});
   }
   table_line.clear();
@@ -119,20 +121,20 @@ void HolidayDialog::showSummary(GameController& controller,
   else if (summary.position_after > 0)
     table_line = fmt::sprintf(LOC("HOLIDAY_TABLE_START"),
                               summary.position_after, summary.points_after);
-  money_rows = {
-      {LOC("HOLIDAY_INCOME"), Format::money(summary.income)},
-      {LOC("HOLIDAY_EXPENSES"), Format::money(-summary.expenses)},
-      {LOC("HOLIDAY_BALANCE"),
-       fmt::sprintf(LOC("HOLIDAY_BALANCE_VALUE"),
-                    Format::money(summary.balance_after).c_str(),
-                    Format::money(summary.balance_before).c_str())}};
+  money_rows = {{LOC("HOLIDAY_INCOME"), Format::money(summary.income)},
+                {LOC("HOLIDAY_EXPENSES"), Format::money(-summary.expenses)},
+                {LOC("HOLIDAY_BALANCE"),
+                 fmt::sprintf(LOC("HOLIDAY_BALANCE_VALUE"),
+                              Format::money(summary.balance_after).c_str(),
+                              Format::money(summary.balance_before).c_str())}};
   moves.clear();
   for (const HolidayMove& move : summary.moves)
     moves.push_back(
-        {fmt::sprintf(LOC(move.incoming ? "HOLIDAY_MOVE_IN" : "HOLIDAY_MOVE_OUT"),
-                      move.name.c_str(),
-                      teamName(controller, move.other_team_id).c_str(),
-                      Format::money(move.fee).c_str()),
+        {fmt::sprintf(
+             LOC(move.incoming ? "HOLIDAY_MOVE_IN" : "HOLIDAY_MOVE_OUT"),
+             move.name.c_str(),
+             teamName(controller, move.other_team_id).c_str(),
+             Format::money(move.fee).c_str()),
          move.incoming ? palette.text : palette.muted});
   injuries.clear();
   for (const HolidayInjury& injury : summary.injuries)
@@ -202,10 +204,9 @@ std::optional<HolidayPlan> HolidayDialog::renderPlan(GameController& controller)
   ImGui::Separator();
 
   UI::sectionLabel(LOC("HOLIDAY_HOW_LONG"));
-  const char* modes[] = {LOC("HOLIDAY_MODE_UNTIL_DATE"),
-                         LOC("HOLIDAY_MODE_NEXT_MATCH"),
-                         LOC("HOLIDAY_MODE_NEXT_DECISION"),
-                         LOC("HOLIDAY_MODE_WINDOW_END")};
+  const char* modes[] = {
+      LOC("HOLIDAY_MODE_UNTIL_DATE"), LOC("HOLIDAY_MODE_NEXT_MATCH"),
+      LOC("HOLIDAY_MODE_NEXT_DECISION"), LOC("HOLIDAY_MODE_WINDOW_END")};
   if (UI::segmented("##holiday_mode", mode, modes,
                     ImGui::GetContentRegionAvail().x))
     refreshTarget(controller);

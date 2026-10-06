@@ -42,13 +42,13 @@ void SeasonStats::accumulate(PlayerSeasonTable& table,
 {
   if (report.match_type == MatchType::FRIENDLY) return;
 
-  const bool lines_have_events = std::ranges::any_of(
-      report.players,
-      [](const PlayerMatchLine& line)
-      {
-        return line.goals > 0 || line.assists > 0 || line.yellow_cards > 0 ||
-               line.red_cards > 0;
-      });
+  const bool lines_have_events =
+      std::ranges::any_of(report.players,
+                          [](const PlayerMatchLine& line)
+                          {
+                            return line.goals > 0 || line.assists > 0 ||
+                                   line.yellow_cards > 0 || line.red_cards > 0;
+                          });
 
   for (const PlayerMatchLine& line : report.players)
   {
@@ -86,8 +86,8 @@ void SeasonStats::accumulate(PlayerSeasonTable& table,
       case MatchEventKind::GOAL:
         increment(stats.goals, 1);
         if (event.assist != 0)
-          increment(entryFor(table, report, event.assist, teamOf(event)).assists,
-                    1);
+          increment(
+              entryFor(table, report, event.assist, teamOf(event)).assists, 1);
         break;
       case MatchEventKind::YELLOW_CARD:
         increment(stats.yellow_cards, 1);
@@ -106,9 +106,8 @@ void SeasonStats::accumulate(PlayerSeasonTable& table,
 }
 
 std::vector<PlayerSeasonStats> SeasonStats::topScorers(
-    const PlayerSeasonTable& table, uint16_t season,
-    MatchType competition_type, const std::vector<TeamID>& team_ids,
-    size_t limit)
+    const PlayerSeasonTable& table, uint16_t season, MatchType competition_type,
+    const std::vector<TeamID>& team_ids, size_t limit)
 {
   std::unordered_map<PlayerID, PlayerSeasonStats> totals;
   for (const auto& [key, stats] : table)
@@ -135,18 +134,15 @@ std::vector<PlayerSeasonStats> SeasonStats::topScorers(
   scorers.reserve(totals.size());
   for (const auto& [player_id, stats] : totals)
     if (stats.goals > 0) scorers.push_back(stats);
-  std::ranges::sort(scorers,
-                    [](const PlayerSeasonStats& left,
-                       const PlayerSeasonStats& right)
-                    {
-                      if (left.goals != right.goals)
-                        return left.goals > right.goals;
-                      if (left.assists != right.assists)
-                        return left.assists > right.assists;
-                      if (left.minutes != right.minutes)
-                        return left.minutes < right.minutes;
-                      return left.player_id < right.player_id;
-                    });
+  std::ranges::sort(
+      scorers,
+      [](const PlayerSeasonStats& left, const PlayerSeasonStats& right)
+      {
+        if (left.goals != right.goals) return left.goals > right.goals;
+        if (left.assists != right.assists) return left.assists > right.assists;
+        if (left.minutes != right.minutes) return left.minutes < right.minutes;
+        return left.player_id < right.player_id;
+      });
   if (scorers.size() > limit) scorers.resize(limit);
   return scorers;
 }

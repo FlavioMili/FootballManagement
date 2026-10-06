@@ -179,13 +179,14 @@ void expectSpreadDays(const Calendar& calendar, const GameData& gamedata,
     // both tiers): the round then has three days.
     const bool short_window = window_days[ordinal(anchor)].size() <= 3;
     const size_t limit = world_round * (short_window ? 34 : 30) / 100;
-    EXPECT_LE(count, limit) << dates[day].toString() << " carries " << count
-                            << " of " << per_window[ordinal(anchor)]
-                            << " league matches";
+    EXPECT_LE(count, limit)
+        << dates[day].toString() << " carries " << count << " of "
+        << per_window[ordinal(anchor)] << " league matches";
   }
-  std::cout << "[staggered] " << season_year << ": league days " << per_day.size() << ", busiest "
-            << busiest << ", mean " << total / per_day.size()
-            << " matches per day (" << world_round << " per round)\n";
+  std::cout << "[staggered] " << season_year << ": league days "
+            << per_day.size() << ", busiest " << busiest << ", mean "
+            << total / per_day.size() << " matches per day (" << world_round
+            << " per round)\n";
   std::map<size_t, size_t> histogram;  // Upper bound of 10 -> days.
   for (const auto& [day, count] : per_day) ++histogram[(count + 9) / 10 * 10];
   for (const auto& [bucket, count] : histogram)
@@ -195,12 +196,11 @@ void expectSpreadDays(const Calendar& calendar, const GameData& gamedata,
   for (const auto& [anchor, count] : per_window)
   {
     EXPECT_GE(window_days[anchor].size(), 2U);
-    const bool midweek = SeasonCalendar::dayOfWeek(
-                             dates[*window_days[anchor].rbegin()]) <=
-                         SeasonCalendar::THURSDAY &&
-                         SeasonCalendar::dayOfWeek(
-                             dates[*window_days[anchor].rbegin()]) !=
-                             SeasonCalendar::MONDAY;
+    const bool midweek =
+        SeasonCalendar::dayOfWeek(dates[*window_days[anchor].rbegin()]) <=
+            SeasonCalendar::THURSDAY &&
+        SeasonCalendar::dayOfWeek(dates[*window_days[anchor].rbegin()]) !=
+            SeasonCalendar::MONDAY;
     if (window_days[anchor].size() <= 3 && !midweek) ++short_weekends;
   }
   std::cout << "[staggered]   weekends with three days: " << short_weekends
@@ -277,8 +277,8 @@ TEST_F(StaggeredRoundsTest, EveryClubPlaysOncePerRoundWithRest)
     if (used.size() >= 2)
       ++spread_rounds;
     else
-      single_days += " " + std::to_string(key.first) + "/" +
-                     std::to_string(key.second);
+      single_days +=
+          " " + std::to_string(key.first) + "/" + std::to_string(key.second);
   }
   EXPECT_GE(spread_rounds, days.size() * 95 / 100)
       << "league/round on one day:" << single_days;
@@ -311,7 +311,8 @@ TEST_F(StaggeredRoundsTest, KickoffsComeFromTheDayPatterns)
   // Fixtures without a scheduled time use the competition's usual one.
   const Match cup(1, 2, GameDateValue(2025, 10, 29), MatchType::CUP, 1, 2);
   EXPECT_EQ(cup.getKickoff(), 20 * 60 + 45);
-  const Match old_league(1, 2, GameDateValue(2025, 9, 27), MatchType::LEAGUE, 1);
+  const Match old_league(1, 2, GameDateValue(2025, 9, 27), MatchType::LEAGUE,
+                         1);
   EXPECT_EQ(old_league.getKickoff(), 15 * 60);
 }
 
@@ -459,8 +460,8 @@ TEST_F(StaggeredRoundsTest, LeagueFixturesMakeRoomForNewTies)
   const TeamID cup_opponent = lower->first == 601 ? 602 : 601;
   calendar.addMatch(Match(top->first, continental_opponent, tuesday,
                           MatchType::CONTINENTAL, 1, 1));
-  calendar.addMatch(Match(lower->first, cup_opponent, wednesday,
-                          MatchType::CUP, 1, 3));
+  calendar.addMatch(
+      Match(lower->first, cup_opponent, wednesday, MatchType::CUP, 1, 3));
   EXPECT_GE(calendar.protectRest(GameDateValue(2025, 8, 1)), 1U);
   EXPECT_EQ(calendar.protectRest(GameDateValue(2025, 8, 1)), 0U)
       << "nothing new to check";

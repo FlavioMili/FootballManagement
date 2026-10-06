@@ -34,8 +34,9 @@ constexpr float TWO_COLUMN_MIN_WIDTH = 900.0f;
 constexpr size_t RACE_SIZE = 5;
 constexpr size_t YOUNG_RACE_SIZE = 3;
 constexpr std::array<const char*, 12> MONTH_KEYS = {
-    "MONTH_JAN", "MONTH_FEB", "MONTH_MAR", "MONTH_APR", "MONTH_MAY", "MONTH_JUN",
-    "MONTH_JUL", "MONTH_AUG", "MONTH_SEP", "MONTH_OCT", "MONTH_NOV", "MONTH_DEC"};
+    "MONTH_JAN", "MONTH_FEB", "MONTH_MAR", "MONTH_APR",
+    "MONTH_MAY", "MONTH_JUN", "MONTH_JUL", "MONTH_AUG",
+    "MONTH_SEP", "MONTH_OCT", "MONTH_NOV", "MONTH_DEC"};
 
 std::string seasonLabel(uint16_t year)
 {
@@ -89,7 +90,8 @@ void nameLink(GUIView* view, PlayerID player_id, const std::string& name,
     return;
   }
   ImGui::PushID(static_cast<int>(player_id));
-  if (UI::link(name.c_str(), "##player")) Navigation::openPlayer(view, player_id);
+  if (UI::link(name.c_str(), "##player"))
+    Navigation::openPlayer(view, player_id);
   ImGui::PopID();
 }
 }  // namespace
@@ -140,8 +142,7 @@ void AwardsScene::refresh()
           .push_back(winnerOf(record));
       continue;
     }
-    const std::string label =
-        std::string(LOC(MONTH_KEYS[record.month - 1U]));
+    const std::string label = std::string(LOC(MONTH_KEYS[record.month - 1U]));
     if (months.empty() || months.back().month != label)
     {
       months.emplace_back();
@@ -268,7 +269,8 @@ void AwardsScene::renderSelectors()
   }
   const char* records = LOC("AWARDS_OPEN_RECORDS");
   UI::sameLineIfFits(UI::buttonWidth(records));
-  if (UI::secondaryButton(records)) Navigation::open(guiView, NavSection::RECORDS);
+  if (UI::secondaryButton(records))
+    Navigation::open(guiView, NavSection::RECORDS);
 }
 
 void AwardsScene::renderWinner(const Winner& winner, float width)
@@ -312,9 +314,9 @@ void AwardsScene::renderRace(float width)
     for (UI::Column& column : columns) column.label = LOC(column.label);
     const UI::ColumnMask mask =
         UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 140.0f);
-    if (!UI::beginResponsiveTable(id, columns, mask,
-                                  ImGuiTableFlags_RowBg |
-                                      ImGuiTableFlags_BordersInnerH))
+    if (!UI::beginResponsiveTable(
+            id, columns, mask,
+            ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
       return;
     for (const RaceRow& row : lines)
     {
@@ -435,8 +437,9 @@ void AwardsScene::renderMonths()
     ImGui::PushID(column);
     nameLink(guiView, winner.player_id, winner.name, width);
     ImGui::PopID();
-    const std::string detail =
-        winner.club.empty() ? winner.figure : winner.club + "  ·  " + winner.figure;
+    const std::string detail = winner.club.empty()
+                                   ? winner.figure
+                                   : winner.club + "  ·  " + winner.figure;
     UI::textFitted(detail, width, palette.faint);
   };
   if (UI::beginResponsiveTable(

@@ -38,17 +38,18 @@ constexpr double MIN_IMPROVEMENT = 1.0;
 constexpr double MIN_CEILING_WAGE_SHARE = 0.10;
 
 constexpr std::array<const char*, static_cast<std::size_t>(Why::COUNT)>
-    WHY_KEYS = {"LOAN_WHY_WITHIN_BUDGET",  "LOAN_WHY_IMPROVED",
-                "LOAN_WHY_WAGE_ROOM",      "LOAN_WHY_FEE_INSTEAD",
-                "LOAN_WHY_NO_OBLIGATION",  "LOAN_WHY_APPEARANCES_CUT",
-                "LOAN_WHY_FINAL_OFFER",    "LOAN_WHY_UNREALISTIC",
-                "LOAN_WHY_INSULTED",       "LOAN_WHY_OUT_OF_PATIENCE",
-                "LOAN_WHY_NO_WAGE_ROOM",   "LOAN_WHY_DEADLINE"};
+    WHY_KEYS = {"LOAN_WHY_WITHIN_BUDGET", "LOAN_WHY_IMPROVED",
+                "LOAN_WHY_WAGE_ROOM",     "LOAN_WHY_FEE_INSTEAD",
+                "LOAN_WHY_NO_OBLIGATION", "LOAN_WHY_APPEARANCES_CUT",
+                "LOAN_WHY_FINAL_OFFER",   "LOAN_WHY_UNREALISTIC",
+                "LOAN_WHY_INSULTED",      "LOAN_WHY_OUT_OF_PATIENCE",
+                "LOAN_WHY_NO_WAGE_ROOM",  "LOAN_WHY_DEADLINE"};
 
 std::uint32_t roundDown(double amount, double step = MONEY_ROUNDING)
 {
   const double clamped = std::clamp(
-      amount, 0.0, static_cast<double>(std::numeric_limits<std::uint32_t>::max()));
+      amount, 0.0,
+      static_cast<double>(std::numeric_limits<std::uint32_t>::max()));
   return static_cast<std::uint32_t>(std::floor(clamped / step) * step);
 }
 
@@ -58,7 +59,10 @@ std::uint8_t stepDown(double value, std::uint8_t step)
   return static_cast<std::uint8_t>(std::floor(clamped / step) * step);
 }
 
-double blend(double from, double to, double t) { return from + t * (to - from); }
+double blend(double from, double to, double t)
+{
+  return from + t * (to - from);
+}
 
 bool sameTerms(const LoanTerms& a, const LoanTerms& b)
 {
@@ -211,8 +215,8 @@ BorrowerReply respond(const BorrowerContext& context, const LoanTerms& current,
                  static_cast<double>(B::CONCESSION_STEP) * context.answered +
                  (deadline ? static_cast<double>(B::DEADLINE_CONCESSION_BONUS)
                            : 0.0));
-  const double target =
-      std::max(previous, previous + share * (std::min(cost, ceiling) - previous));
+  const double target = std::max(
+      previous, previous + share * (std::min(cost, ceiling) - previous));
 
   // The club's structure, within what the borrower can carry.
   LoanTerms base = asked;
@@ -225,8 +229,8 @@ BorrowerReply respond(const BorrowerContext& context, const LoanTerms& current,
     share_capped = true;
     notes.push_back(Why::WageRoom);
   }
-  base.loan_fee = static_cast<std::uint32_t>(
-      std::min<std::int64_t>(base.loan_fee, cash));
+  base.loan_fee =
+      static_cast<std::uint32_t>(std::min<std::int64_t>(base.loan_fee, cash));
   if (base.obligation &&
       (static_cast<std::int64_t>(base.option_fee) > cash ||
        static_cast<double>(base.option_fee) >
@@ -269,7 +273,9 @@ BorrowerReply respond(const BorrowerContext& context, const LoanTerms& current,
     return terms;
   };
   const auto fits = [&](const LoanTerms& terms)
-  { return borrowerCost(context, terms) <= target && affordable(context, terms); };
+  {
+    return borrowerCost(context, terms) <= target && affordable(context, terms);
+  };
   const auto furthest = [&](const LoanTerms& shape) -> std::optional<LoanTerms>
   {
     if (fits(build(shape, 1.0))) return build(shape, 1.0);
@@ -353,10 +359,10 @@ LoanTerms openingOffer(const BorrowerContext& context, LoanDuration duration,
       option_roll < static_cast<double>(L::OPENING_OPTION_CHANCE) &&
       context.market_value > 0)
     terms.option_fee = static_cast<std::uint32_t>(
-        std::ceil(static_cast<double>(context.market_value) *
-                  static_cast<double>(
-                      TransferTuning::Loan::OPTION_VALUE_MULTIPLE) /
-                  OPTION_ROUNDING) *
+        std::ceil(
+            static_cast<double>(context.market_value) *
+            static_cast<double>(TransferTuning::Loan::OPTION_VALUE_MULTIPLE) /
+            OPTION_ROUNDING) *
         OPTION_ROUNDING);
   return terms;
 }

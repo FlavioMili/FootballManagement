@@ -33,12 +33,12 @@ constexpr float CELL_MAX_HEIGHT = 92.0f;
 constexpr int SEASON_MONTHS = 12;
 
 constexpr std::array<const char*, 12> MONTH_KEYS = {
-    "CALENDAR_MONTH_JANUARY", "CALENDAR_MONTH_FEBRUARY",
-    "CALENDAR_MONTH_MARCH",   "CALENDAR_MONTH_APRIL",
-    "CALENDAR_MONTH_MAY",     "CALENDAR_MONTH_JUNE",
-    "CALENDAR_MONTH_JULY",    "CALENDAR_MONTH_AUGUST",
+    "CALENDAR_MONTH_JANUARY",   "CALENDAR_MONTH_FEBRUARY",
+    "CALENDAR_MONTH_MARCH",     "CALENDAR_MONTH_APRIL",
+    "CALENDAR_MONTH_MAY",       "CALENDAR_MONTH_JUNE",
+    "CALENDAR_MONTH_JULY",      "CALENDAR_MONTH_AUGUST",
     "CALENDAR_MONTH_SEPTEMBER", "CALENDAR_MONTH_OCTOBER",
-    "CALENDAR_MONTH_NOVEMBER", "CALENDAR_MONTH_DECEMBER"};
+    "CALENDAR_MONTH_NOVEMBER",  "CALENDAR_MONTH_DECEMBER"};
 constexpr std::array<const char*, 7> WEEKDAY_KEYS = {
     "CALENDAR_WEEKDAY_MON", "CALENDAR_WEEKDAY_TUE", "CALENDAR_WEEKDAY_WED",
     "CALENDAR_WEEKDAY_THU", "CALENDAR_WEEKDAY_FRI", "CALENDAR_WEEKDAY_SAT",
@@ -130,8 +130,9 @@ void CalendarScene::refresh()
     }
     const bool home = event.home_id == club;
     entry.opponent = home ? event.away_id : event.home_id;
-    entry.title = formatLocalized(home ? "CALENDAR_VS_HOME" : "CALENDAR_VS_AWAY",
-                                  {teamName(entry.opponent)});
+    entry.title =
+        formatLocalized(home ? "CALENDAR_VS_HOME" : "CALENDAR_VS_AWAY",
+                        {teamName(entry.opponent)});
     switch (event.match_type)
     {
       case MatchType::LEAGUE:
@@ -153,8 +154,8 @@ void CalendarScene::refresh()
       case MatchType::CONTINENTAL:
       {
         const auto* rules = Continental::rules(event.competition_id);
-        entry.detail = LOC(rules != nullptr ? rules->name_key
-                                            : "MATCH_TYPE_CONTINENTAL");
+        entry.detail =
+            LOC(rules != nullptr ? rules->name_key : "MATCH_TYPE_CONTINENTAL");
         break;
       }
       default:
@@ -222,7 +223,8 @@ void CalendarScene::showMonth(int year, int month)
     else
       day.kinds |= bit(event.kind);
   }
-  month_title = std::format("{} {}", LOC(MONTH_KEYS[static_cast<std::size_t>(month - 1)]), year);
+  month_title = std::format(
+      "{} {}", LOC(MONTH_KEYS[static_cast<std::size_t>(month - 1)]), year);
   selected_day = std::clamp(selected_day, 1, days_in_month);
 }
 
@@ -299,9 +301,8 @@ void CalendarScene::renderGrid(float width)
   const float inner = ImGui::GetContentRegionAvail().x;
   const float spacing = 3.0f * scale;
   const float cellWidth = std::floor((inner - 6.0f * spacing) / 7.0f);
-  const float cellHeight = std::clamp(cellWidth * 0.62f,
-                                      CELL_MIN_HEIGHT * scale,
-                                      CELL_MAX_HEIGHT * scale);
+  const float cellHeight = std::clamp(
+      cellWidth * 0.62f, CELL_MIN_HEIGHT * scale, CELL_MAX_HEIGHT * scale);
   ImDrawList* drawList = ImGui::GetWindowDrawList();
 
   // Weekday header.
@@ -330,8 +331,9 @@ void CalendarScene::renderGrid(float width)
     const int day = slot - first_weekday + 1;
     const int row = slot / 7;
     const int column = slot % 7;
-    const ImVec2 min(origin.x + static_cast<float>(column) * (cellWidth + spacing),
-                     origin.y + static_cast<float>(row) * (cellHeight + spacing));
+    const ImVec2 min(
+        origin.x + static_cast<float>(column) * (cellWidth + spacing),
+        origin.y + static_cast<float>(row) * (cellHeight + spacing));
     const ImVec2 max(min.x + cellWidth, min.y + cellHeight);
     if (day < 1 || day > days_in_month)
     {
@@ -342,7 +344,8 @@ void CalendarScene::renderGrid(float width)
     const Day& info = days[static_cast<std::size_t>(day)];
     ImGui::SetCursorScreenPos(min);
     ImGui::PushID(day);
-    const bool pressed = ImGui::InvisibleButton("##day", ImVec2(cellWidth, cellHeight));
+    const bool pressed =
+        ImGui::InvisibleButton("##day", ImVec2(cellWidth, cellHeight));
     const bool hovered = ImGui::IsItemHovered();
     const bool doubleClicked =
         hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
@@ -357,10 +360,10 @@ void CalendarScene::renderGrid(float width)
     else if (info.winter)
       drawList->AddRectFilled(min, max, Theme::toU32(palette.faint, 0.14f),
                               rounding);
-    drawList->AddRect(min, max,
-                      Theme::toU32(selected_day == day ? palette.accent
-                                                       : palette.border),
-                      rounding, 0, selected_day == day ? 2.0f * scale : 1.0f);
+    drawList->AddRect(
+        min, max,
+        Theme::toU32(selected_day == day ? palette.accent : palette.border),
+        rounding, 0, selected_day == day ? 2.0f * scale : 1.0f);
 
     // Day number (today in a filled pill).
     const std::string number = std::to_string(day);
@@ -398,7 +401,8 @@ void CalendarScene::renderGrid(float width)
     {
       const Entry& entry = entries[static_cast<std::size_t>(info.fixture)];
       const float chipHeight = lineHeight + 4.0f * scale;
-      const ImVec2 chipMin(min.x + 3.0f * scale, max.y - chipHeight - 3.0f * scale);
+      const ImVec2 chipMin(min.x + 3.0f * scale,
+                           max.y - chipHeight - 3.0f * scale);
       const ImVec2 chipMax(max.x - 3.0f * scale, max.y - 3.0f * scale);
       drawList->AddRectFilled(chipMin, chipMax, Theme::toU32(palette.raised),
                               3.0f * scale);
@@ -429,8 +433,8 @@ void CalendarScene::renderGrid(float width)
       }
     }
 
-    if (hovered && (info.fixture >= 0 || info.kinds != 0 || info.international ||
-                    info.winter))
+    if (hovered && (info.fixture >= 0 || info.kinds != 0 ||
+                    info.international || info.winter))
     {
       ImGui::BeginTooltip();
       for (const std::size_t index : month_entries)
@@ -447,8 +451,8 @@ void CalendarScene::renderGrid(float width)
     }
   }
   ImGui::SetCursorScreenPos(origin);
-  ImGui::Dummy(ImVec2(inner, static_cast<float>(rows) * (cellHeight + spacing) -
-                                 spacing));
+  ImGui::Dummy(ImVec2(
+      inner, static_cast<float>(rows) * (cellHeight + spacing) - spacing));
 
   // Legend.
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * scale));
@@ -562,9 +566,9 @@ void CalendarScene::renderAgenda(float width)
   for (UI::Column& column : columns) column.label = LOC(column.label);
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 120.0f);
-  if (UI::beginResponsiveTable("agenda", columns, mask,
-                               ImGuiTableFlags_RowBg |
-                                   ImGuiTableFlags_BordersInnerH))
+  if (UI::beginResponsiveTable(
+          "agenda", columns, mask,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
   {
     for (const std::size_t index : month_entries)
     {

@@ -71,14 +71,16 @@ TEST(LoanNegotiationTest, CostCountsWagesFeesClausesAndUnplayedGames)
 
   LoanTerms recall = share(50);
   recall.recall_clause = true;
-  EXPECT_DOUBLE_EQ(borrowerCost(context, recall) - borrowerCost(context, share(50)),
-                   static_cast<double>(WAGE) * Borrower::RECALL_COST_WEEKS);
+  EXPECT_DOUBLE_EQ(
+      borrowerCost(context, recall) - borrowerCost(context, share(50)),
+      static_cast<double>(WAGE) * Borrower::RECALL_COST_WEEKS);
 
   // A purchase clause is a decision apart: an option costs the loan
   // nothing, an obligation must stay near his value and within budget.
   LoanTerms option = share(50);
   option.option_fee = 6'000'000;
-  EXPECT_DOUBLE_EQ(borrowerCost(context, option), borrowerCost(context, share(50)));
+  EXPECT_DOUBLE_EQ(borrowerCost(context, option),
+                   borrowerCost(context, share(50)));
   LoanTerms obligation = option;
   obligation.obligation = true;
   EXPECT_FALSE(affordable(context, obligation)) << "1.5 times his value";
@@ -98,11 +100,13 @@ TEST(LoanNegotiationTest, CostCountsWagesFeesClausesAndUnplayedGames)
       borrowerCost(context, guaranteed) - borrowerCost(context, share(50));
   EXPECT_GT(clause, 100'000.0);
   EXPECT_LT(clause, 200'000.0);
-  EXPECT_FALSE(isValid([] {
-    LoanTerms bad;
-    bad.min_appearances = 10;  // A guarantee without a fee means nothing.
-    return bad;
-  }()));
+  EXPECT_FALSE(isValid(
+      []
+      {
+        LoanTerms bad;
+        bad.min_appearances = 10;  // A guarantee without a fee means nothing.
+        return bad;
+      }()));
 }
 
 TEST(LoanNegotiationTest, AcceptsTermsWithinItsCeilingAndWageRoom)
@@ -231,8 +235,9 @@ TEST(LoanNegotiationTest, OpeningOfferFitsTheWageRoom)
   EXPECT_GT(opening.option_fee, context.market_value)
       << "a young player comes with an option to buy";
   EXPECT_FALSE(opening.obligation);
-  EXPECT_EQ(openingOffer(context, LoanDuration::SeasonEnd, 50, 29, 0.0).option_fee,
-            0u);
+  EXPECT_EQ(
+      openingOffer(context, LoanDuration::SeasonEnd, 50, 29, 0.0).option_fee,
+      0u);
   EXPECT_GT(ceilingFor(context, opening, 0.5), borrowerCost(context, opening));
 }
 
@@ -301,9 +306,9 @@ TEST(ContractAgentTest, AsksForAPackageWorthHisFlatAsk)
   EXPECT_EQ(demands.standard_agent_fee, FEE / 10);
   EXPECT_GT(demands.agent_fee, demands.standard_agent_fee)
       << "he opens above the usual fee";
-  EXPECT_EQ(PlayerAgent::agentFeeAsk(context, demands.standard_agent_fee,
-                                     LAST_ROUND),
-            demands.standard_agent_fee);
+  EXPECT_EQ(
+      PlayerAgent::agentFeeAsk(context, demands.standard_agent_fee, LAST_ROUND),
+      demands.standard_agent_fee);
 
   // By the last round his package is exactly what the player signs for.
   const PlayerAgent::Demands last =
@@ -341,7 +346,8 @@ TEST(ContractAgentTest, HisOwnFeeCanBlockADealThePlayerAccepts)
   offer.years = 4;
   const std::uint32_t lowest = PlayerAgent::lowestAgentFee(FEE / 10);
   offer.agent_fee = lowest - 100;
-  const PlayerAgent::Reply squeezed = PlayerAgent::respond(context, offer, 0, FEE);
+  const PlayerAgent::Reply squeezed =
+      PlayerAgent::respond(context, offer, 0, FEE);
   EXPECT_FALSE(squeezed.response.accepted);
   EXPECT_TRUE(refuses(squeezed, Reason::AgentFeeTooLow));
   EXPECT_STREQ(squeezed.line_key, "AGENT_LINE_AGENT_FEE");
@@ -369,9 +375,11 @@ TEST(ContractAgentTest, EveryRoundHasALineThatFitsTheAnswer)
   offer.weekly_wage = demand.weekly_wage;
   offer.release_clause = 0;
   PlayerContext ambitious_small = context;
-  ambitious_small.new_club_reputation = 40;  // A modest club: he wants a clause.
+  ambitious_small.new_club_reputation =
+      40;  // A modest club: he wants a clause.
   ambitious_small.current_club_reputation = 45;
-  const auto small_demand = TransferNegotiation::contractDemand(ambitious_small);
+  const auto small_demand =
+      TransferNegotiation::contractDemand(ambitious_small);
   ASSERT_TRUE(small_demand.wants_release_clause);
   offer.weekly_wage = small_demand.weekly_wage;
   EXPECT_STREQ(PlayerAgent::respond(ambitious_small, offer, 0, FEE).line_key,

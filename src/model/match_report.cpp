@@ -164,14 +164,14 @@ void MatchReport::fillFromEngine(const MatchEngine& engine, TeamID home_id,
   {
     if (!engine.wasControlled(home)) continue;
     played_home = home;
-    const int actions =
-        home ? stats.homePassesAttempted + stats.homeShots +
-                   stats.homeTackleAttempts
-             : stats.awayPassesAttempted + stats.awayShots +
-                   stats.awayTackleAttempts;
-    played_share = std::clamp(static_cast<float>(engine.getControlledActions(home)) /
-                                  static_cast<float>(std::max(actions, 1)),
-                              0.0f, 1.0f);
+    const int actions = home ? stats.homePassesAttempted + stats.homeShots +
+                                   stats.homeTackleAttempts
+                             : stats.awayPassesAttempted + stats.awayShots +
+                                   stats.awayTackleAttempts;
+    played_share =
+        std::clamp(static_cast<float>(engine.getControlledActions(home)) /
+                       static_cast<float>(std::max(actions, 1)),
+                   0.0f, 1.0f);
   }
   extra_time = engine.wentToExtraTime();
   penalties = engine.hasShootout();
@@ -186,8 +186,8 @@ void MatchReport::fillFromEngine(const MatchEngine& engine, TeamID home_id,
   players.reserve(engine.getPlayerStats().size());
   // Minutes are reported on the usual 90-minute scale (120 after extra
   // time) whatever the added time, as a share of the clock time played.
-  const float fullMatch = static_cast<float>(
-      extra_time ? EXTRA_TIME_MINUTES : REGULATION_MINUTES);
+  const float fullMatch =
+      static_cast<float>(extra_time ? EXTRA_TIME_MINUTES : REGULATION_MINUTES);
   const float clockMinutes =
       std::max(fullMatch, engine.getElapsedMatchMinutes());
   for (const PlayerMatchStats& entry : engine.getPlayerStats())
@@ -196,8 +196,8 @@ void MatchReport::fillFromEngine(const MatchEngine& engine, TeamID home_id,
     line.player_id = entry.playerId;
     line.team_id = entry.isHomeTeam ? home_id : away_id;
     line.started = entry.started;
-    line.minutes =
-        toSmallCount(std::lround(entry.minutesPlayed * fullMatch / clockMinutes));
+    line.minutes = toSmallCount(
+        std::lround(entry.minutesPlayed * fullMatch / clockMinutes));
     line.goals = toSmallCount(entry.goals);
     line.assists = toSmallCount(entry.assists);
     line.yellow_cards = toSmallCount(entry.yellowCards);
@@ -245,9 +245,9 @@ void MatchReport::addLineupAppearances(const Lineup& lineup, TeamID team_id)
   const auto addStarter = [&](const Player* player)
   {
     if (!player) return;
-    const bool alreadyListed = std::ranges::any_of(
-        players, [player](const PlayerMatchLine& line)
-        { return line.player_id == player->getId(); });
+    const bool alreadyListed =
+        std::ranges::any_of(players, [player](const PlayerMatchLine& line)
+                            { return line.player_id == player->getId(); });
     if (alreadyListed) return;
     PlayerMatchLine line;
     line.player_id = player->getId();

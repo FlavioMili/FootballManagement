@@ -24,6 +24,7 @@
 #include "global/language_manager.h"
 #include "gui/gui_view.h"
 #include "gui/input_actions.h"
+#include "gui/scenes/about_scene.h"
 #include "gui/scenes/awards_scene.h"
 #include "gui/scenes/calendar_scene.h"
 #include "gui/scenes/callup_scene.h"
@@ -31,7 +32,6 @@
 #include "gui/scenes/data_hub_scene.h"
 #include "gui/scenes/delegation_scene.h"
 #include "gui/scenes/fixtures_scene.h"
-#include "gui/scenes/about_scene.h"
 #include "gui/scenes/help_scene.h"
 #include "gui/scenes/inbox_scene.h"
 #include "gui/scenes/international_scene.h"
@@ -241,8 +241,11 @@ const NavHub* hubOf(NavSection section)
 {
   if (section == NavSection::NONE) return nullptr;
   const auto found = std::ranges::find_if(
-      NAV_HUBS, [section](const NavHub& hub)
-      { return std::ranges::find(hub.sections, section) != hub.sections.end(); });
+      NAV_HUBS,
+      [section](const NavHub& hub)
+      {
+        return std::ranges::find(hub.sections, section) != hub.sections.end();
+      });
   return found != NAV_HUBS.end() ? &*found : nullptr;
 }
 
@@ -312,9 +315,9 @@ float drawCountPill(ImDrawList* drawList, ImVec2 min, float height,
       std::max(textSize.x + 8.0f * Theme::scale(), 18.0f * Theme::scale());
   const float pillHeight = std::min(height, textSize.y + 2.0f * Theme::scale());
   const ImVec2 pillMin(min.x, min.y + (height - pillHeight) * 0.5f);
-  drawList->AddRectFilled(
-      pillMin, ImVec2(pillMin.x + width, pillMin.y + pillHeight),
-      Theme::toU32(palette.accent), pillHeight * 0.5f);
+  drawList->AddRectFilled(pillMin,
+                          ImVec2(pillMin.x + width, pillMin.y + pillHeight),
+                          Theme::toU32(palette.accent), pillHeight * 0.5f);
   drawList->AddText(ImVec2(pillMin.x + (width - textSize.x) * 0.5f,
                            pillMin.y + (pillHeight - textSize.y) * 0.5f),
                     Theme::toU32(palette.on_accent), text.c_str());
@@ -327,9 +330,9 @@ float countPillWidth(size_t count)
 {
   ImGui::PushFont(nullptr, Theme::textSize(Theme::Text::CAPTION));
   const std::string text = count > 99 ? "99+" : std::to_string(count);
-  const float width = std::max(
-      ImGui::CalcTextSize(text.c_str()).x + 8.0f * Theme::scale(),
-      18.0f * Theme::scale());
+  const float width =
+      std::max(ImGui::CalcTextSize(text.c_str()).x + 8.0f * Theme::scale(),
+               18.0f * Theme::scale());
   ImGui::PopFont();
   return width;
 }
@@ -366,14 +369,12 @@ void renderHubTabs(GUIView* view, NavSection current)
     labels[index] = LOC(labelKeyOf(shown[index]));
     badges[index] = sectionBadge(controller, shown[index]);
     widths[index] =
-        ImGui::CalcTextSize(labels[index]).x +
-        2.0f * padding +
+        ImGui::CalcTextSize(labels[index]).x + 2.0f * padding +
         (badges[index] > 0 ? countPillWidth(badges[index]) + gap : 0.0f);
     total += widths[index];
   }
-  const float shared =
-      (available - gap * static_cast<float>(count - 1)) /
-      static_cast<float>(count);
+  const float shared = (available - gap * static_cast<float>(count - 1)) /
+                       static_cast<float>(count);
 
   const ImVec2 origin = ImGui::GetCursorScreenPos();
   ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -408,9 +409,10 @@ void renderHubTabs(GUIView* view, NavSection current)
                               Theme::toU32(palette.raised), 4.0f * scale,
                               ImDrawFlags_RoundCornersTop);
     if (selected)
-      drawList->AddRectFilled(ImVec2(min.x + 2.0f * scale, max.y - 3.0f * scale),
-                              ImVec2(max.x - 2.0f * scale, max.y),
-                              Theme::toU32(palette.accent), 1.5f * scale);
+      drawList->AddRectFilled(
+          ImVec2(min.x + 2.0f * scale, max.y - 3.0f * scale),
+          ImVec2(max.x - 2.0f * scale, max.y), Theme::toU32(palette.accent),
+          1.5f * scale);
     const char* label = labels[index];
     const float pill =
         badges[index] > 0 ? countPillWidth(badges[index]) + gap : 0.0f;
@@ -422,12 +424,12 @@ void renderHubTabs(GUIView* view, NavSection current)
         Theme::toU32(selected || hovered ? palette.text : palette.muted), label,
         textRoom);
     if (badges[index] > 0)
-      drawCountPill(drawList,
-                    ImVec2(textPos.x +
-                               std::min(ImGui::CalcTextSize(label).x, textRoom) +
-                               gap,
-                           min.y),
-                    height, badges[index]);
+      drawCountPill(
+          drawList,
+          ImVec2(textPos.x + std::min(ImGui::CalcTextSize(label).x, textRoom) +
+                     gap,
+                 min.y),
+          height, badges[index]);
     if (cut && (hovered || (selected && ImGui::IsItemHovered())))
       ImGui::SetTooltip("%s", label);
     x += width + gap;
@@ -1270,8 +1272,8 @@ void ManagementScene::renderSidebar(bool collapsed)
     // Collapsed: hubs with several screens open a flyout on hover.
     const bool flyout = collapsed && count > 1;
     if (navItem(LOC(hub.label_key), shortcutLabel(hub.action),
-                current && !expanded,
-                hub.icon, collapsed, itemHeight, badge, expanded, !flyout))
+                current && !expanded, hub.icon, collapsed, itemHeight, badge,
+                expanded, !flyout))
     {
       sidebarHasKeyboard = true;
       Navigation::open(guiView, first);
@@ -1807,11 +1809,17 @@ void ManagementScene::buildPaletteIndex()
     palette_entries.push_back(std::move(item));
   }
   {
-    PaletteEntry about{PaletteEntry::Kind::ABOUT, 0, LOC("PALETTE_ABOUT"), {},
+    PaletteEntry about{PaletteEntry::Kind::ABOUT,
+                       0,
+                       LOC("PALETTE_ABOUT"),
+                       {},
                        std::string(LOC("PALETTE_KIND_INFO"))};
     about.label_lower = PlayerView::toLower(about.label);
     palette_entries.push_back(std::move(about));
-    PaletteEntry help{PaletteEntry::Kind::HELP, 0, LOC("PALETTE_HELP"), {},
+    PaletteEntry help{PaletteEntry::Kind::HELP,
+                      0,
+                      LOC("PALETTE_HELP"),
+                      {},
                       std::format("{}  ·  {}", LOC("PALETTE_KIND_HELP"),
                                   shortcutLabel(Input::Ids::CAREER_HELP))};
     help.label_lower = PlayerView::toLower(help.label);

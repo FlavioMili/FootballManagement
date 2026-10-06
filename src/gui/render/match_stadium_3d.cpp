@@ -78,13 +78,12 @@ float valueNoise(float x, float y, std::uint32_t salt)
   const auto smooth = [](float t) { return t * t * (3.0f - 2.0f * t); };
   const float fx = smooth(x - cellX);
   const float fy = smooth(y - cellY);
-  const float bottom = lattice(cellX, cellY) +
-                       (lattice(cellX + 1.0f, cellY) - lattice(cellX, cellY)) *
-                           fx;
+  const float bottom =
+      lattice(cellX, cellY) +
+      (lattice(cellX + 1.0f, cellY) - lattice(cellX, cellY)) * fx;
   const float top =
       lattice(cellX, cellY + 1.0f) +
-      (lattice(cellX + 1.0f, cellY + 1.0f) - lattice(cellX, cellY + 1.0f)) *
-          fx;
+      (lattice(cellX + 1.0f, cellY + 1.0f) - lattice(cellX, cellY + 1.0f)) * fx;
   return bottom + (top - bottom) * fy;
 }
 
@@ -263,8 +262,8 @@ void addWear(std::vector<GroundPolygon>& target, float cx, float cy,
     const float angle =
         TWO_PI * static_cast<float>(corner) / static_cast<float>(RIM);
     const float wobble =
-        1.0f + (unitHash(salt, static_cast<std::uint32_t>(corner), 41U) - 0.5f) *
-                   0.4f;
+        1.0f +
+        (unitHash(salt, static_cast<std::uint32_t>(corner), 41U) - 0.5f) * 0.4f;
     polygon.points[index + 1] = {cx + std::cos(angle) * radiusX * wobble,
                                  cy + std::sin(angle) * radiusY * wobble, 0.0f};
     polygon.colors[index + 1] = withAlpha(Tuning::Grass::WEAR_COLOR, 0);
@@ -287,8 +286,7 @@ void buildWear(Geometry& geometry)
     addWear(wear, goalLine + inward * W::GOALMOUTH_DEPTH, HALF_WIDTH,
             W::GOALMOUTH_DEPTH * 0.8f, W::GOALMOUTH_WIDTH, W::WEAR_ALPHA,
             ++salt);
-    addWear(wear,
-            goalLine + inward * Tuning::Markings::PENALTY_SPOT_DISTANCE,
+    addWear(wear, goalLine + inward * Tuning::Markings::PENALTY_SPOT_DISTANCE,
             HALF_WIDTH, W::SPOT_WEAR_RADIUS, W::SPOT_WEAR_RADIUS * 0.8f,
             W::WEAR_ALPHA, ++salt);
     // The goal area takes a beating in front of the six-yard line too.
@@ -300,8 +298,8 @@ void buildWear(Geometry& geometry)
   // half each (diagonal system), in several overlapping scuffs.
   for (int scuff = 0; scuff < W::LINESMAN_SCUFFS; ++scuff)
   {
-    const float share =
-        (static_cast<float>(scuff) + 0.5f) / static_cast<float>(W::LINESMAN_SCUFFS);
+    const float share = (static_cast<float>(scuff) + 0.5f) /
+                        static_cast<float>(W::LINESMAN_SCUFFS);
     const float length = HALF_LENGTH / static_cast<float>(W::LINESMAN_SCUFFS);
     addWear(wear, HALF_LENGTH + share * HALF_LENGTH, -W::LINESMAN_OFFSET,
             length * 0.75f, W::LINESMAN_HALF_WIDTH, W::LINESMAN_ALPHA, ++salt);
@@ -468,8 +466,7 @@ class StandBuilder
 
   /// Night colours stay as given (floodlit); by day the day colour is lit
   /// by the sun unless the point is in the roof's shadow.
-  ImU32 daylit(ImU32 nightColor, ImU32 dayColor, Vec3 normal,
-               bool shaded) const
+  ImU32 daylit(ImU32 nightColor, ImU32 dayColor, Vec3 normal, bool shaded) const
   {
     return day ? shadeColor(dayColor, sunlight(normal, shaded)) : nightColor;
   }
@@ -545,7 +542,8 @@ class StandBuilder
     fringe.colors[2] = clear;
     fringe.colors[3] = clear;
     geometry.standShadows.push_back(fringe);
-    geometry.shadowAreas.push_back({leftFront, rightFront, rightEdge, leftEdge});
+    geometry.shadowAreas.push_back(
+        {leftFront, rightFront, rightEdge, leftEdge});
   }
 
   /// A profile face in night and day colours (`dayNear`/`dayFar` are the
@@ -557,8 +555,8 @@ class StandBuilder
     Face& face = addProfileFace(shape, from, to, nightNear, nightFar, inset);
     if (day)
     {
-      const ImU32 nearColor = daylit(nightNear, dayNear, face.normal,
-                                     inRoofShadow(shape, from));
+      const ImU32 nearColor =
+          daylit(nightNear, dayNear, face.normal, inRoofShadow(shape, from));
       const ImU32 farColor =
           daylit(nightFar, dayFar, face.normal, inRoofShadow(shape, to));
       face.colors = {nearColor, nearColor, farColor, farColor};
@@ -573,9 +571,9 @@ class StandBuilder
   {
     using C = Tuning::Crowd;
     const float teamShare =
-        (shape.awayEnd ? C::AWAY_END_SHARE
-                       : (shape.side == Side::WEST ? C::HOME_END_SHARE
-                                                   : C::HOME_SHARE)) +
+        (shape.awayEnd
+             ? C::AWAY_END_SHARE
+             : (shape.side == Side::WEST ? C::HOME_END_SHARE : C::HOME_SHARE)) +
         C::SHARE_SWING * (teamNoise - 0.5f) * 2.0f;
     teamFan = unitHash(key, 3U, 0U) < teamShare;
     if (teamFan)
@@ -584,10 +582,10 @@ class StandBuilder
       return unitHash(key, 4U, 0U) < 0.75f ? kit.shirt : kit.trim;
     }
     constexpr std::array<ImU32, 9> NEUTRAL{
-        IM_COL32(34, 40, 62, 255),    IM_COL32(40, 40, 46, 255),
-        IM_COL32(92, 96, 104, 255),   IM_COL32(138, 140, 146, 255),
-        IM_COL32(52, 70, 104, 255),   IM_COL32(96, 56, 46, 255),
-        IM_COL32(70, 78, 56, 255),    IM_COL32(150, 132, 108, 255),
+        IM_COL32(34, 40, 62, 255),  IM_COL32(40, 40, 46, 255),
+        IM_COL32(92, 96, 104, 255), IM_COL32(138, 140, 146, 255),
+        IM_COL32(52, 70, 104, 255), IM_COL32(96, 56, 46, 255),
+        IM_COL32(70, 78, 56, 255),  IM_COL32(150, 132, 108, 255),
         IM_COL32(120, 36, 40, 255)};
     return NEUTRAL[static_cast<std::size_t>(unitHash(key, 5U, 0U) * 9.0f) %
                    NEUTRAL.size()];
@@ -706,18 +704,17 @@ class StandBuilder
                   : frontLight + (backLight - frontLight) * rowT;
           for (int seat = firstSeat; seat < endSeat; ++seat)
           {
-            const std::uint32_t key =
-                ((sectionCounter * 4U + tier) * 128U +
-                 static_cast<std::uint32_t>(row)) *
-                    1024U +
-                static_cast<std::uint32_t>(seat);
+            const std::uint32_t key = ((sectionCounter * 4U + tier) * 128U +
+                                       static_cast<std::uint32_t>(row)) *
+                                          1024U +
+                                      static_cast<std::uint32_t>(seat);
             if (unitHash(key, 1U, 0U) < C::EMPTY_SEAT_RATIO) continue;
             const float jitter =
                 (unitHash(key, 2U, 0U) - 0.5f) * C::JITTER * 2.0f;
-            const Vec3 base = RenderMath::lerp(
-                left, right,
-                (static_cast<float>(seat) + 0.5f + jitter) /
-                    static_cast<float>(seats));
+            const Vec3 base =
+                RenderMath::lerp(left, right,
+                                 (static_cast<float>(seat) + 0.5f + jitter) /
+                                     static_cast<float>(seats));
             const float noiseX =
                 (base.x + base.y) / (C::NOISE_SEATS * C::SEAT_SPACING);
             const float noiseY = (point.d + static_cast<float>(tier) * 50.0f) /
@@ -730,9 +727,9 @@ class StandBuilder
                      SKIN.size()];
             const float light =
                 rowLight *
-                (1.0f + C::LIGHT_SWING *
-                            (valueNoise(noiseX * 0.7f, noiseY, 23U) - 0.5f) *
-                            2.0f +
+                (1.0f +
+                 C::LIGHT_SWING *
+                     (valueNoise(noiseX * 0.7f, noiseY, 23U) - 0.5f) * 2.0f +
                  C::LIGHT_JITTER * (unitHash(key, 7U, 0U) - 0.5f) * 2.0f);
             CrowdDot& dot = geometry.crowd.emplace_back();
             dot.base = base;
@@ -761,9 +758,9 @@ class StandBuilder
         clump.base =
             RenderMath::lerp(shape.left(front), shape.right(front), centre);
         const ProfilePoint beyond = rowPoint(endRow);
-        clump.top = RenderMath::lerp(shape.left(beyond), shape.right(beyond),
-                                     centre) +
-                    UP * (C::DOT_HEIGHT * C::CLUMP_TOP_SHARE);
+        clump.top =
+            RenderMath::lerp(shape.left(beyond), shape.right(beyond), centre) +
+            UP * (C::DOT_HEIGHT * C::CLUMP_TOP_SHARE);
         clump.halfWidth = seatCount * C::SEAT_SPACING * 0.5f;
         clump.color = average(
             clumpSum, static_cast<float>(clump.dotEnd - clump.dotBegin));
@@ -819,10 +816,9 @@ class StandBuilder
     addLitFace(shape, roofBack, roofFront, S::ROOF_UNDER_COLOR,
                shadeColor(S::ROOF_UNDER_COLOR, 1.4f), D::ROOF_UNDER_COLOR,
                shadeColor(D::ROOF_UNDER_COLOR, 1.2f));
-    Face& upper = addLitFace(shape, concourseTop, upperTop,
-                             shadeColor(seats, 0.9f),
-                             shadeColor(seats, S::BACK_ROW_LIGHT),
-                             D::SEAT_COLOR, D::SEAT_COLOR);
+    Face& upper = addLitFace(
+        shape, concourseTop, upperTop, shadeColor(seats, 0.9f),
+        shadeColor(seats, S::BACK_ROW_LIGHT), D::SEAT_COLOR, D::SEAT_COLOR);
     addCrowd(upper, shape, 1U, concourseTop, upperTop, 0.9f, S::BACK_ROW_LIGHT);
     addLitFace(shape, lowerTop, concourseTop, S::WALL_COLOR, S::WALL_COLOR,
                D::WALL_COLOR, D::WALL_COLOR);
@@ -831,17 +827,17 @@ class StandBuilder
                shadeColor(S::WINDOW_COLOR, 0.7f), S::WINDOW_COLOR,
                shadeColor(D::WINDOW_COLOR, 0.8f), D::WINDOW_COLOR,
                S::WINDOW_INSET);
-    Face& lower = addLitFace(shape, frontTop, lowerTop,
-                             shadeColor(seats, 1.1f), shadeColor(seats, 0.8f),
-                             D::SEAT_COLOR, D::SEAT_COLOR);
+    Face& lower =
+        addLitFace(shape, frontTop, lowerTop, shadeColor(seats, 1.1f),
+                   shadeColor(seats, 0.8f), D::SEAT_COLOR, D::SEAT_COLOR);
     addCrowd(lower, shape, 0U, frontTop, lowerTop, 1.05f, 0.78f);
     if (shape.side == Side::WEST)
     {
       // The home end's front wall carries a banner in the club colours.
       const ImU32 banner =
           sectionCounter % 2U == 0U ? kits.home.shirt : kits.home.trim;
-      addLitFace(shape, frontBottom, frontTop, shadeColor(banner, 0.8f),
-                 banner, shadeColor(banner, 0.85f), banner);
+      addLitFace(shape, frontBottom, frontTop, shadeColor(banner, 0.8f), banner,
+                 shadeColor(banner, 0.85f), banner);
     }
     else
     {
@@ -900,10 +896,10 @@ void buildFloodlights(Geometry& geometry, bool day)
       {
         for (std::size_t corner = 0; corner < 4; ++corner)
         {
-          face.colors[corner] = shadeColor(
-              Tuning::Day::MAST_COLOR,
-              sunlight(face.normal, false) *
-                  (face.corners[corner].z > 1.0f ? 1.0f : 0.75f));
+          face.colors[corner] =
+              shadeColor(Tuning::Day::MAST_COLOR,
+                         sunlight(face.normal, false) *
+                             (face.corners[corner].z > 1.0f ? 1.0f : 0.75f));
         }
       }
     }
@@ -922,9 +918,9 @@ void buildFloodlights(Geometry& geometry, bool day)
     back.corners = {centre - halfRight - halfUp, centre - halfRight + halfUp,
                     centre + halfRight + halfUp, centre + halfRight - halfUp};
     back.normal = normal * -1.0f;
-    back.colors.fill(day ? shadeColor(Tuning::Day::MAST_COLOR,
-                                      sunlight(back.normal, false))
-                         : shadeColor(F::MAST_COLOR, 0.7f));
+    back.colors.fill(
+        day ? shadeColor(Tuning::Day::MAST_COLOR, sunlight(back.normal, false))
+            : shadeColor(F::MAST_COLOR, 0.7f));
     Face& front = geometry.faces.emplace_back();
     front.corners = back.corners;
     front.normal = normal;

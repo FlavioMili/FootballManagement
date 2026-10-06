@@ -193,8 +193,9 @@ void InternationalScene::refreshContinental()
   const auto associationOf = [&](TeamID team_id)
   {
     const auto team = controller.getTeamById(team_id);
-    return team && data ? Competitions::rootLeague(*data, team->get().getLeagueId())
-                        : LeagueID{0};
+    return team && data
+               ? Competitions::rootLeague(*data, team->get().getLeagueId())
+               : LeagueID{0};
   };
 
   drawn = season->drawn;
@@ -234,11 +235,12 @@ void InternationalScene::refreshContinental()
     line.association = associationName(entrant.association);
     line.pot = static_cast<uint8_t>(entrant.pot + 1);
     line.coefficient = std::format("{:.1f}", entrant.coefficient);
-    line.route = entrant.cup_winner ? LOC("INTL_ROUTE_CUP")
-                 : entrant.league_position > 0
-                     ? formatLocalized("INTL_ROUTE_LEAGUE",
-                                       {std::to_string(entrant.league_position)})
-                     : LOC("INTL_ROUTE_REPUTATION");
+    line.route =
+        entrant.cup_winner ? LOC("INTL_ROUTE_CUP")
+        : entrant.league_position > 0
+            ? formatLocalized("INTL_ROUTE_LEAGUE",
+                              {std::to_string(entrant.league_position)})
+            : LOC("INTL_ROUTE_REPUTATION");
     entrants.push_back(std::move(line));
   }
 
@@ -254,7 +256,8 @@ void InternationalScene::refreshContinental()
           match.getCompetitionId() != id)
         continue;
       if (!match.isPlayed() && !next) next = date;
-      if (Continental::roundOf(match.getStage()) != Continental::Round::LeaguePhase ||
+      if (Continental::roundOf(match.getStage()) !=
+              Continental::Round::LeaguePhase ||
           match.getStage() == 0 || match.getStage() > season->matches)
         continue;
       if (match.isPlayed())
@@ -267,8 +270,9 @@ void InternationalScene::refreshContinental()
       line.home = teamName(line.home_id);
       line.away = teamName(line.away_id);
       line.played = match.isPlayed();
-      line.score = line.played ? scoreText(match.getHomeScore(), match.getAwayScore())
-                               : std::string("-");
+      line.score = line.played
+                       ? scoreText(match.getHomeScore(), match.getAwayScore())
+                       : std::string("-");
       line.ours = line.home_id == club || line.away_id == club;
       fixtures_by_matchday[match.getStage() - 1].push_back(std::move(line));
     }
@@ -291,7 +295,8 @@ void InternationalScene::refreshContinental()
     line.first = teamName(tie.seeded_id);
     line.second = teamName(tie.unseeded_id);
     line.ours = tie.seeded_id == club || tie.unseeded_id == club;
-    line.winner = tie.winner_id == 0 ? 0 : (tie.winner_id == tie.seeded_id ? 1 : 2);
+    line.winner =
+        tie.winner_id == 0 ? 0 : (tie.winner_id == tie.seeded_id ? 1 : 2);
     const auto score = controller.getContinentalTieScore(id, tie);
     const Match* last = score.second_leg;
     const bool started = (score.first_leg && score.first_leg->isPlayed()) ||
@@ -321,10 +326,10 @@ void InternationalScene::refreshContinental()
       line.detail = formatLocalized("INTL_LEGS", {legs});
     }
     if (last && last->isPlayed() && last->wentToPenalties())
-      line.detail += "  ·  " + formatLocalized(
-                                   "INTL_PENALTIES",
-                                   {scoreText(last->getHomePenalties(),
-                                              last->getAwayPenalties())});
+      line.detail +=
+          "  ·  " + formatLocalized("INTL_PENALTIES",
+                                    {scoreText(last->getHomePenalties(),
+                                               last->getAwayPenalties())});
     else if (last && last->isPlayed() && last->wentToExtraTime())
       line.detail += std::string("  ·  ") + LOC("INTL_AET");
     block.ties.push_back(std::move(line));
@@ -335,9 +340,9 @@ void InternationalScene::refreshContinental()
   if (!drawn)
     stage = formatLocalized("INTL_STAGE_DRAW", {draw_date});
   else if (!season->league_phase_complete)
-    stage = formatLocalized("INTL_STAGE_LEAGUE",
-                            {std::to_string(played_matchdays),
-                             std::to_string(season->matches)});
+    stage = formatLocalized(
+        "INTL_STAGE_LEAGUE",
+        {std::to_string(played_matchdays), std::to_string(season->matches)});
   else if (season->winner_id != 0)
     stage = LOC("INTL_STAGE_FINISHED");
   else if (!season->ties.empty())
@@ -348,8 +353,9 @@ void InternationalScene::refreshContinental()
                ? table.front().name
                : std::string(LOC("INTL_NONE"));
 
-  const bool entered = std::ranges::any_of(
-      season->entrants, [club](const auto& entrant) { return entrant.team_id == club; });
+  const bool entered =
+      std::ranges::any_of(season->entrants, [club](const auto& entrant)
+                          { return entrant.team_id == club; });
   if (club == 0 || !entered)
   {
     club_status = LOC("INTL_CLUB_NOT_IN");
@@ -364,15 +370,16 @@ void InternationalScene::refreshContinental()
         season->ties, [club](const auto& tie)
         { return tie.seeded_id == club || tie.unseeded_id == club; });
     const bool out = std::ranges::any_of(
-        season->ties, [club](const auto& tie)
+        season->ties,
+        [club](const auto& tie)
         {
           return (tie.seeded_id == club || tie.unseeded_id == club) &&
                  tie.winner_id != 0 && tie.winner_id != club;
         });
     const auto row = std::ranges::find(table, club, &TableLine::id);
-    if (out || (season->league_phase_complete && !in_knockouts &&
-                row != table.end() &&
-                row->position > direct_places + playoff_places))
+    if (out ||
+        (season->league_phase_complete && !in_knockouts && row != table.end() &&
+         row->position > direct_places + playoff_places))
       club_status = LOC("INTL_CLUB_OUT");
     else if (row != table.end() && row->played > 0)
       club_status = formatLocalized("INTL_CLUB_POSITION",
@@ -385,9 +392,10 @@ void InternationalScene::refreshContinental()
       !order.empty())
   {
     for (const auto& coefficient : order)
-      associations.push_back({associationName(coefficient.association),
-                              std::format("{:.2f}", coefficient.seasons.front()),
-                              std::format("{:.2f}", coefficient.total())});
+      associations.push_back(
+          {associationName(coefficient.association),
+           std::format("{:.2f}", coefficient.seasons.front()),
+           std::format("{:.2f}", coefficient.total())});
   }
 }
 
@@ -409,7 +417,8 @@ void InternationalScene::refreshNational()
   const TeamID club = managed ? managed->get().getId() : TeamID{0};
   const auto data = controller.getGameData();
 
-  const auto recordOf = [nations](PlayerID id) { return nations->getRecord(id); };
+  const auto recordOf = [nations](PlayerID id)
+  { return nations->getRecord(id); };
   for (const auto& squad : nations->getSquads())
   {
     for (const PlayerID player_id : squad.players)
@@ -433,10 +442,12 @@ void InternationalScene::refreshNational()
   std::vector<const International::Fixture*> past;
   for (const auto& fixture : nations->getFixtures())
     (fixture.played ? past : future).push_back(&fixture);
-  std::ranges::sort(future, [](const auto* a, const auto* b)
-                    { return a->date < b->date || (a->date == b->date && a->id < b->id); });
-  std::ranges::sort(past, [](const auto* a, const auto* b)
-                    { return b->date < a->date || (a->date == b->date && a->id < b->id); });
+  std::ranges::sort(
+      future, [](const auto* a, const auto* b)
+      { return a->date < b->date || (a->date == b->date && a->id < b->id); });
+  std::ranges::sort(
+      past, [](const auto* a, const auto* b)
+      { return b->date < a->date || (a->date == b->date && a->id < b->id); });
   const auto toLine = [](const International::Fixture& fixture)
   {
     NationFixture line;
@@ -444,14 +455,16 @@ void InternationalScene::refreshNational()
     line.home = nationName(fixture.home);
     line.away = nationName(fixture.away);
     line.played = fixture.played;
-    line.score = fixture.played ? scoreText(fixture.home_goals, fixture.away_goals)
-                                : std::string("-");
+    line.score = fixture.played
+                     ? scoreText(fixture.home_goals, fixture.away_goals)
+                     : std::string("-");
     if (fixture.played && fixture.penalties)
       line.score += std::format(" ({}-{})", fixture.home_penalties,
                                 fixture.away_penalties);
     line.competition = LOC(International::competitionKey(fixture.competition));
     if (fixture.stage != International::Stage::Group)
-      line.competition += std::string("  ·  ") + LOC(International::stageKey(fixture.stage));
+      line.competition +=
+          std::string("  ·  ") + LOC(International::stageKey(fixture.stage));
     return line;
   };
   for (size_t i = 0; i < future.size() && i < MAX_NATION_FIXTURES; ++i)
@@ -485,18 +498,20 @@ void InternationalScene::refreshNational()
   if (finals)
   {
     groups_title = LOC(International::competitionKey(finals->competition));
-    for (const auto& group : finals->groups) groups.push_back(groupRows(group, 2));
+    for (const auto& group : finals->groups)
+      groups.push_back(groupRows(group, 2));
     for (const auto& fixture : nations->getFixtures())
     {
       if (fixture.competition != finals->competition ||
           fixture.stage == International::Stage::Group ||
           !std::ranges::contains(finals->qualified, fixture.home))
         continue;
-      std::string text = std::string(LOC(International::stageKey(fixture.stage))) +
-                         ":  " + nationName(fixture.home) + "  " +
-                         (fixture.played ? scoreText(fixture.home_goals, fixture.away_goals)
-                                         : std::string("-")) +
-                         "  " + nationName(fixture.away);
+      std::string text =
+          std::string(LOC(International::stageKey(fixture.stage))) + ":  " +
+          nationName(fixture.home) + "  " +
+          (fixture.played ? scoreText(fixture.home_goals, fixture.away_goals)
+                          : std::string("-")) +
+          "  " + nationName(fixture.away);
       if (fixture.played && fixture.penalties)
         text += "  " + formatLocalized("INTL_PENALTIES",
                                        {scoreText(fixture.home_penalties,
@@ -504,14 +519,15 @@ void InternationalScene::refreshNational()
       knockout_lines.push_back(std::move(text));
     }
     if (finals->winner)
-      knockout_lines.push_back(formatLocalized(
-          "INTL_FINALS_WINNER", {nationName(*finals->winner)}));
+      knockout_lines.push_back(
+          formatLocalized("INTL_FINALS_WINNER", {nationName(*finals->winner)}));
   }
   else if (!nations->getGroups().empty())
   {
     const auto competition = nations->getGroups().front().competition;
     groups_title = LOC(International::competitionKey(competition));
-    const size_t through = competition == International::Competition::NationsLeague ? 1 : 2;
+    const size_t through =
+        competition == International::Competition::NationsLeague ? 1 : 2;
     for (const auto& group : nations->getGroups())
       groups.push_back(groupRows(group, through));
   }
@@ -562,7 +578,8 @@ void InternationalScene::renderCompetitionPicker()
     for (size_t i = 0; i < competitions.size(); ++i)
     {
       ImGui::PushID(static_cast<int>(i));
-      if (ImGui::Selectable(competitions[i].name.c_str(), i == competition_index))
+      if (ImGui::Selectable(competitions[i].name.c_str(),
+                            i == competition_index))
       {
         competition_index = i;
         matchday_chosen = false;
@@ -628,9 +645,9 @@ void InternationalScene::renderLeagueTable(float width)
   const auto columns = localized(tableColumns());
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
-  if (UI::beginResponsiveTable("intl_league_table", columns, mask,
-                               ImGuiTableFlags_RowBg |
-                                   ImGuiTableFlags_BordersInnerH))
+  if (UI::beginResponsiveTable(
+          "intl_league_table", columns, mask,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
   {
     for (const TableLine& line : table)
     {
@@ -638,8 +655,8 @@ void InternationalScene::renderLeagueTable(float width)
       ImGui::TableNextRow();
       const bool started = line.played > 0;
       const bool direct = started && line.position <= direct_places;
-      const bool playoff = started && !direct &&
-                           line.position <= direct_places + playoff_places;
+      const bool playoff =
+          started && !direct && line.position <= direct_places + playoff_places;
       if (line.id == club)
         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1,
                                Theme::toU32(palette.accent, 0.16f));
@@ -667,7 +684,8 @@ void InternationalScene::renderLeagueTable(float width)
         ImGui::TextColored(line.goal_difference > 0   ? palette.positive
                            : line.goal_difference < 0 ? palette.negative
                                                       : palette.muted,
-                           "%s", Format::signedInt(line.goal_difference).c_str());
+                           "%s",
+                           Format::signedInt(line.goal_difference).c_str());
       if (UI::cell(mask, 8)) ImGui::Text("%u", line.points);
       if (UI::cell(mask, 9))
         UI::formStrip(std::span(line.form.data(), line.form_count));
@@ -675,7 +693,8 @@ void InternationalScene::renderLeagueTable(float width)
     }
     ImGui::EndTable();
   }
-  UI::badge(formatLocalized("INTL_ZONE_DIRECT", {std::to_string(direct_places)}).c_str(),
+  UI::badge(formatLocalized("INTL_ZONE_DIRECT", {std::to_string(direct_places)})
+                .c_str(),
             palette.positive);
   ImGui::SameLine();
   UI::badge(formatLocalized("INTL_ZONE_PLAYOFF",
@@ -697,9 +716,9 @@ void InternationalScene::renderEntrants(float width)
   const auto columns = localized(entrantColumns());
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
-  if (UI::beginResponsiveTable("intl_entrants_table", columns, mask,
-                               ImGuiTableFlags_RowBg |
-                                   ImGuiTableFlags_BordersInnerH))
+  if (UI::beginResponsiveTable(
+          "intl_entrants_table", columns, mask,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
   {
     for (const EntrantLine& line : entrants)
     {
@@ -742,7 +761,8 @@ void InternationalScene::renderBracket(float width)
   const int per_row = std::max(
       1, static_cast<int>(available / (ROUND_CARD_MIN_WIDTH * Theme::scale())));
   const int columns = std::min<int>(per_row, static_cast<int>(rounds.size()));
-  if (ImGui::BeginTable("intl_rounds", columns, ImGuiTableFlags_SizingStretchSame))
+  if (ImGui::BeginTable("intl_rounds", columns,
+                        ImGuiTableFlags_SizingStretchSame))
   {
     for (const RoundBlock& block : rounds)
     {
@@ -754,8 +774,8 @@ void InternationalScene::renderBracket(float width)
         ImGui::PushID(static_cast<int>(i));
         const float cell = ImGui::GetContentRegionAvail().x;
         const float score_width = ImGui::CalcTextSize("00 - 00").x;
-        const float name_width = std::max(0.0f, cell - score_width -
-                                                    ImGui::GetStyle().ItemSpacing.x);
+        const float name_width = std::max(
+            0.0f, cell - score_width - ImGui::GetStyle().ItemSpacing.x);
         const auto nameColor = [&](int side)
         {
           if (tie.winner == 0) return tie.ours ? palette.text : palette.muted;
@@ -796,22 +816,22 @@ void InternationalScene::renderMatchday(float width)
   ImGui::SameLine();
   ImGui::AlignTextToFramePadding();
   ImGui::TextUnformatted(
-      formatLocalized("INTL_MATCHDAY_OF", {std::to_string(matchday),
-                                           std::to_string(matchdays)})
+      formatLocalized("INTL_MATCHDAY_OF",
+                      {std::to_string(matchday), std::to_string(matchdays)})
           .c_str());
   ImGui::SameLine();
   ImGui::BeginDisabled(matchday >= matchdays);
   if (UI::secondaryButton(">", ImVec2(0, 0), UI::ButtonSize::COMPACT))
     ++matchday;
   ImGui::EndDisabled();
-  const auto& lines =
-      fixtures_by_matchday[static_cast<size_t>(std::clamp<int>(matchday, 1, matchdays) - 1)];
+  const auto& lines = fixtures_by_matchday[static_cast<size_t>(
+      std::clamp<int>(matchday, 1, matchdays) - 1)];
   const auto columns = localized(fixtureColumns());
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
-  if (UI::beginResponsiveTable("intl_matchday_table", columns, mask,
-                               ImGuiTableFlags_RowBg |
-                                   ImGuiTableFlags_BordersInnerH))
+  if (UI::beginResponsiveTable(
+          "intl_matchday_table", columns, mask,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
   {
     for (size_t i = 0; i < lines.size(); ++i)
     {
@@ -821,9 +841,11 @@ void InternationalScene::renderMatchday(float width)
       if (line.ours)
         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1,
                                Theme::toU32(palette.accent, 0.16f));
-      if (UI::cell(mask, 0)) ImGui::TextColored(palette.muted, "%s", line.when.c_str());
+      if (UI::cell(mask, 0))
+        ImGui::TextColored(palette.muted, "%s", line.when.c_str());
       if (UI::cell(mask, 1))
-        UI::textFitted(line.home, ImGui::GetContentRegionAvail().x, palette.text);
+        UI::textFitted(line.home, ImGui::GetContentRegionAvail().x,
+                       palette.text);
       if (UI::cell(mask, 2))
       {
         if (line.played)
@@ -840,7 +862,8 @@ void InternationalScene::renderMatchday(float width)
         }
       }
       if (UI::cell(mask, 3))
-        UI::textFitted(line.away, ImGui::GetContentRegionAvail().x, palette.text);
+        UI::textFitted(line.away, ImGui::GetContentRegionAvail().x,
+                       palette.text);
       ImGui::PopID();
     }
     ImGui::EndTable();
@@ -892,8 +915,8 @@ void InternationalScene::renderNational()
   UI::statTile("called", LOC("INTL_TILE_CALLED"), count.c_str(), nullptr,
                palette.text, tile);
   tiles.next();
-  UI::statTile("next_intl", LOC("INTL_TILE_NEXT_INTL"), next_international.c_str(),
-               nullptr, palette.text, tile);
+  UI::statTile("next_intl", LOC("INTL_TILE_NEXT_INTL"),
+               next_international.c_str(), nullptr, palette.text, tile);
   tiles.next();
   UI::statTile("cycle", LOC("INTL_TILE_CYCLE"), cycle.c_str(), nullptr,
                palette.text, tile);
@@ -929,9 +952,9 @@ void InternationalScene::renderCalledUp(float width)
   const auto columns = localized(calledColumns());
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
-  if (UI::beginResponsiveTable("intl_called_table", columns, mask,
-                               ImGuiTableFlags_RowBg |
-                                   ImGuiTableFlags_BordersInnerH))
+  if (UI::beginResponsiveTable(
+          "intl_called_table", columns, mask,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
   {
     for (const CalledLine& line : called)
     {
@@ -942,12 +965,14 @@ void InternationalScene::renderCalledUp(float width)
                             ImGuiSelectableFlags_SpanAllColumns))
         Navigation::openPlayer(guiView, line.id);
       if (UI::cell(mask, 1))
-        UI::textFitted(line.nation, ImGui::GetContentRegionAvail().x, palette.muted);
+        UI::textFitted(line.nation, ImGui::GetContentRegionAvail().x,
+                       palette.muted);
       if (UI::cell(mask, 2)) UI::textRight(line.caps.c_str());
       if (UI::cell(mask, 3)) UI::textRight(line.goals.c_str());
       if (UI::cell(mask, 4))
-        ImGui::TextColored(line.away ? palette.warning : palette.muted, "%s",
-                           LOC(line.away ? "INTL_STATUS_AWAY" : "INTL_STATUS_ANNOUNCED"));
+        ImGui::TextColored(
+            line.away ? palette.warning : palette.muted, "%s",
+            LOC(line.away ? "INTL_STATUS_AWAY" : "INTL_STATUS_ANNOUNCED"));
       ImGui::PopID();
     }
     ImGui::EndTable();
@@ -958,7 +983,8 @@ void InternationalScene::renderCalledUp(float width)
 void InternationalScene::renderNationFixtures(float width)
 {
   const Theme::Palette& palette = Theme::palette();
-  UI::beginAutoHeightCard("intl_nation_fixtures", LOC("INTL_NATION_FIXTURES"), width);
+  UI::beginAutoHeightCard("intl_nation_fixtures", LOC("INTL_NATION_FIXTURES"),
+                          width);
   const std::array<const char*, 2> filters = {LOC("INTL_FILTER_UPCOMING"),
                                               LOC("INTL_FILTER_RESULTS")};
   UI::segmented("##intl_fixture_filter", fixture_filter, filters);
@@ -972,21 +998,24 @@ void InternationalScene::renderNationFixtures(float width)
   const auto columns = localized(nationFixtureColumns());
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
-  if (UI::beginResponsiveTable("intl_nation_table", columns, mask,
-                               ImGuiTableFlags_RowBg |
-                                   ImGuiTableFlags_BordersInnerH))
+  if (UI::beginResponsiveTable(
+          "intl_nation_table", columns, mask,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
   {
     for (const NationFixture& line : lines)
     {
       ImGui::TableNextRow();
-      if (UI::cell(mask, 0)) ImGui::TextColored(palette.muted, "%s", line.when.c_str());
+      if (UI::cell(mask, 0))
+        ImGui::TextColored(palette.muted, "%s", line.when.c_str());
       if (UI::cell(mask, 1))
-        UI::textFitted(line.home, ImGui::GetContentRegionAvail().x, palette.text);
+        UI::textFitted(line.home, ImGui::GetContentRegionAvail().x,
+                       palette.text);
       if (UI::cell(mask, 2))
         ImGui::TextColored(line.played ? palette.text : palette.faint, "%s",
                            line.score.c_str());
       if (UI::cell(mask, 3))
-        UI::textFitted(line.away, ImGui::GetContentRegionAvail().x, palette.text);
+        UI::textFitted(line.away, ImGui::GetContentRegionAvail().x,
+                       palette.text);
       if (UI::cell(mask, 4))
         UI::textFitted(line.competition, ImGui::GetContentRegionAvail().x,
                        palette.muted);
@@ -999,8 +1028,8 @@ void InternationalScene::renderNationFixtures(float width)
 void InternationalScene::renderGroups(float width)
 {
   const Theme::Palette& palette = Theme::palette();
-  const std::string title = groups_title.empty() ? std::string(LOC("INTL_GROUPS"))
-                                                 : groups_title;
+  const std::string title =
+      groups_title.empty() ? std::string(LOC("INTL_GROUPS")) : groups_title;
   UI::beginAutoHeightCard("intl_groups", title.c_str(), width);
   if (groups.empty() && knockout_lines.empty())
   {
@@ -1011,9 +1040,10 @@ void InternationalScene::renderGroups(float width)
   const float available = ImGui::GetContentRegionAvail().x;
   const int per_row = std::max(
       1, static_cast<int>(available / (GROUP_CARD_MIN_WIDTH * Theme::scale())));
-  const int columns = std::max(1, std::min<int>(per_row, static_cast<int>(groups.size())));
-  if (!groups.empty() &&
-      ImGui::BeginTable("intl_group_grid", columns, ImGuiTableFlags_SizingStretchSame))
+  const int columns =
+      std::max(1, std::min<int>(per_row, static_cast<int>(groups.size())));
+  if (!groups.empty() && ImGui::BeginTable("intl_group_grid", columns,
+                                           ImGuiTableFlags_SizingStretchSame))
   {
     for (size_t g = 0; g < groups.size(); ++g)
     {
@@ -1021,8 +1051,9 @@ void InternationalScene::renderGroups(float width)
       ImGui::TableNextColumn();
       ImGui::PushID(static_cast<int>(g));
       UI::sectionLabel(block.title.c_str());
-      if (ImGui::BeginTable("group", 4,
-                            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit))
+      if (ImGui::BeginTable(
+              "group", 4,
+              ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit))
       {
         ImGui::TableSetupColumn("nation", ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("p");
@@ -1032,9 +1063,9 @@ void InternationalScene::renderGroups(float width)
         {
           ImGui::TableNextRow();
           ImGui::TableNextColumn();
-          UI::textFitted(row.nation, ImGui::GetContentRegionAvail().x,
-                         row.through && row.played > 0 ? palette.positive
-                                                       : palette.text);
+          UI::textFitted(
+              row.nation, ImGui::GetContentRegionAvail().x,
+              row.through && row.played > 0 ? palette.positive : palette.text);
           ImGui::TableNextColumn();
           ImGui::TextColored(palette.muted, "%u", row.played);
           ImGui::TableNextColumn();
@@ -1067,7 +1098,8 @@ void InternationalScene::renderLeaders(float width)
   if (ImGui::BeginTable("intl_leader_table", 4,
                         ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit))
   {
-    ImGui::TableSetupColumn(LOC("INTL_COL_PLAYER"), ImGuiTableColumnFlags_WidthStretch);
+    ImGui::TableSetupColumn(LOC("INTL_COL_PLAYER"),
+                            ImGuiTableColumnFlags_WidthStretch);
     ImGui::TableSetupColumn(LOC("INTL_COL_NATION"));
     ImGui::TableSetupColumn(LOC("INTL_COL_CAPS"));
     ImGui::TableSetupColumn(LOC("INTL_COL_GOALS"));
@@ -1084,7 +1116,8 @@ void InternationalScene::renderLeaders(float width)
       }
       else
       {
-        UI::textFitted(line.name, ImGui::GetContentRegionAvail().x, palette.muted);
+        UI::textFitted(line.name, ImGui::GetContentRegionAvail().x,
+                       palette.muted);
       }
       ImGui::TableNextColumn();
       ImGui::TextColored(palette.muted, "%s", line.nation.c_str());
@@ -1107,8 +1140,10 @@ void InternationalScene::renderRanking(float width)
                         ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit))
   {
     ImGui::TableSetupColumn("#");
-    ImGui::TableSetupColumn(LOC("INTL_COL_NATION"), ImGuiTableColumnFlags_WidthStretch);
-    ImGui::TableSetupColumn(LOC("INTL_COL_COACH"), ImGuiTableColumnFlags_WidthStretch);
+    ImGui::TableSetupColumn(LOC("INTL_COL_NATION"),
+                            ImGuiTableColumnFlags_WidthStretch);
+    ImGui::TableSetupColumn(LOC("INTL_COL_COACH"),
+                            ImGuiTableColumnFlags_WidthStretch);
     ImGui::TableSetupColumn(LOC("INTL_COL_RATING"));
     UI::staticHeadersRow();
     for (size_t i = 0; i < ranking.size(); ++i)
@@ -1118,9 +1153,11 @@ void InternationalScene::renderRanking(float width)
       ImGui::TableNextColumn();
       ImGui::TextColored(palette.muted, "%zu", i + 1);
       ImGui::TableNextColumn();
-      UI::textFitted(line.nation, ImGui::GetContentRegionAvail().x, palette.text);
+      UI::textFitted(line.nation, ImGui::GetContentRegionAvail().x,
+                     palette.text);
       ImGui::TableNextColumn();
-      UI::textFitted(line.coach, ImGui::GetContentRegionAvail().x, palette.muted);
+      UI::textFitted(line.coach, ImGui::GetContentRegionAvail().x,
+                     palette.muted);
       ImGui::TableNextColumn();
       ImGui::Text("%d", line.rating);
     }

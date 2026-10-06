@@ -8,11 +8,10 @@
 
 #include "tools/lab_fixtures.h"
 
-#include <nlohmann/json.hpp>
-
 #include <algorithm>
 #include <fstream>
 #include <map>
+#include <nlohmann/json.hpp>
 #include <string>
 
 #include "global/paths.h"
@@ -53,8 +52,7 @@ std::map<std::string, float> roleStats(PlayerRole role, float base,
                                        std::uint32_t salt)
 {
   // Small deterministic per-player spread keeps squads from being clones.
-  const float jitter =
-      static_cast<float>((salt * 2654435761U) % 11U) - 5.0f;
+  const float jitter = static_cast<float>((salt * 2654435761U) % 11U) - 5.0f;
   const auto value = [&](float offset)
   { return std::clamp(base + offset + jitter, 1.0f, 99.0f); };
   std::map<std::string, float> stats = {
@@ -155,9 +153,9 @@ Lineup buildLabLineup(TeamID team_id, float rating,
   const auto makePlayer = [&](std::uint32_t index, PlayerRole role)
   {
     const auto playerId = static_cast<PlayerID>(team_id) * 100U + index;
-    const std::uint8_t height =
-        role == PlayerRole::GK || role == PlayerRole::CB ? TALL_HEIGHT_CM
-                                                         : HEIGHT_CM;
+    const std::uint8_t height = role == PlayerRole::GK || role == PlayerRole::CB
+                                    ? TALL_HEIGHT_CM
+                                    : HEIGHT_CM;
     pool.push_back(std::make_unique<Player>(
         playerId, team_id, "Lab", std::to_string(playerId), role, Language::EN,
         PLAYER_WAGE, 0, PLAYER_AGE, CONTRACT_YEARS, height, Foot::Right,

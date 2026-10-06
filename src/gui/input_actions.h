@@ -76,8 +76,8 @@ inline constexpr std::size_t BINDING_SLOTS = 2;
 /** @brief Description of an action, given once at registration. */
 struct ActionDef
 {
-  std::string id;          /*!< Stable id, e.g. "match.pause". */
-  std::string label_key;   /*!< Language key of the label. */
+  std::string id;        /*!< Stable id, e.g. "match.pause". */
+  std::string label_key; /*!< Language key of the label. */
   Category category = Category::NAVIGATION;
   Context context = Context::MANAGEMENT;
   ImGuiKeyChord primary = ImGuiKey_None;   /*!< Default chord. */
@@ -163,11 +163,12 @@ class ActionRegistry
    * Pass ImGuiInputFlags_Repeat for held keys. A chord is matched exactly:
    * "S" does not fire while Shift is held.
    */
-  [[nodiscard]] bool pressed(ActionId id,
-                             ImGuiInputFlags flags = ImGuiInputFlags_RouteGlobal) const;
+  [[nodiscard]] bool pressed(
+      ActionId id, ImGuiInputFlags flags = ImGuiInputFlags_RouteGlobal) const;
   /** @brief pressed() by id; false for unknown ids. */
-  [[nodiscard]] bool pressed(std::string_view id,
-                             ImGuiInputFlags flags = ImGuiInputFlags_RouteGlobal) const;
+  [[nodiscard]] bool pressed(
+      std::string_view id,
+      ImGuiInputFlags flags = ImGuiInputFlags_RouteGlobal) const;
 
   /** @brief True when an SDL key-down event is one of the action's chords. */
   [[nodiscard]] bool matches(ActionId id, const SDL_KeyboardEvent& event) const;

@@ -102,8 +102,8 @@ FixtureState stateOf(const Match& match)
 /** Natural key of a fixture (UNIQUE(game_date, home, away)). */
 std::uint64_t fixtureKey(const GameDateValue& date, int home, int away)
 {
-  return (static_cast<std::uint64_t>(static_cast<std::uint32_t>(
-              dayOrdinal(date)))
+  return (static_cast<std::uint64_t>(
+              static_cast<std::uint32_t>(dayOrdinal(date)))
           << 32) |
          (static_cast<std::uint64_t>(home & 0xFFFF) << 16) |
          static_cast<std::uint64_t>(away & 0xFFFF);
@@ -171,10 +171,9 @@ std::vector<Match> FixtureRepository::loadAllMatches() const
       if (sqlite3_column_type(stmt, 10) != SQLITE_NULL)
         penalties.emplace(static_cast<uint8_t>(sqlite3_column_int(stmt, 10)),
                           static_cast<uint8_t>(sqlite3_column_int(stmt, 11)));
-      match.setKnockoutResult(
-          static_cast<uint8_t>(sqlite3_column_int(stmt, 4)),
-          static_cast<uint8_t>(sqlite3_column_int(stmt, 5)),
-          sqlite3_column_int(stmt, 9) != 0, penalties);
+      match.setKnockoutResult(static_cast<uint8_t>(sqlite3_column_int(stmt, 4)),
+                              static_cast<uint8_t>(sqlite3_column_int(stmt, 5)),
+                              sqlite3_column_int(stmt, 9) != 0, penalties);
     }
     matches.push_back(std::move(match));
   }
@@ -215,10 +214,10 @@ void FixtureRepository::saveCalendar(const Calendar& calendar) const
       state.home_penalties = sqlite3_column_int(select, 11);
       state.away_penalties = sqlite3_column_int(select, 12);
     }
-    stored.emplace(
-        fixtureKey(GameDateValue::fromString(columnText(select, 1)),
-                   sqlite3_column_int(select, 2), sqlite3_column_int(select, 3)),
-        row);
+    stored.emplace(fixtureKey(GameDateValue::fromString(columnText(select, 1)),
+                              sqlite3_column_int(select, 2),
+                              sqlite3_column_int(select, 3)),
+                   row);
   }
   sqlite3_finalize(select);
 

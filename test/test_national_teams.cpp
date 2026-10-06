@@ -138,11 +138,13 @@ TEST(NationalTeamsTest, SquadSelectionIsBalancedAndDeterministic)
       { return gamedata->getPlayer(id)->get().getRole() == PlayerRole::GK; });
   EXPECT_GE(keepers, 3);
   EXPECT_LE(keepers, 4);
-  EXPECT_EQ(squad, International::selectSquad(italians, International::FINALS_SQUAD,
-                                              gamedata->getStatsConfig(), {}));
+  EXPECT_EQ(squad,
+            International::selectSquad(italians, International::FINALS_SQUAD,
+                                       gamedata->getStatsConfig(), {}));
   // The best outfield player is always picked.
   const Player* best = *std::ranges::max_element(
-      italians, [&](const Player* a, const Player* b)
+      italians,
+      [&](const Player* a, const Player* b)
       {
         return a->getOverall(gamedata->getStatsConfig()) <
                b->getOverall(gamedata->getStatsConfig());
@@ -162,7 +164,8 @@ TEST(NationalTeamsTest, CycleRunsQualifiersAndFinals)
   nations.planSeason(2025, day, &world);
   ASSERT_GE(nations.getTeams().size(), 12u);
   ASSERT_FALSE(nations.getGroups().empty());
-  EXPECT_EQ(nations.getGroups().front().competition, Competition::WorldQualifier);
+  EXPECT_EQ(nations.getGroups().front().competition,
+            Competition::WorldQualifier);
   ASSERT_EQ(nations.getFinals().size(), 1u);
   EXPECT_EQ(nations.getFinals().front().competition, Competition::WorldFinals);
   for (const auto& team : nations.getTeams()) EXPECT_FALSE(team.coach.empty());
@@ -178,13 +181,15 @@ TEST(NationalTeamsTest, CycleRunsQualifiersAndFinals)
     {
       EXPECT_GE(squad.players.size(), 16u);
       EXPECT_LE(squad.players.size(), International::FINALS_SQUAD);
-      if (!squad.players.empty() && nations.isOnDuty(squad.players.front(), day))
+      if (!squad.players.empty() &&
+          nations.isOnDuty(squad.players.front(), day))
         saw_duty = true;
     }
   }
   EXPECT_TRUE(saw_duty);
   for (const auto& fixture : nations.getFixtures())
-    if (fixture.date < end) EXPECT_TRUE(fixture.played) << fixture.date.toString();
+    if (fixture.date < end)
+      EXPECT_TRUE(fixture.played) << fixture.date.toString();
 
   // The finals were drawn from the qualifiers and produced a winner.
   const auto& finals = nations.getFinals().front();
@@ -221,7 +226,8 @@ TEST(NationalTeamsTest, CycleRunsQualifiersAndFinals)
   // A new season plans the nations league (odd finals year).
   nations.planSeason(2026, GameDateValue(2026, 7, 13), &world);
   ASSERT_FALSE(nations.getGroups().empty());
-  EXPECT_EQ(nations.getGroups().front().competition, Competition::NationsLeague);
+  EXPECT_EQ(nations.getGroups().front().competition,
+            Competition::NationsLeague);
 
   const std::string saved = nations.serialize();
   NationalTeams restored(gamedata);
@@ -266,11 +272,13 @@ TEST(NationalTeamsTest, SeasonOpeningJourney)
     for (const PlayerID player_id : squad.players)
     {
       const auto player = controller->getGameData()->getPlayer(player_id);
-      if (player && player->get().getTeamId() == club) called.push_back(player_id);
+      if (player && player->get().getTeamId() == club)
+        called.push_back(player_id);
     }
   ASSERT_FALSE(called.empty());
   EXPECT_TRUE(has("INBOX_INTL_CALLUP_TITLE"));
-  const Player& away = controller->getGameData()->getPlayer(called.front())->get();
+  const Player& away =
+      controller->getGameData()->getPlayer(called.front())->get();
   EXPECT_TRUE(nations.isOnDuty(away.getId(), controller->getCurrentDate()));
   EXPECT_FALSE(game->isEligible(away, MatchType::LEAGUE));
   // No competitive club match inside the window.
@@ -287,7 +295,8 @@ TEST(NationalTeamsTest, SeasonOpeningJourney)
   game = controller->getGame();
   EXPECT_TRUE(game->getNationalTeams().isOnDuty(called.front(),
                                                 controller->getCurrentDate()));
-  EXPECT_TRUE(game->getCompetitions().getContinental().getSeasons().front().drawn);
+  EXPECT_TRUE(
+      game->getCompetitions().getContinental().getSeasons().front().drawn);
   EXPECT_EQ(game->getCompetitions()
                 .getContinental()
                 .getTable(Continental::CHAMPIONS_CUP_ID)

@@ -16,8 +16,8 @@
 
 #include "database/gamedata.h"
 #include "database/repositories/inbox_repository.h"
-#include "database/repositories/scouting_repository.h"
 #include "database/repositories/player_repository.h"
+#include "database/repositories/scouting_repository.h"
 #include "database/repositories/staff_repository.h"
 #include "database/repositories/training_repository.h"
 #include "database/repositories/world_state_repository.h"
@@ -248,8 +248,8 @@ SquadAreas squadAreas(
   for (std::size_t area = 0; area < areas.score.size(); ++area)
   {
     if (counted[area] > 0)
-      areas.score[area] = static_cast<float>(
-          totals[area] / static_cast<double>(counted[area]));
+      areas.score[area] =
+          static_cast<float>(totals[area] / static_cast<double>(counted[area]));
   }
   return areas;
 }
@@ -488,8 +488,7 @@ void WorldSimulation::processDaily(const GameDateValue& date,
     // Training injuries: ECIS 3.5-4.1 injuries per 1000 training hours [S],
     // scaled by the session's load (the Balanced week averages the
     // calibrated hours), workload spikes and the medical staff.
-    if (!training_period || player.getTeamId() == FREE_AGENTS_TEAM_ID)
-      continue;
+    if (!training_period || player.getTeamId() == FREE_AGENTS_TEAM_ID) continue;
     const double exposure =
         TrainingSystem::trainPlayer(*gamedata, player, ordinal);
     if (exposure <= 0.0) continue;
@@ -785,9 +784,9 @@ void WorldSimulation::updateWeeklyMorale(Team& team)
     if (player.getTransferStatus() == TransferStatus::Listed)
       transfer_term -= 4.0f * toUnit(player.getTraits().loyalty);
 
-    const float target =
-        Morale::NEUTRAL + playing_term + wage_term + transfer_term +
-        interactions.moraleTargetOffset(player.getId());
+    const float target = Morale::NEUTRAL + playing_term + wage_term +
+                         transfer_term +
+                         interactions.moraleTargetOffset(player.getId());
     dynamics.morale = std::clamp(Morale::PERSISTENCE * dynamics.morale +
                                      (1.0f - Morale::PERSISTENCE) * target,
                                  0.0f, 100.0f);
@@ -804,9 +803,8 @@ void WorldSimulation::processMonthly(const GameDateValue& date,
   const auto economies = buildLeagueEconomies(*gamedata);
   // July is the rollover month: the parachutes of a season are paid from
   // August to June.
-  const auto parachute = date.month == 7
-                             ? std::unordered_map<TeamID, double>{}
-                             : parachutes(economies);
+  const auto parachute = date.month == 7 ? std::unordered_map<TeamID, double>{}
+                                         : parachutes(economies);
   for (auto& [team_id, team] : gamedata->getTeams())
   {
     if (team_id == FREE_AGENTS_TEAM_ID) continue;
@@ -906,8 +904,8 @@ std::unordered_map<TeamID, double> WorldSimulation::parachutes(
   {
     const int seasons_ago = static_cast<int>(latest) - entry.season;
     if (entry.competition_type != MatchType::LEAGUE || seasons_ago < 0 ||
-        seasons_ago >= static_cast<int>(
-                           WorldTuning::Finance::PARACHUTE_SHARES.size()) ||
+        seasons_ago >=
+            static_cast<int>(WorldTuning::Finance::PARACHUTE_SHARES.size()) ||
         Competitions::leagueTier(*gamedata, entry.competition_id) != 1)
       continue;
     const auto economy = economies.find(entry.competition_id);
@@ -920,8 +918,8 @@ std::unordered_map<TeamID, double> WorldSimulation::parachutes(
       if (seasons_ago == 0 && relegated_now) relegated_now->push_back(team_id);
       if (economy == economies.end()) continue;
       double& amount = paid[team_id];
-      amount = std::max(amount, ClubEconomy::parachutePayment(economy->second,
-                                                              seasons_ago));
+      amount = std::max(
+          amount, ClubEconomy::parachutePayment(economy->second, seasons_ago));
     }
   }
   return paid;
@@ -930,8 +928,8 @@ std::unordered_map<TeamID, double> WorldSimulation::parachutes(
 void WorldSimulation::applyRelegationWageCuts(
     const std::vector<TeamID>& relegated, TeamID managed_team_id)
 {
-  const auto keep = static_cast<double>(
-      1.0f - WorldTuning::Finance::RELEGATION_WAGE_CUT);
+  const auto keep =
+      static_cast<double>(1.0f - WorldTuning::Finance::RELEGATION_WAGE_CUT);
   for (const TeamID team_id : relegated)
   {
     if (team_id == managed_team_id) continue;
@@ -1003,10 +1001,10 @@ void WorldSimulation::clearFreeAgentPool(const GameDateValue& date)
     }
   }
   if (second_tier.empty()) return;
-  const auto quantile = second_tier.begin() +
-                        static_cast<std::ptrdiff_t>(
-                            FreeAgents::LEVEL_QUANTILE *
-                            static_cast<double>(second_tier.size() - 1));
+  const auto quantile =
+      second_tier.begin() +
+      static_cast<std::ptrdiff_t>(FreeAgents::LEVEL_QUANTILE *
+                                  static_cast<double>(second_tier.size() - 1));
   std::ranges::nth_element(second_tier, quantile);
   const double level = *quantile;
 
@@ -1028,12 +1026,11 @@ void WorldSimulation::clearFreeAgentPool(const GameDateValue& date)
       chance *= FreeAgents::ABOVE_LEVEL_FACTOR;
     else if (overall < level - margin)
       chance *= FreeAgents::BELOW_LEVEL_FACTOR;
-    if (age <= 21 &&
-        static_cast<double>(player.getPotential()) >=
-            level + FreeAgents::PROSPECT_POTENTIAL_MARGIN)
+    if (age <= 21 && static_cast<double>(player.getPotential()) >=
+                         level + FreeAgents::PROSPECT_POTENTIAL_MARGIN)
       chance *= FreeAgents::PROSPECT_FACTOR;
-    if (WorldRng::hashUniform(seed, RngDomain::Retirement, ordinal,
-                              player_id) < chance)
+    if (WorldRng::hashUniform(seed, RngDomain::Retirement, ordinal, player_id) <
+        chance)
       leaving.push_back(player_id);
   }
   std::ranges::sort(leaving);
@@ -1093,8 +1090,8 @@ void WorldSimulation::ensureBoard(const GameDateValue& date,
       team.getProfile().youth_facilities, finances.getBalance(), 0);
   board.cup_objective = BoardModel::cupObjectiveFor(
       board.objective, Competitions::leagueTier(*gamedata, team.getLeagueId()));
-  board.finance_objective =
-      BoardModel::financeObjectiveFor(vision.tight_budget, finances.getBalance());
+  board.finance_objective = BoardModel::financeObjectiveFor(
+      vision.tight_budget, finances.getBalance());
   board.youth_target = BoardModel::youthTargetFor(vision.youth_focus);
   board.start_balance = finances.getBalance();
   board.targets_set = true;
@@ -1260,16 +1257,16 @@ void WorldSimulation::postSquadReport(const GameDateValue& date,
     if (player.getContractYears() <= 1) ++expiring;
   }
   if (ranked.empty()) return;
-  std::ranges::sort(ranked, [](const auto& a, const auto& b)
-                    { return a.first > b.first; });
+  std::ranges::sort(
+      ranked, [](const auto& a, const auto& b) { return a.first > b.first; });
 
   std::vector<std::string> key_players;
   for (std::size_t i = 0; i < ranked.size() && i < 3; ++i)
   {
-    key_players.push_back(std::format(
-        "{} ({}, {})", ranked[i].second->getName(),
-        RoleUtils::shortName(ranked[i].second->getRole()),
-        std::lround(ranked[i].first)));
+    key_players.push_back(
+        std::format("{} ({}, {})", ranked[i].second->getName(),
+                    RoleUtils::shortName(ranked[i].second->getRole()),
+                    std::lround(ranked[i].first)));
   }
   const SquadAreas areas = squadAreas(ranked);
   const std::size_t strongest = areas.strongest();
@@ -1297,8 +1294,7 @@ void WorldSimulation::postPreseasonSchedule(
   const auto opponentName = [&](const UpcomingFixture& fixture)
   {
     const auto other = gamedata->getTeam(fixture.opponent_id);
-    return other ? other->get().getName()
-                 : std::string(FREE_AGENTS_NAME_ARG);
+    return other ? other->get().getName() : std::string(FREE_AGENTS_NAME_ARG);
   };
   std::string friendlies;
   const UpcomingFixture* opener = nullptr;
@@ -1310,9 +1306,9 @@ void WorldSimulation::postPreseasonSchedule(
       break;
     }
     if (!friendlies.empty()) friendlies += '\n';
-    friendlies += std::format("{:02}/{:02}  {} {}", fixture.date.day,
-                              fixture.date.month, venue(fixture),
-                              opponentName(fixture));
+    friendlies +=
+        std::format("{:02}/{:02}  {} {}", fixture.date.day, fixture.date.month,
+                    venue(fixture), opponentName(fixture));
   }
   if (friendlies.empty() && !opener) return;
   if (friendlies.empty()) friendlies = "@INBOX_NONE";
@@ -1339,8 +1335,8 @@ void WorldSimulation::postScoutSuggestion(const GameDateValue& date,
   std::vector<std::pair<double, const Player*>> ranked;
   for (const auto& player_ref : gamedata->getPlayersForTeam(team.getId()))
     ranked.emplace_back(player_ref.get().getOverall(config), &player_ref.get());
-  std::ranges::sort(ranked, [](const auto& a, const auto& b)
-                    { return a.first > b.first; });
+  std::ranges::sort(
+      ranked, [](const auto& a, const auto& b) { return a.first > b.first; });
   const SquadAreas areas = squadAreas(ranked);
   const std::size_t weakest = areas.weakest();
 
@@ -1436,13 +1432,11 @@ bool WorldSimulation::applyMatchConsequences(
   if (consequence.end_condition < 0.0f && dynamics.injury_days == 0)
   {
     // ECIS: 21-27.5 injuries per 1000 match hours. [S]
-    const double hazard = Fitness::MATCH_INJURY_RATE_PER_HOUR *
-                          static_cast<double>(minutes) / 60.0 *
-                          workload_multiplier *
-                          injuryMultiplier(player, ordinal) *
-                          (injury_risk_provider
-                               ? injury_risk_provider(player.getId(), date)
-                               : 1.0);
+    const double hazard =
+        Fitness::MATCH_INJURY_RATE_PER_HOUR * static_cast<double>(minutes) /
+        60.0 * workload_multiplier * injuryMultiplier(player, ordinal) *
+        (injury_risk_provider ? injury_risk_provider(player.getId(), date)
+                              : 1.0);
     injured =
         WorldRng::hashUniform(gamedata->getWorldSeed(), RngDomain::MatchInjury,
                               static_cast<std::uint64_t>(ordinal),
@@ -1723,10 +1717,9 @@ SquadRole WorldSimulation::squadRole(PlayerID player_id) const
       ++rank;
   }
   // Only the managed club's statuses count (a former club's are stale).
-  if (const auto status =
-          player->get().getTeamId() == board.team_id
-              ? squad_statuses.get(player_id, board.team_id)
-              : std::nullopt)
+  if (const auto status = player->get().getTeamId() == board.team_id
+                              ? squad_statuses.get(player_id, board.team_id)
+                              : std::nullopt)
     return SquadStatusModel::toSquadRole(SquadStatusModel::expectation(
         *status, SquadStatusModel::deserved(rank, player->get().getAge())));
   return roleForRank(rank);
@@ -1938,8 +1931,7 @@ void WorldSimulation::awardPrizeMoney(const GameDateValue& date,
 
       // The board judges the season once promotion and relegation are
       // known (Game::endSeason); its review quotes this money.
-      if (team.getId() == managed_team_id)
-        season_prize_money = merit[position];
+      if (team.getId() == managed_team_id) season_prize_money = merit[position];
     }
   }
 }
@@ -1982,7 +1974,8 @@ void WorldSimulation::renewAiContracts(TeamID managed_team_id)
       else if (player.getAge() < 31)
         years = 2;
       player.setContractYears(static_cast<std::uint8_t>(1 + years));
-      if (!over_budget) player.setWage(player.getWage() + player.getWage() / 20);
+      if (!over_budget)
+        player.setWage(player.getWage() + player.getWage() / 20);
     }
   }
 }
@@ -2003,8 +1996,8 @@ void WorldSimulation::trimAiSquads(TeamID managed_team_id)
         ranked.emplace_back(player.getOverall(config), &player);
     }
     if (ranked.size() <= Youth::AI_SQUAD_TARGET) continue;
-    std::ranges::sort(ranked, [](const auto& a, const auto& b)
-                      { return a.first > b.first; });
+    std::ranges::sort(
+        ranked, [](const auto& a, const auto& b) { return a.first > b.first; });
     // Beyond the matchday squad the weakest players are not kept, except
     // prospects with room to grow: their contracts run out this summer.
     std::size_t surplus = ranked.size() - Youth::AI_SQUAD_TARGET;
@@ -2143,8 +2136,8 @@ void WorldSimulation::load(const std::shared_ptr<DatabaseConnection>& db_conn)
       const GameDateValue& last = finances.getLedger().back().date;
       const GameDateValue review(last.year, last.month, 1);
       cash_warning_sent = true;
-      transfer_embargo = finances.balanceAt(review - 1) < 0 &&
-                         finances.balanceAt(review) < 0;
+      transfer_embargo =
+          finances.balanceAt(review - 1) < 0 && finances.balanceAt(review) < 0;
     }
   }
   ScoutingState scouting_state;

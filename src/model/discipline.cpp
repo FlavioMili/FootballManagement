@@ -60,7 +60,8 @@ void Discipline::processMatch(const MatchReport& report,
     for (const MatchReportEvent& event : report.events)
     {
       if (event.player == 0) continue;
-      if (event.kind == MatchEventKind::YELLOW_CARD) ++cards[event.player].yellows;
+      if (event.kind == MatchEventKind::YELLOW_CARD)
+        ++cards[event.player].yellows;
       if (event.kind == MatchEventKind::SECOND_YELLOW)
       {
         ++cards[event.player].yellows;
@@ -90,19 +91,21 @@ void Discipline::book(DisciplinaryRecord& record, unsigned yellows,
   if (reds > 0 && yellows >= 2)
   {
     // Sent off for a second caution: the two cautions do not accumulate.
-    record.ban_matches = addMatches(record.ban_matches, rules.second_yellow_ban);
+    record.ban_matches =
+        addMatches(record.ban_matches, rules.second_yellow_ban);
     yellows -= 2;
   }
   else if (reds > 0)
   {
-    record.ban_matches = addMatches(
-        record.ban_matches,
-        rules.straight_red_ban +
-            unsigned{rules.repeat_red_extra} * record.season_reds);
+    record.ban_matches =
+        addMatches(record.ban_matches,
+                   rules.straight_red_ban +
+                       unsigned{rules.repeat_red_extra} * record.season_reds);
   }
   if (reds > 0) record.season_reds = addMatches(record.season_reds, 1);
 
-  const unsigned threshold = std::max<unsigned>(rules.yellow_card_threshold, 1U);
+  const unsigned threshold =
+      std::max<unsigned>(rules.yellow_card_threshold, 1U);
   for (unsigned i = 0; i < yellows; ++i)
   {
     ++record.season_yellows;
@@ -144,8 +147,8 @@ void Discipline::resetSeason()
     record.season_yellows = 0;
     record.season_reds = 0;
   }
-  std::erase_if(by_player,
-                [](const auto& entry) { return entry.second.ban_matches == 0; });
+  std::erase_if(by_player, [](const auto& entry)
+                { return entry.second.ban_matches == 0; });
 }
 
 std::vector<DisciplinaryRecord> Discipline::records() const

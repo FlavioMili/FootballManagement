@@ -121,12 +121,13 @@ void Game::beginSeasonReview(
   if (const auto table = final_tables.find(review.league_id);
       table != final_tables.end())
   {
-    review.league_size =
-        static_cast<std::uint8_t>(std::min<std::size_t>(table->second.size(), 255));
+    review.league_size = static_cast<std::uint8_t>(
+        std::min<std::size_t>(table->second.size(), 255));
     for (const StandingRow& row : table->second)
     {
       if (row.team_id != managed_team_id) continue;
-      review.position = static_cast<std::uint8_t>(std::min<int>(row.position, 255));
+      review.position =
+          static_cast<std::uint8_t>(std::min<int>(row.position, 255));
       review.played = row.played;
       review.won = row.won;
       review.drawn = row.drawn;
@@ -144,9 +145,9 @@ void Game::beginSeasonReview(
   review.young_regulars =
       static_cast<std::uint8_t>(std::min(youngRegulars(managed_team_id), 255));
   // League scorers are read while the club is still in this season's league.
-  for (const PlayerSeasonStats& stats : competitions.getTopScorers(
-           MatchType::LEAGUE, review.league_id,
-           std::numeric_limits<std::size_t>::max()))
+  for (const PlayerSeasonStats& stats :
+       competitions.getTopScorers(MatchType::LEAGUE, review.league_id,
+                                  std::numeric_limits<std::size_t>::max()))
   {
     if (stats.team_id != managed_team_id) continue;
     if (const auto player = gamedata->getPlayer(stats.player_id))
@@ -173,7 +174,8 @@ void Game::judgeSeason(std::span<const SeasonHistoryEntry> finished)
   const LeagueID root = Competitions::rootLeague(*gamedata, review.league_id);
   for (const SeasonHistoryEntry& entry : finished)
   {
-    if (entry.competition_type == MatchType::CUP && entry.competition_id == root)
+    if (entry.competition_type == MatchType::CUP &&
+        entry.competition_id == root)
       review.cup_won = entry.champion_id == review.team_id;
     if (entry.competition_type != MatchType::LEAGUE ||
         entry.competition_id != review.league_id)
@@ -205,13 +207,13 @@ void Game::judgeSeason(std::span<const SeasonHistoryEntry> finished)
       review.finance_objective, finances.getBalance(), board.start_balance,
       finances.getCurrentWageSpending(*gamedata, club) >
           finances.getWageBudget());
-  inputs.youth = BoardModel::gradeYouth(review.youth_target,
-                                        review.young_regulars);
+  inputs.youth =
+      BoardModel::gradeYouth(review.youth_target, review.young_regulars);
   inputs.targets_set = board.targets_set;
   inputs.league_matches = board.league_matches;
   inputs.confidence = board.confidence;
-  const SeasonReview* previous = season_archive.review(
-      static_cast<std::uint16_t>(review.season - 1));
+  const SeasonReview* previous =
+      season_archive.review(static_cast<std::uint16_t>(review.season - 1));
   inputs.warned_last_season = previous && previous->team_id == review.team_id &&
                               previous->result.verdict == SeasonVerdict::Warned;
   review.result = SeasonReviewModel::judge(inputs);

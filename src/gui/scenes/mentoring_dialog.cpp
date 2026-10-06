@@ -73,18 +73,19 @@ void MentoringDialog::rebuild(GameController& controller)
     for (const MenteeState& state : group.mentees)
     {
       Member mentee = member(state.player_id);
-      mentee.shift = fmt::sprintf(LOC("MENTORING_SHIFT"),
-                                  static_cast<double>(state.professionalism_shift),
-                                  static_cast<double>(state.temperament_shift));
+      mentee.shift =
+          fmt::sprintf(LOC("MENTORING_SHIFT"),
+                       static_cast<double>(state.professionalism_shift),
+                       static_cast<double>(state.temperament_shift));
       view.mentees.push_back(std::move(mentee));
     }
     if (const auto mentor = gamedata->getPlayer(group.mentor_id))
-      view.effect = fmt::sprintf(
-          LOC("MENTORING_GROUP_EFFECT"),
-          (Mentoring::developmentMultiplier(
-               mentor->get().getTraits().professionalism) -
-           1.0f) *
-              100.0f);
+      view.effect =
+          fmt::sprintf(LOC("MENTORING_GROUP_EFFECT"),
+                       (Mentoring::developmentMultiplier(
+                            mentor->get().getTraits().professionalism) -
+                        1.0f) *
+                           100.0f);
     groups.push_back(std::move(view));
   }
   for (const auto& player : controller.getPlayersForTeam(team->get().getId()))
@@ -191,13 +192,13 @@ bool MentoringDialog::renderGroup(GameController& controller,
 {
   const Theme::Palette& palette = Theme::palette();
   const float available = ImGui::GetContentRegionAvail().x;
-  UI::sectionLabel(fmt::sprintf(LOC("MENTORING_GROUP_OF"),
-                                group.mentor.name.c_str())
-                       .c_str());
+  UI::sectionLabel(
+      fmt::sprintf(LOC("MENTORING_GROUP_OF"), group.mentor.name.c_str())
+          .c_str());
   UI::textFitted(group.mentor.detail + "  ·  " + group.effect, available,
                  palette.muted);
-  const float removeWidth = UI::buttonWidth(LOC("MENTORING_REMOVE"),
-                                            UI::ButtonSize::COMPACT);
+  const float removeWidth =
+      UI::buttonWidth(LOC("MENTORING_REMOVE"), UI::ButtonSize::COMPACT);
   for (const Member& mentee : group.mentees)
   {
     ImGui::PushID(static_cast<int>(mentee.id));
@@ -241,8 +242,8 @@ bool MentoringDialog::renderGroup(GameController& controller,
         }
       ImGui::EndCombo();
     }
-    UI::sameLineIfFits(UI::buttonWidth(LOC("MENTORING_DISSOLVE"),
-                                       UI::ButtonSize::COMPACT));
+    UI::sameLineIfFits(
+        UI::buttonWidth(LOC("MENTORING_DISSOLVE"), UI::ButtonSize::COMPACT));
   }
   if (!changed && UI::secondaryButton(LOC("MENTORING_DISSOLVE"), ImVec2(0, 0),
                                       UI::ButtonSize::COMPACT))

@@ -27,8 +27,8 @@
 #include "model/guidance.h"
 #include "model/league.h"
 #include "model/manager_career.h"
-#include "model/next_action.h"
 #include "model/medical_centre.h"
+#include "model/next_action.h"
 #include "model/player.h"
 #include "model/player_agent.h"
 #include "model/season_agenda.h"
@@ -100,7 +100,7 @@ class GameController
   {
     bool ok = true;
     bool autosave = false;
-    SaveError error;           ///< error.langKey() for the UI message.
+    SaveError error;  ///< error.langKey() for the UI message.
     SaveTimings timings;
     std::string game_date;     ///< In-game date of the save.
     int successful_saves = 0;  ///< Since the game was loaded.
@@ -116,7 +116,8 @@ class GameController
    * @param world_seed Seed of the generated world and of every random stream
    * of the world simulation. Without it FM_WORLD_SEED or the clock is used.
    */
-  void newGame(int slot, std::optional<std::uint64_t> world_seed = std::nullopt);
+  void newGame(int slot,
+               std::optional<std::uint64_t> world_seed = std::nullopt);
 
   /**
    * @brief Loads an existing game from the given save slot.
@@ -498,17 +499,17 @@ class GameController
   enum class PlayerActionBlock : std::uint8_t
   {
     None,
-    NotYours,     /*!< Not the managed club's (or an academy player). */
-    WindowClosed, /*!< The transfer window is shut. */
-    OnLoan,       /*!< Borrowed from another club. */
-    Leaving,      /*!< Committed to another club (pre-contract). */
-    SquadFloor,   /*!< He would leave fewer than 11 senior players. */
+    NotYours,       /*!< Not the managed club's (or an academy player). */
+    WindowClosed,   /*!< The transfer window is shut. */
+    OnLoan,         /*!< Borrowed from another club. */
+    Leaving,        /*!< Committed to another club (pre-contract). */
+    SquadFloor,     /*!< He would leave fewer than 11 senior players. */
     LastGoalkeeper, /*!< He is the club's only senior goalkeeper. */
-    MaxLength,    /*!< His contract already runs as long as allowed. */
-    NotLonger,    /*!< The proposal does not extend his contract. */
-    TooLong,      /*!< Longer than the rules allow at his age. */
-    TalksEnded,   /*!< He will not talk again for a few days. */
-    SquadFull     /*!< The squad already has the most senior players. */
+    MaxLength,      /*!< His contract already runs as long as allowed. */
+    NotLonger,      /*!< The proposal does not extend his contract. */
+    TooLong,        /*!< Longer than the rules allow at his age. */
+    TalksEnded,     /*!< He will not talk again for a few days. */
+    SquadFull       /*!< The squad already has the most senior players. */
   };
   /** Language key explaining @p block (empty for None). */
   static const char* playerActionBlockKey(PlayerActionBlock block);
@@ -529,8 +530,8 @@ class GameController
     /** What the player's agent says about it (language key, takes the
      * player's name). */
     const char* agent_line = "";
-    bool completed = false; /*!< Moved, renewed or pre-contract signed. */
-    bool over_budget = false;    /*!< Agreed but the club cannot pay. */
+    bool completed = false;   /*!< Moved, renewed or pre-contract signed. */
+    bool over_budget = false; /*!< Agreed but the club cannot pay. */
     std::uint8_t rounds_left = 0;
   };
   /**
@@ -596,7 +597,8 @@ class GameController
     std::uint32_t market_value = 0;
     std::uint32_t asking_price = 0; /*!< Listing price, 0 if not listed. */
     std::uint8_t contract_years = 0;
-    BuyerNegotiation::PlayerStance stance = BuyerNegotiation::PlayerStance::Open;
+    BuyerNegotiation::PlayerStance stance =
+        BuyerNegotiation::PlayerStance::Open;
     std::uint8_t rivals = 0; /*!< Other clubs bidding for him. */
     OfferStatus status = OfferStatus::AwaitingClub;
     GameDateValue expires;
@@ -606,9 +608,9 @@ class GameController
     bool loan = false;
     TransferNegotiation::LoanTerms loan_terms; /*!< Loan: on the table. */
     TransferNegotiation::LoanTerms asked_loan; /*!< Loan: pending counter. */
-    std::uint32_t weekly_wage = 0;    /*!< His full wage. */
-    std::uint32_t release_clause = 0; /*!< 0 = none. */
-    int season_weeks = 0;             /*!< Weeks to the season's end. */
+    std::uint32_t weekly_wage = 0;             /*!< His full wage. */
+    std::uint32_t release_clause = 0;          /*!< 0 = none. */
+    int season_weeks = 0; /*!< Weeks to the season's end. */
     /** Why the club could not let him go now (squad floor). */
     PlayerActionBlock sale_block = PlayerActionBlock::None;
     std::vector<OfferRound> history;
@@ -922,8 +924,7 @@ class GameController
   int64_t getScoutAssignmentCost(ScoutTargetKind kind, uint32_t target_id,
                                  uint16_t days) const;
   /** Sends a scout (cost booked to the ledger today). */
-  ScoutAssignError startScoutAssignment(uint32_t scout_id,
-                                        ScoutTargetKind kind,
+  ScoutAssignError startScoutAssignment(uint32_t scout_id, ScoutTargetKind kind,
                                         uint32_t target_id, uint16_t days);
   bool cancelScoutAssignment(uint32_t assignment_id);
   /** Scout reports, oldest first. */
@@ -989,7 +990,8 @@ class GameController
   };
   /** The managed club's next seven days (today first) as scheduled. */
   std::vector<TrainingDayPreview> getTrainingWeekPreview() const;
-  /** Tactical familiarity in [0, 1]; see TrainingSystem::tacticalFamiliarity. */
+  /** Tactical familiarity in [0, 1]; see TrainingSystem::tacticalFamiliarity.
+   */
   float getTacticalFamiliarity(TeamID team_id) const;
   /** Assistant manager's recommendations, most important first. */
   std::vector<TrainingAdvice> getTrainingAdvice() const;
@@ -1041,7 +1043,7 @@ class GameController
     YouthStatus status = YouthStatus::Squad;
     YouthContract contract = YouthContract::None;
     int contract_years = 0;
-    uint32_t wage = 0;       /*!< Weekly wage (0 for trialists). */
+    uint32_t wage = 0; /*!< Weekly wage (0 for trialists). */
     YouthContract offer = YouthContract::None; /*!< Contract he would get. */
     uint32_t offer_wage = 0; /*!< Weekly wage of that contract. */
     YouthEstimate estimate;
@@ -1192,9 +1194,9 @@ class GameController
   struct NationalVacancyView
   {
     Language nation = Language::EN;
-    int rank = 0;          /*!< 1 = best-rated nation. */
-    float stature = 0.0f;  /*!< Club reputation scale. */
-    float chance = 0.0f;   /*!< Chance of an offer after applying. */
+    int rank = 0;         /*!< 1 = best-rated nation. */
+    float stature = 0.0f; /*!< Club reputation scale. */
+    float chance = 0.0f;  /*!< Chance of an offer after applying. */
     CoachingLicence required_licence = CoachingLicence::A;
     std::int64_t weekly_wage = 0;
     GameDateValue opened = GameDateValue();
@@ -1221,12 +1223,12 @@ class GameController
     int age = 0;
     TeamID club = 0;
     int overall = 0;
-    float form = 0.0f;      /*!< Average match rating (0: no matches). */
-    int condition = 0;      /*!< 0-100. */
+    float form = 0.0f; /*!< Average match rating (0: no matches). */
+    int condition = 0; /*!< 0-100. */
     uint16_t caps = 0;
     uint16_t goals = 0;
-    bool available = true;  /*!< Not injured. */
-    bool selected = false;  /*!< In the announced squad. */
+    bool available = true; /*!< Not injured. */
+    bool selected = false; /*!< In the announced squad. */
   };
   /** The managed nation's call-up: squad, candidates and fixtures. */
   struct CallUpView
@@ -1470,8 +1472,7 @@ class GameController
   /** Listing bids for managed players (older saves) become offers. */
   void absorbListingBids();
   /** How a managed player feels about joining @p buyer. */
-  BuyerNegotiation::PlayerStance playerStance(PlayerID pid,
-                                              TeamID buyer) const;
+  BuyerNegotiation::PlayerStance playerStance(PlayerID pid, TeamID buyer) const;
   /** Drops listings of players who moved, left or may not be traded. */
   void purgeStaleListings();
   /** Withdraws the bids a club placed while it had no manager. */

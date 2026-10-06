@@ -82,8 +82,8 @@ int addMissingColumns(sqlite3* db, const Migrations::Migration& migration)
     if (!Migrations::tableExists(db, spec.table) ||
         Migrations::columnExists(db, spec.table, spec.column))
       continue;
-    exec(db, std::format("ALTER TABLE \"{}\" ADD COLUMN \"{}\" {};",
-                         spec.table, spec.column, spec.definition));
+    exec(db, std::format("ALTER TABLE \"{}\" ADD COLUMN \"{}\" {};", spec.table,
+                         spec.column, spec.definition));
     ++added;
   }
   return added;
@@ -91,13 +91,13 @@ int addMissingColumns(sqlite3* db, const Migrations::Migration& migration)
 
 bool columnsMissing(sqlite3* db, const Migrations::Migration& migration)
 {
-  return std::ranges::any_of(
-      migration.columns,
-      [db](const Migrations::ColumnSpec& spec)
-      {
-        return Migrations::tableExists(db, spec.table) &&
-               !Migrations::columnExists(db, spec.table, spec.column);
-      });
+  return std::ranges::any_of(migration.columns,
+                             [db](const Migrations::ColumnSpec& spec)
+                             {
+                               return Migrations::tableExists(db, spec.table) &&
+                                      !Migrations::columnExists(db, spec.table,
+                                                                spec.column);
+                             });
 }
 
 /** Runs @p body in BEGIN IMMEDIATE ... COMMIT, rolling back on failure. */
@@ -218,8 +218,8 @@ int Migrations::readSchemaVersion(sqlite3* db)
 {
   int version = 0;
   if (tableExists(db, "save_meta"))
-    version = queryInt(db, "SELECT schema_version FROM save_meta WHERE id = 1;",
-                       0);
+    version =
+        queryInt(db, "SELECT schema_version FROM save_meta WHERE id = 1;", 0);
   if (tableExists(db, "schema_migrations"))
     version = std::max(
         version, queryInt(db, "SELECT MAX(number) FROM schema_migrations;", 0));
@@ -230,8 +230,8 @@ int Migrations::foreignKeyIssues(sqlite3* db)
 {
   sqlite3_stmt* stmt = nullptr;
   int issues = 0;
-  if (sqlite3_prepare_v2(db, "PRAGMA foreign_key_check;", -1, &stmt,
-                         nullptr) != SQLITE_OK)
+  if (sqlite3_prepare_v2(db, "PRAGMA foreign_key_check;", -1, &stmt, nullptr) !=
+      SQLITE_OK)
     return 0;
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
@@ -261,17 +261,17 @@ Migrations::MigrationReport Migrations::migrate(
   // full definition (schema.sql is idempotent and must run outside a
   // transaction: it sets the journal mode).
   connection.initialize();
-  inTransaction(db,
-                [&]
-                {
-                  exec(db, VERSION_TABLES_SQL);
-                  exec(db, std::format(
-                               "INSERT OR IGNORE INTO save_meta (id, format_id, "
-                               "schema_version, min_reader_version) VALUES "
-                               "(1, '{}', {}, {});",
-                               SaveFormat::FORMAT_ID, report.from_version,
-                               report.from_version));
-                });
+  inTransaction(
+      db,
+      [&]
+      {
+        exec(db, VERSION_TABLES_SQL);
+        exec(db, std::format("INSERT OR IGNORE INTO save_meta (id, format_id, "
+                             "schema_version, min_reader_version) VALUES "
+                             "(1, '{}', {}, {});",
+                             SaveFormat::FORMAT_ID, report.from_version,
+                             report.from_version));
+      });
 
   const MigrationContext context{db, report.fresh};
   for (const Migration& migration : migrations)
@@ -283,9 +283,10 @@ Migrations::MigrationReport Migrations::migrate(
       if (!columnsMissing(db, migration)) continue;
       inTransaction(db, [&] { addMissingColumns(db, migration); });
       report.repaired.push_back(migration.number);
-      Logger::warn(std::format("Save schema repaired: migration {} re-added "
-                               "missing columns",
-                               migration.name));
+      Logger::warn(
+          std::format("Save schema repaired: migration {} re-added "
+                      "missing columns",
+                      migration.name));
       continue;
     }
     try
@@ -300,8 +301,8 @@ Migrations::MigrationReport Migrations::migrate(
     }
     catch (const std::exception& error)
     {
-      throw DatabaseException(std::format("Migration {} failed: {}",
-                                          migration.name, error.what()));
+      throw DatabaseException(
+          std::format("Migration {} failed: {}", migration.name, error.what()));
     }
     report.applied.push_back(migration.number);
   }

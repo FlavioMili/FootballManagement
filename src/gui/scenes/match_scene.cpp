@@ -215,8 +215,8 @@ void drawEventIcon(ImDrawList* drawList, ImVec2 centre, float size,
   {
     drawList->AddRectFilled(
         ImVec2(centre.x - size * 0.22f + offset, centre.y - size * 0.4f),
-        ImVec2(centre.x + size * 0.22f + offset, centre.y + size * 0.4f),
-        color, 1.0f);
+        ImVec2(centre.x + size * 0.22f + offset, centre.y + size * 0.4f), color,
+        1.0f);
   };
   switch (type)
   {
@@ -230,8 +230,7 @@ void drawEventIcon(ImDrawList* drawList, ImVec2 centre, float size,
       break;
     case MatchEventType::SHOT:
     case MatchEventType::SHOT_BLOCKED:
-      drawList->AddCircle(centre, radius, Theme::toU32(palette.muted), 0,
-                          1.5f);
+      drawList->AddCircle(centre, radius, Theme::toU32(palette.muted), 0, 1.5f);
       break;
     case MatchEventType::SHOT_OFF_TARGET:
     case MatchEventType::WOODWORK:
@@ -256,12 +255,14 @@ void drawEventIcon(ImDrawList* drawList, ImVec2 centre, float size,
       card(0.0f, red);
       break;
     case MatchEventType::INJURY:
-      drawList->AddRectFilled(ImVec2(centre.x - radius, centre.y - radius * 0.3f),
-                              ImVec2(centre.x + radius, centre.y + radius * 0.3f),
-                              Theme::toU32(palette.negative));
-      drawList->AddRectFilled(ImVec2(centre.x - radius * 0.3f, centre.y - radius),
-                              ImVec2(centre.x + radius * 0.3f, centre.y + radius),
-                              Theme::toU32(palette.negative));
+      drawList->AddRectFilled(
+          ImVec2(centre.x - radius, centre.y - radius * 0.3f),
+          ImVec2(centre.x + radius, centre.y + radius * 0.3f),
+          Theme::toU32(palette.negative));
+      drawList->AddRectFilled(
+          ImVec2(centre.x - radius * 0.3f, centre.y - radius),
+          ImVec2(centre.x + radius * 0.3f, centre.y + radius),
+          Theme::toU32(palette.negative));
       break;
     case MatchEventType::SUBSTITUTION:
       drawList->AddTriangleFilled(
@@ -284,9 +285,9 @@ void drawEventIcon(ImDrawList* drawList, ImVec2 centre, float size,
                                 Theme::toU32(palette.warning));
       break;
     default:
-      drawList->AddCircleFilled(centre, radius * 0.35f,
-                                Theme::toU32(isKeyEvent(type) ? palette.info
-                                                              : palette.faint));
+      drawList->AddCircleFilled(
+          centre, radius * 0.35f,
+          Theme::toU32(isKeyEvent(type) ? palette.info : palette.faint));
       break;
   }
 }
@@ -414,7 +415,8 @@ void MatchScene::onEnter()
               controller.getCurrentDate(), home_team_id, away_team_id))
       {
         fixture_type = fixture->getMatchType();
-        fixture_when = Format::matchDay(fixture->getDate(), fixture->getKickoff());
+        fixture_when =
+            Format::matchDay(fixture->getDate(), fixture->getKickoff());
         // Day kick-offs (10:00 to 17:29) are shown in daylight.
         kickoff_minutes = fixture->getKickoff();
         day_look = kickoff_minutes >= DAY_LOOK_FROM_MINUTES &&
@@ -478,14 +480,13 @@ void MatchScene::refreshLineupProblems()
       if (!selected.isAvailable())
       {
         const int days = dynamics.injury_days;
-        problem.reason = fmt::sprintf(
-            Format::plural("MATCH_LINEUP_INJURED", days),
-            LOC(InjuryModel::nameKey(dynamics.injury)), days);
+        problem.reason =
+            fmt::sprintf(Format::plural("MATCH_LINEUP_INJURED", days),
+                         LOC(InjuryModel::nameKey(dynamics.injury)), days);
       }
       else
       {
-        const int matches =
-            controller.getSuspensionMatches(id, *fixture_type);
+        const int matches = controller.getSuspensionMatches(id, *fixture_type);
         problem.reason = fmt::sprintf(
             Format::plural("MATCH_LINEUP_SUSPENDED", matches), matches);
       }
@@ -575,8 +576,8 @@ void MatchScene::startMatch()
   // makes the managed side's changes.
   if (const Game* game = controller.getGame(); game && managed_is_home)
     for (const auto& [player, flags] : MatchdaySquad::medicalFlags(
-             game->getMedical(), *managed_is_home ? home_team.getLineup()
-                                                  : away_team.getLineup()))
+             game->getMedical(),
+             *managed_is_home ? home_team.getLineup() : away_team.getLineup()))
       engine->setMedicalFlags(player, flags);
   engine->setTacticalFamiliarity(
       true, controller.getTacticalFamiliarity(home_team_id));
@@ -711,9 +712,9 @@ void MatchScene::dialogClosed()
 bool MatchScene::finishMatch()
 {
   GameController& controller = guiView->getController();
-  if (!engine || !controller.setMatchResult(controller.getCurrentDate(),
-                                            home_team_id, away_team_id,
-                                            *engine))
+  if (!engine ||
+      !controller.setMatchResult(controller.getCurrentDate(), home_team_id,
+                                 away_team_id, *engine))
   {
     debug_status = LOC("MATCH_RESULT_FAILED");
     return false;
@@ -751,8 +752,7 @@ std::string MatchScene::clockText() const
     case MatchState::HALF_TIME:
       // The break before extra time comes after the full 90 minutes.
       if (engine->getPeriod() == 2)
-        return MatchClock::clockLabel(MatchRules::periodEndMinute(2), 2,
-                                      false);
+        return MatchClock::clockLabel(MatchRules::periodEndMinute(2), 2, false);
       return LOC("MATCH_CLOCK_HALF_TIME");
     case MatchState::FULL_TIME:
       return LOC("MATCH_CLOCK_FULL_TIME");
@@ -801,7 +801,8 @@ void MatchScene::update(float deltaTime)
     // Real time times the chosen speed; highlights skip the quiet spells.
     skipped = engine->advancePlayback(
         skipped_last_update
-            ? std::min(deltaTime, MatchSceneTuning::Controls::MAX_DELTA_AFTER_SKIP)
+            ? std::min(deltaTime,
+                       MatchSceneTuning::Controls::MAX_DELTA_AFTER_SKIP)
             : deltaTime);
     skipped_last_update = skipped;
     if (skipped)
@@ -820,8 +821,7 @@ void MatchScene::update(float deltaTime)
   }
   // Full time ends the match even while it is paused (it may have been
   // played on by a quick look-ahead or the engine directly).
-  if (engine && !match_finished &&
-      engine->getState() == MatchState::FULL_TIME)
+  if (engine && !match_finished && engine->getState() == MatchState::FULL_TIME)
   {
     match_finished = true;
     is_paused = false;
@@ -847,8 +847,8 @@ void MatchScene::pauseAtBreak()
   // mode, until the manager resumes it (talk and analysis open meanwhile).
   if (!engine) return;
   const MatchState state = engine->getState();
-  const bool breakNow = state == MatchState::HALF_TIME ||
-                        state == MatchState::PENALTY_SHOOTOUT;
+  const bool breakNow =
+      state == MatchState::HALF_TIME || state == MatchState::PENALTY_SHOOTOUT;
   if (breakNow && !in_break && managed_is_home && !match_finished &&
       SettingsManager::instance()->get().pause_at_breaks)
   {
@@ -873,10 +873,7 @@ void MatchScene::setCameraMode(MatchCameraMode mode)
   setViewMode(MatchViewMode::BROADCAST_3D);
 }
 
-void MatchScene::setPitchFocus(bool enabled)
-{
-  pitch_focus = enabled;
-}
+void MatchScene::setPitchFocus(bool enabled) { pitch_focus = enabled; }
 
 void MatchScene::setSidePanelsHidden(bool hidden)
 {
@@ -1140,18 +1137,17 @@ void MatchScene::render()
       scaled(MatchSceneTuning::Panel::SIDE_PANEL_MIN_CONTENT_WIDTH);
   if (side_panels_hidden)
   {
-    renderPitchArea(
-        ImVec2(std::max(1.0f, available.x),
-               std::max(scaled(MatchSceneTuning::View::MIN_HEIGHT),
-                        available.y)));
+    renderPitchArea(ImVec2(
+        std::max(1.0f, available.x),
+        std::max(scaled(MatchSceneTuning::View::MIN_HEIGHT), available.y)));
   }
   else if (sidePanel)
   {
-    const float panelWidth = std::clamp(
-        std::floor(available.x *
-                   MatchSceneTuning::Panel::SIDE_PANEL_WIDTH_RATIO),
-        scaled(MatchSceneTuning::Panel::SIDE_PANEL_MIN_WIDTH),
-        scaled(MatchSceneTuning::Panel::SIDE_PANEL_MAX_WIDTH));
+    const float panelWidth =
+        std::clamp(std::floor(available.x *
+                              MatchSceneTuning::Panel::SIDE_PANEL_WIDTH_RATIO),
+                   scaled(MatchSceneTuning::Panel::SIDE_PANEL_MIN_WIDTH),
+                   scaled(MatchSceneTuning::Panel::SIDE_PANEL_MAX_WIDTH));
     const float viewWidth =
         std::max(1.0f, available.x - panelWidth - style.ItemSpacing.x);
     const float viewHeight =
@@ -1159,12 +1155,12 @@ void MatchScene::render()
     renderPitchArea(ImVec2(viewWidth, viewHeight));
     ImGui::SameLine();
     ImGui::BeginGroup();
-    const float statisticsHeight = std::floor(
-        (viewHeight - style.ItemSpacing.y) *
-        MatchSceneTuning::Panel::STATISTICS_HEIGHT_RATIO);
+    const float statisticsHeight =
+        std::floor((viewHeight - style.ItemSpacing.y) *
+                   MatchSceneTuning::Panel::STATISTICS_HEIGHT_RATIO);
     renderStatistics(ImVec2(panelWidth, statisticsHeight));
-    renderEvents(ImVec2(
-        panelWidth, viewHeight - statisticsHeight - style.ItemSpacing.y));
+    renderEvents(ImVec2(panelWidth,
+                        viewHeight - statisticsHeight - style.ItemSpacing.y));
     ImGui::EndGroup();
   }
   else
@@ -1174,8 +1170,8 @@ void MatchScene::render()
         std::max(scaled(MatchSceneTuning::View::MIN_HEIGHT),
                  available.y - panelHeight - style.ItemSpacing.y);
     renderPitchArea(ImVec2(std::max(1.0f, available.x), viewHeight));
-    const float halfWidth = std::floor((available.x - style.ItemSpacing.x) *
-                                       0.5f);
+    const float halfWidth =
+        std::floor((available.x - style.ItemSpacing.x) * 0.5f);
     renderEvents(ImVec2(halfWidth, panelHeight));
     ImGui::SameLine();
     renderStatistics(
@@ -1189,18 +1185,17 @@ void MatchScene::renderQuickResultProgress()
 {
   // The engine is busy on a worker thread; only the teams are shown.
   const ImVec2 available = ImGui::GetContentRegionAvail();
-  const float width = std::min(
-      available.x, scaled(MatchSceneTuning::Panel::LINEUP_GATE_WIDTH));
+  const float width =
+      std::min(available.x, scaled(MatchSceneTuning::Panel::LINEUP_GATE_WIDTH));
   ImGui::SetCursorPos(
       ImVec2(ImGui::GetCursorPosX() + (available.x - width) * 0.5f,
              ImGui::GetCursorPosY() + available.y * 0.35f));
   ImGui::BeginGroup();
   const std::string teams = std::format("{}  –  {}", home_name, away_name);
   UI::pageHeader(LOC("MATCH_QUICK_RESULT_RUNNING"), teams.c_str());
-  ImGui::ProgressBar(Theme::reducedMotion()
-                         ? 0.0f
-                         : -static_cast<float>(ImGui::GetTime()),
-                     ImVec2(width, scaled(6.0f)), "");
+  ImGui::ProgressBar(
+      Theme::reducedMotion() ? 0.0f : -static_cast<float>(ImGui::GetTime()),
+      ImVec2(width, scaled(6.0f)), "");
   ImGui::EndGroup();
 }
 
@@ -1209,8 +1204,8 @@ void MatchScene::renderLineupGate()
   const Theme::Palette& palette = Theme::palette();
   // A centred column in the upper part of the screen.
   const ImVec2 available = ImGui::GetContentRegionAvail();
-  const float width = std::min(
-      available.x, scaled(MatchSceneTuning::Panel::LINEUP_GATE_WIDTH));
+  const float width =
+      std::min(available.x, scaled(MatchSceneTuning::Panel::LINEUP_GATE_WIDTH));
   const float top =
       available.y * MatchSceneTuning::Panel::LINEUP_GATE_TOP_RATIO;
   ImGui::SetCursorPos(
@@ -1219,8 +1214,7 @@ void MatchScene::renderLineupGate()
   ImGui::BeginChild("##lineup_gate_column",
                     ImVec2(width, std::max(1.0f, available.y - top)),
                     ImGuiChildFlags_None, ImGuiWindowFlags_NoBackground);
-  const std::string subtitle =
-      std::format("{}  –  {}", home_name, away_name);
+  const std::string subtitle = std::format("{}  –  {}", home_name, away_name);
   UI::pageHeader(LOC("MATCH_LINEUP_BLOCKED_TITLE"), subtitle.c_str());
   UI::beginAutoHeightCard("##lineup_gate", nullptr);
   ImGui::PushTextWrapPos(0.0f);
@@ -1235,13 +1229,13 @@ void MatchScene::renderLineupGate()
     ImGui::SameLine();
     // What the assistant would do about it.
     if (problem.replacement.empty())
-      ImGui::TextColored(palette.faint, "%s", LOC("MATCH_LINEUP_NO_SUGGESTION"));
+      ImGui::TextColored(palette.faint, "%s",
+                         LOC("MATCH_LINEUP_NO_SUGGESTION"));
     else
-      ImGui::TextColored(
-          palette.positive, "%s",
-          fmt::sprintf(LOC("MATCH_LINEUP_SUGGESTION"),
-                       problem.replacement.c_str())
-              .c_str());
+      ImGui::TextColored(palette.positive, "%s",
+                         fmt::sprintf(LOC("MATCH_LINEUP_SUGGESTION"),
+                                      problem.replacement.c_str())
+                             .c_str());
   }
   if (!lineup_status.empty())
   {
@@ -1277,8 +1271,8 @@ void MatchScene::renderScoreboard()
   const float centreX = origin.x + width * 0.5f;
 
   std::array<char, 24> score{};
-  std::snprintf(score.data(), score.size(), "%d  -  %d",
-                engine->getHomeScore(), engine->getAwayScore());
+  std::snprintf(score.data(), score.size(), "%d  -  %d", engine->getHomeScore(),
+                engine->getAwayScore());
   ImVec2 scoreSize;
   {
     Theme::ScopedText display(Theme::Text::DISPLAY);
@@ -1295,9 +1289,9 @@ void MatchScene::renderScoreboard()
   {
     decided_by_ready = true;
     if (engine->hasShootout())
-      decided_by = fmt::sprintf(LOC("RESULT_PENALTIES"),
-                                engine->getShootoutScore(true),
-                                engine->getShootoutScore(false));
+      decided_by =
+          fmt::sprintf(LOC("RESULT_PENALTIES"), engine->getShootoutScore(true),
+                       engine->getShootoutScore(false));
     else if (engine->wentToExtraTime())
       decided_by = LOC("RESULT_AFTER_EXTRA_TIME");
   }
@@ -1315,19 +1309,19 @@ void MatchScene::renderScoreboard()
     const float clockWidth =
         ImGui::CalcTextSize(clock.c_str()).x + 2.0f * padding.x;
     const float periodWidth = ImGui::CalcTextSize(periodText).x;
-    const float addedWidth =
-        addedText[0] != '\0'
-            ? ImGui::CalcTextSize(addedText.data()).x + 2.0f * padding.x +
-                  ImGui::GetStyle().ItemSpacing.x
-            : 0.0f;
-    const float rowWidth = clockWidth + ImGui::GetStyle().ItemSpacing.x +
-                           periodWidth + addedWidth;
+    const float addedWidth = addedText[0] != '\0'
+                                 ? ImGui::CalcTextSize(addedText.data()).x +
+                                       2.0f * padding.x +
+                                       ImGui::GetStyle().ItemSpacing.x
+                                 : 0.0f;
+    const float rowWidth =
+        clockWidth + ImGui::GetStyle().ItemSpacing.x + periodWidth + addedWidth;
     ImGui::SetCursorPos(ImVec2(centreX - rowWidth * 0.5f,
                                origin.y + scoreSize.y + scaled(2.0f)));
     const ImVec2 pillMin = ImGui::GetCursorScreenPos();
-    const ImVec2 pillMax(pillMin.x + clockWidth,
-                         pillMin.y + ImGui::GetTextLineHeight() +
-                             2.0f * padding.y);
+    const ImVec2 pillMax(
+        pillMin.x + clockWidth,
+        pillMin.y + ImGui::GetTextLineHeight() + 2.0f * padding.y);
     ImGui::GetWindowDrawList()->AddRectFilled(
         pillMin, pillMax, Theme::toU32(palette.accent), scaled(3.0f));
     ImGui::GetWindowDrawList()->AddText(
@@ -1352,9 +1346,9 @@ void MatchScene::renderScoreboard()
     const float nameY =
         origin.y + (scoreSize.y - ImGui::GetTextLineHeight()) * 0.5f;
     const float homeWidth = ImGui::CalcTextSize(home_name.c_str()).x;
-    const float homeX = std::max(
-        origin.x + swatch + gap * 0.5f,
-        centreX - scoreSize.x * 0.5f - gap - homeWidth);
+    const float homeX =
+        std::max(origin.x + swatch + gap * 0.5f,
+                 centreX - scoreSize.x * 0.5f - gap - homeWidth);
     const float awayX = centreX + scoreSize.x * 0.5f + gap;
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     const ImVec2 windowPos = ImGui::GetWindowPos();
@@ -1380,8 +1374,7 @@ void MatchScene::renderScoreboard()
   if (fixture_type)
   {
     ImGui::SetCursorPos(origin);
-    UI::badge(LOC(CompetitionView::matchTypeKey(*fixture_type)),
-              palette.info);
+    UI::badge(LOC(CompetitionView::matchTypeKey(*fixture_type)), palette.info);
     ImGui::SameLine();
     Theme::ScopedText caption(Theme::Text::CAPTION);
     ImGui::TextColored(palette.muted, "%s", fixture_when.c_str());
@@ -1425,8 +1418,7 @@ void MatchScene::renderTimeline()
   const float total = segmentEnd[static_cast<std::size_t>(periods)];
   const auto position = [&](float minute, int period)
   {
-    const auto index =
-        static_cast<std::size_t>(std::clamp(period, 1, periods));
+    const auto index = static_cast<std::size_t>(std::clamp(period, 1, periods));
     const float start = segmentEnd[index - 1];
     return start + std::clamp(minute - MatchRules::periodStartMinute(
                                            static_cast<int>(index)),
@@ -1472,9 +1464,8 @@ void MatchScene::renderTimeline()
                       event.type == MatchEventType::RED_CARD;
     if (!goal && !card) continue;
     // An own goal counts for the other side.
-    const bool home = event.type == MatchEventType::OWN_GOAL
-                          ? !event.isHomeTeam
-                          : event.isHomeTeam;
+    const bool home = event.type == MatchEventType::OWN_GOAL ? !event.isHomeTeam
+                                                             : event.isHomeTeam;
     const float x = xAt(position(event.timeMinute, event.period));
     const float y = home ? trackY - markerSize * 0.5f - trackHeight
                          : trackY + markerSize * 0.5f + trackHeight;
@@ -1500,8 +1491,8 @@ void MatchScene::renderTimeline()
 void MatchScene::renderControls()
 {
   const Theme::Palette& palette = Theme::palette();
-  const ImVec2 pauseSize(
-      scaled(MatchSceneTuning::Controls::PAUSE_BUTTON_WIDTH), 0.0f);
+  const ImVec2 pauseSize(scaled(MatchSceneTuning::Controls::PAUSE_BUTTON_WIDTH),
+                         0.0f);
   if (match_finished)
   {
     if (UI::primaryButton(LOC("MATCH_FINISH"), pauseSize)) finishMatch();
@@ -1621,8 +1612,8 @@ void MatchScene::renderControls()
     if (ImGui::Checkbox(LOC("MATCH_ASSISTANT_SUBS"), &assistant_substitutions))
     {
       guiView->getController().setDutyOwner(
-          Duty::Substitutions, assistant_substitutions ? DutyOwner::Assistant
-                                                       : DutyOwner::Manager);
+          Duty::Substitutions,
+          assistant_substitutions ? DutyOwner::Assistant : DutyOwner::Manager);
       applySubstitutionPolicy();
     }
     if (ImGui::IsItemHovered())
@@ -1637,9 +1628,10 @@ void MatchScene::renderControls()
 
   // Latest message: debug, then substitutions, then pre-match changes.
   const bool refused = substitution_refused && !substitution_status.empty();
-  const std::string& status = !debug_status.empty()        ? debug_status
-                              : !substitution_status.empty() ? substitution_status
-                                                             : pre_match_note;
+  const std::string& status = !debug_status.empty() ? debug_status
+                              : !substitution_status.empty()
+                                  ? substitution_status
+                                  : pre_match_note;
   if (!status.empty())
   {
     UI::sameLineIfFits(ImGui::CalcTextSize(status.c_str()).x);
@@ -1655,8 +1647,7 @@ void MatchScene::renderViewControls()
 {
   // Layout first (both views): pitch focus and the side panels.
   if (ImGui::Button(LOC("MATCH_FOCUS"))) setPitchFocus(true);
-  if (ImGui::IsItemHovered())
-    ImGui::SetTooltip("%s", LOC("MATCH_FOCUS_HINT"));
+  if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", LOC("MATCH_FOCUS_HINT"));
   const char* panelsLabel =
       side_panels_hidden ? LOC("MATCH_PANELS_SHOW") : LOC("MATCH_PANELS_HIDE");
   UI::sameLineIfFits(UI::buttonWidth(panelsLabel));
@@ -1780,11 +1771,10 @@ void MatchScene::renderFocusShouts(ImVec2 origin, ImVec2 size)
   ImGui::SetCursorScreenPos(
       ImVec2(origin.x + size.x - margin - width - 2.0f * padding.x,
              origin.y + size.y - margin - height));
-  if (ImGui::BeginChild("##focus_shouts",
-                        ImVec2(width + 2.0f * padding.x, height),
-                        ImGuiChildFlags_AlwaysUseWindowPadding,
-                        ImGuiWindowFlags_NoScrollbar |
-                            ImGuiWindowFlags_NoSavedSettings))
+  if (ImGui::BeginChild(
+          "##focus_shouts", ImVec2(width + 2.0f * padding.x, height),
+          ImGuiChildFlags_AlwaysUseWindowPadding,
+          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings))
     MatchShoutsBar::render(*context, width);
   ImGui::EndChild();
 }
@@ -1832,7 +1822,8 @@ void MatchScene::renderPitch(ImVec2 size)
                                     std::max(1.0f, size.x - 2.0f * apron),
                                     std::max(1.0f, size.y - 2.0f * apron));
     // Centred in the view area when the aspect ratios differ.
-    viewport.x = viewOrigin.x + std::max(apron, (size.x - viewport.width) * 0.5f);
+    viewport.x =
+        viewOrigin.x + std::max(apron, (size.x - viewport.width) * 0.5f);
     viewport.y =
         viewOrigin.y + std::max(apron, (size.y - viewport.height) * 0.5f);
     // Playing: a zoomed view that follows the active footballer.
@@ -1936,8 +1927,9 @@ void MatchScene::renderFocusHud(ImVec2 origin, ImVec2 size)
   const ImVec4 muted(0.72f, 0.75f, 0.80f, 1.0f);
   ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.03f, 0.05f, 0.09f, 0.82f));
   ImGui::PushStyleColor(ImGuiCol_Text, text);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,
-                      ImVec2(scaled(Theme::Space::S), scaled(Theme::Space::XS)));
+  ImGui::PushStyleVar(
+      ImGuiStyleVar_WindowPadding,
+      ImVec2(scaled(Theme::Space::S), scaled(Theme::Space::XS)));
   ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, scaled(6.0f));
   const ImGuiChildFlags chip = ImGuiChildFlags_AutoResizeX |
                                ImGuiChildFlags_AutoResizeY |
@@ -1976,8 +1968,8 @@ void MatchScene::renderFocusHud(ImVec2 origin, ImVec2 size)
     teamChip(true);
     ImGui::SameLine();
     std::array<char, 24> score{};
-    std::snprintf(score.data(), score.size(), "%d - %d",
-                  engine->getHomeScore(), engine->getAwayScore());
+    std::snprintf(score.data(), score.size(), "%d - %d", engine->getHomeScore(),
+                  engine->getAwayScore());
     {
       Theme::ScopedText heading(Theme::Text::TITLE);
       ImGui::AlignTextToFramePadding();
@@ -2210,11 +2202,10 @@ void MatchScene::renderStatistics(ImVec2 size)
                 stats.homeYellowCards, stats.homeRedCards);
   std::snprintf(awayText.data(), awayText.size(), "%d / %d",
                 stats.awayYellowCards, stats.awayRedCards);
-  comparisonRow(
-      LOC("REPORT_CARDS"),
-      static_cast<float>(stats.homeYellowCards + stats.homeRedCards),
-      static_cast<float>(stats.awayYellowCards + stats.awayRedCards),
-      homeText.data(), awayText.data());
+  comparisonRow(LOC("REPORT_CARDS"),
+                static_cast<float>(stats.homeYellowCards + stats.homeRedCards),
+                static_cast<float>(stats.awayYellowCards + stats.awayRedCards),
+                homeText.data(), awayText.data());
   UI::endCard();
 }
 

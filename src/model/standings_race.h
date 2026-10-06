@@ -113,8 +113,8 @@ struct RaceNeed
 {
   enum class Kind : uint8_t
   {
-    IN_HANDS,   /**< `points` from its own games guarantee the place. */
-    NEEDS_HELP  /**< Still possible, but only with help from elsewhere. */
+    IN_HANDS,  /**< `points` from its own games guarantee the place. */
+    NEEDS_HELP /**< Still possible, but only with help from elsewhere. */
   };
   Race race = Race::TITLE;
   Kind kind = Kind::IN_HANDS;

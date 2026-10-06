@@ -51,10 +51,10 @@ MatchContext MatchSimulation::leagueContext(LeagueID league_id)
   context.refereeStrictnessSd = context.refereeStrictnessSd *
                                 style.referee_spread /
                                 Reference::REFERENCE_REFEREE_SPREAD;
-  context.homeAdvantageScale = std::clamp(
-      std::sqrt(std::max(0.0f, style.home_edge) /
-                Reference::REFERENCE_HOME_EDGE),
-      Reference::MIN_HOME_SCALE, Reference::MAX_HOME_SCALE);
+  context.homeAdvantageScale =
+      std::clamp(std::sqrt(std::max(0.0f, style.home_edge) /
+                           Reference::REFERENCE_HOME_EDGE),
+                 Reference::MIN_HOME_SCALE, Reference::MAX_HOME_SCALE);
   return context;
 }
 

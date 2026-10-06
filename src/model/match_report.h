@@ -25,8 +25,8 @@ enum class MatchEventKind : uint8_t
   GOAL = 0,
   OWN_GOAL = 1,
   YELLOW_CARD = 3,
-  RED_CARD = 4,       /*!< Straight red card. */
-  SECOND_YELLOW = 5   /*!< Second caution, player sent off. */
+  RED_CARD = 4,     /*!< Straight red card. */
+  SECOND_YELLOW = 5 /*!< Second caution, player sent off. */
 };
 
 /**
@@ -42,8 +42,8 @@ struct MatchReportEvent
   uint8_t added_minute = 0;
   MatchEventKind kind = MatchEventKind::GOAL;
   bool home = true;
-  PlayerID player = 0;  /*!< 0 when the engine did not attribute it. */
-  PlayerID assist = 0;  /*!< 0 when there was no (known) assist. */
+  PlayerID player = 0; /*!< 0 when the engine did not attribute it. */
+  PlayerID assist = 0; /*!< 0 when there was no (known) assist. */
 };
 
 /** @brief Team totals of a finished match. */
@@ -134,10 +134,10 @@ struct MatchReport
    * Credits @p goals extra-time goals of one side when extra time was
    * resolved statistically (Competitions::resolveDrawnKnockout, the fallback
    * for a tie recorded level without the engine playing it): each goal is
-   * given to a player of @p lineup who finished the match, drawn from @p seed with forwards and good finishers favoured: it
-   * counts on his line and becomes a GOAL event between minutes 91 and 120.
-   * When the side has nobody left to credit, the event has no player (a team
-   * goal).
+   * given to a player of @p lineup who finished the match, drawn from @p seed
+   * with forwards and good finishers favoured: it counts on his line and
+   * becomes a GOAL event between minutes 91 and 120. When the side has nobody
+   * left to credit, the event has no player (a team goal).
    */
   void creditExtraTimeGoals(const Lineup& lineup, TeamID team_id, bool home,
                             uint8_t goals, uint32_t seed);

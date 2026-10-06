@@ -42,8 +42,8 @@ struct SlotCleanup
 
 std::size_t count(const std::vector<AgendaEvent>& events, AgendaKind kind)
 {
-  return static_cast<std::size_t>(std::ranges::count(
-      events, kind, &AgendaEvent::kind));
+  return static_cast<std::size_t>(
+      std::ranges::count(events, kind, &AgendaEvent::kind));
 }
 }  // namespace
 
@@ -140,9 +140,9 @@ TEST(MedicalCentreTest, ReportListsInjuredAndRanksTheRest)
   EXPECT_EQ(report.injured[0].reinjury, RiskBand::High);
   EXPECT_EQ(report.injured[1].player_id, short_layoff);
   EXPECT_EQ(report.squad.size() + report.injured.size(), squad.size());
-  EXPECT_TRUE(std::ranges::is_sorted(
-      report.squad, std::greater<>(),
-      [](const MedicalRiskRow& row) { return row.risk.multiplier; }));
+  EXPECT_TRUE(std::ranges::is_sorted(report.squad, std::greater<>(),
+                                     [](const MedicalRiskRow& row)
+                                     { return row.risk.multiplier; }));
   for (const StaffMember* member : report.medical_staff)
     EXPECT_TRUE(member->role == StaffRole::Physio ||
                 member->role == StaffRole::SportsScientist);
@@ -182,9 +182,9 @@ TEST(SeasonAgendaTest, SeasonListsEveryKindOfEventInOrder)
     EXPECT_FALSE(event.date < GameDateValue(2025, 7, 1));
     EXPECT_TRUE(event.date < GameDateValue(2026, 7, 1));
   }
-  EXPECT_EQ(count(SeasonAgenda::build(2025, none, false, 1),
-                  AgendaKind::BoardReview),
-            0u);
+  EXPECT_EQ(
+      count(SeasonAgenda::build(2025, none, false, 1), AgendaKind::BoardReview),
+      0u);
 }
 
 TEST(SeasonAgendaTest, ControllerAgendaCarriesTheClubsFixtures)

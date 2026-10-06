@@ -228,8 +228,8 @@ TEST(MatchCommentaryTest, EveryEventHasALineInBothLanguages)
 {
   const nlohmann::json english = languageFile("English.json");
   const nlohmann::json italian = languageFile("Italian.json");
-  for (int type = 0;
-       type <= static_cast<int>(MatchEventType::PENALTY_SHOOTOUT); ++type)
+  for (int type = 0; type <= static_cast<int>(MatchEventType::PENALTY_SHOOTOUT);
+       ++type)
   {
     for (int detail = 0; detail <= static_cast<int>(MatchEventDetail::MISSED);
          ++detail)
@@ -290,10 +290,10 @@ TEST(MatchCommentaryTest, FillsTeamsPlayersAndScore)
   goal.primaryPlayerId = 9;
   goal.homeScore = 2;
   goal.awayScore = 1;
-  EXPECT_EQ(MatchCommentary::fill(
-                english[MatchCommentary::key(goal)].get<std::string>(), goal,
-                names),
-            "GOAL! Rossi scores for Acaya (2-1)");
+  EXPECT_EQ(
+      MatchCommentary::fill(
+          english[MatchCommentary::key(goal)].get<std::string>(), goal, names),
+      "GOAL! Rossi scores for Acaya (2-1)");
 
   MatchEvent added;
   added.type = MatchEventType::ADDED_TIME;

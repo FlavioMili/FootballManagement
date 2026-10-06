@@ -112,8 +112,10 @@ std::size_t expectedPosition(const LeagueEconomy& economy,
 {
   // Ties share the middle of their places.
   const auto& reps = economy.reputations_desc;
-  const auto first = std::ranges::lower_bound(reps, reputation, std::greater<>{});
-  const auto last = std::ranges::upper_bound(reps, reputation, std::greater<>{});
+  const auto first =
+      std::ranges::lower_bound(reps, reputation, std::greater<>{});
+  const auto last =
+      std::ranges::upper_bound(reps, reputation, std::greater<>{});
   const auto better = static_cast<std::size_t>(first - reps.begin());
   const auto tied = static_cast<std::size_t>(last - first);
   return better + (tied > 0 ? (tied - 1) / 2 : 0);
@@ -139,12 +141,12 @@ double baseDemand(const LeagueEconomy& economy, std::uint8_t reputation)
   // Germany, 34% in Russia) [S]; bigger clubs draw proportionally more (a
   // 20-point reputation edge fills about 30% more). [P]
   const double fill = static_cast<double>(economy.profile->stadium_fill);
-  return std::clamp(fill * (1.0 + 0.3 *
-                                      (static_cast<double>(reputation) -
-                                       static_cast<double>(
-                                           economy.mean_reputation)) /
-                                      20.0),
-                    0.4 * fill, 1.15);
+  return std::clamp(
+      fill * (1.0 + 0.3 *
+                        (static_cast<double>(reputation) -
+                         static_cast<double>(economy.mean_reputation)) /
+                        20.0),
+      0.4 * fill, 1.15);
 }
 
 double fairTicketPrice(const LeagueEconomy& economy, const ClubProfile& profile)
@@ -184,8 +186,7 @@ std::uint32_t attendance(const LeagueEconomy& economy,
   const double ratio = price / reference;
   const double overpriced = std::max(0.0, ratio - 1.0);
   const double price_factor = std::exp(
-      -static_cast<double>(Finance::TICKET_PRICE_ELASTICITY) *
-          std::log(ratio) -
+      -static_cast<double>(Finance::TICKET_PRICE_ELASTICITY) * std::log(ratio) -
       static_cast<double>(Finance::TICKET_OVERPRICING_DECAY) * overpriced *
           overpriced);
   const double capacity = static_cast<double>(profile.stadium_capacity);
@@ -224,8 +225,8 @@ double monthlyFacilityCosts(const LeagueEconomy& economy,
       static_cast<double>(profile.reputation);
   const double facility_factor =
       std::clamp(1.0 + 0.004 * facility_gap, 0.8, 1.2);
-  return expectedIncome(economy, profile.reputation) *
-         operatingShare(economy) * facility_factor / 12.0;
+  return expectedIncome(economy, profile.reputation) * operatingShare(economy) *
+         facility_factor / 12.0;
 }
 
 double playerWageShare(const LeagueEconomy& economy)
@@ -270,8 +271,8 @@ std::int64_t availableTransferBudget(std::int64_t board_budget,
                                      std::int64_t committed)
 {
   const std::int64_t spare_cash =
-      balance - Finance::CASH_RESERVE_WEEKS * std::max<std::int64_t>(
-                                                  0, weekly_payroll) -
+      balance -
+      Finance::CASH_RESERVE_WEEKS * std::max<std::int64_t>(0, weekly_payroll) -
       std::max<std::int64_t>(0, committed);
   return std::max<std::int64_t>(0, std::min(board_budget, spare_cash));
 }
@@ -300,8 +301,8 @@ std::int64_t seasonWageBudget(const LeagueEconomy& economy, double revenue,
   // The board funds the league's typical player wage share of the expected
   // income with a small margin, but never below the payroll it has already
   // committed to.
-  const double affordable = revenue * playerWageShare(economy) *
-                            Finance::WAGE_BUDGET_MARGIN / 52.0;
+  const double affordable =
+      revenue * playerWageShare(economy) * Finance::WAGE_BUDGET_MARGIN / 52.0;
   return std::max(static_cast<std::int64_t>(std::llround(affordable)),
                   weekly_payroll);
 }

@@ -47,8 +47,9 @@ TeamID middleOfTheLeague(const GameController& controller)
 {
   std::vector<TeamID> clubs =
       controller.getLeagueById(OWN_LEAGUE)->get().getTeamIDs();
-  std::ranges::sort(clubs, {}, [&](TeamID id)
-                    { return controller.getTeamById(id)->get().getReputation(); });
+  std::ranges::sort(
+      clubs, {}, [&](TeamID id)
+      { return controller.getTeamById(id)->get().getReputation(); });
   return clubs[clubs.size() / 2];
 }
 
@@ -168,9 +169,8 @@ TEST(MatchdaySelectionTest, AssistantAndAutoPickFieldTheBestAvailable)
     bool& checked = type == MatchType::LEAGUE ? checkedLeague : checkedCup;
     if (checked) continue;
     checked = true;
-    const std::string what =
-        controller.getCurrentDate().toString() +
-        (type == MatchType::LEAGUE ? " league" : " cup");
+    const std::string what = controller.getCurrentDate().toString() +
+                             (type == MatchType::LEAGUE ? " league" : " cup");
 
     // The assistant's XI: anyone fit to play this match.
     std::vector<const Player*> fit;

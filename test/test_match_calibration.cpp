@@ -131,8 +131,7 @@ Team createCalibrationTeam(TeamID id, float rating,
         role == PlayerRole::GK || role == PlayerRole::CB ? 188 : 178);
     auto player = std::make_unique<Player>(
         playerId, id, "Calib", std::to_string(playerId), role, Language::EN,
-        100'000, 0, 26, 3, height, Foot::Right,
-        roleStats(role, rating, index));
+        100'000, 0, 26, 3, height, Foot::Right, roleStats(role, rating, index));
     Player* raw = player.get();
     pool.push_back(std::move(player));
     return raw;
@@ -465,8 +464,8 @@ void report(const char* label, const CalibrationTotals& t)
     std::printf(
         "[calibration] %s goals by role: forwards=%.1f%% midfield=%.1f%% "
         "defence=%.1f%%\n",
-        label, 100.0 * t.forwardGoals / scored, 100.0 * t.midfieldGoals / scored,
-        100.0 * t.defenderGoals / scored);
+        label, 100.0 * t.forwardGoals / scored,
+        100.0 * t.midfieldGoals / scored, 100.0 * t.defenderGoals / scored);
   }
 }
 }  // namespace
@@ -590,15 +589,17 @@ TEST(MatchEngineCalibration, HeadlessSeasonMatchesRealisticBands)
       << "per-player goals must add up to the score";
   // Goals come from all over the team: strikers score most, midfielders'
   // late runs and defenders at set pieces the rest, and a few are own goals.
-  const int scored = equal.forwardGoals + equal.midfieldGoals + equal.defenderGoals;
+  const int scored =
+      equal.forwardGoals + equal.midfieldGoals + equal.defenderGoals;
   ASSERT_GT(scored, 0);
   EXPECT_LE(static_cast<double>(equal.forwardGoals) / scored, 0.70);
   EXPECT_GE(static_cast<double>(equal.forwardGoals) / scored, 0.40);
   EXPECT_GE(static_cast<double>(equal.midfieldGoals) / scored, 0.14);
   EXPECT_GE(static_cast<double>(equal.defenderGoals) / scored, 0.05);
   EXPECT_LE(static_cast<double>(equal.defenderGoals) / scored, 0.22);
-  EXPECT_GE(static_cast<double>(equal.setPieceGoals - equal.penaltyGoals) / goals,
-            0.15)
+  EXPECT_GE(
+      static_cast<double>(equal.setPieceGoals - equal.penaltyGoals) / goals,
+      0.15)
       << "corners, free kicks and attacking throw-ins";
   EXPECT_GT(equal.ownGoals, 0);
   EXPECT_LE(static_cast<double>(equal.ownGoals) / goals, 0.06);
@@ -621,8 +622,8 @@ TEST(MatchEngineCalibration, WeakerLeaguesScoreLessThanStrongerOnes)
   const Team lowAway = createCalibrationTeam(6, 55.0f, pool);
   const Team highHome = createCalibrationTeam(7, 75.0f, pool);
   const Team highAway = createCalibrationTeam(8, 75.0f, pool);
-  const CalibrationTotals low = runCalibration(lowHome, lowAway, config, 120,
-                                               3, MatchFidelity::BACKGROUND);
+  const CalibrationTotals low = runCalibration(lowHome, lowAway, config, 120, 3,
+                                               MatchFidelity::BACKGROUND);
   const CalibrationTotals high = runCalibration(highHome, highAway, config, 120,
                                                 3, MatchFidelity::BACKGROUND);
   report("low-level", low);
@@ -705,7 +706,8 @@ TEST(MatchEngineCalibration, LeagueSeasonProducesARealisticTable)
   const int champion = *std::ranges::max_element(points);
   const int bottom = *std::ranges::min_element(points);
   int topScorer = 0;
-  for (const auto& [id, goals] : scorers) topScorer = std::max(topScorer, goals);
+  for (const auto& [id, goals] : scorers)
+    topScorer = std::max(topScorer, goals);
   std::printf(
       "[season] home/draw/away=%.1f/%.1f/%.1f%% champion=%d bottom=%d "
       "topScorer=%d strongest=%d weakest=%d\n",

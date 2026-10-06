@@ -37,9 +37,9 @@ std::string SetPiecesDialog::captainSummary(const GameController& controller)
 {
   const std::string captain = nameOf(
       controller, controller.getEffectiveSetPieceTaker(SetPieceDuty::Captain));
-  return captain.empty() ? std::string()
-                         : formatLocalized("SET_PIECES_CAPTAIN_SUMMARY",
-                                           {captain});
+  return captain.empty()
+             ? std::string()
+             : formatLocalized("SET_PIECES_CAPTAIN_SUMMARY", {captain});
 }
 
 void SetPiecesDialog::rebuild(const GameController& controller)
@@ -69,9 +69,9 @@ void SetPiecesDialog::rebuild(const GameController& controller)
     if (SetPieces::isLeadership(duty))
     {
       for (const Player* player : leaders)
-        list.push_back({player->getId(), std::format("{}  \xC2\xB7  {}",
-                                                     player->getName(),
-                                                     player->getAge())});
+        list.push_back(
+            {player->getId(), std::format("{}  \xC2\xB7  {}", player->getName(),
+                                          player->getAge())});
       // What "automatic" means: the top of the hierarchy (the next one for
       // the vice-captain, after whoever captains).
       const PlayerID captain =
@@ -87,8 +87,8 @@ void SetPiecesDialog::rebuild(const GameController& controller)
             break;
           }
       }
-      automatic[index] = formatLocalized("SET_PIECES_AUTOMATIC",
-                                         {nameOf(controller, pick)});
+      automatic[index] =
+          formatLocalized("SET_PIECES_AUTOMATIC", {nameOf(controller, pick)});
     }
     else
     {
@@ -99,9 +99,9 @@ void SetPiecesDialog::rebuild(const GameController& controller)
       std::ranges::sort(ranked, [](const auto& a, const auto& b)
                         { return a.first > b.first; });
       for (const auto& [value, player] : ranked)
-        list.push_back({player->getId(),
-                        std::format("{}  \xC2\xB7  {:.0f}", player->getName(),
-                                    value)});
+        list.push_back(
+            {player->getId(),
+             std::format("{}  \xC2\xB7  {:.0f}", player->getName(), value)});
       const Player* best = SetPieces::best(duty, xi);
       automatic[index] = formatLocalized(
           "SET_PIECES_AUTOMATIC",
@@ -109,11 +109,11 @@ void SetPiecesDialog::rebuild(const GameController& controller)
     }
     const PlayerID designated = lineup.getDesignated(duty);
     const bool starts = lineup.isStarter(designated);
-    current[index] =
-        designated == 0 ? automatic[index]
-        : starts        ? nameOf(controller, designated)
-                        : formatLocalized("SET_PIECES_NOT_STARTING",
-                                          {nameOf(controller, designated)});
+    current[index] = designated == 0 ? automatic[index]
+                     : starts
+                         ? nameOf(controller, designated)
+                         : formatLocalized("SET_PIECES_NOT_STARTING",
+                                           {nameOf(controller, designated)});
   }
 }
 
@@ -126,8 +126,8 @@ bool SetPiecesDialog::render(GameController& controller)
     ImGui::OpenPopup(POPUP_ID);
   }
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
-  const float width = std::min(DIALOG_WIDTH * Theme::scale(),
-                               viewport->WorkSize.x * 0.92f);
+  const float width =
+      std::min(DIALOG_WIDTH * Theme::scale(), viewport->WorkSize.x * 0.92f);
   ImGui::SetNextWindowSize(ImVec2(width, 0.0f), ImGuiCond_Always);
   ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always,
                           ImVec2(0.5f, 0.5f));
@@ -147,8 +147,8 @@ bool SetPiecesDialog::render(GameController& controller)
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
 
   bool changed = false;
-  const float labelWidth =
-      std::min(170.0f * Theme::scale(), ImGui::GetContentRegionAvail().x * 0.4f);
+  const float labelWidth = std::min(170.0f * Theme::scale(),
+                                    ImGui::GetContentRegionAvail().x * 0.4f);
   for (std::size_t index = 0; index < SET_PIECE_DUTY_COUNT; ++index)
   {
     const auto duty = static_cast<SetPieceDuty>(index);

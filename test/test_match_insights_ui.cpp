@@ -206,8 +206,7 @@ struct PlayedMatch
 };
 
 /** Plays the managed club's next matches like a watched match (tracked). */
-int playManagedMatches(GameController& controller, int count,
-                       PlayedMatch& last)
+int playManagedMatches(GameController& controller, int count, PlayedMatch& last)
 {
   int played = 0;
   const TeamID club = controller.getManagedTeam()->get().getId();

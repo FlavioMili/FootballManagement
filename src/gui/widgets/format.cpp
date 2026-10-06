@@ -36,7 +36,10 @@ std::string money(int64_t amount) { return NumberFormat::money(amount); }
 
 std::string thousands(int64_t value) { return NumberFormat::grouped(value); }
 
-std::string moneyFull(int64_t amount) { return NumberFormat::moneyFull(amount); }
+std::string moneyFull(int64_t amount)
+{
+  return NumberFormat::moneyFull(amount);
+}
 
 std::string decimal(double value, int digits)
 {

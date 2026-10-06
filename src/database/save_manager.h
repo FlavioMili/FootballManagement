@@ -163,10 +163,10 @@ class SaveManager
   /** Places where tests inject faults (kill, disk full, I/O errors). */
   enum class FaultPoint : std::uint8_t
   {
-    MidFlush,        ///< Inside Game::saveGame's transaction.
-    TempOpened,      ///< Temporary file opened, before the backup.
-    SnapshotWritten, ///< Backup done, before verification.
-    Rotated,         ///< Backups rotated, before the rename.
+    MidFlush,         ///< Inside Game::saveGame's transaction.
+    TempOpened,       ///< Temporary file opened, before the backup.
+    SnapshotWritten,  ///< Backup done, before verification.
+    Rotated,          ///< Backups rotated, before the rename.
   };
   using FaultHook = std::function<void(FaultPoint, sqlite3* temp_db)>;
 

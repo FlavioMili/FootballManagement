@@ -63,51 +63,51 @@ constexpr std::array<double, 13> ATANH_SERIES = {
     1.0 / 11.0, 1.0 / 13.0, 1.0 / 15.0, 1.0 / 17.0, 1.0 / 19.0,
     1.0 / 21.0, 1.0 / 23.0, 1.0 / 25.0};
 
-constexpr double factorial(int n) { return n <= 1 ? 1.0 : n * factorial(n - 1); }
+constexpr double factorial(int n)
+{
+  return n <= 1 ? 1.0 : n * factorial(n - 1);
+}
 
 // Taylor series of e^r for |r| <= ln 2 / 2.
-constexpr std::array<double, 15> EXP_SERIES = {
-    1.0,
-    1.0,
-    1.0 / factorial(2),
-    1.0 / factorial(3),
-    1.0 / factorial(4),
-    1.0 / factorial(5),
-    1.0 / factorial(6),
-    1.0 / factorial(7),
-    1.0 / factorial(8),
-    1.0 / factorial(9),
-    1.0 / factorial(10),
-    1.0 / factorial(11),
-    1.0 / factorial(12),
-    1.0 / factorial(13),
-    1.0 / factorial(14)};
+constexpr std::array<double, 15> EXP_SERIES = {1.0,
+                                               1.0,
+                                               1.0 / factorial(2),
+                                               1.0 / factorial(3),
+                                               1.0 / factorial(4),
+                                               1.0 / factorial(5),
+                                               1.0 / factorial(6),
+                                               1.0 / factorial(7),
+                                               1.0 / factorial(8),
+                                               1.0 / factorial(9),
+                                               1.0 / factorial(10),
+                                               1.0 / factorial(11),
+                                               1.0 / factorial(12),
+                                               1.0 / factorial(13),
+                                               1.0 / factorial(14)};
 
 // cos y = sum (-1)^k y^(2k) / (2k)!, in powers of y^2; |y| <= pi / 4.
-constexpr std::array<double, 10> COS_SERIES = {
-    1.0,
-    -1.0 / factorial(2),
-    1.0 / factorial(4),
-    -1.0 / factorial(6),
-    1.0 / factorial(8),
-    -1.0 / factorial(10),
-    1.0 / factorial(12),
-    -1.0 / factorial(14),
-    1.0 / factorial(16),
-    -1.0 / factorial(18)};
+constexpr std::array<double, 10> COS_SERIES = {1.0,
+                                               -1.0 / factorial(2),
+                                               1.0 / factorial(4),
+                                               -1.0 / factorial(6),
+                                               1.0 / factorial(8),
+                                               -1.0 / factorial(10),
+                                               1.0 / factorial(12),
+                                               -1.0 / factorial(14),
+                                               1.0 / factorial(16),
+                                               -1.0 / factorial(18)};
 
 // sin y / y = sum (-1)^k y^(2k) / (2k + 1)!, in powers of y^2.
-constexpr std::array<double, 10> SIN_SERIES = {
-    1.0,
-    -1.0 / factorial(3),
-    1.0 / factorial(5),
-    -1.0 / factorial(7),
-    1.0 / factorial(9),
-    -1.0 / factorial(11),
-    1.0 / factorial(13),
-    -1.0 / factorial(15),
-    1.0 / factorial(17),
-    -1.0 / factorial(19)};
+constexpr std::array<double, 10> SIN_SERIES = {1.0,
+                                               -1.0 / factorial(3),
+                                               1.0 / factorial(5),
+                                               -1.0 / factorial(7),
+                                               1.0 / factorial(9),
+                                               -1.0 / factorial(11),
+                                               1.0 / factorial(13),
+                                               -1.0 / factorial(15),
+                                               1.0 / factorial(17),
+                                               -1.0 / factorial(19)};
 
 double cosSmall(double y)
 {
@@ -124,8 +124,9 @@ double sinSmall(double y)
 
 double PortableMath::log(double x)
 {
-  if (!(x > 0.0)) return x == 0.0 ? -std::numeric_limits<double>::infinity()
-                                  : std::numeric_limits<double>::quiet_NaN();
+  if (!(x > 0.0))
+    return x == 0.0 ? -std::numeric_limits<double>::infinity()
+                    : std::numeric_limits<double>::quiet_NaN();
   if (x == std::numeric_limits<double>::infinity()) return x;
   // x = m * 2^e with m in [sqrt(1/2), sqrt(2)); frexp is exact.
   int exponent = 0;

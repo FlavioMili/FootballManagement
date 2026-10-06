@@ -54,15 +54,15 @@ struct PlannerPlayer
   float potential = 0.0f;
   /** Remaining seasons including the current one; <= 1 expires in June. */
   int contract_years = 0;
-  bool in_xi = false;    /*!< Selected in the current starting XI. */
+  bool in_xi = false; /*!< Selected in the current starting XI. */
   bool injured = false;
-  bool listed = false;   /*!< Transfer listed: not counted as depth. */
+  bool listed = false; /*!< Transfer listed: not counted as depth. */
 };
 
 /** @brief One player's line in the depth chart of the viewed season. */
 struct DepthEntry
 {
-  PlannerPlayer player;  /*!< Projected age, overall and contract. */
+  PlannerPlayer player; /*!< Projected age, overall and contract. */
   DepthTier tier = DepthTier::Backup;
   /** Contract ends at the close of the viewed season. */
   bool expiring = false;
@@ -95,8 +95,8 @@ struct PlannerNeed
 {
   PlannerGroup group = PlannerGroup::Goalkeeper;
   NeedKind kind = NeedKind::Missing;
-  int count = 0;           /*!< Players missing / surplus / concerned. */
-  PlayerID player_id = 0;  /*!< Succession: the first choice concerned. */
+  int count = 0;          /*!< Players missing / surplus / concerned. */
+  PlayerID player_id = 0; /*!< Succession: the first choice concerned. */
 };
 
 /** @brief Age bands of the age profile. */

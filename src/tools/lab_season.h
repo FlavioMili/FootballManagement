@@ -24,18 +24,18 @@ namespace Lab
 struct TierVitals
 {
   std::size_t clubs = 0;
-  double median_cash = 0.0;         /*!< EUR on 30 June. */
-  double negative_share = 0.0;      /*!< Clubs with negative cash, 30 June. */
+  double median_cash = 0.0;    /*!< EUR on 30 June. */
+  double negative_share = 0.0; /*!< Clubs with negative cash, 30 June. */
   /** Highest share with negative cash on the first day of any month. */
   double peak_negative_share = 0.0;
   /** Cash below -25% of the season's revenue on 30 June. */
   double insolvent_share = 0.0;
-  double wage_revenue = 0.0;        /*!< Pooled player wages / revenue. */
-  double owner_investment = 0.0;    /*!< Owner money injected (EUR). */
-  double mean_revenue = 0.0;        /*!< EUR per club. */
+  double wage_revenue = 0.0;     /*!< Pooled player wages / revenue. */
+  double owner_investment = 0.0; /*!< Owner money injected (EUR). */
+  double mean_revenue = 0.0;     /*!< EUR per club. */
   double mean_reputation = 0.0;
   double reputation_sd = 0.0;
-  double mean_overall = 0.0;        /*!< Senior club players. */
+  double mean_overall = 0.0; /*!< Senior club players. */
 };
 
 /** World state after one simulated season (the soak trend). */
@@ -48,7 +48,8 @@ struct SeasonVitals
   std::size_t academy = 0;
   std::size_t free_agents = 0;
   double free_agent_mean_age = 0.0;
-  /** Club players (seniors and academy) aged <= 18, 19-23, 24-29, 30-33, 34+. */
+  /** Club players (seniors and academy) aged <= 18, 19-23, 24-29, 30-33, 34+.
+   */
   std::array<std::size_t, 5> age_bands{};
   /** Players created / removed between 1 July and the next rollover. */
   std::size_t intake = 0;

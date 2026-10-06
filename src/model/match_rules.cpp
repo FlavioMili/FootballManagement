@@ -84,8 +84,7 @@ int computeAddedMinutes(const StoppageLog& log, int period)
                      : period == 2 ? T::SECOND_HALF_BASE_MINUTES
                                    : T::EXTRA_TIME_BASE_MINUTES;
   const float minutes =
-      base +
-      static_cast<float>(log.goals) * T::MINUTES_PER_GOAL +
+      base + static_cast<float>(log.goals) * T::MINUTES_PER_GOAL +
       static_cast<float>(log.substitutions) * T::MINUTES_PER_SUBSTITUTION +
       static_cast<float>(log.cards) * T::MINUTES_PER_CARD +
       static_cast<float>(log.injuries) * T::MINUTES_PER_INJURY +
@@ -112,8 +111,7 @@ float periodEndMinute(int period)
          static_cast<float>(period - 2) * T::EXTRA_TIME_HALF_MINUTES;
 }
 
-bool shootoutDecided(int homeGoals, int homeKicks, int awayGoals,
-                     int awayKicks)
+bool shootoutDecided(int homeGoals, int homeKicks, int awayGoals, int awayKicks)
 {
   constexpr int KICKS = MatchTuning::Timing::SHOOTOUT_KICKS;
   if (homeKicks <= KICKS && awayKicks <= KICKS)
@@ -267,11 +265,13 @@ float tackleFoulPropensity(const TackleContext& context)
   return (D::BASE_FOUL_CHANCE + context.riskTaking * D::RISK_FOUL_BONUS +
           context.pressing * D::PRESSING_FOUL_BONUS +
           (1.0f - context.defending) * D::TECHNIQUE_FOUL_BONUS) *
-         (context.defenderBooked ? MatchTuning::Discipline::BOOKED_PLAYER_CAUTION
-                                 : 1.0f) *
+         (context.defenderBooked
+              ? MatchTuning::Discipline::BOOKED_PLAYER_CAUTION
+              : 1.0f) *
          (context.inPenaltyArea ? D::PENALTY_AREA_FOUL_SCALE : 1.0f) *
          (context.fromBehind ? D::FROM_BEHIND_FOUL_FACTOR : 1.0f) *
          (context.sliding ? D::SLIDE_FOUL_FACTOR : 1.0f) *
-         (1.0f - std::clamp(context.exposure, 0.0f, 1.0f) * D::EXPOSED_FOUL_RELIEF);
+         (1.0f -
+          std::clamp(context.exposure, 0.0f, 1.0f) * D::EXPOSED_FOUL_RELIEF);
 }
 }  // namespace MatchRules

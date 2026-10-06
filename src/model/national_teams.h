@@ -169,12 +169,12 @@ inline constexpr int MIN_SQUAD_AGE = 17;
 enum class CallUpResult : uint8_t
 {
   Ok = 0,
-  NoSquad,         /*!< No call-up is due for this nation. */
-  Locked,          /*!< The players have already reported. */
+  NoSquad, /*!< No call-up is due for this nation. */
+  Locked,  /*!< The players have already reported. */
   TooMany,
   TooFew,
   NeedGoalkeepers,
-  Ineligible,      /*!< Wrong nation, too young, injured or tied elsewhere. */
+  Ineligible, /*!< Wrong nation, too young, injured or tied elsewhere. */
   Duplicate
 };
 
@@ -191,9 +191,9 @@ double selectionScore(const Player& player, uint16_t caps,
  * and experience (@p caps); shortfalls are filled by the best remaining
  * players. Deterministic (ties by player ID).
  */
-std::vector<PlayerID> selectSquad(std::vector<const Player*> eligible,
-                                  size_t size, const StatsConfig& config,
-                                  const std::unordered_map<PlayerID, uint16_t>& caps);
+std::vector<PlayerID> selectSquad(
+    std::vector<const Player*> eligible, size_t size, const StatsConfig& config,
+    const std::unordered_map<PlayerID, uint16_t>& caps);
 }  // namespace International
 
 /**

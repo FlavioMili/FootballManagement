@@ -37,8 +37,8 @@ constexpr float DEFENSIVE_FULL_BACK_MARGIN = 8.0f;
 /** Stat used when a player lacks one (the 0-100 midpoint). */
 constexpr float DEFAULT_STAT = 50.0f;
 
-constexpr std::array<TacticalRole, 3> GOALKEEPER_ROLES = {
-    Standard, LineKeeper, SweeperKeeper};
+constexpr std::array<TacticalRole, 3> GOALKEEPER_ROLES = {Standard, LineKeeper,
+                                                          SweeperKeeper};
 constexpr std::array<TacticalRole, 2> FULL_BACK_ROLES = {Standard,
                                                          InsideFullBack};
 constexpr std::array<TacticalRole, 3> CENTRE_BACK_ROLES = {Standard, Stopper,
@@ -55,14 +55,13 @@ constexpr std::array<TacticalRole, 5> STRIKER_ROLES = {
     Standard, TargetForward, Poacher, PressingForward, FalseNine};
 
 constexpr std::array<const char*, static_cast<std::size_t>(TacticalRole::COUNT)>
-    ROLE_KEYS = {"ROLE_STANDARD",         "ROLE_LINE_KEEPER",
-                 "ROLE_SWEEPER_KEEPER",   "ROLE_INSIDE_FULL_BACK",
-                 "ROLE_STOPPER",          "ROLE_COVER_DEFENDER",
-                 "ROLE_ANCHOR",           "ROLE_PLAYMAKER",
-                 "ROLE_BOX_TO_BOX",       "ROLE_SECOND_STRIKER",
-                 "ROLE_INSIDE_FORWARD",   "ROLE_TOUCHLINE_WINGER",
-                 "ROLE_TARGET_FORWARD",   "ROLE_POACHER",
-                 "ROLE_PRESSING_FORWARD", "ROLE_FALSE_NINE"};
+    ROLE_KEYS = {
+        "ROLE_STANDARD",         "ROLE_LINE_KEEPER",    "ROLE_SWEEPER_KEEPER",
+        "ROLE_INSIDE_FULL_BACK", "ROLE_STOPPER",        "ROLE_COVER_DEFENDER",
+        "ROLE_ANCHOR",           "ROLE_PLAYMAKER",      "ROLE_BOX_TO_BOX",
+        "ROLE_SECOND_STRIKER",   "ROLE_INSIDE_FORWARD", "ROLE_TOUCHLINE_WINGER",
+        "ROLE_TARGET_FORWARD",   "ROLE_POACHER",        "ROLE_PRESSING_FORWARD",
+        "ROLE_FALSE_NINE"};
 
 constexpr std::array<const char*, static_cast<std::size_t>(TacticalRole::COUNT)>
     ROLE_DESCRIPTION_KEYS = {
@@ -76,10 +75,10 @@ constexpr std::array<const char*, static_cast<std::size_t>(TacticalRole::COUNT)>
         "ROLE_PRESSING_FORWARD_HELP", "ROLE_FALSE_NINE_HELP"};
 
 constexpr std::array<const char*, static_cast<std::size_t>(RoleFamily::COUNT)>
-    FAMILY_KEYS = {"ROLE_FAMILY_GOALKEEPER", "ROLE_FAMILY_FULL_BACK",
+    FAMILY_KEYS = {"ROLE_FAMILY_GOALKEEPER",  "ROLE_FAMILY_FULL_BACK",
                    "ROLE_FAMILY_CENTRE_BACK", "ROLE_FAMILY_HOLDING",
-                   "ROLE_FAMILY_CENTRAL",    "ROLE_FAMILY_ATTACKING",
-                   "ROLE_FAMILY_WIDE",       "ROLE_FAMILY_STRIKER"};
+                   "ROLE_FAMILY_CENTRAL",     "ROLE_FAMILY_ATTACKING",
+                   "ROLE_FAMILY_WIDE",        "ROLE_FAMILY_STRIKER"};
 
 constexpr std::array<const char*, static_cast<std::size_t>(RoleDuty::COUNT)>
     DUTY_KEYS = {"ROLE_DUTY_DEFEND", "ROLE_DUTY_SUPPORT", "ROLE_DUTY_ATTACK"};
@@ -91,8 +90,8 @@ constexpr std::array<const char*,
 
 // Key attributes, most important first.
 using Attributes = std::span<const std::string_view>;
-constexpr std::array<std::string_view, 2> GOALKEEPER_STANDARD = {
-    "Goalkeeping", "Physicality"};
+constexpr std::array<std::string_view, 2> GOALKEEPER_STANDARD = {"Goalkeeping",
+                                                                 "Physicality"};
 constexpr std::array<std::string_view, 3> FULL_BACK_STANDARD = {
     "Pace", "Defending", "Stamina"};
 constexpr std::array<std::string_view, 2> CENTRE_BACK_STANDARD = {
@@ -110,22 +109,22 @@ constexpr std::array<std::string_view, 3> STRIKER_STANDARD = {
 
 constexpr std::array<std::string_view, 2> LINE_KEEPER = {"Goalkeeping",
                                                          "Physicality"};
-constexpr std::array<std::string_view, 3> SWEEPER_KEEPER = {
-    "Goalkeeping", "Pace", "Passing"};
+constexpr std::array<std::string_view, 3> SWEEPER_KEEPER = {"Goalkeeping",
+                                                            "Pace", "Passing"};
 constexpr std::array<std::string_view, 3> INSIDE_FULL_BACK = {
     "Passing", "Vision", "Defending"};
-constexpr std::array<std::string_view, 3> STOPPER = {"Physicality",
-                                                     "Defending", "Pace"};
-constexpr std::array<std::string_view, 3> COVER_DEFENDER = {
-    "Pace", "Defending", "Vision"};
-constexpr std::array<std::string_view, 3> ANCHOR = {"Defending",
-                                                    "Physicality", "Passing"};
+constexpr std::array<std::string_view, 3> STOPPER = {"Physicality", "Defending",
+                                                     "Pace"};
+constexpr std::array<std::string_view, 3> COVER_DEFENDER = {"Pace", "Defending",
+                                                            "Vision"};
+constexpr std::array<std::string_view, 3> ANCHOR = {"Defending", "Physicality",
+                                                    "Passing"};
 constexpr std::array<std::string_view, 3> PLAYMAKER = {"Passing", "Vision",
                                                        "Dribbling"};
 constexpr std::array<std::string_view, 3> BOX_TO_BOX = {
     "Stamina", "Physicality", "Passing"};
-constexpr std::array<std::string_view, 3> SECOND_STRIKER = {
-    "Shooting", "Pace", "Dribbling"};
+constexpr std::array<std::string_view, 3> SECOND_STRIKER = {"Shooting", "Pace",
+                                                            "Dribbling"};
 constexpr std::array<std::string_view, 3> INSIDE_FORWARD = {
     "Shooting", "Dribbling", "Pace"};
 constexpr std::array<std::string_view, 3> TOUCHLINE_WINGER = {
@@ -437,8 +436,7 @@ RoleDuty suggestedDuty(const Player& player, RoleFamily family)
   if (family != RoleFamily::FullBack) return RoleDuty::Support;
   const float defending = stat(player, "Defending");
   const float engine = (stat(player, "Pace") + stat(player, "Stamina")) * 0.5f;
-  const float flair =
-      (stat(player, "Pace") + stat(player, "Dribbling")) * 0.5f;
+  const float flair = (stat(player, "Pace") + stat(player, "Dribbling")) * 0.5f;
   if (engine >= defending + ATTACKING_FULL_BACK_MARGIN) return RoleDuty::Attack;
   if (defending >= flair + DEFENSIVE_FULL_BACK_MARGIN) return RoleDuty::Defend;
   return RoleDuty::Support;

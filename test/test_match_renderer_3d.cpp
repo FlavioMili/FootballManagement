@@ -24,11 +24,11 @@
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_sdlrenderer3.h"
 #include "controller/game_controller.h"
+#include "database/datagenerator.h"
 #include "global/language_manager.h"
 #include "global/logger.h"
 #include "global/paths.h"
 #include "global/runtime_paths.h"
-#include "database/datagenerator.h"
 #include "gui/gui_view.h"
 #include "gui/render/match_camera_3d.h"
 #include "gui/render/match_kit_colors.h"
@@ -231,8 +231,8 @@ TEST(MatchCamera3DTest, DirectorCutsForGoalsShotsAndAttacks)
   run(attack, D::REVERSE_HOLD + 0.1f);
   EXPECT_EQ(camera.directorShot(), MatchDirectorShot::BROADCAST);
   // The reverse angle came about MIN_SHOT_SECONDS into the attack.
-  run(attack, D::REVERSE_COOLDOWN - D::REVERSE_HOLD - D::MIN_SHOT_SECONDS -
-                  1.5f);
+  run(attack,
+      D::REVERSE_COOLDOWN - D::REVERSE_HOLD - D::MIN_SHOT_SECONDS - 1.5f);
   EXPECT_EQ(camera.directorShot(), MatchDirectorShot::BROADCAST);
   run(attack, 3.0f);
   EXPECT_EQ(camera.directorShot(), MatchDirectorShot::REVERSE_ANGLE);
@@ -314,7 +314,8 @@ TEST(MatchRender3DMath, GroundPickingInvertsProjection)
   }
   // The top edge of this view looks above the horizon: nothing to pick.
   Vec3 sky;
-  EXPECT_FALSE(projection.groundPointAt(TEST_RECT.x, TEST_RECT.y - 400.0f, sky));
+  EXPECT_FALSE(
+      projection.groundPointAt(TEST_RECT.x, TEST_RECT.y - 400.0f, sky));
 }
 
 TEST(MatchCamera3DTest, FreeCameraTakesOverFromThePoseOnScreen)
@@ -477,10 +478,10 @@ TEST(MatchRender3DProportions, PlayerHeightOnScreenIsBroadcastSized)
   {
     const RenderMath::ScreenRect rect{0.0f, 0.0f, height * 16.0f / 9.0f,
                                       height};
-    const Projection projection = Projection::make(
-        camera.eye(), camera.target(), camera.verticalFov(),
-        MatchRender3DTuning::Camera::NEAR_PLANE,
-        MatchRender3DTuning::Camera::FAR_PLANE, rect);
+    const Projection projection =
+        Projection::make(camera.eye(), camera.target(), camera.verticalFov(),
+                         MatchRender3DTuning::Camera::NEAR_PLANE,
+                         MatchRender3DTuning::Camera::FAR_PLANE, rect);
     ScreenPoint feet;
     ScreenPoint head;
     ASSERT_TRUE(projection.project({52.5f, 34.0f, 0.0f}, feet));
@@ -552,18 +553,17 @@ TEST(MatchKitColorsTest, ClubsWearTheirOwnColoursWithoutClashes)
       for (const ImU32 keeper :
            {kits.homeGoalkeeper.shirt, kits.awayGoalkeeper.shirt})
       {
-        EXPECT_GE(kitColorDistance(keeper, kits.home.shirt),
-                  KIT_CLASH_DISTANCE)
+        EXPECT_GE(kitColorDistance(keeper, kits.home.shirt), KIT_CLASH_DISTANCE)
             << home << " vs " << away;
-        EXPECT_GE(kitColorDistance(keeper, kits.away.shirt),
-                  KIT_CLASH_DISTANCE)
+        EXPECT_GE(kitColorDistance(keeper, kits.away.shirt), KIT_CLASH_DISTANCE)
             << home << " vs " << away;
       }
     }
   }
 
   // A clash sends the away side to its reversed colours first.
-  const ClubColours red{IM_COL32(200, 20, 30, 255), IM_COL32(250, 250, 250, 255)};
+  const ClubColours red{IM_COL32(200, 20, 30, 255),
+                        IM_COL32(250, 250, 250, 255)};
   const ClubColours crimson{IM_COL32(190, 30, 40, 255),
                             IM_COL32(20, 30, 90, 255)};
   const MatchKits clash = chooseMatchKits(1, 2, &red, &crimson);
@@ -580,7 +580,8 @@ TEST(MatchRender3DMath, ShirtNumbersAreClassicAndUnique)
       PlayerRole::LB, PlayerRole::RM, PlayerRole::CM, PlayerRole::CM,
       PlayerRole::LM, PlayerRole::ST, PlayerRole::ST};
   std::vector<int> taken;
-  for (const PlayerRole role : starters) taken.push_back(numbers.take(role, true));
+  for (const PlayerRole role : starters)
+    taken.push_back(numbers.take(role, true));
   EXPECT_EQ(taken[0], 1);
   EXPECT_EQ(taken[1], 2);
   EXPECT_EQ(taken[2], 4);
@@ -633,8 +634,9 @@ TEST(MatchKitColorsTest, IntegerBlendsMatchTheFloatOnes)
     {
       for (const std::uint32_t t : {0U, 64U, 128U, 200U, 256U})
       {
-        EXPECT_TRUE(near(mixColor256(first, second, t),
-                         mixColor(first, second, static_cast<float>(t) / 256.0f)))
+        EXPECT_TRUE(
+            near(mixColor256(first, second, t),
+                 mixColor(first, second, static_cast<float>(t) / 256.0f)))
             << std::hex << first << ' ' << second << ' ' << t;
       }
     }
@@ -654,15 +656,14 @@ TEST(MatchKitColorsTest, NumbersAndGlovesStandOut)
     for (TeamID away = 1; away <= 80; away += 7)
     {
       const MatchKits kits = chooseMatchKits(home, away);
-      for (const KitColors& kit : {kits.home, kits.away, kits.homeGoalkeeper,
-                                   kits.awayGoalkeeper})
+      for (const KitColors& kit :
+           {kits.home, kits.away, kits.homeGoalkeeper, kits.awayGoalkeeper})
       {
         EXPECT_GE(kitColorDistance(kitNumberColor(kit), kit.shirt),
                   KIT_CLASH_DISTANCE)
             << home << " vs " << away;
       }
-      for (const KitColors& keeper :
-           {kits.homeGoalkeeper, kits.awayGoalkeeper})
+      for (const KitColors& keeper : {kits.homeGoalkeeper, kits.awayGoalkeeper})
       {
         EXPECT_GE(kitColorDistance(goalkeeperGloveColor(keeper), keeper.shirt),
                   KIT_CLASH_DISTANCE)
@@ -692,8 +693,8 @@ TEST(MatchRenderer3DRig, TwoBoneIkReachesTargetsAndBendsTowardsThePole)
     EXPECT_GT(RenderMath::dot(leg.middle - halfway, pole), 0.0f);
   }
   // Out of reach: the leg points straight at the target.
-  const PlayerRig::TwoBone stretched = PlayerRig::solveTwoBone(
-      hip, {0.0f, 0.0f, -2.0f}, UPPER, LOWER, pole);
+  const PlayerRig::TwoBone stretched =
+      PlayerRig::solveTwoBone(hip, {0.0f, 0.0f, -2.0f}, UPPER, LOWER, pole);
   EXPECT_FALSE(stretched.reached);
   EXPECT_NEAR(RenderMath::length(stretched.end - hip), UPPER + LOWER, 1e-3f);
   EXPECT_LT(stretched.end.z, hip.z);
@@ -794,7 +795,8 @@ TEST(MatchRenderer3DRig, PlantedFootStaysPutThroughTheStance)
       {
         PlayerRig::StrideInput input;
         input.rest =
-            root + Vec3{0.0f, (leg == 0 ? 1.0f : -1.0f) * R::STANCE_WIDTH, 0.0f};
+            root +
+            Vec3{0.0f, (leg == 0 ? 1.0f : -1.0f) * R::STANCE_WIDTH, 0.0f};
         input.forward = {1.0f, 0.0f, 0.0f};
         input.legPhase = std::fmod(phase + (leg == 0 ? 0.0f : PI), 2.0f * PI);
         input.duty = duty;
@@ -1312,9 +1314,8 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
 
     // The 2D tactical view: cost and captures with panels, then in pitch
     // focus at 1440p and 720p, in open play after any celebration.
-    for (int step = 0; step < 600 && scene.engine->getState() !=
-                                         MatchState::PLAYING;
-         ++step)
+    for (int step = 0;
+         step < 600 && scene.engine->getState() != MatchState::PLAYING; ++step)
       scene.engine->advance(0.5f);
     scene.engine->advance(8.0f);
     for (int index = 0; index < 30; ++index) frame(FRAME_SECONDS);
@@ -1364,9 +1365,9 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
         ImGui::SetNextWindowPos({0.0f, 0.0f});
         ImGui::SetNextWindowSize(display);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0f, 0.0f});
-        ImGui::Begin("direct", nullptr,
-                     ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoBackground);
+        ImGui::Begin(
+            "direct", nullptr,
+            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
         MatchRenderSnapshot snapshot = buildMatchRenderSnapshot(*scene.engine);
         if (events && index > 0) snapshot.events = events;
         // The 2D pitch keeps its proportions inside an apron.

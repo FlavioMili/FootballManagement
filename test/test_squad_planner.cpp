@@ -46,8 +46,9 @@ const GroupDepth& group(const SquadPlan& plan, PlannerGroup which)
 
 bool hasNeed(const SquadPlan& plan, PlannerGroup which, NeedKind kind)
 {
-  return std::ranges::any_of(plan.needs, [&](const PlannerNeed& need)
-                             { return need.group == which && need.kind == kind; });
+  return std::ranges::any_of(
+      plan.needs, [&](const PlannerNeed& need)
+      { return need.group == which && need.kind == kind; });
 }
 
 /** A healthy 25-man squad: every group at its target depth. */
@@ -145,7 +146,7 @@ TEST(SquadPlannerTest, ListedPlayersDoNotCountAsDepth)
 TEST(SquadPlannerTest, NextSeasonDropsExpiringContractsAndAgesTheSquad)
 {
   std::vector<PlannerPlayer> squad = healthySquad();
-  squad[3].contract_years = 1;                        // A centre back leaves.
+  squad[3].contract_years = 1;  // A centre back leaves.
   squad[0] = make(1, PlayerRole::GK, 18, 55.0f, 3, 75.0f);  // Young keeper.
   squad[5] = make(6, PlayerRole::CB, 33, 72.0f, 2);         // Veteran.
   const SquadPlan now = SquadPlanner::build(squad, 0);

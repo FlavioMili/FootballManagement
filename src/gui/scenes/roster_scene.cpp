@@ -292,8 +292,9 @@ void RosterScene::applySort()
             break;
           case RosterColumn::NUMBER:
             // Players without a number go last.
-            comparison = UI::compare(a.squad_number == 0 ? 100 : a.squad_number,
-                                     b.squad_number == 0 ? 100 : b.squad_number);
+            comparison =
+                UI::compare(a.squad_number == 0 ? 100 : a.squad_number,
+                            b.squad_number == 0 ? 100 : b.squad_number);
             break;
           case RosterColumn::ROLE:
             comparison = UI::compare(a.role_id, b.role_id);
@@ -346,12 +347,12 @@ void RosterScene::renderTable()
   std::array<UI::Column, 11> columns = rosterColumns();
   const UI::ColumnMask hidden = UI::hiddenColumns(TABLE_KEY, columns);
   for (UI::Column& column : columns) column.label = LOC(column.label);
-  const UI::ColumnMask mask = UI::fitColumns(
-      columns, ImGui::GetContentRegionAvail().x, 160.0f, hidden);
+  const UI::ColumnMask mask =
+      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 160.0f, hidden);
   table_mask = mask;
-  const ImGuiTableFlags flags =
-      ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH |
-      ImGuiTableFlags_Sortable;
+  const ImGuiTableFlags flags = ImGuiTableFlags_RowBg |
+                                ImGuiTableFlags_BordersInnerH |
+                                ImGuiTableFlags_Sortable;
   if (!UI::beginResponsiveTable("RosterTable", columns, mask, flags,
                                 UI::TableHeader::SORTABLE))
     return;
@@ -500,8 +501,8 @@ void RosterScene::renderNumberEditor(const Player& player)
   ImGui::PopStyleVar();
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("%s", LOC("ROSTER_SQUAD_NUMBER_HINT"));
-  number_edit =
-      std::clamp(number_edit, SquadNumbers::MIN_NUMBER, SquadNumbers::MAX_NUMBER);
+  number_edit = std::clamp(number_edit, SquadNumbers::MIN_NUMBER,
+                           SquadNumbers::MAX_NUMBER);
   ImGui::SameLine();
   ImGui::BeginDisabled(number_edit == player.getSquadNumber());
   const bool apply =
@@ -522,8 +523,8 @@ void RosterScene::renderNumberEditor(const Player& player)
   switch (controller.setSquadNumber(player_id, number_edit))
   {
     case SquadNumbers::Change::Changed:
-      showToast(fmt::sprintf(LOC("ROSTER_NUMBER_CHANGED_TOAST"), name,
-                             number_edit));
+      showToast(
+          fmt::sprintf(LOC("ROSTER_NUMBER_CHANGED_TOAST"), name, number_edit));
       break;
     case SquadNumbers::Change::Swapped:
       showToast(fmt::sprintf(LOC("ROSTER_NUMBER_SWAPPED_TOAST"), name,

@@ -27,7 +27,7 @@ struct DrawReveal
 {
   TeamID home_id = 0;
   TeamID away_id = 0;
-  GameDateValue date;             /*!< The match, or the first leg. */
+  GameDateValue date; /*!< The match, or the first leg. */
   std::optional<GameDateValue> second_leg;
   std::uint8_t pot = 0; /*!< League phase: the opponent's pot (1-based). */
 };

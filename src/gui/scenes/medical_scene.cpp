@@ -209,11 +209,10 @@ void MedicalScene::refresh()
     line.load_trend = row.workload_ratio > RISING_LOAD    ? 1
                       : row.workload_ratio < FALLING_LOAD ? -1
                                                           : 0;
-    line.load = std::format(
-        "{:.2f}  ·  {}", row.workload_ratio,
-        LOC(line.load_trend > 0   ? "MEDICAL_LOAD_RISING"
-            : line.load_trend < 0 ? "MEDICAL_LOAD_FALLING"
-                                  : "MEDICAL_LOAD_STABLE"));
+    line.load = std::format("{:.2f}  ·  {}", row.workload_ratio,
+                            LOC(line.load_trend > 0   ? "MEDICAL_LOAD_RISING"
+                                : line.load_trend < 0 ? "MEDICAL_LOAD_FALLING"
+                                                      : "MEDICAL_LOAD_STABLE"));
     line.reasons = reasonsText(row.risk.reasons);
     line.returning = row.returning;
     if (const Game* game = controller.getGame())
@@ -269,8 +268,7 @@ void MedicalScene::setFlag(std::uint8_t flag, bool enabled)
 {
   Game* game = guiView->getController().getGame();
   if (!game || selected == 0) return;
-  game->getMedical().setFlag(selected, static_cast<MedicalFlag>(flag),
-                             enabled);
+  game->getMedical().setFlag(selected, static_cast<MedicalFlag>(flag), enabled);
   selected_flags = game->getMedical().flags(selected);
   for (RiskLine& line : risks)
     if (line.id == selected) line.flags = selected_flags;
@@ -283,9 +281,9 @@ void MedicalScene::nameCell(PlayerID id, const std::string& name,
                         ImGuiSelectableFlags_SpanAllColumns))
     select(id);
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-    ImGui::SetTooltip("%s  ·  %s", role.c_str(),
-                      LOC(returning ? "MEDICAL_RETURNING_HINT"
-                                    : "MEDICAL_ROW_HINT"));
+    ImGui::SetTooltip(
+        "%s  ·  %s", role.c_str(),
+        LOC(returning ? "MEDICAL_RETURNING_HINT" : "MEDICAL_ROW_HINT"));
 }
 
 void MedicalScene::renderContent()
@@ -300,9 +298,9 @@ void MedicalScene::renderContent()
   UI::TileRow tiles(4);
   const float tile = tiles.width();
   const std::string out = std::to_string(injured.size());
-  const std::string lost = formatLocalized(
-      Format::plural("MEDICAL_TILE_DAYS_LOST", days_lost),
-      {std::to_string(days_lost)});
+  const std::string lost =
+      formatLocalized(Format::plural("MEDICAL_TILE_DAYS_LOST", days_lost),
+                      {std::to_string(days_lost)});
   tiles.next();
   UI::statTile("out", LOC("MEDICAL_TILE_INJURED"), out.c_str(), lost.c_str(),
                injured.empty() ? palette.positive : palette.text, tile);
@@ -353,9 +351,9 @@ void MedicalScene::renderInjured(float width)
   const auto columns = localized(injuryColumns());
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
-  if (UI::beginResponsiveTable("injured", columns, mask,
-                               ImGuiTableFlags_RowBg |
-                                   ImGuiTableFlags_BordersInnerH))
+  if (UI::beginResponsiveTable(
+          "injured", columns, mask,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
   {
     for (const InjuryLine& line : injured)
     {
@@ -367,12 +365,11 @@ void MedicalScene::renderInjured(float width)
         UI::textFitted(line.injury, ImGui::GetContentRegionAvail().x,
                        palette.muted);
       if (UI::cell(mask, 2))
-        UI::textRightColored(line.severity == InjurySeverity::Major
-                                 ? palette.negative
-                             : line.severity == InjurySeverity::Moderate
-                                 ? palette.warning
-                                 : palette.text,
-                             line.days.c_str());
+        UI::textRightColored(
+            line.severity == InjurySeverity::Major      ? palette.negative
+            : line.severity == InjurySeverity::Moderate ? palette.warning
+                                                        : palette.text,
+            line.days.c_str());
       if (UI::cell(mask, 3)) ImGui::TextUnformatted(line.back.c_str());
       if (UI::cell(mask, 4))
         ImGui::TextColored(bandColor(line.reinjury), "%s",
@@ -408,9 +405,9 @@ void MedicalScene::renderRisk(float width)
   const auto columns = localized(riskColumns());
   const UI::ColumnMask mask =
       UI::fitColumns(columns, ImGui::GetContentRegionAvail().x);
-  if (UI::beginResponsiveTable("risk", columns, mask,
-                               ImGuiTableFlags_RowBg |
-                                   ImGuiTableFlags_BordersInnerH))
+  if (UI::beginResponsiveTable(
+          "risk", columns, mask,
+          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH))
   {
     for (const RiskLine& line : risks)
     {
@@ -515,8 +512,7 @@ void MedicalScene::renderPlayerLoad(float width)
     UI::endCard();
     return;
   }
-  UI::textFitted(selected_name, ImGui::GetContentRegionAvail().x,
-                 palette.text);
+  UI::textFitted(selected_name, ImGui::GetContentRegionAvail().x, palette.text);
   if (chart_empty)
   {
     ImGui::PushTextWrapPos(0.0f);
@@ -526,8 +522,8 @@ void MedicalScene::renderPlayerLoad(float width)
   else
   {
     renderLoadChart(CHART_HEIGHT * Theme::scale());
-    const auto latest = std::ranges::find_if(
-        chart.rbegin(), chart.rend(), &LoadChartDay::recorded);
+    const auto latest = std::ranges::find_if(chart.rbegin(), chart.rend(),
+                                             &LoadChartDay::recorded);
     const RiskBand band = MedicalCentre::loadBand(latest->ratio);
     const std::string ratio = formatLocalized(
         "MEDICAL_LOAD_LATEST", {std::format("{:.2f}", latest->ratio)});
@@ -578,9 +574,7 @@ void MedicalScene::renderLoadChart(float height)
   ImDrawList* drawList = ImGui::GetWindowDrawList();
   const float bottom = origin.y + height;
   const auto ratioY = [&](float ratio)
-  {
-    return bottom - height * std::clamp(ratio / CHART_RATIO_TOP, 0.0f, 1.0f);
-  };
+  { return bottom - height * std::clamp(ratio / CHART_RATIO_TOP, 0.0f, 1.0f); };
 
   // Risk zones of the acute:chronic ratio behind the bars.
   const auto band = [&](float from, float to, const ImVec4& color)
@@ -637,23 +631,23 @@ void MedicalScene::renderLoadChart(float height)
   drawList->AddLine(ImVec2(origin.x, bottom), ImVec2(origin.x + width, bottom),
                     Theme::toU32(palette.border));
 
-  if (hoveredIndex >= 0 && chart[static_cast<std::size_t>(hoveredIndex)].recorded)
+  if (hoveredIndex >= 0 &&
+      chart[static_cast<std::size_t>(hoveredIndex)].recorded)
   {
     const LoadChartDay& day = chart[static_cast<std::size_t>(hoveredIndex)];
     const GameDateValue date = guiView->getController().getCurrentDate() -
                                static_cast<size_t>(chart_today - day.day);
-    ImGui::SetTooltip(
-        "%s", formatLocalized("MEDICAL_LOAD_TOOLTIP",
-                              {Format::dayMonth(date),
-                               std::format("{:.1f}", day.load),
-                               std::format("{:.2f}", day.ratio)})
-                  .c_str());
+    ImGui::SetTooltip("%s", formatLocalized("MEDICAL_LOAD_TOOLTIP",
+                                            {Format::dayMonth(date),
+                                             std::format("{:.1f}", day.load),
+                                             std::format("{:.2f}", day.ratio)})
+                                .c_str());
   }
   Theme::ScopedText small(Theme::Text::SMALL);
   ImGui::TextColored(palette.faint, "%s", LOC("MEDICAL_LOAD_FOUR_WEEKS"));
   const char* today = LOC("MEDICAL_LOAD_YESTERDAY");
   ImGui::SameLine(std::max(0.0f, ImGui::GetCursorPosX() +
-                                      ImGui::GetContentRegionAvail().x -
-                                      ImGui::CalcTextSize(today).x));
+                                     ImGui::GetContentRegionAvail().x -
+                                     ImGui::CalcTextSize(today).x));
   ImGui::TextColored(palette.faint, "%s", today);
 }

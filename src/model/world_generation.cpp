@@ -169,10 +169,18 @@ constexpr std::array<NationalityWeight, 26> EUROPEAN_FOREIGN_POOL = {{
 // (Spanish-speaking South Americans carry Spanish names), plus Europeans in
 // the MLS. [S: CIES, MLS player pool reports; P weights]
 constexpr std::array<NationalityWeight, 12> AMERICAN_FOREIGN_POOL = {{
-    {Language::ES, 10.0f}, {Language::BR, 5.0f}, {Language::MX, 4.0f},
-    {Language::US, 3.0f},  {Language::EN, 2.5f}, {Language::FR, 1.5f},
-    {Language::DE, 1.5f},  {Language::PT, 1.0f}, {Language::IT, 1.0f},
-    {Language::JP, 1.0f},  {Language::KR, 0.8f}, {Language::IE, 0.7f},
+    {Language::ES, 10.0f},
+    {Language::BR, 5.0f},
+    {Language::MX, 4.0f},
+    {Language::US, 3.0f},
+    {Language::EN, 2.5f},
+    {Language::FR, 1.5f},
+    {Language::DE, 1.5f},
+    {Language::PT, 1.0f},
+    {Language::IT, 1.0f},
+    {Language::JP, 1.0f},
+    {Language::KR, 0.8f},
+    {Language::IE, 0.7f},
 }};
 
 // Standard normal quantile (Abramowitz-Stegun 26.2.23, |error| < 4.5e-4).
@@ -181,9 +189,9 @@ double normalQuantile(double p)
   const double q = std::clamp(p, 1e-6, 1.0 - 1e-6);
   const double tail = q < 0.5 ? q : 1.0 - q;
   const double t = std::sqrt(-2.0 * std::log(tail));
-  const double z = t - (2.515517 + 0.802853 * t + 0.010328 * t * t) /
-                           (1.0 + 1.432788 * t + 0.189269 * t * t +
-                            0.001308 * t * t * t);
+  const double z =
+      t - (2.515517 + 0.802853 * t + 0.010328 * t * t) /
+              (1.0 + 1.432788 * t + 0.189269 * t * t + 0.001308 * t * t * t);
   return q < 0.5 ? -z : z;
 }
 
@@ -221,9 +229,8 @@ float drawPotential(WorldRng& rng, float current, int age)
   const float spread = age >= WorldTuning::Generation::VETERAN_AGE
                            ? 0.5f
                            : 0.45f * headroom + 1.5f;
-  return std::min(
-      WorldGeneration::maxPotential(age, current),
-      current + std::max(0.0f, rng.normal(headroom, spread)));
+  return std::min(WorldGeneration::maxPotential(age, current),
+                  current + std::max(0.0f, rng.normal(headroom, spread)));
 }
 
 NameRegistry& generationRegistry()
@@ -234,7 +241,8 @@ NameRegistry& generationRegistry()
 }
 
 template <std::size_t N>
-Language drawForeign(WorldRng& rng, const std::array<NationalityWeight, N>& pool,
+Language drawForeign(WorldRng& rng,
+                     const std::array<NationalityWeight, N>& pool,
                      Language domestic)
 {
   std::array<float, N> weights{};
@@ -438,22 +446,21 @@ std::string NamePool::normalizeName(std::string_view name)
 {
   // Lower-case ASCII spelling of U+00C0..U+017F.
   static constexpr std::array<const char*, 192> LATIN_FOLD = {
-    "a", "a", "a", "a", "a", "a", "ae", "c", "e", "e", "e", "e",
-    "i", "i", "i", "i", "d", "n", "o", "o", "o", "o", "o", "",
-    "o", "u", "u", "u", "u", "y", "th", "ss", "a", "a", "a", "a",
-    "a", "a", "ae", "c", "e", "e", "e", "e", "i", "i", "i", "i",
-    "d", "n", "o", "o", "o", "o", "o", "", "o", "u", "u", "u",
-    "u", "y", "th", "y", "a", "a", "a", "a", "a", "a", "c", "c",
-    "c", "c", "c", "c", "c", "c", "d", "d", "d", "d", "e", "e",
-    "e", "e", "e", "e", "e", "e", "e", "e", "g", "g", "g", "g",
-    "g", "g", "g", "g", "h", "h", "h", "h", "i", "i", "i", "i",
-    "i", "i", "i", "i", "i", "i", "ij", "ij", "j", "j", "k", "k",
-    "k", "l", "l", "l", "l", "l", "l", "l", "l", "l", "l", "n",
-    "n", "n", "n", "n", "n", "n", "ng", "ng", "o", "o", "o", "o",
-    "o", "o", "oe", "oe", "r", "r", "r", "r", "r", "r", "s", "s",
-    "s", "s", "s", "s", "s", "s", "t", "t", "t", "t", "t", "t",
-    "u", "u", "u", "u", "u", "u", "u", "u", "u", "u", "u", "u",
-    "w", "w", "y", "y", "y", "z", "z", "z", "z", "z", "z", "s",
+      "a", "a", "a", "a",  "a",  "a",  "ae", "c", "e",  "e",  "e",  "e",  "i",
+      "i", "i", "i", "d",  "n",  "o",  "o",  "o", "o",  "o",  "",   "o",  "u",
+      "u", "u", "u", "y",  "th", "ss", "a",  "a", "a",  "a",  "a",  "a",  "ae",
+      "c", "e", "e", "e",  "e",  "i",  "i",  "i", "i",  "d",  "n",  "o",  "o",
+      "o", "o", "o", "",   "o",  "u",  "u",  "u", "u",  "y",  "th", "y",  "a",
+      "a", "a", "a", "a",  "a",  "c",  "c",  "c", "c",  "c",  "c",  "c",  "c",
+      "d", "d", "d", "d",  "e",  "e",  "e",  "e", "e",  "e",  "e",  "e",  "e",
+      "e", "g", "g", "g",  "g",  "g",  "g",  "g", "g",  "h",  "h",  "h",  "h",
+      "i", "i", "i", "i",  "i",  "i",  "i",  "i", "i",  "i",  "ij", "ij", "j",
+      "j", "k", "k", "k",  "l",  "l",  "l",  "l", "l",  "l",  "l",  "l",  "l",
+      "l", "n", "n", "n",  "n",  "n",  "n",  "n", "ng", "ng", "o",  "o",  "o",
+      "o", "o", "o", "oe", "oe", "r",  "r",  "r", "r",  "r",  "r",  "s",  "s",
+      "s", "s", "s", "s",  "s",  "s",  "t",  "t", "t",  "t",  "t",  "t",  "u",
+      "u", "u", "u", "u",  "u",  "u",  "u",  "u", "u",  "u",  "u",  "w",  "w",
+      "y", "y", "y", "z",  "z",  "z",  "z",  "z", "z",  "s",
   };
   std::string out;
   out.reserve(name.size());
@@ -574,12 +581,11 @@ std::pair<std::string, std::string> drawName(WorldRng& rng,
         rng.uniformInt(0, static_cast<int>(names.size()) - 1))];
   };
   // Iberian and Brazilian players commonly carry two surnames.
-  const char* joiner = nationality == Language::ES ||
-                               nationality == Language::PT ||
-                               nationality == Language::BR ||
-                               nationality == Language::MX
-                           ? " "
-                           : "-";
+  const char* joiner =
+      nationality == Language::ES || nationality == Language::PT ||
+              nationality == Language::BR || nationality == Language::MX
+          ? " "
+          : "-";
   std::string first;
   std::string last;
   for (int attempt = 0; attempt < 2 * WorldTuning::Generation::NAME_ATTEMPTS;
@@ -629,8 +635,8 @@ std::vector<float> levelOffsets(const LeagueShape& shape, std::size_t clubs)
   std::vector<double> scores(clubs);
   for (std::size_t rank = 0; rank < clubs; ++rank)
   {
-    scores[rank] = normalQuantile(
-        1.0 - (static_cast<double>(rank) + 0.5) / static_cast<double>(clubs));
+    scores[rank] = normalQuantile(1.0 - (static_cast<double>(rank) + 0.5) /
+                                            static_cast<double>(clubs));
     if (rank < shape.elite_clubs)
       scores[rank] += static_cast<double>(shape.elite_gap);
   }
@@ -716,10 +722,10 @@ void generateClubProfiles(std::unordered_map<TeamID, Team>& teams,
     for (std::size_t i = 0; i < team_ids.size(); ++i)
     {
       ClubProfile profile;
-      profile.reputation = clampRating(
-          centre + Generation::REPUTATION_PER_LEVEL * offsets[i] +
-              rng.normal(0.0f, Generation::CLUB_REPUTATION_NOISE),
-          15.0f);
+      profile.reputation =
+          clampRating(centre + Generation::REPUTATION_PER_LEVEL * offsets[i] +
+                          rng.normal(0.0f, Generation::CLUB_REPUTATION_NOISE),
+                      15.0f);
       profile.training_facilities = clampRating(
           static_cast<float>(profile.reputation) + rng.normal(0.0f, 8.0f),
           10.0f);
@@ -752,8 +758,8 @@ void generateClubProfiles(std::unordered_map<TeamID, Team>& teams,
       const double income =
           ClubEconomy::expectedIncome(economy, profile.reputation);
       const double opening = income * static_cast<double>(rng.uniform(
-                                           Generation::OPENING_BALANCE_MIN,
-                                           Generation::OPENING_BALANCE_MAX));
+                                          Generation::OPENING_BALANCE_MIN,
+                                          Generation::OPENING_BALANCE_MAX));
       team.getFinances() = Finances(
           static_cast<std::int64_t>(std::llround(opening / 1000.0)) * 1000);
     }

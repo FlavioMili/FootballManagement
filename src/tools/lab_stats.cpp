@@ -101,10 +101,12 @@ Estimate ratioEstimate(std::span<const double> numerators,
   const std::size_t units = std::min(numerators.size(), denominators.size());
   estimate.n = units;
   if (units == 0) return estimate;
-  const double num = std::accumulate(numerators.begin(),
-                                     numerators.begin() + static_cast<std::ptrdiff_t>(units), 0.0);
-  const double den = std::accumulate(denominators.begin(),
-                                     denominators.begin() + static_cast<std::ptrdiff_t>(units), 0.0);
+  const double num = std::accumulate(
+      numerators.begin(),
+      numerators.begin() + static_cast<std::ptrdiff_t>(units), 0.0);
+  const double den = std::accumulate(
+      denominators.begin(),
+      denominators.begin() + static_cast<std::ptrdiff_t>(units), 0.0);
   if (den <= 0.0)
   {
     estimate.n = 0;
@@ -125,8 +127,7 @@ Estimate ratioEstimate(std::span<const double> numerators,
     const double residual = numerators[i] - ratio * denominators[i];
     residuals += residual * residual;
   }
-  const double se =
-      std::sqrt(residuals / (n * (n - 1.0))) / meanDen;
+  const double se = std::sqrt(residuals / (n * (n - 1.0))) / meanDen;
   const double half = tQuantile975(units - 1) * se;
   estimate.low = ratio - half;
   estimate.high = ratio + half;
@@ -149,16 +150,16 @@ Estimate medianEstimate(std::span<const double> values)
   std::vector<double> sorted(values.begin(), values.end());
   std::ranges::sort(sorted);
   const std::size_t n = sorted.size();
-  estimate.value = n % 2 == 1 ? sorted[n / 2]
-                              : 0.5 * (sorted[n / 2 - 1] + sorted[n / 2]);
+  estimate.value =
+      n % 2 == 1 ? sorted[n / 2] : 0.5 * (sorted[n / 2 - 1] + sorted[n / 2]);
   // Ranks n/2 -+ z sqrt(n)/2 bound the median with ~95% coverage.
   const double spread = Z_95 * std::sqrt(static_cast<double>(n)) / 2.0;
   const double half = static_cast<double>(n) / 2.0;
   const auto lowRank = static_cast<std::ptrdiff_t>(std::floor(half - spread));
   const auto highRank = static_cast<std::ptrdiff_t>(std::ceil(half + spread));
   const auto last = static_cast<std::ptrdiff_t>(n) - 1;
-  estimate.low = sorted[static_cast<std::size_t>(std::clamp<std::ptrdiff_t>(
-      lowRank - 1, 0, last))];
+  estimate.low = sorted[static_cast<std::size_t>(
+      std::clamp<std::ptrdiff_t>(lowRank - 1, 0, last))];
   estimate.high = sorted[static_cast<std::size_t>(
       std::clamp<std::ptrdiff_t>(highRank - 1, 0, last))];
   return estimate;
@@ -185,7 +186,8 @@ Estimate bootstrapEstimate(
   draws.reserve(static_cast<std::size_t>(std::max(resamples, 0)));
   for (int r = 0; r < resamples; ++r)
   {
-    for (std::size_t& index : indices) index = PortableRandom::below(rng, units);
+    for (std::size_t& index : indices)
+      index = PortableRandom::below(rng, units);
     const double value = statistic(indices);
     if (std::isfinite(value)) draws.push_back(value);
   }
@@ -212,7 +214,8 @@ Verdict classify(const Estimate& estimate, const std::optional<Band>& band)
   if (!band) return Verdict::Info;
   if (estimate.value >= band->low && estimate.value <= band->high)
     return Verdict::Pass;
-  const double low = std::isfinite(estimate.low) ? estimate.low : estimate.value;
+  const double low =
+      std::isfinite(estimate.low) ? estimate.low : estimate.value;
   const double high =
       std::isfinite(estimate.high) ? estimate.high : estimate.value;
   if (high >= band->low && low <= band->high) return Verdict::Warn;

@@ -153,8 +153,8 @@ void CompetitionManager::afterMatchday(Calendar& calendar,
   // this settles one recorded level from a score alone.
   for (const FixtureKey& key : pending_deciders)
   {
-    Match* match =
-        calendar.findMatch(std::get<0>(key), std::get<1>(key), std::get<2>(key));
+    Match* match = calendar.findMatch(std::get<0>(key), std::get<1>(key),
+                                      std::get<2>(key));
     if (!match || !continental.resolveDecider(calendar, *match)) continue;
     if (const auto report = pending_reports.find(key);
         report != pending_reports.end())
@@ -193,7 +193,8 @@ void CompetitionManager::closeSeason(const Calendar& calendar, uint16_t season,
     league_ids.push_back(id);
   }
   std::ranges::sort(league_ids);
-  const auto movements = Competitions::computeLeagueMovements(*gamedata, tables);
+  const auto movements =
+      Competitions::computeLeagueMovements(*gamedata, tables);
 
   // Continental coefficients and next season's clubs, from the final tables
   // (before promotion and relegation) and the domestic cup winners.
@@ -251,9 +252,9 @@ void CompetitionManager::closeSeason(const Calendar& calendar, uint16_t season,
       else
         entry.relegated.push_back(movement.team_id);
     }
-    setTopScorer(entry, SeasonStats::topScorers(player_stats, season,
-                                                MatchType::LEAGUE,
-                                                league.getTeamIDs(), 1));
+    setTopScorer(
+        entry, SeasonStats::topScorers(player_stats, season, MatchType::LEAGUE,
+                                       league.getTeamIDs(), 1));
     upsertHistory(season_history, std::move(entry));
   }
 
@@ -269,10 +270,9 @@ void CompetitionManager::closeSeason(const Calendar& calendar, uint16_t season,
     entry.competition_name = status.name;
     entry.champion_id = status.winner.value_or(0);
     entry.runner_up_id = status.runner_up.value_or(0);
-    setTopScorer(entry,
-                 SeasonStats::topScorers(player_stats, season, MatchType::CUP,
-                                         Competitions::cupEntrants(*gamedata, root),
-                                         1));
+    setTopScorer(entry, SeasonStats::topScorers(
+                            player_stats, season, MatchType::CUP,
+                            Competitions::cupEntrants(*gamedata, root), 1));
     upsertHistory(season_history, std::move(entry));
   }
 
@@ -331,10 +331,9 @@ std::vector<TeamID> CompetitionManager::competitionTeams(
 std::vector<PlayerSeasonStats> CompetitionManager::getTopScorers(
     MatchType competition_type, LeagueID competition_id, size_t limit) const
 {
-  return SeasonStats::topScorers(player_stats, current_season, competition_type,
-                                 competitionTeams(competition_type,
-                                                  competition_id),
-                                 limit);
+  return SeasonStats::topScorers(
+      player_stats, current_season, competition_type,
+      competitionTeams(competition_type, competition_id), limit);
 }
 
 std::vector<PlayerSeasonStats> CompetitionManager::getPlayerSeasonStats(
@@ -353,10 +352,10 @@ std::vector<PlayerSeasonStats> CompetitionManager::getPlayerCareer(
   PlayerSeasonTable merged;
   for (const PlayerSeasonStats& stats :
        CompetitionRepository(db_conn).loadPlayerCareer(player_id))
-    merged.insert_or_assign(PlayerSeasonKey{stats.season, stats.player_id,
-                                            stats.team_id,
-                                            stats.competition_type},
-                            stats);
+    merged.insert_or_assign(
+        PlayerSeasonKey{stats.season, stats.player_id, stats.team_id,
+                        stats.competition_type},
+        stats);
   for (const auto& [key, stats] : player_stats)
     if (stats.player_id == player_id) merged.insert_or_assign(key, stats);
   std::vector<PlayerSeasonStats> career;
@@ -403,14 +402,17 @@ CompetitionManager::benchSuspendedPlayers(const Match& match)
       if (!discipline.isSuspended(starter->getId(), scope)) continue;
       const bool keeper = starter->getRole() == PlayerRole::GK;
       const auto& reserves = lineup.getReserves();
-      auto replacement = std::ranges::find_if(
-          reserves, [&](const Player* reserve)
-          {
-            return eligible(reserve) && reserve->getRole() == starter->getRole();
-          });
+      auto replacement = std::ranges::find_if(reserves,
+                                              [&](const Player* reserve)
+                                              {
+                                                return eligible(reserve) &&
+                                                       reserve->getRole() ==
+                                                           starter->getRole();
+                                              });
       if (replacement == reserves.end())
         replacement = std::ranges::find_if(
-            reserves, [&](const Player* reserve)
+            reserves,
+            [&](const Player* reserve)
             {
               return eligible(reserve) &&
                      (reserve->getRole() == PlayerRole::GK) == keeper;

@@ -531,8 +531,8 @@ class InteractionSystem
   /** Deadline of a signing promise made on @p date by a club of @p league
    * (end of its next window within 120 days), nullopt if no window is that
    * close. */
-  static std::optional<GameDateValue> signingDeadline(
-      const GameDateValue& date, LeagueID league);
+  static std::optional<GameDateValue> signingDeadline(const GameDateValue& date,
+                                                      LeagueID league);
 
  private:
   struct TeamTalkRecord

@@ -959,10 +959,10 @@ TEST(ScoutingTest, AffordabilityUsesTheCashAwareBudget)
   const std::int64_t reserve = WorldTuning::Finance::CASH_RESERVE_WEEKS *
                                finances.getCurrentWageSpending(*gamedata, team);
   const PlayerID target = leaguePlayers(*controller, FOREIGN_LEAGUE)[3];
-  ASSERT_EQ(controller->startScoutAssignment(controller->getScouts().front().id,
-                                             ScoutTargetKind::Player, target,
-                                             10),
-            ScoutAssignError::None);
+  ASSERT_EQ(
+      controller->startScoutAssignment(controller->getScouts().front().id,
+                                       ScoutTargetKind::Player, target, 10),
+      ScoutAssignError::None);
   finances.record(controller->getCurrentDate(), FinanceCategory::Investment,
                   reserve - finances.getBalance());
   for (int day = 0; day < 10; ++day)

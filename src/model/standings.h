@@ -54,7 +54,6 @@ constexpr size_t FORM_LENGTH = 5;
  * mini-league comes right after points, followed by overall goal difference
  * and goals scored. Remaining ties fall back to team name, then team ID.
  */
-std::vector<StandingRow> compute(const League& league,
-                                 const Calendar& calendar,
+std::vector<StandingRow> compute(const League& league, const Calendar& calendar,
                                  const GameData& gamedata);
 }  // namespace Standings

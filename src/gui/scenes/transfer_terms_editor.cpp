@@ -39,8 +39,9 @@ void alignActions(std::initializer_list<const char*> labels)
     ++count;
   }
   total += ImGui::GetStyle().ItemSpacing.x * static_cast<float>(count - 1);
-  ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
-                       std::max(0.0f, ImGui::GetContentRegionAvail().x - total));
+  ImGui::SetCursorPosX(
+      ImGui::GetCursorPosX() +
+      std::max(0.0f, ImGui::GetContentRegionAvail().x - total));
 }
 
 bool beginPanel(const char* id, const char* title)
@@ -76,8 +77,9 @@ struct TargetLabels
   std::array<const char*, 6> labels{};
 };
 
-std::span<const char* const> targetLabels(TargetLabels& cache, const char* key,
-                                          std::span<const std::uint16_t> options)
+std::span<const char* const> targetLabels(
+    TargetLabels& cache, const char* key,
+    std::span<const std::uint16_t> options)
 {
   const char* pattern = LOC(key);
   if (cache.pattern != pattern)
@@ -94,12 +96,13 @@ std::span<const char* const> targetLabels(TargetLabels& cache, const char* key,
 
 /** Guaranteed appearance targets after "None". */
 constexpr std::array<std::uint16_t, 6> LOAN_APPEARANCE_TARGETS = {5,  10, 15,
-                                                                 20, 25, 30};
+                                                                  20, 25, 30};
 
 template <typename T, std::size_t N, typename V>
 bool snap(const std::array<T, N>& options, V& value)
 {
-  const T nearest = options[static_cast<std::size_t>(optionIndex(options, value))];
+  const T nearest =
+      options[static_cast<std::size_t>(optionIndex(options, value))];
   if (static_cast<int>(nearest) == static_cast<int>(value)) return false;
   value = static_cast<V>(nearest);
   return true;
@@ -147,7 +150,8 @@ bool edit(TransferNegotiation::OfferTerms& terms,
   int upfrontIndex = optionIndex(UPFRONT_OPTIONS, terms.upfront_percent);
   if (UI::segmented("##upfront", upfrontIndex, UPFRONT_LABELS))
   {
-    terms.upfront_percent = UPFRONT_OPTIONS[static_cast<std::size_t>(upfrontIndex)];
+    terms.upfront_percent =
+        UPFRONT_OPTIONS[static_cast<std::size_t>(upfrontIndex)];
     if (terms.upfront_percent < 100 && terms.instalment_years == 0)
       terms.instalment_years = DEFAULT_INSTALMENT_YEARS;
     changed = true;
@@ -157,8 +161,8 @@ bool edit(TransferNegotiation::OfferTerms& terms,
     formLabel(LOC("TRANSFER_FIELD_INSTALMENTS"));
     int yearIndex = std::max(0, terms.instalment_years - 1);
     if (UI::segmented("##years", yearIndex,
-                      std::span(YEAR_LABELS).first(
-                          TransferTuning::Offer::MAX_INSTALMENT_YEARS)))
+                      std::span(YEAR_LABELS)
+                          .first(TransferTuning::Offer::MAX_INSTALMENT_YEARS)))
     {
       terms.instalment_years = static_cast<std::uint8_t>(yearIndex + 1);
       changed = true;
@@ -212,7 +216,8 @@ bool edit(TransferNegotiation::OfferTerms& terms,
   int sellOnIndex = optionIndex(SELL_ON_OPTIONS, terms.sell_on_percent);
   if (UI::segmented("##sell_on", sellOnIndex, SELL_ON_LABELS))
   {
-    terms.sell_on_percent = SELL_ON_OPTIONS[static_cast<std::size_t>(sellOnIndex)];
+    terms.sell_on_percent =
+        SELL_ON_OPTIONS[static_cast<std::size_t>(sellOnIndex)];
     changed = true;
   }
   if (addOns) endPanel();
@@ -222,10 +227,9 @@ bool edit(TransferNegotiation::OfferTerms& terms,
 bool snapLoanToOptions(TransferNegotiation::LoanTerms& terms)
 {
   bool changed = false;
-  const int share = std::clamp(
-      (terms.wage_share + LOAN_WAGE_SHARE_STEP / 2) / LOAN_WAGE_SHARE_STEP *
-          LOAN_WAGE_SHARE_STEP,
-      0, 100);
+  const int share = std::clamp((terms.wage_share + LOAN_WAGE_SHARE_STEP / 2) /
+                                   LOAN_WAGE_SHARE_STEP * LOAN_WAGE_SHARE_STEP,
+                               0, 100);
   if (share != terms.wage_share)
   {
     terms.wage_share = static_cast<std::uint8_t>(share);
@@ -242,8 +246,8 @@ bool editLoan(TransferNegotiation::LoanTerms& terms, std::uint32_t market_value)
   bool changed = snapLoanToOptions(terms);
   formLabel(LOC("TRANSFER_FIELD_DURATION"));
   int duration = terms.duration == LoanDuration::SeasonEnd ? 0 : 1;
-  const std::array<const char*, 2> durations = {LOC("TRANSFER_LOAN_SEASON"),
-                                                LOC("TRANSFER_LOAN_SIX_MONTHS")};
+  const std::array<const char*, 2> durations = {
+      LOC("TRANSFER_LOAN_SEASON"), LOC("TRANSFER_LOAN_SIX_MONTHS")};
   if (UI::segmented("##loan_duration", duration, durations))
   {
     terms.duration =
@@ -277,20 +281,23 @@ bool editLoan(TransferNegotiation::LoanTerms& terms, std::uint32_t market_value)
   int purchase = terms.option_fee == 0 && !terms.obligation ? 0
                  : terms.obligation                         ? 2
                                                             : 1;
-  const std::array<const char*, 3> purchases = {LOC("LOAN_PURCHASE_NONE"),
-                                                LOC("LOAN_PURCHASE_OPTION"),
-                                                LOC("LOAN_PURCHASE_OBLIGATION")};
-  const auto option_value = static_cast<std::int64_t>(std::llround(
-      static_cast<double>(market_value) *
-      static_cast<double>(TransferTuning::Loan::OPTION_VALUE_MULTIPLE) /
-      static_cast<double>(FEE_STEP))) * FEE_STEP;
+  const std::array<const char*, 3> purchases = {
+      LOC("LOAN_PURCHASE_NONE"), LOC("LOAN_PURCHASE_OPTION"),
+      LOC("LOAN_PURCHASE_OBLIGATION")};
+  const auto option_value =
+      static_cast<std::int64_t>(std::llround(
+          static_cast<double>(market_value) *
+          static_cast<double>(TransferTuning::Loan::OPTION_VALUE_MULTIPLE) /
+          static_cast<double>(FEE_STEP))) *
+      FEE_STEP;
   if (UI::segmented("##loan_purchase", purchase, purchases))
   {
     terms.obligation = purchase == 2;
     if (purchase == 0)
       terms.option_fee = 0;
     else if (terms.option_fee == 0)
-      terms.option_fee = static_cast<std::uint32_t>(std::max(option_value, FEE_STEP));
+      terms.option_fee =
+          static_cast<std::uint32_t>(std::max(option_value, FEE_STEP));
     changed = true;
   }
   if (purchase != 0)
@@ -333,7 +340,8 @@ bool editLoan(TransferNegotiation::LoanTerms& terms, std::uint32_t market_value)
   int apps = optionIndex(MIN_APPEARANCE_OPTIONS, terms.min_appearances);
   if (UI::segmented("##loan_apps", apps, labels))
   {
-    terms.min_appearances = MIN_APPEARANCE_OPTIONS[static_cast<std::size_t>(apps)];
+    terms.min_appearances =
+        MIN_APPEARANCE_OPTIONS[static_cast<std::size_t>(apps)];
     if (terms.min_appearances == 0) terms.unplayed_fee = 0;
     changed = true;
   }
@@ -367,9 +375,9 @@ std::string loanTermsLine(const TransferNegotiation::LoanTerms& terms)
   if (terms.loan_fee > 0)
     text += fmt::sprintf(LOC("LOAN_LINE_FEE"), Format::money(terms.loan_fee));
   if (terms.option_fee > 0)
-    text += fmt::sprintf(LOC(terms.obligation ? "LOAN_LINE_OBLIGATION"
-                                              : "LOAN_LINE_OPTION"),
-                         Format::money(terms.option_fee));
+    text += fmt::sprintf(
+        LOC(terms.obligation ? "LOAN_LINE_OBLIGATION" : "LOAN_LINE_OPTION"),
+        Format::money(terms.option_fee));
   if (terms.recall_clause) text += LOC("LOAN_LINE_RECALL");
   if (terms.min_appearances > 0)
     text += fmt::sprintf(LOC("LOAN_LINE_APPS"),

@@ -122,8 +122,8 @@ std::string expandMoney(const std::string& argument)
       continue;
     }
     result.append(argument, copied, found - copied);
-    result += NumberFormat::money(std::strtoll(
-        argument.c_str() + found + EURO.size(), nullptr, 10));
+    result += NumberFormat::money(
+        std::strtoll(argument.c_str() + found + EURO.size(), nullptr, 10));
     copied = end;
     found = end;
   }
@@ -234,10 +234,9 @@ std::string formatLocalized(const std::string& key,
         {
           if (index < args.size())
           {
-            result += end == stop
-                          ? resolveArgument(args[index])
-                          : resolveSpec(args[index],
-                                        std::string_view(end, stop));
+            result += end == stop ? resolveArgument(args[index])
+                                  : resolveSpec(args[index],
+                                                std::string_view(end, stop));
           }
           i = close;
           continue;

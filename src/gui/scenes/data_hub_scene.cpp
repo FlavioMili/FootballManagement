@@ -159,8 +159,9 @@ void DataHubScene::refresh()
     performance_tooltips.push_back(fmt::sprintf(
         LOC("HUB_PERF_TOOLTIP"), Format::dayMonth(point.date).c_str(),
         opponent_names[index].c_str(), point.goals_for,
-        decimal(point.xg_for).c_str(), std::format("{:+.2f}", finishing).c_str(),
-        point.goals_against, decimal(point.xg_against).c_str(),
+        decimal(point.xg_for).c_str(),
+        std::format("{:+.2f}", finishing).c_str(), point.goals_against,
+        decimal(point.xg_against).c_str(),
         std::format("{:+.2f}", prevention).c_str()));
   }
   performance_top = std::ceil(performance_top * 2.0f) / 2.0f;
@@ -299,8 +300,8 @@ void DataHubScene::renderPerformance(float width)
   const float zero = (top + bottom) * 0.5f;
   const auto yOf = [&](float value)
   {
-    return zero - (zero - top) *
-                      std::clamp(value / performance_top, -1.0f, 1.0f);
+    return zero -
+           (zero - top) * std::clamp(value / performance_top, -1.0f, 1.0f);
   };
   const std::size_t count = team.trend.size();
   const auto xOf = [&](std::size_t index)
@@ -315,9 +316,9 @@ void DataHubScene::renderPerformance(float width)
     {
       const float value = performance_top * static_cast<float>(step);
       const float y = yOf(value);
-      drawList->AddLine(ImVec2(left, y), ImVec2(right, y),
-                        Theme::toU32(step == 0 ? palette.muted : palette.border),
-                        1.0f);
+      drawList->AddLine(
+          ImVec2(left, y), ImVec2(right, y),
+          Theme::toU32(step == 0 ? palette.muted : palette.border), 1.0f);
       char label[16];
       std::snprintf(label, sizeof(label), "%+.1f", static_cast<double>(value));
       drawList->AddText(ImVec2(origin.x, y - ImGui::GetTextLineHeight() * 0.5f),
@@ -369,8 +370,9 @@ void DataHubScene::renderLeaders(float width)
   const Theme::Palette& palette = Theme::palette();
   const float scale = Theme::scale();
   UI::beginAutoHeightCard("hub_leaders", LOC("HUB_LEADERS_TITLE"), width);
-  const bool any = std::ranges::any_of(
-      leaders, [](const std::vector<LeaderRow>& rows) { return !rows.empty(); });
+  const bool any =
+      std::ranges::any_of(leaders, [](const std::vector<LeaderRow>& rows)
+                          { return !rows.empty(); });
   if (!any)
   {
     footnote(LOC("HUB_LEADERS_NONE"));
@@ -380,9 +382,9 @@ void DataHubScene::renderLeaders(float width)
   const float inner = ImGui::GetContentRegionAvail().x;
   const float gap = ImGui::GetStyle().ItemSpacing.x * 2.0f;
   const float minimum = LEADER_COLUMN_MIN_WIDTH * scale;
-  const std::size_t columns = inner >= 4.0f * minimum + 3.0f * gap   ? 4
-                              : inner >= 2.0f * minimum + gap ? 2
-                                                              : 1;
+  const std::size_t columns = inner >= 4.0f * minimum + 3.0f * gap ? 4
+                              : inner >= 2.0f * minimum + gap      ? 2
+                                                                   : 1;
   const float columnWidth =
       std::floor((inner - gap * static_cast<float>(columns - 1)) /
                  static_cast<float>(columns));
@@ -397,8 +399,9 @@ void DataHubScene::renderLeaders(float width)
     const float x0 = ImGui::GetCursorPosX();
     {
       Theme::ScopedText caption(Theme::Text::CAPTION);
-      ImGui::TextColored(palette.muted, "%s",
-                         LOC(leaderMetricKey(static_cast<LeaderMetric>(metric))));
+      ImGui::TextColored(
+          palette.muted, "%s",
+          LOC(leaderMetricKey(static_cast<LeaderMetric>(metric))));
     }
     if (leaders[metric].empty())
       ImGui::TextColored(palette.faint, "%s", "\u2013");
@@ -788,11 +791,12 @@ void DataHubScene::renderPlayers()
       if (UI::cell(mask, 6))
         UI::textRight(
             per90(static_cast<float>(s.key_passes), s.tracked_minutes).c_str());
-      if (UI::cell(mask, 7)) UI::textRight(per90(s.xa, s.detail_minutes).c_str());
+      if (UI::cell(mask, 7))
+        UI::textRight(per90(s.xa, s.detail_minutes).c_str());
       if (UI::cell(mask, 8))
-        UI::textRight(per90(static_cast<float>(s.progressive_passes),
-                            s.detail_minutes)
-                          .c_str());
+        UI::textRight(
+            per90(static_cast<float>(s.progressive_passes), s.detail_minutes)
+                .c_str());
       if (UI::cell(mask, 9))
         UI::textRight(
             per90(static_cast<float>(s.pressures), s.detail_minutes).c_str());

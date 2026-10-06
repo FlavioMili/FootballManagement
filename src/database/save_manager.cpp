@@ -83,7 +83,8 @@ SaveFailure sqliteFailure(sqlite3* db, int rc, std::string_view what)
   const int primary = rc & 0xFF;
   if (primary == SQLITE_FULL)
     error.kind = SaveErrorKind::DiskFull;
-  else if (system_error != 0 && kindFromErrno(system_error) != SaveErrorKind::Io)
+  else if (system_error != 0 &&
+           kindFromErrno(system_error) != SaveErrorKind::Io)
     error.kind = kindFromErrno(system_error);
   else if (primary == SQLITE_READONLY || primary == SQLITE_PERM ||
            primary == SQLITE_AUTH)
@@ -92,8 +93,8 @@ SaveFailure sqliteFailure(sqlite3* db, int rc, std::string_view what)
     error.kind = SaveErrorKind::Corrupt;
   else
     error.kind = SaveErrorKind::Io;
-  error.detail = std::format("{}: {}", what,
-                             db ? sqlite3_errmsg(db) : sqlite3_errstr(rc));
+  error.detail =
+      std::format("{}: {}", what, db ? sqlite3_errmsg(db) : sqlite3_errstr(rc));
   return SaveFailure(std::move(error));
 }
 
@@ -177,8 +178,8 @@ void syncFile(const fs::path& path, bool directory)
   (void)path;
   (void)directory;
 #else
-  const int fd = ::open(path.c_str(), directory ? O_RDONLY | O_DIRECTORY
-                                                : O_RDONLY);
+  const int fd =
+      ::open(path.c_str(), directory ? O_RDONLY | O_DIRECTORY : O_RDONLY);
   if (fd < 0) return;
   ::fsync(fd);
   ::close(fd);
@@ -203,8 +204,8 @@ void writeSnapshot(sqlite3* source, const fs::path& target,
     throw fileFailure(std::error_code(errno, std::generic_category()),
                       "create temporary save");
   Handle destination;
-  if (const int rc = destination.open(
-          target, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+  if (const int rc =
+          destination.open(target, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
       rc != SQLITE_OK)
     throw sqliteFailure(destination.get(), rc, "create temporary save");
   SaveManager::fault(SaveManager::FaultPoint::TempOpened, destination.get());
@@ -218,9 +219,9 @@ void writeSnapshot(sqlite3* source, const fs::path& target,
   sqlite3_backup_finish(backup);
   if (step != SQLITE_DONE)
     throw sqliteFailure(destination.get(), step, "write snapshot");
-  if (const int rc = sqlite3_exec(destination.get(),
-                                  "PRAGMA journal_mode=DELETE;", nullptr,
-                                  nullptr, nullptr);
+  if (const int rc =
+          sqlite3_exec(destination.get(), "PRAGMA journal_mode=DELETE;",
+                       nullptr, nullptr, nullptr);
       rc != SQLITE_OK)
     throw sqliteFailure(destination.get(), rc, "finish snapshot");
   destination.close();
@@ -419,7 +420,10 @@ SaveFailure::SaveFailure(SaveError failure)
 {
 }
 
-void SaveManager::setFaultHook(FaultHook hook) { faultHook() = std::move(hook); }
+void SaveManager::setFaultHook(FaultHook hook)
+{
+  faultHook() = std::move(hook);
+}
 
 void SaveManager::fault(FaultPoint point, sqlite3* temp_db)
 {
@@ -464,9 +468,9 @@ SaveInspection SaveManager::inspect(const fs::path& file, SaveCheck check)
   if (inspection.schema_version > inspection.supported_version)
   {
     inspection.status = SaveStatus::FutureVersion;
-    inspection.detail = std::format("schema version {} > supported {}",
-                                    inspection.schema_version,
-                                    inspection.supported_version);
+    inspection.detail =
+        std::format("schema version {} > supported {}",
+                    inspection.schema_version, inspection.supported_version);
     return inspection;
   }
   if (!has_state)
@@ -646,9 +650,9 @@ void SaveManager::restoreBackup(const fs::path& file, const fs::path& backup)
       // recoverable data.
       const bool intact =
           inspect(file, SaveCheck::Quick).status == SaveStatus::Ok;
-      const std::string aside = std::format(
-          "{}.{}-{}", file.string(), intact ? "replaced" : "corrupt",
-          utcNow("{:%Y%m%dT%H%M%SZ}"));
+      const std::string aside = std::format("{}.{}-{}", file.string(),
+                                            intact ? "replaced" : "corrupt",
+                                            utcNow("{:%Y%m%dT%H%M%SZ}"));
       for (const char* suffix : {"-wal", "-shm"})
       {
         if (fs::exists(file.string() + suffix))

@@ -95,8 +95,7 @@ SeasonVerdictResult judge(const SeasonVerdictInputs& inputs)
   const float score = league + CUP_WEIGHT * gradeScore(result.cup) +
                       FINANCE_WEIGHT * gradeScore(result.finances) +
                       YOUTH_WEIGHT * gradeScore(result.youth);
-  float delta =
-      std::clamp(CONFIDENCE_PER_POINT * score, -MAX_LOSS, MAX_GAIN);
+  float delta = std::clamp(CONFIDENCE_PER_POINT * score, -MAX_LOSS, MAX_GAIN);
 
   // A manager appointed late is given time: half the swing, no sanction.
   const bool judged = inputs.league_matches >= MIN_MATCHES_TO_JUDGE;
@@ -118,8 +117,7 @@ SeasonVerdictResult judge(const SeasonVerdictInputs& inputs)
   if (failed && (result.confidence < SACK_CONFIDENCE || unexpected_drop ||
                  (inputs.warned_last_season && league < 0.0f)))
     result.verdict = SeasonVerdict::Sacked;
-  else if (failed ||
-           result.confidence < WorldTuning::Board::WARNING_THRESHOLD)
+  else if (failed || result.confidence < WorldTuning::Board::WARNING_THRESHOLD)
     result.verdict = SeasonVerdict::Warned;
   else if (score >= DELIGHTED_SCORE)
     result.verdict = SeasonVerdict::Delighted;
@@ -177,17 +175,15 @@ void postEvents(Inbox& inbox, const GameDateValue& date,
                        std::to_string(review.played)},
                       club));
   if (review.promoted)
-    inbox.add(message(date, InboxCategory::General,
-                      "INBOX_SEASON_PROMOTED_TITLE",
-                      "INBOX_SEASON_PROMOTED_BODY",
-                      {names.club, position, names.league, names.next_league},
-                      club));
+    inbox.add(
+        message(date, InboxCategory::General, "INBOX_SEASON_PROMOTED_TITLE",
+                "INBOX_SEASON_PROMOTED_BODY",
+                {names.club, position, names.league, names.next_league}, club));
   else if (review.relegated)
-    inbox.add(message(date, InboxCategory::General,
-                      "INBOX_SEASON_RELEGATED_TITLE",
-                      "INBOX_SEASON_RELEGATED_BODY",
-                      {names.club, position, names.league, names.next_league},
-                      club));
+    inbox.add(
+        message(date, InboxCategory::General, "INBOX_SEASON_RELEGATED_TITLE",
+                "INBOX_SEASON_RELEGATED_BODY",
+                {names.club, position, names.league, names.next_league}, club));
   else if (names.relegation_places > 0 &&
            (review.objective == BoardObjective::AvoidRelegation ||
             review.position + names.relegation_places + SURVIVAL_MARGIN >
@@ -198,9 +194,8 @@ void postEvents(Inbox& inbox, const GameDateValue& date,
                       {names.club, position, names.league}, club));
   if (review.cup_won)
     inbox.add(message(date, InboxCategory::General,
-                      "INBOX_SEASON_CUP_WON_TITLE",
-                      "INBOX_SEASON_CUP_WON_BODY", {names.club, names.cup},
-                      club));
+                      "INBOX_SEASON_CUP_WON_TITLE", "INBOX_SEASON_CUP_WON_BODY",
+                      {names.club, names.cup}, club));
   if (review.continental_id != 0 && !names.continental.empty())
     inbox.add(message(date, InboxCategory::General,
                       "INBOX_SEASON_CONTINENTAL_TITLE",
@@ -302,15 +297,15 @@ std::optional<std::pair<LeagueID, std::uint16_t>> SeasonArchive::placing(
 
 SeasonReview* SeasonArchive::review(std::uint16_t season)
 {
-  const auto found = std::ranges::find(season_reviews, season,
-                                       &SeasonReview::season);
+  const auto found =
+      std::ranges::find(season_reviews, season, &SeasonReview::season);
   return found == season_reviews.end() ? nullptr : &*found;
 }
 
 const SeasonReview* SeasonArchive::review(std::uint16_t season) const
 {
-  const auto found = std::ranges::find(season_reviews, season,
-                                       &SeasonReview::season);
+  const auto found =
+      std::ranges::find(season_reviews, season, &SeasonReview::season);
   return found == season_reviews.end() ? nullptr : &*found;
 }
 
@@ -337,28 +332,28 @@ void SeasonArchive::load(const DatabaseConnection& db)
   season_reviews.clear();
   unsaved_seasons.clear();
   reviews_dirty = false;
-  forEach(db,
-          "SELECT season, start_year, league_id, position, team_id, played, "
-          "won, drawn, lost, goals_for, goals_against, points FROM "
-          "SeasonTables ORDER BY season, league_id, position;",
-          [&](sqlite3_stmt* stmt)
-          {
-            const auto season = column<std::uint16_t>(stmt, 0);
-            start_years[season] = column<std::uint16_t>(stmt, 1);
-            StandingRow row;
-            row.position = column<std::uint16_t>(stmt, 3);
-            row.team_id = column<TeamID>(stmt, 4);
-            row.played = column<std::uint16_t>(stmt, 5);
-            row.won = column<std::uint16_t>(stmt, 6);
-            row.drawn = column<std::uint16_t>(stmt, 7);
-            row.lost = column<std::uint16_t>(stmt, 8);
-            row.goals_for = column<std::uint16_t>(stmt, 9);
-            row.goals_against = column<std::uint16_t>(stmt, 10);
-            row.goal_difference = row.goals_for - row.goals_against;
-            row.points = column<std::uint16_t>(stmt, 11);
-            tables[{season, column<LeagueID>(stmt, 2)}].push_back(
-                std::move(row));
-          });
+  forEach(
+      db,
+      "SELECT season, start_year, league_id, position, team_id, played, "
+      "won, drawn, lost, goals_for, goals_against, points FROM "
+      "SeasonTables ORDER BY season, league_id, position;",
+      [&](sqlite3_stmt* stmt)
+      {
+        const auto season = column<std::uint16_t>(stmt, 0);
+        start_years[season] = column<std::uint16_t>(stmt, 1);
+        StandingRow row;
+        row.position = column<std::uint16_t>(stmt, 3);
+        row.team_id = column<TeamID>(stmt, 4);
+        row.played = column<std::uint16_t>(stmt, 5);
+        row.won = column<std::uint16_t>(stmt, 6);
+        row.drawn = column<std::uint16_t>(stmt, 7);
+        row.lost = column<std::uint16_t>(stmt, 8);
+        row.goals_for = column<std::uint16_t>(stmt, 9);
+        row.goals_against = column<std::uint16_t>(stmt, 10);
+        row.goal_difference = row.goals_for - row.goals_against;
+        row.points = column<std::uint16_t>(stmt, 11);
+        tables[{season, column<LeagueID>(stmt, 2)}].push_back(std::move(row));
+      });
   forEach(
       db,
       "SELECT season, start_year, team_id, league_id, next_league_id, "
@@ -409,8 +404,8 @@ void SeasonArchive::load(const DatabaseConnection& db)
         review.prize_money = column<std::int64_t>(stmt, 23);
         review.balance = column<std::int64_t>(stmt, 24);
         review.confidence_before = columnFloat(stmt, 25);
-        review.result.verdict = static_cast<SeasonVerdict>(
-            std::clamp(column<int>(stmt, 26), 0, 4));
+        review.result.verdict =
+            static_cast<SeasonVerdict>(std::clamp(column<int>(stmt, 26), 0, 4));
         review.result.league = grade(27);
         review.result.cup = grade(28);
         review.result.finances = grade(29);

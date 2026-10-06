@@ -200,8 +200,10 @@ TEST(InboxViewTest, FiltersFollowsAndMomentsSurviveSaveAndLoad)
   StoryEngine& stories = controller->getGame()->getWorld().getStories();
   StoryState state = stories.getState();
   const std::int32_t today = dayOrdinal(controller->getCurrentDate());
-  const PlayerID captain =
-      controller->getPlayersForTeam(managedId(*controller)).front().get().getId();
+  const PlayerID captain = controller->getPlayersForTeam(managedId(*controller))
+                               .front()
+                               .get()
+                               .getId();
   state.dilemmas.push_back(Dilemma{StoryKind::FineDispute, captain, 0, today,
                                    today + Stories::DILEMMA_ANSWER_DAYS});
   stories.restore(state);
@@ -212,8 +214,8 @@ TEST(InboxViewTest, FiltersFollowsAndMomentsSurviveSaveAndLoad)
   message.args = {"A", "", ""};
   message.player_id = captain;
   controller->getGame()->getWorld().getInbox().add(message);
-  ASSERT_TRUE(controller->isInboxDecisionPending(
-      controller->getInbox().back()));
+  ASSERT_TRUE(
+      controller->isInboxDecisionPending(controller->getInbox().back()));
   controller->saveGame();
 
   auto reloaded = std::make_unique<GameController>();
@@ -226,8 +228,8 @@ TEST(InboxViewTest, FiltersFollowsAndMomentsSurviveSaveAndLoad)
   EXPECT_EQ(open->kind, StoryKind::FineDispute);
   EXPECT_EQ(open->subject, captain);
   EXPECT_EQ(open->day, today);
-  const auto found = std::ranges::find(
-      reloaded->getInbox(), message.title_key, &InboxMessage::title_key);
+  const auto found = std::ranges::find(reloaded->getInbox(), message.title_key,
+                                       &InboxMessage::title_key);
   ASSERT_NE(found, reloaded->getInbox().end());
   // A copy: answering posts a note, which may move the inbox's messages.
   const InboxMessage pending = *found;
@@ -338,9 +340,9 @@ TEST(FollowTest, FollowedPlayersMakeNewsUntilUnfollowed)
   player.setTeamId(buyer);
   day(1);
   EXPECT_EQ(countTitle(inbox, "INBOX_FOLLOW_TRANSFER_TITLE"), 1u);
-  const auto note = std::ranges::find(inbox.getMessages(),
-                                      std::string("INBOX_FOLLOW_TRANSFER_TITLE"),
-                                      &InboxMessage::title_key);
+  const auto note = std::ranges::find(
+      inbox.getMessages(), std::string("INBOX_FOLLOW_TRANSFER_TITLE"),
+      &InboxMessage::title_key);
   ASSERT_NE(note, inbox.getMessages().end());
   EXPECT_EQ(note->player_id, star);
   EXPECT_FALSE(note->read) << "followed news arrives unread";
@@ -469,23 +471,24 @@ TEST(DilemmaTest, EffectsAreBoundedAndEveryAnswerCostsSomething)
         EXPECT_LE(std::abs(effects.sharpness), Stories::DILEMMA_MAX_SHARPNESS);
         EXPECT_LE(std::abs(effects.money), Stories::DILEMMA_MAX_MONEY);
         any_cost[option] = effects.morale < 0 || effects.trust < 0 ||
-                           effects.other_morale < 0 || effects.other_trust < 0 ||
+                           effects.other_morale < 0 ||
+                           effects.other_trust < 0 ||
                            effects.squad_morale < 0 || effects.sharpness < 0 ||
                            effects.money < 0;
       }
       // Turning down money is a cost too (the sponsor's fee).
       for (const int option : {0, 1})
-        any_cost[option] = any_cost[option] ||
-                           Stories::dilemmaEffects(kind, 1 - option, profile)
-                                   .money > 0;
+        any_cost[option] =
+            any_cost[option] ||
+            Stories::dilemmaEffects(kind, 1 - option, profile).money > 0;
       // No free lunch: both answers have a downside.
       EXPECT_TRUE(any_cost[0]) << static_cast<int>(kind);
       EXPECT_TRUE(any_cost[1]) << static_cast<int>(kind);
     }
   }
-  EXPECT_EQ(Stories::dilemmaEffects(StoryKind::FineDispute, 2, profiles[0])
-                .morale,
-            0.0f);
+  EXPECT_EQ(
+      Stories::dilemmaEffects(StoryKind::FineDispute, 2, profiles[0]).morale,
+      0.0f);
 }
 
 TEST(DilemmaTest, NeverOnMatchDayRareAndDeterministic)
@@ -556,8 +559,7 @@ TEST(DilemmaTest, UnansweredMomentsLapseWithoutEffects)
   StoryEngine stories(gamedata);
   const PlayerID subject =
       controller->getPlayersForTeam(managed).front().get().getId();
-  const float morale =
-      gamedata->getPlayer(subject)->get().getDynamics().morale;
+  const float morale = gamedata->getPlayer(subject)->get().getDynamics().morale;
   GameDateValue date(2025, 10, 1);
   const std::int32_t today = dayOrdinal(date);
   StoryState state;
@@ -601,8 +603,7 @@ TEST(DilemmaTest, AnswersApplyTheEffectsShownAndAreRecorded)
   player.mutableDynamics().sharpness = 70.0f;
   mutablePlayer(*controller, bystander).mutableDynamics().morale = 50.0f;
   StoryState state = stories.getState();
-  state.dilemmas.push_back(Dilemma{StoryKind::CoachingCourse, veteran, 0,
-                                   today,
+  state.dilemmas.push_back(Dilemma{StoryKind::CoachingCourse, veteran, 0, today,
                                    today + Stories::DILEMMA_ANSWER_DAYS});
   stories.restore(state);
   const auto preview = controller->getDilemmaEffects(0);
@@ -615,8 +616,7 @@ TEST(DilemmaTest, AnswersApplyTheEffectsShownAndAreRecorded)
       controller->getManagedTeam()->get().getFinances().getBalance();
   ASSERT_TRUE(controller->resolveDilemma(0));
   EXPECT_FLOAT_EQ(player.getDynamics().morale, 50.0f + preview->morale);
-  EXPECT_FLOAT_EQ(player.getDynamics().sharpness,
-                  70.0f + preview->sharpness);
+  EXPECT_FLOAT_EQ(player.getDynamics().sharpness, 70.0f + preview->sharpness);
   ASSERT_NE(controller->getPlayerRelation(veteran), nullptr);
   EXPECT_FLOAT_EQ(controller->getPlayerRelation(veteran)->trust,
                   trust + preview->trust);
@@ -625,15 +625,16 @@ TEST(DilemmaTest, AnswersApplyTheEffectsShownAndAreRecorded)
   ASSERT_FALSE(finances.getLedger().empty());
   EXPECT_EQ(finances.getLedger().back().category, FinanceCategory::Staff);
   EXPECT_EQ(finances.getLedger().back().amount, preview->money);
-  EXPECT_FLOAT_EQ(
-      gamedata->getPlayer(bystander)->get().getDynamics().morale, 50.0f)
+  EXPECT_FLOAT_EQ(gamedata->getPlayer(bystander)->get().getDynamics().morale,
+                  50.0f)
       << "no squad effect for this answer";
   const Dilemma& recorded = stories.getState().dilemmas.back();
   EXPECT_EQ(recorded.chosen, 0);
   EXPECT_EQ(recorded.money, preview->money);
   const InboxMessage& note = controller->getInbox().back();
   EXPECT_EQ(note.title_key, "INBOX_DILEMMA_DONE_TITLE");
-  EXPECT_EQ(note.body_key, Stories::dilemmaDoneKey(StoryKind::CoachingCourse, 0));
+  EXPECT_EQ(note.body_key,
+            Stories::dilemmaDoneKey(StoryKind::CoachingCourse, 0));
   EXPECT_TRUE(note.read);
   EXPECT_FALSE(controller->resolveDilemma(0)) << "answered once";
 

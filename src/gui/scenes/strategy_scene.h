@@ -73,8 +73,7 @@ class StrategyScene : public ManagementScene
   [[nodiscard]] Strategy* clubStrategy() const;
   [[nodiscard]] const Lineup* clubLineup() const;
   /** Instruction of an outfield slot (a Standard one when none is stored). */
-  [[nodiscard]] SlotInstruction slotAt(const Lineup& lineup,
-                                       int slot) const;
+  [[nodiscard]] SlotInstruction slotAt(const Lineup& lineup, int slot) const;
   void storeSlot(const SlotInstruction& instruction);
   void setRole(const Lineup& lineup, TacticalRole role);
   void setDuty(const Lineup& lineup, RoleDuty duty);

@@ -161,8 +161,9 @@ TeamID middleOfTheLeague(const GameController& controller, LeagueID league)
 {
   std::vector<TeamID> clubs =
       controller.getLeagueById(league)->get().getTeamIDs();
-  std::ranges::sort(clubs, {}, [&](TeamID id)
-                    { return controller.getTeamById(id)->get().getReputation(); });
+  std::ranges::sort(
+      clubs, {}, [&](TeamID id)
+      { return controller.getTeamById(id)->get().getReputation(); });
   return clubs.empty() ? 0 : clubs[clubs.size() / 2];
 }
 
@@ -182,8 +183,8 @@ PlayerID affordableTarget(const GameController& controller, TeamID club,
     {
       const auto row = controller.getScoutedRow(player.get().getId());
       if (!row || row->estimated_value <= 0 ||
-          row->estimated_value > budget * 6 / 10 ||
-          row->wage > averageWage || row->overall <= bestOverall)
+          row->estimated_value > budget * 6 / 10 || row->wage > averageWage ||
+          row->overall <= bestOverall)
         continue;
       best = row->player_id;
       bestOverall = row->overall;
@@ -304,8 +305,9 @@ TEST(ShowcaseCaptures, ReadmeScreens)
   MatchEngine& engine = *MatchBridge::engine(*match);
   const auto playTo = [&](float minute)
   {
-    for (int step = 0; step < 100'000 && (engine.getMatchTimeMinutes() < minute ||
-                                          engine.getState() != MatchState::PLAYING);
+    for (int step = 0;
+         step < 100'000 && (engine.getMatchTimeMinutes() < minute ||
+                            engine.getState() != MatchState::PLAYING);
          ++step)
       engine.advance(0.1f);
   };

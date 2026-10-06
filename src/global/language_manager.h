@@ -106,8 +106,8 @@ class LanguageManager
       return std::hash<std::string_view>{}(text);
     }
   };
-  using Table = std::unordered_map<std::string, std::string, StringHash,
-                                   std::equal_to<>>;
+  using Table =
+      std::unordered_map<std::string, std::string, StringHash, std::equal_to<>>;
 
   LanguageManager() = default;
   /** Reads the English table once; false when it cannot be read. */

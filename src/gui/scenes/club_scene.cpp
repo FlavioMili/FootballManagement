@@ -317,8 +317,8 @@ void ClubScene::renderTargets(const GameController::BoardTargets& targets,
   const Theme::Palette& palette = Theme::palette();
   ImGui::Dummy(ImVec2(0.0f, Theme::Space::S * Theme::scale()));
   UI::sectionLabel(LOC("CLUB_TARGETS"));
-  const auto row = [&](const char* label, const std::string& value,
-                       ObjectiveGrade grade)
+  const auto row =
+      [&](const char* label, const std::string& value, ObjectiveGrade grade)
   {
     const char* status = LOC(BoardModel::targetStatusKey(grade));
     const ImVec4 color = grade == ObjectiveGrade::Failed   ? palette.negative

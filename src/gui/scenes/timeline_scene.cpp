@@ -34,8 +34,9 @@ constexpr float COMBO_WIDTH = 240.0f;
 /** Below this width date and kind go above the text. */
 constexpr float SIDE_COLUMNS_MIN_WIDTH = 720.0f;
 constexpr std::array<const char*, 12> MONTH_KEYS = {
-    "MONTH_JAN", "MONTH_FEB", "MONTH_MAR", "MONTH_APR", "MONTH_MAY", "MONTH_JUN",
-    "MONTH_JUL", "MONTH_AUG", "MONTH_SEP", "MONTH_OCT", "MONTH_NOV", "MONTH_DEC"};
+    "MONTH_JAN", "MONTH_FEB", "MONTH_MAR", "MONTH_APR",
+    "MONTH_MAY", "MONTH_JUN", "MONTH_JUL", "MONTH_AUG",
+    "MONTH_SEP", "MONTH_OCT", "MONTH_NOV", "MONTH_DEC"};
 
 std::string seasonLabel(std::uint16_t year)
 {
@@ -98,12 +99,12 @@ void TimelineScene::refresh()
     club_filter = 0;
   clubs_value = std::to_string(clubs.size());
   matches_value = std::to_string(played);
-  matches_note = formatLocalized("TIMELINE_RECORD_LINE",
-                                 {std::to_string(won), std::to_string(drawn),
-                                  std::to_string(lost)});
-  win_rate_value =
-      played == 0 ? std::string("-")
-                  : std::format("{}%", (won * 100 + played / 2) / played);
+  matches_note = formatLocalized(
+      "TIMELINE_RECORD_LINE",
+      {std::to_string(won), std::to_string(drawn), std::to_string(lost)});
+  win_rate_value = played == 0
+                       ? std::string("-")
+                       : std::format("{}%", (won * 100 + played / 2) / played);
   trophies_value = std::to_string(trophies);
   regroup();
 }
@@ -162,8 +163,8 @@ void TimelineScene::renderSummary()
   UI::TileRow tiles(4);
   const float width = tiles.width();
   tiles.next();
-  UI::statTile("clubs", LOC("TIMELINE_TILE_CLUBS"), clubs_value.c_str(), nullptr,
-               palette.text, width);
+  UI::statTile("clubs", LOC("TIMELINE_TILE_CLUBS"), clubs_value.c_str(),
+               nullptr, palette.text, width);
   tiles.next();
   UI::statTile("matches", LOC("TIMELINE_TILE_MATCHES"), matches_value.c_str(),
                matches_note.c_str(), palette.text, width);

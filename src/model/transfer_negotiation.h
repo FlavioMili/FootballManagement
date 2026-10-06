@@ -405,10 +405,10 @@ SquadNeeds squadNeeds(std::span<const std::pair<PlayerRole, float>> squad);
 
 enum class FitKind : std::uint8_t
 {
-  None,     /*!< Would not improve the squad. */
-  Starter,  /*!< Fills a missing starting place. */
-  Upgrade,  /*!< Better than the weakest starter. */
-  Depth     /*!< Needed cover. */
+  None,    /*!< Would not improve the squad. */
+  Starter, /*!< Fills a missing starting place. */
+  Upgrade, /*!< Better than the weakest starter. */
+  Depth    /*!< Needed cover. */
 };
 
 /** How a player would fit: score (higher is better), kind and the gain in

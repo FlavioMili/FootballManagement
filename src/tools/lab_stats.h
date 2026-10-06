@@ -45,11 +45,11 @@ struct Band
 
 enum class Verdict : std::uint8_t
 {
-  Pass,        /*!< Point estimate inside the band. */
-  Warn,        /*!< Outside, but the 95% interval still overlaps the band. */
-  Fail,        /*!< The whole 95% interval lies outside the band. */
-  Info,        /*!< Reported without a band. */
-  NotMeasured  /*!< No extractor yet, or no data in this mode. */
+  Pass,       /*!< Point estimate inside the band. */
+  Warn,       /*!< Outside, but the 95% interval still overlaps the band. */
+  Fail,       /*!< The whole 95% interval lies outside the band. */
+  Info,       /*!< Reported without a band. */
+  NotMeasured /*!< No extractor yet, or no data in this mode. */
 };
 
 /** Two-sided 97.5% quantile of Student's t (1.96 for large samples). */

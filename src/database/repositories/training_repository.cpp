@@ -267,11 +267,10 @@ void TrainingRepository::replaceAll(const TrainingRegistry& registry) const
   {
     stored_players.emplace(
         static_cast<PlayerID>(sqlite3_column_int64(select, 0)),
-        StoredPlayer{sqlite3_column_int(select, 1),
-                     sqlite3_column_double(select, 2),
-                     sqlite3_column_double(select, 3),
-                     sqlite3_column_double(select, 4),
-                     sqlite3_column_double(select, 5), false});
+        StoredPlayer{
+            sqlite3_column_int(select, 1), sqlite3_column_double(select, 2),
+            sqlite3_column_double(select, 3), sqlite3_column_double(select, 4),
+            sqlite3_column_double(select, 5), false});
   }
   sqlite3_finalize(select);
 

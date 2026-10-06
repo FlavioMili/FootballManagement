@@ -31,18 +31,18 @@ struct Settings
   bool vsync = false;               /**< Wait for the display refresh */
 
   // Appearance (applied live by the GUI theme)
-  int theme_preset = 0;            /**< Index of the colour preset */
-  bool club_accent = true;         /**< Accent follows the managed club */
-  uint32_t accent_rgb = 0x21A663;  /**< Custom accent colour, 0xRRGGBB */
-  float ui_scale = 0.0f;           /**< 0 = automatic (display scale) */
-  bool compact_density = false;    /**< Denser tables and controls */
-  bool reduced_motion = false;     /**< Avoid non-essential animation */
-  int color_vision = 0;   /**< Theme::ColorVision: status colour hues */
-  float text_scale = 1.0f; /**< Text size on top of the UI scale */
+  int theme_preset = 0;           /**< Index of the colour preset */
+  bool club_accent = true;        /**< Accent follows the managed club */
+  uint32_t accent_rgb = 0x21A663; /**< Custom accent colour, 0xRRGGBB */
+  float ui_scale = 0.0f;          /**< 0 = automatic (display scale) */
+  bool compact_density = false;   /**< Denser tables and controls */
+  bool reduced_motion = false;    /**< Avoid non-essential animation */
+  int color_vision = 0;           /**< Theme::ColorVision: status colour hues */
+  float text_scale = 1.0f;        /**< Text size on top of the UI scale */
 
   // Guidance
-  bool screen_tips = true;         /**< One-line tip on a screen's first visit */
-  uint64_t screen_tips_seen = 0;   /**< Bit per NavSection already explained */
+  bool screen_tips = true;       /**< One-line tip on a screen's first visit */
+  uint64_t screen_tips_seen = 0; /**< Bit per NavSection already explained */
 
   // Saving (applied to the controller's AutosavePolicy)
   int autosave_frequency = 2; /**< AutosaveFrequency: 0 Off .. 5 season end */
@@ -59,10 +59,10 @@ struct Settings
   bool pause_at_breaks = true; /**< Managed match stops at half-time etc. */
 
   // Play mode (controlling the team on the pitch)
-  bool play_mode = true;        /**< Offer Play / Take control in matches */
-  int play_auto_switch = 2;     /**< PlayAutoSwitch: 0 off, 1 assisted, 2 auto */
-  int play_pass_assist = 1;     /**< 0 none, 1 normal, 2 strong */
-  float play_dead_zone = 0.2f;  /**< Gamepad stick dead zone, 0.05-0.5 */
+  bool play_mode = true;       /**< Offer Play / Take control in matches */
+  int play_auto_switch = 2;    /**< PlayAutoSwitch: 0 off, 1 assisted, 2 auto */
+  int play_pass_assist = 1;    /**< 0 none, 1 normal, 2 strong */
+  float play_dead_zone = 0.2f; /**< Gamepad stick dead zone, 0.05-0.5 */
 
   // Controls: action id -> chord names (primary, alternate); only bindings
   // that differ from the defaults (see src/gui/input_actions.h).

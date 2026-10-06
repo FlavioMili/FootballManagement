@@ -39,9 +39,9 @@ std::size_t MatchTracking::cellOf(float x, float y)
   const auto column = std::min(
       static_cast<std::size_t>(std::clamp(x, 0.0f, 1.0f) * GRID_COLUMNS),
       GRID_COLUMNS - 1);
-  const auto row = std::min(
-      static_cast<std::size_t>(std::clamp(y, 0.0f, 1.0f) * GRID_ROWS),
-      GRID_ROWS - 1);
+  const auto row =
+      std::min(static_cast<std::size_t>(std::clamp(y, 0.0f, 1.0f) * GRID_ROWS),
+               GRID_ROWS - 1);
   return row * GRID_COLUMNS + column;
 }
 
@@ -105,14 +105,14 @@ void MatchTracker::passCompleted(std::size_t passer, std::size_t receiver,
 {
   if (!enabled || passer >= T::MAX_PLAYERS || receiver >= T::MAX_PLAYERS)
     return;
-  if (pass_matrix.empty()) pass_matrix.assign(T::MAX_PLAYERS * T::MAX_PLAYERS, 0);
+  if (pass_matrix.empty())
+    pass_matrix.assign(T::MAX_PLAYERS * T::MAX_PLAYERS, 0);
   bump(pass_matrix[passer * T::MAX_PLAYERS + receiver]);
   TrackedPlayer* tracked = slot(passer);
   if (tracked == nullptr || !pass_open_play) return;
   const Vector2F from = attackingFrame(pass_origin, home);
   const Vector2F to = attackingFrame(reception, home);
-  const float gained =
-      (to.x - from.x) * MatchTuning::Pitch::LENGTH_METRES;
+  const float gained = (to.x - from.x) * MatchTuning::Pitch::LENGTH_METRES;
   if (gained >= T::PROGRESSIVE_METRES && to.x >= T::PROGRESSIVE_MIN_END_X)
     bump(tracked->progressive_passes);
 }

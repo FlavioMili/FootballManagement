@@ -60,10 +60,10 @@ void addDivision(GameData& gamedata, LeagueID league_id,
                                    "Club " + std::to_string(team_id), 0));
     team_ids.push_back(team_id);
   }
-  gamedata.addLeague(league_id,
-                     League(league_id,
-                            "Country " + std::to_string(league_id) + " League",
-                            team_ids, parent));
+  gamedata.addLeague(
+      league_id,
+      League(league_id, "Country " + std::to_string(league_id) + " League",
+             team_ids, parent));
 }
 
 /** Two linked divisions (40 clubs) plus a single-division country. */
@@ -93,11 +93,13 @@ void settleCupTies(Calendar& calendar, const GameDateValue& date)
   for (Match& match : calendar.getMatchesForDateMutable(date))
   {
     if (match.isPlayed() || match.getMatchType() != MatchType::CUP) continue;
-    const unsigned selector = (match.getHomeTeamId() + match.getAwayTeamId()) % 3U;
+    const unsigned selector =
+        (match.getHomeTeamId() + match.getAwayTeamId()) % 3U;
     if (selector == 0)
       match.setPlayedResult(2, 1);
     else if (selector == 1)
-      match.setKnockoutResult(1, 1, true, std::make_pair(uint8_t{4}, uint8_t{3}));
+      match.setKnockoutResult(1, 1, true,
+                              std::make_pair(uint8_t{4}, uint8_t{3}));
     else
       match.setPlayedResult(0, 1);
   }
@@ -123,8 +125,8 @@ TEST(SeasonCalendarTest, LeagueRoundsUseWeekendsMidweeksAndBreaks)
 {
   const auto dates = SeasonCalendar::leagueRoundDates(2025, 38);
   ASSERT_EQ(dates.size(), 38u);
-  const auto cup_dates = SeasonCalendar::cupRoundDates(
-      2025, SeasonCalendar::MAX_CUP_ROUNDS + 1);
+  const auto cup_dates =
+      SeasonCalendar::cupRoundDates(2025, SeasonCalendar::MAX_CUP_ROUNDS + 1);
   size_t midweeks = 0;
   for (size_t i = 0; i < dates.size(); ++i)
   {
@@ -148,7 +150,8 @@ TEST(SeasonCalendarTest, LeagueRoundsUseWeekendsMidweeksAndBreaks)
 
   EXPECT_TRUE(SeasonCalendar::isInternationalBreak(GameDateValue(2025, 9, 10)));
   EXPECT_TRUE(SeasonCalendar::isInternationalBreak(GameDateValue(2026, 3, 28)));
-  EXPECT_FALSE(SeasonCalendar::isInternationalBreak(GameDateValue(2025, 9, 20)));
+  EXPECT_FALSE(
+      SeasonCalendar::isInternationalBreak(GameDateValue(2025, 9, 20)));
   EXPECT_TRUE(SeasonCalendar::isWinterBreak(GameDateValue(2025, 12, 28)));
   EXPECT_FALSE(SeasonCalendar::isWinterBreak(GameDateValue(2026, 1, 17)));
 
@@ -193,7 +196,8 @@ TEST(CalendarTest, GeneratesBalancedRealisticSeason)
     {
       const Match& match = fixtures[i];
       if (i > 0)
-        EXPECT_FALSE(consecutiveOrSame(fixtures[i - 1].getDate(), match.getDate()))
+        EXPECT_FALSE(
+            consecutiveOrSame(fixtures[i - 1].getDate(), match.getDate()))
             << "Team " << team_id << " plays on consecutive days "
             << match.getDate().toString();
       if (match.getMatchType() == MatchType::FRIENDLY)
@@ -214,7 +218,8 @@ TEST(CalendarTest, GeneratesBalancedRealisticSeason)
       // Weekend rounds run Friday to Monday, midweek rounds Tuesday and
       // Wednesday (Thursday when Tuesday is still in a break); every fixture
       // gets a kick-off time.
-      if (SeasonCalendar::dayOfWeek(match.getDate()) == SeasonCalendar::THURSDAY)
+      if (SeasonCalendar::dayOfWeek(match.getDate()) ==
+          SeasonCalendar::THURSDAY)
         EXPECT_TRUE(SeasonCalendar::isBlackout(
             SeasonCalendar::addDays(match.getDate(), -2)))
             << match.getDate().toString();
@@ -285,8 +290,8 @@ class StandingsTest : public ::testing::Test
       gamedata.addTeam(id, Team(id, TOP_LEAGUE, name, 0));
       ids.push_back(id);
     }
-    gamedata.addLeague(TOP_LEAGUE, League(TOP_LEAGUE, "Test League", ids,
-                                          std::nullopt, rule));
+    gamedata.addLeague(
+        TOP_LEAGUE, League(TOP_LEAGUE, "Test League", ids, std::nullopt, rule));
   }
 
   std::vector<StandingRow> table() const
@@ -345,8 +350,12 @@ TEST_F(StandingsTest, CountsResultsFormAndIgnoresOtherMatches)
 
 TEST_F(StandingsTest, GoalDifferenceThenGoalsScored)
 {
-  addTeams({{1, "Alpha"}, {2, "Bravo"}, {3, "Charlie"}, {4, "Delta"},
-            {5, "Echo"}, {6, "Foxtrot"}});
+  addTeams({{1, "Alpha"},
+            {2, "Bravo"},
+            {3, "Charlie"},
+            {4, "Delta"},
+            {5, "Echo"},
+            {6, "Foxtrot"}});
   calendar.addMatch(played(1, 4, nextDay(), 1, 0));  // 1: GD +1
   calendar.addMatch(played(2, 5, nextDay(), 3, 1));  // 2: GD +2, GF 3
   calendar.addMatch(played(3, 6, nextDay(), 2, 0));  // 3: GD +2, GF 2
@@ -561,7 +570,8 @@ TEST(PromotionTest, TopThreeUpBottomThreeDown)
   std::unordered_map<LeagueID, std::vector<StandingRow>> tables;
   for (const LeagueID league_id : {TOP_LEAGUE, SECOND_LEAGUE, OTHER_COUNTRY})
   {
-    for (const TeamID team_id : gamedata.getLeagues().at(league_id).getTeamIDs())
+    for (const TeamID team_id :
+         gamedata.getLeagues().at(league_id).getTeamIDs())
     {
       StandingRow row;
       row.team_id = team_id;
@@ -637,7 +647,8 @@ TEST(SeasonStatsTest, AccumulatesLinesAndFallsBackToEvents)
   EXPECT_EQ(scorers.front().player_id, 1u);
   EXPECT_TRUE(
       SeasonStats::topScorers(table, 1, MatchType::LEAGUE, {20}, 5).empty());
-  EXPECT_TRUE(SeasonStats::topScorers(table, 1, MatchType::CUP, {10}, 5).empty());
+  EXPECT_TRUE(
+      SeasonStats::topScorers(table, 1, MatchType::CUP, {10}, 5).empty());
 }
 
 // ---------------- Suspensions ----------------
@@ -725,15 +736,16 @@ TEST_F(DisciplineTest, RedCardsBanAndRepeatOffencesGrow)
   EXPECT_EQ(suspended.front().player_id, 3u);
 
   const auto records = discipline.records();
-  const auto second_booked = std::ranges::find_if(
-      records, [](const DisciplinaryRecord& record)
-      { return record.player_id == 2; });
+  const auto second_booked =
+      std::ranges::find_if(records, [](const DisciplinaryRecord& record)
+                           { return record.player_id == 2; });
   ASSERT_NE(second_booked, records.end());
   EXPECT_EQ(second_booked->season_yellows, 0)
       << "cautions of a second-yellow dismissal do not accumulate";
 
   discipline.resetSeason();
-  EXPECT_EQ(discipline.banMatches(3, MatchType::LEAGUE), 2) << "bans carry over";
+  EXPECT_EQ(discipline.banMatches(3, MatchType::LEAGUE), 2)
+      << "bans carry over";
   EXPECT_EQ(discipline.records().size(), 1u);
 }
 
@@ -759,9 +771,8 @@ TEST_F(DisciplineTest, SuspendedStartersSitOutSimulatedMatches)
 
   CompetitionManager manager(shared, db_conn);
   MatchReport red = cardReport(MatchType::LEAGUE, 10, 20, {cards(2, 10, 0, 1)});
-  manager.recordResult(Match(10, 20, GameDateValue(2025, 9, 6),
-                             MatchType::LEAGUE, 1, 1),
-                       red);
+  manager.recordResult(
+      Match(10, 20, GameDateValue(2025, 9, 6), MatchType::LEAGUE, 1, 1), red);
   ASSERT_TRUE(manager.getDiscipline().isSuspended(2, MatchType::LEAGUE));
 
   const Match next(20, 10, GameDateValue(2025, 9, 13), MatchType::LEAGUE, 1, 2);
@@ -771,8 +782,8 @@ TEST_F(DisciplineTest, SuspendedStartersSitOutSimulatedMatches)
   manager.restoreLineups(swaps);
   EXPECT_EQ(lineup.getOutfieldPlayers().front().player->getId(), 2u);
   EXPECT_TRUE(manager
-                  .benchSuspendedPlayers(Match(20, 10, GameDateValue(2025, 9, 17),
-                                               MatchType::CUP, 1, 1))
+                  .benchSuspendedPlayers(Match(
+                      20, 10, GameDateValue(2025, 9, 17), MatchType::CUP, 1, 1))
                   .empty())
       << "league bans do not apply to the cup";
 }
@@ -798,8 +809,8 @@ TEST_F(CompetitionPersistenceTest, KnockoutFixtureRoundTrips)
   Match tie(5, 6, GameDateValue(2025, 10, 29), MatchType::CUP, 3, 2);
   tie.setKnockoutResult(2, 2, true, std::make_pair(uint8_t{5}, uint8_t{4}));
   calendar.addMatch(tie);
-  calendar.addMatch(Match(7, 8, GameDateValue(2025, 11, 1), MatchType::LEAGUE,
-                          4, 11));
+  calendar.addMatch(
+      Match(7, 8, GameDateValue(2025, 11, 1), MatchType::LEAGUE, 4, 11));
   repository.saveCalendar(calendar);
 
   Calendar loaded;
@@ -995,7 +1006,8 @@ TEST(SeasonRolloverTest, SeasonEndRecordsHistoryPromotesAndRegenerates)
 
     while (game.getCurrentSeason() == 1)
     {
-      const GameDateValue next = SeasonCalendar::addDays(game.getCurrentDate(), 1);
+      const GameDateValue next =
+          SeasonCalendar::addDays(game.getCurrentDate(), 1);
       {
         for (Match& match : game.getCalendar().getMatchesForDateMutable(next))
         {
@@ -1003,10 +1015,10 @@ TEST(SeasonRolloverTest, SeasonEndRecordsHistoryPromotesAndRegenerates)
                                       match.getHomeTeamId() == engine_home &&
                                       match.getAwayTeamId() == engine_away;
           if (match.isPlayed() || engine_fixture) continue;
-          const auto home_goals =
-              static_cast<uint8_t>((match.getHomeTeamId() * 7U + next.day) % 4U);
-          const auto away_goals =
-              static_cast<uint8_t>((match.getAwayTeamId() * 3U + next.month) % 3U);
+          const auto home_goals = static_cast<uint8_t>(
+              (match.getHomeTeamId() * 7U + next.day) % 4U);
+          const auto away_goals = static_cast<uint8_t>(
+              (match.getAwayTeamId() * 3U + next.month) % 3U);
           if (match.isKnockout() && home_goals == away_goals)
             match.setKnockoutResult(home_goals, away_goals, true,
                                     std::make_pair(uint8_t{5}, uint8_t{4}));
@@ -1022,7 +1034,8 @@ TEST(SeasonRolloverTest, SeasonEndRecordsHistoryPromotesAndRegenerates)
         for (const auto& [date, matches] : game.getCalendar().getFullCalendar())
           for (const Match& match : matches)
             if (match.getMatchType() != MatchType::FRIENDLY)
-              for (const TeamID team : {match.getHomeTeamId(), match.getAwayTeamId()})
+              for (const TeamID team :
+                   {match.getHomeTeamId(), match.getAwayTeamId()})
                 by_club[team].push_back(&match);
         size_t tired = 0;
         for (const auto& [team, fixtures] : by_club)
@@ -1030,10 +1043,11 @@ TEST(SeasonRolloverTest, SeasonEndRecordsHistoryPromotesAndRegenerates)
           {
             const Match& earlier = *fixtures[i - 1];
             const Match& later = *fixtures[i];
-            const int required = earlier.getMatchType() == MatchType::LEAGUE &&
-                                         later.getMatchType() != MatchType::LEAGUE
-                                     ? SeasonCalendar::MIN_REST_BEFORE_TIE
-                                     : SeasonCalendar::MIN_REST_DAYS;
+            const int required =
+                earlier.getMatchType() == MatchType::LEAGUE &&
+                        later.getMatchType() != MatchType::LEAGUE
+                    ? SeasonCalendar::MIN_REST_BEFORE_TIE
+                    : SeasonCalendar::MIN_REST_DAYS;
             if (SeasonCalendar::addDays(earlier.getDate(), required - 1) <
                 later.getDate())
               continue;
@@ -1065,8 +1079,8 @@ TEST(SeasonRolloverTest, SeasonEndRecordsHistoryPromotesAndRegenerates)
         // League rounds, friendlies and cup rounds are spread over several
         // days: no Continue simulates much more than a quarter of a round.
         EXPECT_LE(busiest, 66u) << busiest_date.toString();
-        final_top = game.getCompetitions().getStandings(game.getCalendar(),
-                                                        TOP_LEAGUE);
+        final_top =
+            game.getCompetitions().getStandings(game.getCalendar(), TOP_LEAGUE);
         final_second = game.getCompetitions().getStandings(game.getCalendar(),
                                                            SECOND_LEAGUE);
       }
@@ -1106,7 +1120,8 @@ TEST(SeasonRolloverTest, SeasonEndRecordsHistoryPromotesAndRegenerates)
 
     const auto& history = game.getCompetitions().getSeasonHistory();
     const auto top_entry = std::ranges::find_if(
-        history, [](const SeasonHistoryEntry& entry)
+        history,
+        [](const SeasonHistoryEntry& entry)
         {
           return entry.competition_type == MatchType::LEAGUE &&
                  entry.competition_id == TOP_LEAGUE;
@@ -1118,8 +1133,11 @@ TEST(SeasonRolloverTest, SeasonEndRecordsHistoryPromotesAndRegenerates)
     EXPECT_EQ(top_entry->runner_up_id, final_top[1].team_id);
     EXPECT_EQ(top_entry->relegated.size(), Competitions::PROMOTION_SLOTS);
     const size_t cups = static_cast<size_t>(std::ranges::count_if(
-        history, [](const SeasonHistoryEntry& entry)
-        { return entry.competition_type == MatchType::CUP && entry.champion_id; }));
+        history,
+        [](const SeasonHistoryEntry& entry)
+        {
+          return entry.competition_type == MatchType::CUP && entry.champion_id;
+        }));
     EXPECT_EQ(cups, Competitions::countryRoots(*gamedata).size());
 
     // The new season is scheduled with the promoted clubs in the top flight.
@@ -1144,13 +1162,14 @@ TEST(SeasonRolloverTest, SeasonEndRecordsHistoryPromotesAndRegenerates)
   auto db_conn = std::make_shared<DatabaseConnection>(path.string());
   Game reloaded(gamedata, db_conn);
   EXPECT_EQ(reloaded.getCurrentSeason(), 2);
-  EXPECT_EQ(gamedata->getTeam(final_second.front().team_id)->get().getLeagueId(),
-            TOP_LEAGUE);
+  EXPECT_EQ(
+      gamedata->getTeam(final_second.front().team_id)->get().getLeagueId(),
+      TOP_LEAGUE);
   EXPECT_EQ(Competitions::leagueTier(*gamedata, SECOND_LEAGUE), 2);
   EXPECT_FALSE(reloaded.getCompetitions().getSeasonHistory().empty());
-  EXPECT_TRUE(std::ranges::contains(
-      gamedata->getLeagues().at(TOP_LEAGUE).getTeamIDs(),
-      final_second.front().team_id));
+  EXPECT_TRUE(
+      std::ranges::contains(gamedata->getLeagues().at(TOP_LEAGUE).getTeamIDs(),
+                            final_second.front().team_id));
 }
 
 TEST(CompetitionMigrationTest, SaveWithoutCompetitionTablesLoads)

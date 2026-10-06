@@ -50,9 +50,9 @@ std::string MatchClock::clockLabel(float matchMinutes, int period,
                                    bool addedTime)
 {
   const int regulationEnd = regulationEndOf(period);
-  const float shown =
-      std::max(0.0f, addedTime ? matchMinutes - static_cast<float>(regulationEnd)
-                               : matchMinutes);
+  const float shown = std::max(
+      0.0f, addedTime ? matchMinutes - static_cast<float>(regulationEnd)
+                      : matchMinutes);
   const int totalSeconds = static_cast<int>(std::floor(shown * 60.0f));
   if (addedTime)
     return std::format("{}+{}:{:02}", regulationEnd, totalSeconds / 60,

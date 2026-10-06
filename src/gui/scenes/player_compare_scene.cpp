@@ -87,7 +87,8 @@ void PlayerCompareScene::refresh()
   // Rebuild every slot from the current estimates (knowledge may have grown).
   for (std::size_t index = 0; index < MAX_PLAYERS; ++index)
   {
-    const PlayerID id = slots[index].id != 0 ? slots[index].id : requested[index];
+    const PlayerID id =
+        slots[index].id != 0 ? slots[index].id : requested[index];
     requested[index] = 0;
     setSlot(index, id);
   }
@@ -112,16 +113,16 @@ void PlayerCompareScene::setSlot(std::size_t index, PlayerID id)
   slot.own = view->own;
   slot.name = p.getName();
   const auto team = controller.getTeamById(p.getTeamId());
-  slot.subtitle = std::format(
-      "{}  \xC2\xB7  {}  \xC2\xB7  {}", RoleUtils::shortName(p.getRole()),
-      p.getAge(),
-      team && p.getTeamId() != FREE_AGENTS_TEAM_ID
-          ? team->get().getName()
-          : std::string(LOC("TRANSFER_FREE_AGENT_LABEL")));
-  slot.knowledge =
-      view->own ? std::string(LOC("COMPARE_OWN_PLAYER"))
-                : formatLocalized("COMPARE_KNOWLEDGE",
-                                  {std::to_string(view->knowledge)});
+  slot.subtitle =
+      std::format("{}  \xC2\xB7  {}  \xC2\xB7  {}",
+                  RoleUtils::shortName(p.getRole()), p.getAge(),
+                  team && p.getTeamId() != FREE_AGENTS_TEAM_ID
+                      ? team->get().getName()
+                      : std::string(LOC("TRANSFER_FREE_AGENT_LABEL")));
+  slot.knowledge = view->own
+                       ? std::string(LOC("COMPARE_OWN_PLAYER"))
+                       : formatLocalized("COMPARE_KNOWLEDGE",
+                                         {std::to_string(view->knowledge)});
   slot.attributes = view->attributes;
   for (const ScoutedAttribute& attribute : slot.attributes)
   {
@@ -133,22 +134,21 @@ void PlayerCompareScene::setSlot(std::size_t index, PlayerID id)
 
   // Facts: estimates for other clubs' players, public figures for all.
   const bool exact = view->own;
+  slot.facts.push_back(exact ? std::format("{:.0f}", view->overall)
+                             : std::format("{:.0f} ({:.0f}-{:.0f})",
+                                           view->overall, view->overall_low,
+                                           view->overall_high));
   slot.facts.push_back(
-      exact ? std::format("{:.0f}", view->overall)
-            : std::format("{:.0f} ({:.0f}-{:.0f})", view->overall,
-                          view->overall_low, view->overall_high));
-  slot.facts.push_back(std::format("{:.0f}-{:.0f}", view->potential_low,
-                                   view->potential_high));
+      std::format("{:.0f}-{:.0f}", view->potential_low, view->potential_high));
   slot.facts.push_back(Format::money(view->estimated_value));
   const auto row = controller.getScoutedRow(id);
-  slot.facts.push_back(row ? formatLocalized("COMPARE_WAGE_WEEK",
-                                             {Format::money(row->wage)})
-                           : std::string("-"));
-  const int years = p.getContractYears();
   slot.facts.push_back(
-      years <= 1 ? std::string(LOC("PLANNER_CONTRACT_ENDS"))
-                 : formatLocalized("STAFF_CONTRACT_YEARS",
-                                   {std::to_string(years)}));
+      row ? formatLocalized("COMPARE_WAGE_WEEK", {Format::money(row->wage)})
+          : std::string("-"));
+  const int years = p.getContractYears();
+  slot.facts.push_back(years <= 1 ? std::string(LOC("PLANNER_CONTRACT_ENDS"))
+                                  : formatLocalized("STAFF_CONTRACT_YEARS",
+                                                    {std::to_string(years)}));
   PlayerSeasonStats total;
   for (const PlayerSeasonStats& season : controller.getPlayerSeasonStats(id))
   {
@@ -191,7 +191,8 @@ void PlayerCompareScene::buildCandidates()
   if (!data) return;
   std::vector<PlayerID> ids;
   if (const auto managed = controller.getManagedTeam())
-    for (const auto& player : controller.getPlayersForTeam(managed->get().getId()))
+    for (const auto& player :
+         controller.getPlayersForTeam(managed->get().getId()))
       ids.push_back(player.get().getId());
   for (const ShortlistEntry& entry : controller.getShortlist())
     ids.push_back(entry.player_id);
@@ -255,7 +256,8 @@ void PlayerCompareScene::renderSlots()
         ImVec2(at.x + swatch, at.y + 4.0f * Theme::scale() + swatch),
         Theme::toU32(slot.id != 0 ? seriesColor(index) : palette.border),
         2.0f * Theme::scale());
-    ImGui::SetCursorScreenPos(ImVec2(at.x + swatch + 8.0f * Theme::scale(), at.y));
+    ImGui::SetCursorScreenPos(
+        ImVec2(at.x + swatch + 8.0f * Theme::scale(), at.y));
     const float inner = ImGui::GetContentRegionAvail().x;
     if (slot.id != 0)
     {
@@ -271,8 +273,8 @@ void PlayerCompareScene::renderSlots()
       if (UI::secondaryButton(LOC("COMPARE_PROFILE"), {},
                               UI::ButtonSize::COMPACT))
         Navigation::openPlayer(guiView, slot.id);
-      UI::sameLineIfFits(UI::buttonWidth(LOC("COMPARE_REMOVE"),
-                                         UI::ButtonSize::COMPACT));
+      UI::sameLineIfFits(
+          UI::buttonWidth(LOC("COMPARE_REMOVE"), UI::ButtonSize::COMPACT));
       if (UI::secondaryButton(LOC("COMPARE_REMOVE"), {},
                               UI::ButtonSize::COMPACT))
         removed = index;
@@ -349,18 +351,20 @@ void PlayerCompareScene::renderRadar(float width)
   for (const std::string& label : axis_labels)
     widest = std::max(widest, ImGui::CalcTextSize(label.c_str()).x);
   const float labelRoom = widest + 8.0f * scale;
-  const float radius = std::max(
-      40.0f * scale, std::min(size * 0.5f, inner * 0.5f - labelRoom));
+  const float radius =
+      std::max(40.0f * scale, std::min(size * 0.5f, inner * 0.5f - labelRoom));
   const ImVec2 start = ImGui::GetCursorScreenPos();
-  const ImVec2 centre(start.x + inner * 0.5f,
-                      start.y + radius + ImGui::GetTextLineHeight() + 6.0f * scale);
+  const ImVec2 centre(
+      start.x + inner * 0.5f,
+      start.y + radius + ImGui::GetTextLineHeight() + 6.0f * scale);
   ImDrawList* drawList = ImGui::GetWindowDrawList();
   const std::size_t count = axes.size();
   const auto point = [&](std::size_t axis, float value)
   {
-    const float angle = -std::numbers::pi_v<float> * 0.5f +
-                        2.0f * std::numbers::pi_v<float> *
-                            static_cast<float>(axis) / static_cast<float>(count);
+    const float angle =
+        -std::numbers::pi_v<float> * 0.5f + 2.0f * std::numbers::pi_v<float> *
+                                                static_cast<float>(axis) /
+                                                static_cast<float>(count);
     const float distance = radius * std::clamp(value / 100.0f, 0.0f, 1.0f);
     return ImVec2(centre.x + std::cos(angle) * distance,
                   centre.y + std::sin(angle) * distance);
@@ -404,8 +408,8 @@ void PlayerCompareScene::renderRadar(float width)
       {
         const auto found = std::ranges::find(slot.attributes, axes[axis],
                                              &ScoutedAttribute::name);
-        points[axis] =
-            point(axis, found != slot.attributes.end() ? found->estimate : 0.0f);
+        points[axis] = point(
+            axis, found != slot.attributes.end() ? found->estimate : 0.0f);
       }
       const ImVec4 color = seriesColor(index);
       drawList->AddConcavePolyFilled(points.data(), static_cast<int>(used),
@@ -418,8 +422,8 @@ void PlayerCompareScene::renderRadar(float width)
                                   Theme::toU32(color));
     }
   }
-  ImGui::Dummy(ImVec2(inner, 2.0f * (radius + ImGui::GetTextLineHeight() +
-                                     6.0f * scale)));
+  ImGui::Dummy(ImVec2(
+      inner, 2.0f * (radius + ImGui::GetTextLineHeight() + 6.0f * scale)));
   // Legend: identity is never colour alone.
   bool first = true;
   for (std::size_t index = 0; index < MAX_PLAYERS; ++index)
@@ -466,8 +470,8 @@ void PlayerCompareScene::renderBars(float width)
       const std::size_t position =
           static_cast<std::size_t>(found - slot.attributes.begin());
       const ImVec2 at = ImGui::GetCursorScreenPos();
-      const float barWidth = std::clamp(inner - valueWidth, 0.0f,
-                                        BAR_MAX_WIDTH * scale);
+      const float barWidth =
+          std::clamp(inner - valueWidth, 0.0f, BAR_MAX_WIDTH * scale);
       const float y = at.y + (line - barHeight) * 0.5f;
       const ImVec4 color = seriesColor(index);
       drawList->AddRectFilled(ImVec2(at.x, y),
@@ -476,9 +480,12 @@ void PlayerCompareScene::renderBars(float width)
       // Scouted range behind the estimate.
       if (!slot.own && found->high > found->low)
         drawList->AddRectFilled(
-            ImVec2(at.x + barWidth * std::clamp(found->low / 100.0f, 0.0f, 1.0f), y),
-            ImVec2(at.x + barWidth * std::clamp(found->high / 100.0f, 0.0f, 1.0f),
-                   y + barHeight),
+            ImVec2(
+                at.x + barWidth * std::clamp(found->low / 100.0f, 0.0f, 1.0f),
+                y),
+            ImVec2(
+                at.x + barWidth * std::clamp(found->high / 100.0f, 0.0f, 1.0f),
+                y + barHeight),
             Theme::toU32(color, 0.35f), barHeight * 0.5f);
       drawList->AddRectFilled(
           ImVec2(at.x, y),

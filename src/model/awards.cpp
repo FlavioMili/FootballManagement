@@ -26,8 +26,9 @@ namespace
 {
 constexpr const char* NOT_AWARDED = "@AWARDS_NOT_AWARDED";
 constexpr std::array<const char*, 12> MONTH_KEYS = {
-    "MONTH_JAN", "MONTH_FEB", "MONTH_MAR", "MONTH_APR", "MONTH_MAY", "MONTH_JUN",
-    "MONTH_JUL", "MONTH_AUG", "MONTH_SEP", "MONTH_OCT", "MONTH_NOV", "MONTH_DEC"};
+    "MONTH_JAN", "MONTH_FEB", "MONTH_MAR", "MONTH_APR",
+    "MONTH_MAY", "MONTH_JUN", "MONTH_JUL", "MONTH_AUG",
+    "MONTH_SEP", "MONTH_OCT", "MONTH_NOV", "MONTH_DEC"};
 /** Morale lift of a winner. [P] */
 constexpr float MONTH_MORALE = 4.0f;
 constexpr float SEASON_MORALE = 6.0f;
@@ -182,18 +183,19 @@ float playerScore(const AwardPlayerTally& tally, bool goalkeeper)
   const float appearances =
       static_cast<float>(std::max<std::uint16_t>(1, tally.appearances));
   // [P] Ratings dominate; a goal every match adds 0.3, an assist half that.
-  float score = tally.averageRating() +
-                0.3f *
-                    (static_cast<float>(tally.goals) +
-                     0.5f * static_cast<float>(tally.assists)) /
-                    appearances;
+  float score =
+      tally.averageRating() + 0.3f *
+                                  (static_cast<float>(tally.goals) +
+                                   0.5f * static_cast<float>(tally.assists)) /
+                                  appearances;
   if (goalkeeper)
     score += 0.25f * static_cast<float>(tally.clean_sheets) / appearances;
   return score;
 }
 
-std::optional<std::size_t> bestPlayer(std::span<const AwardCandidate> candidates,
-                                      std::uint16_t min_minutes, int max_age)
+std::optional<std::size_t> bestPlayer(
+    std::span<const AwardCandidate> candidates, std::uint16_t min_minutes,
+    int max_age)
 {
   std::optional<std::size_t> best;
   float best_score = 0.0f;
@@ -215,7 +217,8 @@ std::optional<std::size_t> bestPlayer(std::span<const AwardCandidate> candidates
   return best;
 }
 
-std::optional<std::size_t> goldenBoot(std::span<const AwardCandidate> candidates)
+std::optional<std::size_t> goldenBoot(
+    std::span<const AwardCandidate> candidates)
 {
   std::optional<std::size_t> best;
   for (std::size_t index = 0; index < candidates.size(); ++index)
@@ -269,8 +272,8 @@ std::array<std::optional<std::size_t>, TEAM_OF_SEASON_SIZE> teamOfSeason(
 {
   std::array<std::optional<std::size_t>, TEAM_OF_SEASON_SIZE> team{};
   std::vector<bool> used(candidates.size(), false);
-  const auto fill = [&](std::uint8_t slot,
-                        std::initializer_list<PlayerRole> roles)
+  const auto fill =
+      [&](std::uint8_t slot, std::initializer_list<PlayerRole> roles)
   {
     std::optional<std::size_t> best;
     float best_score = 0.0f;
@@ -293,7 +296,8 @@ std::array<std::optional<std::size_t>, TEAM_OF_SEASON_SIZE> teamOfSeason(
     team[slot] = best;
     used[*best] = true;
   };
-  for (const std::uint8_t slot : FILL_ORDER) fill(slot, slotRules()[slot].primary);
+  for (const std::uint8_t slot : FILL_ORDER)
+    fill(slot, slotRules()[slot].primary);
   for (const std::uint8_t slot : FILL_ORDER)
     if (!team[slot]) fill(slot, slotRules()[slot].fallback);
   return team;
@@ -302,9 +306,9 @@ std::array<std::optional<std::size_t>, TEAM_OF_SEASON_SIZE> teamOfSeason(
 const char* slotKey(std::uint8_t slot)
 {
   static constexpr std::array<const char*, TEAM_OF_SEASON_SIZE> KEYS = {
-      "AWARD_SLOT_GK", "AWARD_SLOT_RB", "AWARD_SLOT_CB", "AWARD_SLOT_CB",
+      "AWARD_SLOT_GK", "AWARD_SLOT_RB",  "AWARD_SLOT_CB",  "AWARD_SLOT_CB",
       "AWARD_SLOT_LB", "AWARD_SLOT_MID", "AWARD_SLOT_MID", "AWARD_SLOT_MID",
-      "AWARD_SLOT_RW", "AWARD_SLOT_ST", "AWARD_SLOT_LW"};
+      "AWARD_SLOT_RW", "AWARD_SLOT_ST",  "AWARD_SLOT_LW"};
   return slot < KEYS.size() ? KEYS[slot] : KEYS.back();
 }
 
@@ -334,8 +338,8 @@ std::uint16_t seasonMinMinutes(std::span<const AwardCandidate> candidates)
   std::uint16_t most = 0;
   for (const AwardCandidate& candidate : candidates)
     most = std::max(most, candidate.tally.minutes);
-  return static_cast<std::uint16_t>(std::max(
-      1.0f, std::floor(static_cast<float>(most) * SEASON_MIN_SHARE)));
+  return static_cast<std::uint16_t>(
+      std::max(1.0f, std::floor(static_cast<float>(most) * SEASON_MIN_SHARE)));
 }
 
 float goalScore(std::uint8_t minute, int own_before, int other_before,
@@ -366,8 +370,8 @@ float valueMultiplier(std::span<const AwardRecord> honours,
   {
     if (isMonthlyPlayerAward(record.type))
     {
-      const int year = record.month >= 7 ? record.season_year
-                                         : record.season_year + 1;
+      const int year =
+          record.month >= 7 ? record.season_year : record.season_year + 1;
       if (now_months - (year * 12 + record.month) <= 12) ++monthly;
     }
     else if (record.season_year + 1 >= season_now)
@@ -475,7 +479,8 @@ void AwardSystem::onMatchPlayed(const GameData& gamedata,
       club.points += pointsFor(own, other);
       club.expected_points += expected;
       club.goals_for = static_cast<std::uint16_t>(club.goals_for + own);
-      club.goals_against = static_cast<std::uint16_t>(club.goals_against + other);
+      club.goals_against =
+          static_cast<std::uint16_t>(club.goals_against + other);
     }
   };
   addClub(report.home_team_id, home_goals, away_goals, home_expected);
@@ -487,8 +492,8 @@ void AwardSystem::onMatchPlayed(const GameData& gamedata,
     if (event.kind == MatchEventKind::GOAL ||
         event.kind == MatchEventKind::OWN_GOAL)
       goals.push_back(&event);
-  std::ranges::stable_sort(goals, {}, [](const MatchReportEvent* event)
-                           { return event->minute; });
+  std::ranges::stable_sort(
+      goals, {}, [](const MatchReportEvent* event) { return event->minute; });
   const auto reputation = [&](TeamID team_id)
   {
     const auto team = gamedata.getTeam(team_id);
@@ -577,7 +582,8 @@ std::vector<AwardRecord> AwardSystem::awardMonth(const GameData& gamedata,
 {
   std::set<LeagueID> leagues;
   for (const auto& [key, tally] : month_players) leagues.insert(key.first);
-  for (const auto& [team_id, club] : month_clubs) leagues.insert(club.league_id);
+  for (const auto& [team_id, club] : month_clubs)
+    leagues.insert(club.league_id);
 
   std::vector<AwardRecord> given;
   for (const LeagueID league_id : leagues)
@@ -593,8 +599,7 @@ std::vector<AwardRecord> AwardSystem::awardMonth(const GameData& gamedata,
       record.type = type;
       record.player_id = winner.tally.player_id;
       record.team_id = winner.tally.team_id;
-      record.value =
-          std::round(winner.tally.averageRating() * 100.0f) / 100.0f;
+      record.value = std::round(winner.tally.averageRating() * 100.0f) / 100.0f;
       record.count = winner.tally.appearances;
       addRecord(gamedata, record, given);
     };
@@ -615,8 +620,7 @@ std::vector<AwardRecord> AwardSystem::awardMonth(const GameData& gamedata,
       record.league_id = league_id;
       record.type = AwardType::ManagerOfMonth;
       record.team_id = clubs[*best].team_id;
-      record.value =
-          std::round(clubs[*best].overPerformance() * 10.0f) / 10.0f;
+      record.value = std::round(clubs[*best].overPerformance() * 10.0f) / 10.0f;
       record.count = clubs[*best].matches;
       addRecord(gamedata, record, given);
     }
@@ -658,9 +662,9 @@ std::vector<AwardRecord> AwardSystem::awardSeason(const GameData& gamedata,
     const std::vector<AwardCandidate> pool =
         candidates(gamedata, season_players, league_id);
     const std::uint16_t min_minutes = Awards::seasonMinMinutes(pool);
-    const auto playerRecord =
-        [&](AwardType type, const AwardCandidate& winner, float value,
-            std::uint16_t count, std::uint8_t slot = 0)
+    const auto playerRecord = [&](AwardType type, const AwardCandidate& winner,
+                                  float value, std::uint16_t count,
+                                  std::uint8_t slot = 0)
     {
       AwardRecord record;
       record.season_year = season_year;
@@ -708,8 +712,7 @@ std::vector<AwardRecord> AwardSystem::awardSeason(const GameData& gamedata,
       record.league_id = league_id;
       record.type = AwardType::ManagerOfSeason;
       record.team_id = clubs[*best].team_id;
-      record.value =
-          std::round(clubs[*best].overPerformance() * 10.0f) / 10.0f;
+      record.value = std::round(clubs[*best].overPerformance() * 10.0f) / 10.0f;
       record.count = clubs[*best].matches;
       addRecord(gamedata, record, given);
     }
@@ -746,9 +749,10 @@ std::vector<AwardRecord> AwardSystem::onMonthStart(GameData& gamedata,
     {
       const auto found = players.find(record.player_id);
       if (found == players.end()) continue;
-      const float lift = record.type == AwardType::TeamOfSeason ? TEAM_OF_SEASON_MORALE
-                         : record.month != 0                    ? MONTH_MORALE
-                                                                : SEASON_MORALE;
+      const float lift = record.type == AwardType::TeamOfSeason
+                             ? TEAM_OF_SEASON_MORALE
+                         : record.month != 0 ? MONTH_MORALE
+                                             : SEASON_MORALE;
       PlayerDynamics& dynamics = found->second.mutableDynamics();
       dynamics.morale = std::min(100.0f, dynamics.morale + lift);
       continue;
@@ -803,15 +807,14 @@ std::vector<AwardRecord> AwardSystem::onMonthStart(GameData& gamedata,
     {
       message.title_key = "INBOX_AWARDS_MONTH_TITLE";
       message.body_key = "INBOX_AWARDS_MONTH_BODY";
-      message.args = {
-          league_name,
-          std::string("@") + MONTH_KEYS[previous.month - 1U],
-          std::to_string(previous.year),
-          line(AwardType::PlayerOfMonth, player),
-          line(AwardType::YoungPlayerOfMonth, player),
-          line(AwardType::ManagerOfMonth, managerLine),
-          line(AwardType::GoalOfMonth,
-               [&](const AwardRecord& r) { return goalLine(r, gamedata); })};
+      message.args = {league_name,
+                      std::string("@") + MONTH_KEYS[previous.month - 1U],
+                      std::to_string(previous.year),
+                      line(AwardType::PlayerOfMonth, player),
+                      line(AwardType::YoungPlayerOfMonth, player),
+                      line(AwardType::ManagerOfMonth, managerLine),
+                      line(AwardType::GoalOfMonth, [&](const AwardRecord& r)
+                           { return goalLine(r, gamedata); })};
     }
     else
     {
@@ -824,15 +827,15 @@ std::vector<AwardRecord> AwardSystem::onMonthStart(GameData& gamedata,
       }
       message.title_key = "INBOX_AWARDS_SEASON_TITLE";
       message.body_key = "INBOX_AWARDS_SEASON_BODY";
-      message.args = {league_name,
-                      std::format("{}/{:02}", season_year,
-                                  (season_year + 1) % 100),
-                      line(AwardType::PlayerOfSeason, player),
-                      line(AwardType::YoungPlayerOfSeason, player),
-                      line(AwardType::GoldenBoot, count),
-                      line(AwardType::GoldenGlove, count),
-                      line(AwardType::ManagerOfSeason, managerLine),
-                      team.empty() ? std::string(NOT_AWARDED) : team};
+      message.args = {
+          league_name,
+          std::format("{}/{:02}", season_year, (season_year + 1) % 100),
+          line(AwardType::PlayerOfSeason, player),
+          line(AwardType::YoungPlayerOfSeason, player),
+          line(AwardType::GoldenBoot, count),
+          line(AwardType::GoldenGlove, count),
+          line(AwardType::ManagerOfSeason, managerLine),
+          team.empty() ? std::string(NOT_AWARDED) : team};
     }
     inbox.add(std::move(message));
   };
@@ -923,26 +926,27 @@ void AwardSystem::load(const std::shared_ptr<DatabaseConnection>& db_conn)
               record.date = GameDateValue::fromString(date);
             records.push_back(std::move(record));
           });
-  forEach(db,
-          "SELECT scope, league_id, player_id, team_id, appearances, minutes, "
-          "goals, assists, clean_sheets, rating_total, rated FROM AwardTallies;",
-          [&](sqlite3_stmt* stmt)
-          {
-            AwardPlayerTally tally;
-            tally.league_id = column<LeagueID>(stmt, 1);
-            tally.player_id = column<PlayerID>(stmt, 2);
-            tally.team_id = column<TeamID>(stmt, 3);
-            tally.appearances = column<std::uint16_t>(stmt, 4);
-            tally.minutes = column<std::uint16_t>(stmt, 5);
-            tally.goals = column<std::uint16_t>(stmt, 6);
-            tally.assists = column<std::uint16_t>(stmt, 7);
-            tally.clean_sheets = column<std::uint16_t>(stmt, 8);
-            tally.rating_total = columnFloat(stmt, 9);
-            tally.rated = column<std::uint16_t>(stmt, 10);
-            auto& tallies =
-                column<int>(stmt, 0) == 0 ? month_players : season_players;
-            tallies[{tally.league_id, tally.player_id}] = tally;
-          });
+  forEach(
+      db,
+      "SELECT scope, league_id, player_id, team_id, appearances, minutes, "
+      "goals, assists, clean_sheets, rating_total, rated FROM AwardTallies;",
+      [&](sqlite3_stmt* stmt)
+      {
+        AwardPlayerTally tally;
+        tally.league_id = column<LeagueID>(stmt, 1);
+        tally.player_id = column<PlayerID>(stmt, 2);
+        tally.team_id = column<TeamID>(stmt, 3);
+        tally.appearances = column<std::uint16_t>(stmt, 4);
+        tally.minutes = column<std::uint16_t>(stmt, 5);
+        tally.goals = column<std::uint16_t>(stmt, 6);
+        tally.assists = column<std::uint16_t>(stmt, 7);
+        tally.clean_sheets = column<std::uint16_t>(stmt, 8);
+        tally.rating_total = columnFloat(stmt, 9);
+        tally.rated = column<std::uint16_t>(stmt, 10);
+        auto& tallies =
+            column<int>(stmt, 0) == 0 ? month_players : season_players;
+        tallies[{tally.league_id, tally.player_id}] = tally;
+      });
   forEach(db,
           "SELECT scope, team_id, league_id, matches, points, expected_points, "
           "goals_for, goals_against FROM AwardClubTallies;",
@@ -1054,19 +1058,20 @@ void AwardSystem::save(const std::shared_ptr<DatabaseConnection>& db_conn) const
   };
   saveClubs(month_clubs, 0);
   saveClubs(season_clubs, 1);
-  insertAll(db,
-            "INSERT INTO AwardGoals (league_id, match_date, player_id, "
-            "team_id, opponent_id, minute, score) VALUES (?, ?, ?, ?, ?, ?, ?);",
-            month_goals,
-            [](sqlite3_stmt* row, const auto& entry)
-            {
-              const GoalCandidate& goal = entry.second;
-              sqlite3_bind_int(row, 1, static_cast<int>(goal.league_id));
-              bindText(row, 2, goal.date.toString());
-              sqlite3_bind_int64(row, 3, goal.scorer);
-              sqlite3_bind_int(row, 4, goal.team_id);
-              sqlite3_bind_int(row, 5, goal.opponent_id);
-              sqlite3_bind_int(row, 6, goal.minute);
-              sqlite3_bind_double(row, 7, goal.score);
-            });
+  insertAll(
+      db,
+      "INSERT INTO AwardGoals (league_id, match_date, player_id, "
+      "team_id, opponent_id, minute, score) VALUES (?, ?, ?, ?, ?, ?, ?);",
+      month_goals,
+      [](sqlite3_stmt* row, const auto& entry)
+      {
+        const GoalCandidate& goal = entry.second;
+        sqlite3_bind_int(row, 1, static_cast<int>(goal.league_id));
+        bindText(row, 2, goal.date.toString());
+        sqlite3_bind_int64(row, 3, goal.scorer);
+        sqlite3_bind_int(row, 4, goal.team_id);
+        sqlite3_bind_int(row, 5, goal.opponent_id);
+        sqlite3_bind_int(row, 6, goal.minute);
+        sqlite3_bind_double(row, 7, goal.score);
+      });
 }

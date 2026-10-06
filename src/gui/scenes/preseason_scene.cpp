@@ -58,12 +58,13 @@ void PreseasonScene::refresh()
     line.slot = slot;
     line.date = Format::dayMonth(slot.date);
     line.opponent = teamName(controller, slot.opponent_id);
-    const auto pick = std::ranges::find(suggestion, slot.date,
-                                        &FriendlySuggestion::date);
+    const auto pick =
+        std::ranges::find(suggestion, slot.date, &FriendlySuggestion::date);
     if (slot.editable && pick != suggestion.end() &&
         pick->opponent_id != slot.opponent_id)
-      line.suggestion = fmt::sprintf(LOC("PLANNING_ASSISTANT_PICK"),
-                                     teamName(controller, pick->opponent_id).c_str());
+      line.suggestion =
+          fmt::sprintf(LOC("PLANNING_ASSISTANT_PICK"),
+                       teamName(controller, pick->opponent_id).c_str());
     friendlies.push_back(std::move(line));
   }
   if (selected_friendly >= static_cast<int>(friendlies.size()) ||
@@ -112,8 +113,8 @@ void PreseasonScene::refresh()
     switch (type)
     {
       case FacilityProjectType::TrainingGround:
-        line.level = fmt::sprintf(LOC("PLANNING_LEVEL"),
-                                  profile.training_facilities);
+        line.level =
+            fmt::sprintf(LOC("PLANNING_LEVEL"), profile.training_facilities);
         break;
       case FacilityProjectType::MedicalCentre:
         line.level = fmt::sprintf(LOC("PLANNING_LEVEL"),
@@ -121,8 +122,9 @@ void PreseasonScene::refresh()
         break;
       case FacilityProjectType::StadiumExpansion:
       case FacilityProjectType::COUNT:
-        line.level = fmt::sprintf(LOC("PLANNING_SEATS"),
-                                  Format::thousands(profile.stadium_capacity).c_str());
+        line.level =
+            fmt::sprintf(LOC("PLANNING_SEATS"),
+                         Format::thousands(profile.stadium_capacity).c_str());
         break;
     }
     if (quote.amount > 0)
@@ -151,7 +153,8 @@ void PreseasonScene::refresh()
                                    Format::date(*cooldown).c_str());
       else if (quote.amount == 0)
         line.status = LOC("PROJECT_VERDICT_MAXIMUM");
-      line.can_request = quote.amount > 0 && !controller.getProjectCooldown(type);
+      line.can_request =
+          quote.amount > 0 && !controller.getProjectCooldown(type);
     }
     projects.push_back(std::move(line));
   }
@@ -291,8 +294,9 @@ void PreseasonScene::renderPreseason(float width)
             LOC(line.slot.home ? "PLANNING_HOME" : "PLANNING_AWAY"));
       if (UI::cell(mask, 3))
       {
-        const std::string note = line.slot.tour ? std::string(LOC("PLANNING_TOUR"))
-                                                : line.suggestion;
+        const std::string note = line.slot.tour
+                                     ? std::string(LOC("PLANNING_TOUR"))
+                                     : line.suggestion;
         UI::textFitted(note, ImGui::GetContentRegionAvail().x,
                        line.slot.tour ? palette.text : palette.faint);
       }
@@ -331,7 +335,8 @@ void PreseasonScene::renderFriendlyEditor(const FriendlyLine& line)
   const char* levels[] = {LOC("PLANNING_LEVEL_WEAKER"),
                           LOC("PLANNING_LEVEL_SIMILAR"),
                           LOC("PLANNING_LEVEL_STRONGER")};
-  if (UI::segmented("##level", level, levels, std::min(full, 420.0f * Theme::scale())))
+  if (UI::segmented("##level", level, levels,
+                    std::min(full, 420.0f * Theme::scale())))
     loadOpponents();
   const char* regions[] = {LOC("PLANNING_DOMESTIC"), LOC("PLANNING_ABROAD")};
   if (UI::segmented("##region", region, regions,
@@ -344,8 +349,9 @@ void PreseasonScene::renderFriendlyEditor(const FriendlyLine& line)
   }
   ImGui::SetNextItemWidth(std::min(full, 360.0f * Theme::scale()));
   const char* preview =
-      opponent_index >= 0 ? opponent_labels[static_cast<size_t>(opponent_index)].c_str()
-                          : "";
+      opponent_index >= 0
+          ? opponent_labels[static_cast<size_t>(opponent_index)].c_str()
+          : "";
   if (ImGui::BeginCombo("##opponent", preview, ImGuiComboFlags_HeightLarge))
   {
     for (size_t index = 0; index < opponent_labels.size(); ++index)
@@ -355,7 +361,8 @@ void PreseasonScene::renderFriendlyEditor(const FriendlyLine& line)
     ImGui::EndCombo();
   }
   const char* venues[] = {LOC("PLANNING_HOME"), LOC("PLANNING_AWAY")};
-  UI::segmented("##venue", venue, venues, std::min(full, 240.0f * Theme::scale()));
+  UI::segmented("##venue", venue, venues,
+                std::min(full, 240.0f * Theme::scale()));
   const OpponentOption& option = opponents[static_cast<size_t>(opponent_index)];
   const bool tour_possible = venue == 1 && option.abroad;
   if (!tour_possible) tour = false;
@@ -400,22 +407,22 @@ void PreseasonScene::renderCamp()
   {
     const char* camps[] = {LOC(CAMP_KEYS[0]), LOC(CAMP_KEYS[1]),
                            LOC(CAMP_KEYS[2])};
-    UI::segmented("##camp", camp_choice, camps,
-                  std::min(ImGui::GetContentRegionAvail().x,
-                           420.0f * Theme::scale()));
+    UI::segmented(
+        "##camp", camp_choice, camps,
+        std::min(ImGui::GetContentRegionAvail().x, 420.0f * Theme::scale()));
   }
   const auto choice = static_cast<TrainingCamp>(camp_choice);
   const CampQuote& quote = camp_quotes[static_cast<size_t>(camp_choice)];
   ImGui::PushTextWrapPos(0.0f);
   if (open && quote.available)
-    ImGui::TextColored(
-        palette.muted, "%s",
-        fmt::sprintf(LOC("PLANNING_CAMP_QUOTE"), Format::money(quote.cost).c_str(),
-                     static_cast<int>(quote.sharpness),
-                     static_cast<int>(quote.familiarity),
-                     Format::dayMonth(quote.start).c_str(),
-                     Format::dayMonth(quote.end).c_str())
-            .c_str());
+    ImGui::TextColored(palette.muted, "%s",
+                       fmt::sprintf(LOC("PLANNING_CAMP_QUOTE"),
+                                    Format::money(quote.cost).c_str(),
+                                    static_cast<int>(quote.sharpness),
+                                    static_cast<int>(quote.familiarity),
+                                    Format::dayMonth(quote.start).c_str(),
+                                    Format::dayMonth(quote.end).c_str())
+                           .c_str());
   if (!camp_status.empty()) ImGui::TextUnformatted(camp_status.c_str());
   if (open) ImGui::TextColored(palette.faint, "%s", camp_suggestion.c_str());
   ImGui::PopTextWrapPos();
@@ -462,7 +469,8 @@ void PreseasonScene::renderProjects(float width)
     UI::textRightColored(palette.muted, line.level.c_str());
     if (line.running)
     {
-      const float progress = line.running->progress(controller.getCurrentDate());
+      const float progress =
+          line.running->progress(controller.getCurrentDate());
       ImGui::ProgressBar(progress, ImVec2(-FLT_MIN, 6.0f * Theme::scale()), "");
       UI::textFitted(line.status, full, palette.muted);
     }
@@ -477,7 +485,8 @@ void PreseasonScene::renderProjects(float width)
           dirty = true;
       }
       if (!line.quote.empty()) UI::textFitted(line.quote, full, palette.text);
-      if (!line.status.empty()) UI::textFitted(line.status, full, palette.faint);
+      if (!line.status.empty())
+        UI::textFitted(line.status, full, palette.faint);
       ImGui::BeginDisabled(!line.can_request);
       if (UI::secondaryButton(LOC("PLANNING_ASK_BOARD"), ImVec2(0, 0),
                               UI::ButtonSize::COMPACT))
@@ -502,8 +511,9 @@ void PreseasonScene::renderProjects(float width)
   {
     ImGui::Dummy(ImVec2(0.0f, Theme::Space::XS * Theme::scale()));
     ImGui::PushTextWrapPos(0.0f);
-    ImGui::TextColored(project_message_error ? palette.warning : palette.positive,
-                       "%s", project_message.c_str());
+    ImGui::TextColored(
+        project_message_error ? palette.warning : palette.positive, "%s",
+        project_message.c_str());
     ImGui::PopTextWrapPos();
   }
   if (!completed_projects.empty())

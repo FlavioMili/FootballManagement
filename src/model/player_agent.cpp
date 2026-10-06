@@ -109,10 +109,9 @@ std::uint32_t agentFeeAsk(const PlayerContext& context, std::uint32_t standard,
                         static_cast<double>(N::AGENT_FEE_AMBITION_MARGIN) *
                             (context.ambition / 100.0);
   const double remaining = 1.0 - static_cast<double>(round) / last_round;
-  return std::max(standard,
-                  roundUp(static_cast<double>(standard) *
-                              (1.0 + margin * remaining),
-                          FEE_ROUNDING));
+  return std::max(standard, roundUp(static_cast<double>(standard) *
+                                        (1.0 + margin * remaining),
+                                    FEE_ROUNDING));
 }
 
 Demands demands(const PlayerContext& context, std::uint32_t transfer_fee,
@@ -129,9 +128,10 @@ Demands demands(const PlayerContext& context, std::uint32_t transfer_fee,
 
   const std::uint8_t term = std::max<std::uint8_t>(years, 1);
   result.yearly_rise = riseFor(context, term);
-  const float share = level(context.projected_role) >= level(SquadRole::Rotation)
-                          ? N::APPEARANCE_BONUS_SQUAD_SHARE
-                          : N::APPEARANCE_BONUS_REGULAR_SHARE;
+  const float share =
+      level(context.projected_role) >= level(SquadRole::Rotation)
+          ? N::APPEARANCE_BONUS_SQUAD_SHARE
+          : N::APPEARANCE_BONUS_REGULAR_SHARE;
   result.appearance_bonus = roundUp(
       static_cast<double>(result.flat_wage) * static_cast<double>(share),
       WAGE_ROUNDING);
@@ -140,10 +140,9 @@ Demands demands(const PlayerContext& context, std::uint32_t transfer_fee,
     result.signing_bonus += result.flat_wage * N::TRANSFER_SIGNING_WEEKS;
 
   // The package is worth his flat ask: the base wage makes up the rest.
-  const double rise_factor =
-      1.0 + TransferNegotiation::yearlyRiseWorth(1'000'000, result.yearly_rise,
-                                                 term) /
-                1'000'000.0;
+  const double rise_factor = 1.0 + TransferNegotiation::yearlyRiseWorth(
+                                       1'000'000, result.yearly_rise, term) /
+                                       1'000'000.0;
   const double extras =
       static_cast<double>(result.appearance_bonus) *
           static_cast<double>(
@@ -209,8 +208,7 @@ const char* openingLine(const PlayerContext& context)
   const int gap = static_cast<int>(context.new_club_reputation) -
                   static_cast<int>(context.current_club_reputation);
   if (context.current_club_reputation > 0 &&
-      context.ambition >= N::STATURE_AMBITION &&
-      -gap >= N::STATURE_REFUSAL_GAP)
+      context.ambition >= N::STATURE_AMBITION && -gap >= N::STATURE_REFUSAL_GAP)
     return "AGENT_OPEN_RELUCTANT";
   if (context.kind == ContractKind::FreeAgent) return "AGENT_OPEN_FREE";
   if (context.current_club_reputation > 0 && gap >= KEEN_REPUTATION_GAP)

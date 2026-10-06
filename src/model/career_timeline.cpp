@@ -136,23 +136,21 @@ class Builder
     addSeasons();
     addHonours();
     addAwards();
-    std::ranges::sort(out,
-                      [](const TimelineEntry& left, const TimelineEntry& right)
-                      {
-                        return std::tuple{left.date, left.kind, left.team_id,
-                                          left.player_id, left.text_key,
-                                          left.args} <
-                               std::tuple{right.date, right.kind,
-                                          right.team_id, right.player_id,
-                                          right.text_key, right.args};
-                      });
+    std::ranges::sort(
+        out,
+        [](const TimelineEntry& left, const TimelineEntry& right)
+        {
+          return std::tuple{left.date,      left.kind,     left.team_id,
+                            left.player_id, left.text_key, left.args} <
+                 std::tuple{right.date,      right.kind,     right.team_id,
+                            right.player_id, right.text_key, right.args};
+        });
     return std::move(out);
   }
 
  private:
   void add(const GameDateValue& date, TimelineKind kind, TeamID team,
-           std::string key, std::vector<std::string> args,
-           PlayerID player = 0)
+           std::string key, std::vector<std::string> args, PlayerID player = 0)
   {
     TimelineEntry entry;
     entry.date = date;
@@ -196,23 +194,23 @@ class Builder
            record.kind == TransferKind::Loan ||
            record.kind == TransferKind::PreContract))
         signings.push_back(&record);
-    std::ranges::sort(signings,
-                      [](const TransferRecord* left, const TransferRecord* right)
-                      {
-                        return std::tuple{right->fee, left->date,
-                                          left->player_id} <
-                               std::tuple{left->fee, right->date,
-                                          right->player_id};
-                      });
+    std::ranges::sort(
+        signings,
+        [](const TransferRecord* left, const TransferRecord* right)
+        {
+          return std::tuple{right->fee, left->date, left->player_id} <
+                 std::tuple{left->fee, right->date, right->player_id};
+        });
     std::size_t listed = 0;
     for (const TransferRecord* record : signings)
     {
       if (listed == CareerTimeline::KEY_SIGNINGS_PER_STINT) break;
       const std::string name = playerName(in.gamedata, record->player_id);
       if (name.empty()) continue;
-      const char* key = record->kind == TransferKind::Loan ? "TIMELINE_SIGNING_LOAN"
-                        : record->fee == 0                 ? "TIMELINE_SIGNING_FREE"
-                                                           : "TIMELINE_SIGNING";
+      const char* key = record->kind == TransferKind::Loan
+                            ? "TIMELINE_SIGNING_LOAN"
+                        : record->fee == 0 ? "TIMELINE_SIGNING_FREE"
+                                           : "TIMELINE_SIGNING";
       add(record->date, TimelineKind::Signing, stint.team_id, key,
           {stint.club_name, name, formatMoney(record->fee),
            teamName(in.gamedata, record->from_team)},
@@ -284,8 +282,8 @@ class Builder
           break;
         case ManagerAwardKind::Promotion:
           // Older saves without season history: the honour is the record.
-          if (!std::ranges::contains(promoted,
-                                     std::pair{honour.team_id, honour.start_year}))
+          if (!std::ranges::contains(
+                  promoted, std::pair{honour.team_id, honour.start_year}))
             add(date, TimelineKind::Promotion, honour.team_id,
                 "TIMELINE_PROMOTED_SHORT", {honour.club_name});
           break;
@@ -413,10 +411,11 @@ std::string CareerTimeline::toMarkdown(const TimelineSources& sources,
                                        const GameDateValue& today)
 {
   std::string text;
-  text += "# " + formatLocalized("TIMELINE_JOURNAL_TITLE", {sources.manager_name}) +
+  text += "# " +
+          formatLocalized("TIMELINE_JOURNAL_TITLE", {sources.manager_name}) +
           "\n\n";
-  text += formatLocalized("TIMELINE_JOURNAL_WRITTEN", {today.toString()}) +
-          "\n\n";
+  text +=
+      formatLocalized("TIMELINE_JOURNAL_WRITTEN", {today.toString()}) + "\n\n";
 
   text += "## " + std::string(LOC("TIMELINE_JOURNAL_CLUBS")) + "\n\n";
   text += std::format("| {} | {} | {} | {} | {} | {} | {} | {} |\n",
@@ -430,11 +429,11 @@ std::string CareerTimeline::toMarkdown(const TimelineSources& sources,
     const std::string until = stint.reason == DepartureReason::Current
                                   ? std::string(LOC("TIMELINE_PRESENT"))
                                   : localizedDate(stint.end.toString());
-    text += std::format("| {} | {} | {} | {} | {} | {} | {} | {} |\n",
-                        escapeCell(stint.club_name),
-                        localizedDate(stint.start.toString()), until,
-                        stint.played, stint.won, stint.drawn, stint.lost,
-                        stint.trophies);
+    text +=
+        std::format("| {} | {} | {} | {} | {} | {} | {} | {} |\n",
+                    escapeCell(stint.club_name),
+                    localizedDate(stint.start.toString()), until, stint.played,
+                    stint.won, stint.drawn, stint.lost, stint.trophies);
   }
   if (sources.stints.empty())
     text += std::string(LOC("TIMELINE_EMPTY_BODY")) + "\n";
@@ -451,10 +450,9 @@ std::string CareerTimeline::toMarkdown(const TimelineSources& sources,
               formatLocalized("TIMELINE_SEASON_HEADER", {seasonLabel(season)}) +
               "\n\n";
     }
-    text += std::format("- **{}** · {} · {}\n",
-                        localizedDate(entry.date.toString()),
-                        LOC(timelineKindKey(entry.kind)),
-                        escapeCell(entry.text()));
+    text += std::format(
+        "- **{}** · {} · {}\n", localizedDate(entry.date.toString()),
+        LOC(timelineKindKey(entry.kind)), escapeCell(entry.text()));
   }
   return text;
 }

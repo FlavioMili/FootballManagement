@@ -169,16 +169,16 @@ struct IncomingOffer
    * LoanNegotiation::borrowerCost() terms. */
   std::uint32_t max_fee = 0;
   GameDateValue created;
-  GameDateValue expires; /*!< Last day to answer (AwaitingClub). */
+  GameDateValue expires;  /*!< Last day to answer (AwaitingClub). */
   std::uint8_t round = 0; /*!< Counters the buyer has answered. */
   /** Counters the buyer answers before it stops; 0 = not drawn yet. */
   std::uint8_t patience = 0;
   std::uint8_t insults = 0; /*!< Unrealistic demands so far. */
   OfferStatus status = OfferStatus::AwaitingClub;
   GameDateValue respond_on; /*!< AwaitingBuyer: the day of its answer. */
-  TransferNegotiation::OfferTerms asked; /*!< AwaitingBuyer: the counter. */
+  TransferNegotiation::OfferTerms asked;     /*!< AwaitingBuyer: the counter. */
   TransferNegotiation::LoanTerms asked_loan; /*!< Loan counter. */
-  bool firm = false; /*!< The counter is a named price. */
+  bool firm = false;               /*!< The counter is a named price. */
   std::vector<OfferRound> history; /*!< Oldest first. */
 };
 
@@ -488,8 +488,7 @@ class TransferMarket
   /** Pays the sell-on clauses of @p seller's sale to @p buyer; a clause
    * whose beneficiary is the buyer itself lapses unpaid. */
   std::int64_t paySellOns(PlayerID player_id, TeamID seller, TeamID buyer,
-                          std::uint32_t fee,
-                          const GameDateValue& date);
+                          std::uint32_t fee, const GameDateValue& date);
   void addRecord(const TransferRecord& record);
   void post(const GameDateValue& date, InboxCategory category,
             std::string title_key, std::string body_key,
@@ -572,7 +571,6 @@ class TransferMarket
    * when @p charge and he played too little). */
   void settleLoanClause(const LoanDeal& loan, const GameDateValue& date,
                         TeamID managed_team_id, bool charge);
-
 
   std::shared_ptr<GameData> gamedata;
   WorldSimulation& world;

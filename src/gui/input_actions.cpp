@@ -149,9 +149,11 @@ ImGuiKey keyOfScancode(SDL_Scancode scancode)
 ImGuiKey keyOfKeycode(SDL_Keycode keycode)
 {
   if (keycode >= SDLK_A && keycode <= SDLK_Z)
-    return static_cast<ImGuiKey>(ImGuiKey_A + static_cast<int>(keycode - SDLK_A));
+    return static_cast<ImGuiKey>(ImGuiKey_A +
+                                 static_cast<int>(keycode - SDLK_A));
   if (keycode >= SDLK_0 && keycode <= SDLK_9)
-    return static_cast<ImGuiKey>(ImGuiKey_0 + static_cast<int>(keycode - SDLK_0));
+    return static_cast<ImGuiKey>(ImGuiKey_0 +
+                                 static_cast<int>(keycode - SDLK_0));
   // Keys without a character carry their scancode in the key code.
   if ((keycode & SDLK_SCANCODE_MASK) != 0)
     return keyOfScancode(
@@ -212,8 +214,8 @@ void registerBuiltins(ActionRegistry& registry)
                                ImGuiKeyChord alternate = ImGuiKey_None,
                                bool rebindable = true)
   {
-    registry.registerAction({std::string(id), label, category, context,
-                             primary, alternate, rebindable});
+    registry.registerAction({std::string(id), label, category, context, primary,
+                             alternate, rebindable});
   };
   add(Ids::NAV_HOME, "NAV_HOME", C::NAVIGATION, X::MANAGEMENT, ImGuiKey_F1);
   add(Ids::NAV_INBOX, "NAV_INBOX", C::NAVIGATION, X::MANAGEMENT, ImGuiKey_F2);
@@ -222,8 +224,8 @@ void registerBuiltins(ActionRegistry& registry)
       ImGuiKey_F4);
   add(Ids::NAV_MATCHES, "NAV_HUB_MATCHES", C::NAVIGATION, X::MANAGEMENT,
       ImGuiKey_F5);
-  add(Ids::NAV_RECRUITMENT, "NAV_HUB_RECRUITMENT", C::NAVIGATION,
-      X::MANAGEMENT, ImGuiKey_F6);
+  add(Ids::NAV_RECRUITMENT, "NAV_HUB_RECRUITMENT", C::NAVIGATION, X::MANAGEMENT,
+      ImGuiKey_F6);
   add(Ids::NAV_CLUB, "NAV_CLUB", C::NAVIGATION, X::MANAGEMENT, ImGuiKey_F7);
   add(Ids::NAV_PALETTE, "ACTION_PALETTE", C::NAVIGATION, X::MANAGEMENT,
       ImGuiMod_Ctrl | ImGuiKey_K);
@@ -271,8 +273,8 @@ void registerBuiltins(ActionRegistry& registry)
   add(Ids::CAMERA_FREE, "ACTION_CAMERA_FREE", C::CAMERA, X::MATCH, ImGuiKey_5);
   add(Ids::CAMERA_DIRECTOR, "ACTION_CAMERA_DIRECTOR", C::CAMERA, X::MATCH,
       ImGuiKey_6);
-  add(Ids::CAMERA_FOLLOW_BALL, "ACTION_CAMERA_FOLLOW_BALL", C::CAMERA,
-      X::MATCH, ImGuiKey_B);
+  add(Ids::CAMERA_FOLLOW_BALL, "ACTION_CAMERA_FOLLOW_BALL", C::CAMERA, X::MATCH,
+      ImGuiKey_B);
   add(Ids::CAMERA_RESET, "ACTION_CAMERA_RESET", C::CAMERA, X::MATCH,
       ImGuiKey_R);
 
@@ -301,8 +303,8 @@ void registerBuiltins(ActionRegistry& registry)
       ImGuiKey_7, ImGuiKey_8, ImGuiKey_9, ImGuiKey_0, ImGuiKey_Minus};
   static_assert(MatchChanges::SHOUTS.size() == Ids::SHOUT_COUNT);
   for (std::size_t index = 0; index < Ids::SHOUT_COUNT; ++index)
-    add(Ids::shout(index), MatchChanges::SHOUTS[index].labelKey, C::SHOUTS, X::MATCH,
-        ImGuiMod_Shift | SHOUT_KEYS[index]);
+    add(Ids::shout(index), MatchChanges::SHOUTS[index].labelKey, C::SHOUTS,
+        X::MATCH, ImGuiMod_Shift | SHOUT_KEYS[index]);
 }
 }  // namespace
 
@@ -370,8 +372,8 @@ std::optional<ImGuiKeyChord> chordFromString(std::string_view text)
     mods |= mod->mod;
     text.remove_prefix(plus + 1);
   }
-  const auto key = std::ranges::find_if(KEYS, [text](const KeyInfo& info)
-                                        { return text == info.name; });
+  const auto key = std::ranges::find_if(
+      KEYS, [text](const KeyInfo& info) { return text == info.name; });
   if (key == KEYS.end()) return std::nullopt;
   return key->key | mods;
 }
@@ -459,7 +461,8 @@ bool ActionRegistry::matches(ActionId id, const SDL_KeyboardEvent& event) const
   if (id >= actions.size()) return false;
   const auto chords = chordsOfEvent(event);
   return std::ranges::any_of(
-      actions[id].chords, [&chords](ImGuiKeyChord bound)
+      actions[id].chords,
+      [&chords](ImGuiKeyChord bound)
       {
         return bound != ImGuiKey_None &&
                (bound == chords[0] || bound == chords[1]);
@@ -479,13 +482,13 @@ bool ActionRegistry::matchesKey(ActionId id,
   if (id >= actions.size()) return false;
   const ImGuiKey byCharacter = keyOfKeycode(event.key);
   const ImGuiKey byPosition = keyOfScancode(event.scancode);
-  return std::ranges::any_of(
-      actions[id].chords,
-      [&](ImGuiKeyChord bound)
-      {
-        const ImGuiKey key = keyOf(bound);
-        return key != ImGuiKey_None && (key == byCharacter || key == byPosition);
-      });
+  return std::ranges::any_of(actions[id].chords,
+                             [&](ImGuiKeyChord bound)
+                             {
+                               const ImGuiKey key = keyOf(bound);
+                               return key != ImGuiKey_None &&
+                                      (key == byCharacter || key == byPosition);
+                             });
 }
 
 bool ActionRegistry::matchesKey(std::string_view id,
@@ -591,8 +594,8 @@ void ActionRegistry::applyStored(ActionId id)
   const auto& stored = SettingsManager::instance()->get().key_bindings;
   const auto found = stored.find(entry.def.id);
   if (found == stored.end()) return;
-  for (std::size_t slot = 0; slot < BINDING_SLOTS && slot < found->second.size();
-       ++slot)
+  for (std::size_t slot = 0;
+       slot < BINDING_SLOTS && slot < found->second.size(); ++slot)
   {
     const auto parsed = chordFromString(found->second[slot]);
     // A broken name keeps the default rather than unbinding the action.

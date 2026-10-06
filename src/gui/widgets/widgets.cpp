@@ -8,6 +8,7 @@
 
 #include "gui/widgets/widgets.h"
 
+#include <fmt/printf.h>
 #include <imgui_internal.h>
 
 #include <algorithm>
@@ -19,8 +20,6 @@
 #include <cstring>
 #include <string>
 #include <vector>
-
-#include <fmt/printf.h>
 
 #include "global/language_manager.h"
 #include "global/number_format.h"
@@ -734,8 +733,7 @@ MoneyPreview moneyPreview(std::string_view text,
     return {fmt::sprintf(LOC("WIDGET_MONEY_PREVIEW_LIMITED"),
                          Format::moneyFull(clamped)),
             false};
-  return {fmt::sprintf(LOC("WIDGET_MONEY_PREVIEW"),
-                       Format::moneyFull(clamped)),
+  return {fmt::sprintf(LOC("WIDGET_MONEY_PREVIEW"), Format::moneyFull(clamped)),
           false};
 }
 
@@ -969,7 +967,8 @@ void budgetImpact(const char* label, int64_t current, int64_t after,
     const float inset = gapWidth * 0.25f;
     const float right = valueMax.x - afterWidth - inset;
     const float left = valueMax.x - afterWidth - gapWidth + inset;
-    const float y = ImGui::GetItemRectMin().y + ImGui::GetTextLineHeight() * 0.5f;
+    const float y =
+        ImGui::GetItemRectMin().y + ImGui::GetTextLineHeight() * 0.5f;
     const float head = scaled(3.5f);
     const ImU32 color = Theme::toU32(palette.muted);
     ImDrawList* arrowList = ImGui::GetWindowDrawList();
@@ -1098,9 +1097,8 @@ bool columnPicker(std::string_view table, std::span<const Column> columns,
         changed = true;
       }
       ImGui::EndDisabled();
-      if (locked &&
-          ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled |
-                               ImGuiHoveredFlags_DelayNormal))
+      if (locked && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled |
+                                         ImGuiHoveredFlags_DelayNormal))
         ImGui::SetTooltip("%s", LOC("TABLE_COLUMN_LOCKED"));
       if (!locked && shown && (fitted & bit) == 0)
       {

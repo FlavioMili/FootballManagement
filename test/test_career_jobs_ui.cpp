@@ -224,19 +224,20 @@ TEST(ReserveUiTest, UnderTwentyOneScreenTabsActionsAndSizes)
   EXPECT_EQ(Bridge::squad(*scene), 1u);
   EXPECT_FALSE(controller.isAcademyPlayer(promoted));
 
-  atBothSizes(view,
-              [&](const std::string& size)
-              {
-                for (const auto& [tab, name] :
-                     {std::pair{0, "squad"}, std::pair{1, "league"},
-                      std::pair{2, "candidates"}})
-                {
-                  Bridge::openTab(*scene, tab);
-                  frames(view, 4);
-                  capture(view, ("u21_" + std::string(name) + "_" + size + ".bmp")
-                                    .c_str());
-                }
-              });
+  atBothSizes(
+      view,
+      [&](const std::string& size)
+      {
+        for (const auto& [tab, name] :
+             {std::pair{0, "squad"}, std::pair{1, "league"},
+              std::pair{2, "candidates"}})
+        {
+          Bridge::openTab(*scene, tab);
+          frames(view, 4);
+          capture(view,
+                  ("u21_" + std::string(name) + "_" + size + ".bmp").c_str());
+        }
+      });
 }
 
 TEST(NationalCallUpUiTest, CallUpScreenSquadEditingAndSizes)
@@ -272,7 +273,8 @@ TEST(NationalCallUpUiTest, CallUpScreenSquadEditingAndSizes)
     game->getNationalJob().openVacancy(nation, controller.getCurrentDate());
     controller.applyForNationalJob(nation);
   }
-  for (int day = 0; day < 12 && controller.getNationalJobOffers().empty(); ++day)
+  for (int day = 0; day < 12 && controller.getNationalJobOffers().empty();
+       ++day)
     controller.advanceDay();
   ASSERT_FALSE(controller.getNationalJobOffers().empty());
 

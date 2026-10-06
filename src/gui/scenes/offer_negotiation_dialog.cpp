@@ -80,8 +80,9 @@ std::string termsLine(const TransferNegotiation::OfferTerms& terms)
 {
   std::string text = Format::money(terms.fee) + " · " +
                      TransferTermsEditor::structureText(terms);
-  const std::int64_t add_ons = static_cast<std::int64_t>(terms.appearance_bonus) +
-                               static_cast<std::int64_t>(terms.goal_bonus);
+  const std::int64_t add_ons =
+      static_cast<std::int64_t>(terms.appearance_bonus) +
+      static_cast<std::int64_t>(terms.goal_bonus);
   if (add_ons > 0)
     text += fmt::sprintf(LOC("OFFER_TERMS_ADD_ONS"), Format::money(add_ons));
   if (terms.sell_on_percent > 0)
@@ -91,8 +92,7 @@ std::string termsLine(const TransferNegotiation::OfferTerms& terms)
 }
 }  // namespace
 
-void OfferNegotiationDialog::open(GameController& controller,
-                                  std::uint32_t id)
+void OfferNegotiationDialog::open(GameController& controller, std::uint32_t id)
 {
   offer_id = id;
   finished = false;
@@ -110,9 +110,9 @@ void OfferNegotiationDialog::open(GameController& controller,
   else if (view)
   {
     counter = view->terms;
-    counter.fee = static_cast<std::uint32_t>(std::min<std::int64_t>(
-        roundedFee(view->terms.fee * OPENING_COUNTER),
-        std::numeric_limits<std::uint32_t>::max()));
+    counter.fee = static_cast<std::uint32_t>(
+        std::min<std::int64_t>(roundedFee(view->terms.fee * OPENING_COUNTER),
+                               std::numeric_limits<std::uint32_t>::max()));
     price = std::max<std::int64_t>(view->asking_price,
                                    roundedFee(view->terms.fee * OPENING_PRICE));
     TransferTermsEditor::snapToOptions(counter);
@@ -139,8 +139,8 @@ void OfferNegotiationDialog::refreshCounterTexts()
   }
   counter_upfront_text =
       Format::moneyFull(TransferNegotiation::upfrontAmount(counter));
-  counter_worth_text = Format::moneyFull(static_cast<std::int64_t>(
-      std::llround(TransferNegotiation::sellerValue(counter, view ? view->age : 25))));
+  counter_worth_text = Format::moneyFull(static_cast<std::int64_t>(std::llround(
+      TransferNegotiation::sellerValue(counter, view ? view->age : 25))));
 }
 
 void OfferNegotiationDialog::rebuild(GameController& controller)
@@ -155,21 +155,24 @@ void OfferNegotiationDialog::rebuild(GameController& controller)
   const Theme::Palette& palette = Theme::palette();
   const GameController::IncomingOfferView& offer = *view;
 
-  title = fmt::sprintf(LOC(offer.loan ? "LOAN_TALKS_TITLE" : "OFFER_TALKS_TITLE"),
-                       offer.buyer_name, offer.player_name);
+  title =
+      fmt::sprintf(LOC(offer.loan ? "LOAN_TALKS_TITLE" : "OFFER_TALKS_TITLE"),
+                   offer.buyer_name, offer.player_name);
   subtitle = fmt::sprintf(LOC("OFFER_TALKS_SUBTITLE"),
                           LOC(squadRoleKey(offer.role)), offer.age);
   // How he feels about a permanent move; a loan does not ask him to leave.
-  stance_text = offer.loan
-                    ? std::string()
-                    : fmt::sprintf(LOC("OFFER_STANCE_LINE"),
-                                   LOC(BuyerNegotiation::stanceKey(offer.stance)));
+  stance_text =
+      offer.loan ? std::string()
+                 : fmt::sprintf(LOC("OFFER_STANCE_LINE"),
+                                LOC(BuyerNegotiation::stanceKey(offer.stance)));
   stance_color = stanceColor(offer.stance);
 
-  facts.push_back({LOC("OFFER_FACT_VALUE"), Format::moneyFull(offer.market_value)});
+  facts.push_back(
+      {LOC("OFFER_FACT_VALUE"), Format::moneyFull(offer.market_value)});
   facts.push_back({LOC("OFFER_FACT_ASKING"),
-                   offer.asking_price > 0 ? Format::moneyFull(offer.asking_price)
-                                          : std::string(LOC("OFFER_FACT_NOT_LISTED"))});
+                   offer.asking_price > 0
+                       ? Format::moneyFull(offer.asking_price)
+                       : std::string(LOC("OFFER_FACT_NOT_LISTED"))});
   facts.push_back(
       {LOC("OFFER_FACT_CONTRACT"),
        fmt::sprintf(Format::plural("OFFER_FACT_YEARS", offer.contract_years),
@@ -178,10 +181,9 @@ void OfferNegotiationDialog::rebuild(GameController& controller)
     facts.push_back({LOC("TRANSFER_FIELD_RELEASE_CLAUSE"),
                      Format::moneyFull(offer.release_clause)});
   if (offer.loan)
-    facts.push_back(
-        {LOC("TRANSFER_FIELD_WAGE"),
-         fmt::sprintf(LOC("TRANSFER_PER_WEEK"),
-                      Format::moneyFull(offer.weekly_wage))});
+    facts.push_back({LOC("TRANSFER_FIELD_WAGE"),
+                     fmt::sprintf(LOC("TRANSFER_PER_WEEK"),
+                                  Format::moneyFull(offer.weekly_wage))});
   if (offer.rivals > 0)
     facts.push_back(
         {LOC("OFFER_FACT_RIVALS"),
@@ -197,7 +199,8 @@ void OfferNegotiationDialog::rebuild(GameController& controller)
   {
     RoundLine line;
     line.buyer = BuyerNegotiation::byBuyer(round.move);
-    line.who = line.buyer ? offer.buyer_name : std::string(LOC("OFFER_WHO_CLUB"));
+    line.who =
+        line.buyer ? offer.buyer_name : std::string(LOC("OFFER_WHO_CLUB"));
     line.text = fmt::sprintf("%s · %s", Format::dayMonth(round.date),
                              LOC(BuyerNegotiation::moveKey(round.move)));
     if (round.move != BuyerNegotiation::Move::WalkedAway)
@@ -214,8 +217,8 @@ void OfferNegotiationDialog::rebuild(GameController& controller)
                    {LOC("TRANSFER_CHIP_VALUE"), value}};
   if (offer.asking_price > 0)
     counter_chips.push_back({LOC("TRANSFER_CHIP_ASKING"), offer.asking_price});
-  counter_chips.push_back(
-      {LOC("TRANSFER_CHIP_PLUS_10"), roundedFee(static_cast<double>(bid) * 1.1)});
+  counter_chips.push_back({LOC("TRANSFER_CHIP_PLUS_10"),
+                           roundedFee(static_cast<double>(bid) * 1.1)});
   counter_chips.push_back({LOC("TRANSFER_CHIP_PLUS_25"),
                            roundedFee(static_cast<double>(bid) * 1.25)});
   price_chips = {{{LOC("TRANSFER_CHIP_MARKET_VALUE"), value},
@@ -231,9 +234,8 @@ void OfferNegotiationDialog::rebuild(GameController& controller)
                    : termsLine(offer.asked));
   refreshCounterTexts();
 
-  const int days_left =
-      std::max(0, dayOrdinal(offer.expires) -
-                      dayOrdinal(controller.getCurrentDate()));
+  const int days_left = std::max(
+      0, dayOrdinal(offer.expires) - dayOrdinal(controller.getCurrentDate()));
   if (offer.status == OfferStatus::AwaitingBuyer)
   {
     status_text = fmt::sprintf(LOC("OFFER_STATUS_AWAITING"), offer.buyer_name,
@@ -257,8 +259,9 @@ void OfferNegotiationDialog::rebuild(GameController& controller)
   }
   else
   {
-    status_text = fmt::sprintf(Format::plural("OFFER_STATUS_ANSWER_BY", days_left),
-                               Format::date(offer.expires), days_left);
+    status_text =
+        fmt::sprintf(Format::plural("OFFER_STATUS_ANSWER_BY", days_left),
+                     Format::date(offer.expires), days_left);
     status_color = palette.muted;
   }
 }
@@ -268,7 +271,8 @@ void OfferNegotiationDialog::rebuildTransferLines()
   const GameController::IncomingOfferView& offer = *view;
   const TransferNegotiation::OfferTerms& terms = offer.terms;
   const auto upfront = TransferNegotiation::upfrontAmount(terms);
-  bid_lines.push_back({LOC("TRANSFER_SUMMARY_FEE"), Format::moneyFull(terms.fee)});
+  bid_lines.push_back(
+      {LOC("TRANSFER_SUMMARY_FEE"), Format::moneyFull(terms.fee)});
   bid_lines.push_back(
       {LOC("TRANSFER_SUMMARY_UPFRONT"),
        fmt::sprintf(LOC("OFFER_UPFRONT_VALUE"), Format::moneyFull(upfront),
@@ -280,10 +284,11 @@ void OfferNegotiationDialog::rebuildTransferLines()
                                       static_cast<int>(instalments.size()),
                                       Format::money(instalments.front()))});
   if (terms.appearance_bonus > 0)
-    bid_lines.push_back({LOC("TRANSFER_FIELD_APPEARANCE_BONUS"),
-                         fmt::sprintf(LOC("OFFER_ADD_ON_APPS"),
-                                      Format::money(terms.appearance_bonus),
-                                      static_cast<int>(terms.appearance_target))});
+    bid_lines.push_back(
+        {LOC("TRANSFER_FIELD_APPEARANCE_BONUS"),
+         fmt::sprintf(LOC("OFFER_ADD_ON_APPS"),
+                      Format::money(terms.appearance_bonus),
+                      static_cast<int>(terms.appearance_target))});
   if (terms.goal_bonus > 0)
     bid_lines.push_back({LOC("TRANSFER_FIELD_GOAL_BONUS"),
                          fmt::sprintf(LOC("OFFER_ADD_ON_GOALS"),
@@ -328,12 +333,13 @@ void OfferNegotiationDialog::rebuildLoanLines()
       {LOC("LOAN_FIELD_PURCHASE"),
        terms.option_fee == 0
            ? std::string(LOC("OFFER_NONE"))
-           : fmt::sprintf(LOC(terms.obligation ? "LOAN_PURCHASE_OBLIGATION_VALUE"
-                                               : "LOAN_PURCHASE_OPTION_VALUE"),
-                          Format::moneyFull(terms.option_fee))});
-  bid_lines.push_back({LOC("TRANSFER_FIELD_RECALL"),
-                       LOC(terms.recall_clause ? "LOAN_RECALL_YES"
-                                               : "LOAN_RECALL_NO")});
+           : fmt::sprintf(
+                 LOC(terms.obligation ? "LOAN_PURCHASE_OBLIGATION_VALUE"
+                                      : "LOAN_PURCHASE_OPTION_VALUE"),
+                 Format::moneyFull(terms.option_fee))});
+  bid_lines.push_back(
+      {LOC("TRANSFER_FIELD_RECALL"),
+       LOC(terms.recall_clause ? "LOAN_RECALL_YES" : "LOAN_RECALL_NO")});
   bid_lines.push_back(
       {LOC("LOAN_FIELD_MIN_APPS"),
        terms.min_appearances == 0
@@ -367,9 +373,8 @@ bool OfferNegotiationDialog::render(GameController& controller)
 
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   const bool wide = viewport->WorkSize.x >= scaled(TWO_COLUMN_MIN_VIEWPORT);
-  const float width =
-      std::min(scaled(wide ? WIDE_DIALOG_WIDTH : DIALOG_WIDTH),
-               viewport->WorkSize.x * VIEWPORT_WIDTH_SHARE);
+  const float width = std::min(scaled(wide ? WIDE_DIALOG_WIDTH : DIALOG_WIDTH),
+                               viewport->WorkSize.x * VIEWPORT_WIDTH_SHARE);
   ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always,
                           ImVec2(0.5f, 0.5f));
   ImGui::SetNextWindowSizeConstraints(
@@ -584,7 +589,8 @@ void OfferNegotiationDialog::renderActions(GameController& controller)
   const char* acceptLabel = LOC("OFFER_ACTION_ACCEPT");
   fits(acceptLabel);
   // Selling him would leave the squad short: the offer can wait.
-  const bool blocked = view->sale_block != GameController::PlayerActionBlock::None;
+  const bool blocked =
+      view->sale_block != GameController::PlayerActionBlock::None;
   ImGui::BeginDisabled(!talking || !window || blocked);
   if (UI::primaryButton(acceptLabel))
   {
@@ -594,8 +600,8 @@ void OfferNegotiationDialog::renderActions(GameController& controller)
   }
   ImGui::EndDisabled();
   if (blocked && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-    ImGui::SetTooltip("%s",
-                      LOC(GameController::playerActionBlockKey(view->sale_block)));
+    ImGui::SetTooltip(
+        "%s", LOC(GameController::playerActionBlockKey(view->sale_block)));
 }
 
 void OfferNegotiationDialog::renderResult()
@@ -635,7 +641,8 @@ void OfferNegotiationDialog::accept(GameController& controller)
   {
     rebuild(controller);
     notice = LOC(GameController::playerActionBlockKey(
-        view ? view->sale_block : GameController::PlayerActionBlock::SquadFloor));
+        view ? view->sale_block
+             : GameController::PlayerActionBlock::SquadFloor));
     notice_color = palette.negative;
     return;
   }
@@ -676,14 +683,14 @@ void OfferNegotiationDialog::reject(GameController& controller)
   const GameController::IncomingOfferView offer = *view;
   controller.rejectIncomingOffer(offer_id);
   changed = true;
-  const bool keen = !offer.loan &&
-                    (offer.stance == PlayerStance::AskedToLeave ||
-                     offer.stance == PlayerStance::WantsBiggerClub);
-  finish(fmt::sprintf(LOC("OFFER_RESULT_REJECTED"), offer.buyer_name),
-         Theme::palette().text,
-         keen ? fmt::sprintf(LOC("OFFER_RESULT_REJECTED_UPSET"),
-                             offer.player_name)
-              : std::string());
+  const bool keen =
+      !offer.loan && (offer.stance == PlayerStance::AskedToLeave ||
+                      offer.stance == PlayerStance::WantsBiggerClub);
+  finish(
+      fmt::sprintf(LOC("OFFER_RESULT_REJECTED"), offer.buyer_name),
+      Theme::palette().text,
+      keen ? fmt::sprintf(LOC("OFFER_RESULT_REJECTED_UPSET"), offer.player_name)
+           : std::string());
 }
 
 void OfferNegotiationDialog::notForSale(GameController& controller)
@@ -710,8 +717,9 @@ void OfferNegotiationDialog::submit(GameController& controller)
       : mode == Mode::Counter
           ? controller.counterIncomingOffer(offer_id, counter)
           : controller.nameAskingPrice(
-                offer_id, static_cast<std::uint32_t>(std::clamp<std::int64_t>(
-                              price, 0, std::numeric_limits<std::uint32_t>::max())));
+                offer_id,
+                static_cast<std::uint32_t>(std::clamp<std::int64_t>(
+                    price, 0, std::numeric_limits<std::uint32_t>::max())));
   changed = true;
   const Theme::Palette& palette = Theme::palette();
   switch (outcome)
@@ -732,7 +740,8 @@ void OfferNegotiationDialog::submit(GameController& controller)
       if (offer.loan)
         finish(fmt::sprintf(LOC("LOAN_RESULT_AGREED"), offer.player_name,
                             offer.buyer_name),
-               palette.positive, TransferTermsEditor::loanTermsLine(loan_counter));
+               palette.positive,
+               TransferTermsEditor::loanTermsLine(loan_counter));
       else
         finish(fmt::sprintf(LOC("OFFER_RESULT_AGREED"), offer.buyer_name,
                             offer.player_name),

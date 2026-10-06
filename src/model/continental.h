@@ -336,8 +336,8 @@ class ContinentalCompetitions
    * For a deciding match: the goals this match's home and away sides scored
    * in the earlier leg ({0, 0} for a final); nullopt for any other match.
    */
-  std::optional<std::pair<int, int>> deciderAggregate(
-      const Calendar& calendar, const Match& match) const;
+  std::optional<std::pair<int, int>> deciderAggregate(const Calendar& calendar,
+                                                      const Match& match) const;
 
   /**
    * Settles a deciding match whose aggregate is level with extra time and
@@ -408,8 +408,7 @@ class ContinentalCompetitions
   void advanceKnockouts(Calendar& calendar, Season& season,
                         const GameDateValue& today);
   void drawKnockoutRound(Calendar& calendar, Season& season,
-                         Continental::Round round,
-                         std::vector<TeamID> seeded,
+                         Continental::Round round, std::vector<TeamID> seeded,
                          std::vector<TeamID> unseeded,
                          const GameDateValue& today);
   void payPrize(TeamID team_id, const GameDateValue& date, int64_t amount);

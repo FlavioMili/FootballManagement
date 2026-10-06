@@ -12,8 +12,8 @@
 
 #include <algorithm>
 #include <cmath>
-#include <tuple>
 #include <string_view>
+#include <tuple>
 #include <utility>
 
 #include "global/language_manager.h"
@@ -94,10 +94,9 @@ void knockoutReveals(DrawCeremony& ceremony, const Calendar& calendar,
     {
       reveal.home_id = tie.seeded_id;
       reveal.away_id = tie.unseeded_id;
-      if (const Match* final_match =
-              findLeg(calendar, season.competition_id,
-                      Continental::stageCode(round, 1), tie.seeded_id,
-                      tie.unseeded_id))
+      if (const Match* final_match = findLeg(calendar, season.competition_id,
+                                             Continental::stageCode(round, 1),
+                                             tie.seeded_id, tie.unseeded_id))
         reveal.date = final_match->getDate();
     }
     else
@@ -105,15 +104,13 @@ void knockoutReveals(DrawCeremony& ceremony, const Calendar& calendar,
       // The unseeded club hosts the first leg.
       reveal.home_id = tie.unseeded_id;
       reveal.away_id = tie.seeded_id;
-      if (const Match* first =
-              findLeg(calendar, season.competition_id,
-                      Continental::stageCode(round, 1), tie.unseeded_id,
-                      tie.seeded_id))
+      if (const Match* first = findLeg(calendar, season.competition_id,
+                                       Continental::stageCode(round, 1),
+                                       tie.unseeded_id, tie.seeded_id))
         reveal.date = first->getDate();
-      if (const Match* second =
-              findLeg(calendar, season.competition_id,
-                      Continental::stageCode(round, 2), tie.seeded_id,
-                      tie.unseeded_id))
+      if (const Match* second = findLeg(calendar, season.competition_id,
+                                        Continental::stageCode(round, 2),
+                                        tie.seeded_id, tie.unseeded_id))
         reveal.second_leg = second->getDate();
     }
     ceremony.reveals.push_back(reveal);
@@ -124,9 +121,12 @@ void leaguePhaseReveals(DrawCeremony& ceremony, const Calendar& calendar,
                         const ContinentalCompetitions::Season& season)
 {
   const auto entrant = [&season](TeamID team_id)
-  { return std::ranges::find(season.entrants, team_id,
-                             &ContinentalCompetitions::Entrant::team_id); };
-  if (ceremony.focus_team == 0 || entrant(ceremony.focus_team) == season.entrants.end())
+  {
+    return std::ranges::find(season.entrants, team_id,
+                             &ContinentalCompetitions::Entrant::team_id);
+  };
+  if (ceremony.focus_team == 0 ||
+      entrant(ceremony.focus_team) == season.entrants.end())
   {
     const auto top = std::ranges::min_element(
         season.entrants,
@@ -269,7 +269,8 @@ std::optional<DrawCeremony> DrawCeremonies::latestContinentalRound(
   if (season == nullptr) return std::nullopt;
   const ContinentalCompetitions::DrawEvent* latest = nullptr;
   for (const auto& event : season->draws)
-    if (!(today < event.date) && (latest == nullptr || !(event.date < latest->date)))
+    if (!(today < event.date) &&
+        (latest == nullptr || !(event.date < latest->date)))
       latest = &event;
   if (latest == nullptr) return std::nullopt;
   return continentalRound(continental, calendar, competition_id,
@@ -293,7 +294,8 @@ std::optional<DrawCeremony> DrawCeremonies::forMessage(
     if (message.args[0] == std::string("@") + candidate.name_key)
       rules = &candidate;
   if (rules == nullptr) return std::nullopt;
-  const std::uint16_t season_year = SeasonCalendar::seasonStartYear(message.date);
+  const std::uint16_t season_year =
+      SeasonCalendar::seasonStartYear(message.date);
   const ContinentalCompetitions::Season* season =
       findSeason(continental, rules->id, season_year);
   if (season == nullptr) return std::nullopt;
@@ -304,7 +306,8 @@ std::optional<DrawCeremony> DrawCeremonies::forMessage(
     if (league_phase != (message.title_key == LEAGUE_PHASE_TITLE)) continue;
     if (!league_phase &&
         (message.args.size() < 2 ||
-         message.args[1] != std::string("@") + Continental::roundKey(event.round)))
+         message.args[1] !=
+             std::string("@") + Continental::roundKey(event.round)))
       continue;
     return continentalRound(continental, calendar, rules->id, season_year,
                             event.round, focus_team);
@@ -316,8 +319,8 @@ std::size_t DrawCeremonies::shownAt(float elapsed, float speed,
                                     std::size_t total, bool reduced_motion)
 {
   if (reduced_motion || total == 0) return total;
-  const float steps = std::max(0.0f, elapsed) * std::max(speed, 0.0f) /
-                      REVEAL_SECONDS;
+  const float steps =
+      std::max(0.0f, elapsed) * std::max(speed, 0.0f) / REVEAL_SECONDS;
   const auto shown = static_cast<std::size_t>(std::floor(steps)) + 1U;
   return std::min(shown, total);
 }

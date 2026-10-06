@@ -58,9 +58,8 @@ MatchPlayController::Options MatchScene::playOptions() const
 bool MatchScene::canTakeControl() const
 {
   return SettingsManager::instance()->get().play_mode && engine &&
-         managed_is_home && !match_finished &&
-         !quick_result.valid() && !play.isActive() &&
-         engine->getState() != MatchState::FULL_TIME;
+         managed_is_home && !match_finished && !quick_result.valid() &&
+         !play.isActive() && engine->getState() != MatchState::FULL_TIME;
 }
 
 void MatchScene::requestTakeControl()

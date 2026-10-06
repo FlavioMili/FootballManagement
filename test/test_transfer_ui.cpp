@@ -70,8 +70,7 @@ class GameFlowTest_GUIFlowLifecycle_Test
     return view.getActiveScene();
   }
   static void refresh(InboxScene& scene) { scene.refresh(); }
-  static bool offersNegotiation(const InboxScene& scene,
-                                std::uint32_t offer_id)
+  static bool offersNegotiation(const InboxScene& scene, std::uint32_t offer_id)
   {
     for (const auto& decision : scene.decisions)
       for (const auto& option : decision.options)
@@ -278,8 +277,8 @@ Bid receiveBid(GameController& controller, TeamID managed, std::uint32_t fee,
            view->stance == BuyerNegotiation::PlayerStance::AskedToLeave))
       {
         data->getTeams().at(buyer).getFinances().addBalance(500'000'000LL);
-        controller.getGame()->getWorld().onTransferBid(
-            today, player.getId(), buyer, fee, managed);
+        controller.getGame()->getWorld().onTransferBid(today, player.getId(),
+                                                       buyer, fee, managed);
         return {player.getId(), buyer, id};
       }
       market.removeIncomingOffer(id);
@@ -296,9 +295,8 @@ bool clickNegotiate(GUIView& view, std::uint32_t offer_id)
   ImGuiIO& io = ImGui::GetIO();
   std::vector<ImGuiWindow*> cards;
   for (ImGuiWindow* window : GImGui->Windows)
-    if (window->Active &&
-        std::string_view(window->Name).find("/decision_") !=
-            std::string_view::npos)
+    if (window->Active && std::string_view(window->Name).find("/decision_") !=
+                              std::string_view::npos)
       cards.push_back(window);
   for (const ImGuiWindow* card : cards)
   {
@@ -525,12 +523,13 @@ TEST(TransferUiTest, EveryBuyerStructureIsASegmentOfTheEditor)
   std::vector<OfferTerms> proposals;
   for (const std::uint32_t ceiling : {800'000u, 6'000'000u, 30'000'000u})
     for (const double roll : {0.0, 0.5, 0.99})
-      proposals.push_back(BuyerNegotiation::openingBid(ceiling, 22, 0, roll, roll));
+      proposals.push_back(
+          BuyerNegotiation::openingBid(ceiling, 22, 0, roll, roll));
   for (const std::uint8_t upfront : UPFRONT_OPTIONS)
     for (const std::uint8_t sell_on : SELL_ON_OPTIONS)
       for (const double roll : {0.1, 0.5, 0.9})
-        for (const std::int64_t cash : {std::int64_t{1'000'000'000},
-                                        std::int64_t{2'000'000}})
+        for (const std::int64_t cash :
+             {std::int64_t{1'000'000'000}, std::int64_t{2'000'000}})
         {
           BuyerNegotiation::BuyerContext context;
           context.ceiling = 10'000'000;
@@ -549,8 +548,10 @@ TEST(TransferUiTest, EveryBuyerStructureIsASegmentOfTheEditor)
         }
   for (const OfferTerms& terms : proposals)
   {
-    const int upfront = terms.instalment_years > 0 ? terms.upfront_percent : 100;
-    EXPECT_TRUE(highlighted(UPFRONT_OPTIONS, upfront)) << upfront << "% upfront";
+    const int upfront =
+        terms.instalment_years > 0 ? terms.upfront_percent : 100;
+    EXPECT_TRUE(highlighted(UPFRONT_OPTIONS, upfront))
+        << upfront << "% upfront";
     EXPECT_TRUE(highlighted(SELL_ON_OPTIONS, terms.sell_on_percent))
         << static_cast<int>(terms.sell_on_percent) << "% sell-on";
     if (terms.appearance_bonus > 0)
@@ -736,8 +737,9 @@ TEST(TransferUiTest, LoanIsNegotiatedInTheTalksAtEverySize)
       1'000;
   Bridge::counterLoan(talks, asked, controller);
   frames(view, 2);
-  const bool awaiting = Bridge::view(talks).has_value() &&
-                        Bridge::view(talks)->status == OfferStatus::AwaitingBuyer;
+  const bool awaiting =
+      Bridge::view(talks).has_value() &&
+      Bridge::view(talks)->status == OfferStatus::AwaitingBuyer;
   EXPECT_TRUE(awaiting || Bridge::finished(talks));
   capture(view, "loan_talks_awaiting_1280.bmp");
 
@@ -761,7 +763,8 @@ TEST(TransferUiTest, LoanIsNegotiatedInTheTalksAtEverySize)
   capture(view, "loan_talks_done_1280.bmp");
   auto data = controller.getGameData();
   EXPECT_EQ(data->getPlayer(loan.player)->get().getTeamId(), loan.buyer);
-  const LoanDeal* deal = controller.getGame()->getTransfers().findLoan(loan.player);
+  const LoanDeal* deal =
+      controller.getGame()->getTransfers().findLoan(loan.player);
   ASSERT_NE(deal, nullptr);
   EXPECT_TRUE(deal->recall_clause);
 }
@@ -806,7 +809,8 @@ TEST(TransferUiTest, ContractTalksWithTheAgentFitTheWindow)
   setUiScale(view, 2.0f);
   resize(view, 2560, 1440);
   frames(view, 3);
-  EXPECT_EQ(dialogLayoutProblems("###contract_talks"), "") << "2560x1440 scale 2";
+  EXPECT_EQ(dialogLayoutProblems("###contract_talks"), "")
+      << "2560x1440 scale 2";
   capture(view, "contract_talks_2560_scale2.bmp");
   setUiScale(view, 0.0f);
   resize(view, 1280, 720);

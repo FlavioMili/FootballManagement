@@ -147,9 +147,12 @@ const SlotInstruction* Strategy::findSlot(Vector2F anchor) const
 void Strategy::setSlot(const SlotInstruction& instruction)
 {
   const SlotInstruction clean = sanitized(instruction);
-  std::erase_if(slots, [&clean](const SlotInstruction& stored)
-                { return anchorDistance(stored.anchor, clean.anchor) <
-                         SAME_SLOT_DISTANCE; });
+  std::erase_if(slots,
+                [&clean](const SlotInstruction& stored)
+                {
+                  return anchorDistance(stored.anchor, clean.anchor) <
+                         SAME_SLOT_DISTANCE;
+                });
   slots.push_back(clean);
   // The oldest instructions (formations not used for a while) go first.
   if (slots.size() > MAX_SLOT_INSTRUCTIONS)
@@ -167,9 +170,12 @@ void Strategy::setKeeperRole(TacticalRole role)
 
 void Strategy::setOppositionOrders(std::vector<PlayerInstruction> orders)
 {
-  std::erase_if(orders, [](const PlayerInstruction& order)
-                { return order.player == 0 ||
+  std::erase_if(orders,
+                [](const PlayerInstruction& order)
+                {
+                  return order.player == 0 ||
                          order.instruction == OppositionInstruction::None ||
-                         order.instruction >= OppositionInstruction::COUNT; });
+                         order.instruction >= OppositionInstruction::COUNT;
+                });
   opposition_orders = std::move(orders);
 }

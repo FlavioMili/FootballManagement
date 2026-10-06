@@ -9,13 +9,13 @@
 #include <SDL3/SDL.h>
 #include <gtest/gtest.h>
 #include <imgui_internal.h>
-#include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <array>
 #include <format>
 #include <fstream>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_set>
 
@@ -156,13 +156,13 @@ TEST_F(ViewModelTest, AutoPickFillsElevenAndNamesABench)
       EXPECT_TRUE(seen.insert(reserve->getId()).second);
     EXPECT_EQ(seen.size(), 11u + lineup.getReserves().size());
     // A reserve keeper when the squad has one.
-    const auto keepers = std::ranges::count_if(
-        squad, [](const Player* player)
-        { return player->getRole() == PlayerRole::GK; });
+    const auto keepers =
+        std::ranges::count_if(squad, [](const Player* player)
+                              { return player->getRole() == PlayerRole::GK; });
     if (keepers >= 2)
-      EXPECT_TRUE(std::ranges::any_of(
-          lineup.getReserves(), [](const Player* player)
-          { return player->getRole() == PlayerRole::GK; }));
+      EXPECT_TRUE(
+          std::ranges::any_of(lineup.getReserves(), [](const Player* player)
+                              { return player->getRole() == PlayerRole::GK; }));
   }
 }
 

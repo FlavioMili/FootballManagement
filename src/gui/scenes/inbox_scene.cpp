@@ -143,8 +143,8 @@ void InboxScene::refresh()
   if (selected_message != SIZE_MAX)
   {
     const auto& messages = guiView->getController().getInbox();
-    const auto found = std::ranges::find(messages, selected_message_id,
-                                         &InboxMessage::id);
+    const auto found =
+        std::ranges::find(messages, selected_message_id, &InboxMessage::id);
     selected_message =
         found != messages.end()
             ? static_cast<size_t>(std::distance(messages.begin(), found))
@@ -188,8 +188,7 @@ void InboxScene::rebuildDecisions()
         {
           if (offer.player_id != player) continue;
           const auto buyer = controller.getTeamById(offer.buyer);
-          const char* buyer_name =
-              buyer ? buyer->get().getName().c_str() : "";
+          const char* buyer_name = buyer ? buyer->get().getName().c_str() : "";
           const bool awaiting = offer.status == OfferStatus::AwaitingBuyer;
           const int days =
               std::max(0, dayNumber(offer.expires) - dayNumber(today));
@@ -254,7 +253,8 @@ void InboxScene::rebuildThreads()
     if (category >= CATEGORY_COUNT || isHidden(index)) continue;
     ++total_by_category[category];
     if (!message.read) ++unread_by_category[category];
-    if (message.player_id && std::ranges::contains(followed, *message.player_id))
+    if (message.player_id &&
+        std::ranges::contains(followed, *message.player_id))
     {
       ++followed_total;
       if (!message.read) ++followed_unread;
@@ -389,9 +389,9 @@ void InboxScene::renderFilters(float width, float height)
   {
     ImGui::PushID(category);
     // Category -2 is the followed players' feed.
-    const bool selected = category == -2 ? followed_only
-                                         : !followed_only &&
-                                               category_filter == category;
+    const bool selected = category == -2
+                              ? followed_only
+                              : !followed_only && category_filter == category;
     if (ImGui::Selectable("##filter", selected, 0,
                           ImVec2(0.0f, ImGui::GetFrameHeight())))
     {
@@ -765,8 +765,9 @@ void InboxScene::renderDecision(const Decision& decision)
                                                   : "INBOX_DECISION_NEGOTIATE");
           const float button = UI::buttonWidth(label, UI::ButtonSize::COMPACT);
           if (UI::sameLineIfFits(button))
-            ImGui::SetCursorPosX(std::max(
-                ImGui::GetCursorPosX(), ImGui::GetContentRegionMax().x - button));
+            ImGui::SetCursorPosX(
+                std::max(ImGui::GetCursorPosX(),
+                         ImGui::GetContentRegionMax().x - button));
           if (UI::primaryButton(label, ImVec2(0.0f, 0.0f),
                                 UI::ButtonSize::COMPACT))
           {

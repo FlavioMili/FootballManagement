@@ -90,8 +90,9 @@ bool Lineup::removePlayer(PlayerID playerID)
                          [&matches](const PositionedPlayer& positioned)
                          { return matches(positioned.player); }) > 0;
   found |= std::erase_if(reserves, matches) > 0;
-  std::erase_if(stand_ins, [playerID](const StandIn& entry)
-                { return entry.regular == playerID || entry.stand_in == playerID; });
+  std::erase_if(
+      stand_ins, [playerID](const StandIn& entry)
+      { return entry.regular == playerID || entry.stand_in == playerID; });
   for (PlayerID& designated : designations)
   {
     if (designated != playerID) continue;
@@ -336,8 +337,8 @@ float SetPieces::score(SetPieceDuty duty, const Player& player)
   {
     case SetPieceDuty::Penalties:
     case SetPieceDuty::FreeKicks:
-      return stat(player, "Shooting") * 0.75f + stat(player, "Passing") * 0.15f +
-             stat(player, "Vision") * 0.10f;
+      return stat(player, "Shooting") * 0.75f +
+             stat(player, "Passing") * 0.15f + stat(player, "Vision") * 0.10f;
     case SetPieceDuty::CornersLeft:
     case SetPieceDuty::CornersRight:
     {
@@ -424,12 +425,9 @@ bool Lineup::isStarter(PlayerID playerID) const
 {
   if (playerID == PlayerID{}) return false;
   if (goalkeeper && goalkeeper->getId() == playerID) return true;
-  return std::ranges::any_of(outfield_players,
-                             [playerID](const PositionedPlayer& positioned)
-                             {
-                               return positioned.player &&
-                                      positioned.player->getId() == playerID;
-                             });
+  return std::ranges::any_of(
+      outfield_players, [playerID](const PositionedPlayer& positioned)
+      { return positioned.player && positioned.player->getId() == playerID; });
 }
 
 const Player* Lineup::effectiveTaker(SetPieceDuty duty) const
@@ -439,9 +437,9 @@ const Player* Lineup::effectiveTaker(SetPieceDuty duty) const
   const auto starter = [&xi](PlayerID playerID) -> const Player*
   {
     if (playerID == PlayerID{}) return nullptr;
-    const auto found = std::ranges::find_if(
-        xi, [playerID](const Player* player)
-        { return player->getId() == playerID; });
+    const auto found =
+        std::ranges::find_if(xi, [playerID](const Player* player)
+                             { return player->getId() == playerID; });
     return found == xi.end() ? nullptr : *found;
   };
   if (duty == SetPieceDuty::Captain)
@@ -601,12 +599,9 @@ void Lineup::generateStartingXI(const class GameData& gamedata,
   std::vector<const Player*> candidates = reserves;
   candidates.insert(candidates.end(), potentialOutfieldPlayers.begin(),
                     potentialOutfieldPlayers.end());
-  std::ranges::stable_sort(candidates,
-                           [&stats_config](const Player* a, const Player* b)
-                           {
-                             return a->getOverall(stats_config) >
-                                    b->getOverall(stats_config);
-                           });
+  std::ranges::stable_sort(
+      candidates, [&stats_config](const Player* a, const Player* b)
+      { return a->getOverall(stats_config) > b->getOverall(stats_config); });
   reserves.clear();
   setReserves(candidates);
 }

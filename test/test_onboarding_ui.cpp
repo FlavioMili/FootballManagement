@@ -173,7 +173,8 @@ bool clickItem(GUIView& view, const ImGuiWindow* window, ImGuiID id)
 bool clickButton(GUIView& view, std::string_view windowPart, const char* label)
 {
   // An exact (top-level) name first, else a child window containing it.
-  const ImGuiWindow* window = ImGui::FindWindowByName(std::string(windowPart).c_str());
+  const ImGuiWindow* window =
+      ImGui::FindWindowByName(std::string(windowPart).c_str());
   if (window == nullptr || !window->Active) window = findWindow(windowPart);
   if (window == nullptr) return false;
   return clickItem(view, window, ImHashStr(label, 0, window->ID));
@@ -192,7 +193,8 @@ std::size_t welcomePage(GUIView& view)
 }
 }  // namespace
 
-// ---- Welcome tour and Help ---------------------------------------------------
+// ---- Welcome tour and Help
+// ---------------------------------------------------
 
 namespace
 {
@@ -278,8 +280,7 @@ void welcomeJourney(GameController& controller)
   frames(view, 2);
   ASSERT_EQ(Bridge::activeScene(view)->getID(), SceneID::HELP);
   capture(view, "help_screen.bmp");
-  ASSERT_TRUE(
-      clickButton(view, "help_start", LOC("HELP_REPLAY_TOUR")));
+  ASSERT_TRUE(clickButton(view, "help_start", LOC("HELP_REPLAY_TOUR")));
   frames(view, 3);
   EXPECT_EQ(Bridge::activeScene(view)->getID(), SceneID::GAME_MENU);
   ASSERT_TRUE(welcomeOpen(view));
@@ -310,7 +311,8 @@ void welcomeJourney(GameController& controller)
 }
 }  // namespace
 
-// ---- Rebindable shortcuts ----------------------------------------------------
+// ---- Rebindable shortcuts
+// ----------------------------------------------------
 
 TEST(InputActionsTest, ChordNamesRoundTrip)
 {
@@ -343,7 +345,8 @@ TEST(InputActionsTest, DefaultsHaveNoConflicts)
   for (Input::ActionId id = 0; id < registry.size(); ++id)
     for (std::size_t slot = 0; slot < Input::BINDING_SLOTS; ++slot)
     {
-      const auto clash = registry.conflictFor(id, registry.chord(id, slot), slot);
+      const auto clash =
+          registry.conflictFor(id, registry.chord(id, slot), slot);
       EXPECT_FALSE(clash.has_value())
           << registry.action(id).def.id << " clashes with "
           << (clash ? registry.action(clash->first).def.id : "");
@@ -377,10 +380,9 @@ TEST(InputActionsTest, RebindRefusesClashesUnlessReplacedAndPersists)
   // A chord used in a match only does not clash with a career action.
   EXPECT_TRUE(registry.rebind(home, 1, ImGuiKey_V).applied);
   // Fixed actions and unbindable keys are refused.
-  EXPECT_FALSE(registry
-                   .rebind(*registry.find(Input::Ids::SCREENSHOT), 0,
-                           ImGuiKey_F11)
-                   .applied);
+  EXPECT_FALSE(
+      registry.rebind(*registry.find(Input::Ids::SCREENSHOT), 0, ImGuiKey_F11)
+          .applied);
   EXPECT_FALSE(registry.rebind(home, 0, ImGuiKey_MouseLeft).applied);
 
   // Stored by name and read back from the settings file.
@@ -396,8 +398,9 @@ TEST(InputActionsTest, RebindRefusesClashesUnlessReplacedAndPersists)
   EXPECT_EQ(registry.chord(home, 1), ImGuiKey_V);
 
   // A broken name keeps the default instead of unbinding.
-  SettingsManager::instance()->get().key_bindings[std::string(
-      Input::Ids::NAV_CLUB)] = {"NotAKey", ""};
+  SettingsManager::instance()
+      ->get()
+      .key_bindings[std::string(Input::Ids::NAV_CLUB)] = {"NotAKey", ""};
   registry.reloadFromSettings();
   EXPECT_EQ(registry.chord(*registry.find(Input::Ids::NAV_CLUB)), ImGuiKey_F7);
 
@@ -414,7 +417,7 @@ TEST(InputActionsTest, LaterRegisteredActionsPickUpStoredBindings)
   Input::ActionRegistry& registry = Input::registry();
   SettingsManager::instance()->get().key_bindings["test.sprint"] = {"Shift+W",
                                                                     ""};
-  const Input::ActionDef def{"test.sprint",     "ACTION_HELP",
+  const Input::ActionDef def{"test.sprint", "ACTION_HELP",
                              Input::Category::PLAY, Input::Context::PLAY,
                              ImGuiKey_E};
   const Input::ActionId sprint = registry.registerAction(def);
@@ -545,23 +548,25 @@ TEST(OnboardingUiTest, SettingsControlsRebindWithConflictPersistAndReset)
   view.refreshTheme();
 }
 
-// ---- Contrast ----------------------------------------------------------------
+// ---- Contrast
+// ----------------------------------------------------------------
 
 TEST(AccessibilityTest, EveryThemeMeetsWcagContrast)
 {
   const ImVec4 accent(0.130f, 0.650f, 0.390f, 1.0f);
   constexpr float BODY_TEXT = 4.5f;  // WCAG AA, normal text
   constexpr float NON_TEXT = 3.0f;   // WCAG AA, large text and UI parts
-  for (int preset = 0; preset < static_cast<int>(Theme::Preset::COUNT); ++preset)
+  for (int preset = 0; preset < static_cast<int>(Theme::Preset::COUNT);
+       ++preset)
     for (int vision = 0; vision < static_cast<int>(Theme::ColorVision::COUNT);
          ++vision)
     {
-      const Theme::Palette p = Theme::presetPalette(
-          static_cast<Theme::Preset>(preset),
-          static_cast<Theme::ColorVision>(vision), accent);
-      const std::string where = std::string(Theme::presetKey(
-                                    static_cast<Theme::Preset>(preset))) +
-                                " / vision " + std::to_string(vision);
+      const Theme::Palette p =
+          Theme::presetPalette(static_cast<Theme::Preset>(preset),
+                               static_cast<Theme::ColorVision>(vision), accent);
+      const std::string where =
+          std::string(Theme::presetKey(static_cast<Theme::Preset>(preset))) +
+          " / vision " + std::to_string(vision);
       for (const ImVec4* ground : {&p.background, &p.surface, &p.raised})
       {
         EXPECT_GE(Theme::contrastRatio(p.text, *ground), BODY_TEXT) << where;
@@ -571,7 +576,8 @@ TEST(AccessibilityTest, EveryThemeMeetsWcagContrast)
              {&p.positive, &p.warning, &p.negative, &p.info})
           EXPECT_GE(Theme::contrastRatio(*status, *ground), NON_TEXT) << where;
       }
-      for (const ImVec4* status : {&p.positive, &p.warning, &p.negative, &p.info})
+      for (const ImVec4* status :
+           {&p.positive, &p.warning, &p.negative, &p.info})
         EXPECT_GE(Theme::contrastRatio(*status, p.background), BODY_TEXT)
             << where;
       // The safe modes tell good from bad on the axis the player still sees:
@@ -586,7 +592,8 @@ TEST(AccessibilityTest, EveryThemeMeetsWcagContrast)
               21.0f, 0.01f);
 }
 
-// ---- Hard-coded English in GUI code --------------------------------------------
+// ---- Hard-coded English in GUI code
+// --------------------------------------------
 
 namespace
 {
@@ -605,10 +612,10 @@ std::string preparedSource(const std::filesystem::path& path)
   std::string line;
   while (std::getline(lines, line))
   {
-    const std::string trimmed = line.substr(std::min(
-        line.size(), line.find_first_not_of(" \t") == std::string::npos
-                         ? line.size()
-                         : line.find_first_not_of(" \t")));
+    const std::string trimmed = line.substr(
+        std::min(line.size(), line.find_first_not_of(" \t") == std::string::npos
+                                  ? line.size()
+                                  : line.find_first_not_of(" \t")));
     if (trimmed.starts_with("#if"))
     {
       ++depth;
@@ -622,8 +629,8 @@ std::string preparedSource(const std::filesystem::path& path)
       out += '\n';
       continue;
     }
-    const bool comment = trimmed.starts_with("//") || trimmed.starts_with("*") ||
-                         trimmed.starts_with("/*");
+    const bool comment = trimmed.starts_with("//") ||
+                         trimmed.starts_with("*") || trimmed.starts_with("/*");
     out += (debugDepth != 0 || comment) ? std::string() : line;
     out += '\n';
   }
@@ -690,7 +697,8 @@ TEST(LocalizationScanTest, GuiCodeHasNoHardCodedEnglish)
   static const std::set<std::string> SKIP_FIRST = {
       "UI::beginCard", "UI::beginAutoHeightCard", "UI::statTile",
       "UI::confirmDialog", "ImGui::InputTextWithHint"};
-  const std::filesystem::path root = std::filesystem::path(FM_SOURCE_DIR) / "src/gui";
+  const std::filesystem::path root =
+      std::filesystem::path(FM_SOURCE_DIR) / "src/gui";
   ASSERT_TRUE(std::filesystem::exists(root));
   std::vector<std::string> findings;
   std::size_t scanned = 0;
@@ -711,7 +719,8 @@ TEST(LocalizationScanTest, GuiCodeHasNoHardCodedEnglish)
         if (index == 0 && SKIP_FIRST.contains(function)) continue;
         if (index == 1 && function == "UI::link") continue;
         // Literals passed through the language files are fine.
-        static const std::regex LOCALISED(R"((LOC|formatLocalized|plural)\s*\()");
+        static const std::regex LOCALISED(
+            R"((LOC|formatLocalized|plural)\s*\()");
         if (std::regex_search(args[index], LOCALISED)) continue;
         static const std::regex LITERAL(R"lit("((?:[^"\\]|\\.)*)")lit");
         for (auto lit = std::sregex_iterator(args[index].begin(),
@@ -720,11 +729,12 @@ TEST(LocalizationScanTest, GuiCodeHasNoHardCodedEnglish)
           if (looksLikeEnglish((*lit)[1].str()))
           {
             const auto line =
-                std::count(text.begin(), text.begin() + it->position(0), '\n') + 1;
+                std::count(text.begin(), text.begin() + it->position(0), '\n') +
+                1;
             findings.push_back(
                 std::filesystem::relative(entry.path(), root).string() + ":" +
-                std::to_string(line) + " " + function + " \"" + (*lit)[1].str() +
-                "\"");
+                std::to_string(line) + " " + function + " \"" +
+                (*lit)[1].str() + "\"");
           }
       }
     }

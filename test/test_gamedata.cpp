@@ -115,9 +115,9 @@ TEST_F(GameDataTest, RemovedPlayerLeavesNoLineupReference)
   gamedata.addTeam(OTHER_ID, Team(OTHER_ID, 1, "Other", 1'000'000));
   const auto add = [this](PlayerID id, PlayerRole role)
   {
-    gamedata.addPlayer(id, Player(id, CLUB_ID, "Squad", "Member", role,
-                                  Language::EN, 1'000, 0, 17, 2, 180,
-                                  Foot::Right, {}));
+    gamedata.addPlayer(
+        id, Player(id, CLUB_ID, "Squad", "Member", role, Language::EN, 1'000, 0,
+                   17, 2, 180, Foot::Right, {}));
     gamedata.getTeams().at(CLUB_ID).addPlayerID(id);
     return &gamedata.getPlayer(id)->get();
   };

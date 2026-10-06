@@ -55,9 +55,9 @@ TeamID favouriteOfATopDivision(const GameController& controller)
   {
     const LeagueID id = league.get().getId();
     if (controller.getLeagueTier(id) != 1) continue;
-    const bool has_lower = std::ranges::any_of(
-        controller.getLeagues(), [id](const auto& other)
-        { return other.get().getParentLeagueID() == id; });
+    const bool has_lower =
+        std::ranges::any_of(controller.getLeagues(), [id](const auto& other)
+                            { return other.get().getParentLeagueID() == id; });
     if (!has_lower) continue;
     TeamID best = 0;
     std::int64_t best_wages = -1;
@@ -96,8 +96,7 @@ void playUntil(GameController& controller, TeamID managed, bool wins,
                const GameDateValue& stop, bool protect_job = false)
 {
   Game& game = *controller.getGame();
-  while (game.getCurrentDate() < stop &&
-         game.getManagedTeamId() == managed)
+  while (game.getCurrentDate() < stop && game.getManagedTeamId() == managed)
   {
     const GameDateValue today = game.getCurrentDate();
     for (const Match& match : controller.getTeamFixtures(managed))
@@ -116,13 +115,14 @@ void playUntil(GameController& controller, TeamID managed, bool wins,
       if (match.isPlayed() || match.getHomeTeamId() == managed ||
           match.getAwayTeamId() == managed)
         continue;
-      const auto home_goals =
-          static_cast<std::uint8_t>((match.getHomeTeamId() * 7U + next.day) % 4U);
+      const auto home_goals = static_cast<std::uint8_t>(
+          (match.getHomeTeamId() * 7U + next.day) % 4U);
       const auto away_goals = static_cast<std::uint8_t>(
           (match.getAwayTeamId() * 3U + next.month) % 3U);
       if (match.isKnockout() && home_goals == away_goals)
-        match.setKnockoutResult(home_goals, away_goals, true,
-                                std::make_pair(std::uint8_t{5}, std::uint8_t{4}));
+        match.setKnockoutResult(
+            home_goals, away_goals, true,
+            std::make_pair(std::uint8_t{5}, std::uint8_t{4}));
       else
         match.setPlayedResult(home_goals, away_goals);
     }
@@ -134,8 +134,8 @@ void playUntil(GameController& controller, TeamID managed, bool wins,
 
 int countTitle(const Inbox& inbox, const std::string& key)
 {
-  return static_cast<int>(std::ranges::count(inbox.getMessages(), key,
-                                             &InboxMessage::title_key));
+  return static_cast<int>(
+      std::ranges::count(inbox.getMessages(), key, &InboxMessage::title_key));
 }
 
 std::optional<std::uint32_t> firstId(const Inbox& inbox, const std::string& key,
@@ -158,7 +158,8 @@ SeasonVerdictInputs midTable()
 }
 }  // namespace
 
-// ---- The board's verdict (pure rules) ------------------------------------------
+// ---- The board's verdict (pure rules)
+// ------------------------------------------
 
 TEST(SeasonVerdict, TitleAndPromotionDelightTheBoard)
 {
@@ -281,7 +282,8 @@ TEST(SeasonVerdict, TargetsTheBoardNeverSetAreNotJudged)
             static_cast<int>(SeasonVerdict::Warned));
 }
 
-// ---- Board targets ----------------------------------------------------------------
+// ---- Board targets
+// ----------------------------------------------------------------
 
 TEST(BoardTargets, StatureSetsTheTargets)
 {
@@ -328,12 +330,12 @@ TEST(BoardTargets, GradesFollowTheRun)
             ObjectiveGrade::Missed);
   EXPECT_EQ(gradeFinances(FinanceObjective::WithinWageBudget, -5, 10, false),
             ObjectiveGrade::Failed);
-  EXPECT_EQ(gradeFinances(FinanceObjective::BreakEven, 9'000'000, 10'000'000,
-                          false),
-            ObjectiveGrade::Missed);
-  EXPECT_EQ(gradeFinances(FinanceObjective::BreakEven, 12'500'000, 10'000'000,
-                          false),
-            ObjectiveGrade::Exceeded);
+  EXPECT_EQ(
+      gradeFinances(FinanceObjective::BreakEven, 9'000'000, 10'000'000, false),
+      ObjectiveGrade::Missed);
+  EXPECT_EQ(
+      gradeFinances(FinanceObjective::BreakEven, 12'500'000, 10'000'000, false),
+      ObjectiveGrade::Exceeded);
   EXPECT_EQ(gradeFinances(FinanceObjective::BreakEven, -1'000, -5'000, false),
             ObjectiveGrade::Met)
       << "a club in the red that reduced its debt broke even";
@@ -376,7 +378,8 @@ TEST(BoardTargets, SummerReviewsWatchOnlyTheMoney)
   EXPECT_GT(state.confidence, before);
 }
 
-// ---- Archive persistence ------------------------------------------------------------
+// ---- Archive persistence
+// ------------------------------------------------------------
 
 TEST(SeasonArchive, TablesAndReviewsSurviveASave)
 {
@@ -444,7 +447,8 @@ TEST(SeasonArchive, TablesAndReviewsSurviveASave)
   EXPECT_NE(again.getGame()->getSeasonArchive().review(1), nullptr);
 }
 
-// ---- Board targets in a career ------------------------------------------------------
+// ---- Board targets in a career
+// ------------------------------------------------------
 
 TEST(SeasonEndFlow, TheBoardSetsEveryTargetWhenTheJobStarts)
 {
@@ -469,14 +473,15 @@ TEST(SeasonEndFlow, TheBoardSetsEveryTargetWhenTheJobStarts)
     if (message.title_key == "INBOX_BOARD_WELCOME_TITLE")
     {
       ASSERT_GE(message.args.size(), 10u);
-      EXPECT_EQ(message.args[7],
-                std::string("@") + BoardModel::cupObjectiveKey(board.cup_objective));
+      EXPECT_EQ(message.args[7], std::string("@") + BoardModel::cupObjectiveKey(
+                                                        board.cup_objective));
       welcomed = true;
     }
   EXPECT_TRUE(welcomed);
 }
 
-// ---- A whole season -----------------------------------------------------------------
+// ---- A whole season
+// -----------------------------------------------------------------
 
 /**
  * A title season: the news comes after promotion and relegation are
@@ -503,7 +508,8 @@ TEST(SeasonEndFlow, ATitleSeasonEndsWithItsNewsSummaryAndArchive)
   for (const Match& match : controller->getTeamFixtures(managed))
     if (match.getDate() < season_end && last_fixture < match.getDate())
       last_fixture = match.getDate();
-  playUntil(*controller, managed, true, SeasonCalendar::addDays(last_fixture, 1));
+  playUntil(*controller, managed, true,
+            SeasonCalendar::addDays(last_fixture, 1));
   ASSERT_EQ(game.getManagedTeamId(), managed);
   const GameDateValue last_day = SeasonCalendar::addDays(season_end, -1);
   ASSERT_LT(game.getCurrentDate(), last_day);
@@ -627,7 +633,8 @@ TEST(SeasonEndFlow, RelegationEndsTheJobOnceAndStopsTheHoliday)
             1);
   EXPECT_EQ(countTitle(inbox, "INBOX_BOARD_DISMISSED_TITLE"), 0);
   EXPECT_EQ(countTitle(inbox, "INBOX_SEASON_RELEGATED_TITLE"), 1);
-  const auto relegated = firstId(inbox, "INBOX_SEASON_RELEGATED_TITLE", season_end);
+  const auto relegated =
+      firstId(inbox, "INBOX_SEASON_RELEGATED_TITLE", season_end);
   const auto verdict = firstId(inbox, "INBOX_SEASON_REVIEW_TITLE", season_end);
   ASSERT_TRUE(relegated && verdict);
   EXPECT_LT(*relegated, *verdict);
@@ -647,7 +654,8 @@ TEST(SeasonEndFlow, RelegationEndsTheJobOnceAndStopsTheHoliday)
   EXPECT_EQ(again.getLastContinueStop(), ContinueStop::LostJob);
 }
 
-// ---- Stop ----------------------------------------------------------------------------
+// ---- Stop
+// ----------------------------------------------------------------------------
 
 TEST(ContinueStop, StopEndsAHolidayAfterTheCurrentDay)
 {
@@ -665,7 +673,8 @@ TEST(ContinueStop, StopEndsAHolidayAfterTheCurrentDay)
   const GameDateValue start = controller->getCurrentDate();
   auto run = std::async(std::launch::async,
                         [&] { return controller->goOnHoliday(plan); });
-  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(60);
+  const auto deadline =
+      std::chrono::steady_clock::now() + std::chrono::seconds(60);
   while (controller->getContinueProgress().days_done < 1 &&
          std::chrono::steady_clock::now() < deadline)
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -717,7 +726,8 @@ TEST(ContinueStop, StopEndsAContinueToTheNextFixture)
     GTEST_SKIP() << "the first fixture is too close to stop on the way";
   auto run = std::async(std::launch::async, [&]
                         { return controller->advanceToNextManagedFixture(); });
-  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(60);
+  const auto deadline =
+      std::chrono::steady_clock::now() + std::chrono::seconds(60);
   while (controller->getContinueProgress().days_done < 1 &&
          std::chrono::steady_clock::now() < deadline)
     std::this_thread::sleep_for(std::chrono::milliseconds(1));

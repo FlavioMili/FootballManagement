@@ -117,7 +117,8 @@ TEST(CrashReport, ReportHasVersionAndBuildAndIsShownOnce)
   EXPECT_EQ(readFile(report), text);
 
   // The next start keeps that session's log next to the report.
-  std::ofstream(RuntimePaths::previousLogPath()) << "last lines of the crashed session\n";
+  std::ofstream(RuntimePaths::previousLogPath())
+      << "last lines of the crashed session\n";
   CrashReport::install();
   const auto pending = CrashReport::pending();
   ASSERT_TRUE(pending.has_value());

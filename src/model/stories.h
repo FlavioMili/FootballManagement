@@ -113,7 +113,7 @@ struct DilemmaEffects
 struct Dilemma
 {
   StoryKind kind = StoryKind::CompassionateLeave;
-  PlayerID subject = 0;  /*!< 0 for club-wide moments. */
+  PlayerID subject = 0;    /*!< 0 for club-wide moments. */
   std::uint32_t other = 0; /*!< Second player, or the rival club. */
   std::int32_t day = 0;    /*!< Raised on this day (unique). */
   std::int32_t expires_day = 0;

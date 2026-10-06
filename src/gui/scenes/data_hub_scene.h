@@ -71,7 +71,7 @@ class DataHubScene : public ManagementScene
 
   GameController::DataHubView hub;
   std::vector<PlayerRow> players;
-  std::vector<std::string> opponent_names; /*!< Per trend point. */
+  std::vector<std::string> opponent_names;       /*!< Per trend point. */
   std::vector<std::string> performance_tooltips; /*!< Per trend point. */
   float performance_top = 0.5f;
   std::array<std::vector<LeaderRow>, LEADER_METRIC_COUNT> leaders;

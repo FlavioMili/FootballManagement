@@ -93,7 +93,8 @@ TEST(PlayingThroughPainTest, AggravationRiskRisesWithSeverity)
   EXPECT_FLOAT_EQ(aggravationMultiplier(InjurySeverity::Moderate), 3.0f);
   EXPECT_FLOAT_EQ(aggravationMultiplier(InjurySeverity::Major), 4.0f);
 
-  EXPECT_EQ(aggravationChance(0, 90), 0.0) << "a fit player has nothing to aggravate";
+  EXPECT_EQ(aggravationChance(0, 90), 0.0)
+      << "a fit player has nothing to aggravate";
   EXPECT_EQ(aggravationChance(10, 0), 0.0) << "no minutes, no risk";
   const double minor = aggravationChance(5, 90);
   const double moderate = aggravationChance(20, 90);
@@ -140,7 +141,8 @@ TEST(PlayingThroughPainTest, MatchesAggravateInjuriesMoreTheWorseTheyAre)
 
   constexpr int TRIALS = 3000;
   const double minor = aggravationRate(data, desk, inbox, player_id, 5, TRIALS);
-  const double major = aggravationRate(data, desk, inbox, player_id, 45, TRIALS);
+  const double major =
+      aggravationRate(data, desk, inbox, player_id, 45, TRIALS);
   EXPECT_NEAR(minor, InjuryModel::aggravationChance(5, 90), 0.02);
   EXPECT_NEAR(major, InjuryModel::aggravationChance(45, 90), 0.025);
   EXPECT_GT(major, minor * 1.5);
@@ -215,7 +217,8 @@ TEST(MedicalDeskTest, TheAssistantLeavesRestedPlayersOut)
 
   game.getMedical().setFlag(rested, MEDICAL_FLAG_REST, true);
   // Rest is an instruction, not a rule: the player stays eligible.
-  EXPECT_TRUE(controller.getIneligibleSelections(club, MatchType::LEAGUE).empty());
+  EXPECT_TRUE(
+      controller.getIneligibleSelections(club, MatchType::LEAGUE).empty());
   const auto preview = controller.previewLineupFix(club, MatchType::LEAGUE);
   ASSERT_EQ(preview.size(), 1u);
   EXPECT_EQ(preview.front().first, rested);
@@ -360,19 +363,21 @@ TEST(SupporterModelTest, ReasonsCoverDerbiesTicketsAndStars)
         std::ranges::find(mood.reasons, factor, &SupporterReason::factor);
     return found == mood.reasons.end() ? 0.0f : found->points;
   };
-  EXPECT_LT(points(SupporterFactor::Derby), 0.0f) << "the latest derby weighs most";
+  EXPECT_LT(points(SupporterFactor::Derby), 0.0f)
+      << "the latest derby weighs most";
   EXPECT_LT(points(SupporterFactor::TicketPrice), 0.0f);
   EXPECT_FLOAT_EQ(points(SupporterFactor::StarSale), -9.0f);
   EXPECT_FLOAT_EQ(points(SupporterFactor::StarSigning), 5.0f);
-  EXPECT_TRUE(std::ranges::is_sorted(
-      mood.reasons, std::greater<>(),
-      [](const SupporterReason& reason) { return std::abs(reason.points); }));
+  EXPECT_TRUE(std::ranges::is_sorted(mood.reasons, std::greater<>(),
+                                     [](const SupporterReason& reason)
+                                     { return std::abs(reason.points); }));
 
   SupporterFacts cheap;
   cheap.ticket_ratio = 0.5f;
   const SupporterMood bargain = SupporterModel::evaluate(cheap);
   ASSERT_EQ(bargain.reasons.size(), 1u);
-  EXPECT_LE(bargain.reasons.front().points, 6.0f) << "cheap tickets help a little";
+  EXPECT_LE(bargain.reasons.front().points, 6.0f)
+      << "cheap tickets help a little";
   EXPECT_STREQ(SupporterModel::reasonKey(bargain.reasons.front()),
                "SUPPORTERS_REASON_TICKETS_CHEAP");
 }
@@ -440,7 +445,8 @@ TEST(SupporterModelTest, ACareerGetsAWeeklyMoodThatMovesTheBoard)
   const TeamID club = startCareer(controller, slot.slot);
   const Game& game = *controller.getGame();
   controller.advanceDay();
-  EXPECT_EQ(game.getSupporters().team(), club) << "a new club gets a mood at once";
+  EXPECT_EQ(game.getSupporters().team(), club)
+      << "a new club gets a mood at once";
   const std::int32_t first = game.getSupporters().updatedOn();
   for (int day = 0; day < 14; ++day) controller.advanceDay();
   EXPECT_GT(game.getSupporters().updatedOn(), first);

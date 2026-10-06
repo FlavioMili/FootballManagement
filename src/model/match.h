@@ -191,7 +191,8 @@ std::vector<PlayerID> ineligible(const Lineup& lineup,
  * How well @p player fills a slot asking for @p slot: his overall scaled by
  * the fit of his position (1 for his own, less for neighbouring ones).
  */
-float slotScore(const Player& player, PlayerRole slot, const StatsConfig& config);
+float slotScore(const Player& player, PlayerRole slot,
+                const StatsConfig& config);
 
 /**
  * Replaces ineligible starters with the eligible substitute or unselected

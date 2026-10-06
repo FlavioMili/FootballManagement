@@ -65,13 +65,13 @@ bool isValid(const LoanTerms& terms);
 /** Everything the borrower weighs when answering. */
 struct BorrowerContext
 {
-  std::uint32_t ceiling = 0;      /*!< Most it commits, borrowerCost terms. */
-  std::int64_t cash = 0;          /*!< Budget for fees and a purchase. */
-  std::int64_t wage_room = 0;     /*!< Weekly wages it can still add. */
-  std::uint32_t weekly_wage = 0;  /*!< The player's full wage. */
+  std::uint32_t ceiling = 0;     /*!< Most it commits, borrowerCost terms. */
+  std::int64_t cash = 0;         /*!< Budget for fees and a purchase. */
+  std::int64_t wage_room = 0;    /*!< Weekly wages it can still add. */
+  std::uint32_t weekly_wage = 0; /*!< The player's full wage. */
   std::uint32_t market_value = 0;
-  int season_weeks = 40;          /*!< Weeks to the end of the season. */
-  float apps_per_week = 0.6f;     /*!< How often he would play there. */
+  int season_weeks = 40;      /*!< Weeks to the end of the season. */
+  float apps_per_week = 0.6f; /*!< How often he would play there. */
   std::uint8_t patience = 3;
   std::uint8_t answered = 0;
   std::uint8_t insults = 0;

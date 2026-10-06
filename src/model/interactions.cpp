@@ -1607,8 +1607,8 @@ float InteractionSystem::onBidRejected(const GameDateValue& date,
   Player& player = found->second;
   PlayerDynamics& dynamics = player.mutableDynamics();
   const float before = dynamics.morale;
-  dynamics.morale = clampMorale(dynamics.morale +
-                                morale_delta * temperamentScale(player.getTraits()));
+  dynamics.morale = clampMorale(
+      dynamics.morale + morale_delta * temperamentScale(player.getTraits()));
   PlayerRelation& rel = relationFor(player_id);
   rel.trust = clampTrust(rel.trust + trust_delta);
   const bool asks = transfer_request && rel.request != TalkRequest::Transfer;

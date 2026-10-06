@@ -444,7 +444,8 @@ void TransferRepository::loadOffers(
       "ORDER BY offer_id, seq;");
   while (sqlite3_step(stmt) == SQLITE_ROW)
   {
-    const auto offer_id = static_cast<std::uint32_t>(sqlite3_column_int64(stmt, 0));
+    const auto offer_id =
+        static_cast<std::uint32_t>(sqlite3_column_int64(stmt, 0));
     const auto offer = std::ranges::find(offers, offer_id, &IncomingOffer::id);
     const auto move = sqlite3_column_int(stmt, 2);
     if (offer == offers.end() || move < 0 ||
@@ -455,8 +456,8 @@ void TransferRepository::loadOffers(
     OfferRound round;
     round.date = dateFromInt(sqlite3_column_int(stmt, 1));
     round.move = static_cast<BuyerNegotiation::Move>(move);
-    round.terms = offerFromJson(json.is_object() ? json
-                                                 : nlohmann::json::object());
+    round.terms =
+        offerFromJson(json.is_object() ? json : nlohmann::json::object());
     if (json.is_object() && json.contains("loan"))
       round.loan_terms = loanFromJson(json["loan"]);
     offer->history.push_back(round);

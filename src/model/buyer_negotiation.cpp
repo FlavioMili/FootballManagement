@@ -43,19 +43,19 @@ constexpr std::uint8_t SELL_ON_CUT = 5;
 constexpr std::uint8_t SELL_ON_CUT_FROM = 10;
 
 constexpr std::array<const char*, static_cast<std::size_t>(Move::COUNT)>
-    MOVE_KEYS = {"OFFER_MOVE_BID",     "OFFER_MOVE_IMPROVED",
-                 "OFFER_MOVE_FINAL",   "OFFER_MOVE_RESTATED",
-                 "OFFER_MOVE_COUNTER", "OFFER_MOVE_ASKING_PRICE",
+    MOVE_KEYS = {"OFFER_MOVE_BID",      "OFFER_MOVE_IMPROVED",
+                 "OFFER_MOVE_FINAL",    "OFFER_MOVE_RESTATED",
+                 "OFFER_MOVE_COUNTER",  "OFFER_MOVE_ASKING_PRICE",
                  "OFFER_MOVE_ACCEPTED", "OFFER_MOVE_WALKED_AWAY"};
 
 constexpr std::array<const char*, static_cast<std::size_t>(Why::COUNT)>
-    WHY_KEYS = {"OFFER_WHY_WITHIN_BUDGET",  "OFFER_WHY_IMPROVED",
+    WHY_KEYS = {"OFFER_WHY_WITHIN_BUDGET",    "OFFER_WHY_IMPROVED",
                 "OFFER_WHY_MORE_INSTALMENTS", "OFFER_WHY_ADD_ONS",
-                "OFFER_WHY_ADD_ONS_TRIMMED", "OFFER_WHY_SELL_ON_CUT",
-                "OFFER_WHY_CASH_LIMITED",   "OFFER_WHY_FINAL_OFFER",
-                "OFFER_WHY_UNREALISTIC",    "OFFER_WHY_INSULTED",
-                "OFFER_WHY_OUT_OF_PATIENCE", "OFFER_WHY_RIVAL_BIDS",
-                "OFFER_WHY_DEADLINE",       "OFFER_WHY_WAGE_BUDGET"};
+                "OFFER_WHY_ADD_ONS_TRIMMED",  "OFFER_WHY_SELL_ON_CUT",
+                "OFFER_WHY_CASH_LIMITED",     "OFFER_WHY_FINAL_OFFER",
+                "OFFER_WHY_UNREALISTIC",      "OFFER_WHY_INSULTED",
+                "OFFER_WHY_OUT_OF_PATIENCE",  "OFFER_WHY_RIVAL_BIDS",
+                "OFFER_WHY_DEADLINE",         "OFFER_WHY_WAGE_BUDGET"};
 
 std::uint32_t roundDown(double amount)
 {
@@ -205,11 +205,11 @@ const char* whyKey(Why why)
 
 double appearanceOdds(std::uint16_t target)
 {
-  return std::clamp(static_cast<double>(B::APPEARANCE_ODDS_BASE) -
-                        static_cast<double>(B::APPEARANCE_ODDS_PER_MATCH) *
-                            target,
-                    static_cast<double>(B::MIN_ADD_ON_ODDS),
-                    static_cast<double>(B::MAX_ADD_ON_ODDS));
+  return std::clamp(
+      static_cast<double>(B::APPEARANCE_ODDS_BASE) -
+          static_cast<double>(B::APPEARANCE_ODDS_PER_MATCH) * target,
+      static_cast<double>(B::MIN_ADD_ON_ODDS),
+      static_cast<double>(B::MAX_ADD_ON_ODDS));
 }
 
 double goalOdds(std::uint16_t target)
@@ -222,9 +222,12 @@ double goalOdds(std::uint16_t target)
 
 double sellOnCostPerPercent(int age)
 {
-  if (age <= B::SELL_ON_YOUNG_AGE) return static_cast<double>(B::SELL_ON_COST_YOUNG) / 100.0;
-  if (age <= B::SELL_ON_PRIME_AGE) return static_cast<double>(B::SELL_ON_COST_PRIME) / 100.0;
-  if (age <= B::SELL_ON_SETTLED_AGE) return static_cast<double>(B::SELL_ON_COST_SETTLED) / 100.0;
+  if (age <= B::SELL_ON_YOUNG_AGE)
+    return static_cast<double>(B::SELL_ON_COST_YOUNG) / 100.0;
+  if (age <= B::SELL_ON_PRIME_AGE)
+    return static_cast<double>(B::SELL_ON_COST_PRIME) / 100.0;
+  if (age <= B::SELL_ON_SETTLED_AGE)
+    return static_cast<double>(B::SELL_ON_COST_SETTLED) / 100.0;
   return static_cast<double>(B::SELL_ON_COST_VETERAN) / 100.0;
 }
 
@@ -235,15 +238,16 @@ double buyerCost(const OfferTerms& terms, int age)
       static_cast<double>(TransferNegotiation::upfrontAmount(terms));
   const double average_delay =
       0.5 * static_cast<double>(terms.instalment_years + 1);
-  const double deferred_factor = std::max(
-      0.0,
-      1.0 - static_cast<double>(B::DEFERRED_DISCOUNT_PER_YEAR) * average_delay);
+  const double deferred_factor =
+      std::max(0.0, 1.0 - static_cast<double>(B::DEFERRED_DISCOUNT_PER_YEAR) *
+                              average_delay);
   double add_ons = 0.0;
   if (terms.appearance_target > 0)
     add_ons += terms.appearance_bonus * appearanceOdds(terms.appearance_target);
   if (terms.goal_target > 0)
     add_ons += terms.goal_bonus * goalOdds(terms.goal_target);
-  const double sell_on = fee * terms.sell_on_percent * sellOnCostPerPercent(age);
+  const double sell_on =
+      fee * terms.sell_on_percent * sellOnCostPerPercent(age);
   return upfront + (fee - upfront) * deferred_factor + add_ons + sell_on;
 }
 
@@ -266,9 +270,9 @@ bool deadlinePressure(int days_to_deadline)
 
 double effectiveCeiling(const BuyerContext& context)
 {
-  const double rivals = std::min(
-      static_cast<double>(B::RIVAL_CEILING_BONUS) * context.rivals,
-      static_cast<double>(B::MAX_RIVAL_CEILING_BONUS));
+  const double rivals =
+      std::min(static_cast<double>(B::RIVAL_CEILING_BONUS) * context.rivals,
+               static_cast<double>(B::MAX_RIVAL_CEILING_BONUS));
   const double deadline = deadlinePressure(context.days_to_deadline)
                               ? static_cast<double>(B::DEADLINE_CEILING_BONUS)
                               : 0.0;
@@ -332,12 +336,12 @@ BuyerReply respond(const BuyerContext& context, const OfferTerms& current,
   double share = 1.0;
   if (!final)
     share = std::min(
-        1.0, static_cast<double>(B::FIRST_CONCESSION) +
-                 static_cast<double>(B::CONCESSION_STEP) * context.answered +
-                 static_cast<double>(B::RIVAL_CONCESSION_BONUS) *
-                     context.rivals +
-                 (deadline ? static_cast<double>(B::DEADLINE_CONCESSION_BONUS)
-                           : 0.0));
+        1.0,
+        static_cast<double>(B::FIRST_CONCESSION) +
+            static_cast<double>(B::CONCESSION_STEP) * context.answered +
+            static_cast<double>(B::RIVAL_CONCESSION_BONUS) * context.rivals +
+            (deadline ? static_cast<double>(B::DEADLINE_CONCESSION_BONUS)
+                      : 0.0));
   const double target =
       std::max(previous, previous + share * (wanted - previous));
 
@@ -436,13 +440,14 @@ BuyerReply respond(const BuyerContext& context, const OfferTerms& current,
 OfferTerms openingBid(std::uint32_t ceiling, int age, std::uint8_t rivals,
                       double share_roll, double add_on_roll)
 {
-  double share = static_cast<double>(B::OPENING_SHARE_MIN) +
-                 static_cast<double>(B::OPENING_SHARE_MAX -
-                                     B::OPENING_SHARE_MIN) *
-                     share_roll;
+  double share =
+      static_cast<double>(B::OPENING_SHARE_MIN) +
+      static_cast<double>(B::OPENING_SHARE_MAX - B::OPENING_SHARE_MIN) *
+          share_roll;
   if (rivals > 0) share += static_cast<double>(B::OPENING_RIVAL_BONUS);
   share = std::min(share, MAX_OPENING_SHARE);
-  const bool add_on = add_on_roll < static_cast<double>(B::OPENING_ADD_ON_CHANCE);
+  const bool add_on =
+      add_on_roll < static_cast<double>(B::OPENING_ADD_ON_CHANCE);
   const auto build = [&](std::uint32_t fee)
   {
     OfferTerms terms = TransferNegotiation::aiOfferTerms(fee);
@@ -552,13 +557,13 @@ RejectionEffect rejectionEffect(PlayerStance stance, bool big_bid,
   switch (stance)
   {
     case PlayerStance::AskedToLeave:
-      effect.morale_delta = -(big_bid ? B::REJECTED_ASKED_MORALE
-                                      : B::REJECTED_SMALL_BID_MORALE);
+      effect.morale_delta =
+          -(big_bid ? B::REJECTED_ASKED_MORALE : B::REJECTED_SMALL_BID_MORALE);
       if (big_bid) effect.trust_delta = -B::REJECTED_TRUST;
       break;
     case PlayerStance::WantsBiggerClub:
-      effect.morale_delta = -(big_bid ? B::REJECTED_KEEN_MORALE
-                                      : B::REJECTED_SMALL_BID_MORALE);
+      effect.morale_delta =
+          -(big_bid ? B::REJECTED_KEEN_MORALE : B::REJECTED_SMALL_BID_MORALE);
       if (big_bid)
       {
         effect.trust_delta = -B::REJECTED_TRUST;

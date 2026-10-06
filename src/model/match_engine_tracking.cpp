@@ -45,8 +45,8 @@ void MatchEngine::trackPassCompletion(const MatchPlayer& passer,
                         passer.isHomeTeam, receiver.position);
 }
 
-void MatchEngine::trackShot(const MatchPlayer& shooter, float xg,
-                            bool setPiece, bool header, bool penalty)
+void MatchEngine::trackShot(const MatchPlayer& shooter, float xg, bool setPiece,
+                            bool header, bool penalty)
 {
   if (!tracker.isEnabled()) return;
   const MatchPlayer* creator = findMatchPlayer(shotAssistCandidate);

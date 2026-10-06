@@ -125,8 +125,8 @@ PlayerID playerId(TeamID team, std::size_t index)
   return static_cast<PlayerID>(team * 100U + index);
 }
 
-Strategy withSlots(std::initializer_list<std::pair<std::size_t, SlotInstruction>>
-                       slots)
+Strategy withSlots(
+    std::initializer_list<std::pair<std::size_t, SlotInstruction>> slots)
 {
   Strategy strategy;
   for (auto [index, slot] : slots)
@@ -205,32 +205,33 @@ TEST(TacticsTest, EveryRoleChangesTheEngineProfile)
            profile.keeperSweep != 0.0f;
   };
   for (int role = 1; role < static_cast<int>(TacticalRole::COUNT); ++role)
-    EXPECT_TRUE(differs(Tactics::profile(static_cast<TacticalRole>(role),
-                                         RoleDuty::Support)))
+    EXPECT_TRUE(differs(
+        Tactics::profile(static_cast<TacticalRole>(role), RoleDuty::Support)))
         << Tactics::roleKey(static_cast<TacticalRole>(role));
   EXPECT_GT(Tactics::profile(TacticalRole::Standard, RoleDuty::Attack)
                 .possessionAdvanceMetres,
             Tactics::profile(TacticalRole::Standard, RoleDuty::Defend)
                 .possessionAdvanceMetres);
-  EXPECT_GT(
-      Tactics::profile(TacticalRole::SweeperKeeper, RoleDuty::Support)
-          .keeperDepthMetres,
-      Tactics::profile(TacticalRole::LineKeeper, RoleDuty::Support)
-          .keeperDepthMetres);
+  EXPECT_GT(Tactics::profile(TacticalRole::SweeperKeeper, RoleDuty::Support)
+                .keeperDepthMetres,
+            Tactics::profile(TacticalRole::LineKeeper, RoleDuty::Support)
+                .keeperDepthMetres);
 }
 
 TEST(TacticsTest, SlotInstructionsMatchByAnchor)
 {
   Strategy strategy;
-  strategy.setSlot({{0.20f, 0.12f}, TacticalRole::InsideFullBack,
-                    RoleDuty::Attack, {0.1f, 0.2f}});
+  strategy.setSlot({{0.20f, 0.12f},
+                    TacticalRole::InsideFullBack,
+                    RoleDuty::Attack,
+                    {0.1f, 0.2f}});
   ASSERT_NE(strategy.findSlot({0.21f, 0.13f}), nullptr);
   EXPECT_EQ(strategy.findSlot({0.21f, 0.13f})->role,
             TacticalRole::InsideFullBack);
   EXPECT_EQ(strategy.findSlot({0.43f, 0.12f}), nullptr);
   // Re-setting the same slot replaces it.
-  strategy.setSlot({{0.20f, 0.12f}, TacticalRole::Standard, RoleDuty::Defend,
-                    {0.0f, 0.0f}});
+  strategy.setSlot(
+      {{0.20f, 0.12f}, TacticalRole::Standard, RoleDuty::Defend, {0.0f, 0.0f}});
   EXPECT_EQ(strategy.getSlotInstructions().size(), 1u);
   EXPECT_EQ(strategy.findSlot({0.20f, 0.12f})->duty, RoleDuty::Defend);
   // A goalkeeper role outside the goalkeeper family is refused.
@@ -266,8 +267,8 @@ TEST(TacticsTest, AiPicksRolesThatFitThePlayers)
   {
     const SlotInstruction* slot = strategy.findSlot(POSITIONS[index]);
     ASSERT_NE(slot, nullptr) << index;
-    EXPECT_TRUE(Tactics::allows(Tactics::familyForSlot(POSITIONS[index]),
-                                slot->role))
+    EXPECT_TRUE(
+        Tactics::allows(Tactics::familyForSlot(POSITIONS[index]), slot->role))
         << index;
   }
 }
@@ -299,8 +300,7 @@ TEST(TacticsTest, AttackingFullBackPlaysHigherThanDefendingOne)
   const auto averageX = [](RoleDuty duty)
   {
     const Strategy home = withSlots(
-        {{LEFT_BACK,
-          {{}, TacticalRole::Standard, duty, {0.0f, 0.0f}}}});
+        {{LEFT_BACK, {{}, TacticalRole::Standard, duty, {0.0f, 0.0f}}}});
     double total = 0.0;
     int samples = 0;
     for (const std::uint32_t seed : SEEDS)
@@ -335,28 +335,28 @@ TEST(TacticsTest, InPossessionShapeMovesTheSlotWithTheBallOnly)
   // it.
   const auto averageY = [](bool shifted, bool withBall)
   {
-    const Strategy home = withSlots(
-        {{LEFT_BACK,
-          {{},
-           TacticalRole::Standard,
-           RoleDuty::Support,
-           shifted ? Vector2F{0.0f, 0.18f} : Vector2F{0.0f, 0.0f}}}});
+    const Strategy home =
+        withSlots({{LEFT_BACK,
+                    {{},
+                     TacticalRole::Standard,
+                     RoleDuty::Support,
+                     shifted ? Vector2F{0.0f, 0.18f} : Vector2F{0.0f, 0.0f}}}});
     double total = 0.0;
     int samples = 0;
-    playMatch(home, Strategy{}, SEEDS[0],
-              [&](const MatchEngine& engine)
-              {
-                if (homeHasBall(engine) != withBall ||
-                    !engine.getBall().possessedBy)
-                  return;
-                for (const MatchPlayer& player : engine.getPlayers())
-                  if (player.isHomeTeam && player.onPitch &&
-                      player.player->getId() == playerId(1, LEFT_BACK))
-                  {
-                    total += player.position.y;
-                    ++samples;
-                  }
-              });
+    playMatch(
+        home, Strategy{}, SEEDS[0],
+        [&](const MatchEngine& engine)
+        {
+          if (homeHasBall(engine) != withBall || !engine.getBall().possessedBy)
+            return;
+          for (const MatchPlayer& player : engine.getPlayers())
+            if (player.isHomeTeam && player.onPitch &&
+                player.player->getId() == playerId(1, LEFT_BACK))
+            {
+              total += player.position.y;
+              ++samples;
+            }
+        });
     return samples > 0 ? total / samples : 0.0;
   };
   EXPECT_GT(averageY(true, true), averageY(false, true) + 0.06);
@@ -385,16 +385,16 @@ TEST(TacticsTest, PressingForwardsPressMore)
     int pressures = 0;
     for (const std::uint32_t seed : SEEDS)
     {
-      playMatch(home, Strategy{}, seed,
-                [&](const MatchEngine& engine)
-                {
-                  if (engine.getState() != MatchState::FULL_TIME) return;
-                  for (const std::size_t index :
-                       {FIRST_STRIKER, FIRST_STRIKER + 1})
-                    if (const PlayerMatchStats* stats =
-                            statsOf(engine, playerId(1, index)))
-                      pressures += stats->pressures;
-                });
+      playMatch(
+          home, Strategy{}, seed,
+          [&](const MatchEngine& engine)
+          {
+            if (engine.getState() != MatchState::FULL_TIME) return;
+            for (const std::size_t index : {FIRST_STRIKER, FIRST_STRIKER + 1})
+              if (const PlayerMatchStats* stats =
+                      statsOf(engine, playerId(1, index)))
+                pressures += stats->pressures;
+          });
     }
     return pressures;
   };
@@ -445,7 +445,8 @@ TEST(TacticsTest, OppositionOrdersOnlyFindTheirMan)
             [&](const MatchEngine& engine)
             {
               if (engine.getState() == MatchState::FULL_TIME)
-                withOrders = engine.getHomeScore() * 100 + engine.getAwayScore();
+                withOrders =
+                    engine.getHomeScore() * 100 + engine.getAwayScore();
             });
   playMatch(Strategy{}, Strategy{}, SEEDS[1],
             [&](const MatchEngine& engine)
@@ -513,10 +514,14 @@ TEST_F(TacticsPersistenceTest, RolesAndShapeSurviveASave)
   TeamRepository repository(connection);
   Team team(1, 1, "Roles", 1'000'000);
   team.getStrategy().setKeeperRole(TacticalRole::SweeperKeeper);
-  team.getStrategy().setSlot({{0.20f, 0.12f}, TacticalRole::InsideFullBack,
-                              RoleDuty::Attack, {0.05f, 0.15f}});
-  team.getStrategy().setSlot({{0.78f, 0.38f}, TacticalRole::FalseNine,
-                              RoleDuty::Defend, {-0.1f, 0.0f}});
+  team.getStrategy().setSlot({{0.20f, 0.12f},
+                              TacticalRole::InsideFullBack,
+                              RoleDuty::Attack,
+                              {0.05f, 0.15f}});
+  team.getStrategy().setSlot({{0.78f, 0.38f},
+                              TacticalRole::FalseNine,
+                              RoleDuty::Defend,
+                              {-0.1f, 0.0f}});
   // Opposition orders belong to the club's plan, not to the saved tactic.
   team.getStrategy().setOppositionOrders(
       {{42, OppositionInstruction::DoubleUp}});

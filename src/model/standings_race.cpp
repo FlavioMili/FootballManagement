@@ -147,7 +147,10 @@ class RaceSolver
   {
     return remaining[index];
   }
-  [[nodiscard]] bool exhausted() const { return report_nodes >= REPORT_NODE_LIMIT; }
+  [[nodiscard]] bool exhausted() const
+  {
+    return report_nodes >= REPORT_NODE_LIMIT;
+  }
 
   /** Can at least `need` clubs finish above t? t's results: `own` (one per
    * game of fixturesOf(t), OWN_*), or every game lost when null. */
@@ -180,7 +183,7 @@ class RaceSolver
       const int8_t result =
           worst_case ? (own != nullptr ? (*own)[k] : OWN_LOSS) : OWN_WIN;
       const bool at_home = remaining[games[k]].first == t;
-      const int8_t match = result == OWN_DRAW ? DRAW
+      const int8_t match = result == OWN_DRAW               ? DRAW
                            : (result == OWN_WIN) == at_home ? HOME_WIN
                                                             : AWAY_WIN;
       assign(games[k], match);
@@ -300,14 +303,12 @@ class RaceSolver
   {
     const auto score = [&](int8_t result)
     {
-      const int home_after =
-          points[home] + (result == HOME_WIN ? WIN_POINTS
-                          : result == DRAW   ? 1
-                                             : 0);
-      const int away_after =
-          points[away] + (result == AWAY_WIN ? WIN_POINTS
-                          : result == DRAW   ? 1
-                                             : 0);
+      const int home_after = points[home] + (result == HOME_WIN ? WIN_POINTS
+                                             : result == DRAW   ? 1
+                                                                : 0);
+      const int away_after = points[away] + (result == AWAY_WIN ? WIN_POINTS
+                                             : result == DRAW   ? 1
+                                                                : 0);
       const int passed = static_cast<int>(home_after > final_points) +
                          static_cast<int>(away_after > final_points);
       const int level = static_cast<int>(home_after >= final_points) +
@@ -436,10 +437,10 @@ class RaceSolver
           members.push_back(other);
         continue;
       }
-      const int64_t low = record.losses > 0 ? -UNBOUNDED
-                                            : goal_diff[other] + record.wins;
-      const int64_t high = record.wins > 0 ? UNBOUNDED
-                                           : goal_diff[other] - record.losses;
+      const int64_t low =
+          record.losses > 0 ? -UNBOUNDED : goal_diff[other] + record.wins;
+      const int64_t high =
+          record.wins > 0 ? UNBOUNDED : goal_diff[other] - record.losses;
       if (low <= diff && diff <= high) return std::nullopt;
     }
     const auto [x_points, x_diff] = miniLeague(x, members);
@@ -551,12 +552,11 @@ class RaceSolver
 };
 
 constexpr std::array<Standings::Race, Standings::RACE_COUNT> RACES = {
-    Standings::Race::TITLE,           Standings::Race::PROMOTION,
-    Standings::Race::PLAY_OFF,        Standings::Race::CONTINENTAL_TOP,
-    Standings::Race::CONTINENTAL,     Standings::Race::SURVIVAL};
+    Standings::Race::TITLE,       Standings::Race::PROMOTION,
+    Standings::Race::PLAY_OFF,    Standings::Race::CONTINENTAL_TOP,
+    Standings::Race::CONTINENTAL, Standings::Race::SURVIVAL};
 
-Standings::ClinchReport reportFor(RaceSolver& solver, size_t club,
-                                  TeamID team,
+Standings::ClinchReport reportFor(RaceSolver& solver, size_t club, TeamID team,
                                   const Standings::RacePlaces& places)
 {
   Standings::ClinchReport report;
@@ -617,8 +617,7 @@ int ownPoints(const std::vector<int8_t>& results)
  * richer set can be worsened step by step (draw to defeat, win to draw or
  * defeat) into one of them.
  */
-Answer guarantees(RaceSolver& solver, size_t club, uint16_t cutoff,
-                  int minimum)
+Answer guarantees(RaceSolver& solver, size_t club, uint16_t cutoff, int minimum)
 {
   const size_t games = solver.fixturesOf(club).size();
   size_t combinations = 1;
@@ -664,9 +663,8 @@ uint16_t Standings::raceCutoff(Race race, const RacePlaces& places,
       cutoff = places.continental_top;
       break;
     case Race::CONTINENTAL:
-      cutoff = places.continental > places.continental_top
-                   ? places.continental
-                   : uint16_t{0};
+      cutoff = places.continental > places.continental_top ? places.continental
+                                                           : uint16_t{0};
       break;
     case Race::SURVIVAL:
       cutoff = places.relegation > 0 && places.relegation < clubs
@@ -694,8 +692,7 @@ Standings::ClinchReport Standings::clinchReport(const RaceInput& input,
 }
 
 Standings::Clinch Standings::clinchStatus(const RaceInput& input,
-                                          const RacePlaces& places,
-                                          TeamID team)
+                                          const RacePlaces& places, TeamID team)
 {
   return clinchReport(input, places, team).status;
 }
@@ -829,7 +826,8 @@ Standings::RacePlaces Standings::racePlaces(
   };
   const auto slotsBetween = [&](const League& parent, const League& child)
   {
-    const size_t children = std::max<size_t>(1, childrenOf(parent.getId()).size());
+    const size_t children =
+        std::max<size_t>(1, childrenOf(parent.getId()).size());
     return std::min({Competitions::PROMOTION_SLOTS,
                      child.getTeamIDs().size() / 4,
                      parent.getTeamIDs().size() / (4 * children)});
@@ -873,9 +871,8 @@ Standings::RacePlaces Standings::racePlaces(
       if (rules.continent != *continent) continue;
       std::vector<uint8_t> capacity;
       for (size_t index = 0; index < sizes.size(); ++index)
-        capacity.push_back(static_cast<uint8_t>(
-            std::min<size_t>(sizes[index] - std::min(sizes[index], taken[index]),
-                             0xFF)));
+        capacity.push_back(static_cast<uint8_t>(std::min<size_t>(
+            sizes[index] - std::min(sizes[index], taken[index]), 0xFF)));
       const std::vector<uint8_t> granted =
           Continental::allocatePlaces(rules, sizes.size(), capacity);
       for (size_t index = 0; index < granted.size(); ++index)

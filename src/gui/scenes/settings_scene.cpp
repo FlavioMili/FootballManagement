@@ -101,12 +101,13 @@ void SettingsScene::syncPendingFromSettings()
   // The presets, plus a size set in the file that is not one of them.
   resolutions.assign(GUIConstants::RESOLUTIONS.begin(),
                      GUIConstants::RESOLUTIONS.end());
-  const auto current = std::ranges::find_if(
-      resolutions, [&settings](const GUIConstants::Resolution& r)
-      {
-        return r.width == settings.resolution_width &&
-               r.height == settings.resolution_height;
-      });
+  const auto current =
+      std::ranges::find_if(resolutions,
+                           [&settings](const GUIConstants::Resolution& r)
+                           {
+                             return r.width == settings.resolution_width &&
+                                    r.height == settings.resolution_height;
+                           });
   if (current == resolutions.end())
     resolutions.push_back(
         {settings.resolution_width, settings.resolution_height});
@@ -257,7 +258,6 @@ bool presetCard(Theme::Preset preset, bool selected, float width)
 }
 }  // namespace
 
-
 void SettingsScene::render()
 {
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -275,8 +275,7 @@ void SettingsScene::render()
   ImGui::PopStyleVar(3);
   // A binding waiting for a key takes every key, Escape included.
   updateCapture();
-  const bool keysFree =
-      !capture && capture_end_frame != ImGui::GetFrameCount();
+  const bool keysFree = !capture && capture_end_frame != ImGui::GetFrameCount();
   // Escape backs out like Cancel unless a dialog or a combo takes it first.
   const bool leaveWithEscape =
       keysFree &&
@@ -460,16 +459,14 @@ void SettingsScene::renderAppearance()
   {
     const int count = static_cast<int>(Theme::ColorVision::COUNT);
     const int current = std::clamp(settings.color_vision, 0, count - 1);
-    if (ImGui::BeginCombo(
-            "##color_vision",
-            LOC(Theme::colorVisionKey(
-                static_cast<Theme::ColorVision>(current)))))
+    if (ImGui::BeginCombo("##color_vision",
+                          LOC(Theme::colorVisionKey(
+                              static_cast<Theme::ColorVision>(current)))))
     {
       for (int index = 0; index < count; ++index)
-        if (ImGui::Selectable(
-                LOC(Theme::colorVisionKey(
-                    static_cast<Theme::ColorVision>(index))),
-                index == current))
+        if (ImGui::Selectable(LOC(Theme::colorVisionKey(
+                                  static_cast<Theme::ColorVision>(index))),
+                              index == current))
         {
           settings.color_vision = index;
           previewAppearance();
@@ -662,9 +659,10 @@ void SettingsScene::renderControlRow(Input::ActionId id,
   for (std::size_t slot = 0; slot < Input::BINDING_SLOTS; ++slot)
   {
     ImGui::PushID(static_cast<int>(slot));
-    const bool waiting = capture && capture->action == id && capture->slot == slot;
-    const char* text = waiting ? LOC("CONTROLS_PRESS_KEY")
-                               : chord_labels[id][slot].c_str();
+    const bool waiting =
+        capture && capture->action == id && capture->slot == slot;
+    const char* text =
+        waiting ? LOC("CONTROLS_PRESS_KEY") : chord_labels[id][slot].c_str();
     ImGui::BeginDisabled(!action.def.rebindable);
     const bool pressed =
         waiting ? UI::primaryButton(text, ImVec2(slotWidth, 0.0f),
@@ -675,8 +673,8 @@ void SettingsScene::renderControlRow(Input::ActionId id,
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort |
                              ImGuiHoveredFlags_AllowWhenDisabled))
       ImGui::SetTooltip("%s", LOC(!action.def.rebindable ? "CONTROLS_FIXED"
-                                  : waiting               ? "CONTROLS_CAPTURE_HELP"
-                                                          : "CONTROLS_SLOT_HELP"));
+                                  : waiting ? "CONTROLS_CAPTURE_HELP"
+                                            : "CONTROLS_SLOT_HELP"));
     if (pressed && capture_end_frame != ImGui::GetFrameCount())
     {
       capture = Capture{id, slot};
@@ -739,12 +737,13 @@ void SettingsScene::renderControls()
       for (std::size_t slot = 0; slot < Input::BINDING_SLOTS; ++slot)
         chord_labels[id][slot] = Input::chordLabel(registry.chord(id, slot));
   }
-  UI::beginAutoHeightCard("settings_controls", LOC("SETTINGS_SECTION_CONTROLS"));
+  UI::beginAutoHeightCard("settings_controls",
+                          LOC("SETTINGS_SECTION_CONTROLS"));
   ImGui::PushTextWrapPos(0.0f);
   ImGui::TextColored(Theme::palette().muted, "%s", LOC("CONTROLS_INTRO"));
   ImGui::PopTextWrapPos();
-  const float labelWidth =
-      std::min(ImGui::GetContentRegionAvail().x * 0.42f, 300.0f * Theme::scale());
+  const float labelWidth = std::min(ImGui::GetContentRegionAvail().x * 0.42f,
+                                    300.0f * Theme::scale());
   for (std::size_t index = 0;
        index < static_cast<std::size_t>(Input::Category::COUNT); ++index)
   {

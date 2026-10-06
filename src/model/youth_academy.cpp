@@ -121,8 +121,8 @@ std::uint8_t clampTrait(float value)
 
 std::int32_t intakeOrdinal(std::uint16_t year)
 {
-  return dayOrdinal(GameDateValue(year, YouthModel::INTAKE_MONTH,
-                                  YouthModel::INTAKE_DAY));
+  return dayOrdinal(
+      GameDateValue(year, YouthModel::INTAKE_MONTH, YouthModel::INTAKE_DAY));
 }
 
 std::uint16_t seasonYear(const GameDateValue& date)
@@ -200,8 +200,7 @@ bool leftSided(PlayerRole role)
  * attributes; the whole set is shifted so the role overall hits @p target.
  */
 std::map<std::string, float> youthStats(WorldRng& rng, PlayerRole role,
-                                        float target,
-                                        const StatsConfig& config)
+                                        float target, const StatsConfig& config)
 {
   std::map<std::string, float> weights;
   double max_weight = 0.0;
@@ -228,9 +227,9 @@ std::map<std::string, float> youthStats(WorldRng& rng, PlayerRole role,
   }
   for (int pass = 0; pass < 3; ++pass)
   {
-    const auto delta = static_cast<float>(
-        static_cast<double>(target) -
-        WorldGeneration::overallFor(role, stats, config));
+    const auto delta =
+        static_cast<float>(static_cast<double>(target) -
+                           WorldGeneration::overallFor(role, stats, config));
     for (auto& [name, value] : stats)
       value = std::clamp(value + delta, static_cast<float>(MIN_STAT_VAL),
                          static_cast<float>(MAX_STAT_VAL) - 1.0f);
@@ -375,13 +374,12 @@ std::vector<TeamID> countryClubs(const GameData& gamedata, LeagueID league_id)
 /** Default reach of a club's youth recruitment network. [P] */
 std::uint8_t defaultRecruitment(std::uint64_t seed, const Team& team)
 {
-  const double noise =
-      WorldRng::hashUniform(seed, RngDomain::YouthIntake, RECRUITMENT_SALT,
-                            team.getId()) -
-      0.5;
-  return static_cast<std::uint8_t>(std::clamp(
-      std::lround(0.75 * team.getReputation() + 12.0 + 16.0 * noise), 10L,
-      95L));
+  const double noise = WorldRng::hashUniform(seed, RngDomain::YouthIntake,
+                                             RECRUITMENT_SALT, team.getId()) -
+                       0.5;
+  return static_cast<std::uint8_t>(
+      std::clamp(std::lround(0.75 * team.getReputation() + 12.0 + 16.0 * noise),
+                 10L, 95L));
 }
 }  // namespace
 
@@ -421,11 +419,11 @@ IntakeClass planIntake(const IntakeInputs& inputs, std::uint64_t world_seed,
   const float level = WorldGeneration::teamLevel(inputs.reputation);
   // Even the best academies produce one or two first-team players a year
   // [RR 4]: the group sits well below the club's level, with a tail.
-  const float mean =
-      level + INTAKE_POTENTIAL_OFFSET +
-      4.0f * (2.0f * inputs.facilities - 1.0f) +
-      2.0f * (2.0f * inputs.recruitment - 1.0f) + inputs.staff_bonus +
-      regionTalent(inputs.country) + intake.class_offset;
+  const float mean = level + INTAKE_POTENTIAL_OFFSET +
+                     4.0f * (2.0f * inputs.facilities - 1.0f) +
+                     2.0f * (2.0f * inputs.recruitment - 1.0f) +
+                     inputs.staff_bonus + regionTalent(inputs.country) +
+                     intake.class_offset;
   // A professional head of youth development attracts and shapes
   // professional youngsters.
   const float professionalism_mean =
@@ -438,27 +436,26 @@ IntakeClass planIntake(const IntakeInputs& inputs, std::uint64_t world_seed,
   intake.candidates.reserve(static_cast<std::size_t>(size));
   for (int index = 0; index < size; ++index)
   {
-    WorldRng rng =
-        WorldRng::stream(world_seed, RngDomain::YouthIntake, year,
-                         candidateKey(team_id, static_cast<std::uint64_t>(index)));
+    WorldRng rng = WorldRng::stream(
+        world_seed, RngDomain::YouthIntake, year,
+        candidateKey(team_id, static_cast<std::uint64_t>(index)));
     CandidateProfile candidate;
     candidate.role = ROLES[rng.weightedIndex(ROLE_WEIGHTS)];
-    candidate.age = static_cast<std::uint8_t>(15 + rng.weightedIndex(
-                                                       std::array<float, 3>{
-                                                           0.3f, 0.4f, 0.3f}));
+    candidate.age = static_cast<std::uint8_t>(
+        15 + rng.weightedIndex(std::array<float, 3>{0.3f, 0.4f, 0.3f}));
     candidate.potential =
         std::clamp(rng.normal(mean, Youth::POTENTIAL_STDDEV), 30.0f, 95.0f);
     if (rng.chance(wonderkid_chance))
     {
       candidate.wonderkid = true;
-      candidate.potential = std::max(
-          candidate.potential,
-          std::min(95.0f, std::max(level + 10.0f, 78.0f) +
-                              std::abs(rng.normal(0.0f, 4.0f))));
+      candidate.potential =
+          std::max(candidate.potential,
+                   std::min(95.0f, std::max(level + 10.0f, 78.0f) +
+                                       std::abs(rng.normal(0.0f, 4.0f))));
     }
-    candidate.current = std::max(
-        15.0f, candidate.potential * rng.uniform(0.50f, 0.62f) -
-                   1.5f * static_cast<float>(17 - candidate.age));
+    candidate.current =
+        std::max(15.0f, candidate.potential * rng.uniform(0.50f, 0.62f) -
+                            1.5f * static_cast<float>(17 - candidate.age));
     candidate.traits.professionalism =
         clampTrait(rng.normal(professionalism_mean, 16.0f));
     candidate.traits.ambition = clampTrait(rng.normal(50.0f, 18.0f));
@@ -481,8 +478,8 @@ IntakePreview summarize(const IntakeClass& intake)
   std::vector<const CandidateProfile*> ranked;
   for (const CandidateProfile& candidate : intake.candidates)
     ranked.push_back(&candidate);
-  std::ranges::sort(ranked, [](const CandidateProfile* a,
-                               const CandidateProfile* b)
+  std::ranges::sort(ranked,
+                    [](const CandidateProfile* a, const CandidateProfile* b)
                     { return a->potential > b->potential; });
   if (ranked.empty()) return preview;
   preview.personality_key = personalityKey(ranked.front()->traits);
@@ -554,10 +551,9 @@ int computerSignings(float grade, std::size_t candidates)
   // The best academies keep most of a large intake, small ones only the
   // few they can coach. [RR 4.3]
   const float share = 0.45f + 0.5f * std::clamp(grade, 0.0f, 1.0f);
-  return std::clamp(static_cast<int>(std::lround(
-                        share * static_cast<float>(candidates))),
-                    std::min<int>(SIGN_MIN, static_cast<int>(candidates)),
-                    SIGN_MAX);
+  return std::clamp(
+      static_cast<int>(std::lround(share * static_cast<float>(candidates))),
+      std::min<int>(SIGN_MIN, static_cast<int>(candidates)), SIGN_MAX);
 }
 
 std::uint32_t scholarshipWage(LeagueID league_id)
@@ -593,8 +589,8 @@ YouthActionResult reserveEligibility(int age, PlayerRole role,
 
 float staffProfessionalism(std::uint64_t world_seed, StaffID staff_id)
 {
-  return static_cast<float>(WorldRng::hashUniform(
-      world_seed, RngDomain::Staff, staff_id, STYLE_SALT));
+  return static_cast<float>(WorldRng::hashUniform(world_seed, RngDomain::Staff,
+                                                  staff_id, STYLE_SALT));
 }
 
 const char* staffStyleKey(float professionalism)
@@ -711,7 +707,8 @@ std::pair<int, int> simulateMatch(float home_strength, float away_strength,
     }
     return goals;
   };
-  const float home_rate = std::clamp(1.55f * std::exp(0.35f * diff), 0.2f, 5.0f);
+  const float home_rate =
+      std::clamp(1.55f * std::exp(0.35f * diff), 0.2f, 5.0f);
   const float away_rate =
       std::clamp(1.30f * std::exp(-0.35f * diff), 0.2f, 5.0f);
   return {poisson(home_rate), poisson(away_rate)};
@@ -722,8 +719,7 @@ std::int64_t upgradeCost(AcademyUpgrade kind, int target, LeagueID league_id)
   // Scaled by league revenue: an academy upgrade costs a few months of a
   // mid-table club's revenue at the top, much less lower down. [P]
   const double scale = std::clamp(
-      static_cast<double>(leagueProfile(league_id).average_revenue_eur) /
-          146e6,
+      static_cast<double>(leagueProfile(league_id).average_revenue_eur) / 146e6,
       0.15, 2.6);
   const double base = kind == AcademyUpgrade::Facilities
                           ? 400'000.0 + 70'000.0 * target
@@ -909,13 +905,14 @@ void YouthAcademy::onSeasonEnd(const GameDateValue& /*date*/,
         found->second.getContractYears() != 1)
       continue;
     const YouthEstimate judged = estimate(youth.team_id, player_id);
-    const float expected = 0.5f * (judged.potential_low + judged.potential_high);
+    const float expected =
+        0.5f * (judged.potential_low + judged.potential_high);
     if (youth.status == YouthStatus::Reserve)
     {
       // U21 players worth keeping get a new professional contract; the
       // others' contracts run out and they move on as free agents.
-      if (expected >= WorldGeneration::teamLevel(team->get().getReputation()) -
-                          KEEP_MARGIN)
+      if (expected >=
+          WorldGeneration::teamLevel(team->get().getReputation()) - KEEP_MARGIN)
         applyContract(found->second, youth, YouthContract::Professional);
       continue;
     }
@@ -975,9 +972,10 @@ void YouthAcademy::onSeasonStart(const GameDateValue& date,
         youth.contract != YouthContract::Scholarship)
       continue;
     const auto team = gamedata->getTeam(youth.team_id);
-    if (team && player.getAge() >= YouthModel::firstProfessionalAge(
-                                       leagueProfile(team->get().getLeagueId())
-                                           .domestic_nationality))
+    if (team &&
+        player.getAge() >=
+            YouthModel::firstProfessionalAge(
+                leagueProfile(team->get().getLeagueId()).domestic_nationality))
       eligible.push_back(player.getName());
   }
   promoteComputerAcademies(managed_team_id);
@@ -1025,19 +1023,21 @@ float YouthAcademy::developmentMultiplier(const Player& player) const
     matches = youth.status == YouthStatus::Reserve
                   ? academy->second.reserve_table.played
                   : academy->second.table.played;
-  const float youth_share =
-      matches > 0 ? static_cast<float>(youth.minutes) /
-                        (90.0f * static_cast<float>(matches))
-                  : 0.0f;
+  const float youth_share = matches > 0
+                                ? static_cast<float>(youth.minutes) /
+                                      (90.0f * static_cast<float>(matches))
+                                : 0.0f;
   // Same minutes factor as the senior model, fed by U18 minutes.
   const float senior =
       0.6f + 0.4f * std::min(1.0f, player.getDynamics().playing_share / 0.6f);
   const float junior = 0.6f + 0.4f * std::min(1.0f, youth_share / 0.6f);
   const float coaching =
-      0.85f + 0.35f * gamedata->getStaff().effects(youth.team_id).coaching_youth;
+      0.85f +
+      0.35f * gamedata->getStaff().effects(youth.team_id).coaching_youth;
   float facilities = 1.0f;
   if (const auto team = gamedata->getTeam(youth.team_id))
-    facilities = 0.92f + 0.16f * toUnit(team->get().getProfile().youth_facilities);
+    facilities =
+        0.92f + 0.16f * toUnit(team->get().getProfile().youth_facilities);
   return std::clamp(std::max(senior, junior) / senior * coaching * facilities,
                     0.8f, 1.6f);
 }
@@ -1053,8 +1053,7 @@ const YouthRecord* YouthAcademy::record(PlayerID player_id) const
 bool YouthAcademy::isAcademyPlayer(PlayerID player_id) const
 {
   const auto found = records.find(player_id);
-  if (found == records.end() ||
-      found->second.status == YouthStatus::Graduated)
+  if (found == records.end() || found->second.status == YouthStatus::Graduated)
     return false;
   const auto player = gamedata->getPlayer(player_id);
   return player && player->get().getTeamId() == found->second.team_id;
@@ -1068,8 +1067,7 @@ std::vector<const YouthRecord*> YouthAcademy::members(TeamID team_id,
   {
     if (youth.team_id != team_id || youth.status != status) continue;
     const auto player = gamedata->getPlayer(player_id);
-    if (player && player->get().getTeamId() == team_id)
-      found.push_back(&youth);
+    if (player && player->get().getTeamId() == team_id) found.push_back(&youth);
   }
   std::ranges::sort(found, {}, &YouthRecord::player_id);
   return found;
@@ -1088,10 +1086,10 @@ IntakeInputs YouthAcademy::intakeInputs(TeamID team_id) const
   if (!team) return inputs;
   inputs.facilities = toUnit(team->get().getProfile().youth_facilities);
   const auto academy = clubs.find(team_id);
-  inputs.recruitment = toUnit(
-      academy != clubs.end()
-          ? academy->second.recruitment
-          : defaultRecruitment(gamedata->getWorldSeed(), team->get()));
+  inputs.recruitment =
+      toUnit(academy != clubs.end()
+                 ? academy->second.recruitment
+                 : defaultRecruitment(gamedata->getWorldSeed(), team->get()));
   const StaffEffects& effects = gamedata->getStaff().effects(team_id);
   inputs.junior_coaching = effects.coaching_youth;
   inputs.staff_bonus = effects.youth_potential_bonus;
@@ -1102,7 +1100,8 @@ IntakeInputs YouthAcademy::intakeInputs(TeamID team_id) const
     inputs.head_professionalism = head.professionalism;
   }
   inputs.reputation = team->get().getReputation();
-  inputs.country = leagueProfile(team->get().getLeagueId()).domestic_nationality;
+  inputs.country =
+      leagueProfile(team->get().getLeagueId()).domestic_nationality;
   return inputs;
 }
 
@@ -1180,9 +1179,9 @@ YouthEstimate YouthAcademy::estimate(TeamID viewer, PlayerID player_id) const
   const float sd = judgingSd(viewer);
   // A fixed judgement per player and club: the bias does not change from
   // one day to the next, the ranges follow the player's development.
-  WorldRng rng = WorldRng::stream(gamedata->getWorldSeed(),
-                                  RngDomain::YouthIntake,
-                                  ESTIMATE_SALT | player_id, viewer);
+  WorldRng rng =
+      WorldRng::stream(gamedata->getWorldSeed(), RngDomain::YouthIntake,
+                       ESTIMATE_SALT | player_id, viewer);
   const float current_centre = current + rng.normal(0.0f, 0.25f * sd);
   const float potential_centre = potential + rng.normal(0.0f, 0.5f * sd);
   const float current_half = 0.35f * sd + 1.0f;
@@ -1191,10 +1190,10 @@ YouthEstimate YouthAcademy::estimate(TeamID viewer, PlayerID player_id) const
   { return std::clamp(std::round(value), 1.0f, 99.0f); };
   result.current_low = clampRating(current_centre - current_half);
   result.current_high = clampRating(current_centre + current_half);
-  result.potential_low =
-      std::max(result.current_low, clampRating(potential_centre - potential_half));
-  result.potential_high =
-      std::max(result.current_high, clampRating(potential_centre + potential_half));
+  result.potential_low = std::max(
+      result.current_low, clampRating(potential_centre - potential_half));
+  result.potential_high = std::max(
+      result.current_high, clampRating(potential_centre + potential_half));
   return result;
 }
 
@@ -1257,9 +1256,8 @@ bool YouthAcademy::isHomegrown(PlayerID player_id) const
   if (found == records.end() || found->second.status == YouthStatus::Candidate)
     return false;
   const auto player = gamedata->getPlayer(player_id);
-  return player &&
-         YouthModel::isHomegrown(found->second.joined_age,
-                                 player->get().getAge());
+  return player && YouthModel::isHomegrown(found->second.joined_age,
+                                           player->get().getAge());
 }
 
 UpgradeQuote YouthAcademy::quote(TeamID team_id, AcademyUpgrade kind,
@@ -1367,7 +1365,8 @@ void YouthAcademy::leaveFootball(TeamID team_id, PlayerID player_id)
                               return positioned.player &&
                                      positioned.player->getId() == player_id;
                             });
-    if (selected) club.generateStartingXI(*gamedata, gamedata->getStatsConfig());
+    if (selected)
+      club.generateStartingXI(*gamedata, gamedata->getStatsConfig());
   }
   records.erase(player_id);
   gamedata->removePlayer(player_id);
@@ -1581,8 +1580,7 @@ YouthActionResult YouthAcademy::promoteReserve(TeamID team_id,
   return YouthActionResult::Ok;
 }
 
-YouthActionResult YouthAcademy::reserveToU18(TeamID team_id,
-                                             PlayerID player_id)
+YouthActionResult YouthAcademy::reserveToU18(TeamID team_id, PlayerID player_id)
 {
   const auto found = records.find(player_id);
   const auto player = gamedata->getPlayer(player_id);
@@ -1641,9 +1639,8 @@ void YouthAcademy::fillComputerSeniors(TeamID team_id)
   std::vector<std::pair<double, PlayerID>> ranked;
   for (const auto& [player_id, youth] : records)
   {
-    if (youth.team_id != team_id ||
-        (youth.status != YouthStatus::Reserve &&
-         youth.status != YouthStatus::Squad))
+    if (youth.team_id != team_id || (youth.status != YouthStatus::Reserve &&
+                                     youth.status != YouthStatus::Squad))
       continue;
     const auto player = gamedata->getPlayer(player_id);
     if (!player || player->get().getTeamId() != team_id ||
@@ -1652,12 +1649,9 @@ void YouthAcademy::fillComputerSeniors(TeamID team_id)
       continue;
     ranked.emplace_back(player->get().getOverall(config), player_id);
   }
-  std::ranges::sort(ranked,
-                    [](const auto& a, const auto& b)
-                    {
-                      return a.first != b.first ? a.first > b.first
-                                                : a.second < b.second;
-                    });
+  std::ranges::sort(
+      ranked, [](const auto& a, const auto& b)
+      { return a.first != b.first ? a.first > b.first : a.second < b.second; });
   for (const auto& [overall, player_id] : ranked)
   {
     if (seniors >= RESERVE_SENIOR_FLOOR) break;
@@ -1689,12 +1683,9 @@ void YouthAcademy::fillComputerReserves(TeamID team_id)
     if (const auto player = gamedata->getPlayer(player_id))
       ranked.emplace_back(player->get().getOverall(config), player_id);
   }
-  std::ranges::sort(ranked,
-                    [](const auto& a, const auto& b)
-                    {
-                      return a.first != b.first ? a.first > b.first
-                                                : a.second < b.second;
-                    });
+  std::ranges::sort(
+      ranked, [](const auto& a, const auto& b)
+      { return a.first != b.first ? a.first > b.first : a.second < b.second; });
   // The weakest young players outside the matchday squad who are not ready
   // for it go first, as long as the senior squad keeps its target size.
   const float level = WorldGeneration::teamLevel(team->get().getReputation());
@@ -1747,13 +1738,14 @@ void YouthAcademy::advanceReserves(TeamID managed_team_id,
     const bool managed = team_id == managed_team_id;
     const float level = WorldGeneration::teamLevel(team->get().getReputation());
     // Youngest first: they keep the over-age places of the managed club.
-    std::ranges::sort(squad,
-                      [this](PlayerID a, PlayerID b)
-                      {
-                        const int age_a = gamedata->getPlayer(a)->get().getAge();
-                        const int age_b = gamedata->getPlayer(b)->get().getAge();
-                        return age_a != age_b ? age_a < age_b : a < b;
-                      });
+    std::ranges::sort(
+        squad,
+        [this](PlayerID a, PlayerID b)
+        {
+          const int age_a = gamedata->getPlayer(a)->get().getAge();
+          const int age_b = gamedata->getPlayer(b)->get().getAge();
+          return age_a != age_b ? age_a < age_b : a < b;
+        });
     std::size_t seniors = firstTeamSize(team_id);
     ReserveQuota kept;
     std::vector<PlayerID> leaving;
@@ -1766,12 +1758,12 @@ void YouthAcademy::advanceReserves(TeamID managed_team_id,
       bool stays = true;
       if (managed)
       {
-        stays = YouthModel::reserveEligibility(player.getAge(),
-                                               player.getRole(), kept) ==
-                YouthActionResult::Ok;
+        stays =
+            YouthModel::reserveEligibility(player.getAge(), player.getRole(),
+                                           kept) == YouthActionResult::Ok;
       }
-      else if (over_age || (overall >= level - READY_MARGIN &&
-                            seniors < FIRST_TEAM_LIMIT))
+      else if (over_age ||
+               (overall >= level - READY_MARGIN && seniors < FIRST_TEAM_LIMIT))
       {
         // Computer managers move ready players up and never use the
         // over-age places: an over-age player without room leaves.
@@ -1981,8 +1973,8 @@ void YouthAcademy::runIntake(const GameDateValue& date, TeamID managed_team_id,
       const int room = static_cast<int>(YouthModel::u18SquadLimit(grade)) -
                        u18_sizes[team_id];
       take = static_cast<std::size_t>(std::clamp(
-          std::min(YouthModel::computerSignings(grade, ranked.size()), room),
-          0, YouthModel::SIGN_MAX));
+          std::min(YouthModel::computerSignings(grade, ranked.size()), room), 0,
+          YouthModel::SIGN_MAX));
     }
     if (take == 0) continue;
 
@@ -2016,9 +2008,9 @@ void YouthAcademy::runIntake(const GameDateValue& date, TeamID managed_team_id,
       const auto height = static_cast<std::uint8_t>(std::lround(
           std::clamp(rng.normal(heightMean(profile.role) - age_shrink, 5.5f),
                      155.0f, 205.0f)));
-      const Foot foot =
-          rng.chance(leftSided(profile.role) ? 0.65 : 0.2) ? Foot::Left
-                                                           : Foot::Right;
+      const Foot foot = rng.chance(leftSided(profile.role) ? 0.65 : 0.2)
+                            ? Foot::Left
+                            : Foot::Right;
       Player youngster(gamedata->allocatePlayerId(), team_id, first, last,
                        profile.role, nationality, 0, 0, profile.age,
                        YouthModel::youthContractYears(profile.age), height,
@@ -2118,8 +2110,7 @@ void YouthAcademy::playMatchday(const GameDateValue& date,
   for (const auto& [league_id, league] : gamedata->getLeagues())
     groups.push_back(league.getTeamIDs());
   playRound(date, managed_team_id, YouthStatus::Squad, groups,
-            &AcademyClub::table, managed_results, MATCH_SALT,
-            STAND_IN_OVERALL);
+            &AcademyClub::table, managed_results, MATCH_SALT, STAND_IN_OVERALL);
 }
 
 void YouthAcademy::playReserveMatchday(const GameDateValue& date,
@@ -2131,8 +2122,7 @@ void YouthAcademy::playReserveMatchday(const GameDateValue& date,
   {
     auto& clubs_of_country =
         countries[leagueProfile(league_id).domestic_nationality];
-    clubs_of_country.insert(clubs_of_country.end(),
-                            league.getTeamIDs().begin(),
+    clubs_of_country.insert(clubs_of_country.end(), league.getTeamIDs().begin(),
                             league.getTeamIDs().end());
   }
   std::vector<std::vector<TeamID>> groups;
@@ -2143,8 +2133,8 @@ void YouthAcademy::playReserveMatchday(const GameDateValue& date,
             RESERVE_MATCH_SALT, RESERVE_STAND_IN_OVERALL);
 }
 
-void YouthAcademy::playRound(const GameDateValue& date,
-                             TeamID managed_team_id, YouthStatus status,
+void YouthAcademy::playRound(const GameDateValue& date, TeamID managed_team_id,
+                             YouthStatus status,
                              const std::vector<std::vector<TeamID>>& groups,
                              YouthTableRow AcademyClub::* row_of,
                              std::vector<YouthResult>& results,
@@ -2191,10 +2181,10 @@ void YouthAcademy::playRound(const GameDateValue& date,
                       });
     float total = 0.0f;
     for (std::size_t i = 0; i < 11; ++i)
-      total += i < sheet.players.size()
-                   ? static_cast<float>(
-                         sheet.players[i].second->getOverall(config))
-                   : stand_in;
+      total +=
+          i < sheet.players.size()
+              ? static_cast<float>(sheet.players[i].second->getOverall(config))
+              : stand_in;
     sheet.strength = total / 11.0f;
   }
   const auto sheetOf = [&](TeamID team_id) -> Sheet&
@@ -2206,16 +2196,15 @@ void YouthAcademy::playRound(const GameDateValue& date,
 
   const auto play = [&](TeamID home, TeamID away)
   {
-    WorldRng rng = WorldRng::stream(gamedata->getWorldSeed(),
-                                    RngDomain::YouthIntake,
-                                    salt | static_cast<std::uint32_t>(ordinal),
-                                    home);
+    WorldRng rng =
+        WorldRng::stream(gamedata->getWorldSeed(), RngDomain::YouthIntake,
+                         salt | static_cast<std::uint32_t>(ordinal), home);
     Sheet& home_sheet = sheetOf(home);
     Sheet& away_sheet = sheetOf(away);
     const auto [home_goals, away_goals] = YouthModel::simulateMatch(
         home_sheet.strength, away_sheet.strength, rng);
-    const auto record_side = [&](TeamID team_id, Sheet& sheet, int scored,
-                                 int conceded)
+    const auto record_side =
+        [&](TeamID team_id, Sheet& sheet, int scored, int conceded)
     {
       YouthTableRow& row = clubState(team_id).*row_of;
       ++row.played;
@@ -2238,8 +2227,10 @@ void YouthAcademy::playRound(const GameDateValue& date,
       const bool anyone =
           std::ranges::any_of(weights, [](float w) { return w > 0.0f; });
       for (int goal = 0; goal < scored && anyone; ++goal)
-        ++goals[rng.weightedIndex(std::span<const float>(weights.data(), used))];
-      const float margin = static_cast<float>(std::clamp(scored - conceded, -3, 3));
+        ++goals[rng.weightedIndex(
+            std::span<const float>(weights.data(), used))];
+      const float margin =
+          static_cast<float>(std::clamp(scored - conceded, -3, 3));
       for (std::size_t i = 0; i < used; ++i)
       {
         Player& player = *sheet.players[i].second;
@@ -2253,15 +2244,15 @@ void YouthAcademy::playRound(const GameDateValue& date,
                 0.6f * static_cast<float>(goals[i]) + rng.normal(0.0f, 0.45f),
             4.0f, 9.8f);
         ++youth.appearances;
-        youth.minutes = static_cast<std::uint16_t>(youth.minutes +
-                                                   (i < 11 ? 90 : 25));
+        youth.minutes =
+            static_cast<std::uint16_t>(youth.minutes + (i < 11 ? 90 : 25));
         youth.goals = static_cast<std::uint16_t>(youth.goals + goals[i]);
         youth.rating_total += rating;
       }
       if (team_id == managed_team_id)
       {
-        results.push_back({date, team_id == home ? away : home,
-                           team_id == home, static_cast<std::uint8_t>(scored),
+        results.push_back({date, team_id == home ? away : home, team_id == home,
+                           static_cast<std::uint8_t>(scored),
                            static_cast<std::uint8_t>(conceded)});
       }
     };
@@ -2282,10 +2273,9 @@ void YouthAcademy::playRound(const GameDateValue& date,
     const bool second_half = (round / rounds) % 2 == 1;
     const auto slot = [&](std::int32_t position)
     {
-      return position == 0
-                 ? teams[0]
-                 : teams[static_cast<std::size_t>(
-                       1 + (position - 1 + turn) % rounds)];
+      return position == 0 ? teams[0]
+                           : teams[static_cast<std::size_t>(
+                                 1 + (position - 1 + turn) % rounds)];
     };
     for (std::int32_t i = 0; i < slots / 2; ++i)
     {
@@ -2295,10 +2285,10 @@ void YouthAcademy::playRound(const GameDateValue& date,
       // Each pair meets once per half: a coin decides who hosts the first
       // meeting, the return match swaps.
       const bool first_hosts =
-          (WorldRng::hashUniform(gamedata->getWorldSeed(),
-                                 RngDomain::YouthIntake, salt | season,
-                                 (static_cast<std::uint64_t>(first) << 32) |
-                                     second) < 0.5) != second_half;
+          (WorldRng::hashUniform(
+               gamedata->getWorldSeed(), RngDomain::YouthIntake, salt | season,
+               (static_cast<std::uint64_t>(first) << 32) | second) < 0.5) !=
+          second_half;
       play(first_hosts ? first : second, first_hosts ? second : first);
     }
   }
@@ -2386,8 +2376,8 @@ void YouthAcademy::load(const std::shared_ptr<DatabaseConnection>& db_conn)
                    std::clamp(columnAs<int>(stmt, 1), 1, 100));
                const auto project = columnAs<int>(stmt, 2);
                academy.project =
-                   project >= 0 &&
-                           project <= static_cast<int>(AcademyUpgrade::Recruitment)
+                   project >= 0 && project <= static_cast<int>(
+                                                  AcademyUpgrade::Recruitment)
                        ? static_cast<AcademyUpgrade>(project)
                        : AcademyUpgrade::None;
                academy.project_start_day = columnAs<std::int32_t>(stmt, 3);
@@ -2462,13 +2452,15 @@ void YouthAcademy::load(const std::shared_ptr<DatabaseConnection>& db_conn)
     bootstrap();
 }
 
-void YouthAcademy::save(const std::shared_ptr<DatabaseConnection>& db_conn) const
+void YouthAcademy::save(
+    const std::shared_ptr<DatabaseConnection>& db_conn) const
 {
   const DatabaseConnection& db = *db_conn;
   for (const char* table : {"YouthAcademies", "YouthPlayers", "YouthResults"})
   {
-    sqlite3_exec(db.getRaw(), (std::string("DELETE FROM ") + table + ";").c_str(),
-                 nullptr, nullptr, nullptr);
+    sqlite3_exec(db.getRaw(),
+                 (std::string("DELETE FROM ") + table + ";").c_str(), nullptr,
+                 nullptr, nullptr);
   }
   if (!ready) return;
   insertAll(db,
@@ -2523,12 +2515,13 @@ void YouthAcademy::save(const std::shared_ptr<DatabaseConnection>& db_conn) cons
               sqlite3_bind_int(row, 8, youth.goals);
               sqlite3_bind_double(row, 9, youth.rating_total);
               const std::string progress = encodeProgress(youth.progress);
-              sqlite3_bind_text(row, 10, progress.c_str(), -1, SQLITE_TRANSIENT);
+              sqlite3_bind_text(row, 10, progress.c_str(), -1,
+                                SQLITE_TRANSIENT);
             });
   int seq = 0;
   int squad = 0;
-  const auto bindResult = [&seq, &squad](sqlite3_stmt* row,
-                                         const YouthResult& result)
+  const auto bindResult =
+      [&seq, &squad](sqlite3_stmt* row, const YouthResult& result)
   {
     sqlite3_bind_int(row, 1, seq++);
     sqlite3_bind_int(row, 2, dateToInt(result.date));

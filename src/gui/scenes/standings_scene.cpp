@@ -167,11 +167,11 @@ std::string needSentence(const Standings::RaceNeed& need,
   const int games = need.games_left;
   if (games == 1)
   {
-    const char* key =
-        points <= 1 ? (need.next_at_home ? "STANDINGS_NEED_DRAW_HOME"
-                                         : "STANDINGS_NEED_DRAW_AWAY")
-                    : (need.next_at_home ? "STANDINGS_NEED_WIN_HOME"
-                                         : "STANDINGS_NEED_WIN_AWAY");
+    const char* key = points <= 1
+                          ? (need.next_at_home ? "STANDINGS_NEED_DRAW_HOME"
+                                               : "STANDINGS_NEED_DRAW_AWAY")
+                          : (need.next_at_home ? "STANDINGS_NEED_WIN_HOME"
+                                               : "STANDINGS_NEED_WIN_AWAY");
     return fmt::sprintf(LOC(key), opponent.c_str(), goal);
   }
   if (points >= 3 * games)
@@ -272,8 +272,8 @@ void StandingsScene::refreshPastSeason(uint16_t season)
     if (entry.season != season || entry.competition_id != league_id ||
         entry.competition_type != MatchType::LEAGUE || entry.top_scorer_id == 0)
       continue;
-    const auto player = data ? data->getPlayer(entry.top_scorer_id)
-                             : std::nullopt;
+    const auto player =
+        data ? data->getPlayer(entry.top_scorer_id) : std::nullopt;
     if (!player) continue;
     const auto club = controller.getTeamById(player->get().getTeamId());
     scorers.push_back({entry.top_scorer_id, player->get().getName(),
@@ -295,7 +295,8 @@ void StandingsScene::refreshRace()
   places = Standings::racePlaces(*data, controller.getContinental(), league_id);
   // Before the first round nothing can be decided (and the table is
   // alphabetical).
-  if (std::ranges::none_of(table, [](const auto& row) { return row.played > 0; }))
+  if (std::ranges::none_of(table,
+                           [](const auto& row) { return row.played > 0; }))
     return;
   const Standings::RaceInput input =
       Standings::raceInput(league->get(), game->getCalendar(), *data);
@@ -318,9 +319,8 @@ void StandingsScene::refreshRace()
   std::vector<const Standings::RaceNeed*> shown = {&needs.front()};
   if (needs.front().kind == Standings::RaceNeed::Kind::NEEDS_HELP)
   {
-    const auto own = std::ranges::find(needs,
-                                       Standings::RaceNeed::Kind::IN_HANDS,
-                                       &Standings::RaceNeed::kind);
+    const auto own = std::ranges::find(
+        needs, Standings::RaceNeed::Kind::IN_HANDS, &Standings::RaceNeed::kind);
     if (own != needs.end()) shown.push_back(&*own);
   }
   const auto survival = std::ranges::find(needs, Standings::Race::SURVIVAL,
@@ -465,8 +465,9 @@ void StandingsScene::renderCompetitionSelector()
   if (!showing_cup && !past_seasons.empty())
   {
     // Final tables of earlier seasons, archived when each season ended.
-    const std::string current = past_season ? seasonLabel(*past_season)
-                                            : std::string(LOC("STANDINGS_SEASON_CURRENT"));
+    const std::string current =
+        past_season ? seasonLabel(*past_season)
+                    : std::string(LOC("STANDINGS_SEASON_CURRENT"));
     const float width = 170.0f * Theme::scale();
     UI::sameLineIfFits(width);
     ImGui::SetNextItemWidth(width);
@@ -561,8 +562,8 @@ void StandingsScene::renderTable(float width, float height)
   std::array<UI::Column, 11> columns = standingsColumns();
   const UI::ColumnMask hidden = UI::hiddenColumns(TABLE_KEY, columns);
   for (UI::Column& column : columns) column.label = LOC(column.label);
-  const UI::ColumnMask mask = UI::fitColumns(
-      columns, ImGui::GetContentRegionAvail().x, 120.0f, hidden);
+  const UI::ColumnMask mask =
+      UI::fitColumns(columns, ImGui::GetContentRegionAvail().x, 120.0f, hidden);
   table_mask = mask;
   const size_t continental = past_season ? 0 : places.continental;
   const ImGuiTableFlags flags = ImGuiTableFlags_RowBg |
@@ -584,12 +585,11 @@ void StandingsScene::renderTable(float width, float height)
         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1,
                                Theme::toU32(palette.accent, 0.16f));
       else if (promoted || relegated || qualifying)
-        ImGui::TableSetBgColor(
-            ImGuiTableBgTarget_RowBg1,
-            Theme::toU32(promoted    ? palette.positive
-                         : relegated ? palette.negative
-                                     : palette.info,
-                         0.07f));
+        ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1,
+                               Theme::toU32(promoted    ? palette.positive
+                                            : relegated ? palette.negative
+                                                        : palette.info,
+                                            0.07f));
       ImGui::TableNextColumn();
       ImGui::TextColored(promoted     ? palette.positive
                          : relegated  ? palette.negative

@@ -200,7 +200,8 @@ TEST(LabReport, JsonRoundTripPreservesTheReport)
   report.ms_per_match = 15.0;
   report.parameters["pairing"] = "fixed | 65 v 65";
   report.rows = Lab::evaluateTargets(metrics, MATCH_SCOPES);
-  report.tables.push_back({"Top scorelines", {"Score", "Share"},
+  report.tables.push_back({"Top scorelines",
+                           {"Score", "Share"},
                            {{"1|1", "12.0%"}, {"1-0", "10.0%"}}});
   report.notes.push_back("note");
 
@@ -232,12 +233,15 @@ TEST(LabRunner, ReportSampleCountsLateGoalsAndTiming)
   report.away_goals = 1;
   report.home_stats.shots = 10;
   report.away_stats.shots = 8;
-  report.events = {
-      {.minute = 10, .kind = MatchEventKind::GOAL, .home = true},
-      {.minute = 47, .added_minute = 2, .kind = MatchEventKind::GOAL,
-       .home = false},
-      {.minute = 92, .added_minute = 2, .kind = MatchEventKind::OWN_GOAL,
-       .home = false}};
+  report.events = {{.minute = 10, .kind = MatchEventKind::GOAL, .home = true},
+                   {.minute = 47,
+                    .added_minute = 2,
+                    .kind = MatchEventKind::GOAL,
+                    .home = false},
+                   {.minute = 92,
+                    .added_minute = 2,
+                    .kind = MatchEventKind::OWN_GOAL,
+                    .home = false}};
   const Lab::MatchSample sample = Lab::sampleFromReport(report);
   EXPECT_FALSE(sample.detailed);
   EXPECT_EQ(sample.totalGoals(), 3);

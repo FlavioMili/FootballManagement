@@ -118,10 +118,7 @@ GameDateValue on(std::uint16_t year, MonthDay day)
 }
 }  // namespace
 
-std::span<const CountryRules> TransferWindows::countries()
-{
-  return COUNTRIES;
-}
+std::span<const CountryRules> TransferWindows::countries() { return COUNTRIES; }
 
 const CountryRules& TransferWindows::rulesFor(LeagueID league)
 {
@@ -193,8 +190,8 @@ bool TransferWindows::canSignFreeAgent(LeagueID league,
     return true;
   // Days since the latest close before today.
   const int today = key(date);
-  GameDateValue closed = on(static_cast<std::uint16_t>(date.year - 1),
-                            rules.mid_year.closes);
+  GameDateValue closed =
+      on(static_cast<std::uint16_t>(date.year - 1), rules.mid_year.closes);
   if (today > key(rules.mid_year.closes))
     closed = on(date.year, rules.mid_year.closes);
   else if (today > key(rules.start_of_year.closes))

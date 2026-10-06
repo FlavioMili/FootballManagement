@@ -74,10 +74,7 @@ const std::string& Team::getName() const { return name; }
 
 const std::vector<PlayerID>& Team::getPlayerIDs() const { return player_ids; }
 
-const std::vector<PlayerID>& Team::getAcademyIDs() const
-{
-  return academy_ids;
-}
+const std::vector<PlayerID>& Team::getAcademyIDs() const { return academy_ids; }
 
 void Team::addPlayerID(PlayerID player_id)
 {

@@ -53,8 +53,8 @@
 #include "backends/imgui_impl_sdlrenderer3.h"
 #include "controller/game_controller.h"
 #include "database/database_connection.h"
-#include "database/save_manager.h"
 #include "database/gamedata.h"
+#include "database/save_manager.h"
 #include "global/global.h"
 #include "global/language_manager.h"
 #include "global/logger.h"
@@ -222,7 +222,8 @@ std::vector<std::string> checkWorld(const GameController& controller)
   std::vector<std::string> problems;
   const auto data = controller.getGameData();
   std::unordered_set<const Player*> alive;
-  for (const auto& player : data->getPlayersVector()) alive.insert(&player.get());
+  for (const auto& player : data->getPlayersVector())
+    alive.insert(&player.get());
   std::unordered_map<PlayerID, TeamID> owner;
   const auto managed = controller.getManagedTeam();
   const TeamID managedId = managed ? managed->get().getId() : 0;
@@ -236,9 +237,8 @@ std::vector<std::string> checkWorld(const GameController& controller)
     for (const PlayerID playerId : team.getAcademyIDs())
       if (const auto player = data->getPlayer(playerId);
           player && !player->get().isAcademyPlayer())
-        problems.push_back(
-            std::format("club {} lists senior {} in its academy", teamId,
-                        playerId));
+        problems.push_back(std::format("club {} lists senior {} in its academy",
+                                       teamId, playerId));
     for (const PlayerID playerId : members)
     {
       const auto player = data->getPlayer(playerId);
@@ -256,7 +256,8 @@ std::vector<std::string> checkWorld(const GameController& controller)
     std::vector<const Player*> selected{lineup.getGoalkeeper()};
     for (const auto& positioned : lineup.getOutfieldPlayers())
       selected.push_back(positioned.player);
-    for (const Player* reserve : lineup.getReserves()) selected.push_back(reserve);
+    for (const Player* reserve : lineup.getReserves())
+      selected.push_back(reserve);
     for (const Player* player : selected)
     {
       if (player == nullptr) continue;
@@ -399,9 +400,8 @@ class Driver
   {
     ImGuiID id = 0;
     for (ImGuiWindow* window : GImGui->Windows)
-      if (window->Active &&
-          std::string_view(window->Name).find("##topbar") !=
-              std::string_view::npos)
+      if (window->Active && std::string_view(window->Name).find("##topbar") !=
+                                std::string_view::npos)
         id = window->GetID("###shell_continue");
     if (id == 0) return std::nullopt;
     const ImVec2 display = ImGui::GetIO().DisplaySize;
@@ -450,7 +450,8 @@ class Driver
   }
 };
 
-// ---- Fixture -------------------------------------------------------------------
+// ---- Fixture
+// -------------------------------------------------------------------
 
 /**
  * One generated world per process (slot 1); every test plays a copy in
@@ -559,7 +560,8 @@ class Adversarial : public ::testing::Test
   std::unique_ptr<Driver> driver;
 };
 
-// ---- Continue ----------------------------------------------------------------
+// ---- Continue
+// ----------------------------------------------------------------
 
 /** Three clicks on Continue in consecutive frames are one Continue. */
 TEST_F(Adversarial, TripleClickContinueIsOneContinue)
@@ -657,8 +659,8 @@ TEST_F(Adversarial, InputDuringContinueIsIgnored)
       static_cast<int>(driver->activeId()), view->getOverlayDepth(),
       ImGui::IsPopupOpen(
           "", ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel),
-      GImGui->ActiveId, ImGui::GetIO().WantTextInput,
-      ImGui::GetIO().NavVisible, mashes);
+      GImGui->ActiveId, ImGui::GetIO().WantTextInput, ImGui::GetIO().NavVisible,
+      mashes);
   driver->save();
   driver->frames(2);
   EXPECT_EQ(savedDate(WORK_SLOT), controller->getCurrentDate().toString())
@@ -733,7 +735,8 @@ TEST_F(Adversarial, LoadThenImmediatelyContinue)
   expectWorldConsistent("load then continue");
 }
 
-// ---- Shutdown ------------------------------------------------------------------
+// ---- Shutdown
+// ------------------------------------------------------------------
 
 /**
  * Aborts the process when its scope does not end within @p limit: a hang
@@ -857,7 +860,8 @@ TEST_F(Adversarial, ClosingDuringContinueWaitsForTheDaysInFlight)
   controller.reset();
 }
 
-// ---- Transfers -----------------------------------------------------------------
+// ---- Transfers
+// -----------------------------------------------------------------
 
 /** An affordable player of another club whose fee is accepted. */
 std::optional<PlayerID> agreeFee(GameController& controller, TeamID managed)
@@ -906,7 +910,8 @@ TEST_F(Adversarial, OfferForPlayerWhoRetiresMeanwhile)
 {
   const auto target = agreeFee(*controller, managed_id);
   if (!target) GTEST_SKIP() << "no affordable target in this world";
-  const TeamID seller = controller->getGameData()->getPlayer(*target)->get().getTeamId();
+  const TeamID seller =
+      controller->getGameData()->getPlayer(*target)->get().getTeamId();
   // WorldSimulation::retirePlayers: out of the squad, lineups rebuilt,
   // then erased.
   auto data = controller->getGameData();
@@ -1019,12 +1024,12 @@ TEST_F(Adversarial, ZeroCashThenSignFreeAgent)
       *freeAgent, demandedTerms(*controller, *freeAgent));
   EXPECT_GE(club().getFinances().getBalance(), 0)
       << "signing a free agent with no cash pushed the balance negative";
-  if (talk.completed)
-    EXPECT_TRUE(talk.over_budget == false);
+  if (talk.completed) EXPECT_TRUE(talk.over_budget == false);
   expectWorldConsistent("after signing with no cash");
 }
 
-// ---- Squad ---------------------------------------------------------------------
+// ---- Squad
+// ---------------------------------------------------------------------
 
 /** Releasing a starter must drop him from the lineup; the match still plays. */
 TEST_F(Adversarial, ReleasePlayerInLineup)
@@ -1202,14 +1207,16 @@ TEST_F(Adversarial, AllPlayersInjuredOnMatchDay)
   expectWorldConsistent("all injured");
   EXPECT_NE(controller->getCurrentDate().toString(), matchDay)
       << "with every player injured the career is stuck on " << matchDay;
-  EXPECT_TRUE(controller->getMatchReport(GameDateValue::fromString(matchDay),
-                                         fixture->getHomeTeamId(),
-                                         fixture->getAwayTeamId())
+  EXPECT_TRUE(controller
+                  ->getMatchReport(GameDateValue::fromString(matchDay),
+                                   fixture->getHomeTeamId(),
+                                   fixture->getAwayTeamId())
                   .has_value())
       << "the managed match was not played";
 }
 
-// ---- Match -------------------------------------------------------------------
+// ---- Match
+// -------------------------------------------------------------------
 
 /**
  * Finish match returns to the window at once: the rest of the match day
@@ -1361,7 +1368,8 @@ TEST_F(Adversarial, ResizeAndMinimizeDuringMatch)
   expectWorldConsistent("after resizing a match");
 }
 
-// ---- Persistence -------------------------------------------------------------
+// ---- Persistence
+// -------------------------------------------------------------
 
 /**
  * A save from before the scouting/staff/training/transfer-deal/world tables
@@ -1377,12 +1385,13 @@ TEST_F(Adversarial, OldSchemaSaveLoadsAndContinues)
     ASSERT_EQ(sqlite3_open(RuntimePaths::savePath(WORK_SLOT).c_str(), &db),
               SQLITE_OK);
     for (const char* table :
-         {"ScoutingState", "ScoutingKnowledge", "ScoutAssignments",
-          "ScoutReports", "RecruitmentFocus", "ScoutShortlist", "Staff",
-          "TeamTraining", "PlayerTraining", "TransferHistory",
-          "TransferObligations", "Loans", "PreContracts", "PlayerMarketFlags",
-          "TransferOffers", "InboxMessages", "BoardState", "WorldState",
-          "SeasonHistory", "PlayerDiscipline", "PlayerSeasonStats",
+         {"ScoutingState",   "ScoutingKnowledge",   "ScoutAssignments",
+          "ScoutReports",    "RecruitmentFocus",    "ScoutShortlist",
+          "Staff",           "TeamTraining",        "PlayerTraining",
+          "TransferHistory", "TransferObligations", "Loans",
+          "PreContracts",    "PlayerMarketFlags",   "TransferOffers",
+          "InboxMessages",   "BoardState",          "WorldState",
+          "SeasonHistory",   "PlayerDiscipline",    "PlayerSeasonStats",
           "MatchReports"})
     {
       const std::string sql = std::format("DROP TABLE IF EXISTS {};", table);
@@ -1492,11 +1501,11 @@ TEST_F(Adversarial, SeasonRolloverWithOpenDeals)
       {
         const auto kind = controller->getContractTalkKind(player.get().getId());
         if (kind != TransferNegotiation::ContractKind::PreContract) continue;
-        preContract =
-            controller
-                ->proposeContract(player.get().getId(),
-                                  demandedTerms(*controller, player.get().getId()))
-                .completed;
+        preContract = controller
+                          ->proposeContract(
+                              player.get().getId(),
+                              demandedTerms(*controller, player.get().getId()))
+                          .completed;
         if (preContract) break;
       }
     }
@@ -1561,11 +1570,13 @@ TEST_F(Adversarial, SameSaveSameMonth)
       line += first[index++] == '\n';
     ADD_FAILURE() << "two runs of the same month differ from line " << line
                   << ":\n  " << first.substr(first.rfind('\n', index) + 1, 120)
-                  << "\n  " << second.substr(second.rfind('\n', index) + 1, 120);
+                  << "\n  "
+                  << second.substr(second.rfind('\n', index) + 1, 120);
   }
 }
 
-// ---- Settings and language -------------------------------------------------------
+// ---- Settings and language
+// -------------------------------------------------------
 
 /** Escape closes every dialog, as it does the confirmation dialogs. */
 TEST_F(Adversarial, EscapeClosesEveryDialog)
@@ -1722,7 +1733,8 @@ TEST_F(Adversarial, CorruptSettingsRecovery)
         << "absurd resolution accepted from the settings file";
     EXPECT_LE(settings.resolution_height, 16384);
     EXPECT_GE(settings.fps_limit, 15);
-    EXPECT_LE(settings.theme_preset, static_cast<int>(Theme::Preset::COUNT) - 1);
+    EXPECT_LE(settings.theme_preset,
+              static_cast<int>(Theme::Preset::COUNT) - 1);
     EXPECT_TRUE(settings.ui_scale == 0.0f ||
                 (settings.ui_scale >= 0.75f && settings.ui_scale <= 2.0f));
     EXPECT_STRNE(LOC("NAV_HOME"), "NAV_HOME")
@@ -1748,7 +1760,8 @@ TEST_F(Adversarial, CorruptSettingsRecovery)
   EXPECT_EQ(local.imgui_errors, 0);
 }
 
-// ---- HiDPI -------------------------------------------------------------------
+// ---- HiDPI
+// -------------------------------------------------------------------
 
 /**
  * On a scale-2 output (Hyprland/Wayland, Retina) the framebuffer has twice
@@ -1788,8 +1801,8 @@ TEST_F(Adversarial, HiDpiUiFillsTheFramebuffer)
     SDL_SetRenderTarget(renderer, nullptr);
     return pixels;
   };
-  const auto clearShare = [](SDL_Surface* surface, int x0, int y0, int x1,
-                             int y1)
+  const auto clearShare =
+      [](SDL_Surface* surface, int x0, int y0, int x1, int y1)
   {
     int clear = 0;
     int total = 0;

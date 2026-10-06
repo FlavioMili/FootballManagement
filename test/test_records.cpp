@@ -113,22 +113,22 @@ TEST(Records, BookUpdatesFromReportsAndSettlesSeasons)
   const auto& clubs = controller->getLeagueById(league)->get().getTeamIDs();
   const TeamID a = clubs[0];
   const TeamID b = clubs[1];
-  const PlayerID scorer = controller->getPlayersForTeam(a).front().get().getId();
+  const PlayerID scorer =
+      controller->getPlayersForTeam(a).front().get().getId();
 
   RecordBook book;
-  MatchReport opener = match(GameDateValue(2025, 8, 16), a, b, league, 3, 0,
-                             21'000);
+  MatchReport opener =
+      match(GameDateValue(2025, 8, 16), a, b, league, 3, 0, 21'000);
   opener.players.push_back({scorer, a, true, 90, 2, 0, 0, 0, 7.5f});
   book.onMatchPlayed(*gamedata, opener);
   // Same margin later: the earlier win stays the record.
-  book.onMatchPlayed(*gamedata, match(GameDateValue(2025, 8, 23), b, a, league,
-                                      0, 3, 19'000));
-  book.onMatchPlayed(*gamedata, match(GameDateValue(2025, 9, 2), a, b, league,
-                                      2, 2, 25'000));
+  book.onMatchPlayed(
+      *gamedata, match(GameDateValue(2025, 8, 23), b, a, league, 0, 3, 19'000));
+  book.onMatchPlayed(
+      *gamedata, match(GameDateValue(2025, 9, 2), a, b, league, 2, 2, 25'000));
   // Friendlies never count.
-  book.onMatchPlayed(*gamedata,
-                     match(GameDateValue(2025, 7, 20), a, b, league, 9, 0,
-                           40'000, MatchType::FRIENDLY));
+  book.onMatchPlayed(*gamedata, match(GameDateValue(2025, 7, 20), a, b, league,
+                                      9, 0, 40'000, MatchType::FRIENDLY));
 
   const auto records_a = book.clubRecords(a);
   const RecordEntry* win = find(records_a, RecordKind::BiggestWin);
@@ -137,10 +137,12 @@ TEST(Records, BookUpdatesFromReportsAndSettlesSeasons)
   EXPECT_EQ(win->date, GameDateValue(2025, 8, 16));
   EXPECT_EQ(find(records_a, RecordKind::HighestScoringMatch)->value, 4);
   EXPECT_EQ(find(records_a, RecordKind::HighestAttendance)->value, 25'000);
-  const RecordEntry* defeat = find(book.clubRecords(b), RecordKind::BiggestDefeat);
+  const RecordEntry* defeat =
+      find(book.clubRecords(b), RecordKind::BiggestDefeat);
   ASSERT_NE(defeat, nullptr);
   EXPECT_EQ(defeat->value, 3);
-  EXPECT_EQ(find(book.leagueRecords(league), RecordKind::BiggestWin)->team_id, a);
+  EXPECT_EQ(find(book.leagueRecords(league), RecordKind::BiggestWin)->team_id,
+            a);
 
   const auto table = book.allTimeTable(league);
   ASSERT_EQ(table.size(), 2u);
@@ -169,7 +171,8 @@ TEST(Records, BookUpdatesFromReportsAndSettlesSeasons)
   book.closeSeason(*gamedata, 2025);
   EXPECT_EQ(find(book.clubRecords(a), RecordKind::MostGoalsSeason)->value, 8);
   EXPECT_EQ(find(book.clubRecords(a), RecordKind::MostPointsSeason)->value, 7);
-  const RecordEntry* top = find(book.clubRecords(a), RecordKind::TopScorerSeason);
+  const RecordEntry* top =
+      find(book.clubRecords(a), RecordKind::TopScorerSeason);
   ASSERT_NE(top, nullptr);
   EXPECT_EQ(top->player_id, scorer);
   EXPECT_EQ(top->value, 2);
@@ -186,9 +189,9 @@ TEST(Records, CareerBookRoundTripsAndRebuildsOldSaves)
     controller->advanceDay();
   const auto records = controller->getClubRecords(managed);
   ASSERT_FALSE(records.empty());
-  EXPECT_NE(find(controller->getLeagueRecords(league),
-                 RecordKind::HighestAttendance),
-            nullptr);
+  EXPECT_NE(
+      find(controller->getLeagueRecords(league), RecordKind::HighestAttendance),
+      nullptr);
   const auto table = controller->getAllTimeTable(league);
   ASSERT_EQ(table.size(),
             controller->getLeagueById(league)->get().getTeamIDs().size());
@@ -216,8 +219,9 @@ TEST(Records, CareerBookRoundTripsAndRebuildsOldSaves)
 
   // A save from before the records book: rebuilt from the stored reports.
   sqlite3* db = nullptr;
-  ASSERT_EQ(sqlite3_open(RuntimePaths::savePath(slot.slot).string().c_str(), &db),
-            SQLITE_OK);
+  ASSERT_EQ(
+      sqlite3_open(RuntimePaths::savePath(slot.slot).string().c_str(), &db),
+      SQLITE_OK);
   for (const char* table_name :
        {"RecordMeta", "RecordEntries", "ClubPlayerTotals", "AllTimeTable",
         "RecordSeason", "RecordSeasonScorers"})

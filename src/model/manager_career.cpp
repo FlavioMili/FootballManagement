@@ -1589,12 +1589,11 @@ bool ManagerCareer::onSeasonEnd(const GameDateValue& date,
     for (const TeamID other :
          league ? league->get().getTeamIDs() : std::vector<TeamID>{})
       if (clubReputation(other) > team->get().getReputation()) ++expected;
-    const float chance =
-        std::min(0.9f, seasonEndDismissalChance(
-                           positions(manager.team_id), expected, league_size,
-                           manager.confidence,
-                           visionOf(manager.team_id).owner) *
-                           leagueTurnover(*gamedata, manager.team_id));
+    const float chance = std::min(
+        0.9f, seasonEndDismissalChance(positions(manager.team_id), expected,
+                                       league_size, manager.confidence,
+                                       visionOf(manager.team_id).owner) *
+                  leagueTurnover(*gamedata, manager.team_id));
     if (uniform(*gamedata, dayOrdinal(date), mixHash(manager.team_id, 15)) <
         static_cast<double>(chance))
       dismissAi(manager, date, inbox, managed_team_id);

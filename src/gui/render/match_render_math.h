@@ -208,10 +208,8 @@ struct Projection
   /** World-space direction (not normalised) of the ray through a pixel. */
   Vec3 rayThrough(float pixelX, float pixelY) const
   {
-    const float right =
-        (pixelX - (rect.x + rect.width * 0.5f)) / focalPixels;
-    const float upward =
-        ((rect.y + rect.height * 0.5f) - pixelY) / focalPixels;
+    const float right = (pixelX - (rect.x + rect.width * 0.5f)) / focalPixels;
+    const float upward = ((rect.y + rect.height * 0.5f) - pixelY) / focalPixels;
     return forward + side * right + up * upward;
   }
 
@@ -341,19 +339,30 @@ class ShirtNumbers
   {
     switch (role)
     {
-      case PlayerRole::GK: return {1, 0, 0};
-      case PlayerRole::RB: return {2, 3, 0};
-      case PlayerRole::LB: return {3, 2, 0};
-      case PlayerRole::CB: return {4, 5, 6};
-      case PlayerRole::CDM: return {6, 4, 8};
-      case PlayerRole::CM: return {8, 6, 10};
-      case PlayerRole::CAM: return {10, 8, 7};
+      case PlayerRole::GK:
+        return {1, 0, 0};
+      case PlayerRole::RB:
+        return {2, 3, 0};
+      case PlayerRole::LB:
+        return {3, 2, 0};
+      case PlayerRole::CB:
+        return {4, 5, 6};
+      case PlayerRole::CDM:
+        return {6, 4, 8};
+      case PlayerRole::CM:
+        return {8, 6, 10};
+      case PlayerRole::CAM:
+        return {10, 8, 7};
       case PlayerRole::RM:
-      case PlayerRole::RW: return {7, 11, 0};
+      case PlayerRole::RW:
+        return {7, 11, 0};
       case PlayerRole::LM:
-      case PlayerRole::LW: return {11, 7, 0};
-      case PlayerRole::ST: return {9, 10, 11};
-      case PlayerRole::UNKNOWN: break;
+      case PlayerRole::LW:
+        return {11, 7, 0};
+      case PlayerRole::ST:
+        return {9, 10, 11};
+      case PlayerRole::UNKNOWN:
+        break;
     }
     return {0, 0, 0};
   }

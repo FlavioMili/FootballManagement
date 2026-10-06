@@ -158,8 +158,8 @@ void drawPitchBase(ImDrawList* drawList, ImVec2 min, ImVec2 max)
   const float height = max.y - min.y;
   drawList->AddLine(ImVec2(midX, min.y), ImVec2(midX, max.y), line,
                     1.2f * scale);
-  drawList->AddCircle(ImVec2(midX, min.y + height * 0.5f), height * 0.16f,
-                      line, 32, 1.2f * scale);
+  drawList->AddCircle(ImVec2(midX, min.y + height * 0.5f), height * 0.16f, line,
+                      32, 1.2f * scale);
   const float width = max.x - min.x;
   for (const bool left : {true, false})
   {
@@ -484,9 +484,9 @@ void StrategyScene::renderShapeEditor(const Lineup& lineup, float width)
         ImGui::IsMouseDragging(ImGuiMouseButton_Left, 1.0f))
     {
       const ImVec2 mouse = ImGui::GetIO().MousePos;
-      const Vector2F wanted{std::clamp((mouse.x - min.x) / size.x, 0.02f, 0.98f),
-                            std::clamp((mouse.y - min.y) / size.y, 0.03f,
-                                       0.97f)};
+      const Vector2F wanted{
+          std::clamp((mouse.x - min.x) / size.x, 0.02f, 0.98f),
+          std::clamp((mouse.y - min.y) / size.y, 0.03f, 0.97f)};
       const Vector2F shift = roleShift(instruction);
       instruction.possessionOffset = {
           wanted.x - instruction.anchor.x - shift.x,
@@ -495,8 +495,7 @@ void StrategyScene::renderShapeEditor(const Lineup& lineup, float width)
       spot = toScreen(possessionSpot(instruction));
     }
     if (ImGui::IsItemDeactivated()) dragging_slot = -1;
-    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort) &&
-        dragging_slot < 0)
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort) && dragging_slot < 0)
       ImGui::SetTooltip(
           "%s\n%s  ·  %s\n%s", positioned.player->getName().c_str(),
           LOC(Tactics::roleKey(instruction.role)),
@@ -506,10 +505,10 @@ void StrategyScene::renderShapeEditor(const Lineup& lineup, float width)
     drawList->AddCircle(base, radius * 0.7f, ring, 0, 1.2f * scale);
     drawList->AddLine(base, spot, link, 1.5f * scale);
     drawList->AddCircleFilled(spot, radius, accent);
-    drawList->AddCircle(spot, radius,
-                        slot == selected_slot ? selection
-                                              : IM_COL32(255, 255, 255, 220),
-                        0, (slot == selected_slot ? 2.5f : 1.2f) * scale);
+    drawList->AddCircle(
+        spot, radius,
+        slot == selected_slot ? selection : IM_COL32(255, 255, 255, 220), 0,
+        (slot == selected_slot ? 2.5f : 1.2f) * scale);
     const std::string number = std::to_string(slot + 1);
     const ImVec2 textSize = ImGui::CalcTextSize(number.c_str());
     drawList->AddText(
@@ -522,16 +521,16 @@ void StrategyScene::renderShapeEditor(const Lineup& lineup, float width)
   {
     const ImVec2 keeper = toScreen({LINEUP_GOALKEEPER_X, 0.5f});
     ImGui::SetCursorScreenPos(ImVec2(keeper.x - radius, keeper.y - radius));
-    if (ImGui::InvisibleButton("##keeper", ImVec2(radius * 2.0f, radius * 2.0f)))
+    if (ImGui::InvisibleButton("##keeper",
+                               ImVec2(radius * 2.0f, radius * 2.0f)))
       selected_slot = KEEPER_SLOT;
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
       ImGui::SetTooltip("%s", lineup.getGoalkeeper()->getName().c_str());
     drawList->AddCircleFilled(keeper, radius, Theme::toU32(palette.raised));
-    drawList->AddCircle(keeper, radius,
-                        selected_slot == KEEPER_SLOT
-                            ? selection
-                            : IM_COL32(255, 255, 255, 220),
-                        0, (selected_slot == KEEPER_SLOT ? 2.5f : 1.2f) * scale);
+    drawList->AddCircle(
+        keeper, radius,
+        selected_slot == KEEPER_SLOT ? selection : IM_COL32(255, 255, 255, 220),
+        0, (selected_slot == KEEPER_SLOT ? 2.5f : 1.2f) * scale);
   }
   ImGui::SetCursorScreenPos(min);
   ImGui::Dummy(size);
@@ -584,7 +583,8 @@ void StrategyScene::renderSlotDetails(const Lineup& lineup)
   const Player* player =
       keeper ? lineup.getGoalkeeper()
       : selected_slot >= 0 &&
-              selected_slot < static_cast<int>(lineup.getOutfieldPlayers().size())
+              selected_slot <
+                  static_cast<int>(lineup.getOutfieldPlayers().size())
           ? lineup.getOutfieldPlayers()[static_cast<std::size_t>(selected_slot)]
                 .player
           : nullptr;
@@ -598,7 +598,8 @@ void StrategyScene::renderSlotDetails(const Lineup& lineup)
       keeper ? SlotInstruction{} : slotAt(lineup, selected_slot);
   const RoleFamily family = keeper ? RoleFamily::Goalkeeper
                                    : Tactics::familyForSlot(instruction.anchor);
-  const TacticalRole role = keeper ? strategy->getKeeperRole() : instruction.role;
+  const TacticalRole role =
+      keeper ? strategy->getKeeperRole() : instruction.role;
 
   UI::sectionLabel(LOC(Tactics::familyKey(family)));
   ImGui::TextUnformatted(
@@ -607,8 +608,7 @@ void StrategyScene::renderSlotDetails(const Lineup& lineup)
                    .c_str());
 
   // Role choice: one button per role of the position group.
-  const float right =
-      ImGui::GetCursorScreenPos().x + ImGui::CalcItemWidth();
+  const float right = ImGui::GetCursorScreenPos().x + ImGui::CalcItemWidth();
   bool first = true;
   for (const TacticalRole option : Tactics::rolesFor(family))
   {
@@ -691,9 +691,8 @@ void StrategyScene::renderSlotList(const Lineup& lineup)
     {
       ImGui::GetWindowDrawList()->AddText(
           ImVec2(rowMax.x - detailWidth,
-                 rowMin.y + (rowMax.y - rowMin.y -
-                             ImGui::GetTextLineHeight()) *
-                                0.5f),
+                 rowMin.y +
+                     (rowMax.y - rowMin.y - ImGui::GetTextLineHeight()) * 0.5f),
           Theme::toU32(palette.muted), detail.c_str());
     }
     else if (ImGui::IsItemHovered())
@@ -738,8 +737,8 @@ void StrategyScene::setDuty(const Lineup& lineup, RoleDuty duty)
 
 void StrategyScene::applyShape(const Lineup& lineup, PossessionShape shape)
 {
-  for (int slot = 0; slot < static_cast<int>(lineup.getOutfieldPlayers().size());
-       ++slot)
+  for (int slot = 0;
+       slot < static_cast<int>(lineup.getOutfieldPlayers().size()); ++slot)
   {
     SlotInstruction instruction = slotAt(lineup, slot);
     instruction.possessionOffset =

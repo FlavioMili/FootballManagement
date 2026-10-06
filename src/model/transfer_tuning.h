@@ -421,9 +421,9 @@ struct TransferTuning final
     /** A new world starts on 1 July, the day after the summer's contract
      * expiries: of every club's players outside its matchday squad (rank
      * OPENING_EXPIRY_MIN_RANK and beyond, aged OPENING_EXPIRY_MIN_AGE or
-     * more, goalkeepers apart) this share has just become a free agent. Most summer moves are
-     * out-of-contract players changing clubs (FIFA: ~2/3 of men's
-     * professional transfers carry no fee). [S/P] */
+     * more, goalkeepers apart) this share has just become a free agent. Most
+     * summer moves are out-of-contract players changing clubs (FIFA: ~2/3 of
+     * men's professional transfers carry no fee). [S/P] */
     static constexpr std::size_t OPENING_EXPIRY_MIN_RANK = 18;
     static constexpr int OPENING_EXPIRY_MIN_AGE = 21;
     static constexpr double OPENING_EXPIRY_SHARE = 0.5;

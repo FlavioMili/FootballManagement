@@ -539,8 +539,7 @@ void GameData::addPlayer(PlayerID id, const Player& player)
   {
     _playersVec.push_back(it->second);
   }
-  (player.isAcademyPlayer() ? _teamAcademies
-                            : _teamPlayers)[player.getTeamId()]
+  (player.isAcademyPlayer() ? _teamAcademies : _teamPlayers)[player.getTeamId()]
       .push_back(it->second);
   if (!player.isAcademyPlayer() && player.getSquadNumber() == 0)
     assignSquadNumbers(player.getTeamId());
@@ -643,8 +642,8 @@ void GameData::setAcademyMember(PlayerID id, bool academy)
   player.setAcademyPlayer(academy);
   const TeamID team_id = player.getTeamId();
   auto& from = (academy ? _teamPlayers : _teamAcademies)[team_id];
-  if (std::erase_if(from, [id](const auto& ref)
-                    { return ref.get().getId() == id; }) > 0)
+  if (std::erase_if(
+          from, [id](const auto& ref) { return ref.get().getId() == id; }) > 0)
     (academy ? _teamAcademies : _teamPlayers)[team_id].push_back(player);
   if (const auto team = _teams.find(team_id); team != _teams.end())
     team->second.setAcademyMember(id, academy);
@@ -699,7 +698,8 @@ void GameData::transferPlayer(PlayerID id, TeamID new_team_id)
   // The number he wore stays his wish; a teammate may already wear it.
   const auto& squad = _teamPlayers[new_team_id];
   const std::uint8_t number = it->second.getSquadNumber();
-  if (number == 0 || std::ranges::any_of(squad, [&](const auto& ref)
+  if (number == 0 || std::ranges::any_of(squad,
+                                         [&](const auto& ref)
                                          {
                                            const Player& other = ref.get();
                                            return other.getId() != id &&

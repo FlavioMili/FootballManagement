@@ -394,9 +394,8 @@ TEST(ManagerCareerMarket, TopFlightChangesMatchRealRates)
         if (season >= WARMUP_SEASONS)
         {
           ++changes;
-          ++changes_by_league[controller->getTeamById(team_id)
-                                  ->get()
-                                  .getLeagueId()];
+          ++changes_by_league
+              [controller->getTeamById(team_id)->get().getLeagueId()];
           tenures.push_back(dayOrdinal(date) - dayOrdinal(before.appointed));
         }
       }
@@ -422,10 +421,11 @@ TEST(ManagerCareerMarket, TopFlightChangesMatchRealRates)
   // almost every season, MLS clubs about one season in three.
   constexpr LeagueID BRAZIL = 11;
   constexpr LeagueID USA = 7;
-  std::printf("[calibration] coach changes per club-season: Brazil %.2f, "
-              "MLS %.2f\n",
-              changes_by_league[BRAZIL] / measured_seasons / 20.0,
-              changes_by_league[USA] / measured_seasons / 20.0);
+  std::printf(
+      "[calibration] coach changes per club-season: Brazil %.2f, "
+      "MLS %.2f\n",
+      changes_by_league[BRAZIL] / measured_seasons / 20.0,
+      changes_by_league[USA] / measured_seasons / 20.0);
   EXPECT_GT(changes_by_league[BRAZIL], 2 * changes_by_league[USA]);
   EXPECT_LT(median_years, 1.3);
   EXPECT_LT(micros_per_day, 2000.0) << "Continue must stay fast";

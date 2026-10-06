@@ -19,8 +19,8 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <stdexcept>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -110,9 +110,9 @@ Arguments parseArguments(int argc, char** argv)
   static constexpr std::array<std::string_view, 4> FLAGS = {
       "--spread", "--reload", "--help", "-h"};
   static constexpr std::array<std::string_view, 13> OPTIONS = {
-      "--n",          "--seed",       "--home-rating", "--away-rating",
-      "--rating",     "--rating-min", "--rating-max",  "--threads",
-      "--out-dir",    "--leagues",    "--seasons",     "--max-days",
+      "--n",       "--seed",       "--home-rating", "--away-rating",
+      "--rating",  "--rating-min", "--rating-max",  "--threads",
+      "--out-dir", "--leagues",    "--seasons",     "--max-days",
       "--fidelity"};
   Arguments arguments;
   if (argc < 2) throw UsageError("missing mode");
@@ -187,10 +187,10 @@ std::filesystem::path makeTempDirectory(const std::string& prefix)
     throw std::runtime_error("cannot create a scratch directory");
   return pattern;
 #else
-  const auto path = std::filesystem::temp_directory_path() /
-                    std::format("{}{}", prefix, std::chrono::steady_clock::now()
-                                                    .time_since_epoch()
-                                                    .count());
+  const auto path =
+      std::filesystem::temp_directory_path() /
+      std::format("{}{}", prefix,
+                  std::chrono::steady_clock::now().time_since_epoch().count());
   std::filesystem::create_directories(path);
   return path;
 #endif
@@ -240,8 +240,8 @@ Lab::LabReport runMatchesMode(const Arguments& arguments, unsigned threads)
 {
   const int count =
       parseNumber<int>(arguments, "--n", DEFAULT_MATCHES, 1, 10'000'000);
-  const auto seed = parseNumber<std::uint64_t>(arguments, "--seed", 1, 0,
-                                               UINT64_MAX / 2);
+  const auto seed =
+      parseNumber<std::uint64_t>(arguments, "--seed", 1, 0, UINT64_MAX / 2);
   const bool spread = arguments.has("--spread");
   const float homeRating = parseNumber<float>(arguments, "--home-rating",
                                               DEFAULT_RATING, 1.0f, 99.0f);
@@ -251,8 +251,8 @@ Lab::LabReport runMatchesMode(const Arguments& arguments, unsigned threads)
                                              SPREAD_MIN_RATING, 1.0f, 99.0f);
   const float maxRating = parseNumber<float>(arguments, "--rating-max",
                                              SPREAD_MAX_RATING, 1.0f, 99.0f);
-  if (spread && (arguments.value("--home-rating") ||
-                 arguments.value("--away-rating")))
+  if (spread &&
+      (arguments.value("--home-rating") || arguments.value("--away-rating")))
     throw UsageError("--spread cannot be combined with fixed ratings");
   if (minRating > maxRating) throw UsageError("--rating-min > --rating-max");
   const bool background = backgroundFidelity(arguments);
@@ -326,8 +326,8 @@ Lab::LabReport runTacticsMode(const Arguments& arguments, unsigned threads)
 {
   const int seeds =
       parseNumber<int>(arguments, "--n", DEFAULT_TACTIC_SEEDS, 1, 1'000'000);
-  const auto seed = parseNumber<std::uint64_t>(arguments, "--seed", 1, 0,
-                                               UINT64_MAX / 2);
+  const auto seed =
+      parseNumber<std::uint64_t>(arguments, "--seed", 1, 0, UINT64_MAX / 2);
   const float rating =
       parseNumber<float>(arguments, "--rating", DEFAULT_RATING, 1.0f, 99.0f);
   std::vector<Lab::MatchJob> jobs = Lab::tacticJobs(seed, seeds, rating);
@@ -371,8 +371,8 @@ Lab::LabReport runTacticsMode(const Arguments& arguments, unsigned threads)
 Lab::LabReport runSeasonMode(const Arguments& arguments, unsigned threads)
 {
   Lab::SeasonOptions options;
-  options.seed = parseNumber<std::uint64_t>(arguments, "--seed", 1, 0,
-                                            UINT64_MAX / 2);
+  options.seed =
+      parseNumber<std::uint64_t>(arguments, "--seed", 1, 0, UINT64_MAX / 2);
   options.seasons = parseNumber<int>(arguments, "--seasons", 1, 1, 100);
   options.max_days_per_season =
       parseNumber<int>(arguments, "--max-days", 400, 30, 2000);
@@ -404,8 +404,8 @@ int main(int argc, char** argv)
   {
     arguments = parseArguments(argc, argv);
     if (arguments.has("--help") || arguments.has("-h") ||
-        arguments.mode == "--help" ||
-        arguments.mode == "-h" || arguments.mode == "help")
+        arguments.mode == "--help" || arguments.mode == "-h" ||
+        arguments.mode == "help")
     {
       std::cout << USAGE;
       return Lab::ExitCode::OK;
@@ -438,9 +438,9 @@ int main(int argc, char** argv)
       report = runTacticsMode(arguments, threads);
     else
       report = runSeasonMode(arguments, threads);
-    writeReport(report, outDir ? std::filesystem::path(*outDir)
-                               : makeTempDirectory("fm-lab-" + report.mode +
-                                                   "-"));
+    writeReport(report, outDir
+                            ? std::filesystem::path(*outDir)
+                            : makeTempDirectory("fm-lab-" + report.mode + "-"));
     return report.exitCode();
   }
   catch (const UsageError& error)
@@ -455,8 +455,9 @@ int main(int argc, char** argv)
   }
   catch (const Lab::SimulationError& error)
   {
-    std::cerr << std::format("fm_lab: simulation error with match seed {}: {}\n",
-                             error.seed, error.what());
+    std::cerr << std::format(
+        "fm_lab: simulation error with match seed {}: {}\n", error.seed,
+        error.what());
     return Lab::ExitCode::SIMULATION_ERROR;
   }
   catch (const std::exception& error)

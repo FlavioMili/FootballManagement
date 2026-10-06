@@ -98,9 +98,9 @@ void postWarning(Inbox& inbox, const GameDateValue& date, TeamID team_id,
 
 float MedicalCentre::staffQuality(const StaffEffects& effects)
 {
-  return std::clamp((WORST_LAYOFF - effects.layoff_multiplier) /
-                        (WORST_LAYOFF - BEST_LAYOFF),
-                    0.0f, 1.0f);
+  return std::clamp(
+      (WORST_LAYOFF - effects.layoff_multiplier) / (WORST_LAYOFF - BEST_LAYOFF),
+      0.0f, 1.0f);
 }
 
 ReturnWindow MedicalCentre::returnWindow(std::uint16_t days_left,
@@ -108,8 +108,8 @@ ReturnWindow MedicalCentre::returnWindow(std::uint16_t days_left,
 {
   if (days_left == 0) return {};
   const float margin =
-      WIDEST_MARGIN -
-      (WIDEST_MARGIN - NARROWEST_MARGIN) * std::clamp(staff_quality, 0.0f, 1.0f);
+      WIDEST_MARGIN - (WIDEST_MARGIN - NARROWEST_MARGIN) *
+                          std::clamp(staff_quality, 0.0f, 1.0f);
   const float days = static_cast<float>(days_left);
   // Setbacks are more common than early returns: twice the margin later.
   const int early = static_cast<int>(std::lround(days * margin * 0.5f));
@@ -134,15 +134,18 @@ InjuryRiskAssessment MedicalCentre::assess(const InjuryRiskInputs& inputs)
   float multiplier = 1.0f;
   if (inputs.age > AGE_FROM)
   {
-    multiplier *= std::exp(AGE_SLOPE * static_cast<float>(inputs.age - AGE_FROM));
+    multiplier *=
+        std::exp(AGE_SLOPE * static_cast<float>(inputs.age - AGE_FROM));
     // Only flagged once it matters (about +16% at 30).
     if (inputs.age >= VETERAN_AGE) result.reasons |= RISK_REASON_AGE;
   }
-  if (inputs.days_since_match >= 0 && inputs.days_since_match <= CONGESTION_DAYS)
+  if (inputs.days_since_match >= 0 &&
+      inputs.days_since_match <= CONGESTION_DAYS)
   {
     using Fitness = WorldTuning::Fitness;
-    multiplier *= static_cast<float>(0.5 * (Fitness::CONGESTION_MUSCLE_MULTIPLIER +
-                                            Fitness::CONGESTION_OTHER_MULTIPLIER));
+    multiplier *=
+        static_cast<float>(0.5 * (Fitness::CONGESTION_MUSCLE_MULTIPLIER +
+                                  Fitness::CONGESTION_OTHER_MULTIPLIER));
     result.reasons |= RISK_REASON_CONGESTION;
   }
   if (inputs.days_since_injury >= 0 &&
@@ -165,7 +168,7 @@ InjuryRiskAssessment MedicalCentre::assess(const InjuryRiskInputs& inputs)
   }
   multiplier *= inputs.staff_prevention;
   result.multiplier = multiplier;
-  result.band = multiplier >= HIGH_FROM      ? RiskBand::High
+  result.band = multiplier >= HIGH_FROM       ? RiskBand::High
                 : multiplier >= MODERATE_FROM ? RiskBand::Moderate
                                               : RiskBand::Low;
   return result;
@@ -188,7 +191,8 @@ const char* MedicalCentre::bandKey(RiskBand band)
 RiskBand MedicalCentre::loadBand(float ratio)
 {
   if (ratio >= LOAD_SPIKE) return RiskBand::High;
-  if (ratio > LOAD_ZONE_HIGH || ratio < LOAD_ZONE_LOW) return RiskBand::Moderate;
+  if (ratio > LOAD_ZONE_HIGH || ratio < LOAD_ZONE_LOW)
+    return RiskBand::Moderate;
   return RiskBand::Low;
 }
 
@@ -236,28 +240,26 @@ bool MedicalDesk::afterMatch(GameData& gamedata, const GameDateValue& date,
       dynamics.last_injury_day == ordinal)
     return false;
   const std::uint64_t seed = gamedata.getWorldSeed();
-  const double chance =
-      engine_injured
-          ? 1.0
-          : InjuryModel::aggravationChance(dynamics.injury_days, minutes);
+  const double chance = engine_injured ? 1.0
+                                       : InjuryModel::aggravationChance(
+                                             dynamics.injury_days, minutes);
   if (WorldRng::hashUniform(seed, RngDomain::MatchInjury,
                             static_cast<std::uint64_t>(ordinal),
                             player_id ^ AGGRAVATION_ROLL_SALT) >= chance)
     return false;
 
-  WorldRng rng =
-      WorldRng::stream(seed, RngDomain::MatchInjury,
-                       static_cast<std::uint64_t>(ordinal),
-                       player_id ^ AGGRAVATION_DRAW_SALT);
+  WorldRng rng = WorldRng::stream(seed, RngDomain::MatchInjury,
+                                  static_cast<std::uint64_t>(ordinal),
+                                  player_id ^ AGGRAVATION_DRAW_SALT);
   const std::uint16_t carried = dynamics.injury_days;
   const Injury injury = InjuryModel::aggravate(rng, dynamics.injury, carried);
   const float layoff =
       player.getTeamId() == FREE_AGENTS_TEAM_ID
           ? 1.0f
           : gamedata.getStaff().effects(player.getTeamId()).layoff_multiplier;
-  const long days = std::max(
-      static_cast<long>(carried) + 1,
-      std::lround(static_cast<float>(injury.days) * layoff));
+  const long days =
+      std::max(static_cast<long>(carried) + 1,
+               std::lround(static_cast<float>(injury.days) * layoff));
   dynamics.injury_days = static_cast<std::uint16_t>(std::min(days, 400L));
   dynamics.last_injury = dynamics.injury;
   dynamics.last_injury_day = ordinal;

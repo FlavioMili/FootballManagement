@@ -14,8 +14,8 @@
 #include <string>
 #include <vector>
 
-#include "gui/scenes/management_scene.h"
 #include "gui/scenes/draw_ceremony_dialog.h"
+#include "gui/scenes/management_scene.h"
 #include "gui/scenes/offer_negotiation_dialog.h"
 #include "gui/scenes/player_talk_dialog.h"
 #include "model/inbox.h"

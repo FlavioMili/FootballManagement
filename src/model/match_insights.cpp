@@ -108,7 +108,10 @@ int regulationEnd(int period)
   return clamped <= 2 ? 45 * clamped : 90 + 15 * (clamped - 2);
 }
 
-bool isGoal(const ShotRecord& shot) { return shot.outcome == ShotOutcome::Goal; }
+bool isGoal(const ShotRecord& shot)
+{
+  return shot.outcome == ShotOutcome::Goal;
+}
 
 const char* flankKey(std::size_t flank)
 {
@@ -302,9 +305,9 @@ MatchDetail captureDetail(const MatchEngine& engine)
       detail.final_third[side][bucket] = toByte(touches[side][bucket]);
   for (const MatchSubstitution& change : engine.getSubstitutions())
   {
-    detail.substitutions.push_back(
-        {toByte(static_cast<int>(change.timeMinute)), change.isHomeTeam,
-         change.outgoingPlayerId, change.incomingPlayerId});
+    detail.substitutions.push_back({toByte(static_cast<int>(change.timeMinute)),
+                                    change.isHomeTeam, change.outgoingPlayerId,
+                                    change.incomingPlayerId});
   }
   return detail;
 }
@@ -392,8 +395,8 @@ std::vector<KeyMoment> keyMoments(const InsightInput& input)
     const bool woodwork = shot.outcome == ShotOutcome::Woodwork;
     if (!woodwork && shot.xg < I::BIG_CHANCE_XG) continue;
     KeyMoment moment;
-    moment.kind = woodwork ? KeyMoment::Kind::Woodwork
-                           : KeyMoment::Kind::BigChance;
+    moment.kind =
+        woodwork ? KeyMoment::Kind::Woodwork : KeyMoment::Kind::BigChance;
     moment.minute = toByte(whole);
     moment.added = toByte(whole >= end ? whole - end : 0);
     moment.home = shot.home;
@@ -508,8 +511,10 @@ std::vector<AnalysisLine> summariseMatch(const InsightInput& input)
   SideFacts opp;
   own.goals = home ? report.home_goals : report.away_goals;
   opp.goals = home ? report.away_goals : report.home_goals;
-  const TeamMatchStats& own_stats = home ? report.home_stats : report.away_stats;
-  const TeamMatchStats& opp_stats = home ? report.away_stats : report.home_stats;
+  const TeamMatchStats& own_stats =
+      home ? report.home_stats : report.away_stats;
+  const TeamMatchStats& opp_stats =
+      home ? report.away_stats : report.home_stats;
   own.xg = own_stats.expected_goals;
   opp.xg = opp_stats.expected_goals;
   own.saves = own_stats.saves;
@@ -544,10 +549,10 @@ std::vector<AnalysisLine> summariseMatch(const InsightInput& input)
   std::vector<Candidate> candidates;
   const float own_finish = static_cast<float>(own.goals) - own.xg;
   if (own_finish <= -I::FINISHING_GAP)
-    candidates.push_back(
-        {90,
-         {"SUM_OWN_WASTEFUL",
-          {own_xg, std::to_string(own.goals), std::to_string(own.big_misses)}}});
+    candidates.push_back({90,
+                          {"SUM_OWN_WASTEFUL",
+                           {own_xg, std::to_string(own.goals),
+                            std::to_string(own.big_misses)}}});
   else if (own_finish >= I::FINISHING_GAP)
     candidates.push_back(
         {70, {"SUM_OWN_CLINICAL", {own_xg, std::to_string(own.goals)}}});
@@ -556,10 +561,10 @@ std::vector<AnalysisLine> summariseMatch(const InsightInput& input)
     candidates.push_back(
         {85, {"SUM_OPP_CLINICAL", {opp_xg, std::to_string(opp.goals)}}});
   else if (opp_finish <= -I::FINISHING_GAP)
-    candidates.push_back({75,
-                          {"SUM_OPP_WASTEFUL",
-                           {opp_xg, std::to_string(opp.goals),
-                            std::to_string(own.saves)}}});
+    candidates.push_back(
+        {75,
+         {"SUM_OPP_WASTEFUL",
+          {opp_xg, std::to_string(opp.goals), std::to_string(own.saves)}}});
 
   if (own.shots >= I::MIN_SHOTS_FOR_QUALITY &&
       own.xg / static_cast<float>(own.shots) < I::LOW_SHOT_QUALITY)
@@ -592,16 +597,15 @@ std::vector<AnalysisLine> summariseMatch(const InsightInput& input)
         const std::size_t ours = flank == 0 ? 2 : 0;
         const PlayerID defender = exposedDefender(detail, home, ours);
         if (defender != 0 && !name(defender).empty())
-          candidates.push_back(
-              {78,
-               {"SUM_OVERLOAD_AGAINST_PLAYER",
-                {flankKey(flank), flankKey(ours), percent(share),
-                 name(defender)}}});
-        else
-          candidates.push_back({76,
-                                {"SUM_OVERLOAD_AGAINST",
+          candidates.push_back({78,
+                                {"SUM_OVERLOAD_AGAINST_PLAYER",
                                  {flankKey(flank), flankKey(ours),
-                                  percent(share)}}});
+                                  percent(share), name(defender)}}});
+        else
+          candidates.push_back(
+              {76,
+               {"SUM_OVERLOAD_AGAINST",
+                {flankKey(flank), flankKey(ours), percent(share)}}});
       }
     }
     const std::array<int, 3> mine = finalThirdByFlank(detail, home);
@@ -616,17 +620,18 @@ std::vector<AnalysisLine> summariseMatch(const InsightInput& input)
             {50, {"SUM_OWN_CHANNEL", {flankKey(flank), percent(share)}}});
     }
 
-    const std::size_t used = report.extra_time ? T::BUCKETS : T::BUCKETS * 3 / 4;
+    const std::size_t used =
+        report.extra_time ? T::BUCKETS : T::BUCKETS * 3 / 4;
     const std::optional<Spell> own_spell = strongestSpell(detail, home, used);
     const std::optional<Spell> opp_spell = strongestSpell(detail, !home, used);
     const auto spellLine = [](const char* key, const Spell& spell)
     {
       const std::size_t start = spell.first * T::BUCKET_MINUTES;
       const std::size_t end = start + SPELL_BUCKETS * T::BUCKET_MINUTES;
-      return AnalysisLine{key,
-                          {std::to_string(start), std::to_string(end),
-                           std::to_string(spell.own),
-                           std::to_string(spell.other)}};
+      return AnalysisLine{
+          key,
+          {std::to_string(start), std::to_string(end),
+           std::to_string(spell.own), std::to_string(spell.other)}};
     };
     if (opp_spell && (!own_spell || opp_spell->own - opp_spell->other >=
                                         own_spell->own - own_spell->other))
@@ -651,20 +656,19 @@ std::vector<AnalysisLine> summariseMatch(const InsightInput& input)
 
     for (const DetailPlayer& line : detail.players)
       (line.home == home ? own : opp).pressures += line.pressures;
-    if (own.pressures >= 40 &&
-        static_cast<float>(own.pressures) >=
-            1.3f * static_cast<float>(opp.pressures))
-      candidates.push_back({45,
-                            {"SUM_PRESS_OWN",
-                             {std::to_string(own.pressures),
-                              std::to_string(opp.pressures)}}});
+    if (own.pressures >= 40 && static_cast<float>(own.pressures) >=
+                                   1.3f * static_cast<float>(opp.pressures))
+      candidates.push_back(
+          {45,
+           {"SUM_PRESS_OWN",
+            {std::to_string(own.pressures), std::to_string(opp.pressures)}}});
     else if (opp.pressures >= 40 &&
              static_cast<float>(opp.pressures) >=
                  1.3f * static_cast<float>(own.pressures))
-      candidates.push_back({45,
-                            {"SUM_PRESS_OPP",
-                             {std::to_string(own.pressures),
-                              std::to_string(opp.pressures)}}});
+      candidates.push_back(
+          {45,
+           {"SUM_PRESS_OPP",
+            {std::to_string(own.pressures), std::to_string(opp.pressures)}}});
   }
 
   std::ranges::stable_sort(candidates, std::greater{}, &Candidate::priority);

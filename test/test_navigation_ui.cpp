@@ -25,9 +25,9 @@
 #include <string_view>
 
 #include "controller/game_controller.h"
+#include "global/language_manager.h"
 #include "global/logger.h"
 #include "global/runtime_paths.h"
-#include "global/language_manager.h"
 #include "gui/gui_view.h"
 #include "gui/scenes/main_game_scene.h"
 #include "gui/scenes/main_menu_scene.h"
@@ -135,8 +135,7 @@ void sideButton(const GUIView& view, Uint8 button)
   for (const bool down : {true, false})
   {
     SDL_Event event{};
-    event.type =
-        down ? SDL_EVENT_MOUSE_BUTTON_DOWN : SDL_EVENT_MOUSE_BUTTON_UP;
+    event.type = down ? SDL_EVENT_MOUSE_BUTTON_DOWN : SDL_EVENT_MOUSE_BUTTON_UP;
     event.button.windowID = SDL_GetWindowID(view.getWindow());
     event.button.button = button;
     event.button.down = down;
@@ -543,9 +542,8 @@ TEST(NavigationUiTest, SettingsReturnsToTheScreenItWasOpenedFrom)
   const std::optional<NavEntry> before = view.navHistory().current();
 
   // The sidebar's Settings entry stacks Settings over the profile...
-  const bool clicked =
-      clickItem(view, "##sidebar", settingsRow, true) ||
-      clickItem(view, "##sidebar", settingsIcon, true);
+  const bool clicked = clickItem(view, "##sidebar", settingsRow, true) ||
+                       clickItem(view, "##sidebar", settingsIcon, true);
   ASSERT_TRUE(clicked);
   frames(view, 2);
   ASSERT_EQ(topId(view), SceneID::SETTINGS);

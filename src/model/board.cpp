@@ -182,8 +182,9 @@ CupObjective cupObjectiveFor(BoardObjective objective, int tier)
 
 FinanceObjective financeObjectiveFor(float tight_budget, std::int64_t balance)
 {
-  return tight_budget >= 0.5f || balance < 0 ? FinanceObjective::BreakEven
-                                             : FinanceObjective::WithinWageBudget;
+  return tight_budget >= 0.5f || balance < 0
+             ? FinanceObjective::BreakEven
+             : FinanceObjective::WithinWageBudget;
 }
 
 std::uint8_t youthTargetFor(float youth_focus)
@@ -247,7 +248,7 @@ ObjectiveGrade gradeCup(CupObjective objective, std::optional<int> rounds_left,
   }
   const bool reached = rounds_left && *rounds_left <= required;
   if (objective == CupObjective::Win)
-    return still_in ? ObjectiveGrade::Met
+    return still_in  ? ObjectiveGrade::Met
            : reached ? ObjectiveGrade::Missed
                      : ObjectiveGrade::Failed;
   if (reached)
@@ -277,8 +278,7 @@ const char* targetStatusKey(ObjectiveGrade grade)
 ObjectiveGrade gradeLeague(int target_position, int position, int league_size)
 {
   const float quarter = std::max(1.0f, static_cast<float>(league_size) / 4.0f);
-  const float margin =
-      static_cast<float>(target_position - position) / quarter;
+  const float margin = static_cast<float>(target_position - position) / quarter;
   if (margin >= 1.0f) return ObjectiveGrade::Exceeded;
   if (margin >= 0.0f) return ObjectiveGrade::Met;
   if (margin >= -1.0f) return ObjectiveGrade::Missed;
@@ -288,15 +288,15 @@ ObjectiveGrade gradeLeague(int target_position, int position, int league_size)
 ObjectiveGrade gradeFinances(FinanceObjective objective, std::int64_t balance,
                              std::int64_t start_balance, bool over_wage_budget)
 {
-  if (balance < 0 && !(objective == FinanceObjective::BreakEven &&
-                       balance >= start_balance))
+  if (balance < 0 &&
+      !(objective == FinanceObjective::BreakEven && balance >= start_balance))
     return ObjectiveGrade::Failed;
   if (objective == FinanceObjective::BreakEven)
   {
     if (balance < start_balance) return ObjectiveGrade::Missed;
     // A clear profit on a tight budget is beyond what was asked. [P]
-    const std::int64_t margin = std::max<std::int64_t>(
-        1'000'000, std::abs(start_balance) / 5);
+    const std::int64_t margin =
+        std::max<std::int64_t>(1'000'000, std::abs(start_balance) / 5);
     return balance - start_balance >= margin && !over_wage_budget
                ? ObjectiveGrade::Exceeded
                : ObjectiveGrade::Met;
@@ -326,8 +326,7 @@ ProjectQuote quoteProject(FacilityProjectType type, std::uint8_t current_level,
 {
   ProjectQuote quote;
   quote.type = type;
-  const double level_factor =
-      1.0 + static_cast<double>(current_level) / 100.0;
+  const double level_factor = 1.0 + static_cast<double>(current_level) / 100.0;
   switch (type)
   {
     case FacilityProjectType::TrainingGround:
@@ -346,19 +345,21 @@ ProjectQuote quoteProject(FacilityProjectType type, std::uint8_t current_level,
     case FacilityProjectType::StadiumExpansion:
     case FacilityProjectType::COUNT:
     {
-      const std::uint32_t room =
-          capacity >= MAX_STADIUM_CAPACITY ? 0 : MAX_STADIUM_CAPACITY - capacity;
-      const std::uint32_t limit = std::min(room, std::max<std::uint32_t>(
-                                                     MIN_EXPANSION_SEATS,
-                                                     capacity / 2));
-      std::uint32_t added = std::min(std::max(seats, MIN_EXPANSION_SEATS), limit);
+      const std::uint32_t room = capacity >= MAX_STADIUM_CAPACITY
+                                     ? 0
+                                     : MAX_STADIUM_CAPACITY - capacity;
+      const std::uint32_t limit = std::min(
+          room, std::max<std::uint32_t>(MIN_EXPANSION_SEATS, capacity / 2));
+      std::uint32_t added =
+          std::min(std::max(seats, MIN_EXPANSION_SEATS), limit);
       added -= added % 500;
       quote.amount = added;
       // [P] Expansions cost EUR 2,500-8,500 per seat with the club's stature.
       const double per_seat = 2'500.0 + 60.0 * static_cast<double>(reputation);
       quote.cost = static_cast<std::int64_t>(
           std::llround(per_seat * static_cast<double>(added)));
-      quote.days = static_cast<std::uint16_t>(240 + std::min(added, 9'000U) / 50);
+      quote.days =
+          static_cast<std::uint16_t>(240 + std::min(added, 9'000U) / 50);
       quote.disruption = std::min(added, capacity / 10);
       break;
     }

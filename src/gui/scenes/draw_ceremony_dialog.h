@@ -53,8 +53,7 @@ class DrawCeremonyDialog
     bool focus = false;
   };
 
-  void renderRow(GUIView* view, const Row& row, std::size_t index,
-                 float alpha);
+  void renderRow(GUIView* view, const Row& row, std::size_t index, float alpha);
 
   bool open_requested = false;
   bool visible = false;

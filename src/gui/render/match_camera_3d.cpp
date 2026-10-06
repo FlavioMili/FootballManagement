@@ -250,7 +250,8 @@ MatchCamera3D::Rig MatchCamera3D::directorRig(
       const Vec3 eye{goalLineX + outward * D::GOAL_LINE_BACK,
                      HALF_WIDTH - D::GOAL_LINE_SIDE, D::GOAL_LINE_HEIGHT};
       const Vec3 goalMouth{goalLineX, HALF_WIDTH, 1.0f};
-      Vec3 target = RenderMath::lerp(goalMouth, focus.ball, D::GOAL_LINE_BALL_SHARE);
+      Vec3 target =
+          RenderMath::lerp(goalMouth, focus.ball, D::GOAL_LINE_BALL_SHARE);
       target.z = 1.0f;
       return aimFrom(eye, target, D::GOAL_LINE_FOV);
     }
@@ -291,10 +292,10 @@ bool MatchCamera3D::direct(const MatchCameraFocus& focus, float deltaSeconds)
   {
     // The goal the ball is flying at, when it is close enough to matter.
     const float heading = focus.ballVelocity.x;
-    const float goal = std::abs(heading) > 1.0f
-                           ? (heading > 0.0f ? PITCH_LENGTH : 0.0f)
-                           : (focus.attackDirection >= 0.0f ? PITCH_LENGTH
-                                                            : 0.0f);
+    const float goal =
+        std::abs(heading) > 1.0f
+            ? (heading > 0.0f ? PITCH_LENGTH : 0.0f)
+            : (focus.attackDirection >= 0.0f ? PITCH_LENGTH : 0.0f);
     if (std::abs(goal - focus.ball.x) < D::SHOT_RANGE_METRES)
     {
       next = MatchDirectorShot::GOAL_LINE;
@@ -337,9 +338,8 @@ void MatchCamera3D::steerFree(const MatchCameraFocus& focus,
     // selected before any other) starts from the default overview.
     if (!initialized || control.reset)
     {
-      freeRig.target = control.followBall
-                           ? focus.ball
-                           : Vec3{HALF_LENGTH, HALF_WIDTH, 0.0f};
+      freeRig.target =
+          control.followBall ? focus.ball : Vec3{HALF_LENGTH, HALF_WIDTH, 0.0f};
       freeRig.yaw = F::DEFAULT_YAW;
       freeRig.pitch = F::DEFAULT_PITCH;
       freeRig.distance = F::DEFAULT_DISTANCE;
@@ -367,11 +367,10 @@ void MatchCamera3D::steerFree(const MatchCameraFocus& focus,
   freeRig.distance =
       std::clamp(freeRig.distance, F::MIN_DISTANCE, F::MAX_DISTANCE);
   // Never under the pitch: the eye stays above the minimum eye height.
-  const float lowest =
-      std::asin(std::clamp(Tuning::Camera::MIN_EYE_HEIGHT / freeRig.distance,
-                           0.0f, 1.0f));
-  freeRig.pitch = std::clamp(freeRig.pitch, std::max(F::MIN_PITCH, lowest),
-                             F::MAX_PITCH);
+  const float lowest = std::asin(std::clamp(
+      Tuning::Camera::MIN_EYE_HEIGHT / freeRig.distance, 0.0f, 1.0f));
+  freeRig.pitch =
+      std::clamp(freeRig.pitch, std::max(F::MIN_PITCH, lowest), F::MAX_PITCH);
 }
 
 void MatchCamera3D::snap(const MatchCameraFocus& focus, MatchCameraMode mode)
@@ -444,8 +443,7 @@ void MatchCamera3D::update(const MatchCameraFocus& focus, MatchCameraMode mode,
   current.pitch += (desired.pitch - current.pitch) * angleBlend;
   current.distance += (desired.distance - current.distance) *
                       blend(Tuning::Camera::DISTANCE_RATE);
-  current.fov +=
-      (desired.fov - current.fov) * blend(Tuning::Camera::FOV_RATE);
+  current.fov += (desired.fov - current.fov) * blend(Tuning::Camera::FOV_RATE);
 }
 
 Vec3 MatchCamera3D::eye() const

@@ -106,8 +106,7 @@ class ReservesScene : public ManagementScene
   void renderCandidates();
   void renderQuotaCard(float width);
   void renderResultsCard(float width);
-  void renderTable(const char* id, const std::vector<Row>& rows,
-                   ListKind kind);
+  void renderTable(const char* id, const std::vector<Row>& rows, ListKind kind);
   void renderDetail(const Row& row, ListKind kind);
   void runPending();
   Row makeRow(const GameController::YouthPlayerView& view) const;

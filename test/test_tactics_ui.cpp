@@ -61,8 +61,7 @@ class GameFlowTest_GUIFlowLifecycle_Test
   {
     scene.setRole(lineup, role);
   }
-  static void setDuty(StrategyScene& scene, const Lineup& lineup,
-                      RoleDuty duty)
+  static void setDuty(StrategyScene& scene, const Lineup& lineup, RoleDuty duty)
   {
     scene.setDuty(lineup, duty);
   }
@@ -163,9 +162,8 @@ std::string nestedScrolling()
 bool tacticsCardShown()
 {
   for (const ImGuiWindow* window : GImGui->Windows)
-    if (window->Active &&
-        std::string_view(window->Name).find("tactic_roles") !=
-            std::string_view::npos)
+    if (window->Active && std::string_view(window->Name).find("tactic_roles") !=
+                              std::string_view::npos)
       return true;
   return false;
 }

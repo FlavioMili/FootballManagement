@@ -75,7 +75,6 @@ class TransferMarketScene : public ManagementScene
     openPendingDeal();
   }
 
-
  private:
   friend class GameFlowTest_GUIFlowLifecycle_Test;
 
@@ -106,7 +105,7 @@ class TransferMarketScene : public ManagementScene
     uint32_t wage = 0;
     std::string wage_text;
     int contract_years = 0;
-    uint32_t asking_price = 0; /**< Listing price, 0 if not listed. */
+    uint32_t asking_price = 0;   /**< Listing price, 0 if not listed. */
     uint32_t release_clause = 0; /**< 0 = none. */
     std::string clause_text;     /**< "Release clause €40M". */
     bool free_agent = false;
@@ -142,7 +141,7 @@ class TransferMarketScene : public ManagementScene
     std::string amount_text;
     std::string terms_text;
     float value_ratio = 0.0f;
-    std::string ratio_text; /**< "112% of value". */
+    std::string ratio_text;   /**< "112% of value". */
     std::string expires_text; /**< Or when the buyer answers. */
     bool awaiting = false;    /**< The buyer considers a counter. */
   };
@@ -233,10 +232,10 @@ class TransferMarketScene : public ManagementScene
     std::string player;
     std::string club;
     int64_t value = 0;
-    int64_t asking_price = 0; /**< Listing price, 0 if not listed. */
+    int64_t asking_price = 0;   /**< Listing price, 0 if not listed. */
     int64_t release_clause = 0; /**< 0 = none. */
-    uint32_t wage = 0;        /**< Current weekly wage. */
-    std::string estimate_text; /**< Estimated ability ("64-72"). */
+    uint32_t wage = 0;          /**< Current weekly wage. */
+    std::string estimate_text;  /**< Estimated ability ("64-72"). */
     int knowledge = 0;
     TransferNegotiation::OfferTerms terms;
     std::optional<TransferNegotiation::ClubResponse> response;

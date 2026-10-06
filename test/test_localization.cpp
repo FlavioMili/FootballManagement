@@ -156,7 +156,8 @@ TEST(InboxFormatTest, ItalianArticlesFollowTheClubName)
   EXPECT_EQ(ClubArticle::withPreposition("Roma", "di"), "della Roma");
   EXPECT_EQ(ClubArticle::withPreposition("Acaya", "a"), "all'Acaya");
   EXPECT_EQ(ClubArticle::withPreposition("Lecce", "da"), "dal Lecce");
-  EXPECT_EQ(ClubArticle::withPreposition("Stoke City", "in"), "nello Stoke City");
+  EXPECT_EQ(ClubArticle::withPreposition("Stoke City", "in"),
+            "nello Stoke City");
   EXPECT_EQ(ClubArticle::withPreposition("Roma", "Il"), "La Roma");
   EXPECT_EQ(ClubArticle::withPreposition("Acaya", "Il"), "L'Acaya");
   EXPECT_EQ(ClubArticle::withPreposition("Lecce", "per"), "Lecce");
@@ -170,9 +171,9 @@ TEST_F(LanguageFormatTest, ClubPlaceholdersRenderArticlesOnlyInItalian)
   useItalian();
   EXPECT_EQ(formatLocalized("INBOX_MANAGER_APPOINTED_BODY", roma),
             "Mario Rossi è il nuovo allenatore della Roma.");
-  EXPECT_EQ(formatLocalized("INBOX_MANAGER_APPOINTED_BODY",
-                            {"Mario Rossi", "Lecce"}),
-            "Mario Rossi è il nuovo allenatore del Lecce.");
+  EXPECT_EQ(
+      formatLocalized("INBOX_MANAGER_APPOINTED_BODY", {"Mario Rossi", "Lecce"}),
+      "Mario Rossi è il nuovo allenatore del Lecce.");
   EXPECT_EQ(formatLocalized("INBOX_JOB_REJECTED_TITLE", {"Acaya"}),
             "L'Acaya ha respinto la tua candidatura");
   // Key arguments are never given an article.
@@ -223,8 +224,8 @@ TEST_F(LanguageFormatTest, PositionNamesFollowTheLanguage)
   // A saved list of position keys is shown in the current language.
   const std::string preview = formatLocalized(
       "INBOX_YOUTH_PREVIEW_BODY",
-      {"Mario Rossi", "@YOUTH_QUALITY_PROMISING", "@ROLE_SHORT_GK, @ROLE_SHORT_CB",
-       "@YOUTH_PERS_CONTENT", "8"});
+      {"Mario Rossi", "@YOUTH_QUALITY_PROMISING",
+       "@ROLE_SHORT_GK, @ROLE_SHORT_CB", "@YOUTH_PERS_CONTENT", "8"});
   EXPECT_NE(preview.find("in POR, DC"), std::string::npos) << preview;
 }
 
@@ -367,9 +368,8 @@ TEST_F(LanguageFormatTest, TypedMoneyIsReadTheSameWayInBothLanguages)
       }
     }
     // What the field shows is read back unchanged.
-    for (const int64_t amount :
-         {int64_t{0}, int64_t{950}, int64_t{14'500}, int64_t{1'250'000},
-          int64_t{987'654'321}})
+    for (const int64_t amount : {int64_t{0}, int64_t{950}, int64_t{14'500},
+                                 int64_t{1'250'000}, int64_t{987'654'321}})
     {
       EXPECT_EQ(NumberFormat::parseMoney(NumberFormat::moneyFull(amount)).value,
                 amount);
@@ -402,13 +402,13 @@ TEST_F(LanguageFormatTest, MessageMoneyAndKeysAreShownInTheReadersLanguage)
   EXPECT_EQ(alone("€1.25M"), "€1.25M");
   EXPECT_EQ(alone("-€2.0M and €350K"), "-€2.0M and €350K");
   EXPECT_EQ(alone("@"), "@");
-  EXPECT_EQ(alone("Rossi @ Roma, @UNKNOWN_KEY_X"), "Rossi @ Roma, @UNKNOWN_KEY_X");
+  EXPECT_EQ(alone("Rossi @ Roma, @UNKNOWN_KEY_X"),
+            "Rossi @ Roma, @UNKNOWN_KEY_X");
 
   useItalian();
   EXPECT_EQ(formatLocalized("INBOX_SIGNING_BODY", signing),
             "Mario Rossi arriva svincolato per € 1,50 mln.");
-  EXPECT_EQ(alone(digest),
-            "Mario Rossi: svincolato -> Roma (€ 2,00 mln)");
+  EXPECT_EQ(alone(digest), "Mario Rossi: svincolato -> Roma (€ 2,00 mln)");
   EXPECT_EQ(alone("Mario Rossi (@NT_Italian)"), "Mario Rossi (Italia)");
   EXPECT_EQ(alone("@NT_Italian, @NT_French"), "Italia, Francia");
   EXPECT_EQ(alone("€1.25M"), "€1.25M");
@@ -470,9 +470,9 @@ TEST_F(LanguageFormatTest, ABrokenLanguageFileFallsBackToEnglish)
   EXPECT_EQ(LOC(unknown), unknown);
 
   // An incomplete file: what it has is used, the rest is English.
-  const std::filesystem::path partial = writeFile(
-      "fm_lang_partial.json",
-      R"({"MENU_SETTINGS": "Impostazioni", "NUMBER_DECIMAL_MARK": ",",
+  const std::filesystem::path partial =
+      writeFile("fm_lang_partial.json",
+                R"({"MENU_SETTINGS": "Impostazioni", "NUMBER_DECIMAL_MARK": ",",
           "NUMBER_GROUP_MARK": ".", "BROKEN_ENTRY": 5})");
   EXPECT_TRUE(languages.loadFromFile(partial.string(), Language::IT));
   EXPECT_FALSE(languages.status().file_failed);
@@ -492,4 +492,3 @@ TEST_F(LanguageFormatTest, ABrokenLanguageFileFallsBackToEnglish)
   for (const auto& path : {truncated, garbage, list, partial})
     std::filesystem::remove(path);
 }
-

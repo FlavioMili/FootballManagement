@@ -23,7 +23,9 @@ int GameController::advanceToNextEvent(int max_days)
   const TeamID managed = game->getManagedTeamId();
   const Inbox& inbox = game->getWorld().getInbox();
   const auto nextId = [&inbox]
-  { return inbox.getMessages().empty() ? 0 : inbox.getMessages().back().id + 1; };
+  {
+    return inbox.getMessages().empty() ? 0 : inbox.getMessages().back().id + 1;
+  };
   game->resetSimulationProgress();
   continue_days_started = 0;
   // The length is not known in advance: the progress card shows the days.
@@ -64,9 +66,9 @@ int GameController::advanceToNextEvent(int max_days)
       stop = ContinueStop::Decision;
     if (stop != ContinueStop::None) break;
     // Only news that needs the manager arrives unread.
-    if (std::ranges::any_of(inbox.getMessages(),
-                            [first_new](const InboxMessage& message)
-                            { return message.id >= first_new && !message.read; }))
+    if (std::ranges::any_of(
+            inbox.getMessages(), [first_new](const InboxMessage& message)
+            { return message.id >= first_new && !message.read; }))
       stop = ContinueStop::Message;
     else if (!window_was_open && isTransferWindowOpen())
       stop = ContinueStop::WindowOpened;
@@ -122,8 +124,8 @@ uint16_t GameController::getSeasonStartYear(uint16_t season) const
   return game ? game->getSeasonArchive().startYear(season) : 0;
 }
 
-std::optional<std::pair<LeagueID, uint16_t>>
-GameController::getArchivedPlacing(uint16_t season, TeamID team_id) const
+std::optional<std::pair<LeagueID, uint16_t>> GameController::getArchivedPlacing(
+    uint16_t season, TeamID team_id) const
 {
   if (!game) return std::nullopt;
   return game->getSeasonArchive().placing(season, team_id);
@@ -155,16 +157,16 @@ std::optional<GameController::BoardTargets> GameController::getBoardTargets()
     if (row.team_id == team.getId() && row.played > 0)
       targets.position = row.position;
   if (targets.position > 0)
-    targets.league_grade = BoardModel::gradeLeague(
-        board.target_position, targets.position,
-        static_cast<int>(table.size()));
+    targets.league_grade =
+        BoardModel::gradeLeague(board.target_position, targets.position,
+                                static_cast<int>(table.size()));
 
   const Game::CupRun run = game->cupRun(team.getId());
   targets.cup = board.cup_objective;
   targets.cup_still_in = run.still_in;
-  targets.cup_grade = BoardModel::gradeCup(board.cup_objective,
-                                           run.rounds_left, run.won,
-                                           run.still_in || !run.rounds_left);
+  targets.cup_grade =
+      BoardModel::gradeCup(board.cup_objective, run.rounds_left, run.won,
+                           run.still_in || !run.rounds_left);
 
   const Finances& finances = team.getFinances();
   targets.finances = board.finance_objective;

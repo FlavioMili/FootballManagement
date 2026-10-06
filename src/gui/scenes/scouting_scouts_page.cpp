@@ -562,9 +562,9 @@ void ScoutingScene::renderOverview()
   const float header = ImGui::GetTextLineHeightWithSpacing() * 2.5f;
   const float natural =
       rowHeight * static_cast<float>(scout_lines.size()) + header;
-  const float listHeight =
-      std::min(natural, std::max(available.y * 0.5f,
-                                 rowHeight * STACKED_LIST_ROWS + header));
+  const float listHeight = std::min(
+      natural,
+      std::max(available.y * 0.5f, rowHeight * STACKED_LIST_ROWS + header));
   renderScoutList(0.0f, listHeight);
   renderScoutDetail(std::max(ImGui::GetContentRegionAvail().y,
                              STACKED_DETAIL_MIN_HEIGHT * dpi()));
@@ -1028,9 +1028,9 @@ void ScoutingScene::renderWorldPicker(float width, float height)
     const float textX = min.x + ImGui::GetTreeNodeToLabelSpacing();
     const float textY =
         min.y + (max.y - min.y - ImGui::GetTextLineHeight()) * 0.5f;
-    const bool cut = UI::drawTextFitted(
-        ImGui::GetWindowDrawList(), ImVec2(textX, textY),
-        Theme::toU32(palette.text), label, max.x - textX);
+    const bool cut =
+        UI::drawTextFitted(ImGui::GetWindowDrawList(), ImVec2(textX, textY),
+                           Theme::toU32(palette.text), label, max.x - textX);
     if (cut && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
       ImGui::SetTooltip("%s", label);
     return open;

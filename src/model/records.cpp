@@ -160,7 +160,8 @@ void RecordBook::onMatchPlayed(const GameData& gamedata,
     const int other = entry.goals_against;
     if (own != other)
     {
-      entry.kind = own > other ? RecordKind::BiggestWin : RecordKind::BiggestDefeat;
+      entry.kind =
+          own > other ? RecordKind::BiggestWin : RecordKind::BiggestDefeat;
       entry.value = std::abs(own - other);
       entry.value2 = own > other ? own : other;
       // League records keep the winner's side only.
@@ -307,8 +308,8 @@ void RecordBook::closeSeason(const GameData& gamedata, std::uint16_t year)
          {RecordKind::MostGoalsSeason, RecordKind::MostPointsSeason})
     {
       entry.kind = kind;
-      entry.value =
-          kind == RecordKind::MostGoalsSeason ? season.goals_for : season.points;
+      entry.value = kind == RecordKind::MostGoalsSeason ? season.goals_for
+                                                        : season.points;
       entry.scope = RecordScope::Club;
       entry.scope_id = team_id;
       offer(entry);
@@ -347,8 +348,8 @@ void RecordBook::closeSeason(const GameData& gamedata, std::uint16_t year)
 std::vector<RecordEntry> RecordBook::clubRecords(TeamID team_id) const
 {
   std::vector<RecordEntry> result;
-  for (std::uint8_t kind = 0; kind < static_cast<std::uint8_t>(RecordKind::COUNT);
-       ++kind)
+  for (std::uint8_t kind = 0;
+       kind < static_cast<std::uint8_t>(RecordKind::COUNT); ++kind)
   {
     const auto found = records.find(
         {RecordScope::Club, team_id, static_cast<RecordKind>(kind)});
@@ -360,8 +361,8 @@ std::vector<RecordEntry> RecordBook::clubRecords(TeamID team_id) const
 std::vector<RecordEntry> RecordBook::leagueRecords(LeagueID league_id) const
 {
   std::vector<RecordEntry> result;
-  for (std::uint8_t kind = 0; kind < static_cast<std::uint8_t>(RecordKind::COUNT);
-       ++kind)
+  for (std::uint8_t kind = 0;
+       kind < static_cast<std::uint8_t>(RecordKind::COUNT); ++kind)
   {
     const auto found = records.find(
         {RecordScope::League, league_id, static_cast<RecordKind>(kind)});
@@ -377,16 +378,15 @@ std::vector<ClubPlayerTotal> RecordBook::topScorers(TeamID team_id,
   for (auto it = club_players.lower_bound({team_id, 0});
        it != club_players.end() && it->first.first == team_id; ++it)
     if (it->second.goals > 0) result.push_back(it->second);
-  std::ranges::sort(result,
-                    [](const ClubPlayerTotal& a, const ClubPlayerTotal& b)
-                    {
-                      return std::tuple(-static_cast<int>(a.goals),
-                                        static_cast<int>(a.appearances),
-                                        a.player_id) <
-                             std::tuple(-static_cast<int>(b.goals),
-                                        static_cast<int>(b.appearances),
-                                        b.player_id);
-                    });
+  std::ranges::sort(
+      result,
+      [](const ClubPlayerTotal& a, const ClubPlayerTotal& b)
+      {
+        return std::tuple(-static_cast<int>(a.goals),
+                          static_cast<int>(a.appearances), a.player_id) <
+               std::tuple(-static_cast<int>(b.goals),
+                          static_cast<int>(b.appearances), b.player_id);
+      });
   if (result.size() > limit) result.resize(limit);
   return result;
 }
@@ -398,16 +398,15 @@ std::vector<ClubPlayerTotal> RecordBook::mostAppearances(
   for (auto it = club_players.lower_bound({team_id, 0});
        it != club_players.end() && it->first.first == team_id; ++it)
     result.push_back(it->second);
-  std::ranges::sort(result,
-                    [](const ClubPlayerTotal& a, const ClubPlayerTotal& b)
-                    {
-                      return std::tuple(-static_cast<int>(a.appearances),
-                                        -static_cast<int>(a.goals),
-                                        a.player_id) <
-                             std::tuple(-static_cast<int>(b.appearances),
-                                        -static_cast<int>(b.goals),
-                                        b.player_id);
-                    });
+  std::ranges::sort(
+      result,
+      [](const ClubPlayerTotal& a, const ClubPlayerTotal& b)
+      {
+        return std::tuple(-static_cast<int>(a.appearances),
+                          -static_cast<int>(a.goals), a.player_id) <
+               std::tuple(-static_cast<int>(b.appearances),
+                          -static_cast<int>(b.goals), b.player_id);
+      });
   if (result.size() > limit) result.resize(limit);
   return result;
 }
@@ -418,20 +417,20 @@ std::vector<AllTimeRow> RecordBook::allTimeTable(LeagueID league_id) const
   for (auto it = all_time.lower_bound({league_id, 0});
        it != all_time.end() && it->first.first == league_id; ++it)
     result.push_back(it->second);
-  std::ranges::sort(
-      result,
-      [](const AllTimeRow& a, const AllTimeRow& b)
-      {
-        const auto key = [](const AllTimeRow& row)
-        {
-          return std::tuple(
-              -static_cast<std::int64_t>(row.points),
-              -(static_cast<std::int64_t>(row.goals_for) -
-                static_cast<std::int64_t>(row.goals_against)),
-              -static_cast<std::int64_t>(row.goals_for), row.team_id);
-        };
-        return key(a) < key(b);
-      });
+  std::ranges::sort(result,
+                    [](const AllTimeRow& a, const AllTimeRow& b)
+                    {
+                      const auto key = [](const AllTimeRow& row)
+                      {
+                        return std::tuple(
+                            -static_cast<std::int64_t>(row.points),
+                            -(static_cast<std::int64_t>(row.goals_for) -
+                              static_cast<std::int64_t>(row.goals_against)),
+                            -static_cast<std::int64_t>(row.goals_for),
+                            row.team_id);
+                      };
+                      return key(a) < key(b);
+                    });
   return result;
 }
 
@@ -561,7 +560,8 @@ void RecordBook::load(const std::shared_ptr<DatabaseConnection>& db_conn,
             entry.goals_for = column<std::uint8_t>(stmt, 11);
             entry.goals_against = column<std::uint8_t>(stmt, 12);
             entry.home = column<int>(stmt, 13) != 0;
-            records[{entry.scope, entry.scope_id, entry.kind}] = std::move(entry);
+            records[{entry.scope, entry.scope_id, entry.kind}] =
+                std::move(entry);
           });
   forEach(db,
           "SELECT team_id, player_id, name, appearances, goals, first_year, "
@@ -576,7 +576,8 @@ void RecordBook::load(const std::shared_ptr<DatabaseConnection>& db_conn,
             totals.goals = column<std::uint16_t>(stmt, 4);
             totals.first_year = column<std::uint16_t>(stmt, 5);
             totals.last_year = column<std::uint16_t>(stmt, 6);
-            club_players[{totals.team_id, totals.player_id}] = std::move(totals);
+            club_players[{totals.team_id, totals.player_id}] =
+                std::move(totals);
           });
   forEach(db,
           "SELECT league_id, team_id, played, won, drawn, lost, goals_for, "
@@ -606,13 +607,13 @@ void RecordBook::load(const std::shared_ptr<DatabaseConnection>& db_conn,
             season.goals_for = column<std::uint16_t>(stmt, 3);
             season.points = column<std::uint16_t>(stmt, 4);
           });
-  forEach(db, "SELECT team_id, player_id, goals FROM RecordSeasonScorers;",
-          [&](sqlite3_stmt* stmt)
-          {
-            season_scorers[{column<TeamID>(stmt, 0),
-                            column<PlayerID>(stmt, 1)}] =
-                column<std::uint16_t>(stmt, 2);
-          });
+  forEach(
+      db, "SELECT team_id, player_id, goals FROM RecordSeasonScorers;",
+      [&](sqlite3_stmt* stmt)
+      {
+        season_scorers[{column<TeamID>(stmt, 0), column<PlayerID>(stmt, 1)}] =
+            column<std::uint16_t>(stmt, 2);
+      });
 }
 
 void RecordBook::save(const std::shared_ptr<DatabaseConnection>& db_conn) const

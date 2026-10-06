@@ -65,16 +65,18 @@ AboutScene::AboutScene(GUIView* guiView_ptr, bool inCareer)
 
 void AboutScene::onEnter()
 {
-  version_line = formatLocalized("ABOUT_VERSION", {std::string(BuildInfo::version())});
-  build_line = formatLocalized(
-      "ABOUT_BUILD",
-      {std::string(BuildInfo::commit()), std::string(BuildInfo::configuration()),
-       std::string(BuildInfo::compiler()), std::string(BuildInfo::platform())});
+  version_line =
+      formatLocalized("ABOUT_VERSION", {std::string(BuildInfo::version())});
+  build_line =
+      formatLocalized("ABOUT_BUILD", {std::string(BuildInfo::commit()),
+                                      std::string(BuildInfo::configuration()),
+                                      std::string(BuildInfo::compiler()),
+                                      std::string(BuildInfo::platform())});
   licence_texts.clear();
   licence_texts.reserve(COMPONENTS.size());
   for (const Credits::Component& component : COMPONENTS)
-    licence_texts.push_back(readText(
-        AssetPaths::file((std::string("assets/licenses/") + component.file).c_str())));
+    licence_texts.push_back(readText(AssetPaths::file(
+        (std::string("assets/licenses/") + component.file).c_str())));
 }
 
 void AboutScene::leave()
@@ -93,8 +95,9 @@ void AboutScene::render()
   ImGui::SetNextWindowSize(viewport->WorkSize);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,
-                      ImVec2(Theme::Space::XL * scale, Theme::Space::XL * scale));
+  ImGui::PushStyleVar(
+      ImGuiStyleVar_WindowPadding,
+      ImVec2(Theme::Space::XL * scale, Theme::Space::XL * scale));
   ImGui::Begin("##about", nullptr,
                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
                    ImGuiWindowFlags_NoSavedSettings |
@@ -112,8 +115,9 @@ void AboutScene::render()
   ImGui::BeginGroup();
   UI::pageHeader(LOC("ABOUT_TITLE"), LOC("ABOUT_SUBTITLE"));
   // The body is the page's only scroll surface.
-  ImGui::BeginChild("##about_body",
-                    ImVec2(width, ImGui::GetContentRegionAvail().y - footerHeight));
+  ImGui::BeginChild(
+      "##about_body",
+      ImVec2(width, ImGui::GetContentRegionAvail().y - footerHeight));
   renderBuild();
   renderThirdParty();
   ImGui::EndChild();
@@ -153,9 +157,9 @@ void AboutScene::renderThirdParty()
     const Credits::Component& component = COMPONENTS[index];
     ImGui::PushID(static_cast<int>(index));
     // Licence texts open inline: the page stays the only scroll surface.
-    const bool open = ImGui::TreeNodeEx(
-        "##licence", ImGuiTreeNodeFlags_SpanAvailWidth, "%s  ·  %s",
-        component.name, component.licence);
+    const bool open =
+        ImGui::TreeNodeEx("##licence", ImGuiTreeNodeFlags_SpanAvailWidth,
+                          "%s  ·  %s", component.name, component.licence);
     if (open)
     {
       if (component.tests_only)

@@ -332,8 +332,8 @@ void summaryRow(const char* label, const char* value,
                 const ImVec4* valueColor = nullptr, bool emphasis = false);
 
 /**
- * @brief Budget before/after bar: "€20.0M -> €5.6M" (drawn arrow). The after part turns red
- * below zero and the reason is shown underneath.
+ * @brief Budget before/after bar: "€20.0M -> €5.6M" (drawn arrow). The after
+ * part turns red below zero and the reason is shown underneath.
  */
 void budgetImpact(const char* label, int64_t current, int64_t after,
                   const char* reasonWhenNegative = nullptr);

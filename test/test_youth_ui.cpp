@@ -63,7 +63,10 @@ class GameFlowTest_GUIFlowLifecycle_Test
   {
     return scene.intake_rows.size();
   }
-  static size_t squad(const YouthScene& scene) { return scene.squad_rows.size(); }
+  static size_t squad(const YouthScene& scene)
+  {
+    return scene.squad_rows.size();
+  }
   static PlayerID firstCandidate(const YouthScene& scene)
   {
     return scene.intake_rows.front().view.id;
@@ -241,10 +244,9 @@ TEST(YouthUiTest, AcademyScreenThroughTheIntakeCycle)
   settings.ui_scale = 2.0f;
   view.refreshTheme();
   resize(view, 2560, 1440);
-  for (const auto& [tab, name] :
-       {std::pair{0, "youth_overview_200.bmp"},
-        std::pair{1, "youth_squad_200.bmp"},
-        std::pair{2, "youth_intake_200.bmp"}})
+  for (const auto& [tab, name] : {std::pair{0, "youth_overview_200.bmp"},
+                                  std::pair{1, "youth_squad_200.bmp"},
+                                  std::pair{2, "youth_intake_200.bmp"}})
   {
     Bridge::openTab(*scene, tab);
     frames(view, 4);

@@ -15,7 +15,8 @@
 
 namespace
 {
-constexpr std::size_t ROLE_COUNT = static_cast<std::size_t>(PlayerRole::UNKNOWN);
+constexpr std::size_t ROLE_COUNT =
+    static_cast<std::size_t>(PlayerRole::UNKNOWN);
 
 constexpr std::array<const char*, ROLE_COUNT> SHORT_KEYS = {
     "ROLE_SHORT_GK",  "ROLE_SHORT_CB", "ROLE_SHORT_LB",  "ROLE_SHORT_RB",

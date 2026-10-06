@@ -85,8 +85,8 @@ std::size_t goalBin(int period, double minute)
 struct ScoringEvent
 {
   double time = 0.0;
-  bool goal = false;  /*!< Otherwise a sending-off. */
-  bool home = false;  /*!< Side credited with the goal / sent-off side. */
+  bool goal = false; /*!< Otherwise a sending-off. */
+  bool home = false; /*!< Side credited with the goal / sent-off side. */
 };
 
 /**
@@ -180,9 +180,8 @@ void extractEngine(MatchSample& sample, const MatchEngine& engine)
     sample.substitution_minute_sum += static_cast<double>(change.timeMinute);
 
   // Clock of the second half restarts at 45; convert to elapsed minutes.
-  const double secondHalf =
-      std::max(0.0, static_cast<double>(engine.getMatchTimeMinutes()) -
-                        HALF_MINUTES);
+  const double secondHalf = std::max(
+      0.0, static_cast<double>(engine.getMatchTimeMinutes()) - HALF_MINUTES);
   const double firstHalf = std::max(0.0, sample.match_length - secondHalf);
   std::vector<ScoringEvent> timeline;
   for (const MatchEvent& event : engine.getEvents())
@@ -302,8 +301,8 @@ MatchSample simulateMatch(const MatchJob& job, const StatsConfig& config)
 }
 
 std::vector<MatchSample> simulateMatches(
-    std::span<const MatchJob> jobs, const StatsConfig& config,
-    unsigned threads, const std::function<void(std::size_t)>& progress)
+    std::span<const MatchJob> jobs, const StatsConfig& config, unsigned threads,
+    const std::function<void(std::size_t)>& progress)
 {
   std::vector<MatchSample> samples(jobs.size());
   const unsigned count = std::clamp(threads, 1U, ThreadPool::MAX_THREADS);
@@ -381,8 +380,8 @@ std::map<std::string, Estimate> matchMetrics(
       valid.push_back(&sample);
     detailed = detailed && sample.detailed;
   }
-  if (detailed) metrics["abandoned_share"] =
-      proportionEstimate(abandoned, samples.size());
+  if (detailed)
+    metrics["abandoned_share"] = proportionEstimate(abandoned, samples.size());
   if (valid.empty()) return metrics;
 
   const std::size_t n = valid.size();
@@ -420,10 +419,10 @@ std::map<std::string, Estimate> matchMetrics(
       count([](const MatchSample& s) { return s.goals[0] < s.goals[1]; }), n);
   metrics["goalless_share"] = proportionEstimate(
       count([](const MatchSample& s) { return s.totalGoals() == 0; }), n);
-  metrics["one_one_share"] = proportionEstimate(
-      count([](const MatchSample& s)
-            { return s.goals[0] == 1 && s.goals[1] == 1; }),
-      n);
+  metrics["one_one_share"] =
+      proportionEstimate(count([](const MatchSample& s)
+                               { return s.goals[0] == 1 && s.goals[1] == 1; }),
+                         n);
   metrics["one_nil_share"] = proportionEstimate(
       count([](const MatchSample& s) { return s.totalGoals() == 1; }), n);
   // Dispersion of total goals: sample variance / mean (Poisson = 1).
@@ -445,11 +444,11 @@ std::map<std::string, Estimate> matchMetrics(
   // Per-team counts are per-match totals halved.
   const auto perTeam = [&](auto extract)
   {
-    return meanEstimate(column([&](const MatchSample& s)
-                               { return extract(s) / 2.0; }));
+    return meanEstimate(
+        column([&](const MatchSample& s) { return extract(s) / 2.0; }));
   };
-  metrics["shots_per_team"] = perTeam([](const MatchSample& s)
-                                      { return s.shots[0] + s.shots[1]; });
+  metrics["shots_per_team"] =
+      perTeam([](const MatchSample& s) { return s.shots[0] + s.shots[1]; });
   metrics["on_target_per_team"] = perTeam(
       [](const MatchSample& s) { return s.on_target[0] + s.on_target[1]; });
   metrics["fouls_per_team"] =
@@ -460,16 +459,16 @@ std::map<std::string, Estimate> matchMetrics(
   metrics["goals_per_shot"] = ratioEstimate(
       column([](const MatchSample& s) { return s.totalGoals() - s.own_goals; }),
       shots);
-  metrics["on_target_share"] = ratioEstimate(
-      column([](const MatchSample& s)
-             { return s.on_target[0] + s.on_target[1]; }),
-      shots);
+  metrics["on_target_share"] =
+      ratioEstimate(column([](const MatchSample& s)
+                           { return s.on_target[0] + s.on_target[1]; }),
+                    shots);
   // Mean xG of the engine's own shot model per shot.
   metrics["xg_per_shot"] = ratioEstimate(
       column([](const MatchSample& s) { return s.xg[0] + s.xg[1]; }), shots);
-  const std::vector<double> attempted = column(
-      [](const MatchSample& s)
-      { return s.passes_attempted[0] + s.passes_attempted[1]; });
+  const std::vector<double> attempted =
+      column([](const MatchSample& s)
+             { return s.passes_attempted[0] + s.passes_attempted[1]; });
   metrics["passes_per_match"] = meanEstimate(attempted);
   metrics["pass_completion"] = ratioEstimate(
       column([](const MatchSample& s)
@@ -495,10 +494,10 @@ std::map<std::string, Estimate> matchMetrics(
   metrics["inside_box_share"] = ratioEstimate(
       column([](const MatchSample& s) { return s.inside_box; }), shots);
   // Non-penalty set-piece goals: the engine flags penalties as set pieces.
-  metrics["set_piece_goal_share"] = ratioEstimate(
-      column([](const MatchSample& s)
-             { return s.set_piece_goals - s.penalty_goals; }),
-      goals);
+  metrics["set_piece_goal_share"] =
+      ratioEstimate(column([](const MatchSample& s)
+                           { return s.set_piece_goals - s.penalty_goals; }),
+                    goals);
   metrics["headed_goal_share"] = ratioEstimate(
       column([](const MatchSample& s) { return s.headed_goals; }), goals);
   const std::vector<double> penalties =
@@ -524,7 +523,8 @@ std::map<std::string, Estimate> matchMetrics(
       column([](const MatchSample& s) { return s.added_minutes; }));
   // Distance: full-match outfield starters, km per player.
   metrics["distance_per_outfielder_km"] = ratioEstimate(
-      column([](const MatchSample& s) { return s.full_match_distance / 1000.0; }),
+      column([](const MatchSample& s)
+             { return s.full_match_distance / 1000.0; }),
       column([](const MatchSample& s) { return s.full_match_players; }));
   // Second-half vs first-half distance per minute of those players, pooled
   // over matches (distance / (half length x players)); bootstrap.
@@ -550,9 +550,8 @@ std::map<std::string, Estimate> matchMetrics(
 
   // Rate multipliers: goals per team-minute in a state / in the reference
   // state, pooled over matches; bootstrap over matches.
-  const auto rateMultiplier = [&](auto minutes, auto goalsOf,
-                                  std::size_t state, std::size_t reference,
-                                  std::uint64_t seed)
+  const auto rateMultiplier = [&](auto minutes, auto goalsOf, std::size_t state,
+                                  std::size_t reference, std::uint64_t seed)
   {
     return bootstrapEstimate(
         n,
@@ -585,14 +584,14 @@ std::map<std::string, Estimate> matchMetrics(
   { return s.strength_minutes; };
   const auto strengthGoals = [](const MatchSample& s) -> const auto&
   { return s.strength_goals; };
-  metrics["lead1_goal_multiplier"] = rateMultiplier(
-      stateMinutes, stateGoals, LEAD_BY_ONE, LEVEL, 0x1EAD1ULL);
-  metrics["trail1_goal_multiplier"] = rateMultiplier(
-      stateMinutes, stateGoals, TRAIL_BY_ONE, LEVEL, 0x7EA11ULL);
+  metrics["lead1_goal_multiplier"] =
+      rateMultiplier(stateMinutes, stateGoals, LEAD_BY_ONE, LEVEL, 0x1EAD1ULL);
+  metrics["trail1_goal_multiplier"] =
+      rateMultiplier(stateMinutes, stateGoals, TRAIL_BY_ONE, LEVEL, 0x7EA11ULL);
   metrics["red_penalised_multiplier"] = rateMultiplier(
       strengthMinutes, strengthGoals, MAN_DOWN, EVEN, 0x4EDD0ULL);
-  metrics["red_opponent_multiplier"] = rateMultiplier(
-      strengthMinutes, strengthGoals, MAN_UP, EVEN, 0x4EDA1ULL);
+  metrics["red_opponent_multiplier"] =
+      rateMultiplier(strengthMinutes, strengthGoals, MAN_UP, EVEN, 0x4EDA1ULL);
 
   // NFR-019: the stronger side (higher starter rating) wins; exact rating
   // ties have no stronger side and are left out.
@@ -658,13 +657,14 @@ std::vector<TextTable> matchTables(std::span<const MatchSample> samples)
       scorelines.begin(), scorelines.end());
   std::ranges::stable_sort(sorted, [](const auto& left, const auto& right)
                            { return left.second > right.second; });
-  TextTable top{"Top scorelines (home-away)", {"Score", "Matches", "Share"},
-                {}};
+  TextTable top{
+      "Top scorelines (home-away)", {"Score", "Matches", "Share"}, {}};
   for (std::size_t i = 0;
        i < sorted.size() && i < static_cast<std::size_t>(TOP_SCORELINES); ++i)
     top.rows.push_back(
         {std::format("{}-{}", sorted[i].first.first, sorted[i].first.second),
-         std::to_string(sorted[i].second), percent(share(sorted[i].second, n))});
+         std::to_string(sorted[i].second),
+         percent(share(sorted[i].second, n))});
   tables.push_back(std::move(top));
 
   static constexpr std::array<const char*, GOAL_TIME_BINS> BIN_NAMES = {
@@ -694,11 +694,12 @@ TextTable ratingGapTable(std::span<const MatchSample> samples)
                 {"> 15", {15.0, 1.0e9, 0.0}}}};
   static constexpr std::array<const char*, 4> TARGETS = {"38-48%", "45-55%",
                                                          "52-65%", "60-75%"};
-  TextTable table{"Stronger side by starter-rating gap (NFR-019; exact ties "
-                  "excluded)",
-                  {"Gap", "Matches", "Stronger wins (95% CI)", "Draws",
-                   "Stronger losses", "Target win share"},
-                  {}};
+  TextTable table{
+      "Stronger side by starter-rating gap (NFR-019; exact ties "
+      "excluded)",
+      {"Gap", "Matches", "Stronger wins (95% CI)", "Draws", "Stronger losses",
+       "Target win share"},
+      {}};
   for (std::size_t b = 0; b < BANDS.size(); ++b)
   {
     const auto& band = BANDS[b].second;
@@ -756,8 +757,7 @@ std::array<std::size_t, 2> tacticPresetsOf(std::size_t job_index,
                                            int seeds_per_pair)
 {
   const auto pairs = presetPairs();
-  const auto perPair =
-      static_cast<std::size_t>(std::max(seeds_per_pair, 1));
+  const auto perPair = static_cast<std::size_t>(std::max(seeds_per_pair, 1));
   const std::size_t pair = (job_index / 2) / perPair;
   const auto [a, b] = pairs[std::min(pair, pairs.size() - 1)];
   return job_index % 2 == 0 ? std::array<std::size_t, 2>{a, b}
@@ -799,8 +799,9 @@ void tacticMetrics(std::span<const MatchSample> samples, int seeds_per_pair,
       const int other = sample.goals[1 - side];
       const double points = own > other ? 3.0 : own == other ? 1.0 : 0.0;
       preset.points.push_back(points);
-      (own > other ? preset.wins : own == other ? preset.draws
-                                                : preset.losses) += 1;
+      (own > other    ? preset.wins
+       : own == other ? preset.draws
+                      : preset.losses) += 1;
       preset.goals_for += own;
       preset.goals_against += other;
       preset.shots += sample.shots[side];
@@ -848,9 +849,8 @@ void tacticMetrics(std::span<const MatchSample> samples, int seeds_per_pair,
   metrics["max_preset_points_share"] = best;
   tables.push_back(std::move(table));
 
-  TextTable matrix{"Head to head: points per match of the row preset",
-                   {"Preset"},
-                   {}};
+  TextTable matrix{
+      "Head to head: points per match of the row preset", {"Preset"}, {}};
   for (const TacticPreset& preset : TACTIC_PRESETS)
     matrix.header.emplace_back(preset.name);
   for (std::size_t row = 0; row < PRESETS; ++row)

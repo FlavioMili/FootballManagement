@@ -115,7 +115,8 @@ std::vector<SeasonHistoryEntry> CompetitionRepository::loadSeasonHistory() const
     SeasonHistoryEntry entry;
     entry.season = static_cast<uint16_t>(sqlite3_column_int(stmt, 0));
     entry.start_year = static_cast<uint16_t>(sqlite3_column_int(stmt, 1));
-    entry.competition_type = static_cast<MatchType>(sqlite3_column_int(stmt, 2));
+    entry.competition_type =
+        static_cast<MatchType>(sqlite3_column_int(stmt, 2));
     entry.competition_id = static_cast<LeagueID>(sqlite3_column_int(stmt, 3));
     entry.competition_name = columnText(stmt, 4);
     entry.champion_id = static_cast<TeamID>(sqlite3_column_int(stmt, 5));
@@ -123,7 +124,8 @@ std::vector<SeasonHistoryEntry> CompetitionRepository::loadSeasonHistory() const
     entry.promoted = teamList(columnText(stmt, 7));
     entry.relegated = teamList(columnText(stmt, 8));
     entry.top_scorer_id = static_cast<PlayerID>(sqlite3_column_int64(stmt, 9));
-    entry.top_scorer_goals = static_cast<uint16_t>(sqlite3_column_int(stmt, 10));
+    entry.top_scorer_goals =
+        static_cast<uint16_t>(sqlite3_column_int(stmt, 10));
     entries.push_back(std::move(entry));
   }
   sqlite3_finalize(stmt);
@@ -136,7 +138,8 @@ void CompetitionRepository::savePlayerSeasonStats(
   if (table.empty()) return;
   sqlite3_stmt* stmt = db_conn->prepareStatement(
       std::string("INSERT OR REPLACE INTO PlayerSeasonStats (") +
-      PLAYER_STATS_COLUMNS + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+      PLAYER_STATS_COLUMNS +
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
   for (const auto& [key, stats] : table)
   {
     sqlite3_bind_int(stmt, 1, stats.season);
@@ -162,9 +165,9 @@ void CompetitionRepository::savePlayerSeasonStats(
 PlayerSeasonTable CompetitionRepository::loadPlayerSeasonStats(
     uint16_t season) const
 {
-  sqlite3_stmt* stmt = db_conn->prepareStatement(
-      std::string("SELECT ") + PLAYER_STATS_COLUMNS +
-      " FROM PlayerSeasonStats WHERE season = ?;");
+  sqlite3_stmt* stmt =
+      db_conn->prepareStatement(std::string("SELECT ") + PLAYER_STATS_COLUMNS +
+                                " FROM PlayerSeasonStats WHERE season = ?;");
   sqlite3_bind_int(stmt, 1, season);
   PlayerSeasonTable table;
   while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -186,7 +189,8 @@ std::vector<PlayerSeasonStats> CompetitionRepository::loadPlayerCareer(
       " FROM PlayerSeasonStats WHERE player_id = ? ORDER BY season;");
   sqlite3_bind_int64(stmt, 1, player_id);
   std::vector<PlayerSeasonStats> career;
-  while (sqlite3_step(stmt) == SQLITE_ROW) career.push_back(readPlayerStats(stmt));
+  while (sqlite3_step(stmt) == SQLITE_ROW)
+    career.push_back(readPlayerStats(stmt));
   sqlite3_finalize(stmt);
   return career;
 }
@@ -194,7 +198,8 @@ std::vector<PlayerSeasonStats> CompetitionRepository::loadPlayerCareer(
 void CompetitionRepository::saveDiscipline(
     const std::vector<DisciplinaryRecord>& records) const
 {
-  sqlite3_stmt* clear = db_conn->prepareStatement("DELETE FROM PlayerDiscipline;");
+  sqlite3_stmt* clear =
+      db_conn->prepareStatement("DELETE FROM PlayerDiscipline;");
   db_conn->executeStep(clear);
   sqlite3_finalize(clear);
   if (records.empty()) return;

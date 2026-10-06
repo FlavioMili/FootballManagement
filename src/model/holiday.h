@@ -22,17 +22,17 @@ class DatabaseConnection;
 /** @brief How long the manager is away. */
 enum class HolidayMode : std::uint8_t
 {
-  UntilDate = 0,    /*!< Up to (not including play on) a chosen day. */
-  NextMatch,        /*!< Until the day of the next managed fixture. */
-  NextDecision,     /*!< Until something needs the manager's answer. */
-  WindowEnd,        /*!< Until the day after the (next) transfer deadline. */
+  UntilDate = 0, /*!< Up to (not including play on) a chosen day. */
+  NextMatch,     /*!< Until the day of the next managed fixture. */
+  NextDecision,  /*!< Until something needs the manager's answer. */
+  WindowEnd,     /*!< Until the day after the (next) transfer deadline. */
   COUNT
 };
 
 /** @brief Why the holiday ended. */
 enum class HolidayStop : std::uint8_t
 {
-  Completed = 0,    /*!< Reached the chosen date / match / deadline. */
+  Completed = 0, /*!< Reached the chosen date / match / deadline. */
   Dismissed,
   SackingWarning,
   BigBid,
@@ -97,8 +97,8 @@ struct HolidayDay
   bool board_warning = false;
   std::vector<HolidayOffer> new_offers;
   std::vector<HolidayInjury> new_injuries;
-  int injured = 0;          /*!< Injured squad members now. */
-  int injured_at_start = 0; /*!< ... when the holiday began. */
+  int injured = 0;           /*!< Injured squad members now. */
+  int injured_at_start = 0;  /*!< ... when the holiday began. */
   bool new_decision = false; /*!< Offer, player request or board message. */
 };
 
@@ -131,7 +131,7 @@ struct HolidaySummary
   GameDateValue end;
   int days = 0;
   HolidayStop reason = HolidayStop::Completed;
-  std::string stop_detail;    /*!< Player concerned, if any. */
+  std::string stop_detail;      /*!< Player concerned, if any. */
   std::int64_t stop_amount = 0; /*!< Fee of the bid that stopped it. */
   std::vector<HolidayResult> results;
   int position_before = 0;

@@ -82,8 +82,8 @@ void SettingsManager::load()
         j.value("autosave_backups", settings_.autosave_backups), 0, 9);
     settings_.master_volume = std::clamp(
         j.value("master_volume", settings_.master_volume), 0.0f, 1.0f);
-    settings_.crowd_volume = std::clamp(
-        j.value("crowd_volume", settings_.crowd_volume), 0.0f, 1.0f);
+    settings_.crowd_volume =
+        std::clamp(j.value("crowd_volume", settings_.crowd_volume), 0.0f, 1.0f);
     settings_.effects_volume = std::clamp(
         j.value("effects_volume", settings_.effects_volume), 0.0f, 1.0f);
     settings_.audio_muted = j.value("audio_muted", settings_.audio_muted);

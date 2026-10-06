@@ -121,14 +121,14 @@ void CallUpScene::refresh()
   if (view.announced && view.locked)
   {
     status_value = LOC("CALLUP_STATUS_AWAY");
-    status_note = formatLocalized("CALLUP_STATUS_AWAY_NOTE",
-                                  {Format::date(view.until)});
+    status_note =
+        formatLocalized("CALLUP_STATUS_AWAY_NOTE", {Format::date(view.until)});
   }
   else if (view.announced)
   {
     status_value = LOC("CALLUP_STATUS_OPEN");
-    status_note = formatLocalized("CALLUP_STATUS_OPEN_NOTE",
-                                  {Format::date(view.start)});
+    status_note =
+        formatLocalized("CALLUP_STATUS_OPEN_NOTE", {Format::date(view.start)});
   }
   else
   {
@@ -174,9 +174,9 @@ void CallUpScene::rebuildLists()
   std::ranges::stable_sort(squad_rows, {}, &Row::group);
   squad_value = std::format("{}/{}", working.size(), view.limit);
   keepers_value = std::to_string(keepers);
-  squad_title = formatLocalized(
-      dirty ? "CALLUP_CARD_SQUAD_EDITED" : "CALLUP_CARD_SQUAD",
-      {std::to_string(working.size())});
+  squad_title =
+      formatLocalized(dirty ? "CALLUP_CARD_SQUAD_EDITED" : "CALLUP_CARD_SQUAD",
+                      {std::to_string(working.size())});
 }
 
 void CallUpScene::renderContent()
@@ -239,23 +239,22 @@ void CallUpScene::renderTiles()
   UI::statTile("callup_status", LOC("CALLUP_TILE_STATUS"), status_value.c_str(),
                status_note.c_str(), palette.text, tile);
   tiles.next();
-  UI::statTile("callup_squad", LOC("CALLUP_TILE_SQUAD"), squad_value.c_str(),
-               LOC(view.finals ? "CALLUP_TILE_SQUAD_FINALS"
-                               : "CALLUP_TILE_SQUAD_NOTE"),
-               working.size() > view.limit ||
-                       (view.announced &&
-                        working.size() < International::MIN_CALL_UPS)
-                   ? palette.warning
-                   : palette.text,
-               tile);
+  UI::statTile(
+      "callup_squad", LOC("CALLUP_TILE_SQUAD"), squad_value.c_str(),
+      LOC(view.finals ? "CALLUP_TILE_SQUAD_FINALS" : "CALLUP_TILE_SQUAD_NOTE"),
+      working.size() > view.limit ||
+              (view.announced && working.size() < International::MIN_CALL_UPS)
+          ? palette.warning
+          : palette.text,
+      tile);
   tiles.next();
-  UI::statTile("callup_keepers", LOC("CALLUP_TILE_KEEPERS"),
-               keepers_value.c_str(), LOC("CALLUP_TILE_KEEPERS_NOTE"),
-               view.announced &&
-                       keepers < International::MIN_CALL_UP_GOALKEEPERS
-                   ? palette.warning
-                   : palette.text,
-               tile);
+  UI::statTile(
+      "callup_keepers", LOC("CALLUP_TILE_KEEPERS"), keepers_value.c_str(),
+      LOC("CALLUP_TILE_KEEPERS_NOTE"),
+      view.announced && keepers < International::MIN_CALL_UP_GOALKEEPERS
+          ? palette.warning
+          : palette.text,
+      tile);
   const NationalJob* job = guiView->getController().getNationalJob();
   const std::string record =
       job ? std::format("{}-{}-{}", job->won, job->drawn, job->lost)
@@ -279,8 +278,9 @@ void CallUpScene::renderSquad(float width)
     return;
   }
   ImGui::PushTextWrapPos(0.0f);
-  ImGui::TextColored(palette.faint, "%s",
-                     LOC(view.locked ? "CALLUP_LOCKED_HINT" : "CALLUP_OPEN_HINT"));
+  ImGui::TextColored(
+      palette.faint, "%s",
+      LOC(view.locked ? "CALLUP_LOCKED_HINT" : "CALLUP_OPEN_HINT"));
   ImGui::PopTextWrapPos();
   if (!view.locked)
   {
@@ -309,7 +309,8 @@ void CallUpScene::renderCandidates(float width)
       LOC("CALLUP_FILTER_FWD")};
   if (UI::segmented("callup_filter", filter, labels)) lists_stale = true;
   if (candidate_rows.empty())
-    UI::emptyState(LOC("CALLUP_POOL_EMPTY_TITLE"), LOC("CALLUP_POOL_EMPTY_BODY"));
+    UI::emptyState(LOC("CALLUP_POOL_EMPTY_TITLE"),
+                   LOC("CALLUP_POOL_EMPTY_BODY"));
   else
     renderTable("callup_pool", candidate_rows, false);
   UI::endCard();
@@ -410,8 +411,9 @@ void CallUpScene::renderTable(const char* id,
             ImGui::TextColored(text, "%s", row.form.c_str());
             break;
           case Cell::CONDITION:
-            ImGui::TextColored(candidate.condition < 75 ? palette.warning : text,
-                               "%d%%", candidate.condition);
+            ImGui::TextColored(
+                candidate.condition < 75 ? palette.warning : text, "%d%%",
+                candidate.condition);
             break;
           case Cell::CAPS:
             ImGui::TextColored(text, "%s", row.caps.c_str());

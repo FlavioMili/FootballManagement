@@ -34,12 +34,12 @@ struct Vacancy;
 /** @brief What a news story is about (filter of the news screen). */
 enum class NewsKind : std::uint8_t
 {
-  Transfer = 0,  /*!< Big-money moves and the managed club's deals. */
-  Manager,       /*!< Appointments, sackings and departures. */
-  Race,          /*!< Title races, new leaders, champions, promotions. */
-  Upset,         /*!< Results against the odds. */
-  Record,        /*!< Records set this season and later. */
-  Award,         /*!< Monthly and season honours. */
+  Transfer = 0, /*!< Big-money moves and the managed club's deals. */
+  Manager,      /*!< Appointments, sackings and departures. */
+  Race,         /*!< Title races, new leaders, champions, promotions. */
+  Upset,        /*!< Results against the odds. */
+  Record,       /*!< Records set this season and later. */
+  Award,        /*!< Monthly and season honours. */
   COUNT
 };
 
@@ -139,8 +139,7 @@ inline constexpr int RACE_POINTS_GAP = 3;
 
 /** Stories dated from @p from to @p to (inclusive), newest first. */
 std::vector<NewsItem> build(const NewsSources& sources,
-                            const GameDateValue& from,
-                            const GameDateValue& to);
+                            const GameDateValue& from, const GameDateValue& to);
 
 /**
  * The feed of a running game: this season and the last one up to today,

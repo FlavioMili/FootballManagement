@@ -149,19 +149,20 @@ void MainGameScene::update(float /*deltaTime*/)
       const ContinueStop stop = guiView->getController().getLastContinueStop();
       const bool atFixture =
           stop == ContinueStop::None || stop == ContinueStop::Fixture;
-      std::string toast = fmt::sprintf(
-          Format::plural(atFixture ? "DASHBOARD_ADVANCED_DAYS"
-                                   : "CONTINUE_ADVANCED_DAYS",
-                         advancedDays),
-          advancedDays);
+      std::string toast =
+          fmt::sprintf(Format::plural(atFixture ? "DASHBOARD_ADVANCED_DAYS"
+                                                : "CONTINUE_ADVANCED_DAYS",
+                                      advancedDays),
+                       advancedDays);
       if (!atFixture)
-        toast += std::string("  ·  ") +
-                 LOC(GameController::continueStopKey(stop));
+        toast +=
+            std::string("  ·  ") + LOC(GameController::continueStopKey(stop));
       if (!match_report && !holiday_running) showToast(toast);
       refreshData();
       if (holiday_running)
-        holidayDialog().showSummary(guiView->getController(),
-                                    guiView->getController().getHolidaySummary());
+        holidayDialog().showSummary(
+            guiView->getController(),
+            guiView->getController().getHolidaySummary());
     }
     catch (const std::exception&)
     {
@@ -277,9 +278,9 @@ void MainGameScene::startContinuation()
   stop_requested = false;
   // Closing the game interrupts open-ended runs; a Continue to the next
   // fixture (at most a few weeks) and the rest of a match day complete.
-  stop_on_close = !match_report &&
-                  (holiday_running || !cached_next.has_value() ||
-                   controllerPtr->isUnemployed());
+  stop_on_close =
+      !match_report && (holiday_running || !cached_next.has_value() ||
+                        controllerPtr->isUnemployed());
   // The rest of a managed match day: exactly one day, whatever comes next.
   if (match_report)
   {
@@ -293,9 +294,9 @@ void MainGameScene::startContinuation()
   }
   if (pending_holiday)
   {
-    continue_operation =
-        std::async(std::launch::async, [controllerPtr, plan = *pending_holiday]()
-                   { return controllerPtr->goOnHoliday(plan); });
+    continue_operation = std::async(
+        std::launch::async, [controllerPtr, plan = *pending_holiday]()
+        { return controllerPtr->goOnHoliday(plan); });
     pending_holiday.reset();
     return;
   }
@@ -528,10 +529,10 @@ void MainGameScene::renderOverview()
   const std::string payrollText = fmt::sprintf(
       LOC("DASHBOARD_PAYROLL_FOOTNOTE"), Format::money(cached_payroll).c_str());
   // Under a transfer embargo the cash tile says so instead of the payroll.
-  UI::statTile("tile_balance", LOC("FINANCE_CASH"), balanceText.c_str(),
-               cached_embargo ? LOC("TRANSFER_TILE_EMBARGO_NOTE")
-                              : payrollText.c_str(),
-               balance < 0 ? palette.negative : palette.text, width);
+  UI::statTile(
+      "tile_balance", LOC("FINANCE_CASH"), balanceText.c_str(),
+      cached_embargo ? LOC("TRANSFER_TILE_EMBARGO_NOTE") : payrollText.c_str(),
+      balance < 0 ? palette.negative : palette.text, width);
   tiles.next();
   const std::string squadText = std::to_string(cached_squad.size());
   const std::string averageText =
@@ -612,9 +613,9 @@ void MainGameScene::renderNextMatchCard(float width, float height)
             home ? palette.positive : palette.warning);
   ImGui::SameLine();
   const bool today = next.date == controller.getCurrentDate();
-  const std::string when =
-      today ? std::string(LOC("FIXTURE_TODAY")) + " " + Format::kickoff(next.kickoff)
-            : Format::matchDay(next.date, next.kickoff);
+  const std::string when = today ? std::string(LOC("FIXTURE_TODAY")) + " " +
+                                       Format::kickoff(next.kickoff)
+                                 : Format::matchDay(next.date, next.kickoff);
   ImGui::TextColored(today ? palette.accent : palette.muted, "%s",
                      when.c_str());
 
@@ -694,9 +695,10 @@ void MainGameScene::renderNextMatchCard(float width, float height)
       std::max(ImGui::GetCursorPosX(),
                ImGui::GetWindowContentRegionMax().x - readinessWidth));
   ImGui::AlignTextToFramePadding();
-  ImGui::TextColored(blocked                                    ? palette.negative
-                     : cached_starters == 11 && !playingInjured ? palette.positive
-                                                                : palette.warning,
+  ImGui::TextColored(blocked ? palette.negative
+                     : cached_starters == 11 && !playingInjured
+                         ? palette.positive
+                         : palette.warning,
                      "%s", readiness.c_str());
   if (blocked)
   {

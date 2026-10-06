@@ -103,7 +103,8 @@ TEST(FacilityProjects, BoardVerdicts)
             ProjectVerdict::TooManyProjects);
   context = healthyClub();
   context.cooling_down = true;
-  EXPECT_EQ(BoardModel::reviewProject(quote, context), ProjectVerdict::Cooldown);
+  EXPECT_EQ(BoardModel::reviewProject(quote, context),
+            ProjectVerdict::Cooldown);
   context = healthyClub();
   context.confidence = 30.0f;
   EXPECT_EQ(BoardModel::reviewProject(quote, context),
@@ -150,8 +151,9 @@ TEST(FacilityProjects, ProjectsRunPayAndComplete)
   ASSERT_EQ(club.getFinances().getLedger().size(), ledger_before + 1);
   EXPECT_EQ(club.getFinances().getLedger().back().amount,
             -std::llround(static_cast<double>(training.cost) * 0.25));
-  EXPECT_EQ(controller->requestFacilityProject(FacilityProjectType::TrainingGround),
-            ProjectVerdict::AlreadyRunning);
+  EXPECT_EQ(
+      controller->requestFacilityProject(FacilityProjectType::TrainingGround),
+      ProjectVerdict::AlreadyRunning);
 
   const ProjectQuote stadium =
       controller->getProjectQuote(FacilityProjectType::StadiumExpansion, 4'000);
@@ -160,8 +162,9 @@ TEST(FacilityProjects, ProjectsRunPayAndComplete)
             ProjectVerdict::Approved);
   EXPECT_EQ(club.getProfile().stadium_capacity,
             capacity_before - stadium.disruption);
-  EXPECT_EQ(controller->requestFacilityProject(FacilityProjectType::MedicalCentre),
-            ProjectVerdict::TooManyProjects);
+  EXPECT_EQ(
+      controller->requestFacilityProject(FacilityProjectType::MedicalCentre),
+      ProjectVerdict::TooManyProjects);
   ASSERT_EQ(controller->getFacilityProjects().size(), 2u);
 
   // Round trip mid-works.
@@ -193,19 +196,20 @@ TEST(FacilityProjects, ProjectsRunPayAndComplete)
     EXPECT_TRUE(project.completed);
     EXPECT_EQ(project.paid, project.cost);
   }
-  EXPECT_EQ(club.getProfile().training_facilities,
-            std::min<int>(100, training_before + static_cast<int>(training.amount)));
+  EXPECT_EQ(
+      club.getProfile().training_facilities,
+      std::min<int>(100, training_before + static_cast<int>(training.amount)));
   EXPECT_EQ(club.getProfile().stadium_capacity,
             capacity_before + stadium.amount);
-  EXPECT_EQ(std::ranges::count_if(controller->getInbox(),
-                                  [](const InboxMessage& message)
-                                  { return message.title_key ==
-                                           "INBOX_PROJECT_DONE_TITLE"; }),
+  EXPECT_EQ(std::ranges::count_if(
+                controller->getInbox(), [](const InboxMessage& message)
+                { return message.title_key == "INBOX_PROJECT_DONE_TITLE"; }),
             2);
 
   // A medical centre shortens layoffs.
-  ASSERT_EQ(controller->requestFacilityProject(FacilityProjectType::MedicalCentre),
-            ProjectVerdict::Approved);
+  ASSERT_EQ(
+      controller->requestFacilityProject(FacilityProjectType::MedicalCentre),
+      ProjectVerdict::Approved);
   const GameDateValue medical_end = controller->getFacilityProjects()[0].end;
   projects.onDay(*gamedata, SeasonCalendar::addDays(medical_end, 1), managed,
                  game->getWorld().getInbox());
@@ -222,15 +226,18 @@ TEST(FacilityProjects, RefusalStartsACooldown)
   club.getFinances().record(controller->getCurrentDate(),
                             FinanceCategory::Adjustment,
                             -club.getFinances().getBalance());
-  EXPECT_EQ(controller->requestFacilityProject(FacilityProjectType::MedicalCentre),
-            ProjectVerdict::CannotAfford);
+  EXPECT_EQ(
+      controller->requestFacilityProject(FacilityProjectType::MedicalCentre),
+      ProjectVerdict::CannotAfford);
   const auto cooldown =
       controller->getProjectCooldown(FacilityProjectType::MedicalCentre);
   ASSERT_TRUE(cooldown.has_value());
-  EXPECT_EQ(*cooldown, SeasonCalendar::addDays(controller->getCurrentDate(),
-                                               BoardModel::PROJECT_COOLDOWN_DAYS));
-  EXPECT_EQ(controller->requestFacilityProject(FacilityProjectType::MedicalCentre),
-            ProjectVerdict::Cooldown);
+  EXPECT_EQ(*cooldown,
+            SeasonCalendar::addDays(controller->getCurrentDate(),
+                                    BoardModel::PROJECT_COOLDOWN_DAYS));
+  EXPECT_EQ(
+      controller->requestFacilityProject(FacilityProjectType::MedicalCentre),
+      ProjectVerdict::Cooldown);
   EXPECT_FALSE(
       controller->getProjectCooldown(FacilityProjectType::TrainingGround));
 }

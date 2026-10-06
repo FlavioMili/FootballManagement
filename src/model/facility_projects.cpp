@@ -35,8 +35,7 @@ double seasonIncome(const GameData& gamedata, const Team& team)
       if (const auto other = gamedata.getTeam(team_id))
         reputations.push_back(other->get().getReputation());
   return ClubEconomy::expectedIncome(
-      makeLeagueEconomy(team.getLeagueId(), reputations),
-      team.getReputation());
+      makeLeagueEconomy(team.getLeagueId(), reputations), team.getReputation());
 }
 
 std::uint8_t currentLevel(const Team& team, FacilityProjectType type,
@@ -79,12 +78,9 @@ ProjectQuote FacilityProjects::quote(const GameData& gamedata, TeamID team_id,
       seasonIncome(gamedata, club), seats);
 }
 
-ProjectVerdict FacilityProjects::request(GameData& gamedata,
-                                         const BoardState& board,
-                                         TeamID team_id,
-                                         FacilityProjectType type,
-                                         std::uint32_t seats,
-                                         const GameDateValue& today)
+ProjectVerdict FacilityProjects::request(
+    GameData& gamedata, const BoardState& board, TeamID team_id,
+    FacilityProjectType type, std::uint32_t seats, const GameDateValue& today)
 {
   const auto team = gamedata.getTeam(team_id);
   if (!team || team_id == FREE_AGENTS_TEAM_ID) return ProjectVerdict::AtMaximum;
@@ -191,8 +187,8 @@ void FacilityProjects::complete(GameData& gamedata, FacilityProject& project,
       break;
     case FacilityProjectType::MedicalCentre:
     {
-      std::uint8_t& level = medical.try_emplace(project.team_id, STANDARD_MEDICAL)
-                                .first->second;
+      std::uint8_t& level =
+          medical.try_emplace(project.team_id, STANDARD_MEDICAL).first->second;
       level = static_cast<std::uint8_t>(
           std::min<int>(100, level + static_cast<int>(project.amount)));
       detail = std::to_string(level);
@@ -242,8 +238,7 @@ std::vector<FacilityProject> FacilityProjects::projectsFor(TeamID team_id) const
 std::optional<GameDateValue> FacilityProjects::cooldownUntil(
     TeamID team_id, FacilityProjectType type, const GameDateValue& today) const
 {
-  const auto found =
-      cooldowns.find({team_id, static_cast<std::uint8_t>(type)});
+  const auto found = cooldowns.find({team_id, static_cast<std::uint8_t>(type)});
   if (found == cooldowns.end() || !(today < found->second)) return std::nullopt;
   return found->second;
 }
@@ -287,15 +282,17 @@ void FacilityProjects::load(const std::shared_ptr<DatabaseConnection>& db_conn)
             next_id = std::max(next_id, project.id + 1);
             projects.push_back(project);
           });
-  forEach(db, "SELECT team_id, medical FROM ClubFacilities;",
-          [&](sqlite3_stmt* stmt)
-          { medical[column<TeamID>(stmt, 0)] = column<std::uint8_t>(stmt, 1); });
-  forEach(db, "SELECT team_id, type, until_date FROM ProjectCooldowns;",
-          [&](sqlite3_stmt* stmt)
-          {
-            cooldowns[{column<TeamID>(stmt, 0), column<std::uint8_t>(stmt, 1)}] =
-                GameDateValue::fromString(columnText(stmt, 2));
-          });
+  forEach(
+      db, "SELECT team_id, medical FROM ClubFacilities;",
+      [&](sqlite3_stmt* stmt)
+      { medical[column<TeamID>(stmt, 0)] = column<std::uint8_t>(stmt, 1); });
+  forEach(
+      db, "SELECT team_id, type, until_date FROM ProjectCooldowns;",
+      [&](sqlite3_stmt* stmt)
+      {
+        cooldowns[{column<TeamID>(stmt, 0), column<std::uint8_t>(stmt, 1)}] =
+            GameDateValue::fromString(columnText(stmt, 2));
+      });
 }
 
 void FacilityProjects::save(

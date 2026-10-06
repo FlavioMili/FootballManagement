@@ -62,12 +62,11 @@ inline void detailPanel(const char* id, const Player* player,
     ImGui::TextUnformatted(player->getName().c_str());
   }
   ImGui::PushStyleColor(ImGuiCol_Text, palette.muted);
-  ImGui::TextWrapped("%s  ·  %s %d  ·  %d cm  ·  %s",
-                     RoleUtils::longName(player->getRole()),
-                     LOC("PLAYER_AGE"), player->getAge(), player->getHeight(),
-                     player->getFoot() == Foot::Right
-                         ? LOC("PLAYER_FOOT_RIGHT")
-                         : LOC("PLAYER_FOOT_LEFT"));
+  ImGui::TextWrapped(
+      "%s  ·  %s %d  ·  %d cm  ·  %s", RoleUtils::longName(player->getRole()),
+      LOC("PLAYER_AGE"), player->getAge(), player->getHeight(),
+      player->getFoot() == Foot::Right ? LOC("PLAYER_FOOT_RIGHT")
+                                       : LOC("PLAYER_FOOT_LEFT"));
   ImGui::PopStyleColor();
 
   const float keyWidth = 130.0f * dpi;

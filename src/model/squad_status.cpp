@@ -159,8 +159,8 @@ void SquadStatusBook::load(const DatabaseConnection& db_conn)
 
 void SquadStatusBook::save(const DatabaseConnection& db_conn) const
 {
-  sqlite3_exec(db_conn.getRaw(), "DELETE FROM SquadStatuses;", nullptr,
-               nullptr, nullptr);
+  sqlite3_exec(db_conn.getRaw(), "DELETE FROM SquadStatuses;", nullptr, nullptr,
+               nullptr);
   sqlite3_stmt* stmt = db_conn.prepareStatement(
       "INSERT INTO SquadStatuses (player_id, team_id, status) VALUES (?, ?, "
       "?);");

@@ -288,8 +288,8 @@ TEST(SwipeGestureTest, ShortSwipeStaysBelowTheThreshold)
 {
   SwipeGesture gesture;
   const float threshold = gesture.getTuning().threshold;
-  const Steps steps = swipe(gesture, 1.0f, 0.0f,
-                            static_cast<int>(threshold) - 2, 5'000 * MS);
+  const Steps steps =
+      swipe(gesture, 1.0f, 0.0f, static_cast<int>(threshold) - 2, 5'000 * MS);
   EXPECT_EQ(steps.back + steps.forward, 0);
   const std::uint64_t last =
       5'000 * MS + static_cast<std::uint64_t>(threshold - 3.0f) * 8 * MS;

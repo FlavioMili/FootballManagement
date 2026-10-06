@@ -69,7 +69,8 @@ TEST(BuyerNegotiationTest, DeferredMoneyAndAddOnsCostTheBuyerLessThanCash)
   EXPECT_LT(buyerCost(spread, 25), CEILING);
   // The buyer discounts deferred money faster than the seller values it,
   // so instalments are worth more to the club than they cost the buyer.
-  EXPECT_LT(buyerCost(spread, 25), TransferNegotiation::sellerValue(spread, 25));
+  EXPECT_LT(buyerCost(spread, 25),
+            TransferNegotiation::sellerValue(spread, 25));
 
   OfferTerms add_on = cash(CEILING);
   add_on.appearance_bonus = 2'000'000;
@@ -128,7 +129,8 @@ TEST(BuyerNegotiationTest, CountersWithStructuresOfItsOwn)
   {
     EXPECT_TRUE(TransferNegotiation::isValid(reply->terms));
     EXPECT_GT(buyerCost(reply->terms, 25), previous);
-    EXPECT_LE(buyerCost(reply->terms, 25), CEILING) << "never above its ceiling";
+    EXPECT_LE(buyerCost(reply->terms, 25), CEILING)
+        << "never above its ceiling";
   }
 }
 
@@ -231,16 +233,18 @@ TEST(BuyerNegotiationTest, RivalBidsRaiseTheCeiling)
   contested.rivals = 2;
   EXPECT_GT(effectiveCeiling(contested), effectiveCeiling(alone));
   contested.rivals = 20;
-  EXPECT_LE(effectiveCeiling(contested),
-            CEILING * (1.0 + static_cast<double>(Buyer::MAX_RIVAL_CEILING_BONUS)) +
-                1.0);
+  EXPECT_LE(
+      effectiveCeiling(contested),
+      CEILING * (1.0 + static_cast<double>(Buyer::MAX_RIVAL_CEILING_BONUS)) +
+          1.0);
 
   // 10% above the ceiling: countered alone, accepted against two rivals.
   const OfferTerms asked = cash(11'000'000);
   EXPECT_EQ(respond(alone, cash(8'000'000), asked, false, 0.5).decision,
             Decision::Counter);
   contested.rivals = 2;
-  const BuyerReply reply = respond(contested, cash(8'000'000), asked, false, 0.5);
+  const BuyerReply reply =
+      respond(contested, cash(8'000'000), asked, false, 0.5);
   EXPECT_EQ(reply.decision, Decision::Accept);
   EXPECT_TRUE(has(reply, Why::RivalBids));
 
@@ -313,11 +317,12 @@ TEST(BuyerNegotiationTest, PlayerStanceAndHisReactionToARejection)
   EXPECT_TRUE(keen.transfer_request);
   EXPECT_FALSE(rejectionEffect(PlayerStance::WantsBiggerClub, true, 60)
                    .transfer_request);
-  EXPECT_GT(rejectionEffect(PlayerStance::WantsBiggerClub, false, 80)
-                .morale_delta,
-            keen.morale_delta)
+  EXPECT_GT(
+      rejectionEffect(PlayerStance::WantsBiggerClub, false, 80).morale_delta,
+      keen.morale_delta)
       << "a small bid turned down hurts less";
-  const RejectionEffect happy = rejectionEffect(PlayerStance::HappyHere, true, 80);
+  const RejectionEffect happy =
+      rejectionEffect(PlayerStance::HappyHere, true, 80);
   EXPECT_EQ(happy.morale_delta, 0.0f);
   EXPECT_FALSE(happy.transfer_request);
 
@@ -335,7 +340,7 @@ TEST(BuyerNegotiationTest, NeverAgreesADealItsWageBudgetCannotCarry)
   EXPECT_EQ(reply.decision, Decision::WalkAway);
   EXPECT_TRUE(has(reply, Why::WageBudget));
   context.wage_fits = true;
-  EXPECT_EQ(respond(context, cash(8'000'000), cash(8'500'000), false, 0.5)
-                .decision,
-            Decision::Accept);
+  EXPECT_EQ(
+      respond(context, cash(8'000'000), cash(8'500'000), false, 0.5).decision,
+      Decision::Accept);
 }

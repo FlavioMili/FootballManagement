@@ -13,8 +13,8 @@
 #include <string>
 #include <vector>
 
-#include "gui/scenes/management_scene.h"
 #include "gui/scenes/contract_talks_dialog.h"
+#include "gui/scenes/management_scene.h"
 #include "gui/scenes/player_talk_dialog.h"
 #include "gui/view_models/player_view.h"
 #include "model/player.h"

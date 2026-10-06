@@ -253,19 +253,18 @@ std::string ciText(const ReportRow& row)
 
 void appendRowTable(std::string& out, std::span<const ReportRow> rows)
 {
-  out += "| ID | Metric | Value | 95% CI | Band | Target | n | Verdict | "
-         "Source | Note |\n";
+  out +=
+      "| ID | Metric | Value | 95% CI | Band | Target | n | Verdict | "
+      "Source | Note |\n";
   out += "|---|---|---|---|---|---|---|---|---|---|\n";
   for (const ReportRow& row : rows)
   {
     out += std::format(
         "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n", row.id,
         escapeCell(row.label),
-        row.estimate.valid() ? formatValue(row.estimate.value, row.unit)
-                             : "-",
-        ciText(row), bandText(row), escapeCell(row.target),
-        row.estimate.n, verdictName(row.verdict), escapeCell(row.source),
-        escapeCell(row.note));
+        row.estimate.valid() ? formatValue(row.estimate.value, row.unit) : "-",
+        ciText(row), bandText(row), escapeCell(row.target), row.estimate.n,
+        verdictName(row.verdict), escapeCell(row.source), escapeCell(row.note));
   }
 }
 
@@ -350,10 +349,11 @@ std::vector<ReportRow> evaluateTargets(
     row.source = spec.source;
     row.unit = spec.unit;
     row.note = spec.note;
-    const auto found =
-        spec.metric.empty() ? metrics.end()
-                            : metrics.find(std::string(spec.metric));
-    if (found != metrics.end()) row.estimate = found->second;
+    const auto found = spec.metric.empty()
+                           ? metrics.end()
+                           : metrics.find(std::string(spec.metric));
+    if (found != metrics.end())
+      row.estimate = found->second;
     else if (!spec.metric.empty())
       row.note = row.note.empty() ? "no data in this mode"
                                   : row.note + "; no data in this mode";
@@ -457,8 +457,8 @@ LabReport reportFromJson(const nlohmann::json& json)
     row.metric = item.at("metric").get<std::string>();
     row.label = item.at("label").get<std::string>();
     row.target = item.at("target").get<std::string>();
-    row.tier = enumFromName<Tier>(item.at("tier").get<std::string>(),
-                                  TIER_NAMES);
+    row.tier =
+        enumFromName<Tier>(item.at("tier").get<std::string>(), TIER_NAMES);
     row.source = item.at("source").get<std::string>();
     const std::optional<Unit> unit =
         unitFromName(item.at("unit").get<std::string>());
@@ -478,8 +478,7 @@ LabReport reportFromJson(const nlohmann::json& json)
     TextTable table;
     table.title = item.at("title").get<std::string>();
     table.header = item.at("header").get<std::vector<std::string>>();
-    table.rows =
-        item.at("rows").get<std::vector<std::vector<std::string>>>();
+    table.rows = item.at("rows").get<std::vector<std::vector<std::string>>>();
     report.tables.push_back(std::move(table));
   }
   report.notes = json.at("notes").get<std::vector<std::string>>();
@@ -491,9 +490,9 @@ std::string toMarkdown(const LabReport& report)
   const Summary summary = report.summary();
   std::string out;
   out += std::format("# fm_lab report: {}\n\n", report.mode);
-  out += std::format(
-      "- seed {}, samples {}, threads {}, wall {:.1f} s", report.seed,
-      report.samples, report.threads, report.wall_seconds);
+  out += std::format("- seed {}, samples {}, threads {}, wall {:.1f} s",
+                     report.seed, report.samples, report.threads,
+                     report.wall_seconds);
   if (report.ms_per_match > 0.0)
     out += std::format(", {:.1f} ms/match", report.ms_per_match);
   if (report.seconds_per_season > 0.0)
@@ -521,12 +520,24 @@ std::string toMarkdown(const LabReport& report)
     out += std::format("\n## {}\n\n", title);
     appendRowTable(out, selected);
   };
-  section("Gate targets", [](const ReportRow& row)
-          { return row.tier == Tier::Gate && row.verdict != Verdict::NotMeasured; });
-  section("Monitor targets", [](const ReportRow& row)
-          { return row.tier == Tier::Monitor && row.verdict != Verdict::NotMeasured; });
-  section("Info metrics (no spec band)", [](const ReportRow& row)
-          { return row.tier == Tier::Info && row.verdict != Verdict::NotMeasured; });
+  section("Gate targets",
+          [](const ReportRow& row)
+          {
+            return row.tier == Tier::Gate &&
+                   row.verdict != Verdict::NotMeasured;
+          });
+  section("Monitor targets",
+          [](const ReportRow& row)
+          {
+            return row.tier == Tier::Monitor &&
+                   row.verdict != Verdict::NotMeasured;
+          });
+  section("Info metrics (no spec band)",
+          [](const ReportRow& row)
+          {
+            return row.tier == Tier::Info &&
+                   row.verdict != Verdict::NotMeasured;
+          });
   if (!report.tables.empty()) out += "\n## Distributions and tables\n";
   for (const TextTable& table : report.tables) appendTextTable(out, table);
   if (!report.notes.empty())

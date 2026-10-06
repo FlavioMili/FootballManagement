@@ -99,8 +99,8 @@ struct Fixture
   std::unique_ptr<MatchEngine> engine(std::uint32_t seed) const
   {
     return std::make_unique<MatchEngine>(home.getLineup(), away.getLineup(),
-                                         home.getStrategy(),
-                                         away.getStrategy(), config, seed);
+                                         home.getStrategy(), away.getStrategy(),
+                                         config, seed);
   }
 };
 
@@ -422,8 +422,8 @@ ShotRecord shotOf(bool home, PlayerID player, float minute, float xg,
 
 bool hasKey(const std::vector<AnalysisLine>& lines, std::string_view key)
 {
-  return std::ranges::any_of(lines, [key](const AnalysisLine& line)
-                             { return line.key == key; });
+  return std::ranges::any_of(
+      lines, [key](const AnalysisLine& line) { return line.key == key; });
 }
 
 /** A detail where the away side attacks down its left (our right). */
@@ -475,8 +475,8 @@ TEST(MatchInsightsTest, SummaryExplainsWastefulFinishingAndAnOverload)
   EXPECT_EQ(lines.front().key, "SUM_LOSS_UNLUCKY");
   EXPECT_EQ(lines.front().args[0], "2.4");
   ASSERT_TRUE(hasKey(lines, "SUM_OWN_WASTEFUL"));
-  const auto wasteful = std::ranges::find(lines, "SUM_OWN_WASTEFUL",
-                                          &AnalysisLine::key);
+  const auto wasteful =
+      std::ranges::find(lines, "SUM_OWN_WASTEFUL", &AnalysisLine::key);
   EXPECT_EQ(wasteful->args[2], "3");  // Three big chances missed.
   const auto overload = std::ranges::find(lines, "SUM_OVERLOAD_AGAINST_PLAYER",
                                           &AnalysisLine::key);
@@ -582,8 +582,8 @@ TEST(MatchInsightsTest, HubMeasuresFinishingKeepingAndLeaders)
   // League conversion: 3 goals per 11 shots on target; the club faced 6
   // on target a match and conceded 1.
   EXPECT_NEAR(team.league_conversion, 3.0f / 11.0f, 1e-4f);
-  EXPECT_NEAR(metric(HubMetric::GoalsPrevented).team, 6.0f * 3.0f / 11.0f - 1.0f,
-              1e-4f);
+  EXPECT_NEAR(metric(HubMetric::GoalsPrevented).team,
+              6.0f * 3.0f / 11.0f - 1.0f, 1e-4f);
   EXPECT_NEAR(metric(HubMetric::SetPieceShare).team, 50.0f, 1e-3f);
   // Both sides of every report count for the league: 7 of 20 shots.
   EXPECT_NEAR(metric(HubMetric::SetPieceShare).league, 35.0f, 1e-3f);

@@ -199,8 +199,7 @@ TEST(ScoutingUiTest, ScoutPagesFollowWhatEachScoutIsDoing)
   const uint32_t active =
       Bridge::selectedLine(*scene)->summary.active_assignment_id;
   const auto filed = static_cast<size_t>(std::ranges::count_if(
-      controller.getScoutReports(),
-      [active](const ScoutReport& report)
+      controller.getScoutReports(), [active](const ScoutReport& report)
       { return report.assignment_id == active; }));
   EXPECT_GT(filed, 0u);
   EXPECT_EQ(Bridge::reportRows(*scene), filed);

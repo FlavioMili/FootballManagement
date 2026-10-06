@@ -155,10 +155,10 @@ float aggravationMultiplier(InjurySeverity severity)
 double aggravationChance(std::uint16_t days_left, int minutes)
 {
   if (days_left == 0 || minutes <= 0) return 0.0;
-  const double hazard = WorldTuning::Fitness::MATCH_INJURY_RATE_PER_HOUR *
-                        static_cast<double>(minutes) / 60.0 *
-                        static_cast<double>(
-                            aggravationMultiplier(severity(days_left)));
+  const double hazard =
+      WorldTuning::Fitness::MATCH_INJURY_RATE_PER_HOUR *
+      static_cast<double>(minutes) / 60.0 *
+      static_cast<double>(aggravationMultiplier(severity(days_left)));
   return 1.0 - std::exp(-hazard);
 }
 

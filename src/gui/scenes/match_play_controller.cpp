@@ -97,7 +97,8 @@ MatchPlayController::Control MatchPlayController::controlForKey(
     const SDL_KeyboardEvent& key)
 {
   // Sprint is held with the other keys, so it stays on the modifier.
-  if (key.scancode == SDL_SCANCODE_LSHIFT || key.scancode == SDL_SCANCODE_RSHIFT)
+  if (key.scancode == SDL_SCANCODE_LSHIFT ||
+      key.scancode == SDL_SCANCODE_RSHIFT)
     return SPRINT;
   static constexpr std::array<std::pair<std::string_view, Control>, 11>
       BINDINGS{{{Input::Ids::PLAY_UP, UP},
@@ -307,8 +308,8 @@ void MatchPlayController::readStick(float& x, float& y) const
     }
   }
   // The movement keys replace the stick while held.
-  const float keyX = (keyHolds[RIGHT] > 0 ? 1.0f : 0.0f) -
-                     (keyHolds[LEFT] > 0 ? 1.0f : 0.0f);
+  const float keyX =
+      (keyHolds[RIGHT] > 0 ? 1.0f : 0.0f) - (keyHolds[LEFT] > 0 ? 1.0f : 0.0f);
   const float keyY =
       (keyHolds[DOWN] > 0 ? 1.0f : 0.0f) - (keyHolds[UP] > 0 ? 1.0f : 0.0f);
   if (keyX != 0.0f || keyY != 0.0f)

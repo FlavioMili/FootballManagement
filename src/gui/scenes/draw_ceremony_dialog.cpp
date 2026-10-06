@@ -51,8 +51,7 @@ void DrawCeremonyDialog::open(const DrawCeremony& ceremony,
 {
   rows.clear();
   rows.reserve(ceremony.reveals.size());
-  league_phase =
-      ceremony.kind == DrawCeremony::Kind::ContinentalLeaguePhase;
+  league_phase = ceremony.kind == DrawCeremony::Kind::ContinentalLeaguePhase;
   for (const DrawReveal& reveal : ceremony.reveals)
   {
     Row row;
@@ -60,15 +59,16 @@ void DrawCeremonyDialog::open(const DrawCeremony& ceremony,
     row.away_id = reveal.away_id;
     row.home = teamName(controller, reveal.home_id);
     row.away = teamName(controller, reveal.away_id);
-    row.when = reveal.second_leg
-                   ? formatLocalized("DRAW_LEGS", {reveal.date.toString(),
-                                                  reveal.second_leg->toString()})
-                   : Format::date(reveal.date);
+    row.when =
+        reveal.second_leg
+            ? formatLocalized("DRAW_LEGS", {reveal.date.toString(),
+                                            reveal.second_leg->toString()})
+            : Format::date(reveal.date);
     if (reveal.pot > 0)
       row.pot = formatLocalized("DRAW_POT", {std::to_string(reveal.pot)});
-    row.focus = ceremony.focus_team != 0 &&
-                (reveal.home_id == ceremony.focus_team ||
-                 reveal.away_id == ceremony.focus_team);
+    row.focus =
+        ceremony.focus_team != 0 && (reveal.home_id == ceremony.focus_team ||
+                                     reveal.away_id == ceremony.focus_team);
     rows.push_back(std::move(row));
   }
   title = formatLocalized("DRAW_TITLE",
@@ -78,9 +78,8 @@ void DrawCeremonyDialog::open(const DrawCeremony& ceremony,
           ? formatLocalized("DRAW_SUBTITLE_LEAGUE_PHASE",
                             {ceremony.drawn_on.toString(),
                              teamName(controller, ceremony.focus_team)})
-          : formatLocalized("DRAW_SUBTITLE",
-                            {ceremony.drawn_on.toString(),
-                             std::to_string(rows.size())});
+          : formatLocalized("DRAW_SUBTITLE", {ceremony.drawn_on.toString(),
+                                              std::to_string(rows.size())});
   elapsed = 0.0f;
   skipped = false;
   last_shown = 0;
@@ -90,9 +89,9 @@ void DrawCeremonyDialog::open(const DrawCeremony& ceremony,
 std::size_t DrawCeremonyDialog::shownCount() const
 {
   if (skipped) return rows.size();
-  return DrawCeremonies::shownAt(
-      elapsed, SPEEDS[static_cast<std::size_t>(speed_index)], rows.size(),
-      Theme::reducedMotion());
+  return DrawCeremonies::shownAt(elapsed,
+                                 SPEEDS[static_cast<std::size_t>(speed_index)],
+                                 rows.size(), Theme::reducedMotion());
 }
 
 void DrawCeremonyDialog::renderRow(GUIView* view, const Row& row,
@@ -108,10 +107,9 @@ void DrawCeremonyDialog::renderRow(GUIView* view, const Row& row,
     drawList->AddRectFilled(origin, ImVec2(origin.x + width, origin.y + height),
                             Theme::toU32(palette.raised), scaled(4.0f));
   if (row.focus)
-    drawList->AddRectFilled(origin,
-                            ImVec2(origin.x + scaled(FOCUS_BAR_WIDTH),
-                                   origin.y + height),
-                            Theme::toU32(palette.accent));
+    drawList->AddRectFilled(
+        origin, ImVec2(origin.x + scaled(FOCUS_BAR_WIDTH), origin.y + height),
+        Theme::toU32(palette.accent));
 
   ImGui::PushID(static_cast<int>(index));
   const float padding = scaled(Theme::Space::M);
@@ -120,8 +118,7 @@ void DrawCeremonyDialog::renderRow(GUIView* view, const Row& row,
   const float potWidth = league_phase ? scaled(64.0f) : 0.0f;
   const float clubsWidth =
       std::max(0.0f, width - numberWidth - whenWidth - potWidth - 2 * padding);
-  const float textY =
-      origin.y + (height - ImGui::GetTextLineHeight()) * 0.5f;
+  const float textY = origin.y + (height - ImGui::GetTextLineHeight()) * 0.5f;
 
   ImGui::SetCursorScreenPos(ImVec2(origin.x + padding, textY));
   ImGui::TextColored(palette.faint, "%zu", index + 1);
@@ -134,8 +131,8 @@ void DrawCeremonyDialog::renderRow(GUIView* view, const Row& row,
   }
   const float versus = ImGui::CalcTextSize(" v ").x;
   const float side = std::max(0.0f, (clubsWidth - versus) * 0.5f);
-  const auto club = [&](TeamID id, const std::string& name, float left,
-                        const char* button_id)
+  const auto club =
+      [&](TeamID id, const std::string& name, float left, const char* button_id)
   {
     ImGui::SetCursorScreenPos(ImVec2(left, textY));
     ImGui::PushID(button_id);
@@ -179,10 +176,10 @@ void DrawCeremonyDialog::render(GUIView* view)
   if (!visible) return;
 
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
-  const ImVec2 size(
-      std::min(scaled(DIALOG_WIDTH), viewport->WorkSize.x * VIEWPORT_WIDTH_SHARE),
-      std::min(scaled(DIALOG_HEIGHT),
-               viewport->WorkSize.y * VIEWPORT_HEIGHT_SHARE));
+  const ImVec2 size(std::min(scaled(DIALOG_WIDTH),
+                             viewport->WorkSize.x * VIEWPORT_WIDTH_SHARE),
+                    std::min(scaled(DIALOG_HEIGHT),
+                             viewport->WorkSize.y * VIEWPORT_HEIGHT_SHARE));
   ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always,
                           ImVec2(0.5f, 0.5f));
   ImGui::SetNextWindowSize(size, ImGuiCond_Always);
@@ -215,8 +212,7 @@ void DrawCeremonyDialog::render(GUIView* view)
     ImGui::AlignTextToFramePadding();
     ImGui::TextColored(palette.muted, "%s", LOC("DRAW_SPEED"));
     ImGui::SameLine();
-    UI::segmented("##draw_speed", speed_index, SPEED_LABELS,
-                  scaled(150.0f));
+    UI::segmented("##draw_speed", speed_index, SPEED_LABELS, scaled(150.0f));
     const char* skip = LOC("DRAW_REVEAL_ALL");
     UI::sameLineIfFits(UI::buttonWidth(skip));
     if (UI::secondaryButton(skip)) skipped = true;
@@ -231,11 +227,11 @@ void DrawCeremonyDialog::render(GUIView* view)
   // The list is the dialog's only scrolling area.
   const float footer =
       UI::buttonHeight() + ImGui::GetStyle().ItemSpacing.y * 2.0f;
-  if (ImGui::BeginChild("##draw_list",
-                        ImVec2(0.0f, std::max(scaled(80.0f),
-                                              ImGui::GetContentRegionAvail().y -
-                                                  footer)),
-                        ImGuiChildFlags_None))
+  if (ImGui::BeginChild(
+          "##draw_list",
+          ImVec2(0.0f, std::max(scaled(80.0f),
+                                ImGui::GetContentRegionAvail().y - footer)),
+          ImGuiChildFlags_None))
   {
     for (std::size_t index = 0; index < shown && index < rows.size(); ++index)
     {
@@ -243,15 +239,15 @@ void DrawCeremonyDialog::render(GUIView* view)
       if (!reduced && !skipped && index + 1 == shown && !done)
       {
         const float since =
-            elapsed - static_cast<float>(index) * DrawCeremonies::REVEAL_SECONDS /
+            elapsed - static_cast<float>(index) *
+                          DrawCeremonies::REVEAL_SECONDS /
                           SPEEDS[static_cast<std::size_t>(speed_index)];
         alpha = std::clamp(since / FADE_SECONDS, 0.2f, 1.0f);
       }
       renderRow(view, rows[index], index, alpha);
       if (!visible) break;
     }
-    if (shown > last_shown && !reduced && !skipped)
-      ImGui::SetScrollHereY(1.0f);
+    if (shown > last_shown && !reduced && !skipped) ImGui::SetScrollHereY(1.0f);
     if (rows.empty())
       ImGui::TextColored(palette.faint, "%s", LOC("DRAW_EMPTY"));
   }
@@ -266,9 +262,9 @@ void DrawCeremonyDialog::render(GUIView* view)
   const char* close = LOC("TALK_CLOSE");
   const ImVec2 closeSize(
       std::min(scaled(150.0f), ImGui::GetContentRegionAvail().x), 0.0f);
-  ImGui::SetCursorPosX(ImGui::GetCursorPosX() +
-                       std::max(0.0f, ImGui::GetContentRegionAvail().x -
-                                          closeSize.x));
+  ImGui::SetCursorPosX(
+      ImGui::GetCursorPosX() +
+      std::max(0.0f, ImGui::GetContentRegionAvail().x - closeSize.x));
   if ((done ? UI::primaryButton(close, closeSize)
             : UI::secondaryButton(close, closeSize)) ||
       ImGui::IsKeyPressed(ImGuiKey_Escape, false))

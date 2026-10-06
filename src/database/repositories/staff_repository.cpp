@@ -140,7 +140,8 @@ void StaffRepository::replaceAll(const StaffRoster& roster) const
     {
       StoredMember& row = found->second;
       row.seen = true;
-      if (row.team_id == member.team_id && row.first_name == member.first_name &&
+      if (row.team_id == member.team_id &&
+          row.first_name == member.first_name &&
           row.last_name == member.last_name &&
           row.nationality == static_cast<int>(member.nationality) &&
           row.age == member.age && row.role == static_cast<int>(member.role) &&

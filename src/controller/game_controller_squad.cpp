@@ -77,13 +77,13 @@ PlayerID GameController::getEffectiveSetPieceTaker(SetPieceDuty duty) const
   for (const LeaderInfo& leader : getDressingRoom().leaders)
     if (lineup.isStarter(leader.player_id)) order.push_back(leader.player_id);
   std::vector<const Player*> rest = lineup.starters();
-  std::ranges::sort(rest,
-                    [](const Player* a, const Player* b)
-                    {
-                      return a->getAge() > b->getAge() ||
-                             (a->getAge() == b->getAge() &&
-                              a->getId() < b->getId());
-                    });
+  std::ranges::sort(
+      rest,
+      [](const Player* a, const Player* b)
+      {
+        return a->getAge() > b->getAge() ||
+               (a->getAge() == b->getAge() && a->getId() < b->getId());
+      });
   for (const Player* player : rest)
     if (std::ranges::find(order, player->getId()) == order.end())
       order.push_back(player->getId());
@@ -147,8 +147,7 @@ bool GameController::setSquadStatus(PlayerID player_id,
       [this, club](PlayerID id)
       {
         const auto member = gamedata->getPlayer(id);
-        return member && member->get().getTeamId() == club ? club
-                                                           : TeamID{0};
+        return member && member->get().getTeamId() == club ? club : TeamID{0};
       });
   return true;
 }
@@ -241,9 +240,9 @@ MedicalReport GameController::getMedicalReport() const
     row.workload = workload.risk;
     row.acute = workload.acute;
     row.chronic = workload.chronic;
-    row.returning = inputs.days_since_injury >= 0 &&
-                    inputs.days_since_injury <=
-                        MedicalCentre::RECURRENCE_WINDOW_DAYS;
+    row.returning =
+        inputs.days_since_injury >= 0 &&
+        inputs.days_since_injury <= MedicalCentre::RECURRENCE_WINDOW_DAYS;
     condition_total += row.condition;
     sharpness_total += row.sharpness;
     report.squad.push_back(row);
@@ -254,13 +253,13 @@ MedicalReport GameController::getMedicalReport() const
     report.average_condition = condition_total / count;
     report.average_sharpness = sharpness_total / count;
   }
-  std::ranges::sort(report.injured,
-                    [](const MedicalInjuryRow& a, const MedicalInjuryRow& b)
-                    {
-                      return a.days_left > b.days_left ||
-                             (a.days_left == b.days_left &&
-                              a.player_id < b.player_id);
-                    });
+  std::ranges::sort(
+      report.injured,
+      [](const MedicalInjuryRow& a, const MedicalInjuryRow& b)
+      {
+        return a.days_left > b.days_left ||
+               (a.days_left == b.days_left && a.player_id < b.player_id);
+      });
   std::ranges::sort(report.squad,
                     [](const MedicalRiskRow& a, const MedicalRiskRow& b)
                     {
@@ -282,7 +281,7 @@ std::vector<AgendaEvent> GameController::getSeasonAgenda() const
 }
 
 SquadNumbers::Change GameController::setSquadNumber(PlayerID player_id,
-                                                           int number)
+                                                    int number)
 {
   const auto player = std::as_const(*gamedata).getPlayer(player_id);
   if (!game || !hasSelectedTeam() || !player ||

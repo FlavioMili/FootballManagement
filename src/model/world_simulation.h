@@ -29,10 +29,10 @@
 #include "model/mentoring.h"
 #include "model/preseason.h"
 #include "model/records.h"
-#include "model/training.h"
 #include "model/scouting.h"
 #include "model/squad_status.h"
 #include "model/stories.h"
+#include "model/training.h"
 #include "model/youth_academy.h"
 
 class DatabaseConnection;
