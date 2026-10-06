@@ -168,7 +168,7 @@ jobs:
           retention-days: ${{ inputs.retention-days }}
 
   macos:
-    name: macOS arm64 (Homebrew LLVM)
+    name: macOS arm64 (LLVM 20)
     runs-on: macos-15
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
@@ -187,11 +187,13 @@ jobs:
 
       # AppleClang's libc++ lacks floating-point std::from_chars and
       # non-experimental std::jthread (both need libc++ 20), so the game is
-      # built with Homebrew LLVM and its libc++ is linked statically.
-      - name: Install Homebrew LLVM, Ninja and ccache
+      # built with Homebrew LLVM 20 and its libc++ is linked statically.
+      # Keep the major fixed: newer Clang rejects enum declarations in the
+      # macOS 15 SDK used by HarfBuzz/CoreText.
+      - name: Install Homebrew LLVM 20, Ninja and ccache
         run: |
-          brew install llvm ninja ccache
-          LLVM_PREFIX="$(brew --prefix llvm)"
+          brew install llvm@20 ninja ccache
+          LLVM_PREFIX="$(brew --prefix llvm@20)"
           echo "LLVM_PREFIX=$LLVM_PREFIX" >> "$GITHUB_ENV"
           "$LLVM_PREFIX/bin/clang++" --version
           ls "$LLVM_PREFIX/lib/c++"
@@ -208,8 +210,8 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .ccache
-          key: ccache-macos-llvm-${{ github.sha }}
-          restore-keys: ccache-macos-llvm-
+          key: ccache-macos-llvm20-${{ github.sha }}
+          restore-keys: ccache-macos-llvm20-
 
       - name: Configure
         run: |

@@ -91,7 +91,7 @@ its `AppRun`.
 game. The code uses floating-point `std::from_chars` (player and training
 repositories) and `std::jthread`/`std::stop_token` (thread pool), and libc++
 only provides both without `-fexperimental-library` from LLVM 20. So the job
-uses Homebrew `llvm` and links its `libc++.a`/`libc++abi.a` statically
+uses Homebrew `llvm@20` and links its `libc++.a`/`libc++abi.a` statically
 (`-nostdlib++`). A check step fails the build if the game links anything
 outside `/usr/lib` or `/System/Library`. CMake builds
 `FootballManagement.app`, installs the assets into `Contents/Resources`,
@@ -222,4 +222,4 @@ cpack --config /tmp/fm-pkg/CPackConfig.cmake -B /tmp/fm-pkg/dist
   versions such as `1.0.0-rc1` go into `CFBundleShortVersionString` as-is. That
   is not Apple's `x.y.z` format, which only matters for App Store submission.
 - `linuxdeploy` is pinned to the `1-alpha-20251107-1` release. Homebrew
-  `llvm` is not pinned, so the macOS compiler follows Homebrew's current LLVM.
+  `llvm@20` fixes the macOS compiler major; patch releases follow Homebrew.

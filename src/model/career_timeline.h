@@ -18,17 +18,15 @@
 #include <vector>
 
 #include "global/types.h"
+#include "model/awards.h"
 #include "model/gamedate.h"
+#include "model/manager_career.h"
+#include "model/records.h"
+#include "model/season_history.h"
+#include "model/transfer_market.h"
 
 class Game;
 class GameData;
-struct AwardRecord;
-struct ManagerAward;
-struct ManagerSeasonLine;
-struct ManagerStint;
-struct RecordEntry;
-struct SeasonHistoryEntry;
-struct TransferRecord;
 
 /** @brief What happened at a point of the manager's career. */
 enum class TimelineKind : std::uint8_t

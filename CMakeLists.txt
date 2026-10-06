@@ -109,16 +109,20 @@ include(FetchContent)
 FetchContent_Declare(
   fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG        10.1.1 
+  GIT_TAG        11.2.0
   GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(fmt)
+
+# Use the same fmt release for logging and the game. Older bundled fmt
+# releases fail constant evaluation with current Clang.
+set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "" FORCE)
 
 # spdlog
 FetchContent_Declare(
   spdlog
   GIT_REPOSITORY https://github.com/gabime/spdlog.git
-  GIT_TAG        v1.12.0
+  GIT_TAG        v1.15.3
   GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(spdlog)

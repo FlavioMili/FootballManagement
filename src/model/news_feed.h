@@ -16,20 +16,18 @@
 #include <vector>
 
 #include "global/types.h"
+#include "model/awards.h"
 #include "model/gamedate.h"
+#include "model/inbox.h"
+#include "model/manager_career.h"
 #include "model/match.h"
+#include "model/records.h"
+#include "model/season_history.h"
+#include "model/transfer_market.h"
 
 class Calendar;
 class Game;
 class GameData;
-struct AiManager;
-struct AwardRecord;
-struct InboxMessage;
-struct ManagerStint;
-struct RecordEntry;
-struct SeasonHistoryEntry;
-struct TransferRecord;
-struct Vacancy;
 
 /** @brief What a news story is about (filter of the news screen). */
 enum class NewsKind : std::uint8_t
