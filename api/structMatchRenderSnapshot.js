@@ -8,6 +8,7 @@ var structMatchRenderSnapshot =
     [ "awayTeam", "structMatchRenderSnapshot.html#a717911f99c15cabeedb2db4e2331b3a6", null ],
     [ "ball", "structMatchRenderSnapshot.html#a09a3ca38c2c8afb0f3be8fac1265dd20", null ],
     [ "events", "structMatchRenderSnapshot.html#a099e31e53d17a3fba64267d6ae627180", null ],
+    [ "goalCelebrationDuration", "structMatchRenderSnapshot.html#ac1394db023e3b222d7cdc2acfec11b52", null ],
     [ "goalCelebrationRemaining", "structMatchRenderSnapshot.html#a163f18724c6f1f7d703065ac18c77f6b", null ],
     [ "goalScoredByHome", "structMatchRenderSnapshot.html#a0d4eede2fad5d47e7ab3d614ef7bc549", null ],
     [ "homeGoalkeeperState", "structMatchRenderSnapshot.html#a978a16e270301e84b9a408856c3f8fcc", null ],

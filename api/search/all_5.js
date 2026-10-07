@@ -128,7 +128,7 @@ var searchData=
   ['evaluateteamtalk_125',['evaluateTeamTalk',['../namespaceInteractions.html#ac68a66c7bbdf0b65885e11c9aa0a35a6',1,'Interactions']]],
   ['even_126',['EVEN',['../namespaceLab.html#a5d8168eea5b561c6175abcee0ff1b66fa19068398198e6fea7c4907d8c36a63c5',1,'Lab']]],
   ['even_5fpossession_5fpercent_127',['EVEN_POSSESSION_PERCENT',['../structMatchTuning_1_1Statistics.html#a60b441f069059b109e3aa6bdc599fd19',1,'MatchTuning::Statistics']]],
-  ['event_128',['event',['../structPlayerRig_1_1ActionInput.html#a44767b08eabcc3201caddda8d05b8c69',1,'PlayerRig::ActionInput::event'],['../structCalendarScene_1_1Entry.html#acef0208c6d164260e0a750b8413bab0e',1,'CalendarScene::Entry::event'],['../classContractTalksDialog.html#aa4edd29ba6423e4ddaa4e0c1cad9da85',1,'ContractTalksDialog::Event'],['../namespacePlayerRig.html#aa8ee7148b8793b8c1a0ca832f10fef9e',1,'PlayerRig::Event']]],
+  ['event_128',['event',['../classContractTalksDialog.html#aa4edd29ba6423e4ddaa4e0c1cad9da85',1,'ContractTalksDialog::Event'],['../structPlayerRig_1_1ActionInput.html#a44767b08eabcc3201caddda8d05b8c69',1,'PlayerRig::ActionInput::event'],['../structCalendarScene_1_1Entry.html#acef0208c6d164260e0a750b8413bab0e',1,'CalendarScene::Entry::event'],['../namespacePlayerRig.html#aa8ee7148b8793b8c1a0ca832f10fef9e',1,'PlayerRig::Event']]],
   ['event_5ficon_5fsize_129',['EVENT_ICON_SIZE',['../structMatchSceneTuning_1_1Panel.html#a90d534e2d88521a043dad11738cb2878',1,'MatchSceneTuning::Panel']]],
   ['eventnames_130',['EventNames',['../structSeasonReviewModel_1_1EventNames.html',1,'SeasonReviewModel']]],
   ['eventrow_131',['EventRow',['../structMatchReportScene_1_1EventRow.html',1,'MatchReportScene']]],

@@ -14,6 +14,7 @@ var match__rules_8h =
     [ "computeAddedMinutes", "match__rules_8h.html#ac08903204662c83500c5cbb77b663c05", null ],
     [ "computeMatchRating", "match__rules_8h.html#a760fae1cb925ee6e334e7606bd0eb1ba", null ],
     [ "decideFoulSanction", "match__rules_8h.html#a500694b7ba7e058edf1b343534818d96", null ],
+    [ "goalkeeperHandlingRadiusMetres", "match__rules_8h.html#a24d619fd4b788a5f2db9a69231378d9a", null ],
     [ "goalkeeperReachMetres", "match__rules_8h.html#a5a78fd46137611b2eb0551e82d1064a3", null ],
     [ "headerReachMetres", "match__rules_8h.html#ae7983b61d36633239997f04bebd1a56d", null ],
     [ "periodEndMinute", "match__rules_8h.html#aacaa530c82bf9d7cd87582bdc980f184", null ],

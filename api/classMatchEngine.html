@@ -195,6 +195,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a5c38c477fb6145922959942e51afb7f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac8e9b2b13f3646167ebbf32406f4bcf9" id="r_ac8e9b2b13f3646167ebbf32406f4bcf9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#ac8e9b2b13f3646167ebbf32406f4bcf9">setControlledPlayer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> playerId)</td></tr>
 <tr class="separator:ac8e9b2b13f3646167ebbf32406f4bcf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77849ebfea35196812ceb995ae31675f" id="r_a77849ebfea35196812ceb995ae31675f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#a77849ebfea35196812ceb995ae31675f">setPlayHalfMinutes</a> (int minutes)</td></tr>
+<tr class="separator:a77849ebfea35196812ceb995ae31675f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac69944beb5c8237bcf00727eddb3bc22" id="r_ac69944beb5c8237bcf00727eddb3bc22"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#ac69944beb5c8237bcf00727eddb3bc22">getPlayHalfMinutes</a> () const</td></tr>
+<tr class="separator:ac69944beb5c8237bcf00727eddb3bc22"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af48164e97d825d6b71332ef6fa933d88" id="r_af48164e97d825d6b71332ef6fa933d88"><td class="memItemLeft" align="right" valign="top"><a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#af48164e97d825d6b71332ef6fa933d88">getControlledPlayer</a> () const</td></tr>
 <tr class="separator:af48164e97d825d6b71332ef6fa933d88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace24c9229ebfef0dae2705a88117424c" id="r_ace24c9229ebfef0dae2705a88117424c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#ace24c9229ebfef0dae2705a88117424c">submitInput</a> (const <a class="el" href="structMatchPlayerInput.html">MatchPlayerInput</a> &amp;input)</td></tr>
@@ -309,6 +313,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a28b1cf9fc2c6e8a5da567adf8358d684"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe4732f9a4c5145175e701ea78c90cf2" id="r_abe4732f9a4c5145175e701ea78c90cf2"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#abe4732f9a4c5145175e701ea78c90cf2">getGoalCelebrationRemaining</a> () const</td></tr>
 <tr class="separator:abe4732f9a4c5145175e701ea78c90cf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66b9fc64f91e08fba931ba3d2224415d" id="r_a66b9fc64f91e08fba931ba3d2224415d"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#a66b9fc64f91e08fba931ba3d2224415d">getGoalCelebrationDuration</a> () const</td></tr>
+<tr class="separator:a66b9fc64f91e08fba931ba3d2224415d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2f454857fcd8f5074ff51ee99248650" id="r_ac2f454857fcd8f5074ff51ee99248650"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#ac2f454857fcd8f5074ff51ee99248650">getInterpolationAlpha</a> () const</td></tr>
 <tr class="separator:ac2f454857fcd8f5074ff51ee99248650"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60d449e1560e5439bc7f717363524341" id="r_a60d449e1560e5439bc7f717363524341"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="structVector2F.html">Vector2F</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#a60d449e1560e5439bc7f717363524341">getPreviousPlayerPositions</a> () const</td></tr>
@@ -334,6 +340,8 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
+<tr class="memitem:ae1156670dfc204cf22917a3348b8b51d" id="r_ae1156670dfc204cf22917a3348b8b51d"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#ae1156670dfc204cf22917a3348b8b51d">matchClockRate</a> () const</td></tr>
+<tr class="separator:ae1156670dfc204cf22917a3348b8b51d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0949d7528bf06bae3a3ef66513d59c46" id="r_a0949d7528bf06bae3a3ef66513d59c46"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#a0949d7528bf06bae3a3ef66513d59c46">initializePlayers</a> (const <a class="el" href="classLineup.html">Lineup</a> &amp;lineup, bool isHomeTeam)</td></tr>
 <tr class="separator:a0949d7528bf06bae3a3ef66513d59c46"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a625b554fdbdc63f5502da5b2065b58ec" id="r_a625b554fdbdc63f5502da5b2065b58ec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#a625b554fdbdc63f5502da5b2065b58ec">loadAttributes</a> (<a class="el" href="structMatchPlayer.html">MatchPlayer</a> &amp;matchPlayer, const <a class="el" href="classPlayer.html">Player</a> *player) const</td></tr>
@@ -408,6 +416,10 @@ Private Member Functions</h2></td></tr>
 <tr class="separator:a01d83d410b431c6b405a9eaa0f69b358"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad85c6da51a161eb9b335846f5d89d2ee" id="r_ad85c6da51a161eb9b335846f5d89d2ee"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#ad85c6da51a161eb9b335846f5d89d2ee">updateRestartMovement</a> (float dt)</td></tr>
 <tr class="separator:ad85c6da51a161eb9b335846f5d89d2ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c0748275dea8c21074a68125f2cb87b" id="r_a7c0748275dea8c21074a68125f2cb87b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#a7c0748275dea8c21074a68125f2cb87b">userRestartPassRequested</a> () const</td></tr>
+<tr class="separator:a7c0748275dea8c21074a68125f2cb87b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6407728042435434c2edd50d490e912e" id="r_a6407728042435434c2edd50d490e912e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#a6407728042435434c2edd50d490e912e">updateRestartSupport</a> (<a class="el" href="structMatchPlayer.html">MatchPlayer</a> &amp;player, const <a class="el" href="structMatchPlayer.html">MatchPlayer</a> *taker)</td></tr>
+<tr class="separator:a6407728042435434c2edd50d490e912e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac11611c3d7224756fb8adff4b7e738c0" id="r_ac11611c3d7224756fb8adff4b7e738c0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#ac11611c3d7224756fb8adff4b7e738c0">separatePlayers</a> ()</td></tr>
 <tr class="separator:ac11611c3d7224756fb8adff4b7e738c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7cca1abac6923190b69d00066bd3beab" id="r_a7cca1abac6923190b69d00066bd3beab"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structVector2F.html">Vector2F</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#a7cca1abac6923190b69d00066bd3beab">goalkeeperTarget</a> (<a class="el" href="structMatchPlayer.html">MatchPlayer</a> &amp;keeper, const <a class="el" href="structMatchPlayer.html">MatchPlayer</a> *carrier)</td></tr>
@@ -900,6 +912,10 @@ Private Attributes</h2></td></tr>
 <tr class="separator:adeb0b871e678ac5dda7686d2823f204e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa71f57ccfbf8fc46b41ab2035b084678" id="r_aa71f57ccfbf8fc46b41ab2035b084678"><td class="memItemLeft" align="right" valign="top">std::array&lt; int, 2 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#aa71f57ccfbf8fc46b41ab2035b084678">controlledActions</a> {}</td></tr>
 <tr class="separator:aa71f57ccfbf8fc46b41ab2035b084678"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34ac653541490a06f0f8d4614712adff" id="r_a34ac653541490a06f0f8d4614712adff"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#a34ac653541490a06f0f8d4614712adff">playHalfMinutes</a> = 0</td></tr>
+<tr class="separator:a34ac653541490a06f0f8d4614712adff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60ca0563ca9568b1889f7c4f61505320" id="r_a60ca0563ca9568b1889f7c4f61505320"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#a60ca0563ca9568b1889f7c4f61505320">pendingPlayHalfMinutes</a> = 0</td></tr>
+<tr class="separator:a60ca0563ca9568b1889f7c4f61505320"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec88c7db6f8c2e836db84f7a47f81cf7" id="r_aec88c7db6f8c2e836db84f7a47f81cf7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMatchPlayerInput.html">MatchPlayerInput</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#aec88c7db6f8c2e836db84f7a47f81cf7">controlInput</a></td></tr>
 <tr class="separator:aec88c7db6f8c2e836db84f7a47f81cf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1fe4e835dcc7756d81b14bf45b577dae" id="r_a1fe4e835dcc7756d81b14bf45b577dae"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMatchEngine.html#a1fe4e835dcc7756d81b14bf45b577dae">controlActionRemaining</a> = 0.0f</td></tr>
@@ -3457,6 +3473,31 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a66b9fc64f91e08fba931ba3d2224415d" name="a66b9fc64f91e08fba931ba3d2224415d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a66b9fc64f91e08fba931ba3d2224415d">&#9670;&#160;</a></span>getGoalCelebrationDuration()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchEngine::getGoalCelebrationDuration </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="abe4732f9a4c5145175e701ea78c90cf2" name="abe4732f9a4c5145175e701ea78c90cf2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abe4732f9a4c5145175e701ea78c90cf2">&#9670;&#160;</a></span>getGoalCelebrationRemaining()</h2>
 
@@ -3973,6 +4014,31 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <p>Per-player statistics for everyone who took part (never truncated). </p>
+
+</div>
+</div>
+<a id="ac69944beb5c8237bcf00727eddb3bc22" name="ac69944beb5c8237bcf00727eddb3bc22"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac69944beb5c8237bcf00727eddb3bc22">&#9670;&#160;</a></span>getPlayHalfMinutes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MatchEngine::getPlayHalfMinutes </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -5381,6 +5447,31 @@ Private Attributes</h2></td></tr>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae1156670dfc204cf22917a3348b8b51d" name="ae1156670dfc204cf22917a3348b8b51d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1156670dfc204cf22917a3348b8b51d">&#9670;&#160;</a></span>matchClockRate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float MatchEngine::matchClockRate </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -6982,6 +7073,25 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Sets a player's condition before kick-off: a starter directly, a bench player when he comes on. False if the player is not in the squad or the match has started. </p>
+
+</div>
+</div>
+<a id="a77849ebfea35196812ceb995ae31675f" name="a77849ebfea35196812ceb995ae31675f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a77849ebfea35196812ceb995ae31675f">&#9670;&#160;</a></span>setPlayHalfMinutes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchEngine::setPlayHalfMinutes </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>minutes</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Schedule play clock pacing independently of physics; 0 restores watch. </p>
 
 </div>
 </div>
@@ -8752,6 +8862,42 @@ result" of a match the user may have been watching). </p>
 
 </div>
 </div>
+<a id="a6407728042435434c2edd50d490e912e" name="a6407728042435434c2edd50d490e912e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6407728042435434c2edd50d490e912e">&#9670;&#160;</a></span>updateRestartSupport()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MatchEngine::updateRestartSupport </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structMatchPlayer.html">MatchPlayer</a> &amp;&#160;</td>
+          <td class="paramname"><em>player</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structMatchPlayer.html">MatchPlayer</a> *&#160;</td>
+          <td class="paramname"><em>taker</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a4e708f0ef01d5ad2a969ac16874dd4e0" name="a4e708f0ef01d5ad2a969ac16874dd4e0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4e708f0ef01d5ad2a969ac16874dd4e0">&#9670;&#160;</a></span>updateShootout()</h2>
 
@@ -8792,6 +8938,31 @@ result" of a match the user may have been watching). </p>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7c0748275dea8c21074a68125f2cb87b" name="a7c0748275dea8c21074a68125f2cb87b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c0748275dea8c21074a68125f2cb87b">&#9670;&#160;</a></span>userRestartPassRequested()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool MatchEngine::userRestartPassRequested </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
   </td>
@@ -10685,6 +10856,28 @@ result" of a match the user may have been watching). </p>
 
 </div>
 </div>
+<a id="a60ca0563ca9568b1889f7c4f61505320" name="a60ca0563ca9568b1889f7c4f61505320"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60ca0563ca9568b1889f7c4f61505320">&#9670;&#160;</a></span>pendingPlayHalfMinutes</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MatchEngine::pendingPlayHalfMinutes = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="aa5f86a71f3ab2d7d59d7e1ad541dca58" name="aa5f86a71f3ab2d7d59d7e1ad541dca58"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa5f86a71f3ab2d7d59d7e1ad541dca58">&#9670;&#160;</a></span>period</h2>
 
@@ -10784,6 +10977,28 @@ result" of a match the user may have been watching). </p>
       <table class="memname">
         <tr>
           <td class="memname">std::vector&lt;<a class="el" href="structPlayerMatchStats.html">PlayerMatchStats</a>&gt; MatchEngine::playerStats</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a34ac653541490a06f0f8d4614712adff" name="a34ac653541490a06f0f8d4614712adff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a34ac653541490a06f0f8d4614712adff">&#9670;&#160;</a></span>playHalfMinutes</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MatchEngine::playHalfMinutes = 0</td>
         </tr>
       </table>
   </td>

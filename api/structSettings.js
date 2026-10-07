@@ -19,6 +19,7 @@ var structSettings =
     [ "pause_for_match_changes", "structSettings.html#af550c09cb98115b0a7bb160074c9a351", null ],
     [ "play_auto_switch", "structSettings.html#a91e84487f7d91f58a3b2895191a79df0", null ],
     [ "play_dead_zone", "structSettings.html#a2a187111622b2d59ef1eadbc65c47e6b", null ],
+    [ "play_half_minutes", "structSettings.html#a58203d992e1f08c2b410bc8a3db0de42", null ],
     [ "play_mode", "structSettings.html#a7f42502f3351b322a6bf5ad51c4561b1", null ],
     [ "play_pass_assist", "structSettings.html#a83cd81b894cd63083d881b79852e003e", null ],
     [ "reduced_motion", "structSettings.html#afb19cf4faaa5a9ae599b695163f4b1a9", null ],

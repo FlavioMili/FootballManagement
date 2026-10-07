@@ -8,7 +8,7 @@ var searchData=
   ['jobapplication_5',['JobApplication',['../structJobApplication.html',1,'']]],
   ['joboffer_6',['JobOffer',['../structJobOffer.html',1,'']]],
   ['jobs_7',['jobs',['../classThreadPool.html#a4e4fec6f69a42f1d9f9c3764f4f1d728',1,'ThreadPool']]],
-  ['jockey_8',['jockey',['../structMatchPlayerInput.html#a66e69cbdfa214f353433527870266389',1,'MatchPlayerInput::jockey'],['../classMatchPlayController.html#ac4322f7813d8053209344d6652eaa7b9a9ab808d61fe7764ddfcdfcda91d8ae63',1,'MatchPlayController::JOCKEY']]],
+  ['jockey_8',['jockey',['../classMatchPlayController.html#ac4322f7813d8053209344d6652eaa7b9a9ab808d61fe7764ddfcdfcda91d8ae63',1,'MatchPlayController::JOCKEY'],['../structMatchPlayerInput.html#a66e69cbdfa214f353433527870266389',1,'MatchPlayerInput::jockey']]],
   ['jockey_5fcontain_5fmetres_9',['JOCKEY_CONTAIN_METRES',['../structMatchTuning_1_1Control.html#adcd92042d3514b0dddbb0dc74aa0bc29',1,'MatchTuning::Control']]],
   ['jockey_5fspeed_5fshare_10',['JOCKEY_SPEED_SHARE',['../structMatchTuning_1_1Control.html#aa251fdd1e16f246d361e3d7f6d51b7c7',1,'MatchTuning::Control']]],
   ['jockey_5ftake_5fon_5fpenalty_11',['JOCKEY_TAKE_ON_PENALTY',['../structMatchTuning_1_1Control.html#afee063ec9a037a5b150db55ef9e3dc22',1,'MatchTuning::Control']]],

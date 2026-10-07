@@ -32,7 +32,7 @@ var searchData=
   ['targetstatuskey_29',['targetStatusKey',['../namespaceBoardModel.html#a195a9e007065cd75d22a456a17dd102a',1,'BoardModel']]],
   ['targettable_30',['targetTable',['../namespaceLab.html#a7e9ed7436f0572aa8191b0c5f1472811',1,'Lab']]],
   ['taskforsection_31',['taskForSection',['../namespaceGuidanceUI.html#afa689d883df097b2b9009b729b1cfc4b',1,'GuidanceUI']]],
-  ['team_32',['team',['../classSupporters.html#ae6d5a32bb3db44e42024f7c892a9f2c2',1,'Supporters::team()'],['../classTeam.html#ad1ede6646cfcfbd6efdd069893918e86',1,'Team::Team()']]],
+  ['team_32',['team',['../classTeam.html#ad1ede6646cfcfbd6efdd069893918e86',1,'Team::Team()'],['../classSupporters.html#ae6d5a32bb3db44e42024f7c892a9f2c2',1,'Supporters::team()']]],
   ['teamcolor_33',['teamColor',['../classMatchScene.html#ac5da1795042a94e24a0ae01a7d0fe6ab',1,'MatchScene']]],
   ['teamedge_34',['teamEdge',['../classMatchEngine.html#a11bbc103217e3037fb3ada4dd485fe8a',1,'MatchEngine']]],
   ['teamlevel_35',['teamLevel',['../namespaceWorldGeneration.html#a69053f8567e5b1e40e22164e4e29f9f4',1,'WorldGeneration']]],

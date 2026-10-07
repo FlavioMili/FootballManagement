@@ -1,5 +1,13 @@
 var NAVTREEINDEX19 =
 {
+"classSquadSurnames.html#a203bc4cc4b845dde090a80e1fbb097a2":[4,0,361,3],
+"classSquadSurnames.html#a3e805a040043e125d8046f28a23a93d5":[4,0,361,1],
+"classSquadSurnames.html#aa29685f8fd4817839ca19035ae75d296":[4,0,361,0],
+"classSquadSurnames.html#af2a2675bb6e56570b69e70fecda5f265":[4,0,361,2],
+"classStaffRepository.html":[4,0,364],
+"classStaffRepository.html#a43afabb484d065ec68956d1b2444a553":[4,0,364,2],
+"classStaffRepository.html#a61df916c0bbf43eee71132ba34d72407":[4,0,364,1],
+"classStaffRepository.html#a8c2328f51c8e91429eaa4e3baeb77e5c":[4,0,364,0],
 "classStaffRepository.html#a9cf74639ab69eb0e04d7a45a570756d1":[4,0,364,3],
 "classStaffRoster.html":[4,0,365],
 "classStaffRoster.html#a01efce71a840431dcdc2967588fac0be":[4,0,365,7],
@@ -241,13 +249,5 @@ var NAVTREEINDEX19 =
 "classTeam.html#a6485a56bfccd3d4cc6795748389b670f":[4,0,393,19],
 "classTeam.html#a71ef480b72c86a1e978fbc741cff434b":[4,0,393,32],
 "classTeam.html#a7463b8b89ec3db04c15e094578af63b5":[4,0,393,31],
-"classTeam.html#a91b4c64b7aefea02e2441390eda234cf":[4,0,393,15],
-"classTeam.html#a9bdecbf757a79bcd566d324f5fec61e9":[4,0,393,29],
-"classTeam.html#a9c8b9367f47a776cd8b895906dd2ac16":[4,0,393,12],
-"classTeam.html#aa5f5217f630e360e187f96dc154c0390":[4,0,393,16],
-"classTeam.html#aaf363d95ada042958e1d984c0860f44f":[4,0,393,20],
-"classTeam.html#abdaea165a945cafa5bff1c0b0add1180":[4,0,393,34],
-"classTeam.html#ac5710b77f14d8d67bc42a7bc0d33670b":[4,0,393,14],
-"classTeam.html#ac8dd234be85d4335cfb5003ebfe3b8cc":[4,0,393,9],
-"classTeam.html#ad1ede6646cfcfbd6efdd069893918e86":[4,0,393,0]
+"classTeam.html#a91b4c64b7aefea02e2441390eda234cf":[4,0,393,15]
 };

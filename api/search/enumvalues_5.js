@@ -32,7 +32,7 @@ var searchData=
   ['forward_29',['forward',['../classSwipeGesture.html#a7bf77d9d514891920d938c7ef9a055a7abfec72bb37910c61f36b6c29a1f7ec31',1,'SwipeGesture::FORWARD'],['../namespacePlayerView.html#a80712f230142c6609fa5cd179ce86df2abfec72bb37910c61f36b6c29a1f7ec31',1,'PlayerView::FORWARD']]],
   ['foul_30',['FOUL',['../match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fda4c00b7ec15aad6e470ed5ceb6a7200f0',1,'match_events.h']]],
   ['fr_31',['FR',['../languages_8h.html#ac401b05356bfe6d1335ddaf14ad31d0ca11aedd0e432747c2bcd97b82808d24a0',1,'languages.h']]],
-  ['free_32',['free',['../imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9a88c189a42c87aa49d667fc8ab76bc323',1,'FREE:&#160;imatch_renderer.h'],['../transfer__market_8h.html#acd7b3257d13499dde8d04b969fcf2979ab24ce0cd392a5b0b8dedc66c25213594',1,'Free:&#160;transfer_market.h']]],
+  ['free_32',['free',['../transfer__market_8h.html#acd7b3257d13499dde8d04b969fcf2979ab24ce0cd392a5b0b8dedc66c25213594',1,'Free:&#160;transfer_market.h'],['../imatch__renderer_8h.html#a7ef1462adbeeecaab32e4dc3c927d8c9a88c189a42c87aa49d667fc8ab76bc323',1,'FREE:&#160;imatch_renderer.h']]],
   ['free_5fagents_33',['FREE_AGENTS',['../classTransferMarketScene.html#a2605b4859f159a12532ae1e642f4207ba6b31ad4b38c4f291d07c2c1f6d1008a4',1,'TransferMarketScene']]],
   ['free_5fkick_34',['free_kick',['../match__events_8h.html#a6af6e0b936779ad5be26463896f0e5fdaefda66f5bcbc157a7bbfe70d58456e51',1,'FREE_KICK:&#160;match_events.h'],['../match__engine_8h.html#aca6448151e924d2cb062632532d9081faefda66f5bcbc157a7bbfe70d58456e51',1,'FREE_KICK:&#160;match_engine.h']]],
   ['freeagent_35',['FreeAgent',['../namespaceTransferNegotiation.html#aa025c5c60896373651da65fef9455c98a2f0c430a8315a5d9b7dd13d8a96e4604',1,'TransferNegotiation']]],

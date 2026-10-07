@@ -1,5 +1,13 @@
 var NAVTREEINDEX28 =
 {
+"manager__career_8h.html#a4c72aaa98b6dec8cb28a2faf31fe6c0eaf122988aa47cf3aeb1c88d999e90f302":[5,0,1,5,54,17,4],
+"manager__career_8h.html#a4d31ce116b1720899f5d8a4ad3c3bbaf":[5,0,1,5,54,27],
+"manager__career_8h.html#a56dda474775cf98ecc8441c28ee4e1c4":[5,0,1,5,54,31],
+"manager__career_8h.html#a5800ef10bd1343c8f0860ddb0123461d":[5,0,1,5,54,16],
+"manager__career_8h.html#a5800ef10bd1343c8f0860ddb0123461da0d61f8370cad1d412f80b84d143e1257":[5,0,1,5,54,16,1],
+"manager__career_8h.html#a5800ef10bd1343c8f0860ddb0123461da4905ac9d6a22bdfc1ae096094ce6248d":[5,0,1,5,54,16,5],
+"manager__career_8h.html#a5800ef10bd1343c8f0860ddb0123461da6adf97f83acf6453d4a6a4b1070f3754":[5,0,1,5,54,16,0],
+"manager__career_8h.html#a5800ef10bd1343c8f0860ddb0123461da7fc56270e7a70fa81a5935b72eacbe29":[5,0,1,5,54,16,3],
 "manager__career_8h.html#a5800ef10bd1343c8f0860ddb0123461da9d5ed678fe57bcca610140957afab571":[5,0,1,5,54,16,2],
 "manager__career_8h.html#a5800ef10bd1343c8f0860ddb0123461daabd900517e55dce0437dac136a8568d7":[5,0,1,5,54,16,4],
 "manager__career_8h.html#a585e0c855b6abbd3adad355bae1ca6fc":[5,0,1,5,54,30],
@@ -241,13 +249,5 @@ var NAVTREEINDEX28 =
 "match__engine_8h.html#aca6448151e924d2cb062632532d9081fa0fdbca2289dacdc8f12ccf9b31c3ed08":[5,0,1,5,62,25,3],
 "match__engine_8h.html#aca6448151e924d2cb062632532d9081fa2e84354d070a36b67c6c60953de6feaa":[5,0,1,5,62,25,10],
 "match__engine_8h.html#aca6448151e924d2cb062632532d9081fa4652c1e0327ad75fd82cbc5e7bf322bf":[5,0,1,5,62,25,2],
-"match__engine_8h.html#aca6448151e924d2cb062632532d9081fa472f3d45de8018bfb63987a203dca8e4":[5,0,1,5,62,25,4],
-"match__engine_8h.html#aca6448151e924d2cb062632532d9081fa50366a49630a416ab3ccaa004196027e":[5,0,1,5,62,25,1],
-"match__engine_8h.html#aca6448151e924d2cb062632532d9081fa526aadb8564a9c50374ebe55ec7bade0":[5,0,1,5,62,25,0],
-"match__engine_8h.html#aca6448151e924d2cb062632532d9081fa654e91e7d93eb77fc971a217c7811f3f":[5,0,1,5,62,25,8],
-"match__engine_8h.html#aca6448151e924d2cb062632532d9081fab763f44331074a91fe69ede12eac324b":[5,0,1,5,62,25,9],
-"match__engine_8h.html#aca6448151e924d2cb062632532d9081faefda66f5bcbc157a7bbfe70d58456e51":[5,0,1,5,62,25,5],
-"match__engine_8h.html#acbc756131ab8818aa239f885e87f5a24":[5,0,1,5,62,24],
-"match__engine_8h.html#acbc756131ab8818aa239f885e87f5a24a05ada911c7d42aa4f808cd5f9e2d6786":[5,0,1,5,62,24,3],
-"match__engine_8h.html#acbc756131ab8818aa239f885e87f5a24a0efbba28e44fa20724b8b3d9153adf37":[5,0,1,5,62,24,0]
+"match__engine_8h.html#aca6448151e924d2cb062632532d9081fa472f3d45de8018bfb63987a203dca8e4":[5,0,1,5,62,25,4]
 };
