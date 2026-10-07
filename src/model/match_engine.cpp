@@ -1580,7 +1580,9 @@ float MatchEngine::getInterpolationAlpha() const
 
 void MatchEngine::advanceClock(float dt)
 {
-  const float clockDelta = dt / MatchTuning::Timing::SECONDS_PER_MINUTE;
+  const float clockScale = matchClockRate();
+  const float clockDelta =
+      dt * clockScale / MatchTuning::Timing::SECONDS_PER_MINUTE;
   matchTimeMinutes += clockDelta;
   elapsedMatchMinutes += clockDelta;
   accumulatePlayerLoad(dt);
@@ -1653,7 +1655,10 @@ void MatchEngine::simulateStepBody(float dt)
   {
     // The scored ball settles in the net while the teams celebrate and walk
     // back; the clock keeps running until the kick-off.
-    goalCelebrationRemaining = std::max(0.0f, goalCelebrationRemaining - dt);
+    if (playHalfMinutes > 0)
+      goalCelebrationRemaining = std::min(
+          goalCelebrationRemaining, MatchTuning::Timing::PLAY_STOPPAGE_SECONDS);
+    goalCelebrationRemaining = std::max(0.0F, goalCelebrationRemaining - dt);
     updateRestartMovement(dt);
     advanceClock(dt);
     if (!ball.possessedBy) updateBallInNet(dt);
@@ -1671,6 +1676,9 @@ void MatchEngine::simulateStepBody(float dt)
   {
     runAiSubstitutions();
     if (state == MatchState::FULL_TIME) return;
+    if (playHalfMinutes > 0)
+      setPieceTimer =
+          std::min(setPieceTimer, MatchTuning::Timing::PLAY_STOPPAGE_SECONDS);
     setPieceTimer -= dt;
     if (setPieceTimer <= 0.0f)
     {
@@ -1690,14 +1698,20 @@ void MatchEngine::simulateStepBody(float dt)
     if (state == MatchState::FULL_TIME) return;
     if (state != MatchState::KICK_OFF) updateRestartMovement(dt);
     if (stateClockRuns(state)) advanceClock(dt);
-    setPieceTimer -= dt;
-    if (setPieceTimer <= 0.0f) completeRestart();
+    const float restartRate = matchClockRate();
+    if (playHalfMinutes > 0)
+      setPieceTimer =
+          std::min(setPieceTimer,
+                   MatchTuning::Timing::PLAY_STOPPAGE_SECONDS * restartRate);
+    setPieceTimer -= dt * restartRate;
+    if (userRestartPassRequested() || setPieceTimer <= 0.0F) completeRestart();
   }
   else
   {
     updateMovement(dt);
     advanceClock(dt);
-    stats.ballInPlayMinutes += dt / MatchTuning::Timing::SECONDS_PER_MINUTE;
+    stats.ballInPlayMinutes +=
+        dt * (matchClockRate()) / MatchTuning::Timing::SECONDS_PER_MINUTE;
     resolvePossessionAndActions(dt);
     trackPressures();
     if (!ball.possessedBy && state == MatchState::PLAYING) updateBall(dt);
@@ -3267,6 +3281,19 @@ bool MatchEngine::isControlled(const MatchPlayer& player) const
   return controlledIndex && &player == &players[*controlledIndex];
 }
 
+void MatchEngine::setPlayHalfMinutes(int minutes)
+{
+  pendingPlayHalfMinutes =
+      minutes == 0
+          ? 0
+          : std::clamp(minutes, MatchTuning::Timing::MIN_PLAY_HALF_MINUTES,
+                       MatchTuning::Timing::MAX_PLAY_HALF_MINUTES);
+  const PlayerID player = getControlledPlayer();
+  inputLog.resize(inputCursor);
+  inputLog.push_back({stepCounter + 1, player, {}, pendingPlayHalfMinutes});
+  ++inputRevision;
+}
+
 bool MatchEngine::setControlledPlayer(PlayerID playerId)
 {
   if (playerId != 0)
@@ -3279,7 +3306,8 @@ bool MatchEngine::setControlledPlayer(PlayerID playerId)
   // Scheduled for the next step, like any other input, so a replay applies it
   // at the same moment.
   inputLog.resize(inputCursor);
-  inputLog.push_back({stepCounter + 1, playerId, MatchPlayerInput{}});
+  inputLog.push_back(
+      {stepCounter + 1, playerId, MatchPlayerInput{}, pendingPlayHalfMinutes});
   ++inputRevision;
   return true;
 }
@@ -3301,7 +3329,8 @@ void MatchEngine::submitInput(const MatchPlayerInput& input)
   const PlayerID controlled = getControlledPlayer();
   if (controlled == 0) return;
   inputLog.resize(inputCursor);
-  inputLog.push_back({stepCounter + 1, controlled, input});
+  inputLog.push_back(
+      {stepCounter + 1, controlled, input, pendingPlayHalfMinutes});
   ++inputRevision;
 }
 
@@ -3323,6 +3352,13 @@ void MatchEngine::applyDueInputs()
          inputLog[inputCursor].step <= stepCounter)
   {
     const MatchInputRecord& record = inputLog[inputCursor++];
+    playHalfMinutes =
+        record.playHalfMinutes == 0
+            ? 0
+            : std::clamp(record.playHalfMinutes,
+                         MatchTuning::Timing::MIN_PLAY_HALF_MINUTES,
+                         MatchTuning::Timing::MAX_PLAY_HALF_MINUTES);
+    pendingPlayHalfMinutes = playHalfMinutes;
     // An action fires on the press, not while the button stays held.
     const bool pressed = record.input.action != MatchInputAction::NONE &&
                          record.input.action != lastInputAction;
@@ -4532,6 +4568,49 @@ FM_KERNEL_CLONES void MatchEngine::integrateMovements(const std::uint8_t* slots,
   }
 }
 
+void MatchEngine::updateRestartSupport(MatchPlayer& player,
+                                       const MatchPlayer* taker)
+{
+  if (player.isGoalkeeper || &player == taker || restartIsSetPiece ||
+      (state != MatchState::THROW_IN && state != MatchState::GOAL_KICK))
+    return;
+
+  player.movementTarget = player.basePosition;
+  if (taker && player.isHomeTeam == taker->isHomeTeam)
+  {
+    const float gap = distance(player.position, ball.position);
+    if (gap < MatchTuning::Timing::RESTART_SUPPORT_DISTANCE_METRES)
+    {
+      // Offer a lane inside the pitch, with teammates spread along it.
+      player.movementTarget.x = std::clamp(
+          ball.position.x + (player.basePosition.x - ball.position.x) *
+                                MatchTuning::Timing::RESTART_SUPPORT_BLEND,
+          MatchTuning::Pitch::PLAYER_MIN_X, MatchTuning::Pitch::PLAYER_MAX_X);
+      player.movementTarget.y = std::clamp(
+          ball.position.y + (player.basePosition.y - ball.position.y) *
+                                MatchTuning::Timing::RESTART_SUPPORT_BLEND,
+          MatchTuning::Pitch::PLAYER_MIN_Y, MatchTuning::Pitch::PLAYER_MAX_Y);
+    }
+  }
+  else if (taker)
+  {
+    const float gap = distance(player.movementTarget, ball.position);
+    const float minimum =
+        state == MatchState::THROW_IN
+            ? MatchTuning::Timing::THROW_OPPONENT_DISTANCE_METRES
+            : MatchTuning::Timing::KICK_OPPONENT_DISTANCE_METRES;
+    if (gap < minimum)
+    {
+      const Vector2F direction =
+          metricDirection(ball.position, player.movementTarget);
+      const Vector2F offset =
+          toPitch({direction.x * minimum, direction.y * minimum});
+      player.movementTarget = {ball.position.x + offset.x,
+                               ball.position.y + offset.y};
+    }
+  }
+}
+
 void MatchEngine::updateRestartMovement(float dt)
 {
   // During a stoppage players walk to their restart positions (set-piece
@@ -4550,6 +4629,7 @@ void MatchEngine::updateRestartMovement(float dt)
       if (!restartIsSetPiece && state != MatchState::GOAL)
         player.movementTarget = goalkeeperTarget(player, nullptr);
     }
+    updateRestartSupport(player, taker);
     player.intent = player.isGoalkeeper ? PlayerIntent::GOALKEEP
                                         : PlayerIntent::RECOVER_SHAPE;
     batch[batched++] = static_cast<std::uint8_t>(slot);
@@ -4647,7 +4727,9 @@ void MatchEngine::accumulatePlayerLoad(float dt)
 {
   using L = MatchTuning::Load;
   using F = MatchTuning::Fatigue;
-  const float clockDelta = dt / MatchTuning::Timing::SECONDS_PER_MINUTE;
+  const float clockScale = matchClockRate();
+  const float clockDelta =
+      dt * clockScale / MatchTuning::Timing::SECONDS_PER_MINUTE;
   for (const auto& player : players)
     if (active(player)) statsOf(player).minutesPlayed += clockDelta;
   // Distance, intensity and energy are accounted over two steps at a time.
@@ -6352,11 +6434,17 @@ void MatchEngine::diveGoalkeeper(MatchPlayer& keeper, float dt)
     return;
   }
   // Lateral dive dynamics in m/s (the keeper moves across the width).
-  const float acceleration = MatchTuning::Goalkeeper::DIVE_ACCELERATION_METRES /
+  // Move the visible body into reach rather than granting a distant save.
+  constexpr float DIVE_CLOSING_GAIN = 1.25F;
+  const float acceleration = MatchTuning::Goalkeeper::DIVE_ACCELERATION_METRES *
+                             DIVE_CLOSING_GAIN /
                              MatchTuning::Pitch::WIDTH_METRES;
   const float maximumSpeed =
-      (MatchTuning::Goalkeeper::DIVE_BASE_SPEED_METRES +
-       keeper.goalkeeping * MatchTuning::Goalkeeper::DIVE_SKILL_SPEED_METRES) /
+      std::min(currentTopSpeed(keeper),
+               (MatchTuning::Goalkeeper::DIVE_BASE_SPEED_METRES +
+                keeper.goalkeeping *
+                    MatchTuning::Goalkeeper::DIVE_SKILL_SPEED_METRES) *
+                   DIVE_CLOSING_GAIN) /
       MatchTuning::Pitch::WIDTH_METRES;
   const float offset = control.diveTargetY - keeper.position.y;
   const float direction = offset >= 0.0f ? 1.0f : -1.0f;
@@ -6417,7 +6505,15 @@ Vector2F MatchEngine::goalkeeperTarget(MatchPlayer& keeper,
   if (!ball.possessedBy && ball.isAerialDelivery &&
       ball.passByHome != keeper.isHomeTeam)
   {
-    const float lookahead = MatchTuning::Goalkeeper::CLAIM_LOOKAHEAD_SECONDS;
+    // Anticipate high flight, then close on the ball itself once it drops
+    // within handling height. Continuing to lead a low cross keeps the
+    // keeper several metres ahead of it and prevents a physical catch.
+    const float height = ball.z * MatchTuning::Units::BALL_Z_METRES;
+    const float lookahead =
+        height > MatchRules::goalkeeperReachMetres(keeper.heightMetres,
+                                                   keeper.goalkeeping)
+            ? MatchTuning::Goalkeeper::CLAIM_LOOKAHEAD_SECONDS
+            : 0.0F;
     const Vector2F drift =
         toPitch({ball.velocity.x * lookahead, ball.velocity.y * lookahead});
     const Vector2F landing{ball.position.x + drift.x,
@@ -6616,15 +6712,9 @@ MatchEngine::SaveAttempt MatchEngine::attemptSave(const MatchPlayer& keeper)
   const float gapMetres = std::abs(crossingY - keeper.position.y) *
                           MatchTuning::Pitch::WIDTH_METRES;
 
-  float lateralReach =
-      MatchTuning::Goalkeeper::BODY_REACH_METRES +
-      (keeper.heightMetres - MatchTuning::Units::DEFAULT_PLAYER_HEIGHT_METRES) *
-          MatchTuning::Goalkeeper::HEIGHT_REACH_GAIN;
-  if (crossingHeight > MatchTuning::Goalkeeper::HIGH_BALL_METRES)
-    lateralReach *= MatchTuning::Goalkeeper::HIGH_BALL_REACH_SCALE;
-  const float verticalReach = MatchRules::goalkeeperReachMetres(
-      keeper.heightMetres, keeper.goalkeeping);
-  if (gapMetres > lateralReach || crossingHeight > verticalReach) return {};
+  const float lateralReach = MatchRules::goalkeeperHandlingRadiusMetres(
+      keeper.heightMetres, keeper.goalkeeping, crossingHeight, keeper.isDiving);
+  if (lateralReach <= 0.0F || gapMetres > lateralReach) return {};
 
   const float stretch = gapMetres / std::max(lateralReach, EPSILON);
   const float speedExcess =
@@ -6831,12 +6921,15 @@ void MatchEngine::resolveLooseBall()
                 : height <= MatchRules::headerReachMetres(player.heightMetres,
                                                           player.physicality);
       if (reachable)
-        reach = hands ? B::SAVE_DISTANCE_METRES
+        reach = hands ? MatchRules::goalkeeperHandlingRadiusMetres(
+                            player.heightMetres, player.goalkeeping, height,
+                            player.isDiving)
                       : MatchTuning::Defending::BLOCK_DISTANCE_METRES;
     }
     else if (hands)
     {
-      reach = B::GOALKEEPER_CONTROL_RADIUS_METRES;
+      reach = MatchRules::goalkeeperHandlingRadiusMetres(
+          player.heightMetres, player.goalkeeping, height, player.isDiving);
     }
     else
     {
@@ -7022,7 +7115,9 @@ bool MatchEngine::resolveAerialContest()
         (ball.kickerLockout > 0.0f && ball.kicker == player.player) ||
         !inPenaltyArea(player.position, player.isHomeTeam) ||
         distance(player.position, ball.position) >
-            MatchTuning::Aerial::GOALKEEPER_CLAIM_RADIUS_METRES ||
+            MatchRules::goalkeeperHandlingRadiusMetres(
+                player.heightMetres, player.goalkeeping, heightMetres,
+                player.isDiving) ||
         heightMetres > MatchRules::goalkeeperReachMetres(player.heightMetres,
                                                          player.goalkeeping))
     {
@@ -7602,7 +7697,7 @@ void MatchEngine::scoreGoal(bool homeTeam)
   event.xg = ball.isShot ? ball.shotXG : 0.0f;
 
   goalScoredByHome = homeTeam;
-  goalCelebrationRemaining = MatchTuning::Timing::GOAL_CELEBRATION_SECONDS;
+  goalCelebrationRemaining = getGoalCelebrationDuration();
   state = MatchState::GOAL;
   ball.possessedBy = nullptr;
   ball.shotByHome = homeTeam;
@@ -8150,13 +8245,44 @@ void MatchEngine::arrangeSetPiece(bool attackingHome, Vector2F ballPosition)
   }
 }
 
+bool MatchEngine::userRestartPassRequested() const
+{
+  if (playHalfMinutes == 0 || !controlledIndex.has_value() ||
+      !restartTakerIndex.has_value())
+    return false;
+  switch (state)
+  {
+    case MatchState::KICK_OFF:
+    case MatchState::THROW_IN:
+    case MatchState::GOAL_KICK:
+    case MatchState::CORNER_KICK:
+    case MatchState::FREE_KICK:
+      break;
+    default:
+      return false;
+  }
+  if (*restartTakerIndex >= players.size()) return false;
+  if (players.at(*controlledIndex).isHomeTeam !=
+      players.at(*restartTakerIndex).isHomeTeam)
+    return false;
+  return controlInput.action == MatchInputAction::PASS ||
+         controlInput.action == MatchInputAction::LOFTED_PASS ||
+         controlInput.action == MatchInputAction::THROUGH_BALL;
+}
+
 void MatchEngine::completeRestart()
 {
   const MatchState restartState = state;
   MatchPlayer* taker = restartTaker();
+  const bool userPass = userRestartPassRequested();
   restartTakerIndex.reset();
   if (!taker || !active(*taker))
   {
+    ball.possessedBy = nullptr;
+    ball.velocity = {0.0F, 0.0F};
+    ball.velocityZ = 0.0F;
+    clearFlightState();
+    restartIsSetPiece = false;
     state = MatchState::PLAYING;
     updateTeamPhases();
     return;
@@ -8189,7 +8315,16 @@ void MatchEngine::completeRestart()
     setPiecePhaseRemaining = MatchTuning::SetPiece::SET_PIECE_PHASE_SECONDS;
     setPieceHome = taker->isHomeTeam;
   }
-  takeSetPiece(*taker, restartState);
+  if (userPass)
+  {
+    const MatchInputAction action = controlInput.action;
+    playControlledPass(*taker, action);
+    controlInput.action = MatchInputAction::NONE;
+    controlActionRemaining = 0.0F;
+    ++controlledActions[taker->isHomeTeam ? 0 : 1];
+  }
+  else
+    takeSetPiece(*taker, restartState);
   if (state == restartState) state = MatchState::PLAYING;
   restartIsSetPiece = false;
   updateTeamPhases();
@@ -8234,6 +8369,26 @@ void MatchEngine::takeSetPiece(MatchPlayer& taker, MatchState restartState)
   }
 
   std::optional<PassOption> passOption = choosePassTarget(taker);
+  if (!passOption && playHalfMinutes > 0)
+  {
+    // A restart must release the ball even when no lane meets the AI's
+    // open-play safety threshold. Find the nearest teammate as an outlet.
+    MatchPlayer* outlet = nullptr;
+    float nearest = std::numeric_limits<float>::infinity();
+    for (auto& candidate : players)
+    {
+      if (!active(candidate) || &candidate == &taker ||
+          candidate.isHomeTeam != taker.isHomeTeam || candidate.isGoalkeeper)
+        continue;
+      const float gap = distance(taker.position, candidate.position);
+      if (gap > EPSILON && gap < nearest)
+      {
+        outlet = &candidate;
+        nearest = gap;
+      }
+    }
+    if (outlet) passOption = evaluatePassOption(taker, *outlet);
+  }
   if (passOption)
     passBall(taker, *passOption, restartState == MatchState::GOAL_KICK);
   else

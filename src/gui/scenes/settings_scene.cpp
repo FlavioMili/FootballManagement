@@ -372,6 +372,13 @@ void SettingsScene::renderGeneral()
   ImGui::Checkbox("##pause_for_match_changes",
                   &settings.pause_for_match_changes);
   rowTooltip(LOC("MATCH_PAUSE_FOR_CHANGES_HINT"));
+  settingLabel(LOC("SETTINGS_PLAY_HALF_MINUTES"),
+               LOC("SETTINGS_PLAY_HALF_MINUTES_HELP"));
+  ImGui::SliderInt("##play_half_minutes", &settings.play_half_minutes,
+                   MatchTuning::Timing::MIN_PLAY_HALF_MINUTES,
+                   MatchTuning::Timing::MAX_PLAY_HALF_MINUTES,
+                   LOC("SETTINGS_PLAY_MINUTES_FORMAT"));
+  rowTooltip(LOC("SETTINGS_PLAY_HALF_MINUTES_HELP"));
   // Play mode and its assistance (also in the play pause menu).
   settingLabel(LOC("SETTINGS_PLAY_MODE"), LOC("SETTINGS_PLAY_MODE_HELP"));
   ImGui::Checkbox("##play_mode", &settings.play_mode);

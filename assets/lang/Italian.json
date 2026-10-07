@@ -4474,5 +4474,8 @@
   "ACTION_PLAY_LOB": "Pallonetto o cross",
   "ACTION_PLAY_SWITCH": "Cambio giocatore",
   "ACTION_PLAY_JOCKEY": "Temporeggia",
-  "ACTION_PLAY_PAUSE": "Menu di pausa"
+  "ACTION_PLAY_PAUSE": "Menu di pausa",
+  "SETTINGS_PLAY_HALF_MINUTES": "Durata tempo (Gioca)",
+  "SETTINGS_PLAY_HALF_MINUTES_HELP": "Minuti reali per ogni tempo di 45 minuti quando controlli la squadra. Pause e recupero sono aggiuntivi. Giocatori e palla mantengono la velocità normale. Si applica quando prendi il controllo.",
+  "SETTINGS_PLAY_MINUTES_FORMAT": "%d minuti"
 }

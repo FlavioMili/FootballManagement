@@ -165,6 +165,7 @@ TEST(PlayModeUiTest, PlayMovePassSwitchAndHandBack)
   // Manual switching keeps the active footballer still between our presses.
   Settings& settings = SettingsManager::instance()->get();
   settings.play_auto_switch = 0;
+  settings.play_half_minutes = 7;
   settings.pause_at_breaks = false;
 
   GUIView view(controller);
@@ -186,6 +187,8 @@ TEST(PlayModeUiTest, PlayMovePassSwitchAndHandBack)
   MatchBridge::startPlaying(*scene);
   frames(view, 2);
   ASSERT_TRUE(play.isActive());
+  ASSERT_FALSE(engine.getInputLog().empty());
+  EXPECT_EQ(engine.getInputLog().back().playHalfMinutes, 7);
   EXPECT_FALSE(MatchBridge::paused(*scene));
   EXPECT_FALSE(MatchBridge::highlights(*scene));
   EXPECT_EQ(MatchBridge::camera(*scene), MatchCameraMode::PLAY);

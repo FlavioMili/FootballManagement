@@ -79,7 +79,9 @@ void MatchScene::startPlaying()
   watch_highlights = highlights_only;
   watch_camera = camera_mode;
   watch_focus = pitch_focus;
-  // Played in real time, every second of it.
+  engine->setPlayHalfMinutes(
+      SettingsManager::instance()->get().play_half_minutes);
+  // Physics and inputs stay in real time; only the match clock is compressed.
   match_speed = 1.0f;
   highlights_only = false;
   engine->setPlaybackMode(MatchPlaybackMode::FULL_MATCH);
@@ -103,6 +105,7 @@ bool MatchScene::canHandBack() const
 void MatchScene::handBack()
 {
   if (!play.isActive() || !engine) return;
+  engine->setPlayHalfMinutes(0);
   play.end(*engine);
   play_menu = false;
   suspendKeyboardNavigation(false);

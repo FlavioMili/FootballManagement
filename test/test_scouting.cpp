@@ -275,7 +275,8 @@ TEST(ScoutingTest, EstimatesConvergeWithKnowledgeAndDecayBack)
     for (const PlayerID id : foreign)
     {
       const auto& stats = playerOf(*controller, id).getStats();
-      for (const ScoutedAttribute& attribute : scouting.view(id)->attributes)
+      const auto view = scouting.view(id);
+      for (const ScoutedAttribute& attribute : view->attributes)
         total += std::abs(attribute.estimate - stats.at(attribute.name));
     }
     return total;
@@ -885,11 +886,16 @@ TEST(ScoutingTest, ReportsOfOlderSavesAreMigratedAsRead)
   sqlite3* db = nullptr;
   ASSERT_EQ(sqlite3_open(RuntimePaths::savePath(slot.slot).c_str(), &db),
             SQLITE_OK);
-  for (const char* sql : {"ALTER TABLE ScoutReports DROP COLUMN seen;",
-                          "ALTER TABLE ScoutReports DROP COLUMN overall_low;",
-                          "ALTER TABLE ScoutReports DROP COLUMN overall_high;"})
-    ASSERT_EQ(sqlite3_exec(db, sql, nullptr, nullptr, nullptr), SQLITE_OK)
-        << sqlite3_errmsg(db);
+  const char* legacy_schema =
+      "BEGIN; CREATE TABLE LegacyScoutReports AS SELECT "
+      "id, game_date, player_id, assignment_id, scout_id, scout_name, "
+      "knowledge, confidence, overall, potential_low, potential_high, "
+      "estimated_fee, grade, reasons FROM ScoutReports; "
+      "DROP TABLE ScoutReports; ALTER TABLE LegacyScoutReports RENAME TO "
+      "ScoutReports; COMMIT;";
+  ASSERT_EQ(sqlite3_exec(db, legacy_schema, nullptr, nullptr, nullptr),
+            SQLITE_OK)
+      << sqlite3_errmsg(db);
   sqlite3_close(db);
 
   auto reloaded = std::make_unique<GameController>();

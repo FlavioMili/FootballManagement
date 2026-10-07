@@ -1993,6 +1993,18 @@ void MatchRenderer3D::State::updateMotion(const MatchRenderPlayer& player,
     const float headHeight = (P::REFERENCE_HEIGHT_METRES - 0.1f) * scale;
     jumpTarget = std::clamp(ballWorld.z - headHeight, 0.0f, R::MAX_JUMP);
   }
+  if (livePlay && player.isGoalkeeper && player.onPitch && heldBy == nullptr &&
+      PlayerRig::flatDistance(ballWorld, root) <
+          playerHeightMetres(player) *
+              MatchTuning::Goalkeeper::HAND_REACH_HEIGHT_SHARE)
+  {
+    const float standingReach = playerHeightMetres(player) *
+                                MatchTuning::Aerial::GOALKEEPER_ARM_REACH_RATIO;
+    jumpTarget =
+        std::clamp(ballWorld.z - standingReach, 0.0F,
+                   MatchTuning::Aerial::GOALKEEPER_BASE_JUMP_METRES +
+                       MatchTuning::Aerial::GOALKEEPER_SKILL_JUMP_METRES);
+  }
   if (simSeconds > 0.0f)
   {
     slot.jump += (jumpTarget - slot.jump) *
@@ -2792,6 +2804,16 @@ void MatchRenderer3D::State::addPlayer(const MatchRenderPlayer& player,
       heldBallPlaced = true;
     }
   }
+  else if (keeper && livePlay && heldBy == nullptr &&
+           ballWorld.z >
+               heightMetres * MatchTuning::Goalkeeper::SHOULDER_HEIGHT_SHARE &&
+           PlayerRig::flatDistance(ballWorld, root) <
+               heightMetres * MatchTuning::Goalkeeper::HAND_REACH_HEIGHT_SHARE)
+  {
+    handTarget = {ballWorld + torsoSide * (R::HAND_GRIP_HALF * scale),
+                  ballWorld - torsoSide * (R::HAND_GRIP_HALF * scale)};
+    handWeight = 1.0F;
+  }
   else if (mood == GoalMood::DEJECTED && celebrating && slot.handsOnHead)
   {
     const Vec3 top = headCentre + torsoUp * (P::HEAD_RADIUS * 0.8f * scale);
@@ -3152,7 +3174,7 @@ void MatchRenderer3D::State::updateGoalMoment(
   }
   goal.shownSeconds += frameSeconds;
   goal.celebrationSeconds =
-      std::max(0.0f, MatchTuning::Timing::GOAL_CELEBRATION_SECONDS -
+      std::max(0.0f, snapshot.goalCelebrationDuration -
                          snapshot.goalCelebrationRemaining);
   const auto envelope = [](float seconds, float hold)
   {

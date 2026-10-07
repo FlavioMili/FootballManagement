@@ -133,7 +133,9 @@ std::string withPreposition(std::string_view club_name,
   std::string lower(preposition);
   lower.front() = static_cast<char>(
       std::tolower(static_cast<unsigned char>(lower.front())));
-  const auto* const found = std::ranges::find(PREPOSITIONS, lower);
+  // MSVC array iterators are wrapper types, not pointers.
+  // NOLINTNEXTLINE(readability-qualified-auto)
+  const auto found = std::ranges::find(PREPOSITIONS, lower);
   if (found == PREPOSITIONS.end()) return std::string(club_name);
   const auto index = static_cast<std::size_t>(found - PREPOSITIONS.begin());
   std::string result(

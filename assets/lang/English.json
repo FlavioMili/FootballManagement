@@ -4474,5 +4474,8 @@
   "ACTION_PLAY_LOB": "Lob or cross",
   "ACTION_PLAY_SWITCH": "Switch player",
   "ACTION_PLAY_JOCKEY": "Jockey",
-  "ACTION_PLAY_PAUSE": "Pause menu"
+  "ACTION_PLAY_PAUSE": "Pause menu",
+  "SETTINGS_PLAY_HALF_MINUTES": "Half length (Play)",
+  "SETTINGS_PLAY_HALF_MINUTES_HELP": "Real minutes per 45-minute half when controlling your team. Pauses and added time are extra. Players and ball keep their normal speed. Applies when taking control.",
+  "SETTINGS_PLAY_MINUTES_FORMAT": "%d minutes"
 }

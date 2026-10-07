@@ -140,7 +140,13 @@ TEST(Holiday, NextMatchStopsOnTheFixtureDay)
 {
   const SlotCleanup slot{uniqueSlot(0)};
   auto controller = makeCareer(slot.slot);
-  const HolidayPlan next = plan(HolidayMode::NextMatch);
+  HolidayPlan next = plan(HolidayMode::NextMatch);
+  // This checks the fixture target; early-stop preferences have their own
+  // tests and may fire when the assistant plays today's match.
+  next.preferences.stop_big_bid = false;
+  next.preferences.stop_sacking_warning = false;
+  next.preferences.stop_injury_crisis = false;
+  next.preferences.stop_key_injury = false;
   const auto target = controller->getHolidayTarget(next);
   ASSERT_TRUE(target.has_value());
   const int days = controller->goOnHoliday(next);

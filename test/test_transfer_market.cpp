@@ -287,7 +287,8 @@ PlayerID findWillingTarget(const GameController& controller, TeamID club,
     for (const auto& player : controller.getPlayersForTeam(team.get().getId()))
     {
       const PlayerID id = player.get().getId();
-      if (player.get().getAge() > 21 && market.canBeTraded(id) &&
+      if (player.get().getAge() > 21 &&
+          player.get().getRole() != PlayerRole::GK && market.canBeTraded(id) &&
           static_cast<int>(controller.getSquadRole(id)) >=
               static_cast<int>(min_role) &&
           market.wouldJoin(id, club, ContractKind::Transfer))

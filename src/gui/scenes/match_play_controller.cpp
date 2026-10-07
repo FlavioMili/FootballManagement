@@ -401,6 +401,16 @@ void MatchPlayController::update(MatchEngine& engine, float simulatedSeconds,
   {
     switchTo(engine, engine.suggestActivePlayer(home, 0));
   }
+  else if (engine.getState() != MatchState::PLAYING &&
+           ball.possessedBy != nullptr)
+  {
+    const MatchPlayer* taker = findPlayer(engine, ball.possessedBy->getId());
+    if (taker != nullptr && taker->isHomeTeam == home && !taker->isGoalkeeper &&
+        taker->player->getId() != current)
+    {
+      switchTo(engine, taker->player->getId());
+    }
+  }
   else if (engine.getState() == MatchState::PLAYING)
   {
     applySwitchingRules(engine, current, idle);

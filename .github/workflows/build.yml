@@ -188,8 +188,8 @@ jobs:
       # AppleClang's libc++ lacks floating-point std::from_chars and
       # non-experimental std::jthread (both need libc++ 20), so the game is
       # built with Homebrew LLVM 20 and its libc++ is linked statically.
-      # Keep the major fixed: newer Clang rejects enum declarations in the
-      # macOS 15 SDK used by HarfBuzz/CoreText.
+      # Keep the major fixed for reproducible builds. CMake applies the
+      # Apple SDK enum compatibility flag to HarfBuzz's CoreText backend.
       - name: Install Homebrew LLVM 20, Ninja and ccache
         run: |
           brew install llvm@20 ninja ccache

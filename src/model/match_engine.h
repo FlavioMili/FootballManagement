@@ -450,6 +450,8 @@ struct MatchInputRecord
   /** Controlled player from this step; 0 hands the player back to the AI. */
   PlayerID player = 0;
   MatchPlayerInput input;
+  /** Real minutes per half in Play; 0 preserves the watch clock. */
+  int playHalfMinutes = 0;
 };
 
 /** Simulation detail of a headless match (see MatchEngine::simulateToEnd). */
@@ -684,6 +686,9 @@ class MatchEngine
    * the pitch.
    */
   bool setControlledPlayer(PlayerID playerId);
+  /** Schedule play clock pacing independently of physics; 0 restores watch. */
+  void setPlayHalfMinutes(int minutes);
+  [[nodiscard]] int getPlayHalfMinutes() const { return playHalfMinutes; }
   /** The controlled player, or 0 when the AI controls everyone. */
   PlayerID getControlledPlayer() const;
   /**
@@ -890,6 +895,11 @@ class MatchEngine
 
   /** Seconds left in the goal celebration before the kick-off restart. */
   float getGoalCelebrationRemaining() const { return goalCelebrationRemaining; }
+  [[nodiscard]] float getGoalCelebrationDuration() const
+  {
+    return playHalfMinutes > 0 ? MatchTuning::Timing::PLAY_STOPPAGE_SECONDS
+                               : MatchTuning::Timing::GOAL_CELEBRATION_SECONDS;
+  }
 
   /**
    * Interpolation fraction between the previous and current fixed-step state,
@@ -1131,6 +1141,14 @@ class MatchEngine
   /** By side (index 0 home): ever controlled, and the actions played. */
   std::array<bool, 2> everControlled{};
   std::array<int, 2> controlledActions{};
+  int playHalfMinutes = 0;
+  int pendingPlayHalfMinutes = 0;
+  [[nodiscard]] float matchClockRate() const
+  {
+    return playHalfMinutes > 0 ? MatchTuning::Timing::HALF_TIME_MINUTE /
+                                     static_cast<float>(playHalfMinutes)
+                               : 1.0F;
+  }
   MatchPlayerInput controlInput;
   float controlActionRemaining = 0.0f;
   MatchInputAction lastInputAction = MatchInputAction::NONE;
@@ -1242,6 +1260,8 @@ class MatchEngine
   void integrateMovements(const std::uint8_t* slots, std::size_t count,
                           float dt, bool walking);
   void updateRestartMovement(float dt);
+  bool userRestartPassRequested() const;
+  void updateRestartSupport(MatchPlayer& player, const MatchPlayer* taker);
   void separatePlayers();
   Vector2F goalkeeperTarget(MatchPlayer& keeper, const MatchPlayer* carrier);
   void diveGoalkeeper(MatchPlayer& keeper, float dt);

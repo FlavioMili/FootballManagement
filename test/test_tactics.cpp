@@ -297,36 +297,41 @@ TEST(TacticsTest, PossessionShapesMoveTheRightSlots)
 
 TEST(TacticsTest, AttackingFullBackPlaysHigherThanDefendingOne)
 {
-  const auto averageX = [](RoleDuty duty)
+  const auto homeSquad = makeSquad(1);
+  const auto awaySquad = makeSquad(2);
+  const StatsConfig config = createStatsConfig();
+  MatchScenario scenario;
+  scenario.carrierId = playerId(1, LEFT_CENTRAL_MIDFIELDER);
+  scenario.ballPosition = POSITIONS[LEFT_CENTRAL_MIDFIELDER];
+  for (size_t index = 0; index < POSITIONS.size(); ++index)
+  {
+    scenario.players.push_back({playerId(1, index), POSITIONS[index], false});
+    scenario.players.push_back(
+        {playerId(2, index),
+         {1.0f - POSITIONS[index].x, 1.0f - POSITIONS[index].y},
+         false});
+  }
+  const auto targetX = [&](RoleDuty duty)
   {
     const Strategy home = withSlots(
         {{LEFT_BACK, {{}, TacticalRole::Standard, duty, {0.0f, 0.0f}}}});
-    double total = 0.0;
-    int samples = 0;
-    for (const std::uint32_t seed : SEEDS)
-    {
-      playMatch(home, Strategy{}, seed,
-                [&](const MatchEngine& engine)
-                {
-                  if (!homeHasBall(engine)) return;
-                  for (const MatchPlayer& player : engine.getPlayers())
-                  {
-                    if (player.isHomeTeam && player.onPitch &&
-                        player.player->getId() == playerId(1, LEFT_BACK))
-                    {
-                      total += player.position.x;
-                      ++samples;
-                    }
-                  }
-                });
-    }
-    return samples > 0 ? total / samples : 0.0;
+    MatchEngine engine(homeSquad->lineup, awaySquad->lineup, home, Strategy{},
+                       config, 101);
+    engine.setControlledPlayer(scenario.carrierId);
+    engine.advance(0.1f);
+    EXPECT_TRUE(engine.applyScenario(scenario));
+    engine.advance(0.1f);
+    for (const MatchPlayer& player : engine.getPlayers())
+      if (player.player->getId() == playerId(1, LEFT_BACK))
+        return player.tacticalTarget.x;
+    ADD_FAILURE() << "Full-back missing from scenario";
+    return 0.0f;
   };
-  const double attacking = averageX(RoleDuty::Attack);
-  const double defending = averageX(RoleDuty::Defend);
-  // About ten metres between the duties while his side has the ball.
-  EXPECT_GT(attacking, defending + 0.04)
-      << "attack " << attacking << " defend " << defending;
+  // Compare duties in the same possession, rather than two whole matches
+  // whose shots, turnovers and possession samples diverge with the duty.
+  const float attacking = targetX(RoleDuty::Attack);
+  const float defending = targetX(RoleDuty::Defend);
+  EXPECT_GT(attacking, defending + 0.04f);
 }
 
 TEST(TacticsTest, InPossessionShapeMovesTheSlotWithTheBallOnly)

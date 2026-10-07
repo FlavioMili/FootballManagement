@@ -508,12 +508,17 @@ TEST(CupTest, BracketRunsToASingleWinner)
     // A round's ties are spread over several days: settle all of them.
     GameDateValue round_date = status.rounds.back().ties.front().getDate();
     for (const LeagueID cup : {TOP_LEAGUE, OTHER_COUNTRY})
-      for (const Match& tie :
-           Competitions::cupStatus(calendar, gamedata, cup).rounds.back().ties)
+    {
+      // Keep the owning status alive while iterating its ties (GCC 14
+      // does not extend this intermediate temporary's lifetime).
+      const auto cup_status = Competitions::cupStatus(calendar, gamedata, cup);
+      ASSERT_FALSE(cup_status.rounds.empty());
+      for (const Match& tie : cup_status.rounds.back().ties)
       {
         settleCupTies(calendar, tie.getDate());
         if (round_date < tie.getDate()) round_date = tie.getDate();
       }
+    }
     Competitions::drawPendingCupRounds(calendar, gamedata, 2025, round_date);
   }
 

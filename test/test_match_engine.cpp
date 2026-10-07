@@ -3269,3 +3269,202 @@ TEST(MatchEngineTest, TeamTalksReplayFromTheCommandLog)
   EXPECT_EQ(replay.getEvents().size(), live.getEvents().size());
   EXPECT_EQ(settledSnapshot(replay), settledSnapshot(live));
 }
+
+TEST(PlayModeTest, HalfDurationChangesClockWithoutChangingPhysicalMovement)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createDummyTeam(1, "Home", 65, players);
+  Team away = createDummyTeam(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+  for (int minutes = 3; minutes <= 15; ++minutes)
+  {
+    MatchEngine watch(home.getLineup(), away.getLineup(), home.getStrategy(),
+                      away.getStrategy(), config, 77);
+    MatchEngine play = watch;
+    play.setPlayHalfMinutes(minutes);
+    ASSERT_TRUE(loadControlled(play, playModeScenario(), 105));
+    ASSERT_TRUE(loadControlled(watch, playModeScenario(), 105));
+    MatchPlayerInput input;
+    input.moveX = 1.0f;
+    input.sprint = true;
+    play.submitInput(input);
+    watch.submitInput(input);
+    play.advance(0.1f);
+    watch.advance(0.1f);
+    EXPECT_EQ(play.getPlayHalfMinutes(), minutes);
+    EXPECT_NEAR(play.getMatchTimeMinutes(),
+                0.1f / 60.0f * 45.0f / static_cast<float>(minutes), 0.00001f);
+    EXPECT_NEAR(watch.getMatchTimeMinutes(), 0.1f / 60.0f, 0.00001f);
+    const MatchPlayer* played = findOnPitch(play, 105);
+    const MatchPlayer* watched = findOnPitch(watch, 105);
+    EXPECT_FLOAT_EQ(played->position.x, watched->position.x);
+    EXPECT_FLOAT_EQ(played->position.y, watched->position.y);
+    EXPECT_FLOAT_EQ(played->velocity.x, watched->velocity.x);
+    EXPECT_FLOAT_EQ(play.getBall().position.x, watch.getBall().position.x);
+    EXPECT_NEAR(play.getStats().ballInPlayMinutes,
+                watch.getStats().ballInPlayMinutes * 45.0f /
+                    static_cast<float>(minutes),
+                0.00001f);
+    play.setPlayHalfMinutes(0);
+    play.setControlledPlayer(0);
+    const float before = play.getMatchTimeMinutes();
+    play.advance(0.1f);
+    EXPECT_EQ(play.getPlayHalfMinutes(), 0);
+    EXPECT_NEAR(play.getMatchTimeMinutes() - before, 0.1f / 60.0f, 0.00001f);
+  }
+}
+
+TEST(PlayModeTest, ClockPacingAndHandBackReplayAtTheSameSteps)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createDummyTeam(1, "Home", 65, players);
+  Team away = createDummyTeam(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine live(home.getLineup(), away.getLineup(), home.getStrategy(),
+                   away.getStrategy(), config, 77);
+  MatchEngine replay = live;
+  live.setPlayHalfMinutes(3);
+  live.setControlledPlayer(105);
+  live.advance(5.0f);
+  live.setPlayHalfMinutes(15);
+  live.advance(5.0f);
+  live.setPlayHalfMinutes(0);
+  live.setControlledPlayer(0);
+  live.advance(5.0f);
+  replay.loadInputReplay(live.getInputLog());
+  replay.advance(15.0f);
+  EXPECT_EQ(live.getPlayHalfMinutes(), 0);
+  EXPECT_EQ(settledSnapshot(live), settledSnapshot(replay));
+}
+
+TEST(PlayModeTest, OutOfPlayRestartsAutomaticallyWithinThreeSeconds)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createDummyTeam(1, "Home", 65, players);
+  Team away = createDummyTeam(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 77);
+  engine.setPlayHalfMinutes(15);
+  const auto isRestart = [](MatchState state)
+  {
+    return state == MatchState::THROW_IN || state == MatchState::GOAL_KICK ||
+           state == MatchState::CORNER_KICK || state == MatchState::FREE_KICK;
+  };
+  int restarts = 0;
+  for (int step = 0; step < 6000 && restarts < 8; ++step)
+  {
+    engine.advance(0.1f);
+    if (!isRestart(engine.getState())) continue;
+    const auto before = engine.getPlayers();
+    int waited = 0;
+    while (isRestart(engine.getState()) && waited < 32)
+    {
+      engine.advance(0.1f);
+      ++waited;
+    }
+    EXPECT_LE(waited, 31);
+    EXPECT_FALSE(isRestart(engine.getState()));
+    int moved = 0;
+    for (size_t slot = 0; slot < before.size(); ++slot)
+      if (before[slot].position.x != engine.getPlayers()[slot].position.x ||
+          before[slot].position.y != engine.getPlayers()[slot].position.y)
+        ++moved;
+    EXPECT_GT(moved, 5);
+    ++restarts;
+  }
+  EXPECT_GE(restarts, 4);
+}
+
+TEST(PlayModeTest, PassButtonReleasesOutOfPlayBallForTheRestartSide)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createDummyTeam(1, "Home", 65, players);
+  Team away = createDummyTeam(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 77);
+  engine.setPlayHalfMinutes(5);
+  int passes = 0;
+  for (int step = 0; step < 4000 && passes < 5; ++step)
+  {
+    engine.advance(0.1f);
+    const MatchState state = engine.getState();
+    if (state != MatchState::THROW_IN && state != MatchState::GOAL_KICK &&
+        state != MatchState::CORNER_KICK && state != MatchState::FREE_KICK)
+      continue;
+    const Player* owner = engine.getBall().possessedBy;
+    ASSERT_NE(owner, nullptr);
+    const bool homeRestart = owner->getTeamId() == home.getId();
+    const PlayerID controller = homeRestart ? 105 : 205;
+    engine.setControlledPlayer(controller);
+    MatchPlayerInput input;
+    input.action = MatchInputAction::PASS;
+    input.aimX = homeRestart ? 1.0f : -1.0f;
+    input.aimY = engine.getBall().position.y < 0.5f ? 0.5f : -0.5f;
+    engine.submitInput(input);
+    engine.advance(0.1f);
+    EXPECT_EQ(engine.getState(), MatchState::PLAYING);
+    EXPECT_EQ(engine.getBall().possessedBy, nullptr);
+    EXPECT_TRUE(engine.getBall().isPass);
+    if (state == MatchState::THROW_IN)
+      EXPECT_TRUE(engine.getBall().fromThrowIn);
+    EXPECT_GT(engine.getControlledActions(homeRestart), 0);
+    engine.setControlledPlayer(0);
+    ++passes;
+  }
+  EXPECT_GE(passes, 3);
+}
+
+TEST(PlayModeTest, RegulationHalfUsesTheChosenRealDuration)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createDummyTeam(1, "Home", 65, players);
+  Team away = createDummyTeam(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+  for (const int minutes : {3, 5, 10, 15})
+  {
+    MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                       away.getStrategy(), config, 77);
+    engine.setPlayHalfMinutes(minutes);
+    int runningSteps = 0;
+    for (int step = 0; step < 12000 && engine.getMatchTimeMinutes() < 45.0f;
+         ++step)
+    {
+      const MatchState before = engine.getState();
+      engine.advance(0.1f);
+      if (before != MatchState::KICK_OFF && before != MatchState::HALF_TIME)
+        ++runningSteps;
+    }
+    ASSERT_GE(engine.getMatchTimeMinutes(), 45.0f);
+    EXPECT_NEAR(static_cast<float>(runningSteps) * 0.1f,
+                static_cast<float>(minutes) * 60.0f, 0.3f);
+  }
+}
+
+TEST(PlayModeTest, GoalCelebrationReturnsToKickoffWithinThreeSeconds)
+{
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createDummyTeam(1, "Home", 65, players);
+  Team away = createDummyTeam(2, "Away", 65, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, 77);
+  engine.setPlayHalfMinutes(15);
+  for (int step = 0; step < 10000 && engine.getState() != MatchState::GOAL;
+       ++step)
+    engine.advance(0.1f);
+  ASSERT_EQ(engine.getState(), MatchState::GOAL);
+  const MatchRenderSnapshot snapshot = buildMatchRenderSnapshot(engine);
+  EXPECT_FLOAT_EQ(snapshot.goalCelebrationDuration, 3.0f);
+  EXPECT_LE(snapshot.goalCelebrationRemaining,
+            snapshot.goalCelebrationDuration);
+  int waited = 0;
+  while (engine.getState() == MatchState::GOAL && waited < 32)
+  {
+    engine.advance(0.1f);
+    ++waited;
+  }
+  EXPECT_LE(waited, 31);
+  EXPECT_EQ(engine.getState(), MatchState::KICK_OFF);
+}

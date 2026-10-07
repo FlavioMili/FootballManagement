@@ -77,6 +77,10 @@ float headerReachMetres(float heightMetres, float physicality);
 
 /** Highest ball height (metres) a goalkeeper can claim with the hands. */
 float goalkeeperReachMetres(float heightMetres, float goalkeeping);
+/** Horizontal hand reach from the current body position at a ball height. */
+float goalkeeperHandlingRadiusMetres(float heightMetres, float goalkeeping,
+                                     float ballHeightMetres,
+                                     bool diving = false);
 
 /** Relative strength of a player in an aerial duel for a ball at a height. */
 float aerialDuelStrength(float heightMetres, float physicality,

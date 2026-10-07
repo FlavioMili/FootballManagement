@@ -1054,6 +1054,10 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
     {
       ImGui_ImplSDLRenderer3_NewFrame();
       ImGui_ImplSDL3_NewFrame();
+      // Synthetic input uses the same deterministic clock as the scene.
+      // Wall-clock frame times can otherwise turn separate clicks into a
+      // double-click on fast CI runners, toggling focus instead of orbiting.
+      ImGui::GetIO().DeltaTime = seconds;
       ImGui::NewFrame();
       scene.update(seconds);
       scene.render();

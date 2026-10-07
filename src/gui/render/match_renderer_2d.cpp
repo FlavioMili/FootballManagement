@@ -1531,9 +1531,9 @@ MatchViewport computeMatchViewport(float topLeftX, float topLeftY,
 }
 void drawGoalCelebration(ImDrawList& drawList, const MatchViewport& viewport,
                          int homeScore, int awayScore,
-                         float celebrationRemaining)
+                         float celebrationRemaining, float celebrationDuration)
 {
-  const float total = MatchTuning::Timing::GOAL_CELEBRATION_SECONDS;
+  const float total = celebrationDuration;
   const float progress =
       total > 0.0f ? std::clamp(1.0f - celebrationRemaining / total, 0.0f, 1.0f)
                    : 0.0f;
@@ -1664,6 +1664,7 @@ void MatchRenderer2D::render(const MatchRenderSnapshot& snapshot,
   if (snapshot.state == MatchState::GOAL)
   {
     drawGoalCelebration(*drawList, viewport, snapshot.homeScore,
-                        snapshot.awayScore, snapshot.goalCelebrationRemaining);
+                        snapshot.awayScore, snapshot.goalCelebrationRemaining,
+                        snapshot.goalCelebrationDuration);
   }
 }

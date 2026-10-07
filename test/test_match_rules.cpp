@@ -331,3 +331,25 @@ TEST(MatchRulesTest, PeriodsRunThroughExtraTime)
   EXPECT_LE(MatchRules::computeAddedMinutes(quiet, 4),
             MatchRules::computeAddedMinutes(quiet, 2));
 }
+
+TEST(MatchRulesTest, KeeperHandlingRequiresPhysicalHorizontalAndVerticalReach)
+{
+  const float height = 1.85f;
+  const float skill = 0.8f;
+  const float shoulder = height * 0.8f;
+  const float ceiling = MatchRules::goalkeeperReachMetres(height, skill);
+  const float standing =
+      MatchRules::goalkeeperHandlingRadiusMetres(height, skill, shoulder);
+  EXPECT_GT(standing, 0.7f);
+  EXPECT_LT(standing, 0.9f);
+  EXPECT_LT(MatchRules::goalkeeperHandlingRadiusMetres(
+                height, skill, (shoulder + ceiling) * 0.5f),
+            standing);
+  EXPECT_FLOAT_EQ(
+      MatchRules::goalkeeperHandlingRadiusMetres(height, skill, ceiling), 0.0f);
+  EXPECT_FLOAT_EQ(
+      MatchRules::goalkeeperHandlingRadiusMetres(height, skill, ceiling + 0.1f),
+      0.0f);
+  EXPECT_LT(MatchRules::goalkeeperHandlingRadiusMetres(1.70f, skill, 1.0f),
+            MatchRules::goalkeeperHandlingRadiusMetres(2.00f, skill, 1.0f));
+}

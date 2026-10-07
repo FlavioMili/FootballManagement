@@ -195,6 +195,29 @@ float goalkeeperReachMetres(float heightMetres, float goalkeeping)
          std::clamp(goalkeeping, 0.0f, 1.0f) * A::GOALKEEPER_SKILL_JUMP_METRES;
 }
 
+float goalkeeperHandlingRadiusMetres(float heightMetres, float goalkeeping,
+                                     float ballHeightMetres, bool diving)
+{
+  const float verticalReach = goalkeeperReachMetres(heightMetres, goalkeeping);
+  if (ballHeightMetres < 0.0F || ballHeightMetres > verticalReach)
+  {
+    return 0.0F;
+  }
+  const float shoulderHeight =
+      heightMetres * MatchTuning::Goalkeeper::SHOULDER_HEIGHT_SHARE;
+  const float stretch =
+      std::max(0.0F, ballHeightMetres - shoulderHeight) /
+      std::max(MatchTuning::Goalkeeper::MIN_VERTICAL_REACH_MARGIN,
+               verticalReach - shoulderHeight);
+  // A diving keeper's tilted torso contributes to the hand's reach;
+  // lateral travel itself is already reflected in the body position.
+  const float armReach =
+      heightMetres * (diving
+                          ? MatchTuning::Goalkeeper::DIVE_REACH_HEIGHT_SHARE
+                          : MatchTuning::Goalkeeper::HAND_REACH_HEIGHT_SHARE);
+  return armReach * std::sqrt(std::max(0.0F, 1.0F - (stretch * stretch)));
+}
+
 float aerialDuelStrength(float heightMetres, float physicality,
                          float ballHeightMetres)
 {

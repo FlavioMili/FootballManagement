@@ -80,6 +80,14 @@ struct MatchTuning final
      */
     static constexpr std::uint32_t BACKGROUND_STOPPAGE_TICKS = 3;
     static constexpr float SECONDS_PER_MINUTE = 60.0f;
+    static constexpr int MIN_PLAY_HALF_MINUTES = 3;
+    static constexpr int MAX_PLAY_HALF_MINUTES = 15;
+    static constexpr int DEFAULT_PLAY_HALF_MINUTES = 5;
+    static constexpr float PLAY_STOPPAGE_SECONDS = 3.0F;
+    static constexpr float RESTART_SUPPORT_DISTANCE_METRES = 30.0F;
+    static constexpr float RESTART_SUPPORT_BLEND = 0.35F;
+    static constexpr float THROW_OPPONENT_DISTANCE_METRES = 2.0F;
+    static constexpr float KICK_OPPONENT_DISTANCE_METRES = 9.15F;
     // update() bounds catch-up work so a stalled render frame cannot freeze
     // the live view; remaining whole steps are dropped. Headless code uses
     // advance()/simulateToEnd(), which never drop steps.
@@ -783,6 +791,10 @@ struct MatchTuning final
     static constexpr float DIVE_BASE_SPEED_METRES = 4.2f;
     static constexpr float DIVE_SKILL_SPEED_METRES = 1.6f;
     static constexpr float BODY_REACH_METRES = 2.0f;
+    static constexpr float HAND_REACH_HEIGHT_SHARE = 0.45F;
+    static constexpr float DIVE_REACH_HEIGHT_SHARE = 0.85F;
+    static constexpr float SHOULDER_HEIGHT_SHARE = 0.8F;
+    static constexpr float MIN_VERTICAL_REACH_MARGIN = 0.01F;
     static constexpr float HEIGHT_REACH_GAIN = 0.8f;
     static constexpr float HIGH_BALL_METRES = 1.9f;
     static constexpr float HIGH_BALL_REACH_SCALE = 0.85f;

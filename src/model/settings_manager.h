@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "global/languages.h"
+#include "model/match_tuning.h"
 
 /**
  * @struct Settings
@@ -59,7 +60,9 @@ struct Settings
   bool pause_at_breaks = true; /**< Managed match stops at half-time etc. */
 
   // Play mode (controlling the team on the pitch)
-  bool play_mode = true;       /**< Offer Play / Take control in matches */
+  int play_half_minutes = MatchTuning::Timing::
+      DEFAULT_PLAY_HALF_MINUTES; /**< Real minutes per regulation half, 3-15 */
+  bool play_mode = true;         /**< Offer Play / Take control in matches */
   int play_auto_switch = 2;    /**< PlayAutoSwitch: 0 off, 1 assisted, 2 auto */
   int play_pass_assist = 1;    /**< 0 none, 1 normal, 2 strong */
   float play_dead_zone = 0.2f; /**< Gamepad stick dead zone, 0.05-0.5 */

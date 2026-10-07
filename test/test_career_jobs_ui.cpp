@@ -306,6 +306,14 @@ TEST(NationalCallUpUiTest, CallUpScreenSquadEditingAndSizes)
   ASSERT_NE(scene, nullptr);
   const size_t squad = Bridge::squad(*scene);
   EXPECT_GE(squad, International::MIN_CALL_UPS);
+  const auto* announced_squad = game->getNationalTeams().squadOf(
+      controller.getNationalJob()->nation, controller.getCurrentDate());
+  ASSERT_NE(announced_squad, nullptr);
+  EXPECT_EQ(game->getNationalTeams().validateSquad(
+                controller.getNationalJob()->nation, announced_squad->players,
+                controller.getCurrentDate()),
+            International::CallUpResult::Ok);
+  EXPECT_EQ(announced_squad->players.size(), squad);
   EXPECT_GT(Bridge::pool(*scene), 0u);
   capture(view, "callup_announced.bmp");
 

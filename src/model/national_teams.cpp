@@ -905,6 +905,7 @@ std::vector<PlayerID> NationalTeams::pickSquad(
   for (const auto& [id, player] : gamedata->getPlayers())
   {
     if (player.getNationality() != nation || !player.isAvailable() ||
+        player.getTeamId() == FREE_AGENTS_TEAM_ID ||
         player.getAge() < MIN_SQUAD_AGE || std::ranges::contains(exclude, id) ||
         !isEligibleFor(player, nation, date))
       continue;

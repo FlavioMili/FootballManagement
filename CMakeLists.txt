@@ -181,6 +181,12 @@ else()
     GIT_SHALLOW    TRUE
   )
   FetchContent_MakeAvailable(SDL3_ttf)
+  # Apple's SDK declares CF_ENUM with a typedef/enum extension rejected by
+  # upstream Clang 20+. Permit that SDK syntax only in the CoreText backend.
+  if(APPLE AND TARGET harfbuzz AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+     AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 20)
+    target_compile_options(harfbuzz PRIVATE -Wno-elaborated-enum-base)
+  endif()
 endif()
 
 # --- ImGui ---

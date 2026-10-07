@@ -60,4 +60,4 @@ const char* playerIntentLabel(PlayerIntent intent);
 /** Goal flash and banner centred on the viewport; shared by both views. */
 void drawGoalCelebration(ImDrawList& drawList, const MatchViewport& viewport,
                          int homeScore, int awayScore,
-                         float celebrationRemaining);
+                         float celebrationRemaining, float celebrationDuration);

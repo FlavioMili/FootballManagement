@@ -459,3 +459,27 @@ TEST(WidgetsTest, FitColumnsDropsHighestPriorityFirst)
   ImGui::DestroyContext(context);
   ImGui::SetCurrentContext(previous);
 }
+
+TEST(SettingsPersistenceTest, PlayHalfDurationRoundTripsAndClamps)
+{
+  SettingsManager* manager = SettingsManager::instance();
+  const Settings original = manager->get();
+  EXPECT_EQ(Settings{}.play_half_minutes, 5);
+  for (int minutes = 3; minutes <= 15; ++minutes)
+  {
+    manager->get().play_half_minutes = minutes;
+    manager->save();
+    manager->get() = Settings{};
+    manager->load();
+    EXPECT_EQ(manager->get().play_half_minutes, minutes);
+  }
+  for (const int minutes : {0, 99})
+  {
+    manager->get().play_half_minutes = minutes;
+    manager->save();
+    manager->load();
+    EXPECT_EQ(manager->get().play_half_minutes, std::clamp(minutes, 3, 15));
+  }
+  manager->get() = original;
+  manager->save();
+}

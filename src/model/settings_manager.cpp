@@ -91,6 +91,10 @@ void SettingsManager::load()
         j.value("pause_for_match_changes", settings_.pause_for_match_changes);
     settings_.pause_at_breaks =
         j.value("pause_at_breaks", settings_.pause_at_breaks);
+    settings_.play_half_minutes =
+        std::clamp(j.value("play_half_minutes", settings_.play_half_minutes),
+                   MatchTuning::Timing::MIN_PLAY_HALF_MINUTES,
+                   MatchTuning::Timing::MAX_PLAY_HALF_MINUTES);
     settings_.play_mode = j.value("play_mode", settings_.play_mode);
     settings_.play_auto_switch = std::clamp(
         j.value("play_auto_switch", settings_.play_auto_switch), 0, 2);
@@ -160,6 +164,7 @@ void SettingsManager::save() const
   j["audio_muted"] = settings_.audio_muted;
   j["pause_for_match_changes"] = settings_.pause_for_match_changes;
   j["pause_at_breaks"] = settings_.pause_at_breaks;
+  j["play_half_minutes"] = settings_.play_half_minutes;
   j["play_mode"] = settings_.play_mode;
   j["play_auto_switch"] = settings_.play_auto_switch;
   j["play_pass_assist"] = settings_.play_pass_assist;

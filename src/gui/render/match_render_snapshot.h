@@ -95,6 +95,7 @@ struct MatchRenderSnapshot
   int awayScore = 0;
   bool goalScoredByHome = false;
   float goalCelebrationRemaining = 0.0f;
+  float goalCelebrationDuration = MatchTuning::Timing::GOAL_CELEBRATION_SECONDS;
   float matchTimeMinutes = 0.0f;
   const std::vector<MatchEvent>* events = nullptr;
   const MatchStats* stats = nullptr;
@@ -175,6 +176,7 @@ inline void fillMatchRenderSnapshot(const MatchEngine& engine,
   snapshot.awayScore = engine.getAwayScore();
   snapshot.goalScoredByHome = engine.getGoalScoredByHome();
   snapshot.goalCelebrationRemaining = engine.getGoalCelebrationRemaining();
+  snapshot.goalCelebrationDuration = engine.getGoalCelebrationDuration();
   snapshot.matchTimeMinutes = engine.getMatchTimeMinutes();
   snapshot.events = &engine.getEvents();
   snapshot.stats = &engine.getStats();
