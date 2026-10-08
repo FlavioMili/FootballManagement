@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Football Management: MatchSimulationInput Struct Reference</title>
+<title>Player12: MatchSimulationInput Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Football Management
+   <div id="projectname">Player12
    </div>
    <div id="projectbrief">An open source football management simulator</div>
   </td>
@@ -128,9 +128,11 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a504994e2b802e61a2771318072f43bb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb647322f18dc9dcf2bb57e91515a4ef" id="r_adb647322f18dc9dcf2bb57e91515a4ef"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a>, std::uint8_t &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchSimulationInput.html#adb647322f18dc9dcf2bb57e91515a4ef">medical_flags</a></td></tr>
 <tr class="separator:adb647322f18dc9dcf2bb57e91515a4ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a105bc559210fc7625b07768b3e2b70a5" id="r_a105bc559210fc7625b07768b3e2b70a5"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structMatchContext.html">MatchContext</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchSimulationInput.html#a105bc559210fc7625b07768b3e2b70a5">context_override</a></td></tr>
+<tr class="separator:a105bc559210fc7625b07768b3e2b70a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Everything a headless match needs, captured on the thread that owns the game state. Simulating it only reads the <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> objects the lineups point to (attributes and persistent condition), which nothing modifies while a batch runs, so inputs with distinct players can run concurrently. </p>
+<div class="textblock"><p>Everything a headless match needs, captured on the thread that owns the game state. Simulating it only reads the <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> objects the lineups point to (attributes and persistent condition), which nothing modifies while a batch runs, so inputs with distinct players can run concurrently. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="ac34a2e8b3b7b3b28749cb5bfd7852bca" name="ac34a2e8b3b7b3b28749cb5bfd7852bca"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac34a2e8b3b7b3b28749cb5bfd7852bca">&#9670;&#160;</a></span>away_id</h2>
@@ -185,6 +187,21 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a105bc559210fc7625b07768b3e2b70a5" name="a105bc559210fc7625b07768b3e2b70a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a105bc559210fc7625b07768b3e2b70a5">&#9670;&#160;</a></span>context_override</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;<a class="el" href="structMatchContext.html">MatchContext</a>&gt; MatchSimulationInput::context_override</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Optional complete replacement for the league-derived match context. Unset preserves normal league behavior; <a class="el" href="structMatchContext.html">MatchContext</a>{} explicitly selects the calibrated defaults, even when league_id is nonzero. Values go through <a class="el" href="classMatchEngine.html#a0f2d072772e668700474e3302a00cc23">MatchEngine::setMatchContext()</a> validation before simulation begins. This is a C++ experiment/modding seam, not a saved career or JSON setting. </p>
 
 </div>
 </div>

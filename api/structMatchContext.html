@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Football Management: MatchContext Struct Reference</title>
+<title>Player12: MatchContext Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Football Management
+   <div id="projectname">Player12
    </div>
    <div id="projectbrief">An open source football management simulator</div>
   </td>
@@ -100,21 +100,22 @@ $(document).ready(function(){initNavTree('structMatchContext.html',''); initResi
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="match__engine_8h_source.html">match_engine.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="match__context_8h_source.html">match_context.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a13a99402e54754d3942f9644258115af" id="r_a13a99402e54754d3942f9644258115af"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchContext.html#a13a99402e54754d3942f9644258115af">goalRateScale</a> = 1.0f</td></tr>
+<tr class="memitem:a13a99402e54754d3942f9644258115af" id="r_a13a99402e54754d3942f9644258115af"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchContext.html#a13a99402e54754d3942f9644258115af">goalRateScale</a> = 1.0F</td></tr>
 <tr class="separator:a13a99402e54754d3942f9644258115af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7fa36951aeb24be2545d1d40e064c766" id="r_a7fa36951aeb24be2545d1d40e064c766"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchContext.html#a7fa36951aeb24be2545d1d40e064c766">refereeStrictnessMean</a> = 1.0f</td></tr>
+<tr class="memitem:a7fa36951aeb24be2545d1d40e064c766" id="r_a7fa36951aeb24be2545d1d40e064c766"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchContext.html#a7fa36951aeb24be2545d1d40e064c766">refereeStrictnessMean</a> = 1.0F</td></tr>
 <tr class="separator:a7fa36951aeb24be2545d1d40e064c766"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9996550bd1d08c9d2878a3fc854a8e50" id="r_a9996550bd1d08c9d2878a3fc854a8e50"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchContext.html#a9996550bd1d08c9d2878a3fc854a8e50">refereeStrictnessSd</a> = <a class="el" href="structMatchTuning_1_1Discipline.html#a80b1a94336ec85cd40e5f69056fa1195">MatchTuning::Discipline::STRICTNESS_SD</a></td></tr>
 <tr class="separator:a9996550bd1d08c9d2878a3fc854a8e50"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab509a6663dabca4709bd460de5f5b4a2" id="r_ab509a6663dabca4709bd460de5f5b4a2"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchContext.html#ab509a6663dabca4709bd460de5f5b4a2">homeAdvantageScale</a> = 1.0f</td></tr>
+<tr class="memitem:ab509a6663dabca4709bd460de5f5b4a2" id="r_ab509a6663dabca4709bd460de5f5b4a2"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMatchContext.html#ab509a6663dabca4709bd460de5f5b4a2">homeAdvantageScale</a> = 1.0F</td></tr>
 <tr class="separator:ab509a6663dabca4709bd460de5f5b4a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="classLeague.html" title="Represents a football league containing teams and a leaderboard.">League</a> character of a match, set before kick-off with <a class="el" href="classMatchEngine.html#a0f2d072772e668700474e3302a00cc23">MatchEngine::setMatchContext()</a>. The defaults are the calibrated engine and play exactly like an engine without a context. </p>
+<div class="textblock"><p>Per-match balance settings, independent of the engine's mutable state. Defaults preserve the calibrated engine. <a class="el" href="namespaceMatchSimulation.html#aa9fe0d5f2966663ee743f40c54a1d88a">MatchSimulation::leagueContext()</a> derives these from a league; headless callers may supply an explicit <a class="el" href="structMatchSimulationInput.html#a105bc559210fc7625b07768b3e2b70a5">MatchSimulationInput::context_override</a> for an experiment or custom ruleset.</p>
+<p><a class="el" href="classMatchEngine.html#a0f2d072772e668700474e3302a00cc23">MatchEngine::setMatchContext()</a> accepts settings only before the first step, clamps finite values to <a class="el" href="structMatchTuning_1_1Context.html">MatchTuning::Context</a> bounds and replaces non-finite values with defaults. Keep this value in captured match inputs, not in a mutable global: concurrent fixtures and highlight copies must stay isolated. See <a class="el" href="extending-and-modding_8md.html">docs/development/extending-and-modding.md</a> for examples and limitations. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="a13a99402e54754d3942f9644258115af" name="a13a99402e54754d3942f9644258115af"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a13a99402e54754d3942f9644258115af">&#9670;&#160;</a></span>goalRateScale</h2>
@@ -123,11 +124,11 @@ Public Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">float MatchContext::goalRateScale = 1.0f</td>
+          <td class="memname">float MatchContext::goalRateScale = 1.0F</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Finishing sharpness: above 1 more chances are converted (a high-scoring league), below 1 fewer (about 0.9 for a second tier). It acts on the precision of shots, not on the score, so shot volume and xG stay put. </p>
+<p>Finishing precision: above 1 sharpens shots, below 1 makes them less accurate. Changes execution, not the score or the xG formula directly. </p>
 
 </div>
 </div>
@@ -138,11 +139,11 @@ Public Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">float MatchContext::homeAdvantageScale = 1.0f</td>
+          <td class="memname">float MatchContext::homeAdvantageScale = 1.0F</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Scales the home crowd's edge on attributes, execution and refereeing (0 = neutral venue). </p>
+<p>Scales the home edge on attributes, execution and refereeing; 0 represents a neutral venue. </p>
 
 </div>
 </div>
@@ -153,11 +154,11 @@ Public Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">float MatchContext::refereeStrictnessMean = 1.0f</td>
+          <td class="memname">float MatchContext::refereeStrictnessMean = 1.0F</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Mean and spread of the per-match referee strictness drawn at kick-off; booking rates scale about linearly with it. </p>
+<p>Mean and spread of the referee strictness drawn at kick-off. </p>
 
 </div>
 </div>
@@ -176,7 +177,7 @@ Public Attributes</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
-<li>src/model/<a class="el" href="match__engine_8h_source.html">match_engine.h</a></li>
+<li>src/model/<a class="el" href="match__context_8h_source.html">match_context.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

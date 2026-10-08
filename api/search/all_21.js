@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['x_0',['x',['../structMatchViewport.html#a3224ce852ef54cd307975e534f6893b1',1,'MatchViewport::x'],['../structVector2F.html#a1e66924a52a2955bc44472527fb89264',1,'Vector2F::x'],['../structShotRecord.html#afba180ad903b87c7209937c4bae65d18',1,'ShotRecord::x'],['../structMatchInsightsView_1_1NetworkNode.html#a35c971676654468bddb544b80ca28a47',1,'MatchInsightsView::NetworkNode::x'],['../structMatchInsightsView_1_1ShotMark.html#a888a0be471c1815befc4e11364c66910',1,'MatchInsightsView::ShotMark::x'],['../structRenderMath_1_1ScreenPoint.html#aed009317d5acf5ca27745c924d2ea4e4',1,'RenderMath::ScreenPoint::x'],['../structRenderMath_1_1ScreenRect.html#a8ccaa13113a1bee303b94ee1b6d2d5ee',1,'RenderMath::ScreenRect::x'],['../structRenderMath_1_1Vec4.html#ad9e43ec98ab013276dc9a13b31805d34',1,'RenderMath::Vec4::x'],['../structRenderMath_1_1Vec3.html#a68e295f124f7f4c34ad2c14065005252',1,'RenderMath::Vec3::x']]],
+  ['xa_1',['xa',['../structPlayerAnalyticsRow.html#a415f0c2a13e147a403e1737a1f77f9a4',1,'PlayerAnalyticsRow']]],
+  ['xg_2',['xg',['../structMatchAudio_1_1PendingShot.html#ad4de394efbfa84f37c3ec0946709b81a',1,'MatchAudio::PendingShot::xg'],['../structMatchInsightsView_1_1ShotMark.html#a75b53ec28c1e12fcc3572442298cf1b2',1,'MatchInsightsView::ShotMark::xg'],['../structPlayerMatchSnapshot.html#a0b136cfe4768ed697cf34eae9c738fbb',1,'PlayerMatchSnapshot::xg'],['../structPlayerAnalyticsRow.html#a53af605fa6303114a20e9ba0b8e84474',1,'PlayerAnalyticsRow::xg'],['../structShotRecord.html#ab2d832317121a2b17b4f7f92fc1efbc4',1,'ShotRecord::xg'],['../structSideSummary.html#a0d1609a040b4cb3071543bb18b05db60',1,'SideSummary::xg'],['../structMatchEvent.html#a18f1315d78afaf6676433cd8bf10ff8f',1,'MatchEvent::xg'],['../structKeyMoment.html#af99a0e1788d2c4a94c4b3359e8b51c42',1,'KeyMoment::xg'],['../structLab_1_1MatchSample.html#aab7913b871f9494ed4f97b7e8eb7140c',1,'Lab::MatchSample::xg']]],
+  ['xg_5fagainst_3',['xg_against',['../structTeamTrendPoint.html#a932c7cd9613d853634506f859cdf4565',1,'TeamTrendPoint::xg_against'],['../structOppositionAverages.html#a843c09fc7edd84a9b96b50a32fa62fa8',1,'OppositionAverages::xg_against']]],
+  ['xg_5fangle_4',['XG_ANGLE',['../structMatchTuning_1_1Shooting.html#a88b12ede4d5cca7de9497cafc64952a4',1,'MatchTuning::Shooting']]],
+  ['xg_5fangle_5fline_5',['XG_ANGLE_LINE',['../structMatchTuning_1_1Shooting.html#a3db01776f5636323dc810a85cbefd7e5',1,'MatchTuning::Shooting']]],
+  ['xg_5fdistance_6',['XG_DISTANCE',['../structMatchTuning_1_1Shooting.html#a87e9430b20ad33e0b460ff0562a22288',1,'MatchTuning::Shooting']]],
+  ['xg_5ffor_7',['xg_for',['../structTeamTrendPoint.html#a93d5e2179cd54f309bc7eeceddb2b2c7',1,'TeamTrendPoint::xg_for'],['../structOppositionAverages.html#a8324909aed50081bd0c88680a28cc146',1,'OppositionAverages::xg_for']]],
+  ['xg_5fintercept_8',['XG_INTERCEPT',['../structMatchTuning_1_1Shooting.html#ad72752dcf73e2704495f3948f72638b8',1,'MatchTuning::Shooting']]],
+  ['xg_5flateral_9',['XG_LATERAL',['../structMatchTuning_1_1Shooting.html#aa4b3c3de5dafa568b694532b87462921',1,'MatchTuning::Shooting']]],
+  ['xg_5flateral_5fsquared_10',['XG_LATERAL_SQUARED',['../structMatchTuning_1_1Shooting.html#afb64e469405eb448a0819175dff73b73',1,'MatchTuning::Shooting']]],
+  ['xg_5fline_11',['XG_LINE',['../structMatchTuning_1_1Shooting.html#ad4947469acf5df9880ad3e7e906947bc',1,'MatchTuning::Shooting']]],
+  ['xg_5fline_5fsquared_12',['XG_LINE_SQUARED',['../structMatchTuning_1_1Shooting.html#af9e56005cdccd8ae4db8858e2fa10e61',1,'MatchTuning::Shooting']]],
+  ['xg_5fmax_5fdistance_5fmetres_13',['XG_MAX_DISTANCE_METRES',['../structMatchTuning_1_1Shooting.html#af876a6e2c4c14e23c320a0e433c394e5',1,'MatchTuning::Shooting']]],
+  ['xg_5fsteps_14',['xg_steps',['../classMatchInsightsView.html#abb7e207c9a0f09b7fe4b3948d764244e',1,'MatchInsightsView']]],
+  ['xg_5ftop_15',['xg_top',['../classMatchInsightsView.html#a2319fefe7fc045b6286c4131f061cbb4',1,'MatchInsightsView']]],
+  ['xg_5ftotals_16',['xg_totals',['../classMatchInsightsView.html#a354494f02d6728be4f058c6e4784f9c8',1,'MatchInsightsView']]],
+  ['xgagainst_17',['XgAgainst',['../data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfaef7b54c6a0b30cfb8463055deb4ad4d8',1,'data_hub.h']]],
+  ['xgfor_18',['XgFor',['../data__hub_8h.html#a2f03747c6d1083e8b8c6247a1ce430cfada61904e34ae6710d83ab08b1fdaf669',1,'data_hub.h']]],
+  ['xl_19',['XL',['../namespaceTheme_1_1Space.html#a76d31ced6594b7b1fbdca81088540742',1,'Theme::Space']]],
+  ['xs_20',['XS',['../namespaceTheme_1_1Space.html#a4c8663450c59db6ba642ff8a6ef05185',1,'Theme::Space']]]
+];

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Football Management: MatchEngine Class Reference</title>
+<title>Player12: MatchEngine Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Football Management
+   <div id="projectname">Player12
    </div>
    <div id="projectbrief">An open source football management simulator</div>
   </td>
@@ -976,8 +976,9 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a1505d5810504b4c7ab33e98c6cf724bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Stateful, deterministic-when-seeded live match simulation in real match time: one simulated second is one second of the match (a full match with stoppages and added time is roughly 5,900 simulated seconds).</p>
-<p><a class="el" href="classMatchEngine.html#a5a577339f0adf339c5bdf2d0385ae321">update()</a> uses a fixed internal timestep, so the same seed produces the same match at different render frame rates. Home attacks toward x=1 and away attacks toward x=0. The engine is copyable, which highlight prediction uses to look ahead deterministically. </p>
+<div class="textblock"><p>Stateful, deterministic-when-seeded live match simulation in real match time: in watch mode one simulated second is one second of the match (a full match with stoppages and added time is roughly 5,900 simulated seconds). Play mode can accelerate the match clock while body/ball physics retain the same timestep; see <a class="el" href="classMatchEngine.html#a77849ebfea35196812ceb995ae31675f">setPlayHalfMinutes()</a>.</p>
+<p><a class="el" href="classMatchEngine.html#a5a577339f0adf339c5bdf2d0385ae321">update()</a> uses a fixed internal timestep, so the same seed produces the same match at different render frame rates. Home attacks toward x=1 and away attacks toward x=0. The engine is copyable, which highlight prediction uses to look ahead deterministically.</p>
+<p>Strategies and simulation state are owned by value. <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> pointers and the <a class="el" href="structStatsConfig.html" title="Configuration mapping roles to their focus areas and listing all possible stats.">StatsConfig</a> reference are borrowed: keep them alive and unchanged for the engine's lifetime, including any prediction copies and worker batches. The engine records match consequences; the career applies them afterwards. See <a class="el" href="match-engine_8md.html">docs/development/match-engine.md</a> for the step order and extension map, and <a class="el" href="player-behavior_8md.html">docs/development/player-behavior.md</a> for movement and action selection. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a1554a8a0ffea407a5437bb8a30fce6b4" name="a1554a8a0ffea407a5437bb8a30fce6b4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1554a8a0ffea407a5437bb8a30fce6b4">&#9670;&#160;</a></span>MatchEngine() <span class="overload">[1/2]</span></h2>

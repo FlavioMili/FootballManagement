@@ -1,13 +1,17 @@
 var searchData=
 [
-  ['offer_5fnegotiation_5fdialog_2ecpp_0',['offer_negotiation_dialog.cpp',['../offer__negotiation__dialog_8cpp.html',1,'']]],
-  ['offer_5fnegotiation_5fdialog_2eh_1',['offer_negotiation_dialog.h',['../offer__negotiation__dialog_8h.html',1,'']]],
-  ['onboarding_2ecpp_2',['onboarding.cpp',['../onboarding_8cpp.html',1,'']]],
-  ['onboarding_2eh_3',['onboarding.h',['../onboarding_8h.html',1,'']]],
-  ['onboarding_5foverlay_2ecpp_4',['onboarding_overlay.cpp',['../onboarding__overlay_8cpp.html',1,'']]],
-  ['onboarding_5foverlay_2eh_5',['onboarding_overlay.h',['../onboarding__overlay_8h.html',1,'']]],
-  ['opposition_5freport_2ecpp_6',['opposition_report.cpp',['../opposition__report_8cpp.html',1,'']]],
-  ['opposition_5freport_2eh_7',['opposition_report.h',['../opposition__report_8h.html',1,'']]],
-  ['opposition_5fscene_2ecpp_8',['opposition_scene.cpp',['../opposition__scene_8cpp.html',1,'']]],
-  ['opposition_5fscene_2eh_9',['opposition_scene.h',['../opposition__scene_8h.html',1,'']]]
+  ['national_5fjob_2ecpp_0',['national_job.cpp',['../national__job_8cpp.html',1,'']]],
+  ['national_5fjob_2eh_1',['national_job.h',['../national__job_8h.html',1,'']]],
+  ['national_5fteams_2ecpp_2',['national_teams.cpp',['../national__teams_8cpp.html',1,'']]],
+  ['national_5fteams_2eh_3',['national_teams.h',['../national__teams_8h.html',1,'']]],
+  ['nav_5fhistory_2ecpp_4',['nav_history.cpp',['../nav__history_8cpp.html',1,'']]],
+  ['nav_5fhistory_2eh_5',['nav_history.h',['../nav__history_8h.html',1,'']]],
+  ['news_5ffeed_2ecpp_6',['news_feed.cpp',['../news__feed_8cpp.html',1,'']]],
+  ['news_5ffeed_2eh_7',['news_feed.h',['../news__feed_8h.html',1,'']]],
+  ['news_5fscene_2ecpp_8',['news_scene.cpp',['../news__scene_8cpp.html',1,'']]],
+  ['news_5fscene_2eh_9',['news_scene.h',['../news__scene_8h.html',1,'']]],
+  ['next_5faction_2ecpp_10',['next_action.cpp',['../next__action_8cpp.html',1,'']]],
+  ['next_5faction_2eh_11',['next_action.h',['../next__action_8h.html',1,'']]],
+  ['number_5fformat_2ecpp_12',['number_format.cpp',['../number__format_8cpp.html',1,'']]],
+  ['number_5fformat_2eh_13',['number_format.h',['../number__format_8h.html',1,'']]]
 ];

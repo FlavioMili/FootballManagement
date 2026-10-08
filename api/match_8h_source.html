@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Football Management: src/model/match.h Source File</title>
+<title>Player12: src/model/match.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Football Management
+   <div id="projectname">Player12
    </div>
    <div id="projectbrief">An open source football management simulator</div>
   </td>
@@ -240,7 +240,7 @@ $(document).ready(function(){initNavTree('match_8h_source.html',''); initResizab
 </div>
 <div class="ttc" id="aclassGameData_html"><div class="ttname"><a href="classGameData.html">GameData</a></div><div class="ttdoc">Singleton class that acts as an in-memory cache for the database state.</div><div class="ttdef"><b>Definition</b> gamedata.h:43</div></div>
 <div class="ttc" id="aclassLineup_html"><div class="ttname"><a href="classLineup.html">Lineup</a></div><div class="ttdoc">Manages the starting XI and reserves of a team.</div><div class="ttdef"><b>Definition</b> lineup.h:85</div></div>
-<div class="ttc" id="aclassMatchEngine_html"><div class="ttname"><a href="classMatchEngine.html">MatchEngine</a></div><div class="ttdef"><b>Definition</b> match_engine.h:531</div></div>
+<div class="ttc" id="aclassMatchEngine_html"><div class="ttname"><a href="classMatchEngine.html">MatchEngine</a></div><div class="ttdef"><b>Definition</b> match_engine.h:517</div></div>
 <div class="ttc" id="aclassMatch_html"><div class="ttname"><a href="classMatch.html">Match</a></div><div class="ttdoc">Represents a football match between two teams.</div><div class="ttdef"><b>Definition</b> match.h:38</div></div>
 <div class="ttc" id="aclassMatch_html_a069dd7a7573feb0fe768a4795e0e24ca"><div class="ttname"><a href="classMatch.html#a069dd7a7573feb0fe768a4795e0e24ca">Match::setCompetitionId</a></div><div class="ttdeci">void setCompetitionId(LeagueID id)</div><div class="ttdef"><b>Definition</b> match.h:141</div></div>
 <div class="ttc" id="aclassMatch_html_a18b8bfeb0444d4e48a7fc3322222fea7"><div class="ttname"><a href="classMatch.html#a18b8bfeb0444d4e48a7fc3322222fea7">Match::applySimulation</a></div><div class="ttdeci">MatchReport applySimulation(MatchSimulationResult result)</div><div class="ttdef"><b>Definition</b> match.cpp:111</div></div>
@@ -283,7 +283,7 @@ $(document).ready(function(){initNavTree('match_8h_source.html',''); initResizab
 <div class="ttc" id="aclassMatch_html_afed7509c7b737137ce3e7d9a0612eb9d"><div class="ttname"><a href="classMatch.html#afed7509c7b737137ce3e7d9a0612eb9d">Match::getAwayPenalties</a></div><div class="ttdeci">uint8_t getAwayPenalties() const</div><div class="ttdef"><b>Definition</b> match.h:149</div></div>
 <div class="ttc" id="aclassMatch_html_affd399eb06a3ef7308645fbb59b3306d"><div class="ttname"><a href="classMatch.html#affd399eb06a3ef7308645fbb59b3306d">Match::_played</a></div><div class="ttdeci">bool _played</div><div class="ttdef"><b>Definition</b> match.h:174</div></div>
 <div class="ttc" id="aclassMedicalDesk_html"><div class="ttname"><a href="classMedicalDesk.html">MedicalDesk</a></div><div class="ttdoc">The medical staff's day-to-day work for the managed club: rest and minute-limit instructions,...</div><div class="ttdef"><b>Definition</b> medical_centre.h:200</div></div>
-<div class="ttc" id="aclassPlayer_html"><div class="ttname"><a href="classPlayer.html">Player</a></div><div class="ttdoc">Represents a football player.</div><div class="ttdef"><b>Definition</b> player.h:96</div></div>
+<div class="ttc" id="aclassPlayer_html"><div class="ttname"><a href="classPlayer.html">Player</a></div><div class="ttdoc">Persistent career identity, attributes, traits and day-to-day state.</div><div class="ttdef"><b>Definition</b> player.h:101</div></div>
 <div class="ttc" id="agamedate_8h_html"><div class="ttname"><a href="gamedate_8h.html">gamedate.h</a></div></div>
 <div class="ttc" id="anamespaceMatchdaySquad_html"><div class="ttname"><a href="namespaceMatchdaySquad.html">MatchdaySquad</a></div><div class="ttdef"><b>Definition</b> match.h:183</div></div>
 <div class="ttc" id="anamespaceMatchdaySquad_html_a09dceebf0fc88431f8f8a4cb4846cbe6"><div class="ttname"><a href="namespaceMatchdaySquad.html#a09dceebf0fc88431f8f8a4cb4846cbe6">MatchdaySquad::recallRegulars</a></div><div class="ttdeci">std::size_t recallRegulars(Lineup &amp;lineup, std::span&lt; const Player *const &gt; squad, const Eligibility &amp;eligible, const StatsConfig &amp;config)</div><div class="ttdef"><b>Definition</b> match.cpp:425</div></div>
@@ -299,8 +299,8 @@ $(document).ready(function(){initNavTree('match_8h_source.html',''); initResizab
 <div class="ttc" id="astats__config_8h_html"><div class="ttname"><a href="stats__config_8h.html">stats_config.h</a></div><div class="ttdoc">Contains structures to simplify JSON parsing and loading of player statistics.</div></div>
 <div class="ttc" id="astructGameDateValue_html"><div class="ttname"><a href="structGameDateValue.html">GameDateValue</a></div><div class="ttdoc">Represents a specific date in the game world.</div><div class="ttdef"><b>Definition</b> gamedate.h:20</div></div>
 <div class="ttc" id="astructMatchReport_html"><div class="ttname"><a href="structMatchReport.html">MatchReport</a></div><div class="ttdoc">Structured summary of a played fixture, persisted per fixture.</div><div class="ttdef"><b>Definition</b> match_report.h:93</div></div>
-<div class="ttc" id="astructMatchSimulationInput_html"><div class="ttname"><a href="structMatchSimulationInput.html">MatchSimulationInput</a></div><div class="ttdef"><b>Definition</b> match_scheduler.h:38</div></div>
-<div class="ttc" id="astructMatchSimulationResult_html"><div class="ttname"><a href="structMatchSimulationResult.html">MatchSimulationResult</a></div><div class="ttdef"><b>Definition</b> match_scheduler.h:65</div></div>
+<div class="ttc" id="astructMatchSimulationInput_html"><div class="ttname"><a href="structMatchSimulationInput.html">MatchSimulationInput</a></div><div class="ttdef"><b>Definition</b> match_scheduler.h:37</div></div>
+<div class="ttc" id="astructMatchSimulationResult_html"><div class="ttname"><a href="structMatchSimulationResult.html">MatchSimulationResult</a></div><div class="ttdef"><b>Definition</b> match_scheduler.h:72</div></div>
 <div class="ttc" id="astructPlayerMatchConsequence_html"><div class="ttname"><a href="structPlayerMatchConsequence.html">PlayerMatchConsequence</a></div><div class="ttdoc">Physical outcome of one player's match.</div><div class="ttdef"><b>Definition</b> world_simulation.h:57</div></div>
 <div class="ttc" id="astructStatsConfig_html"><div class="ttname"><a href="structStatsConfig.html">StatsConfig</a></div><div class="ttdoc">Configuration mapping roles to their focus areas and listing all possible stats.</div><div class="ttdef"><b>Definition</b> stats_config.h:42</div></div>
 <div class="ttc" id="atypes_8h_html"><div class="ttname"><a href="types_8h.html">types.h</a></div></div>

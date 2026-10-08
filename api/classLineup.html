@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Football Management: Lineup Class Reference</title>
+<title>Player12: Lineup Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Football Management
+   <div id="projectname">Player12
    </div>
    <div id="projectbrief">An open source football management simulator</div>
   </td>
@@ -138,7 +138,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ac7e5a5b3671168c114db3f91b2c48404"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes an outfield player from the pitch.  <br /></td></tr>
 <tr class="separator:ac7e5a5b3671168c114db3f91b2c48404"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a21625b913f3c1893d6b895cf565205ef" id="r_a21625b913f3c1893d6b895cf565205ef"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a21625b913f3c1893d6b895cf565205ef">removePlayer</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> playerID)</td></tr>
-<tr class="memdesc:a21625b913f3c1893d6b895cf565205ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drops every reference to a player: goalkeeper, outfield slot, bench and set-piece designations. Call it before the <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object is destroyed, since the lineup holds raw pointers.  <br /></td></tr>
+<tr class="memdesc:a21625b913f3c1893d6b895cf565205ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drops every reference to a player: goalkeeper, outfield slot, bench and set-piece designations. Call it before the <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> object is destroyed, since the lineup holds raw pointers.  <br /></td></tr>
 <tr class="separator:a21625b913f3c1893d6b895cf565205ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47102645a88aa387ae39e0566d9ba23c" id="r_a47102645a88aa387ae39e0566d9ba23c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLineup.html#a47102645a88aa387ae39e0566d9ba23c">swapPlayers</a> (<a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> benchPlayerID, <a class="el" href="types_8h.html#a93dcecc4aec7387438b9cabd8a28dfdb">PlayerID</a> pitchPlayerID)</td></tr>
 <tr class="memdesc:a47102645a88aa387ae39e0566d9ba23c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Swaps a bench player with an outfield player.  <br /></td></tr>
@@ -281,7 +281,7 @@ Private Attributes</h2></td></tr>
 <p>Adds an outfield player to the pitch at the specified coordinate. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">player</td><td>Pointer to the <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object. </td></tr>
+    <tr><td class="paramname">player</td><td>Pointer to the <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> object. </td></tr>
     <tr><td class="paramname">position</td><td>The position on the pitch (x, y in [0.0, 1.0]). </td></tr>
   </table>
   </dd>
@@ -494,7 +494,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets the goalkeeper. </p>
-<dl class="section return"><dt>Returns</dt><dd>Pointer to the goalkeeper <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Pointer to the goalkeeper <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> object. </dd></dl>
 
 </div>
 </div>
@@ -534,7 +534,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets the reserve players. </p>
-<dl class="section return"><dt>Returns</dt><dd>A vector of pointers to the reserve <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> objects. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A vector of pointers to the reserve <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> objects. </dd></dl>
 
 </div>
 </div>
@@ -685,7 +685,7 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Drops every reference to a player: goalkeeper, outfield slot, bench and set-piece designations. Call it before the <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object is destroyed, since the lineup holds raw pointers. </p>
+<p>Drops every reference to a player: goalkeeper, outfield slot, bench and set-piece designations. Call it before the <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> object is destroyed, since the lineup holds raw pointers. </p>
 <dl class="section return"><dt>Returns</dt><dd>true if the player was referenced anywhere. </dd></dl>
 
 </div>
@@ -787,7 +787,7 @@ Private Attributes</h2></td></tr>
 <p>Sets the goalkeeper. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">gk</td><td>Pointer to the <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object. </td></tr>
+    <tr><td class="paramname">gk</td><td>Pointer to the <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> object. </td></tr>
   </table>
   </dd>
 </dl>
@@ -813,7 +813,7 @@ Private Attributes</h2></td></tr>
 <p>Sets the substitutes. Starters and duplicates are skipped; more than MAX_SUBSTITUTES are cut down with <a class="el" href="classLineup.html#a625646227eb7f64652b6a9bc38416533" title="A matchday bench of at most MAX_SUBSTITUTES from candidates (best first): available players before in...">chooseBench()</a> (pass the candidates best first). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">subs</td><td>A vector of pointers to the reserve <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> objects. </td></tr>
+    <tr><td class="paramname">subs</td><td>A vector of pointers to the reserve <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> objects. </td></tr>
   </table>
   </dd>
 </dl>

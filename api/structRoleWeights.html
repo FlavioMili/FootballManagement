@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Football Management: RoleWeights Struct Reference</title>
+<title>Player12: RoleWeights Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Football Management
+   <div id="projectname">Player12
    </div>
    <div id="projectbrief">An open source football management simulator</div>
   </td>
@@ -100,7 +100,7 @@ $(document).ready(function(){initNavTree('structRoleWeights.html',''); initResiz
 </div><!--header-->
 <div class="contents">
 
-<p>Defines the behavior of a single player during a match simulation.  
+<p>Legacy grid-based strategy weights, retained by the <a class="el" href="classStrategy.html" title="Represents the tactical setup of a team for a match.">Strategy</a> API.  
  <a href="structRoleWeights.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="strategy_8h_source.html">strategy.h</a>&gt;</code></p>
@@ -115,13 +115,8 @@ Public Attributes</h2></td></tr>
 <tr class="separator:accadccbd8108d564aba5d468b84697c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Defines the behavior of a single player during a match simulation. </p>
-<ul>
-<li>attackWeight : tendency to engage in offensive actions</li>
-<li>defenseWeight : tendency to engage in defensive actions</li>
-<li>movementRadius: distance (in grid cells) the player can move from their lineup position as a rule of thumb, this would be applied to a theoretical heatmap of where the actions are going to take place</li>
-</ul>
-<p>During simulation, these weights are applied only within the movementRadius so that we might calculate better what is going on in a certain area of the field. </p>
+<div class="textblock"><p>Legacy grid-based strategy weights, retained by the <a class="el" href="classStrategy.html" title="Represents the tactical setup of a team for a match.">Strategy</a> API. </p>
+<p>getAttackWeight()/getDefenseWeight() evaluate these within movementRadius grid cells. The live <a class="el" href="classMatchEngine.html">MatchEngine</a> does not call those methods: extend its player behavior through tactical slot instructions and <a class="el" href="structRoleProfile.html" title="Measurable behaviour of a role and duty in the match engine. Distances are metres,...">RoleProfile</a> instead. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="ab363de1c0c8387e481e02386fd993241" name="ab363de1c0c8387e481e02386fd993241"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab363de1c0c8387e481e02386fd993241">&#9670;&#160;</a></span>attackWeight</h2>

@@ -74,7 +74,7 @@ var searchData=
   ['nets_71',['nets',['../structStadium3D_1_1Goal.html#a62f745e480e11393b7d0e4112643cd7a',1,'Stadium3D::Goal']]],
   ['network_5fside_72',['network_side',['../classMatchInsightsView.html#a7c9ec94b66b1e2e2ecd961ec35a37024',1,'MatchInsightsView']]],
   ['networks_73',['networks',['../classMatchInsightsView.html#aff4730cdfa2d332a45344039697d12b7',1,'MatchInsightsView']]],
-  ['neutral_74',['neutral',['../namespaceSupporterModel.html#a12754a74f142c624c28e2e6c62049614',1,'SupporterModel::NEUTRAL'],['../structWorldTuning_1_1Morale.html#a03442e2f29083d70a97b081e6297875a',1,'WorldTuning::Morale::NEUTRAL'],['../structTeamTalkResult.html#ad0902f229292a61e662861cbb0ef27fb',1,'TeamTalkResult::neutral'],['../structInternational_1_1Fixture.html#a8dae74c2a4f639054e388dbe244d89dd',1,'International::Fixture::neutral']]],
+  ['neutral_74',['neutral',['../namespaceSupporterModel.html#a12754a74f142c624c28e2e6c62049614',1,'SupporterModel::NEUTRAL'],['../structTeamTalkResult.html#ad0902f229292a61e662861cbb0ef27fb',1,'TeamTalkResult::neutral'],['../structInternational_1_1Fixture.html#a8dae74c2a4f639054e388dbe244d89dd',1,'International::Fixture::neutral'],['../structWorldTuning_1_1Morale.html#a03442e2f29083d70a97b081e6297875a',1,'WorldTuning::Morale::NEUTRAL']]],
   ['neutral_5fcheer_5fshare_75',['NEUTRAL_CHEER_SHARE',['../structMatchRender3DTuning_1_1Crowd.html#a6fba62f6668d16b83aa4682695ea05ff',1,'MatchRender3DTuning::Crowd']]],
   ['new_5fclub_5freputation_76',['new_club_reputation',['../structTransferNegotiation_1_1PlayerContext.html#a843f085325707b618f604a9eaae8bb75',1,'TransferNegotiation::PlayerContext']]],
   ['new_5fdecision_77',['new_decision',['../structHolidayDay.html#a87ed6f86f8bb63ed587d7864202b688d',1,'HolidayDay']]],

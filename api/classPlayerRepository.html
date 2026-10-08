@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Football Management: PlayerRepository Class Reference</title>
+<title>Player12: PlayerRepository Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Football Management
+   <div id="projectname">Player12
    </div>
    <div id="projectbrief">An open source football management simulator</div>
   </td>
@@ -101,7 +101,7 @@ $(document).ready(function(){initNavTree('classPlayerRepository.html',''); initR
 </div><!--header-->
 <div class="contents">
 
-<p>Repository class for managing <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> entities in the database.  
+<p>Repository class for managing <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> entities in the database.  
  <a href="classPlayerRepository.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="player__repository_8h_source.html">player_repository.h</a>&gt;</code></p>
@@ -109,7 +109,7 @@ $(document).ready(function(){initNavTree('classPlayerRepository.html',''); initR
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a3ea2cedc26c4852f0185060eb455a324" id="r_a3ea2cedc26c4852f0185060eb455a324"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayerRepository.html#a3ea2cedc26c4852f0185060eb455a324">PlayerRepository</a> (std::shared_ptr&lt; <a class="el" href="classDatabaseConnection.html">DatabaseConnection</a> &gt; <a class="el" href="classPlayerRepository.html#ad3926008e4aa2a54696521ba0f78de2e">db_conn</a>)</td></tr>
-<tr class="memdesc:a3ea2cedc26c4852f0185060eb455a324"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> Repository object.  <br /></td></tr>
+<tr class="memdesc:a3ea2cedc26c4852f0185060eb455a324"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> Repository object.  <br /></td></tr>
 <tr class="separator:a3ea2cedc26c4852f0185060eb455a324"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27492c71238ba3fd5a5db4b39c0e1a05" id="r_a27492c71238ba3fd5a5db4b39c0e1a05"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classPlayer.html">Player</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPlayerRepository.html#a27492c71238ba3fd5a5db4b39c0e1a05">loadAllPlayers</a> () const</td></tr>
 <tr class="memdesc:a27492c71238ba3fd5a5db4b39c0e1a05"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load all players from the database.  <br /></td></tr>
@@ -142,7 +142,7 @@ Private Attributes</h2></td></tr>
 <tr class="separator:ad3926008e4aa2a54696521ba0f78de2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Repository class for managing <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> entities in the database. </p>
+<div class="textblock"><p>Repository class for managing <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> entities in the database. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a3ea2cedc26c4852f0185060eb455a324" name="a3ea2cedc26c4852f0185060eb455a324"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3ea2cedc26c4852f0185060eb455a324">&#9670;&#160;</a></span>PlayerRepository()</h2>
@@ -168,7 +168,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Construct a new <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> Repository object. </p>
+<p>Construct a new <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> Repository object. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">db_conn</td><td>Shared pointer to the database connection. </td></tr>
@@ -224,7 +224,7 @@ Private Attributes</h2></td></tr>
 <p>Insert a new player into the database. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">player</td><td>The <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object to insert. </td></tr>
+    <tr><td class="paramname">player</td><td>The <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> object to insert. </td></tr>
   </table>
   </dd>
 </dl>
@@ -250,7 +250,7 @@ Private Attributes</h2></td></tr>
 <p>Insert multiple players into the database. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">players</td><td>A vector of reference wrappers to <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> objects. </td></tr>
+    <tr><td class="paramname">players</td><td>A vector of reference wrappers to <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> objects. </td></tr>
   </table>
   </dd>
 </dl>
@@ -276,7 +276,7 @@ Private Attributes</h2></td></tr>
 <p>Insert a player with a specific ID into the database. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">player</td><td>The <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object to insert. </td></tr>
+    <tr><td class="paramname">player</td><td>The <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> object to insert. </td></tr>
   </table>
   </dd>
 </dl>
@@ -299,7 +299,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Load all players from the database. </p>
-<dl class="section return"><dt>Returns</dt><dd>A vector of <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> objects. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A vector of <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> objects. </dd></dl>
 
 </div>
 </div>
@@ -359,7 +359,7 @@ Private Attributes</h2></td></tr>
 <p>Update an existing player in the database. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">player</td><td>The <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> object with updated details. </td></tr>
+    <tr><td class="paramname">player</td><td>The <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> object with updated details. </td></tr>
   </table>
   </dd>
 </dl>
@@ -385,7 +385,7 @@ Private Attributes</h2></td></tr>
 <p>Update multiple players in the database, inserting new ones. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">players</td><td>A vector of reference wrappers to <a class="el" href="classPlayer.html" title="Represents a football player.">Player</a> objects. </td></tr>
+    <tr><td class="paramname">players</td><td>A vector of reference wrappers to <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> objects. </td></tr>
   </table>
   </dd>
 </dl>

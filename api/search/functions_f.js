@@ -65,7 +65,7 @@ var searchData=
   ['platform_62',['platform',['../namespaceBuildInfo.html#a1bcd932d4c52416e75e0bf040e4486a4',1,'BuildInfo']]],
   ['play_63',['play',['../classMatchAudio.html#a6048ee07f70d2913a872726af844de7d',1,'MatchAudio']]],
   ['playcontrolledpass_64',['playControlledPass',['../classMatchEngine.html#ae46d0973f02fb163be4c4221b288cc63',1,'MatchEngine']]],
-  ['player_65',['player',['../classPlayer.html#a435ec014d4b6b6bf5c5cd281ff51742c',1,'Player::Player()'],['../classTrainingRegistry.html#a4015d6b2dd92db749eb3b916240ba0d1',1,'TrainingRegistry::player()'],['../classMatchTracker.html#aebc866f12a70c21bbb44719f858e36ac',1,'MatchTracker::player()'],['../classPlayerProfileScene.html#a475a7a0477579a95bb1e766c2b4a003a',1,'PlayerProfileScene::player()']]],
+  ['player_65',['player',['../classTrainingRegistry.html#a4015d6b2dd92db749eb3b916240ba0d1',1,'TrainingRegistry::player()'],['../classMatchTracker.html#aebc866f12a70c21bbb44719f858e36ac',1,'MatchTracker::player()'],['../classPlayerProfileScene.html#a475a7a0477579a95bb1e766c2b4a003a',1,'PlayerProfileScene::player()'],['../classPlayer.html#a435ec014d4b6b6bf5c5cd281ff51742c',1,'Player::Player()']]],
   ['playeracceptsloan_66',['playerAcceptsLoan',['../namespaceTransferNegotiation.html#ac463fb698486bbe9e465cf6d0f30635b',1,'TransferNegotiation']]],
   ['playeractionblockkey_67',['playerActionBlockKey',['../classGameController.html#ab3fc20fb195911a755f907b69b765a98',1,'GameController']]],
   ['playercell_68',['playerCell',['../classScoutingScene.html#a32df7a0cb6537651d339e0effbe075f7',1,'ScoutingScene']]],

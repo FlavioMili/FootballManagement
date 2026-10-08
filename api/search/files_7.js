@@ -1,22 +1,9 @@
 var searchData=
 [
-  ['icons_2ecpp_0',['icons.cpp',['../icons_8cpp.html',1,'']]],
-  ['icons_2eh_1',['icons.h',['../icons_8h.html',1,'']]],
-  ['imatch_5frenderer_2eh_2',['imatch_renderer.h',['../imatch__renderer_8h.html',1,'']]],
-  ['inbox_2ecpp_3',['inbox.cpp',['../inbox_8cpp.html',1,'']]],
-  ['inbox_2eh_4',['inbox.h',['../inbox_8h.html',1,'']]],
-  ['inbox_5fdilemma_5fcard_2ecpp_5',['inbox_dilemma_card.cpp',['../inbox__dilemma__card_8cpp.html',1,'']]],
-  ['inbox_5fdilemma_5fcard_2eh_6',['inbox_dilemma_card.h',['../inbox__dilemma__card_8h.html',1,'']]],
-  ['inbox_5frepository_2ecpp_7',['inbox_repository.cpp',['../inbox__repository_8cpp.html',1,'']]],
-  ['inbox_5frepository_2eh_8',['inbox_repository.h',['../inbox__repository_8h.html',1,'']]],
-  ['inbox_5fscene_2ecpp_9',['inbox_scene.cpp',['../inbox__scene_8cpp.html',1,'']]],
-  ['inbox_5fscene_2eh_10',['inbox_scene.h',['../inbox__scene_8h.html',1,'']]],
-  ['injury_2ecpp_11',['injury.cpp',['../injury_8cpp.html',1,'']]],
-  ['injury_2eh_12',['injury.h',['../injury_8h.html',1,'']]],
-  ['input_5factions_2ecpp_13',['input_actions.cpp',['../input__actions_8cpp.html',1,'']]],
-  ['input_5factions_2eh_14',['input_actions.h',['../input__actions_8h.html',1,'']]],
-  ['interactions_2ecpp_15',['interactions.cpp',['../interactions_8cpp.html',1,'']]],
-  ['interactions_2eh_16',['interactions.h',['../interactions_8h.html',1,'']]],
-  ['international_5fscene_2ecpp_17',['international_scene.cpp',['../international__scene_8cpp.html',1,'']]],
-  ['international_5fscene_2eh_18',['international_scene.h',['../international__scene_8h.html',1,'']]]
+  ['help_5fscene_2ecpp_0',['help_scene.cpp',['../help__scene_8cpp.html',1,'']]],
+  ['help_5fscene_2eh_1',['help_scene.h',['../help__scene_8h.html',1,'']]],
+  ['holiday_2ecpp_2',['holiday.cpp',['../holiday_8cpp.html',1,'']]],
+  ['holiday_2eh_3',['holiday.h',['../holiday_8h.html',1,'']]],
+  ['holiday_5fdialog_2ecpp_4',['holiday_dialog.cpp',['../holiday__dialog_8cpp.html',1,'']]],
+  ['holiday_5fdialog_2eh_5',['holiday_dialog.h',['../holiday__dialog_8h.html',1,'']]]
 ];

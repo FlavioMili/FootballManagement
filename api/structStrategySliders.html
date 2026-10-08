@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Football Management: StrategySliders Struct Reference</title>
+<title>Player12: StrategySliders Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Football Management
+   <div id="projectname">Player12
    </div>
    <div id="projectbrief">An open source football management simulator</div>
   </td>
@@ -100,7 +100,7 @@ $(document).ready(function(){initNavTree('structStrategySliders.html',''); initR
 </div><!--header-->
 <div class="contents">
 
-<p>Holds global strategy sliders for a team's tactical behavior.  
+<p>Team-wide tactical preferences in [0, 1].  
  <a href="structStrategySliders.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="strategy_8h_source.html">strategy.h</a>&gt;</code></p>
@@ -119,7 +119,8 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a9b672c1f0c8c9312b4063d1c9e450c04"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Holds global strategy sliders for a team's tactical behavior. </p>
+<div class="textblock"><p>Team-wide tactical preferences in [0, 1]. </p>
+<p><a class="el" href="classMatchEngine.html">MatchEngine</a> combines these base values with score state, relative team strength and fading shouts in computeEffectiveSliders(). Movement and action selection consume those effective values. Individual behavior comes from SlotInstruction/RoleProfile in <a class="el" href="tactics_8h.html">tactics.h</a>. See <a class="el" href="player-behavior_8md.html">docs/development/player-behavior.md</a>. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="a9b672c1f0c8c9312b4063d1c9e450c04" name="a9b672c1f0c8c9312b4063d1c9e450c04"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9b672c1f0c8c9312b4063d1c9e450c04">&#9670;&#160;</a></span>compactness</h2>
@@ -132,7 +133,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Closeness of players to the goalkeeper </p>
+<p>Squeeze defensive lines and follow the ball </p>
 
 </div>
 </div>

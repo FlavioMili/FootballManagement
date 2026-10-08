@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Football Management: MatchRenderPlayer Struct Reference</title>
+<title>Player12: MatchRenderPlayer Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Football Management
+   <div id="projectname">Player12
    </div>
    <div id="projectbrief">An open source football management simulator</div>
   </td>
@@ -143,7 +143,8 @@ Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Read-only normalized world state consumed by renderers.</p>
-<p>The snapshot is rebuilt every frame from a <code><a class="el" href="classMatchEngine.html">MatchEngine</a></code> and carries the previous and current fixed-step positions plus the interpolation fraction, so 2D and future 3D renderers can interpolate without touching the simulation. Renderers must never mutate this data or the engine.</p>
+<p>The snapshot is rebuilt every frame from a <code><a class="el" href="classMatchEngine.html">MatchEngine</a></code> and carries the previous and current fixed-step positions plus the interpolation fraction, so 2D and 3D renderers can interpolate without touching the simulation. Renderers must never mutate this data or the engine.</p>
+<p>Positions are copied, but <a class="el" href="classPlayer.html" title="Persistent career identity, attributes, traits and day-to-day state.">Player</a> pointers and the event/statistics pointers in <a class="el" href="structMatchRenderSnapshot.html">MatchRenderSnapshot</a> remain borrowed. Consume the snapshot while its source engine and players are alive and stable; it is not an owned replay record or a cross-thread publication format. See <a class="el" href="match-engine_8md.html">docs/development/match-engine.md</a>.</p>
 <p>Units: positions are normalised pitch coordinates (x along the 105 m length, home attacking +x; y across the 68 m width). Ball <code>currentZ</code> and <code>previousZ</code> are in length units (metres = z * 105); the <code>*HeightMetres</code> fields carry the same value already converted to metres. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="a3bc50cb60c4d80e1cad88a0a962f23d8" name="a3bc50cb60c4d80e1cad88a0a962f23d8"></a>

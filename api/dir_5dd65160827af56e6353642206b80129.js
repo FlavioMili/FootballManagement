@@ -61,6 +61,7 @@ var dir_5dd65160827af56e6353642206b80129 =
     [ "match_analysis.h", "match__analysis_8h.html", "match__analysis_8h" ],
     [ "match_commentary.cpp", "match__commentary_8cpp.html", null ],
     [ "match_commentary.h", "match__commentary_8h.html", "match__commentary_8h" ],
+    [ "match_context.h", "match__context_8h.html", "match__context_8h" ],
     [ "match_engine.cpp", "match__engine_8cpp.html", "match__engine_8cpp" ],
     [ "match_engine.h", "match__engine_8h.html", "match__engine_8h" ],
     [ "match_engine_tracking.cpp", "match__engine__tracking_8cpp.html", null ],

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Football Management: Strategy Class Reference</title>
+<title>Player12: Strategy Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Football Management
+   <div id="projectname">Player12
    </div>
    <div id="projectbrief">An open source football management simulator</div>
   </td>
@@ -184,7 +184,7 @@ Private Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Represents the tactical setup of a team for a match. </p>
-<p>It combines sliders and per-role weights to determine player behavior. </p>
+<p>Stores team sliders, tactical slot/keeper roles, possession offsets and opposition orders. The engine copies a <a class="el" href="classStrategy.html" title="Represents the tactical setup of a team for a match.">Strategy</a> and resolves its role profiles; changing a club's <a class="el" href="classStrategy.html" title="Represents the tactical setup of a team for a match.">Strategy</a> alone does not update a running match. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a2021a15bbc4f0d13f7b92f8933db2235" name="a2021a15bbc4f0d13f7b92f8933db2235"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2021a15bbc4f0d13f7b92f8933db2235">&#9670;&#160;</a></span>Strategy()</h2>
@@ -379,7 +379,7 @@ Private Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Reference to the <a class="el" href="structRoleWeights.html" title="Defines the behavior of a single player during a match simulation.">RoleWeights</a> struct. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to the <a class="el" href="structRoleWeights.html" title="Legacy grid-based strategy weights, retained by the Strategy API.">RoleWeights</a> struct. </dd></dl>
 
 </div>
 </div>
@@ -406,7 +406,7 @@ Private Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Const reference to the <a class="el" href="structRoleWeights.html" title="Defines the behavior of a single player during a match simulation.">RoleWeights</a> struct. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Const reference to the <a class="el" href="structRoleWeights.html" title="Legacy grid-based strategy weights, retained by the Strategy API.">RoleWeights</a> struct. </dd></dl>
 
 </div>
 </div>
@@ -426,7 +426,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Retrieves the current slider state. </p>
-<dl class="section return"><dt>Returns</dt><dd>The current <a class="el" href="structStrategySliders.html" title="Holds global strategy sliders for a team&#39;s tactical behavior.">StrategySliders</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The current <a class="el" href="structStrategySliders.html" title="Team-wide tactical preferences in [0, 1].">StrategySliders</a>. </dd></dl>
 
 </div>
 </div>
@@ -519,7 +519,7 @@ Private Attributes</h2></td></tr>
 <p>Sets all sliders at once. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">newSliders</td><td>The new <a class="el" href="structStrategySliders.html" title="Holds global strategy sliders for a team&#39;s tactical behavior.">StrategySliders</a> to apply. </td></tr>
+    <tr><td class="paramname">newSliders</td><td>The new <a class="el" href="structStrategySliders.html" title="Team-wide tactical preferences in [0, 1].">StrategySliders</a> to apply. </td></tr>
   </table>
   </dd>
 </dl>

@@ -13,12 +13,13 @@ var searchData=
   ['delegation_2eh_10',['delegation.h',['../delegation_8h.html',1,'']]],
   ['delegation_5fscene_2ecpp_11',['delegation_scene.cpp',['../delegation__scene_8cpp.html',1,'']]],
   ['delegation_5fscene_2eh_12',['delegation_scene.h',['../delegation__scene_8h.html',1,'']]],
-  ['discipline_2ecpp_13',['discipline.cpp',['../discipline_8cpp.html',1,'']]],
-  ['discipline_2eh_14',['discipline.h',['../discipline_8h.html',1,'']]],
-  ['draw_5fceremony_2ecpp_15',['draw_ceremony.cpp',['../draw__ceremony_8cpp.html',1,'']]],
-  ['draw_5fceremony_2eh_16',['draw_ceremony.h',['../draw__ceremony_8h.html',1,'']]],
-  ['draw_5fceremony_5fdialog_2ecpp_17',['draw_ceremony_dialog.cpp',['../draw__ceremony__dialog_8cpp.html',1,'']]],
-  ['draw_5fceremony_5fdialog_2eh_18',['draw_ceremony_dialog.h',['../draw__ceremony__dialog_8h.html',1,'']]],
-  ['dropdown_2ecpp_19',['dropdown.cpp',['../dropdown_8cpp.html',1,'']]],
-  ['dropdown_2eh_20',['dropdown.h',['../dropdown_8h.html',1,'']]]
+  ['design_2dnotes_2emd_13',['design-notes.md',['../design-notes_8md.html',1,'']]],
+  ['discipline_2ecpp_14',['discipline.cpp',['../discipline_8cpp.html',1,'']]],
+  ['discipline_2eh_15',['discipline.h',['../discipline_8h.html',1,'']]],
+  ['draw_5fceremony_2ecpp_16',['draw_ceremony.cpp',['../draw__ceremony_8cpp.html',1,'']]],
+  ['draw_5fceremony_2eh_17',['draw_ceremony.h',['../draw__ceremony_8h.html',1,'']]],
+  ['draw_5fceremony_5fdialog_2ecpp_18',['draw_ceremony_dialog.cpp',['../draw__ceremony__dialog_8cpp.html',1,'']]],
+  ['draw_5fceremony_5fdialog_2eh_19',['draw_ceremony_dialog.h',['../draw__ceremony__dialog_8h.html',1,'']]],
+  ['dropdown_2ecpp_20',['dropdown.cpp',['../dropdown_8cpp.html',1,'']]],
+  ['dropdown_2eh_21',['dropdown.h',['../dropdown_8h.html',1,'']]]
 ];

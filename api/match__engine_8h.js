@@ -8,7 +8,6 @@ var match__engine_8h =
     [ "MatchCommandRecord", "structMatchCommandRecord.html", "structMatchCommandRecord" ],
     [ "MatchPlayerInput", "structMatchPlayerInput.html", "structMatchPlayerInput" ],
     [ "MatchInputRecord", "structMatchInputRecord.html", "structMatchInputRecord" ],
-    [ "MatchContext", "structMatchContext.html", "structMatchContext" ],
     [ "MatchHighlight", "structMatchHighlight.html", "structMatchHighlight" ],
     [ "MatchEngine", "classMatchEngine.html", "classMatchEngine" ],
     [ "MatchEngine::Shootout", "structMatchEngine_1_1Shootout.html", "structMatchEngine_1_1Shootout" ],
