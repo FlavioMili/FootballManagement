@@ -1,5 +1,9 @@
 var NAVTREEINDEX55 =
 {
+"structMatchRenderPlayer.html#a9b88541837d2418f15ad44d7f51d6912":[22,0,208,14],
+"structMatchRenderPlayer.html#a9c84704622c268336a56af4f79460a08":[22,0,208,10],
+"structMatchRenderPlayer.html#aa5d6444604169fba3a487097302203c0":[22,0,208,11],
+"structMatchRenderPlayer.html#abf4279223eee43f37aa81bd0641a351a":[22,0,208,5],
 "structMatchRenderPlayer.html#acccf117c550b4463fcb783ef788c94b1":[22,0,208,17],
 "structMatchRenderPlayer.html#ad6781f805ba4027c7a77f0ae721ea609":[22,0,208,12],
 "structMatchRenderPlayer.html#ae05add59366c9d6354443ad927e1dc79":[22,0,208,15],
@@ -245,9 +249,5 @@ var NAVTREEINDEX55 =
 "structMatchReportScene_1_1EventRow.html":[22,0,212,0],
 "structMatchReportScene_1_1EventRow.html#a054bc7d888a2c0f8817f3c0a44e8a9a9":[22,0,212,0,3],
 "structMatchReportScene_1_1EventRow.html#a2bc9ccec66e526c1e8d5516a0feb01b6":[22,0,212,0,1],
-"structMatchReportScene_1_1EventRow.html#a8ebc9f813ef962e85d9d4677fb0a9bfd":[22,0,212,0,4],
-"structMatchReportScene_1_1EventRow.html#ab07b1968b61a75db5d8df4cf58eb9455":[22,0,212,0,0],
-"structMatchReportScene_1_1EventRow.html#ab6b39d0ef3fddf6c9b7e9c43f750888d":[22,0,212,0,2],
-"structMatchReportScene_1_1PlayerRow.html":[22,0,212,1],
-"structMatchReportScene_1_1PlayerRow.html#a613613b670fc0bcaefb26ee1ffeed31c":[22,0,212,1,2]
+"structMatchReportScene_1_1EventRow.html#a8ebc9f813ef962e85d9d4677fb0a9bfd":[22,0,212,0,4]
 };

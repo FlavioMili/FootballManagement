@@ -1,5 +1,9 @@
 var NAVTREEINDEX40 =
 {
+"save__manager_8h.html#a3531beada44788a5ac69957338dcc544a809b7a805a28884b364837536cdc38b7":[23,0,1,2,10,9,0],
+"save__manager_8h.html#a3531beada44788a5ac69957338dcc544abbd47109890259c0127154db1af26c75":[23,0,1,2,10,9,1],
+"save__manager_8h.html#a527988df62e56a927ae098f0a301efa2":[23,0,1,2,10,11],
+"save__manager_8h.html#a527988df62e56a927ae098f0a301efa2a2aee0be2678ee90fd327cc186826438e":[23,0,1,2,10,11,1],
 "save__manager_8h.html#a527988df62e56a927ae098f0a301efa2a4307e7e7986aa21a4b7c3ef2b5e948f6":[23,0,1,2,10,11,2],
 "save__manager_8h.html#a527988df62e56a927ae098f0a301efa2a6e25aa27fcd893613fac13b0312fe36d":[23,0,1,2,10,11,3],
 "save__manager_8h.html#a527988df62e56a927ae098f0a301efa2aa60852f204ed8028c1c58808b746d115":[23,0,1,2,10,11,0],
@@ -245,9 +249,5 @@ var NAVTREEINDEX40 =
 "settings__scene_8h.html":[23,0,1,4,1,95],
 "settings__scene_8h_source.html":[23,0,1,4,1,95],
 "sqlite__rows_8h.html":[23,0,1,2,11],
-"sqlite__rows_8h.html#a035050642a7ea3894d0d62f606a8b415":[23,0,1,2,11,0],
-"sqlite__rows_8h.html#a238336a79a3b5f801c4858631339c767":[23,0,1,2,11,6],
-"sqlite__rows_8h.html#a6252dfeef4a57c499b4107be9d55415d":[23,0,1,2,11,3],
-"sqlite__rows_8h.html#a8f1014f3f6bbf67ed7aba0f52173c4d4":[23,0,1,2,11,5],
-"sqlite__rows_8h.html#a99f81aff00c0df308f8dccdb75477dfe":[23,0,1,2,11,4]
+"sqlite__rows_8h.html#a035050642a7ea3894d0d62f606a8b415":[23,0,1,2,11,0]
 };

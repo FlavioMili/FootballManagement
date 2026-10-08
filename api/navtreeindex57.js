@@ -1,5 +1,9 @@
 var NAVTREEINDEX57 =
 {
+"structMatchStats.html#a0bb62cd3babdc363f6f5296d812be8da":[22,0,221,31],
+"structMatchStats.html#a146575f50edbf1991184617fa0d58fe4":[22,0,221,18],
+"structMatchStats.html#a179d136cfad070457fdd3677e8e7ee91":[22,0,221,6],
+"structMatchStats.html#a1ab06994e5ca0c0752ba02f5e4fecad2":[22,0,221,57],
 "structMatchStats.html#a24b8d56e5ad9bb795d47c94f9a57c31f":[22,0,221,23],
 "structMatchStats.html#a26b174a5a00de7f2e781b0f8501fdcd3":[22,0,221,10],
 "structMatchStats.html#a2b982fce39e990b0ad85d92212481175":[22,0,221,36],
@@ -245,9 +249,5 @@ var NAVTREEINDEX57 =
 "structMatchTuning_1_1Defending.html#a357725a312b23b029e01c649c7d4c10b":[22,0,226,5,13],
 "structMatchTuning_1_1Defending.html#a3b0eadad51e5d3875718151bda3d4736":[22,0,226,5,15],
 "structMatchTuning_1_1Defending.html#a431559debb9f4de4eb4ffb779d91a6d1":[22,0,226,5,9],
-"structMatchTuning_1_1Defending.html#a48be2a283f07176f9ec3bf57f8050051":[22,0,226,5,21],
-"structMatchTuning_1_1Defending.html#a4c45ba4a197c97fead6706adb0621306":[22,0,226,5,32],
-"structMatchTuning_1_1Defending.html#a4f868a1774afbe3807dbc20d7312ed10":[22,0,226,5,29],
-"structMatchTuning_1_1Defending.html#a520a900b2fd6a9b14c5e3480a8135e45":[22,0,226,5,39],
-"structMatchTuning_1_1Defending.html#a525e548e76b114ef4b13e8daa5814389":[22,0,226,5,3]
+"structMatchTuning_1_1Defending.html#a48be2a283f07176f9ec3bf57f8050051":[22,0,226,5,21]
 };

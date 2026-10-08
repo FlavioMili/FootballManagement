@@ -1,5 +1,9 @@
 var NAVTREEINDEX50 =
 {
+"structManagementScene_1_1PaletteEntry.html":[22,0,167,0],
+"structManagementScene_1_1PaletteEntry.html#a3290083e4172d7ee3909df4434854f9f":[22,0,167,0,4],
+"structManagementScene_1_1PaletteEntry.html#a3e63718e6a391448c52afa5c42976a82":[22,0,167,0,0],
+"structManagementScene_1_1PaletteEntry.html#a3e63718e6a391448c52afa5c42976a82a07c80e2a355d91402a00d82b1fa13855":[22,0,167,0,0,2],
 "structManagementScene_1_1PaletteEntry.html#a3e63718e6a391448c52afa5c42976a82a33080c3d870c862a9fee5a861e43be86":[22,0,167,0,0,5],
 "structManagementScene_1_1PaletteEntry.html#a3e63718e6a391448c52afa5c42976a82a3d0d6f3b89d94934de83ca41b85e6ce4":[22,0,167,0,0,0],
 "structManagementScene_1_1PaletteEntry.html#a3e63718e6a391448c52afa5c42976a82a4fc963e213bba362778f5c175eb4d5ff":[22,0,167,0,0,4],
@@ -245,9 +249,5 @@ var NAVTREEINDEX50 =
 "structMatchCameraInput.html#a303fa8339e72405abb7cf63e8b7ebf92":[22,0,186,11],
 "structMatchCameraInput.html#a403870e69ff2022e74b8d73dd004ee46":[22,0,186,2],
 "structMatchCameraInput.html#a5a01be6d05d89f2ffa07ca3d31adf9a0":[22,0,186,9],
-"structMatchCameraInput.html#a74482cc80bdc12eedc1350c4af57279f":[22,0,186,10],
-"structMatchCameraInput.html#a77760fb92688f26176328ab3f599e218":[22,0,186,7],
-"structMatchCameraInput.html#a78ee5fb275e5eda2b61b4dd021f6bb1c":[22,0,186,3],
-"structMatchCameraInput.html#a8007565506c240081b03b61771cb044b":[22,0,186,8],
-"structMatchCameraInput.html#a8921efa567aefd1506e7b6adc42d45f7":[22,0,186,0]
+"structMatchCameraInput.html#a74482cc80bdc12eedc1350c4af57279f":[22,0,186,10]
 };

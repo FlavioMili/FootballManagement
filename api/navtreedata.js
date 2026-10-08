@@ -75,110 +75,115 @@ var NAVTREE =
       [ "Coordinates and clocks", "md_docs_2development_2match-engine.html#autotoc_md50", null ],
       [ "One authoritative simulation step", "md_docs_2development_2match-engine.html#autotoc_md51", null ],
       [ "Choosing an advance API", "md_docs_2development_2match-engine.html#autotoc_md52", null ],
-      [ "Ball flight, contacts and rules", "md_docs_2development_2match-engine.html#autotoc_md53", null ],
-      [ "Determinism, replay and observation", "md_docs_2development_2match-engine.html#autotoc_md54", null ],
-      [ "Implementation map and checks", "md_docs_2development_2match-engine.html#autotoc_md55", null ]
+      [ "Ball flight, contacts and rules", "md_docs_2development_2match-engine.html#autotoc_md53", [
+        [ "Calibrating finishing without changing keeper reach", "md_docs_2development_2match-engine.html#autotoc_md54", null ]
+      ] ],
+      [ "Determinism, replay and observation", "md_docs_2development_2match-engine.html#autotoc_md55", null ],
+      [ "Implementation map and checks", "md_docs_2development_2match-engine.html#autotoc_md56", null ]
     ] ],
     [ "Player behavior: from attributes to actions", "md_docs_2development_2player-behavior.html", [
-      [ "Persistent player versus match slot", "md_docs_2development_2player-behavior.html#autotoc_md57", null ],
-      [ "Behavior between matches", "md_docs_2development_2player-behavior.html#autotoc_md58", null ],
-      [ "Team phase and coordinated assignments", "md_docs_2development_2player-behavior.html#autotoc_md59", null ],
-      [ "Shape, roles and duties", "md_docs_2development_2player-behavior.html#autotoc_md60", null ],
-      [ "Off-ball intentions and physical movement", "md_docs_2development_2player-behavior.html#autotoc_md61", null ],
-      [ "On-ball choice and execution", "md_docs_2development_2player-behavior.html#autotoc_md62", null ],
-      [ "Defending, keepers and external control", "md_docs_2development_2player-behavior.html#autotoc_md63", null ],
-      [ "Reproducing a suspicious decision", "md_docs_2development_2player-behavior.html#autotoc_md64", null ]
+      [ "Persistent player versus match slot", "md_docs_2development_2player-behavior.html#autotoc_md58", null ],
+      [ "Behavior between matches", "md_docs_2development_2player-behavior.html#autotoc_md59", null ],
+      [ "Team phase and coordinated assignments", "md_docs_2development_2player-behavior.html#autotoc_md60", null ],
+      [ "Shape, roles and duties", "md_docs_2development_2player-behavior.html#autotoc_md61", null ],
+      [ "Off-ball intentions and physical movement", "md_docs_2development_2player-behavior.html#autotoc_md62", null ],
+      [ "On-ball choice and execution", "md_docs_2development_2player-behavior.html#autotoc_md63", null ],
+      [ "Defending, keepers and external control", "md_docs_2development_2player-behavior.html#autotoc_md64", null ],
+      [ "Reproducing a suspicious decision", "md_docs_2development_2player-behavior.html#autotoc_md65", null ]
     ] ],
     [ "Building and releasing desktop packages", "md_docs_2development_2release.html", [
-      [ "Cutting a release", "md_docs_2development_2release.html#autotoc_md69", null ],
-      [ "What each job does", "md_docs_2development_2release.html#autotoc_md70", null ],
-      [ "Package layout and runtime paths", "md_docs_2development_2release.html#autotoc_md71", [
-        [ "Crash reports and save recovery", "md_docs_2development_2release.html#autotoc_md72", null ]
+      [ "Cutting a release", "md_docs_2development_2release.html#autotoc_md70", null ],
+      [ "What each job does", "md_docs_2development_2release.html#autotoc_md71", null ],
+      [ "Package layout and runtime paths", "md_docs_2development_2release.html#autotoc_md72", [
+        [ "Crash reports and save recovery", "md_docs_2development_2release.html#autotoc_md73", null ]
       ] ],
-      [ "Building a package locally (Linux)", "md_docs_2development_2release.html#autotoc_md73", null ],
-      [ "Known limitations", "md_docs_2development_2release.html#autotoc_md74", null ]
+      [ "Building a package locally (Linux)", "md_docs_2development_2release.html#autotoc_md74", null ],
+      [ "Known limitations", "md_docs_2development_2release.html#autotoc_md75", null ]
     ] ],
     [ "Tests and tools", "md_docs_2development_2testing.html", [
-      [ "Run one area first", "md_docs_2development_2testing.html#autotoc_md76", null ],
-      [ "Balance lab", "md_docs_2development_2testing.html#autotoc_md77", null ],
-      [ "Screenshots", "md_docs_2development_2testing.html#autotoc_md78", null ],
-      [ "Performance benchmarks", "md_docs_2development_2testing.html#autotoc_md79", null ],
-      [ "Known baseline failures", "md_docs_2development_2testing.html#autotoc_md80", null ]
+      [ "Run one area first", "md_docs_2development_2testing.html#autotoc_md77", null ],
+      [ "Balance lab", "md_docs_2development_2testing.html#autotoc_md78", null ],
+      [ "Screenshots", "md_docs_2development_2testing.html#autotoc_md79", null ],
+      [ "Performance benchmarks", "md_docs_2development_2testing.html#autotoc_md80", null ],
+      [ "Historical calibration failures", "md_docs_2development_2testing.html#autotoc_md81", null ]
     ] ],
     [ "Website documentation rendering", "md_docs_2development_2website.html", [
-      [ "Lists and code examples", "md_docs_2development_2website.html#autotoc_md82", null ],
-      [ "Diagram sizing and themes", "md_docs_2development_2website.html#autotoc_md83", null ],
-      [ "Rendering repair walkthrough", "md_docs_2development_2website.html#autotoc_md84", null ],
-      [ "Media and publication size", "md_docs_2development_2website.html#autotoc_md85", null ]
+      [ "Lists and code examples", "md_docs_2development_2website.html#autotoc_md83", null ],
+      [ "Diagram sizing and themes", "md_docs_2development_2website.html#autotoc_md84", null ],
+      [ "Rendering repair walkthrough", "md_docs_2development_2website.html#autotoc_md85", null ],
+      [ "Media and publication size", "md_docs_2development_2website.html#autotoc_md86", null ]
     ] ],
     [ "Controls", "md_docs_2user_2controls.html", [
-      [ "Anywhere in the game", "md_docs_2user_2controls.html#autotoc_md87", null ],
-      [ "Main menu and club choice", "md_docs_2user_2controls.html#autotoc_md88", null ],
-      [ "Management screens", "md_docs_2user_2controls.html#autotoc_md89", [
-        [ "Back and Forward", "md_docs_2user_2controls.html#autotoc_md90", null ],
-        [ "Sidebar hubs", "md_docs_2user_2controls.html#autotoc_md91", null ],
-        [ "Mouse on management screens", "md_docs_2user_2controls.html#autotoc_md92", null ]
+      [ "Anywhere in the game", "md_docs_2user_2controls.html#autotoc_md88", null ],
+      [ "Main menu and club choice", "md_docs_2user_2controls.html#autotoc_md89", null ],
+      [ "Management screens", "md_docs_2user_2controls.html#autotoc_md90", [
+        [ "Back and Forward", "md_docs_2user_2controls.html#autotoc_md91", null ],
+        [ "Sidebar hubs", "md_docs_2user_2controls.html#autotoc_md92", null ],
+        [ "Mouse on management screens", "md_docs_2user_2controls.html#autotoc_md93", null ]
       ] ],
-      [ "Match day", "md_docs_2user_2controls.html#autotoc_md93", [
-        [ "Playback", "md_docs_2user_2controls.html#autotoc_md94", null ],
-        [ "Substitutions board and tactics", "md_docs_2user_2controls.html#autotoc_md95", null ],
-        [ "Touchline shouts", "md_docs_2user_2controls.html#autotoc_md96", null ],
-        [ "3D cameras", "md_docs_2user_2controls.html#autotoc_md97", null ],
-        [ "Mouse in the match view", "md_docs_2user_2controls.html#autotoc_md98", null ],
-        [ "Play mode", "md_docs_2user_2controls.html#autotoc_md99", null ]
+      [ "Match day", "md_docs_2user_2controls.html#autotoc_md94", [
+        [ "Playback", "md_docs_2user_2controls.html#autotoc_md95", null ],
+        [ "Substitutions board and tactics", "md_docs_2user_2controls.html#autotoc_md96", null ],
+        [ "Touchline shouts", "md_docs_2user_2controls.html#autotoc_md97", null ],
+        [ "3D cameras", "md_docs_2user_2controls.html#autotoc_md98", null ],
+        [ "Mouse in the match view", "md_docs_2user_2controls.html#autotoc_md99", null ],
+        [ "Play mode", "md_docs_2user_2controls.html#autotoc_md100", null ]
       ] ],
-      [ "Where your files are", "md_docs_2user_2controls.html#autotoc_md100", null ]
+      [ "Where your files are", "md_docs_2user_2controls.html#autotoc_md101", null ]
     ] ],
     [ "Saves, settings and troubleshooting", "md_docs_2user_2files-and-troubleshooting.html", [
-      [ "Recover a save", "md_docs_2user_2files-and-troubleshooting.html#autotoc_md102", null ],
-      [ "Report a problem", "md_docs_2user_2files-and-troubleshooting.html#autotoc_md103", null ],
-      [ "Use an isolated test career", "md_docs_2user_2files-and-troubleshooting.html#autotoc_md104", null ],
-      [ "Player12 and earlier careers", "md_docs_2user_2files-and-troubleshooting.html#autotoc_md105", null ]
+      [ "Recover a save", "md_docs_2user_2files-and-troubleshooting.html#autotoc_md103", null ],
+      [ "Report a problem", "md_docs_2user_2files-and-troubleshooting.html#autotoc_md104", null ],
+      [ "Use an isolated test career", "md_docs_2user_2files-and-troubleshooting.html#autotoc_md105", null ],
+      [ "Player12 and earlier careers", "md_docs_2user_2files-and-troubleshooting.html#autotoc_md106", null ]
     ] ],
     [ "Getting started", "md_docs_2user_2getting-started.html", [
-      [ "1. Start a career", "md_docs_2user_2getting-started.html#autotoc_md107", null ],
-      [ "2. Your first day", "md_docs_2user_2getting-started.html#autotoc_md108", null ],
-      [ "3. Get to know the squad", "md_docs_2user_2getting-started.html#autotoc_md109", null ],
-      [ "4. Lineup and tactics", "md_docs_2user_2getting-started.html#autotoc_md110", null ],
-      [ "5. Training and staff", "md_docs_2user_2getting-started.html#autotoc_md111", null ],
-      [ "6. Scouting and transfers", "md_docs_2user_2getting-started.html#autotoc_md112", null ],
-      [ "7. The youth academy", "md_docs_2user_2getting-started.html#autotoc_md113", null ],
-      [ "8. Advancing the calendar", "md_docs_2user_2getting-started.html#autotoc_md114", null ],
-      [ "9. Match day", "md_docs_2user_2getting-started.html#autotoc_md115", [
-        [ "3D camera controls", "md_docs_2user_2getting-started.html#autotoc_md116", null ]
+      [ "1. Start a career", "md_docs_2user_2getting-started.html#autotoc_md108", null ],
+      [ "2. Your first day", "md_docs_2user_2getting-started.html#autotoc_md109", null ],
+      [ "3. Get to know the squad", "md_docs_2user_2getting-started.html#autotoc_md110", null ],
+      [ "4. Lineup and tactics", "md_docs_2user_2getting-started.html#autotoc_md111", null ],
+      [ "5. Training and staff", "md_docs_2user_2getting-started.html#autotoc_md112", null ],
+      [ "6. Scouting and transfers", "md_docs_2user_2getting-started.html#autotoc_md113", null ],
+      [ "7. The youth academy", "md_docs_2user_2getting-started.html#autotoc_md114", null ],
+      [ "8. Advancing the calendar", "md_docs_2user_2getting-started.html#autotoc_md115", null ],
+      [ "9. Match day", "md_docs_2user_2getting-started.html#autotoc_md116", [
+        [ "3D camera controls", "md_docs_2user_2getting-started.html#autotoc_md117", null ]
       ] ],
-      [ "10. Beyond the first season", "md_docs_2user_2getting-started.html#autotoc_md117", null ],
-      [ "Tips", "md_docs_2user_2getting-started.html#autotoc_md118", null ]
+      [ "10. Beyond the first season", "md_docs_2user_2getting-started.html#autotoc_md118", null ],
+      [ "Tips", "md_docs_2user_2getting-started.html#autotoc_md119", null ]
     ] ],
     [ "Install and run", "md_docs_2user_2installation.html", [
-      [ "Download and play", "md_docs_2user_2installation.html#autotoc_md120", null ],
-      [ "Build from source", "md_docs_2user_2installation.html#autotoc_md121", [
-        [ "Linux", "md_docs_2user_2installation.html#autotoc_md122", null ],
-        [ "macOS", "md_docs_2user_2installation.html#autotoc_md123", null ],
-        [ "Windows", "md_docs_2user_2installation.html#autotoc_md124", null ],
-        [ "Other build options", "md_docs_2user_2installation.html#autotoc_md125", null ]
+      [ "Download and play", "md_docs_2user_2installation.html#autotoc_md121", null ],
+      [ "Build from source", "md_docs_2user_2installation.html#autotoc_md122", [
+        [ "Linux", "md_docs_2user_2installation.html#autotoc_md123", null ],
+        [ "macOS", "md_docs_2user_2installation.html#autotoc_md124", null ],
+        [ "Windows", "md_docs_2user_2installation.html#autotoc_md125", null ],
+        [ "Other build options", "md_docs_2user_2installation.html#autotoc_md126", null ]
       ] ],
-      [ "Running", "md_docs_2user_2installation.html#autotoc_md126", null ]
+      [ "Running", "md_docs_2user_2installation.html#autotoc_md127", null ]
     ] ],
     [ "Feature tour", "md_docs_2project_2features.html", [
-      [ "Screenshots", "md_docs_2project_2features.html#autotoc_md128", null ]
+      [ "Screenshots", "md_docs_2project_2features.html#autotoc_md129", null ]
     ] ],
     [ "Roadmap", "md_docs_2project_2roadmap.html", [
-      [ "First priority: improve the interface and player experience", "md_docs_2project_2roadmap.html#autotoc_md130", null ],
-      [ "Build a community around the game", "md_docs_2project_2roadmap.html#autotoc_md131", null ],
-      [ "In-game editing: build your own football world", "md_docs_2project_2roadmap.html#autotoc_md132", [
-        [ "Start with safe, approachable editing", "md_docs_2project_2roadmap.html#autotoc_md133", null ],
-        [ "Add countries and football structures", "md_docs_2project_2roadmap.html#autotoc_md134", null ],
-        [ "Organise friendlies and summer tournaments", "md_docs_2project_2roadmap.html#autotoc_md135", null ]
+      [ "Start from what already works", "md_docs_2project_2roadmap.html#autotoc_md131", null ],
+      [ "First priority: make existing decisions easier", "md_docs_2project_2roadmap.html#autotoc_md132", null ],
+      [ "Release confidence and football quality", "md_docs_2project_2roadmap.html#autotoc_md133", null ],
+      [ "In-game editing: safe changes before arbitrary worlds", "md_docs_2project_2roadmap.html#autotoc_md134", [
+        [ "1. Edit supported data for a new career", "md_docs_2project_2roadmap.html#autotoc_md135", null ],
+        [ "2. Make creations shareable and recoverable", "md_docs_2project_2roadmap.html#autotoc_md136", null ],
+        [ "3. Separate countries from today's league-pyramid convention", "md_docs_2project_2roadmap.html#autotoc_md137", null ],
+        [ "4. Expose competition rules, then expand supported formats", "md_docs_2project_2roadmap.html#autotoc_md138", null ]
       ] ],
-      [ "Continue improving the simulation and matchday", "md_docs_2project_2roadmap.html#autotoc_md136", null ],
-      [ "Help shape the next step", "md_docs_2project_2roadmap.html#autotoc_md137", null ]
+      [ "Friendlies, invitations and summer competitions", "md_docs_2project_2roadmap.html#autotoc_md139", null ],
+      [ "Community building: people and ownership", "md_docs_2project_2roadmap.html#autotoc_md140", null ],
+      [ "Turn the roadmap into a contribution", "md_docs_2project_2roadmap.html#autotoc_md141", null ]
     ] ],
     [ "Add yourself as a player", "md_docs_2contributing_2player-cameo.html", [
-      [ "1. Choose your club and an unused player ID", "md_docs_2contributing_2player-cameo.html#autotoc_md139", null ],
-      [ "2. Create a player file", "md_docs_2contributing_2player-cameo.html#autotoc_md140", null ],
-      [ "3. Check it in a new career", "md_docs_2contributing_2player-cameo.html#autotoc_md141", null ],
-      [ "4. Include it in your contribution", "md_docs_2contributing_2player-cameo.html#autotoc_md142", null ]
+      [ "1. Choose your club and an unused player ID", "md_docs_2contributing_2player-cameo.html#autotoc_md143", null ],
+      [ "2. Create a player file", "md_docs_2contributing_2player-cameo.html#autotoc_md144", null ],
+      [ "3. Check it in a new career", "md_docs_2contributing_2player-cameo.html#autotoc_md145", null ],
+      [ "4. Include it in your contribution", "md_docs_2contributing_2player-cameo.html#autotoc_md146", null ]
     ] ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
@@ -254,53 +259,53 @@ var NAVTREEINDEX =
 "manager__career_8h.html#a4c72aaa98b6dec8cb28a2faf31fe6c0ea222a267cc5778206b253be35ee3ddab5",
 "match__engine_8h.html#aca6448151e924d2cb062632532d9081fa007a3c4175ca4f86d9dc49e4f2e9cf8a",
 "match__rules_8cpp.html",
-"md_docs_2user_2getting-started.html#autotoc_md107",
-"namespaceCareerTimeline.html#aaacc94008ff614afeb6c688409be1d49",
-"namespaceInteractions.html#a2dcf056e5ef48beb6cac20e1d722fe2e",
-"namespaceMatchRules.html#a0aa9e08d57d3e9b3ce2dcabb2bbaa845",
-"namespacePreseason.html#a1a646e43dd06c53cf40d2fede7f99fd1",
-"namespaceStandings.html#ac2bda5e5da85f073617beff752d3f1f5af79cda57d76127809cf73cb01c470167",
-"namespaceTransferNegotiation.html#ac16348065bc0972cf21588fc7f36cd50a8342181f4a611ab840450b347523b9f3",
-"namespacemembers_o.html",
-"onboarding_8h.html#a90ff1381c79d6b3eb3a853e22f612426a7381655f6e41ebb51d11cfe92f4ded71",
-"save__manager_8h.html#a527988df62e56a927ae098f0a301efa2a4307e7e7986aa21a4b7c3ef2b5e948f6",
-"sqlite__rows_8h.html#ac13cf5065908ede8c0a47c290f499ebb",
-"strategy__scene_8h.html",
-"structBuyerNegotiation_1_1BuyerContext.html#a166071031c35407ef1d2a13de5d1d1e0",
-"structCompetitions_1_1LeagueMovement.html",
-"structDropdownStyle.html#a89d73d219f6dc5778d9d79131f50183b",
-"structGameController_1_1VacancyView.html#ac8a2d85acba698e59a774a50259c2989",
-"structInput_1_1ActionDef.html#aef4ae2b3bb0a5d98969afdf31d220a16",
-"structKeyMoment.html#af21eb649096f067b066981e02c36aa78",
-"structLab_1_1SeasonVitals.html#aa4cd0d3bda84e684dbde2aa042558218",
-"structManagementScene_1_1PaletteEntry.html#a3e63718e6a391448c52afa5c42976a82a33080c3d870c862a9fee5a861e43be86",
-"structMatchCameraInput.html#ae6a1d6428991bd8db9ce34bf83edaa25",
-"structMatchPlayer.html#ad562fc8f421a223c3dcb7357c1cd092a",
-"structMatchRender3DTuning_1_1Crowd.html#aeebb8f0fb011d144f7f0d5daa1b7a029",
-"structMatchRender3DTuning_1_1Player.html#a32f586916a44405d2ed40d2350efb6b9",
-"structMatchRenderPlayer.html#acccf117c550b4463fcb783ef788c94b1",
-"structMatchReportScene_1_1PlayerRow.html#ab54d776b804ec09cc2b7f3100e92406f",
-"structMatchStats.html#a24b8d56e5ad9bb795d47c94f9a57c31f",
-"structMatchTuning_1_1Defending.html#a54634ef5838c78501485f21e23d0d2b5",
-"structMatchTuning_1_1Pitch.html#a2d9a9142b7b6859232b51d61a344abe1",
-"structMatchTuning_1_1Shape.html#acb4d2d0ad6278c1224a759dee36a8b6e",
-"structMedicalScene_1_1StaffLine.html#a32881e443d273eee0594dc9a93eb99c0",
-"structNextActionFacts.html#a3f5b7522478108942e6386162e9a348b",
-"structPlayerMatchLine.html",
-"structPlayerTraits.html#a585dfb1b6a6ee6b9ad04e642dc56b7b1",
-"structReserveQuota.html#a74edf13e96337b348eb1d944a44eb586",
-"structScoutingScene_1_1ReportLine.html#a8fb248a334176e95df6a78363ca2005c",
-"structSquadNumbers_1_1Entry.html#af4b4653a62ac14c845753751fdae5998",
-"structStaffScene_1_1PendingAction.html",
-"structTeamSelectionScene_1_1ClubSummary.html",
-"structTransferMarketSceneTuning_1_1Layout.html#a169d3cc762ce05147c993dab281be91a",
-"structTransferNegotiation_1_1LoanTerms.html#a41ef1c4b59fcaedf69da201bbd513520",
-"structTransferTuning_1_1Market.html#a0c61cb81dae553fcf3cd8c20b7619343",
-"structWorldTuning_1_1Finance.html#a423da229bbe898dfd430530461537ba9",
-"tactics_8h.html#a0e8e0709c928a7dcca4b389c1213e83c",
-"training_8h.html#a4f7541ba864f118a40c9dabed727f5d0a7fd5d63187cb76b997d78b1d2f16fbbe",
-"transfer__terms__editor_8h.html#ab1d6bd85c8d4c409eac7de70537dd4d1",
-"world__simulation_8h.html#aac1ce0b351573c60ceaa4f8f2774c713ab6cb75cc54a5888e685f4ee814b0876f"
+"md_docs_2user_2files-and-troubleshooting.html#autotoc_md104",
+"namespaceCareerTimeline.html",
+"namespaceInteractions.html#a0c3dcf610b431b903767bc0a36183388",
+"namespaceMatchInsights.html#ac569768d71154fa0409e97673a0d4ec4",
+"namespacePortableRandom.html#ab1841bc2e4f9dbc0fa5a221adced7b6c",
+"namespaceStandings.html#ac2bda5e5da85f073617beff752d3f1f5a6da7303be1f764b9ee9509a3b515dd63",
+"namespaceTransferNegotiation.html#ac16348065bc0972cf21588fc7f36cd50a5f65828b85ec1903e35b7d2163d3eeb6",
+"namespacemembers_k.html",
+"onboarding_8h.html#a4c48bf29158d92c91f240c194229aab7",
+"save__manager_8h.html#a3531beada44788a5ac69957338dcc544a809b7a805a28884b364837536cdc38b7",
+"sqlite__rows_8h.html#a238336a79a3b5f801c4858631339c767",
+"strategy_8cpp.html",
+"structButtonStyle.html#aa42e6de85cfa8b093bc39c8d0a563c84",
+"structCompetitions_1_1KnockoutResolution.html#aee7a9ba54b78dc288e25989f7e4c1804",
+"structDressingRoom.html#ac173a1c38aa861abbff5bf9af56fc8b4",
+"structGameController_1_1VacancyView.html#a9106b1bb66689e70eeead18f24177ec1",
+"structInput_1_1ActionDef.html#ab9877a3ec35cd42e30b6c92885425583",
+"structKeyMoment.html#a832d059da8bae85ac5f2dd3399dbdac7",
+"structLab_1_1SeasonVitals.html#a8d54c2ef42ebc406f9ac3ee9e2852490",
+"structManagementScene_1_1PaletteEntry.html",
+"structMatchCameraInput.html#a77760fb92688f26176328ab3f599e218",
+"structMatchPlayer.html#aac062e80612cfca2603703c145c5a373",
+"structMatchRender3DTuning_1_1Crowd.html#acf22cf73cb14dd8e88c9b58569f5c287",
+"structMatchRender3DTuning_1_1Player.html#a1079176314992e54649ed88d87bfc636",
+"structMatchRenderPlayer.html#a9b88541837d2418f15ad44d7f51d6912",
+"structMatchReportScene_1_1EventRow.html#ab07b1968b61a75db5d8df4cf58eb9455",
+"structMatchStats.html#a0bb62cd3babdc363f6f5296d812be8da",
+"structMatchTuning_1_1Defending.html#a4c45ba4a197c97fead6706adb0621306",
+"structMatchTuning_1_1Pitch.html#a27c7127d0ba16a910f59655178503a4e",
+"structMatchTuning_1_1Shape.html#ac6cf617f248fd60f7da032aa4c770980",
+"structMedicalScene_1_1RiskLine.html#aecce72ec0cdb633fd41359ed90afff51",
+"structNextActionFacts.html",
+"structPlayerMatchConsequence.html#a178ad40c8edba71ddfd1a65815fb02f4",
+"structPlayerTrainingState.html#a469688503bf13c2beae93d7747142358",
+"structRenderMath_1_1Vec4.html#ac15a0f5372a963bc808a5c0378c903ad",
+"structScoutingScene_1_1ReportLine.html#a1762d0bd88a5f832e109e5fe4f1ca846",
+"structSquadNumbers_1_1Entry.html#a2e4c442c146286d49a07da6da972807f",
+"structStaffMember.html#aa485e557e34f1bf5de55ce4d1bbb6394",
+"structTeamMatchStats.html#adf42f660aa3b57ad13f92169764dfd50",
+"structTransferMarketSceneTuning_1_1Filters.html#acc7178d0ba34ff405a2ff16bf6d77012",
+"structTransferNegotiation_1_1LoanTerms.html#a3d120d02013c7b49baa054f9875598aa",
+"structTransferTuning_1_1Loan.html#abe5595457472cff8a7fdd2e2f347e3ea",
+"structWorldTuning_1_1Finance.html#a0f00439f21d8c8c53628f04c631a581d",
+"tactics_8h.html#a0def41ff5c7c3157ef5c508203fce19ca4905ac9d6a22bdfc1ae096094ce6248d",
+"training_8h.html#a4f7541ba864f118a40c9dabed727f5d0a587f1b30af94b6e0c0c382fb5f6a9ad5",
+"transfer__terms__editor_8h.html#a922fe5393d432e9c4b5c18231f1d2f35",
+"world__simulation_8h.html#a67107a62dc2214104a4039738559b574"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

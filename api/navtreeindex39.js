@@ -1,5 +1,9 @@
 var NAVTREEINDEX39 =
 {
+"onboarding_8h.html#a4c48bf29158d92c91f240c194229aab7":[23,0,1,5,91,2],
+"onboarding_8h.html#a90ff1381c79d6b3eb3a853e22f612426":[23,0,1,5,91,1],
+"onboarding_8h.html#a90ff1381c79d6b3eb3a853e22f612426a4905ac9d6a22bdfc1ae096094ce6248d":[23,0,1,5,91,1,6],
+"onboarding_8h.html#a90ff1381c79d6b3eb3a853e22f612426a4c90b0be3d21b9c83cd6b66ad1c7c1f7":[23,0,1,5,91,1,2],
 "onboarding_8h.html#a90ff1381c79d6b3eb3a853e22f612426a7381655f6e41ebb51d11cfe92f4ded71":[23,0,1,5,91,1,1],
 "onboarding_8h.html#a90ff1381c79d6b3eb3a853e22f612426a942fb8990b1c5beb90a0faf93a176b68":[23,0,1,5,91,1,3],
 "onboarding_8h.html#a90ff1381c79d6b3eb3a853e22f612426ab189526aa512aae0a8d9327be2cff87f":[23,0,1,5,91,1,0],
@@ -245,9 +249,5 @@ var NAVTREEINDEX39 =
 "runtime__paths_8h_source.html":[23,0,1,3,15],
 "save__manager_8cpp.html":[23,0,1,2,9],
 "save__manager_8h.html":[23,0,1,2,10],
-"save__manager_8h.html#a3531beada44788a5ac69957338dcc544":[23,0,1,2,10,9],
-"save__manager_8h.html#a3531beada44788a5ac69957338dcc544a809b7a805a28884b364837536cdc38b7":[23,0,1,2,10,9,0],
-"save__manager_8h.html#a3531beada44788a5ac69957338dcc544abbd47109890259c0127154db1af26c75":[23,0,1,2,10,9,1],
-"save__manager_8h.html#a527988df62e56a927ae098f0a301efa2":[23,0,1,2,10,11],
-"save__manager_8h.html#a527988df62e56a927ae098f0a301efa2a2aee0be2678ee90fd327cc186826438e":[23,0,1,2,10,11,1]
+"save__manager_8h.html#a3531beada44788a5ac69957338dcc544":[23,0,1,2,10,9]
 };

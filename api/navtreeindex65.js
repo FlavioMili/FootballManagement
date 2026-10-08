@@ -1,5 +1,9 @@
 var NAVTREEINDEX65 =
 {
+"structRenderMath_1_1Vec4.html#ac15a0f5372a963bc808a5c0378c903ad":[22,0,22,6,3],
+"structRenderMath_1_1Vec4.html#ad9e43ec98ab013276dc9a13b31805d34":[22,0,22,6,1],
+"structRenderMath_1_1Vec4.html#ad9e43ec98ab013276dc9a13b31805d34":[20,0,57,6,1],
+"structReserveQuota.html":[22,0,306],
 "structReserveQuota.html#a74edf13e96337b348eb1d944a44eb586":[22,0,306,2],
 "structReserveQuota.html#a8e38d817e9905e6f8b364de83f9dbfd2":[22,0,306,0],
 "structReserveQuota.html#aed50508173631a092ee8bff3412a1653":[22,0,306,1],
@@ -245,9 +249,5 @@ var NAVTREEINDEX65 =
 "structScoutingScene_1_1PlayerLine.html#a838ae414715e354e2a6f58ce4f89024a":[22,0,331,5,5],
 "structScoutingScene_1_1PlayerLine.html#a874d0c4794778f25543aacdb5a5ceb50":[22,0,331,5,1],
 "structScoutingScene_1_1PlayerLine.html#ab3ac4900c6936c5484828bece6e6f9d5":[22,0,331,5,2],
-"structScoutingScene_1_1ReportLine.html":[22,0,331,6],
-"structScoutingScene_1_1ReportLine.html#a1762d0bd88a5f832e109e5fe4f1ca846":[22,0,331,6,6],
-"structScoutingScene_1_1ReportLine.html#a3b353a1252f3e2d309d6089ad0a78b97":[22,0,331,6,7],
-"structScoutingScene_1_1ReportLine.html#a51cb0ea80ec51be47aed60e5fc8e8f3b":[22,0,331,6,8],
-"structScoutingScene_1_1ReportLine.html#a6151514434ba908c9764842e966484b1":[22,0,331,6,5]
+"structScoutingScene_1_1ReportLine.html":[22,0,331,6]
 };

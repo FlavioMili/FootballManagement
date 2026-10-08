@@ -1,5 +1,9 @@
 var NAVTREEINDEX73 =
 {
+"structWorldTuning_1_1Finance.html#a0f00439f21d8c8c53628f04c631a581d":[22,0,433,2,14],
+"structWorldTuning_1_1Finance.html#a1bcd8e35d6ffdac4795576cf5d7b708d":[22,0,433,2,1],
+"structWorldTuning_1_1Finance.html#a241be4d12f587d435de931f06567833e":[22,0,433,2,6],
+"structWorldTuning_1_1Finance.html#a39f63fe0c5ae4e34d79a8118889219da":[22,0,433,2,15],
 "structWorldTuning_1_1Finance.html#a423da229bbe898dfd430530461537ba9":[22,0,433,2,3],
 "structWorldTuning_1_1Finance.html#a435fc60df946ce8a4ba6dccbf10ccdb9":[22,0,433,2,12],
 "structWorldTuning_1_1Finance.html#a4aab20e7ccdc4de5785e61a591c98e5f":[22,0,433,2,21],
@@ -245,9 +249,5 @@ var NAVTREEINDEX73 =
 "tactics_8h.html#a0bf51efcb05fe2c083b0be582e9b647fa4905ac9d6a22bdfc1ae096094ce6248d":[23,0,1,5,135,3,5],
 "tactics_8h.html#a0bf51efcb05fe2c083b0be582e9b647fa6adf97f83acf6453d4a6a4b1070f3754":[23,0,1,5,135,3,0],
 "tactics_8h.html#a0bf51efcb05fe2c083b0be582e9b647fadff51d70831a479de94e4a222cb179c5":[23,0,1,5,135,3,4],
-"tactics_8h.html#a0def41ff5c7c3157ef5c508203fce19c":[23,0,1,5,135,5],
-"tactics_8h.html#a0def41ff5c7c3157ef5c508203fce19ca4905ac9d6a22bdfc1ae096094ce6248d":[23,0,1,5,135,5,3],
-"tactics_8h.html#a0def41ff5c7c3157ef5c508203fce19ca4aec8c62cef82bc80bd3192973dc8609":[23,0,1,5,135,5,0],
-"tactics_8h.html#a0def41ff5c7c3157ef5c508203fce19cadb5eb84117d06047c97c9a0191b5fffe":[23,0,1,5,135,5,1],
-"tactics_8h.html#a0def41ff5c7c3157ef5c508203fce19cadcfafcb4323b102c7e204555d313ba0a":[23,0,1,5,135,5,2]
+"tactics_8h.html#a0def41ff5c7c3157ef5c508203fce19c":[23,0,1,5,135,5]
 };
