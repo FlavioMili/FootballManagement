@@ -1,12 +1,12 @@
 [Desktop Entry]
 Type=Application
-Name=Football Management
+Name=Player12
 GenericName=Football club management game
 Comment=Run a football club: squad, tactics, transfers and live matches
-Exec=FootballManagement
+Exec=Player12
 Icon=footballmanagement
 Terminal=false
 Categories=Game;SportsGame;
 Keywords=football;soccer;manager;simulation;
-StartupWMClass=FootballManagement
+StartupWMClass=Player12
 X-AppImage-Version=@FM_GAME_VERSION@

@@ -18,3 +18,7 @@ assets/imgui.ini
 build_before/
 out
 docs/implementation
+
+# Local documentation/media build helpers
+__pycache__/
+node_modules/

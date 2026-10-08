@@ -1,14 +1,20 @@
 # Default world data pack
 
+For a complete asset-copy workflow, current modding limits and C++ behavior
+extensions, see [Extending and modding](../../docs/development/extending-and-modding.md).
+
 This directory is the world that a new career starts from: eleven
 countries, each with a top division and a second division linked for
 promotion and relegation (three clubs up, three down every season). Clubs
 are named after real cities and towns (including the Apulian towns of the
 Italian second division, Acaya among them), but the pack contains **no real crests, kits,
 stadiums or professional players**: kit colours, nicknames, founding years
-and every player are made up, and stadiums use a generic municipal naming
-pattern (which can coincide with a real municipal stadium's name). Keep it that way when you edit:
-do not add real players, real club badges or copied kits.
+and player identities are fictional, with optional contributor-name cameos.
+Stadiums use a generic municipal naming
+pattern (which can coincide with a real municipal stadium's name). Keep
+professional players, real club badges and copied kits out of the pack.
+Contributors may use their own name or nickname for a fictional player as an
+optional credit; follow the [player cameo guide](../../docs/contributing/player-cameo.md).
 
 Files are read at startup from the asset root (`AssetPaths` in
 `src/global/paths.h.in`: installed data next to the executable, else the
@@ -65,7 +71,7 @@ generated players, so this directory may be empty.
 |------------------|---------------------------------------------------------------|
 | `id`             | Unique player id below 50000 (generated players start there). |
 | `team_id`        | Club id.                                                      |
-| `first_name`, `last_name` | Fictional names only.                                |
+| `first_name`, `last_name` | Fictional names, or your own chosen contributor name/nickname. |
 | `age`, `height`  | Years, centimetres.                                           |
 | `nationality`    | Demonym such as `"Italian"` (see `stringToLanguage` in `src/global/languages.h`; unknown values fall back to English). |
 | `role`           | Role name understood by `RoleUtils::fromString`.              |

@@ -63,10 +63,19 @@ MatchSimulationResult MatchSimulation::run(const MatchSimulationInput& input,
 {
   MatchEngine engine(input.home_lineup, input.away_lineup, input.home_strategy,
                      input.away_strategy, config, input.seed);
-  // League matches keep the engine's default so they stay bit-identical.
+  // Only knockout fixtures opt into extra time and shootout resolution.
   if (input.knockout.required) engine.setKnockout(input.knockout);
-  if (input.league_id != 0)
+  // Resolve settings once on this engine, before any step or condition carry.
+  // An explicit context replaces the whole league profile; absent overrides
+  // retain the existing path (including no setter call for league 0).
+  if (input.context_override)
+  {
+    engine.setMatchContext(*input.context_override);
+  }
+  else if (input.league_id != 0)
+  {
     engine.setMatchContext(leagueContext(input.league_id));
+  }
   MatchdaySquad::carryCondition(engine, input.home_lineup);
   MatchdaySquad::carryCondition(engine, input.away_lineup);
   for (int half = 1; half <= 2; ++half)
@@ -120,6 +129,9 @@ std::vector<MatchSimulationResult> MatchScheduler::run(
     const std::vector<MatchSimulationInput>& inputs, const StatsConfig& config)
 {
   std::vector<MatchSimulationResult> results(inputs.size());
+  // Workers write disjoint result slots and read captured inputs. Applying
+  // reports to the career belongs to the caller after the whole batch joins;
+  // mutating GameData here would race with other fixtures reading players.
   total.fetch_add(static_cast<uint32_t>(inputs.size()),
                   std::memory_order_relaxed);
   const auto simulate = [&](std::size_t index)

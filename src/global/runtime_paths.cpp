@@ -100,6 +100,8 @@ std::filesystem::path RuntimePaths::root()
     return ensureDirectory(processRoot.path);
   }
 
+  // Keep the historical storage identity through the Player12 rebrand so
+  // existing careers and settings remain discoverable on every platform.
   char* prefPath = SDL_GetPrefPath("FlavioMili", "FootballManagement");
   if (prefPath != nullptr)
   {

@@ -1296,6 +1296,20 @@ TEST(MatchEngineTest, ConditionCanBeCarriedBetweenMatches)
   EXPECT_FLOAT_EQ(engine.getPlayerCondition(105).value_or(0.0f), 0.7f);
   EXPECT_FALSE(engine.getPlayerCondition(999'999).has_value());
 
+  // Compare the same player under identical early-match workload. Different
+  // positions run different distances, and full-match exhaustion may put
+  // both players at the minimum condition regardless of their starting load.
+  MatchEngine freshEngine(home.getLineup(), away.getLineup(),
+                          home.getStrategy(), away.getStrategy(), config, 5150);
+  freshEngine.setAutoSubstitutions(false, false);
+  for (int step = 0; step < 600; ++step)
+  {
+    engine.update(0.1f);
+    freshEngine.update(0.1f);
+  }
+  EXPECT_GT(freshEngine.getPlayerCondition(105).value_or(0.0f),
+            engine.getPlayerCondition(105).value_or(1.0f));
+
   simulateToFullTime(engine, 0.1f);
   EXPECT_FALSE(engine.setPlayerCondition(106, 0.5f))
       << "condition can only be set before kick-off";
@@ -1303,7 +1317,6 @@ TEST(MatchEngineTest, ConditionCanBeCarriedBetweenMatches)
   const float fresh = engine.getPlayerCondition(106).value_or(0.0f);
   EXPECT_LT(tired, 0.7f);
   EXPECT_LT(fresh, 0.95f) << "a full match must cost condition";
-  EXPECT_GT(fresh, tired);
   EXPECT_GE(tired, MatchTuning::Player::MINIMUM_STAMINA);
 }
 

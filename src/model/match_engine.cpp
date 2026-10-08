@@ -8,6 +8,18 @@
 
 #include "model/match_engine.h"
 
+// Implementation map (search these function names to find each subsystem):
+// - Construction/loadAttributes: borrow career players, cache match attributes.
+// - simulateStepBody: order commands, movement, actions, physics and rules.
+// - refreshTacticalTargets: coordinate each team's off-ball intentions.
+// - integrateMovements/integrateControlled: turn intentions into body motion.
+// - decideAction/evaluatePassOption: compare actions before executing one.
+// - updateBall/resolveLooseBall: integrate flight and resolve actual contacts.
+// - setup*/completeRestart: own dead-ball placement, delay and legal restart.
+// - performSubstitution/removeFromPitch: maintain slots and player statistics.
+// See docs/development/match-engine.md and player-behavior.md for the
+// rationale.
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -611,6 +623,10 @@ void MatchEngine::initializePlayers(const Lineup& lineup, bool isHomeTeam)
 void MatchEngine::loadAttributes(MatchPlayer& matchPlayer,
                                  const Player* player) const
 {
+  // Cache the named career stats once, after match-level normalization. The
+  // hot movement/decision loops read these fields, never a string-keyed map.
+  // A new simulation attribute needs an explicit consumer as well as a field
+  // here; adding a name to stats_config.json alone creates no new behavior.
   matchPlayer.pace = attribute(player, "Pace");
   matchPlayer.shooting = attribute(player, "Shooting");
   matchPlayer.passing = attribute(player, "Passing");
@@ -1596,6 +1612,11 @@ void MatchEngine::simulateStep(float dt)
 
 void MatchEngine::simulateStepBody(float dt)
 {
+  // This is the authoritative tick order. First apply external changes and
+  // age timers, then dispatch exactly one match-state branch. In live play,
+  // move bodies before resolving touches/actions, and advance a newly kicked
+  // ball afterwards. Reordering these stages changes contacts and seeded RNG
+  // consumption, even if each individual stage still looks correct.
   // Replayed touchline changes happen between the same two steps as live.
   if (commandCursor < commandLog.size()) applyDueCommands();
   captureInterpolationFrame();
@@ -1651,6 +1672,9 @@ void MatchEngine::simulateStepBody(float dt)
   }
   updateTeamPhases();
 
+  // Dead-ball and break states have their own movement/clock rules. Their
+  // early returns prevent celebrations, breaks and shootouts from also
+  // executing open-play decisions or the ordinary period-ending logic.
   if (state == MatchState::GOAL)
   {
     // The scored ball settles in the net while the teams celebrate and walk
@@ -2229,6 +2253,11 @@ void MatchEngine::updateMovement(float dt)
 
 void MatchEngine::refreshTacticalTargets(float dt)
 {
+  // Team planning happens in two passes: choose shared assignments (pressers,
+  // runners, support and marks), then give each player a target and intent.
+  // Bodies stay still until updateMovement integrates all targets, so player
+  // iteration order cannot make later players see an already-moved opponent.
+  // Add an off-ball behavior here; physical acceleration belongs downstream.
   const MatchPlayer* carrier = findMatchPlayer(ball.possessedBy);
   const MatchPlayer* transitionSource = findMatchPlayer(ball.lastPossessor);
   // The players on the pitch of each side, in slot order (index 0 home).
@@ -3893,6 +3922,10 @@ const RoleProfile NO_ROLE{};
 
 void MatchEngine::resolveTactics(bool homeTeam)
 {
+  // Compile stored slot instructions into match-local numeric profiles. The
+  // anchor identifies a formation job, not its current occupant: substitutes
+  // inherit that job. Incompatible roles fall back to Standard. Keep this
+  // resolution outside the per-player physics loops when adding new roles.
   const std::size_t side = homeTeam ? 0 : 1;
   const Strategy& strategy = homeTeam ? homeStrategy : awayStrategy;
   const std::vector<Vector2F>& anchors = slotAnchors[side];
@@ -4725,6 +4758,10 @@ void MatchEngine::separatePlayers()
 
 void MatchEngine::accumulatePlayerLoad(float dt)
 {
+  // Measure actual travelled distance, then update the slow condition pool,
+  // the fast sprint reserve and report totals together. Match-clock minutes
+  // can be accelerated in Play, but physical exertion uses simulated seconds.
+  // The final pass rejects restart teleports before applying load or fatigue.
   using L = MatchTuning::Load;
   using F = MatchTuning::Fatigue;
   const float clockScale = matchClockRate();
@@ -4852,6 +4889,10 @@ void MatchEngine::accumulatePlayerLoad(float dt)
 
 void MatchEngine::resolvePossessionAndActions(float dt)
 {
+  // Owning the ball is not an unconditional right to act: first move the
+  // dribble touch, then allow challenges, then check touch reach/cooldowns.
+  // A tackle may transfer ownership or stop play, so return immediately when
+  // that happens instead of letting the former carrier act with a stale ball.
   MatchPlayer* carrier = findMatchPlayer(ball.possessedBy);
   if (!carrier) return;
   ball.lastPossessor = carrier->player;
@@ -5340,6 +5381,10 @@ void MatchEngine::updatePendingAdvantage(float dt)
 
 void MatchEngine::decideAction(MatchPlayer& carrier)
 {
+  // Decision layer: score pass/shot/carry/shield on comparable utility scales,
+  // perturb close choices by decision quality, record the explanation, and
+  // execute exactly one winner. Utilities are preferences, not probabilities.
+  // The execution functions and subsequent contacts decide the outcome.
   const StrategySliders strategy = getEffectiveSliders(carrier.isHomeTeam);
   const float pressure =
       std::clamp((MatchTuning::Decision::PRESSURE_RADIUS_METRES -
@@ -5572,6 +5617,10 @@ void MatchEngine::decideAction(MatchPlayer& carrier)
 MatchEngine::PassOption MatchEngine::evaluatePassOption(
     MatchPlayer& passer, MatchPlayer& receiver) const
 {
+  // Estimate one receiver's safety, progress and space without consuming RNG
+  // or changing the match. The completion estimate ranks options; passBall
+  // does not roll against it to guarantee a completed pass. Error at release,
+  // ball flight and contested receptions determine whether it arrives.
   const StrategySliders strategy = getEffectiveSliders(passer.isHomeTeam);
   const float direction = passer.isHomeTeam ? 1.0f : -1.0f;
   const float passDistance = distance(passer.position, receiver.position);
@@ -6626,6 +6675,10 @@ Vector2F MatchEngine::goalkeeperTarget(MatchPlayer& keeper,
 
 void MatchEngine::updateBall(float dt)
 {
+  // Integrate short flight segments so a fast ball cannot jump through a
+  // keeper or a line between player ticks. Keep this resolution order: shot
+  // save at the keeper's plane, goal/out-of-bounds, then other loose contacts.
+  // Every resolver may change state or possession, ending the remaining flight.
   // The sub-step length is the same at every fidelity.
   const int substeps =
       MatchTuning::Timing::BALL_SUBSTEPS * static_cast<int>(stepTicks);
@@ -7480,6 +7533,9 @@ void MatchEngine::headBall(MatchPlayer& header)
 
 void MatchEngine::setPossession(MatchPlayer& player)
 {
+  // Central ownership transition: clear the old flight bookkeeping and update
+  // the team transition context as well as the ball pointer. New reception or
+  // interception code should use this path so phases and statistics agree.
   trackTouch(player);
   // A set piece's phase ends once the defending side has the ball.
   if (player.isHomeTeam != setPieceHome) setPiecePhaseRemaining = 0.0f;
@@ -8272,6 +8328,9 @@ bool MatchEngine::userRestartPassRequested() const
 
 void MatchEngine::completeRestart()
 {
+  // Restart setup functions own placement and waiting; this function owns the
+  // actual release. Preserve the restart state until the kick is executed:
+  // passBall uses it for offside exemptions and set-piece classification.
   const MatchState restartState = state;
   MatchPlayer* taker = restartTaker();
   const bool userPass = userRestartPassRequested();

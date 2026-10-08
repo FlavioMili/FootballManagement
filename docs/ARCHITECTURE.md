@@ -1,9 +1,16 @@
 # Architecture
 
-Football Management is a C++23 desktop game built on SDL3, Dear ImGui
+Player12 is a C++23 desktop game built on SDL3, Dear ImGui
 (drawn through `SDL_Renderer`) and SQLite. The code is split into a headless
 core, a GUI layer on top of it, and a few tools and test executables that
 link only what they need.
+
+For implementation details and extension recipes, see the
+[developer guide](development/README.md), especially the
+[match engine](development/match-engine.md) and
+[player behavior](development/player-behavior.md) guides. The
+[design notes](development/design-notes.md) preserve rationale from the Spec
+Kitty archive and identify proposals that differ from the current code.
 
 ```
                 +-------------------------------------------------+
@@ -38,7 +45,7 @@ link only what they need.
 |--------|----------|
 | `fm_core` | Everything headless: `src/model`, `src/database`, `src/controller`, `src/global`. No window, no ImGui. |
 | `fm_ui` | `src/gui`: the view, scenes, widgets, theme and match renderers. Links `fm_core`. |
-| `FootballManagement` | `src/main.cpp`: creates a `GameController` and a `GUIView`, runs the loop, saves a loaded career on quit. `--profile-match` times the match renderer on the first existing save. |
+| `FootballManagement` (outputs `Player12`) | `src/main.cpp`: creates a `GameController` and a `GUIView`, runs the loop, saves a loaded career on quit. `--profile-match` times the match renderer on the first existing save. |
 | `fm_lab` | `src/tools`: the headless balance lab (see below). |
 
 ## Core model
@@ -84,8 +91,10 @@ constants in `transfer_tuning.h`.
 **Randomness** is always seeded: `WorldRng` (`world_rng.h`, xoshiro256**
 with its own portable distributions) derives independent streams per domain
 (generation, injuries, development, youth intake, transfers, scouting,
-managers, ...) from the world seed, so a career replays identically on every
-platform. `FM_WORLD_SEED` and `FM_MATCH_SEED` override the
+managers, ...) from the world seed. The match engine separately uses seeded
+play/incident streams. Reproducibility also depends on inputs, engine version
+and fidelity; portable RNG alone does not guarantee whole-career identity
+across builds/platforms. `FM_WORLD_SEED` and `FM_MATCH_SEED` override the
 seeds for tests and bug reports.
 
 **Tuning** constants are kept out of the logic in `match_tuning.h`,
@@ -101,6 +110,11 @@ of the game. It supports playback speeds and highlight windows for the live
 view, `simulateToEnd()` for instant results, and a controlled-player input
 seam with a replayable input log. Match statistics and reports are built from
 the engine's events (`match_events.h`, `match_report.*`).
+
+`MatchContext` (`match_context.h`) carries finishing, refereeing and home-edge
+settings. The scheduler normally derives it from the league; tools can provide
+`MatchSimulationInput::context_override` for one fixture. These settings are
+validated before stepping, not read from mutable globals during a match.
 
 Background fixtures go through `MatchScheduler` (`match_scheduler.*`).
 `Game` captures a `MatchSimulationInput` per fixture on the owning thread
@@ -187,9 +201,12 @@ exposed through scouted estimates.
   (previous and current fixed-step positions plus an interpolation factor)
   from the engine every frame and passes it to an `IMatchRenderer`:
   `MatchRenderer2D` (top-down pitch) or `MatchRenderer3D` (CPU perspective
-  projection drawn as ImDrawList triangles, with five cameras in
+  projection drawn as ImDrawList triangles, with six camera modes in
   `MatchCamera3D`). Renderers never touch the engine or its RNG, so switching
   views cannot change the match.
+  The current snapshot copies positions but still borrows player, event and
+  statistics pointers; it is consumed while the live engine is stable, not
+  published as an independently owned object across threads.
 
 ## Balance lab
 

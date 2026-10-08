@@ -1,6 +1,6 @@
 # Controls
 
-Football Management is played with the mouse. Keyboard shortcuts speed up the
+Player12 is played with the mouse. Keyboard shortcuts speed up the
 things you do all the time: moving between screens, advancing the calendar and
 driving the match view.
 

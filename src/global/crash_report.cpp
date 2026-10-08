@@ -89,7 +89,7 @@ void prepare()
     pending_path[0] = PathChar{};
 
   const std::string text = std::format(
-      "Football Management crash report\n"
+      "Player12 crash report\n"
       "Version: {}\n"
       "Build: commit {}, {}, {}, {}\n"
       "Session started: {:%FT%TZ}\n"

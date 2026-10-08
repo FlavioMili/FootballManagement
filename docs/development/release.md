@@ -9,7 +9,7 @@ Three workflows in `.github/workflows/` build the game:
 | `build.yml`   | called by the two above          | Release build, headless tests, packaging, package smoke test        |
 
 `deploy_docs.yml` (Doxygen site) is unrelated; it publishes the API docs
-and only README, CHANGELOG, CONTRIBUTING and the code of conduct.
+and the public project, player and contributor guides.
 
 ## Cutting a release
 
@@ -28,17 +28,16 @@ and only README, CHANGELOG, CONTRIBUTING and the code of conduct.
    (`packaging/release_version.sh`):
 
    ```sh
-   git tag -a v1.0.0 -m "Football Management 1.0.0"
+   git tag -a v1.0.0 -m "Player12 1.0.0"
    git push origin v1.0.0
    ```
 
 5. `release.yml` builds every platform. When it finishes, the release
    `v1.0.0` appears on GitHub with:
-   - `FootballManagement-1.0.0-linux-x86_64.tar.gz`
-   - `FootballManagement-1.0.0-linux-x86_64.AppImage`
-   - `FootballManagement-1.0.0-macos-arm64.zip`
-   - `FootballManagement-1.0.0-windows-x86_64.zip` (only if the Windows job
-     passed, see limitations)
+   - `Player12-1.0.0-linux-x86_64.tar.gz`
+   - `Player12-1.0.0-linux-x86_64.AppImage`
+   - `Player12-1.0.0-macos-arm64.zip`
+   - `Player12-1.0.0-windows-x86_64.zip`
    - `SHA256SUMS.txt` (check with `sha256sum -c SHA256SUMS.txt`)
 
    A tag with a hyphen (`v1.0.0-rc1`) becomes a pre-release. The release
@@ -47,10 +46,30 @@ and only README, CHANGELOG, CONTRIBUTING and the code of conduct.
    they can be edited on GitHub afterwards. Re-running the workflow for an
    existing release replaces its files.
 
-To try the pipeline without tagging, run **Release** manually from the Actions
-tab: packages are uploaded as workflow artifacts (kept 30 days). Tick
-*publish* to also create a **draft** release `v<version>` at that commit;
-nothing is public until you publish the draft.
+The entire release process can also run from the GitHub CLI after the workflow
+changes have been pushed. No GitHub Packages registry or extra publishing secret
+is needed: the workflow uses its scoped `GITHUB_TOKEN` to upload release files.
+
+To build packages without publishing, run:
+
+```sh
+gh workflow run release.yml --ref main -f version=1.0.0 -f publish=false
+gh run list --workflow release.yml
+```
+
+Use `-f publish=true` to create a **draft** release at the selected commit once
+all platform builds succeed. Inspect its downloads before publishing:
+
+```sh
+gh release view v1.0.0
+gh release download v1.0.0 --dir /tmp/player12-release-review
+gh release edit v1.0.0 --draft=false
+```
+
+The last command makes the draft public; run it only after reviewing the packages.
+Manual builds also upload workflow artifacts, kept for 30 days. GitHub Releases
+hosts the ready-to-play game archives; GitHub Packages is for supported package
+registries such as npm, NuGet and containers.
 
 The version is the project version from `CMakeLists.txt`. A tagged build
 passes the tag (without the `v`, after `release_version.sh` has checked it)
@@ -94,7 +113,7 @@ only provides both without `-fexperimental-library` from LLVM 20. So the job
 uses Homebrew `llvm@20` and links its `libc++.a`/`libc++abi.a` statically
 (`-nostdlib++`). A check step fails the build if the game links anything
 outside `/usr/lib` or `/System/Library`. CMake builds
-`FootballManagement.app`, installs the assets into `Contents/Resources`,
+`Player12.app`, installs the assets into `Contents/Resources`,
 ad-hoc signs the bundle as the last install step and zips it (`cpack` ZIP).
 The job verifies the signature after extracting the zip.
 
@@ -102,8 +121,17 @@ The job verifies the signature after extracting the zip.
 toolset): builds the game and `fm_lab` with `BUILD_TESTING=OFF`, packs a
 zip. The executable embeds `packaging/windows/footballmanagement.manifest`,
 which sets the UTF-8 code page so that paths and names with non-ASCII
-characters work through the narrow Windows APIs. The job is
-`continue-on-error`, so a failure never blocks CI or a release.
+characters work through the narrow Windows APIs. The game and fetched
+libraries use the static MSVC runtime (`CMAKE_MSVC_RUNTIME_LIBRARY`), so
+players do not need to install a separate VC++ redistributable. CI checks
+PE imports for accidental dynamic runtime dependencies before launching the
+extracted game. Every platform is required: a failed Windows build blocks
+release publication just like Linux and macOS.
+
+Windows players download the ZIP from the release, extract the entire folder,
+and double-click `Player12.exe`; `assets/`, `licenses/` and `README.txt` ship
+beside it. The `package-windows-x86_64` Actions artifact also contains this ZIP
+for test builds; an artifact is not automatically a published GitHub Release.
 
 **Smoke test** (all platforms, `packaging/smoke_test.sh`): extracts the
 package to a temporary directory and starts the game headless from another
@@ -115,7 +143,10 @@ inside the package was created, changed or removed. You can run it locally
 on any extracted package:
 
 ```sh
-XDG_DATA_HOME=/tmp/fm-xdg packaging/smoke_test.sh <pkg> <pkg>/bin/FootballManagement \
+# Replace this with your extracted Linux package directory.
+package_dir=/path/to/extracted-package
+XDG_DATA_HOME=/tmp/fm-xdg packaging/smoke_test.sh \
+  "$package_dir" "$package_dir/bin/Player12" \
   /tmp/fm-xdg/FlavioMili/FootballManagement
 ```
 
@@ -127,9 +158,9 @@ never add headers or static libraries.
 
 | Platform | Executable                                   | Read-only game data                              |
 |----------|----------------------------------------------|--------------------------------------------------|
-| Linux    | `bin/FootballManagement`                     | `share/footballmanagement/assets`                |
-| macOS    | `FootballManagement.app/Contents/MacOS/...`  | `FootballManagement.app/Contents/Resources/assets` |
-| Windows  | `FootballManagement.exe`                     | `assets` next to the executable                  |
+| Linux    | `bin/Player12`                     | `share/footballmanagement/assets`                |
+| macOS    | `Player12.app/Contents/MacOS/...`  | `Player12.app/Contents/Resources/assets` |
+| Windows  | `Player12.exe`                     | `assets` next to the executable                  |
 
 Linux packages also ship `share/applications/footballmanagement.desktop`
 (generated from `packaging/linux/footballmanagement.desktop.in` with the
@@ -138,8 +169,8 @@ version) and a scalable icon. Licence files go to
 Windows zips: the repository's `LICENSE` file and README, and `third_party/`
 notices for fmt, spdlog, nlohmann/json, Dear ImGui, SDL3, SDL3_ttf,
 FreeType, HarfBuzz, PlutoSVG/PlutoVG, SQLite (public domain) and the Roboto
-font (Apache-2.0). The licence of the game itself is still to be announced;
-until it is, check that `LICENSE` says what the release should say before
+font (Apache-2.0). The game's source code is licensed under the GNU GPL v3;
+include the repository's `LICENSE` with every release. Check the notices before
 tagging.
 
 The game also carries the third-party licence texts as data in
@@ -196,7 +227,7 @@ cpack --config /tmp/fm-pkg/CPackConfig.cmake -B /tmp/fm-pkg/dist
   ad-hoc signed). The first launch is blocked by Gatekeeper. On macOS 15,
   open the app once, then go to *System Settings > Privacy & Security* and
   click *Open Anyway*. Alternatively run
-  `xattr -dr com.apple.quarantine FootballManagement.app`. On older systems,
+  `xattr -dr com.apple.quarantine Player12.app`. On older systems,
   right-click the app and choose *Open*. Real signing needs an Apple
   Developer account and `codesign`/`notarytool` secrets in the workflow.
 - **macOS needs 15.0 or later on Apple silicon.** The static libc++ comes
@@ -218,7 +249,7 @@ cpack --config /tmp/fm-pkg/CPackConfig.cmake -B /tmp/fm-pkg/dist
   Windows subsystem (no console window), so check the log file in
   `%APPDATA%` (and any crash report there) for output.
 - On macOS, every build (including development builds) produces
-  `build/src/FootballManagement.app` instead of a plain executable. Pre-release
+  `build/src/Player12.app` instead of a plain executable. Pre-release
   versions such as `1.0.0-rc1` go into `CFBundleShortVersionString` as-is. That
   is not Apple's `x.y.z` format, which only matters for App Store submission.
 - `linuxdeploy` is pinned to the `1-alpha-20251107-1` release. Homebrew

@@ -21,6 +21,7 @@
 #include "global/stats_config.h"
 #include "global/types.h"
 #include "model/lineup.h"
+#include "model/match_context.h"
 #include "model/match_events.h"
 #include "model/match_rules.h"
 #include "model/match_scenario.h"
@@ -469,30 +470,6 @@ enum class MatchFidelity : std::uint8_t
   BACKGROUND
 };
 
-/**
- * League character of a match, set before kick-off with
- * MatchEngine::setMatchContext(). The defaults are the calibrated engine
- * and play exactly like an engine without a context.
- */
-struct MatchContext
-{
-  /**
-   * Finishing sharpness: above 1 more chances are converted (a high-scoring
-   * league), below 1 fewer (about 0.9 for a second tier). It acts on the
-   * precision of shots, not on the score, so shot volume and xG stay put.
-   */
-  float goalRateScale = 1.0f;
-  /**
-   * Mean and spread of the per-match referee strictness drawn at kick-off;
-   * booking rates scale about linearly with it.
-   */
-  float refereeStrictnessMean = 1.0f;
-  float refereeStrictnessSd = MatchTuning::Discipline::STRICTNESS_SD;
-  /** Scales the home crowd's edge on attributes, execution and refereeing
-   * (0 = neutral venue). */
-  float homeAdvantageScale = 1.0f;
-};
-
 /** How advancePlayback() presents the match. */
 enum class MatchPlaybackMode
 {
@@ -519,13 +496,22 @@ struct MatchHighlight
 
 /**
  * Stateful, deterministic-when-seeded live match simulation in real match
- * time: one simulated second is one second of the match (a full match with
- * stoppages and added time is roughly 5,900 simulated seconds).
+ * time: in watch mode one simulated second is one second of the match (a full
+ * match with stoppages and added time is roughly 5,900 simulated seconds).
+ * Play mode can accelerate the match clock while body/ball physics retain
+ * the same timestep; see setPlayHalfMinutes().
  *
  * update() uses a fixed internal timestep, so the same seed produces the same
  * match at different render frame rates. Home attacks toward x=1 and away
  * attacks toward x=0. The engine is copyable, which highlight prediction uses
  * to look ahead deterministically.
+ *
+ * Strategies and simulation state are owned by value. Player pointers and
+ * the StatsConfig reference are borrowed: keep them alive and unchanged for
+ * the engine's lifetime, including any prediction copies and worker batches.
+ * The engine records match consequences; the career applies them afterwards.
+ * See docs/development/match-engine.md for the step order and extension map,
+ * and docs/development/player-behavior.md for movement and action selection.
  */
 class MatchEngine
 {

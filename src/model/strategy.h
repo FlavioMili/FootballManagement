@@ -13,25 +13,15 @@
 
 #include "model/tactics.h"
 
-/* TODO: These might later become a JSON file so that they can be modded
- *
- * DESCRIPTION OF ALL SLIDERS
- *
- * pressing      : Team-wide intensity of pressing opponents (0 = none, 1 =
- * maximum) riskTaking    : Aggressiveness in attack vs. defensive caution (0 =
- * very safe, 1 = very risky) offensiveBias : Likelihood to pass forward or
- * safer options (0 = mostly safe, 1 = mostly forward) widthUsage    :
- * Horizontal spread of the team on the field (0 = narrow, 1 = full width)
- * compactness   : Closeness of players to the goalkeeper (0 = very close, 1 =
- * very high)
- *
- * These sliders influence movement, positioning, passing decisions, and
- * pressing behavior for all players during simulation. They can be
- * combined with per-role weight maps for fine-tuned behavior.
- */
 /**
  * @struct StrategySliders
- * @brief Holds global strategy sliders for a team's tactical behavior.
+ * @brief Team-wide tactical preferences in [0, 1].
+ *
+ * MatchEngine combines these base values with score state, relative team
+ * strength and fading shouts in computeEffectiveSliders(). Movement and action
+ * selection consume those effective values. Individual behavior comes from
+ * SlotInstruction/RoleProfile in tactics.h. See
+ * docs/development/player-behavior.md.
  */
 struct StrategySliders
 {
@@ -41,23 +31,16 @@ struct StrategySliders
   float offensiveBias =
       0.5f;                 /**< Likelihood to pass forward vs. safer options */
   float widthUsage = 0.5f;  /**< Horizontal spread of the team */
-  float compactness = 0.5f; /**< Closeness of players to the goalkeeper */
+  float compactness = 0.5f; /**< Squeeze defensive lines and follow the ball */
 };
 
 /**
  * @struct RoleWeights
- * @brief Defines the behavior of a single player during a match simulation.
+ * @brief Legacy grid-based strategy weights, retained by the Strategy API.
  *
- * - attackWeight  : tendency to engage in offensive actions
- * - defenseWeight : tendency to engage in defensive actions
- * - movementRadius: distance (in grid cells) the player can
- *     move from their lineup position as a rule of thumb, this
- *     would be applied to a theoretical heatmap of where the actions
- *     are going to take place
- *
- * During simulation, these weights are applied only within the movementRadius
- * so that we might calculate better what is going on in a certain area of the
- * field.
+ * getAttackWeight()/getDefenseWeight() evaluate these within movementRadius
+ * grid cells. The live MatchEngine does not call those methods: extend its
+ * player behavior through tactical slot instructions and RoleProfile instead.
  */
 struct RoleWeights
 {
@@ -70,7 +53,9 @@ struct RoleWeights
  * @class Strategy
  * @brief Represents the tactical setup of a team for a match.
  *
- * It combines sliders and per-role weights to determine player behavior.
+ * Stores team sliders, tactical slot/keeper roles, possession offsets and
+ * opposition orders. The engine copies a Strategy and resolves its role
+ * profiles; changing a club's Strategy alone does not update a running match.
  */
 class Strategy
 {

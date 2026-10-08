@@ -18,8 +18,14 @@
  *
  * The snapshot is rebuilt every frame from a `MatchEngine` and carries the
  * previous and current fixed-step positions plus the interpolation fraction,
- * so 2D and future 3D renderers can interpolate without touching the
+ * so 2D and 3D renderers can interpolate without touching the
  * simulation. Renderers must never mutate this data or the engine.
+ *
+ * Positions are copied, but Player pointers and the event/statistics pointers
+ * in MatchRenderSnapshot remain borrowed. Consume the snapshot while its
+ * source engine and players are alive and stable; it is not an owned replay
+ * record or a cross-thread publication format. See
+ * docs/development/match-engine.md.
  *
  * Units: positions are normalised pitch coordinates (x along the 105 m
  * length, home attacking +x; y across the 68 m width). Ball `currentZ` and

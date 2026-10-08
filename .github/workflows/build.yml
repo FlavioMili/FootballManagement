@@ -108,7 +108,7 @@ jobs:
         run: |
           cmake --install build --prefix "$RUNNER_TEMP/install"
           packaging/smoke_test.sh "$RUNNER_TEMP/install" \
-            "$RUNNER_TEMP/install/bin/FootballManagement" \
+            "$RUNNER_TEMP/install/bin/Player12" \
             "$XDG_DATA_HOME/FlavioMili/FootballManagement"
 
       - name: Package (tar.gz)
@@ -126,11 +126,11 @@ jobs:
           cmake --install build --component game --strip --prefix "$RUNNER_TEMP/AppDir/usr"
           (cd "$RUNNER_TEMP" && LINUXDEPLOY_OUTPUT_VERSION="$FM_VERSION" \
             "$RUNNER_TEMP/linuxdeploy" --appdir AppDir \
-            --executable AppDir/usr/bin/FootballManagement \
+            --executable AppDir/usr/bin/Player12 \
             --desktop-file AppDir/usr/share/applications/footballmanagement.desktop \
             --icon-file AppDir/usr/share/icons/hicolor/scalable/apps/footballmanagement.svg \
             --output appimage)
-          mv "$RUNNER_TEMP"/*.AppImage "dist/FootballManagement-$FM_VERSION-linux-x86_64.AppImage"
+          mv "$RUNNER_TEMP"/*.AppImage "dist/Player12-$FM_VERSION-linux-x86_64.AppImage"
 
       - name: Smoke test extracted package
         env:
@@ -139,8 +139,8 @@ jobs:
           mkdir -p "$RUNNER_TEMP/extract"
           tar -xzf dist/*.tar.gz -C "$RUNNER_TEMP/extract"
           pkg=$(find "$RUNNER_TEMP/extract" -mindepth 1 -maxdepth 1 -type d)
-          ldd "$pkg/bin/FootballManagement"
-          packaging/smoke_test.sh "$pkg" "$pkg/bin/FootballManagement" \
+          ldd "$pkg/bin/Player12"
+          packaging/smoke_test.sh "$pkg" "$pkg/bin/Player12" \
             "$XDG_DATA_HOME/FlavioMili/FootballManagement"
 
       # Runners have no FUSE: check the AppImage's own contents and AppRun
@@ -234,15 +234,15 @@ jobs:
 
       - name: Check the game links no Homebrew libraries
         run: |
-          exe=build/src/FootballManagement.app/Contents/MacOS/FootballManagement
+          exe=build/src/Player12.app/Contents/MacOS/Player12
           otool -L "$exe"
           if otool -L "$exe" | tail -n +2 | grep -Ev '^[[:space:]]+(/usr/lib/|/System/Library/)'; then
-            echo "::error::FootballManagement links a library that is not part of macOS"
+            echo "::error::Player12 links a library that is not part of macOS"
             exit 1
           fi
           # libc++ must be the static Homebrew copy, never the system dylib.
           if otool -L "$exe" | grep -E 'libc\+\+|libunwind'; then
-            echo "::error::FootballManagement links a dynamic libc++/libunwind"
+            echo "::error::Player12 links a dynamic libc++/libunwind"
             exit 1
           fi
 
@@ -251,7 +251,7 @@ jobs:
           ctest --test-dir build --output-on-failure --parallel 2
           --timeout 900 -LE "$CTEST_LABEL_EXCLUDE"
 
-      - name: Package (zip with FootballManagement.app)
+      - name: Package (zip with Player12.app)
         run: cpack --config build/CPackConfig.cmake -B dist
 
       - name: Smoke test extracted package
@@ -259,9 +259,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/extract"
           ditto -x -k dist/*.zip "$RUNNER_TEMP/extract"
           pkg=$(find "$RUNNER_TEMP/extract" -mindepth 1 -maxdepth 1 -type d)
-          codesign --verify --deep --strict --verbose=2 "$pkg/FootballManagement.app"
+          codesign --verify --deep --strict --verbose=2 "$pkg/Player12.app"
           packaging/smoke_test.sh "$pkg" \
-            "$pkg/FootballManagement.app/Contents/MacOS/FootballManagement" \
+            "$pkg/Player12.app/Contents/MacOS/Player12" \
             "$HOME/Library/Application Support/FlavioMili/FootballManagement"
 
       - name: Upload packages
@@ -273,11 +273,8 @@ jobs:
           retention-days: ${{ inputs.retention-days }}
 
   windows:
-    name: Windows x86_64 (clang-cl, experimental)
+    name: Windows x86_64 (clang-cl, portable ZIP)
     runs-on: windows-2022
-    # Not yet validated on Windows: a failure here must not block the Linux
-    # and macOS results or a release (see docs/development/release.md).
-    continue-on-error: true
     defaults:
       run:
         shell: bash
@@ -327,7 +324,29 @@ jobs:
           mkdir -p "$extract"
           7z x -y -o"$(cygpath -w "$extract")" dist/*.zip > /dev/null
           pkg=$(find "$extract" -mindepth 1 -maxdepth 1 -type d)
-          packaging/smoke_test.sh "$pkg" "$pkg/FootballManagement.exe" \
+          test -s "$pkg/Player12.exe"
+          test -s "$pkg/assets/db/schema.sql"
+          test -s "$pkg/assets/config/stats_config.json"
+          test -s "$pkg/README.txt"
+          test -s "$pkg/licenses/LICENSE"
+          # Hosted runners already have VC++ installed, so launching alone
+          # would hide a broken extract-and-play package. Inspect PE imports.
+          readobj=$(command -v llvm-readobj || true)
+          if [[ -z "$readobj" ]]; then
+            readobj=$(find '/c/Program Files/Microsoft Visual Studio/2022' \
+              -name llvm-readobj.exe -print -quit)
+          fi
+          if [[ -z "$readobj" && -x '/c/Program Files/LLVM/bin/llvm-readobj.exe' ]]; then
+            readobj='/c/Program Files/LLVM/bin/llvm-readobj.exe'
+          fi
+          test -n "$readobj"
+          "$readobj" --coff-imports "$pkg/Player12.exe" > "$extract/imports.txt"
+          cat "$extract/imports.txt"
+          if grep -Ei 'Name: (MSVCP|MSVCR|VCRUNTIME|CONCRT|SDL3|freetype|harfbuzz|sqlite3).*\.dll' "$extract/imports.txt"; then
+            echo "::error::Portable package imports an unbundled non-system runtime"
+            exit 1
+          fi
+          packaging/smoke_test.sh "$pkg" "$pkg/Player12.exe" \
             "$(cygpath -u "$APPDATA")/FlavioMili/FootballManagement"
 
       - name: Upload packages

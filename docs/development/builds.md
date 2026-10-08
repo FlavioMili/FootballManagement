@@ -1,8 +1,13 @@
 # Reproducible builds
 
+For your first build, start with the
+[platform installation guide](../user/installation.md). For pull requests and
+focused verification, see [Contributing](../../CONTRIBUTING.md) and
+[Tests and tools](testing.md).
+
 The project requires CMake 3.29 because discovered GTest cases use the
 `TEST_LAUNCHER` target property. Ninja is used by the checked-in presets.
-Dependencies fetched by CMake are pinned to immutable tags or commits. CI uses
+Dependencies fetched by CMake are pinned to releases or commit hashes. CI uses
 the fixed Ubuntu 24.04 image and GCC 14 toolchain; local GCC 16 is also
 verified. Other C++23 compilers require their own clean validation.
 

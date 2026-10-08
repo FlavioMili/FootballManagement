@@ -66,12 +66,11 @@ jobs:
         working-directory: dist
         run: |
           ls -l
-          # Linux and macOS are required; Windows is experimental and optional.
+          # Every supported platform must have a complete downloadable package.
           compgen -G "*-linux-x86_64.tar.gz" > /dev/null
           compgen -G "*-linux-x86_64.AppImage" > /dev/null
           compgen -G "*-macos-arm64.zip" > /dev/null
-          compgen -G "*-windows-x86_64.zip" > /dev/null ||
-            echo "::warning::No Windows package: the experimental Windows job failed."
+          compgen -G "*-windows-x86_64.zip" > /dev/null
           sha256sum -- * > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
@@ -82,6 +81,11 @@ jobs:
           {
             echo
             echo "Check the downloads with \`sha256sum -c SHA256SUMS.txt\`."
+            echo
+            echo "### Play on Windows"
+            echo 'Download the `Player12-*-windows-x86_64.zip` asset, extract the entire ZIP, and double-click `Player12.exe` inside the extracted folder. Keep the assets and licences beside the executable. No build tools or separate VC++ runtime installation are needed by this package.'
+            echo
+            echo 'On Linux, use the AppImage or extract the tarball and run `bin/Player12`. On macOS, extract the ARM64 ZIP and open `Player12.app`.'
           } >> "$RUNNER_TEMP/notes.md"
           cat "$RUNNER_TEMP/notes.md"
 
@@ -98,6 +102,6 @@ jobs:
           if gh release view "$tag" > /dev/null 2>&1; then
             gh release upload "$tag" dist/* --clobber
           else
-            gh release create "$tag" dist/* --title "Football Management $tag" \
+            gh release create "$tag" dist/* --title "Player12 $tag" \
               --notes-file "$RUNNER_TEMP/notes.md" "${flags[@]}"
           fi

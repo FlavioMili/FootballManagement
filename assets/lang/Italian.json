@@ -1,5 +1,5 @@
 {
-  "MENU_TITLE": "Football Management",
+  "MENU_TITLE": "Player12",
   "MENU_NEW_GAME": "Nuova partita",
   "MENU_LOAD_GAME": "Carica partita",
   "MENU_SETTINGS": "Impostazioni",
@@ -3277,9 +3277,9 @@
   "ABOUT_TITLE": "Informazioni",
   "ABOUT_SUBTITLE": "Questa copia del gioco e il software con cui è realizzato",
   "ABOUT_SECTION_BUILD": "Questa build",
-  "ABOUT_VERSION": "Football Management {0}",
+  "ABOUT_VERSION": "Player12 {0}",
   "ABOUT_BUILD": "Build: commit {0}, {1}, {2}, {3}",
-  "ABOUT_LICENSE": "Licenza: da annunciare",
+  "ABOUT_LICENSE": "Open source · GNU GPL v3",
   "ABOUT_PRIVACY": "Il gioco funziona offline e non invia nulla. Rapporti sugli arresti anomali e log restano su questo computer.",
   "ABOUT_SECTION_THIRD_PARTY": "Software di terze parti",
   "ABOUT_THIRD_PARTY_HINT": "Il gioco è realizzato con queste librerie e questo carattere. Apri una voce per leggerne la licenza.",

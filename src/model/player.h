@@ -90,7 +90,12 @@ struct PlayerDynamics
 
 /**
  * @class Player
- * @brief Represents a football player.
+ * @brief Persistent career identity, attributes, traits and day-to-day state.
+ *
+ * On-pitch positions, intentions and live fatigue belong to MatchPlayer in
+ * match_engine.h. The engine borrows this Player as read-only input and the
+ * career later applies its match consequences. PlayerAgent models contract
+ * negotiations, not on-pitch AI. See docs/development/player-behavior.md.
  */
 class Player
 {

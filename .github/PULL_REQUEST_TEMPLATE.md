@@ -1,19 +1,27 @@
-## Description
-<!-- Describe your changes in detail here. Mention the related issue number if applicable. -->
-Fixes #
+## What changed and why?
 
-## Type of Change
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
+<!-- Describe the problem and resulting behavior. Screenshots help for UI changes.
+Link an issue if relevant; an issue is not required for a small contribution. -->
 
-## Checklist:
-- [ ] My code follows the `clang-format` and `clang-tidy` rules of this project.
-- [ ] I have performed a self-review of my own code.
-- [ ] I have verified that the game compiles and passes all tests locally.
+## How was it checked?
 
-## AI Declaration
-<!-- Please read AI_GUIDELINES.md. If you used AI to help with this PR, you must declare it here. -->
-- [ ] **AI Usage Declared**
-  - **If yes, describe how AI was used:** *(e.g., "Used Copilot to generate boilerplate", "Used Antigravity agent to refactor X")*
+<!-- List the commands/checks you ran and their results. For docs, check links
+and preview the Markdown; for JSON data, check syntax and a new career.
+Report any failing/skipped tests and whether they also fail on the base revision. -->
+
+## Review checklist
+
+- [ ] I reviewed my changes and kept the PR focused.
+- [ ] I ran checks appropriate to this change and described them above.
+- [ ] For C++ changes, I checked formatting/lint and relevant tests.
+- [ ] I updated the relevant documentation when behavior or setup changed.
+
+## AI assistance
+
+<!-- Write "None", or describe which tools helped and what you reviewed.
+AI-assisted contributions are welcome; see AI_GUIDELINES.md. -->
+
+## Optional contributor credit
+
+<!-- You may add your name/handle to CONTRIBUTORS.md and/or add a player cameo.
+See docs/contributing/player-cameo.md. Leave this section out if you prefer. -->

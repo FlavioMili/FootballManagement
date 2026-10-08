@@ -209,6 +209,10 @@ bool hasDuty(RoleFamily family) { return family != RoleFamily::Goalkeeper; }
 
 RoleProfile profile(TacticalRole role, RoleDuty duty)
 {
+  // Roles are composable numeric biases over the common match AI, rather than
+  // separate player controllers. Start neutral, apply the role, then the duty.
+  // To add a role, also register its allowed families, text keys and attribute
+  // fit above/below; append its persisted enum value instead of renumbering.
   RoleProfile result;
   switch (role)
   {

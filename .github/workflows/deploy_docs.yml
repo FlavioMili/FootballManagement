@@ -9,6 +9,9 @@ on:
       - 'include/**'
       - 'docs/**'
       - 'Doxyfile'
+      - 'scripts/build_website_docs.py'
+      - 'scripts/optimize_website.cjs'
+      - 'scripts/requirements-docs.txt'
       - '*.md'
       - '.github/workflows/deploy_docs.yml'
 
@@ -32,25 +35,34 @@ jobs:
       - name: Install Doxygen
         run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
 
+      - name: Install documentation build tools
+        run: |
+          python3 -m venv "$RUNNER_TEMP/player12-docs"
+          "$RUNNER_TEMP/player12-docs/bin/pip" install -r main/scripts/requirements-docs.txt
+          npm --prefix "$RUNNER_TEMP/player12-web-tools" install --ignore-scripts --no-audit --no-fund \
+            terser@5.51.2 clean-css@5.3.3 html-minifier-terser@7.2.0
+
       - name: Build Doxygen Documentation
         run: |
           cd main
           doxygen Doxyfile
-
-      # Only the public pages: contributor notes in the root stay out.
-      - name: Copy Markdown files (Cherry pick)
-        run: |
-          for page in README.md CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md; do
-            if [[ -f main/$page ]]; then cp "main/$page" website/; fi
-          done
-          mkdir -p website/docs
-          cp main/docs/ARCHITECTURE.md website/docs/ || true
 
       - name: Copy Doxygen Output to Website
         run: |
           # Clean old api docs and copy new ones
           rm -rf website/api
           cp -r main/docs/html website/api
+
+      - name: Render readable guides and compress publication
+        run: |
+          # The showcase/CSS/media stay owned by the website branch. The
+          # renderer updates guides without republishing raw duplicate assets.
+          test -f website/scripts/check_site.py
+          "$RUNNER_TEMP/player12-docs/bin/python" main/scripts/build_website_docs.py \
+            --source main --site website
+          node main/scripts/optimize_website.cjs website \
+            "$RUNNER_TEMP/player12-web-tools/node_modules"
+          python3 website/scripts/check_site.py
 
       - name: Commit and Push to website
         run: |

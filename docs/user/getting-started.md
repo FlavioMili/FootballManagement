@@ -1,5 +1,7 @@
 # Getting started
 
+Need to install or build the game first? Follow [Install and run](installation.md).
+
 This guide walks you through the first season of a career: picking a club,
 reading what the board wants, setting up the squad, and getting through match
 day. For every key and mouse shortcut see [controls.md](controls.md).

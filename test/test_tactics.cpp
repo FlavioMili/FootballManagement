@@ -338,7 +338,10 @@ TEST(TacticsTest, InPossessionShapeMovesTheSlotWithTheBallOnly)
 {
   // The left back tucks in with the ball and plays as a full-back without
   // it.
-  const auto averageY = [](bool shifted, bool withBall)
+  const StatsConfig config = createStatsConfig();
+  const auto homeSquad = makeSquad(1);
+  const auto awaySquad = makeSquad(2);
+  const auto targetY = [&](bool shifted, bool withBall)
   {
     const Strategy home =
         withSlots({{LEFT_BACK,
@@ -346,29 +349,34 @@ TEST(TacticsTest, InPossessionShapeMovesTheSlotWithTheBallOnly)
                      TacticalRole::Standard,
                      RoleDuty::Support,
                      shifted ? Vector2F{0.0f, 0.18f} : Vector2F{0.0f, 0.0f}}}});
-    double total = 0.0;
-    int samples = 0;
-    playMatch(
-        home, Strategy{}, SEEDS[0],
-        [&](const MatchEngine& engine)
-        {
-          if (homeHasBall(engine) != withBall || !engine.getBall().possessedBy)
-            return;
-          for (const MatchPlayer& player : engine.getPlayers())
-            if (player.isHomeTeam && player.onPitch &&
-                player.player->getId() == playerId(1, LEFT_BACK))
-            {
-              total += player.position.y;
-              ++samples;
-            }
-        });
-    return samples > 0 ? total / samples : 0.0;
+    MatchEngine engine(homeSquad->lineup, awaySquad->lineup, home, Strategy{},
+                       config, SEEDS[0]);
+    MatchScenario scenario;
+    scenario.carrierId = playerId(withBall ? 1 : 2, LEFT_CENTRAL_MIDFIELDER);
+    scenario.ballPosition = POSITIONS[LEFT_CENTRAL_MIDFIELDER];
+    for (size_t index = 0; index < POSITIONS.size(); ++index)
+    {
+      scenario.players.push_back({playerId(1, index), POSITIONS[index], false});
+      scenario.players.push_back(
+          {playerId(2, index),
+           {1.0f - POSITIONS[index].x, 1.0f - POSITIONS[index].y},
+           false});
+    }
+    engine.setControlledPlayer(scenario.carrierId);
+    engine.advance(0.1f);
+    EXPECT_TRUE(engine.applyScenario(scenario));
+    engine.advance(0.1f);
+    for (const MatchPlayer& player : engine.getPlayers())
+      if (player.player->getId() == playerId(1, LEFT_BACK))
+        return player.tacticalTarget.y;
+    ADD_FAILURE() << "Full-back missing from scenario";
+    return 0.0f;
   };
-  EXPECT_GT(averageY(true, true), averageY(false, true) + 0.06);
+  // Comparing whole-match positions also measures different possessions,
+  // turnovers and opponent responses. Hold those fixed to test the shape.
+  EXPECT_GT(targetY(true, true), targetY(false, true) + 0.06f);
+  EXPECT_FLOAT_EQ(targetY(true, false), targetY(false, false));
   // Without the ball the formation is the one set on the lineup.
-  static const StatsConfig config = createStatsConfig();
-  const auto homeSquad = makeSquad(1);
-  const auto awaySquad = makeSquad(2);
   const Strategy shifted = withSlots(
       {{LEFT_BACK,
         {{}, TacticalRole::Standard, RoleDuty::Support, {0.0f, 0.18f}}}});

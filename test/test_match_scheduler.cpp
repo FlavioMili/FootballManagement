@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <future>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -744,8 +745,84 @@ TEST(MatchContextTest, LeaguesCarryTheirOwnMatchStyle)
   }
 }
 
-// Domestic league fixtures are prepared in their league's style; friendlies
-// keep the calibrated engine.
+TEST(MatchContextTest, ExplicitContextReplacesLeagueAndCanBeCleared)
+{
+  constexpr LeagueID PORTUGAL = 12;
+  const SlotCleanup slot{uniqueSlot(8)};
+  const auto controller = makeWorld(slot.slot);
+  const auto day = firstBusyDay(*controller, 2);
+  ASSERT_TRUE(day);
+  auto inputs = prepareDay(*controller, *day);
+  ASSERT_FALSE(inputs.empty());
+  auto input = inputs.front();
+  const auto& config = controller->getGameData()->getStatsConfig();
+  const auto simulate = [&]
+  { return describe(MatchSimulation::run(input, config)); };
+
+  input.league_id = 0;
+  const auto defaults = simulate();
+  input.league_id = PORTUGAL;
+  const auto league = simulate();
+  ASSERT_NE(defaults, league);
+
+  // An explicit neutral context must win over a known league's settings.
+  input.context_override = MatchContext{};
+  EXPECT_EQ(simulate(), defaults);
+
+  // Supplying the league's own context leaves its seeded result unchanged.
+  input.context_override = MatchSimulation::leagueContext(input.league_id);
+  EXPECT_EQ(simulate(), league);
+
+  input.context_override.reset();
+  EXPECT_EQ(simulate(), league);
+}
+
+TEST(MatchContextTest, CustomContextsAreValidatedAndIndependentAcrossWorkers)
+{
+  constexpr float SHARPER_FINISHING = 1.2F;
+  constexpr float STRICTER_REFEREE = 1.3F;
+  constexpr float EXCESSIVE_FINISHING = 50.0F;
+  constexpr float NEGATIVE_HOME_EDGE = -10.0F;
+  const SlotCleanup slot{uniqueSlot(9)};
+  const auto controller = makeWorld(slot.slot);
+  const auto day = firstBusyDay(*controller, 2);
+  ASSERT_TRUE(day);
+  auto inputs = prepareDay(*controller, *day);
+  ASSERT_GE(inputs.size(), 2U);
+  inputs.resize(2);
+  const auto& config = controller->getGameData()->getStatsConfig();
+
+  MatchContext custom;
+  custom.goalRateScale = SHARPER_FINISHING;
+  custom.refereeStrictnessMean = STRICTER_REFEREE;
+  custom.refereeStrictnessSd = 0.0F;
+  custom.homeAdvantageScale = 0.0F;
+  inputs.at(0).context_override = custom;
+  MatchContext bounded;
+  bounded.goalRateScale = MatchTuning::Context::MAX_GOAL_RATE_SCALE;
+  bounded.homeAdvantageScale = 0.0F;
+  inputs.at(1).context_override = bounded;
+
+  MatchScheduler sequential(1);
+  const auto expected = sequential.run(inputs, config);
+  // Finite extremes are clamped and non-finite settings use engine defaults.
+  MatchContext invalid;
+  invalid.goalRateScale = EXCESSIVE_FINISHING;
+  invalid.homeAdvantageScale = NEGATIVE_HOME_EDGE;
+  invalid.refereeStrictnessMean = std::numeric_limits<float>::quiet_NaN();
+  inputs.at(1).context_override = invalid;
+  MatchScheduler parallel(2);
+  const auto actual = parallel.run(inputs, config);
+  ASSERT_EQ(actual.size(), expected.size());
+  for (std::size_t i = 0; i < expected.size(); ++i)
+  {
+    EXPECT_EQ(describe(actual.at(i)), describe(expected.at(i)))
+        << "fixture " << i;
+  }
+}
+
+// Domestic league fixtures retain their league id without opting into
+// overrides.
 TEST(MatchContextTest, LeagueFixturesCarryTheirLeague)
 {
   const SlotCleanup slot{uniqueSlot(7)};

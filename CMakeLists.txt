@@ -46,6 +46,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BUILD_SHARED_LIBS OFF)
 
+if(MSVC)
+  # A portable Windows zip must run without a separately installed VC++
+  # redistributable. Apply the static CRT consistently to project/dependencies.
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+      CACHE STRING "MSVC runtime library for portable Windows packages")
+endif()
+
 option(BUILD_TESTING "Build tests" ON)
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(BUILD_UI_AUTOMATION "Build UI automation support" OFF)
@@ -174,6 +181,12 @@ else()
   FetchContent_MakeAvailable(SDL3)
 
   set(SDL3TTF_SAMPLES OFF CACHE BOOL "" FORCE)
+  if(APPLE)
+    # SDL_ttf uses the shipped font files through FreeType. HarfBuzz's optional
+    # CoreText backend includes obsolete Carbon headers rejected by LLVM 20;
+    # it is unnecessary for this rendering path and prevents macOS packaging.
+    set(HB_HAVE_CORETEXT OFF CACHE BOOL "Unused HarfBuzz CoreText backend" FORCE)
+  endif()
   FetchContent_Declare(
     SDL3_ttf
     GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
@@ -181,12 +194,6 @@ else()
     GIT_SHALLOW    TRUE
   )
   FetchContent_MakeAvailable(SDL3_ttf)
-  # Apple's SDK declares CF_ENUM with a typedef/enum extension rejected by
-  # upstream Clang 20+. Permit that SDK syntax only in the CoreText backend.
-  if(APPLE AND TARGET harfbuzz AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
-     AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 20)
-    target_compile_options(harfbuzz PRIVATE -Wno-elaborated-enum-base)
-  endif()
 endif()
 
 # --- ImGui ---

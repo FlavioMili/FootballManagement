@@ -99,7 +99,7 @@ bool GUIView::initialize()
   // ImGui rasterises glyphs at that density (DisplayFramebufferScale), so
   // text stays sharp on HiDPI and fractionally scaled displays.
   window =
-      SDL_CreateWindow("Football Management", 1280, 720,
+      SDL_CreateWindow("Player12", 1280, 720,
                        SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
   if (window == nullptr)
   {

@@ -17,6 +17,9 @@
 // FM_SHOWCASE_LANGUAGE the language by file name (e.g. "Italian").
 // The images are rendered at interface scale 2 on a 3200x1800 window;
 // downscale them by two before committing them.
+// FM_SHOWCASE_VIDEO_DIR additionally records two silent, 15-second sequences
+// at 1600x900 / 30 fps from the live match renderer. Each subfolder contains
+// frame-00000.png onwards, ready for ffmpeg; no synthetic frames are added.
 
 #include <SDL3/SDL.h>
 #include <gtest/gtest.h>
@@ -28,8 +31,10 @@
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
+#include <iomanip>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -51,12 +56,13 @@
 class GameFlowTest_GUIFlowLifecycle_Test
 {
  public:
+  static constexpr float DEFAULT_FRAME_SECONDS = 0.016F;
   static bool initialize(GUIView& view) { return view.initialize(); }
-  static void frame(GUIView& view)
+  static void frame(GUIView& view, float seconds = DEFAULT_FRAME_SECONDS)
   {
     view.applyPendingSceneChanges();
     view.handleEvents();
-    view.update(0.016f);
+    view.update(seconds);
     view.render();
     EXPECT_EQ(ImGui::GetCurrentContext()->ErrorCountCurrentFrame, 0)
         << "ImGui reported a usage error";
@@ -90,6 +96,7 @@ class GameFlowTest_ManagedMatchIntegration_Test
     scene.setHighlightsOnly(false);
     scene.setPlaybackSpeed(1.0f);
   }
+  static void resume(MatchScene& scene) { scene.is_paused = false; }
 };
 
 using Bridge = GameFlowTest_GUIFlowLifecycle_Test;
@@ -145,6 +152,63 @@ void capture(GUIView& view, const std::filesystem::path& folder,
   SDL_DestroySurface(surface);
   ASSERT_TRUE(std::filesystem::exists(path)) << name;
   EXPECT_GT(std::filesystem::file_size(path), 50'000u) << name;
+}
+
+/** Optional motion capture: every PNG is a rendered, fixed-time game frame.
+ * Keep the normal screenshot run unchanged when no video folder is requested.
+ */
+void recordMotion(GUIView& view, MatchScene& match, const char* name,
+                  bool focus)
+{
+  const char* setting = std::getenv("FM_SHOWCASE_VIDEO_DIR");
+  if (setting == nullptr || *setting == '\0')
+  {
+    return;
+  }
+  constexpr int VIDEO_WIDTH = 1600;
+  constexpr int VIDEO_HEIGHT = 900;
+  constexpr int VIDEO_FPS = 30;
+  constexpr int VIDEO_SECONDS = 15;
+  constexpr int FRAME_DIGITS = 5;
+  constexpr float VIDEO_STEP = 1.0F / static_cast<float>(VIDEO_FPS);
+  const auto folder = std::filesystem::path(setting) / name;
+  std::filesystem::create_directories(folder);
+  SettingsManager::instance()->get().ui_scale = 1.0F;
+  resize(view, VIDEO_WIDTH, VIDEO_HEIGHT);
+  MatchBridge::setFocus(match, focus);
+  MatchBridge::resume(match);
+  MatchBridge::watchLive(match);
+
+  // Find an upcoming real chance and include its build-up. Prediction runs a
+  // copy of the match; the recorded live engine still executes every action.
+  MatchEngine& engine = *MatchBridge::engine(match);
+  if (const auto highlight = engine.predictNextHighlight(120.0F))
+  {
+    const double start =
+        std::max(highlight->startSeconds, highlight->triggerSeconds - 9.0);
+    const auto skip = static_cast<float>(start - engine.getSimulatedSeconds());
+    if (skip > 0.0F)
+    {
+      engine.advance(skip);
+    }
+  }
+  frames(view, 3);
+  for (int index = 0; index < VIDEO_FPS * VIDEO_SECONDS; ++index)
+  {
+    Bridge::frame(view, VIDEO_STEP);
+    std::ostringstream filename;
+    filename << "frame-" << std::setw(FRAME_DIGITS) << std::setfill('0')
+             << index << ".png";
+    SDL_Surface* surface = SDL_RenderReadPixels(view.getRenderer(), nullptr);
+    ASSERT_NE(surface, nullptr) << SDL_GetError();
+    const auto path = folder / filename.str();
+    ASSERT_TRUE(SDL_SavePNG(surface, path.string().c_str())) << SDL_GetError();
+    SDL_DestroySurface(surface);
+  }
+  MatchBridge::setFocus(match, false);
+  SettingsManager::instance()->get().ui_scale = SCALE;
+  resize(view, WIDTH, HEIGHT);
+  frames(view, 3);
 }
 
 /** Plays whole days until @p date (matches included). */
@@ -322,6 +386,7 @@ TEST(ShowcaseCaptures, ReadmeScreens)
     frames(view, 10);
   }
   capture(view, folder, "match_2d");
+  recordMotion(view, *match, "match-2d", false);
 
   playTo(38.0f);
   {
@@ -335,6 +400,7 @@ TEST(ShowcaseCaptures, ReadmeScreens)
   frames(view, 60);
   ASSERT_EQ(MatchBridge::viewMode(*match), MatchViewMode::BROADCAST_3D);
   capture(view, folder, "match_3d");
+  recordMotion(view, *match, "match-3d", true);
 
   playTo(52.0f);
   MatchBridge::setFocus(*match, true);

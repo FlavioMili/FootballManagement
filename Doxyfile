@@ -1,10 +1,10 @@
-PROJECT_NAME           = "Football Management"
+PROJECT_NAME           = "Player12"
 PROJECT_BRIEF          = "An open source football management simulator"
 OUTPUT_DIRECTORY       = docs
 GENERATE_LATEX         = NO
 GENERATE_MAN           = NO
 GENERATE_RTF           = NO
-INPUT                  = src/ include/ README.md docs/ARCHITECTURE.md
+INPUT                  = src/ README.md CONTRIBUTING.md CONTRIBUTORS.md AI_GUIDELINES.md docs/ARCHITECTURE.md docs/development/ docs/user/ docs/project/ docs/contributing/
 RECURSIVE              = YES
 USE_MDFILE_AS_MAINPAGE = README.md
 EXTRACT_ALL            = YES

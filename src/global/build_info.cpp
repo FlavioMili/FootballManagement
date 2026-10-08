@@ -37,8 +37,7 @@ std::string_view platform() { return FM_BUILD_PLATFORM; }
 
 std::string summary()
 {
-  return std::format("Football Management {} (commit {}, {}, {}, {})",
-                     version(), commit(), configuration(), compiler(),
-                     platform());
+  return std::format("Player12 {} (commit {}, {}, {}, {})", version(), commit(),
+                     configuration(), compiler(), platform());
 }
 }  // namespace BuildInfo

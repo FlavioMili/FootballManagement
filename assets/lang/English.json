@@ -1,5 +1,5 @@
 {
-  "MENU_TITLE": "Football Management",
+  "MENU_TITLE": "Player12",
   "MENU_NEW_GAME": "New Game",
   "MENU_LOAD_GAME": "Load Game",
   "MENU_SETTINGS": "Settings",
@@ -3277,9 +3277,9 @@
   "ABOUT_TITLE": "About",
   "ABOUT_SUBTITLE": "This copy of the game and the software it is built with",
   "ABOUT_SECTION_BUILD": "This build",
-  "ABOUT_VERSION": "Football Management {0}",
+  "ABOUT_VERSION": "Player12 {0}",
   "ABOUT_BUILD": "Build: commit {0}, {1}, {2}, {3}",
-  "ABOUT_LICENSE": "License: to be announced",
+  "ABOUT_LICENSE": "Open source · GNU GPL v3",
   "ABOUT_PRIVACY": "The game plays offline and sends nothing anywhere. Crash reports and logs stay on this computer.",
   "ABOUT_SECTION_THIRD_PARTY": "Third-party software",
   "ABOUT_THIRD_PARTY_HINT": "The game is built with these libraries and this font. Open an entry to read its licence.",

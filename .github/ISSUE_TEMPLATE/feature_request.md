@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for Football Management
+about: Suggest an idea for Player12
 title: '[Feature] '
 labels: enhancement
 assignees: ''

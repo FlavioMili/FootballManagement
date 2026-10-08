@@ -4,9 +4,9 @@
 #  See docs/development/release.md.
 #
 #  Layout (must match RuntimePaths::assetRoot()):
-#    Linux    bin/FootballManagement, share/footballmanagement/assets
-#    macOS    FootballManagement.app/Contents/Resources/assets
-#    Windows  FootballManagement.exe and assets/ side by side
+#    Linux    bin/Player12, share/footballmanagement/assets
+#    macOS    Player12.app/Contents/Resources/assets
+#    Windows  Player12.exe and assets/ side by side
 #  Only the "game" component is packaged, so install rules of fetched
 #  dependencies never leak headers or static libraries into a package.
 # -----------------------------------------------------------------------------
@@ -14,6 +14,9 @@
 # FM_GAME_VERSION (top-level CMakeLists.txt) names the packages; bundle
 # metadata takes the plain numeric project version.
 set(FM_GAME_TARGET FootballManagement)
+# Stable CMake target; public executable and package name follow the brand.
+set(FM_GAME_NAME Player12)
+set_target_properties(${FM_GAME_TARGET} PROPERTIES OUTPUT_NAME "${FM_GAME_NAME}")
 set(FM_COMPONENT game)
 
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" FM_ARCH)
@@ -33,13 +36,13 @@ set(FM_PACKAGE_PLATFORM "${FM_OS}-${FM_ARCH}" CACHE STRING
   "Platform suffix of package file names")
 
 if(APPLE)
-  set(FM_BUNDLE "${FM_GAME_TARGET}.app")
+  set(FM_BUNDLE "${FM_GAME_NAME}.app")
   set(FM_DATA_DESTINATION "${FM_BUNDLE}/Contents/Resources")
   set(FM_LICENSE_DESTINATION licenses)
   set_target_properties(${FM_GAME_TARGET} PROPERTIES
     MACOSX_BUNDLE ON
     MACOSX_BUNDLE_INFO_PLIST "${PROJECT_SOURCE_DIR}/packaging/macos/Info.plist.in"
-    MACOSX_BUNDLE_BUNDLE_NAME "Football Management"
+    MACOSX_BUNDLE_BUNDLE_NAME "${FM_GAME_NAME}"
     MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.flaviomili.footballmanagement"
     MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
     MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
@@ -60,6 +63,8 @@ elseif(WIN32)
     "${PROJECT_SOURCE_DIR}/packaging/windows/footballmanagement.manifest")
   install(TARGETS ${FM_GAME_TARGET}
     RUNTIME DESTINATION . COMPONENT ${FM_COMPONENT})
+  install(FILES packaging/windows/README-WINDOWS.txt
+    DESTINATION . RENAME README.txt COMPONENT ${FM_COMPONENT})
 else()
   # Fixed (not GNUInstallDirs) because the runtime lookup expects exactly
   # <exe>/../share/footballmanagement.
@@ -140,7 +145,7 @@ endif()
 # -----------------------------------------------------------------------------
 # CPack: TGZ on Linux, ZIP on macOS and Windows.
 # -----------------------------------------------------------------------------
-set(CPACK_PACKAGE_NAME "FootballManagement")
+set(CPACK_PACKAGE_NAME "${FM_GAME_NAME}")
 set(CPACK_PACKAGE_VENDOR "Flavio Milinanni")
 set(CPACK_PACKAGE_VERSION "${FM_GAME_VERSION}")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Football club management game")

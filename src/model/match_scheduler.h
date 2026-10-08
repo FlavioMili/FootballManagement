@@ -21,12 +21,11 @@
 #include "global/types.h"
 #include "model/competition.h"
 #include "model/lineup.h"
+#include "model/match_context.h"
 #include "model/match_report.h"
 #include "model/match_rules.h"
 #include "model/strategy.h"
 #include "model/world_simulation.h"
-
-struct MatchContext;
 
 /**
  * Everything a headless match needs, captured on the thread that owns the
@@ -58,6 +57,14 @@ struct MatchSimulationInput
   /** Medical staff instructions of the managed club's squad
    * (MatchEngine::setMedicalFlags). */
   std::vector<std::pair<PlayerID, std::uint8_t>> medical_flags;
+  /**
+   * Optional complete replacement for the league-derived match context.
+   * Unset preserves normal league behavior; MatchContext{} explicitly selects
+   * the calibrated defaults, even when league_id is nonzero. Values go through
+   * MatchEngine::setMatchContext() validation before simulation begins.
+   * This is a C++ experiment/modding seam, not a saved career or JSON setting.
+   */
+  std::optional<MatchContext> context_override;
 };
 
 /** Final score, engine summary and physical outcome of one match. */
