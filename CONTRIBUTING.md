@@ -1,95 +1,132 @@
-# Contributing to Football Management
+# Contributing to Player12
 
-First off, thank you for considering contributing to Football Management! It's people like you that make open source such a great community.
+Your first contribution can be a small one: a clearer tooltip, a translation,
+a reproducible bug report, a documentation correction or a focused code fix.
+You do not need to understand the entire game to help.
 
-## Getting Started
+## Choose a starting point
 
-1. **Fork the repository** on GitHub.
-2. **Clone your fork** locally:
-   ```bash
+| Contribution | Where to begin |
+|--------------|----------------|
+| Report a bug or share playtest feedback | [Open an issue](https://github.com/FlavioMili/FootballManagement/issues/new/choose) with steps, expected behavior and what happened |
+| Suggest a feature | Describe the player problem and an example of the experience you want in a [feature request](https://github.com/FlavioMili/FootballManagement/issues/new/choose) |
+| Improve documentation | Edit the relevant guide in `docs/`; preview the Markdown and check its links |
+| Translate or improve wording | Edit matching keys in `assets/lang/English.json` and `Italian.json`; preserve placeholders |
+| Add game data or your player cameo | Read the [data reference](assets/user_made_data/README.md) and [cameo walkthrough](docs/contributing/player-cameo.md) |
+| Fix code | Use the [developer guide](docs/development/README.md) to find the subsystem and its tests |
+
+Browse [open issues](https://github.com/FlavioMili/FootballManagement/issues),
+including [good first issues](https://github.com/FlavioMili/FootballManagement/labels/good%20first%20issue)
+when available. Leave a comment if you are taking an issue so others can
+coordinate. Small fixes can go straight to a pull request; discuss larger
+features or architectural changes in an issue before investing in them.
+
+## Your first pull request
+
+1. Fork the repository on GitHub. For a Markdown-only change, you can use
+   GitHub's file editor and open a pull request without a local build.
+2. For local work, clone your fork and create a branch:
+
+   ```sh
    git clone https://github.com/YOUR_USERNAME/FootballManagement.git
    cd FootballManagement
+   git switch -c improve-player-docs
    ```
-3. **Build the project** with CMake (3.29 or newer) and Ninja. The first
-   configure fetches the pinned dependencies; see the
-   [README](README.md#building) for the system packages SDL needs.
-   ```bash
-   cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
-   cmake --build build --parallel 2
-   ```
-   The presets in `CMakePresets.json` (`release`, `release-tests`,
-   `debug-sanitized`, `profile`, `clang-tidy`) are described in
-   [docs/development/builds.md](docs/development/builds.md).
-4. **Run the tests**:
-   ```bash
-   # Fast suites (what CI runs)
-   ctest --test-dir build --output-on-failure -LE "playtest|monkey|slow"
 
-   # One area, e.g. the headless core tests or a single suite
-   ctest --test-dir build --output-on-failure -L core
-   ctest --test-dir build --output-on-failure -R "TransferMarket"
+3. Make one focused change. Explain the behavior or wording it improves;
+   include an issue link if there is one.
+4. Run the checks relevant to your change (below). You can ask for feedback
+   early by opening a draft pull request.
+5. Optionally add your name to [CONTRIBUTORS.md](CONTRIBUTORS.md), and/or add a
+   [player cameo](docs/contributing/player-cameo.md) at your favorite club.
+6. Commit and push your branch, then open a pull request against `main`.
+   Fill in the template with what changed and how you checked it. Respond to
+   review feedback by pushing further commits to the same branch.
 
-   # Everything, including the long playtest, monkey and adversarial suites
-   ctest --test-dir build --output-on-failure
-   ```
-   Labels: `unit`, `core`, `gui`, `lab`, `playtest`, `monkey`, `adversarial`
-   and `slow`. Tests run headless with fixed seeds and a scratch data
-   directory, so they never touch your saves.
+## Set up for code changes
 
-## Performance Benchmarks
+On Linux, install the [platform prerequisites](docs/user/installation.md),
+then use the test-enabled preset from the source root:
 
-If your Pull Request introduces changes that might affect the game's performance (such as database IO, tight game loops, etc.), you **MUST** run the benchmarks locally. Note that these benchmarks are *not* run in CI to save resources and avoid flakiness.
-
-To run the benchmarks:
-```bash
-# Configure the build with benchmarks enabled
-cmake -S . -B build -DBUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release
-# Build the benchmarks
-cmake --build build --target db_benchmarks
-# Execute the benchmarks
-./build/benchmarks/db_benchmarks
+```sh
+cmake --preset release-tests
+cmake --build --preset release-tests --parallel 4
+./out/build/release-tests/src/Player12
 ```
-Please include the benchmark output in your Pull Request description.
 
-## Branching Strategy
+On Linux with GCC 14, prefix the configure step with
+`CC=gcc-14 CXX=g++-14`. macOS needs the compiler/linker setup described in its
+[installation guide](docs/user/installation.md#macos); select
+`-DBUILD_TESTING=ON` there. Windows builds are experimental and the current
+test suites require POSIX APIs, so use Linux/macOS for test development.
 
-- **Main branch:** `main` is our bleeding edge. It should always compile and pass all tests.
-- **Epic branches:** Features that take weeks go into Epic branches (e.g. `epic/modern-ui-design`).
-- **Issue branches:** Work on specific issues in their own branch, named after the issue number. For example, if you are working on Issue #42:
-  ```bash
-  git checkout -b 42-add-player-transfers
-  ```
+The [build guide](docs/development/builds.md) explains sanitizers, profiling,
+dependency configuration and linting. The
+[architecture map](docs/ARCHITECTURE.md) explains how the core, GUI and
+database fit together.
 
-## Code Style
+## Check your change
 
-This project uses `clang-format` and `clang-tidy` to enforce coding standards.
-- The style is in `.clang-format`: Google-based, **Allman braces**, 2-space
-  indentation and an 80-column limit.
-- Before committing, format the files you changed:
-  ```bash
-  clang-format -i src/path/to/file.cpp src/path/to/file.h
-  ```
-  or format all of `src/` and `test/` through the build (the `format` target
-  exists when CMake finds `clang-format`):
-  ```bash
-  cmake --build build --target format
-  ```
-- Always check that your changes don't introduce new `clang-tidy` warnings
-  (`cmake --preset clang-tidy && cmake --build --preset clang-tidy`).
+| Change | Useful verification |
+|--------|---------------------|
+| Markdown | Preview it, check local links, and confirm commands match the current API/build presets |
+| Translations | Parse the JSON, preserve formatting placeholders, and inspect the changed screen |
+| Player/game data | Parse JSON, check unique IDs and team references, then start a new test career |
+| Model or rules | Build the affected target and run its focused tests; add a regression for a fixed behavior |
+| GUI | Check the affected screen and relevant GUI tests, including layout at different sizes |
+| Match behavior or tuning | Use scenarios, replay/determinism tests and the balance lab as described in the [engine guide](docs/development/match-engine.md) |
 
-## AI Guidelines
+For example, with the test preset configured and built:
 
-We are a **pro-AI** project! We encourage the use of AI tools (GitHub Copilot, ChatGPT, Antigravity, etc.) to accelerate your workflow. However, we have strict rules regarding accountability and review:
+```sh
+# Find tests for the area you changed.
+ctest --preset release-tests -N -R 'MatchScenarioTest'
+ctest --preset release-tests -R '^core::MatchScenarioTest\.'
 
-Please read our [AI Guidelines](AI_GUIDELINES.md) before submitting an AI-assisted Pull Request. All AI-generated code MUST be declared and heavily reviewed by the human author.
+# CI-style suite, excluding long playtests and GUI monkey runs.
+ctest --preset release-tests -LE 'playtest|monkey|slow'
+```
 
-## Pull Requests
+See [Tests and tools](docs/development/testing.md) for the full suite, labels,
+lab commands and known baseline failures. Report the exact checks you ran and
+any failures; compare a suspected existing failure on the base revision rather
+than weakening the test. Documentation-only changes do not require building
+every game target.
 
-1. **Keep it focused:** A PR should only do one thing. If you find a typo while working on a feature, consider a separate PR.
-2. **Pass all tests:** Ensure CI passes (or local tests pass).
-3. **Fill out the template:** We have a PR template that includes a checklist. Please fill it out completely, especially the AI declaration.
-4. **Link the Issue:** Use keywords like `Fixes #42` or `Closes #42` in your PR description.
+## Code and documentation conventions
 
-## Code of Conduct
+Use C++23, two-space indentation, Allman braces and the checked-in
+`.clang-format`. Format changed C++ files or ranges and check that they add no
+new `.clang-tidy` findings. Keep comments about substantial blocks explicit:
+purpose, units, inputs/outputs and important ordering constraints.
 
-Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+```sh
+clang-format -i src/path/to/file.cpp src/path/to/file.h
+```
+
+Keep simulation behavior in the headless core and presentation in the GUI.
+When changing an implementation contract, update its guide and focused
+coverage. For code that changes performance, measure the affected workload
+and include the results: the [testing guide](docs/development/testing.md)
+lists benchmarks and balance tools.
+
+## Names, credit and licence
+
+[CONTRIBUTORS.md](CONTRIBUTORS.md) is the human-readable contributor list;
+Git history also records authorship. Add the name or handle you want displayed,
+with an optional public profile link. Documentation, translations, data and
+testing count as contributions too.
+
+The default world uses fictional footballers. As an optional contributor
+credit, you may submit your own name or nickname for a fictional player in
+your favorite existing club. The [cameo guide](docs/contributing/player-cameo.md)
+explains the required fields. Use your own chosen name; keep professional
+players, copied kits and real club badges out of the default data.
+
+Contributions to the game's source are made under the project's
+[GNU GPL v3 licence](LICENSE). Identify the source and licence of any
+third-party material you propose to add. AI-assisted contributions are welcome:
+explain the assistance in your PR, review the result and follow the
+[AI guidelines](AI_GUIDELINES.md).
+
+Please follow the [code of conduct](CODE_OF_CONDUCT.md) in issues and reviews.

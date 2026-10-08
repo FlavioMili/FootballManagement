@@ -1,38 +1,17 @@
-name: C++ CI
-
+name: Website checks
 on:
   push:
+    branches: [website]
   pull_request:
-
+    branches: [website]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
+  static-site:
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Setup SDL3
-      uses: libsdl-org/setup-sdl@main
-      with:
-        version: 3-latest
-        install-linux-dependencies: true
-
-    - name: Install Tools & Dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y \
-          clang \
-          clang-tidy \
-          cppcheck \
-          libsqlite3-dev \
-          libfreetype-dev \
-          libharfbuzz-dev
-
-    - name: Configure
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
-
-    - name: Build
-      run: cmake --build build -j
-
-    - name: Run tests
-      run: ctest --test-dir build --output-on-failure
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Check pages, local links, images and media budget
+        run: python3 scripts/check_site.py
+      - name: Check whitespace
+        run: git diff --check

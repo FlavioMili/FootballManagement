@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Football Management are listed here. The format
+All notable changes to Player12 are listed here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and version
 numbers follow [Semantic Versioning](https://semver.org/).
 
@@ -355,4 +355,3 @@ development snapshots, so most of it is listed under *Added*.
   macOS 15 on Apple silicon. The Windows build is experimental and has not
   been validated on real Windows systems. See
   [docs/development/release.md](docs/development/release.md).
-- The licence of the game and its final title are still to be announced.

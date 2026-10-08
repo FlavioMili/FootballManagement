@@ -1,6 +1,6 @@
-# Football Management - Agent Context
+# Player12 - Agent Context
 
-Welcome to the Football Management project! If you are an autonomous AI Agent (e.g., Antigravity), this document is your primary context and instruction manual.
+Welcome to the Player12 project! If you are an autonomous AI Agent (e.g., Antigravity), this document is your primary context and instruction manual.
 
 ## 1. Project Overview
 A football management simulator built in C++ using SDL3, Dear ImGui, and SQLite3.

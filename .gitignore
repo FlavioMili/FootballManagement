@@ -4,3 +4,9 @@ compile_commands.json
 logs
 build
 assets
+
+node_modules/
+__pycache__/
+.venv/
+*.log
+.preview/
