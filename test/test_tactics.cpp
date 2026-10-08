@@ -420,6 +420,7 @@ TEST(TacticsTest, PressingForwardsPressMore)
 
 TEST(TacticsTest, TightlyMarkedPlayerGetsFewerTouches)
 {
+  constexpr std::uint32_t MATCH_SAMPLE_SIZE = 64;
   const PlayerID target = playerId(2, LEFT_CENTRAL_MIDFIELDER);
   const auto touches = [&](bool marked)
   {
@@ -427,9 +428,13 @@ TEST(TacticsTest, TightlyMarkedPlayerGetsFewerTouches)
     if (marked)
       home.setOppositionOrders({{target, OppositionInstruction::TightMark}});
     int total = 0;
-    for (const std::uint32_t seed : SEEDS)
+    // Marking changes subsequent passes, shots and possession, so paired
+    // full matches diverge even with the same seed. Use a representative
+    // sample, including the original four seeds, to measure touch reduction
+    // rather than the score and possession noise of a handful of games.
+    for (std::uint32_t sample = 1; sample <= MATCH_SAMPLE_SIZE; ++sample)
     {
-      playMatch(home, Strategy{}, seed,
+      playMatch(home, Strategy{}, sample * SEEDS.front(),
                 [&](const MatchEngine& engine)
                 {
                   if (engine.getState() != MatchState::FULL_TIME) return;

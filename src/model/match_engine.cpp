@@ -42,6 +42,18 @@ namespace
 {
 constexpr float EPSILON = 0.00001f;
 
+// Credit only flight since launch before the keeper's first body update.
+// The control type is deduced so this timing helper stays private to this file.
+void ageInitialGoalkeeperReaction(auto& control, float flightSeconds)
+{
+  if (control.state != GoalkeeperState::DIVE || control.timer != 0.0F)
+  {
+    return;
+  }
+  control.reactionRemaining =
+      std::max(0.0F, control.reactionRemaining - flightSeconds);
+}
+
 std::uint32_t makeNonBlockingMatchSeed()
 {
   static std::atomic<std::uint32_t> sequence{0};
@@ -4283,7 +4295,8 @@ void MatchEngine::assignMarks()
 
 // The kinematics kernel runs 8 players at a time where the processor
 // supports it; every variant does the same IEEE arithmetic.
-#if defined(__x86_64__) && defined(__linux__) && defined(__GNUC__)
+#if defined(__x86_64__) && defined(__linux__) && defined(__GNUC__) && \
+    !defined(__clang__)
 #define FM_KERNEL_CLONES __attribute__((target_clones("avx2", "default")))
 #else
 #define FM_KERNEL_CLONES
@@ -6460,6 +6473,8 @@ void MatchEngine::planGoalkeeperDive(bool defendingHome, bool penalty)
       (1.0f - keeper->goalkeeping) *
           MatchTuning::Goalkeeper::REACTION_SKILL_SECONDS +
       (screened ? MatchTuning::Goalkeeper::SCREENED_REACTION_SECONDS : 0.0f);
+  // Flight substeps account for time between launch and the keeper's first
+  // movement update. A restart launch can have no flight time in this tick.
   control.reactionRemaining = reactionSeconds;
 }
 
@@ -6478,9 +6493,16 @@ void MatchEngine::diveGoalkeeper(MatchPlayer& keeper, float dt)
   }
   if (control.reactionRemaining > 0.0f)
   {
-    control.reactionRemaining -= dt;
-    keeper.velocity = {0.0f, 0.0f};
-    return;
+    // A reaction can finish partway through a step. Use the remaining time
+    // for movement instead of delaying the keeper for another whole step.
+    const float waiting = std::min(control.reactionRemaining, dt);
+    control.reactionRemaining -= waiting;
+    dt -= waiting;
+    if (dt <= 0.0F)
+    {
+      keeper.velocity = {.x = 0.0F, .y = 0.0F};
+      return;
+    }
   }
   // Lateral dive dynamics in m/s (the keeper moves across the width).
   // Move the visible body into reach rather than granting a distant save.
@@ -6701,6 +6723,10 @@ void MatchEngine::updateBall(float dt)
     if (ball.isShot)
     {
       ball.shotElapsedSeconds += substep;
+      // Headers can launch mid-flight; restarts may not fly this tick.
+      // Later ticks age the reaction in diveGoalkeeper instead.
+      ageInitialGoalkeeperReaction(
+          keepers.at(static_cast<std::size_t>(ball.shotByHome)), substep);
       MatchPlayer* keeper = findGoalkeeper(!ball.shotByHome);
       if (!ball.shotSaveResolved && keeper)
       {
@@ -7338,12 +7364,18 @@ bool MatchEngine::tryOwnGoalTouch(MatchPlayer& defender)
   const Vector2F target{goalX,
                         MatchTuning::Pitch::CENTRE +
                             aimMetres / MatchTuning::Pitch::WIDTH_METRES};
+  // An accidental defensive touch does not end the attacking restart's
+  // origin. Preserve it across the replacement flight for goal accounting.
+  const bool fromSetPiece =
+      ball.shotFromSetPiece ||
+      (setPiecePhaseRemaining > 0.0F && defender.isHomeTeam != setPieceHome);
   const float height = ball.z;
   clearFlightState();
   launchBall(defender, ball.position, target,
              randomFloat(S::OWN_GOAL_MIN_SPEED, S::OWN_GOAL_MAX_SPEED),
              randomFloat(0.0f, S::OWN_GOAL_MAX_LIFT), 0.0f);
   ball.z = height;
+  ball.shotFromSetPiece = fromSetPiece;
   lastShooter = nullptr;
   return true;
 }
@@ -7698,12 +7730,16 @@ void MatchEngine::scoreGoal(bool homeTeam)
   slidersStale = true;
   ++stoppageLogs[static_cast<std::size_t>(period - 1)].goals;
 
+  // Set-piece totals include own goals caused by a restart. Header and
+  // penalty conversion totals still describe the attacking player's shot.
+  if (ball.shotFromSetPiece)
+  {
+    ++(homeTeam ? stats.homeSetPieceGoals : stats.awaySetPieceGoals);
+  }
   if (ball.isShot && scorer && !ownGoal)
   {
     if (ball.shotIsHeader)
       ++(homeTeam ? stats.homeHeadedGoals : stats.awayHeadedGoals);
-    if (ball.shotFromSetPiece)
-      ++(homeTeam ? stats.homeSetPieceGoals : stats.awaySetPieceGoals);
     if (ball.shotIsPenalty)
       ++(homeTeam ? stats.homePenaltyGoals : stats.awayPenaltyGoals);
   }

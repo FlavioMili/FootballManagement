@@ -1049,6 +1049,10 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
     MatchScene scene(&view, teams[0].get().getId(), teams[1].get().getId());
     scene.onEnter();
     ASSERT_NE(scene.engine, nullptr);
+    // Camera controls are exercised during normal playback. Highlight
+    // skipping can move past the pre-match modal's expiry on some seeds,
+    // hiding the input blocker instead of preparing the view explicitly.
+    scene.setHighlightsOnly(false);
 
     const auto frame = [&](float seconds)
     {
@@ -1098,6 +1102,17 @@ TEST_F(MatchRenderer3DSceneTest, SwitchesViewsAndCapturesFrames)
     if (scene.view_mode != MatchViewMode::BROADCAST_3D) press(SDLK_V);
     ASSERT_EQ(scene.view_mode, MatchViewMode::BROADCAST_3D);
     for (int index = 0; index < 30; ++index) frame(FRAME_SECONDS);
+
+    // The managed club's pre-match talk is modal and correctly prevents
+    // pitch drags. Dismiss it through its real keyboard action before
+    // capturing the view and asserting that camera gestures work.
+    ASSERT_TRUE(scene.team_talk.isOpen());
+    ImGui::GetIO().AddKeyEvent(ImGuiKey_Escape, true);
+    frame(FRAME_SECONDS);
+    ImGui::GetIO().AddKeyEvent(ImGuiKey_Escape, false);
+    frame(FRAME_SECONDS);
+    ASSERT_FALSE(scene.team_talk.isOpen());
+    ASSERT_FALSE(ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId));
 
     // Broadcast-camera CPU cost of building the 3D draw lists.
     press(SDLK_1);

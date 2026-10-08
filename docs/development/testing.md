@@ -85,7 +85,7 @@ The `profile` preset enables machine-local native optimizations; use comparable
 builds and hardware when reporting results. Benchmark target definitions are
 in [benchmarks/CMakeLists.txt](../../benchmarks/CMakeLists.txt).
 
-## Known baseline failures
+## Historical calibration failures
 
 Verification on 2026-10-07 reproduced these failures with the original engine
 from revision `8b0aafb`, before the documentation/context-override changes:
@@ -96,7 +96,22 @@ from revision `8b0aafb`, before the documentation/context-override changes:
 | `MatchEngineTest.ConditionCanBeCarriedBetweenMatches` | Both compared players finished at the 0.35 condition floor |
 | `TacticsTest.InPossessionShapeMovesTheSlotWithTheBallOnly` | The observed in-possession width shift missed the expected threshold |
 
-These are baseline observations, not permission to ignore new failures. If
-you encounter one, compare your change with its base revision and include the
-evidence in the PR. Timing tests may skip unless their opt-in environment is
-enabled; a skipped case is not a test pass.
+The condition and shape fixtures now compare controlled, equivalent scenarios.
+Goalkeeper timing, handling calibration and defensive-touch calibration address
+the stronger-team and season regressions without widening their expected ranges.
+Set-piece own goals retain their restart origin and contribute to set-piece
+totals; `SetPieceOwnGoalsKeepTheirRestartOrigin` covers that accounting path.
+That regression pins a replay containing an actual own goal, rather than
+requiring the rare incident to occur in an arbitrary batch of matches.
+The tight-marking comparison uses 64 paired matches with identical seeds for
+marked and unmarked opponents; its original 10% reduction requirement remains.
+
+Run renderer checks through CTest so SDL's dummy driver and the fixed world
+seed match CI. A direct invocation can inherit a desktop video driver and open
+a visible window. Camera input fixtures dismiss the pre-match modal explicitly;
+highlight skipping must not determine whether input is blocked.
+
+These historical observations are not permission to ignore new failures. Compare
+a behavior change with its base revision and include the evidence in the PR.
+Timing tests may skip unless their opt-in environment is enabled; a skipped case
+is not a test pass. Local success does not replace checks on the platform runners.

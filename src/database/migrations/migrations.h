@@ -25,7 +25,7 @@ namespace SaveFormat
 {
 inline constexpr std::string_view FORMAT_ID = "open-football-career";
 inline const std::string_view GAME_VERSION = BuildInfo::version();
-inline constexpr std::string_view ENGINE_VERSION = "1.0.0";
+inline constexpr std::string_view ENGINE_VERSION = "1.0.0-player12.1";
 inline constexpr std::string_view RULES_EDITION = "2026-27";
 inline constexpr int RNG_VERSION = 2;  // 2: platform-independent distributions
 inline constexpr int SIM_VERSION = 1;

@@ -143,6 +143,47 @@ TEST(MatchEngineTest, CompletesARealisticMatch)
   EXPECT_GT(std::filesystem::file_size(snapshotPath), 100u);
 }
 
+TEST(MatchEngineTest, SetPieceOwnGoalsKeepTheirRestartOrigin)
+{
+  constexpr int RATING = 65;
+  constexpr float FRAME_SECONDS = 0.05F;
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createDummyTeam(1, "Home", RATING, players);
+  Team away = createDummyTeam(2, "Away", RATING, players);
+  const StatsConfig config = createStatsConfig();
+  // This replay contains a real restart delivery deflected into its own goal.
+  // Pin the fixture instead of hoping a rare event appears in a seed sample.
+  constexpr std::uint32_t SEED = 41;
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, SEED);
+  while (engine.getState() != MatchState::FULL_TIME)
+  {
+    // A defensive deflection is a replacement flight, not an attacking
+    // shot. Its restart origin must survive until the ball crosses goal.
+    const bool restartDeflection =
+        engine.getBall().shotFromSetPiece && !engine.getBall().isShot;
+    const int goals = engine.getHomeScore() + engine.getAwayScore();
+    const int setPieceGoals = engine.getStats().homeSetPieceGoals +
+                              engine.getStats().awaySetPieceGoals;
+    const std::size_t events = engine.getEvents().size();
+    engine.update(FRAME_SECONDS);
+    if (!restartDeflection ||
+        engine.getHomeScore() + engine.getAwayScore() == goals)
+    {
+      continue;
+    }
+    ASSERT_TRUE(
+        std::any_of(engine.getEvents().begin() + events,
+                    engine.getEvents().end(), [](const MatchEvent& event)
+                    { return event.type == MatchEventType::OWN_GOAL; }));
+    EXPECT_EQ(engine.getStats().homeSetPieceGoals +
+                  engine.getStats().awaySetPieceGoals,
+              setPieceGoals + 1);
+    return;
+  }
+  FAIL() << "The pinned replay did not produce its set-piece own goal";
+}
+
 TEST(MatchEngineTest, InterpolationSnapshotTracksPreviousFixedStep)
 {
   std::vector<std::unique_ptr<Player>> players;
@@ -2744,6 +2785,72 @@ TEST(PlayModeTest, WeakPasserStaysImpreciseUnderTheSameInput)
   EXPECT_GT(weak, strong * 1.5f) << "weak " << weak << " strong " << strong;
 }
 
+namespace
+{
+// Isolate the shot lane so a delayed dive cannot be hidden by screening or
+// defensive contact. Keep scenario preparation separate from the observation.
+MatchScenario keeperReactionScenario()
+{
+  constexpr PlayerID SHOOTER = 105;
+  constexpr PlayerID KEEPER = 200;
+  constexpr Vector2F SIDELINE{.x = 0.1F, .y = 0.1F};
+  constexpr Vector2F SHOT_ORIGIN{.x = 0.65F, .y = 0.5F};
+  constexpr Vector2F KEEPER_ORIGIN{.x = 0.95F, .y = 0.5F};
+  MatchScenario scenario = playModeScenario();
+  // Leave a clear shooting lane and enough flight time to observe the dive
+  // before a save. No screening delay or intervening contact masks the clock.
+  for (MatchScenarioPlayer& player : scenario.players)
+  {
+    player.position = SIDELINE;
+    if (player.playerId == SHOOTER)
+    {
+      player.position = SHOT_ORIGIN;
+    }
+    else if (player.playerId == KEEPER)
+    {
+      player.position = KEEPER_ORIGIN;
+    }
+  }
+  scenario.carrierId = SHOOTER;
+  scenario.ballPosition = SHOT_ORIGIN;
+  return scenario;
+}
+}  // namespace
+
+TEST(PlayModeTest, KeeperMovesWhenReactionEndsWithinTheNextStep)
+{
+  constexpr int RATING = 65;
+  constexpr PlayerID SHOOTER = 105;
+  constexpr PlayerID KEEPER = 200;
+  constexpr std::uint32_t SEED = 31;
+  constexpr float AIM_FORWARD_METRES = 36.75F;
+  constexpr float AIM_LATERAL_METRES = 2.0F;
+  constexpr float STEP = MatchTuning::Timing::FIXED_STEP_SECONDS;
+  std::vector<std::unique_ptr<Player>> players;
+  Team home = createSquadWithBench(1, "Home", RATING, players);
+  Team away = createSquadWithBench(2, "Away", RATING, players);
+  const StatsConfig config = createStatsConfig();
+  MatchEngine engine(home.getLineup(), away.getLineup(), home.getStrategy(),
+                     away.getStrategy(), config, SEED);
+  const MatchScenario scenario = keeperReactionScenario();
+  ASSERT_TRUE(loadControlled(engine, scenario, SHOOTER));
+  MatchPlayerInput input;
+  input.action = MatchInputAction::SHOOT;
+  input.aimX = AIM_FORWARD_METRES;
+  input.aimY = AIM_LATERAL_METRES;
+  engine.submitInput(input);
+  engine.advance(STEP);
+  ASSERT_TRUE(engine.getBall().isShot);
+  ASSERT_EQ(engine.getAwayGoalkeeperState(), GoalkeeperState::DIVE);
+  const float before = findOnPitch(engine, KEEPER)->position.y;
+  engine.advance(STEP);
+  ASSERT_TRUE(engine.getBall().isShot);
+  ASSERT_EQ(engine.getAwayGoalkeeperState(), GoalkeeperState::DIVE);
+  // The launch step already consumed part of the reaction. When it finishes
+  // inside this step, the remaining fraction must move the visible keeper.
+  EXPECT_NE(findOnPitch(engine, KEEPER)->position.y, before);
+}
+
 TEST(PlayModeTest, SwitchingTakesTheCarrierTheReceiverAndTheInterceptor)
 {
   std::vector<std::unique_ptr<Player>> players;
@@ -3206,13 +3313,27 @@ TEST(MatchEngineTest, MedicalMinuteLimitTakesThePlayerOffAroundTheHour)
   // around 50' is not taken off soon after the hour (no wasted change).
   MatchEngine substitute(home.getLineup(), away.getLineup(), home.getStrategy(),
                          away.getStrategy(), config, 73);
+  // Keep the reserve on the bench until the controlled introduction. Normal
+  // tactical or injury changes must not consume the player this case measures.
+  substitute.setAutoSubstitutions(false, true);
   const Player* flaggedSub = home.getLineup().getReserves()[3];
   substitute.setMedicalFlags(flaggedSub->getId(), 1U << 1);
   while (substitute.getState() != MatchState::FULL_TIME &&
          substitute.getMatchTimeMinutes() < 50.0f)
     substitute.advance(MatchTuning::Timing::FIXED_STEP_SECONDS);
   ASSERT_TRUE(advanceToNextStoppage(substitute));
-  ASSERT_TRUE(substitute.substitutePlayer(107, flaggedSub));
+  const auto outgoing = std::ranges::find_if(
+      substitute.getPlayers(),
+      [&](const MatchPlayer& player)
+      {
+        return player.player && player.onPitch && player.isHomeTeam &&
+               !player.isInjured &&
+               player.player->getRole() == flaggedSub->getRole();
+      });
+  ASSERT_NE(outgoing, substitute.getPlayers().end());
+  ASSERT_TRUE(
+      substitute.substitutePlayer(outgoing->player->getId(), flaggedSub));
+  substitute.setAutoSubstitutions(true, true);
   substitute.simulateToEnd();
   EXPECT_TRUE(std::ranges::none_of(substitute.getSubstitutions(),
                                    [&](const MatchSubstitution& substitution)
