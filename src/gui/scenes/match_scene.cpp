@@ -116,7 +116,7 @@ constexpr int DAY_LOOK_FROM_MINUTES = 10 * 60;
 constexpr int DAY_LOOK_UNTIL_MINUTES = 17 * 60 + 30;
 
 /** Share of the focus view the shouts chip may take across. */
-constexpr float FOCUS_SHOUTS_WIDTH_SHARE = 0.45f;
+constexpr float FOCUS_SHOUTS_WIDTH_SHARE = 0.33f;
 
 ImVec4 eventColor(MatchEventType type)
 {

@@ -1444,8 +1444,19 @@ void ManagementScene::renderTopBar(float height)
                          4.0f * style.FramePadding.x);
   const float dateWidth = ImGui::CalcTextSize(dateText.c_str()).x;
   const float balanceWidth = ImGui::CalcTextSize(balanceText.c_str()).x;
-  const float rightEdge = ImGui::GetWindowContentRegionMax().x;
+  // Right edge from the space actually available this frame, clamped to the
+  // visible viewport. GetWindowContentRegionMax() can be stale and oversized on
+  // a scene's first frames, which pushed the right-hand cluster off-screen.
   const float leftEdge = ImGui::GetCursorPosX();
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  const float viewportRight =
+      viewport ? viewport->WorkPos.x + viewport->WorkSize.x : 0.0f;
+  const float localViewportRight =
+      viewportRight - ImGui::GetWindowPos().x -
+      ImGui::GetStyle().WindowPadding.x;
+  const float rightEdge =
+      std::min(leftEdge + ImGui::GetContentRegionAvail().x,
+               std::max(leftEdge, localViewportRight));
 
   // Back and Forward walk the history like a browser's; each is disabled
   // while there is nothing to go to.
@@ -1536,6 +1547,11 @@ void ManagementScene::renderTopBar(float height)
                searchPos.y + frameHeight * 0.5f),
         iconSize, Theme::toU32(palette.faint));
   }
+  // The right-hand cluster is right-aligned but never placed left of the
+  // search field. Anchoring it here (not to the transient toast on the same
+  // line) keeps the Play Match button inside the window when a toast shows.
+  const float searchEndX =
+      ImGui::GetItemRectMax().x - ImGui::GetWindowPos().x;
 
   if (toast_seconds > 0.0f && !toast_message.empty())
   {
@@ -1558,8 +1574,8 @@ void ManagementScene::renderTopBar(float height)
 
   const float clusterWidth = dateBlock + balanceWidth + continueBlock;
   ImGui::SameLine();
-  ImGui::SetCursorPos(ImVec2(
-      std::max(ImGui::GetCursorPosX(), rightEdge - clusterWidth), textY));
+  const float clusterX = std::max(searchEndX, rightEdge - clusterWidth);
+  ImGui::SetCursorPos(ImVec2(clusterX, textY));
   if (showSave)
   {
     ImGui::TextColored(save_failed ? palette.negative : palette.faint, "%s",
