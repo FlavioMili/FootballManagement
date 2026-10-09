@@ -13,6 +13,10 @@ on:
           numbers must equal the project version.
         type: string
         default: ""
+      run-tests:
+        description: Run the full test suite; release packaging uses package smoke checks.
+        type: boolean
+        default: true
       retention-days:
         description: Days to keep the uploaded package artifacts
         type: number
@@ -86,7 +90,7 @@ jobs:
           # shellcheck disable=SC2086 # FM_PACKAGE_OPTIONS is a flag list
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
-            -DBUILD_TESTING=ON \
+            -DBUILD_TESTING=${{ inputs.run-tests && 'ON' || 'OFF' }} \
             -DFM_VERSION="$FM_VERSION" \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -94,9 +98,10 @@ jobs:
             $FM_PACKAGE_OPTIONS
 
       - name: Build
-        run: cmake --build build --parallel 4
+        run: cmake --build build --parallel 4 ${{ !inputs.run-tests && '--target FootballManagement fm_lab' || '' }}
 
       - name: Test (headless, excluding playtest/monkey/slow)
+        if: inputs.run-tests
         run: >
           ctest --test-dir build --output-on-failure --parallel 2
           --timeout 900 -LE "$CTEST_LABEL_EXCLUDE"
@@ -218,7 +223,7 @@ jobs:
           # shellcheck disable=SC2086 # FM_PACKAGE_OPTIONS is a flag list
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
-            -DBUILD_TESTING=ON \
+            -DBUILD_TESTING=${{ inputs.run-tests && 'ON' || 'OFF' }} \
             -DFM_VERSION="$FM_VERSION" \
             -DCMAKE_C_COMPILER="$LLVM_PREFIX/bin/clang" \
             -DCMAKE_CXX_COMPILER="$LLVM_PREFIX/bin/clang++" \
@@ -230,7 +235,7 @@ jobs:
             $FM_PACKAGE_OPTIONS
 
       - name: Build
-        run: cmake --build build --parallel 3
+        run: cmake --build build --parallel 3 ${{ !inputs.run-tests && '--target FootballManagement fm_lab' || '' }}
 
       - name: Check the game links no Homebrew libraries
         run: |
@@ -247,11 +252,13 @@ jobs:
           fi
 
       - name: Verify test executable starts
+        if: inputs.run-tests
         run: |
           otool -L build/test/core_unit_tests
           build/test/core_unit_tests --gtest_list_tests
 
       - name: Test (headless, excluding playtest/monkey/slow)
+        if: inputs.run-tests
         run: >
           ctest --test-dir build --output-on-failure --parallel 2
           --timeout 900 -LE "$CTEST_LABEL_EXCLUDE"

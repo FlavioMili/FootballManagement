@@ -5,7 +5,7 @@ Three workflows in `.github/workflows/` build the game:
 | Workflow      | Trigger                          | What it does                                                        |
 |---------------|----------------------------------|---------------------------------------------------------------------|
 | `ci.yml`      | push to any branch, pull request | Runs `build.yml` (packages kept 3 days) plus a Linux ASan/UBSan job on the core tests |
-| `release.yml` | tag `v*`, manual run             | Runs `build.yml`, then publishes a GitHub Release with checksums    |
+| `release.yml` | tag `v*`, manual run             | Builds and smoke-tests packages, then publishes a GitHub Release with checksums    |
 | `build.yml`   | called by the two above          | Release build, headless tests, packaging, package smoke test        |
 
 `deploy_docs.yml` (Doxygen site) is unrelated; it publishes the API docs
@@ -91,12 +91,15 @@ they carry no library dependencies beyond the OS:
 `sjinks/sqlite3-cmake`). SDL3 is already built from source as a static
 library.
 
-Tests run headless (`SDL_VIDEO_DRIVER=dummy`, `SDL_AUDIO_DRIVER=dummy`) with
+CI tests run headless (`SDL_VIDEO_DRIVER=dummy`, `SDL_AUDIO_DRIVER=dummy`) with
 `ctest -LE "playtest|monkey|slow"`. That also skips the `adversarial`, `qa`,
 `perf` and `soak` suites, which are labelled `slow`. The sanitizer job in
 `ci.yml` (Debug, ASan and UBSan) runs only the headless core tests and the
 sanitizer probe (`-L "core|sanitizer"`), because the GUI suites are too slow
-under the sanitizers. Run the full suite locally before a release.
+under the sanitizers. Release jobs build the game and balance lab without test executables and run
+the package smoke checks on every platform. The full test suites remain in
+`ci.yml`; require green CI on the source commit before tagging.
+Run the full suite locally before a release.
 
 **Linux** (`ubuntu-24.04`, GCC 14): links libstdc++ and libgcc statically,
 builds and runs the tests, smoke-tests a normal install (without selecting a
