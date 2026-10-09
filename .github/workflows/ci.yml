@@ -14,7 +14,8 @@ concurrency:
 
 jobs:
   # Release builds, headless tests and package smoke tests on Linux, macOS
-  # and (experimental) Windows. Packages are kept as short-lived artifacts.
+  # and Windows. Full tests run here; release builds run package smoke checks.
+  # Packages are kept as short-lived artifacts.
   packages:
     uses: ./.github/workflows/build.yml
     with:
