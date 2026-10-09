@@ -58,8 +58,7 @@ jobs:
         with:
           path: |
             out/build/debug-sanitized/_deps/*-src
-            out/build/debug-sanitized/_deps/*-subbuild
-          key: fetchcontent-linux-sanitized-${{ hashFiles('CMakeLists.txt') }}
+          key: fetchcontent-sources-v2-${{ github.repository }}-linux-sanitized-${{ hashFiles('CMakeLists.txt') }}
 
       - name: Cache ccache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

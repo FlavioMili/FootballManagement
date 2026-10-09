@@ -72,8 +72,7 @@ jobs:
         with:
           path: |
             build/_deps/*-src
-            build/_deps/*-subbuild
-          key: fetchcontent-linux-${{ hashFiles('CMakeLists.txt') }}
+          key: fetchcontent-sources-v2-${{ github.repository }}-linux-${{ hashFiles('CMakeLists.txt') }}
 
       - name: Cache ccache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -198,13 +197,20 @@ jobs:
           "$LLVM_PREFIX/bin/clang++" --version
           ls "$LLVM_PREFIX/lib/c++"
 
+      # Keep discovery behavior stable instead of inheriting Homebrew CMake updates.
+      - name: Install CMake 3.31.10
+        run: |
+          python3 -m venv "$RUNNER_TEMP/cmake-tools"
+          "$RUNNER_TEMP/cmake-tools/bin/pip" install cmake==3.31.10
+          echo "$RUNNER_TEMP/cmake-tools/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/cmake-tools/bin/cmake" --version
+
       - name: Cache FetchContent sources
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             build/_deps/*-src
-            build/_deps/*-subbuild
-          key: fetchcontent-macos-${{ hashFiles('CMakeLists.txt') }}
+          key: fetchcontent-sources-v2-${{ github.repository }}-macos-${{ hashFiles('CMakeLists.txt') }}
 
       - name: Cache ccache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -245,6 +251,11 @@ jobs:
             echo "::error::Player12 links a dynamic libc++/libunwind"
             exit 1
           fi
+
+      - name: Verify test executable starts
+        run: |
+          otool -L build/test/core_unit_tests
+          build/test/core_unit_tests --gtest_list_tests
 
       - name: Test (headless, excluding playtest/monkey/slow)
         run: >
@@ -294,8 +305,7 @@ jobs:
         with:
           path: |
             build/_deps/*-src
-            build/_deps/*-subbuild
-          key: fetchcontent-windows-${{ hashFiles('CMakeLists.txt') }}
+          key: fetchcontent-sources-v2-${{ github.repository }}-windows-${{ hashFiles('CMakeLists.txt') }}
 
       # The unit tests use POSIX headers (unistd.h, setenv), so Windows builds
       # the game and the balance lab only.
