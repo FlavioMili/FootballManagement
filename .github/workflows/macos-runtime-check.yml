@@ -31,8 +31,8 @@ jobs:
           llvm=$(brew --prefix llvm@20)
           cmake -S probe -B probe/build -G Ninja \
             -DCMAKE_CXX_COMPILER="$llvm/bin/clang++" \
-            "-DCMAKE_EXE_LINKER_FLAGS=-nostdlib++ $llvm/lib/c++/libc++.a $llvm/lib/c++/libc++abi.a"
+            "-DCMAKE_EXE_LINKER_FLAGS=-nostdlib++ -Wl,-no_exported_symbols $llvm/lib/c++/libc++.a $llvm/lib/c++/libc++abi.a"
           cmake --build probe/build --parallel 3
           otool -L probe/build/probe
           probe/build/probe --gtest_list_tests || \
-            lldb --batch -o run -o 'thread backtrace all' -- probe/build/probe --gtest_list_tests
+            lldb --batch -o run -k 'thread backtrace all' -- probe/build/probe --gtest_list_tests
