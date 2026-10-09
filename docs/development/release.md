@@ -82,7 +82,8 @@ commit they were built from.
 ## What each job does
 
 All jobs build `Release` with pinned FetchContent dependencies and cache the
-fetched sources (`build/_deps/*-src`, `*-subbuild`). Linux and macOS also
+fetched sources (`build/_deps/*-src`). CMake subbuilds contain absolute paths and are never
+cached; source-cache keys also include the repository name. Linux and macOS also
 cache compiler output with ccache. Packages use two extra CMake options so
 they carry no library dependencies beyond the OS:
 `-DSDLTTF_VENDORED=ON` (FreeType, HarfBuzz and PlutoSVG built in) and
@@ -111,7 +112,9 @@ game. The code uses floating-point `std::from_chars` (player and training
 repositories) and `std::jthread`/`std::stop_token` (thread pool), and libc++
 only provides both without `-fexperimental-library` from LLVM 20. So the job
 uses Homebrew `llvm@20` and links its `libc++.a`/`libc++abi.a` statically
-(`-nostdlib++`). A check step fails the build if the game links anything
+(`-nostdlib++`). The executable exports no symbols (`-no_exported_symbols`),
+so its C++ runtime cannot replace symbols in the system runtime used by Cocoa.
+A check step fails the build if the game links anything
 outside `/usr/lib` or `/System/Library`. CMake builds
 `Player12.app`, installs the assets into `Contents/Resources`,
 ad-hoc signs the bundle as the last install step and zips it (`cpack` ZIP).

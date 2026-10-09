@@ -187,6 +187,8 @@ jobs:
       # AppleClang's libc++ lacks floating-point std::from_chars and
       # non-experimental std::jthread (both need libc++ 20), so the game is
       # built with Homebrew LLVM 20 and its libc++ is linked statically.
+      # Hide executable exports so its static libc++ cannot interpose on
+      # the system libc++ used by Cocoa (which otherwise aborts at startup).
       # Keep the major fixed for reproducible builds. CMake applies the
       # Apple SDK enum compatibility flag to HarfBuzz's CoreText backend.
       - name: Install Homebrew LLVM 20, Ninja and ccache
@@ -196,14 +198,6 @@ jobs:
           echo "LLVM_PREFIX=$LLVM_PREFIX" >> "$GITHUB_ENV"
           "$LLVM_PREFIX/bin/clang++" --version
           ls "$LLVM_PREFIX/lib/c++"
-
-      # Keep discovery behavior stable instead of inheriting Homebrew CMake updates.
-      - name: Install CMake 3.31.10
-        run: |
-          python3 -m venv "$RUNNER_TEMP/cmake-tools"
-          "$RUNNER_TEMP/cmake-tools/bin/pip" install cmake==3.31.10
-          echo "$RUNNER_TEMP/cmake-tools/bin" >> "$GITHUB_PATH"
-          "$RUNNER_TEMP/cmake-tools/bin/cmake" --version
 
       - name: Cache FetchContent sources
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -232,7 +226,7 @@ jobs:
             -DCMAKE_OSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            "-DCMAKE_EXE_LINKER_FLAGS=-nostdlib++ $LLVM_PREFIX/lib/c++/libc++.a $LLVM_PREFIX/lib/c++/libc++abi.a" \
+            "-DCMAKE_EXE_LINKER_FLAGS=-nostdlib++ -Wl,-no_exported_symbols $LLVM_PREFIX/lib/c++/libc++.a $LLVM_PREFIX/lib/c++/libc++abi.a" \
             $FM_PACKAGE_OPTIONS
 
       - name: Build
