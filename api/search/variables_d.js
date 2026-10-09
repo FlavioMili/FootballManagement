@@ -25,7 +25,7 @@ var searchData=
   ['managers_22',['managers',['../structNewsSources.html#aa07a20e3730d77260e6a4b6f78fcee98',1,'NewsSources::managers'],['../classManagerCareer.html#a93e722ce6e0541e9b81e437926919212',1,'ManagerCareer::managers']]],
   ['manual_5fskip_23',['manual_skip',['../classMatchPlayController.html#a0b00f8b87d66035cd1e94b43e12d472c',1,'MatchPlayController']]],
   ['manualsubstitutionstep_24',['manualSubstitutionStep',['../classMatchEngine.html#a0342bfa852ca0695606096b8da5d1445',1,'MatchEngine']]],
-  ['margin_25',['margin',['../structManagerScene_1_1SeasonRow.html#ad2e6cffb29cc3bdc4ac3dfc48dadad8d',1,'ManagerScene::SeasonRow::margin'],['../structMatchRender3DTuning_1_1Hud.html#afcb2b806ac591a8625deb0b132f832f6',1,'MatchRender3DTuning::Hud::MARGIN']]],
+  ['margin_25',['margin',['../structMatchRender3DTuning_1_1Hud.html#afcb2b806ac591a8625deb0b132f832f6',1,'MatchRender3DTuning::Hud::MARGIN'],['../structManagerScene_1_1SeasonRow.html#ad2e6cffb29cc3bdc4ac3dfc48dadad8d',1,'ManagerScene::SeasonRow::margin']]],
   ['mark_26',['mark',['../structCounterTactic.html#a447dadf442dce125721998488bd63db5',1,'CounterTactic']]],
   ['mark_5frefresh_5fsteps_27',['MARK_REFRESH_STEPS',['../structMatchTuning_1_1Shape.html#a20919075521b3f21d791e31431c12564',1,'MatchTuning::Shape']]],
   ['markassignments_28',['markAssignments',['../classMatchEngine.html#aef88720e09cf8902efdebb9cd2b5ea4f',1,'MatchEngine']]],

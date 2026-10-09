@@ -1,5 +1,6 @@
 var NAVTREEINDEX65 =
 {
+"structRenderMath_1_1Vec4.html#ac15a0f5372a963bc808a5c0378c903ad":[20,0,57,6,3],
 "structRenderMath_1_1Vec4.html#ac15a0f5372a963bc808a5c0378c903ad":[22,0,22,6,3],
 "structRenderMath_1_1Vec4.html#ad9e43ec98ab013276dc9a13b31805d34":[22,0,22,6,1],
 "structRenderMath_1_1Vec4.html#ad9e43ec98ab013276dc9a13b31805d34":[20,0,57,6,1],
@@ -248,6 +249,5 @@ var NAVTREEINDEX65 =
 "structScoutingScene_1_1PlayerLine.html#a4f46208d4c025aede668a50c066a7ea6":[22,0,331,5,0],
 "structScoutingScene_1_1PlayerLine.html#a838ae414715e354e2a6f58ce4f89024a":[22,0,331,5,5],
 "structScoutingScene_1_1PlayerLine.html#a874d0c4794778f25543aacdb5a5ceb50":[22,0,331,5,1],
-"structScoutingScene_1_1PlayerLine.html#ab3ac4900c6936c5484828bece6e6f9d5":[22,0,331,5,2],
-"structScoutingScene_1_1ReportLine.html":[22,0,331,6]
+"structScoutingScene_1_1PlayerLine.html#ab3ac4900c6936c5484828bece6e6f9d5":[22,0,331,5,2]
 };

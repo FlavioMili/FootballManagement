@@ -83,7 +83,7 @@ var searchData=
   ['manual_5fskip_80',['manual_skip',['../classMatchPlayController.html#a0b00f8b87d66035cd1e94b43e12d472c',1,'MatchPlayController']]],
   ['manualsubstitutionstep_81',['manualSubstitutionStep',['../classMatchEngine.html#a0342bfa852ca0695606096b8da5d1445',1,'MatchEngine']]],
   ['map_20and_20checks_82',['Implementation map and checks',['../md_docs_2development_2match-engine.html#autotoc_md56',1,'']]],
-  ['margin_83',['margin',['../structMatchRender3DTuning_1_1Hud.html#afcb2b806ac591a8625deb0b132f832f6',1,'MatchRender3DTuning::Hud::MARGIN'],['../structManagerScene_1_1SeasonRow.html#ad2e6cffb29cc3bdc4ac3dfc48dadad8d',1,'ManagerScene::SeasonRow::margin']]],
+  ['margin_83',['margin',['../structManagerScene_1_1SeasonRow.html#ad2e6cffb29cc3bdc4ac3dfc48dadad8d',1,'ManagerScene::SeasonRow::margin'],['../structMatchRender3DTuning_1_1Hud.html#afcb2b806ac591a8625deb0b132f832f6',1,'MatchRender3DTuning::Hud::MARGIN']]],
   ['mark_84',['mark',['../structCounterTactic.html#a447dadf442dce125721998488bd63db5',1,'CounterTactic::mark'],['../classMatchEventCursor.html#a49fff7e4f938732e43f8132b1d8d1e22',1,'MatchEventCursor::mark()']]],
   ['mark_5fopponent_85',['MARK_OPPONENT',['../match__engine_8h.html#a142c3c51fd70298c409fad612830d4b5a6d001f8ce2541502c7e90ea500d8741a',1,'match_engine.h']]],
   ['mark_5frefresh_5fsteps_86',['MARK_REFRESH_STEPS',['../structMatchTuning_1_1Shape.html#a20919075521b3f21d791e31431c12564',1,'MatchTuning::Shape']]],

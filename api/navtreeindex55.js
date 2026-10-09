@@ -1,5 +1,6 @@
 var NAVTREEINDEX55 =
 {
+"structMatchRenderPlayer.html#a91ebae82aa29e2b3842eed7fc0da23a3":[22,0,208,2],
 "structMatchRenderPlayer.html#a9b88541837d2418f15ad44d7f51d6912":[22,0,208,14],
 "structMatchRenderPlayer.html#a9c84704622c268336a56af4f79460a08":[22,0,208,10],
 "structMatchRenderPlayer.html#aa5d6444604169fba3a487097302203c0":[22,0,208,11],
@@ -248,6 +249,5 @@ var NAVTREEINDEX55 =
 "structMatchReportEvent.html#ae01c5d0c427e279b5ee9e5b4a129b98e":[22,0,211,4],
 "structMatchReportScene_1_1EventRow.html":[22,0,212,0],
 "structMatchReportScene_1_1EventRow.html#a054bc7d888a2c0f8817f3c0a44e8a9a9":[22,0,212,0,3],
-"structMatchReportScene_1_1EventRow.html#a2bc9ccec66e526c1e8d5516a0feb01b6":[22,0,212,0,1],
-"structMatchReportScene_1_1EventRow.html#a8ebc9f813ef962e85d9d4677fb0a9bfd":[22,0,212,0,4]
+"structMatchReportScene_1_1EventRow.html#a2bc9ccec66e526c1e8d5516a0feb01b6":[22,0,212,0,1]
 };

@@ -1,5 +1,6 @@
 var NAVTREEINDEX57 =
 {
+"structMatchStats.html#a087bec7d3f42c16c6112a5c44342d0ba":[22,0,221,30],
 "structMatchStats.html#a0bb62cd3babdc363f6f5296d812be8da":[22,0,221,31],
 "structMatchStats.html#a146575f50edbf1991184617fa0d58fe4":[22,0,221,18],
 "structMatchStats.html#a179d136cfad070457fdd3677e8e7ee91":[22,0,221,6],
@@ -248,6 +249,5 @@ var NAVTREEINDEX57 =
 "structMatchTuning_1_1Defending.html#a2f73054d86fab03ee49d9b3295cc6637":[22,0,226,5,22],
 "structMatchTuning_1_1Defending.html#a357725a312b23b029e01c649c7d4c10b":[22,0,226,5,13],
 "structMatchTuning_1_1Defending.html#a3b0eadad51e5d3875718151bda3d4736":[22,0,226,5,15],
-"structMatchTuning_1_1Defending.html#a431559debb9f4de4eb4ffb779d91a6d1":[22,0,226,5,9],
-"structMatchTuning_1_1Defending.html#a48be2a283f07176f9ec3bf57f8050051":[22,0,226,5,21]
+"structMatchTuning_1_1Defending.html#a431559debb9f4de4eb4ffb779d91a6d1":[22,0,226,5,9]
 };

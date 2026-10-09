@@ -1,5 +1,6 @@
 var NAVTREEINDEX66 =
 {
+"structScoutingScene_1_1ReportLine.html":[22,0,331,6],
 "structScoutingScene_1_1ReportLine.html#a1762d0bd88a5f832e109e5fe4f1ca846":[22,0,331,6,6],
 "structScoutingScene_1_1ReportLine.html#a3b353a1252f3e2d309d6089ad0a78b97":[22,0,331,6,7],
 "structScoutingScene_1_1ReportLine.html#a51cb0ea80ec51be47aed60e5fc8e8f3b":[22,0,331,6,8],
@@ -245,9 +246,8 @@ var NAVTREEINDEX66 =
 "structSquadComparisonRow.html#ad4c281cbe4e2f23ec047214468cda5e7":[22,0,357,2],
 "structSquadNumbers_1_1Entry.html":[20,0,68,0],
 "structSquadNumbers_1_1Entry.html":[22,0,25,0],
-"structSquadNumbers_1_1Entry.html#a0d955e99225bb4c2a5988a6d61a3d24d":[22,0,25,0,1],
 "structSquadNumbers_1_1Entry.html#a0d955e99225bb4c2a5988a6d61a3d24d":[20,0,68,0,1],
-"structSquadNumbers_1_1Entry.html#a0ea2a3a5f181dafa3151d7a61acd6e98":[22,0,25,0,3],
+"structSquadNumbers_1_1Entry.html#a0d955e99225bb4c2a5988a6d61a3d24d":[22,0,25,0,1],
 "structSquadNumbers_1_1Entry.html#a0ea2a3a5f181dafa3151d7a61acd6e98":[20,0,68,0,3],
-"structSquadNumbers_1_1Entry.html#a2e4c442c146286d49a07da6da972807f":[20,0,68,0,4]
+"structSquadNumbers_1_1Entry.html#a0ea2a3a5f181dafa3151d7a61acd6e98":[22,0,25,0,3]
 };

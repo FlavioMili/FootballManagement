@@ -1,5 +1,6 @@
 var NAVTREEINDEX74 =
 {
+"tactics_8h.html#a0def41ff5c7c3157ef5c508203fce19c":[23,0,1,5,135,5],
 "tactics_8h.html#a0def41ff5c7c3157ef5c508203fce19ca4905ac9d6a22bdfc1ae096094ce6248d":[23,0,1,5,135,5,3],
 "tactics_8h.html#a0def41ff5c7c3157ef5c508203fce19ca4aec8c62cef82bc80bd3192973dc8609":[23,0,1,5,135,5,0],
 "tactics_8h.html#a0def41ff5c7c3157ef5c508203fce19cadb5eb84117d06047c97c9a0191b5fffe":[23,0,1,5,135,5,1],
@@ -248,6 +249,5 @@ var NAVTREEINDEX74 =
 "training_8h.html#a424b786fa8ddb2dfb397f2bb2ecd1b25afb08a52d95d398c12b24d6c075d43051":[23,0,1,5,139,12,5],
 "training_8h.html#a44efd473cdc209bd15af44773d48cb80":[23,0,1,5,139,47],
 "training_8h.html#a4af5692e2bfb3ee5bf0e351608f556a8":[23,0,1,5,139,57],
-"training_8h.html#a4f7541ba864f118a40c9dabed727f5d0":[23,0,1,5,139,11],
-"training_8h.html#a4f7541ba864f118a40c9dabed727f5d0a4905ac9d6a22bdfc1ae096094ce6248d":[23,0,1,5,139,11,6]
+"training_8h.html#a4f7541ba864f118a40c9dabed727f5d0":[23,0,1,5,139,11]
 };

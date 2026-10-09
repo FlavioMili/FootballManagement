@@ -1,5 +1,6 @@
 var NAVTREEINDEX60 =
 {
+"structMatchTuning_1_1Shape.html#ac62a77105802115272f508b0940a6257":[22,0,226,19,97],
 "structMatchTuning_1_1Shape.html#ac6cf617f248fd60f7da032aa4c770980":[22,0,226,19,114],
 "structMatchTuning_1_1Shape.html#ac7e5e8d641da4411c29f2609f71bdc33":[22,0,226,19,50],
 "structMatchTuning_1_1Shape.html#ac82a306cb6716c0b7b6da7b0e8878466":[22,0,226,19,96],
@@ -248,6 +249,5 @@ var NAVTREEINDEX60 =
 "structMedicalScene_1_1RiskLine.html#a5291126396206013198094b06627057c":[22,0,233,1,8],
 "structMedicalScene_1_1RiskLine.html#a824e8ad18a07a83786cf7479ece22b8e":[22,0,233,1,6],
 "structMedicalScene_1_1RiskLine.html#ab84fba00b8c3abc0330fa25d44e0dd49":[22,0,233,1,9],
-"structMedicalScene_1_1RiskLine.html#ad6e88a900b72ff5465d45997db01cf54":[22,0,233,1,4],
-"structMedicalScene_1_1RiskLine.html#adfbb44b5158636a3aacb164f39a212b1":[22,0,233,1,0]
+"structMedicalScene_1_1RiskLine.html#ad6e88a900b72ff5465d45997db01cf54":[22,0,233,1,4]
 };

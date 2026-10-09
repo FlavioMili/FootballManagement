@@ -847,7 +847,7 @@ var searchData=
   ['richerbuyer_844',['RicherBuyer',['../namespaceTransferNegotiation.html#ac16348065bc0972cf21588fc7f36cd50a60c74ac0ec809f625a06dfe2d639817d',1,'TransferNegotiation']]],
   ['rig_845',['rig',['../structMatchRender3DTuning_1_1Rig.html',1,'MatchRender3DTuning::Rig'],['../structMatchCamera3D_1_1Rig.html',1,'MatchCamera3D::Rig']]],
   ['right_846',['right',['../structStadium3D_1_1AdBoard.html#a4a15a2fe752e914a22f1f8046ea4ed06',1,'Stadium3D::AdBoard::right'],['../classAudio_1_1CrowdBed.html#a5472cbead1127a486e21a0a9db44a338',1,'Audio::CrowdBed::right'],['../classMatchPlayController.html#ac4322f7813d8053209344d6652eaa7b9a21a25a051226823da96cc0c21489a3a9',1,'MatchPlayController::RIGHT'],['../player_8h.html#a29a274bfa86b6e9dbfae8cddbae6e606a92b09c7c48c520c3c55e497875da437c',1,'Right:&#160;player.h'],['../match__analysis_8h.html#aedc38eac1d75b937608bf4acd003b2c4a92b09c7c48c520c3c55e497875da437c',1,'Right:&#160;match_analysis.h']]],
-  ['right_20implementation_847',['Finding the right implementation',['..//home/runner/work/FootballManagement/FootballManagement/main/docs/development/README.md#autotoc_md67',1,'']]],
+  ['right_20implementation_847',['Finding the right implementation',['..//home/runner/work/Player12/Player12/main/docs/development/README.md#autotoc_md67',1,'']]],
   ['right_5ffooted_848',['right_footed',['../structOppositionPlayer.html#abeb4091bf1094f0bdb326111604ae836',1,'OppositionPlayer']]],
   ['right_5fgoal_5fkick_5fx_849',['RIGHT_GOAL_KICK_X',['../structMatchTuning_1_1Pitch.html#a27c7127d0ba16a910f59655178503a4e',1,'MatchTuning::Pitch']]],
   ['right_5finside_5fforward_5fchannel_850',['RIGHT_INSIDE_FORWARD_CHANNEL',['../structMatchTuning_1_1Shape.html#ac0ec5d9a1b5a8578c3b4e0a336f8f8c5',1,'MatchTuning::Shape']]],

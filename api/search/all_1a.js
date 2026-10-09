@@ -22,7 +22,7 @@ var searchData=
   ['quick_19',['Quick',['../save__manager_8h.html#a3531beada44788a5ac69957338dcc544a809b7a805a28884b364837536cdc38b7',1,'save_manager.h']]],
   ['quick_5fresult_20',['quick_result',['../classMatchScene.html#a7e043d9fd9b4cf4307c1e1d67f21eb0e',1,'MatchScene']]],
   ['quickresult_21',['quickResult',['../classMatchScene.html#a63d2f66b78a76b954e288a389e1f0ab7',1,'MatchScene']]],
-  ['quickstart_22',['Quickstart',['..//home/runner/work/FootballManagement/FootballManagement/main/README.md#autotoc_md7',1,'']]],
+  ['quickstart_22',['Quickstart',['..//home/runner/work/Player12/Player12/main/README.md#autotoc_md7',1,'']]],
   ['quiet_5fdays_23',['quiet_days',['../structTalkOutcome.html#a189555cb9c48c91a8827a87e0fc0d60d',1,'TalkOutcome']]],
   ['quiet_5funtil_24',['quiet_until',['../structPlayerRelation.html#a9015cb065c1783b358f5eb1959cb442d',1,'PlayerRelation']]],
   ['quit_25',['quit',['../classGUIScene.html#a87d222a9ff6abbfcd0d2879a114a8424',1,'GUIScene::quit()'],['../classGUIView.html#a1cd3cf476bcf47adf7ec8e8fdb18e8d7',1,'GUIView::quit()']]],

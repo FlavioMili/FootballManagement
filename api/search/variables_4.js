@@ -55,7 +55,7 @@ var searchData=
   ['debug_5ftarget_5fcolor_52',['debug_target_color',['../structMatchSceneTuning_1_1Marker.html#a6434e8f56f364f63f47de87d54811c56',1,'MatchSceneTuning::Marker::DEBUG_TARGET_COLOR'],['../structMatchRender3DTuning_1_1Hud.html#a924c329f592251b09de9c2f0841b3174',1,'MatchRender3DTuning::Hud::DEBUG_TARGET_COLOR']]],
   ['debug_5ftarget_5fradius_53',['DEBUG_TARGET_RADIUS',['../structMatchSceneTuning_1_1Marker.html#a0ccf4f303a0d3cb08e93d3c952eace7a',1,'MatchSceneTuning::Marker']]],
   ['debut_5fmax_5fage_54',['DEBUT_MAX_AGE',['../namespaceStories.html#a74878825c385782974a7ad017b00688e',1,'Stories']]],
-  ['decay_55',['decay',['../classAudio_1_1Voice.html#a58586dcf3211da67a6e33c851af55705',1,'Audio::Voice::decay'],['../structMatchRender3DTuning_1_1Ripple.html#a6dbb7181fecf02618fccf88a6cf6ac33',1,'MatchRender3DTuning::Ripple::DECAY']]],
+  ['decay_55',['decay',['../structMatchRender3DTuning_1_1Ripple.html#a6dbb7181fecf02618fccf88a6cf6ac33',1,'MatchRender3DTuning::Ripple::DECAY'],['../classAudio_1_1Voice.html#a58586dcf3211da67a6e33c851af55705',1,'Audio::Voice::decay']]],
   ['decided_56',['decided',['../structNationalManagement_1_1QueuedFinals.html#a546314fe848f51eedb4831aa86d6e9f7',1,'NationalManagement::QueuedFinals']]],
   ['decided_5fby_57',['decided_by',['../classMatchScene.html#aa650446cf4d06fd322fa123536ca642e',1,'MatchScene']]],
   ['decided_5fby_5fready_58',['decided_by_ready',['../classMatchScene.html#af3acbcff1e723ce367bce68c986a2cf0',1,'MatchScene']]],
