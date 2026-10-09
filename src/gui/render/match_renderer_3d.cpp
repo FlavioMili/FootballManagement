@@ -3222,14 +3222,17 @@ void MatchRenderer3D::State::drawGoalSting(const MatchRenderSnapshot& snapshot)
       font->CalcTextSizeA(em, FLT_MAX, 0.0f, detail.data());
   const float bar = em * S::BAR_EM;
   const float titleWidth = callSize.x + padding * 2.0f + scoreSize.x;
-  const float width = bar + padding * 2.0f + std::max(titleWidth, detailSize.x);
+  const float detailWidth =
+      detailSize.x + (hasDetail ? detailSize.y + padding * 0.4f : 0.0f);
+  const float width =
+      bar + padding * 2.0f + std::max(titleWidth, detailWidth);
   const float height =
-      callSize.y + (hasDetail ? detailSize.y : 0.0f) + padding * 1.5f;
-  const float x = projection.rect.x +
-                  std::max(padding, (projection.rect.width - width) * 0.5f) -
+      callSize.y + (hasDetail ? detailSize.y + padding * 0.5f : 0.0f) +
+      padding * 1.5f;
+  // Centre the banner on the view.
+  const float x = projection.rect.x + (projection.rect.width - width) * 0.5f -
                   slide * em;
-  const float y = projection.rect.y + projection.rect.height - height -
-                  projection.rect.height * S::BOTTOM_SHARE;
+  const float y = projection.rect.y + (projection.rect.height - height) * 0.5f;
   const auto fade = [opacity](ImU32 color)
   {
     const auto alpha = static_cast<float>((color >> IM_COL32_A_SHIFT) & 0xFFU);
@@ -3245,13 +3248,51 @@ void MatchRenderer3D::State::drawGoalSting(const MatchRenderSnapshot& snapshot)
                           fade(kit.trim));
   const float textX = x + bar + padding;
   const float textY = y + padding * 0.75f;
-  drawList->AddText(font, titleSize, {textX, textY}, fade(S::CALL_COLOR), call);
+  // "GOAL!" flashes.
+  const float flash = 0.5f + 0.5f * std::sin(t * S::FLASH_HZ * 2.0f *
+                                             std::numbers::pi_v<float>);
+  const ImU32 callColor = fade(withAlpha(
+      S::CALL_COLOR,
+      static_cast<std::uint8_t>(255.0f * std::clamp(flash, 0.15f, 1.0f))));
+  drawList->AddText(font, titleSize, {textX, textY}, callColor, call);
   drawList->AddText(font, titleSize,
                     {textX + callSize.x + padding * 2.0f, textY},
                     fade(S::TEXT_COLOR), score);
   if (hasDetail)
   {
-    drawList->AddText(font, em, {textX, textY + callSize.y},
+    // A football to the left of the scorer's name (the game font has no emoji
+    // glyph, so it is drawn: white ball, black pentagon and seams).
+    const float ballR = detailSize.y * 0.5f;
+    const float detailY = textY + callSize.y + padding * 0.5f;
+    const ImVec2 ballCentre{textX + ballR, detailY + detailSize.y * 0.5f};
+    const ImU32 ballColor = fade(IM_COL32(240, 243, 248, 255));
+    const ImU32 patchColor = fade(IM_COL32(15, 18, 24, 255));
+    drawList->AddCircleFilled(ballCentre, ballR, ballColor, 24);
+    std::array<ImVec2, 5> pentagon{};
+    for (int i = 0; i < 5; ++i)
+    {
+      const float angle =
+          -std::numbers::pi_v<float> * 0.5f +
+          static_cast<float>(i) * 2.0f * std::numbers::pi_v<float> / 5.0f;
+      pentagon[static_cast<std::size_t>(i)] = {
+          ballCentre.x + std::cos(angle) * ballR * 0.44f,
+          ballCentre.y + std::sin(angle) * ballR * 0.44f};
+    }
+    drawList->AddConvexPolyFilled(pentagon.data(), 5, patchColor);
+    for (const ImVec2& vertex : pentagon)
+    {
+      const float dx = vertex.x - ballCentre.x;
+      const float dy = vertex.y - ballCentre.y;
+      const float len = std::max(std::hypot(dx, dy), 1e-4f);
+      drawList->AddLine(vertex,
+                        {ballCentre.x + dx / len * ballR,
+                         ballCentre.y + dy / len * ballR},
+                        patchColor, std::max(1.0f, ballR * 0.14f));
+    }
+    drawList->AddCircle(ballCentre, ballR, patchColor, 24,
+                        std::max(1.0f, ballR * 0.14f));
+    drawList->AddText(font, em,
+                      {textX + ballR * 2.0f + padding * 0.6f, detailY},
                       fade(S::DETAIL_COLOR), detail.data());
   }
 }

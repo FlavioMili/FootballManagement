@@ -644,15 +644,20 @@ bool styledButton(const char* label, ImVec2 size, ButtonSize buttonSize,
                      std::min(1.0f, fill.y * 1.12f + 0.03f),
                      std::min(1.0f, fill.z * 1.12f + 0.03f), 1.0f);
   const ImVec4 active(fill.x * 0.82f, fill.y * 0.82f, fill.z * 0.82f, 1.0f);
+  const ImVec2 extent = buttonExtent(label, size, buttonSize);
+  // The label is centred in the button: derive the vertical padding from the
+  // button's height, or a short (COMPACT) button using the regular style's
+  // larger FramePadding.y leaves the text clipped toward the top.
+  const float verticalPadding =
+      std::max(2.0f, (extent.y - ImGui::GetTextLineHeight()) * 0.5f);
   ImGui::PushStyleColor(ImGuiCol_Button, fill);
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover);
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, active);
   ImGui::PushStyleColor(ImGuiCol_Text, text);
   ImGui::PushStyleVar(
       ImGuiStyleVar_FramePadding,
-      ImVec2(scaled(Size::BUTTON_PADDING_X), ImGui::GetStyle().FramePadding.y));
-  const bool pressed =
-      ImGui::Button(label, buttonExtent(label, size, buttonSize));
+      ImVec2(scaled(Size::BUTTON_PADDING_X), verticalPadding));
+  const bool pressed = ImGui::Button(label, extent);
   ImGui::PopStyleVar();
   ImGui::PopStyleColor(4);
   return pressed;
